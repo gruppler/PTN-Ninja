@@ -172,10 +172,6 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     body = file[4];
 
     header = header.match(r.grammar.tag);
-    if (!header) {
-      m.error(t.error.invalid_header_format());
-      return false;
-    }
     for (var i = 0; i < header.length; i++) {
       this.tags[i] = new Tag(header[i]);
       this.config[this.tags[i].key] = this.tags[i].value;
@@ -189,19 +185,15 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
       return false;
     }
 
-    if (body) {
-      body = body.match(r.grammar.body);
-      if (!body) {
-        m.error(t.error.invalid_body_format);
-        return false;
-      }
-      body = body[0].match(r.grammar.turn);
-      for (var i = 0; i < body.length; i++) {
-        this.turns[i] = new Turn(body[i]);
-      }
+    body = body.match(r.grammar.body);
+    if (!body) {
+      m.error(t.error.invalid_body());
+      return;
     }
-
-    console.log(this);
+    body = body[0].match(r.grammar.turn);
+    for (var i = 0; i < body.length; i++) {
+      this.turns[i] = new Turn(body[i]);
+    }
   };
 
 

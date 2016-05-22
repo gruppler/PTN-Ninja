@@ -20,13 +20,12 @@ define({
     Time: "Time",
 
     error: {
+      illegal_move: "Illegal move: \"<b><%=move%></b>\"",
+      invalid_body: "Invalid movetext",
       invalid_file_format: "Invalid file format",
-      invalid_header_format: "Invalid header format",
-      invalid_body_format: "Invalid movetext format",
-      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>",
-      invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
-      invalid_move: "Invalid move: \"<b><%=move%></b>\""
+      invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",
+      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>"
     }
     // error = _.mapValues(error, _.template);
   }

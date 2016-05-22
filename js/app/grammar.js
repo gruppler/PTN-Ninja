@@ -50,11 +50,11 @@ define(['lodash'], function (_) {
     move_grouped: '(\\s*)(?:(<place>)|(<slide>))(<evaluation>)',
     linenum: '\\s*\\d+\\.',
     linenum_grouped: '(\\s*)(\\d+\\.)',
-    turn: '<comment><linenum><comment><move><comment><move>?<comment><result>?<comment>',
+    turn: '(?:<comment><linenum><comment><move><comment><move>?<comment><result>?<comment>)',
     turn_grouped: '(<comment>)(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
 
-    body: '^(?:<turn>\\s*)+$',
-    ptn_grouped: '^(\\s*)(<header>)(\\s*)((?:.+\\s*)+)?$'
+    body: '^<turn>*$',
+    ptn_grouped: '^(\\s*)(<header>)(\\s*)((?:.+\\s*)*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));

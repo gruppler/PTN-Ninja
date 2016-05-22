@@ -53,7 +53,7 @@ define(['jquery'], function ($) {
   };
 
 
-  function remove_message(event, a,b,c) {
+  function remove_message() {
     $(this).closest('div').remove();
   }
 
