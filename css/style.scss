@@ -1,0 +1,93 @@
+/* Autocompile */
+
+@import 'mixins.scss';
+@import 'variables.scss';
+@import 'global.scss';
+@import 'button.scss';
+
+#app {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap
+}
+
+#ptn {
+  color: $primary-color-light;
+  font-family: $monospace;
+  font-weight: 300;
+  line-height: 1.5em;
+  overflow: auto;
+  padding: $edge;
+  margin: 0;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+#messages {
+  overflow: auto;
+  flex-shrink: 0;
+  max-height: 50%;
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+
+  > div {
+    position: relative;
+    padding: $edge/2 $edge + 2rem;
+
+    i {
+      position: absolute;
+      left: $edge;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5em;
+
+      &.icon-x {
+        left: auto;
+        right: $edge;
+      }
+    }
+
+    &.success {
+      background-color: $success-color;
+      color: $success-text-color;
+    }
+
+    &.warning {
+      background-color: $warning-color;
+      color: $warning-text-color;
+    }
+
+    &.error {
+      background-color: $error-color;
+      color: $error-text-color;
+
+      b {
+        border-bottom: 2px solid $error-text-color;
+      }
+    }
+
+    &.help {
+      background-color: $help-color;
+      color: $help-text-color;
+    }
+
+    &.info {
+      background-color: $info-color;
+      color: $info-text-color;
+    }
+  }
+}
+
+#permalink {
+  position: absolute;
+  top: $edge;
+  right: $edge;
+}

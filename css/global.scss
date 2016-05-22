@@ -1,0 +1,29 @@
+html, body {
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 1em;
+  font-family: $sans;
+  background-color: $primary-color-dark;
+}
+
+::-webkit-scrollbar-track {
+	background-color: $primary-color;
+}
+::-webkit-scrollbar {
+	height: $scrollbar;
+	width: $scrollbar;
+}
+::-webkit-scrollbar-thumb {
+	background-color: $primary-color-light;
+}
+
+@include selection {
+  color: $primary-color-text;
+  background: $primary-color;
+}

@@ -1,0 +1,59 @@
+.button, .fab {
+  border: none;
+  border-radius: 2px;
+  display: inline-block;
+  height: 36px;
+  line-height: 36px;
+  outline: 0;
+  padding: 0 2rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  text-align: center;
+  vertical-align: middle;
+  text-decoration: none;
+  box-shadow: $shadow1;
+  transition: box-shadow $quick ease-out;
+
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    box-shadow: $shadow4;
+  }
+  &:active {
+    box-shadow: $shadow5;
+  }
+}
+
+$fab: 56px;
+$fab-small: 40px;
+.fab {
+  border-radius: 50%;
+  width: $fab;
+  height: $fab;
+  line-height: $fab;
+  padding: 0;
+  overflow: hidden;
+  background: $accent-color;
+  color: $primary-color-text;
+  box-shadow: $shadow2;
+  font-size: 1.6rem;
+
+  i {
+    line-height: $fab;
+  }
+
+  &.small {
+    width: $fab-small;
+    height: $fab-small;
+    line-height: $fab-small;
+
+    i {
+      line-height: $fab-small;
+    }
+  }
+}
