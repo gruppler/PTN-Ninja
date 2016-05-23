@@ -13,7 +13,6 @@ define(['lodash'], function (_) {
   var other_tags = {
     'event': /^(.*)$/,
     'site': /^(.*)$/,
-    'time': /^(\d\d):(\d\d):(\d\d)$/,
     'round': /^(\d+)$/,
     'rating1': /^(\d+)$/,
     'rating2': /^(\d+)$/,
