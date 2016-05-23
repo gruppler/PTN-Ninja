@@ -25,6 +25,7 @@
   overflow: auto;
   padding: $edge;
   margin: 0;
+  flex-grow: 1;
 
   &:focus {
     outline: none;
