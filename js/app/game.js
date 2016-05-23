@@ -84,21 +84,10 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     this.prefix = move_group[1];
 
     if (move_group[2]) {
-      parts = move_group[2].match(r.grammar.place_grouped);
-      this.is_slide = false;
-      this.player = player;
-      this.move = move_group[2];
-      this.stone_text = parts[1] || '';
-      this.stone = this.stone_text || 'F';
-      this.column = parts[2][0];
-      this.row = parts[2][1]*1;
-      this.evaluation = move_group[4] || '';
-      this.print = this.print_place;
-    } else if(move_group[3]) {
-      parts = move_group[3].match(r.grammar.slide_grouped);
+      parts = move_group[2].match(r.grammar.slide_grouped);
       this.is_slide = true;
       this.player = player;
-      this.move = move_group[3];
+      this.move = move_group[2];
       this.count_text = parts[1] || '';
       this.count = 1*this.count_text || 1;
       this.column = parts[2][0];
@@ -110,6 +99,17 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
       this.stone = this.stone_text || 'F';
       this.evaluation = move_group[4] || '';
       this.print = this.print_slide;
+    } else if(move_group[3]) {
+      parts = move_group[3].match(r.grammar.place_grouped);
+      this.is_slide = false;
+      this.player = player;
+      this.move = move_group[3];
+      this.stone_text = parts[1] || '';
+      this.stone = this.stone_text || 'F';
+      this.column = parts[2][0];
+      this.row = parts[2][1]*1;
+      this.evaluation = move_group[4] || '';
+      this.print = this.print_place;
     }
 
     return this;
@@ -179,6 +179,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     this.comments3 = parse_comments(parts[5]);
     this.comments4 = parse_comments(parts[7]);
     this.comments5 = parse_comments(parts[9]);
+    this.suffix = parts[10] || '';
 
     return this;
   };
@@ -210,7 +211,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
       output += _.invokeMap(this.comments5, 'print').join('');
     }
 
-    return output + '</span>';
+    return output + this.suffix + '</span>';
   };
 
 

@@ -46,12 +46,12 @@ define(['lodash'], function (_) {
     result: '(?:\\s*(?:R-0|0-R|F-0|0-F|1\\/2-1\\/2))',
     result_grouped: '(\\s*)(R-0|0-R|F-0|0-F|1\\/2-1\\/2)',
     evaluation: '[?!\']*',
-    move: '(?:\\s*(?:<place>|<slide>)<evaluation>)',
-    move_grouped: '(\\s*)(?:(<place>)|(<slide>))(<evaluation>)',
+    move: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
+    move_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
     linenum: '\\s*\\d+\\.',
     linenum_grouped: '(\\s*)(\\d+\\.)',
-    turn: '(?:<comment><linenum><comment><move><comment><move>?<comment><result>?<comment>)',
-    turn_grouped: '(<comment>)(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
+    turn: '(?:<comment><linenum><comment><move><comment><move>?<comment><result>?<comment>\\s*)',
+    turn_grouped: '(<comment>)(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)(\\s*)',
 
     body: '^<turn>*$',
     ptn_grouped: '^(<tag>+)(\\s*)((?:.+\\s*)*)$'
@@ -66,6 +66,8 @@ define(['lodash'], function (_) {
   _.each(grammar, function (expression, token) {
     grammar[token] = new RegExp(expression, /_grouped$/.test(token) ? '' : 'g');
   });
+
+  console.log(grammar);
 
   return {
     tags: _.merge({}, required_tags, other_tags),
