@@ -42,7 +42,6 @@ requirejs({locale: navigator.language}, [
   })();
 
   $('title').text(t.app_title);
-  $permalink.attr('title', t.Permalink);
 
   if (location.hash) {
     $ptn.text(decode(location.hash.substr(1)));
@@ -50,23 +49,26 @@ requirejs({locale: navigator.language}, [
     $ptn.text(decode(default_ptn));
   }
 
-  function parse_text() {
-    var ptn = $ptn.text()
-      , href, length
+  function parse_text(from_hash) {
+    var ptn = $ptn.text();
 
-    if (!game.parse(ptn)) {
-      return;
+    if (game.parse(ptn)) {
+      $ptn.html(game.print());
+      board.parse(game);
+
+      update_permalink(from_hash);
     }
+  }
 
-    $ptn.html(game.print());
-    board.parse(game);
+  function update_permalink(from_hash) {
+    var href = from_hash === true ? location.hash : '#'+encode(game.ptn)
+      , length = (baseurl + href).length;
 
-    href = '#'+encode(game.ptn);
-    length = (baseurl + href).length;
     $permalink.attr({
       href: href,
       title: t.Permalink+' ('+t.n_characters({n: length})+')'
     });
+
     m.clear('warning', 'url');
     if (length > 2000) {
       m.warning(t.warning.long_url, 0, 'url');
@@ -98,9 +100,13 @@ requirejs({locale: navigator.language}, [
         reader.onload = function (event) {
           $ptn.text(event.target.result);
           parse_text();
+          location.hash = $permalink.attr('href');
         }
         reader.readAsText(file);
       }
+    }).on('hashchange', function () {
+      $ptn.text(decode(location.hash.substr(1)));
+      parse_text(true);
     });
   }
 
