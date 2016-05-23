@@ -172,7 +172,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
 
     this.linenum = new Linenum(parts[2]);
     this.move1 = new Move(parts[4], this.linenum.value == 1 ? 2: 1);
-    this.move2 = new Move(parts[6], this.linenum.value == 1 ? 1: 2);
+    this.move2 = parts[6] ? new Move(parts[6], this.linenum.value == 1 ? 1: 2) : null;
     this.result = parts[8] ? new Result(parts[8]) : null;
     this.comments1 = parse_comments(parts[1]);
     this.comments2 = parse_comments(parts[3]);
@@ -275,14 +275,14 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
   };
 
 
-  Game.prototype.parse = function (string, no_messages) {
+  Game.prototype.parse = function (string, silent) {
     var header, body, i, file, tag, missing_tags;
 
     if (string == this.ptn) {
       return false;
     }
 
-    if (no_messages) {
+    if (silent) {
       m.disable();
     } else {
       m.enable();
