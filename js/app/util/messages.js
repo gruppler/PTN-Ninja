@@ -1,6 +1,6 @@
 'use strict';
 
-define(['jquery'], function ($) {
+define(['jquery', 'lodash'], function ($, _) {
   var Messages, $messages;
 
   var template = _.template(
@@ -26,8 +26,8 @@ define(['jquery'], function ($) {
     }
   };
 
-  Messages.prototype.clear = function (type) {
-    $messages.children('.'+this.group+(type ? '.'+type : '')).remove();
+  Messages.prototype.clear = function (type, group) {
+    $messages.children('.'+(group || this.group)+(type ? '.'+type : '')).remove();
   };
 
   Messages.prototype.clear_all = function (type) {
