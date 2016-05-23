@@ -1,0 +1,120 @@
+$solid-black: #000;
+$solid-white: #fff;
+$heavy-black: rgba(0,0,0,0.75);
+$heavy-white: rgba(255,255,255,0.75);
+$medium-black: rgba(0,0,0,0.5);
+$medium-white: rgba(255,255,255,0.5);
+$light-black: rgba(0,0,0,0.25);
+$light-white: rgba(255,255,255,0.25);
+$faint-black: rgba(0,0,0,0.13);
+$faint-white: rgba(255,255,255,0.08);
+
+$red: #EF5350;
+$orange: #FF9800;
+$yellow: #FFCA28;
+$green: #8BC34A;
+$blue: #64B5F6;
+$purple: #BA68C8;
+
+.ptn {
+
+  .tag {
+    color: $medium-black;
+    font-weight: 300;
+
+    .name {
+      color: $heavy-white;
+      font-weight: 300;
+    }
+
+    .value {
+      color: $heavy-white;
+      font-weight: 600;
+    }
+  }
+
+  .comment {
+    color: $medium-black;
+    font-weight: 300;
+
+    .text {
+      color: $heavy-white;
+      font-weight: 400;
+    }
+  }
+
+  .turn {
+    .linenum {
+      color: $medium-black;
+      font-weight: 400
+    }
+  }
+
+  .move {
+    font-weight: 700;
+
+    &.player1 .stone {
+      color: $solid-white;
+    }
+    &.player2 .stone {
+      color: $solid-black;
+    }
+    .column {
+      color: $yellow;
+      font-weight: 600;
+    }
+    .row {
+      color: $orange;
+      font-weight: 600;
+    }
+    .count_text {
+      color: $green;
+      font-weight: 300;
+    }
+    &.player1 .direction {
+      color: $heavy-white;
+    }
+    &.player2 .direction {
+      color: $heavy-black;
+    }
+    .drops {
+      color: $blue;
+      font-weight: 300;
+    }
+    .evaluation {
+      color: $purple;
+    }
+  }
+
+  .result {
+    font-weight: 700;
+
+    .win {
+      &.road {
+        color: $green;
+      }
+      &.flat {
+        color: $blue;
+      }
+    }
+    .loss {
+      color: $red;
+    }
+    .draw {
+      color: $yellow;
+    }
+  }
+
+  .player1, .player2 {
+    margin: 0 -0.3em;
+    padding: 0 0.3em;
+    border-radius: 0.2em;
+  }
+  .player1 {
+    background-color: $faint-white;
+  }
+  .player2 {
+    background-color: $faint-black;
+  }
+
+}

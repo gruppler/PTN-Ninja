@@ -2,9 +2,8 @@
 
 define(['util/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
-  var m = new Messages('board');
-
   var Board, Square, Stone;
+  var m = new Messages('board');
 
   Stone = function (config) {
     config = _.defaults(config, {
@@ -51,7 +50,7 @@ define(['util/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     for (row = 1; row <= this.size; row++) {
       this.squares[row] = {}
       for (col = 0; col < this.size; col++) {
-        this.squares[row][String.fromCharCode(a + col)] = {}
+        this.squares[row][String.fromCharCode(a + col)] = {};
       }
     }
   };

@@ -11,10 +11,23 @@ define(['jquery', 'lodash'], function ($, _) {
   );
 
   Messages = function(group) {
+    this.enabled = true;
     this.group = group || 'general';
   };
 
+  Messages.prototype.enable = function () {
+    this.enabled = true;
+  };
+
+  Messages.prototype.disable = function () {
+    this.enabled = false;
+  };
+
   Messages.prototype.add = function (message, seconds, group, type) {
+    if (!this.enabled) {
+      return;
+    }
+
     var $message = $(template({
       type: type,
       group: group ? group : this.group,

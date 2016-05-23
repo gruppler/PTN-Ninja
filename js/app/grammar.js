@@ -27,9 +27,9 @@ define(['lodash'], function (_) {
     row: '(?:<col>(?:,<col>){2,8})',
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
 
-    tag: '\\[[^\\]]+\\]',
-    tag_grouped: '(\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
-    header: '(?:<tag>\\s*)+',
+    tag: '(?:\\s*\\[[^\\]]+\\])',
+    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
+    header: '^<tag>+$',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',
@@ -54,7 +54,7 @@ define(['lodash'], function (_) {
     turn_grouped: '(<comment>)(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
 
     body: '^<turn>*$',
-    ptn_grouped: '^(\\s*)(<header>)(\\s*)((?:.+\\s*)*)$'
+    ptn_grouped: '^(<tag>+)(\\s*)((?:.+\\s*)*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));
