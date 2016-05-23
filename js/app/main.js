@@ -8,6 +8,9 @@ requirejs({locale: navigator.language}, [
   'lodash',
   'jquery',
   'lzstring',
+  'bililiteRange',
+  'bililiteRange.undo',
+  'bililiteRange.fancytext',
   'domReady!'
 ], function (t, Messages, Game, Board, _, $) {
 
@@ -41,6 +44,12 @@ requirejs({locale: navigator.language}, [
   $('title').text(t.app_title);
   $permalink.attr('title', t.Permalink);
 
+  if (location.hash) {
+    $ptn.text(decode(location.hash.substr(1)));
+  } else {
+    $ptn.text(decode(default_ptn));
+  }
+
   function parse_text() {
     var ptn = $ptn.text()
       , href, length
@@ -64,15 +73,16 @@ requirejs({locale: navigator.language}, [
     }
   }
 
-  $ptn.on('blur paste', parse_text)
-    .on('keyup cut mouseup', _.debounce(parse_text, 200));
-
-  if (location.hash) {
-    $ptn.text(decode(location.hash.substr(1)));
-  } else {
-    $ptn.text(decode(default_ptn));
-  }
-
-  parse_text();
+  bililiteRange.fancyText($ptn[0], parse_text);
+  bililiteRange($ptn[0]).undo(0);
+  $ptn.on('keydown', function (event) {
+		if (event.ctrlKey && event.which == 90) {
+      if (event.shiftKey) {
+        bililiteRange.redo(event);
+      } else {
+        bililiteRange.undo(event);
+      }
+    }
+	});
 
 });
