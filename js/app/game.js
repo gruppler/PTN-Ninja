@@ -171,8 +171,8 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     var parts = string.match(r.grammar.turn_grouped);
 
     this.linenum = new Linenum(parts[2]);
-    this.move1 = new Move(parts[4], 1);
-    this.move2 = new Move(parts[6], 2);
+    this.move1 = new Move(parts[4], this.linenum.value == 1 ? 2: 1);
+    this.move2 = new Move(parts[6], this.linenum.value == 1 ? 1: 2);
     this.result = parts[8] ? new Result(parts[8]) : null;
     this.comments1 = parse_comments(parts[1]);
     this.comments2 = parse_comments(parts[3]);
