@@ -5,8 +5,7 @@ define(['lodash'], function (_) {
   var required_tags = {
     'player1': /^(.*)$/,
     'player2': /^(.*)$/,
-    'date': /^(\d\d\d\d)\.(\d\d)\.(\d\d)$/,
-    'time': /^(\d\d):(\d\d):(\d\d)$/,
+    'date': /^(\d\d\d\d)\.(\d\d?)\.(\d\d?)$/,
     'size': /^([3-9])$/,
     'result': /^(R-0|0-R|F-0|0-F|1\/2-1\/2)$/
   };
@@ -14,6 +13,7 @@ define(['lodash'], function (_) {
   var other_tags = {
     'event': /^(.*)$/,
     'site': /^(.*)$/,
+    'time': /^(\d\d):(\d\d):(\d\d)$/,
     'round': /^(\d+)$/,
     'rating1': /^(\d+)$/,
     'rating2': /^(\d+)$/,
