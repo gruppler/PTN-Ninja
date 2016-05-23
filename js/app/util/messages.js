@@ -14,14 +14,16 @@ define(['jquery'], function ($) {
     this.group = group || 'general';
   };
 
-  Messages.prototype.add = function (message, group, type) {
-    $messages.append(
-      template({
-        type: type,
-        group: group ? group : this.group,
-        message: message
-      })
-    );
+  Messages.prototype.add = function (message, seconds, group, type) {
+    var $message = $(template({
+      type: type,
+      group: group ? group : this.group,
+      message: message
+    }));
+    $messages.append($message);
+    if (seconds) {
+      setTimeout(_.bind($message.remove, $message), seconds*1000);
+    }
   };
 
   Messages.prototype.clear = function (type) {
@@ -32,24 +34,24 @@ define(['jquery'], function ($) {
     $messages.children(type ? '.'+type : '').remove();
   };
 
-  Messages.prototype.success = function (message, group) {
-    this.add(message, group, 'success');
+  Messages.prototype.success = function (message, seconds, group) {
+    this.add(message, seconds, group, 'success');
   };
 
-  Messages.prototype.warning = function (message, group) {
-    this.add(message, group, 'warning');
+  Messages.prototype.warning = function (message, seconds, group) {
+    this.add(message, seconds, group, 'warning');
   };
 
-  Messages.prototype.error = function (message, group) {
-    this.add(message, group, 'error');
+  Messages.prototype.error = function (message, seconds, group) {
+    this.add(message, seconds, group, 'error');
   };
 
-  Messages.prototype.help = function (message, group) {
-    this.add(message, group, 'help');
+  Messages.prototype.help = function (message, seconds, group) {
+    this.add(message, seconds, group, 'help');
   };
 
-  Messages.prototype.info = function (message, group) {
-    this.add(message, group, 'info');
+  Messages.prototype.info = function (message, seconds, group) {
+    this.add(message, seconds, group, 'info');
   };
 
 
