@@ -22,7 +22,7 @@ requirejs({locale: navigator.language}, [
     , game = new Game()
     , board = new Board()
     , baseurl = location.origin + location.pathname
-    , default_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2AYwxWHDEBmAFwSALLoMB2FTzRQAThPgBzKwFcADs6TXzqS1ZH2rURndaMCEACxQGFQAlKABnRyRmLQBaADEVcAAvTWVKAG8KGBhVBBB4AA9tABoJESqREAB6cvqG1oBhGol6iUba7pFamrqJfs7+hsbBkBqenokZ2qaW6fqq8t9bESk+AF8KQqKj4+O8mDUIdxh9iglcGBQ5GDyAQSQAd3RYmHfIUJgIKFYEQrFwrLFcJDdjAoBIKCJ7gATWz4OQUbRI3yItEGe5QAwwtEKGASfEAahJ2IAfBQZDAQNiYAAjNEme4Sam2drYigADnu3IJTJEFAAnPd8NpmdpbmIJQSJEztFS4aN7kyCSgDLcEST8AYybYOXIVbcMZSDbYlbdcTBEQTETKlOyNckjcLDbc6SAUFKOdpPRI2TB9TARJKySKJPyw6jkr4RPaADxR8V2qUGfUqmXidmOw0wbRZnN3emomByKByZJokS641u+mO+Hmxka+G2kBV5lwkTEiS+lXMkXbe4iJXxh454P4XyS+Exn2+FC9tMGZMEysGJNo7RyklVxtV9Gl8faFPS9G6zMGZIKx1u9Hm8PKudw7S2iSSpMSADkzxYf5LBQUIqhgABJGA7EIZhATAWIAEJoTyKIwDsUIIAAfn2Y4oG0BCEMOIoxDSACADMQ0IRxwSgMDCC4GBiEIegYDIqwSB+TgGE4OwYGSAB9ZJdiAA';
+    , default_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO94wowEksA1OuzAHwUMjAgszAARuMA7AUSe9oAwrMUABwFD8unIhQAnAX4E2cTPJiX7LCSnCa7foSfJnZYoOZ5QbrfBzTbaG5ySF5KY7VHacF5BYwIbLIaApTXU5zQLoj5ovKHEAof43Cb0iRXGAomAiP6bT4SF48saBKwiEkAHgFP2J-zmKMhgPE1zJaJgEwVSphIDGMDkUDkgXGIiRGJpRzJAxxJypAyJIANZ36IjWEmZkLOnxEhxE4NFhSVnPwVj+AyFTKsKGdMrmkuW+rmEvGE2B6wN5oNkxhvomUoBkyR8upoLJNMmON5EJD-QmRIkfwlEgA5CUWA11CgnAAaGAASRgOkIzCaYC8AEIesl3GAdE4IAB+HKJKATMdjuIJILBVsAMy5hH0HSgPcIXBgxEI9BgO40JFqnAYnB0MECAH1AjkgA';
 
   (function () {
     function _templatize(parent) {
@@ -84,5 +84,24 @@ requirejs({locale: navigator.language}, [
       }
     }
 	});
+
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+    $(window).on('drop', function(event) {
+      var file = event.originalEvent.dataTransfer.files[0]
+        , i, file, ext;
+
+      event.stopPropagation();
+      event.preventDefault();
+
+      if (file && /.ptn$/i.test(file.name)) {
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          $ptn.text(event.target.result);
+          parse_text();
+        }
+        reader.readAsText(file);
+      }
+    });
+  }
 
 });
