@@ -17,6 +17,9 @@ $blue: #64B5F6;
 $purple: #BA68C8;
 
 .ptn {
+  body.playmode & {
+    cursor: default;
+  }
 
   .tag {
     color: $medium-black;
@@ -83,6 +86,22 @@ $purple: #BA68C8;
     }
     .evaluation {
       color: $purple;
+    }
+
+    transition: box-shadow 0.1s $natural;
+
+    body.playmode & {
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: $shadow3;
+        z-index: 1;
+      }
+      &:active {
+        cursor: pointer;
+        box-shadow: $shadow5;
+        z-index: 1;
+      }
     }
   }
 
