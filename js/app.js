@@ -11,6 +11,14 @@ requirejs.config({
     'lodash': 'lodash.min',
     'jquery': 'jquery.min',
     'lzstring': 'lz-string.min'
+  },
+  shim: {
+    'bililiteRange.undo': {
+      deps: ['bililiteRange']
+    },
+    'bililiteRange.fancytext': {
+      deps: ['bililiteRange']
+    }
   }
 });
 
