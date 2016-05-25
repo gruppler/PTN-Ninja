@@ -12,6 +12,22 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     '1/2': 'draw'
   };
 
+  var tag_icons = {
+    'player1': 'player-solid',
+    'player2': 'player-line',
+    'date': 'date',
+    'size': 'grid-line',
+    'result': 'result',
+    'event': 'event',
+    'site': 'site',
+    'round': 'round',
+    'rating1': 'star-solid',
+    'rating2': 'star-line',
+    'tps': 'grid-solid',
+    'points': 'points',
+    'clock': 'timer'
+  };
+
   var compress = LZString.compressToEncodedURIComponent
     , decompress = LZString.decompressFromEncodedURIComponent;
 
@@ -235,6 +251,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     this.suffix = parts[5];
 
     this.key = this.name.toLowerCase();
+    this.icon = tag_icons[this.key];
 
     if (!(this.key in r.tags)) {
       m.error(t.error.invalid_tag({tag: parts[2]}));
@@ -248,15 +265,24 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
       return false;
     }
 
+    if (this.key == 'result') {
+      this.value_print = new Result(this.value).print();
+    } else {
+      this.value_print = this.value;
+    }
+
     return this;
   };
 
   Tag.prototype.print = _.template(
     '<span class="tag">'+
       '<%=this.prefix%>'+
-      '<span class="name"><%=this.name%></span>'+
+      '<span class="name">'+
+        '<i class="icon-<%=this.icon%>"></i>'+
+        '<%=this.name%>'+
+      '</span>'+
       '<%=this.separator%>'+
-      '<span class="value"><%=this.value%></span>'+
+      '<span class="value <%=this.key%>"><%=this.value_print%></span>'+
       '<%=this.suffix%>'+
     '</span>'
   );
@@ -315,6 +341,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     body = file[3];
 
     // Header
+
     header = header.match(r.grammar.header);
     if (!header) {
       m.error(t.error.invalid_header);
@@ -335,6 +362,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     }
 
     // Body
+
     body = body.match(r.grammar.body);
     if (!body) {
       m.error(t.error.invalid_body);

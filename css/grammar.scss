@@ -25,6 +25,12 @@ $purple: #BA68C8;
     color: $medium-black;
     font-weight: 300;
 
+    i {
+      margin-right: 0.2em;
+      font-size: 1.2em;
+      vertical-align: text-bottom;
+    }
+
     .name {
       color: $heavy-white;
       font-weight: 300;
