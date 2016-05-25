@@ -7,7 +7,6 @@ requirejs({locale: navigator.language}, [
   'app/board',
   'lodash',
   'jquery',
-  'lzstring',
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
@@ -16,8 +15,6 @@ requirejs({locale: navigator.language}, [
 
   var $ptn = $('#ptn')
     , $permalink = $('#permalink')
-    , encode = LZString.compressToEncodedURIComponent
-    , decode = LZString.decompressFromEncodedURIComponent
     , m = new Messages('general')
     , game = new Game()
     , board = new Board()
@@ -43,26 +40,14 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
-  if (location.hash) {
-    $ptn.text(decode(location.hash.substr(1)));
-  } else {
-    $ptn.text(decode(default_ptn));
-  }
+  game.on_update(function () {
+    var href, length;
 
-  function parse_text(from_hash) {
-    var ptn = $ptn.text();
+    $ptn.html(this.print());
+    board.parse(this);
 
-    if (game.parse(ptn)) {
-      $ptn.html(game.print());
-      board.parse(game);
-
-      update_permalink(from_hash);
-    }
-  }
-
-  function update_permalink(from_hash) {
-    var href = from_hash === true ? location.hash : '#'+encode(game.ptn)
-      , length = (baseurl + href).length;
+    href = '#'+this.ptn_compressed;
+    length = (baseurl + href).length;
 
     $permalink.attr({
       href: href,
@@ -73,9 +58,12 @@ requirejs({locale: navigator.language}, [
     if (length > 2000) {
       m.warning(t.warning.long_url, 0, 'url');
     }
-  }
+  });
+  game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
 
-  bililiteRange.fancyText($ptn[0], parse_text);
+  bililiteRange.fancyText($ptn[0], function () {
+    game.parse($ptn.text());
+  });
   bililiteRange($ptn[0]).undo(0);
   $ptn.on('keydown', function (event) {
 		if (event.ctrlKey && event.which == 90) {
@@ -98,15 +86,12 @@ requirejs({locale: navigator.language}, [
       if (file && /.ptn$/i.test(file.name)) {
         var reader = new FileReader();
         reader.onload = function (event) {
-          $ptn.text(event.target.result);
-          parse_text();
-          location.hash = $permalink.attr('href');
+          game.parse(event.target.result);
         }
         reader.readAsText(file);
       }
     }).on('hashchange', function () {
-      $ptn.text(decode(location.hash.substr(1)));
-      parse_text(true);
+      game.parse(location.hash.substr(1), true);
     });
   }
 

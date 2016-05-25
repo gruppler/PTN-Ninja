@@ -1,6 +1,6 @@
 'use strict';
 
-define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r, Messages, t, _) {
+define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
   var Comment, Result, Move, Linenum, Turn, Tag, Game;
   var m = new Messages('parse');
@@ -11,6 +11,9 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     'R': 'road win',
     '1/2': 'draw'
   };
+
+  var compress = LZString.compressToEncodedURIComponent
+    , decompress = LZString.decompressFromEncodedURIComponent;
 
 
   // Comment
@@ -266,6 +269,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     this.tags = [];
     this.turns = [];
     this.ptn = '';
+    this.callbacks = [];
 
     if (string && string.length) {
       this.parse(string);
@@ -274,26 +278,33 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     return this;
   };
 
+  Game.prototype.on_update = function (fn) {
+    this.callbacks.push(fn);
+  };
 
-  Game.prototype.parse = function (string, silent) {
-    var header, body, i, file, tag, missing_tags;
+  Game.prototype.parse = function (string, is_compressed) {
+    var decompressed, header, body, i, file, tag, missing_tags;
 
-    if (string == this.ptn) {
+    if (is_compressed) {
+      decompressed = decompress(string);
+      if (decompressed == this.ptn) {
+        return false;
+      } else {
+        this.ptn = decompressed;
+        this.ptn_compressed = string;
+      }
+    } else if (string == this.ptn) {
       return false;
-    }
-
-    if (silent) {
-      m.disable();
     } else {
-      m.enable();
+      this.ptn = string;
+      this.ptn_compressed = compress(string);
     }
 
-    this.ptn = string;
     this.tags.length = 0;
     this.turns.length = 0;
     m.clear('error');
 
-    file = string.match(r.grammar.ptn_grouped);
+    file = this.ptn.match(r.grammar.ptn_grouped);
     if (!file) {
       m.error(t.error.invalid_file_format);
       return false;
@@ -303,6 +314,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     this.separator = file[2];
     body = file[3];
 
+    // Header
     header = header.match(r.grammar.header);
     if (!header) {
       m.error(t.error.invalid_header);
@@ -322,6 +334,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
       return false;
     }
 
+    // Body
     body = body.match(r.grammar.body);
     if (!body) {
       m.error(t.error.invalid_body);
@@ -331,6 +344,8 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash'], function (r,
     for (var i = 0; i < body.length; i++) {
       this.turns[i] = new Turn(body[i]);
     }
+
+    _.invokeMap(this.callbacks, 'call', this, this);
 
     return true;
   };
