@@ -87,11 +87,12 @@ requirejs({locale: navigator.language}, [
         var reader = new FileReader();
         reader.onload = function (event) {
           game.parse(event.target.result);
+          location.hash = game.ptn_compressed;
         }
         reader.readAsText(file);
       }
     }).on('hashchange', function () {
-      game.parse(location.hash.substr(1), true);
+      game.parse(location.hash.substr(1) || default_ptn, true);
     });
   }
 
