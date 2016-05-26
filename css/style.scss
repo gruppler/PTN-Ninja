@@ -102,7 +102,7 @@
   height: $edge + $button-height;
   overflow: hidden;
   background-color: $whitish;
-  transition: height $time-quick $natural;
+  transition: height $time-smooth $natural;
 
   body.editmode & {
     height: 0;

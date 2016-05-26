@@ -103,18 +103,18 @@ $purple: #BA68C8;
       color: $purple;
     }
 
-    transition: all $time-quick $natural;
+    transition: all $time-quick ease-out;
 
     body.playmode & {
       cursor: pointer;
 
       &:hover {
-        box-shadow: $shadow3;
+        box-shadow: $shadow2;
         z-index: 1;
       }
       &:active {
         cursor: pointer;
-        box-shadow: $shadow5;
+        box-shadow: $shadow4;
         z-index: 1;
       }
     }
