@@ -7,6 +7,7 @@ $primary-color:        #607D8B;
 $primary-color-light:  #CFD8DC;
 $primary-color-text:   #FFFFFF;
 $accent-color:         #8BC34A;
+$accent-color-light:   lighten($accent-color, 8%);
 $primary-text-color:   #212121;
 $secondary-text-color: #727272;
 $divider-color:        #B6B6B6;
@@ -36,7 +37,9 @@ $edge: 1.5rem;
 $scrollbar: 8px;
 
 /* Animations */
-$quick: 0.3s;
+$time-slow: 1s;
+$time-smooth: 0.35s;
+$time-quick: 0.2s;
 $natural: cubic-bezier(0.4, 0, 0.2, 1);
 
 /* Shadows */

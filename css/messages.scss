@@ -1,0 +1,71 @@
+#messages {
+  overflow: auto;
+  flex-shrink: 0;
+  max-height: 50%;
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+
+  > div {
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: all $time-quick $natural;
+
+    &.visible {
+      opacity: 1;
+      height: auto;
+    }
+  }
+
+  .message {
+    position: relative;
+    overflow: hidden;
+    transition: all $time-quick $natural;
+
+    .content {
+      padding: $edge/2 $edge + 2rem;
+    }
+
+    i {
+      position: absolute;
+      left: $edge;
+      top: $edge/2;
+      font-size: 1.5em;
+
+      &.icon-x {
+        left: auto;
+        right: $edge;
+      }
+    }
+
+    &.success {
+      background-color: $success-color;
+      color: $success-text-color;
+    }
+
+    &.warning {
+      background-color: $warning-color;
+      color: $warning-text-color;
+    }
+
+    &.error {
+      background-color: $error-color;
+      color: $error-text-color;
+
+      b {
+        border-bottom: 2px solid $error-text-color;
+      }
+    }
+
+    &.help {
+      background-color: $help-color;
+      color: $help-text-color;
+    }
+
+    &.info {
+      background-color: $info-color;
+      color: $info-text-color;
+    }
+  }
+}

@@ -4,6 +4,7 @@
 @import 'variables.scss';
 @import 'global.scss';
 @import 'button.scss';
+@import 'messages.scss';
 @import 'grammar.scss';
 
 #app {
@@ -17,73 +18,114 @@
   flex-wrap: nowrap
 }
 
-#ptn {
+#editor {
+  position: relative;
   color: $primary-color-light;
   font-family: $monospace;
-  font-weight: 300;
-  line-height: 1.5em;
+  flex-grow: 1;
+  overflow: hidden;
+
+  body.playmode & {
+    @include unselectable;
+  }
+}
+
+#ptn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   overflow: auto;
+  font-weight: 300;
+  font-size: 1.3em;
+  line-height: 1.5em;
   padding: $edge;
   margin: 0;
-  flex-grow: 1;
 
   &:focus {
     outline: none;
   }
+
+  body.playmode & {
+    cursor: default;
+  }
 }
 
-#messages {
-  overflow: auto;
-  flex-shrink: 0;
-  max-height: 50%;
-  -webkit-transform-style: preserve-3d;
-  -moz-transform-style: preserve-3d;
-  transform-style: preserve-3d;
+#fab {
+  position: absolute;
+  right: $edge;
+  bottom: $edge;
 
-  > div {
-    position: relative;
-    padding: $edge/2 $edge + 2rem;
+  i {
+    opacity: 0;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+    transition: all $time-quick $natural;
+
+    &.icon-error {
+      opacity: 0;
+    }
+  }
+
+  body.editmode & {
+    i.icon-play {
+      opacity: 1;
+    }
+  }
+
+  body.playmode & {
+    i.icon-edit {
+      opacity: 1;
+    }
+  }
+
+  body.error & {
+    background-color: $error-color;
+    color: $error-text-color;
+
+    &:hover {
+      background-color: lighten($error-color, 8%);
+    }
 
     i {
-      position: absolute;
-      left: $edge;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.5em;
+      opacity: 0 !important;
+    }
+    i.icon-error {
+      opacity: 1 !important;
+    }
+  }
+}
 
-      &.icon-x {
-        left: auto;
-        right: $edge;
-      }
+#controls {
+  height: $edge + $button-height;
+  overflow: hidden;
+  background-color: $whitish;
+  transition: height $time-quick $natural;
+
+  body.editmode & {
+    height: 0;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: $edge/2 $edge;
+  }
+
+  button {
+    background-color: $accent-color;
+    color: $primary-color-text;
+
+    &:hover {
+      background-color: $accent-color-light;
     }
 
-    &.success {
-      background-color: $success-color;
-      color: $success-text-color;
-    }
-
-    &.warning {
-      background-color: $warning-color;
-      color: $warning-text-color;
-    }
-
-    &.error {
-      background-color: $error-color;
-      color: $error-text-color;
-
-      b {
-        border-bottom: 2px solid $error-text-color;
-      }
-    }
-
-    &.help {
-      background-color: $help-color;
-      color: $help-text-color;
-    }
-
-    &.info {
-      background-color: $info-color;
-      color: $info-text-color;
+    + button {
+      margin-left: $edge/2;
     }
   }
 }

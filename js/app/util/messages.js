@@ -4,15 +4,20 @@ define(['jquery', 'lodash'], function ($, _) {
   var Messages, $messages;
 
   var template = _.template(
-    '<div class="<%=type%> <%=group||""%>">\
-      <i class="icon-<%=type%>"></i><%=message%>\
-      <i class="icon-x"></i>\
-    </div>'
+    '<div class="message <%=type%>">'+
+      '<div class="content">'+
+        '<i class="icon-<%=type%>"></i><%=message%>'+
+        '<i class="icon-x"></i>'+
+      '</div>'+
+    '</div>'
   );
 
   Messages = function(group) {
     this.enabled = true;
     this.group = group || 'general';
+    this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+
+    return this;
   };
 
   Messages.prototype.enable = function () {
@@ -33,18 +38,26 @@ define(['jquery', 'lodash'], function ($, _) {
       group: group ? group : this.group,
       message: message
     }));
-    $messages.append($message);
+    this.$messages.append($message);
+    $message.grow();
+
     if (seconds) {
-      setTimeout(_.bind($message.remove, $message), seconds*1000);
+      setTimeout(_.bind(remove_message, $message), seconds*1000);
     }
   };
 
   Messages.prototype.clear = function (type, group) {
-    $messages.children('.'+(group || this.group)+(type ? '.'+type : '')).remove();
+    this.$messages.children(type ? '.'+type : '').remove();
+    if (!$messages.find('.message.error').length) {
+      $('body').removeClass('error');
+    }
   };
 
   Messages.prototype.clear_all = function (type) {
-    $messages.children(type ? '.'+type : '').remove();
+    $messages.find('.message'+(type ? '.'+type : '')).remove();
+    if (!$messages.find('.message.error').length) {
+      $('body').removeClass('error');
+    }
   };
 
   Messages.prototype.success = function (message, seconds, group) {
@@ -57,6 +70,7 @@ define(['jquery', 'lodash'], function ($, _) {
 
   Messages.prototype.error = function (message, seconds, group) {
     this.add(message, seconds, group, 'error');
+    $('body').addClass('error');
   };
 
   Messages.prototype.help = function (message, seconds, group) {
@@ -67,9 +81,14 @@ define(['jquery', 'lodash'], function ($, _) {
     this.add(message, seconds, group, 'info');
   };
 
-
   function remove_message() {
-    $(this).closest('div').remove();
+    var $message = $(this);
+    if (!$message.hasClass('message')) {
+      $message = $message.closest('.message');
+    }
+    $message.shrink(function () {
+      this.remove();
+    });
   }
 
   $(function () {

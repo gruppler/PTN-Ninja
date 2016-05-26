@@ -17,8 +17,17 @@ $blue: #64B5F6;
 $purple: #BA68C8;
 
 .ptn {
-  body.playmode & {
-    cursor: default;
+
+  .player1, .player2 {
+    margin: 0 -0.25em;
+    padding: 0 0.25em;
+    border-radius: 0.25em;
+  }
+  .player1 {
+    background-color: $faint-white;
+  }
+  .player2 {
+    background-color: $faint-black;
   }
 
   .tag {
@@ -94,7 +103,7 @@ $purple: #BA68C8;
       color: $purple;
     }
 
-    transition: box-shadow 0.1s $natural;
+    transition: all $time-quick $natural;
 
     body.playmode & {
       cursor: pointer;
@@ -128,18 +137,6 @@ $purple: #BA68C8;
     .draw {
       color: $yellow;
     }
-  }
-
-  .player1, .player2 {
-    margin: 0 -0.3em;
-    padding: 0 0.3em;
-    border-radius: 0.2em;
-  }
-  .player1 {
-    background-color: $faint-white;
-  }
-  .player2 {
-    background-color: $faint-black;
   }
 
 }

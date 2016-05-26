@@ -8,12 +8,39 @@
     <link rel="stylesheet" href="css/icons/style.css" charset="utf-8">
     <link rel="stylesheet" href="css/style.css" charset="utf-8">
   </head>
-  <body>
+  <body class="editmode">
     <div id="app">
 
-      <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
+      <div id="editor">
+        <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
+        <div id="fab" class="fab">
+          <i class="icon-play"></i>
+          <i class="icon-edit"></i>
+          <i class="icon-error"></i>
+        </div>
+      </div>
 
       <div id="messages"></div>
+
+      <div id="controls">
+        <div class="buttons">
+          <button>
+            <i class="icon-first"></i>
+          </button>
+          <button>
+            <i class="icon-left"></i>
+          </button>
+          <button>
+            <i class="icon-play"></i>
+          </button>
+          <button>
+            <i class="icon-right"></i>
+          </button>
+          <button>
+            <i class="icon-last"></i>
+          </button>
+        </div>
+      </div>
 
     </div>
 

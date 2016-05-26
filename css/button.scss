@@ -1,25 +1,23 @@
-.button, .fab {
+$button-height: 2.5rem;
+button, .button, .fab {
   border: none;
   border-radius: 2px;
   display: inline-block;
-  height: 36px;
-  line-height: 36px;
+  height: $button-height;
+  line-height: $button-height;
   outline: 0;
   padding: 0 2rem;
   text-transform: uppercase;
-  cursor: pointer;
+  cursor: default;
   position: relative;
-  user-select: none;
+  font-size: 1.5rem;
   text-align: center;
   vertical-align: middle;
   text-decoration: none;
   box-shadow: $shadow1;
-  transition: box-shadow $quick ease-out;
+  transition: all $time-quick $natural;
 
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  @include unselectable;
 
   &:hover {
     box-shadow: $shadow4;
@@ -29,31 +27,35 @@
   }
 }
 
-$fab: 56px;
-$fab-small: 40px;
+$fab-height: 56px;
+$fab-height-small: 40px;
 .fab {
   border-radius: 50%;
-  width: $fab;
-  height: $fab;
-  line-height: $fab;
+  width: $fab-height;
+  height: $fab-height;
+  line-height: $fab-height;
   padding: 0;
   overflow: hidden;
-  background: $accent-color;
+  background-color: $accent-color;
   color: $primary-color-text;
   box-shadow: $shadow2;
   font-size: 1.6rem;
 
   i {
-    line-height: $fab;
+    line-height: $fab-height;
   }
 
   &.small {
-    width: $fab-small;
-    height: $fab-small;
-    line-height: $fab-small;
+    width: $fab-height-small;
+    height: $fab-height-small;
+    line-height: $fab-height-small;
 
     i {
-      line-height: $fab-small;
+      line-height: $fab-height-small;
     }
+  }
+
+  &:hover {
+    background-color: $accent-color-light;
   }
 }

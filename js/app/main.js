@@ -13,8 +13,10 @@ requirejs({locale: navigator.language}, [
   'domReady!'
 ], function (t, Messages, Game, Board, _, $) {
 
-  var $ptn = $('#ptn')
+  var $body = $('body')
+    , $ptn = $('#ptn')
     , $permalink = $('#permalink')
+    , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
     , game = new Game()
     , board = new Board()
@@ -38,13 +40,42 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
+  function toggle_edit_mode(on) {
+    if (_.isBoolean(on)) {
+      $body.addClass(on ? 'editmode' : 'playmode');
+      $body.removeClass(on ? 'playmode' : 'editmode');
+    } else {
+      $body.toggleClass('editmode playmode');
+    }
+
+    if ($body.hasClass('editmode')) {
+      $ptn.attr('contenteditable', true);
+    } else {
+      $ptn.attr('contenteditable', false);
+      board.parse(game);
+    }
+  }
+
   $('title').text(t.app_title);
+
+  $('#fab').click(function () {
+    if ($body.hasClass('error')) {
+      if ($messages_parse.hasClass('visible')) {
+        $messages_parse.shrink(function () {
+          this.removeClass('visible').height('');
+        });
+      } else {
+        $messages_parse.addClass('visible').grow();
+      }
+    } else {
+      toggle_edit_mode();
+    }
+  });
 
   game.on_update(function () {
     var href, length;
 
     $ptn.html(this.print());
-    board.parse(this);
 
     href = '#'+this.ptn_compressed;
     length = (baseurl + href).length;
@@ -59,21 +90,6 @@ requirejs({locale: navigator.language}, [
       m.warning(t.warning.long_url, 0, 'url');
     }
   });
-  game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
-
-  bililiteRange.fancyText($ptn[0], function () {
-    game.parse($ptn.text());
-  });
-  bililiteRange($ptn[0]).undo(0);
-  $ptn.on('keydown', function (event) {
-		if (event.ctrlKey && event.which == 90) {
-      if (event.shiftKey) {
-        bililiteRange.redo(event);
-      } else {
-        bililiteRange.undo(event);
-      }
-    }
-	});
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $(window).on('drop', function(event) {
@@ -95,5 +111,54 @@ requirejs({locale: navigator.language}, [
       game.parse(location.hash.substr(1) || default_ptn, true);
     });
   }
+
+
+  $.fn.grow = function (callback) {
+    var $this = $(this)
+      , height = $this.height();
+
+    $this.height(0);
+    $this.height();
+    $this.height(height);
+      $this.one('webkitTransitionEnd transitionend', function () {
+        $this.height('');
+        if (_.isFunction(callback)) {
+          callback.call($this);
+        }
+      });
+  };
+
+  $.fn.shrink = function (callback) {
+    var $this = $(this);
+
+    $this.height($this.height());
+    $this.height();
+    $this.height(0);
+    if (_.isFunction(callback)) {
+      $this.one('webkitTransitionEnd transitionend', function () {
+        callback.call($this);
+      });
+    }
+  };
+
+
+  // Initialize
+
+  game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
+  toggle_edit_mode(!location.hash);
+
+  bililiteRange.fancyText($ptn[0], function () {
+    game.parse($ptn.text());
+  });
+  bililiteRange($ptn[0]).undo(0);
+  $ptn.on('keydown', function (event) {
+    if (event.ctrlKey && event.which == 90) {
+      if (event.shiftKey) {
+        bililiteRange.redo(event);
+      } else {
+        bililiteRange.undo(event);
+      }
+    }
+  });
 
 });
