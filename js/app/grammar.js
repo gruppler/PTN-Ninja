@@ -26,7 +26,7 @@ define(['lodash'], function (_) {
     row: '(?:<col>(?:,<col>){2,8})',
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
 
-    tag: '(?:\\s*\\[[^\\]]+\\])',
+    tag: '(?:\\s*\\[[^\\[\\]]+\\])',
     tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
     header: '^<tag>+$',
 
@@ -47,13 +47,13 @@ define(['lodash'], function (_) {
     evaluation: '[?!\']*',
     move: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
     move_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
-    linenum: '\\s*\\d+\\.',
-    linenum_grouped: '(\\s*)(\\d+\\.)',
-    turn: '(?:<comment><linenum><comment><move><comment><move>?<comment><result>?<comment>\\s*)',
-    turn_grouped: '(<comment>)(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)(\\s*)',
+    linenum: '\\s+\\d+\\.',
+    linenum_grouped: '(\\s+)(\\d+\\.)',
+    turn: '(?:<linenum><comment><move><comment><move>?<comment><result>?<comment>)',
+    turn_grouped: '(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
 
-    body: '^<turn>*$',
-    ptn_grouped: '^(<tag>+)(\\s*)((?:.+\\s*)*)$'
+    body: '^<turn>*\\s*$',
+    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));

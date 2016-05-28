@@ -144,13 +144,16 @@ requirejs({locale: navigator.language}, [
 
   // Initialize
 
+  bililiteRange.fancyText($ptn[0], function () {
+    if ($ptn.text().trim()) {
+      game.parse($ptn.text());
+    }
+  });
+  bililiteRange($ptn[0]).undo(0);
+
   game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
   toggle_edit_mode(!location.hash);
 
-  bililiteRange.fancyText($ptn[0], function () {
-    game.parse($ptn.text());
-  });
-  bililiteRange($ptn[0]).undo(0);
   $ptn.on('keydown', function (event) {
     if (event.ctrlKey && event.which == 90) {
       if (event.shiftKey) {

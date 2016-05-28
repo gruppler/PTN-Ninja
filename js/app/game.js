@@ -189,16 +189,14 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
   Turn = function (string) {
     var parts = string.match(r.grammar.turn_grouped);
 
-    this.linenum = new Linenum(parts[2]);
-    this.move1 = new Move(parts[4], this.linenum.value == 1 ? 2: 1);
-    this.move2 = parts[6] ? new Move(parts[6], this.linenum.value == 1 ? 1: 2) : null;
-    this.result = parts[8] ? new Result(parts[8]) : null;
-    this.comments1 = parse_comments(parts[1]);
-    this.comments2 = parse_comments(parts[3]);
-    this.comments3 = parse_comments(parts[5]);
-    this.comments4 = parse_comments(parts[7]);
-    this.comments5 = parse_comments(parts[9]);
-    this.suffix = parts[10] || '';
+    this.linenum = new Linenum(parts[1]);
+    this.move1 = new Move(parts[3], this.linenum.value == 1 ? 2: 1);
+    this.move2 = parts[5] ? new Move(parts[5], this.linenum.value == 1 ? 1: 2) : null;
+    this.result = parts[7] ? new Result(parts[7]) : null;
+    this.comments1 = parse_comments(parts[2]);
+    this.comments2 = parse_comments(parts[4]);
+    this.comments3 = parse_comments(parts[6]);
+    this.comments4 = parse_comments(parts[8]);
 
     return this;
   };
@@ -206,31 +204,28 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
   Turn.prototype.print = function(){
     var output = '<span class="turn">';
 
+    output += this.linenum.print();
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print').join('');
     }
-    output += this.linenum.print();
+    output += this.move1.print();
     if (this.comments2) {
       output += _.invokeMap(this.comments2, 'print').join('');
-    }
-    output += this.move1.print();
-    if (this.comments3) {
-      output += _.invokeMap(this.comments3, 'print').join('');
     }
     if (this.move2) {
       output += this.move2.print();
     }
-    if (this.comments4) {
-      output += _.invokeMap(this.comments4, 'print').join('');
+    if (this.comments3) {
+      output += _.invokeMap(this.comments3, 'print').join('');
     }
     if (this.result) {
       output += this.result.print();
     }
-    if (this.comments5) {
-      output += _.invokeMap(this.comments5, 'print').join('');
+    if (this.comments4) {
+      output += _.invokeMap(this.comments4, 'print').join('');
     }
 
-    return output + this.suffix + '</span>';
+    return output + '</span>';
   };
 
 
@@ -241,6 +236,12 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
 
     if (!parts) {
       m.error(t.error.invalid_tag({tag: string}));
+      this.prefix = '';
+      this.name = '';
+      this.separator = '';
+      this.value = '';
+      this.value_print = '';
+      this.suffix = string;
       return false;
     }
 
@@ -248,6 +249,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     this.name = parts[2];
     this.separator = parts[3];
     this.value = parts[4];
+    this.value_print = this.value;
     this.suffix = parts[5];
 
     this.key = this.name.toLowerCase();
@@ -277,10 +279,8 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
   Tag.prototype.print = _.template(
     '<span class="tag">'+
       '<%=this.prefix%>'+
-      '<span class="name">'+
-        '<i class="icon-<%=this.icon%>"></i>'+
-        '<%=this.name%>'+
-      '</span>'+
+      '<i class="icon-<%=this.icon%>"></i>'+
+      '<span class="name"><%=this.name%></span>'+
       '<%=this.separator%>'+
       '<span class="value <%=this.key%>"><%=this.value_print%></span>'+
       '<%=this.suffix%>'+
@@ -337,7 +337,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     }
 
     header = file[1];
-    this.separator = file[2];
+    this.comment = file[2] ? new Comment(file[2]) : '';
     body = file[3];
 
     // Header
@@ -383,7 +383,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     var output = '';
 
     output += _.invokeMap(this.tags, 'print').join('');
-    output += this.separator;
+    output += this.comment ? this.comment.print() : '';
     output += _.invokeMap(this.turns, 'print').join('');
 
     return output;
