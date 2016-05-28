@@ -346,6 +346,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     header = file[1];
     this.comment = file[2] ? new Comment(file[2]) : '';
     body = file[3];
+    this.suffix = file[4] || '';
 
     // Header
 
@@ -392,6 +393,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     output += _.invokeMap(this.tags, 'print').join('');
     output += this.comment ? this.comment.print() : '';
     output += _.invokeMap(this.turns, 'print').join('');
+    output += this.suffix;
 
     return output;
   };

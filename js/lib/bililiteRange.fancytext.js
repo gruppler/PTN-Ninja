@@ -1,6 +1,6 @@
 // Turn a textarea element into a pre element that can use a highlighter
 // Designed for use with Prism (prismjs.com)
-// usage: editor = bililiteRange.fancytext(element, Prism.highlightElement, threshold); 
+// usage: editor = bililiteRange.fancytext(element, Prism.highlightElement, threshold);
 // the element should have the appropriate class=language-* for Prism.
 // Version: 1.0
 // Documentation: http://bililite.com/blog/2013/12/16/simple-syntax-highlighting-editor-with-prism/
@@ -41,7 +41,7 @@ bililiteRange.fancyText = function(editor, highlighter, threshold){
 		editor.parentNode.replaceChild(replacement, editor);
 		editor = replacement;
 	}
-	// for large texts, it can be too slow to run the highlighter on every input event. 
+	// for large texts, it can be too slow to run the highlighter on every input event.
 	// use the code from http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
 	// to limit it to once every threshold milliseconds
 	function debounce (func, threshold){
@@ -55,15 +55,16 @@ bililiteRange.fancyText = function(editor, highlighter, threshold){
 			}, threshold);
 		};
 	}
-	
+
 	var rng = bililiteRange(editor);
 	function highlight(){
 		rng.bounds('selection');
 		// handle what Lea Verou calls "Dirty fix to #2"--seems to be Chrome issue with missing newlines
 		// from https://github.com/LeaVerou/dabblet/issues/2
 		if (!/\n$/.test(editor.textContent)) editor.textContent += '\n';
-		highlighter(editor);
-		rng.select();
+		if (highlighter(editor)) {
+			rng.select();
+		}
 	}
 	if (highlighter){
 		highlight();
@@ -84,6 +85,6 @@ bililiteRange.fancyText = function(editor, highlighter, threshold){
 			evt.preventDefault();
 		}
 	});
-	
+
 	return editor;
 };

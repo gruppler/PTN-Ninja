@@ -19,6 +19,10 @@ button, .button, .fab {
 
   @include unselectable;
 
+  i {
+    line-height: $button-height;
+  }
+
   &:hover {
     box-shadow: $shadow2;
   }

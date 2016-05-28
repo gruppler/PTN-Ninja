@@ -70,7 +70,8 @@ define(['jquery', 'lodash'], function ($, _) {
 
   Messages.prototype.error = function (message, seconds, group) {
     this.add(message, seconds, group, 'error');
-    $('body').addClass('error editmode').removeClass('playmode');
+    $('body').addClass('error');
+    $(window).trigger('error');
   };
 
   Messages.prototype.help = function (message, seconds, group) {

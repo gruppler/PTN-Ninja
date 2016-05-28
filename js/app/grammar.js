@@ -53,7 +53,7 @@ define(['lodash'], function (_) {
 
     header: '^<tag>+$',
     body: '^<turn>*\\s*$',
-    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*)$'
+    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)(\\s*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));

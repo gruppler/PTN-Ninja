@@ -113,10 +113,20 @@ requirejs({locale: navigator.language}, [
         }
         reader.readAsText(file);
       }
+    }).on('dragover', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }).on('dragleave', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
     }).on('hashchange', function () {
       game.parse(location.hash.substr(1) || default_ptn, true);
     });
   }
+
+  $(window).on('error', function () {
+    toggle_edit_mode(true);
+  });
 
 
   $.fn.grow = function (callback) {
@@ -152,8 +162,9 @@ requirejs({locale: navigator.language}, [
 
   bililiteRange.fancyText($ptn[0], function () {
     if ($ptn.text().trim()) {
-      game.parse($ptn.text());
+      return game.parse($ptn.text());
     }
+    return false;
   });
   bililiteRange($ptn[0]).undo(0);
 
