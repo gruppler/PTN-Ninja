@@ -103,6 +103,7 @@
   overflow: hidden;
   background-color: $whitish;
   transition: height $time-smooth $natural;
+  flex-shrink: 0;
 
   body.editmode & {
     height: 0;
