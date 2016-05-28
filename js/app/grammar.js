@@ -28,7 +28,6 @@ define(['lodash'], function (_) {
 
     tag: '(?:\\s*\\[[^\\[\\]]+\\])',
     tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
-    header: '^<tag>+$',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',
@@ -52,6 +51,7 @@ define(['lodash'], function (_) {
     turn: '(?:<linenum><comment><move><comment><move>?<comment><result>?<comment>)',
     turn_grouped: '(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
 
+    header: '^<tag>+$',
     body: '^<turn>*\\s*$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*)$'
   };

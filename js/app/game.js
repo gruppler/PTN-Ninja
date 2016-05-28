@@ -295,7 +295,8 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     this.tags = [];
     this.turns = [];
     this.ptn = '';
-    this.callbacks = [];
+    this.callbacks_start = [];
+    this.callbacks_end = [];
 
     if (string && string.length) {
       this.parse(string);
@@ -304,8 +305,12 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     return this;
   };
 
-  Game.prototype.on_update = function (fn) {
-    this.callbacks.push(fn);
+  Game.prototype.on_parse_start = function (fn) {
+    this.callbacks_start.push(fn);
+  };
+
+  Game.prototype.on_parse_end = function (fn) {
+    this.callbacks_end.push(fn);
   };
 
   Game.prototype.parse = function (string, is_compressed) {
@@ -325,6 +330,8 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
       this.ptn = string;
       this.ptn_compressed = compress(string);
     }
+
+    _.invokeMap(this.callbacks_start, 'call', this, this);
 
     this.tags.length = 0;
     this.turns.length = 0;
@@ -373,7 +380,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
       this.turns[i] = new Turn(body[i]);
     }
 
-    _.invokeMap(this.callbacks, 'call', this, this);
+    _.invokeMap(this.callbacks_end, 'call', this, this);
 
     return true;
   };

@@ -72,7 +72,13 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  game.on_update(function () {
+  game.on_parse_start(function () {
+    if ($ptn.text() != this.ptn) {
+      $ptn.text(this.ptn);
+    }
+  });
+
+  game.on_parse_end(function () {
     var href, length;
 
     $ptn.html(this.print());
@@ -152,7 +158,9 @@ requirejs({locale: navigator.language}, [
   bililiteRange($ptn[0]).undo(0);
 
   game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
-  toggle_edit_mode(!location.hash);
+  if (location.hash && !$body.hasClass('error')) {
+    toggle_edit_mode(false);
+  }
 
   $ptn.on('keydown', function (event) {
     if (event.ctrlKey && event.which == 90) {
