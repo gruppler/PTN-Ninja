@@ -190,13 +190,29 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     var parts = string.match(r.grammar.turn_grouped);
 
     this.linenum = new Linenum(parts[1]);
-    this.move1 = new Move(parts[3], this.linenum.value == 1 ? 2: 1);
-    this.move2 = parts[5] ? new Move(parts[5], this.linenum.value == 1 ? 1: 2) : null;
-    this.result = parts[7] ? new Result(parts[7]) : null;
+
     this.comments1 = parse_comments(parts[2]);
     this.comments2 = parse_comments(parts[4]);
     this.comments3 = parse_comments(parts[6]);
     this.comments4 = parse_comments(parts[8]);
+
+    this.move1 = new Move(parts[3], this.linenum.value == 1 ? 2: 1);
+    this.move1.comments_before = this.comments1;
+    this.move1.comments = this.comments2;
+
+    if (parts[5]) {
+      this.move2 = new Move(parts[5], this.linenum.value == 1 ? 1: 2);
+      this.move2.comments = this.comments3;
+    } else {
+      this.move2 = null;
+    }
+
+    if (parts[7]) {
+      this.result = new Result(parts[7]);
+      this.result.comments = this.comments4;
+    } else {
+      this.result = null;
+    }
 
     return this;
   };
