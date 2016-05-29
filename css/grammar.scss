@@ -17,6 +17,13 @@ $blue: #64B5F6;
 $purple: #BA68C8;
 
 .ptn {
+  .tag, .comment, .turn > * {
+    transition: opacity $time-smooth $natural;
+
+    body.playmode & {
+      opacity: 0.5;
+    }
+  }
 
   .player1, .player2 {
     margin: 0 -0.25em;
@@ -113,11 +120,16 @@ $purple: #BA68C8;
 
       &:hover {
         box-shadow: $shadow2;
+        opacity: 1;
         z-index: 1;
       }
       &:active {
-        cursor: pointer;
         box-shadow: $shadow4;
+        opacity: 1;
+        z-index: 1;
+      }
+      &.active {
+        opacity: 1;
         z-index: 1;
       }
     }

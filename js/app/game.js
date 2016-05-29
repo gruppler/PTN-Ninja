@@ -415,22 +415,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     // Body
 
-      body = body.match(r.grammar.body);
+    body = body.match(r.grammar.body);
     if (!body) {
       m.error(t.error.invalid_body);
       this.is_valid = false;
       return false;
     }
     body = body[0].match(r.grammar.turn);
-    for (var i = 0; i < body.length; i++) {
-      this.turns[i] = new Turn(body[i], this);
+    if (body) {
+      for (var i = 0; i < body.length; i++) {
+        this.turns[i] = new Turn(body[i], this);
 
-      this.turns[i].move1.id = this.moves.length;
-      this.moves.push(this.turns[i].move1);
+        this.turns[i].move1.id = this.moves.length;
+        this.moves.push(this.turns[i].move1);
 
-      if (this.turns[i].move2) {
-        this.turns[i].move2.id = this.moves.length;
-        this.moves.push(this.turns[i].move2);
+        if (this.turns[i].move2) {
+          this.turns[i].move2.id = this.moves.length;
+          this.moves.push(this.turns[i].move2);
+        }
       }
     }
 

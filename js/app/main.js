@@ -15,6 +15,7 @@ requirejs({locale: navigator.language}, [
 
   var $body = $('body')
     , $ptn = $('#ptn')
+    , $viewer = $('#viewer')
     , $permalink = $('#permalink')
     , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
@@ -85,6 +86,9 @@ requirejs({locale: navigator.language}, [
     var href, length;
 
     $ptn.html(this.print());
+    if (game.is_valid) {
+      board.parse(game);
+    }
 
     href = '#'+this.ptn_compressed;
     length = (baseurl + href).length;
@@ -99,6 +103,10 @@ requirejs({locale: navigator.language}, [
       m.warning(t.warning.long_url, 0, 'url');
     }
   });
+
+  board.on_parse_end(function () {
+    $viewer.html(board.render());
+  })
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $(window).on('drop', function(event) {

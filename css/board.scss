@@ -1,0 +1,88 @@
+#viewer {
+  position: absolute;
+  top: 0;
+  bottom: $edge + $button-height;
+  left: 0;
+  right: $fab-height;
+  transition: opacity $time-smooth $natural;
+
+  body.editmode & {
+    opacity: 0.5;
+  }
+}
+
+.board {
+  position: absolute;
+  top: $edge;
+  right: $edge;
+  width: calc(100vmin - #{$edge*2 + $button-height});
+  height: calc(100vmin - #{$edge*2 + $button-height});
+  font-size: 3vmin;
+
+  .squares {
+    position: absolute;
+    top: 0;
+    bottom: 2em;
+    left: 2em;
+    right: 0;
+    background-color: $primary-color;
+
+  }
+
+  .square {
+    position: absolute;
+    background-color: $primary-color-light;
+
+    &.dark {
+      background-color: $primary-color;
+    }
+  }
+
+  .piece {
+    position: absolute;
+  }
+
+  .labels {
+    color: $primary-color-text;
+    position: absolute;
+    display: flex;
+    font-size: 1em;
+    justify-content: space-around;
+
+    &.row {
+      top: 0;
+      left: 0;
+      flex-direction: column-reverse;
+      width: 2em;
+      height: calc(100% - 2em);
+      text-align: center;
+    }
+    &.col {
+      bottom: 0;
+      right: 0;
+      flex-direction: row;
+      width: calc(100% - 2em);
+      height: 2em;
+      line-height: 2em;
+    }
+  }
+}
+
+@for $size from 3 through 9 {
+  .size-#{$size} .square,
+  .size-#{$size} .piece {
+    width: percentage(1/$size);
+    height: percentage(1/$size);
+  }
+
+  @for $col from 0 through $size - 1 {
+    .size-#{$size} .c#{$col} {
+      left: percentage($col/$size);
+    }
+  }
+  @for $row from 0 through $size - 1 {
+    .size-#{$size} .r#{$row} {
+      bottom: percentage($row/$size);
+    }
+  }
+}
