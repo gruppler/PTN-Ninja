@@ -136,7 +136,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
 
   Move.prototype.print_place = _.template(
     '<%=this.prefix%>'+
-    '<span class="move place player<%=this.player%>">'+
+    '<span class="move place player<%=this.player%>" data-move="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -150,7 +150,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
 
   Move.prototype.print_slide = _.template(
     '<%=this.prefix%>'+
-    '<span class="move slide player<%=this.player%>">'+
+    '<span class="move slide player<%=this.player%>" data-move="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.column%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -294,6 +294,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     this.config = {};
     this.tags = [];
     this.turns = [];
+    this.moves = [];
     this.ptn = '';
     this.callbacks_start = [];
     this.callbacks_end = [];
@@ -379,6 +380,14 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
     body = body[0].match(r.grammar.turn);
     for (var i = 0; i < body.length; i++) {
       this.turns[i] = new Turn(body[i]);
+
+      this.turns[i].move1.id = this.moves.length;
+      this.moves.push(this.turns[i].move1);
+
+      if (this.turns[i].move2) {
+        this.turns[i].move2.id = this.moves.length;
+        this.moves.push(this.turns[i].move2);
+      }
     }
 
     _.invokeMap(this.callbacks_end, 'call', this, this);
