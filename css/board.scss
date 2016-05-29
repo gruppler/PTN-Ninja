@@ -13,8 +13,8 @@
 
 .board {
   position: absolute;
-  top: calc(#{$edge} + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
-  right: calc( #{$edge}*2 + #{$fab-height} );
+  top: calc(50% - 50vmin + #{($edge*3 + $button-height) / 2});
+  right: calc(#{$edge}*2 + #{$fab-height});
   width: calc(100vmin - #{$edge*3 + $button-height});
   height: calc(100vmin - #{$edge*3 + $button-height});
   font-size: 3vmin;
@@ -30,6 +30,10 @@
   body.playmode.hide-ptn & {
     right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
     z-index: 1;
+  }
+
+  @media (max-aspect-ratio: 11/10) {
+    right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
   }
 
   .squares {
