@@ -31,6 +31,8 @@ define(['util/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Board = function (game) {
     this.squares = {};
+    this.rows = [];
+    this.cols = [];
 
     if (game) {
       this.parse(game);
@@ -41,22 +43,34 @@ define(['util/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Board.prototype.parse = function (game) {
     var row, col
-      , a = 'a'.charCodeAt(0);
+      , a = 'a'.charCodeAt(0), col_letter;
 
     this.game = game;
     this.size = game.config.size;
     this.tps = game.config.tps;
 
+    this.squares = {};
+    this.rows.length = 0;
+    this.cols.length = 0;
     for (row = 1; row <= this.size; row++) {
-      this.squares[row] = {}
+      this.rows.push(row);
       for (col = 0; col < this.size; col++) {
-        this.squares[row][String.fromCharCode(a + col)] = {};
+        col_letter = String.fromCharCode(a + col);
+        this.cols.push(col_letter);
+        this.squares[col_letter+row] = {
+          row: row,
+          col: col_letter
+        };
       }
     }
   };
 
   Board.prototype.to_tps = function () {
     // x5/x5/x5/x5/x5 1 1
+  };
+
+  Board.prototype.render = function () {
+    return '';
   };
 
   return Board;
