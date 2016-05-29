@@ -32,6 +32,43 @@
 }
 
 #ptn {
+  body.playmode.hide-ptn & {
+    overflow: hidden;
+  }
+
+  .tag, .comment, .turn > * {
+    transition: opacity $time-smooth $natural;
+
+    body.playmode & {
+      opacity: 0.5;
+    }
+    body.playmode.hide-ptn & {
+      opacity: 0;
+    }
+  }
+
+  .move {
+    transition: all $time-quick ease-out;
+  }
+  body.playmode & .move {
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: $shadow2;
+      opacity: 1;
+      z-index: 1;
+    }
+    &:active {
+      box-shadow: $shadow4;
+      opacity: 1;
+      z-index: 1;
+    }
+    &.active {
+      opacity: 1;
+      z-index: 1;
+    }
+  }
+
   position: absolute;
   top: 0;
   bottom: 0;
