@@ -20,19 +20,7 @@ define(['jquery', 'lodash'], function ($, _) {
     return this;
   };
 
-  Messages.prototype.enable = function () {
-    this.enabled = true;
-  };
-
-  Messages.prototype.disable = function () {
-    this.enabled = false;
-  };
-
   Messages.prototype.add = function (message, seconds, group, type) {
-    if (!this.enabled) {
-      return;
-    }
-
     var $message = $(template({
       type: type,
       group: group ? group : this.group,
@@ -44,6 +32,8 @@ define(['jquery', 'lodash'], function ($, _) {
     if (seconds) {
       setTimeout(_.bind(remove_message, $message), seconds*1000);
     }
+
+    return $message;
   };
 
   Messages.prototype.clear = function (type, group) {
@@ -61,25 +51,25 @@ define(['jquery', 'lodash'], function ($, _) {
   };
 
   Messages.prototype.success = function (message, seconds, group) {
-    this.add(message, seconds, group, 'success');
+    return this.add(message, seconds, group, 'success');
   };
 
   Messages.prototype.warning = function (message, seconds, group) {
-    this.add(message, seconds, group, 'warning');
+    return this.add(message, seconds, group, 'warning');
   };
 
   Messages.prototype.error = function (message, seconds, group) {
-    this.add(message, seconds, group, 'error');
     $('body').addClass('error');
     $(window).trigger('error');
+    return this.add(message, seconds, group, 'error');
   };
 
   Messages.prototype.help = function (message, seconds, group) {
-    this.add(message, seconds, group, 'help');
+    return this.add(message, seconds, group, 'help');
   };
 
   Messages.prototype.info = function (message, seconds, group) {
-    this.add(message, seconds, group, 'info');
+    return this.add(message, seconds, group, 'info');
   };
 
   function remove_message() {
@@ -94,7 +84,9 @@ define(['jquery', 'lodash'], function ($, _) {
 
   $(function () {
     $messages = $('#messages');
-    $messages.on('click', 'i.icon-x', remove_message);
+    $messages
+      .on('click', 'i.icon-x', remove_message)
+      .on('remove', remove_message);
   });
 
   return Messages;

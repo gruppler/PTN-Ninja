@@ -1,6 +1,6 @@
 'use strict';
 
-define(['util/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
+define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   var Board, Square, Stone;
   var m = new Messages('board');

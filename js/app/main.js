@@ -2,7 +2,7 @@
 
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
-  'util/messages',
+  'app/messages',
   'app/game',
   'app/board',
   'lodash',
@@ -70,6 +70,9 @@ requirejs({locale: navigator.language}, [
     } else {
       toggle_edit_mode();
     }
+  }).mousedown(function (event) {
+    event.stopPropagation();
+    event.preventDefault();
   });
 
   game.on_parse_start(function () {

@@ -1,6 +1,6 @@
 'use strict';
 
-define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
+define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
   var Comment, Result, Move, Linenum, Turn, Tag, Game;
   var m = new Messages('parse');
@@ -352,6 +352,7 @@ define(['app/grammar', 'util/messages', 'i18n!nls/main', 'lodash', 'lzstring'], 
 
     this.tags.length = 0;
     this.turns.length = 0;
+    this.moves.length = 0;
     m.clear('error');
 
     file = this.ptn.match(r.grammar.ptn_grouped);
