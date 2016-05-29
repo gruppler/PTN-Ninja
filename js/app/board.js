@@ -9,7 +9,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return a && !b || !a && b;
   }
 
-  window.tpl = {};
+  var tpl = {};
 
   tpl.row = _.template('<span class="row"><%=obj%></span>');
 
@@ -73,6 +73,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.cols = [];
     this.callbacks_start = []
     this.callbacks_end = [];
+    this.tpl = tpl;
 
     if (game) {
       this.parse(game);
