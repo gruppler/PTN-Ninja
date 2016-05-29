@@ -72,6 +72,10 @@ define(['jquery', 'lodash'], function ($, _) {
     return this.add(message, seconds, group, 'info');
   };
 
+  Messages.prototype.comment = function (message, seconds, group) {
+    return this.add(message, seconds, group, 'comment');
+  };
+
   function remove_message() {
     var $message = $(this);
     if (!$message.hasClass('message')) {

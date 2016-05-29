@@ -160,6 +160,32 @@
 		{
 			"icon": {
 				"paths": [
+					"M854 86c46 0 84 38 84 84v512c0 46-38 86-84 86h-598l-170 170v-768c0-46 38-84 84-84h684z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"comment"
+				],
+				"defaultCode": 57546,
+				"grid": 24
+			},
+			"attrs": [],
+			"properties": {
+				"order": 73,
+				"ligatures": "comment",
+				"id": 146,
+				"prevSize": 24,
+				"code": 57546,
+				"name": "comment"
+			},
+			"setIdx": 0,
+			"setId": 0,
+			"iconIdx": 146
+		},
+		{
+			"icon": {
+				"paths": [
 					"M384 690l452-452 60 60-512 512-238-238 60-60z"
 				],
 				"attrs": [],
@@ -228,7 +254,8 @@
 				"id": 157,
 				"prevSize": 24,
 				"code": 58829,
-				"name": "x"
+				"name": "x",
+				"ligatures": "ex"
 			},
 			"setIdx": 0,
 			"setId": 0,

@@ -4,11 +4,11 @@
 
 @font-face {
     font-family: 'material';
-    src:    url('#{$icomoon-font-path}/material.eot?uqyev0');
-    src:    url('#{$icomoon-font-path}/material.eot?uqyev0#iefix') format('embedded-opentype'),
-        url('#{$icomoon-font-path}/material.ttf?uqyev0') format('truetype'),
-        url('#{$icomoon-font-path}/material.woff?uqyev0') format('woff'),
-        url('#{$icomoon-font-path}/material.svg?uqyev0#material') format('svg');
+    src:    url('#{$icomoon-font-path}/material.eot?j98ptb');
+    src:    url('#{$icomoon-font-path}/material.eot?j98ptb#iefix') format('embedded-opentype'),
+        url('#{$icomoon-font-path}/material.ttf?j98ptb') format('truetype'),
+        url('#{$icomoon-font-path}/material.woff?j98ptb') format('woff'),
+        url('#{$icomoon-font-path}/material.svg?j98ptb#material') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -65,6 +65,11 @@ i, .icomoon-liga {
 .icon-cancel {
     &:before {
         content: $icon-cancel;
+    }
+}
+.icon-comment {
+    &:before {
+        content: $icon-comment;
     }
 }
 .icon-check {

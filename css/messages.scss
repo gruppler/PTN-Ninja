@@ -68,5 +68,10 @@
       background-color: $info-color;
       color: $info-text-color;
     }
+
+    &.comment {
+      background-color: $primary-color;
+      color: $primary-color-text;
+    }
   }
 }
