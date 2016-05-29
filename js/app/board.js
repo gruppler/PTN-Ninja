@@ -68,6 +68,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   // Board
 
   Board = function (game) {
+    this.size = 5;
     this.squares = {};
     this.rows = [];
     this.cols = [];

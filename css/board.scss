@@ -1,9 +1,9 @@
 #viewer {
   position: absolute;
   top: 0;
-  bottom: $edge + $button-height;
+  bottom: 0;
   left: 0;
-  right: $fab-height;
+  right: 0;
   transition: opacity $time-smooth $natural;
 
   body.editmode & {
@@ -13,11 +13,24 @@
 
 .board {
   position: absolute;
-  top: $edge;
-  right: $edge;
-  width: calc(100vmin - #{$edge*2 + $button-height});
-  height: calc(100vmin - #{$edge*2 + $button-height});
+  top: calc(#{$edge} + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
+  right: calc( #{$edge}*2 + #{$fab-height} );
+  width: calc(100vmin - #{$edge*3 + $button-height});
+  height: calc(100vmin - #{$edge*3 + $button-height});
   font-size: 3vmin;
+
+  #viewer.animated & {
+    transition: all $time-smooth $natural;
+  }
+
+  body.playmode & {
+    top: calc(#{$edge} + 50% - 50vmin + 0.5em);
+  }
+
+  body.playmode.hide-ptn & {
+    right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
+    z-index: 1;
+  }
 
   .squares {
     position: absolute;

@@ -43,9 +43,17 @@ requirejs({locale: navigator.language}, [
 
   function toggle_edit_mode(on) {
     if (_.isBoolean(on)) {
-      $body.addClass(on ? 'editmode' : 'playmode');
-      $body.removeClass(on ? 'playmode' : 'editmode');
+      if (on && !$body.hasClass('editmode')) {
+        $viewer.transition();
+        $body.addClass('editmode');
+        $body.removeClass('playmode');
+      } else if (!on && $body.hasClass('editmode')) {
+        $viewer.transition();
+        $body.addClass('playmode');
+        $body.removeClass('editmode');
+      }
     } else {
+      $viewer.transition();
       $body.toggleClass('editmode playmode');
     }
 
@@ -53,7 +61,6 @@ requirejs({locale: navigator.language}, [
       $ptn.attr('contenteditable', true);
     } else {
       $ptn.attr('contenteditable', false);
-      board.parse(game);
     }
   }
 
@@ -166,6 +173,18 @@ requirejs({locale: navigator.language}, [
         callback.call($this);
       });
     }
+  };
+
+  $.fn.transition = function (callback) {
+    var $this = $(this);
+
+    $this.addClass('animated');
+    $this.one('webkitTransitionEnd transitionend', function () {
+      $this.removeClass('animated');
+      if (_.isFunction(callback)) {
+        callback.call($this);
+      }
+    });
   };
 
 
