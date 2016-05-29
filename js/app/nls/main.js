@@ -31,6 +31,7 @@ define({
       invalid_body: "Invalid movetext",
       invalid_file_format: "Invalid file format",
       invalid_header: "Invalid header",
+      invalid_square: "Invalid square: \"<b><%=square%></b>\"",
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
       invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",
       missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>"

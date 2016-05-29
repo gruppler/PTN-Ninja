@@ -96,7 +96,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   // Move
 
-  Move = function (string, player) {
+  Move = function (string, player, game) {
     var move_group = string.match(r.grammar.move_grouped)
       , parts;
 
@@ -109,7 +109,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.move = move_group[2];
       this.count_text = parts[1] || '';
       this.count = 1*this.count_text || 1;
-      this.column = parts[2][0];
+      this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
@@ -125,10 +125,18 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.move = move_group[3];
       this.stone_text = parts[1] || '';
       this.stone = this.stone_text || 'F';
-      this.column = parts[2][0];
+      this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.evaluation = move_group[4] || '';
       this.print = this.print_place;
+    }
+
+    if (
+      this.row > game.config.size ||
+      (this.col.charCodeAt(0) - '`'.charCodeAt(0)) > game.config.size
+    ) {
+      game.is_valid = false;
+      m.error(t.error.invalid_square({square: this.col+this.row}));
     }
 
     return this;
@@ -140,7 +148,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
-      '<span class="column"><%=this.column%></span>'+
+      '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
       '<% if (this.evaluation) { %>'+
       '<span class="evaluation"><%=this.evaluation%></span>'+
@@ -152,7 +160,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     '<%=this.prefix%>'+
     '<span class="move slide player<%=this.player%>" data-move="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
-      '<span class="column"><%=this.column%></span>'+
+      '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
       '<span class="direction"><%=this.direction%></span>'+
       '<% if (this.drops_text) { %>'+
@@ -186,7 +194,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  Turn = function (string) {
+  Turn = function (string, game) {
     var parts = string.match(r.grammar.turn_grouped);
 
     this.linenum = new Linenum(parts[1]);
@@ -196,12 +204,20 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.comments3 = parse_comments(parts[6]);
     this.comments4 = parse_comments(parts[8]);
 
-    this.move1 = new Move(parts[3], this.linenum.value == 1 ? 2: 1);
+    this.move1 = new Move(
+      parts[3],
+      this.linenum.value == 1 ? 2: 1,
+      game
+    );
     this.move1.comments_before = this.comments1;
     this.move1.comments = this.comments2;
 
     if (parts[5]) {
-      this.move2 = new Move(parts[5], this.linenum.value == 1 ? 1: 2);
+      this.move2 = new Move(
+        parts[5],
+        this.linenum.value == 1 ? 1: 2,
+        game
+      );
       this.move2.comments = this.comments3;
     } else {
       this.move2 = null;
@@ -240,14 +256,15 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print').join('');
     }
+    output += '</span>';
 
-    return output + '</span>';
+    return output;
   };
 
 
   // Tag
 
-  Tag = function (string) {
+  Tag = function (string, game) {
     var parts = string.match(r.grammar.tag_grouped);
 
     if (!parts) {
@@ -258,6 +275,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.value = '';
       this.value_print = '';
       this.suffix = string;
+
+      game.is_valid = false;
       return false;
     }
 
@@ -273,6 +292,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     if (!(this.key in r.tags)) {
       m.error(t.error.invalid_tag({tag: parts[2]}));
+      game.is_valid = false;
       return false;
     }
 
@@ -280,6 +300,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       m.error(
         t.error.invalid_tag_value({tag: this.name, value: this.value})
       );
+      game.is_valid = false;
       return false;
     }
 
@@ -307,6 +328,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   // Game
 
   Game = function (string) {
+    this.is_valid = false;
     this.config = {};
     this.tags = [];
     this.turns = [];
@@ -350,6 +372,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
+    this.is_valid = true;
     this.tags.length = 0;
     this.turns.length = 0;
     this.moves.length = 0;
@@ -358,6 +381,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     file = this.ptn.match(r.grammar.ptn_grouped);
     if (!file) {
       m.error(t.error.invalid_file_format);
+      this.is_valid = false;
       return false;
     }
 
@@ -371,11 +395,12 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     header = header.match(r.grammar.header);
     if (!header) {
       m.error(t.error.invalid_header);
+      this.is_valid = false;
       return false;
     }
     header = header[0].match(r.grammar.tag);
     for (var i = 0; i < header.length; i++) {
-      this.tags[i] = new Tag(header[i]);
+      this.tags[i] = new Tag(header[i], this);
       this.config[this.tags[i].key] = this.tags[i].value;
     }
     missing_tags = _.difference(
@@ -384,19 +409,21 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     );
     if (missing_tags.length) {
       m.error(t.error.missing_tags({tags: missing_tags}));
+      this.is_valid = false;
       return false;
     }
 
     // Body
 
-    body = body.match(r.grammar.body);
+      body = body.match(r.grammar.body);
     if (!body) {
       m.error(t.error.invalid_body);
+      this.is_valid = false;
       return false;
     }
     body = body[0].match(r.grammar.turn);
     for (var i = 0; i < body.length; i++) {
-      this.turns[i] = new Turn(body[i]);
+      this.turns[i] = new Turn(body[i], this);
 
       this.turns[i].move1.id = this.moves.length;
       this.moves.push(this.turns[i].move1);
