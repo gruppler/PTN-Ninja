@@ -2,8 +2,12 @@
 
 define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
-  var Board, Square, Stone;
+  var Board, Square, Piece;
   var m = new Messages('board');
+
+  function xor(a, b) {
+    return a && !b || !a && b;
+  }
 
   window.tpl = {};
 
@@ -12,6 +16,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   tpl.col = _.template('<span class="col"><%=obj%></span>');
 
   tpl.square = _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>');
+
+  tpl.piece = _.template('<div class="piece <%=type%> c<%=col_i%> r<%=row_i%> p<%=player%>"></div>');
 
   tpl.board = _.template(
     '<div class="board size-<%=size%>">'+
@@ -28,12 +34,17 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     '</div>'
   );
 
-  Stone = function () {
+
+  // Piece
+
+  Piece = function () {
     this.type = 'F';
 
     return this;
   };
 
+
+  // Square
 
   Square = function (col_i, row_i, board) {
     this.board = board;
@@ -41,7 +52,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.row_i = row_i;
     this.col = board.cols[col_i];
     this.row = board.rows[row_i];
-    this.color = row_i%2?(col_i%2?'dark':'light'):(col_i%2?'light':'dark');
+    this.color = xor(row_i%2, col_i%2) ? 'dark' : 'light';
     this.pieces = [];
 
     return this;
@@ -53,6 +64,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Square.prototype.to_tps = function () {};
 
+
+  // Board
 
   Board = function (game) {
     this.squares = {};
