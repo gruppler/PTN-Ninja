@@ -18,24 +18,24 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     piece: _.template(
       '<div class="piece c<%=col_i%> r<%=row_i%>">'+
-      '<div class="stone <%=stone%> <%=player%>">'+
-      '<div class="captives"></div>'+
-      '</div>'+
+        '<div class="stone <%=stone%> player<%=player%>">'+
+          '<div class="captives"></div>'+
+        '</div>'+
       '</div>'
     ),
 
     board: _.template(
       '<div class="board size-<%=size%>">'+
-      '<div class="row labels">'+
-      '<%=_.map(rows, tpl.row).join("")%>'+
-      '</div>'+
-      '<div class="col labels">'+
-      '<%=_.map(cols, tpl.col).join("")%>'+
-      '</div>'+
-      '<div class="squares">'+
-      '<%=_.map(squares, tpl.square).join("")%>'+
-      '</div>'+
-      '<div class="pieces"></div>'+
+        '<div class="row labels">'+
+          '<%=_.map(rows, tpl.row).join("")%>'+
+        '</div>'+
+        '<div class="col labels">'+
+          '<%=_.map(cols, tpl.col).join("")%>'+
+        '</div>'+
+        '<div class="squares">'+
+          '<%=_.map(squares, tpl.square).join("")%>'+
+        '</div>'+
+        '<div class="pieces"></div>'+
       '</div>'
     )
   };
