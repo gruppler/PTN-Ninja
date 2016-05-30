@@ -36,14 +36,13 @@
     right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
   }
 
-  .squares {
+  .squares,
+  .pieces {
     position: absolute;
     top: 0;
     bottom: 2em;
     left: 2em;
     right: 0;
-    background-color: $primary-color;
-
   }
 
   .square {
@@ -62,8 +61,8 @@
   .labels {
     color: $primary-color-text;
     position: absolute;
-    display: flex;
     font-size: 1em;
+    display: flex;
     justify-content: space-around;
 
     &.row {

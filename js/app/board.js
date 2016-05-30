@@ -9,38 +9,55 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return a && !b || !a && b;
   }
 
-  var tpl = {};
+  var tpl = {
+    row: _.template('<span class="row"><%=obj%></span>'),
 
-  tpl.row = _.template('<span class="row"><%=obj%></span>');
+    col: _.template('<span class="col"><%=obj%></span>'),
 
-  tpl.col = _.template('<span class="col"><%=obj%></span>');
+    square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
 
-  tpl.square = _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>');
+    piece: _.template(
+      '<div class="piece c<%=col_i%> r<%=row_i%>">'+
+      '<div class="stone <%=stone%> <%=player%>">'+
+      '<div class="captives"></div>'+
+      '</div>'+
+      '</div>'
+    ),
 
-  tpl.piece = _.template('<div class="piece <%=type%> c<%=col_i%> r<%=row_i%> p<%=player%>"></div>');
-
-  tpl.board = _.template(
-    '<div class="board size-<%=size%>">'+
+    board: _.template(
+      '<div class="board size-<%=size%>">'+
       '<div class="row labels">'+
-        '<%=_.map(rows, tpl.row).join("")%>'+
+      '<%=_.map(rows, tpl.row).join("")%>'+
       '</div>'+
       '<div class="col labels">'+
-        '<%=_.map(cols, tpl.col).join("")%>'+
+      '<%=_.map(cols, tpl.col).join("")%>'+
       '</div>'+
       '<div class="squares">'+
-        '<%=_.map(squares, tpl.square).join("")%>'+
+      '<%=_.map(squares, tpl.square).join("")%>'+
       '</div>'+
       '<div class="pieces"></div>'+
-    '</div>'
-  );
+      '</div>'
+    )
+  };
 
 
   // Piece
 
-  Piece = function () {
-    this.type = 'F';
+  Piece = function (player, stone, col_i, row_i, captives) {
+    this.player = player || 1;
+    this.stone = stone || 'F';
+    this.col_i = col_i;
+    this.row_i = row_i;
+    this.captives = captives || [];
 
     return this;
+  };
+
+  Piece.prototype.render = function () {
+    this.$view = $(tpl.piece(this));
+    this.$captives = this.$view.find('.captives');
+
+    return this.$view;
   };
 
 
@@ -53,14 +70,25 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.col = board.cols[col_i];
     this.row = board.rows[row_i];
     this.color = xor(row_i%2, col_i%2) ? 'dark' : 'light';
-    this.pieces = [];
+    this.piece = null;
 
     return this;
   };
 
-  Square.prototype.parse = function (tps) {
+  Square.prototype.place = function (move) {
+    if (this.piece) {
+      m.error(t.illegal_move({ move: move.move }));
+      return false;
+    }
 
+    this.piece = new Piece(move.player, move.stone, this.col_i, this.row_i);
+
+    return this.piece;
   };
+
+  Square.prototype.undo_place = function (move) {};
+
+  Square.prototype.parse = function (tps) {};
 
   Square.prototype.to_tps = function () {};
 
@@ -68,6 +96,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   // Board
 
   Board = function (game) {
+    this.move = 0;
     this.size = 5;
     this.squares = {};
     this.rows = [];
@@ -77,21 +106,21 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.tpl = tpl;
 
     if (game) {
-      this.parse(game);
+      this.init(game);
     }
 
     return this;
   };
 
-  Board.prototype.on_parse_start = function (fn) {
+  Board.prototype.on_init_start = function (fn) {
     this.callbacks_start.push(fn);
   };
 
-  Board.prototype.on_parse_end = function (fn) {
+  Board.prototype.on_init_end = function (fn) {
     this.callbacks_end.push(fn);
   };
 
-  Board.prototype.parse = function (game) {
+  Board.prototype.init = function (game) {
     var row, col
       , a = 'a'.charCodeAt(0), col_letter;
 
@@ -100,6 +129,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.game = game;
     this.size = game.config.size;
     this.tps = game.config.tps;
+    this.move = 0;
 
     this.cols.length = 0;
     for (col = 0; col < this.size; col++) {
@@ -130,8 +160,53 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.render = function () {
-    return tpl.board(this);
+    this.$view = $(tpl.board(this));
+    this.$squares = this.$view.find('.squares');
+    this.$pieces = this.$view.find('.pieces');
+
+    return this.$view;
   };
+
+  Board.prototype.do_move = function (is_silent) {
+    var move, square, piece;
+
+    if (this.move >= this.game.moves.length || this.move < 0) {
+      return false;
+    }
+
+    move = this.game.moves[this.move++];
+    square = this.squares[move.square];
+
+    if (move.is_slide) {
+      return this.slide(move, is_silent);
+    } else {
+      piece = square.place(move);
+      if (piece && is_silent !== true) {
+        this.$pieces.append(piece.render());
+        return true;
+      } else {
+        return false;
+      }
+    }
+  };
+
+  Board.prototype.undo_move = function () {};
+
+  Board.prototype.slide = function (move) {};
+
+  Board.prototype.undo_slide = function (move) {};
+
+  Board.prototype.play = function () {};
+
+  Board.prototype.pause = function () {};
+
+  Board.prototype.prev = function () {};
+
+  Board.prototype.next = function () {};
+
+  Board.prototype.first = function () {};
+
+  Board.prototype.last = function () {};
 
   return Board;
 

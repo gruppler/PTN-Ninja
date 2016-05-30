@@ -41,6 +41,9 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
+  window.game = game;
+  window.board = board;
+
   function toggle_edit_mode(on) {
     if (_.isBoolean(on)) {
       if (on && !$body.hasClass('editmode')) {
@@ -94,7 +97,7 @@ requirejs({locale: navigator.language}, [
 
     $ptn.html(this.print());
     if (game.is_valid) {
-      board.parse(game);
+      board.init(game);
     }
 
     href = '#'+this.ptn_compressed;
@@ -111,8 +114,8 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  board.on_parse_end(function () {
-    $viewer.html(board.render());
+  board.on_init_end(function () {
+    $viewer.empty().append(board.render());
   })
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {

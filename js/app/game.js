@@ -111,6 +111,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.count = 1*this.count_text || 1;
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
+      this.square = this.col+this.row;
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [1*parts[1] || 1],
@@ -127,6 +128,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.stone = this.stone_text || 'F';
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
+      this.square = this.col+this.row;
       this.evaluation = move_group[4] || '';
       this.print = this.print_place;
     }
@@ -215,7 +217,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     if (parts[5]) {
       this.move2 = new Move(
         parts[5],
-        this.linenum.value == 1 ? 1: 2,
+        this.linenum.value == 1 ? 1 : 2,
         game
       );
       this.move2.comments = this.comments3;
