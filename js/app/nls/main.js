@@ -31,6 +31,7 @@ define({
       invalid_body: "Invalid movetext",
       invalid_file_format: "Invalid file format",
       invalid_header: "Invalid header",
+      invalid_move: "Invalid move: \"<b><%=move%></b>\"",
       invalid_square: "Invalid square: \"<b><%=square%></b>\"",
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
       invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",

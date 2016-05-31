@@ -13,7 +13,8 @@ requirejs({locale: navigator.language}, [
   'domReady!'
 ], function (t, Messages, Game, Board, _, $) {
 
-  var $body = $('body')
+  var $window = $(window)
+    , $body = $('body')
     , $ptn = $('#ptn')
     , $viewer = $('#viewer')
     , $permalink = $('#permalink')
@@ -43,6 +44,16 @@ requirejs({locale: navigator.language}, [
 
   window.game = game;
   window.board = board;
+
+  _.bindAll(board, [
+    'play',
+    'pause',
+    'playpause',
+    'prev',
+    'next',
+    'first',
+    'last'
+  ]);
 
   function toggle_edit_mode(on) {
     if (_.isBoolean(on)) {
@@ -114,12 +125,18 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  board.on_init_end(function () {
+  board.on_init(function () {
     $viewer.empty().append(board.render());
-  })
+  });
+
+  $('#controls button.move-first').click(board.first);
+  $('#controls button.move-prev').click(board.prev);
+  $('#controls button.play').click(board.playpause);
+  $('#controls button.move-next').click(board.next);
+  $('#controls button.move-last').click(board.last);
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
-    $(window).on('drop', function(event) {
+    $window.on('drop', function(event) {
       var file = event.originalEvent.dataTransfer.files[0]
         , i, file, ext;
 
@@ -145,10 +162,23 @@ requirejs({locale: navigator.language}, [
     });
   }
 
-  $(window).on('error', function () {
+  $window.on('error:parse', function () {
+    $body.addClass('error');
     toggle_edit_mode(true);
+  }).on('clear:error:parse', function () {
+    $body.removeClass('error');
   });
 
+
+  $.fn.afterTransition = function (callback) {
+    var $this = $(this);
+
+    if (_.isFunction(callback)) {
+      $this.one('webkitTransitionEnd transitionend', function () {
+        callback.call($this);
+      });
+    }
+  }
 
   $.fn.grow = function (callback) {
     var $this = $(this)
@@ -157,12 +187,12 @@ requirejs({locale: navigator.language}, [
     $this.height(0);
     $this.height();
     $this.height(height);
-      $this.one('webkitTransitionEnd transitionend', function () {
-        $this.height('');
-        if (_.isFunction(callback)) {
-          callback.call($this);
-        }
-      });
+    $this.afterTransition(function () {
+      $this.height('');
+      if (_.isFunction(callback)) {
+        callback.call($this);
+      }
+    });
   };
 
   $.fn.shrink = function (callback) {
@@ -171,18 +201,29 @@ requirejs({locale: navigator.language}, [
     $this.height($this.height());
     $this.height();
     $this.height(0);
-    if (_.isFunction(callback)) {
-      $this.one('webkitTransitionEnd transitionend', function () {
-        callback.call($this);
-      });
-    }
+    $this.afterTransition(callback);
+  };
+
+
+  $.fn.place = function ($piece) {
+    $piece.addClass('placing');
+    $piece.appendTo(this);
+    $piece.height();
+    $piece.removeClass('placing');
+  };
+
+  $.fn.unplace = function ($piece) {
+    $piece.afterTransition(function () {
+      $piece.detach();
+    });
+    $piece.addClass('placing');
   };
 
   $.fn.transition = function (callback) {
     var $this = $(this);
 
     $this.addClass('animated');
-    $this.one('webkitTransitionEnd transitionend', function () {
+    $this.afterTransition(function () {
       $this.removeClass('animated');
       if (_.isFunction(callback)) {
         callback.call($this);

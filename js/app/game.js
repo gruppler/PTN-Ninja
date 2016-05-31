@@ -103,7 +103,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.prefix = move_group[1];
 
     if (move_group[2]) {
+
+      // Slide
       parts = move_group[2].match(r.grammar.slide_grouped);
+      this.print = this.print_slide;
       this.is_slide = true;
       this.player = player;
       this.move = move_group[2];
@@ -114,13 +117,18 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.square = this.col+this.row;
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
-      this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [1*parts[1] || 1],
+      this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
+      this.flattens = {};
       this.stone_text = parts[5] || '';
-      this.stone = this.stone_text || 'F';
       this.evaluation = move_group[4] || '';
-      this.print = this.print_slide;
+      if (_.sum(this.drops) != this.count) {
+        m.error(t.error.invalid_move({move: this.move}));
+      }
     } else if(move_group[3]) {
+
+      // Place
       parts = move_group[3].match(r.grammar.place_grouped);
+      this.print = this.print_place;
       this.is_slide = false;
       this.player = player;
       this.move = move_group[3];
@@ -130,7 +138,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
       this.evaluation = move_group[4] || '';
-      this.print = this.print_place;
     }
 
     if (
