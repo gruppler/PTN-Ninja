@@ -24,16 +24,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
 
     piece_class: _.template('piece c<%=col_i%> r<%=row_i%>'),
-    stone_class: _.template('stone player<%=player%> <%=stone%> <%=class_stack%> <%=class_top%>'),
+    stone_class: _.template('stone player<%=player%> <%=stone%> <%=stack_class%>'),
     piece: _.template(
       '<div class="<%=tpl.piece_class(obj)%>">'+
-        '<div class="captives">'+
-          '<%=_.map(captives, tpl.captive).join("")%>'+
-        '</div>'+
+        '<div class="captive player<%=player%>"></div>'+
         '<div class="<%=tpl.stone_class(obj)%>"></div>'+
       '</div>'
     ),
-    captive: _.template('<span class="captive player<%=player%>"></span>'),
 
     board: _.template(
       '<div class="board size-<%=size%>">'+
@@ -87,64 +84,71 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   Piece.prototype.render = function () {
     var that = this;
 
-    // Determine top/stack classes
-    this.class_stack = '';
-    if (this.captor && this.captor.stone != 'F' && this == this.captor.captives[0]) {
-      this.class_top = 'top';
-      this.class_stack = 'stack'+Math.min(4, this.captor.captives.length - 1);
-    } else {
-      this.class_top = this.is_top ? 'top' : '';
-    }
-
+    // Render/update captives
     if (this.captives.length) {
-      this.class_stack = 'stack'+Math.min(4, this.captives.length);
+      this.height = this.captives.length + 1;
 
-      // Render/update captives
       _.each(this.captives, function (captive, z) {
         captive.captor = that;
+        captive.height = that.captives.length - z;
+
         if (!captive.$view) {
           captive.render();
           that.board.$pieces.append(captive.$view);
         } else {
           captive.render();
         }
-        captive.$view.css('z-index', that.captives.length - z);
       });
+    } else if (!this.captor) {
+      this.height = 1;
     }
 
+    // Determine stack classes
+    if (this.captor) {
+      if (this.captor.stone != 'F' && this == this.captor.captives[0]) {
+        this.stack_class = 'stack'+Math.min(5, this.height);
+      } else {
+        this.stack_class = '';
+      }
+    } else {
+      this.stack_class = 'stack'+Math.min(5, this.height);
+    }
+
+    // Render or update view
     if (!this.$view) {
       this.$view = $(tpl.piece(this));
-      this.$view.css('z-index', this.captives.length + 1);
+      this.$view.css('z-index', this.height);
       this.$stone = this.$view.find('.stone');
-      this.$captives = this.$view.find('.captives');
+      this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
     } else {
-      if (!this.captor) {
-        if (
-          1*this.$view.css('z-index') <= this.captives.length + 1 ||
-          this.$view.hasClass('c'+this.col_i+' r'+this.row_i)
-        ) {
-          this.$view.css('z-index', this.captives.length + 1);
-        } else {
-          this.$view.afterTransition(function () {
-            that.$view.css('z-index', that.captives.length + 1);
-          });
-        }
+      if (
+        1*this.$view.css('z-index') <= this.height ||
+        this.$view.hasClass('c'+this.col_i+' r'+this.row_i)
+      ) {
+        // Update z-index now
+        this.$view.css('z-index', this.height);
+      } else {
+        // Update z-index after move
+        this.$view.afterTransition(function () {
+          that.$view.css('z-index', this.height);
+        });
       }
       this.$view[0].className = tpl.piece_class(this);
       this.$stone[0].className = tpl.stone_class(this);
       this.$stone.removeClass('F S').addClass(this.stone);
-      this.$captives.html(
-        _.invokeMap(this.captives, 'render_captive').join('')
-      );
     }
+
+    // Update captive indicators
+    if (this.captor || this.captives.length) {
+      this.$captive.addClass('visible');
+    } else {
+      this.$captive.removeClass('visible');
+    }
+    this.$captive.css('margin-bottom', (this.height - 1)*5 + '%');
 
     return this.$view;
   };
-
-  Piece.prototype.render_captive = function () {
-    return tpl.captive(this);
-  }
 
 
   // Square
@@ -456,7 +460,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.last = function () {
-    this.go_to_move(this.game.moves.length - 1);
+    this.go_to_move(this.game.moves.length);
   };
 
   Board.prototype.go_to_move = function (move) {
