@@ -447,7 +447,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.update = function() {
-    this.$pieces.empty().append(_.invokeMap(this.pieces, 'render'));
+    this.$pieces.empty().append(
+      _.invokeMap(
+        _.filter(this.pieces, { captor: null }),
+        'render'
+      )
+    );
   };
 
   Board.prototype.do_ply = function (is_silent) {
