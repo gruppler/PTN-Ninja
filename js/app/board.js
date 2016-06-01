@@ -98,8 +98,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
           captive.render();
         }
       });
+      this.is_immovable = false;
     } else if (!this.captor) {
       this.height = 1;
+      this.is_immovable = false;
     }
 
     // Determine stack classes
