@@ -66,10 +66,10 @@
     }
 
     .stone, .captive {
-      &.player1 {
+      &.p1 {
         background-color: $primary-color-lighter;
       }
-      &.player2 {
+      &.p2 {
         background-color: $primary-color-darker;
       }
     }
@@ -86,11 +86,11 @@
         box-shadow $time-smooth ease-out;
 
       &.F {
-        &.stack1 { box-shadow: $shadow1; }
-        &.stack2 { box-shadow: $shadow2; }
-        &.stack3 { box-shadow: $shadow3; }
-        &.stack4 { box-shadow: $shadow4; }
-        &.stack5 { box-shadow: $shadow5; }
+        &.h1 { box-shadow: $shadow1; }
+        &.h2 { box-shadow: $shadow2; }
+        &.h3 { box-shadow: $shadow3; }
+        &.h4 { box-shadow: $shadow4; }
+        &.h5 { box-shadow: $shadow5; }
       }
 
       &.S {

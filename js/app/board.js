@@ -24,10 +24,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
 
     piece_class: _.template('piece c<%=col_i%> r<%=row_i%>'),
-    stone_class: _.template('stone player<%=player%> <%=stone%> <%=stack_class%>'),
+    stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
     piece: _.template(
       '<div class="<%=tpl.piece_class(obj)%>">'+
-        '<div class="captive player<%=player%>"></div>'+
+        '<div class="captive p<%=player%>"></div>'+
         '<div class="<%=tpl.stone_class(obj)%>"></div>'+
       '</div>'
     ),
@@ -57,7 +57,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.stone = stone || 'F';
     this.col_i = col_i;
     this.row_i = row_i;
-    this.is_top = true;
     this.stack = '';
     this.captives = captives || [];
 
@@ -67,7 +66,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   Piece.prototype.set_captives = function (captives) {
     var that = this;
 
-    this.is_top = true;
     this.captor = null;
     this.captives = captives || [];
 
@@ -76,7 +74,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       captive.col_i = that.col_i;
       captive.row_i = that.row_i;
       captive.stone = 'F';
-      captive.is_top = false;
       captive.captives.length = 0;
     });
   };
@@ -91,6 +88,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       _.each(this.captives, function (captive, z) {
         captive.captor = that;
         captive.height = that.captives.length - z;
+        captive.is_immovable = z >= that.board.size - 1;
 
         if (!captive.$view) {
           captive.render();
@@ -104,14 +102,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     // Determine stack classes
-    if (this.captor) {
-      if (this.captor.stone != 'F' && this == this.captor.captives[0]) {
-        this.stack_class = 'stack'+Math.min(5, this.height);
-      } else {
-        this.stack_class = '';
-      }
-    } else {
-      this.stack_class = 'stack'+Math.min(5, this.height);
+    this.height_class = 'h'+Math.min(5, this.height);
+    if (
+      this.captor &&
+      (this.captor.stone == 'F' || this != this.captor.captives[0])
+    ) {
+      this.height_class = '';
     }
 
     // Render or update view
@@ -142,6 +138,9 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     // Update captive indicators
     if (this.captor || this.captives.length) {
       this.$captive.addClass('visible');
+      if ((this.captor || this).captives.length >= this.board.size && !this.is_immovable) {
+        this.height++;
+      }
     } else {
       this.$captive.removeClass('visible');
     }
