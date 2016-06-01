@@ -94,10 +94,17 @@
       }
 
       &.S {
-        transform: rotate(-45deg);
         width: 18.75%;
         margin-left: 40.625%;
-        box-shadow: -3px 3px 10px 0 rgba(0,0,0,0.14), -1px 1px 18px 0 rgba(0,0,0,0.12), -2px 2px 5px -1px rgba(0,0,0,0.4);
+
+        &.p1 {
+          transform: rotate(-45deg);
+          box-shadow: -3px 3px 10px 0 rgba(0,0,0,0.14), -1px 1px 18px 0 rgba(0,0,0,0.12), -2px 2px 5px -1px rgba(0,0,0,0.4);
+        }
+        &.p2 {
+          transform: rotate(45deg);
+          box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.14), 1px 1px 18px 0 rgba(0,0,0,0.12), 2px 2px 5px -1px rgba(0,0,0,0.4);
+        }
       }
 
       &.C {
