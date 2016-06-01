@@ -2,7 +2,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Ply, Linenum, Turn, Tag, Game;
+  var Comment, Result, Ply, Linenum, Move, Tag, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -203,30 +203,38 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  Turn = function (string, game) {
-    var parts = string.match(r.grammar.move_grouped);
+  // Move
+
+  Move = function (string, game) {
+    var parts = string.match(r.grammar.move_grouped)
+      , first_player = 1
+      , second_player = 2;
 
     this.linenum = new Linenum(parts[1]);
+
+    if(game.config.tps && this.linenum.value == game.config.tps.move){
+      first_player = game.config.tps.player;
+      second_player = first_player == 1 ? 2 : 1;
+      if (this.linenum.value == 1) {
+        first_player = second_player;
+        second_player = first_player == 1 ? 2 : 1;
+      }
+    } else if (this.linenum.value == 1) {
+      first_player = 2;
+      second_player = 1;
+    }
 
     this.comments1 = parse_comments(parts[2]);
     this.comments2 = parse_comments(parts[4]);
     this.comments3 = parse_comments(parts[6]);
     this.comments4 = parse_comments(parts[8]);
 
-    this.ply1 = new Ply(
-      parts[3],
-      this.linenum.value == 1 ? 2: 1,
-      game
-    );
+    this.ply1 = new Ply(parts[3], first_player, game);
     this.ply1.comments_before = this.comments1;
     this.ply1.comments = this.comments2;
 
     if (parts[5]) {
-      this.ply2 = new Ply(
-        parts[5],
-        this.linenum.value == 1 ? 1 : 2,
-        game
-      );
+      this.ply2 = new Ply(parts[5], second_player, game);
       this.ply2.comments = this.comments3;
     } else {
       this.ply2 = null;
@@ -242,7 +250,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Turn.prototype.print = function(){
+  Move.prototype.print = function(){
     var output = '<span class="move">';
 
     output += this.linenum.print();
@@ -423,6 +431,21 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
 
+    // TPS
+    if (this.config.tps) {
+      tps = this.config.tps.match(r.grammar.tps_grouped);
+      if (!tps) {
+        m.error(t.error.invalid_tag_value({tag: t.TPS, value: this.config.tps}));
+        return false;
+      } else {
+        this.config.tps = {
+          board: _.invokeMap(tps[1].split(/\//g), 'split', /,/g),
+          player: 1*tps[2],
+          move: 1*tps[3]
+        };
+      }
+    }
+
     // Body
 
     body = body.match(r.grammar.body);
@@ -434,7 +457,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     body = body[0].match(r.grammar.move);
     if (body) {
       for (var i = 0; i < body.length; i++) {
-        this.moves[i] = new Turn(body[i], this);
+        this.moves[i] = new Move(body[i], this);
 
         this.moves[i].ply1.id = this.plys.length;
         this.plys.push(this.moves[i].ply1);

@@ -23,7 +23,7 @@ define(['lodash'], function (_) {
 
   var grammar = {
     col: '(?:x[1-9]?|[12]+[SC]?)',
-    row: '(?:<col>(?:,<col>){2,8})',
+    row: '(?:<col>(?:,<col>){0,8})',
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
     tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
 

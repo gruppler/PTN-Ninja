@@ -3,7 +3,8 @@
 define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   var Board, Square, Piece;
-  var m = new Messages('board');
+  var m = new Messages('board')
+    , m_parse = new Messages('parse');
 
   var opposite_direction = {
     '+': '-',
@@ -90,7 +91,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         captive.height = that.captives.length - z;
         captive.is_immovable = z >= that.board.size - 1;
 
-        if (!captive.$view) {
+        if (!captive.$view || !captive.$view.parent('.pieces').length) {
           captive.render();
           that.board.$pieces.append(captive.$view);
         } else {
@@ -165,6 +166,30 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this;
   };
 
+  Square.prototype.parse = function (tps) {
+    var that = this
+      , tps, player, stone = 'F';
+
+    tps = tps.split('').reverse();
+
+    if (!/\d/.test(tps[0])) {
+      stone = tps.shift();
+    }
+
+    player = tps.shift();
+
+    return this.set_piece(
+      new Piece(this.board, player, stone, this.col_i, this.row_i,
+        _.map(tps, function (player) {
+          return new Piece(that.board, player);
+        })
+      ),
+      false, true
+    );
+  };
+
+  Square.prototype.to_tps = function () {};
+
   Square.prototype.set_piece = function (piece, captives, is_silent) {
     this.piece = piece || null;
 
@@ -178,6 +203,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         piece.render();
       }
     }
+
+    return this.piece;
   };
 
   Square.prototype.render = function () {
@@ -303,10 +330,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return true;
   };
 
-  Square.prototype.parse = function (tps) {};
-
-  Square.prototype.to_tps = function () {};
-
 
   // Board
 
@@ -316,6 +339,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.squares = {};
     this.rows = [];
     this.cols = [];
+    this.pieces = [];
     this.callbacks = [];
     this.tpl = tpl;
 
@@ -331,7 +355,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.init = function (game) {
-    var row, col, a = 'a'.charCodeAt(0), col_letter, square;
+    var i, j, row, col, a = 'a'.charCodeAt(0), col_letter, square, piece, tps;
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
@@ -339,6 +363,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
     this.ply = 0;
+    this.pieces = [];
+    this.initial_pieces = [];
 
     this.cols.length = 0;
     for (col = 0; col < this.size; col++) {
@@ -368,16 +394,35 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     if (this.tps) {
-      console.log(this.tps);
+      if (this.tps.board.length != this.size) {
+        m_parse.error(t.error.invalid_TPS_dimensions);
+        return false;
+      }
+      for (i = 0, row = this.size - 1; row >= 0; i++, row--) {
+        for (col = 0, j = 0; j < this.tps.board[i].length; col++, j++) {
+          tps = this.tps.board[i][j];
+          if (!tps || col >= this.size) {
+            m_parse.error(t.error.invalid_TPS_dimensions);
+            return false;
+          }
+
+          if (tps[0] == 'x') {
+            if (tps[1]) {
+              col += 1*tps[1] - 1;
+            }
+          } else {
+            this.initial_pieces.push(
+              this.squares[this.cols[col]+this.rows[row]].parse(tps)
+            );
+          }
+        }
+      }
+      this.tps.board;
     }
 
     _.invokeMap(this.callbacks, 'call', this, this);
 
     return true;
-  };
-
-  Board.prototype.from_tps = function (tps) {
-    this.pieces.length = 0;
   };
 
   Board.prototype.to_tps = function () {
@@ -388,12 +433,14 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.$view = $(tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.pieces = [];
+    this.pieces = this.initial_pieces;
 
     this.$squares.append.apply(
       this.$squares,
       _.invokeMap(this.squares, 'render')
     );
+
+    this.update();
 
     return this.$view;
   };

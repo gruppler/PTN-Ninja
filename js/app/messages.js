@@ -18,7 +18,10 @@ define(['jquery', 'lodash'], function ($, _) {
   Messages = function(group) {
     this.enabled = true;
     this.group = group || 'general';
-    this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+    this.$messages = $messages.children('.messages-'+group);
+    if (!this.$messages.length) {
+      this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+    }
 
     return this;
   };
