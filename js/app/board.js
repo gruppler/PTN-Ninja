@@ -71,6 +71,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.captives = captives || [];
 
     _.each(this.captives, function (captive) {
+      captive.captor = that;
       captive.square = that.square;
       captive.col_i = that.col_i;
       captive.row_i = that.row_i;
@@ -87,7 +88,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.height = this.captives.length + 1;
 
       _.each(this.captives, function (captive, z) {
-        captive.captor = that;
         captive.height = that.captives.length - z;
         captive.is_immovable = z >= that.board.size - 1;
 
