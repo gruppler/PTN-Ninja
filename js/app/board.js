@@ -413,14 +413,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
               col += 1*tps[1] - 1;
             }
           } else {
-            this.initial_pieces.push(
-              this.squares[this.cols[col]+this.rows[row]].parse(tps)
-            );
+            this.squares[this.cols[col]+this.rows[row]].parse(tps);
           }
         }
       }
       this.tps.board;
     }
+    this.initial_pieces = this.pieces.concat();
 
     _.invokeMap(this.callbacks, 'call', this, this);
 
