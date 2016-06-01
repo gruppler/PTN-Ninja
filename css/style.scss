@@ -73,7 +73,7 @@
     overflow: hidden;
   }
 
-  .tag, .comment, .turn > * {
+  .tag, .comment, .move > * {
     transition: opacity $time-smooth $natural;
 
     body.playmode & {
@@ -84,10 +84,10 @@
     }
   }
 
-  .move {
+  .ply {
     transition: all $time-quick ease-out;
   }
-  body.playmode.ptn & .move {
+  body.playmode.ptn & .ply {
     cursor: pointer;
 
     &:hover {

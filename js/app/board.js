@@ -125,7 +125,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         // Update z-index now
         this.$view.css('z-index', this.height);
       } else {
-        // Update z-index after move
+        // Update z-index after ply
         this.$view.afterTransition(function () {
           that.$view.css('z-index', this.height);
         });
@@ -187,16 +187,16 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this.$view;
   };
 
-  Square.prototype.place = function (move, is_silent) {
+  Square.prototype.place = function (ply, is_silent) {
     if (this.piece) {
-      m.error(t.error.illegal_move({ move: move.move }));
+      m.error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
     this.set_piece(new Piece(
       this.board,
-      move.player,
-      move.stone,
+      ply.player,
+      ply.stone,
       this.col_i,
       this.row_i
     ), false, true);
@@ -208,7 +208,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return true;
   };
 
-  Square.prototype.undo_place = function (move, is_silent) {
+  Square.prototype.undo_place = function (ply, is_silent) {
     if (this.piece) {
       if (is_silent !== true && this.piece.$view) {
         this.board.$pieces.unplace(this.piece.$view);
@@ -221,31 +221,31 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
   };
 
-  Square.prototype.slide = function (move, is_silent) {
+  Square.prototype.slide = function (ply, is_silent) {
     var square = this
       , piece = this.piece
       , moving_stack, remaining_stack, i;
 
     function error() {
-      m.error(t.error.illegal_move({ move: move.move }));
+      m.error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
     if (
       !piece ||
-      move.count > this.board.size ||
-      piece.captives.length < move.count - 1
+      ply.count > this.board.size ||
+      piece.captives.length < ply.count - 1
     ) {
       return error();
     }
 
-    remaining_stack = piece.captives.splice(move.count - 1);
+    remaining_stack = piece.captives.splice(ply.count - 1);
     square.set_piece(remaining_stack[0], remaining_stack.slice(1), is_silent);
     moving_stack = [piece].concat(piece.captives);
 
-    for (i = 0; i < move.drops.length; i++) {
-      square = square.neighbors[move.direction];
-      remaining_stack = moving_stack.splice(-move.drops[i]);
+    for (i = 0; i < ply.drops.length; i++) {
+      square = square.neighbors[ply.direction];
+      remaining_stack = moving_stack.splice(-ply.drops[i]);
 
       if (square.piece) {
         if (square.piece.stone == 'C') {
@@ -255,9 +255,9 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
             return error();
           }
 
-          move.flattens[i] = true;
+          ply.flattens[i] = true;
         } else {
-          move.flattens[i] = false;
+          ply.flattens[i] = false;
         }
 
         remaining_stack.push(square.piece);
@@ -270,24 +270,24 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return true;
   };
 
-  Square.prototype.undo_slide = function (move, is_silent) {
+  Square.prototype.undo_slide = function (ply, is_silent) {
     var square = this
-      , backwards = opposite_direction[move.direction]
+      , backwards = opposite_direction[ply.direction]
       , moving_stack = []
       , remaining_stack, i;
 
-    for (i = 0; i < move.drops.length; i++) {
-      square = square.neighbors[move.direction];
+    for (i = 0; i < ply.drops.length; i++) {
+      square = square.neighbors[ply.direction];
     }
 
-    for (i = move.drops.length - 1; i >= 0; i--) {
+    for (i = ply.drops.length - 1; i >= 0; i--) {
       moving_stack.push(square.piece);
       moving_stack = moving_stack.concat(
-        square.piece.captives.slice(0, move.drops[i] - 1)
+        square.piece.captives.slice(0, ply.drops[i] - 1)
       );
-      remaining_stack = square.piece.captives.slice(move.drops[i] - 1);
+      remaining_stack = square.piece.captives.slice(ply.drops[i] - 1);
 
-      if (remaining_stack[0] && move.flattens[i]) {
+      if (remaining_stack[0] && ply.flattens[i]) {
         remaining_stack[0].stone = 'S';
       }
       square.set_piece(remaining_stack[0], remaining_stack.slice(1), is_silent);
@@ -311,7 +311,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   // Board
 
   Board = function (game) {
-    this.move = 0;
+    this.ply = 0;
     this.size = 5;
     this.squares = {};
     this.rows = [];
@@ -338,7 +338,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.game = game;
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
-    this.move = 0;
+    this.ply = 0;
 
     this.cols.length = 0;
     for (col = 0; col < this.size; col++) {
@@ -367,9 +367,17 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       }
     }
 
+    if (this.tps) {
+      console.log(this.tps);
+    }
+
     _.invokeMap(this.callbacks, 'call', this, this);
 
     return true;
+  };
+
+  Board.prototype.from_tps = function (tps) {
+    this.pieces.length = 0;
   };
 
   Board.prototype.to_tps = function () {
@@ -394,37 +402,37 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.$pieces.empty().append(_.invokeMap(this.pieces, 'render'));
   };
 
-  Board.prototype.do_move = function (is_silent) {
-    var move, square, piece;
+  Board.prototype.do_ply = function (is_silent) {
+    var ply, square, piece;
 
-    if (this.move >= this.game.moves.length || this.move < 0) {
+    if (this.ply >= this.game.plys.length || this.ply < 0) {
       return false;
     }
 
-    move = this.game.moves[this.move++];
-    square = this.squares[move.square];
+    ply = this.game.plys[this.ply++];
+    square = this.squares[ply.square];
 
-    if (move.is_slide) {
-      return square.slide(move, is_silent);
+    if (ply.is_slide) {
+      return square.slide(ply, is_silent);
     } else {
-      return square.place(move, is_silent);
+      return square.place(ply, is_silent);
     }
   };
 
-  Board.prototype.undo_move = function (is_silent) {
-    var move, square, piece;
+  Board.prototype.undo_ply = function (is_silent) {
+    var ply, square, piece;
 
-    if (this.move > this.game.moves.length || this.move <= 0) {
+    if (this.ply > this.game.plys.length || this.ply <= 0) {
       return false;
     }
 
-    move = this.game.moves[--this.move];
-    square = this.squares[move.square];
+    ply = this.game.plys[--this.ply];
+    square = this.squares[ply.square];
 
-    if (move.is_slide) {
-      return square.undo_slide(move, is_silent);
+    if (ply.is_slide) {
+      return square.undo_slide(ply, is_silent);
     } else {
-      return square.undo_place(move);
+      return square.undo_place(ply);
     }
   };
 
@@ -447,26 +455,26 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.prev = function () {
-    this.undo_move();
+    this.undo_ply();
   };
 
   Board.prototype.next = function () {
-    this.do_move();
+    this.do_ply();
   };
 
   Board.prototype.first = function () {
-    this.go_to_move(0);
+    this.go_to_ply(0);
   };
 
   Board.prototype.last = function () {
-    this.go_to_move(this.game.moves.length);
+    this.go_to_ply(this.game.plys.length);
   };
 
-  Board.prototype.go_to_move = function (move) {
-    if (move > this.move) {
-      while (this.move < move && this.do_move(true)) {}
-    } else if (move < this.move) {
-      while (this.move >= move && this.undo_move(true)) {}
+  Board.prototype.go_to_ply = function (ply) {
+    if (ply > this.ply) {
+      while (this.ply < ply && this.do_ply(true)) {}
+    } else if (ply < this.ply) {
+      while (this.ply >= ply && this.undo_ply(true)) {}
     }
     this.update();
   };

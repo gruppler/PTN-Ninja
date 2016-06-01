@@ -2,7 +2,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Move, Linenum, Turn, Tag, Game;
+  var Comment, Result, Ply, Linenum, Turn, Tag, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -94,22 +94,22 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  // Move
+  // Ply
 
-  Move = function (string, player, game) {
-    var move_group = string.match(r.grammar.move_grouped)
+  Ply = function (string, player, game) {
+    var ply_group = string.match(r.grammar.ply_grouped)
       , parts;
 
-    this.prefix = move_group[1];
+    this.prefix = ply_group[1];
 
-    if (move_group[2]) {
+    if (ply_group[2]) {
 
       // Slide
-      parts = move_group[2].match(r.grammar.slide_grouped);
+      parts = ply_group[2].match(r.grammar.slide_grouped);
       this.print = this.print_slide;
       this.is_slide = true;
       this.player = player;
-      this.move = move_group[2];
+      this.ply = ply_group[2];
       this.count_text = parts[1] || '';
       this.count = 1*this.count_text || 1;
       this.col = parts[2][0];
@@ -120,24 +120,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
       this.flattens = {};
       this.stone_text = parts[5] || '';
-      this.evaluation = move_group[4] || '';
+      this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
-        m.error(t.error.invalid_move({move: this.move}));
+        m.error(t.error.invalid_ply({ply: this.ply}));
       }
-    } else if(move_group[3]) {
+    } else if(ply_group[3]) {
 
       // Place
-      parts = move_group[3].match(r.grammar.place_grouped);
+      parts = ply_group[3].match(r.grammar.place_grouped);
       this.print = this.print_place;
       this.is_slide = false;
       this.player = player;
-      this.move = move_group[3];
+      this.ply = ply_group[3];
       this.stone_text = parts[1] || '';
       this.stone = this.stone_text || 'F';
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
-      this.evaluation = move_group[4] || '';
+      this.evaluation = ply_group[4] || '';
     }
 
     if (
@@ -151,9 +151,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Move.prototype.print_place = _.template(
+  Ply.prototype.print_place = _.template(
     '<%=this.prefix%>'+
-    '<span class="move place player<%=this.player%>" data-move="<%=this.id%>">'+
+    '<span class="ply place player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -165,9 +165,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     '</span>'
   );
 
-  Move.prototype.print_slide = _.template(
+  Ply.prototype.print_slide = _.template(
     '<%=this.prefix%>'+
-    '<span class="move slide player<%=this.player%>" data-move="<%=this.id%>">'+
+    '<span class="ply slide player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -204,7 +204,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
 
   Turn = function (string, game) {
-    var parts = string.match(r.grammar.turn_grouped);
+    var parts = string.match(r.grammar.move_grouped);
 
     this.linenum = new Linenum(parts[1]);
 
@@ -213,23 +213,23 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.comments3 = parse_comments(parts[6]);
     this.comments4 = parse_comments(parts[8]);
 
-    this.move1 = new Move(
+    this.ply1 = new Ply(
       parts[3],
       this.linenum.value == 1 ? 2: 1,
       game
     );
-    this.move1.comments_before = this.comments1;
-    this.move1.comments = this.comments2;
+    this.ply1.comments_before = this.comments1;
+    this.ply1.comments = this.comments2;
 
     if (parts[5]) {
-      this.move2 = new Move(
+      this.ply2 = new Ply(
         parts[5],
         this.linenum.value == 1 ? 1 : 2,
         game
       );
-      this.move2.comments = this.comments3;
+      this.ply2.comments = this.comments3;
     } else {
-      this.move2 = null;
+      this.ply2 = null;
     }
 
     if (parts[7]) {
@@ -243,18 +243,18 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   Turn.prototype.print = function(){
-    var output = '<span class="turn">';
+    var output = '<span class="move">';
 
     output += this.linenum.print();
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print').join('');
     }
-    output += this.move1.print();
+    output += this.ply1.print();
     if (this.comments2) {
       output += _.invokeMap(this.comments2, 'print').join('');
     }
-    if (this.move2) {
-      output += this.move2.print();
+    if (this.ply2) {
+      output += this.ply2.print();
     }
     if (this.comments3) {
       output += _.invokeMap(this.comments3, 'print').join('');
@@ -340,8 +340,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = false;
     this.config = {};
     this.tags = [];
-    this.turns = [];
     this.moves = [];
+    this.plys = [];
     this.ptn = '';
     this.callbacks_start = [];
     this.callbacks_end = [];
@@ -362,7 +362,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   Game.prototype.parse = function (string, is_compressed) {
-    var decompressed, header, body, i, file, tag, missing_tags;
+    var decompressed, header, body, i, file, tag, missing_tags, tps;
 
     if (is_compressed) {
       decompressed = decompress(string);
@@ -383,8 +383,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.is_valid = true;
     this.tags.length = 0;
-    this.turns.length = 0;
     this.moves.length = 0;
+    this.plys.length = 0;
     m.clear('error');
 
     file = this.ptn.match(r.grammar.ptn_grouped);
@@ -408,6 +408,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
     header = header[0].match(r.grammar.tag);
+    this.config = {};
     for (var i = 0; i < header.length; i++) {
       this.tags[i] = new Tag(header[i], this);
       this.config[this.tags[i].key] = this.tags[i].value;
@@ -430,17 +431,17 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.is_valid = false;
       return false;
     }
-    body = body[0].match(r.grammar.turn);
+    body = body[0].match(r.grammar.move);
     if (body) {
       for (var i = 0; i < body.length; i++) {
-        this.turns[i] = new Turn(body[i], this);
+        this.moves[i] = new Turn(body[i], this);
 
-        this.turns[i].move1.id = this.moves.length;
-        this.moves.push(this.turns[i].move1);
+        this.moves[i].ply1.id = this.plys.length;
+        this.plys.push(this.moves[i].ply1);
 
-        if (this.turns[i].move2) {
-          this.turns[i].move2.id = this.moves.length;
-          this.moves.push(this.turns[i].move2);
+        if (this.moves[i].ply2) {
+          this.moves[i].ply2.id = this.plys.length;
+          this.plys.push(this.moves[i].ply2);
         }
       }
     }
@@ -456,7 +457,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     output += _.invokeMap(this.tags, 'print').join('');
     output += this.comment ? this.comment.print() : '';
-    output += _.invokeMap(this.turns, 'print').join('');
+    output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
 
     return output;

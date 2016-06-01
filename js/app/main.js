@@ -129,11 +129,11 @@ requirejs({locale: navigator.language}, [
     $viewer.empty().append(board.render());
   });
 
-  $('#controls button.move-first').click(board.first);
-  $('#controls button.move-prev').click(board.prev);
+  $('#controls button.first').click(board.first);
+  $('#controls button.prev').click(board.prev);
   $('#controls button.play').click(board.playpause);
-  $('#controls button.move-next').click(board.next);
-  $('#controls button.move-last').click(board.last);
+  $('#controls button.next').click(board.next);
+  $('#controls button.last').click(board.last);
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $window.on('drop', function(event) {

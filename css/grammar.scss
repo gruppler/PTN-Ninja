@@ -63,14 +63,14 @@ $purple: #BA68C8;
     }
   }
 
-  .turn {
+  .move {
     .linenum {
       color: $medium-black;
       font-weight: 400
     }
   }
 
-  .move {
+  .ply {
     font-weight: 700;
 
     &.player1 .stone {

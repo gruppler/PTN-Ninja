@@ -25,6 +25,7 @@ define(['lodash'], function (_) {
     col: '(?:x[1-9]?|[12]+[SC]?)',
     row: '(?:<col>(?:,<col>){2,8})',
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
+    tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
 
     tag: '(?:\\s*\\[[^\\[\\]]+\\])',
     tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
@@ -44,15 +45,15 @@ define(['lodash'], function (_) {
     result: '(?:\\s*(?:R-0|0-R|F-0|0-F|1\\/2-1\\/2))',
     result_grouped: '(\\s*)(R-0|0-R|F-0|0-F|1\\/2-1\\/2)',
     evaluation: '[?!\']*',
-    move: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
-    move_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
+    ply: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
+    ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
     linenum: '\\s+\\d+\\.',
     linenum_grouped: '(\\s+)(\\d+\\.)',
-    turn: '(?:<linenum><comment><move><comment><move>?<comment><result>?<comment>)',
-    turn_grouped: '(<linenum>)(<comment>)(<move>)(<comment>)(<move>?)(<comment>)(<result>?)(<comment>)',
+    move: '(?:<linenum><comment><ply><comment><ply>?<comment><result>?<comment>)',
+    move_grouped: '(<linenum>)(<comment>)(<ply>)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)',
 
     header: '^<tag>+$',
-    body: '^<turn>*\\s*$',
+    body: '^<move>*\\s*$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)(\\s*)$'
   };
 
