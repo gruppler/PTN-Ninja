@@ -130,7 +130,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       } else {
         // Update z-index after ply
         this.$view.afterTransition(function () {
-          that.$view.css('z-index', this.height);
+          that.$view.css('z-index', that.height);
         });
       }
       this.$view[0].className = tpl.piece_class(this);
