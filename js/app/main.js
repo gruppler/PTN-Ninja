@@ -151,6 +151,7 @@ requirejs({locale: navigator.language}, [
       if (file && /.ptn$/i.test(file.name)) {
         var reader = new FileReader();
         reader.onload = function (event) {
+          board.ply = 0;
           game.parse(event.target.result);
           bililiteRange($ptn[0]).undo(0);
           location.hash = game.ptn_compressed;
@@ -164,6 +165,7 @@ requirejs({locale: navigator.language}, [
       event.preventDefault();
       event.stopPropagation();
     }).on('hashchange', function () {
+      board.ply = 0;
       game.parse(location.hash.substr(1) || default_ptn, true);
       bililiteRange($ptn[0]).undo(0);
     });
@@ -259,6 +261,7 @@ requirejs({locale: navigator.language}, [
     return game.parse($ptn.text());
   });
 
+  board.ply = 0;
   game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
   bililiteRange($ptn[0]).undo(0);
 
