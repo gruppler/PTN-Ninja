@@ -363,10 +363,12 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   Game.prototype.on_parse_start = function (fn) {
     this.callbacks_start.push(fn);
+    return this;
   };
 
   Game.prototype.on_parse_end = function (fn) {
     this.callbacks_end.push(fn);
+    return this;
   };
 
   Game.prototype.parse = function (string, is_compressed) {

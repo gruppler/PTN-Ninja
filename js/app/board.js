@@ -350,7 +350,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.rows = [];
     this.cols = [];
     this.pieces = [];
-    this.callbacks = [];
+    this.init_callbacks = [];
+    this.ply_callbacks = [];
     this.tpl = tpl;
 
     if (game) {
@@ -361,7 +362,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.on_init = function (fn) {
-    this.callbacks.push(fn);
+    this.init_callbacks.push(fn);
+    return this;
+  };
+
+  Board.prototype.on_ply = function (fn) {
+    this.ply_callbacks.push(fn);
+    return this;
   };
 
   Board.prototype.init = function (game) {
@@ -430,7 +437,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
     this.initial_pieces = this.pieces.concat();
 
-    _.invokeMap(this.callbacks, 'call', this, this);
+    _.invokeMap(this.init_callbacks, 'call', this, this);
 
     return true;
   };
@@ -473,6 +480,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return false;
     }
 
+    _.invokeMap(this.ply_callbacks, 'call', this, this.ply);
+
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
 
@@ -492,6 +501,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     ply = this.game.plys[--this.ply];
     square = this.squares[ply.square];
+
+    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
       return square.undo_slide(ply, is_silent);

@@ -129,6 +129,9 @@ requirejs({locale: navigator.language}, [
 
   board.on_init(function () {
     $viewer.empty().append(board.render());
+  }).on_ply(function (ply) {
+    $ptn.find('.ply').removeClass('active')
+      .filter('[data-ply="'+ply+'"]').addClass('active');
   });
 
   $('#controls button.first').click(board.first);
