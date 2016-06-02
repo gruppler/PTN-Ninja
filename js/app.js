@@ -18,6 +18,9 @@ requirejs.config({
     },
     'bililiteRange.fancytext': {
       deps: ['bililiteRange']
+    },
+    'jquery.keymap': {
+      deps: ['jquery']
     }
   }
 });

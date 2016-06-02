@@ -7,6 +7,7 @@ requirejs({locale: navigator.language}, [
   'app/board',
   'lodash',
   'jquery',
+  'jquery.keymap',
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
@@ -147,6 +148,7 @@ requirejs({locale: navigator.language}, [
         var reader = new FileReader();
         reader.onload = function (event) {
           game.parse(event.target.result);
+          bililiteRange($ptn[0]).undo(0);
           location.hash = game.ptn_compressed;
         }
         reader.readAsText(file);
@@ -159,6 +161,7 @@ requirejs({locale: navigator.language}, [
       event.stopPropagation();
     }).on('hashchange', function () {
       game.parse(location.hash.substr(1) || default_ptn, true);
+      bililiteRange($ptn[0]).undo(0);
     });
   }
 
@@ -236,11 +239,11 @@ requirejs({locale: navigator.language}, [
 
   bililiteRange.fancyText($ptn[0], function () {
     if ($ptn.text().trim()) {
+      bililiteRange($ptn[0]).undo(0);
       return game.parse($ptn.text());
     }
     return false;
   });
-  bililiteRange($ptn[0]).undo(0);
 
   game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
   if (location.hash && !$body.hasClass('error')) {
@@ -248,11 +251,14 @@ requirejs({locale: navigator.language}, [
   }
 
   $ptn.on('keydown', function (event) {
-    if (event.ctrlKey && event.which == 90) {
-      if (event.shiftKey) {
-        bililiteRange.redo(event);
-      } else {
-        bililiteRange.undo(event);
+    if ($body.hasClass('editmode')) {
+      switch (event.keymap) {
+        case '^z':
+          bililiteRange.undo(event);
+          break;
+        case '^Z':
+          bililiteRange.redo(event);
+          break;
       }
     }
   });
