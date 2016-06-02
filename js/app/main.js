@@ -184,7 +184,11 @@ requirejs({locale: navigator.language}, [
       $this.one('webkitTransitionEnd transitionend', function () {
         callback.call($this);
       });
+    } else if (_.isUndefined(callback)) {
+      $this.trigger('transitionend');
     }
+
+    return this;
   }
 
   $.fn.grow = function (callback) {
@@ -200,6 +204,8 @@ requirejs({locale: navigator.language}, [
         callback.call($this);
       }
     });
+
+    return this;
   };
 
   $.fn.shrink = function (callback) {
@@ -209,6 +215,8 @@ requirejs({locale: navigator.language}, [
     $this.height();
     $this.height(0);
     $this.afterTransition(callback);
+
+    return this;
   };
 
 
@@ -217,6 +225,8 @@ requirejs({locale: navigator.language}, [
     $piece.appendTo(this);
     $piece.height();
     $piece.removeClass('placing');
+
+    return this;
   };
 
   $.fn.unplace = function ($piece) {
@@ -224,6 +234,8 @@ requirejs({locale: navigator.language}, [
       $piece.detach();
     });
     $piece.addClass('placing');
+
+    return this;
   };
 
   $.fn.transition = function (callback) {
@@ -236,6 +248,8 @@ requirejs({locale: navigator.language}, [
         callback.call($this);
       }
     });
+
+    return this;
   };
 
 

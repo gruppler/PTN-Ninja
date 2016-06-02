@@ -126,7 +126,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         this.$view.hasClass('c'+this.col_i+' r'+this.row_i)
       ) {
         // Update z-index now
-        this.$view.css('z-index', this.height);
+        this.$view.afterTransition().css('z-index', this.height);
       } else {
         // Update z-index after ply
         this.$view.afterTransition(function () {
