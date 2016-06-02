@@ -516,20 +516,22 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.first = function () {
-    this.go_to_ply(0);
+    this.go_to_ply(0, true);
   };
 
   Board.prototype.last = function () {
-    this.go_to_ply(this.game.plys.length);
+    this.go_to_ply(this.game.plys.length, true);
   };
 
-  Board.prototype.go_to_ply = function (ply) {
+  Board.prototype.go_to_ply = function (ply, is_silent) {
     if (ply > this.ply) {
-      while (this.ply < ply && this.do_ply(true)) {}
+      while (this.ply < ply && this.do_ply(is_silent)) {}
     } else if (ply < this.ply) {
-      while (this.ply >= ply && this.undo_ply(true)) {}
+      while (this.ply > ply && this.undo_ply(is_silent)) {}
     }
-    this.update();
+    if (is_silent) {
+      this.update();
+    }
   };
 
   return Board;

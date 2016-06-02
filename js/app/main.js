@@ -263,6 +263,15 @@ requirejs({locale: navigator.language}, [
           break;
       }
     }
+  }).on('keyup mouseup', function (event) {
+    if ($body.hasClass('editmode')) {
+      var $focus = $(getSelection().focusNode)
+        , ply = $focus.add($focus.next()).closest('.ply').data('ply');
+
+      if (!_.isUndefined(ply)) {
+        board.go_to_ply(ply + 1);
+      }
+    }
   });
 
 });
