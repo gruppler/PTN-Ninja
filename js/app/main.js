@@ -238,14 +238,12 @@ requirejs({locale: navigator.language}, [
   // Initialize
 
   bililiteRange.fancyText($ptn[0], function () {
-    if ($ptn.text().trim()) {
-      bililiteRange($ptn[0]).undo(0);
-      return game.parse($ptn.text());
-    }
-    return false;
+    return game.parse($ptn.text());
   });
 
   game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
+  bililiteRange($ptn[0]).undo(0);
+
   if (location.hash && !$body.hasClass('error')) {
     toggle_edit_mode(false);
   }
@@ -255,9 +253,13 @@ requirejs({locale: navigator.language}, [
       switch (event.keymap) {
         case '^z':
           bililiteRange.undo(event);
+          event.preventDefault();
+          event.stopPropagation();
           break;
         case '^Z':
           bililiteRange.redo(event);
+          event.preventDefault();
+          event.stopPropagation();
           break;
       }
     }
