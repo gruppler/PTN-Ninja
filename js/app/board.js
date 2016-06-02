@@ -221,7 +221,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Square.prototype.place = function (ply, is_silent) {
     if (this.piece) {
-      (this.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
+      (this.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
@@ -254,12 +254,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Square.prototype.slide = function (ply, is_silent) {
-    var square = this
+    var that = this
+      , square = this
       , piece = this.piece
       , moving_stack, remaining_stack, i;
 
     function error() {
-      (this.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
+      (that.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
@@ -277,6 +278,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     for (i = 0; i < ply.drops.length; i++) {
       square = square.neighbors[ply.direction];
+      if (!square) {
+        return error();
+      }
+
       remaining_stack = moving_stack.splice(-ply.drops[i]);
 
       if (square.piece) {
@@ -367,6 +372,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.game = game;
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
+    this.saved_ply = this.ply;
     this.ply = 0;
     this.pieces = [];
     this.initial_pieces = [];
@@ -445,6 +451,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     );
 
     this.update();
+
+    this.go_to_ply(this.saved_ply - 1, true);
 
     return this.$view;
   };
