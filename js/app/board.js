@@ -480,10 +480,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return false;
     }
 
-    _.invokeMap(this.ply_callbacks, 'call', this, this.ply);
-
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
+    
+    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
       return square.slide(ply, is_silent);
