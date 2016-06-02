@@ -81,7 +81,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Piece.prototype.render = function () {
-    var that = this;
+    var that = this
+      , ply = this.board.ply;
 
     // Render/update captives
     if (this.captives.length) {
@@ -130,7 +131,9 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       } else {
         // Update z-index after ply
         this.$view.afterTransition(function () {
-          that.$view.css('z-index', that.height);
+          if (ply == that.board.ply) {
+            that.$view.css('z-index', that.height);
+          }
         });
       }
       this.$view[0].className = tpl.piece_class(this);
