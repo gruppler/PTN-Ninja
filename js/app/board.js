@@ -459,7 +459,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     this.update();
 
-    this.go_to_ply(this.saved_ply - 1, true);
+    this.go_to_ply(this.saved_ply, true);
 
     return this.$view;
   };
@@ -482,7 +482,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
-    
+
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
