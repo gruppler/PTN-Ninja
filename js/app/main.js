@@ -72,15 +72,12 @@ requirejs({locale: navigator.language}, [
         $body.removeClass('editmode');
       }
     } else {
+      game.is_editing = !game.is_editing;
       $viewer.transition();
       $body.toggleClass('editmode playmode');
     }
 
-    if (game.is_editing) {
-      $ptn.attr('contenteditable', true);
-    } else {
-      $ptn.attr('contenteditable', false);
-    }
+    $ptn.attr('contenteditable', game.is_editing);
   }
 
   $('title').text(t.app_title);
