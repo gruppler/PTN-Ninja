@@ -87,9 +87,8 @@
   .ply {
     transition: all $time-quick ease-out;
   }
+  body.editmode & .ply,
   body.playmode.ptn & .ply {
-    cursor: pointer;
-
     &:hover {
       box-shadow: $shadow2;
       opacity: 1;
