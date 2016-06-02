@@ -119,10 +119,6 @@
     left: 50%;
     transform: translate(-50%);
     transition: all $time-quick $natural;
-
-    &.icon-error {
-      opacity: 0;
-    }
   }
 
   body.editmode & {
