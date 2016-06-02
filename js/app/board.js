@@ -218,7 +218,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Square.prototype.place = function (ply, is_silent) {
     if (this.piece) {
-      m.error(t.error.illegal_ply({ ply: ply.ply }));
+      (this.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
@@ -256,7 +256,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       , moving_stack, remaining_stack, i;
 
     function error() {
-      m.error(t.error.illegal_ply({ ply: ply.ply }));
+      (this.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 

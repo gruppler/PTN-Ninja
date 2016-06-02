@@ -43,8 +43,10 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
+  // For debugging purposes only:
   window.game = game;
   window.board = board;
+  //
 
   _.bindAll(board, [
     'play',
@@ -58,12 +60,14 @@ requirejs({locale: navigator.language}, [
 
   function toggle_edit_mode(on) {
     if (_.isBoolean(on)) {
-      if (on && !$body.hasClass('editmode')) {
+      if (on && !game.is_editing) {
         $viewer.transition();
+        game.is_editing = true;
         $body.addClass('editmode');
         $body.removeClass('playmode');
-      } else if (!on && $body.hasClass('editmode')) {
+      } else if (!on && game.is_editing) {
         $viewer.transition();
+        game.is_editing = false;
         $body.addClass('playmode');
         $body.removeClass('editmode');
       }
@@ -72,7 +76,7 @@ requirejs({locale: navigator.language}, [
       $body.toggleClass('editmode playmode');
     }
 
-    if ($body.hasClass('editmode')) {
+    if (game.is_editing) {
       $ptn.attr('contenteditable', true);
     } else {
       $ptn.attr('contenteditable', false);
@@ -249,7 +253,7 @@ requirejs({locale: navigator.language}, [
   }
 
   $ptn.on('keydown', function (event) {
-    if ($body.hasClass('editmode')) {
+    if (game.is_editing) {
       switch (event.keymap) {
         case '^z':
           bililiteRange.undo(event);
@@ -264,7 +268,7 @@ requirejs({locale: navigator.language}, [
       }
     }
   }).on('keyup mouseup', function (event) {
-    if ($body.hasClass('editmode')) {
+    if (game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');
 

@@ -5,9 +5,10 @@
   left: 0;
   right: 0;
   transition: opacity $time-smooth $natural;
+  opacity: 0.5;
 
-  body.editmode & {
-    opacity: 0.5;
+  body.playmode & {
+    opacity: 1;
   }
 }
 

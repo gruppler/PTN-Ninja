@@ -156,9 +156,10 @@
   transition: height $time-smooth $natural;
   flex-shrink: 0;
   z-index: 1;
+  height: 0;
 
-  body.editmode & {
-    height: 0;
+  body.playmode & {
+    height: auto;
   }
 
   > div {
