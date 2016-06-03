@@ -269,22 +269,38 @@ requirejs({locale: navigator.language}, [
     toggle_edit_mode(false);
   }
 
-  $ptn.on('keydown', function (event) {
+  $window.on('keydown', function (event) {
     if (game.is_editing) {
       switch (event.keymap) {
         case '^z':
           bililiteRange.undo(event);
-          event.preventDefault();
-          event.stopPropagation();
           break;
         case '^Z':
           bililiteRange.redo(event);
-          event.preventDefault();
-          event.stopPropagation();
+          break;
+      }
+    } else {
+      switch (event.keymap) {
+        case 'Spacebar':
+          board.playpause();
+          break;
+        case 'ArrowLeft':
+          board.prev();
+          break;
+        case 'ArrowRight':
+          board.next();
+          break;
+        case '^ArrowLeft':
+          board.first();
+          break;
+        case '^ArrowRight':
+          board.last();
           break;
       }
     }
-  }).on('keyup mouseup', function (event) {
+  });
+
+  $ptn.on('keyup mouseup', function (event) {
     if (game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');
