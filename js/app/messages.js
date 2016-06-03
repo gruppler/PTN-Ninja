@@ -1,6 +1,6 @@
 'use strict';
 
-define(['jquery', 'lodash'], function ($, _) {
+define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   var Messages, $messages;
 
   var $window = $(window)

@@ -183,8 +183,8 @@ requirejs({locale: navigator.language}, [
     var $this = $(this);
 
     if (_.isFunction(callback)) {
-      $this.one('webkitTransitionEnd transitionend', function () {
-        callback.call($this);
+      $this.one('transitionend', function (event) {
+        callback.call($this, event);
       });
     } else if (_.isUndefined(callback)) {
       $this.trigger('transitionend');

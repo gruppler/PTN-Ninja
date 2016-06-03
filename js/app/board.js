@@ -52,7 +52,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Piece = function (board, player, stone, col_i, row_i, captives) {
     this.board = board;
-    this.board.pieces.push(this);
     this.tpl = this.board.tpl;
     this.player = player || 1;
     this.stone = stone || 'F';
@@ -83,6 +82,15 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   Piece.prototype.render = function () {
     var that = this
       , ply = this.board.ply;
+
+    if (this.board.defer_render) {
+      this.needs_updated = true;
+      return;
+    }
+
+    if (!this.square) {
+      this.board.$pieces.unplace(this.$view);
+    }
 
     // Render/update captives
     if (this.captives.length) {
@@ -121,6 +129,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.$stone = this.$view.find('.stone');
       this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
+      this.board.$pieces.place(this.$view);
     } else {
       if (
         1*this.$view.css('z-index') <= this.height ||
@@ -130,7 +139,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         this.$view.afterTransition().css('z-index', this.height);
       } else {
         // Update z-index after ply
-        this.$view.afterTransition(function () {
+        this.$view.afterTransition().afterTransition(function (event) {
           if (ply == that.board.ply) {
             that.$view.css('z-index', that.height);
           }
@@ -151,6 +160,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.$captive.removeClass('visible');
     }
     this.$captive.css('margin-bottom', (this.height - 1)*5 + '%');
+
+    this.needs_updated = false;
 
     return this.$view;
   };
@@ -195,7 +206,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Square.prototype.to_tps = function () {};
 
-  Square.prototype.set_piece = function (piece, captives, is_silent) {
+  Square.prototype.set_piece = function (piece, captives) {
     this.piece = piece || null;
 
     if (piece) {
@@ -203,10 +214,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       piece.col_i = this.col_i;
       piece.row_i = this.row_i;
       piece.set_captives(captives || piece.captives);
-
-      if (is_silent !== true) {
-        piece.render();
-      }
+      piece.render();
     }
 
     return this.piece;
@@ -219,33 +227,35 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this.$view;
   };
 
-  Square.prototype.place = function (ply, is_silent) {
+  Square.prototype.place = function (ply) {
+    var piece = this.board.pieces[this.col+this.row];
+
     if (this.piece) {
       (this.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
       return false;
     }
 
-    this.set_piece(new Piece(
-      this.board,
-      ply.player,
-      ply.stone,
-      this.col_i,
-      this.row_i
-    ), false, true);
-
-    if (is_silent !== true) {
-      this.board.$pieces.place(this.piece.render());
+    if (!piece) {
+      piece = new Piece(
+        this.board,
+        ply.player,
+        ply.stone,
+        this.col_i,
+        this.row_i
+      );
+      this.board.pieces[this.col+this.row] = piece;
     }
+
+    this.set_piece(piece, false, true);
+
+    this.piece.render();
 
     return true;
   };
 
-  Square.prototype.undo_place = function (ply, is_silent) {
+  Square.prototype.undo_place = function (ply) {
     if (this.piece) {
-      if (is_silent !== true && this.piece.$view) {
-        this.board.$pieces.unplace(this.piece.$view);
-      }
-      _.pull(this.board.pieces, this.piece);
+      this.piece.square = null;
       this.set_piece();
       return true;
     } else {
@@ -253,7 +263,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
   };
 
-  Square.prototype.slide = function (ply, is_silent) {
+  Square.prototype.slide = function (ply) {
     var that = this
       , square = this
       , piece = this.piece
@@ -273,7 +283,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     remaining_stack = piece.captives.splice(ply.count - 1);
-    square.set_piece(remaining_stack[0], remaining_stack.slice(1), is_silent);
+    square.set_piece(remaining_stack[0], remaining_stack.slice(1));
     moving_stack = [piece].concat(piece.captives);
 
     for (i = 0; i < ply.drops.length; i++) {
@@ -301,13 +311,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         remaining_stack = remaining_stack.concat(square.piece.captives);
       }
 
-      square.set_piece(remaining_stack[0], remaining_stack.slice(1), is_silent);
+      square.set_piece(remaining_stack[0], remaining_stack.slice(1));
     }
 
     return true;
   };
 
-  Square.prototype.undo_slide = function (ply, is_silent) {
+  Square.prototype.undo_slide = function (ply) {
     var square = this
       , backwards = opposite_direction[ply.direction]
       , moving_stack = []
@@ -327,7 +337,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       if (remaining_stack[0] && ply.flattens[i]) {
         remaining_stack[0].stone = 'S';
       }
-      square.set_piece(remaining_stack[0], remaining_stack.slice(1), is_silent);
+      square.set_piece(remaining_stack[0], remaining_stack.slice(1));
 
       square = square.neighbors[backwards];
     }
@@ -335,7 +345,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       moving_stack.push(this.piece);
       moving_stack = moving_stack.concat(this.piece.captives);
     }
-    this.set_piece(moving_stack[0], moving_stack.slice(1), is_silent);
+    this.set_piece(moving_stack[0], moving_stack.slice(1));
 
     return true;
   };
@@ -349,7 +359,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.squares = {};
     this.rows = [];
     this.cols = [];
-    this.pieces = [];
+    this.pieces = {};
+    this.initial_pieces = {};
     this.init_callbacks = [];
     this.ply_callbacks = [];
     this.tpl = tpl;
@@ -381,8 +392,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.tps = game.config.tps;
     this.saved_ply = this.ply;
     this.ply = 0;
-    this.pieces = [];
-    this.initial_pieces = [];
+    this.pieces = {};
+    this.initial_pieces = {};
 
     this.cols.length = 0;
     for (col = 0; col < this.size; col++) {
@@ -435,7 +446,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       }
       this.tps.board;
     }
-    this.initial_pieces = this.pieces.concat();
+    this.initial_pieces = _.clone(this.pieces);
 
     _.invokeMap(this.init_callbacks, 'call', this, this);
 
@@ -450,14 +461,19 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.$view = $(tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.pieces = this.initial_pieces;
+    this.pieces = _.clone(this.initial_pieces);
 
     this.$squares.append.apply(
       this.$squares,
       _.invokeMap(this.squares, 'render')
     );
 
-    this.update();
+    this.$pieces.empty().append(
+      _.invokeMap(
+        _.filter(this.pieces, { captor: null }),
+        'render'
+      )
+    );
 
     this.go_to_ply(this.saved_ply, true);
 
@@ -465,15 +481,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.update = function() {
-    this.$pieces.empty().append(
-      _.invokeMap(
-        _.filter(this.pieces, { captor: null }),
-        'render'
-      )
+    _.invokeMap(
+      _.filter(this.pieces, { needs_updated: true }),
+      'render'
     );
   };
 
-  Board.prototype.do_ply = function (is_silent) {
+  Board.prototype.do_ply = function () {
     var ply, square, piece;
 
     if (this.ply >= this.game.plys.length || this.ply < 0) {
@@ -486,13 +500,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
-      return square.slide(ply, is_silent);
+      return square.slide(ply);
     } else {
-      return square.place(ply, is_silent);
+      return square.place(ply);
     }
   };
 
-  Board.prototype.undo_ply = function (is_silent) {
+  Board.prototype.undo_ply = function () {
     var ply, square, piece;
 
     if (this.ply > this.game.plys.length || this.ply <= 0) {
@@ -505,7 +519,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
-      return square.undo_slide(ply, is_silent);
+      return square.undo_slide(ply);
     } else {
       return square.undo_place(ply);
     }
@@ -538,22 +552,22 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.first = function () {
-    this.go_to_ply(0, true);
+    this.go_to_ply(0);
   };
 
   Board.prototype.last = function () {
-    this.go_to_ply(this.game.plys.length, true);
+    this.go_to_ply(this.game.plys.length);
   };
 
-  Board.prototype.go_to_ply = function (ply, is_silent) {
+  Board.prototype.go_to_ply = function (ply) {
+    this.defer_render = true;
     if (ply > this.ply) {
-      while (this.ply < ply && this.do_ply(is_silent)) {}
+      while (this.ply < ply && this.do_ply()) {}
     } else if (ply < this.ply) {
-      while (this.ply > ply && this.undo_ply(is_silent)) {}
+      while (this.ply > ply && this.undo_ply()) {}
     }
-    if (is_silent) {
-      this.update();
-    }
+    this.defer_render = false;
+    this.update();
   };
 
   return Board;
