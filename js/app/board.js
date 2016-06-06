@@ -69,7 +69,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.captor = null;
     this.captives = captives || [];
 
-    _.each(this.captives, function (captive) {
+    _.each(this.captives, function (captive, index) {
+      captive.index = index;
       captive.captor = that;
       captive.square = that.square;
       captive.col_i = that.col_i;
@@ -93,23 +94,15 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return;
     }
 
-    // Render/update captives
-    if (this.captives.length) {
+    // Set height
+    if (this.captor) {
+      this.height = this.captor.captives.length - this.index;
+      this.is_immovable = this.index >= this.board.size - 1;
+    } else if (this.captives.length) {
       this.height = this.captives.length + 1;
-
-      _.each(this.captives, function (captive, z) {
-        captive.height = that.captives.length - z;
-        captive.is_immovable = z >= that.board.size - 1;
-
-        if (!captive.$view || !captive.$view.parent('.pieces').length) {
-          captive.render();
-          that.board.$pieces.append(captive.$view);
-        } else {
-          captive.render();
-        }
-      });
       this.is_immovable = false;
-    } else if (!this.captor) {
+      _.invokeMap(this.captives, 'render');
+    } else {
       this.height = 1;
       this.is_immovable = false;
     }
