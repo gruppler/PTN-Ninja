@@ -103,7 +103,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
         if (!captive.$view || !captive.$view.parent('.pieces').length) {
           captive.render();
-          that.board.$pieces.place(captive.$view);
+          that.board.$pieces.append(captive.$view);
         } else {
           captive.render();
         }
@@ -130,14 +130,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.$stone = this.$view.find('.stone');
       this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
-      if (this.square) {
-        this.board.$pieces.place(this.$view);
-      }
     } else {
-      if (this.square && !this.$view.closest('html').length) {
-        this.board.$pieces.place(this.$view);
-        this.$view.height();
-      }
       if (
         1*this.$view.css('z-index') <= this.height ||
         this.$view.hasClass('c'+this.col_i+' r'+this.row_i)
@@ -167,6 +160,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.$captive.removeClass('visible');
     }
     this.$captive.css('margin-bottom', (this.height - 1)*5 + '%');
+
+    if (this.square && !this.$view.closest('html').length) {
+      this.board.$pieces.place(this.$view);
+    }
 
     this.needs_updated = false;
 
