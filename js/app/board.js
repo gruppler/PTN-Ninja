@@ -50,7 +50,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   // Piece
 
-  Piece = function (board, player, stone, col_i, row_i, captives) {
+  Piece = function (board, player, stone, col_i, row_i, ply, captives) {
     this.board = board;
     this.tpl = this.board.tpl;
     this.player = player || 1;
@@ -58,6 +58,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.col_i = col_i;
     this.row_i = row_i;
     this.stack = '';
+    this.ply = ply || null;
     this.captives = captives || [];
 
     return this;
@@ -133,7 +134,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       } else {
         // Update z-index after ply
         this.$view.afterTransition().afterTransition(function (event) {
-          if (ply == that.board.ply) {
+          if (that.board.ply == ply) {
             that.$view.css('z-index', that.height);
           }
         });
@@ -192,7 +193,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     player = tps.shift();
 
     return this.set_piece(
-      new Piece(this.board, player, stone, this.col_i, this.row_i,
+      new Piece(this.board, player, stone, this.col_i, this.row_i, false,
         _.map(tps, function (player) {
           return new Piece(that.board, player);
         })
@@ -242,7 +243,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         ply.player,
         ply.stone,
         this.col_i,
-        this.row_i
+        this.row_i,
+        ply
       );
       this.board.pieces[ply.id] = piece;
     }
@@ -482,6 +484,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.update = function() {
+    m.clear('comment', true);
     _.invokeMap(
       _.filter(this.pieces, { needs_updated: true }),
       'render'
@@ -499,6 +502,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     square = this.squares[ply.square];
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
+    if (!this.defer_render) {
+      m.clear('comment', true);
+      if (ply.comments) {
+        _.map(_.map(ply.comments, 'text'), _.ary(_.bind(m.comment, m), 1));
+      }
+    }
 
     if (ply.is_slide) {
       return square.slide(ply);
@@ -508,16 +517,23 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.undo_ply = function () {
-    var ply, square, piece;
+    var ply, prev_ply, square, piece;
 
     if (this.ply > this.game.plys.length || this.ply <= 0) {
       return false;
     }
 
     ply = this.game.plys[--this.ply];
+    prev_ply = this.game.plys[this.ply - 1];
     square = this.squares[ply.square];
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
+    if (!this.defer_render) {
+      m.clear('comment', true);
+      if (prev_ply && prev_ply.comments) {
+        _.map(_.map(prev_ply.comments, 'text'), _.ary(_.bind(m.comment, m), 1));
+      }
+    }
 
     if (ply.is_slide) {
       return square.undo_slide(ply);

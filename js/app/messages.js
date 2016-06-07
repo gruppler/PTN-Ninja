@@ -45,8 +45,15 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return $message;
   };
 
-  Messages.prototype.clear = function (type) {
-    this.$messages.children(type ? '.'+type : '').remove();
+  Messages.prototype.clear = function (type, animate) {
+    var $messages = this.$messages.children(type ? '.'+type : '');
+
+    if (animate) {
+      $messages.map(remove_message);
+    } else{
+      $messages.remove();
+    }
+
     $window.trigger('clear:'+(type ? type+':' : '')+this.group);
   };
 

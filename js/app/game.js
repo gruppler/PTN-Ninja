@@ -230,8 +230,13 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.comments4 = parse_comments(parts[8]);
 
     this.ply1 = new Ply(parts[3], first_player, game);
-    this.ply1.comments_before = this.comments1;
-    this.ply1.comments = this.comments2;
+    if (this.comments2) {
+      if (this.comments1) {
+        this.ply1.comments = this.comments1.concat(this.comments2);
+      } else {
+        this.ply1.comments = this.comments2;
+      }
+    }
 
     if (parts[5]) {
       this.ply2 = new Ply(parts[5], second_player, game);
