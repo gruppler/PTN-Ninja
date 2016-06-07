@@ -37,8 +37,10 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       group: group || this.group,
       message: message
     }));
+    $message.addClass('animating');
     this.$messages.append($message);
-    $message.grow();
+    $message.height();
+    $message.removeClass('animating');
 
     $window.trigger(type+':'+(group || this.group));
     $window.trigger(type);
@@ -96,9 +98,9 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     if (!$message.hasClass('message')) {
       $message = $message.closest('.message');
     }
-    $message.shrink(function () {
+    $message.afterTransition(function () {
       this.remove();
-    });
+    }).addClass('animating');
   }
 
   return Messages;

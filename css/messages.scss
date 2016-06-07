@@ -1,41 +1,72 @@
 #messages {
-  overflow: auto;
-  flex-shrink: 0;
-  max-height: 50%;
-  z-index: 1;
+  > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: $edge;
+    overflow: auto;
+    max-height: 100%;
+    max-width: calc(100% - #{$edge + $fab-height});
+    box-sizing: border-box;
+    z-index: 1;
+  }
 
   > div.messages-parse,
   > div.messages-board {
     opacity: 0;
-    height: 0;
-    overflow: hidden;
+    transform: translateX(-100%);
     transition: all $time-smooth $natural;
   }
 
   > div.messages-parse.visible,
   body.playmode & > div.messages-board {
+    transform: translateX(0);
     opacity: 1;
-    height: auto;
   }
 
   .message {
+    float: left;
+    clear: left;
     position: relative;
-    overflow: hidden;
+    white-space: nowrap;
+    border-radius: 2px;
+    margin-top: 0.5em;
+    margin-right: $edge;
+    max-width: 100%;
+    box-shadow: $shadow1;
     transition: all $time-smooth $natural;
 
+    &.animating {
+      opacity: 0;
+      margin-top: calc(-1em - 2rem);
+    }
+
+    &.comment {
+      .content {
+        margin-right: $edge;
+
+        i.icon-x {
+          display: none;
+        }
+      }
+    }
+
     .content {
-      padding: 1rem $edge + 2rem;
+      margin: 1rem calc(#{$edge*2} + 2rem);
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     i {
       position: absolute;
-      left: $edge;
-      top: $edge/2;
+      padding: $edge*2/3 $edge;
+      left: 0;
+      top: 0;
       font-size: 1.5em;
 
       &.icon-x {
         left: auto;
-        right: $edge;
+        right: 0;
         cursor: default;
       }
     }

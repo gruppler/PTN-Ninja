@@ -1,4 +1,4 @@
-$button-height: 2.5rem;
+$button-height: 36px;
 button, .button, .fab {
   border: none;
   border-radius: 2px;
@@ -6,11 +6,11 @@ button, .button, .fab {
   height: $button-height;
   line-height: $button-height;
   outline: 0;
-  padding: 0 2rem;
+  padding: 0 0.5em;
   text-transform: uppercase;
   cursor: default;
   position: relative;
-  font-size: 1.5rem;
+  font-size: 20px;
   text-align: center;
   vertical-align: middle;
   text-decoration: none;

@@ -84,13 +84,7 @@ requirejs({locale: navigator.language}, [
 
   $('#fab').click(function () {
     if ($body.hasClass('error')) {
-      if ($messages_parse.hasClass('visible')) {
-        $messages_parse.shrink(function () {
-          this.removeClass('visible').height('');
-        });
-      } else {
-        $messages_parse.addClass('visible').grow();
-      }
+      $messages_parse.toggleClass('visible');
     } else {
       toggle_edit_mode();
     }
