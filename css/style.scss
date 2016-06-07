@@ -24,7 +24,6 @@
   color: $primary-color-light;
   font-family: $monospace;
   flex-grow: 1;
-  overflow: hidden;
 
   body.playmode & {
     @include unselectable;
@@ -107,8 +106,9 @@
 #fab {
   position: absolute;
   right: $edge;
-  bottom: $edge;
-  z-index: 1;
+  bottom: calc(#{$edge + $button-height} - #{$fab-height/2});
+  z-index: 2;
+  transition: bottom $time-smooth $natural;
 
   i {
     opacity: 0;
@@ -125,6 +125,8 @@
   }
 
   body.playmode & {
+    bottom: -$fab-height/2;
+
     i.icon-edit {
       opacity: 1;
     }
