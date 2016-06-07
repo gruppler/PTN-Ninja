@@ -15,6 +15,11 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     '</div>'
   );
 
+  $messages = $('#messages');
+  $messages
+    .on('click', 'i.icon-x', remove_message)
+    .on('remove', remove_message);
+
   Messages = function(group) {
     this.enabled = true;
     this.group = group || 'general';
@@ -95,13 +100,6 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       this.remove();
     });
   }
-
-  $(function () {
-    $messages = $('#messages');
-    $messages
-      .on('click', 'i.icon-x', remove_message)
-      .on('remove', remove_message);
-  });
 
   return Messages;
 
