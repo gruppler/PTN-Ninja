@@ -115,12 +115,20 @@
     position: absolute;
     left: 50%;
     transform: translate(-50%);
-    transition: all $time-quick $natural;
+    transition: all $time-smooth ease-in-out;
+
+    &.icon-play {
+      transform: translate(-50%) rotate(179deg);
+    }
+    &.icon-edit {
+      transform: translate(-50%) rotate(-90deg);
+    }
   }
 
   body.editmode & {
     i.icon-play {
       opacity: 1;
+      transform: translate(-50%);
     }
   }
 
@@ -129,6 +137,7 @@
 
     i.icon-edit {
       opacity: 1;
+      transform: translate(-50%);
     }
   }
 
