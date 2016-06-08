@@ -277,18 +277,23 @@ requirejs({locale: navigator.language}, [
       switch (event.keymap) {
         case 'Spacebar':
           board.playpause();
+          event.preventDefault();
           break;
         case 'ArrowLeft':
           board.prev();
+          event.preventDefault();
           break;
         case 'ArrowRight':
           board.next();
+          event.preventDefault();
           break;
         case '^ArrowLeft':
           board.first();
+          event.preventDefault();
           break;
         case '^ArrowRight':
           board.last();
+          event.preventDefault();
           break;
       }
     }

@@ -106,7 +106,7 @@
 #fab {
   position: absolute;
   right: $edge;
-  bottom: calc(#{$edge + $button-height} - #{$fab-height/2});
+  bottom: $toolbar-height - $fab-height/2;
   z-index: 2;
 
   i {
@@ -164,7 +164,7 @@
   height: 0;
 
   body.playmode & {
-    height: $edge + $button-height;
+    height: $toolbar-height;
   }
 
   > div {
@@ -175,16 +175,29 @@
     padding: $edge/2 $edge;
   }
 
-  button {
-    background-color: $accent-color;
-    color: $primary-color-text;
+  button + button {
+    margin-left: $edge/2;
+  }
 
-    &:hover {
-      background-color: $accent-color-light;
+  button.play {
+    i {
+      transition: opacity $time-smooth $natural;
+
+      &.icon-pause {
+        position: absolute;
+        top: 0;
+        left: 0.5em;
+        opacity: 0;
+      }
     }
 
-    + button {
-      margin-left: $edge/2;
+    body.playing & {
+      i.icon-play {
+        opacity: 0;
+      }
+      i.icon-pause {
+        opacity: 1;
+      }
     }
   }
 }

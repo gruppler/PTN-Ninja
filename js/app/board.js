@@ -392,6 +392,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
+    this.pause();
     this.game = game;
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
@@ -567,13 +568,16 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.play = function () {
-    //
+    this.do_ply();
+    this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
     this.is_playing = true;
+    $('body').addClass('playing');
   };
 
   Board.prototype.pause = function () {
-    clearTimeout(this.play_timer);
+    clearInterval(this.play_timer);
     this.is_playing = false;
+    $('body').removeClass('playing');
   };
 
   Board.prototype.playpause = function () {
@@ -585,18 +589,22 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.prev = function () {
+    this.pause();
     this.undo_ply();
   };
 
   Board.prototype.next = function () {
+    this.pause();
     this.do_ply();
   };
 
   Board.prototype.first = function () {
+    this.pause();
     this.go_to_ply(0);
   };
 
   Board.prototype.last = function () {
+    this.pause();
     this.go_to_ply(this.game.plys.length);
   };
 
