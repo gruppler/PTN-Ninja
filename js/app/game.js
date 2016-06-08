@@ -81,7 +81,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.victor = 2;
       this.text = t.result[this.player2]({ player: game.config.player2 });
     } else {
-      this.victor = 0;
+      this.victor = 2;
       this.text = t.result.tie;
     }
 

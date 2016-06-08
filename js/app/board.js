@@ -555,7 +555,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     if (ply.result) {
-      m[ply.result.victor ? 'player'+ply.result.victor : 'info'](ply.result.text);
+      m['player'+ply.result.victor](ply.result.text);
       if (ply.result.comments) {
         _.map(ply.result.comments, comment);
       }

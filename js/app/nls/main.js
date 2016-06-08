@@ -24,7 +24,7 @@ define({
     result: {
       'F': "<%=player%> wins by flats",
       'R': "<%=player%> wins by building a road",
-      '1/2': "It's a tie"
+      'tie': "It's a tie"
     },
 
     success: {},
