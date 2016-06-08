@@ -425,7 +425,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     header = file[1];
-    this.comment = file[2] ? new Comment(file[2]) : '';
+    this.comment_text = parse_comments(file[2]);
+    this.comments = this.comment_text ? _.map(this.comment_text, 'text') : null;
     body = file[3];
     this.suffix = file[4] || '';
 
@@ -505,7 +506,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     var output = '';
 
     output += _.invokeMap(this.tags, 'print').join('');
-    output += this.comment ? this.comment.print() : '';
+    output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
     output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
 

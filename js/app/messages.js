@@ -36,7 +36,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       type: type,
       icon: icon || type,
       group: group || this.group,
-      message: message
+      message: message || '&nbsp;'
     }));
     $message.addClass('animating');
     this.$messages.append($message);
