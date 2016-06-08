@@ -18,7 +18,14 @@ define({
     Site: "Site",
     Size: "Size",
     TPS: "TPS",
+    Tak: "Tak",
     Time: "Time",
+
+    result: {
+      'F': "<%=player%> wins by flats",
+      'R': "<%=player%> wins by building a road",
+      '1/2': "It's a tie"
+    },
 
     success: {},
 

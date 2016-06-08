@@ -11,15 +11,15 @@
     z-index: 1;
   }
 
-  > div.messages-parse,
-  > div.messages-board {
+  .messages-parse,
+  .messages-board {
     opacity: 0;
     transform: translateX(-100%);
     transition: all $time-smooth $natural;
   }
 
-  > div.messages-parse.visible,
-  body.playmode & > div.messages-board {
+  .messages-parse.visible,
+  body.playmode & .messages-board {
     transform: translateX(0);
     opacity: 1;
   }
@@ -38,17 +38,7 @@
 
     &.animating {
       opacity: 0;
-      margin-top: calc(-1em - 2rem);
-    }
-
-    &.comment {
-      .content {
-        margin-right: $edge;
-
-        i.icon-x {
-          display: none;
-        }
-      }
+      margin-top: calc(-1.22em - 2rem);
     }
 
     .content {
@@ -65,9 +55,15 @@
       font-size: 1.5em;
 
       &.icon-x {
+        opacity: 0.5;
         left: auto;
         right: 0;
         cursor: default;
+        transition: opacity $time-smooth $natural;
+
+        &:hover {
+          opacity: 1;
+        }
       }
     }
 
@@ -101,8 +97,18 @@
     }
 
     &.comment {
-      background-color: rgba($primary-color, 0.8);
+      background-color: $accent-color;
       color: $primary-color-text;
+    }
+
+    &.player1 {
+      background-color: $primary-color-lighter;
+      color: $primary-color-darker;
+    }
+
+    &.player2 {
+      background-color: $primary-color-darker;
+      color: $primary-color-lighter;
     }
   }
 }

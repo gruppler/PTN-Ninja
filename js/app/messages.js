@@ -9,7 +9,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   var template = _.template(
     '<div class="message <%=type%>">'+
       '<div class="content">'+
-        '<i class="icon-<%=type%>"></i><%=message%>'+
+        '<i class="icon-<%=icon%>"></i><%=message%>'+
         '<i class="icon-x"></i>'+
       '</div>'+
     '</div>'
@@ -31,9 +31,10 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return this;
   };
 
-  Messages.prototype.add = function (message, seconds, group, type) {
+  Messages.prototype.add = function (message, seconds, group, type, icon) {
     var $message = $(template({
       type: type,
+      icon: icon || type,
       group: group || this.group,
       message: message
     }));
@@ -91,6 +92,14 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
 
   Messages.prototype.comment = function (message, seconds, group) {
     return this.add(message, seconds, group, 'comment');
+  };
+
+  Messages.prototype.player1 = function (message, seconds, group) {
+    return this.add(message, seconds, group, 'player1', 'player-solid');
+  };
+
+  Messages.prototype.player2 = function (message, seconds, group) {
+    return this.add(message, seconds, group, 'player2', 'player-line');
   };
 
   function remove_message() {

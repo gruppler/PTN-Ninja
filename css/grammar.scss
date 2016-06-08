@@ -73,11 +73,8 @@ $purple: #BA68C8;
   .ply {
     font-weight: 700;
 
-    &.player1 .stone {
-      color: $solid-white;
-    }
-    &.player2 .stone {
-      color: $solid-black;
+    .stone {
+      color: $heavy-white;
     }
     .column {
       color: $yellow;
@@ -91,11 +88,8 @@ $purple: #BA68C8;
       color: $green;
       font-weight: 300;
     }
-    &.player1 .direction {
+    .direction {
       color: $heavy-white;
-    }
-    &.player2 .direction {
-      color: $heavy-black;
     }
     .drops {
       color: $blue;
@@ -114,7 +108,7 @@ $purple: #BA68C8;
         color: $green;
       }
       &.flat {
-        color: $blue;
+        color: $heavy-white;
       }
     }
     .loss {

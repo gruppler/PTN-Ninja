@@ -399,6 +399,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.ply = 0;
     this.pieces = {};
     this.initial_pieces = {};
+    m.clear(false, true);
 
     this.cols.length = 0;
     for (col = 0; col < this.size; col++) {
@@ -486,7 +487,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.update = function() {
-    m.clear('comment', true);
     _.invokeMap(
       _.filter(this.pieces, { needs_updated: true }),
       'render'
@@ -503,10 +503,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
 
-    m.clear('comment', true);
-    if (ply.comments) {
-      _.map(ply.comments, comment);
-    }
+    this.show_comments(ply);
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
@@ -518,20 +515,16 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.undo_ply = function () {
-    var ply, prev_ply, square, piece;
+    var ply, square, piece;
 
     if (this.ply > this.game.plys.length || this.ply <= 0) {
       return false;
     }
 
     ply = this.game.plys[--this.ply];
-    prev_ply = this.game.plys[this.ply - 1];
     square = this.squares[ply.square];
 
-    m.clear('comment', true);
-    if (prev_ply && prev_ply.comments) {
-      _.map(prev_ply.comments, comment);
-    }
+    this.show_comments(this.game.plys[this.ply - 1])
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
@@ -539,6 +532,33 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return square.undo_slide(ply);
     } else {
       return square.undo_place(ply);
+    }
+  };
+
+  Board.prototype.show_comments = function (ply) {
+    m.clear(false, true);
+
+    if (!ply || this.defer_render) {
+      return;
+    }
+
+    if (ply && ply.evaluation && /'/.test(ply.evaluation)) {
+      m['player'+ply.player](t.Tak);
+    }
+
+    if (ply && ply.evaluation && /[!?]/.test(ply.evaluation)) {
+      comment(ply.evaluation.replace(/[^!?]/g, ''));
+    }
+
+    if (ply.comments) {
+      _.map(ply.comments, comment);
+    }
+
+    if (ply.result) {
+      m[ply.result.victor ? 'player'+ply.result.victor : 'info'](ply.result.text);
+      if (ply.result.comments) {
+        _.map(ply.result.comments, comment);
+      }
     }
   };
 
@@ -584,6 +604,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       while (this.ply > ply && this.undo_ply()) {}
     }
     this.defer_render = false;
+    this.show_comments(this.game.plys[ply - 1]);
     this.update();
   };
 

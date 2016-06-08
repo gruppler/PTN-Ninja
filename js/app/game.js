@@ -66,13 +66,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   // Result
 
-  Result = function (string) {
+  Result = function (string, game) {
     var parts = string.match(r.grammar.result_grouped);
 
     this.prefix = parts[1];
     parts = parts[2].split('-');
     this.player1 = parts[0];
     this.player2 = parts[1];
+
+    if (this.player2 == '0') {
+      this.victor = 1;
+      this.text = t.result[this.player1]({ player: game.config.player1 });
+    } else if (this.player1 == '0') {
+      this.victor = 2;
+      this.text = t.result[this.player2]({ player: game.config.player2 });
+    } else {
+      this.victor = 0;
+      this.text = t.result.tie;
+    }
 
     this.player1_label = result_label[this.player1];
     this.player2_label = result_label[this.player2];
@@ -248,7 +259,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     if (parts[7]) {
-      this.result = new Result(parts[7]);
+      this.result = new Result(parts[7], game);
       this.result.comments = _.map(this.comments4, 'text');
     } else {
       this.result = null;
@@ -321,15 +332,17 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     if (!r.tags[this.key].test(this.value)) {
-      m.error(
-        t.error.invalid_tag_value({tag: this.name, value: this.value})
-      );
+      if (this.key != 'tps') {
+        m.error(
+          t.error.invalid_tag_value({tag: this.name, value: this.value})
+        );
+      }
       game.is_valid = false;
       return false;
     }
 
     if (this.key == 'result') {
-      this.value_print = new Result(this.value).print();
+      this.value_print = new Result(this.value, game).print();
     } else {
       this.value_print = this.value;
     }
@@ -474,6 +487,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         if (this.moves[i].ply2) {
           this.moves[i].ply2.id = this.plys.length;
           this.plys.push(this.moves[i].ply2);
+        }
+
+        if (this.moves[i].result) {
+          (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
     }
