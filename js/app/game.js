@@ -232,22 +232,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.ply1 = new Ply(parts[3], first_player, game);
     if (this.comments2) {
       if (this.comments1) {
-        this.ply1.comments = this.comments1.concat(this.comments2);
+        this.ply1.comments = _.map(this.comments1, 'text').concat(
+          _.map(this.comments2, 'text')
+        );
       } else {
-        this.ply1.comments = this.comments2;
+        this.ply1.comments = _.map(this.comments2, 'text');
       }
     }
 
     if (parts[5]) {
       this.ply2 = new Ply(parts[5], second_player, game);
-      this.ply2.comments = this.comments3;
+      this.ply2.comments = _.map(this.comments3, 'text');
     } else {
       this.ply2 = null;
     }
 
     if (parts[7]) {
       this.result = new Result(parts[7]);
-      this.result.comments = this.comments4;
+      this.result.comments = _.map(this.comments4, 'text');
     } else {
       this.result = null;
     }

@@ -47,6 +47,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     )
   };
 
+  var comment = _.ary(_.bind(m.comment, m), 1);
+
 
   // Piece
 
@@ -501,13 +503,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
 
-    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
-    if (!this.defer_render) {
-      m.clear('comment', true);
-      if (ply.comments) {
-        _.map(_.map(ply.comments, 'text'), _.ary(_.bind(m.comment, m), 1));
-      }
+    m.clear('comment', true);
+    if (ply.comments) {
+      _.map(ply.comments, comment);
     }
+
+    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
       return square.slide(ply);
@@ -527,13 +528,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     prev_ply = this.game.plys[this.ply - 1];
     square = this.squares[ply.square];
 
-    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
-    if (!this.defer_render) {
-      m.clear('comment', true);
-      if (prev_ply && prev_ply.comments) {
-        _.map(_.map(prev_ply.comments, 'text'), _.ary(_.bind(m.comment, m), 1));
-      }
+    m.clear('comment', true);
+    if (prev_ply && prev_ply.comments) {
+      _.map(prev_ply.comments, comment);
     }
+
+    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
       return square.undo_slide(ply);
