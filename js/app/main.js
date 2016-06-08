@@ -77,6 +77,10 @@ requirejs({locale: navigator.language}, [
       $body.toggleClass('editmode playmode');
     }
 
+    if (game.is_editing) {
+      board.pause();
+    }
+
     $ptn.attr('contenteditable', game.is_editing);
   }
 

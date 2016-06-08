@@ -498,6 +498,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     var ply, square, piece;
 
     if (this.ply >= this.game.plys.length || this.ply < 0) {
+      this.pause();
       return false;
     }
 
