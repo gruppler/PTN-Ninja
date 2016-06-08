@@ -52,7 +52,7 @@
     }
 
     .content {
-      margin: 1rem calc(#{$edge*2} + 2rem);
+      margin: 1rem calc(#{$edge*2} + 1.5rem);
       overflow: hidden;
       text-overflow: ellipsis;
     }

@@ -98,9 +98,13 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     if (!$message.hasClass('message')) {
       $message = $message.closest('.message');
     }
-    $message.afterTransition(function () {
-      this.remove();
-    }).addClass('animating');
+    if ($message.hasClass('animating')) {
+      $message.remove();
+    } else {
+      $message.afterTransition(function () {
+        $message.remove();
+      }).addClass('animating');
+    }
   }
 
   return Messages;
