@@ -61,7 +61,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.row_i = row_i;
     this.stack = '';
     this.ply = ply || null;
-    this.captives = captives || [];
+    if (captives) {
+      this.set_captives(captives);
+    } else {
+      this.captives = [];
+    }
 
     return this;
   };
@@ -392,6 +396,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
+    this.defer_render = true;
     this.pause();
     this.game = game;
     this.size = 1*game.config.size;
@@ -447,14 +452,14 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
               col += 1*tps[1] - 1;
             }
           } else {
-            this.squares[this.cols[col]+this.rows[row]].parse(tps);
+            this.initial_pieces['tps-'+i+'-'+j] = this.squares[this.cols[col]+this.rows[row]].parse(tps);
           }
         }
       }
       this.tps.board;
     }
-    this.initial_pieces = _.clone(this.pieces);
 
+    this.defer_render = false;
     _.invokeMap(this.init_callbacks, 'call', this, this);
 
     return true;
