@@ -1,4 +1,7 @@
 $button-height: 36px;
+$fab-height: 56px;
+$fab-height-small: 40px;
+
 button, .button, .fab {
   border: none;
   border-radius: 2px;
@@ -36,12 +39,19 @@ button, .button, .fab {
     &:focus, &:hover {
       background-color: rgba(0,0,0,0.05);
     }
-    &:hover {
-      box-shadow: $shadow1;
-    }
     &:active {
       background-color: rgba(0,0,0,0.1);
-      box-shadow: $shadow4;
+    }
+  }
+
+  &.round {
+    border-radius: 50%;
+    width: $fab-height-small;
+    height: $fab-height-small;
+    line-height: $fab-height-small;
+
+    i {
+      line-height: $fab-height-small;
     }
   }
 
@@ -55,8 +65,6 @@ button, .button, .fab {
   }
 }
 
-$fab-height: 56px;
-$fab-height-small: 40px;
 .fab {
   border-radius: 50%;
   width: $fab-height;
