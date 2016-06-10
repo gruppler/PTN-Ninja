@@ -310,7 +310,7 @@ requirejs({locale: navigator.language}, [
   });
 
   // Go to focused ply
-  $ptn.on('keydown keyup mouseup', function (event) {
+  $ptn.on('keydown keyup mouseup touchstart touchend', function (event) {
     if (game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');
