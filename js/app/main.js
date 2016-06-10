@@ -132,11 +132,11 @@ requirejs({locale: navigator.language}, [
       .filter('[data-ply="'+ply+'"]').addClass('active');
   });
 
-  $('#controls button.first').click(board.first);
-  $('#controls button.prev').click(board.prev);
-  $('#controls button.play').click(board.playpause);
-  $('#controls button.next').click(board.next);
-  $('#controls button.last').click(board.last);
+  $('#controls button.first').on('touchstart click', board.first);
+  $('#controls button.prev').on('touchstart click', board.prev);
+  $('#controls button.play').on('touchstart click', board.playpause);
+  $('#controls button.next').on('touchstart click', board.next);
+  $('#controls button.last').on('touchstart click', board.last);
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $window.on('drop', function(event) {
@@ -270,6 +270,9 @@ requirejs({locale: navigator.language}, [
   $window.on('keydown', function (event) {
     if (game.is_editing) {
       switch (event.keymap) {
+        case 'Escape':
+            toggle_edit_mode(false);
+          break;
         case '^z':
           bililiteRange.undo(event);
           break;
@@ -279,6 +282,9 @@ requirejs({locale: navigator.language}, [
       }
     } else {
       switch (event.keymap) {
+        case 'Escape':
+          toggle_edit_mode(true);
+          break;
         case 'Spacebar':
           board.playpause();
           event.preventDefault();
@@ -303,7 +309,8 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  $ptn.on('keyup mouseup', function (event) {
+  // Go to focused ply
+  $ptn.on('keydown keyup mouseup', function (event) {
     if (game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');
