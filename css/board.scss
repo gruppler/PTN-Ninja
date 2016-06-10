@@ -56,12 +56,21 @@
 
   .piece {
     position: absolute;
-    transition: bottom $time-smooth $natural,
-      left $time-smooth $natural,
-      transform $time-smooth $natural,
-      opacity $time-smooth $natural;
+    bottom: 0;
+    left: 0;
+    transition: transform $time-smooth $natural;
 
-    &.placing {
+    .wrapper {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      transition: transform $time-smooth $natural,
+        opacity $time-smooth $natural;
+    }
+
+    &.placing .wrapper {
       opacity: 0;
       transform: scale(2);
     }

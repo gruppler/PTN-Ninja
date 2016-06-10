@@ -24,12 +24,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
 
-    piece_class: _.template('piece c<%=col_i%> r<%=row_i%>'),
     stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
     piece: _.template(
-      '<div class="<%=tpl.piece_class(obj)%>">'+
-        '<div class="captive p<%=player%>"></div>'+
-        '<div class="<%=tpl.stone_class(obj)%>"></div>'+
+      '<div class="piece">'+
+        '<div class="wrapper">'+
+          '<div class="captive p<%=player%>"></div>'+
+          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
+        '</div>'+
       '</div>'
     ),
 
@@ -145,10 +146,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
           }
         });
       }
-      this.$view[0].className = tpl.piece_class(this);
       this.$stone[0].className = tpl.stone_class(this);
       this.$stone.removeClass('F S').addClass(this.stone);
     }
+    this.x = 100*this.col_i;
+    this.y = -100*this.row_i;
+    this.$view.css('transform', 'translate('+(this.x)+'%, '+(this.y)+'%)');
 
     // Update captive indicators
     if (this.captor || this.captives.length) {
