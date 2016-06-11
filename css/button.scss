@@ -3,6 +3,7 @@ $fab-height: 56px;
 $fab-height-small: 40px;
 
 button, .button, .fab {
+  background: transparent;
   border: none;
   border-radius: 2px;
   display: inline-block;
@@ -26,7 +27,7 @@ button, .button, .fab {
     line-height: $button-height;
   }
 
-  &:hover, &:focus {
+  &:hover {
     box-shadow: $shadow2;
   }
   &:active {
@@ -36,7 +37,7 @@ button, .button, .fab {
   &.flat {
     box-shadow: none;
 
-    &:focus, &:hover {
+    &:hover {
       background-color: rgba(0,0,0,0.05);
     }
     &:active {
@@ -59,7 +60,7 @@ button, .button, .fab {
     background-color: $accent-color;
     color: $primary-color-text;
 
-    &:focus, &:hover, &:active {
+    &:hover, &:active {
       background-color: $accent-color-light;
     }
   }
@@ -91,7 +92,7 @@ button, .button, .fab {
     }
   }
 
-  &:hover, &:focus {
+  &:hover {
     background-color: $accent-color-light;
   }
   &:hover {

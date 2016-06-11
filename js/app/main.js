@@ -241,7 +241,7 @@ requirejs({locale: navigator.language}, [
   $.fn.transition = function (callback) {
     var $this = $(this);
 
-    $this.addClass('animated');
+    $this.afterTransition().addClass('animated');
     $this.afterTransition(function () {
       $this.removeClass('animated');
       if (_.isFunction(callback)) {

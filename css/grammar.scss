@@ -74,7 +74,7 @@ $purple: #BA68C8;
     font-weight: 700;
 
     .stone {
-      color: $heavy-white;
+      color: $white;
     }
     .column {
       color: $yellow;
@@ -96,7 +96,8 @@ $purple: #BA68C8;
       font-weight: 300;
     }
     .evaluation {
-      color: $purple;
+      color: $whitish;
+      font-weight: 300;
     }
   }
 
@@ -108,7 +109,7 @@ $purple: #BA68C8;
         color: $green;
       }
       &.flat {
-        color: $heavy-white;
+        color: $blue;
       }
     }
     .loss {

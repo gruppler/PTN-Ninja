@@ -14,19 +14,22 @@
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap
 }
 
 #editor {
-  position: relative;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   color: $primary-color-light;
   font-family: $monospace;
   flex-grow: 1;
+  transition: all $time-smooth $natural;
 
   body.playmode & {
     @include unselectable;
+    opacity: 0;
   }
 
   &:before {
@@ -67,28 +70,13 @@
 
   body.playmode & {
     cursor: default;
-  }
-
-  body.playmode:not(.ptn) & {
     overflow: hidden;
-  }
-
-  .tag, .comment, .move > * {
-    transition: opacity $time-smooth $natural;
-
-    body.playmode & {
-      opacity: 0.5;
-    }
-    body.playmode:not(.ptn) & {
-      opacity: 0;
-    }
   }
 
   .ply {
     transition: all $time-quick ease-out;
   }
-  body.editmode & .ply,
-  body.playmode.ptn & .ply {
+  body.editmode & .ply {
     &:hover {
       box-shadow: $shadow2;
       opacity: 1;
@@ -156,8 +144,11 @@
 }
 
 #controls {
-  overflow: hidden;
-  background-color: $whitish;
+  background-color: $primary-color-darker;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   transition: height $time-smooth $natural;
   flex-shrink: 0;
   z-index: 1;
@@ -175,8 +166,12 @@
     padding: $edge/2 $edge;
   }
 
-  button + button {
-    margin-left: $edge/2;
+  button {
+    color: $whitish;
+
+    + button {
+      margin-left: $edge/2;
+    }
   }
 
   button.play {
