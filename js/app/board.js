@@ -85,6 +85,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       captive.row_i = that.row_i;
       captive.stone = 'F';
       captive.captives.length = 0;
+      captive.render();
     });
   };
 
@@ -153,7 +154,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.y = -100*this.row_i;
     this.$view.css('transform', 'translate('+(this.x)+'%, '+(this.y)+'%)');
 
-    // Update captive indicators
+    // Update captive indicator
     if (this.captor || this.captives.length) {
       this.$captive.addClass('visible');
       if ((this.captor || this).captives.length >= this.board.size && !this.is_immovable) {
