@@ -149,13 +149,14 @@
   bottom: 0;
   left: 0;
   right: 0;
-  transition: height $time-smooth $natural;
   flex-shrink: 0;
   z-index: 1;
-  height: 0;
+  height: $toolbar-height;
+  transform: translateY(100%);
+  transition: transform $time-smooth $natural;
 
   body.playmode & {
-    height: $toolbar-height;
+    transform: none;
   }
 
   > div {
