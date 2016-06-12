@@ -25,6 +25,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
 
     stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
+    piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
     piece: _.template(
       '<div class="piece">'+
         '<div class="wrapper">'+
@@ -90,7 +91,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Piece.prototype.render = function () {
     var that = this
-      , ply = this.board.ply;
+      , ply = this.board.ply
+      , location;
 
     if (this.board.defer_render) {
       this.needs_updated = true;
@@ -125,19 +127,25 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     // Render or update view
+    this.x = 100*this.col_i;
+    this.y = -100*this.row_i;
+    location = tpl.piece_location(this);
+
     if (!this.$view) {
       this.$view = $(tpl.piece(this));
-      this.$view.css('z-index', this.height);
+      this.$view.css({
+        'z-index': this.height,
+        'transform': location
+      });
       this.$stone = this.$view.find('.stone');
       this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
     } else {
-      if (
-        1*this.$view.css('z-index') <= this.height ||
-        this.$view.hasClass('c'+this.col_i+' r'+this.row_i)
-      ) {
-        // Update z-index now
-        this.$view.afterTransition().css('z-index', this.height);
+      if (this.prev_location == location || this.prev_height < this.height) {
+        this.$view.afterTransition().css({
+          'z-index': this.height,
+          'transform': location
+        });
       } else {
         // Update z-index after ply
         this.$view.afterTransition().afterTransition(function (event) {
@@ -145,13 +153,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
             that.$view.css('z-index', that.height);
           }
         });
+        this.$view.css('transform', location);
       }
       this.$stone[0].className = tpl.stone_class(this);
       this.$stone.removeClass('F S').addClass(this.stone);
     }
-    this.x = 100*this.col_i;
-    this.y = -100*this.row_i;
-    this.$view.css('transform', 'translate('+(this.x)+'%, '+(this.y)+'%)');
+    this.prev_height = this.height;
+    this.prev_location = location;
 
     // Update captive indicator
     if (this.captor || this.captives.length) {
