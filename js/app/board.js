@@ -91,7 +91,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Piece.prototype.render = function () {
     var that = this
-      , ply = this.board.ply
       , location;
 
     if (this.board.defer_render) {
@@ -149,9 +148,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       } else {
         // Update z-index after ply
         this.$view.afterTransition().afterTransition(function (event) {
-          if (that.board.ply == ply) {
-            that.$view.css('z-index', that.height);
-          }
+          that.$view.css('z-index', that.height);
         });
         this.$view.css('transform', location);
       }
