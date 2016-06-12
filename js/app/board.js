@@ -85,7 +85,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       captive.row_i = that.row_i;
       captive.stone = 'F';
       captive.captives.length = 0;
-      captive.render();
     });
   };
 
