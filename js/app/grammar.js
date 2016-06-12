@@ -7,7 +7,7 @@ define(['lodash'], function (_) {
     'player2': /^(.*)$/,
     'date': /^(\d\d\d\d)\.(\d\d?)\.(\d\d?)$/,
     'size': /^([3-9])$/,
-    'result': /^(R-0|0-R|F-0|0-F|1\/2-1\/2)$/
+    'result': /^(R-0|0-R|F-0|0-F|1\/2-1\/2|)$/
   };
 
   var other_tags = {
@@ -27,8 +27,8 @@ define(['lodash'], function (_) {
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
     tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
 
-    tag: '(?:\\s*\\[[^\\[\\]]+\\])',
-    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]+)(\\"\\s*\\])',
+    tag: '(?:\\s*\\[[^\\[\\]]*\\])',
+    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]*)(\\"\\s*\\])',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',

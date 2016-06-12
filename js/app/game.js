@@ -341,7 +341,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
 
-    if (this.key == 'result') {
+    if (this.key == 'result' && this.value) {
       this.value_print = new Result(this.value, game).print();
     } else {
       this.value_print = this.value;
