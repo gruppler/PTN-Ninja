@@ -23,6 +23,7 @@ requirejs({locale: navigator.language}, [
     , $body = $('body')
     , $ptn = $('#ptn')
     , $viewer = $('#viewer')
+    , $fab = $('#fab')
     , $permalink = $('#permalink')
     , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
@@ -91,7 +92,7 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
-  $('#fab').click(function () {
+  $fab.click(function () {
     if ($body.hasClass('error')) {
       $messages_parse.toggleClass('visible');
     } else {
@@ -100,6 +101,11 @@ requirejs({locale: navigator.language}, [
   }).mousedown(function (event) {
     event.stopPropagation();
     event.preventDefault();
+  }).mouseover(function () {
+    $fab.attr('title',
+      $body.hasClass('error') ? t.ShowHide_Errors :
+        $body.hasClass('playmode') ? t.Edit_Mode : t.Play_Mode
+    );
   });
 
   game.on_parse_start(function () {
@@ -137,18 +143,23 @@ requirejs({locale: navigator.language}, [
       .filter('[data-ply="'+ply+'"]').addClass('active');
   });
 
-  $('#controls button.first').on('touchstart click', board.first);
-  $('#controls button.prev').on('touchstart click', board.prev);
-  $('#controls button.play').on('touchstart click', board.playpause);
-  $('#controls button.next').on('touchstart click', board.next);
-  $('#controls button.last').on('touchstart click', board.last);
+  $('#controls button.first')
+    .on('touchstart click', board.first)
+    .attr('title', t.First_Move);
+  $('#controls button.prev')
+    .on('touchstart click', board.prev)
+    .attr('title', t.Previous_Move);
+  $('#controls button.play')
+    .on('touchstart click', board.playpause)
+    .attr('title', t.PlayPause);
+  $('#controls button.next')
+    .on('touchstart click', board.next)
+    .attr('title', t.Next_Move);
+  $('#controls button.last')
+    .on('touchstart click', board.last)
+    .attr('title', t.Last_Move);
 
-  $('#share').on('touchstart click', function (event) {
-    event.stopPropagation();
-    event.preventDefault();
-
-    $(this).toggleClass('active');
-  }).attr('title', t.Share);
+  $('#share').attr('title', t.Share);
 
   $('#download').on('touchstart click', function (event) {
     event.stopPropagation();

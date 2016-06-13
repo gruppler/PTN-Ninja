@@ -204,22 +204,26 @@
 
 #share-menu {
   position: absolute;
-  top: $edge;
-  right: $edge;
+  top: 0;
+  right: 0;
   width: $fab-height-small;
+  padding: $edge;
+  overflow: visible;
   z-index: 1;
 
-  #share ~ .fab {
+  .fab + .fab {
     margin-top: $edge;
     opacity: 0;
     transform: scale(0);
     pointer-events: none;
-    transition: all $time-smooth $natural;
+    transition: all $time-quick $natural;
   }
 
-  #share.active ~ .fab {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: all;
+  &:hover {
+    .fab + .fab {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: all;
+    }
   }
 }
