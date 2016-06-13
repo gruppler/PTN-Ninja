@@ -99,11 +99,11 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.player1 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player1', 'player-solid');
+    return this.add(message, seconds, group, 'player1', 'player');
   };
 
   Messages.prototype.player2 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player2', 'player-line');
+    return this.add(message, seconds, group, 'player2', 'player');
   };
 
   function remove_message() {
