@@ -9,6 +9,7 @@ requirejs({locale: navigator.language}, [
   'app/messages',
   'app/game',
   'app/board',
+  'filesaver',
   'lodash',
   'jquery',
   'jquery.keymap',
@@ -16,7 +17,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, Messages, Game, Board, _, $) {
+], function (t, Messages, Game, Board, saveAs, _, $) {
 
   var $window = $(window)
     , $body = $('body')
@@ -141,6 +142,31 @@ requirejs({locale: navigator.language}, [
   $('#controls button.play').on('touchstart click', board.playpause);
   $('#controls button.next').on('touchstart click', board.next);
   $('#controls button.last').on('touchstart click', board.last);
+
+  $('#share').on('touchstart click', function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    $(this).toggleClass('active');
+  }).attr('title', t.Share);
+
+  $('#download').on('touchstart click', function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    saveAs(
+      new Blob([game.ptn], {type: "text/plain;charset=utf-8"}),
+      (game.config.player1 || t.Player1) +
+      ' vs ' +
+      (game.config.player2 || t.Player2) +
+      (
+        game.config.date ?
+        ' ' + game.config.date
+        : ''
+      )
+      + '.ptn'
+    );
+  }).attr('title', t.Download);
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $window.on('drop', function(event) {

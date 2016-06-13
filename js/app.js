@@ -14,6 +14,7 @@ requirejs.config({
     'nls': '../app/nls',
     'lodash': 'lodash.min',
     'jquery': 'jquery.min',
+    'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min'
   },
   shim: {

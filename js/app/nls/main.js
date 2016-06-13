@@ -5,6 +5,7 @@ define({
 
     Clock: "Clock",
     Date: "Date",
+    Download: "Download",
     Event: "Event",
     n_characters: "<%=n%> characters",
     Permalink: "Permalink",
@@ -15,6 +16,7 @@ define({
     Rating2: "Rating2",
     Result: "Result",
     Round: "Round",
+    Share: "Share",
     Site: "Site",
     Size: "Size",
     TPS: "TPS",

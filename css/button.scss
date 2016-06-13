@@ -78,8 +78,8 @@ button, .button, .fab {
   line-height: $fab-height;
   padding: 0;
   overflow: hidden;
-  background-color: $accent-color;
-  color: $primary-color-text;
+  background-color: $primary-color-lighter;
+  color: $primary-color-darker;
   box-shadow: $shadow3;
   font-size: 1.6rem;
 
@@ -98,7 +98,7 @@ button, .button, .fab {
   }
 
   &:hover {
-    background-color: $accent-color-light;
+    background-color: $white;
   }
   &:hover {
     box-shadow: $shadow4;
