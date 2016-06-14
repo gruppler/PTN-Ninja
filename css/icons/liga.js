@@ -25,6 +25,7 @@
     var icons;
     if (!supportsProperty('fontFeatureSettings')) {
         icons = {
+            'open': '&#xe2c8;',
             'download': '&#xe2c0;',
             'time': '&#xe8b5;',
             'player': '&#xe853;',

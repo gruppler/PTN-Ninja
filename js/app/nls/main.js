@@ -11,6 +11,7 @@ define({
     First_Ply: "First Ply",
     Last_Ply: "Last Ply",
     Next_Ply: "Next Ply",
+    Open: "Open",
     Permalink: "Permalink",
     Play_Mode: "Play Mode",
     PlayPause: "Play/Pause",

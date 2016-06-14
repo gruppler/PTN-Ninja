@@ -36,9 +36,6 @@ The **share** menu in the upper-right corner allows you to share the current PTN
 
 
 ## Future Features
-- Interface for selecting a .ptn file
-
-
 - Set current ply as beginning
   - Encode the current board as TPS and add to header
   - From Edit Mode or Play Mode?

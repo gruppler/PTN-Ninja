@@ -90,6 +90,19 @@ requirejs({locale: navigator.language}, [
     $ptn.attr('contenteditable', game.is_editing);
   }
 
+  function read_file(file) {
+    if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        board.ply = 0;
+        game.parse(event.target.result);
+        bililiteRange($ptn[0]).undo(0);
+        location.hash = game.ptn_compressed;
+      }
+      reader.readAsText(file);
+    }
+  }
+
   $('title').text(t.app_title);
 
   $fab.click(function () {
@@ -179,24 +192,18 @@ requirejs({locale: navigator.language}, [
     );
   }).attr('title', t.Download);
 
+  $('#open').on('change', function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+    read_file(this.files[0]);
+    $(this).val('');
+  }).attr('title', t.Open);
+
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     $window.on('drop', function(event) {
-      var file = event.originalEvent.dataTransfer.files[0]
-        , i, file, ext;
-
       event.stopPropagation();
       event.preventDefault();
-
-      if (file && /.ptn$/i.test(file.name)) {
-        var reader = new FileReader();
-        reader.onload = function (event) {
-          board.ply = 0;
-          game.parse(event.target.result);
-          bililiteRange($ptn[0]).undo(0);
-          location.hash = game.ptn_compressed;
-        }
-        reader.readAsText(file);
-      }
+      read_file(event.originalEvent.dataTransfer.files[0]);
     }).on('dragover', function(event) {
       event.preventDefault();
       event.stopPropagation();
