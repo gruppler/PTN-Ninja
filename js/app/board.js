@@ -577,10 +577,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       _.map(ply.comments, comment);
     }
 
-    if (ply.result) {
-      m['player'+ply.result.victor](ply.result.text);
-      if (ply.result.comments) {
-        _.map(ply.result.comments, comment);
+    if (ply.is_last && this.game.result) {
+      m['player'+this.game.result.victor](this.game.result.text);
+      if (this.game.result.comments) {
+        _.map(this.game.result.comments, comment);
       }
     }
   };

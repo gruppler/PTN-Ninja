@@ -93,6 +93,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.player1_label = result_label[this.player1];
     this.player2_label = result_label[this.player2];
 
+    game.result = this;
     return this;
   }
 
@@ -417,6 +418,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
     this.is_valid = true;
+    this.result = null;
     this.tags.length = 0;
     this.moves.length = 0;
     this.plys.length = 0;
@@ -499,6 +501,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
           (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
+      _.last(this.plys).is_last = true;
     }
 
     _.invokeMap(this.callbacks_end, 'call', this, this);
