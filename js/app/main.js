@@ -307,6 +307,7 @@ requirejs({locale: navigator.language}, [
   if (location.hash && !$body.hasClass('error')) {
     toggle_edit_mode(false);
   }
+  $viewer.afterTransition();
 
   $window.on('keydown', function (event) {
     if (game.is_editing) {

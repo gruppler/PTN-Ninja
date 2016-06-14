@@ -14,9 +14,10 @@ The **share** menu in the upper-right corner allows you to share the current PTN
 
 ## Hotkeys
 #### Global
-| Key            | Action                                 |
-| -------------- | -------------------------------------- |
-| <kbd>Esc</kbd> | Toggle between Play Mode and Edit Mode |
+| Key                        | Action                                 |
+| -------------------------- | -------------------------------------- |
+| <kbd>Esc</kbd>             | Toggle between Play Mode and Edit Mode |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd> | Load sample PTN |
 
 #### Edit Mode
 | Key                            | Action |
