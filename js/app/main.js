@@ -360,7 +360,9 @@ requirejs({locale: navigator.language}, [
     // Global
     switch (event.keymap) {
       case 'Escape':
-        toggle_edit_mode();
+        if (!$body.hasClass('error')) {
+          toggle_edit_mode();
+        }
         break;
       case '^?':
         game.parse(sample_ptn, true);
