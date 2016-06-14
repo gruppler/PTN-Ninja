@@ -4,11 +4,11 @@
 An editor and viewer for Portable Tak Notation (http://ptn.ninja)
 
 ## Getting Started
-To load a **.ptn** file, simply drag the file into the window, or copy the contents and paste into the editor. Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-left corner).
+To load a **.ptn** file, simply drag the file into the window, or copy the contents and paste into the editor. Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
 
 If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s).
 
-The **share** menu in the top-right corner allows you to share the current PTN as a URL. The PTN is compressed and is always up to date. You can also download the current PTN as a **.ptn** file.
+The **share** menu in the upper-right corner allows you to share the current PTN as a URL. The PTN is compressed and is always up to date. You can also download the current PTN as a **.ptn** file.
 
 
 
