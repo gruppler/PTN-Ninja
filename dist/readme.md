@@ -1,4 +1,4 @@
-# PTN Player
+# PTN Ninja
 &copy; 2016 Craig Laparo
 
 An editor and viewer for Portable Tak Notation (http://ptn.ninja)

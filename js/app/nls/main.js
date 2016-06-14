@@ -1,7 +1,7 @@
 define({
 
   root: {
-    App_Title: "PTN Player",
+    App_Title: "PTN Ninja",
 
     Clock: "Clock",
     Date: "Date",
