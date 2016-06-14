@@ -104,7 +104,7 @@ requirejs({locale: navigator.language}, [
   }).mouseover(function () {
     $fab.attr('title',
       $body.hasClass('error') ? t.ShowHide_Errors :
-        $body.hasClass('playmode') ? t.Edit_Mode : t.Play_Mode
+        game.is_editing ? t.Play_Mode : t.Edit_Mode
     );
   });
 
@@ -145,19 +145,19 @@ requirejs({locale: navigator.language}, [
 
   $('#controls button.first')
     .on('touchstart click', board.first)
-    .attr('title', t.First_Move);
+    .attr('title', t.First_Ply);
   $('#controls button.prev')
     .on('touchstart click', board.prev)
-    .attr('title', t.Previous_Move);
+    .attr('title', t.Previous_Ply);
   $('#controls button.play')
     .on('touchstart click', board.playpause)
     .attr('title', t.PlayPause);
   $('#controls button.next')
     .on('touchstart click', board.next)
-    .attr('title', t.Next_Move);
+    .attr('title', t.Next_Ply);
   $('#controls button.last')
     .on('touchstart click', board.last)
-    .attr('title', t.Last_Move);
+    .attr('title', t.Last_Ply);
 
   $('#share').attr('title', t.Share);
 
