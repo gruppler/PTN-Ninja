@@ -14,29 +14,43 @@ The **share** menu in the top-right corner allows you to share the current PTN a
 
 ## Hotkeys
 #### Global
-| Key                                 | Action                                 |
-| ----------------------------------- | -------------------------------------- |
-| <kbd>Esc</kbd>                      | Toggle between Play Mode and Edit Mode |
+| Key            | Action                                 |
+| -------------- | -------------------------------------- |
+| <kbd>Esc</kbd> | Toggle between Play Mode and Edit Mode |
+
+#### Edit Mode
+| Key                            | Action |
+| ------------------------------ | ------ |
+| <kbd>Ctrl</kbd> + <kbd>z</kbd> | Undo   |
 
 #### Play Mode
-| Key                                 | Action                                 |
-| ----------------------------------- | -------------------------------------- |
-| <kbd>Spacebar</kbd>                 | Play/Pause                             |
-| <kbd>&rarr;</kbd>                   | Next Ply                               |
-| <kbd>&larr;</kbd>                   | Previous Ply                           |
-| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply                               |
-| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply                              |
+| Key                                 | Action       |
+| ----------------------------------- | ------------ |
+| <kbd>Spacebar</kbd>                 | Play/Pause   |
+| <kbd>&rarr;</kbd>                   | Next Ply     |
+| <kbd>&larr;</kbd>                   | Previous Ply |
+| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply     |
+| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply    |
 
 
 
 ## Future Features
+- Interface for selecting a .ptn file
+
+
 - Set current ply as beginning
-  - Encode the current board as TPS
-  - From Edit Mode and/or Play Mode?
+  - Encode the current board as TPS and add to header
+  - From Edit Mode or Play Mode?
+
+
+- "Tak" detection
+  - Automatically add Tak notation `'` to PTN
 
 
 - "Editing" from Play Mode
   - Toggle switch, or enabled only if Result is blank?
+  - Use the editor's undo feature
+  - Interface for adding comments and evaluation marks
   - Allow for easy live transcription
   - Allow for completion of puzzles
 
@@ -46,12 +60,7 @@ The **share** menu in the top-right corner allows you to share the current PTN a
   - Mobile friendly
 
 
-- "Tak" detection
-  - Automatically add Tak notation `'` to PTN
-
-
 ## Legal
-
 &copy; 2016 Craig Laparo
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
