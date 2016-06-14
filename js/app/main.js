@@ -54,11 +54,6 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
-  // For debugging purposes only:
-  window.game = game;
-  window.board = board;
-  //
-
   _.bindAll(board, [
     'play',
     'pause',
