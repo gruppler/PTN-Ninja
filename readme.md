@@ -8,7 +8,10 @@ To load a **.ptn** file, simply drag the file into the window, or copy the conte
 
 If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s).
 
-The **share** menu in the upper-right corner allows you to share the current PTN as a URL. The PTN is compressed and is always up to date. You can also download the current PTN as a **.ptn** file.
+The **share** menu in the upper-right corner allows you to do the following:
+- Share the current PTN as a URL. The PTN is compressed and is always up to date.
+- Download the current PTN as a **.ptn** file.
+- Open a **.ptn** or **.txt** file from your system. (I agree, it doesn't belong under the "share" menu, but I didn't know where else to put it.)
 
 
 
