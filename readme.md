@@ -1,6 +1,8 @@
 # PTN Player
 &copy; 2016 Craig Laparo
 
+An editor and viewer for Portable Tak Notation (http://ptn.ninja)
+
 ## Getting Started
 To load a **.ptn** file, simply drag the file into the window, or copy the contents and paste into the editor. Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-left corner).
 
