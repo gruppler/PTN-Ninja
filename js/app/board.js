@@ -171,7 +171,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     } else {
       this.$captive.removeClass('visible');
     }
-    this.$captive.css('margin-bottom', (this.height - 1)*5 + '%');
+    this.$captive.css('transform', 'translateY('+(-65*(this.height - 1)) + '%)');
 
     if (this.square && !this.$view.closest('html').length) {
       this.board.$pieces.place(this.$view);

@@ -133,8 +133,7 @@
       opacity: 0;
       border-radius: 0.25vmin;
       box-shadow: $shadow1;
-      transition: opacity $time-smooth ease-out,
-        margin $time-smooth $natural;
+      transition: all $time-smooth $natural;
 
       &.visible {
         opacity: 1;
