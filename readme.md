@@ -60,6 +60,9 @@ The **share** menu in the upper-right corner allows you to share the current PTN
   - Mobile friendly
 
 
+- Improve mobile performance and usability
+
+
 ## Legal
 &copy; 2016 Craig Laparo
 
