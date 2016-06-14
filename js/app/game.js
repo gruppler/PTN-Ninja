@@ -29,6 +29,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     'rating2': 'star-line',
     'tps': 'grid-solid',
     'points': 'points',
+    'time': 'time',
     'clock': 'timer'
   };
 

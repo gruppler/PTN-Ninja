@@ -22,6 +22,7 @@ define(['lodash'], function (_) {
     'rating2': /^(\d+)$/,
     'tps': /^[1-9xSC\/,]+\s+[1,2]\s+\d+$/,
     'points': /^(\d+)$/,
+    'time': /^\d\d(?::\d\d){1,2}$/,
     'clock': /^(\d+min(?:\+\d+sec))$/
   };
 
