@@ -352,6 +352,9 @@ requirejs({locale: navigator.language}, [
 
     // Global
     switch (event.keymap) {
+      case 'Escape':
+        toggle_edit_mode(true);
+        break;
       case '^?':
         game.parse(sample_ptn, true);
         break;
