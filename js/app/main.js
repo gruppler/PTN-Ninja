@@ -30,7 +30,12 @@ requirejs({locale: navigator.language}, [
     , game = new Game()
     , board = new Board()
     , baseurl = location.origin + location.pathname
-    , default_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA';
+    , d = new Date()
+    , today = d.getFullYear() +'.'+
+        _.padStart(d.getMonth()+1,2,0) +'.'+
+        _.padStart(d.getDate(),2,0)
+    , default_ptn = '[Date "'+today+'"]\n[Player1 "White"]\n[Player2 "Black"]\n[Result ""]\n[Size "5"]\n\n'
+    , sample_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA';
 
   (function () {
     function _templatize(parent) {
@@ -205,7 +210,7 @@ requirejs({locale: navigator.language}, [
       event.stopPropagation();
     }).on('hashchange', function () {
       board.ply = 0;
-      game.parse(location.hash.substr(1) || default_ptn, true);
+      game.parse(location.hash.substr(1) || default_ptn, !!location.hash);
       bililiteRange($ptn[0]).undo(0);
     });
   }
@@ -301,7 +306,7 @@ requirejs({locale: navigator.language}, [
   });
 
   board.ply = 0;
-  game.parse(location.hash ? location.hash.substr(1) : default_ptn, true);
+  game.parse(location.hash.substr(1) || default_ptn, !!location.hash);
   bililiteRange($ptn[0]).undo(0);
 
   if (location.hash && !$body.hasClass('error')) {
@@ -310,10 +315,9 @@ requirejs({locale: navigator.language}, [
 
   $window.on('keydown', function (event) {
     if (game.is_editing) {
+
+      // Edit Mode
       switch (event.keymap) {
-        case 'Escape':
-            toggle_edit_mode(false);
-          break;
         case '^z':
           bililiteRange.undo(event);
           break;
@@ -321,11 +325,11 @@ requirejs({locale: navigator.language}, [
           bililiteRange.redo(event);
           break;
       }
+
     } else {
+
+      // Play Mode
       switch (event.keymap) {
-        case 'Escape':
-          toggle_edit_mode(true);
-          break;
         case 'Spacebar':
           board.playpause();
           event.preventDefault();
@@ -347,6 +351,14 @@ requirejs({locale: navigator.language}, [
           event.preventDefault();
           break;
       }
+
+    }
+
+    // Global
+    switch (event.keymap) {
+      case '^?':
+        game.parse(sample_ptn, true);
+        break;
     }
   });
 
