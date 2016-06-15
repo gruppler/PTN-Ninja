@@ -68,11 +68,9 @@ $purple: #BA68C8;
     }
   }
 
-  .move {
-    .linenum {
-      color: $medium-black;
-      font-weight: 400
-    }
+  .linenum {
+    color: $medium-black;
+    font-weight: 400
   }
 
   .ply {
@@ -125,4 +123,12 @@ $purple: #BA68C8;
     }
   }
 
+  .invalid {
+    color: $medium-white;
+
+    .first-letter {
+      color: $error-color;
+      font-weight: 600;
+    }
+  }
 }

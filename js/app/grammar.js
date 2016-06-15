@@ -32,8 +32,8 @@ define(['lodash'], function (_) {
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
     tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
 
-    tag: '(?:\\s*\\[[^\\[\\]]*\\])',
-    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s+\\")([^"]*)(\\"\\s*\\])',
+    tag: '(?:\\s*\\[.*\\]?)',
+    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',
@@ -44,9 +44,9 @@ define(['lodash'], function (_) {
     place_grouped: '(<stone>)(<square>)',
     slide: '(?:<count><square><direction><drops><stone>)',
     slide_grouped: '(<count>)(<square>)(<direction>)(<drops>)(<stone>)',
-    comment: '(?:\\s*\\{[^}]*\\})*',
+    comment: '(?:\\s*\\{[^}]*\\}?)*',
     comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}',
-    comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\})',
+    comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\}?)',
     result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1\\/2-1\\/2))',
     result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1\\/2-1\\/2)',
     evaluation: '[?!\']*',
@@ -54,11 +54,11 @@ define(['lodash'], function (_) {
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
     linenum: '\\s+\\d+\\.?',
     linenum_grouped: '(\\s+)(\\d+\\.?)',
-    move: '(?:<linenum><comment><ply>?<comment><ply>?<comment><result>?<comment>)',
-    move_grouped: '(<linenum>)(<comment>)(<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)',
+    turn: '(?:<linenum><comment><ply>?<comment><ply>?<comment><result>?<comment>)|<nonturn>',
+    turn_grouped: '(?:(<linenum>)(<comment>)(<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>))|(<nonturn>)',
+    nonturn: '(?:[^]+)',
 
     header: '^<tag>+$',
-    body: '^<move>*\\s*$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)(\\s*)$'
   };
 

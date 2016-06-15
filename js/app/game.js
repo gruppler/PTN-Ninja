@@ -6,7 +6,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Ply, Linenum, Move, Tag, Game;
+  var Comment, Result, Ply, Linenum, Turn, Tag, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -36,6 +36,11 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   var compress = LZString.compressToEncodedURIComponent
     , decompress = LZString.decompressFromEncodedURIComponent;
 
+  var print_invalid = _.template(
+    '<span class="invalid">'+
+      '<%=this.text.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
+    '</span>'
+  );
 
   // Comment
 
@@ -220,16 +225,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  // Move
+  // Turn
 
-  Move = function (string, game) {
-    var parts = string.match(r.grammar.move_grouped)
+  Turn = function (string, game) {
+    var parts = string.match(r.grammar.turn_grouped)
       , first_player = 1
       , second_player = 2;
 
+    if (parts[9]) {
+      game.is_valid = false;
+      this.text = string;
+      this.print = print_invalid;
+      m.error(t.error.invalid_movetext({text: _.trim(string)[0]}));
+      return this;
+    }
+
     this.linenum = new Linenum(parts[1]);
 
-    if(game.config.tps && this.linenum.value == game.config.tps.move){
+    if(game.config.tps && this.linenum.value == game.config.tps.turn){
       first_player = game.config.tps.player;
       second_player = first_player == 1 ? 2 : 1;
       if (this.linenum.value == 1) {
@@ -278,8 +291,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Move.prototype.print = function(){
-    var output = '<span class="move">';
+  Turn.prototype.print = function(){
+    var output = '<span class="turn">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -315,27 +328,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     var parts = string.match(r.grammar.tag_grouped);
 
     if (!parts) {
-      m.error(t.error.invalid_tag({tag: string}));
-      this.prefix = '';
-      this.name = '';
-      this.separator = '';
-      this.value = '';
-      this.value_print = '';
-      this.suffix = string;
-
       game.is_valid = false;
-      return false;
+      this.text = string;
+      this.print = print_invalid;
+      m.error(t.error.invalid_tag({tag: _.truncate(string, {length: 5})}));
+      return this;
     }
 
     this.prefix = parts[1];
     this.name = parts[2];
     this.separator = parts[3];
-    this.value = parts[4];
+    this.q1 = parts[4];
+    this.value = parts[5];
     this.value_print = this.value;
-    this.suffix = parts[5];
+    this.q2 = parts[6];
+    this.suffix = parts[7];
 
     this.key = this.name.toLowerCase();
-    this.icon = tag_icons[this.key];
+    this.icon = tag_icons[this.key] || 'circle';
 
     if (!(this.key in r.tags)) {
       m.error(t.error.invalid_tag({tag: parts[2]}));
@@ -367,9 +377,11 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       '<%=this.prefix%>'+
       '<i class="icon-<%=this.icon%>"></i>'+
       '<span class="name"><%=this.name%></span>'+
-      '<%=this.separator%>'+
-      '<span class="value <%=this.key%>"><%=this.value_print%></span>'+
-      '<%=this.suffix%>'+
+      '<%=this.separator%><%=this.q1%>'+
+      '<span class="value <%=this.q1 ? this.key : ""%>">'+
+        '<%=this.value_print%>'+
+      '</span>'+
+      '<%=this.q2%><%=this.suffix%>'+
     '</span>'
   );
 
@@ -380,7 +392,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = false;
     this.config = {};
     this.tags = [];
-    this.moves = [];
+    this.turns = [];
     this.plys = [];
     this.ptn = '';
     this.callbacks_start = [];
@@ -426,7 +438,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = true;
     this.result = null;
     this.tags.length = 0;
-    this.moves.length = 0;
+    this.turns.length = 0;
     this.plys.length = 0;
     m.clear('error');
 
@@ -444,7 +456,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.suffix = file[4] || '';
 
     // Header
-
     header = header.match(r.grammar.header);
     if (!header) {
       m.error(t.error.invalid_header);
@@ -464,7 +475,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     if (missing_tags.length) {
       m.error(t.error.missing_tags({tags: missing_tags}));
       this.is_valid = false;
-      return false;
     }
 
     // TPS
@@ -477,36 +487,29 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         this.config.tps = {
           board: _.invokeMap(tps[1].split(/\//g), 'split', /,/g),
           player: 1*tps[2],
-          move: 1*tps[3]
+          turn: 1*tps[3]
         };
       }
     }
 
     // Body
-
-    body = body.match(r.grammar.body);
-    if (!body) {
-      m.error(t.error.invalid_body);
-      this.is_valid = false;
-      return false;
-    }
-    body = body[0].match(r.grammar.move);
+    body = body.match(r.grammar.turn);
     if (body) {
       for (var i = 0; i < body.length; i++) {
-        this.moves[i] = new Move(body[i], this);
+        this.turns[i] = new Turn(body[i], this);
 
-        if (this.moves[i].ply1) {
-          this.moves[i].ply1.id = this.plys.length;
-          this.plys.push(this.moves[i].ply1);
+        if (this.turns[i].ply1) {
+          this.turns[i].ply1.id = this.plys.length;
+          this.plys.push(this.turns[i].ply1);
         }
 
-        if (this.moves[i].ply2) {
-          this.moves[i].ply2.id = this.plys.length;
-          this.plys.push(this.moves[i].ply2);
+        if (this.turns[i].ply2) {
+          this.turns[i].ply2.id = this.plys.length;
+          this.plys.push(this.turns[i].ply2);
         }
 
-        if (this.moves[i].result) {
-          (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
+        if (this.turns[i].result) {
+          (this.turns[i].ply2 || this.turns[i].ply1).result = this.turns[i].result;
         }
       }
 
@@ -526,7 +529,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     output += _.invokeMap(this.tags, 'print').join('');
     output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
-    output += _.invokeMap(this.moves, 'print').join('');
+    output += _.invokeMap(this.turns, 'print').join('');
     output += this.suffix;
 
     return output;

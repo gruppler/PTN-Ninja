@@ -46,7 +46,7 @@ define({
 
     error: {
       illegal_ply: "Illegal move: \"<b><%=ply%></b>\"",
-      invalid_body: "Invalid movetext",
+      invalid_movetext: "Invalid movetext: \"<b><%=text%></b>\"",
       invalid_file_format: "Invalid file format",
       invalid_header: "Invalid header",
       invalid_ply: "Invalid move: \"<b><%=ply%></b>\"",

@@ -84,14 +84,10 @@
   body.editmode & .ply {
     &:hover {
       box-shadow: $shadow2;
-      opacity: 1;
-      z-index: 1;
     }
     &:active,
     &.active {
       box-shadow: $shadow4;
-      opacity: 1;
-      z-index: 1;
     }
   }
 }
