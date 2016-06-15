@@ -246,7 +246,11 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.comments3 = parse_comments(parts[6]);
     this.comments4 = parse_comments(parts[8]);
 
-    this.ply1 = new Ply(parts[3], first_player, game);
+    if (parts[3]) {
+      this.ply1 = new Ply(parts[3], first_player, game);
+    } else {
+      this.ply1 = null;
+    }
     if (this.comments2) {
       if (this.comments1) {
         this.ply1.comments = _.map(this.comments1, 'text').concat(
@@ -281,7 +285,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print').join('');
     }
-    output += this.ply1.print();
+    if (this.ply1) {
+      output += this.ply1.print();
+    }
     if (this.comments2) {
       output += _.invokeMap(this.comments2, 'print').join('');
     }
@@ -489,8 +495,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       for (var i = 0; i < body.length; i++) {
         this.moves[i] = new Move(body[i], this);
 
-        this.moves[i].ply1.id = this.plys.length;
-        this.plys.push(this.moves[i].ply1);
+        if (this.moves[i].ply1) {
+          this.moves[i].ply1.id = this.plys.length;
+          this.plys.push(this.moves[i].ply1);
+        }
 
         if (this.moves[i].ply2) {
           this.moves[i].ply2.id = this.plys.length;
