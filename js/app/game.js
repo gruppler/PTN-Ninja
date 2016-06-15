@@ -509,7 +509,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
           (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
-      _.last(this.plys).is_last = true;
+
+      if (this.plys.length) {
+        _.last(this.plys).is_last = true;
+      }
     }
 
     _.invokeMap(this.callbacks_end, 'call', this, this);
