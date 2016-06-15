@@ -522,7 +522,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
 
-    this.show_comments(ply);
+    if (this.ply == 0) {
+      this.show_comments(this.game);
+    } else {
+      this.show_comments(ply);
+    }
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
@@ -652,10 +656,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.go_to_ply = function (ply) {
-    if (this.ply == ply) {
-      return;
-    }
-
     this.defer_render = true;
     if (ply > this.ply) {
       while (this.ply < ply && this.do_ply()) {}
@@ -663,11 +663,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       while (this.ply > ply && this.undo_ply()) {}
     }
     this.defer_render = false;
+
     if (ply == 0) {
       this.show_comments(this.game);
     } else {
       this.show_comments(this.game.plys[ply - 1]);
     }
+
     this.update();
   };
 
