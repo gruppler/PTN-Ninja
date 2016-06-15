@@ -108,6 +108,8 @@ $purple: #BA68C8;
     font-weight: 700;
 
     .win {
+      color: $solid-white;
+
       &.road {
         color: $green;
       }

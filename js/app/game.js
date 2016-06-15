@@ -11,6 +11,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   var result_label = {
     '0': 'loss',
+    '1': 'win',
     'F': 'flat win',
     'R': 'road win',
     '1/2': 'draw'

@@ -11,7 +11,7 @@ define(['lodash'], function (_) {
     'player2': /^(.*)$/,
     'date': /^(\d\d\d\d)\.(\d\d?)\.(\d\d?)$/,
     'size': /^([3-9])$/,
-    'result': /^(R-0|0-R|F-0|0-F|1\/2-1\/2|)$/
+    'result': /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|)$/
   };
 
   var other_tags = {
@@ -47,8 +47,8 @@ define(['lodash'], function (_) {
     comment: '(?:\\s*\\{[^}]*\\}?)*',
     comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}',
     comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\}?)',
-    result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1\\/2-1\\/2))',
-    result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1\\/2-1\\/2)',
+    result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
+    result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',
     evaluation: '[?!\']*',
     ply: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',

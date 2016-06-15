@@ -33,6 +33,7 @@ define({
     n_characters: "<%=n%> characters",
 
     result: {
+      '1': "<%=player%> wins by default",
       'F': "<%=player%> wins by flats",
       'R': "<%=player%> wins by building a road",
       'tie': "It's a tie"
