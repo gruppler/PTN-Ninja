@@ -45,7 +45,7 @@ define(['lodash'], function (_) {
     slide: '(?:<count><square><direction><drops><stone>)',
     slide_grouped: '(<count>)(<square>)(<direction>)(<drops>)(<stone>)',
     comment: '(?:\\s*\\{[^}]*\\}?)*',
-    comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}',
+    comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}?',
     comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\}?)',
     result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
     result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',

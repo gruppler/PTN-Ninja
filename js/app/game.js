@@ -48,6 +48,13 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   Comment = function (string) {
     var parts = string.match(r.grammar.comment_grouped);
 
+    if (!parts) {
+      this.prefix = string;
+      this.text = '';
+      this.suffix = '';
+      return this;
+    }
+
     this.prefix = parts[1];
     this.text = parts[2];
     this.suffix = parts[3];
