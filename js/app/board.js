@@ -404,7 +404,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.init = function (game) {
-    var i, j, row, col, a = 'a'.charCodeAt(0), col_letter, square, piece, tps;
+    var i, row, col, a = 'a'.charCodeAt(0), col_letter, square, piece, tps;
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
 
@@ -447,28 +447,24 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     if (this.tps) {
-      if (this.tps.board.length != this.size) {
-        m_parse.error(t.error.invalid_TPS_dimensions);
-        return false;
-      }
-      for (i = 0, row = this.size - 1; row >= 0; i++, row--) {
-        for (col = 0, j = 0; j < this.tps.board[i].length; col++, j++) {
-          tps = this.tps.board[i][j];
-          if (!tps || col >= this.size) {
-            m_parse.error(t.error.invalid_TPS_dimensions);
-            return false;
-          }
+      row = this.size - 1;
+      for (col = 0, i = 0; i < this.tps.board.length; col++, i++) {
+        tps = this.tps.board[i];
+        if (!tps || col >= this.size) {
+          m_parse.error(t.error.invalid_TPS_dimensions);
+          break;
+        }
 
-          if (tps[0] == 'x') {
-            if (tps[1]) {
-              col += 1*tps[1] - 1;
-            }
-          } else {
-            this.initial_pieces['tps-'+i+'-'+j] = this.squares[this.cols[col]+this.rows[row]].parse(tps);
-          }
+        if (tps.is_space) {
+          col += tps.count - 1;
+        } else {
+          this.initial_pieces['tps-'+i] = this.squares[this.cols[col]+this.rows[row]].parse(tps.text);
+        }
+        if (tps.separator == '/') {
+          row--;
+          col = -1;
         }
       }
-      this.tps.board;
     }
 
     this.defer_render = false;

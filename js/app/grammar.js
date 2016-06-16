@@ -27,10 +27,15 @@ define(['lodash'], function (_) {
   };
 
   var grammar = {
-    col: '(?:x[1-9]?|[12]+[SC]?)',
+    space: '(?:x[1-9]?)',
+    stack: '(?:[12]+[SC]?)',
+    stack_grouped: '([12]+[SC]?)',
+    col: '(?:<space>|<stack>)',
+    cols: '((?:<space>|<stack>)(?:[,\\/]?))',
+    col_grouped: '(<space>?)(<stack>?)([,\\/]?)',
     row: '(?:<col>(?:,<col>){0,8})',
     tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
-    tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
+    tps_grouped: '(<row>?(?:\\/<row>)*)(\\s*)([12]?)(\\s*)(\\d*)([^]*)',
 
     tag: '(?:\\s*\\[.*\\]?)',
     tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',

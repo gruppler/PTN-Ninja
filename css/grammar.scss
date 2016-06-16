@@ -42,7 +42,7 @@ $purple: #BA68C8;
       color: $heavy-white;
       margin-right: 0.2em;
       font-size: 1em;
-      line-height: 1em;
+      line-height: 1.5em;
       vertical-align: middle;
     }
 
@@ -55,6 +55,23 @@ $purple: #BA68C8;
     .value {
       color: $heavy-white;
       font-weight: 600;
+    }
+  }
+
+  .tps {
+    color: $medium-white;
+    font-weight: 300;
+
+    .separator {
+      color: $medium-black;
+    }
+
+    .piece, .player, .turn {
+      color: $heavy-white;
+    }
+
+    .player {
+      margin-left: 0.25em;
     }
   }
 

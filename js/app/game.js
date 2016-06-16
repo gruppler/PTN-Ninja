@@ -6,7 +6,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Ply, Linenum, Turn, Tag, Game;
+  var Comment, Result, Ply, Linenum, Turn, Tag, TPS, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -106,7 +106,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.player1_label = result_label[this.player1];
     this.player2_label = result_label[this.player2];
 
-    game.result = this;
     return this;
   }
 
@@ -372,9 +371,14 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     if (this.key == 'result' && this.value) {
-      this.value_print = new Result(this.value, game).print();
-    } else {
+      game.config.result = new Result(this.value, game);
+      this.value_print = game.config.result.print();
+    } else if(this.key == 'tps') {
+      game.config.tps = new TPS(this.value, game);
+      this.value_print = game.config.tps.print();
+    }else{
       this.value_print = this.value;
+      game.config[this.key] = this.value;
     }
 
     return this;
@@ -392,6 +396,101 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       '<%=this.q2%><%=this.suffix%>'+
     '</span>'
   );
+
+
+  // TPS
+
+  TPS = function (string, game) {
+    var parts = string.match(r.grammar.tps_grouped)
+      , tps;
+
+    // Invalid or just incomplete
+    if (!r.grammar.tps.test(string)) {
+      m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
+    }
+
+    // Invalid
+    if (!r.grammar.col.test(parts[1])) {
+      game.is_valid = false;
+      this.print = function () {
+        return string;
+      };
+      return this;
+    }
+
+    this.board = parse_cols(parts[1], game);
+    this.space1 = parts[2];
+    this.player = 1*parts[3] || 1;
+    this.space2 = parts[4];
+    this.turn = 1*parts[5] || 1;
+    this.suffix = parts[6];
+
+    return this;
+  };
+
+  TPS.prototype.print = _.template(
+    '<span class="tps">'+
+      '<%=_.invokeMap(this.board, "print").join("")%>'+
+      '<%=this.space1%>'+
+      '<% if (this.player) { %>'+
+        '<span class="player player<%=this.player%>">'+
+          '<i class="icon-player-<%=this.player == 1 ? "solid" : "line"%>"></i>'+
+          '<%=this.player%>'+
+        '</span>'+
+      '<% } %>'+
+      '<%=this.space2%>'+
+        '<% if (this.turn) { %>'+
+          '<span class="turn"><i class="icon-round"></i><%=this.turn%></span>'+
+        '<% } %>'+
+      '</span>'+
+    '<span class=""><%=this.suffix%></span>'
+  );
+
+  TPS.Col = function (string) {
+    var parts = string.match(r.grammar.col_grouped);
+
+    if (parts[1]) {
+      this.is_space = true;
+      this.print = this.print_space;
+      this.text = parts[1];
+      this.count = 1*this.text[1] || 1;
+    } else if (parts[2]) {
+      this.is_space = false;
+      this.print = this.print_stack;
+      this.text = parts[2];
+      this.pieces = this.text.match(r.grammar.stack_grouped);
+    }
+    this.separator = parts[3];
+
+    return this;
+  }
+
+  TPS.Col.prototype.print_space = _.template(
+    '<span class="space"><%=this.text%></span>'+
+    '<span class="separator"><%=this.separator%></span>'
+  );
+
+  TPS.Col.prototype.print_stack = _.template(
+    '<span class="stack">'+
+      '<% _.map(_.tail(this.pieces), function(piece) { %>'+
+        '<span class="piece player<%=piece[0]%>">'+
+          '<%=piece%>'+
+        '</span>'+
+      '<% }).join("") %>'+
+    '</span>'+
+    '<span class="separator"><%=this.separator%></span>'
+  );
+
+  function parse_cols(string, game) {
+    var cols = _.map(
+      string.match(r.grammar.cols),
+      function (col, i) {
+        return new TPS.Col(col, i);
+      }
+    );
+
+    return cols || [];
+  }
 
 
   // Game
@@ -474,7 +573,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.config = {};
     for (var i = 0; i < header.length; i++) {
       this.tags[i] = new Tag(header[i], this);
-      this.config[this.tags[i].key] = this.tags[i].value;
     }
     missing_tags = _.difference(
       r.required_tags,
@@ -483,21 +581,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     if (missing_tags.length) {
       m.error(t.error.missing_tags({tags: missing_tags}));
       this.is_valid = false;
-    }
-
-    // TPS
-    if (this.config.tps) {
-      tps = this.config.tps.match(r.grammar.tps_grouped);
-      if (!tps) {
-        m.error(t.error.invalid_tag_value({tag: t.TPS, value: this.config.tps}));
-        return false;
-      } else {
-        this.config.tps = {
-          board: _.invokeMap(tps[1].split(/\//g), 'split', /,/g),
-          player: 1*tps[2],
-          turn: 1*tps[3]
-        };
-      }
     }
 
     // Body
