@@ -353,6 +353,14 @@ requirejs({locale: navigator.language}, [
           board.last();
           event.preventDefault();
           break;
+        case 'ArrowDown':
+          board.go_to_ply(board.ply + 2);
+          event.preventDefault();
+          break;
+        case 'ArrowUp':
+          board.go_to_ply(board.ply - 2);
+          event.preventDefault();
+          break;
       }
 
     }

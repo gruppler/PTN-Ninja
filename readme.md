@@ -28,13 +28,15 @@ The **share** menu in the upper-right corner allows you to do the following:
 | <kbd>Ctrl</kbd> + <kbd>z</kbd> | Undo   |
 
 #### Play Mode
-| Key                                 | Action       |
-| ----------------------------------- | ------------ |
-| <kbd>Spacebar</kbd>                 | Play/Pause   |
-| <kbd>&rarr;</kbd>                   | Next Ply     |
-| <kbd>&larr;</kbd>                   | Previous Ply |
-| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply     |
-| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply    |
+| Key                                 | Action        |
+| ----------------------------------- | ------------- |
+| <kbd>Spacebar</kbd>                 | Play/Pause    |
+| <kbd>&uarr;</kbd>                   | Previous Turn |
+| <kbd>&darr;</kbd>                   | Next Turn     |
+| <kbd>&larr;</kbd>                   | Previous Ply  |
+| <kbd>&rarr;</kbd>                   | Next Ply      |
+| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply     |
+| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply      |
 
 
 

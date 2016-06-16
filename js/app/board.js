@@ -664,10 +664,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
     this.defer_render = false;
 
-    if (ply == 0) {
+    if (ply <= 0) {
       this.show_comments(this.game);
     } else {
-      this.show_comments(this.game.plys[ply - 1]);
+      this.show_comments(this.game.plys[Math.min(ply, this.game.plys.length) - 1]);
     }
 
     this.update();
