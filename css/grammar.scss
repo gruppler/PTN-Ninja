@@ -77,10 +77,11 @@ $purple: #BA68C8;
     font-weight: 700;
 
     &.illegal {
-      background-color: $error-color;
+      background: transparent;
+      box-shadow: none !important;
 
       * {
-        color: $error-text-color !important;
+        color: $error-color !important;
       }
     }
 

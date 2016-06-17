@@ -153,6 +153,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
         m.error(t.error.invalid_ply({ply: this.ply}));
+        this.mark_illegal();
       }
     } else if(ply_group[3]) {
 
