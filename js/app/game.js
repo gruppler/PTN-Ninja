@@ -181,9 +181,13 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
+  Ply.prototype.mark_illegal = function () {
+    this.is_illegal = true;
+  };
+
   Ply.prototype.print_place = _.template(
     '<%=this.prefix%>'+
-    '<span class="ply place player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -197,7 +201,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   Ply.prototype.print_slide = _.template(
     '<%=this.prefix%>'+
-    '<span class="ply slide player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -396,7 +400,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   // Game
 
-  Game = function (string) {
+  Game = function (simulator) {
+    this.simulator = simulator;
     this.is_valid = false;
     this.config = {};
     this.tags = [];
@@ -405,10 +410,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.ptn = '';
     this.callbacks_start = [];
     this.callbacks_end = [];
-
-    if (string && string.length) {
-      this.parse(string);
-    }
 
     return this;
   };
@@ -525,6 +526,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         _.last(this.plys).is_last = true;
       }
     }
+
+    this.simulator.validate(this);
 
     _.invokeMap(this.callbacks_end, 'call', this, this);
 

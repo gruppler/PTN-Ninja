@@ -317,7 +317,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         if (square.piece.stone == 'C') {
           return illegal();
         } else if(square.piece.stone == 'S') {
-          if (piece.stone != 'C' || remaining_stack.length > 1) {
+          if (remaining_stack.length > 1 || remaining_stack[0].stone != 'C') {
             return illegal();
           }
 
@@ -401,29 +401,37 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this;
   };
 
-  Board.prototype.init = function (game) {
-    var i, j, row, col, a = 'a'.charCodeAt(0), col_letter, square, piece, tps;
-
-    _.invokeMap(this.callbacks_start, 'call', this, this);
-
-    this.defer_render = true;
-    this.pause();
-    this.game = game;
-    this.size = 1*game.config.size;
-    this.tps = game.config.tps;
-    this.saved_ply = this.ply;
+  Board.prototype.clear = function () {
     this.ply = 0;
     this.pieces = {};
     this.initial_pieces = {};
-    m.clear(false, true);
-
     this.cols.length = 0;
+    this.rows.length = 0;
+  };
+
+  Board.prototype.init = function (game, silent) {
+    var saved_ply, i, j, row, col, col_letter, square, piece, tps
+      , a = 'a'.charCodeAt(0);
+
+    if (silent !== true) {
+      _.invokeMap(this.callbacks_start, 'call', this, this);
+      m.clear(false, true);
+      this.pause();
+    }
+
+    this.defer_render = true;
+    this.game = game;
+    this.size = 1*game.config.size;
+    this.tps = game.config.tps;
+
+    saved_ply = this.ply;
+    this.clear();
+
     for (col = 0; col < this.size; col++) {
       col_letter = String.fromCharCode(a + col);
       this.cols[col] = col_letter;
     }
 
-    this.rows.length = 0;
     for (row = 0; row < this.size; row++) {
       this.rows[row] = row + 1;
     }
@@ -469,10 +477,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.tps.board;
     }
 
-    this.defer_render = false;
-    _.invokeMap(this.init_callbacks, 'call', this, this);
+    if (silent !== true) {
+      this.defer_render = false;
+      _.invokeMap(this.init_callbacks, 'call', this, this);
+    }
 
     return true;
+  };
+
+  Board.prototype.validate = function (game) {
+    this.init(game, true);
+    this.go_to_ply(game.plys.length, true);
+    this.clear();
   };
 
   Board.prototype.to_tps = function () {
@@ -497,7 +513,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       )
     );
 
-    this.go_to_ply(this.saved_ply, true);
+    this.go_to_ply(this.saved_ply);
 
     return this.$view;
   };
@@ -512,13 +528,21 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   Board.prototype.do_ply = function () {
     var ply, square, piece;
 
-    if (this.ply >= this.game.plys.length || this.ply < 0) {
+    if (this.ply == this.game.plys.length) {
       this.pause();
+    }
+    if (this.ply > this.game.plys.length || this.ply < 0) {
       return false;
     }
 
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
+
+    if (ply.is_illegal) {
+      this.pause();
+      this.ply -= 1;
+      return false;
+    }
 
     if (this.ply == 0) {
       this.show_comments(this.game);
@@ -545,6 +569,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ply = this.game.plys[--this.ply];
     square = this.squares[ply.square];
 
+    if (ply.is_illegal) {
+      this.ply += 1;
+      return false;
+    }
+
     if (this.ply == 0) {
       this.show_comments(this.game);
     } else {
@@ -561,9 +590,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.illegal_ply = function (ply) {
-    (this.game.is_editing ? m_parse : m).error(
+    m_parse.error(
       t.error.illegal_ply({ ply: ply.ply })
     );
+    ply.mark_illegal();
     return false;
   };
 
@@ -660,22 +690,25 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.go_to_ply(this.game.plys.length);
   };
 
-  Board.prototype.go_to_ply = function (ply) {
+  Board.prototype.go_to_ply = function (ply, is_silent) {
     this.defer_render = true;
     if (ply > this.ply) {
       while (this.ply < ply && this.do_ply()) {}
     } else if (ply < this.ply) {
       while (this.ply > ply && this.undo_ply()) {}
     }
-    this.defer_render = false;
 
-    if (ply <= 0) {
-      this.show_comments(this.game);
-    } else {
-      this.show_comments(this.game.plys[Math.min(ply, this.game.plys.length) - 1]);
+    if (is_silent !== true) {
+      this.defer_render = false;
+
+      if (ply <= 0) {
+        this.show_comments(this.game);
+      } else {
+        this.show_comments(this.game.plys[this.ply - 1]);
+      }
+
+      this.update();
     }
-
-    this.update();
   };
 
   return Board;

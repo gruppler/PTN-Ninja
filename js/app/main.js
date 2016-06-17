@@ -27,8 +27,9 @@ requirejs({locale: navigator.language}, [
     , $permalink = $('#permalink')
     , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
-    , game = new Game()
     , board = new Board()
+    , simulator = new Board()
+    , game = new Game(simulator)
     , baseurl = location.origin + location.pathname
     , d = new Date()
     , today = d.getFullYear() +'.'+

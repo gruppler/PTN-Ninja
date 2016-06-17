@@ -76,6 +76,14 @@ $purple: #BA68C8;
   .ply {
     font-weight: 700;
 
+    &.illegal {
+      background-color: $error-color;
+
+      * {
+        color: $error-text-color !important;
+      }
+    }
+
     .stone {
       color: $white;
     }
