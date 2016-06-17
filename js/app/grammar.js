@@ -54,9 +54,9 @@ define(['lodash'], function (_) {
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
     linenum: '\\s+\\d+\\.?',
     linenum_grouped: '(\\s+)(\\d+\\.?)',
-    turn: '(?:<linenum><comment><ply>?<comment><ply>?<comment><result>?<comment>)|<nonturn>',
-    turn_grouped: '(?:(<linenum>)(<comment>)(<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>))|(<nonturn>)',
-    nonturn: '(?:[^]+)',
+    move: '(?:<linenum><comment><ply>?<comment><ply>?<comment><result>?<comment>)|<nonmove>',
+    move_grouped: '(?:(<linenum>)(<comment>)(<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>))|(<nonmove>)',
+    nonmove: '(?:[^]+)',
 
     header: '^<tag>+$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)(\\s*)$'

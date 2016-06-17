@@ -31,8 +31,8 @@ The **share** menu in the upper-right corner allows you to do the following:
 | Key                                 | Action        |
 | ----------------------------------- | ------------- |
 | <kbd>Spacebar</kbd>                 | Play/Pause    |
-| <kbd>&uarr;</kbd>                   | Previous Turn |
-| <kbd>&darr;</kbd>                   | Next Turn     |
+| <kbd>&uarr;</kbd>                   | Previous Move |
+| <kbd>&darr;</kbd>                   | Next Move     |
 | <kbd>&larr;</kbd>                   | Previous Ply  |
 | <kbd>&rarr;</kbd>                   | Next Ply      |
 | <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply     |

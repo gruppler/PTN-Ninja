@@ -46,11 +46,11 @@ define({
     },
 
     error: {
-      illegal_ply: "Illegal move: \"<b><%=ply%></b>\"",
+      illegal_ply: "Illegal ply: \"<b><%=ply%></b>\"",
       invalid_movetext: "Invalid movetext: \"<b><%=text%></b>\"",
       invalid_file_format: "Invalid file format",
       invalid_header: "Invalid header",
-      invalid_ply: "Invalid move: \"<b><%=ply%></b>\"",
+      invalid_ply: "Invalid ply: \"<b><%=ply%></b>\"",
       invalid_square: "Invalid square: \"<b><%=square%></b>\"",
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
       invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",

@@ -6,7 +6,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Ply, Linenum, Turn, Tag, Game;
+  var Comment, Result, Ply, Linenum, Move, Tag, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -233,10 +233,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  // Turn
+  // Move
 
-  Turn = function (string, game) {
-    var parts = string.match(r.grammar.turn_grouped)
+  Move = function (string, game) {
+    var parts = string.match(r.grammar.move_grouped)
       , first_player = 1
       , second_player = 2;
 
@@ -250,7 +250,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.linenum = new Linenum(parts[1]);
 
-    if(game.config.tps && this.linenum.value == game.config.tps.turn){
+    if(game.config.tps && this.linenum.value == game.config.tps.move){
       first_player = game.config.tps.player;
       second_player = first_player == 1 ? 2 : 1;
       if (this.linenum.value == 1) {
@@ -299,8 +299,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Turn.prototype.print = function(){
-    var output = '<span class="turn">';
+  Move.prototype.print = function(){
+    var output = '<span class="move">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -400,7 +400,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = false;
     this.config = {};
     this.tags = [];
-    this.turns = [];
+    this.moves = [];
     this.plys = [];
     this.ptn = '';
     this.callbacks_start = [];
@@ -446,7 +446,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = true;
     this.result = null;
     this.tags.length = 0;
-    this.turns.length = 0;
+    this.moves.length = 0;
     this.plys.length = 0;
     m.clear('error');
 
@@ -495,29 +495,29 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         this.config.tps = {
           board: _.invokeMap(tps[1].split(/\//g), 'split', /,/g),
           player: 1*tps[2],
-          turn: 1*tps[3]
+          move: 1*tps[3]
         };
       }
     }
 
     // Body
-    body = body.match(r.grammar.turn);
+    body = body.match(r.grammar.move);
     if (body) {
       for (var i = 0; i < body.length; i++) {
-        this.turns[i] = new Turn(body[i], this);
+        this.moves[i] = new Move(body[i], this);
 
-        if (this.turns[i].ply1) {
-          this.turns[i].ply1.id = this.plys.length;
-          this.plys.push(this.turns[i].ply1);
+        if (this.moves[i].ply1) {
+          this.moves[i].ply1.id = this.plys.length;
+          this.plys.push(this.moves[i].ply1);
         }
 
-        if (this.turns[i].ply2) {
-          this.turns[i].ply2.id = this.plys.length;
-          this.plys.push(this.turns[i].ply2);
+        if (this.moves[i].ply2) {
+          this.moves[i].ply2.id = this.plys.length;
+          this.plys.push(this.moves[i].ply2);
         }
 
-        if (this.turns[i].result) {
-          (this.turns[i].ply2 || this.turns[i].ply1).result = this.turns[i].result;
+        if (this.moves[i].result) {
+          (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
 
@@ -537,7 +537,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     output += _.invokeMap(this.tags, 'print').join('');
     output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
-    output += _.invokeMap(this.turns, 'print').join('');
+    output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
 
     return output;
