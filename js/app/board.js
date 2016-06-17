@@ -319,7 +319,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
         if (square.piece.stone == 'C') {
           return error();
         } else if(square.piece.stone == 'S') {
-          if (piece.stone != 'C' || piece.captives.length) {
+          if (piece.stone != 'C' || remaining_stack.length > 1) {
             return error();
           }
 
