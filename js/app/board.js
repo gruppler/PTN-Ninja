@@ -251,8 +251,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     var piece = this.board.pieces[ply.id];
 
     if (this.piece) {
-      (this.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
-      return false;
+      return this.board.illegal_ply(ply);
     }
 
     if (!piece) {
@@ -290,9 +289,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       , piece = this.piece
       , moving_stack, remaining_stack, i;
 
-    function error() {
-      (that.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
-      return false;
+    function illegal() {
+      return that.board.illegal_ply(ply);
     }
 
     if (
@@ -300,7 +298,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       ply.count > this.board.size ||
       piece.captives.length < ply.count - 1
     ) {
-      return error();
+      return illegal();
     }
 
     remaining_stack = piece.captives.splice(ply.count - 1);
@@ -310,17 +308,17 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     for (i = 0; i < ply.drops.length; i++) {
       square = square.neighbors[ply.direction];
       if (!square) {
-        return error();
+        return illegal();
       }
 
       remaining_stack = moving_stack.splice(-ply.drops[i]);
 
       if (square.piece) {
         if (square.piece.stone == 'C') {
-          return error();
+          return illegal();
         } else if(square.piece.stone == 'S') {
           if (piece.stone != 'C' || remaining_stack.length > 1) {
-            return error();
+            return illegal();
           }
 
           ply.flattens[i] = true;
@@ -560,6 +558,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     } else {
       return square.undo_place(ply);
     }
+  };
+
+  Board.prototype.illegal_ply = function (ply) {
+    (this.game.is_editing ? m_parse : m).error(
+      t.error.illegal_ply({ ply: ply.ply })
+    );
+    return false;
   };
 
   Board.prototype.show_comments = function (ply) {
