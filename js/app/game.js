@@ -145,6 +145,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
+      this.squares = [];
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
@@ -168,6 +169,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
+      this.squares = [];
       this.evaluation = ply_group[4] || '';
     }
 

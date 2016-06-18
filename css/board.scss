@@ -50,6 +50,23 @@
     position: absolute;
     background-color: $primary-color-light;
 
+    &:after {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      pointer-events: none;
+      background-color: $accent-color;
+      transition: opacity $time-smooth $natural;
+    }
+    body.editmode &.active:after {
+      opacity: 0.5;
+    }
+
     &.dark {
       background-color: $primary-color;
     }
