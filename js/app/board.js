@@ -538,9 +538,6 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   Board.prototype.do_ply = function () {
     var ply, square, piece, ply_result;
 
-    if (this.ply == this.game.plys.length) {
-      this.pause();
-    }
     if (this.ply >= this.game.plys.length || this.ply < 0) {
       return false;
     }
@@ -569,6 +566,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     this.set_active_squares(ply);
+
+    if (this.ply == this.game.plys.length) {
+      this.pause();
+    }
 
     return ply_result;
   };
@@ -648,10 +649,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.play = function () {
-    this.do_ply();
-    this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
-    this.is_playing = true;
-    $('body').addClass('playing');
+    if (this.do_ply() && this.game.plys[this.ply]) {
+      this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
+      this.is_playing = true;
+      $('body').addClass('playing');
+    }
   };
 
   Board.prototype.pause = function () {
@@ -691,6 +693,26 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     this.pause();
     this.do_ply();
+  };
+
+  Board.prototype.prev_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply + 2);
+  };
+
+  Board.prototype.next_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply - 2);
   };
 
   Board.prototype.first = function (event) {

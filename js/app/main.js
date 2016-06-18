@@ -335,32 +335,25 @@ requirejs({locale: navigator.language}, [
       // Play Mode
       switch (event.keymap) {
         case 'Spacebar':
-          board.playpause();
-          event.preventDefault();
+          board.playpause(event);
           break;
         case 'ArrowLeft':
-          board.prev();
-          event.preventDefault();
+          board.prev(event);
           break;
         case 'ArrowRight':
-          board.next();
-          event.preventDefault();
+          board.next(event);
           break;
         case '^ArrowLeft':
-          board.first();
-          event.preventDefault();
+          board.first(event);
           break;
         case '^ArrowRight':
-          board.last();
-          event.preventDefault();
+          board.last(event);
           break;
         case 'ArrowDown':
-          board.go_to_ply(board.ply + 2);
-          event.preventDefault();
+          board.prev_move(event);
           break;
         case 'ArrowUp':
-          board.go_to_ply(board.ply - 2);
-          event.preventDefault();
+          board.next_move(event);
           break;
       }
 
