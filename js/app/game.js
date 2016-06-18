@@ -179,6 +179,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     ) {
       game.is_valid = false;
       m.error(t.error.invalid_square({square: this.col+this.row}));
+      this.mark_illegal();
     }
 
     return this;
