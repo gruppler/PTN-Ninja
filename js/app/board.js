@@ -240,6 +240,12 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this.piece;
   };
 
+  Square.prototype.set_active = function () {
+    if (this.$view) {
+      this.$view.addClass('active');
+    }
+  };
+
   Square.prototype.render = function () {
     this.$view = $(tpl.square(this));
     this.$view.data('model', this);
@@ -267,6 +273,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     this.set_piece(piece, false, true);
+    ply.squares[0] = this;
 
     this.piece.render();
 
@@ -301,6 +308,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return illegal();
     }
 
+    ply.squares[0] = this;
+
     remaining_stack = piece.captives.splice(ply.count - 1);
     square.set_piece(remaining_stack[0], remaining_stack.slice(1));
     moving_stack = [piece].concat(piece.captives);
@@ -331,6 +340,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       }
 
       square.set_piece(remaining_stack[0], remaining_stack.slice(1));
+      ply.squares[i + 1] = square;
     }
 
     return true;
@@ -410,7 +420,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.init = function (game, silent) {
-    var saved_ply, i, j, row, col, col_letter, square, piece, tps
+    var i, j, row, col, col_letter, square, piece, tps
       , a = 'a'.charCodeAt(0);
 
     if (silent !== true) {
@@ -424,7 +434,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
 
-    saved_ply = this.ply;
+    this.saved_ply = this.ply;
     this.clear();
 
     for (col = 0; col < this.size; col++) {
@@ -513,7 +523,9 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       )
     );
 
-    this.go_to_ply(this.saved_ply);
+    if (this.saved_ply) {
+      this.go_to_ply(this.saved_ply);
+    }
 
     return this.$view;
   };
@@ -526,11 +538,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.do_ply = function () {
-    var ply, square, piece;
+    var ply, square, piece, ply_result;
 
-    if (this.ply == this.game.plys.length) {
-      this.pause();
-    }
     if (this.ply >= this.game.plys.length || this.ply < 0) {
       return false;
     }
@@ -553,10 +562,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
-      return square.slide(ply);
+      ply_result = square.slide(ply);
     } else {
-      return square.place(ply);
+      ply_result = square.place(ply);
     }
+
+    this.set_active_squares(ply);
+
+    if (this.ply == this.game.plys.length) {
+      this.pause();
+    }
+
+    return ply_result;
   };
 
   Board.prototype.undo_ply = function () {
@@ -576,8 +593,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     if (this.ply == 0) {
       this.show_comments(this.game);
+      this.set_active_squares(ply);
     } else {
       this.show_comments(this.game.plys[this.ply - 1]);
+      this.set_active_squares(this.game.plys[this.ply - 1]);
     }
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
@@ -595,6 +614,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     );
     ply.mark_illegal();
     return false;
+  };
+
+  Board.prototype.set_active_squares = function (ply) {
+    if (this.$view) {
+      this.$squares.children().removeClass('active');
+      _.invokeMap(ply.squares, 'set_active');
+    }
   };
 
   Board.prototype.show_comments = function (ply) {
@@ -625,10 +651,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.play = function () {
-    this.do_ply();
-    this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
-    this.is_playing = true;
-    $('body').addClass('playing');
+    if (this.do_ply() && this.game.plys[this.ply]) {
+      this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
+      this.is_playing = true;
+      $('body').addClass('playing');
+    }
   };
 
   Board.prototype.pause = function () {
@@ -668,6 +695,26 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     this.pause();
     this.do_ply();
+  };
+
+  Board.prototype.prev_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply + 2);
+  };
+
+  Board.prototype.next_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply - 2);
   };
 
   Board.prototype.first = function (event) {
