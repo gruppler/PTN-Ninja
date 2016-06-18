@@ -366,6 +366,16 @@ requirejs({locale: navigator.language}, [
           toggle_edit_mode();
         }
         break;
+      case '^s':
+        $('#download').click();
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      case '^o':
+        $('#open').click();
+        event.preventDefault();
+        event.stopPropagation();
+        break;
       case '^?':
         game.parse(sample_ptn, true);
         break;
