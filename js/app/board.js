@@ -420,7 +420,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.init = function (game, silent) {
-    var saved_ply, i, j, row, col, col_letter, square, piece, tps
+    var i, j, row, col, col_letter, square, piece, tps
       , a = 'a'.charCodeAt(0);
 
     if (silent !== true) {
@@ -434,7 +434,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.size = 1*game.config.size;
     this.tps = game.config.tps;
 
-    saved_ply = this.ply;
+    this.saved_ply = this.ply;
     this.clear();
 
     for (col = 0; col < this.size; col++) {
@@ -523,7 +523,9 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       )
     );
 
-    this.go_to_ply(this.saved_ply);
+    if (this.saved_ply) {
+      this.go_to_ply(this.saved_ply);
+    }
 
     return this.$view;
   };
