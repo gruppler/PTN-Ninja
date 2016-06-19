@@ -137,10 +137,7 @@
       margin: 25%;
       border-radius: 0.8vmin;
       position: relative;
-      transition: transform $time-smooth $natural,
-        width $time-smooth $natural,
-        margin $time-smooth $natural,
-        box-shadow $time-smooth ease-out;
+      transition: all $time-smooth $natural;
 
       &.F {
         &.h1 { box-shadow: $shadow1; }
@@ -155,10 +152,12 @@
         margin-left: 40.625%;
 
         &.p1 {
+          background-color: $primary-color-lightest;
           transform: rotate(-45deg);
           box-shadow: -3px 3px 10px 0 rgba(0,0,0,0.14), -1px 1px 18px 0 rgba(0,0,0,0.12), -2px 2px 5px -1px rgba(0,0,0,0.4);
         }
         &.p2 {
+          background-color: $primary-color-darker;
           transform: rotate(45deg);
           box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.14), 1px 1px 18px 0 rgba(0,0,0,0.12), 2px 2px 5px -1px rgba(0,0,0,0.4);
         }
