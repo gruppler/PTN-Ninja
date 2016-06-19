@@ -147,7 +147,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     // Render or update view
     this.x = 100*this.col_i;
-    this.y = -100*this.row_i;
+    this.y = 100*(this.board.size - 1 - this.row_i);
     location = tpl.piece_location(this);
 
     if (!this.$view) {

@@ -108,7 +108,7 @@
   .piece {
     position: absolute;
     bottom: 0;
-    left: 0;
+    top: 0;
     transition: transform $time-smooth $natural;
 
     .wrapper {
