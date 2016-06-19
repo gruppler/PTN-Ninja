@@ -59,7 +59,7 @@ define(['lodash'], function (_) {
     nonmove: '(?:[^]+)',
 
     header: '^<tag>+$',
-    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)(\\s*)$'
+    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)([\\s-]*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));
