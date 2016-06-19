@@ -45,7 +45,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ),
 
     stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
-    piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
+    piece_location: _.template('translate(<%=x%>.0%, <%=y%>.0%)'),
     piece: _.template(
       '<div class="piece">'+
         '<div class="wrapper">'+
@@ -146,8 +146,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     // Render or update view
-    this.x = 100*this.col_i;
-    this.y = 100*(this.board.size - 1 - this.row_i);
+    this.x = 100*( this.col_i - this.board.size/2);
+    this.y = 100*(this.board.size/2 - 1 - this.row_i);
     location = tpl.piece_location(this);
 
     if (!this.$view) {
