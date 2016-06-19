@@ -166,7 +166,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     if (this.captor || this.captives.length) {
       this.$captive.addClass('visible');
       if ((this.captor || this).captives.length >= this.board.size && !this.is_immovable) {
-        this.height++;
+        this.height += 1.5;
       }
     } else {
       this.$captive.removeClass('visible');
