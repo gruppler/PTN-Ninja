@@ -101,8 +101,8 @@
     &.left .road .left,
     &.right .road .right { opacity: 1; }
 
-    &.player1 .road > div { background-color: $primary-color-lighter }
-    &.player2 .road > div { background-color: $primary-color-darker }
+    &.p1 .road > div { background-color: $primary-color-lighter }
+    &.p2 .road > div { background-color: $primary-color-dark }
   }
 
   .piece {
@@ -127,12 +127,8 @@
     }
 
     .stone, .captive {
-      &.p1 {
-        background-color: $primary-color-lighter;
-      }
-      &.p2 {
-        background-color: $primary-color-darker;
-      }
+      &.p1 { background-color: $primary-color-lighter; }
+      &.p2 { background-color: $primary-color-dark; }
     }
 
     .stone {
@@ -169,8 +165,14 @@
       }
 
       &.C {
+        width: 54%;
+        height: 54%;
+        margin: 23%;
         border-radius: 50%;
         box-shadow: $shadow3;
+
+        &.p1 { background-color: $primary-color-lightest; }
+        &.p2 { background-color: $primary-color-darker; }
       }
     }
 

@@ -245,7 +245,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.piece = piece || null;
 
     if (this.$view) {
-      this.$view.removeClass('player1 player2');
+      this.$view.removeClass('p1 p2');
     }
 
     if (piece) {
@@ -256,7 +256,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       piece.render();
 
       if (this.$view) {
-        this.$view.addClass('player'+piece.player);
+        this.$view.addClass('p'+piece.player);
         _.each(direction_name, function (dn, d) {
           if (that.neighbors[d]) {
             if (
