@@ -577,9 +577,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       )
     );
 
-    if (this.saved_ply) {
-      this.go_to_ply(this.saved_ply);
-    }
+    this.go_to_ply(this.saved_ply || 0);
 
     return this.$view;
   };
@@ -608,7 +606,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     if (this.ply == 0) {
-      this.show_comments(this.game);
+      this.show_comments(0);
     } else {
       this.show_comments(ply);
     }
@@ -646,7 +644,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     if (this.ply == 0) {
-      this.show_comments(this.game);
+      this.show_comments(0);
       this.set_active_squares(ply);
     } else {
       this.show_comments(this.game.plys[this.ply - 1]);
@@ -679,6 +677,14 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Board.prototype.show_comments = function (ply) {
     m.clear(false, true);
+
+    if (ply === 0) {
+      if (this.game.comments) {
+        _.map(this.game.comments, comment);
+      }
+      m.player1(this.game.config.player1);
+      m.player2(this.game.config.player2);
+    }
 
     if (!ply || this.defer_render) {
       return;
@@ -803,7 +809,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.defer_render = false;
 
       if (ply <= 0) {
-        this.show_comments(this.game);
+        this.show_comments(0);
       } else {
         this.show_comments(this.game.plys[this.ply - 1]);
       }

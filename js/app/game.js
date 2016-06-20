@@ -527,6 +527,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       }
 
       if (this.plys.length) {
+        this.plys[0].is_first = true;
         _.last(this.plys).is_last = true;
       }
     }
