@@ -30,6 +30,7 @@ define({
     TPS: "TPS",
     Tak: "Tak",
     Time: "Time",
+    Tinue: "Tinuë",
     n_characters: "<%=n%> characters",
 
     result: {

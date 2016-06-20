@@ -684,8 +684,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       return;
     }
 
-    if (ply && ply.evaluation && /'/.test(ply.evaluation)) {
-      m['player'+ply.player](t.Tak);
+    if (ply && ply.evaluation && /['"]/.test(ply.evaluation)) {
+      m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
     }
 
     if (ply && ply.evaluation && /[!?]/.test(ply.evaluation)) {
