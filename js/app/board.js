@@ -706,7 +706,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Board.prototype.play = function () {
     if (this.do_ply() && this.game.plys[this.ply]) {
-      this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
+      this.play_timer = setInterval(_.bind(this.do_ply, this), 1500);
       this.is_playing = true;
       $('body').addClass('playing');
     }
