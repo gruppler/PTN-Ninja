@@ -12,8 +12,9 @@ js/app.js
 js/lib/i18n.js
 js/app/nls/main.js
 i18n!nls/main
-js/lib/jquery.min.js
 js/lib/lodash.min.js
+js/app/config.js
+js/lib/jquery.min.js
 js/lib/domReady.js
 domReady!
 js/app/messages.js
