@@ -4,7 +4,7 @@
 
 'use strict';
 
-define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
+define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (config, Messages, t, _) {
 
   var Board, Square, Piece;
   var m = new Messages('board')
@@ -45,7 +45,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ),
 
     stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
-    piece_location: _.template('translate(<%=x%>.0%, <%=y%>.0%)'),
+    piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
     piece: _.template(
       '<div class="piece">'+
         '<div class="wrapper">'+
@@ -111,7 +111,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Piece.prototype.render = function () {
     var that = this
-      , location;
+      , location, captive_offset = 6;
 
     if (this.board.defer_render) {
       this.needs_updated = true;
@@ -148,6 +148,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     // Render or update view
     this.x = 100*( this.col_i - this.board.size/2);
     this.y = 100*(this.board.size/2 - 1 - this.row_i);
+
+    // Offset captives
+    if (!this.is_immovable) {
+      this.y += captive_offset*(
+        1 - this.height + 1*(this.stone == 'S' && !!this.captives.length)
+      );
+
+      if ((this.captor||this).height > this.board.size) {
+        this.y += captive_offset*((this.captor||this).height - this.board.size);
+      }
+    }
+
     location = tpl.piece_location(this);
 
     if (!this.$view) {
@@ -178,16 +190,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.prev_height = this.height;
     this.prev_location = location;
 
-    // Update captive indicator
-    if (this.captor || this.captives.length) {
-      this.$captive.addClass('visible');
-      if ((this.captor || this).captives.length >= this.board.size && !this.is_immovable) {
-        this.height += 1.5;
-      }
+    if (this.is_immovable) {
+      this.$view.addClass('immovable');
+      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.075) + '%)');
     } else {
-      this.$captive.removeClass('visible');
+      this.$view.removeClass('immovable');
+      this.$captive.css('transform', 'none');
     }
-    this.$captive.css('transform', 'translateY('+(-65*(this.height - 1)) + '%)');
 
     if (this.square && !this.$view.closest('html').length) {
       this.board.$pieces.place(this.$view);
@@ -712,7 +721,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Board.prototype.play = function () {
     if (this.do_ply() && this.game.plys[this.ply]) {
-      this.play_timer = setInterval(_.bind(this.do_ply, this), 1500);
+      this.play_timer = setInterval(_.bind(this.do_ply, this), 6e4/config.play_speed);
       this.is_playing = true;
       $('body').addClass('playing');
     }

@@ -6,6 +6,7 @@
 
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
+  'app/config',
   'app/messages',
   'app/game',
   'app/board',
@@ -17,7 +18,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, Messages, Game, Board, saveAs, _, $) {
+], function (t, config, Messages, Game, Board, saveAs, _, $) {
 
   var $window = $(window)
     , $body = $('body')
@@ -37,6 +38,9 @@ requirejs({locale: navigator.language}, [
         _.padStart(d.getDate(),2,0)
     , default_ptn = '[Date "'+today+'"]\n[Player1 "White"]\n[Player2 "Black"]\n[Result ""]\n[Size "5"]\n\n'
     , sample_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA';
+
+  window.game = game;
+  window.board = board;
 
   (function () {
     function _templatize(parent) {
