@@ -131,6 +131,11 @@
       &.p2 { background-color: $primary-color-dark; }
     }
 
+    &.immovable {
+      .stone { opacity: 0; }
+      .captive { opacity: 1; }
+    }
+
     .stone {
       width: 50%;
       height: 50%;
@@ -140,11 +145,7 @@
       transition: all $time-smooth $natural;
 
       &.F {
-        &.h1 { box-shadow: $shadow1; }
-        &.h2 { box-shadow: $shadow2; }
-        &.h3 { box-shadow: $shadow3; }
-        &.h4 { box-shadow: $shadow4; }
-        &.h5 { box-shadow: $shadow5; }
+        box-shadow: $shadow1;
       }
 
       &.S {
@@ -185,10 +186,6 @@
       border-radius: 0.25vmin;
       box-shadow: $shadow1;
       transition: all $time-smooth $natural;
-
-      &.visible {
-        opacity: 1;
-      }
     }
   }
 
