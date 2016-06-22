@@ -193,7 +193,8 @@ requirejs({locale: navigator.language}, [
         ' ' + game.config.date
         : ''
       )
-      + '.ptn'
+      + '.ptn',
+      true
     );
   }).attr('title', t.Download);
 
