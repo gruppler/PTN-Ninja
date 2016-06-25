@@ -6,6 +6,6 @@
 
 define(['lodash'], function (_) {
   return {
-    play_speed: 45
+    play_speed: 40
   };
 });
