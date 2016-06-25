@@ -111,6 +111,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   Piece.prototype.render = function () {
     var that = this
+      , square = this.square
       , location, captive_offset = 6;
 
     if (this.board.defer_render) {
@@ -202,6 +203,28 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.board.$pieces.place(this.$view);
     }
 
+    square.$view.removeClass('p1 p2').addClass('p'+this.player);
+    _.each(direction_name, function (dn, d) {
+      if (square.neighbors[d]) {
+        if (
+          that.stone != 'S' &&
+          square.neighbors[d].piece &&
+          square.neighbors[d].piece.player == that.player &&
+          square.neighbors[d].piece.stone != 'S'
+        ) {
+          square.$view.addClass(dn);
+          square.neighbors[d].$view.addClass(direction_name[opposite_direction[d]]);
+        } else {
+          square.$view.removeClass(dn);
+          square.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
+        }
+      } else if (that.stone != 'S') {
+        square.$view.addClass(dn);
+      } else {
+        square.$view.removeClass(dn);
+      }
+    });
+
     this.needs_updated = false;
 
     return this.$view;
@@ -241,7 +264,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
           return new Piece(that.board, player);
         })
       ),
-      false, true
+      false
     );
   };
 
@@ -263,30 +286,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       piece.row_i = this.row_i;
       piece.set_captives(captives || piece.captives);
       piece.render();
-
-      if (this.$view) {
-        this.$view.addClass('p'+piece.player);
-        _.each(direction_name, function (dn, d) {
-          if (that.neighbors[d]) {
-            if (
-              piece.stone != 'S' &&
-              that.neighbors[d].piece &&
-              that.neighbors[d].piece.player == piece.player &&
-              that.neighbors[d].piece.stone != 'S'
-            ) {
-              that.$view.addClass(dn);
-              that.neighbors[d].$view.addClass(direction_name[opposite_direction[d]]);
-            } else {
-              that.$view.removeClass(dn);
-              that.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
-            }
-          } else if (piece.stone != 'S') {
-            that.$view.addClass(dn);
-          } else {
-            that.$view.removeClass(dn);
-          }
-        })
-      }
     } else if (previous_piece) {
       previous_piece.render();
 
