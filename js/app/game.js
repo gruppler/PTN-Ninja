@@ -428,22 +428,27 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Game.prototype.parse = function (string, is_compressed) {
-    var decompressed, header, body, i, file, tag, missing_tags, tps;
+  Game.prototype.parse = function (input, is_from_URL) {
+    var plaintext, header, body, i, file, tag, missing_tags, tps;
 
-    if (is_compressed) {
-      decompressed = decompress(string);
-      if (decompressed == this.ptn) {
+    if (is_from_URL) {
+      if (/^[A-Za-z0-9$+-]+$/.test(input)) {
+        plaintext = decompress(input);
+      } else {
+        plaintext = decodeURIComponent(input);
+        input = compress(plaintext);
+      }
+      if (plaintext == this.ptn) {
         return false;
       } else {
-        this.ptn = decompressed;
-        this.ptn_compressed = string;
+        this.ptn = plaintext;
+        this.ptn_compressed = input;
       }
-    } else if (string == this.ptn) {
+    } else if (input == this.ptn) {
       return false;
     } else {
-      this.ptn = string;
-      this.ptn_compressed = compress(string);
+      this.ptn = input;
+      this.ptn_compressed = compress(input);
     }
 
     _.invokeMap(this.callbacks_start, 'call', this, this);

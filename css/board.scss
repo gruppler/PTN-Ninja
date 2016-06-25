@@ -185,6 +185,7 @@
       opacity: 0;
       border-radius: 0.25vmin;
       box-shadow: $shadow1;
+      transform: translateX(100%);
       transition: all $time-smooth $natural;
     }
   }
