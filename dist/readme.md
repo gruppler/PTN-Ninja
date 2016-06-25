@@ -54,41 +54,8 @@ The **share** menu in the upper-right corner allows you to do the following:
     - Unless a road is built
 
 
-- Embed code generator
-  - In the share menu
-  - Open new window (embed.html#C0mpr3s5edPTN)
-  - Resize window to set iframe aspect ratio
-    - Aspect ratio inputs update onResize
-    - Embed code updates onResize
-  - Fluid size
-
-
-- Sidebar menu
-  - Use https://github.com/mango/slideout
-  - Items:
-    - Open file
-    - Load sample PTN
-    - Edit Mode:
-      - Set current ply as start
-        - Encode current board as TPS and add to header
-        - Remove preceding notation
-      - Automatic formatting options
-    - Play Mode:
-      - Playback speed
-      - Enable/disable annotations
-      - Editing GUI options
-    - About (readme.html)
-
-
-- Editing via GUI (i.e. easy mode)
-  - Allow for easy live transcription and puzzle completion
-  - Toggle switch, or enabled only if result is blank?
-  - Use the editor's undo feature
-  - UI for adding comments and evaluation marks
-  - UI for tags
-    - Show all possible tags
-    - Indicate required tags
-    - Inputs provide options or format validation
+- Export board as .png
+  - Redraw board using canvas
 
 
 - Edit Mode Improvements
@@ -112,6 +79,43 @@ The **share** menu in the upper-right corner allows you to do the following:
         - Board.find_road(player, ply)
           - Highlight squares composing road
         - Board.possible_plys(player)
+
+
+- Sidebar menu
+  - Use https://github.com/mango/slideout
+  - Items:
+    - Open file
+    - Load sample PTN
+    - Edit Mode:
+      - Set current ply as start
+        - Encode current board as TPS and add to header
+        - Remove preceding notation
+      - Automatic formatting options
+    - Play Mode:
+      - Playback speed
+      - Enable/disable annotations
+      - Editing GUI options
+    - About (readme.html)
+
+
+- Embed code generator
+  - In the share menu
+  - Open new window (embed.html#C0mpr3s5edPTN)
+  - Resize window to set iframe aspect ratio
+    - Aspect ratio inputs update onResize
+    - Embed code updates onResize
+  - Fluid size
+
+
+- Editing via GUI (i.e. easy mode)
+  - Allow for easy live transcription and puzzle completion
+  - Toggle switch, or enabled only if result is blank?
+  - Use the editor's undo feature
+  - UI for adding comments and evaluation marks
+  - UI for tags
+    - Show all possible tags
+    - Indicate required tags
+    - Inputs provide options or format validation
 
 
 ## Legal
