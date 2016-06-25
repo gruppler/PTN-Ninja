@@ -196,7 +196,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.075) + '%)');
     } else {
       this.$view.removeClass('immovable');
-      this.$captive.css('transform', 'none');
+      this.$captive.css('transform', '');
     }
 
     if (this.square && !this.$view.closest('html').length) {
@@ -290,6 +290,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       previous_piece.render();
 
       if (this.$view) {
+        this.$view.removeClass(_.values(direction_name).join(' '));
         _.each(direction_name, function (dn, d) {
           if (that.neighbors[d]) {
             that.$view.removeClass(dn);
