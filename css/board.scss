@@ -217,11 +217,16 @@ $stone-thickness: 0.3vmin;
   }
 
   .labels {
-    color: $primary-color-text;
+    color: $primary-color-lighter;
     position: absolute;
     font-size: 1em;
     display: flex;
     justify-content: space-around;
+    transition: color $time-smooth $natural;
+
+    body.editmode & {
+      color: $primary-color-light;
+    }
 
     &.row {
       top: 0;
