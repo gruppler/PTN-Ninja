@@ -110,15 +110,14 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
-  $fab.click(function () {
+  $fab.on('touchstart click', function (event) {
+    event.stopPropagation();
+    event.preventDefault();
     if ($body.hasClass('error')) {
       $messages_parse.toggleClass('visible');
     } else {
       toggle_edit_mode();
     }
-  }).mousedown(function (event) {
-    event.stopPropagation();
-    event.preventDefault();
   }).mouseover(function () {
     $fab.attr('title',
       $body.hasClass('error') ? t.ShowHide_Errors :
