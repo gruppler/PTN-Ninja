@@ -3,6 +3,8 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
+$stone-thickness: 0.3vmin;
+
 #viewer {
   position: absolute;
   top: 0;
@@ -20,6 +22,7 @@
   width: calc(100vmin - #{$edge*3 + $button-height});
   height: calc(100vmin - #{$edge*3 + $button-height});
   font-size: 3vmin;
+  background-color: $primary-color-dark;
 
   #viewer.animated & {
     transition: all $time-smooth $natural;
@@ -46,12 +49,15 @@
     right: 0;
   }
 
+  .squares {
+    background-color: darken($primary-color-light, 1.5%);
+  }
+
   .square {
     position: absolute;
-    background-color: $primary-color-light;
 
-    &.dark {
-      background-color: darken($primary-color-light, 1.5%);
+    &.light {
+      background-color: $primary-color-light;
     }
 
     &:after {
@@ -127,8 +133,23 @@
     }
 
     .stone, .captive {
-      &.p1 { background-color: $primary-color-lighter; }
-      &.p2 { background-color: $primary-color-dark; }
+      @media (max-width: $mobile) {
+        box-sizing: border-box;
+        border-style: solid;
+        border-width: 0 0 $stone-thickness;
+      }
+      @media (min-width: $desktop) {
+        box-shadow: $shadow1;
+      }
+
+      &.p1 {
+        background-color: $primary-color-lighter;
+        border-color: $primary-color;
+      }
+      &.p2 {
+        background-color: $primary-color-dark;
+        border-color: $primary-color-darkest;
+      }
     }
 
     &.immovable {
@@ -144,10 +165,6 @@
       position: relative;
       transition: all $time-smooth $natural;
 
-      &.F {
-        box-shadow: $shadow1;
-      }
-
       &.S {
         width: 18.75%;
         margin-left: 40.625%;
@@ -155,36 +172,45 @@
         &.p1 {
           background-color: $primary-color-lightest;
           transform: rotate(-45deg);
-          box-shadow: -3px 3px 10px 0 rgba(0,0,0,0.14), -1px 1px 18px 0 rgba(0,0,0,0.12), -2px 2px 5px -1px rgba(0,0,0,0.4);
+          @media (max-width: $mobile) {
+            border-width: 0 0 $stone-thickness $stone-thickness;
+          }
+          @media (min-width: $desktop) {
+            box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
+          }
         }
         &.p2 {
           background-color: $primary-color-darker;
           transform: rotate(45deg);
-          box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.14), 1px 1px 18px 0 rgba(0,0,0,0.12), 2px 2px 5px -1px rgba(0,0,0,0.4);
+          @media (max-width: $mobile) {
+            border-width: 0 $stone-thickness $stone-thickness 0;
+          }
+          @media (min-width: $desktop) {
+            box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
+          }
         }
       }
 
       &.C {
-        width: 54%;
-        height: 54%;
-        margin: 23%;
         border-radius: 50%;
-        box-shadow: $shadow3;
 
-        &.p1 { background-color: $primary-color-lightest; }
-        &.p2 { background-color: $primary-color-darker; }
+        &.p1 {
+          background-color: $primary-color-lightest;
+        }
+        &.p2 {
+          background-color: $primary-color-darker;
+        }
       }
     }
 
     .captive {
       position: absolute;
       bottom: 25%;
-      left: 10%;
+      left: 5%;
       width: 15%;
       height: 7.5%;
       opacity: 0;
-      border-radius: 0.25vmin;
-      box-shadow: $shadow1;
+      border-radius: $stone-thickness;
       transform: translateX(100%);
       transition: all $time-smooth $natural;
     }

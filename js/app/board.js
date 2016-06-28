@@ -44,7 +44,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       '</div>'
     ),
 
-    stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
+    stone_class: _.template('stone p<%=player%> <%=stone%>'),
     piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
     piece: _.template(
       '<div class="piece">'+
@@ -137,15 +137,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.is_immovable = false;
     }
 
-    // Determine stack classes
-    this.height_class = 'h'+Math.min(5, this.height);
-    if (
-      this.captor &&
-      (this.captor.stone == 'F' || this != this.captor.captives[0])
-    ) {
-      this.height_class = '';
-    }
-
     // Render or update view
     this.x = 100*( this.col_i - this.board.size/2);
     this.y = 100*(this.board.size/2 - 1 - this.row_i);
@@ -193,7 +184,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     if (this.is_immovable) {
       this.$view.addClass('immovable');
-      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.075) + '%)');
+      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.07) + '%)');
     } else {
       this.$view.removeClass('immovable');
       this.$captive.css('transform', '');
