@@ -206,12 +206,12 @@ $stone-thickness: 0.3vmin;
     .captive {
       position: absolute;
       bottom: 25%;
-      left: 5%;
+      right: 5%;
       width: 15%;
       height: 7.5%;
       opacity: 0;
       border-radius: $stone-thickness;
-      transform: translateX(100%);
+      transform: translateX(-100%);
       transition: all $time-smooth $natural;
     }
   }
