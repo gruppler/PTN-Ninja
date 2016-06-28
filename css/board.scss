@@ -40,6 +40,13 @@ $stone-thickness: 0.3vmin;
     right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
   }
 
+  @media (max-aspect-ratio: 7/10) {
+    top: calc(50% - 50vmin) !important;
+    right: $edge !important;
+    width: calc(100vmin - #{$edge});
+    height: calc(100vmin - #{$edge});
+  }
+
   .squares,
   .pieces {
     position: absolute;
