@@ -203,27 +203,33 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.board.$pieces.place(this.$view);
     }
 
-    square.$view.removeClass('p1 p2').addClass('p'+this.player);
-    _.each(direction_name, function (dn, d) {
-      if (square.neighbors[d]) {
-        if (
-          that.stone != 'S' &&
-          square.neighbors[d].piece &&
-          square.neighbors[d].piece.player == that.player &&
-          square.neighbors[d].piece.stone != 'S'
-        ) {
+    // Update road visualization
+    if (!this.captor) {
+      square.$view.removeClass('p1 p2').addClass('p'+this.player);
+      _.each(direction_name, function (dn, d) {
+        if (square.neighbors[d]) {
+          if (
+            that.stone != 'S' &&
+            square.neighbors[d].piece &&
+            square.neighbors[d].piece.player == that.player &&
+            square.neighbors[d].piece.stone != 'S'
+          ) {
+            square.$view.addClass(dn);
+            square.neighbors[d].$view.addClass(
+              direction_name[opposite_direction[d]]
+            );
+          } else {
+            square.$view.removeClass(dn);
+            square.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
+          }
+        } else if (that.stone != 'S') {
+          // Edge
           square.$view.addClass(dn);
-          square.neighbors[d].$view.addClass(direction_name[opposite_direction[d]]);
         } else {
           square.$view.removeClass(dn);
-          square.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
         }
-      } else if (that.stone != 'S') {
-        square.$view.addClass(dn);
-      } else {
-        square.$view.removeClass(dn);
-      }
-    });
+      });
+    }
 
     this.needs_updated = false;
 
