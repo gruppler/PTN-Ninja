@@ -51,7 +51,7 @@
     background-color: $primary-color-light;
 
     &.dark {
-      background-color: $primary-color;
+      background-color: darken($primary-color-light, 1.5%);
     }
 
     &:after {
