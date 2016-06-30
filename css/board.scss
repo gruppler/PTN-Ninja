@@ -3,6 +3,8 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
+$stone-thickness: 0.3vmin;
+
 #viewer {
   position: absolute;
   top: 0;
@@ -20,6 +22,7 @@
   width: calc(100vmin - #{$edge*3 + $button-height});
   height: calc(100vmin - #{$edge*3 + $button-height});
   font-size: 3vmin;
+  background-color: $primary-color-dark;
 
   #viewer.animated & {
     transition: all $time-smooth $natural;
@@ -37,6 +40,13 @@
     right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
   }
 
+  @media (max-aspect-ratio: 7/10) {
+    top: calc(50% - 50vmin) !important;
+    right: $edge !important;
+    width: calc(100vmin - #{$edge});
+    height: calc(100vmin - #{$edge});
+  }
+
   .squares,
   .pieces {
     position: absolute;
@@ -46,19 +56,72 @@
     right: 0;
   }
 
+  .squares {
+    background-color: darken($primary-color-light, 1.5%);
+  }
+
   .square {
     position: absolute;
-    background-color: $primary-color-light;
 
-    &.dark {
-      background-color: $primary-color;
+    &.light {
+      background-color: $primary-color-light;
     }
+
+    &:after {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      pointer-events: none;
+      background-color: $accent-color;
+      transition: opacity $time-smooth $natural;
+    }
+    body.editmode &.active:after {
+      opacity: 0.5;
+    }
+
+    .road {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      opacity: 0.25;
+      transition: opacity $time-smooth $natural;
+
+      > div {
+        opacity: 0;
+        position: absolute;
+        transition: all $time-smooth $natural;
+        top: 35%;
+        bottom: 35%;
+        left: 35%;
+        right: 35%;
+      }
+
+      .up { top: 0; }
+      .down { bottom: 0; }
+      .left { left: 0; }
+      .right { right: 0; }
+    }
+
+    &.up .road .up,
+    &.down .road .down,
+    &.left .road .left,
+    &.right .road .right { opacity: 1; }
+
+    &.p1 .road > div { background-color: $primary-color-lighter }
+    &.p2 .road > div { background-color: $primary-color-dark }
   }
 
   .piece {
     position: absolute;
-    bottom: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
     transition: transform $time-smooth $natural;
 
     .wrapper {
@@ -77,12 +140,28 @@
     }
 
     .stone, .captive {
+      @media (max-width: $mobile) {
+        box-sizing: border-box;
+        border-style: solid;
+        border-width: 0 0 $stone-thickness;
+      }
+      @media (min-width: $desktop) {
+        box-shadow: $shadow1;
+      }
+
       &.p1 {
         background-color: $primary-color-lighter;
+        border-color: $primary-color;
       }
       &.p2 {
-        background-color: $primary-color-darker;
+        background-color: $primary-color-dark;
+        border-color: $primary-color-darkest;
       }
+    }
+
+    &.immovable {
+      .stone { opacity: 0; }
+      .captive { opacity: 1; }
     }
 
     .stone {
@@ -91,62 +170,70 @@
       margin: 25%;
       border-radius: 0.8vmin;
       position: relative;
-      transition: transform $time-smooth $natural,
-        width $time-smooth $natural,
-        margin $time-smooth $natural,
-        box-shadow $time-smooth ease-out;
-
-      &.F {
-        &.h1 { box-shadow: $shadow1; }
-        &.h2 { box-shadow: $shadow2; }
-        &.h3 { box-shadow: $shadow3; }
-        &.h4 { box-shadow: $shadow4; }
-        &.h5 { box-shadow: $shadow5; }
-      }
+      transition: all $time-smooth $natural;
 
       &.S {
         width: 18.75%;
         margin-left: 40.625%;
 
         &.p1 {
+          background-color: $primary-color-lightest;
           transform: rotate(-45deg);
-          box-shadow: -3px 3px 10px 0 rgba(0,0,0,0.14), -1px 1px 18px 0 rgba(0,0,0,0.12), -2px 2px 5px -1px rgba(0,0,0,0.4);
+          @media (max-width: $mobile) {
+            border-width: 0 0 $stone-thickness $stone-thickness;
+          }
+          @media (min-width: $desktop) {
+            box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
+          }
         }
         &.p2 {
+          background-color: $primary-color-darker;
           transform: rotate(45deg);
-          box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.14), 1px 1px 18px 0 rgba(0,0,0,0.12), 2px 2px 5px -1px rgba(0,0,0,0.4);
+          @media (max-width: $mobile) {
+            border-width: 0 $stone-thickness $stone-thickness 0;
+          }
+          @media (min-width: $desktop) {
+            box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
+          }
         }
       }
 
       &.C {
         border-radius: 50%;
-        box-shadow: $shadow3;
+
+        &.p1 {
+          background-color: $primary-color-lightest;
+        }
+        &.p2 {
+          background-color: $primary-color-darker;
+        }
       }
     }
 
     .captive {
       position: absolute;
       bottom: 25%;
-      left: 10%;
+      right: 5%;
       width: 15%;
       height: 7.5%;
       opacity: 0;
-      border-radius: 0.25vmin;
-      box-shadow: $shadow1;
+      border-radius: $stone-thickness;
+      transform: translateX(-100%);
       transition: all $time-smooth $natural;
-
-      &.visible {
-        opacity: 1;
-      }
     }
   }
 
   .labels {
-    color: $primary-color-text;
+    color: $primary-color-lighter;
     position: absolute;
     font-size: 1em;
     display: flex;
     justify-content: space-around;
+    transition: color $time-smooth $natural;
+
+    body.editmode & {
+      color: $primary-color-light;
+    }
 
     &.row {
       top: 0;

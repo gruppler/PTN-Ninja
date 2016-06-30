@@ -6,7 +6,7 @@
 
 define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], function (r, Messages, t, _) {
 
-  var Comment, Result, Ply, Linenum, Turn, Tag, TPS, Game;
+  var Comment, Result, Ply, Linenum, Move, Tag, TPS, Game;
   var m = new Messages('parse');
 
   var result_label = {
@@ -144,6 +144,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
+      this.squares = [];
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
@@ -152,6 +153,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
         m.error(t.error.invalid_ply({ply: this.ply}));
+        this.mark_illegal();
       }
     } else if(ply_group[3]) {
 
@@ -166,6 +168,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
+      this.squares = [];
       this.evaluation = ply_group[4] || '';
     }
 
@@ -175,14 +178,19 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     ) {
       game.is_valid = false;
       m.error(t.error.invalid_square({square: this.col+this.row}));
+      this.mark_illegal();
     }
 
     return this;
   };
 
+  Ply.prototype.mark_illegal = function () {
+    this.is_illegal = true;
+  };
+
   Ply.prototype.print_place = _.template(
     '<%=this.prefix%>'+
-    '<span class="ply place player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -196,7 +204,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   Ply.prototype.print_slide = _.template(
     '<%=this.prefix%>'+
-    '<span class="ply slide player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -232,10 +240,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
 
-  // Turn
+  // Move
 
-  Turn = function (string, game) {
-    var parts = string.match(r.grammar.turn_grouped)
+  Move = function (string, game) {
+    var parts = string.match(r.grammar.move_grouped)
       , first_player = 1
       , second_player = 2;
 
@@ -249,7 +257,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.linenum = new Linenum(parts[1]);
 
-    if(game.config.tps && this.linenum.value == game.config.tps.turn){
+    if(game.config.tps && this.linenum.value == game.config.tps.move){
       first_player = game.config.tps.player;
       second_player = first_player == 1 ? 2 : 1;
       if (this.linenum.value == 1) {
@@ -298,8 +306,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Turn.prototype.print = function(){
-    var output = '<span class="turn">';
+  Move.prototype.print = function(){
+    var output = '<span class="move">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -418,14 +426,25 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return this;
     }
 
-    this.board = parse_cols(parts[1], game);
+    this.board = this.parse_cols(parts[1]);
     this.space1 = parts[2];
     this.player = 1*parts[3] || 1;
     this.space2 = parts[4];
-    this.turn = 1*parts[5] || 1;
+    this.move = 1*parts[5] || 1;
     this.suffix = parts[6];
 
     return this;
+  };
+
+  TPS.prototype.parse_cols = function(string) {
+    var cols = _.map(
+      string.match(r.grammar.cols),
+      function (col, i) {
+        return new TPS.Col(col, i);
+      }
+    );
+
+    return cols || [];
   };
 
   TPS.prototype.print = _.template(
@@ -439,8 +458,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         '</span>'+
       '<% } %>'+
       '<%=this.space2%>'+
-        '<% if (this.turn) { %>'+
-          '<span class="turn"><i class="icon-round"></i><%=this.turn%></span>'+
+        '<% if (this.move) { %>'+
+          '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
         '<% } %>'+
       '</span>'+
     '<span class=""><%=this.suffix%></span>'
@@ -481,33 +500,19 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     '<span class="separator"><%=this.separator%></span>'
   );
 
-  function parse_cols(string, game) {
-    var cols = _.map(
-      string.match(r.grammar.cols),
-      function (col, i) {
-        return new TPS.Col(col, i);
-      }
-    );
-
-    return cols || [];
-  }
-
 
   // Game
 
-  Game = function (string) {
+  Game = function (simulator) {
+    this.simulator = simulator;
     this.is_valid = false;
     this.config = {};
     this.tags = [];
-    this.turns = [];
+    this.moves = [];
     this.plys = [];
     this.ptn = '';
     this.callbacks_start = [];
     this.callbacks_end = [];
-
-    if (string && string.length) {
-      this.parse(string);
-    }
 
     return this;
   };
@@ -522,22 +527,27 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return this;
   };
 
-  Game.prototype.parse = function (string, is_compressed) {
-    var decompressed, header, body, i, file, tag, missing_tags, tps;
+  Game.prototype.parse = function (input, is_from_URL) {
+    var plaintext, header, body, i, file, tag, missing_tags, tps;
 
-    if (is_compressed) {
-      decompressed = decompress(string);
-      if (decompressed == this.ptn) {
+    if (is_from_URL) {
+      if (/^[A-Za-z0-9$+-]+$/.test(input)) {
+        plaintext = decompress(input);
+      } else {
+        plaintext = decodeURIComponent(input);
+        input = compress(plaintext);
+      }
+      if (plaintext == this.ptn) {
         return false;
       } else {
-        this.ptn = decompressed;
-        this.ptn_compressed = string;
+        this.ptn = plaintext;
+        this.ptn_compressed = input;
       }
-    } else if (string == this.ptn) {
+    } else if (input == this.ptn) {
       return false;
     } else {
-      this.ptn = string;
-      this.ptn_compressed = compress(string);
+      this.ptn = input;
+      this.ptn_compressed = compress(input);
     }
 
     _.invokeMap(this.callbacks_start, 'call', this, this);
@@ -545,7 +555,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.is_valid = true;
     this.result = null;
     this.tags.length = 0;
-    this.turns.length = 0;
+    this.moves.length = 0;
     this.plys.length = 0;
     m.clear('error');
 
@@ -584,30 +594,33 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     // Body
-    body = body.match(r.grammar.turn);
+    body = body.match(r.grammar.move);
     if (body) {
       for (var i = 0; i < body.length; i++) {
-        this.turns[i] = new Turn(body[i], this);
+        this.moves[i] = new Move(body[i], this);
 
-        if (this.turns[i].ply1) {
-          this.turns[i].ply1.id = this.plys.length;
-          this.plys.push(this.turns[i].ply1);
+        if (this.moves[i].ply1) {
+          this.moves[i].ply1.id = this.plys.length;
+          this.plys.push(this.moves[i].ply1);
         }
 
-        if (this.turns[i].ply2) {
-          this.turns[i].ply2.id = this.plys.length;
-          this.plys.push(this.turns[i].ply2);
+        if (this.moves[i].ply2) {
+          this.moves[i].ply2.id = this.plys.length;
+          this.plys.push(this.moves[i].ply2);
         }
 
-        if (this.turns[i].result) {
-          (this.turns[i].ply2 || this.turns[i].ply1).result = this.turns[i].result;
+        if (this.moves[i].result) {
+          (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
 
       if (this.plys.length) {
+        this.plys[0].is_first = true;
         _.last(this.plys).is_last = true;
       }
     }
+
+    this.simulator.validate(this);
 
     _.invokeMap(this.callbacks_end, 'call', this, this);
 
@@ -620,7 +633,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     output += _.invokeMap(this.tags, 'print').join('');
     output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
-    output += _.invokeMap(this.turns, 'print').join('');
+    output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
 
     return output;

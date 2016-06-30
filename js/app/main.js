@@ -6,6 +6,7 @@
 
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
+  'app/config',
   'app/messages',
   'app/game',
   'app/board',
@@ -17,7 +18,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, Messages, Game, Board, saveAs, _, $) {
+], function (t, config, Messages, Game, Board, saveAs, _, $) {
 
   var $window = $(window)
     , $body = $('body')
@@ -27,8 +28,9 @@ requirejs({locale: navigator.language}, [
     , $permalink = $('#permalink')
     , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
-    , game = new Game()
     , board = new Board()
+    , simulator = new Board()
+    , game = new Game(simulator)
     , baseurl = location.origin + location.pathname
     , d = new Date()
     , today = d.getFullYear() +'.'+
@@ -36,6 +38,9 @@ requirejs({locale: navigator.language}, [
         _.padStart(d.getDate(),2,0)
     , default_ptn = '[Date "'+today+'"]\n[Player1 "White"]\n[Player2 "Black"]\n[Result ""]\n[Size "5"]\n\n'
     , sample_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA';
+
+  window.game = game;
+  window.board = board;
 
   (function () {
     function _templatize(parent) {
@@ -105,15 +110,14 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
-  $fab.click(function () {
+  $fab.on('touchstart click', function (event) {
+    event.stopPropagation();
+    event.preventDefault();
     if ($body.hasClass('error')) {
       $messages_parse.toggleClass('visible');
     } else {
       toggle_edit_mode();
     }
-  }).mousedown(function (event) {
-    event.stopPropagation();
-    event.preventDefault();
   }).mouseover(function () {
     $fab.attr('title',
       $body.hasClass('error') ? t.ShowHide_Errors :
@@ -188,7 +192,8 @@ requirejs({locale: navigator.language}, [
         ' ' + game.config.date
         : ''
       )
-      + '.ptn'
+      + '.ptn',
+      true
     );
   }).attr('title', t.Download);
 
@@ -334,24 +339,25 @@ requirejs({locale: navigator.language}, [
       // Play Mode
       switch (event.keymap) {
         case 'Spacebar':
-          board.playpause();
-          event.preventDefault();
+          board.playpause(event);
           break;
         case 'ArrowLeft':
-          board.prev();
-          event.preventDefault();
+          board.prev(event);
           break;
         case 'ArrowRight':
-          board.next();
-          event.preventDefault();
+          board.next(event);
           break;
         case '^ArrowLeft':
-          board.first();
-          event.preventDefault();
+          board.first(event);
           break;
         case '^ArrowRight':
-          board.last();
-          event.preventDefault();
+          board.last(event);
+          break;
+        case 'ArrowDown':
+          board.prev_move(event);
+          break;
+        case 'ArrowUp':
+          board.next_move(event);
           break;
       }
 
@@ -363,6 +369,16 @@ requirejs({locale: navigator.language}, [
         if (!$body.hasClass('error')) {
           toggle_edit_mode();
         }
+        break;
+      case '^s':
+        $('#download').click();
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      case '^o':
+        $('#open').click();
+        event.preventDefault();
+        event.stopPropagation();
         break;
       case '^?':
         game.parse(sample_ptn, true);

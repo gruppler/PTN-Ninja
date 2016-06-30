@@ -66,7 +66,7 @@ $purple: #BA68C8;
       color: $medium-black;
     }
 
-    .piece, .player, .turn {
+    .piece, .player, .move {
       color: $heavy-white;
     }
 
@@ -92,6 +92,15 @@ $purple: #BA68C8;
 
   .ply {
     font-weight: 700;
+
+    &.illegal {
+      background: transparent;
+      box-shadow: none !important;
+
+      * {
+        color: $error-color !important;
+      }
+    }
 
     .stone {
       color: $white;

@@ -4,7 +4,7 @@
 
 'use strict';
 
-define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
+define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (config, Messages, t, _) {
 
   var Board, Square, Piece;
   var m = new Messages('board')
@@ -17,6 +17,13 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     '>': '<'
   };
 
+  var direction_name = {
+    '+': 'up',
+    '-': 'down',
+    '<': 'left',
+    '>': 'right'
+  };
+
   function xor(a, b) {
     return a && !b || !a && b;
   }
@@ -26,9 +33,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
     col: _.template('<span class="col"><%=obj%></span>'),
 
-    square: _.template('<div class="square c<%=col_i%> r<%=row_i%> <%=color%>"></div>'),
+    square: _.template(
+      '<div class="square c<%=col_i%> r<%=row_i%> <%=color%>">'+
+        '<div class="road">'+
+          '<div class="up"></div>'+
+          '<div class="down"></div>'+
+          '<div class="left"></div>'+
+          '<div class="right"></div>'+
+        '</div>'+
+      '</div>'
+    ),
 
-    stone_class: _.template('stone p<%=player%> <%=stone%> <%=height_class%>'),
+    stone_class: _.template('stone p<%=player%> <%=stone%>'),
     piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
     piece: _.template(
       '<div class="piece">'+
@@ -95,7 +111,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
 
   Piece.prototype.render = function () {
     var that = this
-      , location;
+      , square = this.square
+      , location, captive_offset = 6;
 
     if (this.board.defer_render) {
       this.needs_updated = true;
@@ -120,18 +137,21 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       this.is_immovable = false;
     }
 
-    // Determine stack classes
-    this.height_class = 'h'+Math.min(5, this.height);
-    if (
-      this.captor &&
-      (this.captor.stone == 'F' || this != this.captor.captives[0])
-    ) {
-      this.height_class = '';
+    // Render or update view
+    this.x = 100*( this.col_i - this.board.size/2);
+    this.y = 100*(this.board.size/2 - 1 - this.row_i);
+
+    // Offset captives
+    if (!this.is_immovable) {
+      this.y += captive_offset*(
+        1 - this.height + 1*(this.stone == 'S' && !!this.captives.length)
+      );
+
+      if ((this.captor||this).height > this.board.size) {
+        this.y += captive_offset*((this.captor||this).height - this.board.size);
+      }
     }
 
-    // Render or update view
-    this.x = 100*this.col_i;
-    this.y = -100*this.row_i;
     location = tpl.piece_location(this);
 
     if (!this.$view) {
@@ -162,19 +182,44 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.prev_height = this.height;
     this.prev_location = location;
 
-    // Update captive indicator
-    if (this.captor || this.captives.length) {
-      this.$captive.addClass('visible');
-      if ((this.captor || this).captives.length >= this.board.size && !this.is_immovable) {
-        this.height++;
-      }
+    if (this.is_immovable) {
+      this.$view.addClass('immovable');
+      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.07) + '%)');
     } else {
-      this.$captive.removeClass('visible');
+      this.$view.removeClass('immovable');
+      this.$captive.css('transform', '');
     }
-    this.$captive.css('transform', 'translateY('+(-65*(this.height - 1)) + '%)');
 
     if (this.square && !this.$view.closest('html').length) {
       this.board.$pieces.place(this.$view);
+    }
+
+    // Update road visualization
+    if (!this.captor) {
+      square.$view.removeClass('p1 p2').addClass('p'+this.player);
+      _.each(direction_name, function (dn, d) {
+        if (square.neighbors[d]) {
+          if (
+            that.stone != 'S' &&
+            square.neighbors[d].piece &&
+            square.neighbors[d].piece.player == that.player &&
+            square.neighbors[d].piece.stone != 'S'
+          ) {
+            square.$view.addClass(dn);
+            square.neighbors[d].$view.addClass(
+              direction_name[opposite_direction[d]]
+            );
+          } else {
+            square.$view.removeClass(dn);
+            square.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
+          }
+        } else if (that.stone != 'S') {
+          // Edge
+          square.$view.addClass(dn);
+        } else {
+          square.$view.removeClass(dn);
+        }
+      });
     }
 
     this.needs_updated = false;
@@ -216,16 +261,21 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
           return new Piece(that.board, player);
         })
       ),
-      false, true
+      false
     );
   };
 
   Square.prototype.to_tps = function () {};
 
   Square.prototype.set_piece = function (piece, captives) {
-    var previous_piece = this.piece;
+    var that = this
+      , previous_piece = this.piece;
 
     this.piece = piece || null;
+
+    if (this.$view) {
+      this.$view.removeClass('p1 p2');
+    }
 
     if (piece) {
       piece.square = this;
@@ -235,9 +285,25 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       piece.render();
     } else if (previous_piece) {
       previous_piece.render();
+
+      if (this.$view) {
+        this.$view.removeClass(_.values(direction_name).join(' '));
+        _.each(direction_name, function (dn, d) {
+          if (that.neighbors[d]) {
+            that.$view.removeClass(dn);
+            that.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
+          }
+        })
+      }
     }
 
     return this.piece;
+  };
+
+  Square.prototype.set_active = function () {
+    if (this.$view) {
+      this.$view.addClass('active');
+    }
   };
 
   Square.prototype.render = function () {
@@ -251,8 +317,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     var piece = this.board.pieces[ply.id];
 
     if (this.piece) {
-      (this.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
-      return false;
+      return this.board.illegal_ply(ply);
     }
 
     if (!piece) {
@@ -268,6 +333,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
 
     this.set_piece(piece, false, true);
+    ply.squares[0] = this;
 
     this.piece.render();
 
@@ -290,9 +356,8 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       , piece = this.piece
       , moving_stack, remaining_stack, i;
 
-    function error() {
-      (that.board.game.is_editing ? m_parse : m).error(t.error.illegal_ply({ ply: ply.ply }));
-      return false;
+    function illegal() {
+      return that.board.illegal_ply(ply);
     }
 
     if (
@@ -300,8 +365,10 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       ply.count > this.board.size ||
       piece.captives.length < ply.count - 1
     ) {
-      return error();
+      return illegal();
     }
+
+    ply.squares[0] = this;
 
     remaining_stack = piece.captives.splice(ply.count - 1);
     square.set_piece(remaining_stack[0], remaining_stack.slice(1));
@@ -310,17 +377,17 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     for (i = 0; i < ply.drops.length; i++) {
       square = square.neighbors[ply.direction];
       if (!square) {
-        return error();
+        return illegal();
       }
 
       remaining_stack = moving_stack.splice(-ply.drops[i]);
 
       if (square.piece) {
         if (square.piece.stone == 'C') {
-          return error();
+          return illegal();
         } else if(square.piece.stone == 'S') {
-          if (piece.stone != 'C' || piece.captives.length) {
-            return error();
+          if (remaining_stack.length > 1 || remaining_stack[0].stone != 'C') {
+            return illegal();
           }
 
           ply.flattens[i] = true;
@@ -333,6 +400,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       }
 
       square.set_piece(remaining_stack[0], remaining_stack.slice(1));
+      ply.squares[i + 1] = square;
     }
 
     return true;
@@ -403,29 +471,37 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     return this;
   };
 
-  Board.prototype.init = function (game) {
-    var i, row, col, a = 'a'.charCodeAt(0), col_letter, square, piece, tps;
-
-    _.invokeMap(this.callbacks_start, 'call', this, this);
-
-    this.defer_render = true;
-    this.pause();
-    this.game = game;
-    this.size = 1*game.config.size;
-    this.tps = game.config.tps;
-    this.saved_ply = this.ply;
+  Board.prototype.clear = function () {
     this.ply = 0;
     this.pieces = {};
     this.initial_pieces = {};
-    m.clear(false, true);
-
     this.cols.length = 0;
+    this.rows.length = 0;
+  };
+
+  Board.prototype.init = function (game, silent) {
+    var i, j, row, col, col_letter, square, piece, tps
+      , a = 'a'.charCodeAt(0);
+
+    if (silent !== true) {
+      _.invokeMap(this.callbacks_start, 'call', this, this);
+      m.clear(false, true);
+      this.pause();
+    }
+
+    this.defer_render = true;
+    this.game = game;
+    this.size = 1*game.config.size;
+    this.tps = game.config.tps && game.config.tps.is_valid ? game.config.tps : undefined;
+
+    this.saved_ply = this.ply;
+    this.clear();
+
     for (col = 0; col < this.size; col++) {
       col_letter = String.fromCharCode(a + col);
       this.cols[col] = col_letter;
     }
 
-    this.rows.length = 0;
     for (row = 0; row < this.size; row++) {
       this.rows[row] = row + 1;
     }
@@ -467,10 +543,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       }
     }
 
-    this.defer_render = false;
-    _.invokeMap(this.init_callbacks, 'call', this, this);
+    if (silent !== true) {
+      this.defer_render = false;
+      _.invokeMap(this.init_callbacks, 'call', this, this);
+    }
 
     return true;
+  };
+
+  Board.prototype.validate = function (game) {
+    this.init(game, true);
+    this.go_to_ply(game.plys.length, true);
+    this.clear();
   };
 
   Board.prototype.to_tps = function () {
@@ -495,7 +579,7 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
       )
     );
 
-    this.go_to_ply(this.saved_ply, true);
+    this.go_to_ply(this.saved_ply || 0);
 
     return this.$view;
   };
@@ -508,18 +592,23 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.do_ply = function () {
-    var ply, square, piece;
+    var ply, square, piece, ply_result;
 
     if (this.ply >= this.game.plys.length || this.ply < 0) {
-      this.pause();
       return false;
     }
 
     ply = this.game.plys[this.ply++];
     square = this.squares[ply.square];
 
+    if (ply.is_illegal) {
+      this.pause();
+      this.ply -= 1;
+      return false;
+    }
+
     if (this.ply == 0) {
-      this.show_comments(this.game);
+      this.show_comments(0);
     } else {
       this.show_comments(ply);
     }
@@ -527,10 +616,18 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
     if (ply.is_slide) {
-      return square.slide(ply);
+      ply_result = square.slide(ply);
     } else {
-      return square.place(ply);
+      ply_result = square.place(ply);
     }
+
+    this.set_active_squares(ply);
+
+    if (this.ply == this.game.plys.length) {
+      this.pause();
+    }
+
+    return ply_result;
   };
 
   Board.prototype.undo_ply = function () {
@@ -543,10 +640,17 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     ply = this.game.plys[--this.ply];
     square = this.squares[ply.square];
 
+    if (ply.is_illegal) {
+      this.ply += 1;
+      return false;
+    }
+
     if (this.ply == 0) {
-      this.show_comments(this.game);
+      this.show_comments(0);
+      this.set_active_squares(ply);
     } else {
       this.show_comments(this.game.plys[this.ply - 1]);
+      this.set_active_squares(this.game.plys[this.ply - 1]);
     }
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
@@ -558,15 +662,38 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     }
   };
 
+  Board.prototype.illegal_ply = function (ply) {
+    m_parse.error(
+      t.error.illegal_ply({ ply: ply.ply })
+    );
+    ply.mark_illegal();
+    return false;
+  };
+
+  Board.prototype.set_active_squares = function (ply) {
+    if (this.$view) {
+      this.$squares.children().removeClass('active');
+      _.invokeMap(ply.squares, 'set_active');
+    }
+  };
+
   Board.prototype.show_comments = function (ply) {
     m.clear(false, true);
+
+    if (ply === 0) {
+      if (this.game.comments) {
+        _.map(this.game.comments, comment);
+      }
+      m.player1(this.game.config.player1);
+      m.player2(this.game.config.player2);
+    }
 
     if (!ply || this.defer_render) {
       return;
     }
 
-    if (ply && ply.evaluation && /'/.test(ply.evaluation)) {
-      m['player'+ply.player](t.Tak);
+    if (ply && ply.evaluation && /['"]/.test(ply.evaluation)) {
+      m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
     }
 
     if (ply && ply.evaluation && /[!?]/.test(ply.evaluation)) {
@@ -586,10 +713,11 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
   };
 
   Board.prototype.play = function () {
-    this.do_ply();
-    this.play_timer = setInterval(_.bind(this.do_ply, this), 1000);
-    this.is_playing = true;
-    $('body').addClass('playing');
+    if (this.do_ply() && this.game.plys[this.ply]) {
+      this.play_timer = setInterval(_.bind(this.do_ply, this), 6e4/config.play_speed);
+      this.is_playing = true;
+      $('body').addClass('playing');
+    }
   };
 
   Board.prototype.pause = function () {
@@ -631,6 +759,26 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.do_ply();
   };
 
+  Board.prototype.prev_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply + 2);
+  };
+
+  Board.prototype.next_move = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.pause();
+    this.go_to_ply(this.ply - 2);
+  };
+
   Board.prototype.first = function (event) {
     if (event) {
       event.stopPropagation();
@@ -651,22 +799,25 @@ define(['app/messages', 'i18n!nls/main', 'lodash'], function (Messages, t, _) {
     this.go_to_ply(this.game.plys.length);
   };
 
-  Board.prototype.go_to_ply = function (ply) {
+  Board.prototype.go_to_ply = function (ply, is_silent) {
     this.defer_render = true;
     if (ply > this.ply) {
       while (this.ply < ply && this.do_ply()) {}
     } else if (ply < this.ply) {
       while (this.ply > ply && this.undo_ply()) {}
     }
-    this.defer_render = false;
 
-    if (ply == 0) {
-      this.show_comments(this.game);
-    } else {
-      this.show_comments(this.game.plys[ply - 1]);
+    if (is_silent !== true) {
+      this.defer_render = false;
+
+      if (ply <= 0) {
+        this.show_comments(0);
+      } else {
+        this.show_comments(this.game.plys[this.ply - 1]);
+      }
+
+      this.update();
     }
-
-    this.update();
   };
 
   return Board;
