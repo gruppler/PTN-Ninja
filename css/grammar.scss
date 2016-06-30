@@ -23,14 +23,14 @@ $purple: #BA68C8;
 
 .ptn {
   .player1, .player2 {
-    margin: 0 -0.25em;
-    padding: 0 0.25em;
-    border-radius: 0.25em;
+    border-radius: 0.2em;
   }
   .player1 {
+    box-shadow: 0 0 0 0.1em $faint-white;
     background-color: $faint-white;
   }
-  .player2 {
+    .player2 {
+    box-shadow: 0 0 0 0.1em $faint-black;
     background-color: $faint-black;
   }
 
@@ -66,12 +66,30 @@ $purple: #BA68C8;
       color: $medium-black;
     }
 
-    .piece, .player, .move {
+    .stack, .player, .move {
       color: $heavy-white;
     }
 
-    .player {
-      margin-left: 0.25em;
+    .piece {
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0 0.2em;
+
+      &.player1 {
+        background-color: $light-white;
+      }
+      &.player2 {
+        background-color: $light-black;
+      }
+
+      &:first-child {
+        border-top-left-radius: 0.2em;
+        border-bottom-left-radius: 0.2em;
+      }
+      &:last-child {
+        border-top-right-radius: 0.2em;
+        border-bottom-right-radius: 0.2em;
+      }
     }
   }
 

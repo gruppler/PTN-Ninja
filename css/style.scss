@@ -62,7 +62,7 @@
   overflow: auto;
   font-weight: 300;
   font-size: 1.3em;
-  line-height: 1.5em;
+  line-height: 1.65em;
   padding: $edge;
   padding-right: $edge + $fab-height-small;
   margin: 0;
@@ -82,12 +82,27 @@
     transition: all $time-quick ease-out;
   }
   body.editmode & .ply {
-    &:hover {
-      box-shadow: $shadow2;
+    &.player1 {
+      &:hover {
+        background-color: $light-white;
+        box-shadow: 0 0 0 0.1em $light-white;
+      }
+      &:active,
+      &.active {
+        background-color: $faint-white;
+        box-shadow: 0 0 0 0.15em $medium-white;
+      }
     }
-    &:active,
-    &.active {
-      box-shadow: $shadow4;
+    &.player2 {
+      &:hover {
+        background-color: $light-black;
+        box-shadow: 0 0 0 0.1em $light-black;
+      }
+      &:active,
+      &.active {
+        background-color: $faint-black;
+        box-shadow: 0 0 0 0.15em $medium-black;
+      }
     }
   }
 }

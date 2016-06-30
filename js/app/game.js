@@ -412,9 +412,12 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     var parts = string.match(r.grammar.tps_grouped)
       , tps;
 
+    this.is_valid = true;
+
     // Invalid or just incomplete
     if (!r.grammar.tps.test(string)) {
       m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
+      this.is_valid = false;
     }
 
     // Invalid
@@ -466,7 +469,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
   TPS.Col = function (string) {
-    var parts = string.match(r.grammar.col_grouped);
+    var parts = string.match(r.grammar.col_grouped)
+      , stack_parts;
 
     if (parts[1]) {
       this.is_space = true;
@@ -477,7 +481,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.is_space = false;
       this.print = this.print_stack;
       this.text = parts[2];
-      this.pieces = this.text.match(r.grammar.stack_grouped);
+
+      stack_parts = this.text.match(r.grammar.stack_grouped);
+      this.pieces = stack_parts[1].split('').concat(stack_parts[2]);
     }
     this.separator = parts[3];
 
@@ -491,7 +497,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   TPS.Col.prototype.print_stack = _.template(
     '<span class="stack">'+
-      '<% _.map(_.tail(this.pieces), function(piece) { %>'+
+      '<% _.map(this.pieces, function(piece, i) { %>'+
         '<span class="piece player<%=piece[0]%>">'+
           '<%=piece%>'+
         '</span>'+

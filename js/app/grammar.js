@@ -29,7 +29,7 @@ define(['lodash'], function (_) {
   var grammar = {
     space: '(?:x[1-9]?)',
     stack: '(?:[12]+[SC]?)',
-    stack_grouped: '([12]+[SC]?)',
+    stack_grouped: '([12]*)([12][SC]?)',
     col: '(?:<space>|<stack>)',
     cols: '((?:<space>|<stack>)(?:[,\\/]?))',
     col_grouped: '(<space>?)(<stack>?)([,\\/]?)',
@@ -76,6 +76,8 @@ define(['lodash'], function (_) {
   _.each(grammar, function (expression, token) {
     grammar[token] = new RegExp(expression, /_grouped$/.test(token) ? '' : 'g');
   });
+
+  window.grammar = grammar;
 
   return {
     tags: _.merge({}, required_tags, other_tags),
