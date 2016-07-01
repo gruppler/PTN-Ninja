@@ -108,6 +108,12 @@ requirejs({locale: navigator.language}, [
     }
   }
 
+  function insert_text(text, before) {
+    bililiteRange($ptn[0]).bounds('selection')
+      .text(text, before ? 'end' : 'start')
+      .select();
+  }
+
   $('title').text(t.app_title);
 
   $fab.on('touchstart click', function (event) {
@@ -322,6 +328,9 @@ requirejs({locale: navigator.language}, [
   $viewer.afterTransition();
 
   $window.on('keydown', function (event) {
+    var $focus = $(getSelection().focusNode)
+      , $parent = $focus.parent();
+
     if (game.is_editing) {
 
       // Edit Mode
@@ -331,6 +340,31 @@ requirejs({locale: navigator.language}, [
           break;
         case '^Z':
           bililiteRange.redo(event);
+          break;
+        case '[':
+          insert_text(']');
+          break;
+        case '"':
+          if (!$focus.closest('.ply').length) {
+            insert_text('"');
+          }
+          break;
+        case '\'':
+          if (!$focus.closest('.ply').length) {
+            insert_text('\'');
+          }
+          break;
+        case '{':
+          if ($focus.closest('.body').length) {
+            insert_text('}');
+          }
+          break;
+        case 'Enter':
+          if ($parent.hasClass('body')) {
+            insert_text(game.get_linenum() + '. ', true);
+          } else if ($parent.hasClass('move')) {
+            insert_text($parent.data('id') + '. ', true);
+          }
           break;
       }
 
@@ -387,7 +421,7 @@ requirejs({locale: navigator.language}, [
   });
 
   // Go to focused ply
-  $ptn.on('keydown keyup mouseup touchstart touchend', function (event) {
+  $ptn.on('touchstart touchend keyup mouseup', function (event) {
     if (game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');

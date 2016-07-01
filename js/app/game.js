@@ -189,7 +189,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   Ply.prototype.print_place = _.template(
-    '<%=this.prefix%>'+
+    '<span class="space"><%=this.prefix%></span>'+
     '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
@@ -203,7 +203,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   );
 
   Ply.prototype.print_slide = _.template(
-    '<%=this.prefix%>'+
+    '<span class="space"><%=this.prefix%></span>'+
     '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
@@ -224,12 +224,12 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   // Linenum
 
-  Linenum = function (string) {
+  Linenum = function (string, game) {
     var parts = string.match(r.grammar.linenum_grouped);
 
     this.prefix = parts[1];
-    this.text = parts[2];
-    this.value = parseInt(this.text, 10);
+    this.value = game.get_linenum();
+    this.text = ''+this.value + '.';
 
     return this;
   };
@@ -255,7 +255,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return this;
     }
 
-    this.linenum = new Linenum(parts[1]);
+    this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
     if(game.config.tps && this.linenum.value == game.config.tps.move){
       first_player = game.config.tps.player;
@@ -307,7 +307,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   Move.prototype.print = function(){
-    var output = '<span class="move">';
+    var output = '<span class="move" data-id="'+this.linenum.value+'">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -633,14 +633,22 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     return true;
   };
 
+  Game.prototype.get_linenum = function () {
+    return this.config.tps && this.config.tps.is_valid ?
+      this.config.tps.move + this.moves.length :
+      this.moves.length + 1;
+  };
+
 
   Game.prototype.print = function () {
-    var output = '';
+    var output = '<span class="header">';
 
     output += _.invokeMap(this.tags, 'print').join('');
+    output += '</span><span class="body">'
     output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
     output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
+    output += '</span>';
 
     return output;
   };

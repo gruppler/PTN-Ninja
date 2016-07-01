@@ -59,12 +59,6 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 
 - Edit Mode Improvements
-  - Automatic line numbers
-    - Insert line numbers after Enter keypress
-    - Insert if missing
-    - Correct if wrong
-  - Automatically insert closing braces and quotes
-    - [], "", {}
   - Auto formatting
     - Styles
       - Verbose
