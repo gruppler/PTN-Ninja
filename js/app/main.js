@@ -400,7 +400,9 @@ requirejs({locale: navigator.language}, [
     // Global
     switch (event.keymap) {
       case 'Escape':
-        if (!$body.hasClass('error')) {
+        if ($body.hasClass('error')) {
+          $messages_parse.toggleClass('visible');
+        } else {
           toggle_edit_mode();
         }
         break;
