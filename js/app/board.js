@@ -812,6 +812,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
       if (ply <= 0) {
         this.show_comments(0);
+        if (this.$view) {
+          this.$squares.children().removeClass('active');
+        }
       } else {
         this.show_comments(this.game.plys[this.ply - 1]);
       }

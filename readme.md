@@ -29,9 +29,10 @@ The **share** menu in the upper-right corner allows you to do the following:
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd> | Load sample PTN     |
 
 #### Edit Mode
-| Key                            | Action |
-| ------------------------------ | ------ |
-| <kbd>Ctrl</kbd> + <kbd>z</kbd> | Undo   |
+| Key                                               | Action |
+| ------------------------------------------------- | ------ |
+| <kbd>Ctrl</kbd> + <kbd>z</kbd>                    | Undo   |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd> | Redo   |
 
 #### Play Mode
 | Key                                 | Action        |
@@ -48,10 +49,8 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 ## To Do
 - Known Bugs
-  - Enable moving to Ply 0 from editor
   - Support "load" as first "ply" for TPS where next ply is black
-  - Don't display result if not explicitly stated at end
-    - Unless a road is built
+  - Don't display result if road win but no road is built
 
 
 - Export board as .png

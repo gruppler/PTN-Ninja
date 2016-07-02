@@ -374,11 +374,14 @@ requirejs({locale: navigator.language}, [
   // Go to focused ply
   app.$ptn.on('touchstart touchend keyup mouseup', function (event) {
     if (app.game.is_editing) {
-      var $focus = $(getSelection().focusNode)
-        , ply = $focus.add($focus.next()).closest('.ply').data('ply');
+      var $focus = $(getSelection().focusNode).parent()
+        , ply = $focus.add($focus.next())
+            .closest('.ply').data('ply');
 
       if (!_.isUndefined(ply)) {
         app.board.go_to_ply(ply + 1);
+      } else if ($focus.closest('.header').length) {
+        app.board.go_to_ply(0);
       }
     }
   });
