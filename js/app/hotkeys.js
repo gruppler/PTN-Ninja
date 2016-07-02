@@ -105,6 +105,12 @@ define([], function () {
         event.stopPropagation();
       },
 
+      '^d': function (event, $focus, $parent) {
+        app.game.parse(app.default_ptn, true);
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
       '^?': function (event, $focus, $parent) {
         app.game.parse(app.sample_ptn, true);
       }
