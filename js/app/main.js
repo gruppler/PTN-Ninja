@@ -7,6 +7,7 @@
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
   'app/config',
+  'app/hotkeys',
   'app/messages',
   'app/game',
   'app/board',
@@ -18,29 +19,45 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, config, Messages, Game, Board, saveAs, _, $) {
+], function (t, config, hotkeys, Messages, Game, Board, saveAs, _, $) {
 
-  var $window = $(window)
-    , $body = $('body')
-    , $ptn = $('#ptn')
-    , $viewer = $('#viewer')
-    , $fab = $('#fab')
-    , $permalink = $('#permalink')
+  var baseurl = location.origin + location.pathname
+
+    , simulator = new Board()
+
     , $messages_parse = $('.messages-parse')
     , m = new Messages('general')
-    , board = new Board()
-    , simulator = new Board()
-    , game = new Game(simulator)
-    , baseurl = location.origin + location.pathname
+
     , d = new Date()
     , today = d.getFullYear() +'.'+
-        _.padStart(d.getMonth()+1,2,0) +'.'+
-        _.padStart(d.getDate(),2,0)
-    , default_ptn = '[Date "'+today+'"]\n[Player1 "White"]\n[Player2 "Black"]\n[Result ""]\n[Size "5"]\n\n'
-    , sample_ptn = 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA';
+    _.padStart(d.getMonth()+1,2,0) +'.'+
+    _.padStart(d.getDate(),2,0)
 
-  window.game = game;
-  window.board = board;
+    , app = {
+        config: config,
+        hotkeys: hotkeys,
+
+        board: new Board(),
+        game: new Game(simulator),
+
+        $window: $(window),
+        $body: $('body'),
+        $ptn: $('#ptn'),
+        $viewer: $('#viewer'),
+        $fab: $('#fab'),
+        $permalink: $('#permalink'),
+        $download: $('#download'),
+        $open: $('#open'),
+
+        undo: bililiteRange.undo,
+        redo: bililiteRange.redo,
+
+        default_ptn: '[Date "'+today+'"]\n[Player1 "White"]\n[Player2 "Black"]\n[Result ""]\n[Size "5"]\n\n',
+
+        sample_ptn: 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA'
+      };
+
+  window.app = app;
 
   (function () {
     function _templatize(parent) {
@@ -59,7 +76,7 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
-  _.bindAll(board, [
+  _.bindAll(app.board, [
     'play',
     'pause',
     'playpause',
@@ -69,86 +86,86 @@ requirejs({locale: navigator.language}, [
     'last'
   ]);
 
-  function toggle_edit_mode(on) {
+  app.toggle_edit_mode = function (on) {
     if (_.isBoolean(on)) {
-      if (on && !game.is_editing) {
-        $viewer.transition();
-        game.is_editing = true;
-        $body.addClass('editmode');
-        $body.removeClass('playmode');
-      } else if (!on && game.is_editing) {
-        $viewer.transition();
-        game.is_editing = false;
-        $body.addClass('playmode');
-        $body.removeClass('editmode');
+      if (on && !app.game.is_editing) {
+        app.$viewer.transition();
+        app.game.is_editing = true;
+        app.$body.addClass('editmode');
+        app.$body.removeClass('playmode');
+      } else if (!on && app.game.is_editing) {
+        app.$viewer.transition();
+        app.game.is_editing = false;
+        app.$body.addClass('playmode');
+        app.$body.removeClass('editmode');
       }
     } else {
-      game.is_editing = !game.is_editing;
-      $viewer.transition();
-      $body.toggleClass('editmode playmode');
+      app.game.is_editing = !app.game.is_editing;
+      app.$viewer.transition();
+      app.$body.toggleClass('editmode playmode');
     }
 
-    if (game.is_editing) {
-      board.pause();
+    if (app.game.is_editing) {
+      app.board.pause();
     }
 
-    $ptn.attr('contenteditable', game.is_editing);
-  }
+    app.$ptn.attr('contenteditable', app.game.is_editing);
+  };
 
-  function read_file(file) {
+  app.read_file = function (file) {
     if (file && /\.ptn$|\.txt$/i.test(file.name)) {
       var reader = new FileReader();
       reader.onload = function (event) {
-        board.ply = 0;
-        game.parse(event.target.result);
-        bililiteRange($ptn[0]).undo(0);
-        location.hash = game.ptn_compressed;
+        app.board.ply = 0;
+        app.game.parse(event.target.result);
+        bililiteRange(app.$ptn[0]).undo(0);
+        location.hash = app.game.ptn_compressed;
       }
       reader.readAsText(file);
     }
-  }
+  };
 
-  function insert_text(text, before) {
-    bililiteRange($ptn[0]).bounds('selection')
+  app.insert_text = function (text, before) {
+    bililiteRange(app.$ptn[0]).bounds('selection')
       .text(text, before ? 'end' : 'start')
       .select();
-  }
+  };
 
   $('title').text(t.app_title);
 
-  $fab.on('touchstart click', function (event) {
+  app.$fab.on('touchstart click', function (event) {
     event.stopPropagation();
     event.preventDefault();
-    if ($body.hasClass('error')) {
+    if (app.$body.hasClass('error')) {
       $messages_parse.toggleClass('visible');
     } else {
-      toggle_edit_mode();
+      app.toggle_edit_mode();
     }
   }).mouseover(function () {
-    $fab.attr('title',
-      $body.hasClass('error') ? t.ShowHide_Errors :
-        game.is_editing ? t.Play_Mode : t.Edit_Mode
+    app.$fab.attr('title',
+      app.$body.hasClass('error') ? t.ShowHide_Errors :
+        app.game.is_editing ? t.Play_Mode : t.Edit_Mode
     );
   });
 
-  game.on_parse_start(function () {
-    if ($ptn.text() != this.ptn) {
-      $ptn.text(this.ptn);
+  app.game.on_parse_start(function () {
+    if (app.$ptn.text() != this.ptn) {
+      app.$ptn.text(this.ptn);
     }
   });
 
-  game.on_parse_end(function () {
+  app.game.on_parse_end(function () {
     var href, length;
 
-    $ptn.html(this.print());
-    if (game.is_valid) {
-      board.init(game);
+    app.$ptn.html(this.print());
+    if (app.game.is_valid) {
+      app.board.init(app.game);
     }
 
     href = '#'+this.ptn_compressed;
     length = (baseurl + href).length;
 
-    $permalink.attr({
+    app.$permalink.attr({
       href: href,
       title: t.Permalink+' ('+t.n_characters({n: length})+')'
     });
@@ -159,27 +176,27 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  board.on_init(function () {
-    $viewer.empty().append(board.render());
+  app.board.on_init(function () {
+    app.$viewer.empty().append(app.board.render());
   }).on_ply(function (ply) {
-    $ptn.find('.ply').removeClass('active')
+    app.$ptn.find('.ply').removeClass('active')
       .filter('[data-ply="'+ply+'"]').addClass('active');
   });
 
   $('#controls button.first')
-    .on('touchstart click', board.first)
+    .on('touchstart click', app.board.first)
     .attr('title', t.First_Ply);
   $('#controls button.prev')
-    .on('touchstart click', board.prev)
+    .on('touchstart click', app.board.prev)
     .attr('title', t.Previous_Ply);
   $('#controls button.play')
-    .on('touchstart click', board.playpause)
+    .on('touchstart click', app.board.playpause)
     .attr('title', t.PlayPause);
   $('#controls button.next')
-    .on('touchstart click', board.next)
+    .on('touchstart click', app.board.next)
     .attr('title', t.Next_Ply);
   $('#controls button.last')
-    .on('touchstart click', board.last)
+    .on('touchstart click', app.board.last)
     .attr('title', t.Last_Ply);
 
   $('#share').attr('title', t.Share);
@@ -189,13 +206,13 @@ requirejs({locale: navigator.language}, [
     event.preventDefault();
 
     saveAs(
-      new Blob([game.ptn], {type: "text/plain;charset=utf-8"}),
-      (game.config.player1 || t.Player1) +
+      new Blob([app.game.ptn], {type: "text/plain;charset=utf-8"}),
+      (app.game.config.player1 || t.Player1) +
       ' vs ' +
-      (game.config.player2 || t.Player2) +
+      (app.game.config.player2 || t.Player2) +
       (
-        game.config.date ?
-        ' ' + game.config.date
+        app.game.config.date ?
+        ' ' + app.game.config.date
         : ''
       )
       + '.ptn',
@@ -211,7 +228,7 @@ requirejs({locale: navigator.language}, [
   }).attr('title', t.Open);
 
   if (window.File && window.FileReader && window.FileList && window.Blob) {
-    $window.on('drop', function(event) {
+    app.$window.on('drop', function(event) {
       event.stopPropagation();
       event.preventDefault();
       read_file(event.originalEvent.dataTransfer.files[0]);
@@ -222,17 +239,17 @@ requirejs({locale: navigator.language}, [
       event.preventDefault();
       event.stopPropagation();
     }).on('hashchange', function () {
-      board.ply = 0;
-      game.parse(location.hash.substr(1) || default_ptn, !!location.hash);
-      bililiteRange($ptn[0]).undo(0);
+      app.board.ply = 0;
+      app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
+      bililiteRange(app.$ptn[0]).undo(0);
     });
   }
 
-  $window.on('error:parse', function () {
-    $body.addClass('error');
-    toggle_edit_mode(true);
+  app.$window.on('error:parse', function () {
+    app.$body.addClass('error');
+    app.toggle_edit_mode(true);
   }).on('clear:error:parse', function () {
-    $body.removeClass('error');
+    app.$body.removeClass('error');
   });
 
 
@@ -314,122 +331,54 @@ requirejs({locale: navigator.language}, [
 
   // Initialize
 
-  bililiteRange.fancyText($ptn[0], function () {
-    return game.parse($ptn.text());
+  bililiteRange.fancyText(app.$ptn[0], function () {
+    return app.game.parse(app.$ptn.text());
   });
 
-  board.ply = 0;
-  game.parse(location.hash.substr(1) || default_ptn, !!location.hash);
-  bililiteRange($ptn[0]).undo(0);
+  app.board.ply = 0;
+  app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
+  bililiteRange(app.$ptn[0]).undo(0);
 
-  if (location.hash && !$body.hasClass('error')) {
-    toggle_edit_mode(false);
+  if (location.hash && !app.$body.hasClass('error')) {
+    app.toggle_edit_mode(false);
   }
-  $viewer.afterTransition();
+  app.$viewer.afterTransition();
 
-  $window.on('keydown', function (event) {
+  app.$window.on('keydown', function (event) {
     var $focus = $(getSelection().focusNode)
       , $parent = $focus.parent();
 
-    if (game.is_editing) {
+    if (app.game.is_editing) {
 
       // Edit Mode
-      switch (event.keymap) {
-        case '^z':
-          bililiteRange.undo(event);
-          break;
-        case '^Z':
-          bililiteRange.redo(event);
-          break;
-        case '[':
-          insert_text(']');
-          break;
-        case '"':
-          if (!$focus.closest('.ply').length) {
-            insert_text('"');
-          }
-          break;
-        case '\'':
-          if (!$focus.closest('.ply').length) {
-            insert_text('\'');
-          }
-          break;
-        case '{':
-          if ($focus.closest('.body').length) {
-            insert_text('}');
-          }
-          break;
-        case 'Enter':
-          if ($parent.hasClass('body')) {
-            insert_text(game.get_linenum() + '. ', true);
-          } else if ($parent.hasClass('move')) {
-            insert_text($parent.data('id') + '. ', true);
-          }
-          break;
+      if (event.keymap in hotkeys.edit) {
+        hotkeys.edit[event.keymap](event, $focus, $parent);
       }
 
     } else {
 
       // Play Mode
-      switch (event.keymap) {
-        case 'Spacebar':
-          board.playpause(event);
-          break;
-        case 'ArrowLeft':
-          board.prev(event);
-          break;
-        case 'ArrowRight':
-          board.next(event);
-          break;
-        case '^ArrowLeft':
-          board.first(event);
-          break;
-        case '^ArrowRight':
-          board.last(event);
-          break;
-        case 'ArrowDown':
-          board.prev_move(event);
-          break;
-        case 'ArrowUp':
-          board.next_move(event);
-          break;
+      if (event.keymap in hotkeys.play) {
+        hotkeys.play[event.keymap](event, $focus, $parent);
       }
 
     }
 
     // Global
-    switch (event.keymap) {
-      case 'Escape':
-        if ($body.hasClass('error')) {
-          $messages_parse.toggleClass('visible');
-        } else {
-          toggle_edit_mode();
-        }
-        break;
-      case '^s':
-        $('#download').click();
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      case '^o':
-        $('#open').click();
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      case '^?':
-        game.parse(sample_ptn, true);
-        break;
+    if (event.keymap in hotkeys.global) {
+      hotkeys.global[event.keymap](event, $focus, $parent);
     }
+
   });
 
   // Go to focused ply
-  $ptn.on('touchstart touchend keyup mouseup', function (event) {
-    if (game.is_editing) {
+  app.$ptn.on('touchstart touchend keyup mouseup', function (event) {
+    if (app.game.is_editing) {
       var $focus = $(getSelection().focusNode)
         , ply = $focus.add($focus.next()).closest('.ply').data('ply');
 
       if (!_.isUndefined(ply)) {
-        board.go_to_ply(ply + 1);
+        app.board.go_to_ply(ply + 1);
       }
     }
   });
