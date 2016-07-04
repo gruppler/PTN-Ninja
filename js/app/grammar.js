@@ -52,8 +52,8 @@ define(['lodash'], function (_) {
     comment: '(?:\\s*?\\{[^}]*\\}?)*',
     comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}?',
     comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\}?)',
-    result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
-    result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',
+    result: '(?:(?:\\s|--)*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
+    result_grouped: '((?:\\s|--)*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',
     evaluation: '[?!\'"]*',
     ply: '(?:\\s*?(?:<slide>|<place>)<evaluation>)',
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
@@ -64,7 +64,7 @@ define(['lodash'], function (_) {
     nonmove: '(?:[^]+)',
 
     header: '^<tag>+$',
-    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)([\\s-]*)$'
+    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)((?:\\s|--)*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));
