@@ -257,16 +257,12 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
-    if(game.config.tps && this.linenum.value == game.config.tps.move){
-      first_player = game.config.tps.player;
-      second_player = first_player == 1 ? 2 : 1;
-      if (this.linenum.value == 1) {
-        first_player = second_player;
-        second_player = first_player == 1 ? 2 : 1;
-      }
-    } else if (this.linenum.value == 1) {
+    if (this.linenum.value == 1) {
       first_player = 2;
       second_player = 1;
+    } else if(game.config.tps && this.linenum.value == game.config.tps.move){
+      first_player = game.config.tps.player;
+      second_player = first_player == 1 ? 2 : 1;
     }
 
     this.comments1 = parse_comments(parts[2]);

@@ -363,7 +363,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     if (
       !piece ||
       ply.count > this.board.size ||
-      piece.captives.length < ply.count - 1
+      piece.captives.length < ply.count - 1 ||
+      piece.player != ply.player
     ) {
       return illegal();
     }
