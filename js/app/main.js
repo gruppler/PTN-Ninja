@@ -34,6 +34,17 @@ requirejs({locale: navigator.language}, [
     _.padStart(d.getDate(),2,0)
 
     , app = {
+
+        piece_counts: {
+          3: { F: 10, C: 0 },
+          4: { F: 15, C: 0 },
+          5: { F: 21, C: 1 },
+          6: { F: 30, C: 1 },
+          7: { F: 40, C: 2 },
+          8: { F: 50, C: 2 },
+          9: { F: 60, C: 3 }
+        },
+
         config: config,
         hotkeys: hotkeys,
 
