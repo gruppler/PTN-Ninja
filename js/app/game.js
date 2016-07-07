@@ -165,6 +165,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.ply = ply_group[3];
       this.stone_text = parts[1] || '';
       this.stone = this.stone_text || 'F';
+      this.true_stone = this.stone == 'C' ? this.stone : 'F';
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;

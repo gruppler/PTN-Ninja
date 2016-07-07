@@ -36,13 +36,13 @@ requirejs({locale: navigator.language}, [
     , app = {
 
         piece_counts: {
-          3: { F: 10, C: 0 },
-          4: { F: 15, C: 0 },
-          5: { F: 21, C: 1 },
-          6: { F: 30, C: 1 },
-          7: { F: 40, C: 2 },
-          8: { F: 50, C: 2 },
-          9: { F: 60, C: 3 }
+          3: { F: 10, C: 0, total: 10 },
+          4: { F: 15, C: 0, total: 15 },
+          5: { F: 21, C: 1, total: 22 },
+          6: { F: 30, C: 1, total: 31 },
+          7: { F: 40, C: 2, total: 42 },
+          8: { F: 50, C: 2, total: 52 },
+          9: { F: 60, C: 3, total: 63 }
         },
 
         config: config,
@@ -234,7 +234,7 @@ requirejs({locale: navigator.language}, [
   $('#open').on('change', function (event) {
     event.stopPropagation();
     event.preventDefault();
-    read_file(this.files[0]);
+    app.read_file(this.files[0]);
     $(this).val('');
   }).attr('title', t.Open);
 
@@ -242,7 +242,7 @@ requirejs({locale: navigator.language}, [
     app.$window.on('drop', function(event) {
       event.stopPropagation();
       event.preventDefault();
-      read_file(event.originalEvent.dataTransfer.files[0]);
+      app.read_file(event.originalEvent.dataTransfer.files[0]);
     }).on('dragover', function(event) {
       event.preventDefault();
       event.stopPropagation();

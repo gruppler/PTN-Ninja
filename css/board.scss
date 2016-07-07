@@ -16,11 +16,13 @@ $stone-thickness: 0.3vmin;
 }
 
 .board {
+  $top-margin: 5vmin;
+
   position: absolute;
-  top: calc(50% - 50vmin + #{($edge*3 + $button-height) / 2});
+  top: calc(50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
   right: calc(#{$edge}*2 + #{$fab-height});
-  width: calc(100vmin - #{$edge*3 + $button-height});
-  height: calc(100vmin - #{$edge*3 + $button-height});
+  width: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
+  height: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
   font-size: 3vmin;
   background-color: $primary-color-dark;
 
@@ -29,19 +31,19 @@ $stone-thickness: 0.3vmin;
   }
 
   body.playmode & {
-    top: calc(#{$edge} + 50% - 50vmin + 0.5em);
+    top: calc(#{$edge} + 50% - #{50vmin - $top-margin} + 0.5em);
   }
   body.playmode:not(.ptn) & {
-    right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
+    right: calc(1em + 50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
     z-index: 1;
   }
 
   @media (max-aspect-ratio: 11/10) {
-    right: calc(1em + 50% - 50vmin + #{($edge*3 + $button-height) / 2});
+    right: calc(1em + 50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
   }
 
   @media (max-aspect-ratio: 7/10) {
-    top: calc(50% - 50vmin) !important;
+    top: calc(50% - #{50vmin - $top-margin}) !important;
     right: $edge !important;
     width: calc(100vmin - #{$edge});
     height: calc(100vmin - #{$edge});
@@ -162,6 +164,27 @@ $stone-thickness: 0.3vmin;
     &.immovable {
       .stone { opacity: 0; }
       .captive { opacity: 1; }
+    }
+
+    &:not(.played) .stone {
+      @media (max-width: $mobile) {
+        box-sizing: border-box;
+        border-style: solid;
+        border-width: 0.15em;
+        box-shadow: none;
+
+        &.p1 { border-color: $primary-color-dark; }
+        &.p2 { border-color: $primary-color-darkest; }
+      }
+      @media (min-width: $desktop) {
+        &.p1 {
+          box-shadow: 4px 0 5px 0 rgba(0,0,0,0.14), 1px 0 10px 0 rgba(0,0,0,0.12), 2px 0 4px -1px rgba(0,0,0,0.4);
+        }
+        &.p2 {
+          box-shadow: -4px 0 5px 0 rgba(0,0,0,0.14), -1px 0 10px 0 rgba(0,0,0,0.12), -2px 0 4px -1px rgba(0,0,0,0.4);
+        }
+
+      }
     }
 
     .stone {

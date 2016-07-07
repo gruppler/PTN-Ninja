@@ -45,7 +45,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     ),
 
     stone_class: _.template('stone p<%=player%> <%=stone%>'),
-    piece_location: _.template('translate(<%=x%>%, <%=y%>%)'),
+    piece_location: _.template('translate(<%=x%>%, <%=y%>%) scale(<%=scale%>)'),
     piece: _.template(
       '<div class="piece">'+
         '<div class="wrapper">'+
@@ -74,22 +74,39 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   // Piece
 
-  Piece = function (board, player, stone, col_i, row_i, ply, captives) {
+  Piece = function (board, player, stone) {
+    this.needs_updated = true;
     this.board = board;
-    this.tpl = this.board.tpl;
-    this.player = player || 1;
+    this.player = 1*player || 1;
     this.stone = stone || 'F';
-    this.col_i = col_i;
-    this.row_i = row_i;
-    this.stack = '';
-    this.ply = ply || null;
-    if (captives) {
-      this.set_captives(captives);
-    } else {
-      this.captives = [];
+    this.true_stone = stone == 'C' ? stone : 'F';
+    this.ply = null;
+    this.square = null;
+    this.captor = null;
+    this.captives = [];
+    this.piece_index = board.pieces[this.player][this.true_stone].length;
+    if (this.stone == 'C') {
+      this.piece_index += board.piece_counts.F;
     }
 
+    this.tpl = this.board.tpl;  // give template access to tpl
+
+    board.all_pieces.push(this);
+    board.pieces[this.player][this.true_stone].push(this);
     return this;
+  };
+
+  Piece.to_tps = function () {
+    return _.map(this.captives, 'player').join('')
+      + this.player
+      + (this.stone == 'F' ? '' : this.stone);
+  };
+
+  Piece.prototype.set_ply = function (ply) {
+    this.ply = ply;
+    if (!ply.is_slide) {
+      this.stone = ply.stone;
+    }
   };
 
   Piece.prototype.set_captives = function (captives) {
@@ -99,11 +116,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.captives = captives || [];
 
     _.each(this.captives, function (captive, index) {
-      captive.index = index;
+      captive.stack_index = index;
       captive.captor = that;
       captive.square = that.square;
-      captive.col_i = that.col_i;
-      captive.row_i = that.row_i;
       captive.stone = 'F';
       captive.captives.length = 0;
     });
@@ -112,37 +127,47 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   Piece.prototype.render = function () {
     var that = this
       , square = this.square
-      , location, captive_offset = 6;
+      , location, captive_offset = 6, capstones;
 
     if (this.board.defer_render) {
       this.needs_updated = true;
       return;
     }
 
-    if (!this.square) {
-      this.board.$pieces.unplace(this.$view);
-      return;
-    }
-
     // Set height
     if (this.captor) {
-      this.height = this.captor.captives.length - this.index;
-      this.is_immovable = this.index >= this.board.size - 1;
+      this.height = this.captor.captives.length - this.stack_index;
+      this.is_immovable = this.stack_index >= this.board.size - 1;
     } else if (this.captives.length) {
       this.height = this.captives.length + 1;
       this.is_immovable = false;
       _.invokeMap(this.captives, 'render');
     } else {
-      this.height = 1;
+      this.height = square ? 1 : this.piece_index;
       this.is_immovable = false;
     }
 
-    // Render or update view
-    this.x = 100*( this.col_i - this.board.size/2);
-    this.y = 100*(this.board.size/2 - 1 - this.row_i);
+    // Calculate location transform
+    if (square) {
+      this.scale = 1;
+      this.x = 100*(square.col_i - this.board.size/2);
+      this.y = 100*(this.board.size/2 - 1 - square.row_i);
+    } else {
+      this.scale = this.board.size/10;
+
+      this.x = (this.player == 1 ? -1 : 1) * (
+        85 * (
+          this.board.size/(2*this.board.piece_counts.total - 2/this.board.size) * (
+            this.piece_index
+          )
+        ) + 25
+      ) - 50;
+
+      this.y = -100*(this.board.size + 1)/2 - 5*this.board.size;
+    }
 
     // Offset captives
-    if (!this.is_immovable) {
+    if (square && !this.is_immovable) {
       this.y += captive_offset*(
         1 - this.height + 1*(this.stone == 'S' && !!this.captives.length)
       );
@@ -182,7 +207,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.prev_height = this.height;
     this.prev_location = location;
 
-    if (this.is_immovable) {
+    if (square && this.is_immovable) {
       this.$view.addClass('immovable');
       this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.07) + '%)');
     } else {
@@ -190,12 +215,12 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.$captive.css('transform', '');
     }
 
-    if (this.square && !this.$view.closest('html').length) {
+    if (!this.$view.closest('html').length) {
       this.board.$pieces.place(this.$view);
     }
 
     // Update road visualization
-    if (!this.captor) {
+    if (!this.captor && square) {
       square.$view.removeClass('p1 p2').addClass('p'+this.player);
       _.each(direction_name, function (dn, d) {
         if (square.neighbors[d]) {
@@ -222,6 +247,13 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       });
     }
 
+    if (square) {
+      this.$view.addClass('played');
+    } else {
+      this.$view.removeClass('played');
+      this.$stone.removeClass('S');
+    }
+
     this.needs_updated = false;
 
     return this.$view;
@@ -243,9 +275,13 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     return this;
   };
 
+  Square.prototype.to_tps = function () {
+    return this.piece ? this.piece.to_tps() : 'x';
+  };
+
   Square.prototype.parse = function (tps) {
     var that = this
-      , tps, player, stone = 'F';
+      , piece, player, stone = 'F';
 
     tps = tps.split('').reverse();
 
@@ -254,18 +290,26 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     }
 
     player = tps.shift();
+    piece = this.board.pieces[player][stone == 'C' ? stone : 'F'].pop();
 
-    return this.set_piece(
-      new Piece(this.board, player, stone, this.col_i, this.row_i, false,
-        _.map(tps, function (player) {
-          return new Piece(that.board, player);
-        })
-      ),
-      false
+    if (!piece) {
+      m.error(t.error.invalid_tag_value({tag: t.TPS, value: tps}));
+      return false;
+    }
+
+    piece.set_captives(
+      _.map(tps, function (player) {
+        return that.board.pieces[player].F.pop();
+      })
     );
-  };
 
-  Square.prototype.to_tps = function () {};
+    if (piece.captives.indexOf(undefined) >= 0) {
+      m.error(t.error.invalid_tag_value({tag: t.TPS, value: tps}));
+      return false;
+    }
+
+    return this.set_piece(piece, false);
+  };
 
   Square.prototype.set_piece = function (piece, captives) {
     var that = this
@@ -279,8 +323,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     if (piece) {
       piece.square = this;
-      piece.col_i = this.col_i;
-      piece.row_i = this.row_i;
       piece.set_captives(captives || piece.captives);
       piece.render();
     } else if (previous_piece) {
@@ -314,24 +356,16 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Square.prototype.place = function (ply) {
-    var piece = this.board.pieces[ply.id];
+    var pieces = this.board.pieces[ply.player][ply.true_stone]
+      , piece;
 
-    if (this.piece) {
+    if (this.piece || !pieces.length) {
       return this.board.illegal_ply(ply);
     }
 
-    if (!piece) {
-      piece = new Piece(
-        this.board,
-        ply.player,
-        ply.stone,
-        this.col_i,
-        this.row_i,
-        ply
-      );
-      this.board.pieces[ply.id] = piece;
-    }
+    piece = pieces.pop();
 
+    piece.set_ply(ply);
     this.set_piece(piece, false, true);
     ply.squares[0] = this;
 
@@ -342,6 +376,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   Square.prototype.undo_place = function (ply) {
     if (this.piece) {
+      this.board.pieces[this.piece.player][this.piece.true_stone].push(this.piece);
       this.piece.square = null;
       this.set_piece();
       return true;
@@ -449,8 +484,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.squares = {};
     this.rows = [];
     this.cols = [];
+    this.all_pieces = [];
     this.pieces = {};
-    this.initial_pieces = {};
     this.init_callbacks = [];
     this.ply_callbacks = [];
     this.tpl = tpl;
@@ -474,14 +509,25 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   Board.prototype.clear = function () {
     this.ply = 0;
-    this.pieces = {};
-    this.initial_pieces = {};
+    this.squares = {};
+    this.all_pieces = [];
+    this.pieces = {
+      1: {
+        F: [],
+        C: []
+      },
+      2: {
+        F: [],
+        C: []
+      }
+    };
     this.cols.length = 0;
     this.rows.length = 0;
   };
 
   Board.prototype.init = function (game, silent) {
-    var i, j, row, col, col_letter, square, piece, tps
+    var that = this
+      , i, j, row, col, col_letter, square, piece, tps
       , a = 'a'.charCodeAt(0);
 
     if (silent !== true) {
@@ -493,6 +539,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.defer_render = true;
     this.game = game;
     this.size = 1*game.config.size;
+    this.piece_counts = _.clone(app.piece_counts[this.size]);
     this.tps = game.config.tps && game.config.tps.is_valid ? game.config.tps : undefined;
 
     this.saved_ply = this.ply;
@@ -507,7 +554,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.rows[row] = row + 1;
     }
 
-    this.squares = {};
+    // Create all the squares and label the neighbors
     for (row = 0; row < this.size; row++) {
       for (col = 0; col < this.size; col++) {
         square = new Square(this, col, row);
@@ -523,6 +570,15 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       }
     }
 
+    // Create all the pieces
+    _.each(this.pieces, function (stones, player) {
+      _.each(stones, function (count, stone) {
+        while (that.pieces[player][stone].length < that.piece_counts[stone]) {
+          new Piece(that, player, stone);
+        }
+      })
+    });
+
     if (this.tps) {
       row = this.size - 1;
       for (col = 0, i = 0; i < this.tps.board.length; col++, i++) {
@@ -535,7 +591,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
         if (tps.is_space) {
           col += tps.count - 1;
         } else {
-          this.initial_pieces['tps-'+i] = this.squares[this.cols[col]+this.rows[row]].parse(tps.text);
+          this.squares[this.cols[col]+this.rows[row]].parse(tps.text);
         }
         if (tps.separator == '/') {
           row--;
@@ -559,25 +615,43 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.to_tps = function () {
-    // x5/x5/x5/x5/x5 1 1
+    var board = []
+      , i, j;
+
+    for (i = 0; i < this.size; i++) {
+      board[i] = [];
+      for (j = 0; j < this.size; j++) {
+        board[i][j] = this.squares[this.cols[j]+this.rows[i]].to_tps;
+      }
+      board[i] = board[i].join(',');
+    }
+    board = board.join('/');
+
+    board = board.replace(/x(\d?),x/g, function (count) {
+      if (count) {
+        return 'x'+(count + 1);
+      } else {
+        return 'x2';
+      }
+    });
+
+    return board + ' ' +this.game.player+ ' ' + this.game.moves.length + 1;
   };
 
   Board.prototype.render = function () {
     this.$view = $(tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.pieces = _.clone(this.initial_pieces);
 
     this.$squares.append.apply(
       this.$squares,
       _.invokeMap(this.squares, 'render')
     );
 
-    this.$pieces.empty().append(
-      _.invokeMap(
-        _.filter(this.pieces, { captor: null }),
-        'render'
-      )
+    this.$pieces.empty();
+    _.invokeMap(
+      _.filter(this.all_pieces, {captive: null}),
+      'render'
     );
 
     this.go_to_ply(this.saved_ply || 0);
@@ -587,7 +661,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   Board.prototype.update = function() {
     _.invokeMap(
-      _.filter(this.pieces, { needs_updated: true }),
+      _.filter(this.all_pieces, { needs_updated: true }),
       'render'
     );
   };
