@@ -24,7 +24,7 @@ $stone-thickness: 0.3vmin;
   width: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
   height: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
   font-size: 3vmin;
-  background-color: $primary-color-dark;
+  background-color: $primary-color-500;
 
   #viewer.animated & {
     transition: all $time-smooth $natural;
@@ -59,14 +59,14 @@ $stone-thickness: 0.3vmin;
   }
 
   .squares {
-    background-color: darken($primary-color-lit, 1.5%);
+    background-color: darken($primary-color-300, 1.5%);
   }
 
   .square {
     position: absolute;
 
     &.light {
-      background-color: $primary-color-lit;
+      background-color: $primary-color-300;
     }
 
     &:after {
@@ -116,8 +116,8 @@ $stone-thickness: 0.3vmin;
     &.left .road .left,
     &.right .road .right { opacity: 1; }
 
-    &.p1 .road > div { background-color: $primary-color-lighter }
-    &.p2 .road > div { background-color: $primary-color-dark }
+    &.p1 .road > div { background-color: $primary-color-100 }
+    &.p2 .road > div { background-color: $primary-color-700 }
   }
 
   .piece {
@@ -152,12 +152,12 @@ $stone-thickness: 0.3vmin;
       }
 
       &.p1 {
-        background-color: $primary-color-lighter;
-        border-color: $primary-color;
+        background-color: $primary-color-100;
+        border-color: $primary-color-600;
       }
       &.p2 {
-        background-color: $primary-color-dim;
-        border-color: $primary-color-darkest;
+        background-color: $primary-color-600;
+        border-color: $primary-color-900;
       }
     }
 
@@ -168,7 +168,7 @@ $stone-thickness: 0.3vmin;
 
     &:not(.played) .stone {
       @media (max-width: $mobile) {
-        border-width: $stone-thickness;
+        border-width: 1px 1px $stone-thickness;
       }
     }
 
@@ -176,16 +176,17 @@ $stone-thickness: 0.3vmin;
       width: 50%;
       height: 50%;
       margin: 25%;
-      border-radius: 0.8vmin;
+      border-radius: 10%;
       position: relative;
       transition: all $time-smooth $natural;
 
       &.S {
         width: 18.75%;
+        border-radius: 27%/10%;
         margin-left: 40.625%;
 
         &.p1 {
-          background-color: $primary-color-lightest;
+          background-color: $primary-color-50;
           transform: rotate(-45deg);
           @media (max-width: $mobile) {
             border-width: 0 0 $stone-thickness $stone-thickness;
@@ -195,7 +196,7 @@ $stone-thickness: 0.3vmin;
           }
         }
         &.p2 {
-          background-color: $primary-color-darker;
+          background-color: $primary-color-700;
           transform: rotate(45deg);
           @media (max-width: $mobile) {
             border-width: 0 $stone-thickness $stone-thickness 0;
@@ -208,12 +209,13 @@ $stone-thickness: 0.3vmin;
 
       &.C {
         border-radius: 50%;
+        transform: scale(1.1);
 
         &.p1 {
-          background-color: $primary-color-lightest;
+          background-color: $primary-color-50;
         }
         &.p2 {
-          background-color: $primary-color-darker;
+          background-color: $primary-color-700;
         }
       }
     }
@@ -232,7 +234,7 @@ $stone-thickness: 0.3vmin;
   }
 
   .labels {
-    color: $primary-color-lighter;
+    color: $primary-color-100;
     position: absolute;
     font-size: 1em;
     display: flex;
@@ -240,7 +242,7 @@ $stone-thickness: 0.3vmin;
     transition: color $time-smooth $natural;
 
     body.editmode & {
-      color: $primary-color-light;
+      color: $primary-color-200;
     }
 
     &.row {

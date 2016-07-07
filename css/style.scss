@@ -24,7 +24,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  color: $primary-color-light;
+  color: $primary-color-200;
   font-family: $monospace;
   flex-grow: 1;
   z-index: 1;
@@ -44,7 +44,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to right, rgba($primary-color-dark, 0.8) 10em, rgba($primary-color-dark, 0) 30em);
+    background: linear-gradient(to right, rgba($primary-color-500, 0.8) 10em, rgba($primary-color-500, 0) 30em);
     transition: opacity $time-smooth $natural;
 
     body.playmode & {
@@ -81,27 +81,33 @@
   .ply {
     transition: all $time-quick ease-out;
   }
-  body.editmode & .ply {
-    &.player1 {
-      &:hover {
-        background-color: $light-white;
-        box-shadow: 0 0 0 0.1em $light-white;
+  body.editmode & {
+    .player1 {
+      box-shadow: 0 0 0 0.1em $primary-color-400;
+      background-color: $primary-color-400;
+
+      &.ply:hover {
+        background-color: $primary-color-300;
+        box-shadow: 0 0 0 0.1em $primary-color-300;
       }
-      &:active,
-      &.active {
-        background-color: $faint-white;
-        box-shadow: 0 0 0 0.15em $medium-white;
+      &.ply:active,
+      &.ply.active {
+        background-color: $primary-color-400;
+        box-shadow: 0 0 0 0.15em $primary-color-100;
       }
     }
-    &.player2 {
-      &:hover {
-        background-color: $light-black;
-        box-shadow: 0 0 0 0.1em $light-black;
+    .player2 {
+      box-shadow: 0 0 0 0.1em $primary-color-600;
+      background-color: $primary-color-600;
+
+      &.ply:hover {
+        background-color: $primary-color-700;
+        box-shadow: 0 0 0 0.1em $primary-color-700;
       }
-      &:active,
-      &.active {
-        background-color: $faint-black;
-        box-shadow: 0 0 0 0.15em $medium-black;
+      &.ply:active,
+      &.ply.active {
+        background-color: $primary-color-600;
+        box-shadow: 0 0 0 0.15em $primary-color-900;
       }
     }
   }
@@ -160,7 +166,7 @@
 }
 
 #controls {
-  background-color: $primary-color-darker;
+  background-color: $primary-color-800;
   position: absolute;
   bottom: 0;
   left: 0;

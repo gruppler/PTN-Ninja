@@ -107,13 +107,13 @@
     }
 
     &.player1 {
-      background-color: $primary-color-lightest;
-      color: $primary-color-darker;
+      background-color: $primary-color-50;
+      color: $primary-color-700;
     }
 
     &.player2 {
-      background-color: $primary-color-darker;
-      color: $primary-color-lightest;
+      background-color: $primary-color-700;
+      color: $primary-color-50;
     }
   }
 }

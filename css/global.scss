@@ -9,7 +9,7 @@ html, body {
   padding: 0;
   font-size: 14px;
   font-family: $sans;
-  background-color: $primary-color-dark;
+  background-color: $primary-color-500;
 }
 
 ::-webkit-scrollbar-track {
@@ -20,10 +20,10 @@ html, body {
 	width: $scrollbar;
 }
 ::-webkit-scrollbar-thumb {
-	background-color: $primary-color-light;
+	background-color: $primary-color-200;
 }
 
 @include selection {
   color: $primary-color-text;
-  background: $primary-color;
+  background: $primary-color-500;
 }

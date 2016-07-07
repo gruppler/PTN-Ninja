@@ -3,43 +3,24 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
-$solid-black: #000;
-$solid-white: #fff;
-$heavy-black: rgba(0,0,0,0.75);
-$heavy-white: rgba(255,255,255,0.75);
-$medium-black: rgba(0,0,0,0.5);
-$medium-white: rgba(255,255,255,0.5);
-$light-black: rgba(0,0,0,0.25);
-$light-white: rgba(255,255,255,0.25);
-$faint-black: rgba(0,0,0,0.13);
-$faint-white: rgba(255,255,255,0.08);
-
 $red: #EF5350;
 $orange: #FF9800;
 $yellow: #FFCA28;
 $green: #8BC34A;
-$blue: #64B5F6;
+$blue: #81D4FA;
 $purple: #BA68C8;
 
 .ptn {
   .player1, .player2 {
     border-radius: 0.2em;
   }
-  .player1 {
-    box-shadow: 0 0 0 0.1em $faint-white;
-    background-color: $faint-white;
-  }
-    .player2 {
-    box-shadow: 0 0 0 0.1em $faint-black;
-    background-color: $faint-black;
-  }
 
   .tag {
-    color: $medium-black;
+    color: $primary-color-900;
     font-weight: 300;
 
     i {
-      color: $heavy-white;
+      color: $primary-color-50;
       margin-right: 0.2em;
       font-size: 1em;
       line-height: 1.5em;
@@ -47,27 +28,27 @@ $purple: #BA68C8;
     }
 
     .name {
-      color: $heavy-white;
+      color: $primary-color-50;
       font-weight: 300;
       vertical-align: middle;
     }
 
     .value {
-      color: $heavy-white;
+      color: $primary-color-50;
       font-weight: 600;
     }
   }
 
   .tps {
-    color: $medium-white;
+    color: $primary-color-100;
     font-weight: 300;
 
     .separator {
-      color: $medium-black;
+      color: $primary-color-900;
     }
 
     .stack, .player, .move {
-      color: $heavy-white;
+      color: $primary-color-50;
     }
 
     .piece {
@@ -76,10 +57,10 @@ $purple: #BA68C8;
       padding: 0 0.2em;
 
       &.player1 {
-        background-color: $light-white;
+        background-color: $primary-color-200;
       }
       &.player2 {
-        background-color: $light-black;
+        background-color: $primary-color-700;
       }
 
       &:first-child {
@@ -94,17 +75,17 @@ $purple: #BA68C8;
   }
 
   .comment {
-    color: $medium-black;
+    color: $primary-color-900;
     font-weight: 300;
 
     .text {
-      color: $heavy-white;
+      color: $primary-color-50;
       font-weight: 400;
     }
   }
 
   .linenum {
-    color: $medium-black;
+    color: $primary-color-900;
     font-weight: 400
   }
 
@@ -136,7 +117,7 @@ $purple: #BA68C8;
       font-weight: 300;
     }
     .direction {
-      color: $heavy-white;
+      color: $primary-color-50;
     }
     .drops {
       color: $blue;
@@ -152,7 +133,7 @@ $purple: #BA68C8;
     font-weight: 700;
 
     .win {
-      color: $solid-white;
+      color: $primary-color-50;
 
       &.road {
         color: $green;
@@ -170,7 +151,7 @@ $purple: #BA68C8;
   }
 
   .invalid {
-    color: $medium-white;
+    color: $primary-color-100;
 
     .first-letter {
       color: $error-color;
