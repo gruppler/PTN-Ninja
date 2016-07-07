@@ -45,7 +45,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     ),
 
     stone_class: _.template('stone p<%=player%> <%=stone%>'),
-    piece_location: _.template('translate(<%=x%>%, <%=y%>%) scale(<%=scale%>)'),
+    piece_location: _.template(
+      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>) rotate(<%=rotate%>deg)'
+    ),
     piece: _.template(
       '<div class="piece">'+
         '<div class="wrapper">'+
@@ -149,10 +151,12 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     // Calculate location transform
     if (square) {
+      this.rotate = 0;
       this.scale = 1;
       this.x = 100*(square.col_i - this.board.size/2);
       this.y = 100*(this.board.size/2 - 1 - square.row_i);
     } else {
+      this.rotate = this.player == 1 ? -90 : 90;
       this.scale = this.board.size/10;
 
       this.x = (this.player == 1 ? -1 : 1) * (

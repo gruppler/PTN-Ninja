@@ -59,14 +59,14 @@ $stone-thickness: 0.3vmin;
   }
 
   .squares {
-    background-color: darken($primary-color-light, 1.5%);
+    background-color: darken($primary-color-lit, 1.5%);
   }
 
   .square {
     position: absolute;
 
     &.light {
-      background-color: $primary-color-light;
+      background-color: $primary-color-lit;
     }
 
     &:after {
@@ -156,7 +156,7 @@ $stone-thickness: 0.3vmin;
         border-color: $primary-color;
       }
       &.p2 {
-        background-color: $primary-color-dark;
+        background-color: $primary-color-dim;
         border-color: $primary-color-darkest;
       }
     }
@@ -168,22 +168,7 @@ $stone-thickness: 0.3vmin;
 
     &:not(.played) .stone {
       @media (max-width: $mobile) {
-        box-sizing: border-box;
-        border-style: solid;
-        border-width: 0.15em;
-        box-shadow: none;
-
-        &.p1 { border-color: $primary-color-dark; }
-        &.p2 { border-color: $primary-color-darkest; }
-      }
-      @media (min-width: $desktop) {
-        &.p1 {
-          box-shadow: 4px 0 5px 0 rgba(0,0,0,0.14), 1px 0 10px 0 rgba(0,0,0,0.12), 2px 0 4px -1px rgba(0,0,0,0.4);
-        }
-        &.p2 {
-          box-shadow: -4px 0 5px 0 rgba(0,0,0,0.14), -1px 0 10px 0 rgba(0,0,0,0.12), -2px 0 4px -1px rgba(0,0,0,0.4);
-        }
-
+        border-width: $stone-thickness;
       }
     }
 
