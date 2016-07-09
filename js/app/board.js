@@ -301,6 +301,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       return false;
     }
 
+    piece.stone = stone;
+
     piece.set_captives(
       _.map(tps, function (player) {
         return that.board.pieces[player].F.pop();
@@ -904,4 +906,4 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   return Board;
 
-})
+});
