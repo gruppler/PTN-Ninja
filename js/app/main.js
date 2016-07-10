@@ -142,6 +142,10 @@ requirejs({locale: navigator.language}, [
       .select();
   };
 
+  app.i_to_square = function (row, col) {
+    return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
+  };
+
   $('title').text(t.app_title);
 
   app.$fab.on('touchstart click', function (event) {
@@ -344,7 +348,7 @@ requirejs({locale: navigator.language}, [
 
   bililiteRange.fancyText(app.$ptn[0], function () {
     return app.game.parse(app.$ptn.text());
-  });
+  }, 100);
 
   app.board.ply = 0;
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
@@ -384,13 +388,38 @@ requirejs({locale: navigator.language}, [
 
   // Go to focused ply
   app.$ptn.on('touchstart touchend keyup mouseup', function (event) {
+    var $square, squares, square, i;
+
     if (app.game.is_editing) {
       var $focus = $(getSelection().focusNode).parent()
-        , ply = $focus.add($focus.next())
-            .closest('.ply').data('ply');
+        , ply, $squares;
 
+      $focus = $focus.add($focus.next());
+
+      ply = $focus.closest('.ply').data('ply');
       if (!_.isUndefined(ply)) {
         app.board.go_to_ply(ply + 1);
+      } else if ($focus.closest('.tps.value').length) {
+        $square = $focus.closest('.square');
+
+        if (!($square && $square.length) && $focus.hasClass('opening quote')) {
+          $square = $focus.find('.square:eq(0)');
+        }
+
+        if ($square && $square.length) {
+          square = app.board.squares[$square.data('square')];
+          if (square) {
+            squares = [square];
+
+            if ($square.hasClass('space')) {
+              for (var i = 0; i < 1*$square.data('count') - 1; i++) {
+                squares.push(_.last(squares).neighbors['>']);
+              }
+            }
+          }
+        }
+
+        app.board.set_active_squares(squares);
       } else if ($focus.closest('.header').length) {
         app.board.go_to_ply(0);
       }

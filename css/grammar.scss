@@ -52,14 +52,14 @@ $purple: #BA68C8;
     }
 
     .piece {
-      box-shadow: none;
       border-radius: 0;
-      padding: 0 0.2em;
 
       &.player1 {
+        box-shadow: none !important;
         background-color: $primary-color-200;
       }
       &.player2 {
+        box-shadow: none !important;
         background-color: $primary-color-700;
       }
 
@@ -91,15 +91,6 @@ $purple: #BA68C8;
 
   .ply {
     font-weight: 700;
-
-    &.illegal {
-      background: transparent;
-      box-shadow: none !important;
-
-      * {
-        color: $error-color !important;
-      }
-    }
 
     .stone {
       color: $white;
@@ -157,5 +148,11 @@ $purple: #BA68C8;
       color: $error-color;
       font-weight: 600;
     }
+  }
+
+  .illegal, .illegal > * {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: $error-color !important;
   }
 }

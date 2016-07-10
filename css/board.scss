@@ -69,7 +69,7 @@ $stone-thickness: 0.3vmin;
       background-color: $primary-color-300;
     }
 
-    &:after {
+    &:before {
       content: '';
       display: block;
       position: absolute;
@@ -82,8 +82,8 @@ $stone-thickness: 0.3vmin;
       background-color: $accent-color;
       transition: opacity $time-smooth $natural;
     }
-    body.editmode &.active:after {
-      opacity: 0.5;
+    body.editmode &.active:before {
+      opacity: 0.65;
     }
 
     .road {

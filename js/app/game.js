@@ -153,7 +153,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
         m.error(t.error.invalid_ply({ply: this.ply}));
-        this.mark_illegal();
+        this.is_illegal = true;
       }
     } else if(ply_group[3]) {
 
@@ -179,14 +179,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     ) {
       game.is_valid = false;
       m.error(t.error.invalid_square({square: this.col+this.row}));
-      this.mark_illegal();
+      this.is_illegal = true;
     }
 
     return this;
-  };
-
-  Ply.prototype.mark_illegal = function () {
-    this.is_illegal = true;
   };
 
   Ply.prototype.print_place = _.template(
@@ -352,7 +348,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.separator = parts[3];
     this.q1 = parts[4];
     this.value = parts[5];
-    this.value_print = this.value;
+    this.printed_value = this.value;
     this.q2 = parts[6];
     this.suffix = parts[7];
 
@@ -365,24 +361,19 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
 
-    if (!r.tags[this.key].test(this.value)) {
-      if (this.key != 'tps') {
-        m.error(
-          t.error.invalid_tag_value({tag: this.name, value: this.value})
-        );
-      }
+    if (!r.tags[this.key].test(this.value) && this.key != 'tps') {
       game.is_valid = false;
       return false;
     }
 
     if (this.key == 'result' && this.value) {
       game.config.result = new Result(this.value, game);
-      this.value_print = game.config.result.print();
+      this.printed_value = game.config.result.print();
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game);
-      this.value_print = game.config.tps.print();
+      this.printed_value = game.config.tps.print();
     }else{
-      this.value_print = this.value;
+      this.printed_value = this.value;
       game.config[this.key] = this.value;
     }
 
@@ -394,11 +385,13 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       '<%=this.prefix%>'+
       '<i class="icon-<%=this.icon%>"></i>'+
       '<span class="name"><%=this.name%></span>'+
-      '<%=this.separator%><%=this.q1%>'+
+      '<%=this.separator%>'+
+      '<span class="opening quote"><%=this.q1%></span>'+
       '<span class="value <%=this.q1 ? this.key : ""%>">'+
-        '<%=this.value_print%>'+
+        '<%=this.printed_value%>'+
       '</span>'+
-      '<%=this.q2%><%=this.suffix%>'+
+      '<span class="closing quote"><%=this.q2%></span>'+
+      '<%=this.suffix%>'+
     '</span>'
   );
 
@@ -411,45 +404,37 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.is_valid = true;
 
-    // Invalid or just incomplete
-    if (!r.grammar.tps.test(string)) {
+    // Invalid
+    if (!parts[1]) {
       m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
       this.is_valid = false;
-    }
-
-    // Invalid
-    if (!r.grammar.col.test(parts[1])) {
       game.is_valid = false;
-      this.print = function () {
-        return string;
-      };
-      return this;
+      this.text = string;
+      this.print = print_invalid;
+
+      return false;
     }
 
-    this.board = this.parse_cols(parts[1]);
+    this.squares = parse_squares(parts[1], 1*game.config.size);
     this.space1 = parts[2];
-    this.player = 1*parts[3] || 1;
+    this.player = parts[3];
     this.space2 = parts[4];
-    this.move = 1*parts[5] || 1;
+    this.move = parts[5];
     this.suffix = parts[6];
+
+    if (!this.player || !this.move || this.suffix || !this.is_valid) {
+      m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
+    }
+
+    this.player *= 1;
+    this.move *= 1;
 
     return this;
   };
 
-  TPS.prototype.parse_cols = function(string) {
-    var cols = _.map(
-      string.match(r.grammar.cols),
-      function (col, i) {
-        return new TPS.Col(col, i);
-      }
-    );
-
-    return cols || [];
-  };
-
   TPS.prototype.print = _.template(
     '<span class="tps">'+
-      '<%=_.invokeMap(this.board, "print").join("")%>'+
+      '<%=_.invokeMap(this.squares, "print").join("")%>'+
       '<%=this.space1%>'+
       '<% if (this.player) { %>'+
         '<span class="player player<%=this.player%>">'+
@@ -458,49 +443,100 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         '</span>'+
       '<% } %>'+
       '<%=this.space2%>'+
-        '<% if (this.move) { %>'+
-          '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
-        '<% } %>'+
-      '</span>'+
-    '<span class=""><%=this.suffix%></span>'
+      '<% if (this.move) { %>'+
+        '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
+      '<% } %>'+
+    '</span>'+
+    '<span class="illegal"><%=this.suffix%></span>'
   );
 
-  TPS.Col = function (string) {
+  function parse_squares(string, size) {
+    var row = size - 1, col = 0
+      , squares, invalid_dimensions = false;
+
+    var squares = _.map(
+      string.match(r.grammar.cols),
+      function (square, i) {
+        square = new TPS.Square(square, row, col);
+
+        if (col >= size || row < 0) {
+          square.error = true;
+          square.separator_error = square.separator == ',';
+          invalid_dimensions = true;
+        }
+
+        if (square.is_space) {
+          col += square.count;
+          if (col > size) {
+            square.error = true;
+            invalid_dimensions = true;
+          }
+        } else {
+          col++;
+        }
+
+        if (square.separator == '/') {
+          if (col < size || row == 0) {
+            square.separator_error = true;
+            invalid_dimensions = true;
+          }
+
+          row--;
+          col = 0;
+        } else if (square.separator == ',' && col == size) {
+          square.separator_error = true;
+          invalid_dimensions = true;
+        }
+
+        return square;
+      }
+    );
+
+    if (invalid_dimensions || row != 0 || col != size) {
+      m.error(t.error.invalid_TPS_dimensions);
+    }
+
+    return squares || [];
+  }
+
+  TPS.Square = function (string, row, col) {
     var parts = string.match(r.grammar.col_grouped)
       , stack_parts;
 
-    if (parts[1]) {
-      this.is_space = true;
-      this.print = this.print_space;
-      this.text = parts[1];
-      this.count = 1*this.text[1] || 1;
-    } else if (parts[2]) {
+    this.square = app.i_to_square(row, col);
+
+    if (parts[2]) {
       this.is_space = false;
       this.print = this.print_stack;
       this.text = parts[2];
 
       stack_parts = this.text.match(r.grammar.stack_grouped);
       this.pieces = stack_parts[1].split('').concat(stack_parts[2]);
+    } else {
+      this.is_space = true;
+      this.print = this.print_space;
+      this.text = parts[1] || '';
+      this.count = 1*this.text[1] || 1;
     }
     this.separator = parts[3];
 
     return this;
   }
 
-  TPS.Col.prototype.print_space = _.template(
-    '<span class="space"><%=this.text%></span>'+
-    '<span class="separator"><%=this.separator%></span>'
+  TPS.Square.prototype.print_space = _.template(
+    '<span class="square space <%=this.error ? "illegal":""%>" data-square="<%=this.square%>" data-count="<%=this.count%>"><%=this.text%></span>'+
+    '<span class="separator <%=this.separator_error ? "illegal":""%>"><%=this.separator%></span>'
   );
 
-  TPS.Col.prototype.print_stack = _.template(
-    '<span class="stack">'+
+  TPS.Square.prototype.print_stack = _.template(
+    '<span class="square stack <%=this.error ? "illegal":""%>" data-square="<%=this.square%>">'+
       '<% _.map(this.pieces, function(piece, i) { %>'+
         '<span class="piece player<%=piece[0]%>">'+
           '<%=piece%>'+
         '</span>'+
       '<% }).join("") %>'+
     '</span>'+
-    '<span class="separator"><%=this.separator%></span>'
+    '<span class="separator <%=this.separator_error ? "illegal":""%>"><%=this.separator%></span>'
   );
 
 
@@ -631,7 +667,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   Game.prototype.get_linenum = function () {
-    return this.config.tps && this.config.tps.is_valid ?
+    return this.config.tps && this.config.tps.move ?
       this.config.tps.move + this.moves.length :
       this.moves.length + 1;
   };

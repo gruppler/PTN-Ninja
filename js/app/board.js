@@ -24,17 +24,13 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     '>': 'right'
   };
 
-  function xor(a, b) {
-    return a && !b || !a && b;
-  }
-
   var tpl = {
     row: _.template('<span class="row"><%=obj%></span>'),
 
     col: _.template('<span class="col"><%=obj%></span>'),
 
     square: _.template(
-      '<div class="square c<%=col_i%> r<%=row_i%> <%=color%>">'+
+      '<div class="square c<%=col%> r<%=row%> <%=color%>">'+
         '<div class="road">'+
           '<div class="up"></div>'+
           '<div class="down"></div>'+
@@ -153,8 +149,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     if (square) {
       this.rotate = 0;
       this.scale = 1;
-      this.x = 100*(square.col_i - this.board.size/2);
-      this.y = 100*(this.board.size/2 - 1 - square.row_i);
+      this.x = 100*(square.col - this.board.size/2);
+      this.y = 100*(this.board.size/2 - 1 - square.row);
     } else {
       this.rotate = this.player == 1 ? -90 : 90;
       this.scale = this.board.size/10;
@@ -266,13 +262,12 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   // Square
 
-  Square = function (board, col_i, row_i) {
+  Square = function (board, row, col) {
     this.board = board;
-    this.col_i = col_i;
-    this.row_i = row_i;
-    this.col = board.cols[col_i];
-    this.row = board.rows[row_i];
-    this.color = xor(row_i%2, col_i%2) ? 'dark' : 'light';
+    this.col = col;
+    this.row = row;
+    this.square = app.i_to_square(row, col);
+    this.color = (row % 2 != col % 2) ? 'dark' : 'light';
     this.piece = null;
     this.neighbors = {};
 
@@ -527,8 +522,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
         C: []
       }
     };
-    this.cols.length = 0;
+
     this.rows.length = 0;
+    this.cols.length = 0;
   };
 
   Board.prototype.init = function (game, silent) {
@@ -551,6 +547,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.saved_ply = this.ply;
     this.clear();
 
+    if (!this.piece_counts) {
+      return false;
+    }
+
     for (col = 0; col < this.size; col++) {
       col_letter = String.fromCharCode(a + col);
       this.cols[col] = col_letter;
@@ -563,15 +563,15 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     // Create all the squares and label the neighbors
     for (row = 0; row < this.size; row++) {
       for (col = 0; col < this.size; col++) {
-        square = new Square(this, col, row);
-        this.squares[this.cols[col]+this.rows[row]] = square;
+        square = new Square(this, row, col);
+        this.squares[square.square] = square;
         if (row) {
-          square.neighbors['-'] = this.squares[this.cols[col]+this.rows[row-1]];
-          this.squares[this.cols[col]+this.rows[row-1]].neighbors['+'] = square;
+          square.neighbors['-'] = this.squares[app.i_to_square(row-1, col)];
+          this.squares[app.i_to_square(row-1, col)].neighbors['+'] = square;
         }
         if (col) {
-          square.neighbors['<'] = this.squares[this.cols[col-1]+this.rows[row]];
-          this.squares[this.cols[col-1]+this.rows[row]].neighbors['>'] = square;
+          square.neighbors['<'] = this.squares[app.i_to_square(row, col-1)];
+          this.squares[app.i_to_square(row, col-1)].neighbors['>'] = square;
         }
       }
     }
@@ -585,25 +585,13 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       })
     });
 
+    // Parse TPS
     if (this.tps) {
-      row = this.size - 1;
-      for (col = 0, i = 0; i < this.tps.board.length; col++, i++) {
-        tps = this.tps.board[i];
-        if (!tps || col >= this.size) {
-          m_parse.error(t.error.invalid_TPS_dimensions);
-          break;
+      _.each(this.tps.squares, function (square) {
+        if (!square.is_space && !square.error) {
+          that.squares[square.square].parse(square.text);
         }
-
-        if (tps.is_space) {
-          col += tps.count - 1;
-        } else {
-          this.squares[this.cols[col]+this.rows[row]].parse(tps.text);
-        }
-        if (tps.separator == '/') {
-          row--;
-          col = -1;
-        }
-      }
+      });
     }
 
     if (silent !== true) {
@@ -621,19 +609,19 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.to_tps = function () {
-    var board = []
+    var squares = []
       , i, j;
 
     for (i = 0; i < this.size; i++) {
-      board[i] = [];
+      squares[i] = [];
       for (j = 0; j < this.size; j++) {
-        board[i][j] = this.squares[this.cols[j]+this.rows[i]].to_tps;
+        squares[i][j] = this.squares[app.i_to_square(this.size - 1 - i, j)].to_tps();
       }
-      board[i] = board[i].join(',');
+      squares[i] = squares[i].join(',');
     }
-    board = board.join('/');
+    squares = squares.join('/');
 
-    board = board.replace(/x(\d?),x/g, function (count) {
+    squares = squares.replace(/x(\d?),x/g, function (count) {
       if (count) {
         return 'x'+(count + 1);
       } else {
@@ -641,7 +629,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       }
     });
 
-    return board + ' ' +this.game.player+ ' ' + this.game.moves.length + 1;
+    return squares + ' ' +this.game.player+ ' ' + this.game.moves.length + 1;
   };
 
   Board.prototype.render = function () {
@@ -702,7 +690,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       ply_result = square.place(ply);
     }
 
-    this.set_active_squares(ply);
+    this.set_active_squares(ply.squares);
 
     if (this.ply == this.game.plys.length) {
       this.pause();
@@ -728,10 +716,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     if (this.ply == 0) {
       this.show_comments(0);
-      this.set_active_squares(ply);
+      this.set_active_squares(ply.squares);
     } else {
       this.show_comments(this.game.plys[this.ply - 1]);
-      this.set_active_squares(this.game.plys[this.ply - 1]);
+      this.set_active_squares(this.game.plys[this.ply - 1].squares);
     }
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
@@ -747,14 +735,14 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     m_parse.error(
       t.error.illegal_ply({ ply: ply.ply })
     );
-    ply.mark_illegal();
+    ply.is_illegal = true;
     return false;
   };
 
-  Board.prototype.set_active_squares = function (ply) {
+  Board.prototype.set_active_squares = function (squares) {
     if (this.$view) {
       this.$squares.children().removeClass('active');
-      _.invokeMap(ply.squares, 'set_active');
+      _.invokeMap(squares, 'set_active');
     }
   };
 
