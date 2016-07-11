@@ -56,7 +56,9 @@ define({
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
       invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",
       invalid_TPS_dimensions: "Invalid TPS dimensions",
-      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>"
+      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>",
+      tps_missing_player: "Invalid TPS: Missing player",
+      tps_missing_move: "Invalid TPS: Missing move number"
     },
 
     help: {},

@@ -32,7 +32,7 @@ define(['lodash'], function (_) {
     stack_grouped: '([12]*)([12][SC]?)',
     col: '(?:<space>|<stack>)',
     cols: '((?:<space>|<stack>)(?:[,\\/]?))',
-    col_grouped: '(<space>?)(<stack>?)([,\\/]?)',
+    col_grouped: '(<space>?)(<stack>?)([,\\/]*)',
     row: '(?:<col>(?:,<col>?){0,8})',
     tps_grouped: '(<row>?(?:\\/<row>?)*)(?:(\\s+)([12]))?(?:(\\s+)([1-9]\\d*))?([^]*)',
 

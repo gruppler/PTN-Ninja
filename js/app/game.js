@@ -348,7 +348,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.separator = parts[3];
     this.q1 = parts[4];
     this.value = parts[5];
-    this.printed_value = this.value;
     this.q2 = parts[6];
     this.suffix = parts[7];
 
@@ -368,12 +367,11 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     if (this.key == 'result' && this.value) {
       game.config.result = new Result(this.value, game);
-      this.printed_value = game.config.result.print();
+      this.print_value = _.bind(game.config.result.print, game.config.result);
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game);
-      this.printed_value = game.config.tps.print();
+      this.print_value = _.bind(game.config.tps.print, game.config.tps);
     }else{
-      this.printed_value = this.value;
       game.config[this.key] = this.value;
     }
 
@@ -388,12 +386,16 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       '<%=this.separator%>'+
       '<span class="opening quote"><%=this.q1%></span>'+
       '<span class="value <%=this.q1 ? this.key : ""%>">'+
-        '<%=this.printed_value%>'+
+        '<%=this.print_value()%>'+
       '</span>'+
       '<span class="closing quote"><%=this.q2%></span>'+
       '<%=this.suffix%>'+
     '</span>'
   );
+
+  Tag.prototype.print_value = function () {
+    return ''+this.value;
+  };
 
 
   // TPS
@@ -415,15 +417,26 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
 
-    this.squares = parse_squares(parts[1], 1*game.config.size);
+    this.squares = parse_squares(this, parts[1], 1*game.config.size);
     this.space1 = parts[2];
     this.player = parts[3];
     this.space2 = parts[4];
     this.move = parts[5];
     this.suffix = parts[6];
 
-    if (!this.player || !this.move || this.suffix || !this.is_valid) {
-      m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
+    if (this.suffix && /\S/.test(this.suffix)) {
+      m.error(t.error.invalid_tag_value({tag: t.TPS, value: this.suffix}));
+    } else if (!this.is_valid) {
+      m.error(t.error.invalid_tag_value({
+        tag: t.TPS,
+        value: _.find(this.squares, {error: true}).text
+      }));
+    } else if (!this.player) {
+      m.error(t.error.tps_missing_player);
+    } else if (!this.move) {
+      m.error(t.error.tps_missing_move);
+    } else if (this.invalid_dimensions) {
+      m.error(t.error.invalid_TPS_dimensions);
     }
 
     this.player *= 1;
@@ -433,26 +446,24 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   };
 
   TPS.prototype.print = _.template(
-    '<span class="tps">'+
-      '<%=_.invokeMap(this.squares, "print").join("")%>'+
-      '<%=this.space1%>'+
-      '<% if (this.player) { %>'+
-        '<span class="player player<%=this.player%>">'+
-          '<i class="icon-player-<%=this.player == 1 ? "solid" : "line"%>"></i>'+
-          '<%=this.player%>'+
-        '</span>'+
-      '<% } %>'+
-      '<%=this.space2%>'+
-      '<% if (this.move) { %>'+
-        '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
-      '<% } %>'+
-    '</span>'+
+    '<%=_.invokeMap(this.squares, "print").join("")%>'+
+    '<%=this.space1%>'+
+    '<% if (this.player) { %>'+
+      '<span class="player player<%=this.player%>">'+
+        '<i class="icon-player-<%=this.player == 1 ? "solid" : "line"%>"></i>'+
+        '<%=this.player%>'+
+      '</span>'+
+    '<% } %>'+
+    '<%=this.space2%>'+
+    '<% if (this.move) { %>'+
+      '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
+    '<% } %>'+
     '<span class="illegal"><%=this.suffix%></span>'
   );
 
-  function parse_squares(string, size) {
+  function parse_squares(tps, string, size) {
     var row = size - 1, col = 0
-      , squares, invalid_dimensions = false;
+      , squares;
 
     var squares = _.map(
       string.match(r.grammar.cols),
@@ -462,14 +473,14 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         if (col >= size || row < 0) {
           square.error = true;
           square.separator_error = square.separator == ',';
-          invalid_dimensions = true;
+          tps.invalid_dimensions = true;
         }
 
         if (square.is_space) {
           col += square.count;
           if (col > size) {
             square.error = true;
-            invalid_dimensions = true;
+            tps.invalid_dimensions = true;
           }
         } else {
           col++;
@@ -478,22 +489,22 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         if (square.separator == '/') {
           if (col < size || row == 0) {
             square.separator_error = true;
-            invalid_dimensions = true;
+            tps.invalid_dimensions = true;
           }
 
           row--;
           col = 0;
         } else if (square.separator == ',' && col == size) {
           square.separator_error = true;
-          invalid_dimensions = true;
+          tps.invalid_dimensions = true;
         }
 
         return square;
       }
     );
 
-    if (invalid_dimensions || row != 0 || col != size) {
-      m.error(t.error.invalid_TPS_dimensions);
+    if (row != 0 || col != size) {
+      tps.invalid_dimensions = true;
     }
 
     return squares || [];
@@ -524,19 +535,19 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   }
 
   TPS.Square.prototype.print_space = _.template(
-    '<span class="square space <%=this.error ? "illegal":""%>" data-square="<%=this.square%>" data-count="<%=this.count%>"><%=this.text%></span>'+
-    '<span class="separator <%=this.separator_error ? "illegal":""%>"><%=this.separator%></span>'
+    '<span class="square space<%=this.error ? " illegal":""%>" data-square="<%=this.square%>" data-count="<%=this.count%>"><%=this.text%></span>'+
+    '<span class="separator<%=this.separator_error ? " illegal":""%>"><%=this.separator%></span>'
   );
 
   TPS.Square.prototype.print_stack = _.template(
-    '<span class="square stack <%=this.error ? "illegal":""%>" data-square="<%=this.square%>">'+
+    '<span class="square stack<%=this.error ? " illegal":""%>" data-square="<%=this.square%>">'+
       '<% _.map(this.pieces, function(piece, i) { %>'+
         '<span class="piece player<%=piece[0]%>">'+
           '<%=piece%>'+
         '</span>'+
       '<% }).join("") %>'+
     '</span>'+
-    '<span class="separator <%=this.separator_error ? "illegal":""%>"><%=this.separator%></span>'
+    '<span class="separator<%=this.separator_error ? " illegal":""%>"><%=this.separator%></span>'
   );
 
 

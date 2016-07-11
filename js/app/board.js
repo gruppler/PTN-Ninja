@@ -292,7 +292,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     piece = this.board.pieces[player][stone == 'C' ? stone : 'F'].pop();
 
     if (!piece) {
-      m.error(t.error.invalid_tag_value({tag: t.TPS, value: tps}));
       return false;
     }
 
@@ -305,7 +304,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     );
 
     if (piece.captives.indexOf(undefined) >= 0) {
-      m.error(t.error.invalid_tag_value({tag: t.TPS, value: tps}));
       return false;
     }
 
@@ -587,9 +585,11 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     // Parse TPS
     if (this.tps) {
-      _.each(this.tps.squares, function (square) {
+      _.each(this.tps.squares, function (square, i) {
         if (!square.is_space && !square.error) {
-          that.squares[square.square].parse(square.text);
+          if (!that.squares[square.square].parse(square.text)) {
+            that.invalid_tps(square, i);
+          }
         }
       });
     }
@@ -736,6 +736,15 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       t.error.illegal_ply({ ply: ply.ply })
     );
     ply.is_illegal = true;
+    return false;
+  };
+
+  Board.prototype.invalid_tps = function (square) {
+    m_parse.error(
+      t.error.invalid_tag_value({tag: t.TPS, value: square.text})
+    );
+    square.error = true;
+
     return false;
   };
 
