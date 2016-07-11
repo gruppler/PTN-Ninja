@@ -42,10 +42,14 @@ define([], function () {
       },
 
       'Enter': function (event, $focus, $parent) {
-        var $prev = $parent.prev('.move');
+        var $prev = $focus.prev('.move');
+
+        if (!$prev.length) {
+          $prev = $parent.prev('.move');
+        }
 
         if ($prev.length && app.game.moves[$prev.data('id') - 1].ply2) {
-          app.insert_text($parent.data('id') + '. ', true);
+          app.insert_text((1*$prev.data('id') + 1) + '. ', true);
         }
       }
 
