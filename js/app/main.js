@@ -301,7 +301,7 @@ requirejs({locale: navigator.language}, [
 
   bililiteRange.fancyText(app.$ptn[0], function () {
     return app.game.parse(app.$ptn.text());
-  }, 100);
+  });
 
   app.board.ply = 0;
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
