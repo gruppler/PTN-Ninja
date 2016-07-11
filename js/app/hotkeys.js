@@ -42,9 +42,9 @@ define([], function () {
       },
 
       'Enter': function (event, $focus, $parent) {
-        if ($parent.hasClass('body')) {
-          app.insert_text(app.game.get_linenum() + '. ', true);
-        } else if ($parent.hasClass('move')) {
+        var $prev = $parent.prev('.move');
+
+        if ($prev.length && app.game.moves[$prev.data('id') - 1].ply2) {
           app.insert_text($parent.data('id') + '. ', true);
         }
       }
