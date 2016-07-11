@@ -87,6 +87,16 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
   Result = function (string, game) {
     var parts = string.match(r.grammar.result_grouped);
 
+    game.config.result = this;
+
+    if (!string.length) {
+      this.print = function () {
+        return '';
+      };
+
+      return false;
+    }
+
     this.prefix = parts[1];
     parts = parts[2].split('-');
     this.player1 = parts[0];
@@ -365,9 +375,11 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       return false;
     }
 
-    if (this.key == 'result' && this.value) {
-      game.config.result = new Result(this.value, game);
-      this.print_value = _.bind(game.config.result.print, game.config.result);
+    if (this.key == 'result') {
+      new Result(this.value, game);
+      this.print_value = function() {
+        return _.trim(game.config.result.print(game.config.result));
+      };
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game);
       this.print_value = _.bind(game.config.tps.print, game.config.tps);
@@ -659,7 +671,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
           this.plys.push(this.moves[i].ply2);
         }
 
-        if (this.moves[i].result) {
+        if (this.moves[i].result && (this.moves[i].ply2 || this.moves[i].ply1)) {
           (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
         }
       }
