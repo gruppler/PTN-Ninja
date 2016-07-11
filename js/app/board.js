@@ -216,7 +216,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     }
 
     if (!this.$view.closest('html').length) {
-      this.board.$pieces.place(this.$view);
+      this.board.$pieces.append(this.$view);
     }
 
     // Update road visualization

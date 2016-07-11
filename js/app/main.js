@@ -282,53 +282,6 @@ requirejs({locale: navigator.language}, [
     return this;
   }
 
-  $.fn.grow = function (callback) {
-    var $this = $(this)
-      , height = $this.height();
-
-    $this.height(0);
-    $this.height();
-    $this.height(height);
-    $this.afterTransition(function () {
-      $this.height('');
-      if (_.isFunction(callback)) {
-        callback.call($this);
-      }
-    });
-
-    return this;
-  };
-
-  $.fn.shrink = function (callback) {
-    var $this = $(this);
-
-    $this.height($this.height());
-    $this.height();
-    $this.height(0);
-    $this.afterTransition(callback);
-
-    return this;
-  };
-
-
-  $.fn.place = function ($piece) {
-    $piece.addClass('placing');
-    $piece.appendTo(this);
-    $piece.height();
-    $piece.removeClass('placing');
-
-    return this;
-  };
-
-  $.fn.unplace = function ($piece) {
-    $piece.afterTransition(function () {
-      $piece.detach();
-    });
-    $piece.addClass('placing');
-
-    return this;
-  };
-
   $.fn.transition = function (callback) {
     var $this = $(this);
 
