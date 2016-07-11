@@ -372,6 +372,7 @@ requirejs({locale: navigator.language}, [
           }
         }
 
+        app.board.go_to_ply(0);
         app.board.set_active_squares(squares);
       } else if ($focus.closest('.header').length) {
         app.board.go_to_ply(0);
