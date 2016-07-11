@@ -280,7 +280,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
   Square.prototype.parse = function (tps) {
     var that = this
-      , piece, player, stone = 'F';
+      , piece, captives, player, stone = 'F';
 
     tps = tps.split('').reverse();
 
@@ -297,15 +297,15 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     piece.stone = stone;
 
-    piece.set_captives(
-      _.map(tps, function (player) {
-        return that.board.pieces[player].F.pop();
-      })
-    );
+    captives = _.map(tps, function (player) {
+      return that.board.pieces[player].F.pop();
+    });
 
-    if (piece.captives.indexOf(undefined) >= 0) {
+    if (captives.indexOf(undefined) >= 0) {
       return false;
     }
+
+    piece.set_captives(captives);
 
     return this.set_piece(piece, false);
   };
@@ -585,10 +585,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     // Parse TPS
     if (this.tps) {
-      _.each(this.tps.squares, function (square, i) {
+      _.each(this.tps.squares, function (square) {
         if (!square.is_space && !square.error) {
           if (!that.squares[square.square].parse(square.text)) {
-            that.invalid_tps(square, i);
+            that.invalid_tps(square);
           }
         }
       });

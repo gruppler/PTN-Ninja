@@ -436,7 +436,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     this.move = parts[5];
     this.suffix = parts[6];
 
-    if (this.suffix && /\S/.test(this.suffix)) {
+    if (this.invalid_dimensions) {
+      m.error(t.error.invalid_TPS_dimensions);
+    } else if (this.suffix && /\S/.test(this.suffix)) {
       m.error(t.error.invalid_tag_value({tag: t.TPS, value: this.suffix}));
     } else if (!this.is_valid) {
       m.error(t.error.invalid_tag_value({
@@ -447,8 +449,6 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       m.error(t.error.tps_missing_player);
     } else if (!this.move) {
       m.error(t.error.tps_missing_move);
-    } else if (this.invalid_dimensions) {
-      m.error(t.error.invalid_TPS_dimensions);
     }
 
     this.player *= 1;
@@ -478,7 +478,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       , squares;
 
     var squares = _.map(
-      string.match(r.grammar.cols),
+      _.compact(string.match(r.grammar.cols)),
       function (square, i) {
         square = new TPS.Square(square, row, col);
 
@@ -515,7 +515,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
       }
     );
 
-    if (row != 0 || col != size) {
+    if (row != 0 || col < size) {
       tps.invalid_dimensions = true;
     }
 
