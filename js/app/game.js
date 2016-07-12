@@ -139,7 +139,27 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     var ply_group = string.match(r.grammar.ply_grouped)
       , parts;
 
+    this.is_nop = false;
     this.is_illegal = false;
+
+    if (!ply_group) {
+      this.is_nop = true;
+      this.print = this.print_nop;
+      this.player = player;
+
+      ply_group = string.match(r.grammar.nop_grouped)
+      this.prefix = ply_group[1];
+      this.ply = ply_group[2];
+
+      if (!game.config.tps || game.config.tps.player == 1) {
+        m.error(t.error.invalid_ply({ply: this.ply}));
+        this.is_illegal = true;
+        this.text = this.prefix + this.ply;
+        this.print = print_invalid;
+      }
+
+      return this;
+    }
 
     this.prefix = ply_group[1];
 
@@ -200,21 +220,21 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
   Ply.prototype.print_place = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-ply="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
       '<% if (this.evaluation) { %>'+
-      '<span class="evaluation"><%=this.evaluation%></span>'+
+        '<span class="evaluation"><%=this.evaluation%></span>'+
       '<% } %>'+
     '</span>'
   );
 
   Ply.prototype.print_slide = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply <%=this.is_illegal ? "illegal" : ""%> player<%=this.player%>" data-ply="<%=this.id%>">'+
+    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-ply="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -226,8 +246,15 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
       '<% if (this.evaluation) { %>'+
-      '<span class="evaluation"><%=this.evaluation%></span>'+
+        '<span class="evaluation"><%=this.evaluation%></span>'+
       '<% } %>'+
+    '</span>'
+  );
+
+  Ply.prototype.print_nop = _.template(
+    '<span class="space"><%=this.prefix%></span>'+
+    '<span class="ply nop" data-ply="<%=this.id%>">'+
+      '<%=this.ply%>'+
     '</span>'
   );
 
@@ -287,6 +314,10 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     if (parts[3]) {
       this.ply1 = new Ply(parts[3], first_player, game);
+      if (this.ply1.is_nop) {
+        second_player = first_player;
+        this.ply1.player = first_player - 1 || 2;
+      }
     } else {
       this.ply1 = null;
     }

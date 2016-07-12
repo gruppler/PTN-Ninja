@@ -684,7 +684,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
-    if (ply.is_slide) {
+
+    if (ply.is_nop) {
+      ply_result = true;
+    } else if (ply.is_slide) {
       ply_result = square.slide(ply);
     } else {
       ply_result = square.place(ply);
@@ -724,7 +727,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
 
-    if (ply.is_slide) {
+    if (ply.is_nop) {
+      return true;
+    } else if (ply.is_slide) {
       return square.undo_slide(ply);
     } else {
       return square.undo_place(ply);

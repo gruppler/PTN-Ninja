@@ -123,6 +123,11 @@ $purple: #BA68C8;
       color: $whitish;
       font-weight: 300;
     }
+
+    &.nop {
+      color: $primary-color-300;
+      font-weight: normal;
+    }
   }
 
   .result {

@@ -50,7 +50,6 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 ## To Do
 - Known Bugs
-  - Support "load" as first "ply" for TPS where next ply is black
   - Don't display result if road win but no road is built
 
 
