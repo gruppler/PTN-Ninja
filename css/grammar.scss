@@ -146,8 +146,11 @@ $purple: #BA68C8;
     }
   }
 
-  .invalid {
+  .invalid, .invalid * {
+    background: transparent !important;
+    box-shadow: none !important;
     color: $primary-color-100;
+    font-weight: 300;
 
     .first-letter {
       color: $error-color;
@@ -155,7 +158,7 @@ $purple: #BA68C8;
     }
   }
 
-  .illegal, .illegal > * {
+  .illegal, .illegal * {
     background: transparent !important;
     box-shadow: none !important;
     color: $error-color !important;

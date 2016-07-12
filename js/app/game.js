@@ -478,7 +478,9 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     '<% if (this.move) { %>'+
       '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
     '<% } %>'+
-    '<span class="illegal"><%=this.suffix%></span>'
+    '<span class="invalid">'+
+      '<%=this.suffix.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
+    '</span>'
   );
 
   function parse_squares(tps, string, size) {
