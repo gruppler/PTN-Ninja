@@ -17,6 +17,8 @@ define({
     PlayPause: "Play/Pause",
     Player1: "Player1",
     Player2: "Player2",
+    Player1_name: "White",
+    Player2_name: "Black",
     Points: "Points",
     Previous_Ply: "Previous Ply",
     Rating1: "Rating1",
