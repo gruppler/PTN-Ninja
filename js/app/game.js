@@ -139,6 +139,8 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     var ply_group = string.match(r.grammar.ply_grouped)
       , parts;
 
+    this.is_illegal = false;
+
     this.prefix = ply_group[1];
 
     if (ply_group[2]) {
@@ -184,6 +186,7 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
     }
 
     if (
+      !this.player ||
       this.row > game.config.size ||
       (this.col.charCodeAt(0) - '`'.charCodeAt(0)) > game.config.size
     ) {
@@ -264,12 +267,17 @@ define(['app/grammar', 'app/messages', 'i18n!nls/main', 'lodash', 'lzstring'], f
 
     this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
-    if (this.linenum.value == 1) {
+    if(game.config.tps && this.linenum.value == game.config.tps.move){
+      if (game.config.tps.player == 1) {
+        first_player = (this.linenum.value == 1) ? 2 : 1;
+        second_player = first_player - 1 || 2;
+      } else {
+        first_player = (this.linenum.value == 1) ? 1 : 2;
+        second_player = 0;
+      }
+    } else if (this.linenum.value == 1) {
       first_player = 2;
       second_player = 1;
-    } else if(game.config.tps && this.linenum.value == game.config.tps.move){
-      first_player = game.config.tps.player;
-      second_player = first_player == 1 ? 2 : 1;
     }
 
     this.comments1 = parse_comments(parts[2]);
