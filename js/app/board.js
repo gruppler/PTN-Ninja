@@ -4,480 +4,16 @@
 
 'use strict';
 
-define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (config, Messages, t, _) {
-
-  var Board, Square, Piece;
-  var m = new Messages('board')
-    , m_parse = new Messages('parse');
-
-  var opposite_direction = {
-    '+': '-',
-    '-': '+',
-    '<': '>',
-    '>': '<'
-  };
-
-  var direction_name = {
-    '+': 'up',
-    '-': 'down',
-    '<': 'left',
-    '>': 'right'
-  };
-
-  var tpl = {
-    row: _.template('<span class="row"><%=obj%></span>'),
-
-    col: _.template('<span class="col"><%=obj%></span>'),
-
-    square: _.template(
-      '<div class="square c<%=col%> r<%=row%> <%=color%>">'+
-        '<div class="road">'+
-          '<div class="up"></div>'+
-          '<div class="down"></div>'+
-          '<div class="left"></div>'+
-          '<div class="right"></div>'+
-        '</div>'+
-      '</div>'
-    ),
-
-    stone_class: _.template('stone p<%=player%> <%=stone%>'),
-    piece_location: _.template(
-      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>) rotate(<%=rotate%>deg)'
-    ),
-    piece: _.template(
-      '<div class="piece">'+
-        '<div class="wrapper">'+
-          '<div class="captive p<%=player%>"></div>'+
-          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
-        '</div>'+
-      '</div>'
-    ),
-
-    board: _.template(
-      '<div class="board size-<%=size%>">'+
-        '<div class="row labels">'+
-          '<%=_.map(rows, tpl.row).join("")%>'+
-        '</div>'+
-        '<div class="col labels">'+
-          '<%=_.map(cols, tpl.col).join("")%>'+
-        '</div>'+
-        '<div class="squares"></div>'+
-        '<div class="pieces"></div>'+
-      '</div>'
-    )
-  };
-
-  var comment = _.ary(_.bind(m.comment, m), 1);
-
-
-  // Piece
-
-  Piece = function (board, player, stone) {
-    this.needs_updated = true;
-    this.board = board;
-    this.player = 1*player || 1;
-    this.stone = stone || 'F';
-    this.true_stone = stone == 'C' ? stone : 'F';
-    this.ply = null;
-    this.square = null;
-    this.captor = null;
-    this.captives = [];
-    this.piece_index = board.pieces[this.player][this.true_stone].length;
-    if (this.stone == 'C') {
-      this.piece_index += board.piece_counts.F;
-    }
-
-    this.tpl = this.board.tpl;  // give template access to tpl
-
-    board.all_pieces.push(this);
-    board.pieces[this.player][this.true_stone].push(this);
-    return this;
-  };
-
-  Piece.to_tps = function () {
-    return _.map(this.captives, 'player').join('')
-      + this.player
-      + (this.stone == 'F' ? '' : this.stone);
-  };
-
-  Piece.prototype.set_ply = function (ply) {
-    this.ply = ply;
-    if (!ply.is_slide) {
-      this.stone = ply.stone;
-    }
-  };
-
-  Piece.prototype.set_captives = function (captives) {
-    var that = this;
-
-    this.captor = null;
-    this.captives = captives || [];
-
-    _.each(this.captives, function (captive, index) {
-      captive.stack_index = index;
-      captive.captor = that;
-      captive.square = that.square;
-      captive.stone = 'F';
-      captive.captives.length = 0;
-    });
-  };
-
-  Piece.prototype.render = function () {
-    var that = this
-      , square = this.square
-      , location, captive_offset = 6, capstones;
-
-    if (this.board.defer_render) {
-      this.needs_updated = true;
-      return;
-    }
-
-    // Set height
-    if (this.captor) {
-      this.height = this.captor.captives.length - this.stack_index;
-      this.is_immovable = this.stack_index >= this.board.size - 1;
-    } else if (this.captives.length) {
-      this.height = this.captives.length + 1;
-      this.is_immovable = false;
-      _.invokeMap(this.captives, 'render');
-    } else {
-      this.height = square ? 1 : this.piece_index;
-      this.is_immovable = false;
-    }
-
-    // Calculate location transform
-    if (square) {
-      this.rotate = 0;
-      this.scale = 1;
-      this.x = 100*(square.col - this.board.size/2);
-      this.y = 100*(this.board.size/2 - 1 - square.row);
-    } else {
-      this.rotate = this.player == 1 ? -90 : 90;
-      this.scale = this.board.size/10;
-
-      this.x = (this.player == 1 ? -1 : 1) * (
-        85 * (
-          this.board.size/(2*this.board.piece_counts.total - 2/this.board.size) * (
-            this.piece_index
-          )
-        ) + 25
-      ) - 50;
-
-      this.y = -100*(this.board.size + 1)/2 - 5*this.board.size;
-    }
-
-    // Offset captives
-    if (square && !this.is_immovable) {
-      this.y += captive_offset*(
-        1 - this.height + 1*(this.stone == 'S' && !!this.captives.length)
-      );
-
-      if ((this.captor||this).height > this.board.size) {
-        this.y += captive_offset*((this.captor||this).height - this.board.size);
-      }
-    }
-
-    location = tpl.piece_location(this);
-
-    if (!this.$view) {
-      this.$view = $(tpl.piece(this));
-      this.$view.css({
-        'z-index': this.height,
-        'transform': location
-      });
-      this.$stone = this.$view.find('.stone');
-      this.$captive = this.$view.find('.captive');
-      this.$view.data('model', this);
-    } else {
-      if (this.prev_location == location || this.prev_height < this.height) {
-        this.$view.afterTransition().css({
-          'z-index': this.height,
-          'transform': location
-        });
-      } else {
-        // Update z-index after ply
-        this.$view.afterTransition().afterTransition(function (event) {
-          that.$view.css('z-index', that.height);
-        });
-        this.$view.css('transform', location);
-      }
-      this.$stone[0].className = tpl.stone_class(this);
-      this.$stone.removeClass('F S').addClass(this.stone);
-    }
-    this.prev_height = this.height;
-    this.prev_location = location;
-
-    if (square && this.is_immovable) {
-      this.$view.addClass('immovable');
-      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.07) + '%)');
-    } else {
-      this.$view.removeClass('immovable');
-      this.$captive.css('transform', '');
-    }
-
-    if (!this.$view.closest('html').length) {
-      this.board.$pieces.append(this.$view);
-    }
-
-    // Update road visualization
-    if (!this.captor && square) {
-      square.$view.removeClass('p1 p2').addClass('p'+this.player);
-      _.each(direction_name, function (dn, d) {
-        if (square.neighbors[d]) {
-          if (
-            that.stone != 'S' &&
-            square.neighbors[d].piece &&
-            square.neighbors[d].piece.player == that.player &&
-            square.neighbors[d].piece.stone != 'S'
-          ) {
-            square.$view.addClass(dn);
-            square.neighbors[d].$view.addClass(
-              direction_name[opposite_direction[d]]
-            );
-          } else {
-            square.$view.removeClass(dn);
-            square.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
-          }
-        } else if (that.stone != 'S') {
-          // Edge
-          square.$view.addClass(dn);
-        } else {
-          square.$view.removeClass(dn);
-        }
-      });
-    }
-
-    if (square) {
-      this.$view.addClass('played');
-    } else {
-      this.$view.removeClass('played');
-      this.$stone.removeClass('S');
-    }
-
-    this.needs_updated = false;
-
-    return this.$view;
-  };
-
-
-  // Square
-
-  Square = function (board, row, col) {
-    this.board = board;
-    this.col = col;
-    this.row = row;
-    this.square = app.i_to_square(row, col);
-    this.color = (row % 2 != col % 2) ? 'dark' : 'light';
-    this.piece = null;
-    this.neighbors = {};
-
-    return this;
-  };
-
-  Square.prototype.to_tps = function () {
-    return this.piece ? this.piece.to_tps() : 'x';
-  };
-
-  Square.prototype.parse = function (tps) {
-    var that = this
-      , piece, captives, player, stone = 'F';
-
-    tps = tps.split('').reverse();
-
-    if (!/\d/.test(tps[0])) {
-      stone = tps.shift();
-    }
-
-    player = tps.shift();
-    piece = this.board.pieces[player][stone == 'C' ? stone : 'F'].pop();
-
-    if (!piece) {
-      return false;
-    }
-
-    piece.stone = stone;
-
-    captives = _.map(tps, function (player) {
-      return that.board.pieces[player].F.pop();
-    });
-
-    if (captives.indexOf(undefined) >= 0) {
-      return false;
-    }
-
-    piece.set_captives(captives);
-
-    return this.set_piece(piece, false);
-  };
-
-  Square.prototype.set_piece = function (piece, captives) {
-    var that = this
-      , previous_piece = this.piece;
-
-    this.piece = piece || null;
-
-    if (this.$view) {
-      this.$view.removeClass('p1 p2');
-    }
-
-    if (piece) {
-      piece.square = this;
-      piece.set_captives(captives || piece.captives);
-      piece.render();
-    } else if (previous_piece) {
-      previous_piece.render();
-
-      if (this.$view) {
-        this.$view.removeClass(_.values(direction_name).join(' '));
-        _.each(direction_name, function (dn, d) {
-          if (that.neighbors[d]) {
-            that.$view.removeClass(dn);
-            that.neighbors[d].$view.removeClass(direction_name[opposite_direction[d]]);
-          }
-        })
-      }
-    }
-
-    return this.piece;
-  };
-
-  Square.prototype.set_active = function () {
-    if (this.$view) {
-      this.$view.addClass('active');
-    }
-  };
-
-  Square.prototype.render = function () {
-    this.$view = $(tpl.square(this));
-    this.$view.data('model', this);
-
-    return this.$view;
-  };
-
-  Square.prototype.place = function (ply) {
-    var pieces = this.board.pieces[ply.player][ply.true_stone]
-      , piece;
-
-    if (this.piece || !pieces.length) {
-      return this.board.illegal_ply(ply);
-    }
-
-    piece = pieces.pop();
-
-    piece.set_ply(ply);
-    this.set_piece(piece, false, true);
-    ply.squares[0] = this;
-
-    this.piece.render();
-
-    return true;
-  };
-
-  Square.prototype.undo_place = function (ply) {
-    if (this.piece) {
-      this.board.pieces[this.piece.player][this.piece.true_stone].push(this.piece);
-      this.piece.square = null;
-      this.set_piece();
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  Square.prototype.slide = function (ply) {
-    var that = this
-      , square = this
-      , piece = this.piece
-      , moving_stack, remaining_stack, i;
-
-    function illegal() {
-      return that.board.illegal_ply(ply);
-    }
-
-    if (
-      !piece ||
-      ply.count > this.board.size ||
-      piece.captives.length < ply.count - 1 ||
-      piece.player != ply.player
-    ) {
-      return illegal();
-    }
-
-    ply.squares[0] = this;
-
-    remaining_stack = piece.captives.splice(ply.count - 1);
-    square.set_piece(remaining_stack[0], remaining_stack.slice(1));
-    moving_stack = [piece].concat(piece.captives);
-
-    for (i = 0; i < ply.drops.length; i++) {
-      square = square.neighbors[ply.direction];
-      if (!square) {
-        return illegal();
-      }
-
-      remaining_stack = moving_stack.splice(-ply.drops[i]);
-
-      if (square.piece) {
-        if (square.piece.stone == 'C') {
-          return illegal();
-        } else if(square.piece.stone == 'S') {
-          if (remaining_stack.length > 1 || remaining_stack[0].stone != 'C') {
-            return illegal();
-          }
-
-          ply.flattens[i] = true;
-        } else {
-          ply.flattens[i] = false;
-        }
-
-        remaining_stack.push(square.piece);
-        remaining_stack = remaining_stack.concat(square.piece.captives);
-      }
-
-      square.set_piece(remaining_stack[0], remaining_stack.slice(1));
-      ply.squares[i + 1] = square;
-    }
-
-    return true;
-  };
-
-  Square.prototype.undo_slide = function (ply) {
-    var square = this
-      , backwards = opposite_direction[ply.direction]
-      , moving_stack = []
-      , remaining_stack, i;
-
-    for (i = 0; i < ply.drops.length; i++) {
-      square = square.neighbors[ply.direction];
-    }
-
-    for (i = ply.drops.length - 1; i >= 0; i--) {
-      moving_stack.push(square.piece);
-      moving_stack = moving_stack.concat(
-        square.piece.captives.slice(0, ply.drops[i] - 1)
-      );
-      remaining_stack = square.piece.captives.slice(ply.drops[i] - 1);
-
-      if (remaining_stack[0] && ply.flattens[i]) {
-        remaining_stack[0].stone = 'S';
-      }
-      square.set_piece(remaining_stack[0], remaining_stack.slice(1));
-
-      square = square.neighbors[backwards];
-    }
-    if (this.piece) {
-      moving_stack.push(this.piece);
-      moving_stack = moving_stack.concat(this.piece.captives);
-    }
-    this.set_piece(moving_stack[0], moving_stack.slice(1));
-
-    return true;
-  };
-
-
-  // Board
-
-  Board = function (game) {
+define([
+  'app/board/piece',
+  'app/board/square',
+  'app/config',
+  'app/messages',
+  'i18n!nls/main',
+  'lodash'
+], function (Piece, Square, config, Messages, t, _) {
+
+  var Board = function (game) {
     this.ply = 0;
     this.size = 5;
     this.squares = {};
@@ -487,7 +23,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.pieces = {};
     this.init_callbacks = [];
     this.ply_callbacks = [];
-    this.tpl = tpl;
 
     if (game) {
       this.init(game);
@@ -532,7 +67,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     if (silent !== true) {
       _.invokeMap(this.callbacks_start, 'call', this, this);
-      m.clear(false, true);
+      this.m.clear(false, true);
       this.pause();
     }
 
@@ -633,7 +168,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.render = function () {
-    this.$view = $(tpl.board(this));
+    this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
 
@@ -737,7 +272,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.illegal_ply = function (ply) {
-    m_parse.error(
+    this.m_parse.error(
       t.error.illegal_ply({ ply: ply.ply })
     );
     ply.is_illegal = true;
@@ -745,7 +280,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.invalid_tps = function (square) {
-    m_parse.error(
+    this.m_parse.error(
       t.error.invalid_tag_value({tag: t.TPS, value: square.text})
     );
     square.error = true;
@@ -761,14 +296,16 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Board.prototype.show_comments = function (ply) {
-    m.clear(false, true);
+    var result = this.game.config.result;
+
+    this.m.clear(false, true);
 
     if (ply === 0) {
       if (this.game.comments) {
-        _.map(this.game.comments, comment);
+        _.map(this.game.comments, this.comment);
       }
-      m.player1(this.game.config.player1);
-      m.player2(this.game.config.player2);
+      this.m.player1(this.game.config.player1);
+      this.m.player2(this.game.config.player2);
     }
 
     if (!ply || this.defer_render) {
@@ -776,21 +313,21 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     }
 
     if (ply && ply.evaluation && /['"]/.test(ply.evaluation)) {
-      m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
+      this.m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
     }
 
     if (ply && ply.evaluation && /[!?]/.test(ply.evaluation)) {
-      comment(ply.evaluation.replace(/[^!?]/g, ''));
+      this.comment(ply.evaluation.replace(/[^!?]/g, ''));
     }
 
     if (ply.comments) {
-      _.map(ply.comments, comment);
+      _.map(ply.comments, this.comment);
     }
 
-    if (ply.is_last && ply.result) {
-      m['player'+ply.result.victor](ply.result.text);
-      if (ply.result.comments) {
-        _.map(ply.result.comments, comment);
+    if (ply.is_last && result && result.text) {
+      this.m['player'+result.victor](result.text);
+      if (result.comments) {
+        _.map(result.comments, this.comment);
       }
     }
   };
@@ -904,6 +441,69 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
       this.update();
     }
+  };
+
+  Board.prototype.tpl = {
+    row: _.template('<span class="row"><%=obj%></span>'),
+
+    col: _.template('<span class="col"><%=obj%></span>'),
+
+    square: _.template(
+      '<div class="square c<%=col%> r<%=row%> <%=color%>">'+
+        '<div class="road">'+
+          '<div class="up"></div>'+
+          '<div class="down"></div>'+
+          '<div class="left"></div>'+
+          '<div class="right"></div>'+
+        '</div>'+
+      '</div>'
+    ),
+
+    stone_class: _.template('stone p<%=player%> <%=stone%>'),
+    piece_location: _.template(
+      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>) rotate(<%=rotate%>deg)'
+    ),
+    piece: _.template(
+      '<div class="piece">'+
+        '<div class="wrapper">'+
+          '<div class="captive p<%=player%>"></div>'+
+          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
+        '</div>'+
+      '</div>'
+    ),
+
+    board: _.template(
+      '<div class="board size-<%=size%>">'+
+        '<div class="row labels">'+
+          '<%=_.map(rows, tpl.row).join("")%>'+
+        '</div>'+
+        '<div class="col labels">'+
+          '<%=_.map(cols, tpl.col).join("")%>'+
+        '</div>'+
+        '<div class="squares"></div>'+
+        '<div class="pieces"></div>'+
+      '</div>'
+    )
+  };
+
+  Board.prototype.m = new Messages('board');
+  Board.prototype.m_parse = new Messages('parse');
+  Board.prototype.comment = _.ary(_.bind(
+    Board.prototype.m.comment, Board.prototype.m
+  ), 1);
+
+  Board.prototype.opposite_direction = {
+    '+': '-',
+    '-': '+',
+    '<': '>',
+    '>': '<'
+  };
+
+  Board.prototype.direction_name = {
+    '+': 'up',
+    '-': 'down',
+    '<': 'left',
+    '>': 'right'
   };
 
   return Board;
