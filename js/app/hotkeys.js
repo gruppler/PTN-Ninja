@@ -41,15 +41,36 @@ define([], function () {
         }
       },
 
+      'Tab': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        app.insert_text('\t', true);
+      },
+
       'Enter': function (event, $focus, $parent) {
-        var $prev = $focus.prev('.move');
+        var $prev = $focus.prev('.move')
+          , move;
 
         if (!$prev.length) {
           $prev = $parent.prev('.move');
         }
 
-        if ($prev.length && app.game.moves[$prev.data('id') - 1].ply2) {
-          app.insert_text((1*$prev.data('id') + 1) + '. ', true);
+        if (!$prev.length) {
+          $prev = $focus.closest('.invalid');
+          if ($prev.length) {
+            $prev = $prev.prev('.move');
+          }
+          if (!$prev.length) {
+            $prev = $prev.closest('.move');
+          }
+        }
+
+        if ($prev.length) {
+          move = app.game.moves[$prev.data('id') - 1];
+          if (move.ply2) {
+            app.insert_text((1*$prev.data('id') + 1) + '.' + move.ply1.prefix, true);
+          }
         }
       }
 

@@ -317,26 +317,21 @@ requirejs({locale: navigator.language}, [
       , $parent = $focus.parent();
 
     if (app.game.is_editing) {
-
       // Edit Mode
       if (event.keymap in hotkeys.edit) {
         hotkeys.edit[event.keymap](event, $focus, $parent);
       }
-
     } else {
-
       // Play Mode
       if (event.keymap in hotkeys.play) {
         hotkeys.play[event.keymap](event, $focus, $parent);
       }
-
     }
 
     // Global
     if (event.keymap in hotkeys.global) {
       hotkeys.global[event.keymap](event, $focus, $parent);
     }
-
   });
 
   // Go to focused ply

@@ -76,8 +76,16 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.evaluation = ply_group[4] || '';
     }
 
+    if (!this.player) {
+      game.is_valid = false;
+      this.is_illegal = true;
+      this.text = string;
+      this.print = game.print_invalid;
+      game.m.error(t.error.invalid_movetext({text: _.trim(string)[0]}));
+      return this;
+    }
+
     if (
-      !this.player ||
       this.row > game.config.size ||
       (this.col.charCodeAt(0) - '`'.charCodeAt(0)) > game.config.size
     ) {
