@@ -24,6 +24,5 @@ html, body {
 }
 
 @include selection {
-  color: $primary-color-text;
-  background: $primary-color-500;
+  background: rgba($accent-color, 0.65);
 }
