@@ -174,8 +174,8 @@ define([
     this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.$score1 = this.$view.find('.scores .player1.score');
-    this.$score2 = this.$view.find('.scores .player2.score');
+    this.$score1 = this.$view.find('.scores .player1 .score');
+    this.$score2 = this.$view.find('.scores .player2 .score');
 
     this.$squares.append.apply(
       this.$squares,
@@ -485,10 +485,14 @@ define([
     board: _.template(
       '<div class="board size-<%=size%>">'+
         '<div class="scores">'+
-          '<span class="player1 name"><%=game.config.player1%></span>'+
-          '<span class="player1 score"><%=flat_score[1]%></span>'+
-          '<span class="player2 score"><%=flat_score[2]%></span>'+
-          '<span class="player2 name"><%=game.config.player2%></span>'+
+          '<span class="player1">'+
+            '<span class="name"><%=game.config.player1%></span>'+
+            '<span class="score"><%=flat_score[1]%></span>'+
+          '</span>'+
+          '<span class="player2">'+
+            '<span class="score"><%=flat_score[2]%></span>'+
+            '<span class="name"><%=game.config.player2%></span>'+
+          '</span>'+
         '</div>'+
         '<div class="row labels">'+
           '<%=_.map(rows, tpl.row).join("")%>'+

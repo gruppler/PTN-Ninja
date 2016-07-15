@@ -239,9 +239,36 @@ $stone-thickness: 0.3vmin;
     right: 0;
     display: flex;
 
+    .player1, .player2 {
+      display: flex;
+      width: 50%;
+      border-radius: $stone-thickness;
+    }
+
     .name, .score {
       font-size: $top-margin/4;
-      border-radius: $stone-thickness;
+      padding: 0.1em 0.25em;
+    }
+
+    .name {
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player1 {
+      background-color: $primary-color-100;
+      color: $primary-color-700;
+    }
+
+    .player2 {
+      background-color: $primary-color-700;
+      color: $primary-color-100;
+
+      .name {
+        text-align: right;
+      }
     }
 
     @media (max-aspect-ratio: $aspect-compact) {
@@ -250,33 +277,6 @@ $stone-thickness: 0.3vmin;
       .name, .score {
         font-size: $top-margin/3;
       }
-    }
-
-    .name {
-      width: 50%;
-      flex-grow: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding: 0.1em 0.25em;
-    }
-
-    .score {
-      padding: 0.1em 0.5em;
-      margin: 0 0.25em;
-    }
-
-    .player2.name, .player1.score {
-      text-align: right;
-    }
-
-    .player1 {
-      background-color: $primary-color-100;
-      color: $primary-color-700;
-    }
-    .player2 {
-      background-color: $primary-color-700;
-      color: $primary-color-100;
     }
   }
 
