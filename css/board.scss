@@ -16,13 +16,13 @@ $stone-thickness: 0.3vmin;
 }
 
 .board {
-  $top-margin: 5vmin;
+  $top-margin: 10vmin;
 
   position: absolute;
   top: calc(50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
   right: calc(#{$edge}*2 + #{$fab-height});
-  width: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
-  height: calc(#{100vmin - $top-margin*2} - #{$edge*3 + $button-height});
+  width: calc(#{100vmin - $top-margin} - #{$edge*3 + $button-height});
+  height: calc(#{100vmin - $top-margin} - #{$edge*3 + $button-height});
   font-size: 3vmin;
   background-color: $primary-color-500;
 
@@ -34,16 +34,16 @@ $stone-thickness: 0.3vmin;
     top: calc(#{$edge} + 50% - #{50vmin - $top-margin} + 0.5em);
   }
   body.playmode:not(.ptn) & {
-    right: calc(1em + 50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
+    right: calc(1em + 50% - #{50vmin - $top-margin/2} + #{($edge*3 + $button-height) / 2});
     z-index: 1;
   }
 
-  @media (max-aspect-ratio: 11/10) {
-    right: calc(1em + 50% - #{50vmin - $top-margin} + #{($edge*3 + $button-height) / 2});
+  @media (max-aspect-ratio: $aspect-centered) {
+    right: calc(1em + 50% - #{50vmin - $top-margin/2} + #{($edge*3 + $button-height) / 2});
   }
 
-  @media (max-aspect-ratio: 7/10) {
-    top: calc(50% - #{50vmin - $top-margin}) !important;
+  @media (max-aspect-ratio: $aspect-compact) {
+    top: calc(50% - #{50vmin - $top-margin/2}) !important;
     right: $edge !important;
     width: calc(100vmin - #{$edge});
     height: calc(100vmin - #{$edge});
@@ -143,7 +143,6 @@ $stone-thickness: 0.3vmin;
 
     .stone, .captive {
       @media (max-width: $mobile) {
-        box-sizing: border-box;
         border-style: solid;
         border-width: 0 0 $stone-thickness;
       }
@@ -227,9 +226,57 @@ $stone-thickness: 0.3vmin;
       width: 15%;
       height: 7.5%;
       opacity: 0;
-      border-radius: $stone-thickness;
+      border-radius: 15%/30%;
       transform: translateX(-100%);
       transition: all $time-smooth $natural;
+    }
+  }
+
+  .scores {
+    position: absolute;
+    top: -$top-margin;
+    left: 2em;
+    right: 0;
+    display: flex;
+
+    .name, .score {
+      font-size: $top-margin/4;
+      border-radius: $stone-thickness;
+    }
+
+    @media (max-aspect-ratio: $aspect-compact) {
+      top: -#{$top-margin + 3};
+
+      .name, .score {
+        font-size: $top-margin/3;
+      }
+    }
+
+    .name {
+      width: 50%;
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0.1em 0.25em;
+    }
+
+    .score {
+      padding: 0.1em 0.5em;
+      margin: 0 0.25em;
+    }
+
+    .player2.name, .player1.score {
+      text-align: right;
+    }
+
+    .player1 {
+      background-color: $primary-color-100;
+      color: $primary-color-700;
+    }
+    .player2 {
+      background-color: $primary-color-700;
+      color: $primary-color-100;
     }
   }
 

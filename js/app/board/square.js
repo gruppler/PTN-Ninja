@@ -64,7 +64,12 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.$view.removeClass('p1 p2');
     }
 
+    if (previous_piece && previous_piece.stone == 'F') {
+      this.board.flat_score[previous_piece.player]--;
+    }
+
     if (piece) {
+      this.board.flat_score[piece.player] += 1*(piece.stone == 'F');
       piece.square = this;
       piece.set_captives(captives || piece.captives);
       piece.render();
@@ -84,6 +89,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
           }
         })
       }
+    }
+
+    if (!this.board.defer_render) {
+      this.board.update_scores();
     }
 
     return this.piece;

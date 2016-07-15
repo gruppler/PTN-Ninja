@@ -21,6 +21,7 @@ define([
     this.cols = [];
     this.all_pieces = [];
     this.pieces = {};
+    this.flat_score = {1:0, 2:0};
     this.init_callbacks = [];
     this.ply_callbacks = [];
 
@@ -45,6 +46,8 @@ define([
     this.ply = 0;
     this.squares = {};
     this.all_pieces = [];
+    this.flat_score[1] = 0;
+    this.flat_score[2] = 0;
     this.pieces = {
       1: {
         F: [],
@@ -171,6 +174,8 @@ define([
     this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
+    this.$score1 = this.$view.find('.scores .player1.score');
+    this.$score2 = this.$view.find('.scores .player2.score');
 
     this.$squares.append.apply(
       this.$squares,
@@ -193,6 +198,13 @@ define([
       _.filter(this.all_pieces, { needs_updated: true }),
       'render'
     );
+
+    this.update_scores();
+  };
+
+  Board.prototype.update_scores = function() {
+    this.$score1.text(this.flat_score[1]);
+    this.$score2.text(this.flat_score[2]);
   };
 
   Board.prototype.do_ply = function () {
@@ -304,8 +316,6 @@ define([
       if (this.game.comments) {
         _.map(this.game.comments, this.comment);
       }
-      this.m.player1(this.game.config.player1);
-      this.m.player2(this.game.config.player2);
     }
 
     if (!ply || this.defer_render) {
@@ -474,6 +484,12 @@ define([
 
     board: _.template(
       '<div class="board size-<%=size%>">'+
+        '<div class="scores">'+
+          '<span class="player1 name"><%=game.config.player1%></span>'+
+          '<span class="player1 score"><%=flat_score[1]%></span>'+
+          '<span class="player2 score"><%=flat_score[2]%></span>'+
+          '<span class="player2 name"><%=game.config.player2%></span>'+
+        '</div>'+
         '<div class="row labels">'+
           '<%=_.map(rows, tpl.row).join("")%>'+
         '</div>'+
