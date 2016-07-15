@@ -64,8 +64,8 @@ define([
 
     if (this.key == 'result') {
       new Result(this.value, game);
-      this.print_value = function() {
-        return _.trim(game.config.result.print(game.config.result));
+      this.print_value = function () {
+        return game.config.result.print_value();
       };
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game);

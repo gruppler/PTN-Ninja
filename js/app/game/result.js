@@ -49,8 +49,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return this;
   }
 
-  Result.prototype.print = _.template(
-    '<%=this.prefix%>'+
+  Result.prototype.print_value = _.template(
     '<span class="result">'+
       '<span class="player1 <%=this.player1_label%>">'+
         '<%=this.player1%>'+
@@ -61,6 +60,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       '</span>'+
     '</span>'
   );
+
+  Result.prototype.print = function () {
+    return this.prefix + this.print_value();
+  };
 
   return Result;
 
