@@ -78,8 +78,6 @@ define(['lodash'], function (_) {
     grammar[token] = new RegExp(expression, /_grouped$/.test(token) ? '' : 'g');
   });
 
-  window.grammar = grammar;
-
   return {
     tags: _.merge({}, required_tags, other_tags),
     required_tags: _.keys(required_tags),
