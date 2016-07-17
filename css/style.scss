@@ -33,6 +33,20 @@
   z-index: 1;
   transition: all $time-smooth $natural;
 
+  &:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: $button-height + $edge*2;
+    pointer-events: none;
+    background: linear-gradient(
+      to top, rgba($primary-color-500, 0) 0%, $primary-color-500 100%
+    );
+  }
+
   html.playmode & {
     @include unselectable;
     pointer-events: none;
