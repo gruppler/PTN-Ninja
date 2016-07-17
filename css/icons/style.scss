@@ -4,11 +4,11 @@
 
 @font-face {
     font-family: 'material';
-    src:    url('#{$icomoon-font-path}/material.eot?lj84j6');
-    src:    url('#{$icomoon-font-path}/material.eot?lj84j6#iefix') format('embedded-opentype'),
-        url('#{$icomoon-font-path}/material.ttf?lj84j6') format('truetype'),
-        url('#{$icomoon-font-path}/material.woff?lj84j6') format('woff'),
-        url('#{$icomoon-font-path}/material.svg?lj84j6#material') format('svg');
+    src:    url('#{$icomoon-font-path}/material.eot?wxgcoz');
+    src:    url('#{$icomoon-font-path}/material.eot?wxgcoz#iefix') format('embedded-opentype'),
+        url('#{$icomoon-font-path}/material.ttf?wxgcoz') format('truetype'),
+        url('#{$icomoon-font-path}/material.woff?wxgcoz') format('woff'),
+        url('#{$icomoon-font-path}/material.svg?wxgcoz#material') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -38,6 +38,21 @@ i, .icomoon-liga {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-move {
+    &:before {
+        content: $icon-move;
+    }
+}
+.icon-menu {
+    &:before {
+        content: $icon-menu;
+    }
+}
+.icon-preferences {
+    &:before {
+        content: $icon-preferences;
+    }
+}
 .icon-open {
     &:before {
         content: $icon-open;

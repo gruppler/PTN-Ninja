@@ -25,6 +25,9 @@
     var icons;
     if (!supportsProperty('fontFeatureSettings')) {
         icons = {
+            'move': '&#xe900;',
+            'menu': '&#xe5d2;',
+            'preferences': '&#xe429;',
             'open': '&#xe2c8;',
             'download': '&#xe2c0;',
             'time': '&#xe8b5;',
