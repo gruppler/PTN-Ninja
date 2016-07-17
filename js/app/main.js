@@ -319,20 +319,21 @@ requirejs({locale: navigator.language}, [
     var $focus = $(getSelection().focusNode)
       , $parent = $focus.parent();
 
-    if (app.game.is_editing) {
-      // Edit Mode
-      if (event.keymap in hotkeys.edit) {
-        hotkeys.edit[event.keymap](event, $focus, $parent);
-      }
-    } else {
-      // Play Mode
-      if (event.keymap in hotkeys.play) {
-        hotkeys.play[event.keymap](event, $focus, $parent);
-      }
+    if (!event.keymap) {
+      return;
     }
 
-    // Global
-    if (event.keymap in hotkeys.global) {
+    if (app.menu.isOpen() && event.keymap in hotkeys.menu) {
+      // Menu Mode
+      hotkeys.menu[event.keymap](event, $focus, $parent);
+    } else if (app.game.is_editing && event.keymap in hotkeys.edit) {
+      // Edit Mode
+      hotkeys.edit[event.keymap](event, $focus, $parent);
+    } else if (!app.game.is_editing && event.keymap in hotkeys.play) {
+      // Play Mode
+      hotkeys.play[event.keymap](event, $focus, $parent);
+    } else if (event.keymap in hotkeys.global) {
+      // Global
       hotkeys.global[event.keymap](event, $focus, $parent);
     }
   });

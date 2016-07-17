@@ -8,6 +8,50 @@ define([], function () {
 
   return {
 
+    // Global
+    global: {
+
+      'Escape': function (event, $focus, $parent) {
+        app.menu.toggle();
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      '^Spacebar': function (event, $focus, $parent) {
+        app.$fab.click();
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      '^s': function (event, $focus, $parent) {
+        app.$download.click();
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      '^o': function (event, $focus, $parent) {
+        app.$open.click();
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      '^d': function (event, $focus, $parent) {
+        app.game.parse(app.default_ptn, true);
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      '^?': function (event, $focus, $parent) {
+        app.game.parse(app.sample_ptn, true);
+      }
+
+    },
+
+    // Menu Mode
+    menu: {
+
+    },
+
     // Edit Mode
     edit: {
 
@@ -106,38 +150,6 @@ define([], function () {
 
       'ArrowUp': function (event, $focus, $parent) {
         app.board.next_move(event);
-      }
-
-    },
-
-
-    // Global
-    global: {
-
-      'Escape': function (event, $focus, $parent) {
-        app.$fab.click();
-      },
-
-      '^s': function (event, $focus, $parent) {
-        app.$download.click();
-        event.preventDefault();
-        event.stopPropagation();
-      },
-
-      '^o': function (event, $focus, $parent) {
-        app.$open.click();
-        event.preventDefault();
-        event.stopPropagation();
-      },
-
-      '^d': function (event, $focus, $parent) {
-        app.game.parse(app.default_ptn, true);
-        event.preventDefault();
-        event.stopPropagation();
-      },
-
-      '^?': function (event, $focus, $parent) {
-        app.game.parse(app.sample_ptn, true);
       }
 
     }
