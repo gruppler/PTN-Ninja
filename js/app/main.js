@@ -8,6 +8,7 @@ requirejs({locale: navigator.language}, [
   'i18n!nls/main',
   'app/config',
   'app/hotkeys',
+  'app/menu',
   'app/messages',
   'app/game',
   'app/board',
@@ -19,7 +20,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, config, hotkeys, Messages, Game, Board, saveAs, _, $) {
+], function (t, config, hotkeys, menu, Messages, Game, Board, saveAs, _, $) {
 
   var baseurl = location.origin + location.pathname
 
@@ -47,11 +48,13 @@ requirejs({locale: navigator.language}, [
 
         config: config,
         hotkeys: hotkeys,
+        menu: menu,
 
         board: new Board(),
         game: new Game(simulator),
 
         $window: $(window),
+        $html: $('html'),
         $body: $('body'),
         $ptn: $('#ptn'),
         $viewer: $('#viewer'),
@@ -102,18 +105,18 @@ requirejs({locale: navigator.language}, [
       if (on && !app.game.is_editing) {
         app.$viewer.transition();
         app.game.is_editing = true;
-        app.$body.addClass('editmode');
-        app.$body.removeClass('playmode');
+        app.$html.addClass('editmode');
+        app.$html.removeClass('playmode');
       } else if (!on && app.game.is_editing) {
         app.$viewer.transition();
         app.game.is_editing = false;
-        app.$body.addClass('playmode');
-        app.$body.removeClass('editmode');
+        app.$html.addClass('playmode');
+        app.$html.removeClass('editmode');
       }
     } else {
       app.game.is_editing = !app.game.is_editing;
       app.$viewer.transition();
-      app.$body.toggleClass('editmode playmode');
+      app.$html.toggleClass('editmode playmode');
     }
 
     if (app.game.is_editing) {
@@ -151,14 +154,14 @@ requirejs({locale: navigator.language}, [
   app.$fab.on('touchstart click', function (event) {
     event.stopPropagation();
     event.preventDefault();
-    if (app.$body.hasClass('error')) {
+    if (app.$html.hasClass('error')) {
       $messages_parse.toggleClass('visible');
     } else {
       app.toggle_edit_mode();
     }
   }).mouseover(function () {
     app.$fab.attr('title',
-      app.$body.hasClass('error') ? t.ShowHide_Errors :
+      app.$html.hasClass('error') ? t.ShowHide_Errors :
         app.game.is_editing ? t.Play_Mode : t.Edit_Mode
     );
   });
@@ -261,10 +264,10 @@ requirejs({locale: navigator.language}, [
   }
 
   app.$window.on('error:parse', function () {
-    app.$body.addClass('error');
+    app.$html.addClass('error');
     app.toggle_edit_mode(true);
   }).on('clear:error:parse', function () {
-    app.$body.removeClass('error');
+    app.$html.removeClass('error');
   });
 
 
@@ -307,7 +310,7 @@ requirejs({locale: navigator.language}, [
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
   bililiteRange(app.$ptn[0]).undo(0);
 
-  if (location.hash && !app.$body.hasClass('error')) {
+  if (location.hash && !app.$html.hasClass('error')) {
     app.toggle_edit_mode(false);
   }
   app.$viewer.afterTransition();

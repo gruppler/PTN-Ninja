@@ -21,13 +21,14 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 ## Hotkeys
 #### Global
-| Key                            | Action                                 |
-| ------------------------------ | -------------------------------------- |
-| <kbd>Esc</kbd>                 | Toggle between Play Mode and Edit Mode |
-| <kbd>Ctrl</kbd> + <kbd>s</kbd> | Download .ptn file                     |
-| <kbd>Ctrl</kbd> + <kbd>o</kbd> | Open .ptn file                         |
-| <kbd>Ctrl</kbd> + <kbd>d</kbd> | Load default PTN                       |
-| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd> | Load sample PTN     |
+| Key                            | Action                                     |
+| ------------------------------ | ------------------------------------------ |
+| <kbd>Esc</kbd>                 | Toggle Menu                                |
+| <kbd>Ctrl</kbd> + <kbd>Space</kbd> | Toggle between Play Mode and Edit Mode |
+| <kbd>Ctrl</kbd> + <kbd>s</kbd> | Download .ptn file                         |
+| <kbd>Ctrl</kbd> + <kbd>o</kbd> | Open .ptn file                             |
+| <kbd>Ctrl</kbd> + <kbd>d</kbd> | Load default PTN                           |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd> | Load sample PTN         |
 
 #### Edit Mode
 | Key                                               | Action |
@@ -38,7 +39,7 @@ The **share** menu in the upper-right corner allows you to do the following:
 #### Play Mode
 | Key                                 | Action        |
 | ----------------------------------- | ------------- |
-| <kbd>Spacebar</kbd>                 | Play/Pause    |
+| <kbd>Space</kbd>                    | Play/Pause    |
 | <kbd>&uarr;</kbd>                   | Previous Move |
 | <kbd>&darr;</kbd>                   | Next Move     |
 | <kbd>&larr;</kbd>                   | Previous Ply  |

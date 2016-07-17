@@ -30,10 +30,10 @@ $stone-thickness: 0.3vmin;
     transition: all $time-smooth $natural;
   }
 
-  body.playmode & {
+  html.playmode & {
     top: calc(#{$edge} + 50% - #{50vmin - $top-margin} + 0.5em);
   }
-  body.playmode:not(.ptn) & {
+  html.playmode:not(.ptn) & {
     right: calc(1em + 50% - #{50vmin - $top-margin/2} + #{($edge*3 + $button-height) / 2});
     z-index: 1;
   }
@@ -82,7 +82,7 @@ $stone-thickness: 0.3vmin;
       background-color: $accent-color;
       transition: opacity $time-smooth $natural;
     }
-    body.editmode &.active:before {
+    html.editmode &.active:before {
       opacity: 0.65;
     }
 
@@ -288,7 +288,7 @@ $stone-thickness: 0.3vmin;
     justify-content: space-around;
     transition: color $time-smooth $natural;
 
-    body.editmode & {
+    html.editmode & {
       color: $primary-color-200;
     }
 

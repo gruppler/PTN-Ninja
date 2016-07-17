@@ -1,0 +1,43 @@
+.slideout-menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 0;
+  width: 256px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: none;
+}
+
+.slideout-open,
+.slideout-open body,
+.slideout-open #panel {
+  overflow: hidden;
+}
+
+.slideout-open .slideout-menu {
+  display: block;
+}
+
+#app {
+  will-change: transform;
+}
+
+#menu-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-top: $edge/2;
+  padding-left: $edge;
+  color: $primary-color-text;
+  box-shadow: none;
+  text-shadow: 0 0 0.25em $primary-color-800;
+  z-index: 1;
+}
+
+#menu {
+  background: $primary-color-900;
+  box-shadow: inset -16px 0 24px 2px rgba(0,0,0,0.14), inset -6px 0 30px 5px rgba(0,0,0,0.12), inset -8px 0 10px -5px rgba(0,0,0,0.4);
+}

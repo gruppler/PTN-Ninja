@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="playmode">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -32,7 +32,10 @@
     <link rel="stylesheet" href="css/style.css" charset="utf-8">
     <script data-main="js/app" src="js/require.js" charset="utf-8"></script>
   </head>
-  <body class="playmode">
+  <body>
+
+    <nav id="menu"></nav>
+
     <div id="app">
 
       <div id="viewer"></div>
@@ -62,9 +65,12 @@
         </div>
       </div>
 
+      <div id="messages"></div>
+
+      <button id="menu-button"><i class="icon-menu"></i></button>
+
     </div>
 
-    <div id="messages"></div>
 
     <div id="fab" class="fab cta">
       <i class="icon-play"></i>

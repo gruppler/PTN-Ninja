@@ -16,6 +16,7 @@
     'nls': '../app/nls',
     'lodash': 'lodash.min',
     'jquery': 'jquery.min',
+    'slideout': 'slideout.min',
     'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min'
   }

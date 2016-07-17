@@ -7,7 +7,7 @@
   > div {
     position: absolute;
     top: -0.5em;
-    left: 0;
+    left: $button-height;
     padding: $edge;
     overflow: auto;
     max-height: 100%;
@@ -24,7 +24,7 @@
   }
 
   .messages-parse.visible,
-  body.playmode & .messages-board {
+  html.playmode & .messages-board {
     transform: translateX(0);
     opacity: 1;
   }

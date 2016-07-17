@@ -346,14 +346,14 @@ define([
     if (this.do_ply() && this.game.plys[this.ply]) {
       this.play_timer = setInterval(_.bind(this.do_ply, this), 6e4/config.play_speed);
       this.is_playing = true;
-      $('body').addClass('playing');
+      app.$html.addClass('playing');
     }
   };
 
   Board.prototype.pause = function () {
     clearInterval(this.play_timer);
     this.is_playing = false;
-    $('body').removeClass('playing');
+    app.$html.removeClass('playing');
   };
 
   Board.prototype.playpause = function (event) {
