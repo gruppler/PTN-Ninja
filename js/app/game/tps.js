@@ -62,7 +62,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<% } %>'+
     '<%=this.space2%>'+
     '<% if (this.move) { %>'+
-      '<span class="move"><i class="icon-round"></i><%=this.move%></span>'+
+      '<span class="move"><i class="icon-move"></i><%=this.move%></span>'+
     '<% } %>'+
     '<span class="invalid">'+
       '<%=this.suffix.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
