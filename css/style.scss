@@ -227,9 +227,10 @@
 #share-menu {
   position: absolute;
   top: 0;
-  right: 0;
+  right: $edge;
   width: $fab-height-small;
   padding: $edge;
+  padding-right: 0;
   overflow: visible;
   z-index: 1;
 
