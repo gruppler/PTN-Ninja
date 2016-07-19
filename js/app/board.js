@@ -491,6 +491,12 @@ define([
     this.pause();
     this.defer_render = true;
 
+    if (ply_id < 0) {
+      do_ply = false;
+    } else if (ply_id >= this.game.plys.length) {
+      do_ply = true;
+    }
+
     ply_id = Math.min(this.game.plys.length - 1, Math.max(0, ply_id));
 
     while (this.ply_id < ply_id && this.do_ply()) {
