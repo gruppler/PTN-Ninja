@@ -24,12 +24,16 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     .on('click', 'i.icon-x', remove_message)
     .on('remove', remove_message);
 
-  Messages = function(group) {
+  Messages = function(group, is_visible) {
     this.enabled = true;
     this.group = group || 'general';
     this.$messages = $messages.children('.messages-'+group);
     if (!this.$messages.length) {
       this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+    }
+
+    if (is_visible) {
+      this.$messages.addClass('visible');
     }
 
     return this;

@@ -5,12 +5,13 @@
 'use strict';
 
 define([
+  'app/config',
   'i18n!nls/main',
   'lodash',
   'jquery',
   'slideout',
   'domReady!'
-], function (t, _, $, Slideout) {
+], function (config, t, _, $, Slideout) {
 
   var $panel = $('#app')
     , $menu = $('#menu')

@@ -27,7 +27,8 @@ requirejs({locale: navigator.language}, [
     , simulator = new Board()
 
     , $messages_parse = $('.messages-parse')
-    , m = new Messages('general')
+    , $messages_board = $('.messages-board')
+    , m = new Messages('general', true)
 
     , d = new Date()
     , today = d.getFullYear() +'.'+
@@ -126,6 +127,16 @@ requirejs({locale: navigator.language}, [
     app.$ptn.attr('contenteditable', app.game.is_editing);
   };
 
+  app.toggle_parse_errors = function () {
+    $messages_parse.toggleClass('visible');
+    config.set('show_parse_errors', !config.show_parse_errors);
+  };
+
+  app.toggle_annotations = function () {
+    $messages_board.toggleClass('visible');
+    config.set('show_annotations', !config.show_annotations);
+  };
+
   app.read_file = function (file) {
     if (file && /\.ptn$|\.txt$/i.test(file.name)) {
       var reader = new FileReader();
@@ -155,7 +166,7 @@ requirejs({locale: navigator.language}, [
     event.stopPropagation();
     event.preventDefault();
     if (app.$html.hasClass('error')) {
-      $messages_parse.toggleClass('visible');
+      app.toggle_parse_errors();
     } else {
       app.toggle_edit_mode();
     }

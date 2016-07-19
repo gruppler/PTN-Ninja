@@ -150,6 +150,10 @@ define([], function () {
 
       'ArrowUp': function (event, $focus, $parent) {
         app.board.prev_move(event);
+      },
+
+      'a': function (event, $focus, $parent) {
+        app.toggle_annotations();
       }
 
     }

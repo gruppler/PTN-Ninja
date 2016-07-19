@@ -5,7 +5,33 @@
 'use strict';
 
 define(['lodash'], function (_) {
-  return {
-    play_speed: 40
+
+  var config = {
+
+    defaults: {
+      play_speed: 40,
+      show_parse_errors: false,
+      show_annotations: true
+    },
+
+    set: function (key, value) {
+      this[key] = value;
+      localStorage[key] = JSON.stringify(value);
+    },
+
+    load: function () {
+      var key, stored;
+
+      for (var key in this.defaults) {
+        stored = localStorage[key];
+        this[key] = stored ? JSON.parse(stored) : this.defaults[key];
+      }
+    }
+
   };
+
+  config.load();
+
+  return config;
+
 });

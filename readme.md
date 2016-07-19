@@ -37,15 +37,16 @@ The **share** menu in the upper-right corner allows you to do the following:
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd> | Redo   |
 
 #### Play Mode
-| Key                                 | Action        |
-| ----------------------------------- | ------------- |
-| <kbd>Space</kbd>                    | Play/Pause    |
-| <kbd>&uarr;</kbd>                   | Previous Move |
-| <kbd>&darr;</kbd>                   | Next Move     |
-| <kbd>&larr;</kbd>                   | Previous Ply  |
-| <kbd>&rarr;</kbd>                   | Next Ply      |
-| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply     |
-| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply      |
+| Key                                 | Action             |
+| ----------------------------------- | ------------------ |
+| <kbd>Space</kbd>                    | Play/Pause         |
+| <kbd>&uarr;</kbd>                   | Previous Move      |
+| <kbd>&darr;</kbd>                   | Next Move          |
+| <kbd>&larr;</kbd>                   | Previous Ply       |
+| <kbd>&rarr;</kbd>                   | Next Ply           |
+| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply          |
+| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply           |
+| <kbd>a</kbd>                        | Toggle Annotations |
 
 
 

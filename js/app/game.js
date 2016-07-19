@@ -5,6 +5,7 @@
 'use strict';
 
 define([
+  'app/config',
   'app/game/tag',
   'app/game/move',
   'app/game/comment',
@@ -13,7 +14,7 @@ define([
   'i18n!nls/main',
   'lodash',
   'lzstring',
-], function (Tag, Move, Comment, r, Messages, t, _) {
+], function (config, Tag, Move, Comment, r, Messages, t, _) {
 
   var compress = LZString.compressToEncodedURIComponent
     , decompress = LZString.decompressFromEncodedURIComponent;
@@ -172,7 +173,7 @@ define([
     return output;
   };
 
-  Game.prototype.m = new Messages('parse');
+  Game.prototype.m = new Messages('parse', config.show_parse_errors);
 
   Game.prototype.print_invalid = _.template(
     '<span class="invalid">'+

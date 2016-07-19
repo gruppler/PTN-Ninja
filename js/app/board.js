@@ -5,13 +5,13 @@
 'use strict';
 
 define([
+  'app/config',
   'app/board/piece',
   'app/board/square',
-  'app/config',
   'app/messages',
   'i18n!nls/main',
   'lodash'
-], function (Piece, Square, config, Messages, t, _) {
+], function (config, Piece, Square, Messages, t, _) {
 
   var Board = function (game) {
     this.ply_id = 0;
@@ -569,7 +569,7 @@ define([
     )
   };
 
-  Board.prototype.m = new Messages('board');
+  Board.prototype.m = new Messages('board', config.show_annotations);
   Board.prototype.m_parse = new Messages('parse');
   Board.prototype.comment = _.ary(_.bind(
     Board.prototype.m.comment, Board.prototype.m
