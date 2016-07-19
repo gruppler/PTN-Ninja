@@ -48,10 +48,12 @@ define([
     this.comments4 = Comment.parse(parts[8]);
 
     if (parts[3]) {
-      this.ply1 = new Ply(parts[3], first_player, game);
+      this.ply1 = new Ply(parts[3], first_player, game, this);
+      this.ply1.turn = 1 ;
       if (this.ply1.is_nop) {
         second_player = first_player;
         this.ply1.player = first_player - 1 || 2;
+        this.ply1.turn = 2 ;
       }
     } else {
       this.ply1 = null;
@@ -67,8 +69,9 @@ define([
     }
 
     if (parts[5]) {
-      this.ply2 = new Ply(parts[5], second_player, game);
+      this.ply2 = new Ply(parts[5], second_player, game, this);
       this.ply2.comments = _.map(this.comments3, 'text');
+      this.ply2.turn = 2;
     } else {
       this.ply2 = null;
     }

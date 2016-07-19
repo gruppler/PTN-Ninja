@@ -14,7 +14,9 @@ define([
 ], function (Piece, Square, config, Messages, t, _) {
 
   var Board = function (game) {
-    this.ply = 0;
+    this.ply_id = 0;
+    this.ply_is_done = false;
+    this.comments_ply_id = -2;
     this.size = 5;
     this.squares = {};
     this.rows = [];
@@ -33,17 +35,29 @@ define([
   };
 
   Board.prototype.on_init = function (fn) {
-    this.init_callbacks.push(fn);
+    if (fn) {
+      this.init_callbacks.push(fn);
+    } else {
+      _.invokeMap(this.init_callbacks, 'call', this, this);
+    }
+
     return this;
   };
 
   Board.prototype.on_ply = function (fn) {
-    this.ply_callbacks.push(fn);
+    if (fn) {
+      this.ply_callbacks.push(fn);
+    } else {
+      _.invokeMap(this.ply_callbacks, 'call', this, this.game.plys[this.ply_id]);
+    }
+
     return this;
   };
 
   Board.prototype.clear = function () {
-    this.ply = 0;
+    this.ply_id = 0;
+    this.ply_is_done = false;
+    this.comments_ply_id = -2;
     this.squares = {};
     this.all_pieces = [];
     this.flat_score[1] = 0;
@@ -69,7 +83,6 @@ define([
       , a = 'a'.charCodeAt(0);
 
     if (silent !== true) {
-      _.invokeMap(this.callbacks_start, 'call', this, this);
       this.m.clear(false, true);
       this.pause();
     }
@@ -80,7 +93,8 @@ define([
     this.piece_counts = _.clone(app.piece_counts[this.size]);
     this.tps = game.config.tps && game.config.tps.is_valid ? game.config.tps : undefined;
 
-    this.saved_ply = this.ply;
+    this.saved_ply_id = this.ply_id;
+    this.saved_ply_is_done = this.ply_is_done;
     this.clear();
 
     if (!this.piece_counts) {
@@ -134,7 +148,7 @@ define([
 
     if (silent !== true) {
       this.defer_render = false;
-      _.invokeMap(this.init_callbacks, 'call', this, this);
+      this.on_init();
     }
 
     return true;
@@ -142,12 +156,13 @@ define([
 
   Board.prototype.validate = function (game) {
     this.init(game, true);
-    this.go_to_ply(game.plys.length, true);
+    this.go_to_ply(game.plys.length, true, true);
     this.clear();
   };
 
   Board.prototype.to_tps = function () {
-    var squares = []
+    var ply = this.game.plys[this.ply_id] || this.game.plys[this.ply_id - 1]
+      , squares = []
       , i, j;
 
     for (i = 0; i < this.size; i++) {
@@ -159,21 +174,22 @@ define([
     }
     squares = squares.join('/');
 
-    squares = squares.replace(/x(\d?),x/g, function (count) {
-      if (count) {
-        return 'x'+(count + 1);
-      } else {
-        return 'x2';
-      }
+    squares = squares.replace(/x((?:,x)+)/g, function (spaces) {
+      return 'x'+(1 + spaces.length)/2;
     });
 
-    return squares + ' ' +this.game.player+ ' ' + this.game.moves.length + 1;
+    return squares + ' ' +
+      (this.ply_id == this.game.plys.length ? ply.turn - 1 || 2 : ply.turn) +
+      ' ' +
+      (ply.move.id + 1 + 1*(ply.turn == 2));
   };
 
   Board.prototype.render = function () {
     this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
+    this.$ply1 = this.$view.find('.scores .player1 .ptn');
+    this.$ply2 = this.$view.find('.scores .player2 .ptn');
     this.$score1 = this.$view.find('.scores .player1 .score');
     this.$score2 = this.$view.find('.scores .player2 .score');
 
@@ -188,18 +204,47 @@ define([
       'render'
     );
 
-    this.go_to_ply(this.saved_ply || 0);
+    this.go_to_ply(
+      _.isUndefined(this.saved_ply_id) ? 0 : this.saved_ply_id,
+      this.saved_ply_is_done
+    );
 
     return this.$view;
   };
 
-  Board.prototype.update = function() {
+  Board.prototype.update_view = function() {
     _.invokeMap(
       _.filter(this.all_pieces, { needs_updated: true }),
       'render'
     );
 
     this.update_scores();
+    this.on_ply();
+  };
+
+  Board.prototype.update_plys = function(current_ply) {
+    var ply1, ply2;
+
+    this.$ply2.removeClass('active');
+    this.$ply1.removeClass('active');
+
+    if (current_ply) {
+      ply1 = current_ply.move.ply1;
+      ply2 = current_ply.move.ply2;
+    }
+
+    if (ply1) {
+      this.$ply1.html(ply1.print());
+      if (ply1 == current_ply) {
+        this.$ply1.addClass('active');
+      }
+    }
+    if (ply2) {
+      this.$ply2.html(ply2.print());
+      if (ply2 == current_ply) {
+        this.$ply2.addClass('active');
+      }
+    }
   };
 
   Board.prototype.update_scores = function() {
@@ -210,27 +255,21 @@ define([
   Board.prototype.do_ply = function () {
     var ply, square, piece, ply_result;
 
-    if (this.ply >= this.game.plys.length || this.ply < 0) {
+    if (this.ply_is_done) {
+      return true;
+    }
+
+    if (this.ply_id >= this.game.plys.length || this.ply_id < 0) {
       return false;
     }
 
-    ply = this.game.plys[this.ply++];
+    ply = this.game.plys[this.ply_id];
     square = this.squares[ply.square];
 
     if (ply.is_illegal) {
       this.pause();
-      this.ply -= 1;
       return false;
     }
-
-    if (this.ply == 0) {
-      this.show_comments(0);
-    } else {
-      this.show_comments(ply);
-    }
-
-    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
-
 
     if (ply.is_nop) {
       ply_result = true;
@@ -240,9 +279,13 @@ define([
       ply_result = square.place(ply);
     }
 
-    this.set_active_squares(ply.squares);
+    this.ply_is_done = true;
 
-    if (this.ply == this.game.plys.length) {
+    if (!this.defer_render) {
+      this.on_ply();
+    }
+
+    if (ply.is_last) {
       this.pause();
     }
 
@@ -250,42 +293,39 @@ define([
   };
 
   Board.prototype.undo_ply = function () {
-    var ply, square, piece;
+    var ply, square, piece, ply_result;
 
-    if (this.ply > this.game.plys.length || this.ply <= 0) {
+    if (!this.ply_is_done) {
+      return true;
+    }
+
+    if (this.ply_id > this.game.plys.length || this.ply_id < 0) {
       return false;
     }
 
-    ply = this.game.plys[--this.ply];
+    ply = this.game.plys[this.ply_id];
     square = this.squares[ply.square];
 
-    if (ply.is_illegal) {
-      this.ply += 1;
-      return false;
-    }
-
-    if (this.ply == 0) {
-      this.show_comments(0);
-      this.set_active_squares(ply.squares);
-    } else {
-      this.show_comments(this.game.plys[this.ply - 1]);
-      this.set_active_squares(this.game.plys[this.ply - 1].squares);
-    }
-
-    _.invokeMap(this.ply_callbacks, 'call', this, this.ply - 1);
-
     if (ply.is_nop) {
-      return true;
+      ply_result = true;
     } else if (ply.is_slide) {
-      return square.undo_slide(ply);
+      ply_result = square.undo_slide(ply);
     } else {
-      return square.undo_place(ply);
+      ply_result = square.undo_place(ply);
     }
+
+    this.ply_is_done = false;
+
+    if (!this.defer_render) {
+      this.on_ply();
+    }
+
+    return ply_result;
   };
 
   Board.prototype.illegal_ply = function (ply) {
     this.m_parse.error(
-      t.error.illegal_ply({ ply: ply.ply })
+      t.error.illegal_ply({ ply: ply.text })
     );
     ply.is_illegal = true;
     return false;
@@ -303,30 +343,42 @@ define([
   Board.prototype.set_active_squares = function (squares) {
     if (this.$view) {
       this.$squares.children().removeClass('active');
-      _.invokeMap(squares, 'set_active');
+      if (squares) {
+        _.invokeMap(squares, 'set_active');
+      }
     }
   };
 
   Board.prototype.show_comments = function (ply) {
     var result = this.game.config.result;
 
-    this.m.clear(false, true);
-
-    if (ply === 0) {
-      if (this.game.comments) {
-        _.map(this.game.comments, this.comment);
-      }
-    }
-
-    if (!ply || this.defer_render) {
+    if (
+      this.defer_render ||
+      ply && ply.id == this.comments_ply_id && ply.id > 0 ||
+      (this.comments_ply_id == -1 && !this.ply_is_done)
+    ) {
       return;
     }
 
-    if (ply && ply.evaluation && /['"]/.test(ply.evaluation)) {
+    this.m.clear(false, true);
+
+    if (!ply) {
+      return;
+    }
+
+    if (ply.is_first && !this.ply_is_done && this.game.comments) {
+      _.map(this.game.comments, this.comment);
+      this.comments_ply_id = -1;
+      return;
+    }
+
+    this.comments_ply_id = ply.id;
+
+    if (ply.evaluation && /['"]/.test(ply.evaluation)) {
       this.m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
     }
 
-    if (ply && ply.evaluation && /[!?]/.test(ply.evaluation)) {
+    if (ply.evaluation && /[!?]/.test(ply.evaluation)) {
       this.comment(ply.evaluation.replace(/[^!?]/g, ''));
     }
 
@@ -343,8 +395,8 @@ define([
   };
 
   Board.prototype.play = function () {
-    if (this.do_ply() && this.game.plys[this.ply]) {
-      this.play_timer = setInterval(_.bind(this.do_ply, this), 6e4/config.play_speed);
+    if (this.do_ply() && this.game.plys[this.ply_id]) {
+      this.play_timer = setInterval(this.next, 6e4/config.play_speed);
       this.is_playing = true;
       app.$html.addClass('playing');
     }
@@ -373,20 +425,30 @@ define([
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+
+      this.pause();
     }
 
-    this.pause();
     this.undo_ply();
+    if (this.ply_id) {
+      this.ply_id--;
+      this.ply_is_done = true;
+    }
   };
 
   Board.prototype.next = function (event) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+
+      this.pause();
     }
 
-    this.pause();
-    this.do_ply();
+    if (this.ply_is_done && this.ply_id < this.game.plys.length - 1) {
+      this.ply_id++;
+      this.ply_is_done = false;
+    }
+    return this.do_ply();
   };
 
   Board.prototype.prev_move = function (event) {
@@ -395,8 +457,7 @@ define([
       event.preventDefault();
     }
 
-    this.pause();
-    this.go_to_ply(this.ply + 2);
+    this.go_to_ply(this.ply_id - 2, this.ply_is_done && this.ply_id > 1);
   };
 
   Board.prototype.next_move = function (event) {
@@ -405,8 +466,7 @@ define([
       event.preventDefault();
     }
 
-    this.pause();
-    this.go_to_ply(this.ply - 2);
+    this.go_to_ply(this.ply_id + 2, this.ply_is_done);
   };
 
   Board.prototype.first = function (event) {
@@ -415,8 +475,7 @@ define([
       event.preventDefault();
     }
 
-    this.pause();
-    this.go_to_ply(0);
+    this.go_to_ply(0, false);
   };
 
   Board.prototype.last = function (event) {
@@ -425,31 +484,33 @@ define([
       event.preventDefault();
     }
 
-    this.pause();
-    this.go_to_ply(this.game.plys.length);
+    this.go_to_ply(this.game.plys.length, true);
   };
 
-  Board.prototype.go_to_ply = function (ply, is_silent) {
+  Board.prototype.go_to_ply = function (ply_id, do_ply, is_silent) {
+    this.pause();
     this.defer_render = true;
-    if (ply > this.ply) {
-      while (this.ply < ply && this.do_ply()) {}
-    } else if (ply < this.ply) {
-      while (this.ply > ply && this.undo_ply()) {}
+
+    ply_id = Math.min(this.game.plys.length - 1, Math.max(0, ply_id));
+
+    while (this.ply_id < ply_id && this.do_ply()) {
+      this.ply_id++;
+      this.ply_is_done = false;
+    }
+    while (this.ply_id > ply_id && this.undo_ply()) {
+      this.ply_id--;
+      this.ply_is_done = true;
+    }
+
+    if (do_ply) {
+      this.do_ply();
+    } else {
+      this.undo_ply();
     }
 
     if (is_silent !== true) {
       this.defer_render = false;
-
-      if (ply <= 0) {
-        this.show_comments(0);
-        if (this.$view) {
-          this.$squares.children().removeClass('active');
-        }
-      } else {
-        this.show_comments(this.game.plys[this.ply - 1]);
-      }
-
-      this.update();
+      this.update_view();
     }
   };
 
@@ -487,10 +548,12 @@ define([
         '<div class="scores">'+
           '<span class="player1">'+
             '<span class="name"><%=game.config.player1%></span>'+
+            '<span class="ptn"></span>'+
             '<span class="score"><%=flat_score[1]%></span>'+
           '</span>'+
           '<span class="player2">'+
             '<span class="score"><%=flat_score[2]%></span>'+
+            '<span class="ptn"></span>'+
             '<span class="name"><%=game.config.player2%></span>'+
           '</span>'+
         '</div>'+

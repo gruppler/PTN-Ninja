@@ -28,8 +28,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     return this;
   };
 
-  Piece.to_tps = function () {
-    return _.map(this.captives, 'player').join('')
+  Piece.prototype.to_tps = function () {
+    return _.map(this.captives, 'player').reverse().join('')
       + this.player
       + (this.stone == 'F' ? '' : this.stone);
   };

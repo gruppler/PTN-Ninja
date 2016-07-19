@@ -33,12 +33,22 @@ define([
   };
 
   Game.prototype.on_parse_start = function (fn) {
-    this.callbacks_start.push(fn);
+    if (fn) {
+      this.callbacks_start.push(fn);
+    } else {
+      _.invokeMap(this.callbacks_start, 'call', this, this);
+    }
+
     return this;
   };
 
   Game.prototype.on_parse_end = function (fn) {
-    this.callbacks_end.push(fn);
+    if (fn) {
+      this.callbacks_end.push(fn);
+    } else {
+      _.invokeMap(this.callbacks_end, 'call', this, this);
+    }
+
     return this;
   };
 
@@ -65,7 +75,7 @@ define([
       this.ptn_compressed = compress(input);
     }
 
-    _.invokeMap(this.callbacks_start, 'call', this, this);
+    this.on_parse_start();
 
     this.is_valid = true;
     this.result = null;
@@ -113,6 +123,7 @@ define([
     if (body) {
       for (var i = 0; i < body.length; i++) {
         this.moves[i] = new Move(body[i], this);
+        this.moves[i].id = this.get_linenum() - 2;
 
         if (this.moves[i].ply1) {
           this.moves[i].ply1.id = this.plys.length;
@@ -137,7 +148,7 @@ define([
 
     this.simulator.validate(this);
 
-    _.invokeMap(this.callbacks_end, 'call', this, this);
+    this.on_parse_end();
 
     return true;
   };

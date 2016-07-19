@@ -6,9 +6,11 @@
 
 define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
-  var Ply = function (string, player, game) {
+  var Ply = function (string, player, game, move) {
     var ply_group = string.match(r.grammar.ply_grouped)
       , parts;
+
+    this.move = move;
 
     this.is_nop = false;
     this.is_illegal = false;
@@ -20,12 +22,12 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
       ply_group = string.match(r.grammar.nop_grouped)
       this.prefix = ply_group[1];
-      this.ply = ply_group[2];
+      this.text = ply_group[2];
 
       if (!game.config.tps || game.config.tps.player == 1) {
-        game.m.error(t.error.invalid_ply({ply: this.ply}));
+        game.m.error(t.error.invalid_ply({ply: this.text}));
         this.is_illegal = true;
-        this.text = this.prefix + this.ply;
+        this.text = this.prefix + this.text;
         this.print = game.print_invalid;
       }
 
@@ -41,7 +43,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.print = this.print_slide;
       this.is_slide = true;
       this.player = player;
-      this.ply = ply_group[2];
+      this.text = ply_group[2];
       this.count_text = parts[1] || '';
       this.count = 1*this.count_text || 1;
       this.col = parts[2][0];
@@ -55,7 +57,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.stone_text = parts[5] || '';
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
-        game.m.error(t.error.invalid_ply({ply: this.ply}));
+        game.m.error(t.error.invalid_ply({ply: this.text}));
         this.is_illegal = true;
       }
     } else if (ply_group[3]) {
@@ -65,7 +67,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.print = this.print_place;
       this.is_slide = false;
       this.player = player;
-      this.ply = ply_group[3];
+      this.text = ply_group[3];
       this.stone_text = parts[1] || '';
       this.stone = this.stone_text || 'F';
       this.true_stone = this.stone == 'C' ? this.stone : 'F';
@@ -99,7 +101,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_place = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-ply="<%=this.id%>">'+
+    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -113,7 +115,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_slide = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-ply="<%=this.id%>">'+
+    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+
@@ -132,8 +134,8 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_nop = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply nop" data-ply="<%=this.id%>">'+
-      '<%=this.ply%>'+
+    '<span class="ply nop" data-id="<%=this.id%>">'+
+      '<%=this.text%>'+
     '</span>'
   );
 

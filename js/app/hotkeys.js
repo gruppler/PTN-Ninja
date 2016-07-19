@@ -145,11 +145,11 @@ define([], function () {
       },
 
       'ArrowDown': function (event, $focus, $parent) {
-        app.board.prev_move(event);
+        app.board.next_move(event);
       },
 
       'ArrowUp': function (event, $focus, $parent) {
-        app.board.next_move(event);
+        app.board.prev_move(event);
       }
 
     }

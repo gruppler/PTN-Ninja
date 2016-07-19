@@ -130,7 +130,7 @@ requirejs({locale: navigator.language}, [
     if (file && /\.ptn$|\.txt$/i.test(file.name)) {
       var reader = new FileReader();
       reader.onload = function (event) {
-        app.board.ply = 0;
+        app.board.ply_id = 0;
         app.game.parse(event.target.result);
         bililiteRange(app.$ptn[0]).undo(0);
         location.hash = app.game.ptn_compressed;
@@ -196,9 +196,19 @@ requirejs({locale: navigator.language}, [
 
   app.board.on_init(function () {
     app.$viewer.empty().append(app.board.render());
-  }).on_ply(function (ply) {
-    app.$ptn.find('.ply').removeClass('active')
-      .filter('[data-ply="'+ply+'"]').addClass('active');
+  });
+
+  app.board.on_ply(function (ply) {
+    if (app.$ptn.$ply && app.$ptn.$ply.length) {
+      app.$ptn.$ply.removeClass('active');
+    }
+    app.$ptn.$ply = ply ?
+      app.$ptn.find('[data-id="'+ply.id+'"]:first').addClass('active') :
+      null;
+
+    app.board.show_comments(ply);
+    app.board.update_plys(ply);
+    app.board.set_active_squares(ply ? ply.squares : null);
   });
 
   $('#controls button.first')
@@ -257,7 +267,7 @@ requirejs({locale: navigator.language}, [
       event.preventDefault();
       event.stopPropagation();
     }).on('hashchange', function () {
-      app.board.ply = 0;
+      app.board.ply_id = 0;
       app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
       bililiteRange(app.$ptn[0]).undo(0);
     });
@@ -306,7 +316,6 @@ requirejs({locale: navigator.language}, [
     return app.game.parse(app.$ptn.text());
   });
 
-  app.board.ply = 0;
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
   bililiteRange(app.$ptn[0]).undo(0);
 
@@ -344,13 +353,13 @@ requirejs({locale: navigator.language}, [
 
     if (app.game.is_editing) {
       var $focus = $(getSelection().focusNode).parent()
-        , ply, $squares;
+        , ply_id, $squares;
 
       $focus = $focus.add($focus.next());
 
-      ply = $focus.closest('.ply').data('ply');
-      if (!_.isUndefined(ply)) {
-        app.board.go_to_ply(ply + 1);
+      ply_id = $focus.closest('.ply').data('id');
+      if (!_.isUndefined(ply_id)) {
+        app.board.go_to_ply(ply_id, true);
       } else if ($focus.closest('.tps.value').length) {
         $square = $focus.closest('.square');
 
@@ -371,10 +380,10 @@ requirejs({locale: navigator.language}, [
           }
         }
 
-        app.board.go_to_ply(0);
+        app.board.go_to_ply(0, false);
         app.board.set_active_squares(squares);
       } else if ($focus.closest('.header').length) {
-        app.board.go_to_ply(0);
+        app.board.go_to_ply(0, false);
       }
     }
   });

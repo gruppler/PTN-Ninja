@@ -239,7 +239,7 @@ $stone-thickness: 0.3vmin;
     right: 0;
     display: flex;
 
-    .player1, .player2 {
+    > .player1,> .player2 {
       display: flex;
       width: 50%;
       border-radius: $stone-thickness;
@@ -250,6 +250,11 @@ $stone-thickness: 0.3vmin;
       padding: 0.1em 0.25em;
     }
 
+    .score {
+      width: 1.25em;
+      @include unselectable;
+    }
+
     .name {
       flex-grow: 1;
       overflow: hidden;
@@ -257,12 +262,50 @@ $stone-thickness: 0.3vmin;
       white-space: nowrap;
     }
 
-    .player1 {
-      background-color: $primary-color-100;
-      color: $primary-color-700;
+    .ptn, .score {
+      flex-grow: 0;
+      flex-shrink: 0;
     }
 
-    .player2 {
+    .ptn {
+      .space {
+        display: none;
+      }
+
+      .ply {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        padding: 0 0.2em;
+
+        &.player1 {
+          background: $primary-color-300;
+        }
+        &.player2 {
+          background: $primary-color-800;
+        }
+      }
+
+      &.active {
+        .ply {
+          &.player1 {
+            box-shadow: 0 0 0 0.15em $primary-color-50;
+          }
+          &.player2 {
+            box-shadow: 0 0 0 0.15em $primary-color-900;
+          }
+        }
+      }
+    }
+
+    > .player1 {
+      background-color: $primary-color-100;
+      color: $primary-color-700;
+
+      .score {
+        text-align: right;
+      }
+    }
+
+    > .player2 {
       background-color: $primary-color-700;
       color: $primary-color-100;
 
@@ -287,6 +330,7 @@ $stone-thickness: 0.3vmin;
     display: flex;
     justify-content: space-around;
     transition: color $time-smooth $natural;
+    @include unselectable;
 
     html.editmode & {
       color: $primary-color-200;
