@@ -355,7 +355,7 @@ define([
     if (
       this.defer_render ||
       ply && ply.id == this.comments_ply_id && ply.id > 0 ||
-      (this.comments_ply_id == -1 && !this.ply_is_done)
+      (ply.id == 0 && this.comments_ply_id == -1 && !this.ply_is_done)
     ) {
       return;
     }
