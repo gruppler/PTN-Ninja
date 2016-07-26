@@ -32,9 +32,10 @@ define([
   var Tag = function (string, game) {
     var parts = string.match(r.grammar.tag_grouped);
 
+    this.text = string;
+
     if (!parts) {
       game.is_valid = false;
-      this.text = string;
       this.print = game.print_invalid;
       game.m.error(t.error.invalid_tag({tag: _.truncate(string, {length: 5})}));
       return this;
@@ -94,6 +95,10 @@ define([
 
   Tag.prototype.print_value = function () {
     return ''+this.value;
+  };
+
+  Tag.prototype.print_text = function () {
+    return this.text;
   };
 
   return Tag;

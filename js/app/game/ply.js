@@ -139,6 +139,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '</span>'
   );
 
+  Ply.prototype.print_text = function () {
+    return this.prefix + this.text;
+  };
+
   return Ply;
 
 });

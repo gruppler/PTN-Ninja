@@ -7,17 +7,18 @@
 define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   var Messages, $messages;
 
-  var $window = $(window)
-    , $body = $('body');
+  var tpl = {
+    message: _.template(
+      '<div class="message <%=type%>">'+
+        '<div class="content">'+
+          '<i class="icon-<%=icon%>"></i><%=message%>'+
+          '<i class="icon-x"></i>'+
+        '</div>'+
+      '</div>'
+    ),
 
-  var template = _.template(
-    '<div class="message <%=type%>">'+
-      '<div class="content">'+
-        '<i class="icon-<%=icon%>"></i><%=message%>'+
-        '<i class="icon-x"></i>'+
-      '</div>'+
-    '</div>'
-  );
+    group: _.template('<div class="messages-<%=group%>">')
+  };
 
   $messages = $('#messages');
   $messages
@@ -29,7 +30,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     this.group = group || 'general';
     this.$messages = $messages.children('.messages-'+group);
     if (!this.$messages.length) {
-      this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+      this.$messages = $(tpl.group({group: group})).appendTo($messages);
     }
 
     if (is_visible) {
@@ -40,7 +41,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.add = function (message, seconds, group, type, icon) {
-    var $message = $(template({
+    var $message = $(tpl.message({
       type: type,
       icon: icon || type,
       group: group || this.group,
@@ -51,8 +52,8 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     $message.height();
     $message.removeClass('animating');
 
-    $window.trigger(type+':'+(group || this.group));
-    $window.trigger(type);
+    app.$window.trigger(type+':'+(group || this.group));
+    app.$window.trigger(type);
 
     if (seconds) {
       setTimeout(_.bind(remove_message, $message), seconds*1000);
@@ -70,12 +71,12 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       $messages.remove();
     }
 
-    $window.trigger('clear:'+(type ? type+':' : '')+this.group);
+    app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
   };
 
   Messages.prototype.clear_all = function (type) {
     $messages.find('.message'+(type ? '.'+type : '')).remove();
-    $window.trigger('clear' + (type ? ':'+type : ''));
+    app.$window.trigger('clear' + (type ? ':'+type : ''));
   };
 
   Messages.prototype.success = function (message, seconds, group) {

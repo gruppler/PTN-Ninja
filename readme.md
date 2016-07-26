@@ -21,32 +21,33 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 ## Hotkeys
 #### Global
-| Key                            | Action                                     |
-| ------------------------------ | ------------------------------------------ |
-| <kbd>Esc</kbd>                 | Toggle Menu                                |
-| <kbd>Ctrl</kbd> + <kbd>Space</kbd> | Toggle between Play Mode and Edit Mode |
-| <kbd>Ctrl</kbd> + <kbd>s</kbd> | Download .ptn file                         |
-| <kbd>Ctrl</kbd> + <kbd>o</kbd> | Open .ptn file                             |
-| <kbd>Ctrl</kbd> + <kbd>d</kbd> | Load default PTN                           |
-| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd> | Load sample PTN         |
+| Key                                           | Action             |
+| --------------------------------------------- | -----------------  |
+| <kbd>Esc</kbd>                                | Toggle Menu        |
+| <kbd>Ctrl</kbd>+<kbd>Space</kbd>              | FAB action         |
+| <kbd>Ctrl</kbd>+<kbd>s</kbd>                  | Download .ptn file |
+| <kbd>Ctrl</kbd>+<kbd>o</kbd>                  | Open .ptn file     |
+| <kbd>Ctrl</kbd>+<kbd>d</kbd>                  | Load default PTN   |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> | Load sample PTN    |
 
 #### Edit Mode
-| Key                                               | Action |
-| ------------------------------------------------- | ------ |
-| <kbd>Ctrl</kbd> + <kbd>z</kbd>                    | Undo   |
-| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd> | Redo   |
+| Key                                           | Action              |
+| ----------------------------------------------| ------------------- |
+| <kbd>Ctrl</kbd>+<kbd>z</kbd>                  | Undo                |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>z</kbd> | Redo                |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>t</kbd>   | Trim to current ply |
 
 #### Play Mode
-| Key                                 | Action             |
-| ----------------------------------- | ------------------ |
-| <kbd>Space</kbd>                    | Play/Pause         |
-| <kbd>&uarr;</kbd>                   | Previous Move      |
-| <kbd>&darr;</kbd>                   | Next Move          |
-| <kbd>&larr;</kbd>                   | Previous Ply       |
-| <kbd>&rarr;</kbd>                   | Next Ply           |
-| <kbd>Ctrl</kbd> + <kbd>&larr;</kbd> | First Ply          |
-| <kbd>Ctrl</kbd> + <kbd>&rarr;</kbd> | Last Ply           |
-| <kbd>a</kbd>                        | Toggle Annotations |
+| Key                               | Action             |
+| --------------------------------- | ------------------ |
+| <kbd>Space</kbd>                  | Play/Pause         |
+| <kbd>&uarr;</kbd>                 | Previous Move      |
+| <kbd>&darr;</kbd>                 | Next Move          |
+| <kbd>&larr;</kbd>                 | Previous Ply       |
+| <kbd>&rarr;</kbd>                 | Next Ply           |
+| <kbd>Ctrl</kbd>+<kbd>&larr;</kbd> | First Ply          |
+| <kbd>Ctrl</kbd>+<kbd>&rarr;</kbd> | Last Ply           |
+| <kbd>a</kbd>                      | Toggle Annotations |
 
 
 

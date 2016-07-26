@@ -63,6 +63,10 @@ define([], function () {
         app.redo(event);
       },
 
+      '^%t': function (event, $focus, $parent) {
+        app.board.trim_to_current_ply();
+      },
+
       '[': function (event, $focus, $parent) {
         app.insert_text(']');
       },

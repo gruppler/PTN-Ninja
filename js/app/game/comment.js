@@ -31,6 +31,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '</span>'
   );
 
+  Comment.prototype.print_text = function () {
+    return this.prefix + this.text + this.suffix;
+  };
+
   Comment.parse = function(string) {
     var comments = _.map(
       string.match(r.grammar.comment_text),

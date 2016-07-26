@@ -243,11 +243,12 @@ $stone-thickness: 0.3vmin;
       display: flex;
       width: 50%;
       border-radius: $stone-thickness;
+      font-size: $top-margin/4;
+      line-height: normal;
     }
 
     .name, .score {
-      font-size: $top-margin/4;
-      padding: 0.1em 0.25em;
+      padding: 0 0.25em;
     }
 
     .score {

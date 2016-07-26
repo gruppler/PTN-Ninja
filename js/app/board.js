@@ -160,10 +160,18 @@ define([
     this.clear();
   };
 
+  Board.prototype.trim_to_current_ply = function () {
+    if (this.game.plys.length) {
+      this.game.trim_to_current_ply(this);
+    }
+  };
+
   Board.prototype.to_tps = function () {
     var ply = this.game.plys[this.ply_id] || this.game.plys[this.ply_id - 1]
       , squares = []
       , i, j;
+
+    this.do_ply();
 
     for (i = 0; i < this.size; i++) {
       squares[i] = [];
@@ -179,7 +187,7 @@ define([
     });
 
     return squares + ' ' +
-      (this.ply_id == this.game.plys.length ? ply.turn - 1 || 2 : ply.turn) +
+      (ply ? ply.turn - 1 || 2 : 1) +
       ' ' +
       (ply.move.id + 1 + 1*(ply.turn == 2));
   };
@@ -352,23 +360,27 @@ define([
   Board.prototype.show_comments = function (ply) {
     var result = this.game.config.result;
 
+    if (this.defer_render) {
+      return;
+    }
+
     if (
-      this.defer_render ||
-      ply && ply.id == this.comments_ply_id && ply.id > 0 ||
-      (ply.id == 0 && this.comments_ply_id == -1 && !this.ply_is_done)
+      this.game.comments && this.comments_ply_id != -1 &&
+      (!ply || ply.is_first && !this.ply_is_done)
     ) {
+      this.m.clear(false, true);
+      _.map(this.game.comments, this.comment);
+      this.comments_ply_id = -1;
+      return;
+    }
+
+    if (ply && this.comments_ply_id == ply.id) {
       return;
     }
 
     this.m.clear(false, true);
 
     if (!ply) {
-      return;
-    }
-
-    if (ply.is_first && !this.ply_is_done && this.game.comments) {
-      _.map(this.game.comments, this.comment);
-      this.comments_ply_id = -1;
       return;
     }
 
@@ -386,8 +398,8 @@ define([
       _.map(ply.comments, this.comment);
     }
 
-    if (ply.is_last && result && result.text) {
-      this.m['player'+result.victor](result.text);
+    if (ply.is_last && result && result.message) {
+      this.m['player'+result.victor](result.message);
       if (result.comments) {
         _.map(result.comments, this.comment);
       }

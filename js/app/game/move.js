@@ -17,7 +17,8 @@ define([
   var Move = function (string, game) {
     var parts = string.match(r.grammar.move_grouped)
       , first_player = 1
-      , second_player = 2;
+      , second_player = 2
+      , first_turn = 1;
 
     if (parts[9]) {
       game.is_valid = false;
@@ -36,6 +37,7 @@ define([
       } else {
         first_player = (this.linenum.value == 1) ? 1 : 2;
         second_player = 0;
+        first_turn = 2;
       }
     } else if (this.linenum.value == 1) {
       first_player = 2;
@@ -49,23 +51,23 @@ define([
 
     if (parts[3]) {
       this.ply1 = new Ply(parts[3], first_player, game, this);
-      this.ply1.turn = 1 ;
+      this.ply1.turn = first_turn;
       if (this.ply1.is_nop) {
         second_player = first_player;
-        this.ply1.player = first_player - 1 || 2;
-        this.ply1.turn = 2 ;
       }
     } else {
       this.ply1 = null;
     }
-    if (this.comments2) {
-      if (this.comments1) {
+    if (this.comments1) {
+      if (this.comments2) {
         this.ply1.comments = _.map(this.comments1, 'text').concat(
           _.map(this.comments2, 'text')
         );
       } else {
-        this.ply1.comments = _.map(this.comments2, 'text');
+        this.ply1.comments = _.map(this.comments1, 'text');
       }
+    } else if (this.comments2) {
+      this.ply1.comments = _.map(this.comments2, 'text');
     }
 
     if (parts[5]) {
@@ -112,6 +114,35 @@ define([
       output += _.invokeMap(this.comments4, 'print').join('');
     }
     output += '</span>';
+
+    return output;
+  };
+
+  Move.prototype.print_text = function(){
+    var output = '';
+
+    output += this.linenum.print_text();
+    if (this.comments1) {
+      output += _.invokeMap(this.comments1, 'print_text').join('');
+    }
+    if (this.ply1) {
+      output += this.ply1.print_text();
+    }
+    if (this.comments2) {
+      output += _.invokeMap(this.comments2, 'print_text').join('');
+    }
+    if (this.ply2) {
+      output += this.ply2.print_text();
+    }
+    if (this.comments3) {
+      output += _.invokeMap(this.comments3, 'print_text').join('');
+    }
+    if (this.result) {
+      output += this.result.print_text();
+    }
+    if (this.comments4) {
+      output += _.invokeMap(this.comments4, 'print_text').join('');
+    }
 
     return output;
   };

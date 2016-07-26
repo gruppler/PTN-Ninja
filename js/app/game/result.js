@@ -28,19 +28,20 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     }
 
     this.prefix = parts[1];
-    parts = parts[2].split('-');
+    this.text = parts[2];
+    parts = this.text.split('-');
     this.player1 = parts[0];
     this.player2 = parts[1];
 
     if (this.player2 == '0') {
       this.victor = 1;
-      this.text = t.result[this.player1]({ player: game.config.player1 });
+      this.message = t.result[this.player1]({ player: game.config.player1 });
     } else if (this.player1 == '0') {
       this.victor = 2;
-      this.text = t.result[this.player2]({ player: game.config.player2 });
+      this.message = t.result[this.player2]({ player: game.config.player2 });
     } else {
       this.victor = 2;
-      this.text = t.result.tie;
+      this.message = t.result.tie;
     }
 
     this.player1_label = result_label[this.player1];
@@ -63,6 +64,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Result.prototype.print = function () {
     return this.prefix + this.print_value();
+  };
+
+  Result.prototype.print_text = function () {
+    return this.prefix + this.text;
   };
 
   return Result;

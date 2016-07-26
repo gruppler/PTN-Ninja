@@ -21,6 +21,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<span class="linenum"><%=this.text%></span>'
   );
 
+  Linenum.prototype.print_text = function () {
+    return this.prefix + this.text;
+  };
+
   return Linenum;
 
 });

@@ -109,6 +109,7 @@ define([
     this.config = {};
     for (var i = 0; i < header.length; i++) {
       this.tags[i] = new Tag(header[i], this);
+      this.tags[i].index = i;
     }
     missing_tags = _.difference(
       r.required_tags,
@@ -124,6 +125,7 @@ define([
     if (body) {
       for (var i = 0; i < body.length; i++) {
         this.moves[i] = new Move(body[i], this);
+        this.moves[i].index = i;
         this.moves[i].id = this.get_linenum() - 2;
 
         if (this.moves[i].ply1) {
@@ -160,6 +162,29 @@ define([
       this.moves.length + 1;
   };
 
+  Game.prototype.trim_to_current_ply = function (board) {
+    var ply = this.plys[board.ply_id]
+      , tag = _.find(this.tags, { key: 'tps' })
+      , new_tag = new Tag('\n[TPS "'+board.to_tps()+'"]', this);
+
+    if (ply) {
+      this.moves.splice(0, ply.move.index + (ply.turn == 2));
+      if (ply.move.ply1 == ply) {
+        ply.move.ply1 = null;
+      }
+      board.ply_id = 0;
+      board.ply_is_done = false;
+    }
+
+    if (tag) {
+      this.tags[tag.index] = new_tag;
+    } else {
+      this.tags.push(new_tag);
+    }
+
+    this.parse(this.print_text());
+  };
+
   Game.prototype.print = function () {
     var output = '<span class="header">';
 
@@ -169,6 +194,17 @@ define([
     output += _.invokeMap(this.moves, 'print').join('');
     output += this.suffix;
     output += '</span>';
+
+    return output;
+  };
+
+  Game.prototype.print_text = function () {
+    var output = '';
+
+    output += _.invokeMap(this.tags, 'print_text').join('');
+    output += this.comment_text ? _.invokeMap(this.comment_text, 'print_text').join('') : '';
+    output += _.invokeMap(this.moves, 'print_text').join('');
+    output += this.suffix;
 
     return output;
   };

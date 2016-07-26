@@ -214,7 +214,7 @@ requirejs({locale: navigator.language}, [
       app.$ptn.$ply.removeClass('active');
     }
     app.$ptn.$ply = ply ?
-      app.$ptn.find('[data-id="'+ply.id+'"]:first').addClass('active') :
+      app.$ptn.find('.ply[data-id="'+ply.id+'"]:first').addClass('active') :
       null;
 
     app.board.show_comments(ply);
@@ -240,7 +240,7 @@ requirejs({locale: navigator.language}, [
 
   $('#share').attr('title', t.Share);
 
-  $('#download').on('touchstart click', function (event) {
+  app.$download.on('touchstart click', function (event) {
     event.stopPropagation();
     event.preventDefault();
 
@@ -259,7 +259,7 @@ requirejs({locale: navigator.language}, [
     );
   }).attr('title', t.Download);
 
-  $('#open').on('change', function (event) {
+  app.$open.on('change', function (event) {
     event.stopPropagation();
     event.preventDefault();
     app.read_file(this.files[0]);
@@ -322,6 +322,8 @@ requirejs({locale: navigator.language}, [
 
 
   // Initialize
+
+  app.menu.render();
 
   bililiteRange.fancyText(app.$ptn[0], function () {
     return app.game.parse(app.$ptn.text());
