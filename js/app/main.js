@@ -101,6 +101,15 @@ requirejs({locale: navigator.language}, [
     'last'
   ]);
 
+  app.scroll_to_ply = function () {
+    if (this.$ptn.$ply) {
+      this.$ptn.scrollTop(
+        this.$ptn.scrollTop() + this.$ptn.$ply.offset().top
+        - (window.innerHeight - this.$ptn.$ply.height())/2
+      );
+    }
+  };
+
   app.toggle_edit_mode = function (on) {
     if (_.isBoolean(on)) {
       if (on && !app.game.is_editing) {
@@ -122,6 +131,7 @@ requirejs({locale: navigator.language}, [
 
     if (app.game.is_editing) {
       app.board.pause();
+      app.scroll_to_ply();
     }
 
     app.$ptn.attr('contenteditable', app.game.is_editing);
