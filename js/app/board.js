@@ -242,9 +242,14 @@ define([
     }
 
     if (ply1) {
-      this.$ply1.html(ply1.print());
-      if (ply1 == current_ply) {
-        this.$ply1.addClass('active');
+      if (ply1.turn == 1) {
+        this.$ply1.html(ply1.print());
+        if (ply1 == current_ply) {
+          this.$ply1.addClass('active');
+        }
+      } else {
+        this.$ply1.empty();
+        ply2 = ply1;
       }
     }
     if (ply2) {
