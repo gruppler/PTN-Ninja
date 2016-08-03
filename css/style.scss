@@ -87,8 +87,8 @@
   }
   html.editmode & {
     .player1 {
-      box-shadow: 0 0 0 0.1em $primary-color-400;
-      background-color: $primary-color-400;
+      box-shadow: 0 0 0 0.1em rgba($primary-color-200, 0.5);
+      background-color: rgba($primary-color-200, 0.5);
 
       &.ply:hover {
         background-color: $primary-color-300;
