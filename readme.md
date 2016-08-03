@@ -99,6 +99,10 @@ The **share** menu in the upper-right corner allows you to do the following:
     - Show annotations
     - Playback speed
   - Board:
+    - Show current move
+      - Include line number
+      - Show both plies side by side
+      - Position below board
     - Show row/column labels
     - Show player names and flat counts
     - Show un-played pieces
@@ -149,7 +153,7 @@ The **share** menu in the upper-right corner allows you to do the following:
           - player1
           - player2
 - Edit Mode Improvements
-  - Improve visibility while editing
+  - ~~Improve visibility while editing~~
   - ~~Highlight current square~~
   - ~~Automatically insert closing braces and quotes~~
     - ~~[], "", {}~~
