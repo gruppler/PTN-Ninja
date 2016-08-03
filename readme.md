@@ -52,66 +52,142 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 
 ## To Do
-- Known Bugs
-  - Don't display result if road win but no road is built
-
-
-- Export board as .png
-  - Redraw board using canvas
-
-
-- Edit Mode Improvements
-  - Auto formatting
-    - Styles
-      - Verbose
-        - Insert all stone types (before place, after slide)
-        - Insert all slide and drop counts
-      - Minimal
-        - Opposite of Verbose
-    - Pad line numbers
-    - Pad between plies based on longest move.ply1
-    - Automatically insert Tak marks (')
-      - "Tak" detection
-        - Board.find_road(player, ply)
-          - Highlight squares composing road
-        - Board.possible_plys(player)
-
-
+- Refactor:
+  - Use [MDL](https://getmdl.io/started/index.html)
+    - As a subtree? submodule?
+    - Include only scss files if possible
+  - Messages
+    - Use MDL if possible
+    - Rethink positioning?
+  - Hotkeys
+    - Include textual description (for hotkey help)
+  - Config
+    - Include type and textual description (for easier rendering of preference controls)
+  - main.js
+    - Re-organize and comment
+- Improve performance
+  - Re-write caret position ply detection
+    - Don't use $.closest()
+  - Delete simulator when entering Play Mode (after validation)
+    - Test to verify this is worth it
 - Sidebar menu
-  - Use https://github.com/mango/slideout
-  - Items:
-    - Open file
-    - Load sample PTN
-    - Edit Mode:
-      - Set current ply as start
-        - Encode current board as TPS and add to header
-        - Remove preceding notation
-      - Automatic formatting options
-    - Play Mode:
-      - Playback speed
-      - Enable/disable annotations
-      - Editing GUI options
-    - About (readme.html)
-
-
+  - ~~Use https://github.com/mango/slideout~~
+  - Use MDL if possible
+  - Game Properties
+    - Open modal dialog to edit tags
+  - ~~Open~~
+  - ~~Load sample game~~
+  - Load stress test
+  - Edit Mode:
+    - ~~Trim to current ply~~
+      - ~~Encode current board as TPS and add to header~~
+      - ~~Remove preceding notation~~
+    - Toggle: Highlight current ply's squares
+    - Automatic Formatting:
+      - Styles:
+        - Verbose
+          - Insert all stone types (before place, after slide)
+          - Insert all slide and drop counts
+        - Minimal
+          - Opposite of Verbose
+      - Toggle: Pad line numbers
+        - Pad between plies based on longest ply1
+      - Automatically insert analytical notation
+        - Use [TakAnalysis by nqeron](https://github.com/nqeron/TakAnalysis)
+  - Play Mode:
+    - Highlight current ply's squares
+    - Show annotations
+    - Playback speed
+  - Board:
+    - Show row/column labels
+    - Show player names and flat counts
+    - Show un-played pieces
+    - Show play controls
+  - About
+    - Modal iframe of rendered readme.md
+  - Ad
+    - Persistent option to hide it (because I hate ads)
+    - Show donate links on hide
 - Embed code generator
   - In the share menu
-  - Open new window (embed.html#C0mpr3s5edPTN)
+  - Open new window (index.html#C0mpr3s5edPTN)
   - Resize window to set iframe aspect ratio
     - Aspect ratio inputs update onResize
     - Embed code updates onResize
-  - Fluid size
-
-
+  - Option to include current ply in URL
+  - Allow initial mode override
+  - Allow preference override
+    - Presets:
+      - Current Board Only (Screenshot Mode)
+        - Include only TPS in URL hash
+      - Minimal Play Mode
+      - Maximal Play Mode
+  - API
+    - Use [window.postMessage](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage)
+    - Send and/or receive in JSON:
+      - Raw PTN text
+      - Compressed PTN
+      - Parsed PTN
+      - Current board TPS
+      - PTN changes
+      - Navigation events:
+        - Previous
+        - Next
+        - Ply by ID
+        - Move by ID
+      - Single ply (to be) performed
+        - Errors from Board.do_ply()
+      - Errors from Game.parse()
+      - Message to be displayed
+        - Types:
+          - success
+          - warning
+          - error
+          - help
+          - info
+          - comment
+          - player1
+          - player2
+- Edit Mode Improvements
+  - Improve visibility while editing
+  - ~~Highlight current square~~
+  - ~~Automatically insert closing braces and quotes~~
+    - ~~[], "", {}~~
+  - Delete preceding auto-matched brace/quote on Backspace
+  - ~~Automatic line numbers~~
+    - ~~Insert line numbers after Enter keypress~~
+    - ~~Insert if missing~~
+    - ~~Correct if wrong~~
+  - Don't bail unless necessary
+    - Use a warning instead
+    - Namely, required tags should warn
+  - TPS parsing
+    - ~~Insert player and move icons~~
+    - ~~Highlight notation~~
+    - ~~Realtime parsing~~
+    - ~~Highlight current square~~
+    - Don't rely on Size tag
+    - Warn about "Size" and "TPS" conflict
 - Editing via GUI (i.e. easy mode)
+  - Board.do_ply(new_ply)
+    - Overwrite any following PTN if new_ply is valid
   - Allow for easy live transcription and puzzle completion
   - Toggle switch, or enabled only if result is blank?
-  - Use the editor's undo feature
+  - Use the editor's undo feature?
   - UI for adding comments and evaluation marks
+    - Menu
+    - Hotkeys
   - UI for tags
     - Show all possible tags
     - Indicate required tags
     - Inputs provide options or format validation
+  - Integrate with existing bots
+- Known Bugs:
+  - ~~Allow C to smash S by sliding stack if no captives~~
+  - ~~Handle illegal moves better~~
+  - ~~Enable moving to Ply 0 from editor~~
+  - ~~Support "load" as first "ply" for TPS where next ply is black~~
+  - Don't display result if road win but no road is built
 
 
 ## Legal
