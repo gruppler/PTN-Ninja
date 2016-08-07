@@ -23,8 +23,56 @@ $purple: #BA68C8;
       color: $primary-color-50;
       margin-right: 0.2em;
       font-size: 1em;
-      line-height: 1.5em;
       vertical-align: middle;
+
+      &.unknown:before {
+        content: '\E3FA';
+      }
+      &.player1:before {
+        content: '\E7FD';
+      }
+      &.player2:before {
+        content: '\E7FF';
+      }
+      &.date:before {
+        content: '\E878';
+      }
+      &.size:before {
+        content: '\E3EC';
+      }
+      &.result:before {
+        content: '\E90E';
+      }
+      &.event:before {
+        content: '\E616';
+      }
+      &.site:before {
+        content: '\E80B';
+      }
+      &.round:before {
+        content: '\E923';
+      }
+      &.rating1:before {
+        content: '\E838';
+      }
+      &.rating2:before {
+        content: '\E83A';
+      }
+      &.tps:before {
+        content: '\E5C3';
+      }
+      &.points:before {
+        content: '\E6DD';
+      }
+      &.time:before {
+        content: '\E192';
+      }
+      &.clock:before {
+        content: '\E425';
+      }
+      &.move:before {
+        content: '\E040';
+      }
     }
 
     .name {

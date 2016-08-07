@@ -120,23 +120,23 @@
     transform: translate(-50%);
     transition: all $time-smooth ease-in-out;
 
-    &.icon-play {
+    &.play {
       transform: translate(-50%) rotate(179deg);
     }
-    &.icon-edit {
+    &.edit {
       transform: translate(-50%) rotate(-90deg);
     }
   }
 
   html.editmode & {
-    i.icon-play {
+    i.play {
       opacity: 1;
       transform: translate(-50%);
     }
   }
 
   html.playmode & {
-    i.icon-edit {
+    i.edit {
       opacity: 1;
       transform: translate(-50%);
     }
@@ -153,7 +153,7 @@
     i {
       opacity: 0 !important;
     }
-    i.icon-error {
+    i.error {
       opacity: 1 !important;
     }
   }
@@ -195,7 +195,7 @@
     i {
       transition: opacity $time-smooth $natural;
 
-      &.icon-pause {
+      &.pause {
         position: absolute;
         top: 0;
         left: 0.5em;
@@ -204,10 +204,10 @@
     }
 
     html.playing & {
-      i.icon-play {
+      i.play {
         opacity: 0;
       }
-      i.icon-pause {
+      i.pause {
         opacity: 1;
       }
     }
@@ -241,7 +241,7 @@
   }
 }
 
-.fab.small .icon-share {
+.fab.small i.share {
   margin-left: -2px;
 }
 

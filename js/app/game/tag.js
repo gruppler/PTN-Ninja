@@ -12,23 +12,6 @@ define([
   'lodash'
 ], function (Result, TPS, r, t, _) {
 
-  var tag_icons = {
-    'player1': 'player-solid',
-    'player2': 'player-line',
-    'date': 'date',
-    'size': 'grid-line',
-    'result': 'result',
-    'event': 'event',
-    'site': 'site',
-    'round': 'round',
-    'rating1': 'star-solid',
-    'rating2': 'star-line',
-    'tps': 'grid-solid',
-    'points': 'points',
-    'time': 'time',
-    'clock': 'timer'
-  };
-
   var Tag = function (string, game) {
     var parts = string.match(r.grammar.tag_grouped);
 
@@ -50,9 +33,10 @@ define([
     this.suffix = parts[7];
 
     this.key = this.name.toLowerCase();
-    this.icon = tag_icons[this.key] || 'circle';
+    this.icon = this.key;
 
     if (!(this.key in r.tags)) {
+      this.icon = 'unknown';
       game.m.error(t.error.invalid_tag({tag: parts[2]}));
       game.is_valid = false;
       return false;
@@ -81,7 +65,7 @@ define([
   Tag.prototype.print = _.template(
     '<span class="tag">'+
       '<%=this.prefix%>'+
-      '<i class="icon-<%=this.icon%>"></i>'+
+      '<i class="material-icons <%=this.icon%>"></i>'+
       '<span class="name"><%=this.name%></span>'+
       '<%=this.separator%>'+
       '<span class="opening quote"><%=this.q1%></span>'+

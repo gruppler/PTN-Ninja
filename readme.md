@@ -53,9 +53,6 @@ The **share** menu in the upper-right corner allows you to do the following:
 
 ## To Do
 - Refactor:
-  - Use [MDL](https://getmdl.io/started/index.html)
-    - As a subtree? submodule?
-    - Include only scss files if possible
   - Messages
     - Use MDL if possible
     - Rethink positioning?

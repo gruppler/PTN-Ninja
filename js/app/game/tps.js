@@ -55,14 +55,14 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<%=_.invokeMap(this.squares, "print").join("")%>'+
     '<%=this.space1%>'+
     '<% if (this.player) { %>'+
-      '<span class="player player<%=this.player%>">'+
-        '<i class="icon-player-<%=this.player == 1 ? "solid" : "line"%>"></i>'+
+      '<span class="player">'+
+        '<i class="material-icons player<%=this.player%>"></i>'+
         '<%=this.player%>'+
       '</span>'+
     '<% } %>'+
     '<%=this.space2%>'+
     '<% if (this.move) { %>'+
-      '<span class="move"><i class="icon-move"></i><%=this.move%></span>'+
+      '<span class="move"><i class="material-icons move"></i><%=this.move%></span>'+
     '<% } %>'+
     '<span class="invalid">'+
       '<%=this.suffix.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
