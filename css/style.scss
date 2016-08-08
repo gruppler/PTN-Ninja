@@ -62,9 +62,9 @@
   }
 
   > * > * {
-    background: rgba($primary-color-500, 0.7);
+    background-color: rgba($primary-color-500, 0.7);
+    box-shadow: 0 0 0.2em rgba($primary-color-500, 0.7);
     border-radius: 0.2em;
-    padding: 0.15em 0;
   }
 
   html.playmode & {
@@ -75,34 +75,32 @@
   .ply {
     transition: all $time-quick ease-out;
   }
-  html.editmode & {
-    .player1 {
-      box-shadow: 0 0 0 0.1em rgba($primary-color-200, 0.5);
-      background-color: rgba($primary-color-200, 0.5);
+  .player1 {
+    box-shadow: 0 0 0.1em rgba($primary-color-200, 0.5);
+    background-color: rgba($primary-color-200, 0.5);
 
-      &.ply:hover {
-        background-color: $primary-color-300;
-        box-shadow: 0 0 0 0.1em $primary-color-300;
-      }
-      &.ply:active,
-      &.ply.active {
-        background-color: $primary-color-400;
-        box-shadow: 0 0 0 0.15em $primary-color-100;
-      }
+    &.ply:hover {
+      background-color: $primary-color-300;
+      box-shadow: 0 0 0 0.1em $primary-color-300;
     }
-    .player2 {
-      box-shadow: 0 0 0 0.1em rgba($primary-color-900, 0.5);
-      background-color: rgba($primary-color-900, 0.5);
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-400;
+      box-shadow: 0 0 0 0.15em $primary-color-100;
+    }
+  }
+  .player2 {
+    box-shadow: 0 0 0.1em rgba($primary-color-900, 0.5);
+    background-color: rgba($primary-color-900, 0.5);
 
-      &.ply:hover {
-        background-color: $primary-color-700;
-        box-shadow: 0 0 0 0.1em $primary-color-700;
-      }
-      &.ply:active,
-      &.ply.active {
-        background-color: $primary-color-600;
-        box-shadow: 0 0 0 0.15em $primary-color-900;
-      }
+    &.ply:hover {
+      background-color: $primary-color-700;
+      box-shadow: 0 0 0 0.1em $primary-color-700;
+    }
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-600;
+      box-shadow: 0 0 0 0.15em $primary-color-900;
     }
   }
 }
