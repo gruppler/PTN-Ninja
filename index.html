@@ -38,63 +38,62 @@
   </head>
   <body>
 
-    <nav id="menu"></nav>
+    <div class="mdl-layout mdl-js-layout">
+      <header class="mdl-layout__header mdl-layout__header--transparent">
+        <div class="mdl-layout__header-row"></div>
+      </header>
+      <div id="menu" class="mdl-layout__drawer"></div>
+      <main id="app" class="mdl-layout__content">
+        <div id="viewer"></div>
 
-    <div id="app">
-
-      <div id="viewer"></div>
-
-      <div id="editor">
-        <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
-      </div>
-
-      <div id="controls">
-        <div class="buttons">
-          <button class="flat round first">
-            <i class="material-icons">first_page</i>
-          </button>
-          <button class="flat round prev">
-            <i class="material-icons">chevron_left</i>
-          </button>
-          <button class="flat round cta play">
-            <i class="material-icons play">play_arrow</i>
-            <i class="material-icons pause">pause</i>
-          </button>
-          <button class="flat round next">
-            <i class="material-icons">chevron_right</i>
-          </button>
-          <button class="flat round last">
-            <i class="material-icons">last_page</i>
-          </button>
+        <div id="editor">
+          <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
         </div>
+
+        <div id="controls">
+          <div class="buttons">
+            <button class="flat round first">
+              <i class="material-icons">first_page</i>
+            </button>
+            <button class="flat round prev">
+              <i class="material-icons">chevron_left</i>
+            </button>
+            <button class="flat round cta play">
+              <i class="material-icons play">play_arrow</i>
+              <i class="material-icons pause">pause</i>
+            </button>
+            <button class="flat round next">
+              <i class="material-icons">chevron_right</i>
+            </button>
+            <button class="flat round last">
+              <i class="material-icons">last_page</i>
+            </button>
+          </div>
+        </div>
+
+        <div id="messages"></div>
+      </main>
+
+      <div id="fab" class="fab cta">
+        <i class="material-icons play">play_arrow</i>
+        <i class="material-icons edit">mode_edit</i>
+        <i class="material-icons error">error</i>
       </div>
 
-      <div id="messages"></div>
-
-      <button id="menu-button"><i class="material-icons">menu</i></button>
-
-    </div>
-
-
-    <div id="fab" class="fab cta">
-      <i class="material-icons play">play_arrow</i>
-      <i class="material-icons edit">mode_edit</i>
-      <i class="material-icons error">error</i>
-    </div>
-
-    <div id="share-menu">
-      <div id="share" class="fab cta small">
-        <i class="material-icons share">share</i>
-      </div>
-      <a id="permalink" href="#" target="_blank" class="fab small" rel="noopener">
-        <i class="material-icons link">link</i>
-      </a>
-      <a id="download" href="#" target="_blank" class="fab small">
-        <i class="material-icons download">file_download</i>
-      </a>
-      <div class="fab small">
-        <i class="material-icons open">folder_open</i>
-        <input id="open" type="file" accept=".ptn,.txt"/>
+      <div id="share-menu">
+        <div id="share" class="fab cta small">
+          <i class="material-icons share">share</i>
+        </div>
+        <a id="permalink" href="#" target="_blank" class="fab small" rel="noopener">
+          <i class="material-icons link">link</i>
+        </a>
+        <a id="download" href="#" target="_blank" class="fab small">
+          <i class="material-icons download">file_download</i>
+        </a>
+        <div class="fab small">
+          <i class="material-icons open">folder_open</i>
+          <input id="open" type="file" accept=".ptn,.txt"/>
+        </div>
       </div>
     </div>
 

@@ -35,6 +35,8 @@ requirejs({locale: navigator.language}, [
     _.padStart(d.getMonth()+1,2,0) +'.'+
     _.padStart(d.getDate(),2,0)
 
+    , nop = function () {}
+
     , app = {
 
         piece_counts: {
@@ -64,8 +66,12 @@ requirejs({locale: navigator.language}, [
         $download: $('#download'),
         $open: $('#open'),
 
-        undo: bililiteRange.undo,
-        redo: bililiteRange.redo,
+        undo: function (event) {
+          bililiteRange.undo(event || {target: app.$ptn[0], preventDefault: nop});
+        },
+        redo: function (event) {
+          bililiteRange.redo(event || {target: app.$ptn[0], preventDefault: nop});
+        },
 
         default_ptn: '[Date "'+today+'"]\n[Player1 "'+t.Player1_name+'"]\n[Player2 "'+t.Player2_name+'"]\n[Result ""]\n[Size "5"]\n\n1. ',
 
@@ -184,7 +190,7 @@ requirejs({locale: navigator.language}, [
     }
   }).mouseover(function () {
     app.$fab.attr('title',
-      app.$html.hasClass('error') ? t.ShowHide_Errors :
+      app.$html.hasClass('error') ? t.Show_Hide_Errors :
         app.game.is_editing ? t.Play_Mode : t.Edit_Mode
     );
   });
@@ -361,10 +367,7 @@ requirejs({locale: navigator.language}, [
       return;
     }
 
-    if (app.menu.isOpen() && event.keymap in hotkeys.menu) {
-      // Menu Mode
-      hotkeys.menu[event.keymap](event, $focus, $parent);
-    } else if (app.game.is_editing && event.keymap in hotkeys.edit) {
+    if (app.game.is_editing && event.keymap in hotkeys.edit) {
       // Edit Mode
       hotkeys.edit[event.keymap](event, $focus, $parent);
     } else if (!app.game.is_editing && event.keymap in hotkeys.play) {

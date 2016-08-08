@@ -68,8 +68,7 @@ The **share** menu in the upper-right corner allows you to do the following:
   - Delete simulator when entering Play Mode (after validation)
     - Test to verify this is worth it
 - Sidebar menu
-  - ~~Use https://github.com/mango/slideout~~
-  - Use MDL if possible
+  - ~~Use MDL if possible~~
   - Game Properties
     - Open modal dialog to edit tags
   - ~~Open~~

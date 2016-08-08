@@ -47,11 +47,6 @@ define([], function () {
 
     },
 
-    // Menu Mode
-    menu: {
-
-    },
-
     // Edit Mode
     edit: {
 
