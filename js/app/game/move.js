@@ -85,6 +85,8 @@ define([
       this.result = null;
     }
 
+    this.suffix = parts[10];
+
     return this;
   };
 
@@ -112,6 +114,9 @@ define([
     }
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print').join('');
+    }
+    if (this.suffix) {
+      output += '<span class="space">'+this.suffix+'</span>';
     }
     output += '</span>';
 
@@ -144,7 +149,7 @@ define([
       output += _.invokeMap(this.comments4, 'print_text').join('');
     }
 
-    return output;
+    return output + this.suffix;
   };
 
   return Move;
