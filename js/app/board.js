@@ -155,9 +155,13 @@ define([
   };
 
   Board.prototype.validate = function (game) {
-    this.init(game, true);
-    this.go_to_ply(game.plys.length, true, true);
-    this.clear();
+    if (this.init(game, true)) {
+      this.go_to_ply(game.plys.length, true, true);
+      this.clear();
+      return true;
+    } else {
+      return false;
+    }
   };
 
   Board.prototype.trim_to_current_ply = function () {

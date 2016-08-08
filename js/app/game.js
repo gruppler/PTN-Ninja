@@ -149,11 +149,13 @@ define([
       }
     }
 
-    this.simulator.validate(this);
+    if (this.simulator.validate(this)) {
+      this.on_parse_end();
+      return true;
+    } else {
+      return false;
+    }
 
-    this.on_parse_end();
-
-    return true;
   };
 
   Game.prototype.get_linenum = function () {
