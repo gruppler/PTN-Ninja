@@ -119,6 +119,8 @@ requirejs({locale: navigator.language}, [
   };
 
   app.toggle_edit_mode = function (on) {
+    var was_editing = app.game.is_editing;
+
     if (_.isBoolean(on)) {
       if (on && !app.game.is_editing) {
         app.$viewer.transition();
@@ -137,7 +139,7 @@ requirejs({locale: navigator.language}, [
       app.$html.toggleClass('editmode playmode');
     }
 
-    if (app.game.is_editing) {
+    if (app.game.is_editing && !was_editing) {
       app.board.pause();
       app.scroll_to_ply();
     }
