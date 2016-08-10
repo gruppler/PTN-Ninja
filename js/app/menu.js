@@ -22,6 +22,10 @@ define([
     $menu_button.click();
   };
 
+  $menu_button.focus(function () {
+    $menu_button.blur();
+  });
+
   Menu.content = [{
     id: 'play',
     items: [{
