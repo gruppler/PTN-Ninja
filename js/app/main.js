@@ -82,6 +82,7 @@ requirejs({locale: navigator.language}, [
 
   window.app = app;
 
+  // Templatize i18n strings
   (function () {
     function _templatize(parent) {
       for (var key in parent) {
@@ -99,6 +100,39 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
+  $('title').text(t.app_title);
+
+  // Schedule callback for one-time execution after CSS transition ends,
+  // or execute existing callbacks
+  $.fn.afterTransition = function (callback) {
+    var $this = $(this);
+
+    if (_.isFunction(callback)) {
+      $this.one('transitionend', function (event) {
+        callback.call($this, event);
+      });
+    } else if (_.isUndefined(callback)) {
+      $this.trigger('transitionend');
+    }
+
+    return this;
+  }
+
+  // Add "animated" class and remove it after transition
+  // and execute optional callback
+  $.fn.transition = function (callback) {
+    var $this = $(this);
+
+    $this.afterTransition().addClass('animated');
+    $this.afterTransition(function () {
+      $this.removeClass('animated');
+      if (_.isFunction(callback)) {
+        callback.call($this);
+      }
+    });
+
+    return this;
+  };
 
   app.scroll_to_ply = function () {
     if (this.$ptn.$ply) {
@@ -138,6 +172,7 @@ requirejs({locale: navigator.language}, [
     app.$ptn.attr('contenteditable', app.game.is_editing);
   };
 
+  // Read and parse the file
   app.read_file = function (file) {
     if (file && /\.ptn$|\.txt$/i.test(file.name)) {
       var reader = new FileReader();
@@ -151,17 +186,17 @@ requirejs({locale: navigator.language}, [
     }
   };
 
+  // Insert text into PTN before or after caret
   app.insert_text = function (text, before) {
     bililiteRange(app.$ptn[0]).bounds('selection')
       .text(text, before ? 'end' : 'start')
       .select();
   };
 
+  // (0, 0) to 'a1'
   app.i_to_square = function (row, col) {
     return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
   };
-
-  $('title').text(t.app_title);
 
   app.$fab.on('touchstart click', function (event) {
     event.stopPropagation();
@@ -178,12 +213,16 @@ requirejs({locale: navigator.language}, [
     );
   });
 
+  // Update $ptn if parsing starts somewhere else
   app.game.on_parse_start(function () {
     if (app.$ptn.text() != this.ptn) {
       app.$ptn.text(this.ptn);
     }
   });
 
+  // Re-render $ptn
+  // Initialize board
+  // Update Permalinks
   app.game.on_parse_end(function () {
     var href, length;
 
@@ -206,10 +245,12 @@ requirejs({locale: navigator.language}, [
     }
   });
 
+  // Re-render $viewer after board initialization
   app.board.on_init(function () {
     app.$viewer.empty().append(app.board.render());
   });
 
+  // Update current ply display
   app.board.on_ply(function (ply) {
     if (app.$ptn.$ply && app.$ptn.$ply.length) {
       app.$ptn.$ply.removeClass('active');
@@ -223,10 +264,7 @@ requirejs({locale: navigator.language}, [
     app.board.set_active_squares(ply ? ply.squares : null);
   });
 
-  if (app.is_in_iframe) {
-    app.$html.addClass('embed');
-  }
-
+  // Bind and label play controls
   $('#controls button.first')
     .on('touchstart click', app.board.first)
     .attr('title', t.First_Ply);
@@ -256,12 +294,13 @@ requirejs({locale: navigator.language}, [
     }
   });
 
+  // Initialize Share Menu
   $('#share').attr('title', t.Share);
 
+  // Initialize Download Button
   app.$download.on('touchstart click', function (event) {
     event.stopPropagation();
     event.preventDefault();
-
     saveAs(
       new Blob([app.game.ptn], {type: "text/plain;charset=utf-8"}),
       (app.game.config.player1 || t.Player1) +
@@ -277,6 +316,7 @@ requirejs({locale: navigator.language}, [
     );
   }).attr('title', t.Download);
 
+  // Initialize Open Button
   app.$open.on('change', function (event) {
     event.stopPropagation();
     event.preventDefault();
@@ -284,6 +324,7 @@ requirejs({locale: navigator.language}, [
     $(this).val('');
   }).attr('title', t.Open);
 
+  // Listen for dropped files and hash change
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     app.$window.on('drop', function(event) {
       event.stopPropagation();
@@ -309,52 +350,25 @@ requirejs({locale: navigator.language}, [
     app.$html.removeClass('error');
   });
 
-
-  $.fn.afterTransition = function (callback) {
-    var $this = $(this);
-
-    if (_.isFunction(callback)) {
-      $this.one('transitionend', function (event) {
-        callback.call($this, event);
-      });
-    } else if (_.isUndefined(callback)) {
-      $this.trigger('transitionend');
-    }
-
-    return this;
-  }
-
-  $.fn.transition = function (callback) {
-    var $this = $(this);
-
-    $this.afterTransition().addClass('animated');
-    $this.afterTransition(function () {
-      $this.removeClass('animated');
-      if (_.isFunction(callback)) {
-        callback.call($this);
-      }
-    });
-
-    return this;
-  };
-
-
-  // Initialize
-
+  // Initialize Menu
   app.menu.render();
 
+  // Bind update events to game parsing
   bililiteRange.fancyText(app.$ptn[0], function () {
     return app.game.parse(app.$ptn.text());
   });
 
+  // Load the initial PTN
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
   bililiteRange(app.$ptn[0]).undo(0);
 
+  // Start in Play Mode if loading from valid hash
   if (location.hash && !app.$html.hasClass('error')) {
     app.toggle_edit_mode(false);
   }
   app.$viewer.afterTransition();
 
+  // Bind hotkeys
   app.$window.on('keydown', function (event) {
     var $focus = $(getSelection().focusNode)
       , $parent = $focus.parent();
