@@ -165,7 +165,7 @@ define([
 
     slider: _.template(
       '<li class="mdl-navigation__link">'+
-        '<%=obj.label%>'+
+        '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
             ' <%=key%>="<%=value%>"'+
