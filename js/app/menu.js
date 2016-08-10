@@ -102,7 +102,7 @@ define([
       icon: 'folder_open',
       onclick: 'app.$open.click()'
     },{
-      title: t.Load_sample_game,
+      title: t.Load_Sample_Game,
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
     },{

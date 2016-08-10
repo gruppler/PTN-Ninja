@@ -12,7 +12,7 @@ define({
     First_Ply: "First Ply",
     Highlight_Squares: "Highlight Squares",
     Last_Ply: "Last Ply",
-    Load_sample_game: "Load sample game",
+    Load_Sample_Game: "Load Sample Game",
     Next_Ply: "Next Ply",
     Open: "Open",
     Permalink: "Permalink",
