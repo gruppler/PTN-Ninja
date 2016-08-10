@@ -286,11 +286,13 @@ requirejs({locale: navigator.language}, [
     var now = new Date().getTime()
       , next_frame = app.board.play_timestamp + 6e4/speed;
 
-    if (app.board.is_playing && next_frame < now) {
-      app.board.next();
-    } else {
-      clearTimeout(app.board.play_timer);
-      setTimeout(app.board.next, next_frame - now);
+    if (app.board.is_playing) {
+      if (next_frame < now) {
+        app.board.next();
+      } else {
+        clearTimeout(app.board.play_timer);
+        setTimeout(app.board.next, next_frame - now);
+      }
     }
   });
 
