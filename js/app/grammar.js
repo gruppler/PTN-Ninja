@@ -42,7 +42,7 @@ define(['lodash'], function (_) {
     stone: '[FSC]?',
     square: '[a-i][1-9]',
     count: '[1-9]?',
-    direction: '(?:\\+|-|<|>)',
+    direction: '(?:[-+<>])',
     drops: '[1-9]*',
     place: '(?:<stone><square>)',
     place_grouped: '(<stone>)(<square>)',
