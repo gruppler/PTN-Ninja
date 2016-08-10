@@ -126,7 +126,9 @@ define([
   Move.prototype.print_text = function(){
     var output = '';
 
-    output += this.linenum.print_text();
+    if (this.linenum) {
+      output += this.linenum.print_text();
+    }
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print_text').join('');
     }
@@ -148,8 +150,11 @@ define([
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print_text').join('');
     }
+    if (this.text) {
+      output += this.text;
+    }
 
-    return output + this.suffix;
+    return output + (this.suffix || '');
   };
 
   return Move;
