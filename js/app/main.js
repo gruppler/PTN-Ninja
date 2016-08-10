@@ -198,6 +198,19 @@ requirejs({locale: navigator.language}, [
     return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
   };
 
+  // Add boolean preferences to html class
+  app.$html.addClass(
+    _.map(_.keys(_.pickBy(app.config, _.isBoolean)), function (prop) {
+      return app.config[prop] ? prop.replace(/_/g, '-') : '';
+    }).join(' ')
+  );
+
+  // Initialize embed stuff
+  if (app.is_in_iframe) {
+    app.$html.addClass('embed');
+  }
+
+  // Initialize FAB
   app.$fab.on('touchstart click', function (event) {
     event.stopPropagation();
     event.preventDefault();
