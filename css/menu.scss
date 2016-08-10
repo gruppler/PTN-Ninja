@@ -1,0 +1,49 @@
+html.editmode #menu .menu-play,
+html.playmode #menu .menu-edit {
+  display: none;
+}
+
+.mdl-layout__drawer-button i {
+  color: $white !important;
+}
+
+#menu {
+  cursor: default;
+  @include unselectable;
+
+  a {
+    text-decoration: none;
+    cursor: pointer;
+
+    &.mode li {
+      font-size: 18px;
+    }
+  }
+
+  i {
+    margin-right: 32px;
+  }
+
+  &.mdl-layout__drawer > .mdl-layout-title,
+  &.mdl-layout__drawer .mdl-navigation .mdl-navigation__link {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .mdl-navigation {
+    padding-top: 0;
+  }
+
+  .mdl-list {
+    margin: 0;
+    padding: 0;
+  }
+
+  .mdl-switch.is-upgraded {
+    padding-left: 56px;
+  }
+
+  .mdl-checkbox__label {
+    font-size: inherit;
+  }
+}

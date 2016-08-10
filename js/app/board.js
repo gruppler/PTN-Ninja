@@ -14,6 +14,8 @@ define([
 ], function (config, Piece, Square, Messages, t, _) {
 
   var Board = function (game) {
+    var that = this;
+
     this.ply_id = 0;
     this.ply_is_done = false;
     this.comments_ply_id = -2;
@@ -26,6 +28,18 @@ define([
     this.flat_score = {1:0, 2:0};
     this.init_callbacks = [];
     this.ply_callbacks = [];
+
+    _.bindAll(this, [
+      'play',
+      'pause',
+      'playpause',
+      'prev',
+      'next',
+      'prev_move',
+      'next_move',
+      'first',
+      'last'
+    ]);
 
     if (game) {
       this.init(game);
@@ -417,14 +431,14 @@ define([
 
   Board.prototype.play = function () {
     if (this.do_ply() && this.game.plys[this.ply_id]) {
-      this.play_timer = setInterval(this.next, 6e4/config.play_speed);
       this.is_playing = true;
+      this.next();
       app.$html.addClass('playing');
     }
   };
 
   Board.prototype.pause = function () {
-    clearInterval(this.play_timer);
+    clearTimeout(this.play_timer);
     this.is_playing = false;
     app.$html.removeClass('playing');
   };
@@ -458,6 +472,12 @@ define([
   };
 
   Board.prototype.next = function (event) {
+    if (this.is_playing) {
+      clearTimeout(this.play_timer);
+      this.play_timer = setTimeout(this.next, 6e4/config.play_speed);
+      this.play_timestamp = new Date().getTime();
+    }
+
     if (event) {
       event.stopPropagation();
       event.preventDefault();

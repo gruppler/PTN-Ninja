@@ -82,7 +82,8 @@ $stone-thickness: 0.3vmin;
       background-color: $accent-color;
       transition: opacity $time-smooth $natural;
     }
-    html.editmode &.active:before {
+    html.editmode-square-hl.editmode &.active:before,
+    html.playmode-square-hl.playmode &.active:before {
       opacity: 0.65;
     }
 

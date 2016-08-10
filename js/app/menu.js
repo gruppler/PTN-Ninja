@@ -23,52 +23,90 @@ define([
   };
 
   Menu.content = [{
-    id: 'global',
-    title: t.App_Title,
-    items: [{
-      title: t.About_App,
-      href: 'readme.md',
-      target: '_blank',
-      rel: 'noopener'
-    },{
-      title: t.Open,
-      onclick: 'app.$open.click()'
-    },{
-      title: t.Load_sample_game,
-      onclick: 'app.game.parse(app.sample_ptn, true)'
-    }]
-  },{
     id: 'play',
-    title: t.Play_Mode,
     items: [{
+      title: t.Play_Mode,
+      icon: 'play_arrow',
+      onclick: 'app.toggle_edit_mode()',
+      class: 'mode keep-open'
+    },{
+      label: t.Highlight_Squares,
+      type: 'switch',
+      checked: config.playmode_square_hl,
+      'data-id': 'playmode_square_hl'
+    },{
+      label: t.Show_Annotations,
+      type: 'switch',
+      checked: config.show_annotations,
+      'data-id': 'show_annotations'
+    },{
       label: t.Play_Speed,
       type: 'slider',
-      min: 1,
-      max: 100,
-      value: config.play_speed
+      min: 30,
+      max: 200,
+      step: 10,
+      value: config.play_speed,
+      'data-id': 'play_speed'
+    }]
+  },{
+    id: 'edit',
+    items: [{
+      title: t.Edit_Mode,
+      icon: 'mode_edit',
+      onclick: 'app.toggle_edit_mode()',
+      class: 'mode keep-open'
+    },{
+      label: t.Highlight_Squares,
+      type: 'switch',
+      checked: config.editmode_square_hl,
+      'data-id': 'editmode_square_hl'
     },{
       label: t.Show_Parse_Errors,
       type: 'switch',
       checked: config.show_parse_errors,
       'data-id': 'show_parse_errors'
     },{
-      label: t.Show_Annotations,
-      type: 'switch',
-      checked: config.show_annotations,
-      'data-id': 'show_annotations'
-    }]
-  },{
-    id: 'edit',
-    title: t.Edit_Mode,
-    items: [{
       title: t.Undo,
-      onclick: 'app.undo()'
+      icon: 'undo',
+      onclick: 'app.undo()',
+      class: 'keep-open'
     },{
       title: t.Redo,
-      onclick: 'app.redo()'
+      icon: 'redo',
+      onclick: 'app.redo()',
+      class: 'keep-open'
     },{
       title: t.Trim_to_current_ply,
+      icon: 'content_cut',
       onclick: 'app.board.trim_to_current_ply()'
+    }]
+  },{
+    id: 'global',
+    items: [{
+      title: t.Permalink,
+      icon: 'link',
+      class: 'permalink',
+      href: '#'+app.ptn_compressed,
+      target: '_blank',
+      rel: 'noopener'
+    },{
+      title: t.Download,
+      icon: 'file_download',
+      onclick: 'app.$download.click()'
+    },{
+      title: t.Open,
+      icon: 'folder_open',
+      onclick: 'app.$open.click()'
+    },{
+      title: t.Load_sample_game,
+      icon: 'apps',
+      onclick: 'app.game.parse(app.sample_ptn, true)'
+    },{
+      title: t.About_App,
+      icon: 'code',
+      href: 'readme.md',
+      target: '_blank',
+      rel: 'noopener'
     }]
   }];
 
@@ -79,51 +117,120 @@ define([
         return app.menu.tpl.section(obj);
       } else if ('href' in obj || 'onclick' in obj) {
         return app.menu.tpl.anchor(obj);
-    } else if ('type' in obj) {
+      } else if ('type' in obj) {
         return app.menu.tpl[obj.type](obj);
       }
     },
 
+    menu: function (obj) {
+      return '<span class="mdl-layout-title">'+t.App_Title+'</span>'
+        + _.map(obj.content, app.menu.tpl.section).join('');
+    },
+
     section: _.template(
-      '<span class="mdl-layout-title"><%=obj.title%></span>'+
-      '<nav id="menu-<%=obj.id%>" class="mdl-navigation">'+
-        '<%= _.map(items, app.menu.tpl.item).join("") %>'+
+      '<span class="menu-<%=obj.id%> mdl-menu__item--full-bleed-divider"></span>'+
+      '<nav class="menu-<%=obj.id%> mdl-navigation">'+
+        '<ul class="mdl-list">'+
+          '<%= _.map(items, app.menu.tpl.item).join("") %>'+
+        '</ul>'+
       '</nav>'
     ),
 
     anchor: _.template(
-      '<a class="mdl-navigation__link mdl-js-ripple-effect"'+
-        '<% _.each(obj, function(value, key) { %>'+
+      '<a'+
+        '<% _.each(_.omit(obj, ["title", "icon"]), function(value, key) { %>'+
           ' <%=key%>="<%=value%>"'+
         '<% }) %>'+
       '>'+
-        '<%=obj.title%>'+
+        '<li class="mdl-navigation__link">'+
+            '<i class="material-icons"><%=obj.icon%></i>'+
+            '<%=obj.title%>'+
+        '</li>'+
       '</a>'
     ),
 
     switch: _.template(
-      '<p class="mdl-navigation__link">'+
-        '<label class="mdl-switch mdl-js-switch mdl-js-ripple-effect">'+
+      '<li class="mdl-navigation__link">'+
+        '<label class="mdl-switch mdl-js-switch">'+
           '<input type="checkbox" class="mdl-switch__input"'+
             '<%= obj.checked ? " checked" : "" %>'+
-          '>'+
-          '<span class="mdl-switch__label"><%=obj.label%></span>'+
+            '<% _.each(_.omit(obj, ["label", "type", "checked"]), function(value, key) { %>'+
+              ' <%=key%>="<%=value%>"'+
+            '<% }) %>'+
+            '>'+
+          '<span class="mdl-checkbox__label"><%=obj.label%></span>'+
         '</label>'+
-      '</p>'
+      '</li>'
     ),
 
     slider: _.template(
-      '<p class="mdl-navigation__link">'+
-        '<span class="mdl-slider__label"><%=obj.label%></span>'+
-        '<input class="mdl-slider mdl-js-slider" type="range">'+
-      '</p>'
+      '<li class="mdl-navigation__link">'+
+        '<%=obj.label%>'+
+        '<input class="mdl-slider mdl-js-slider" type="range"'+
+          '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
+            ' <%=key%>="<%=value%>"'+
+          '<% }) %>'+
+        '>'+
+      '</li>'
     )
   };
 
   Menu.render = function () {
-    $menu.html(_.map(this.content, this.tpl.section));
+    $menu.html(this.tpl.menu(this));
+
+    // Initialize widgets
     $menu.find('.mdl-switch, .mdl-slider').each(function () {
       componentHandler.upgradeElement(this);
+    });
+
+    // Include menu permalink in permalink updates
+    app.$permalink = $('.permalink');
+
+    // Close menu after selecting an anchor item
+    $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);
+
+    // Effectively extend the touch zone for switches to the entire item
+    $menu.on('click', 'li:has(.mdl-switch)', function (event) {
+      if (this == event.target) {
+        $(this).find('input').click();
+      }
+    });
+
+    // Update config when inputs change
+    $menu.on('change', '[data-id]', function () {
+      var $this = $(this)
+        , prop = $this.data('id')
+        , val = config[prop];
+
+      if (_.isBoolean(val)) {
+        config.toggle(prop, this.checked, 'menu');
+      } else if (_.isNumber(val)) {
+        config.set(prop, 1*this.value, 'menu');
+      }
+    });
+
+    // Update switches when config changes
+    $menu.find('.mdl-switch').each(function () {
+      var that = this
+        , prop = $(this).find('input').data('id');
+
+      config.on_change(prop, function (value, prop, initiator) {
+        if (initiator != 'menu') {
+          if (value) {
+            that.MaterialSwitch.on();
+          } else {
+            that.MaterialSwitch.off();
+          }
+        }
+      });
+    });
+
+    // Update sliders when config changes
+    $menu.find('.mdl-slider').each(function () {
+      config.on_change(
+        $(this).data('id'),
+        _.bind(this.MaterialSlider.change, this.MaterialSlider)
+      );
     });
   };
 

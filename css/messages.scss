@@ -16,9 +16,10 @@
     transition: all $time-smooth $natural;
     z-index: 1;
 
-    &:not(.visible),
     html.playmode &.messages-parse,
-    html.editmode &.messages-board {
+    html.editmode &.messages-board,
+    html.playmode:not(.show-annotations) &.messages-board,
+    html.editmode:not(.show-parse-errors) &.messages-parse {
       opacity: 0;
       transform: translateX(-100%);
       pointer-events: none;

@@ -152,7 +152,7 @@ define([], function () {
       },
 
       'a': function (event, $focus, $parent) {
-        app.toggle_annotations();
+        app.config.toggle('show_annotations');
       }
 
     }

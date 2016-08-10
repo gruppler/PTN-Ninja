@@ -62,7 +62,7 @@ requirejs({locale: navigator.language}, [
         $ptn: $('#ptn'),
         $viewer: $('#viewer'),
         $fab: $('#fab'),
-        $permalink: $('#permalink'),
+        $permalink: $('.permalink'),
         $download: $('#download'),
         $open: $('#open'),
 
@@ -99,15 +99,6 @@ requirejs({locale: navigator.language}, [
     _templatize(t);
   })();
 
-  _.bindAll(app.board, [
-    'play',
-    'pause',
-    'playpause',
-    'prev',
-    'next',
-    'first',
-    'last'
-  ]);
 
   app.scroll_to_ply = function () {
     if (this.$ptn.$ply) {
@@ -147,16 +138,6 @@ requirejs({locale: navigator.language}, [
     app.$ptn.attr('contenteditable', app.game.is_editing);
   };
 
-  app.toggle_parse_errors = function () {
-    $messages_parse.toggleClass('visible');
-    config.set('show_parse_errors', !config.show_parse_errors);
-  };
-
-  app.toggle_annotations = function () {
-    $messages_board.toggleClass('visible');
-    config.set('show_annotations', !config.show_annotations);
-  };
-
   app.read_file = function (file) {
     if (file && /\.ptn$|\.txt$/i.test(file.name)) {
       var reader = new FileReader();
@@ -186,7 +167,7 @@ requirejs({locale: navigator.language}, [
     event.stopPropagation();
     event.preventDefault();
     if (app.$html.hasClass('error')) {
-      app.toggle_parse_errors();
+      config.toggle('show_parse_errors');
     } else {
       app.toggle_edit_mode();
     }
@@ -261,6 +242,19 @@ requirejs({locale: navigator.language}, [
   $('#controls button.last')
     .on('touchstart click', app.board.last)
     .attr('title', t.Last_Ply);
+
+  // Make playback speed respond immediately to speed changes
+  config.on_change('play_speed', function (speed) {
+    var now = new Date().getTime()
+      , next_frame = app.board.play_timestamp + 6e4/speed;
+
+    if (app.board.is_playing && next_frame < now) {
+      app.board.next();
+    } else {
+      clearTimeout(app.board.play_timer);
+      setTimeout(app.board.next, next_frame - now);
+    }
+  });
 
   $('#share').attr('title', t.Share);
 

@@ -5,6 +5,7 @@
 @import 'mixins.scss';
 @import 'variables.scss';
 @import 'global.scss';
+@import 'menu.scss';
 @import 'button.scss';
 @import 'messages.scss';
 @import 'grammar.scss';
@@ -208,13 +209,6 @@
         opacity: 1;
       }
     }
-  }
-}
-
-#menu {
-  a {
-    @include unselectable;
-    cursor: default;
   }
 }
 
