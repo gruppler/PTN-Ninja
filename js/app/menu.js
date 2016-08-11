@@ -46,7 +46,7 @@ define([
     },{
       label: t.Play_Speed,
       type: 'slider',
-      min: 30,
+      min: 20,
       max: 200,
       step: 10,
       value: config.play_speed,
