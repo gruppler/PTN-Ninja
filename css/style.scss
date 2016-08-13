@@ -56,52 +56,14 @@
   padding-right: $edge + $fab-height-small;
   margin: 0;
   white-space: pre-wrap;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
 
   &:focus {
     outline: none;
   }
 
-  > * > * {
-    background-color: rgba($primary-color-500, 0.7);
-    box-shadow: 0 0 0.1em rgba($primary-color-500, 0.7);
-  }
-
   html.playmode & {
     cursor: default;
     overflow: hidden;
-  }
-
-  .ply {
-    transition: all $time-quick ease-out;
-  }
-  .player1 {
-    box-shadow: 0 0 0.1em rgba($primary-color-200, 0.5);
-    background-color: rgba($primary-color-200, 0.5);
-
-    &.ply:hover {
-      background-color: $primary-color-300;
-      box-shadow: 0 0 0 0.1em $primary-color-300;
-    }
-    &.ply:active,
-    &.ply.active {
-      background-color: $primary-color-400;
-      box-shadow: 0 0 0 0.15em $primary-color-100;
-    }
-  }
-  .player2 {
-    box-shadow: 0 0 0.1em rgba($primary-color-900, 0.5);
-    background-color: rgba($primary-color-900, 0.5);
-
-    &.ply:hover {
-      background-color: $primary-color-700;
-      box-shadow: 0 0 0 0.1em $primary-color-700;
-    }
-    &.ply:active,
-    &.ply.active {
-      background-color: $primary-color-600;
-      box-shadow: 0 0 0 0.15em $primary-color-900;
-    }
   }
 }
 

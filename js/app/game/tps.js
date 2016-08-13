@@ -55,7 +55,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<%=_.invokeMap(this.squares, "print").join("")%>'+
     '<%=this.space1%>'+
     '<% if (this.player) { %>'+
-      '<span class="player">'+
+      '<span class="player<%=this.player%>">'+
         '<i class="material-icons player<%=this.player%>"></i>'+
         '<%=this.player%>'+
       '</span>'+

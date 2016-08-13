@@ -58,11 +58,11 @@ button, .button, .fab {
   }
 
   &.cta {
-    background-color: $accent-color;
+    background-color: $accent-color-500;
     color: $primary-color-text;
 
     &:hover, &:active {
-      background-color: $accent-color-light;
+      background-color: $accent-color-700;
     }
   }
 }

@@ -388,6 +388,12 @@ requirejs({locale: navigator.language}, [
       app.$ptn.find('.ply[data-id="'+ply.id+'"]:first').addClass('active') :
       null;
 
+    if (app.board.ply_is_done) {
+      app.$html.addClass('ply-is-done');
+    } else {
+      app.$html.removeClass('ply-is-done');
+    }
+
     app.board.show_comments(ply);
     app.board.update_plys(ply);
     app.board.set_active_squares(ply ? ply.squares : null);
@@ -524,7 +530,7 @@ requirejs({locale: navigator.language}, [
   });
 
   // Go to focused ply
-  app.$ptn.on('touchstart touchend keyup mouseup', function (event) {
+  app.$ptn.on('keyup mouseup', function (event) {
     var $square, squares, square, i;
 
     if (app.game.is_editing) {
@@ -535,7 +541,12 @@ requirejs({locale: navigator.language}, [
 
       ply_id = $focus.closest('.ply').data('id');
       if (!_.isUndefined(ply_id)) {
-        app.board.go_to_ply(ply_id, true);
+        app.board.go_to_ply(
+          ply_id,
+          app.board.ply_id != ply_id
+            || !app.board.ply_is_done
+            || event.type != 'mouseup'
+        );
       } else if ($focus.closest('.tps.value').length) {
         $square = $focus.closest('.square');
 

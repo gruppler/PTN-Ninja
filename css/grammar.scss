@@ -3,16 +3,69 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
-$red: #EF5350;
-$orange: #FF9800;
-$yellow: #FFCA28;
-$green: #8BC34A;
-$blue: #81D4FA;
+$red-light: #EF5350;
+$red-dark: #D32F2F;
+$orange-light: #FF9800;
+$orange-dark: #EF6C00;
+$yellow-light: #FFCA28;
+$yellow-dark: #FF8F00;
+$green-light: #9CCC65;
+$green-dark: #7CB342;
+$blue-light: #4FC3F7;
+$blue-dark: #0288D1;
 $purple: #BA68C8;
 
+$ptn-bg-radius: 0.2em;
+
+@mixin neutral-bg {
+  background-color: rgba($bg-color, 0.8);
+  box-shadow: 0 0 0.1em rgba($bg-color, 0.8);
+  border-radius: $ptn-bg-radius;
+}
+
 .ptn {
+  text-shadow: rgba($black, 0.25) 0px 1px 1px;
+
   .player1, .player2 {
-    border-radius: 0.2em;
+    border-radius: $ptn-bg-radius;
+  }
+  .player1 {
+    color: $primary-color-800;
+    box-shadow: 0 0 0.1em $primary-color-100;
+    background-color: $primary-color-100;
+
+    &.ply:hover {
+      background-color: $primary-color-50;
+      box-shadow: 0 0 0 0.1em $primary-color-50;
+    }
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-200;
+      box-shadow: 0 0 0 0.15em $accent-color-600;
+
+      html.ply-is-done & {
+        background-color: $primary-color-100;
+      }
+    }
+  }
+  .player2 {
+    color: $primary-color-100;
+    box-shadow: 0 0 0.1em $primary-color-800;
+    background-color: $primary-color-800;
+
+    &.ply:hover {
+      background-color: $primary-color-900;
+      box-shadow: 0 0 0 0.1em $primary-color-900;
+    }
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-700;
+      box-shadow: 0 0 0 0.15em $accent-color-600;
+
+      html.ply-is-done & {
+        background-color: $primary-color-800;
+      }
+    }
   }
 
   .tag {
@@ -21,6 +74,8 @@ $purple: #BA68C8;
 
     i {
       color: $primary-color-50;
+      background-color: transparent;
+      box-shadow: none;
       margin-right: 0.2em;
       font-size: 1em;
       vertical-align: middle;
@@ -79,11 +134,13 @@ $purple: #BA68C8;
       color: $primary-color-50;
       font-weight: 300;
       vertical-align: middle;
+      @include neutral-bg;
     }
 
-    .value {
+    .value:not(.player1):not(.player2) {
       color: $primary-color-50;
       font-weight: 600;
+      @include neutral-bg;
     }
   }
 
@@ -91,16 +148,20 @@ $purple: #BA68C8;
     color: $primary-color-100;
     font-weight: 300;
 
+    i.player1 {
+      color: $primary-color-800;
+    }
+
     .separator {
       color: $primary-color-900;
     }
 
     .space {
-      color: $primary-color-300;
+      color: $primary-color-200;
       font-weight: normal;
     }
 
-    .stack, .player, .move {
+    .stack, .move {
       color: $primary-color-50;
     }
 
@@ -115,12 +176,12 @@ $purple: #BA68C8;
       }
 
       &:first-child {
-        border-top-left-radius: 0.2em;
-        border-bottom-left-radius: 0.2em;
+        border-top-left-radius: $ptn-bg-radius;
+        border-bottom-left-radius: $ptn-bg-radius;
       }
       &:last-child {
-        border-top-right-radius: 0.2em;
-        border-bottom-right-radius: 0.2em;
+        border-top-right-radius: $ptn-bg-radius;
+        border-bottom-right-radius: $ptn-bg-radius;
       }
     }
   }
@@ -132,6 +193,7 @@ $purple: #BA68C8;
     .text {
       color: $primary-color-50;
       font-weight: 400;
+      @include neutral-bg;
     }
   }
 
@@ -142,32 +204,60 @@ $purple: #BA68C8;
 
   .ply {
     font-weight: 700;
+    transition: all $time-quick ease-out;
 
     .stone {
-      color: $white;
+      color: $primary-color-900
     }
+    &.player2 .stone {
+      color: $primary-color-50
+    }
+
     .column {
-      color: $yellow;
+      color: $yellow-dark;
       font-weight: 600;
     }
+    &.player2 .column {
+      color: $yellow-light;
+    }
+
     .row {
-      color: $orange;
+      color: $orange-dark;
       font-weight: 600;
     }
+    &.player2 .row {
+      color: $orange-light;
+    }
+
     .count_text {
-      color: $green;
+      color: $green-dark;
       font-weight: 300;
     }
+    &.player2 .count_text {
+      color: $green-light;
+    }
+
     .direction {
+      color: $primary-color-900;
+    }
+    &.player2 .direction {
       color: $primary-color-50;
     }
+
     .drops {
-      color: $blue;
+      color: $blue-dark;
       font-weight: 300;
     }
+    &.player2 .drops {
+      color: $blue-light;
+    }
+
     .evaluation {
-      color: $whitish;
+      color: $blackish;
       font-weight: 300;
+    }
+    &.player2 .evaluation {
+      color: $whitish;
     }
 
     &.nop {
@@ -180,21 +270,34 @@ $purple: #BA68C8;
     font-weight: 700;
 
     .win {
-      color: $primary-color-50;
-
       &.road {
-        color: $green;
+        color: $green-dark;
+        &.player2 {
+          color: $green-light;
+        }
       }
       &.flat {
-        color: $blue;
+        color: $blue-dark;
+        &.player2 {
+          color: $blue-light;
+        }
       }
     }
     .loss {
-      color: $red;
+      color: $red-dark;
+      &.player2 {
+        color: $red-light;
+      }
     }
     .draw {
-      color: $yellow;
+      color: $yellow-dark;
+      &.player2 {
+        color: $yellow-light;
+      }
     }
+  }
+  .move .result {
+    @include neutral-bg;
   }
 
   .invalid, .invalid * {

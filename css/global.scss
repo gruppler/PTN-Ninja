@@ -10,7 +10,7 @@ html, body, .mdl-layout {
   font-size: 14px;
   line-height: 20px;
   font-family: $sans;
-  background-color: $primary-color-500;
+  background-color: $bg-color;
 }
 
 ::-webkit-scrollbar-track {
@@ -25,5 +25,5 @@ html, body, .mdl-layout {
 }
 
 @include selection {
-  background: rgba($accent-color, 0.65);
+  background: rgba($accent-color-500, 0.65);
 }
