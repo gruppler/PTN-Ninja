@@ -56,16 +56,6 @@ requirejs({locale: navigator.language}, [
         board: new Board(),
         game: new Game(simulator),
 
-        $window: $(window),
-        $html: $('html'),
-        $body: $('body'),
-        $ptn: $('#ptn'),
-        $viewer: $('#viewer'),
-        $fab: $('#fab'),
-        $permalink: $('.permalink'),
-        $download: $('#download'),
-        $open: $('#open'),
-
         default_ptn: '[Date "'+today+'"]\n[Player1 "'+t.Player1_name+'"]\n[Player2 "'+t.Player2_name+'"]\n[Result ""]\n[Size "5"]\n\n1. ',
 
         sample_ptn: 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA',
@@ -278,6 +268,20 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
+
+  // Initialize Menu
+  app.menu.render();
+
+  app.$window = $(window);
+  app.$html = $('html');
+  app.$body = $('body');
+  app.$ptn = $('#ptn');
+  app.$viewer = $('#viewer');
+  app.$fab = $('#fab');
+  app.$permalink = $('.permalink');
+  app.$download = $('#download');
+  app.$open = $('#open');
+
   // Schedule callback for one-time execution after CSS transition ends,
   // or execute existing callbacks
   $.fn.afterTransition = function (callback) {
@@ -431,9 +435,6 @@ requirejs({locale: navigator.language}, [
     }
   });
 
-  // Initialize Share Menu
-  $('#share').attr('title', t.Share);
-
   // Initialize Download Button
   app.$download.on('touchstart click', function (event) {
     event.stopPropagation();
@@ -485,9 +486,6 @@ requirejs({locale: navigator.language}, [
   }).on('clear:error:parse', function () {
     app.$html.removeClass('error');
   });
-
-  // Initialize Menu
-  app.menu.render();
 
   // Bind update events to game parsing
   bililiteRange.fancyText(app.$ptn[0], function () {

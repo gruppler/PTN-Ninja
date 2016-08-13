@@ -14,7 +14,7 @@ define([
 
   var $panel = $('#app')
     , $menu = $('#menu')
-    , $menu_button = $('.mdl-layout__drawer-button');
+    , $menu_button = $('.mdl-layout__drawer-button').addClass('mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect');
 
   var Menu = {};
 
@@ -29,7 +29,7 @@ define([
   Menu.content = [{
     id: 'play',
     items: [{
-      title: t.Play_Mode,
+      label: t.Play_Mode,
       icon: 'play_arrow',
       onclick: 'app.toggle_edit_mode()',
       class: 'mode keep-open'
@@ -55,7 +55,7 @@ define([
   },{
     id: 'edit',
     items: [{
-      title: t.Edit_Mode,
+      label: t.Edit_Mode,
       icon: 'mode_edit',
       onclick: 'app.toggle_edit_mode()',
       class: 'mode keep-open'
@@ -70,47 +70,49 @@ define([
       checked: config.show_parse_errors,
       'data-id': 'show_parse_errors'
     },{
-      title: t.Undo,
+      label: t.Undo,
       icon: 'undo',
       onclick: 'app.undo()',
       class: 'keep-open'
     },{
-      title: t.Redo,
+      label: t.Redo,
       icon: 'redo',
       onclick: 'app.redo()',
       class: 'keep-open'
     },{
-      title: t.Trim_to_current_ply,
+      label: t.Trim_to_current_ply,
       icon: 'content_cut',
       onclick: 'app.board.trim_to_current_ply()'
     },{
-      title: t.Revert_Game,
+      label: t.Revert_Game,
       icon: 'restore',
       onclick: 'app.revert_game()'
     }]
   },{
     id: 'global',
     items: [{
-      title: t.Permalink,
+      label: t.Permalink,
       icon: 'link',
       class: 'permalink',
       href: '#'+app.ptn_compressed,
       target: '_blank',
       rel: 'noopener'
     },{
-      title: t.Download,
+      label: t.Download,
       icon: 'file_download',
-      onclick: 'app.$download.click()'
+      id: 'download'
     },{
-      title: t.Open,
+      label: t.Open,
       icon: 'folder_open',
-      onclick: 'app.$open.click()'
+      id: 'open',
+      type: 'file',
+      accept: '.ptn,.txt'
     },{
-      title: t.Load_Sample_Game,
+      label: t.Load_Sample_Game,
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
     },{
-      title: t.About_App,
+      label: t.About_App,
       icon: 'code',
       href: 'readme.md',
       target: '_blank',
@@ -131,7 +133,7 @@ define([
     },
 
     menu: function (obj) {
-      return '<span class="mdl-layout-title">'+t.App_Title+'</span>'
+      return '<span class="mdl-layout-title">'+t.app_title+'</span>'
         + _.map(obj.content, app.menu.tpl.section).join('');
     },
 
@@ -146,19 +148,19 @@ define([
 
     anchor: _.template(
       '<a'+
-        '<% _.each(_.omit(obj, ["title", "icon"]), function(value, key) { %>'+
+        '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
           ' <%=key%>="<%=value%>"'+
         '<% }) %>'+
       '>'+
         '<li class="mdl-navigation__link">'+
             '<i class="material-icons"><%=obj.icon%></i>'+
-            '<%=obj.title%>'+
+            '<%=obj.label%>'+
         '</li>'+
       '</a>'
     ),
 
     switch: _.template(
-      '<li class="mdl-navigation__link">'+
+      '<li class="mdl-navigation__link item-switch">'+
         '<label class="mdl-switch mdl-js-switch">'+
           '<input type="checkbox" class="mdl-switch__input"'+
             '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
@@ -175,10 +177,26 @@ define([
     ),
 
     slider: _.template(
-      '<li class="mdl-navigation__link">'+
+      '<li class="mdl-navigation__link item-slider">'+
         '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
+            '<% if (_.isBoolean(value)) { %>'+
+              ' <%= value ? key : "" %>'+
+            '<% } else { %>'+
+              ' <%=key%>="<%=value%>"'+
+            '<% } %>'+
+          '<% }) %>'+
+        '>'+
+      '</li>'
+    ),
+
+    file: _.template(
+      '<li class="mdl-navigation__link item-file">'+
+        '<i class="material-icons"><%=obj.icon%></i>'+
+        '<%=obj.label%>'+
+        '<input class="invisible-file-input"'+
+          '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
             '<% if (_.isBoolean(value)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+

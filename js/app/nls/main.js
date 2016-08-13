@@ -1,7 +1,7 @@
 define({
 
   root: {
-    App_Title: "PTN Ninja",
+    app_title: "PTN Ninja",
     About_App: "About PTN Ninja",
 
     Cancel: "Cancel",

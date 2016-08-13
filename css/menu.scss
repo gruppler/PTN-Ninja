@@ -24,8 +24,15 @@ html.playmode #menu .menu-edit {
     margin-right: 32px;
   }
 
+  .item-switch,
+  .item-file,
+  .mdl-switch {
+    cursor: pointer;
+  }
+
   &.mdl-layout__drawer > .mdl-layout-title,
   &.mdl-layout__drawer .mdl-navigation .mdl-navigation__link {
+    position: relative;
     padding-left: 16px;
     padding-right: 16px;
   }

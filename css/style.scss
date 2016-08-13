@@ -53,7 +53,7 @@
   line-height: 2em;
   padding: $edge;
   padding-top: $edge + $button-height;
-  padding-right: $edge + $fab-height-small;
+  padding-right: $edge;
   margin: 0;
   white-space: pre-wrap;
 
@@ -69,14 +69,23 @@
 
 #fab {
   position: absolute;
-  right: $edge;
+  right: $toolbar-height - $fab-height/2;
   bottom: $toolbar-height - $fab-height/2;
+  box-shadow: $shadow3;
   z-index: 2;
+
+  &:hover {
+    box-shadow: $shadow4;
+  }
+  &:active {
+    box-shadow: $shadow5;
+  }
 
   i {
     opacity: 0;
     position: absolute;
-    left: 50%;
+    top: 0;
+    line-height: $fab-height;
     transform: translate(-50%);
     transition: all $time-smooth ease-in-out;
 
@@ -152,13 +161,14 @@
   }
 
   button.play {
+    width: 40px;
+    height: 40px;
+
     i {
       transition: opacity $time-smooth $natural;
 
       &.pause {
         position: absolute;
-        top: 0;
-        left: 0.5em;
         opacity: 0;
       }
     }
@@ -172,45 +182,4 @@
       }
     }
   }
-}
-
-#share-menu {
-  position: absolute;
-  top: 0;
-  right: $edge;
-  width: $fab-height-small;
-  padding: $edge;
-  padding-right: 0;
-  overflow: visible;
-  z-index: 1;
-
-  .fab + .fab {
-    margin-top: $edge;
-    opacity: 0;
-    transform: scale(0);
-    pointer-events: none;
-    transition: all $time-quick $natural;
-  }
-
-  &:hover {
-    .fab + .fab {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: all;
-    }
-  }
-}
-
-.fab.small i.share {
-  margin-left: -2px;
-}
-
-#open {
-  display: block;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  opacity: 0;
 }
