@@ -83,6 +83,10 @@ define([
       title: t.Trim_to_current_ply,
       icon: 'content_cut',
       onclick: 'app.board.trim_to_current_ply()'
+    },{
+      title: t.Revert_Game,
+      icon: 'restore',
+      onclick: 'app.revert_game()'
     }]
   },{
     id: 'global',
@@ -157,9 +161,12 @@ define([
       '<li class="mdl-navigation__link">'+
         '<label class="mdl-switch mdl-js-switch">'+
           '<input type="checkbox" class="mdl-switch__input"'+
-            '<%= obj.checked ? " checked" : "" %>'+
-            '<% _.each(_.omit(obj, ["label", "type", "checked"]), function(value, key) { %>'+
-              ' <%=key%>="<%=value%>"'+
+            '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
+              '<% if (_.isBoolean(value)) { %>'+
+                ' <%= value ? key : "" %>'+
+              '<% } else { %>'+
+                ' <%=key%>="<%=value%>"'+
+              '<% } %>'+
             '<% }) %>'+
             '>'+
           '<span class="mdl-checkbox__label"><%=obj.label%></span>'+
@@ -172,7 +179,11 @@ define([
         '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
-            ' <%=key%>="<%=value%>"'+
+            '<% if (_.isBoolean(value)) { %>'+
+              ' <%= value ? key : "" %>'+
+            '<% } else { %>'+
+              ' <%=key%>="<%=value%>"'+
+            '<% } %>'+
           '<% }) %>'+
         '>'+
       '</li>'
@@ -204,11 +215,11 @@ define([
     $menu.on('change', '[data-id]', function () {
       var $this = $(this)
         , prop = $this.data('id')
-        , val = config[prop];
+        , value = config[prop];
 
-      if (_.isBoolean(val)) {
+      if (_.isBoolean(value)) {
         config.toggle(prop, this.checked, 'menu');
-      } else if (_.isNumber(val)) {
+      } else if (_.isNumber(value)) {
         config.set(prop, 1*this.value, 'menu');
       }
     });

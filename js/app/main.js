@@ -66,21 +66,197 @@ requirejs({locale: navigator.language}, [
         $download: $('#download'),
         $open: $('#open'),
 
-        undo: function (event) {
-          bililiteRange.undo(event || {target: app.$ptn[0], preventDefault: nop});
-        },
-        redo: function (event) {
-          bililiteRange.redo(event || {target: app.$ptn[0], preventDefault: nop});
-        },
-
         default_ptn: '[Date "'+today+'"]\n[Player1 "'+t.Player1_name+'"]\n[Player2 "'+t.Player2_name+'"]\n[Result ""]\n[Size "5"]\n\n1. ',
 
         sample_ptn: 'NoZQlgLgpgBARABQDYEMCeAVFBrAdAYwHsBbOAXQChgBRANygDsJ4B5BpMB2ZdcqgERTR4AJgAMARgBsuMQFZcEuX2A80UAE4T4Acw0BXAA6GkmlWs0jdGqI1O0wQgBYoGKgEpQAzvqTM4YgC0AGIq4ABesHDKlBQw8QmJiQDeMBiQpjAAvhQUErgwKHIwyQCCSADu6F4wFZBOMBBOsEQaXBpeuF1ZMFASFCIFACba+HIUAMzDVkPjACwFUHO9cgDkFAowEksA1FuzAHwUMjAgszAARuMA7AUSh9oAwrMUABwFz8sXIhQAnAX4CaXCZ5MQA5YSC4TA79CT5S7LFBzPKDLb4OY7bT3OQw1YAQjyU32GO0ULyCxgQzmq0pIKUdwuc0CEnxW2+mLyJxAKCB9wmHIktxg6JgIkBOx+EneorGgSsIipAB5Jf9aTS5uiYSDxHchvyWTAJprtfCQGMYHIoHJAuMRKjsczTnqBkTzoyBhSQFbLiyBpsJDyYZcfiITiIoXLCtqhfgrICBtLuVYUP0RKq5krqRalorxhMwVsrY6rZN4eGJsrgZNURqmVm+Y7kgAKfQMIaEACUOQmRLF0Lj-QmFIkgMVBuSLAa6hQTgANDAAJIwHSEZhNMBePE9ZLuMA6JwQAD8OUSUAmeIJiSCwRKMCbgHtSQAFMIBC0kfHfvgFY-mCAblJAICk3+yCggA',
 
-        is_in_iframe: top.location != self.location
+        is_in_iframe: top.location != self.location,
+
+        tpl: {
+          dialog: _.template(
+            '<dialog class="mdl-dialog">'+
+              '<h3 class="mdl-dialog__title"><%=title%></h3>'+
+              '<div class="mdl-dialog__content">'+
+                '<p><%=content%></p>'+
+              '</div>'+
+              '<div class="mdl-dialog__actions">'+
+                '<% _.each(actions, function (action) { %>'+
+                  '<button type="button" class="mdl-button mdl-button--flat mdl-js-ripple-effect'+
+                    '<%= action.className ? " "+action.className : "" %>"'+
+                    '<% _.each(_.omit(action, ["label", "value", "callback", "className"]), function(value, key) { %>'+
+                      '<% if (_.isBoolean(value)) { %>'+
+                        ' <%= value ? key : "" %>'+
+                      '<% } else { %>'+
+                        ' <%=key%>="<%=value%>"'+
+                      '<% } %>'+
+                    '<% }) %>'+
+                  '><%=action.label%></button>'+
+                '<% }) %>'+
+              '</div>'+
+            '</dialog>'
+          )
+        },
+
+
+        // Dialogs
+
+        current_dialogs: [],
+
+        dialog: function (title, content, actions) {
+          var that = this;
+
+          var $dialog = $(this.tpl.dialog({
+            title: title,
+            content: content,
+            actions: actions || []
+          })).appendTo(this.$body);
+
+          var dialog = $dialog[0]
+            , $actions = $dialog.find('.mdl-dialog__actions button')
+            , $action;
+
+          if (!dialog.showModal) {
+            dialogPolyfill.registerDialog(dialog);
+          }
+
+          _.each(actions, function (action, i) {
+            var value = 'value' in action ? action.value : i
+              , callback = 'callback' in action ? action.callback : false;
+
+            $action = $actions.eq(i);
+
+            $actions.eq(i).click(function () {
+              dialog.close();
+              _.pull(that.current_dialogs, dialog);
+              $dialog.remove();
+            });
+
+            if (callback) {
+              $action.click(function () {
+                callback(value);
+              });
+            }
+          });
+
+          this.current_dialogs.push(dialog);
+
+          return dialog;
+        },
+
+        confirm: function (text, callback) {
+          var dialog = app.dialog(text.title, text.content, [{
+            label: t.OK,
+            value: true,
+            callback: callback
+          },{
+            label: t.Cancel,
+            value: false,
+            callback: callback
+          }]);
+
+          dialog.showModal();
+
+          return dialog;
+        },
+
+        revert_game: function (confirmed) {
+          if (confirmed === true) {
+            this.game.revert();
+          } else if (_.isUndefined(confirmed)) {
+            this.confirm(t.confirm.Revert_Game, this.revert_game);
+          }
+        },
+
+
+        // Edit Mode Functions
+
+        undo: function (event) {
+          bililiteRange.undo(event || {target: this.$ptn[0], preventDefault: nop});
+        },
+
+        redo: function (event) {
+          bililiteRange.redo(event || {target: this.$ptn[0], preventDefault: nop});
+        },
+
+        scroll_to_ply: function () {
+          if (this.$ptn.$ply) {
+            this.$ptn.scrollTop(
+              this.$ptn.scrollTop() + this.$ptn.$ply.offset().top
+              - (window.innerHeight - this.$ptn.$ply.height())/2
+            );
+          }
+        },
+
+        toggle_edit_mode: function (on) {
+          var was_editing = this.game.is_editing;
+
+          if (_.isBoolean(on)) {
+            if (on && !this.game.is_editing) {
+              this.$viewer.transition();
+              this.game.is_editing = true;
+              this.$html.addClass('editmode');
+              this.$html.removeClass('playmode');
+            } else if (!on && this.game.is_editing) {
+              this.$viewer.transition();
+              this.game.is_editing = false;
+              this.$html.addClass('playmode');
+              this.$html.removeClass('editmode');
+            }
+          } else {
+            this.game.is_editing = !this.game.is_editing;
+            this.$viewer.transition();
+            this.$html.toggleClass('editmode playmode');
+          }
+
+          if (this.game.is_editing && !was_editing) {
+            this.board.pause();
+            this.scroll_to_ply();
+          }
+
+          this.$ptn.attr('contenteditable', this.game.is_editing);
+        },
+
+        // Read and parse the file
+        read_file: function (file) {
+          var that = this;
+
+          if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+            var reader = new FileReader();
+            reader.onload = function (event) {
+              that.board.ply_id = 0;
+              that.game.parse(event.target.result);
+              bililiteRange(that.$ptn[0]).undo(0);
+              location.hash = that.game.ptn_compressed;
+            }
+            reader.readAsText(file);
+          }
+        },
+
+        // Insert text into PTN before or after caret
+        insert_text: function (text, before) {
+          bililiteRange(this.$ptn[0]).bounds('selection')
+            .text(text, before ? 'end' : 'start')
+            .select();
+        },
+
+        // (0, 0) to 'a1'
+        i_to_square: function (row, col) {
+          return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
+        }
       };
 
   window.app = app;
+
+  _.bindAll(app,
+    'dialog',
+    'confirm',
+    'revert_game',
+    'undo',
+    'redo',
+    'scroll_to_ply',
+    'toggle_edit_mode',
+    'insert_text'
+  );
 
   // Templatize i18n strings
   (function () {
@@ -134,70 +310,6 @@ requirejs({locale: navigator.language}, [
     return this;
   };
 
-  app.scroll_to_ply = function () {
-    if (this.$ptn.$ply) {
-      this.$ptn.scrollTop(
-        this.$ptn.scrollTop() + this.$ptn.$ply.offset().top
-        - (window.innerHeight - this.$ptn.$ply.height())/2
-      );
-    }
-  };
-
-  app.toggle_edit_mode = function (on) {
-    var was_editing = app.game.is_editing;
-
-    if (_.isBoolean(on)) {
-      if (on && !app.game.is_editing) {
-        app.$viewer.transition();
-        app.game.is_editing = true;
-        app.$html.addClass('editmode');
-        app.$html.removeClass('playmode');
-      } else if (!on && app.game.is_editing) {
-        app.$viewer.transition();
-        app.game.is_editing = false;
-        app.$html.addClass('playmode');
-        app.$html.removeClass('editmode');
-      }
-    } else {
-      app.game.is_editing = !app.game.is_editing;
-      app.$viewer.transition();
-      app.$html.toggleClass('editmode playmode');
-    }
-
-    if (app.game.is_editing && !was_editing) {
-      app.board.pause();
-      app.scroll_to_ply();
-    }
-
-    app.$ptn.attr('contenteditable', app.game.is_editing);
-  };
-
-  // Read and parse the file
-  app.read_file = function (file) {
-    if (file && /\.ptn$|\.txt$/i.test(file.name)) {
-      var reader = new FileReader();
-      reader.onload = function (event) {
-        app.board.ply_id = 0;
-        app.game.parse(event.target.result);
-        bililiteRange(app.$ptn[0]).undo(0);
-        location.hash = app.game.ptn_compressed;
-      }
-      reader.readAsText(file);
-    }
-  };
-
-  // Insert text into PTN before or after caret
-  app.insert_text = function (text, before) {
-    bililiteRange(app.$ptn[0]).bounds('selection')
-      .text(text, before ? 'end' : 'start')
-      .select();
-  };
-
-  // (0, 0) to 'a1'
-  app.i_to_square = function (row, col) {
-    return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
-  };
-
   // Add boolean preferences to html class
   app.$html.addClass(
     _.map(_.keys(_.pickBy(app.config, _.isBoolean)), function (prop) {
@@ -227,24 +339,24 @@ requirejs({locale: navigator.language}, [
   });
 
   // Update $ptn if parsing starts somewhere else
-  app.game.on_parse_start(function () {
-    if (app.$ptn.text() != this.ptn) {
-      app.$ptn.text(this.ptn);
+  app.game.on_parse_start(function (is_original) {
+    if (app.$ptn.text() != app.game.ptn) {
+      app.$ptn.text(app.game.ptn);
     }
   });
 
   // Re-render $ptn
   // Initialize board
   // Update Permalinks
-  app.game.on_parse_end(function () {
+  app.game.on_parse_end(function (is_original) {
     var href, length;
 
-    app.$ptn.html(this.print());
+    app.$ptn.html(app.game.print());
     if (app.game.is_valid) {
       app.board.init(app.game);
     }
 
-    href = '#'+this.ptn_compressed;
+    href = '#'+app.game.ptn_compressed;
     length = (baseurl + href).length;
 
     app.$permalink.attr({
@@ -255,6 +367,10 @@ requirejs({locale: navigator.language}, [
     m.clear('warning', 'url');
     if (length > 2000) {
       m.warning(t.warning.long_url, 0, 'url');
+    }
+
+    if (is_original) {
+      bililiteRange(app.$ptn[0]).undo(0);
     }
   });
 
@@ -353,8 +469,7 @@ requirejs({locale: navigator.language}, [
       event.stopPropagation();
     }).on('hashchange', function () {
       app.board.ply_id = 0;
-      app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
-      bililiteRange(app.$ptn[0]).undo(0);
+      app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash, true);
     });
   }
 
@@ -374,8 +489,7 @@ requirejs({locale: navigator.language}, [
   });
 
   // Load the initial PTN
-  app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash);
-  bililiteRange(app.$ptn[0]).undo(0);
+  app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash, !sessionStorage.ptn);
 
   // Start in Play Mode if loading from valid hash
   if (location.hash && !app.$html.hasClass('error')) {
@@ -392,7 +506,12 @@ requirejs({locale: navigator.language}, [
       return;
     }
 
-    if (app.game.is_editing && event.keymap in hotkeys.edit) {
+    if (app.current_dialogs.length) {
+      // Modal Dialog
+      if (event.keymap == 'Escape') {
+        app.current_dialogs.pop().close();
+      }
+    } else if (app.game.is_editing && event.keymap in hotkeys.edit) {
       // Edit Mode
       hotkeys.edit[event.keymap](event, $focus, $parent);
     } else if (!app.game.is_editing && event.keymap in hotkeys.play) {

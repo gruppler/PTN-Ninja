@@ -4,6 +4,7 @@ define({
     App_Title: "PTN Ninja",
     About_App: "About PTN Ninja",
 
+    Cancel: "Cancel",
     Clock: "Clock",
     Date: "Date",
     Download: "Download",
@@ -14,6 +15,7 @@ define({
     Last_Ply: "Last Ply",
     Load_Sample_Game: "Load Sample Game",
     Next_Ply: "Next Ply",
+    OK: "OK",
     Open: "Open",
     Permalink: "Permalink",
     Play_Mode: "Play Mode",
@@ -30,6 +32,7 @@ define({
     Rating2: "Rating2",
     Redo: "Redo",
     Result: "Result",
+    Revert_Game: "Revert Game",
     Round: "Round",
     Share: "Share",
     Show_Annotations: "Show Annotations",
@@ -50,6 +53,13 @@ define({
       'F': "<%=player%> wins by flats",
       'R': "<%=player%> wins by building a road",
       'tie': "It's a tie"
+    },
+
+    confirm: {
+      Revert_Game: {
+        title: "Revert Game",
+        content: "Are you sure you want to revert the game to its original state?"
+      }
     },
 
     warning: {

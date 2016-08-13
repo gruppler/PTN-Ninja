@@ -33,27 +33,27 @@ define([
     return this;
   };
 
-  Game.prototype.on_parse_start = function (fn) {
-    if (fn) {
+  Game.prototype.on_parse_start = function (fn, is_original) {
+    if (_.isFunction(fn)) {
       this.callbacks_start.push(fn);
     } else {
-      _.invokeMap(this.callbacks_start, 'call', this, this);
+      _.invokeMap(this.callbacks_start, 'call', is_original);
     }
 
     return this;
   };
 
-  Game.prototype.on_parse_end = function (fn) {
-    if (fn) {
+  Game.prototype.on_parse_end = function (fn, is_original) {
+    if (_.isFunction(fn)) {
       this.callbacks_end.push(fn);
     } else {
-      _.invokeMap(this.callbacks_end, 'call', this, this);
+      _.invokeMap(this.callbacks_end, 'call', is_original);
     }
 
     return this;
   };
 
-  Game.prototype.parse = function (input, is_from_URL) {
+  Game.prototype.parse = function (input, is_from_URL, is_original) {
     var plaintext, header, body, i, file, tag, missing_tags, tps;
 
     if (is_from_URL) {
@@ -76,7 +76,14 @@ define([
       this.ptn_compressed = compress(input);
     }
 
-    this.on_parse_start();
+    if (is_original) {
+      this.original_ptn = this.ptn;
+      sessionStorage.ptn = this.original_ptn;
+    } else if (!this.original_ptn) {
+      this.original_ptn = sessionStorage.ptn;
+    }
+
+    this.on_parse_start(false, is_original);
 
     this.is_valid = true;
     this.result = null;
@@ -150,13 +157,17 @@ define([
     }
 
     if (this.simulator.validate(this)) {
-      this.on_parse_end();
+      this.on_parse_end(false, is_original);
       return true;
     } else {
       return false;
     }
 
   };
+
+  Game.prototype.revert = function () {
+    this.parse(this.original_ptn, false, true);
+  }
 
   Game.prototype.get_linenum = function () {
     return this.config.tps && this.config.tps.move ?

@@ -58,6 +58,13 @@ define([], function () {
         app.redo(event);
       },
 
+      '^%z': function (event, $focus, $parent) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        app.revert_game();
+      },
+
       '^%t': function (event, $focus, $parent) {
         app.board.trim_to_current_ply();
       },
