@@ -3,35 +3,32 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
-$red-light: #EF5350;
-$red-dark: #D32F2F;
-$orange-light: #FF9800;
-$orange-dark: #EF6C00;
-$yellow-light: #FFCA28;
-$yellow-dark: #FF8F00;
+$red-light: #EF5451;
+$red-dark: #E53A35;
+$orange-light: #FAA629;
+$orange-dark: #F47C20;
 $green-light: #9CCC65;
-$green-dark: #7CB342;
-$blue-light: #4FC3F7;
-$blue-dark: #0288D1;
-$purple: #BA68C8;
+$green-dark: #378E43;
+$blue-light: #36C2D6;
+$blue-dark: #1B87C9;
 
 $ptn-bg-radius: 0.2em;
 
 @mixin neutral-bg {
   background-color: rgba($bg-color, 0.8);
-  box-shadow: 0 0 0.1em rgba($bg-color, 0.8);
+  box-shadow: 0 0 0 0.1em rgba($bg-color, 0.8);
   border-radius: $ptn-bg-radius;
 }
 
 .ptn {
-  text-shadow: rgba($black, 0.25) 0px 1px 1px;
+  font-family: $monospace;
 
   .player1, .player2 {
     border-radius: $ptn-bg-radius;
   }
   .player1 {
     color: $primary-color-800;
-    box-shadow: 0 0 0.1em $primary-color-100;
+    box-shadow: 0 0 0 0.1em $primary-color-100;
     background-color: $primary-color-100;
 
     &.ply:hover {
@@ -40,17 +37,17 @@ $ptn-bg-radius: 0.2em;
     }
     &.ply:active,
     &.ply.active {
-      background-color: $primary-color-200;
+      background-color: $primary-color-100;
       box-shadow: 0 0 0 0.15em $accent-color-600;
 
       html.ply-is-done & {
-        background-color: $primary-color-100;
+        background-color: $white;
       }
     }
   }
   .player2 {
     color: $primary-color-100;
-    box-shadow: 0 0 0.1em $primary-color-800;
+    box-shadow: 0 0 0 0.1em $primary-color-800;
     background-color: $primary-color-800;
 
     &.ply:hover {
@@ -59,11 +56,11 @@ $ptn-bg-radius: 0.2em;
     }
     &.ply:active,
     &.ply.active {
-      background-color: $primary-color-700;
+      background-color: $primary-color-800;
       box-shadow: 0 0 0 0.15em $accent-color-600;
 
       html.ply-is-done & {
-        background-color: $primary-color-800;
+        background-color: $black;
       }
     }
   }
@@ -137,9 +134,12 @@ $ptn-bg-radius: 0.2em;
       @include neutral-bg;
     }
 
+    .value {
+      font-weight: 600;
+    }
+
     .value:not(.player1):not(.player2) {
       color: $primary-color-50;
-      font-weight: 600;
       @include neutral-bg;
     }
   }
@@ -199,7 +199,7 @@ $ptn-bg-radius: 0.2em;
 
   .linenum {
     color: $primary-color-900;
-    font-weight: 400
+    font-weight: 400;
   }
 
   .ply {
@@ -207,57 +207,57 @@ $ptn-bg-radius: 0.2em;
     transition: all $time-quick ease-out;
 
     .stone {
-      color: $primary-color-900
+      color: $orange-dark;
     }
     &.player2 .stone {
-      color: $primary-color-50
+      color: $orange-light;
     }
 
     .column {
-      color: $yellow-dark;
-      font-weight: 600;
+      color: $primary-color-800;
+      font-weight: 400;
     }
     &.player2 .column {
-      color: $yellow-light;
+      color: $primary-color-100;
     }
 
     .row {
-      color: $orange-dark;
-      font-weight: 600;
+      color: $primary-color-800;
+      font-weight: 400;
     }
     &.player2 .row {
-      color: $orange-light;
+      color: $primary-color-100;
     }
 
     .count_text {
       color: $green-dark;
-      font-weight: 300;
+      font-weight: 600;
     }
     &.player2 .count_text {
       color: $green-light;
     }
 
     .direction {
-      color: $primary-color-900;
+      color: $green-dark;
     }
     &.player2 .direction {
-      color: $primary-color-50;
+      color: $green-light;
     }
 
     .drops {
       color: $blue-dark;
-      font-weight: 300;
+      font-weight: 600;
     }
     &.player2 .drops {
       color: $blue-light;
     }
 
     .evaluation {
-      color: $blackish;
+      color: $red-dark;
       font-weight: 300;
     }
     &.player2 .evaluation {
-      color: $whitish;
+      color: $red-light;
     }
 
     &.nop {
@@ -290,9 +290,9 @@ $ptn-bg-radius: 0.2em;
       }
     }
     .draw {
-      color: $yellow-dark;
+      color: $orange-dark;
       &.player2 {
-        color: $yellow-light;
+        color: $orange-light;
       }
     }
   }
