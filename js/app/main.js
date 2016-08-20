@@ -365,7 +365,7 @@ requirejs({locale: navigator.language}, [
 
     app.$permalink.attr({
       href: href,
-      title: t.Permalink+' ('+t.n_characters({n: length})+')'
+      title: t.n_characters({n: length})
     });
 
     m.clear('warning', 'url');
@@ -452,7 +452,7 @@ requirejs({locale: navigator.language}, [
       + '.ptn',
       true
     );
-  }).attr('title', t.Download);
+  });
 
   // Initialize Open Button
   app.$open.on('change', function (event) {
@@ -460,7 +460,7 @@ requirejs({locale: navigator.language}, [
     event.preventDefault();
     app.read_file(this.files[0]);
     $(this).val('');
-  }).attr('title', t.Open);
+  });
 
   // Listen for dropped files and hash change
   if (window.File && window.FileReader && window.FileList && window.Blob) {

@@ -17,7 +17,7 @@ define({
     Next_Ply: "Next Ply",
     OK: "OK",
     Open: "Open",
-    Permalink: "Permalink",
+    Permalink: "Link to this game",
     Play_Mode: "Play Mode",
     Play_Speed: "Play Speed",
     PlayPause: "Play/Pause",

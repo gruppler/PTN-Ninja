@@ -38,7 +38,8 @@ define([
     },{
       label: t.Download,
       icon: 'file_download',
-      id: 'download'
+      id: 'download',
+      href: '#'
     },{
       label: t.Open,
       icon: 'folder_open',
