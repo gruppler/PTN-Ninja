@@ -251,9 +251,6 @@ define([
   Board.prototype.update_plys = function(current_ply) {
     var ply1, ply2;
 
-    this.$ply2.removeClass('active');
-    this.$ply1.removeClass('active');
-
     if (current_ply) {
       ply1 = current_ply.move.ply1;
       ply2 = current_ply.move.ply2;
@@ -263,7 +260,7 @@ define([
       if (ply1.turn == 1) {
         this.$ply1.html(ply1.print());
         if (ply1 == current_ply) {
-          this.$ply1.addClass('active');
+          this.$ply1.find('.ply').addClass('active');
         }
       } else {
         this.$ply1.empty();
@@ -273,7 +270,7 @@ define([
     if (ply2) {
       this.$ply2.html(ply2.print());
       if (ply2 == current_ply) {
-        this.$ply2.addClass('active');
+        this.$ply2.find('.ply').addClass('active');
       }
     }
   };
