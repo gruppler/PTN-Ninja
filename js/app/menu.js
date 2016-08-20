@@ -27,6 +27,36 @@ define([
   });
 
   Menu.content = [{
+    id: 'global',
+    items: [{
+      label: t.Permalink,
+      icon: 'link',
+      class: 'permalink',
+      href: '#'+app.ptn_compressed,
+      target: '_blank',
+      rel: 'noopener'
+    },{
+      label: t.Download,
+      icon: 'file_download',
+      id: 'download'
+    },{
+      label: t.Open,
+      icon: 'folder_open',
+      id: 'open',
+      type: 'file',
+      accept: '.ptn,.txt'
+    },{
+      label: t.Load_Sample_Game,
+      icon: 'apps',
+      onclick: 'app.game.parse(app.sample_ptn, true)'
+    },{
+      label: t.About_App,
+      icon: 'code',
+      href: 'readme.md',
+      target: '_blank',
+      rel: 'noopener'
+    }]
+  },{
     id: 'play',
     items: [{
       label: t.Play_Mode,
@@ -87,36 +117,6 @@ define([
       label: t.Revert_Game,
       icon: 'restore',
       onclick: 'app.revert_game()'
-    }]
-  },{
-    id: 'global',
-    items: [{
-      label: t.Permalink,
-      icon: 'link',
-      class: 'permalink',
-      href: '#'+app.ptn_compressed,
-      target: '_blank',
-      rel: 'noopener'
-    },{
-      label: t.Download,
-      icon: 'file_download',
-      id: 'download'
-    },{
-      label: t.Open,
-      icon: 'folder_open',
-      id: 'open',
-      type: 'file',
-      accept: '.ptn,.txt'
-    },{
-      label: t.Load_Sample_Game,
-      icon: 'apps',
-      onclick: 'app.game.parse(app.sample_ptn, true)'
-    },{
-      label: t.About_App,
-      icon: 'code',
-      href: 'readme.md',
-      target: '_blank',
-      rel: 'noopener'
     }]
   }];
 
