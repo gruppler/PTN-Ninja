@@ -10,7 +10,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   var tpl = {
     message: _.template(
       '<div class="message <%=type%>">'+
-        '<div class="content">'+
+        '<div class="content" title="<%=message%>">'+
           '<i class="material-icons"><%=icon%></i><%=message%>'+
           '<i class="material-icons close">close</i>'+
         '</div>'+

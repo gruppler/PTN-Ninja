@@ -7,11 +7,11 @@
   > div {
     position: absolute;
     top: -0.5em;
-    left: $button-height;
+    right: $edge;
     padding: $edge;
     overflow: auto;
     max-height: 100%;
-    max-width: calc(100% - #{$edge + $fab-height});
+    max-width: calc(100% - #{$edge + $button-height});
     box-sizing: border-box;
     transition: all $time-smooth $natural;
     z-index: 1;
@@ -21,19 +21,18 @@
     html.playmode:not(.show-annotations) &.messages-board,
     html.editmode:not(.show-parse-errors) &.messages-parse {
       opacity: 0;
-      transform: translateX(-100%);
+      transform: translateX(100%);
       pointer-events: none;
     }
   }
 
   .message {
-    float: left;
-    clear: left;
+    float: right;
+    clear: right;
     position: relative;
     white-space: nowrap;
     border-radius: 2px;
     margin-top: 0.5em;
-    margin-right: $edge;
     max-width: 100%;
     box-shadow: $shadow1;
     transition: all $time-smooth $natural;
