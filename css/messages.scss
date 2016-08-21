@@ -43,7 +43,7 @@
     }
 
     .content {
-      margin: 1rem calc(#{$edge*2} + 1.5rem);
+      margin: 0.8rem calc(#{$edge*2} + 1.5rem);
       overflow: hidden;
       text-overflow: ellipsis;
     }
