@@ -12,6 +12,7 @@ define(['lodash'], function (_) {
 
     defaults: {
       play_speed: 40, // BPM
+      board_opacity: 50,
       show_parse_errors: true,
       show_annotations: true,
       playmode_square_hl: true,

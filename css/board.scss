@@ -13,6 +13,10 @@ $stone-thickness: 0.3vmin;
   right: 0;
   z-index: 0;
   transition: opacity $time-smooth $natural;
+
+  html.playmode & {
+    opacity: 1 !important;
+  }
 }
 
 .board {

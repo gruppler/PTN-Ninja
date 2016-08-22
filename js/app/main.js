@@ -435,6 +435,12 @@ requirejs({locale: navigator.language}, [
     }
   });
 
+  // Make board opacity controls work
+  config.on_change('board_opacity', function (opacity) {
+    app.$viewer.css('opacity', opacity/100);
+  });
+  app.$viewer.css('opacity', config.board_opacity/100);
+
   // Initialize Download Button
   app.$download.on('touchstart click', function (event) {
     event.stopPropagation();

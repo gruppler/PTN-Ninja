@@ -101,6 +101,15 @@ define([
       checked: config.show_parse_errors,
       'data-id': 'show_parse_errors'
     },{
+      label: t.Board_Opacity,
+      type: 'slider',
+      min: 0,
+      max: 100,
+      step: 5,
+      value: config.board_opacity,
+      'data-realtime': true,
+      'data-id': 'board_opacity'
+    },{
       label: t.Undo,
       icon: 'undo',
       onclick: 'app.undo()',
@@ -165,7 +174,7 @@ define([
         '<label class="mdl-switch mdl-js-switch">'+
           '<input type="checkbox" class="mdl-switch__input"'+
             '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
-              '<% if (_.isBoolean(value)) { %>'+
+              '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
                 ' <%= value ? key : "" %>'+
               '<% } else { %>'+
                 ' <%=key%>="<%=value%>"'+
@@ -182,7 +191,7 @@ define([
         '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
-            '<% if (_.isBoolean(value)) { %>'+
+            '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
               ' <%=key%>="<%=value%>"'+
@@ -198,7 +207,7 @@ define([
         '<%=obj.label%>'+
         '<input class="invisible-file-input"'+
           '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
-            '<% if (_.isBoolean(value)) { %>'+
+            '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
               ' <%=key%>="<%=value%>"'+
@@ -231,14 +240,19 @@ define([
     });
 
     // Update config when inputs change
-    $menu.on('change', '[data-id]', function () {
+    $menu.on('change', 'input[type=checkbox][data-id]', function () {
       var $this = $(this)
-        , prop = $this.data('id')
-        , value = config[prop];
+        , prop = $this.data('id');
 
-      if (_.isBoolean(value)) {
-        config.toggle(prop, this.checked, 'menu');
-      } else if (_.isNumber(value)) {
+      config.toggle(prop, $this.checked, 'menu');
+    }).on('change input', 'input[type=range][data-id]', function (event) {
+      var $this = $(this)
+        , prop = $this.data('id');
+
+      if (
+        $this.data('realtime') && event.type == 'input'
+        || event.type == 'change'
+      ) {
         config.set(prop, 1*this.value, 'menu');
       }
     });

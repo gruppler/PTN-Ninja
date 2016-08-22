@@ -9,6 +9,7 @@ html.playmode #menu .menu-edit {
 
 #menu {
   cursor: default;
+  overflow-x: hidden;
   @include unselectable;
 
   a {

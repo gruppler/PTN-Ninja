@@ -4,6 +4,7 @@ define({
     app_title: "PTN Ninja",
     About_App: "About PTN Ninja",
 
+    Board_Opacity: "Board Opacity",
     Cancel: "Cancel",
     Clock: "Clock",
     Date: "Date",
