@@ -77,7 +77,7 @@ requirejs({locale: navigator.language}, [
                       '<% if (_.isBoolean(value)) { %>'+
                         ' <%= value ? key : "" %>'+
                       '<% } else { %>'+
-                        ' <%=key%>="<%=value%>"'+
+                        ' <%=key%>="<%-value%>"'+
                       '<% } %>'+
                     '<% }) %>'+
                   '><%=action.label%></button>'+

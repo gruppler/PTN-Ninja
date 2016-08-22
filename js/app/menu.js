@@ -159,7 +159,7 @@ define([
     anchor: _.template(
       '<a'+
         '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
-          ' <%=key%>="<%=value%>"'+
+          ' <%=key%>="<%-value%>"'+
         '<% }) %>'+
       '>'+
         '<li class="mdl-navigation__link">'+
@@ -177,7 +177,7 @@ define([
               '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
                 ' <%= value ? key : "" %>'+
               '<% } else { %>'+
-                ' <%=key%>="<%=value%>"'+
+                ' <%=key%>="<%-value%>"'+
               '<% } %>'+
             '<% }) %>'+
             '>'+
@@ -194,7 +194,7 @@ define([
             '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
-              ' <%=key%>="<%=value%>"'+
+              ' <%=key%>="<%-value%>"'+
             '<% } %>'+
           '<% }) %>'+
         '>'+
@@ -210,7 +210,7 @@ define([
             '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
-              ' <%=key%>="<%=value%>"'+
+              ' <%=key%>="<%-value%>"'+
             '<% } %>'+
           '<% }) %>'+
         '>'+
