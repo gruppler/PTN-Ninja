@@ -6,10 +6,9 @@
 #messages {
   > div {
     position: absolute;
-    top: -0.5em;
     right: $edge;
     padding: $edge;
-    overflow: auto;
+    overflow: hidden;;
     max-height: 100%;
     max-width: calc(100% - #{$edge + $button-height});
     box-sizing: border-box;
