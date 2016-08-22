@@ -25,9 +25,9 @@ html.playmode #menu .menu-edit {
     margin-right: 32px;
   }
 
-  .item-switch,
+  .item-checkbox,
   .item-file,
-  .mdl-switch {
+  .mdl-checkbox {
     cursor: pointer;
   }
 
@@ -47,7 +47,7 @@ html.playmode #menu .menu-edit {
     padding: 0;
   }
 
-  .mdl-switch.is-upgraded {
+  .mdl-checkbox.is-upgraded {
     padding-left: 56px;
   }
 

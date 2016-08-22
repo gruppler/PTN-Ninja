@@ -66,12 +66,12 @@ define([
       class: 'mode keep-open'
     },{
       label: t.Highlight_Squares,
-      type: 'switch',
+      type: 'checkbox',
       checked: config.playmode_square_hl,
       'data-id': 'playmode_square_hl'
     },{
       label: t.Show_Annotations,
-      type: 'switch',
+      type: 'checkbox',
       checked: config.show_annotations,
       'data-id': 'show_annotations'
     },{
@@ -92,12 +92,12 @@ define([
       class: 'mode keep-open'
     },{
       label: t.Highlight_Squares,
-      type: 'switch',
+      type: 'checkbox',
       checked: config.editmode_square_hl,
       'data-id': 'editmode_square_hl'
     },{
       label: t.Show_Parse_Errors,
-      type: 'switch',
+      type: 'checkbox',
       checked: config.show_parse_errors,
       'data-id': 'show_parse_errors'
     },{
@@ -169,12 +169,12 @@ define([
       '</a>'
     ),
 
-    switch: _.template(
-      '<li class="mdl-navigation__link item-switch">'+
-        '<label class="mdl-switch mdl-js-switch">'+
-          '<input type="checkbox" class="mdl-switch__input"'+
+    checkbox: _.template(
+      '<li class="mdl-navigation__link item-checkbox">'+
+        '<label class="mdl-checkbox mdl-js-checkbox">'+
+          '<input type="checkbox" class="mdl-checkbox__input"'+
             '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
-              '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
+              '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
                 ' <%= value ? key : "" %>'+
               '<% } else { %>'+
                 ' <%=key%>="<%=value%>"'+
@@ -191,7 +191,7 @@ define([
         '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
-            '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
+            '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
               ' <%=key%>="<%=value%>"'+
@@ -207,7 +207,7 @@ define([
         '<%=obj.label%>'+
         '<input class="invisible-file-input"'+
           '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
-            '<% if (_.isBoolean(value) && /^data-/.test(value)) { %>'+
+            '<% if (_.isBoolean(value) && !/^data-/.test(key)) { %>'+
               ' <%= value ? key : "" %>'+
             '<% } else { %>'+
               ' <%=key%>="<%=value%>"'+
@@ -222,7 +222,7 @@ define([
     $menu.html(this.tpl.menu(this));
 
     // Initialize widgets
-    $menu.find('.mdl-switch, .mdl-slider').each(function () {
+    $menu.find('.mdl-slider, .mdl-checkbox').each(function () {
       componentHandler.upgradeElement(this);
     });
 
@@ -232,8 +232,8 @@ define([
     // Close menu after selecting an anchor item
     $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);
 
-    // Effectively extend the touch zone for switches to the entire item
-    $menu.on('click', 'li:has(.mdl-switch)', function (event) {
+    // Effectively extend the touch zone for checkboxes to the entire item
+    $menu.on('click', 'li.item-checkbox', function (event) {
       if (this == event.target) {
         $(this).find('input').click();
       }
@@ -257,17 +257,17 @@ define([
       }
     });
 
-    // Update switches when config changes
-    $menu.find('.mdl-switch').each(function () {
+    // Update checkboxes when config changes
+    $menu.find('.mdl-checkbox').each(function () {
       var that = this
         , prop = $(this).find('input').data('id');
 
       config.on_change(prop, function (value, prop, initiator) {
         if (initiator != 'menu') {
           if (value) {
-            that.MaterialSwitch.on();
+            that.MaterialCheckbox.check();
           } else {
-            that.MaterialSwitch.off();
+            that.MaterialCheckbox.uncheck();
           }
         }
       });
