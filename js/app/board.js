@@ -272,6 +272,8 @@ define([
       if (ply2 == current_ply) {
         this.$ply2.find('.ply').addClass('active');
       }
+    } else {
+      this.$ply2.empty();
     }
   };
 
