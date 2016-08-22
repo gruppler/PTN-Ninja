@@ -67,7 +67,7 @@ requirejs({locale: navigator.language}, [
             '<dialog class="mdl-dialog">'+
               '<h3 class="mdl-dialog__title"><%=title%></h3>'+
               '<div class="mdl-dialog__content">'+
-                '<p><%=content%></p>'+
+                '<%=content%>'+
               '</div>'+
               '<div class="mdl-dialog__actions">'+
                 '<% _.each(actions, function (action) { %>'+
@@ -128,6 +128,7 @@ requirejs({locale: navigator.language}, [
             }
           });
 
+          dialog.showModal();
           this.current_dialogs.push(dialog);
 
           return dialog;
@@ -143,8 +144,6 @@ requirejs({locale: navigator.language}, [
             value: false,
             callback: callback
           }]);
-
-          dialog.showModal();
 
           return dialog;
         },

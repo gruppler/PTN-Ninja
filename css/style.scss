@@ -6,10 +6,10 @@
 @import 'variables.scss';
 @import 'global.scss';
 @import 'menu.scss';
-@import 'button.scss';
 @import 'messages.scss';
 @import 'grammar.scss';
 @import 'board.scss';
+@import 'mdl-override.scss';
 
 #app {
   position: absolute;

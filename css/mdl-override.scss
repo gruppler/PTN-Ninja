@@ -26,6 +26,24 @@
       background-color: $white;
     }
   }
+
+  &.mdl-button--accent {
+    color: $accent-color-500 !important;
+  }
+
+  .mdl-dialog__actions & {
+    color: $primary-color-500;
+  }
+}
+
+.mdl-dialog {
+  padding: 0;
+}
+
+.mdl-dialog__title {
+  font-size: 1.5rem;
+  line-height: normal;
+  font-weight: 500;
 }
 
 .invisible-file-input {
