@@ -31,6 +31,10 @@ html.playmode #menu .menu-edit {
     cursor: pointer;
   }
 
+  .item-checkbox .mdl-checkbox__label ~ * {
+    margin-left: 4px;
+  }
+
   &.mdl-layout__drawer > .mdl-layout-title,
   &.mdl-layout__drawer .mdl-navigation .mdl-navigation__link {
     position: relative;
