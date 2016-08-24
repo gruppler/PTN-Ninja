@@ -41,6 +41,7 @@ To load a "**.ptn**" file, **drag** the file into the window, or copy the conten
 | <kbd>&#x2318;/Ctrl</kbd>+<kbd>&larr;</kbd>                | First Ply          |
 | <kbd>&#x2318;/Ctrl</kbd>+<kbd>&rarr;</kbd>                | Last Ply           |
 | <kbd>a</kbd>                                              | Toggle Annotations |
+| <kbd>h</kbd>                                              | Toggle Square Highlighting |
 
 #### Edit Mode
 | Key                                                       | Action             |

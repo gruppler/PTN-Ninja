@@ -160,6 +160,10 @@ define([], function () {
 
       'a': function (event, $focus, $parent) {
         app.config.toggle('show_annotations');
+      },
+
+      'h': function (event, $focus, $parent) {
+        app.config.toggle('playmode_square_hl');
       }
 
     }
