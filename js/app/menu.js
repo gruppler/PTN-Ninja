@@ -249,10 +249,7 @@ define([
       var $this = $(this)
         , prop = $this.data('id');
 
-      if (
-        $this.data('realtime') && event.type == 'input'
-        || event.type == 'change'
-      ) {
+      if (event.type == 'change' || $this.data('realtime')) {
         config.set(prop, 1*this.value, 'menu');
       }
     });

@@ -62,10 +62,16 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<% } %>'+
     '<%=this.space2%>'+
     '<% if (this.move) { %>'+
-      '<span class="move"><i class="material-icons move"></i><%=this.move%></span>'+
+      '<span class="move">'+
+        '<i class="material-icons move"></i>'+
+        '<%=this.move%>'+
+      '</span>'+
     '<% } %>'+
     '<span class="invalid">'+
-      '<%=this.suffix.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
+      '<%=this.suffix.replace('+
+        '/(\\S[a-zA-Z]*)/,'+
+        '\'<span class="first-letter">$1</span>\''+
+      ')%>'+
     '</span>'
   );
 
@@ -143,19 +149,35 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   };
 
   TPS.Square.prototype.print_space = _.template(
-    '<span class="square space<%=this.error ? " illegal":""%>" data-square="<%=this.square%>" data-count="<%=this.count%>"><%=this.text%></span>'+
-    '<span class="separator<%=this.separator_error ? " illegal":""%>"><%=this.separator%></span>'
+    '<span '+
+      'class="square space<%=this.error ? " illegal":""%>" '+
+      'data-square="<%=this.square%>" '+
+      'data-count="<%=this.count%>"'+
+    '>'+
+      '<%=this.text%>'+
+    '</span>'+
+    '<span class="separator<%=this.separator_error ? " illegal":""%>">'+
+      '<%=this.separator%>'+
+    '</span>'
   );
 
   TPS.Square.prototype.print_stack = _.template(
-    '<span class="square stack<%=this.error ? " illegal":""%>" data-square="<%=this.square%>">'+
+    '<span '+
+      'class="square stack<%=this.error ? " illegal":""%>" '+
+      'data-square="<%=this.square%>"'+
+    '>'+
       '<% _.map(this.pieces, function(piece, i) { %>'+
         '<span class="piece player<%=piece[0]%>">'+
-          '<%=piece%>'+
+          '<%=piece[0]%>'+
+          '<% if (piece.length > 1) { %>'+
+            '<span class="stone"><%=piece[1]%></span>'+
+          '<% } %>'+
         '</span>'+
       '<% }).join("") %>'+
     '</span>'+
-    '<span class="separator<%=this.separator_error ? " illegal":""%>"><%=this.separator%></span>'
+    '<span class="separator<%=this.separator_error ? " illegal":""%>">'+
+      '<%=this.separator%>'+
+    '</span>'
   );
 
   return TPS;

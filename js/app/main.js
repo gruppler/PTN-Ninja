@@ -438,7 +438,7 @@ requirejs({locale: navigator.language}, [
   config.on_change('board_opacity', function (opacity) {
     app.$viewer.css('opacity', opacity/100);
   });
-  app.$viewer.css('opacity', config.board_opacity/100);
+  config.on_change('board_opacity');
 
   // Initialize Download Button
   app.$download.on('touchstart click', function (event) {

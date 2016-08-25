@@ -101,7 +101,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_place = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
+    '<span '+
+      'class="ply player<%=this.player%>'+
+        '<%=this.is_illegal ? " illegal" : ""%>" '+
+      'data-id="<%=this.id%>"'+
+    '>'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -115,7 +119,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_slide = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
+    '<span '+
+      'class="ply player<%=this.player%>'+
+        '<%=this.is_illegal ? " illegal" : ""%>" '+
+        'data-id="<%=this.id%>"'+
+      '>'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+

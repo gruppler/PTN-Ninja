@@ -202,16 +202,16 @@ $ptn-bg-radius: 0.2em;
     font-weight: 400;
   }
 
+  .stone {
+    color: $orange-dark;
+  }
+  .player2 .stone {
+    color: $orange-light;
+  }
+
   .ply {
     font-weight: 700;
     transition: all $time-quick ease-out;
-
-    .stone {
-      color: $orange-dark;
-    }
-    &.player2 .stone {
-      color: $orange-light;
-    }
 
     .column {
       color: $primary-color-800;
