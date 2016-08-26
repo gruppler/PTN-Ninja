@@ -514,7 +514,8 @@ requirejs({locale: navigator.language}, [
   // Bind hotkeys
   app.$window.on('keydown', function (event) {
     var $focus = $(getSelection().focusNode)
-      , $parent = $focus.parent();
+      , $parent = $focus.parent()
+      , dialog;
 
     if (!event.keymap) {
       return;
@@ -523,7 +524,9 @@ requirejs({locale: navigator.language}, [
     if (app.current_dialogs.length) {
       // Modal Dialog
       if (event.keymap == 'Escape') {
-        app.current_dialogs.pop().close();
+        dialog = app.current_dialogs.pop();
+        dialog.close();
+        $(dialog).remove();
       }
     } else if (app.game.is_editing && event.keymap in hotkeys.edit) {
       // Edit Mode
