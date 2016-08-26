@@ -93,14 +93,16 @@ requirejs({locale: navigator.language}, [
 
         current_dialogs: [],
 
-        dialog: function (title, content, actions) {
+        dialog: function (title, content, actions, className) {
           var that = this;
 
-          var $dialog = $(this.tpl.dialog({
-            title: title,
-            content: content,
-            actions: actions || []
-          })).appendTo(this.$body);
+          var $dialog = $(
+                this.tpl.dialog({
+                  title: title,
+                  content: content,
+                  actions: actions || []
+                })
+              ).addClass(className).appendTo(this.$body);
 
           var dialog = $dialog[0]
             , $actions = $dialog.find('.mdl-dialog__actions button')
@@ -150,7 +152,7 @@ requirejs({locale: navigator.language}, [
         },
 
         about: function () {
-          this.dialog('', readme, [{label: t.Close}]);
+          this.dialog('', app.$readme, [{label: t.Close}], 'about');
         },
 
         revert_game: function (confirmed) {
@@ -271,6 +273,18 @@ requirejs({locale: navigator.language}, [
   })();
 
   $('title').text(t.app_title);
+
+  // Reformat Readme
+  readme = (function () {
+    var $readme = $('<div>').html(readme);
+
+    $readme.find('a').attr({
+      target: '_blank',
+      rel: 'noopener'
+    });
+
+    return $readme.html();
+  })();
 
 
   // Initialize Menu

@@ -3,6 +3,10 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
+a {
+  color: $accent-color-500;
+}
+
 .mdl-button {
   &:hover {
     background-color: rgba(0,0,0,0.05);
@@ -44,6 +48,10 @@
   font-size: 1.5rem;
   line-height: normal;
   font-weight: 500;
+
+  &:empty {
+    display: none;
+  }
 }
 
 .invisible-file-input {

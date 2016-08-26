@@ -1,4 +1,4 @@
-# [PTN Ninja](http://ptn.ninja)
+# PTN Ninja
 &copy; 2016 Craig Laparo
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...

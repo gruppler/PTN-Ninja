@@ -11,6 +11,32 @@
 @import 'board.scss';
 @import 'mdl-override.scss';
 
+.mdl-dialog.about {
+  width: auto;
+  max-width: $mobile;
+  height: 90vh;
+  top: 5vh;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: $mobile) {
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .mdl-dialog__content {
+    overflow: auto;
+    flex-shrink: 1;
+    flex-grow: 1;
+  }
+
+  .mdl-dialog__actions {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+}
+
 #app {
   position: absolute;
   top: 0;

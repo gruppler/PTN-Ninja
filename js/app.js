@@ -16,7 +16,7 @@ requirejs.config({
     'jquery': 'jquery.min',
     'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min',
-    'markdownConverter': 'Markdown.Converter'
+    'markdownConverter': 'micromarkdown.min'
   },
   shim: {
     'bililiteRange.undo': {
