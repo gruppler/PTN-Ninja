@@ -62,16 +62,25 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return $message;
   };
 
-  Messages.prototype.clear = function (type, animate) {
+  Messages.prototype.clear = function (type, animate, callback) {
     var $messages = this.$messages.children(type ? '.'+type : '');
 
-    if (animate) {
-      $messages.map(remove_message);
-    } else{
-      $messages.remove();
+    if ($messages.length) {
+      if (animate) {
+        $messages.map(remove_message);
+        if (callback) {
+          $messages.last().afterTransition(callback);
+        }
+      } else{
+        $messages.remove();
+      }
+      app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
+
+      return true;
+    } else {
+      return false;
     }
 
-    app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
   };
 
   Messages.prototype.clear_all = function (type) {

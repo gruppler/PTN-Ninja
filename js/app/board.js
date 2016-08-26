@@ -380,7 +380,9 @@ define([
   };
 
   Board.prototype.show_comments = function (ply) {
-    var result = this.game.config.result;
+    var that = this
+      , result = this.game.config.result
+      , clear_required;
 
     if (this.defer_render) {
       return;
@@ -390,8 +392,9 @@ define([
       this.game.comments && this.comments_ply_id != -1 &&
       (!ply || ply.is_first && !this.ply_is_done)
     ) {
-      this.m.clear(false, true);
-      _.map(this.game.comments, this.comment);
+      this.m.clear(false, true, function () {
+        _.map(that.game.comments, that.comment);
+      });
       this.comments_ply_id = -1;
       return;
     }
@@ -400,7 +403,13 @@ define([
       return;
     }
 
-    this.m.clear(false, true);
+    clear_required = this.m.clear(false, true, function () {
+      that.show_comments(ply);
+    });
+
+    if (clear_required) {
+      return;
+    }
 
     if (!ply) {
       return;
