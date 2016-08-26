@@ -152,7 +152,7 @@ requirejs({locale: navigator.language}, [
         },
 
         about: function () {
-          this.dialog('', app.$readme, [{label: t.Close}], 'about');
+          this.dialog('', readme, [{label: t.Close}], 'about');
         },
 
         revert_game: function (confirmed) {
