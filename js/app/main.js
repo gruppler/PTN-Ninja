@@ -12,6 +12,7 @@ requirejs({locale: navigator.language}, [
   'app/messages',
   'app/game',
   'app/board',
+  'mdown!../../readme.md',
   'filesaver',
   'lodash',
   'jquery',
@@ -20,7 +21,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, config, hotkeys, menu, Messages, Game, Board, saveAs, _, $) {
+], function (t, config, hotkeys, menu, Messages, Game, Board, readme, saveAs, _, $) {
 
   var baseurl = location.origin + location.pathname
 
@@ -577,5 +578,7 @@ requirejs({locale: navigator.language}, [
       }
     }
   });
+
+  console.log(readme);
 
 });
