@@ -28,7 +28,7 @@ define(
 
         var converter = new showdown.Converter({
             tables: true,
-            headerLevelStart: 2
+            headerLevelStart: 3
         });
 
 

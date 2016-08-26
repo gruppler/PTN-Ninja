@@ -18,9 +18,9 @@ If you want to support this project, you can...
 To load a "**.ptn**" file, **drag** the file into the window, or copy the contents and paste into the editor. Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner). If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). The editor checks the validity of the syntax as well as the legality of each ply.
 
 ## Hotkeys
-#### Global
+### Global
 Key|Action
-:--|--:
+--:|:--
 <kbd>Esc</kbd>|Toggle Menu
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>Space</kbd>|FAB action
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>s</kbd>|Download .ptn file
@@ -28,9 +28,9 @@ Key|Action
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>d</kbd>|Load default PTN
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;</kbd>+<kbd>/</kbd>|Load sample PTN
 
-#### Play Mode
+### Play Mode
 Key|Action
-:--|--:
+--:|:--
 <kbd>Space</kbd>|Play/Pause
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;</kbd>|Previous Move
@@ -42,9 +42,9 @@ Key|Action
 <kbd>a</kbd>|Toggle Annotations
 <kbd>h</kbd>|Toggle Square Hi
 
-#### Edit Mode
+### Edit Mode
 Key|Action
-:--|--:
+--:|:--
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>z</kbd>|Undo
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;</kbd>+<kbd>z</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x2325;/Alt</kbd>+<kbd>z</kbd>|Revert
