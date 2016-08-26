@@ -20,7 +20,7 @@ To load a "**.ptn**" file, **drag** the file into the window, or copy the conten
 ## Hotkeys
 ### Global
 Key|Action
---:|:--
+:--|:--
 <kbd>Esc</kbd>|Toggle Menu
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>Space</kbd>|FAB action
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>s</kbd>|Download .ptn file
@@ -30,7 +30,7 @@ Key|Action
 
 ### Play Mode
 Key|Action
---:|:--
+:--|:--
 <kbd>Space</kbd>|Play/Pause
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;</kbd>|Previous Move
@@ -44,7 +44,7 @@ Key|Action
 
 ### Edit Mode
 Key|Action
---:|:--
+:--|:--
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>z</kbd>|Undo
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;</kbd>+<kbd>z</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x2325;/Alt</kbd>+<kbd>z</kbd>|Revert
