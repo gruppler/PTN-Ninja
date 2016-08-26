@@ -53,9 +53,7 @@ define([
     },{
       label: t.About_App,
       icon: 'code',
-      href: 'readme.md',
-      target: '_blank',
-      rel: 'noopener'
+      onclick: 'app.about()',
     }]
   },{
     id: 'play',

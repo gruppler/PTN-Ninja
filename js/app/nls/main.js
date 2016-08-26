@@ -7,6 +7,7 @@ define({
     Board_Opacity: "Board Opacity",
     Cancel: "Cancel",
     Clock: "Clock",
+    Close: "Close",
     Date: "Date",
     Download: "Download",
     Edit_Mode: "Edit Mode",

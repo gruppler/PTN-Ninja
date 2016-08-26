@@ -17,6 +17,7 @@
     'lodash': 'lodash.min',
     'jquery': 'jquery.min',
     'filesaver': 'FileSaver.min',
-    'lzstring': 'lz-string.min'
+    'lzstring': 'lz-string.min',
+    'markdownConverter': 'Markdown.Converter'
   }
 })

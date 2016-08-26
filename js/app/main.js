@@ -136,7 +136,7 @@ requirejs({locale: navigator.language}, [
         },
 
         confirm: function (text, callback) {
-          var dialog = app.dialog(text.title, text.content, [{
+          var dialog = this.dialog(text.title, text.content, [{
             label: t.OK,
             value: true,
             callback: callback
@@ -147,6 +147,10 @@ requirejs({locale: navigator.language}, [
           }]);
 
           return dialog;
+        },
+
+        about: function () {
+          this.dialog('', readme, [{label: t.Close}]);
         },
 
         revert_game: function (confirmed) {
@@ -578,7 +582,5 @@ requirejs({locale: navigator.language}, [
       }
     }
   });
-
-  console.log(readme);
 
 });
