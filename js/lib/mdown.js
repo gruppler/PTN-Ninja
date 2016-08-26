@@ -32,7 +32,7 @@ define(
             load : function(name, req, onLoad, config) {
 //>>excludeStart('excludeMdown', pragmas.excludeMdown)
                 text.get(req.toUrl(name), function(data){
-                    data = markdownConverter.parse(data);
+                    data = markdownConverter.makeHtml(data);
                     if (config.isBuild) {
                         buildMap[name] = data;
                         onLoad(data);

@@ -18,7 +18,7 @@
     'jquery': 'jquery.min',
     'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min',
-    'markdownConverter': 'micromarkdown.min'
+    'markdownConverter': 'Markdown.Converter'
   },
   stubModules: [
     'markdownConverter',
