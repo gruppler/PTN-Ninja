@@ -3,14 +3,14 @@
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...
 
-- Intuitive, with a minimal UI that is enjoyable to use.
-- Interactive, with an editing experience that teaches or aides understanding of notation.
-- Responsive, with a fluid design that works as well on a phone as it does in fullscreen on a desktop.
+* Intuitive, with a minimal UI that is enjoyable to use.
+* Interactive, with an editing experience that teaches or aides understanding of notation.
+* Responsive, with a fluid design that works as well on a phone as it does in fullscreen on a desktop.
 
 If you want to support this project, you can...
-- [Report an issue](https://github.com/gruppler/PTN-Ninja/issues/)
-- [Donate Bitcoins](bitcoin:12mD2HUNb4MJoLfVDDLS1wep1hdhrSY3L8)
-- [Donate USD](https://www.paypal.me/gruppler)
+* [Report an issue](https://github.com/gruppler/PTN-Ninja/issues/)
+* [Donate Bitcoins](bitcoin:12mD2HUNb4MJoLfVDDLS1wep1hdhrSY3L8)
+* [Donate USD](https://www.paypal.me/gruppler)
 
 ## Getting Started
 
