@@ -19,5 +19,10 @@
     'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min',
     'markdownConverter': 'micromarkdown.min'
-  }
+  },
+  stubModules: [
+    'markdownConverter',
+    'mdown',
+    'text'
+  ]
 })
