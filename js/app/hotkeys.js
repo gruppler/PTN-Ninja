@@ -51,21 +51,23 @@ define([], function () {
     edit: {
 
       '^z': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
         app.undo(event);
       },
 
       '^Z': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
         app.redo(event);
       },
 
-      '^%z': function (event, $focus, $parent) {
-        event.preventDefault();
+      '^Delete': function (event, $focus, $parent) {
         event.stopPropagation();
+        event.preventDefault();
 
-        app.revert_game();
-      },
-
-      '^%t': function (event, $focus, $parent) {
         app.board.trim_to_current_ply();
       },
 
@@ -140,6 +142,14 @@ define([], function () {
 
       'ArrowRight': function (event, $focus, $parent) {
         app.board.next(event);
+      },
+
+      '+ArrowLeft': function (event, $focus, $parent) {
+        app.board.prev_ply(event);
+      },
+
+      '+ArrowRight': function (event, $focus, $parent) {
+        app.board.next_ply(event);
       },
 
       '^ArrowLeft': function (event, $focus, $parent) {

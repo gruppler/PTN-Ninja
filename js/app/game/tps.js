@@ -79,7 +79,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     var parts = string.match(r.grammar.col_grouped)
       , stack_parts;
 
-    this.square = app.i_to_square(row, col);
+    this.square = app.i_to_square([col, row]);
 
     if (parts[2]) {
       this.is_space = false;

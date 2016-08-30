@@ -38,6 +38,8 @@ requirejs({locale: navigator.language}, [
 
     , nop = function () {}
 
+    , a = 'a'.charCodeAt(0)
+
     , app = {
 
         piece_counts: {
@@ -235,9 +237,17 @@ requirejs({locale: navigator.language}, [
             .select();
         },
 
-        // (0, 0) to 'a1'
-        i_to_square: function (row, col) {
-          return String.fromCharCode('a'.charCodeAt(0) + col) + (row + 1);
+        // [0, 0] to 'a1'
+        i_to_square: function (square) {
+          return String.fromCharCode(a + square[0]) + (square[1] + 1);
+        },
+
+        // ('a', '1') to [0, 0]
+        square_to_i: function (square) {
+          return [
+            square[0].charCodeAt(0) - a,
+            1*square[1] - 1
+          ];
         }
       };
 
@@ -534,6 +544,10 @@ requirejs({locale: navigator.language}, [
     if (!event.keymap) {
       return;
     }
+
+    event.keymap
+      .replace('~', '^')
+      .replace('Backspace', 'Delete');
 
     if (app.current_dialogs.length) {
       // Modal Dialog

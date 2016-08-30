@@ -35,6 +35,8 @@ define([
       'playpause',
       'prev',
       'next',
+      'prev_ply',
+      'next_ply',
       'prev_move',
       'next_move',
       'first',
@@ -130,12 +132,12 @@ define([
         square = new Square(this, row, col);
         this.squares[square.square] = square;
         if (row) {
-          square.neighbors['-'] = this.squares[app.i_to_square(row-1, col)];
-          this.squares[app.i_to_square(row-1, col)].neighbors['+'] = square;
+          square.neighbors['-'] = this.squares[app.i_to_square([col, row-1])];
+          this.squares[app.i_to_square([col, row-1])].neighbors['+'] = square;
         }
         if (col) {
-          square.neighbors['<'] = this.squares[app.i_to_square(row, col-1)];
-          this.squares[app.i_to_square(row, col-1)].neighbors['>'] = square;
+          square.neighbors['<'] = this.squares[app.i_to_square([col-1, row])];
+          this.squares[app.i_to_square([col-1, row])].neighbors['>'] = square;
         }
       }
     }
@@ -194,7 +196,9 @@ define([
     for (i = 0; i < this.size; i++) {
       squares[i] = [];
       for (j = 0; j < this.size; j++) {
-        squares[i][j] = this.squares[app.i_to_square(this.size - 1 - i, j)].to_tps();
+        squares[i][j] = this.squares[
+          app.i_to_square([j, this.size - 1 - i])
+        ].to_tps();
       }
       squares[i] = squares[i].join(',');
     }
@@ -374,7 +378,7 @@ define([
     if (this.$view) {
       this.$squares.children().removeClass('active');
       if (squares) {
-        _.invokeMap(squares, 'set_active');
+        _.invokeMap(_.pick(this.squares, squares), 'set_active');
       }
     }
   };
@@ -472,10 +476,14 @@ define([
       this.pause();
     }
 
-    this.undo_ply();
-    if (this.ply_id) {
+    if (!this.ply_is_done && this.ply_id) {
       this.ply_id--;
       this.ply_is_done = true;
+      if (!this.defer_render) {
+        this.on_ply();
+      }
+    } else {
+      this.undo_ply();
     }
   };
 
@@ -486,6 +494,40 @@ define([
       this.play_timestamp = new Date().getTime();
     }
 
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      this.pause();
+    }
+
+    if (this.ply_is_done && this.ply_id < this.game.plys.length - 1) {
+      this.ply_id++;
+      this.ply_is_done = false;
+      if (!this.defer_render) {
+        this.on_ply();
+      }
+    } else {
+      return this.do_ply();
+    }
+  };
+
+  Board.prototype.prev_ply = function (event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+
+      this.pause();
+    }
+
+    this.undo_ply();
+    if (this.ply_id) {
+      this.ply_id--;
+      this.ply_is_done = true;
+    }
+  };
+
+  Board.prototype.next_ply = function (event) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
