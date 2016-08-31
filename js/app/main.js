@@ -338,6 +338,9 @@ requirejs({locale: navigator.language}, [
         $ply = $focus.prevAll('.ply');
       } else if ($focus.hasClass('space')) {
         $ply = $focus.next('.ply');
+      } else if ($focus.is('.win, .loss, .draw')) {
+        $focus = $focus.closest('.result');
+        $ply = $focus.prevAll('.ply');
       } else {
         $ply = $focus.closest('.ply');
       }
@@ -368,7 +371,7 @@ requirejs({locale: navigator.language}, [
       )
     ) {
 
-      // PTN
+      // TPS
 
       if ($focus.hasClass('separator')) {
         $square = $focus.next().closest('.square');

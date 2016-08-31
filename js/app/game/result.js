@@ -63,7 +63,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   );
 
   Result.prototype.print = function () {
-    return this.prefix + this.print_value();
+    return '<span>'+this.prefix+'</span>' + this.print_value();
   };
 
   Result.prototype.print_text = function () {
