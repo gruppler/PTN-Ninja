@@ -17,7 +17,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   };
 
   Linenum.prototype.print = _.template(
-    '<%=this.prefix%>'+
+    '<span class="space"><%=this.prefix%></span>'+
     '<span class="linenum"><%=this.text%></span>'
   );
 
