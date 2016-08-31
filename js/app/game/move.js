@@ -91,7 +91,7 @@ define([
   };
 
   Move.prototype.print = function(){
-    var output = '<span class="move" data-id="'+this.linenum.value+'">';
+    var output = '<span class="move" data-id="'+this.id+'">';
 
     output += this.linenum.print();
     if (this.comments1) {

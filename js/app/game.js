@@ -133,7 +133,7 @@ define([
       for (var i = 0; i < body.length; i++) {
         this.moves[i] = new Move(body[i], this);
         this.moves[i].index = i;
-        this.moves[i].id = this.get_linenum() - 2;
+        this.moves[i].id = i;
 
         if (this.moves[i].ply1) {
           this.moves[i].ply1.id = this.plys.length;

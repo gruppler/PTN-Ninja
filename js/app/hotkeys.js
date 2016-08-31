@@ -119,9 +119,9 @@ define([], function () {
         }
 
         if ($prev.length) {
-          move = app.game.moves[$prev.data('id') - 1];
+          move = app.game.moves[$prev.data('id')];
           if (move.ply2) {
-            app.insert_text((1*$prev.data('id') + 1) + '.' + move.ply1.prefix, true);
+            app.insert_text((move.linenum.value + 1)+'.'+move.ply1.prefix, true);
           }
         }
       }
