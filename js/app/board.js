@@ -442,7 +442,7 @@ define([
   };
 
   Board.prototype.play = function () {
-    if (this.do_ply() && this.game.plys[this.ply_id]) {
+    if (this.game.plys[this.ply_id]) {
       this.is_playing = true;
       this.next();
       app.$html.addClass('playing');
