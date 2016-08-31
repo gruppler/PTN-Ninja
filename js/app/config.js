@@ -11,12 +11,22 @@ define(['lodash'], function (_) {
   var config = {
 
     defaults: {
-      play_speed: 40, // BPM
-      board_opacity: 50,
+      // Edit Mode
+      editmode_square_hl: true,
       show_parse_errors: true,
-      show_annotations: true,
+      board_opacity: 50,
+
+      // Play Mode
       playmode_square_hl: true,
-      editmode_square_hl: true
+      show_annotations: true,
+      play_speed: 40, // BPM
+
+      // Board
+      show_axis_labels: true,
+      show_player_score: true,
+      show_current_move: true,
+      show_unplayed_pieces: true,
+      show_play_controls: true
     },
 
     toggle: function (prop) {
