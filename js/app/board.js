@@ -393,8 +393,11 @@ define([
   Board.prototype.set_active_squares = function (squares) {
     if (this.$view) {
       this.$squares.children().removeClass('active');
-      if (squares) {
-        _.invokeMap(_.pick(this.squares, squares), 'set_active');
+      if (squares && squares.length) {
+        if (_.isString(squares[0])) {
+          _.pick(this.squares, squares);
+        }
+        _.invokeMap(squares, 'set_active');
       }
     }
   };
