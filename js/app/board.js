@@ -50,6 +50,7 @@ define([
     return this;
   };
 
+
   Board.prototype.on_init = function (fn) {
     if (fn) {
       this.init_callbacks.push(fn);
@@ -60,6 +61,7 @@ define([
     return this;
   };
 
+
   Board.prototype.on_ply = function (fn) {
     if (fn) {
       this.ply_callbacks.push(fn);
@@ -69,6 +71,7 @@ define([
 
     return this;
   };
+
 
   Board.prototype.clear = function () {
     this.ply_id = 0;
@@ -92,6 +95,7 @@ define([
     this.rows.length = 0;
     this.cols.length = 0;
   };
+
 
   Board.prototype.init = function (game, silent) {
     var that = this
@@ -170,6 +174,7 @@ define([
     return true;
   };
 
+
   Board.prototype.validate = function (game) {
     if (this.init(game, true)) {
       this.go_to_ply(game.plys.length, true, true);
@@ -180,11 +185,13 @@ define([
     }
   };
 
+
   Board.prototype.trim_to_current_ply = function () {
     if (this.game.plys.length) {
       this.game.trim_to_current_ply(this);
     }
   };
+
 
   Board.prototype.to_tps = function () {
     var ply = this.game.plys[this.ply_id] || this.game.plys[this.ply_id - 1]
@@ -214,6 +221,7 @@ define([
       (ply.move.id + 1 + 1*(ply.turn == 2));
   };
 
+
   Board.prototype.render = function () {
     this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
@@ -242,6 +250,7 @@ define([
     return this.$view;
   };
 
+
   Board.prototype.update_view = function() {
     _.invokeMap(
       _.filter(this.all_pieces, { needs_updated: true }),
@@ -251,6 +260,7 @@ define([
     this.update_scores();
     this.on_ply();
   };
+
 
   Board.prototype.update_plys = function(current_ply) {
     var ply1, ply2;
@@ -281,10 +291,12 @@ define([
     }
   };
 
+
   Board.prototype.update_scores = function() {
     this.$score1.text(this.flat_score[1]);
     this.$score2.text(this.flat_score[2]);
   };
+
 
   Board.prototype.do_ply = function () {
     var ply, square, piece, ply_result;
@@ -326,6 +338,7 @@ define([
     return ply_result;
   };
 
+
   Board.prototype.undo_ply = function () {
     var ply, square, piece, ply_result;
 
@@ -357,6 +370,7 @@ define([
     return ply_result;
   };
 
+
   Board.prototype.illegal_ply = function (ply) {
     this.m_parse.error(
       t.error.illegal_ply({ ply: ply.text })
@@ -364,6 +378,7 @@ define([
     ply.is_illegal = true;
     return false;
   };
+
 
   Board.prototype.invalid_tps = function (square) {
     this.m_parse.error(
@@ -374,6 +389,7 @@ define([
     return false;
   };
 
+
   Board.prototype.set_active_squares = function (squares) {
     if (this.$view) {
       this.$squares.children().removeClass('active');
@@ -382,6 +398,7 @@ define([
       }
     }
   };
+
 
   Board.prototype.show_comments = function (ply) {
     var that = this
@@ -441,6 +458,7 @@ define([
     }
   };
 
+
   Board.prototype.play = function () {
     if (this.game.plys[this.ply_id]) {
       this.is_playing = true;
@@ -449,11 +467,13 @@ define([
     }
   };
 
+
   Board.prototype.pause = function () {
     clearTimeout(this.play_timer);
     this.is_playing = false;
     app.$html.removeClass('playing');
   };
+
 
   Board.prototype.playpause = function (event) {
     if (event) {
@@ -467,6 +487,7 @@ define([
       this.play();
     }
   };
+
 
   Board.prototype.prev = function (event) {
     if (event) {
@@ -486,6 +507,7 @@ define([
       this.undo_ply();
     }
   };
+
 
   Board.prototype.next = function (event) {
     if (this.is_playing) {
@@ -512,6 +534,7 @@ define([
     }
   };
 
+
   Board.prototype.prev_ply = function (event) {
     if (event) {
       event.stopPropagation();
@@ -526,6 +549,7 @@ define([
       this.ply_is_done = true;
     }
   };
+
 
   Board.prototype.next_ply = function (event) {
     if (event) {
@@ -542,6 +566,7 @@ define([
     return this.do_ply();
   };
 
+
   Board.prototype.prev_move = function (event) {
     if (event) {
       event.stopPropagation();
@@ -550,6 +575,7 @@ define([
 
     this.go_to_ply(this.ply_id - 2, this.ply_is_done && this.ply_id > 1);
   };
+
 
   Board.prototype.next_move = function (event) {
     if (event) {
@@ -560,6 +586,7 @@ define([
     this.go_to_ply(this.ply_id + 2, this.ply_is_done);
   };
 
+
   Board.prototype.first = function (event) {
     if (event) {
       event.stopPropagation();
@@ -569,6 +596,7 @@ define([
     this.go_to_ply(0, false);
   };
 
+
   Board.prototype.last = function (event) {
     if (event) {
       event.stopPropagation();
@@ -577,6 +605,7 @@ define([
 
     this.go_to_ply(this.game.plys.length, true);
   };
+
 
   Board.prototype.go_to_ply = function (ply_id, do_ply, is_silent) {
     this.pause();
@@ -610,6 +639,7 @@ define([
       this.update_view();
     }
   };
+
 
   Board.prototype.tpl = {
     row: _.template('<span class="row"><%=obj%></span>'),
@@ -666,8 +696,11 @@ define([
     )
   };
 
+
   Board.prototype.m = new Messages('board', config.show_annotations);
+
   Board.prototype.m_parse = new Messages('parse');
+
   Board.prototype.comment = _.ary(_.bind(
     Board.prototype.m.comment, Board.prototype.m
   ), 1);
