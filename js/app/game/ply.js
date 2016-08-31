@@ -6,9 +6,43 @@
 
 define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
+  function get_slide_squares(ply) {
+    var squares = [ply.square]
+      , i = ply.drops.length
+      , square = app.square_to_i([ply.col, ply.row]);
+
+    switch (ply.direction) {
+      case '+':
+        while (i--) {
+          square[1]++;
+          squares.push(app.i_to_square(square));
+        }
+        break;
+      case '-':
+        while (i--) {
+          square[1]--;
+          squares.push(app.i_to_square(square));
+        }
+        break;
+      case '<':
+        while (i--) {
+          square[0]--;
+          squares.push(app.i_to_square(square));
+        }
+        break;
+      case '>':
+        while (i--) {
+          square[0]++;
+          squares.push(app.i_to_square(square));
+        }
+    }
+
+    return squares;
+  }
+
   var Ply = function (string, player, game, move) {
     var ply_group = string.match(r.grammar.ply_grouped)
-      , parts;
+      , parts, i;
 
     this.move = move;
 
@@ -49,10 +83,10 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
-      this.squares = [];
       this.direction = parts[3];
       this.drops_text = parts[4] || '',
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
+      this.squares = get_slide_squares(this);
       this.flattens = {};
       this.stone_text = parts[5] || '';
       this.evaluation = ply_group[4] || '';
@@ -74,7 +108,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.col = parts[2][0];
       this.row = parts[2][1]*1;
       this.square = this.col+this.row;
-      this.squares = [];
+      this.squares = [this.square];
       this.evaluation = ply_group[4] || '';
     }
 
@@ -101,7 +135,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_place = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
+    '<span '+
+      'class="ply player<%=this.player%>'+
+        '<%=this.is_illegal ? " illegal" : ""%>" '+
+      'data-id="<%=this.id%>"'+
+    '>'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
       '<% } %>'+
@@ -115,7 +153,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_slide = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply player<%=this.player%><%=this.is_illegal ? " illegal" : ""%>" data-id="<%=this.id%>">'+
+    '<span '+
+      'class="ply player<%=this.player%>'+
+        '<%=this.is_illegal ? " illegal" : ""%>" '+
+        'data-id="<%=this.id%>"'+
+      '>'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
       '<span class="row"><%=this.row%></span>'+

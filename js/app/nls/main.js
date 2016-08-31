@@ -1,21 +1,27 @@
 define({
 
   root: {
-    App_Title: "PTN Ninja",
+    app_title: "PTN Ninja",
     About_App: "About PTN Ninja",
 
+    Board_Opacity: "Board Opacity",
+    Cancel: "Cancel",
     Clock: "Clock",
+    Close: "Close",
     Date: "Date",
     Download: "Download",
     Edit_Mode: "Edit Mode",
     Event: "Event",
     First_Ply: "First Ply",
+    Highlight_Squares: "Highlight Squares",
     Last_Ply: "Last Ply",
-    Load_sample_game: "Load sample game",
+    Load_Sample_Game: "Load Sample Game",
     Next_Ply: "Next Ply",
+    OK: "OK",
     Open: "Open",
-    Permalink: "Permalink",
+    Permalink: "Link to this game",
     Play_Mode: "Play Mode",
+    Play_Speed: "Play Speed",
     PlayPause: "Play/Pause",
     Player1: "Player1",
     Player2: "Player2",
@@ -26,10 +32,14 @@ define({
     Previous_Ply: "Previous Ply",
     Rating1: "Rating1",
     Rating2: "Rating2",
+    Redo: "Redo",
     Result: "Result",
+    Revert_Game: "Revert Game",
     Round: "Round",
     Share: "Share",
-    ShowHide_Errors: "Show/Hide Errors",
+    Show_Annotations: "Show Annotations",
+    Show_Hide_Errors: "Show/Hide Errors",
+    Show_Parse_Errors: "Show Parse Errors",
     Site: "Site",
     Size: "Size",
     TPS: "TPS",
@@ -37,6 +47,7 @@ define({
     Time: "Time",
     Tinue: "Tinuë",
     Trim_to_current_ply: "Trim to current ply",
+    Undo: "Undo",
     n_characters: "<%=n%> characters",
 
     result: {
@@ -44,6 +55,13 @@ define({
       'F': "<%=player%> wins by flats",
       'R': "<%=player%> wins by building a road",
       'tie': "It's a tie"
+    },
+
+    confirm: {
+      Revert_Game: {
+        title: "Revert Game",
+        content: "Are you sure you want to revert the game to its original state?"
+      }
     },
 
     warning: {

@@ -10,7 +10,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.board = board;
     this.col = col;
     this.row = row;
-    this.square = app.i_to_square(row, col);
+    this.square = app.i_to_square([col, row]);
     this.color = (row % 2 != col % 2) ? 'dark' : 'light';
     this.piece = null;
     this.neighbors = {};
@@ -123,7 +123,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     piece.set_ply(ply);
     this.set_piece(piece, false, true);
-    ply.squares[0] = this;
 
     this.piece.render();
 
@@ -160,8 +159,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       return illegal();
     }
 
-    ply.squares[0] = this;
-
     remaining_stack = piece.captives.splice(ply.count - 1);
     square.set_piece(remaining_stack[0], remaining_stack.slice(1));
     moving_stack = [piece].concat(piece.captives);
@@ -182,9 +179,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
             return illegal();
           }
 
-          ply.flattens[i] = true;
-        } else {
-          ply.flattens[i] = false;
+          ply.flattens = i;
         }
 
         remaining_stack.push(square.piece);
@@ -192,7 +187,6 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       }
 
       square.set_piece(remaining_stack[0], remaining_stack.slice(1));
-      ply.squares[i + 1] = square;
     }
 
     return true;
@@ -215,7 +209,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       );
       remaining_stack = square.piece.captives.slice(ply.drops[i] - 1);
 
-      if (remaining_stack[0] && ply.flattens[i]) {
+      if (remaining_stack[0] && ply.flattens === i) {
         remaining_stack[0].stone = 'S';
       }
       square.set_piece(remaining_stack[0], remaining_stack.slice(1));

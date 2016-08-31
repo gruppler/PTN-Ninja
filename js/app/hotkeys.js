@@ -47,23 +47,27 @@ define([], function () {
 
     },
 
-    // Menu Mode
-    menu: {
-
-    },
-
     // Edit Mode
     edit: {
 
       '^z': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
         app.undo(event);
       },
 
       '^Z': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
         app.redo(event);
       },
 
-      '^%t': function (event, $focus, $parent) {
+      '^Delete': function (event, $focus, $parent) {
+        event.stopPropagation();
+        event.preventDefault();
+
         app.board.trim_to_current_ply();
       },
 
@@ -115,9 +119,9 @@ define([], function () {
         }
 
         if ($prev.length) {
-          move = app.game.moves[$prev.data('id') - 1];
+          move = app.game.moves[$prev.data('id')];
           if (move.ply2) {
-            app.insert_text((1*$prev.data('id') + 1) + '.' + move.ply1.prefix, true);
+            app.insert_text((move.linenum.value + 1)+'.'+move.ply1.prefix, true);
           }
         }
       }
@@ -140,6 +144,14 @@ define([], function () {
         app.board.next(event);
       },
 
+      '+ArrowLeft': function (event, $focus, $parent) {
+        app.board.prev_ply(event);
+      },
+
+      '+ArrowRight': function (event, $focus, $parent) {
+        app.board.next_ply(event);
+      },
+
       '^ArrowLeft': function (event, $focus, $parent) {
         app.board.first(event);
       },
@@ -157,7 +169,11 @@ define([], function () {
       },
 
       'a': function (event, $focus, $parent) {
-        app.toggle_annotations();
+        app.config.toggle('show_annotations');
+      },
+
+      'h': function (event, $focus, $parent) {
+        app.config.toggle('playmode_square_hl');
       }
 
     }

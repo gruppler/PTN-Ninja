@@ -11,8 +11,8 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     message: _.template(
       '<div class="message <%=type%>">'+
         '<div class="content">'+
-          '<i class="icon-<%=icon%>"></i><%=message%>'+
-          '<i class="icon-x"></i>'+
+          '<i class="material-icons"><%=icon%></i><%=message%>'+
+          '<i class="material-icons close">close</i>'+
         '</div>'+
       '</div>'
     ),
@@ -22,7 +22,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
 
   $messages = $('#messages');
   $messages
-    .on('click', 'i.icon-x', remove_message)
+    .on('click', 'i.close', remove_message)
     .on('remove', remove_message);
 
   Messages = function(group, is_visible) {
@@ -62,16 +62,25 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return $message;
   };
 
-  Messages.prototype.clear = function (type, animate) {
+  Messages.prototype.clear = function (type, animate, callback) {
     var $messages = this.$messages.children(type ? '.'+type : '');
 
-    if (animate) {
-      $messages.map(remove_message);
-    } else{
-      $messages.remove();
+    if ($messages.length) {
+      if (animate) {
+        $messages.map(remove_message);
+        if (callback) {
+          $messages.last().afterTransition(callback);
+        }
+      } else{
+        $messages.remove();
+      }
+      app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
+
+      return true;
+    } else {
+      return false;
     }
 
-    app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
   };
 
   Messages.prototype.clear_all = function (type) {
@@ -80,7 +89,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.success = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'success');
+    return this.add(message, seconds, group, 'success', 'check_circle');
   };
 
   Messages.prototype.warning = function (message, seconds, group) {
@@ -100,15 +109,15 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.comment = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'comment');
+    return this.add(message, seconds, group, 'comment', 'mode_comment');
   };
 
   Messages.prototype.player1 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player1', 'player');
+    return this.add(message, seconds, group, 'player1', 'person');
   };
 
   Messages.prototype.player2 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player2', 'player');
+    return this.add(message, seconds, group, 'player2', 'person');
   };
 
   function remove_message() {

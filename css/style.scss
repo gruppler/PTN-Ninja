@@ -5,11 +5,52 @@
 @import 'mixins.scss';
 @import 'variables.scss';
 @import 'global.scss';
-@import 'button.scss';
 @import 'menu.scss';
 @import 'messages.scss';
 @import 'grammar.scss';
 @import 'board.scss';
+@import 'mdl-override.scss';
+
+.mdl-dialog.about {
+  width: 600px;
+  max-width: 100vw;
+  height: 90vh;
+  top: 5vh;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 650px) {
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .mdl-dialog__content {
+    overflow: auto;
+    flex-shrink: 1;
+    flex-grow: 1;
+  }
+
+  .mdl-dialog__actions {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  kbd {
+    background-color: $primary-color-50;
+    border: 1px solid $primary-color-100;
+    color: $primary-color-900;
+    font-family: $monospace;
+    font-size: inherit;
+    margin: 0;
+    padding: 0.125rem 0.25rem 0;
+    border-radius: 3px;
+  }
+
+  table td {
+
+  }
+}
 
 #app {
   position: absolute;
@@ -19,6 +60,7 @@
   right: 0;
   background-color: $primary-color-500;
   color: $primary-color-text;
+  overflow: hidden;
 }
 
 #editor {
@@ -28,7 +70,6 @@
   left: 0;
   right: 0;
   color: $primary-color-200;
-  font-family: $monospace;
   flex-grow: 1;
   z-index: 1;
   transition: all $time-smooth $natural;
@@ -52,91 +93,59 @@
   line-height: 2em;
   padding: $edge;
   padding-top: $edge + $button-height;
-  padding-right: $edge + $fab-height-small;
+  padding-right: $edge;
   margin: 0;
   white-space: pre-wrap;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
 
   &:focus {
     outline: none;
-  }
-
-  > * > * {
-    background: rgba($primary-color-500, 0.7);
-    border-radius: 0.2em;
-    padding: 0.15em 0;
   }
 
   html.playmode & {
     cursor: default;
     overflow: hidden;
   }
-
-  .ply {
-    transition: all $time-quick ease-out;
-  }
-  html.editmode & {
-    .player1 {
-      box-shadow: 0 0 0 0.1em rgba($primary-color-200, 0.5);
-      background-color: rgba($primary-color-200, 0.5);
-
-      &.ply:hover {
-        background-color: $primary-color-300;
-        box-shadow: 0 0 0 0.1em $primary-color-300;
-      }
-      &.ply:active,
-      &.ply.active {
-        background-color: $primary-color-400;
-        box-shadow: 0 0 0 0.15em $primary-color-100;
-      }
-    }
-    .player2 {
-      box-shadow: 0 0 0 0.1em rgba($primary-color-900, 0.5);
-      background-color: rgba($primary-color-900, 0.5);
-
-      &.ply:hover {
-        background-color: $primary-color-700;
-        box-shadow: 0 0 0 0.1em $primary-color-700;
-      }
-      &.ply:active,
-      &.ply.active {
-        background-color: $primary-color-600;
-        box-shadow: 0 0 0 0.15em $primary-color-900;
-      }
-    }
-  }
 }
 
 #fab {
   position: absolute;
-  right: $edge;
+  right: $toolbar-height - $fab-height/2;
   bottom: $toolbar-height - $fab-height/2;
+  box-shadow: $shadow3;
   z-index: 2;
+
+  &:hover {
+    box-shadow: $shadow4;
+  }
+  &:active {
+    box-shadow: $shadow5;
+  }
 
   i {
     opacity: 0;
     position: absolute;
-    left: 50%;
+    top: 0;
+    line-height: $fab-height;
     transform: translate(-50%);
     transition: all $time-smooth ease-in-out;
 
-    &.icon-play {
+    &.play {
       transform: translate(-50%) rotate(179deg);
     }
-    &.icon-edit {
+    &.edit {
       transform: translate(-50%) rotate(-90deg);
     }
   }
 
   html.editmode & {
-    i.icon-play {
+    i.play {
       opacity: 1;
       transform: translate(-50%);
     }
   }
 
   html.playmode & {
-    i.icon-edit {
+    i.edit {
       opacity: 1;
       transform: translate(-50%);
     }
@@ -153,7 +162,7 @@
     i {
       opacity: 0 !important;
     }
-    i.icon-error {
+    i.error {
       opacity: 1 !important;
     }
   }
@@ -192,65 +201,25 @@
   }
 
   button.play {
+    width: 40px;
+    height: 40px;
+
     i {
       transition: opacity $time-smooth $natural;
 
-      &.icon-pause {
+      &.pause {
         position: absolute;
-        top: 0;
-        left: 0.5em;
         opacity: 0;
       }
     }
 
     html.playing & {
-      i.icon-play {
+      i.play {
         opacity: 0;
       }
-      i.icon-pause {
+      i.pause {
         opacity: 1;
       }
     }
   }
-}
-
-#share-menu {
-  position: absolute;
-  top: 0;
-  right: $edge;
-  width: $fab-height-small;
-  padding: $edge;
-  padding-right: 0;
-  overflow: visible;
-  z-index: 1;
-
-  .fab + .fab {
-    margin-top: $edge;
-    opacity: 0;
-    transform: scale(0);
-    pointer-events: none;
-    transition: all $time-quick $natural;
-  }
-
-  &:hover {
-    .fab + .fab {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: all;
-    }
-  }
-}
-
-.fab.small .icon-share {
-  margin-left: -2px;
-}
-
-#open {
-  display: block;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  opacity: 0;
 }

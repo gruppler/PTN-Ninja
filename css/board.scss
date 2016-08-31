@@ -13,6 +13,10 @@ $stone-thickness: 0.3vmin;
   right: 0;
   z-index: 0;
   transition: opacity $time-smooth $natural;
+
+  html.playmode & {
+    opacity: 1 !important;
+  }
 }
 
 .board {
@@ -79,10 +83,11 @@ $stone-thickness: 0.3vmin;
       right: 0;
       opacity: 0;
       pointer-events: none;
-      background-color: $accent-color;
+      background-color: $accent-color-500;
       transition: opacity $time-smooth $natural;
     }
-    html.editmode &.active:before {
+    html.editmode-square-hl.editmode &.active:before,
+    html.playmode-square-hl.playmode &.active:before {
       opacity: 0.65;
     }
 
@@ -266,35 +271,6 @@ $stone-thickness: 0.3vmin;
     .ptn, .score {
       flex-grow: 0;
       flex-shrink: 0;
-    }
-
-    .ptn {
-      .space {
-        display: none;
-      }
-
-      .ply {
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        padding: 0 0.2em;
-
-        &.player1 {
-          background: $primary-color-300;
-        }
-        &.player2 {
-          background: $primary-color-800;
-        }
-      }
-
-      &.active {
-        .ply {
-          &.player1 {
-            box-shadow: 0 0 0 0.15em $primary-color-50;
-          }
-          &.player2 {
-            box-shadow: 0 0 0 0.15em $primary-color-900;
-          }
-        }
-      }
     }
 
     > .player1 {

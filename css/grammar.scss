@@ -3,16 +3,66 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
-$red: #EF5350;
-$orange: #FF9800;
-$yellow: #FFCA28;
-$green: #8BC34A;
-$blue: #81D4FA;
-$purple: #BA68C8;
+$red-light: #EF5451;
+$red-dark: #E53A35;
+$orange-light: #FAA629;
+$orange-dark: #F47C20;
+$green-light: #9CCC65;
+$green-dark: #378E43;
+$blue-light: #36C2D6;
+$blue-dark: #1B87C9;
+
+$ptn-bg-radius: 0.2em;
+
+@mixin neutral-bg {
+  background-color: rgba($bg-color, 0.8);
+  box-shadow: 0 0 0 0.1em rgba($bg-color, 0.8);
+  border-radius: $ptn-bg-radius;
+}
 
 .ptn {
+  font-family: $monospace;
+
   .player1, .player2 {
-    border-radius: 0.2em;
+    border-radius: $ptn-bg-radius;
+  }
+  .player1 {
+    color: $primary-color-800;
+    box-shadow: 0 0 0 0.1em $primary-color-100;
+    background-color: $primary-color-100;
+
+    &.ply:hover {
+      background-color: $primary-color-50;
+      box-shadow: 0 0 0 0.1em $primary-color-50;
+    }
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-100;
+      box-shadow: 0 0 0 0.15em $accent-color-600;
+
+      html.ply-is-done & {
+        background-color: $white;
+      }
+    }
+  }
+  .player2 {
+    color: $primary-color-100;
+    box-shadow: 0 0 0 0.1em $primary-color-800;
+    background-color: $primary-color-800;
+
+    &.ply:hover {
+      background-color: $primary-color-900;
+      box-shadow: 0 0 0 0.1em $primary-color-900;
+    }
+    &.ply:active,
+    &.ply.active {
+      background-color: $primary-color-800;
+      box-shadow: 0 0 0 0.15em $accent-color-600;
+
+      html.ply-is-done & {
+        background-color: $black;
+      }
+    }
   }
 
   .tag {
@@ -21,21 +71,76 @@ $purple: #BA68C8;
 
     i {
       color: $primary-color-50;
+      background-color: transparent;
+      box-shadow: none;
       margin-right: 0.2em;
       font-size: 1em;
-      line-height: 1.5em;
       vertical-align: middle;
+
+      &.unknown:before {
+        content: '\E3FA';
+      }
+      &.player1:before {
+        content: '\E7FD';
+      }
+      &.player2:before {
+        content: '\E7FF';
+      }
+      &.date:before {
+        content: '\E878';
+      }
+      &.size:before {
+        content: '\E3EC';
+      }
+      &.result:before {
+        content: '\E90E';
+      }
+      &.event:before {
+        content: '\E616';
+      }
+      &.site:before {
+        content: '\E80B';
+      }
+      &.round:before {
+        content: '\E923';
+      }
+      &.rating1:before {
+        content: '\E838';
+      }
+      &.rating2:before {
+        content: '\E83A';
+      }
+      &.tps:before {
+        content: '\E5C3';
+      }
+      &.points:before {
+        content: '\E6DD';
+      }
+      &.time:before {
+        content: '\E192';
+      }
+      &.clock:before {
+        content: '\E425';
+      }
+      &.move:before {
+        content: '\E040';
+      }
     }
 
     .name {
       color: $primary-color-50;
       font-weight: 300;
       vertical-align: middle;
+      @include neutral-bg;
     }
 
     .value {
-      color: $primary-color-50;
       font-weight: 600;
+    }
+
+    .value:not(.player1):not(.player2) {
+      color: $primary-color-50;
+      @include neutral-bg;
     }
   }
 
@@ -43,16 +148,20 @@ $purple: #BA68C8;
     color: $primary-color-100;
     font-weight: 300;
 
+    i.player1 {
+      color: $primary-color-800;
+    }
+
     .separator {
       color: $primary-color-900;
     }
 
     .space {
-      color: $primary-color-300;
+      color: $primary-color-200;
       font-weight: normal;
     }
 
-    .stack, .player, .move {
+    .stack, .move {
       color: $primary-color-50;
     }
 
@@ -67,12 +176,12 @@ $purple: #BA68C8;
       }
 
       &:first-child {
-        border-top-left-radius: 0.2em;
-        border-bottom-left-radius: 0.2em;
+        border-top-left-radius: $ptn-bg-radius;
+        border-bottom-left-radius: $ptn-bg-radius;
       }
       &:last-child {
-        border-top-right-radius: 0.2em;
-        border-bottom-right-radius: 0.2em;
+        border-top-right-radius: $ptn-bg-radius;
+        border-bottom-right-radius: $ptn-bg-radius;
       }
     }
   }
@@ -84,42 +193,71 @@ $purple: #BA68C8;
     .text {
       color: $primary-color-50;
       font-weight: 400;
+      @include neutral-bg;
     }
   }
 
   .linenum {
     color: $primary-color-900;
-    font-weight: 400
+    font-weight: 400;
+  }
+
+  .stone {
+    color: $orange-dark;
+  }
+  .player2 .stone {
+    color: $orange-light;
   }
 
   .ply {
     font-weight: 700;
+    transition: all $time-quick ease-out;
 
-    .stone {
-      color: $white;
-    }
     .column {
-      color: $yellow;
-      font-weight: 600;
+      color: $primary-color-800;
+      font-weight: 400;
     }
+    &.player2 .column {
+      color: $primary-color-100;
+    }
+
     .row {
-      color: $orange;
+      color: $primary-color-800;
+      font-weight: 400;
+    }
+    &.player2 .row {
+      color: $primary-color-100;
+    }
+
+    .count_text {
+      color: $green-dark;
       font-weight: 600;
     }
-    .count_text {
-      color: $green;
-      font-weight: 300;
+    &.player2 .count_text {
+      color: $green-light;
     }
+
     .direction {
-      color: $primary-color-50;
+      color: $green-dark;
     }
+    &.player2 .direction {
+      color: $green-light;
+    }
+
     .drops {
-      color: $blue;
+      color: $blue-dark;
+      font-weight: 600;
+    }
+    &.player2 .drops {
+      color: $blue-light;
+    }
+
+    .evaluation {
+      color: $red-dark;
       font-weight: 300;
     }
-    .evaluation {
-      color: $whitish;
-      font-weight: 300;
+    &.player2 .evaluation {
+      color: $red-light;
     }
 
     &.nop {
@@ -132,21 +270,34 @@ $purple: #BA68C8;
     font-weight: 700;
 
     .win {
-      color: $primary-color-50;
-
       &.road {
-        color: $green;
+        color: $green-dark;
+        &.player2 {
+          color: $green-light;
+        }
       }
       &.flat {
-        color: $blue;
+        color: $blue-dark;
+        &.player2 {
+          color: $blue-light;
+        }
       }
     }
     .loss {
-      color: $red;
+      color: $red-dark;
+      &.player2 {
+        color: $red-light;
+      }
     }
     .draw {
-      color: $yellow;
+      color: $orange-dark;
+      &.player2 {
+        color: $orange-light;
+      }
     }
+  }
+  .move .result {
+    @include neutral-bg;
   }
 
   .invalid, .invalid * {

@@ -85,11 +85,13 @@ define([
       this.result = null;
     }
 
+    this.suffix = parts[10];
+
     return this;
   };
 
   Move.prototype.print = function(){
-    var output = '<span class="move" data-id="'+this.linenum.value+'">';
+    var output = '<span class="move" data-id="'+this.id+'">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -113,6 +115,9 @@ define([
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print').join('');
     }
+    if (this.suffix) {
+      output += '<span class="space">'+this.suffix+'</span>';
+    }
     output += '</span>';
 
     return output;
@@ -121,7 +126,9 @@ define([
   Move.prototype.print_text = function(){
     var output = '';
 
-    output += this.linenum.print_text();
+    if (this.linenum) {
+      output += this.linenum.print_text();
+    }
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print_text').join('');
     }
@@ -143,8 +150,11 @@ define([
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print_text').join('');
     }
+    if (this.text) {
+      output += this.text;
+    }
 
-    return output;
+    return output + (this.suffix || '');
   };
 
   return Move;

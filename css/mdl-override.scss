@@ -1,0 +1,66 @@
+
+// PTN Ninja by Craig Laparo is licensed under a Creative Commons
+// Attribution-NonCommercial-ShareAlike 4.0 International License.
+// http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+a {
+  color: $accent-color-500;
+}
+
+.mdl-button {
+  &:hover {
+    background-color: rgba(0,0,0,0.05);
+  }
+  &:active {
+    background-color: rgba(0,0,0,0.1);
+  }
+}
+
+.mdl-button {
+  &.mdl-button--colored,
+  .mdl-button--fab.mdl-button--colored {
+    background-color: $accent-color-500;
+    color: $primary-color-text;
+
+    &:hover, &:active {
+      background-color: $accent-color-400;
+    }
+
+    .mdl-ripple {
+      background-color: $white;
+    }
+  }
+
+  &.mdl-button--accent {
+    color: $accent-color-500 !important;
+  }
+
+  .mdl-dialog__actions & {
+    color: $primary-color-500;
+  }
+}
+
+.mdl-dialog {
+  padding: 0;
+}
+
+.mdl-dialog__title {
+  font-size: 1.5rem;
+  line-height: normal;
+  font-weight: 500;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.invisible-file-input {
+  cursor: pointer;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+}
