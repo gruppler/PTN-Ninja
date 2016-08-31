@@ -108,6 +108,9 @@ requirejs({locale: navigator.language}, [
     var href, length;
 
     app.$ptn.html(app.game.print());
+    app.$ptn.$header = app.$ptn.find('span.header');
+    app.$ptn.$header.$tps = app.$ptn.$header.find('span.value.tps');
+    app.$ptn.$body = app.$ptn.find('span.body');
     if (app.game.is_valid) {
       app.board.init(app.game);
     }
@@ -154,7 +157,7 @@ requirejs({locale: navigator.language}, [
 
     app.board.show_comments(ply);
     app.board.update_plys(ply);
-    app.board.set_active_squares(ply ? ply.squares : null);
+    app.board.set_active_squares(ply ? ply.squares : false);
   });
 
 
@@ -307,49 +310,95 @@ requirejs({locale: navigator.language}, [
   });
 
 
-  // Go to focused ply
+  // Update board when cursor moves
   app.$ptn.on('keyup mouseup', function (event) {
-    var $square, squares, square, i;
+    var focus, $focus
+      , $ply, ply_id
+      , $square, squares, square, i;
 
-    if (app.game.is_editing) {
-      var $focus = $(getSelection().focusNode).parent()
-        , ply_id, $squares;
+    if (!app.game.is_editing) {
+      return;
+    }
 
-      $focus = $focus.add($focus.next());
+    focus = getSelection().focusNode.parentNode;
+    if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
+      focus = focus.nextSibling;
+    }
+    if (focus.className == 'opening quote') {
+      focus = focus.nextSibling;
+    }
+    $focus = $(focus);
 
-      ply_id = $focus.closest('.ply').data('id');
-      if (!_.isUndefined(ply_id)) {
+    if ($.contains(app.$ptn.$body[0], focus)) {
+
+      // Body
+
+      if ($focus.hasClass('text')) {
+        $focus = $focus.closest('.comment');
+        $ply = $focus.prevAll('.ply');
+      } else if ($focus.hasClass('space')) {
+        $ply = $focus.next('.ply');
+      } else {
+        $ply = $focus.closest('.ply');
+      }
+
+      if (!$ply.length) {
+        $ply = $focus.prevAll('.ply');
+      }
+      if (!$ply.length) {
+        $ply = $focus.nextAll('.ply');
+      }
+
+      ply_id = 1*$ply.data('id');
+
+      if (_.isInteger(ply_id)) {
         app.board.go_to_ply(
           ply_id,
           app.board.ply_id != ply_id
             || !app.board.ply_is_done
             || event.type != 'mouseup'
         );
-      } else if ($focus.closest('.tps.value').length) {
+      }
+
+    } else if (
+      app.$ptn.$header.$tps.length
+      && (
+        app.$ptn.$header.$tps[0] == focus
+        || $.contains(app.$ptn.$header.$tps[0], focus)
+      )
+    ) {
+
+      // PTN
+
+      if ($focus.hasClass('separator')) {
+        $square = $focus.next().closest('.square');
+      } else if (app.$ptn.$header.$tps[0] == focus) {
+        $square = $(app.$ptn.$header.$tps[0].querySelector('.square'));
+      } else {
         $square = $focus.closest('.square');
+      }
 
-        if (!($square && $square.length) && $focus.hasClass('opening quote')) {
-          $square = $focus.find('.square:eq(0)');
-        }
+      if ($square && $square.length) {
+        square = app.board.squares[$square.data('square')];
+        if (square) {
+          squares = [square];
 
-        if ($square && $square.length) {
-          square = app.board.squares[$square.data('square')];
-          if (square) {
-            squares = [square];
-
-            if ($square.hasClass('space')) {
-              for (var i = 0; i < 1*$square.data('count') - 1; i++) {
-                squares.push(_.last(squares).neighbors['>']);
-              }
+          if ($square.hasClass('space')) {
+            for (i = 0; i < 1*$square.data('count') - 1; i++) {
+              squares.push(_.last(squares).neighbors['>']);
             }
           }
         }
-
-        app.board.go_to_ply(0, false);
-        app.board.set_active_squares(squares);
-      } else if ($focus.closest('.header').length) {
-        app.board.go_to_ply(0, false);
       }
+
+      app.board.go_to_ply(0, false);
+      app.board.set_active_squares(squares);
+
+    } else {
+
+      // Clear square highlighting
+      app.board.set_active_squares();
+
     }
   });
 
