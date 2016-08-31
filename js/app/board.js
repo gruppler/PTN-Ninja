@@ -395,7 +395,7 @@ define([
       this.$squares.children().removeClass('active');
       if (squares && squares.length) {
         if (_.isString(squares[0])) {
-          _.pick(this.squares, squares);
+          squares = _.pick(this.squares, squares);
         }
         _.invokeMap(squares, 'set_active');
       }
