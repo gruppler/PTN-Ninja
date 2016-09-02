@@ -51,8 +51,12 @@ define([
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
     },{
+      label: t.Configure_Board,
+      icon: 'settings',
+      onclick: 'app.configure_board()'
+    },{
       label: t.About_App,
-      icon: 'code',
+      icon: 'help',
       onclick: 'app.about()',
     }]
   },{

@@ -73,6 +73,9 @@ define([
             '<% }) %>'+
           '</div>'+
         '</dialog>'
+      ),
+      configure_board: _.template(
+        ''
       )
     },
 
@@ -126,21 +129,42 @@ define([
     },
 
     confirm: function (text, callback) {
-      var dialog = this.dialog(text.title, text.content, [{
-        label: t.OK,
-        value: true,
-        callback: callback
-      },{
-        label: t.Cancel,
-        value: false,
-        callback: callback
-      }]);
+      var dialog = this.dialog(
+        text.title,
+        text.content,
+        [{
+          label: t.OK,
+          value: true,
+          callback: callback
+        },{
+          label: t.Cancel,
+          value: false,
+          callback: callback
+        }]
+      );
 
       return dialog;
     },
 
     about: function () {
-      this.dialog(t.app_title, readme, [{label: t.Close}], 'about');
+      this.dialog(
+        t.app_title,
+        readme,
+        [{label: t.Close}],
+        'scrolling'
+      );
+    },
+
+    configure_board: function () {
+      this.dialog(
+        t.Configure_Board,
+        this.tpl.configure_board({
+          t: t,
+          config: this.config
+        }),
+        [{label: t.Close}],
+        'scrolling'
+      );
     },
 
     revert_game: function (confirmed) {

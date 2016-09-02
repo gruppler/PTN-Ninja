@@ -8,6 +8,7 @@ define({
     Cancel: "Cancel",
     Clock: "Clock",
     Close: "Close",
+    Configure_Board: "Configure Board",
     Date: "Date",
     Download: "Download",
     Edit_Mode: "Edit Mode",
