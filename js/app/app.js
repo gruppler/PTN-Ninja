@@ -140,7 +140,7 @@ define([
     },
 
     about: function () {
-      this.dialog('', readme, [{label: t.Close}], 'about');
+      this.dialog(t.app_title, readme, [{label: t.Close}], 'about');
     },
 
     revert_game: function (confirmed) {
@@ -257,6 +257,8 @@ define([
       target: '_blank',
       rel: 'noopener'
     });
+
+    $readme.find('h3:eq(0)').remove();
 
     return $readme.html();
   })();

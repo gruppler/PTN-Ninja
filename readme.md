@@ -1,5 +1,4 @@
 # PTN Ninja
-&copy; 2016 Craig Laparo
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...
 
@@ -22,11 +21,11 @@ To load a "**.ptn**" file, **drag** the file into the window, or copy the conten
 Key|Action
 :--|:--
 <kbd>Esc</kbd>|Toggle Menu
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>Space</kbd>|FAB action
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>s</kbd>|Download .ptn file
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>o</kbd>|Open .ptn file
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>d</kbd>|Load default PTN
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;Shift</kbd>+<kbd>/</kbd>|Load sample PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|FAB action
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn file
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn file
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load default PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>&#x21E7;Shift</kbd> + <kbd>/</kbd>|Load sample PTN
 
 ### Play Mode
 Key|Action
@@ -38,17 +37,17 @@ Key|Action
 <kbd>&#x21E7;Shift</kbd> + <kbd>&rarr;</kbd>|Next Ply
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&darr;</kbd>|Next Move
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>&larr;</kbd>|First Ply
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>&rarr;</kbd>|Last Ply
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
 <kbd>a</kbd>|Toggle Annotations
 <kbd>h</kbd>|Toggle Square Highlight
 
 ### Edit Mode
 Key|Action
 :--|:--
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>z</kbd>|Undo
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>&#x21E7;Shift</kbd>+<kbd>z</kbd>|Redo
-<kbd>&#x2318;/Ctrl</kbd>+<kbd>Backspace/Delete</kbd>|Trim to current ply*
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>&#x21E7;Shift</kbd> + <kbd>z</kbd>|Redo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Backspace/Delete</kbd>|Trim to current ply*
 
 *This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
 
