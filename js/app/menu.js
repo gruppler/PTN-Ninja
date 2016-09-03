@@ -29,6 +29,10 @@ define([
   Menu.content = [{
     id: 'global',
     items: [{
+      label: t.About_App,
+      icon: 'help',
+      onclick: 'app.about()',
+    },{
       label: t.Permalink,
       icon: 'link',
       class: 'permalink',
@@ -53,11 +57,7 @@ define([
     },{
       label: t.Board_Settings,
       icon: 'settings',
-      onclick: 'app.configure_board()'
-    },{
-      label: t.About_App,
-      icon: 'help',
-      onclick: 'app.about()',
+      onclick: 'app.board_settings()'
     }]
   },{
     id: 'play',
