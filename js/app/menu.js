@@ -51,7 +51,7 @@ define([
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
     },{
-      label: t.Configure_Board,
+      label: t.Board_Settings,
       icon: 'settings',
       onclick: 'app.configure_board()'
     },{

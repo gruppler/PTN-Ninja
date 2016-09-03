@@ -75,7 +75,7 @@ define([
           '</div>'+
         '</dialog>'
       ),
-      configure_board: _.template(
+      board_settings: _.template(
         ''
       )
     },
@@ -156,10 +156,10 @@ define([
       );
     },
 
-    configure_board: function () {
+    board_settings: function () {
       this.dialog(
-        t.Configure_Board,
-        this.tpl.configure_board({
+        t.Board_Settings,
+        this.tpl.board_settings({
           t: t,
           config: this.config
         }),

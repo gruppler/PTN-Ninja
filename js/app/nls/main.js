@@ -5,10 +5,10 @@ define({
     About_App: "About PTN Ninja",
 
     Board_Opacity: "Board Opacity",
+    Board_Settings: "Board Settings",
     Cancel: "Cancel",
     Clock: "Clock",
     Close: "Close",
-    Configure_Board: "Configure Board",
     Date: "Date",
     Download: "Download",
     Edit_Mode: "Edit Mode",
