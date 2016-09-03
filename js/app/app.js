@@ -17,7 +17,8 @@ define([
   'jquery',
   'bililiteRange',
   'bililiteRange.undo',
-  'bililiteRange.fancytext'
+  'bililiteRange.fancytext',
+  'dialog-polyfill'
 ], function (t, config, hotkeys, menu, Game, Board, readme, sample_ptn, _, $) {
 
   var d = new Date()
