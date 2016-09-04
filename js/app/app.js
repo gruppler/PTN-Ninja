@@ -201,26 +201,26 @@ define([
       var was_editing = this.game.is_editing;
 
       if (_.isBoolean(on)) {
-        if (on && !this.game.is_editing) {
-          this.$viewer.transition();
-          this.game.is_editing = true;
-          this.$html.addClass('editmode');
-          this.$html.removeClass('playmode');
-        } else if (!on && this.game.is_editing) {
-          this.$viewer.transition();
-          this.game.is_editing = false;
-          this.$html.addClass('playmode');
-          this.$html.removeClass('editmode');
-        }
+        this.game.is_editing = on;
       } else {
         this.game.is_editing = !this.game.is_editing;
-        this.$viewer.transition();
-        this.$html.toggleClass('editmode playmode');
       }
 
-      if (this.game.is_editing && !was_editing) {
+      if (!was_editing && this.game.is_editing) {
+        this.$viewer.transition();
+        this.$html.addClass('editmode');
+        this.$html.removeClass('playmode');
+        this.$menu_edit.addClass('mdl-accordion--opened');
+        this.$menu_play.removeClass('mdl-accordion--opened');
+
         this.board.pause();
         this.scroll_to_ply();
+      } else if (was_editing && !this.game.is_editing) {
+        this.$viewer.transition();
+        this.$html.addClass('playmode');
+        this.$html.removeClass('editmode');
+        this.$menu_play.addClass('mdl-accordion--opened');
+        this.$menu_edit.removeClass('mdl-accordion--opened');
       }
 
       this.$ptn.attr('contenteditable', this.game.is_editing);

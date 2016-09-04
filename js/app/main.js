@@ -60,6 +60,8 @@ requirejs({locale: navigator.language}, [
   app.$permalink = $('.permalink');
   app.$download = $('#download');
   app.$open = $('#open');
+  app.$menu_edit = $('#menu-edit');
+  app.$menu_play = $('#menu-play');
 
 
   // Add boolean preferences to html class

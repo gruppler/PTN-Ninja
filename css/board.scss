@@ -116,10 +116,10 @@ $stone-thickness: 0.3vmin;
       .right { right: 0; }
     }
 
-    &.up .road .up,
-    &.down .road .down,
-    &.left .road .left,
-    &.right .road .right { opacity: 1; }
+    html.show-roads &.up .road .up,
+    html.show-roads &.down .road .down,
+    html.show-roads &.left .road .left,
+    html.show-roads &.right .road .right { opacity: 1; }
 
     &.p1 .road > div { background-color: $primary-color-100 }
     &.p2 .road > div { background-color: $primary-color-700 }

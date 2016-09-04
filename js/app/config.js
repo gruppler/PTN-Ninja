@@ -23,10 +23,11 @@ define(['lodash'], function (_) {
 
       // Board
       show_axis_labels: true,
-      show_player_score: true,
+      show_player_scores: true,
       show_current_move: true,
       show_unplayed_pieces: true,
-      show_play_controls: true
+      show_play_controls: true,
+      show_roads: true
     },
 
     toggle: function (prop) {

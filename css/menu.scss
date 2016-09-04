@@ -1,7 +1,3 @@
-html.editmode #menu .menu-play,
-html.playmode #menu .menu-edit {
-  display: none;
-}
 
 .mdl-layout__drawer-button i {
   color: $white !important;
@@ -21,7 +17,7 @@ html.playmode #menu .menu-edit {
     }
   }
 
-  i {
+  i:first-child {
     margin-right: 32px;
   }
 
@@ -47,8 +43,7 @@ html.playmode #menu .menu-edit {
   }
 
   .mdl-list {
-    margin: 0;
-    padding: 0;
+    padding-bottom: 0;
   }
 
   .mdl-checkbox.is-upgraded {

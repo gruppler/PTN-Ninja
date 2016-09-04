@@ -54,45 +54,12 @@ define([
       label: t.Load_Sample_Game,
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
-    },{
-      label: t.Board_Settings,
-      icon: 'settings',
-      onclick: 'app.board_settings()'
-    }]
-  },{
-    id: 'play',
-    items: [{
-      label: t.Play_Mode,
-      icon: 'play_arrow',
-      onclick: 'app.toggle_edit_mode()',
-      class: 'mode keep-open'
-    },{
-      label: t.Highlight_Squares,
-      type: 'checkbox',
-      checked: config.playmode_square_hl,
-      'data-id': 'playmode_square_hl'
-    },{
-      label: t.Show_Annotations,
-      type: 'checkbox',
-      checked: config.show_annotations,
-      'data-id': 'show_annotations'
-    },{
-      label: t.Play_Speed,
-      type: 'slider',
-      min: 20,
-      max: 200,
-      step: 10,
-      value: config.play_speed,
-      'data-id': 'play_speed'
     }]
   },{
     id: 'edit',
+    label: t.Edit_Mode,
+    icon: 'mode_edit',
     items: [{
-      label: t.Edit_Mode,
-      icon: 'mode_edit',
-      onclick: 'app.toggle_edit_mode()',
-      class: 'mode keep-open'
-    },{
       label: t.Highlight_Squares,
       type: 'checkbox',
       checked: config.editmode_square_hl,
@@ -130,13 +97,75 @@ define([
       icon: 'restore',
       onclick: 'app.revert_game()'
     }]
+  },{
+    id: 'play',
+    label: t.Play_Mode,
+    icon: 'play_arrow',
+    items: [{
+      label: t.Highlight_Squares,
+      type: 'checkbox',
+      checked: config.playmode_square_hl,
+      'data-id': 'playmode_square_hl'
+    },{
+      label: t.Show_Annotations,
+      type: 'checkbox',
+      checked: config.show_annotations,
+      'data-id': 'show_annotations'
+    },{
+      label: t.Play_Speed,
+      type: 'slider',
+      min: 20,
+      max: 200,
+      step: 10,
+      value: config.play_speed,
+      'data-id': 'play_speed'
+    }]
+  },{
+    id: 'board',
+    label: t.Board_Settings,
+    icon: 'settings',
+    items: [{
+      label: t.Axis_Labels,
+      type: 'checkbox',
+      checked: config.show_axis_labels,
+      'data-id': 'show_axis_labels'
+    },{
+      label: t.Player_Scores,
+      type: 'checkbox',
+      checked: config.show_player_scores,
+      'data-id': 'show_player_scores'
+    },{
+      label: t.Current_Move,
+      type: 'checkbox',
+      checked: config.show_current_move,
+      'data-id': 'show_current_move'
+    },{
+      label: t.Unplayed_Pieces,
+      type: 'checkbox',
+      checked: config.show_unplayed_pieces,
+      'data-id': 'show_unplayed_pieces'
+    },{
+      label: t.Play_Controls,
+      type: 'checkbox',
+      checked: config.show_play_controls,
+      'data-id': 'show_play_controls'
+    },{
+      label: t.Road_Connections,
+      type: 'checkbox',
+      checked: config.show_roads,
+      'data-id': 'show_roads'
+    }]
   }];
 
   Menu.tpl = {
 
     item: function (obj) {
       if ('items' in obj) {
-        return app.menu.tpl.section(obj);
+        if ('label' in obj) {
+          return app.menu.tpl.accordion(obj);
+        } else {
+          return app.menu.tpl.section(obj);
+        }
       } else if ('href' in obj || 'onclick' in obj) {
         return app.menu.tpl.anchor(obj);
       } else if ('type' in obj) {
@@ -146,33 +175,45 @@ define([
 
     menu: function (obj) {
       return '<span class="mdl-layout-title">'+t.app_title+'</span>'
-        + _.map(obj.content, app.menu.tpl.section).join('');
+        + _.map(obj.content, app.menu.tpl.item).join('');
     },
 
     section: _.template(
-      '<span class="menu-<%=obj.id%> mdl-menu__item--full-bleed-divider"></span>'+
-      '<nav class="menu-<%=obj.id%> mdl-navigation">'+
-        '<ul class="mdl-list">'+
-          '<%= _.map(items, app.menu.tpl.item).join("") %>'+
-        '</ul>'+
+      '<nav id="menu-<%=obj.id%>" class="mdl-list mdl-navigation">'+
+        '<%= _.map(items, app.menu.tpl.item).join("") %>'+
       '</nav>'
     ),
 
+    accordion: _.template(
+      '<div id="menu-<%=obj.id%>" class="mdl-accordion mdl-list mdl-navigation">'+
+        '<a class="mdl-navigation__link mdl-accordion__button keep-open">'+
+          '<span class="label">'+
+            '<i class="material-icons"><%=obj.icon%></i>'+
+            '<%=obj.label%>'+
+          '</span>'+
+          '<i class="material-icons mdl-accordion__icon">expand_more</i>'+
+        '</a>'+
+        '<div class="mdl-accordion__content-wrapper">'+
+          '<div class="mdl-accordion__content mdl-list">'+
+            '<%= _.map(obj.items, app.menu.tpl.item).join("") %>'+
+          '</div>'+
+        '</div>'+
+      '</div>'
+    ),
+
     anchor: _.template(
-      '<a'+
+      '<a class="mdl-navigation__link"'+
         '<% _.each(_.omit(obj, ["label", "icon"]), function(value, key) { %>'+
           ' <%=key%>="<%-value%>"'+
         '<% }) %>'+
       '>'+
-        '<li class="mdl-navigation__link">'+
-            '<i class="material-icons"><%=obj.icon%></i>'+
-            '<%=obj.label%>'+
-        '</li>'+
+        '<i class="material-icons"><%=obj.icon%></i>'+
+        '<%=obj.label%>'+
       '</a>'
     ),
 
     checkbox: _.template(
-      '<li class="mdl-navigation__link item-checkbox">'+
+      '<div class="mdl-navigation__link item-checkbox">'+
         '<label class="mdl-checkbox mdl-js-checkbox">'+
           '<input type="checkbox" class="mdl-checkbox__input"'+
             '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
@@ -185,11 +226,11 @@ define([
             '>'+
           '<span class="mdl-checkbox__label"><%=obj.label%></span>'+
         '</label>'+
-      '</li>'
+      '</div>'
     ),
 
     slider: _.template(
-      '<li class="mdl-navigation__link item-slider">'+
+      '<div class="mdl-navigation__link item-slider">'+
         '<span class="mdl-slider__label"><%=obj.label%></span>'+
         '<input class="mdl-slider mdl-js-slider" type="range"'+
           '<% _.each(_.omit(obj, ["label", "type"]), function(value, key) { %>'+
@@ -200,11 +241,11 @@ define([
             '<% } %>'+
           '<% }) %>'+
         '>'+
-      '</li>'
+      '</div>'
     ),
 
     file: _.template(
-      '<li class="mdl-navigation__link item-file">'+
+      '<div class="mdl-navigation__link item-file">'+
         '<i class="material-icons"><%=obj.icon%></i>'+
         '<%=obj.label%>'+
         '<input class="invisible-file-input"'+
@@ -216,8 +257,9 @@ define([
             '<% } %>'+
           '<% }) %>'+
         '>'+
-      '</li>'
+      '</div>'
     )
+
   };
 
   Menu.render = function () {
@@ -227,15 +269,22 @@ define([
     $menu.find('.mdl-slider, .mdl-checkbox').each(function () {
       componentHandler.upgradeElement(this);
     });
+    $menu.find('.mdl-accordion__content').each(function(){
+      var $content = $(this);
+      $content.css('margin-top', -$content.outerHeight());
+    });
+    $menu.on('click', '.mdl-accordion__button', function () {
+      $(this).parent('.mdl-accordion').toggleClass('mdl-accordion--opened');
+    });
 
-    // Include menu permalink in permalink updates
+    // Hang on to the permalink
     app.$permalink = $('.permalink');
 
     // Close menu after selecting an anchor item
     $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);
 
     // Effectively extend the touch zone for checkboxes to the entire item
-    $menu.on('click', 'li.item-checkbox', function (event) {
+    $menu.on('click', '.item-checkbox', function (event) {
       if (this == event.target) {
         $(this).find('input').click();
       }
