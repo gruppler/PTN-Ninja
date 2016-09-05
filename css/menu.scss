@@ -38,6 +38,15 @@
     padding-right: 16px;
   }
 
+  &.is-visible {
+    will-change: scroll-position;
+  }
+  &:not(.is-visible) {
+    .mdl-accordion__content {
+      will-change: auto;
+    }
+  }
+
   .mdl-navigation {
     padding-top: 0;
   }

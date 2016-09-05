@@ -86,6 +86,7 @@ a {
   }
 
   .mdl-accordion__content {
+    will-change: margin-top;
     transition: margin-top $time-smooth $natural;
   }
 
