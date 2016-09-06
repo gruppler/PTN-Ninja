@@ -120,18 +120,12 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return this.add(message, seconds, group, 'player2', 'person');
   };
 
-  function remove_message() {
+  function remove_message(immediately) {
     var $message = $(this);
     if (!$message.hasClass('message')) {
       $message = $message.closest('.message');
     }
-    if ($message.hasClass('animating')) {
-      $message.remove();
-    } else {
-      $message.afterTransition(function () {
-        $message.remove();
-      }).addClass('animating');
-    }
+    $message.remove();
   }
 
   return Messages;

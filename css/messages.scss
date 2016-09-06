@@ -12,7 +12,8 @@
     max-height: 100%;
     max-width: calc(100% - #{$edge + $button-height});
     box-sizing: border-box;
-    transition: all $time-smooth $natural;
+    transition: opacity $time-smooth $natural;
+    will-change: opacity;
     z-index: 1;
 
     html.playmode &.messages-parse,
@@ -20,7 +21,6 @@
     html.playmode:not(.show-annotations) &.messages-board,
     html.editmode:not(.show-parse-errors) &.messages-parse {
       opacity: 0;
-      transform: translateX(100%);
       pointer-events: none;
     }
   }
@@ -33,7 +33,8 @@
     margin-top: 0.5em;
     max-width: 100%;
     box-shadow: $shadow1;
-    transition: all $time-smooth $natural;
+    transition: opacity $time-smooth $natural;
+    will-change: opacity;
 
     &.animating {
       opacity: 0;
@@ -58,6 +59,7 @@
         right: 0;
         cursor: default;
         transition: opacity $time-smooth $natural;
+        will-change: opacity;
 
         &:hover {
           opacity: 1;

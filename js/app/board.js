@@ -427,13 +427,9 @@ define([
       return;
     }
 
-    clear_required = this.m.clear(false, true, function () {
+    this.m.clear(false, true, function () {
       that.show_comments(ply);
     });
-
-    if (clear_required) {
-      return;
-    }
 
     if (!ply) {
       return;
