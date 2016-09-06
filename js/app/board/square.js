@@ -15,6 +15,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.piece = null;
     this.neighbors = {};
 
+    _.bindAll(this, 'render');
+
     return this;
   };
 
@@ -105,7 +107,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Square.prototype.render = function () {
-    this.$view = $(this.board.tpl.square(this));
+    this.$view = $(this.tpl(this));
     this.$view.data('model', this);
 
     return this.$view;
@@ -224,6 +226,17 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     return true;
   };
+
+  Square.prototype.tpl = _.template(
+    '<div class="square c<%=col%> r<%=row%> <%=color%>">'+
+      '<div class="road">'+
+        '<div class="up"></div>'+
+        '<div class="down"></div>'+
+        '<div class="left"></div>'+
+        '<div class="right"></div>'+
+      '</div>'+
+    '</div>'
+  );
 
   return Square;
 

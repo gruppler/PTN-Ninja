@@ -226,8 +226,7 @@ define([
     this.$view = $(this.tpl.board(this));
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.$ply1 = this.$view.find('.scores .player1 .ptn');
-    this.$ply2 = this.$view.find('.scores .player2 .ptn');
+    this.$ptn = this.$view.find('.ptn');
     this.$score1 = this.$view.find('.scores .player1 .score');
     this.$score2 = this.$view.find('.scores .player2 .score');
 
@@ -263,31 +262,28 @@ define([
 
 
   Board.prototype.update_plys = function(current_ply) {
-    var ply1, ply2;
+    var ply1, ply2, $ply1, $ply2;
 
     if (current_ply) {
       ply1 = current_ply.move.ply1;
       ply2 = current_ply.move.ply2;
+
+      this.$ptn.html(current_ply.move.print());
+      $ply1 = this.$ptn.find('.ply:eq(0)');
+      $ply2 = this.$ptn.find('.ply:eq(1)');
     }
 
     if (ply1) {
       if (ply1.turn == 1) {
-        this.$ply1.html(ply1.print());
         if (ply1 == current_ply) {
-          this.$ply1.find('.ply').addClass('active');
+          $ply1.addClass('active');
         }
-      } else {
-        this.$ply1.empty();
-        ply2 = ply1;
       }
     }
     if (ply2) {
-      this.$ply2.html(ply2.print());
       if (ply2 == current_ply) {
-        this.$ply2.find('.ply').addClass('active');
+        $ply2.addClass('active');
       }
-    } else {
-      this.$ply2.empty();
     }
   };
 
@@ -645,44 +641,19 @@ define([
 
     col: _.template('<span class="col"><%=obj%></span>'),
 
-    square: _.template(
-      '<div class="square c<%=col%> r<%=row%> <%=color%>">'+
-        '<div class="road">'+
-          '<div class="up"></div>'+
-          '<div class="down"></div>'+
-          '<div class="left"></div>'+
-          '<div class="right"></div>'+
-        '</div>'+
-      '</div>'
-    ),
-
-    stone_class: _.template('stone p<%=player%> <%=stone%>'),
-    piece_location: _.template(
-      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>) rotate(<%=rotate%>deg)'
-    ),
-    piece: _.template(
-      '<div class="piece">'+
-        '<div class="wrapper">'+
-          '<div class="captive p<%=player%>"></div>'+
-          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
-        '</div>'+
-      '</div>'
-    ),
-
     board: _.template(
       '<div class="board size-<%=size%>">'+
         '<div class="scores">'+
           '<span class="player1">'+
             '<span class="name"><%=game.config.player1%></span>'+
-            '<span class="ptn"></span>'+
             '<span class="score"><%=flat_score[1]%></span>'+
           '</span>'+
           '<span class="player2">'+
             '<span class="score"><%=flat_score[2]%></span>'+
-            '<span class="ptn"></span>'+
             '<span class="name"><%=game.config.player2%></span>'+
           '</span>'+
         '</div>'+
+        '<div class="ptn"></div>'+
         '<div class="row labels">'+
           '<%=_.map(rows, tpl.row).join("")%>'+
         '</div>'+

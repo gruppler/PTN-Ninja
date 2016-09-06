@@ -263,7 +263,7 @@ define([
     }
   };
 
-  _.bindAll(app,
+  _.bindAll(app, [
     'dialog',
     'confirm',
     'revert_game',
@@ -272,7 +272,7 @@ define([
     'scroll_to_ply',
     'toggle_edit_mode',
     'insert_text'
-  );
+  ]);
 
 
   // Reformat Readme

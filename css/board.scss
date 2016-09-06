@@ -13,6 +13,7 @@ $stone-thickness: 0.3vmin;
   right: 0;
   z-index: 0;
   transition: opacity $time-smooth $natural;
+  will-change: opacity;
 
   html.playmode & {
     opacity: 1 !important;
@@ -57,8 +58,8 @@ $stone-thickness: 0.3vmin;
   .pieces {
     position: absolute;
     top: 0;
-    bottom: 2em;
-    left: 2em;
+    bottom: 0;
+    left: 0;
     right: 0;
   }
 
@@ -85,6 +86,7 @@ $stone-thickness: 0.3vmin;
       pointer-events: none;
       background-color: $accent-color-500;
       transition: opacity $time-smooth $natural;
+      will-change: opacity;
     }
     html.editmode-square-hl.editmode &.active:before,
     html.playmode-square-hl.playmode &.active:before {
@@ -98,12 +100,12 @@ $stone-thickness: 0.3vmin;
       left: 0;
       right: 0;
       opacity: 0.25;
-      transition: opacity $time-smooth $natural;
 
       > div {
         opacity: 0;
         position: absolute;
         transition: all $time-smooth $natural;
+        will-change: opacity;
         top: 35%;
         bottom: 35%;
         left: 35%;
@@ -130,6 +132,7 @@ $stone-thickness: 0.3vmin;
     top: 50%;
     left: 50%;
     transition: transform $time-smooth $natural;
+    will-change: transform;
 
     .wrapper {
       position: absolute;
@@ -139,6 +142,7 @@ $stone-thickness: 0.3vmin;
       right: 0;
       transition: transform $time-smooth $natural,
         opacity $time-smooth $natural;
+      will-change: opacity, transform;
     }
 
     &.placing .wrapper {
@@ -147,13 +151,7 @@ $stone-thickness: 0.3vmin;
     }
 
     .stone, .captive {
-      @media (max-width: $mobile) {
-        border-style: solid;
-        border-width: 0 0 $stone-thickness;
-      }
-      @media (min-width: $desktop) {
-        box-shadow: $shadow1;
-      }
+      box-shadow: $shadow1;
 
       &.p1 {
         background-color: $primary-color-100;
@@ -170,12 +168,6 @@ $stone-thickness: 0.3vmin;
       .captive { opacity: 1; }
     }
 
-    &:not(.played) .stone {
-      @media (max-width: $mobile) {
-        border-width: 1px 1px $stone-thickness;
-      }
-    }
-
     .stone {
       width: 50%;
       height: 50%;
@@ -183,6 +175,7 @@ $stone-thickness: 0.3vmin;
       border-radius: 10%;
       position: relative;
       transition: all $time-smooth $natural;
+      will-change: transform;
 
       &.S {
         width: 18.75%;
@@ -192,22 +185,12 @@ $stone-thickness: 0.3vmin;
         &.p1 {
           background-color: $primary-color-50;
           transform: rotate(-45deg);
-          @media (max-width: $mobile) {
-            border-width: 0 0 $stone-thickness $stone-thickness;
-          }
-          @media (min-width: $desktop) {
-            box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
-          }
+          box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
         }
         &.p2 {
           background-color: $primary-color-700;
           transform: rotate(45deg);
-          @media (max-width: $mobile) {
-            border-width: 0 $stone-thickness $stone-thickness 0;
-          }
-          @media (min-width: $desktop) {
-            box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
-          }
+          box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
         }
       }
 
@@ -234,31 +217,27 @@ $stone-thickness: 0.3vmin;
       border-radius: 15%/30%;
       transform: translateX(-100%);
       transition: all $time-smooth $natural;
+      will-change: opacity, transform;
     }
   }
 
   .scores {
     position: absolute;
     top: -$top-margin;
-    left: 2em;
+    left: 0;
     right: 0;
     display: flex;
+    line-height: normal;
 
-    > .player1,> .player2 {
+    > .player1, > .player2 {
       display: flex;
       width: 50%;
       border-radius: $stone-thickness;
       font-size: $top-margin/4;
-      line-height: normal;
     }
 
     .name, .score {
       padding: 0 0.25em;
-    }
-
-    .score {
-      width: 1.25em;
-      @include unselectable;
     }
 
     .name {
@@ -268,9 +247,11 @@ $stone-thickness: 0.3vmin;
       white-space: nowrap;
     }
 
-    .ptn, .score {
+    .score {
+      width: 1.25em;
       flex-grow: 0;
       flex-shrink: 0;
+      will-change: content;
     }
 
     > .player1 {
@@ -300,32 +281,64 @@ $stone-thickness: 0.3vmin;
     }
   }
 
+  .ptn {
+    line-height: normal;
+    position: absolute;
+    top: -$top-margin/2;
+    left: 0;
+    right: 0;
+    will-change: content;
+
+    .space:first-child, .comment {
+      display: none;
+    }
+
+    .ply {
+      position: absolute;
+      right: 51%;
+      max-width: 49%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      ~ .ply {
+        right: auto;
+        left: 51%;
+      }
+    }
+
+    .result {
+      position: absolute;
+      right: 0;
+    }
+  }
+
   .labels {
     color: $primary-color-100;
     position: absolute;
     font-size: 1em;
     display: flex;
     justify-content: space-around;
-    transition: color $time-smooth $natural;
+    opacity: 0;
+    transition: opacity $time-smooth $natural;
     @include unselectable;
 
-    html.editmode & {
-      color: $primary-color-200;
+    html.show-axis-labels & {
+      opacity: 1;
     }
 
     &.row {
       top: 0;
-      left: 0;
+      left: -2em;
       flex-direction: column-reverse;
       width: 2em;
-      height: calc(100% - 2em);
+      height: 100%;
       text-align: center;
     }
     &.col {
-      bottom: 0;
+      bottom: -2em;
       right: 0;
       flex-direction: row;
-      width: calc(100% - 2em);
+      width: 100%;
       height: 2em;
       line-height: 2em;
     }

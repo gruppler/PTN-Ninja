@@ -21,10 +21,11 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       this.piece_index += board.piece_counts.F;
     }
 
-    this.tpl = this.board.tpl;  // give template access to tpl
-
     board.all_pieces.push(this);
     board.pieces[this.player][this.true_stone].push(this);
+
+    _.bindAll(this, 'render');
+
     return this;
   };
 
@@ -81,23 +82,20 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
     // Calculate location transform
     if (square) {
-      this.rotate = 0;
       this.scale = 1;
       this.x = 100*(square.col - this.board.size/2);
       this.y = 100*(this.board.size/2 - 1 - square.row);
     } else {
-      this.rotate = this.player == 1 ? -90 : 90;
       this.scale = this.board.size/10;
 
-      this.x = (this.player == 1 ? -1 : 1) * (
-        85 * (
-          this.board.size/(2*this.board.piece_counts.total - 2/this.board.size) * (
-            this.piece_index
-          )
-        ) + 25
-      ) - 50;
+      this.x = 100*(this.board.size + this.player*2/3 - 0.5)/2 - 5*this.board.size;
 
-      this.y = -100*(this.board.size + 1)/2 - 5*this.board.size;
+      this.y = (
+        95 * this.piece_index *
+          this.board.size /
+            (this.board.piece_counts.total - 1 / this.board.size)
+        + 25
+      ) - 50*(this.board.size + 1);
     }
 
     // Offset captives
@@ -111,10 +109,10 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       }
     }
 
-    location = this.board.tpl.piece_location(this);
+    location = this.tpl.piece_location(this);
 
     if (!this.$view) {
-      this.$view = $(this.board.tpl.piece(this));
+      this.$view = $(this.tpl.piece(this));
       this.$view.css({
         'z-index': this.height,
         'transform': location
@@ -135,7 +133,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
         });
         this.$view.css('transform', location);
       }
-      this.$stone[0].className = this.board.tpl.stone_class(this);
+      this.$stone[0].className = this.tpl.stone_class(this);
       this.$stone.removeClass('F S').addClass(this.stone);
     }
     this.prev_height = this.height;
@@ -197,6 +195,21 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
     this.needs_updated = false;
 
     return this.$view;
+  };
+
+  Piece.prototype.tpl = {
+    stone_class: _.template('stone p<%=player%> <%=stone%>'),
+    piece_location: _.template(
+      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>)'
+    ),
+    piece: _.template(
+      '<div class="piece">'+
+        '<div class="wrapper">'+
+          '<div class="captive p<%=player%>"></div>'+
+          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
+        '</div>'+
+      '</div>'
+    )
   };
 
   return Piece;
