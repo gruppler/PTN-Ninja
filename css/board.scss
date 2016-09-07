@@ -136,7 +136,8 @@ $stone-thickness: 0.3vmin;
     html.animate-pieces.show-roads &.down .road .down,
     html.animate-pieces.show-roads &.left .road .left,
     html.animate-pieces.show-roads &.right .road .right {
-      transition-delay: $time-smooth;
+      transition: opacity $time-smooth $natural $time-smooth,
+        background-color $time-smooth $natural;
     }
 
     &.p1 .road > div { background-color: $primary-color-100 }
