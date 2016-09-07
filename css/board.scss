@@ -115,7 +115,7 @@ $stone-thickness: 0.3vmin;
         right: 35%;
 
         html.animate-pieces & {
-          transition: opacity $time-smooth $natural,
+          transition: opacity $time-smooth/2 $natural,
             background-color $time-smooth $natural;
         }
       }
@@ -136,7 +136,7 @@ $stone-thickness: 0.3vmin;
     html.animate-pieces.show-roads &.down .road .down,
     html.animate-pieces.show-roads &.left .road .left,
     html.animate-pieces.show-roads &.right .road .right {
-      transition: opacity $time-smooth $natural $time-smooth,
+      transition: opacity $time-smooth/2 $natural $time-smooth/2,
         background-color $time-smooth $natural;
     }
 
@@ -333,24 +333,6 @@ $stone-thickness: 0.3vmin;
 
     .player1, .player2 {
       padding: 0 0.2em;
-    }
-
-    .ply {
-      position: absolute;
-      right: 51%;
-      max-width: 49%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      ~ .ply {
-        right: auto;
-        left: 51%;
-      }
-    }
-
-    .result {
-      position: absolute;
-      right: 0;
     }
   }
 
