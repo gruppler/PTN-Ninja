@@ -18,6 +18,18 @@ define([
 
   var Menu = {};
 
+  Menu.open = function () {
+    if (!$menu.hasClass('is-visible')) {
+      this.toggle();
+    }
+  };
+
+  Menu.close = function () {
+    if ($menu.hasClass('is-visible')) {
+      this.toggle();
+    }
+  };
+
   Menu.toggle = function () {
     $menu_button.click();
   };

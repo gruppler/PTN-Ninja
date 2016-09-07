@@ -230,6 +230,7 @@ requirejs({locale: navigator.language}, [
     event.preventDefault();
     app.read_file(this.files[0]);
     $(this).val('');
+    app.menu.close();
   });
 
 
