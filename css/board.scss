@@ -86,8 +86,11 @@ $stone-thickness: 0.3vmin;
       opacity: 0;
       pointer-events: none;
       background-color: $accent-color-500;
-      transition: opacity $time-smooth $natural;
       will-change: opacity;
+
+      html.animate-pieces & {
+        transition: opacity $time-smooth $natural;
+      }
     }
     html.editmode-square-hl.editmode &.active:before,
     html.playmode-square-hl.playmode &.active:before {
@@ -105,12 +108,16 @@ $stone-thickness: 0.3vmin;
       > div {
         opacity: 0;
         position: absolute;
-        transition: all $time-smooth $natural;
         will-change: opacity;
         top: 35%;
         bottom: 35%;
         left: 35%;
         right: 35%;
+
+        html.animate-pieces & {
+          transition: opacity $time-smooth $natural,
+            background-color $time-smooth $natural;
+        }
       }
 
       .up { top: 0; }
@@ -136,8 +143,12 @@ $stone-thickness: 0.3vmin;
     position: absolute;
     bottom: 0;
     left: 0;
-    transition: all $time-smooth $natural;
     will-change: transform, opacity;
+
+    html.animate-pieces & {
+      transition: transform $time-smooth $natural,
+        opacity $time-smooth $natural;
+    }
 
     &.unplayed {
       html:not(.show-unplayed-pieces) & {
@@ -164,8 +175,11 @@ $stone-thickness: 0.3vmin;
       margin: 25%;
       border-radius: 10%;
       position: relative;
-      transition: all $time-smooth $natural;
       will-change: transform, width, border-radius, margin-left;
+
+      html.animate-pieces & {
+        transition: all $time-smooth $natural;
+      }
     }
 
     &:not(.unplayed) .stone.S {
@@ -204,8 +218,11 @@ $stone-thickness: 0.3vmin;
       height: 7.5%;
       opacity: 0;
       border-radius: 15%/30%;
-      transition: all $time-smooth $natural;
       will-change: opacity, right;
+
+      html.animate-pieces & {
+        transition: all $time-smooth $natural;
+      }
     }
 
     &.immovable {

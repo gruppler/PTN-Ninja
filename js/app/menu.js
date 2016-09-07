@@ -125,6 +125,11 @@ define([
     label: t.Board_Settings,
     icon: 'settings',
     items: [{
+      label: t.Animate_Pieces,
+      type: 'checkbox',
+      checked: config.animate_pieces,
+      'data-id': 'animate_pieces'
+    },{
       label: t.Axis_Labels,
       type: 'checkbox',
       checked: config.show_axis_labels,

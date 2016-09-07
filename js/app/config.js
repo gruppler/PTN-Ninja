@@ -22,6 +22,7 @@ define(['lodash'], function (_) {
       play_speed: 40, // BPM
 
       // Board
+      animate_pieces: true,
       show_axis_labels: true,
       show_player_scores: true,
       show_current_move: true,
