@@ -168,6 +168,10 @@ $stone-thickness: 0.3vmin;
     .stone, .captive {
       box-shadow: $shadow1;
 
+      @media (max-width: $mobile) {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      }
+
       &.p1 {
         background-color: $primary-color-100;
         border-color: $primary-color-600;
@@ -184,7 +188,7 @@ $stone-thickness: 0.3vmin;
       margin: 25%;
       border-radius: 10%;
       position: relative;
-      will-change: transform, width, border-radius, margin-left;
+      will-change: transform;
 
       html.animate-pieces & {
         transition: all $time-smooth $natural;
@@ -195,16 +199,25 @@ $stone-thickness: 0.3vmin;
       width: 18.75%;
       border-radius: 27%/10%;
       margin-left: 40.625%;
+      will-change: transform, width, border-radius, margin-left, box-shadow;
 
       &.p1 {
         background-color: $primary-color-50;
         transform: rotate(-45deg);
         box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
+
+        @media (max-width: $mobile) {
+          box-shadow: -1px 1px 2px rgba(0,0,0,0.5);
+        }
       }
       &.p2 {
         background-color: $primary-color-700;
         transform: rotate(45deg);
         box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
+
+        @media (max-width: $mobile) {
+          box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
       }
     }
 
