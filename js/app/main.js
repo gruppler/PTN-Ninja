@@ -8,7 +8,6 @@ requirejs({locale: navigator.language}, [
   'i18n!nls/main',
   'app/config',
   'app/app',
-  'app/messages',
   'filesaver',
   'lodash',
   'jquery',
@@ -18,10 +17,9 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, config, app, Messages, saveAs, _, $) {
+], function (t, config, app, saveAs, _, $) {
 
-  var baseurl = location.origin + location.pathname
-    , m = new Messages('general', true);
+  var baseurl = location.origin + location.pathname;
 
   window.app = app;
 
@@ -124,11 +122,6 @@ requirejs({locale: navigator.language}, [
       href: href,
       title: t.n_characters({n: length})
     });
-
-    m.clear('warning', 'url');
-    if (length > 2000) {
-      m.warning(t.warning.long_url, 0, 'url');
-    }
 
     if (is_original) {
       bililiteRange(app.$ptn[0]).undo(0);

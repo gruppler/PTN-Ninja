@@ -72,10 +72,6 @@ define({
       }
     },
 
-    warning: {
-      long_url: "The permalink is over 2000 characters long, which might not work in some browsers."
-    },
-
     error: {
       illegal_ply: "Illegal ply: \"<b><%=ply%></b>\"",
       invalid_movetext: "Invalid movetext: \"<b><%=text%></b>\"",
