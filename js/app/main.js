@@ -265,7 +265,7 @@ requirejs({locale: navigator.language}, [
   // Bind update events to game parsing
   bililiteRange.fancyText(app.$ptn[0], function () {
     return app.game.parse(app.$ptn.text());
-  });
+  }, 100);
 
 
   // Load the initial PTN
@@ -314,7 +314,7 @@ requirejs({locale: navigator.language}, [
 
 
   // Update board when cursor moves
-  app.$ptn.on('keyup mouseup', function (event) {
+  app.set_position_from_caret = function (event) {
     var focus, $focus
       , $ply, ply_id
       , $square, squares, square, i;
@@ -333,7 +333,6 @@ requirejs({locale: navigator.language}, [
     $focus = $(focus);
 
     if ($.contains(app.$ptn.$body[0], focus)) {
-
       // Body
 
       if ($focus.hasClass('text')) {
@@ -373,7 +372,6 @@ requirejs({locale: navigator.language}, [
         || $.contains(app.$ptn.$header.$tps[0], focus)
       )
     ) {
-
       // TPS
 
       if ($focus.hasClass('separator')) {
@@ -399,13 +397,12 @@ requirejs({locale: navigator.language}, [
 
       app.board.go_to_ply(0, false);
       app.board.set_active_squares(squares);
-
     } else {
-
       // Clear square highlighting
       app.board.set_active_squares();
-
     }
-  });
+  };
+  app.set_position_from_caret = _.throttle(app.set_position_from_caret, 100);
+  app.$ptn.on('keyup mouseup', app.set_position_from_caret);
 
 });
