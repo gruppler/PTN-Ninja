@@ -33,12 +33,13 @@ $stone-thickness: 0.3vmin;
 
   #viewer.animated & {
     transition: all $time-smooth $natural;
+    will-change: top, right;
   }
 
-  html.playmode & {
+  html.playmode.show-play-controls & {
     top: calc(#{$edge} + 50% - #{50vmin - $top-margin} + 0.5em);
   }
-  html.playmode:not(.ptn) & {
+  html.playmode & {
     right: calc(1em + 50% - #{50vmin - $top-margin/2} + #{($edge*3 + $button-height) / 2});
     z-index: 1;
   }
@@ -127,27 +128,25 @@ $stone-thickness: 0.3vmin;
     &.p2 .road > div { background-color: $primary-color-700 }
   }
 
+  .pieces {
+    transform-style: preserve-3d;
+  }
+
   .piece {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transition: transform $time-smooth $natural;
-    will-change: transform;
+    bottom: 0%;
+    left: 0%;
+    transition: transform $time-smooth $natural,
+      opacity $time-smooth $natural,
+      left $time-smooth*1.25 $natural;
+    will-change: left, transform;
 
-    .wrapper {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      transition: transform $time-smooth $natural,
-        opacity $time-smooth $natural;
-      will-change: opacity, transform;
-    }
+    &.unplayed {
+      left: 100%;
 
-    &.placing .wrapper {
-      opacity: 0;
-      transform: scale(2);
+      html:not(.show-unplayed-pieces) & {
+        opacity: 0;
+      }
     }
 
     .stone, .captive {
@@ -163,11 +162,6 @@ $stone-thickness: 0.3vmin;
       }
     }
 
-    &.immovable {
-      .stone { opacity: 0; }
-      .captive { opacity: 1; }
-    }
-
     .stone {
       width: 50%;
       height: 50%;
@@ -176,48 +170,55 @@ $stone-thickness: 0.3vmin;
       position: relative;
       transition: all $time-smooth $natural;
       will-change: transform;
+    }
 
-      &.S {
-        width: 18.75%;
-        border-radius: 27%/10%;
-        margin-left: 40.625%;
+    &:not(.unplayed) .stone.S {
+      width: 18.75%;
+      border-radius: 27%/10%;
+      margin-left: 40.625%;
+      will-change: transform, width, border-radius, margin-left;
 
-        &.p1 {
-          background-color: $primary-color-50;
-          transform: rotate(-45deg);
-          box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
-        }
-        &.p2 {
-          background-color: $primary-color-700;
-          transform: rotate(45deg);
-          box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
-        }
+      &.p1 {
+        background-color: $primary-color-50;
+        transform: rotate(-45deg);
+        box-shadow: -1px 1px 2px 0 rgba(0,0,0,0.14), -1px 1px 5px 0 rgba(0,0,0,0.12), -1px 1px 1px -2px rgba(0,0,0,0.4);
       }
+      &.p2 {
+        background-color: $primary-color-700;
+        transform: rotate(45deg);
+        box-shadow: 1px 1px 2px 0 rgba(0,0,0,0.14), 1px 1px 5px 0 rgba(0,0,0,0.12), 1px 1px 1px -2px rgba(0,0,0,0.4);
+      }
+    }
 
-      &.C {
-        border-radius: 50%;
-        transform: scale(1.1);
+    .stone.C {
+      border-radius: 50%;
 
-        &.p1 {
-          background-color: $primary-color-50;
-        }
-        &.p2 {
-          background-color: $primary-color-700;
-        }
+      &.p1 {
+        background-color: $primary-color-50;
+      }
+      &.p2 {
+        background-color: $primary-color-700;
       }
     }
 
     .captive {
       position: absolute;
       bottom: 25%;
-      right: 5%;
+      right: 25%;
       width: 15%;
       height: 7.5%;
       opacity: 0;
       border-radius: 15%/30%;
-      transform: translateX(-100%);
       transition: all $time-smooth $natural;
-      will-change: opacity, transform;
+      will-change: opacity, right;
+    }
+
+    &.immovable {
+      .stone { opacity: 0; }
+      .captive {
+        opacity: 1;
+        right: 5%;
+      }
     }
   }
 
@@ -226,12 +227,21 @@ $stone-thickness: 0.3vmin;
     top: -$top-margin;
     left: 0;
     right: 0;
-    display: flex;
     line-height: normal;
+    transition: opacity $time-smooth $natural;
+    will-change: opacity;
+
+    html:not(.show-player-scores) & {
+      opacity: 0;
+    }
 
     > .player1, > .player2 {
-      display: flex;
+      position: absolute;
+      top: 0;
       width: 50%;
+      display: flex;
+      padding: 0.2em;
+      box-sizing: border-box;
       border-radius: $stone-thickness;
       font-size: $top-margin/4;
     }
@@ -255,6 +265,7 @@ $stone-thickness: 0.3vmin;
     }
 
     > .player1 {
+      left: 0;
       background-color: $primary-color-100;
       color: $primary-color-700;
 
@@ -264,6 +275,7 @@ $stone-thickness: 0.3vmin;
     }
 
     > .player2 {
+      right: 0;
       background-color: $primary-color-700;
       color: $primary-color-100;
 
@@ -287,10 +299,19 @@ $stone-thickness: 0.3vmin;
     top: -$top-margin/2;
     left: 0;
     right: 0;
-    will-change: content;
+    transition: opacity $time-smooth $natural;
+    will-change: content, opacity;
+
+    html:not(.show-current-move) & {
+      opacity: 0;
+    }
 
     .space:first-child, .comment {
       display: none;
+    }
+
+    .player1, .player2 {
+      padding: 0 0.2em;
     }
 
     .ply {

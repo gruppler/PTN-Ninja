@@ -192,7 +192,7 @@
   transition: transform $time-smooth $natural;
   will-change: transform;
 
-  html.playmode & {
+  html.playmode.show-play-controls & {
     transform: none;
   }
 
@@ -206,6 +206,8 @@
 
   button {
     color: $whitish;
+    width: 40px;
+    height: 40px;
 
     + button {
       margin-left: $edge/2;
@@ -213,8 +215,6 @@
   }
 
   button.play {
-    width: 40px;
-    height: 40px;
 
     i {
       transition: opacity $time-smooth $natural;

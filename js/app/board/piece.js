@@ -60,95 +60,65 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   Piece.prototype.render = function () {
     var that = this
       , square = this.square
-      , location, captive_offset = 6, capstones;
+      , location, captive_offset = 6;
 
     if (this.board.defer_render) {
       this.needs_updated = true;
       return;
     }
 
-    // Set height
+    // Set Z
     if (this.captor) {
-      this.height = this.captor.captives.length - this.stack_index;
+      this.z = this.captor.captives.length - this.stack_index;
       this.is_immovable = this.stack_index >= this.board.size - 1;
     } else if (this.captives.length) {
-      this.height = this.captives.length + 1;
+      this.z = this.captives.length + 1;
       this.is_immovable = false;
       _.invokeMap(this.captives, 'render');
     } else {
-      this.height = square ? 1 : this.piece_index;
+      this.z = square ? 1 : this.piece_index;
       this.is_immovable = false;
     }
 
-    // Calculate location transform
+    // Set X and Y
     if (square) {
-      this.scale = 1;
-      this.x = 100*(square.col - this.board.size/2);
-      this.y = 100*(this.board.size/2 - 1 - square.row);
-    } else {
-      this.scale = this.board.size/10;
+      this.x = 100*square.col;
+      this.y = -100*square.row;
+      if(this.is_immovable) {
+        this.y += captive_offset*(1 - this.z);
+      } else {
+        this.y += captive_offset*(
+          1 - this.z + 1*(this.stone == 'S' && !!this.captives.length)
+        );
 
-      this.x = 100*(this.board.size + this.player*2/3 - 0.5)/2 - 5*this.board.size;
-
-      this.y = (
-        95 * this.piece_index *
-          this.board.size /
-            (this.board.piece_counts.total - 1 / this.board.size)
-        + 25
-      ) - 50*(this.board.size + 1);
-    }
-
-    // Offset captives
-    if (square && !this.is_immovable) {
-      this.y += captive_offset*(
-        1 - this.height + 1*(this.stone == 'S' && !!this.captives.length)
-      );
-
-      if ((this.captor||this).height > this.board.size) {
-        this.y += captive_offset*((this.captor||this).height - this.board.size);
+        if ((this.captor||this).z > this.board.size) {
+          this.y += captive_offset*((this.captor||this).z - this.board.size);
+        }
       }
+    } else {
+      this.z += this.board.piece_counts.total;
+
+      if (this.player == 2) {
+        this.z += this.board.piece_counts.total;
+        this.x = 75;
+      } else {
+        this.x = 0;
+      }
+
+      this.y = (this.board.size - 1) * -100 * this.piece_index / this.board.piece_counts.total;
     }
 
-    location = this.tpl.piece_location(this);
-
+    // Render or update the view
     if (!this.$view) {
       this.$view = $(this.tpl.piece(this));
-      this.$view.css({
-        'z-index': this.height,
-        'transform': location
-      });
       this.$stone = this.$view.find('.stone');
       this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
     } else {
-      if (this.prev_location == location || this.prev_height < this.height) {
-        this.$view.afterTransition().css({
-          'z-index': this.height,
-          'transform': location
-        });
-      } else {
-        // Update z-index after ply
-        this.$view.afterTransition().afterTransition(function (event) {
-          that.$view.css('z-index', that.height);
-        });
-        this.$view.css('transform', location);
-      }
+      this.$view[0].style = this.tpl.location(this);
+      this.$view[0].className = this.tpl.piece_class(this);
       this.$stone[0].className = this.tpl.stone_class(this);
       this.$stone.removeClass('F S').addClass(this.stone);
-    }
-    this.prev_height = this.height;
-    this.prev_location = location;
-
-    if (square && this.is_immovable) {
-      this.$view.addClass('immovable');
-      this.$captive.css('transform', 'translateY('+(-captive_offset*(this.height - 1)/0.07) + '%)');
-    } else {
-      this.$view.removeClass('immovable');
-      this.$captive.css('transform', '');
-    }
-
-    if (!this.$view.closest('html').length) {
-      this.board.$pieces.append(this.$view);
     }
 
     // Update road visualization
@@ -185,11 +155,8 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       });
     }
 
-    if (square) {
-      this.$view.addClass('played');
-    } else {
-      this.$view.removeClass('played');
-      this.$stone.removeClass('S');
+    if (!$.contains(app.$html[0], this.$view[0])) {
+      this.board.$pieces.append(this.$view);
     }
 
     this.needs_updated = false;
@@ -198,16 +165,26 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
   };
 
   Piece.prototype.tpl = {
-    stone_class: _.template('stone p<%=player%> <%=stone%>'),
-    piece_location: _.template(
-      'translate(<%=x%>%, <%=y%>%) scale(<%=scale%>)'
+    piece_class: _.template(
+      'piece'+
+      '<% if (square) { %>'+
+        '<% if (is_immovable) { %>'+
+          ' immovable'+
+        '<% } %>'+
+      '<% } else { %>'+
+        ' unplayed'+
+      '<% } %>'
     ),
+    location: _.template(
+      'transform: translate3d(<%=x%>%, <%=y%>%, <%=z%>px);'
+    ),
+    stone_class: _.template('stone p<%=player%> <%=stone%>'),
     piece: _.template(
-      '<div class="piece">'+
-        '<div class="wrapper">'+
-          '<div class="captive p<%=player%>"></div>'+
-          '<div class="<%=tpl.stone_class(obj)%>"></div>'+
-        '</div>'+
+      '<div class="<%=tpl.piece_class(obj)%>" '+
+        ' style="<%=tpl.location(obj)%>"'+
+      '>'+
+        '<div class="captive p<%=player%>"></div>'+
+        '<div class="<%=tpl.stone_class(obj)%>"></div>'+
       '</div>'
     )
   };

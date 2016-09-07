@@ -86,8 +86,11 @@ a {
   }
 
   .mdl-accordion__content {
-    will-change: margin-top;
     transition: margin-top $time-smooth $natural;
+
+    .mdl-navigation__link:hover + & {
+      will-change: margin-top;
+    }
   }
 
   .mdl-accordion__icon {
