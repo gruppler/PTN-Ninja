@@ -97,12 +97,11 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
       }
     } else {
       this.z += this.board.piece_counts.total;
+      this.x = 100*this.board.size;
 
       if (this.player == 2) {
         this.z += this.board.piece_counts.total;
-        this.x = 75;
-      } else {
-        this.x = 0;
+        this.x += 75;
       }
 
       this.y = (this.board.size - 1) * -100 * this.piece_index / this.board.piece_counts.total;

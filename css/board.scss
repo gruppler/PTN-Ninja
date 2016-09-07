@@ -134,16 +134,12 @@ $stone-thickness: 0.3vmin;
 
   .piece {
     position: absolute;
-    bottom: 0%;
-    left: 0%;
-    transition: transform $time-smooth $natural,
-      opacity $time-smooth $natural,
-      left $time-smooth*1.25 $natural;
-    will-change: left, transform;
+    bottom: 0;
+    left: 0;
+    transition: all $time-smooth $natural;
+    will-change: transform, opacity;
 
     &.unplayed {
-      left: 100%;
-
       html:not(.show-unplayed-pieces) & {
         opacity: 0;
       }
@@ -169,14 +165,13 @@ $stone-thickness: 0.3vmin;
       border-radius: 10%;
       position: relative;
       transition: all $time-smooth $natural;
-      will-change: transform;
+      will-change: transform, width, border-radius, margin-left;
     }
 
     &:not(.unplayed) .stone.S {
       width: 18.75%;
       border-radius: 27%/10%;
       margin-left: 40.625%;
-      will-change: transform, width, border-radius, margin-left;
 
       &.p1 {
         background-color: $primary-color-50;
