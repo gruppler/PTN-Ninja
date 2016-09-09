@@ -55,6 +55,25 @@ $stone-thickness: 0.3vmin;
     height: calc(100vmin - #{$edge});
   }
 
+  .unplayed-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    border-radius: 0 $ptn-bg-radius $ptn-bg-radius 0;
+    background-color: $primary-color-400;
+    opacity: 0;
+    will-change: opacity;
+
+    html.animate-pieces & {
+      transition: opacity $time-smooth $natural;
+    }
+
+    html.show-unplayed-pieces & {
+      opacity: 1;
+    }
+  }
+
   .squares,
   .pieces {
     position: absolute;
@@ -387,6 +406,10 @@ $stone-thickness: 0.3vmin;
   .size-#{$size} .piece {
     width: percentage(1/$size);
     height: percentage(1/$size);
+  }
+
+  .size-#{$size} .unplayed-bg {
+    width: percentage(1.75/$size);
   }
 
   @for $col from 0 through $size - 1 {

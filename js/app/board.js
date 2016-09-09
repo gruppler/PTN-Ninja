@@ -660,6 +660,7 @@ define([
         '<div class="col labels">'+
           '<%=_.map(cols, tpl.col).join("")%>'+
         '</div>'+
+        '<div class="unplayed-bg"></div>'+
         '<div class="squares"></div>'+
         '<div class="pieces"></div>'+
       '</div>'
