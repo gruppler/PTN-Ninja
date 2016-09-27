@@ -434,7 +434,8 @@ $stone-thickness: 0.3vmin;
     will-change: opacity, margin-top;
 
     html.animate-board & {
-      transition: margin-top $time-smooth $natural;
+      transition: opacity $time-smooth $natural,
+        margin-top $time-smooth $natural;
     }
 
     html.show-axis-labels & {
