@@ -30,6 +30,7 @@ define([
     this.ply_callbacks = [];
 
     _.bindAll(this, [
+      'resize',
       'play',
       'pause',
       'playpause',
@@ -224,11 +225,23 @@ define([
 
   Board.prototype.render = function () {
     this.$view = $(this.tpl.board(this));
+    this.$board = this.$view.find('.board');
+    this.$unplayed_bg = this.$view.find('.unplayed-bg').parent();
+    this.$controls = this.$view.filter('.controls');
+    this.$row_labels = this.$view.find('.row.labels');
+    this.$col_labels = this.$view.find('.col.labels');
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
     this.$ptn = this.$view.find('.ptn');
-    this.$score1 = this.$view.find('.scores .player1 .score');
-    this.$score2 = this.$view.find('.scores .player2 .score');
+    this.$scores = this.$view.find('.scores');
+    this.$score1 = this.$scores.find('.player1 .score');
+    this.$score2 = this.$scores.find('.player2 .score');
+
+    this.$controls.find('.first').on('touchstart click', this.first);
+    this.$controls.find('.prev').on('touchstart click', this.prev);
+    this.$controls.find('.play').on('touchstart click', this.playpause);
+    this.$controls.find('.next').on('touchstart click', this.next);
+    this.$controls.find('.last').on('touchstart click', this.last);
 
     this.$squares.append.apply(
       this.$squares,
@@ -247,6 +260,53 @@ define([
     );
 
     return this.$view;
+  };
+
+
+  Board.prototype.resize = function (from_config) {
+    var $parent = this.$view.parent()
+      , vw = $parent.width()
+      , vh = $parent.height()
+      , unplayed_ratio = config.show_unplayed_pieces ?
+          1 + 1.75/this.size : 1
+      , margin, width, height, size;
+
+    if (!config.board_only) {
+      vw -= 32;
+      vh -= 32;
+    }
+
+    width = vw;
+    height = vh;
+
+    if (config.show_axis_labels) {
+      width -= this.$row_labels.width();
+      height -= this.$col_labels.outerHeight();
+    }
+    if (config.show_player_scores) {
+      height -= this.$scores.outerHeight();
+    }
+    if (config.show_current_move) {
+      height -= this.$ptn.outerHeight();
+    }
+    if (config.show_play_controls) {
+      height -= this.$controls.outerHeight();
+    }
+
+    if (width < height * unplayed_ratio) {
+      size = width / unplayed_ratio;
+    } else {
+      size = height;
+    }
+
+    if (_.isBoolean(from_config)) {
+      $parent.transition();
+    }
+    this.$board.css({
+      width: size,
+      height: size
+    });
+    this.$unplayed_bg.width(size * (unplayed_ratio - 1));
   };
 
 
@@ -642,27 +702,88 @@ define([
     col: _.template('<span class="col"><%=obj%></span>'),
 
     board: _.template(
-      '<div class="board size-<%=size%>">'+
-        '<div class="scores">'+
-          '<span class="player1">'+
-            '<span class="name"><%=game.config.player1%></span>'+
-            '<span class="score"><%=flat_score[1]%></span>'+
-          '</span>'+
-          '<span class="player2">'+
-            '<span class="score"><%=flat_score[2]%></span>'+
-            '<span class="name"><%=game.config.player2%></span>'+
-          '</span>'+
+      '<div class="table-wrapper">'+
+        '<div></div>'+
+
+        '<div class="table size-<%=size%>">'+
+
+          '<div class="top">'+
+            '<div></div>'+
+
+            '<div>'+
+              '<div class="scores">'+
+                '<span class="player1">'+
+                  '<span class="name"><%=game.config.player1%></span>'+
+                  '<span class="score"><%=flat_score[1]%></span>'+
+                '</span>'+
+                '<span class="player2">'+
+                  '<span class="score"><%=flat_score[2]%></span>'+
+                  '<span class="name"><%=game.config.player2%></span>'+
+                '</span>'+
+              '</div>'+
+            '</div>'+
+
+            '<div></div>'+
+          '</div>'+
+
+          '<div class="middle">'+
+
+            '<div class="left row-label-container">'+
+              '<div class="row labels">'+
+                '<%=_.map(rows, tpl.row).join("")%>'+
+              '</div>'+
+            '</div>'+
+
+            '<div class="center">'+
+              '<div class="board">'+
+                '<div class="squares"></div>'+
+                '<div class="pieces"></div>'+
+              '</div>'+
+            '</div>'+
+
+            '<div class="right">'+
+              '<div class="unplayed-bg"></div>'+
+            '</div>'+
+
+          '</div>'+
+
+          '<div class="bottom">'+
+            '<div></div>'+
+
+            '<div>'+
+              '<div class="col labels">'+
+                '<%=_.map(cols, tpl.col).join("")%>'+
+              '</div>'+
+              '<div class="ptn"></div>'+
+            '</div>'+
+
+            '<div></div>'+
+          '</div>'+
+
         '</div>'+
-        '<div class="ptn"></div>'+
-        '<div class="row labels">'+
-          '<%=_.map(rows, tpl.row).join("")%>'+
+
+        '<div></div>'+
+      '</div>'+
+
+      '<div class="controls">'+
+        '<div class="buttons">'+
+          '<button class="first mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.First_Ply%>">'+
+            '<i class="material-icons">first_page</i>'+
+          '</button>'+
+          '<button class="prev mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Previous_Ply%>">'+
+            '<i class="material-icons">chevron_left</i>'+
+          '</button>'+
+          '<button class="play mdl-button--colored mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.PlayPause%>">'+
+            '<i class="material-icons play">play_arrow</i>'+
+            '<i class="material-icons pause">pause</i>'+
+          '</button>'+
+          '<button class="next mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Next_Ply%>">'+
+            '<i class="material-icons">chevron_right</i>'+
+          '</button>'+
+          '<button class="last mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Last_Ply%>">'+
+            '<i class="material-icons">last_page</i>'+
+          '</button>'+
         '</div>'+
-        '<div class="col labels">'+
-          '<%=_.map(cols, tpl.col).join("")%>'+
-        '</div>'+
-        '<div class="unplayed-bg"></div>'+
-        '<div class="squares"></div>'+
-        '<div class="pieces"></div>'+
       '</div>'
     )
   };

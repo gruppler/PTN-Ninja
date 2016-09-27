@@ -22,6 +22,7 @@ requirejs({locale: navigator.language}, [
   var baseurl = location.origin + location.pathname;
 
   window.app = app;
+  window.t = t;
 
 
   // Templatize i18n strings
@@ -132,7 +133,17 @@ requirejs({locale: navigator.language}, [
   // Re-render $viewer after board initialization
   app.board.on_init(function () {
     app.$viewer.empty().append(app.board.render());
+    app.board.resize();
   });
+
+  app.$window.on('resize', app.board.resize);
+  app.config.on_change([
+    'show_axis_labels',
+    'show_player_scores',
+    'show_current_move',
+    'show_unplayed_pieces',
+    'show_play_controls'
+  ], app.board.resize)
 
 
   // Update current ply display
@@ -154,24 +165,6 @@ requirejs({locale: navigator.language}, [
     app.board.update_plys(ply);
     app.board.set_active_squares(ply ? ply.squares : false);
   });
-
-
-  // Bind and label play controls
-  $('#controls button.first')
-    .on('touchstart click', app.board.first)
-    .attr('title', t.First_Ply);
-  $('#controls button.prev')
-    .on('touchstart click', app.board.prev)
-    .attr('title', t.Previous_Ply);
-  $('#controls button.play')
-    .on('touchstart click', app.board.playpause)
-    .attr('title', t.PlayPause);
-  $('#controls button.next')
-    .on('touchstart click', app.board.next)
-    .attr('title', t.Next_Ply);
-  $('#controls button.last')
-    .on('touchstart click', app.board.last)
-    .attr('title', t.Last_Ply);
 
 
   // Make playback speed respond immediately to speed changes

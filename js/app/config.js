@@ -22,7 +22,7 @@ define(['lodash'], function (_) {
       play_speed: 40, // BPM
 
       // Board
-      animate_pieces: true,
+      animate_board: true,
       show_axis_labels: true,
       show_player_scores: true,
       show_current_move: true,
@@ -64,11 +64,19 @@ define(['lodash'], function (_) {
     },
 
     on_change: function (prop, fn, initiator) {
-      if (_.isFunction(fn)) {
+      function _listen(prop) {
         if (!(prop in callbacks)) {
           callbacks[prop] = [fn];
         } else {
           callbacks[prop].push(fn);
+        }
+      }
+
+      if (_.isFunction(fn)) {
+        if (_.isArray(prop)) {
+          _.each(prop, _listen);
+        } else {
+          _listen(prop);
         }
       } else {
         _.invokeMap(callbacks[prop], 'call', config, config[prop], prop, initiator);

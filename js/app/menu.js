@@ -137,10 +137,10 @@ define([
     label: t.Board_Settings,
     icon: 'settings',
     items: [{
-      label: t.Animate_Pieces,
+      label: t.Animate_Board,
       type: 'checkbox',
-      checked: config.animate_pieces,
-      'data-id': 'animate_pieces'
+      checked: config.animate_board,
+      'data-id': 'animate_board'
     },{
       label: t.Axis_Labels,
       type: 'checkbox',

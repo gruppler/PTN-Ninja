@@ -4,7 +4,7 @@ define({
     app_title: "PTN Ninja",
     About_App: "About PTN Ninja",
 
-    Animate_Pieces: "Animate Pieces",
+    Animate_Board: "Animate Board",
     Axis_Labels: "Axis Labels",
     Board_Opacity: "Board Opacity",
     Board_Settings: "Board Settings",

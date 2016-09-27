@@ -22,7 +22,7 @@ a {
     background-color: $accent-color-500;
     color: $primary-color-text;
 
-    &:hover, &:active {
+    &:hover, &:active, &:focus:not(:active) {
       background-color: $accent-color-400;
     }
 

@@ -59,25 +59,19 @@
   }
 }
 
+#app, #editor, #viewer {
+  @include position-fill;
+}
+
 #app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background-color: $primary-color-500;
   color: $primary-color-text;
   overflow: hidden;
 }
 
 #editor {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  overflow: auto;
   color: $primary-color-200;
-  flex-grow: 1;
   z-index: 1;
   transition: opacity $time-smooth $natural;
   will-change: opacity;
@@ -90,11 +84,6 @@
 }
 
 #ptn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
   overflow: auto;
   font-weight: 300;
   font-size: 1.3em;
@@ -175,64 +164,6 @@
     }
     i.error {
       opacity: 1 !important;
-    }
-  }
-}
-
-#controls {
-  background-color: $primary-color-800;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  flex-shrink: 0;
-  z-index: 1;
-  height: $toolbar-height;
-  transform: translateY(100%);
-  transition: transform $time-smooth $natural;
-  will-change: transform;
-
-  html.playmode.show-play-controls & {
-    transform: none;
-  }
-
-  > div {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: $edge/2 $edge;
-  }
-
-  button {
-    color: $whitish;
-    width: 40px;
-    height: 40px;
-
-    + button {
-      margin-left: $edge/2;
-    }
-  }
-
-  button.play {
-
-    i {
-      transition: opacity $time-smooth $natural;
-      will-change: opacity;
-
-      &.pause {
-        position: absolute;
-        opacity: 0;
-      }
-    }
-
-    html.playing & {
-      i.play {
-        opacity: 0;
-      }
-      i.pause {
-        opacity: 1;
-      }
     }
   }
 }

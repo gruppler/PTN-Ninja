@@ -96,6 +96,7 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
         }
       }
     } else {
+      // Unplayed pieces
       this.z += this.board.piece_counts.total;
       this.x = 100*this.board.size;
 
@@ -106,6 +107,9 @@ define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (conf
 
       this.y = (this.board.size - 1) * -100 * this.piece_index / this.board.piece_counts.total;
     }
+
+    this.x = Math.round(1000*this.x)/1000;
+    this.y = Math.round(1000*this.y)/1000;
 
     // Render or update the view
     if (!this.$view) {
