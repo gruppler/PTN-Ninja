@@ -47,7 +47,7 @@ define([
     },{
       label: t.Permalink,
       icon: 'link',
-      class: 'permalink',
+      id: 'permalink',
       href: '#'+app.ptn_compressed,
       target: '_blank',
       rel: 'noopener'
@@ -293,9 +293,6 @@ define([
     $menu.on('click', '.mdl-accordion__button', function () {
       $(this).parent('.mdl-accordion').toggleClass('mdl-accordion--opened');
     });
-
-    // Hang on to the permalink
-    app.$permalink = $('.permalink');
 
     // Close menu after selecting an anchor item
     $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);

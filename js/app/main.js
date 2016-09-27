@@ -56,7 +56,6 @@ requirejs({locale: navigator.language}, [
   app.$ptn = $('#ptn');
   app.$viewer = $('#viewer');
   app.$fab = $('#fab');
-  app.$permalink = $('.permalink');
   app.$download = $('#download');
   app.$open = $('#open');
   app.$menu_edit = $('#menu-edit');
@@ -104,7 +103,8 @@ requirejs({locale: navigator.language}, [
 
   // Re-render $ptn
   // Initialize board
-  // Update Permalinks
+  // Update Permalink
+  app.$permalink = $('#permalink');
   app.game.on_parse_end(function (is_original) {
     var href, length;
 
