@@ -497,10 +497,6 @@ define([
       this.m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
     }
 
-    if (ply.evaluation && /[!?]/.test(ply.evaluation)) {
-      this.comment(ply.evaluation.replace(/[^!?]/g, ''));
-    }
-
     if (ply.comments) {
       _.map(ply.comments, this.comment);
     }
