@@ -71,7 +71,7 @@ $stone-thickness: 0.3vmin;
       position: relative;
       vertical-align: middle;
 
-      html.animate-board #viewer.animated & {
+      html.animate-board & {
         transition: width $time-smooth $natural;
       }
 

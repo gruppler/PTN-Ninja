@@ -11,6 +11,8 @@ html, body, .mdl-layout {
   line-height: 20px;
   font-family: $sans;
   background-color: $bg-color;
+  min-width: 350px;
+  min-height: 350px;
 }
 
 ::-webkit-scrollbar-track {
