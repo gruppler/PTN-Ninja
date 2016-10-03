@@ -462,6 +462,10 @@ $stone-thickness: 0.3vmin;
   background-color: $primary-color-400;
 }
 
+html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
+  transition: none;
+}
+
 
 @for $size from 3 through 9 {
   .size-#{$size} {

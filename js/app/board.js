@@ -729,7 +729,7 @@ define([
               '</div>'+
             '</div>'+
 
-            '<div class="right">'+
+            '<div class="right unplayed-bg-cell">'+
               '<div class="unplayed-bg"></div>'+
             '</div>'+
 
