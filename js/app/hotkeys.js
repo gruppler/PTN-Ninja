@@ -137,19 +137,19 @@ define([], function () {
       },
 
       'ArrowLeft': function (event, $focus, $parent) {
-        app.board.prev(event);
-      },
-
-      'ArrowRight': function (event, $focus, $parent) {
-        app.board.next(event);
-      },
-
-      '+ArrowLeft': function (event, $focus, $parent) {
         app.board.prev_ply(event);
       },
 
-      '+ArrowRight': function (event, $focus, $parent) {
+      'ArrowRight': function (event, $focus, $parent) {
         app.board.next_ply(event);
+      },
+
+      '+ArrowLeft': function (event, $focus, $parent) {
+        app.board.prev(event);
+      },
+
+      '+ArrowRight': function (event, $focus, $parent) {
+        app.board.next(event);
       },
 
       '^ArrowLeft': function (event, $focus, $parent) {

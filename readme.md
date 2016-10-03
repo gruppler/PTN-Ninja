@@ -25,16 +25,16 @@ Key|Action
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn file
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn file
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load default PTN
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>&#x21E7;Shift</kbd> + <kbd>/</kbd>|Load sample PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Load sample PTN
 
 ### Play Mode
 Key|Action
 :--|:--
 <kbd>Space</kbd>|Play/Pause
-<kbd>&larr;</kbd>|Backward
-<kbd>&rarr;</kbd>|Forward
-<kbd>&#x21E7;Shift</kbd> + <kbd>&larr;</kbd>|Previous Ply
-<kbd>&#x21E7;Shift</kbd> + <kbd>&rarr;</kbd>|Next Ply
+<kbd>&larr;</kbd>|Previous Ply
+<kbd>&rarr;</kbd>|Next Ply
+<kbd>Shift</kbd> + <kbd>&larr;</kbd>|Backward
+<kbd>Shift</kbd> + <kbd>&rarr;</kbd>|Forward
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&darr;</kbd>|Next Move
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
@@ -46,7 +46,7 @@ Key|Action
 Key|Action
 :--|:--
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>&#x21E7;Shift</kbd> + <kbd>z</kbd>|Redo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Backspace/Delete</kbd>|Trim to current ply*
 
 *This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
