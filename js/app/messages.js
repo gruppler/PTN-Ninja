@@ -47,10 +47,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       group: group || this.group,
       message: message || '&nbsp;'
     }));
-    $message.addClass('animating');
     this.$messages.append($message);
-    $message.height();
-    $message.removeClass('animating');
 
     app.$window.trigger(type+':'+(group || this.group));
     app.$window.trigger(type);
@@ -62,25 +59,17 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return $message;
   };
 
-  Messages.prototype.clear = function (type, animate, callback) {
+  Messages.prototype.clear = function (type) {
     var $messages = this.$messages.children(type ? '.'+type : '');
 
     if ($messages.length) {
-      if (animate) {
-        $messages.map(remove_message);
-        if (callback) {
-          $messages.last().afterTransition(callback);
-        }
-      } else{
-        $messages.remove();
-      }
+      $messages.remove();
       app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
 
       return true;
-    } else {
-      return false;
     }
 
+    return false;
   };
 
   Messages.prototype.clear_all = function (type) {
@@ -120,7 +109,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return this.add(message, seconds, group, 'player2', 'person');
   };
 
-  function remove_message(immediately) {
+  function remove_message() {
     var $message = $(this);
     if (!$message.hasClass('message')) {
       $message = $message.closest('.message');

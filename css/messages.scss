@@ -33,12 +33,6 @@
     margin-top: 0.5em;
     max-width: 100%;
     box-shadow: $shadow1;
-    transition: opacity $time-smooth $natural;
-    will-change: opacity;
-
-    &.animating {
-      opacity: 0;
-    }
 
     .content {
       margin: 0.8rem calc(#{$edge*2} + 1.5rem);

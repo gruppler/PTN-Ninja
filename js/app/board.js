@@ -104,7 +104,7 @@ define([
       , a = 'a'.charCodeAt(0);
 
     if (silent !== true) {
-      this.m.clear(false, true);
+      this.m.clear();
       this.pause();
     }
 
@@ -462,45 +462,37 @@ define([
   Board.prototype.show_comments = function (ply) {
     var that = this
       , result = this.game.config.result
-      , clear_required;
+      , comments_ply_id = (!ply || ply.is_first && !this.ply_is_done) ? -1 : ply.id;
 
-    if (this.defer_render) {
+    if (this.defer_render || this.comments_ply_id == comments_ply_id) {
       return;
     }
 
-    if (
-      this.game.comments && this.comments_ply_id != -1 &&
-      (!ply || ply.is_first && !this.ply_is_done)
-    ) {
-      this.m.clear(false, true, function () {
-        _.map(that.game.comments, that.comment);
-      });
-      this.comments_ply_id = -1;
+    this.comments_ply_id = comments_ply_id;
+
+    this.m.clear();
+
+    // Show comments before first move
+    if (comments_ply_id == -1) {
+      if (this.game.comments) {
+        _.map(this.game.comments, this.comment);
+      }
       return;
     }
 
-    if (ply && this.comments_ply_id == ply.id) {
-      return;
-    }
-
-    this.m.clear(false, true, function () {
-      that.show_comments(ply);
-    });
-
-    if (!ply) {
-      return;
-    }
-
-    this.comments_ply_id = ply.id;
-
+    // Show Tak and Tinue
     if (ply.evaluation && /['"]/.test(ply.evaluation)) {
-      this.m['player'+ply.player](/"|''/.test(ply.evaluation) ? t.Tinue : t.Tak);
+      this.m['player'+ply.player](
+        /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
+      );
     }
 
+    // Show ply comments
     if (ply.comments) {
       _.map(ply.comments, this.comment);
     }
 
+    // Show result
     if (ply.is_last && result && result.message) {
       this.m['player'+result.victor](result.message);
       if (result.comments) {
