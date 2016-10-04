@@ -480,11 +480,12 @@ define([
       return;
     }
 
-    // Show Tak and Tinue
-    if (ply.evaluation && /['"]/.test(ply.evaluation)) {
-      this.m['player'+ply.player](
-        /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
-      );
+    // Show result
+    if (ply.is_last && result && result.message) {
+      this.m['player'+result.victor](result.message);
+      if (result.comments) {
+        _.map(result.comments.concat().reverse(), this.comment);
+      }
     }
 
     // Show ply comments
@@ -492,12 +493,11 @@ define([
       _.map(ply.comments.concat().reverse(), this.comment);
     }
 
-    // Show result
-    if (ply.is_last && result && result.message) {
-      this.m['player'+result.victor](result.message);
-      if (result.comments) {
-        _.map(result.comments.concat().reverse(), this.comment);
-      }
+    // Show Tak and Tinue
+    if (ply.evaluation && /['"]/.test(ply.evaluation)) {
+      this.m['player'+ply.player](
+        /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
+      );
     }
   };
 
