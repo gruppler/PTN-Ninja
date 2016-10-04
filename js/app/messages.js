@@ -25,16 +25,12 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     .on('click', 'i.close', remove_message)
     .on('remove', remove_message);
 
-  Messages = function(group, is_visible) {
+  Messages = function(group) {
     this.enabled = true;
     this.group = group || 'general';
     this.$messages = $messages.children('.messages-'+group);
     if (!this.$messages.length) {
       this.$messages = $(tpl.group({group: group})).appendTo($messages);
-    }
-
-    if (is_visible) {
-      this.$messages.addClass('visible');
     }
 
     return this;
@@ -47,7 +43,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
       group: group || this.group,
       message: message || '&nbsp;'
     }));
-    this.$messages.append($message);
+    this.$messages.prepend($message);
 
     app.$window.trigger(type+':'+(group || this.group));
     app.$window.trigger(type);

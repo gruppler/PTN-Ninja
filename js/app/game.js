@@ -222,7 +222,7 @@ define([
     return output;
   };
 
-  Game.prototype.m = new Messages('parse', config.show_parse_errors);
+  Game.prototype.m = new Messages('parse');
 
   Game.prototype.print_invalid = _.template(
     '<span class="invalid">'+

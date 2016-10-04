@@ -475,7 +475,7 @@ define([
     // Show comments before first move
     if (comments_ply_id == -1) {
       if (this.game.comments) {
-        _.map(this.game.comments, this.comment);
+        _.map(this.game.comments.concat().reverse(), this.comment);
       }
       return;
     }
@@ -489,14 +489,14 @@ define([
 
     // Show ply comments
     if (ply.comments) {
-      _.map(ply.comments, this.comment);
+      _.map(ply.comments.concat().reverse(), this.comment);
     }
 
     // Show result
     if (ply.is_last && result && result.message) {
       this.m['player'+result.victor](result.message);
       if (result.comments) {
-        _.map(result.comments, this.comment);
+        _.map(result.comments.concat().reverse(), this.comment);
       }
     }
   };
@@ -777,7 +777,7 @@ define([
   };
 
 
-  Board.prototype.m = new Messages('board', config.show_annotations);
+  Board.prototype.m = new Messages('board');
 
   Board.prototype.m_parse = new Messages('parse');
 

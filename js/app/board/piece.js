@@ -4,7 +4,7 @@
 
 'use strict';
 
-define(['app/config', 'app/messages', 'i18n!nls/main', 'lodash'], function (config, Messages, t, _) {
+define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
   var Piece = function (board, player, stone) {
     this.needs_updated = true;

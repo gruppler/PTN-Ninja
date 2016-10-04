@@ -39,8 +39,15 @@ Key|Action
 <kbd>&darr;</kbd>|Next Move
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
+<kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>a</kbd>|Toggle Annotations
+<kbd>c</kbd>|Toggle Play Controls
 <kbd>h</kbd>|Toggle Square Highlight
+<kbd>r</kbd>|Toggle Road Connections
+<kbd>s</kbd>|Toggle Player Scores
+<kbd>m</kbd>|Toggle Current Move
+<kbd>u</kbd>|Toggle Unplayed Pieces
+<kbd>x</kbd>|Toggle Axis Labels
 
 ### Edit Mode
 Key|Action

@@ -4,24 +4,29 @@
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
 #messages {
+  z-index: 2;
+  position: absolute;
+  top: $edge;
+  bottom: 0;
+  left: $edge;
+  right: $toolbar-height - $fab-height/2;
+  pointer-events: none;
+  overflow: hidden;
+
   > div {
-    position: absolute;
-    right: $edge;
-    padding: $edge;
-    overflow: hidden;;
+    padding-bottom: $edge;
     max-height: 100%;
-    max-width: calc(100% - #{$edge + $button-height});
+    max-width: 100%;
     box-sizing: border-box;
-    transition: opacity $time-smooth $natural;
-    will-change: opacity;
+    pointer-events: all;
     z-index: 1;
 
+    &:empty,
     html.playmode &.messages-parse,
     html.editmode &.messages-board,
     html.playmode:not(.show-annotations) &.messages-board,
     html.editmode:not(.show-parse-errors) &.messages-parse {
-      opacity: 0;
-      pointer-events: none;
+      display: none;
     }
   }
 
