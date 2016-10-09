@@ -320,6 +320,11 @@ $stone-thickness: 0.3vmin;
       display: flex;
       box-sizing: border-box;
       border-radius: $stone-thickness;
+      will-change: width;
+
+      html.animate-board & {
+        transition: width $time-smooth $natural;
+      }
     }
 
     .name, .score {
@@ -327,16 +332,12 @@ $stone-thickness: 0.3vmin;
     }
 
     .name {
-      flex-grow: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .score {
-      width: 1.25em;
-      flex-grow: 0;
-      flex-shrink: 0;
       will-change: content;
     }
 
@@ -345,8 +346,9 @@ $stone-thickness: 0.3vmin;
       background-color: $primary-color-100;
       color: $primary-color-700;
 
-      .score {
-        text-align: right;
+      .name {
+        padding-right: 0;
+        flex-grow: 1;
       }
     }
 
@@ -356,7 +358,11 @@ $stone-thickness: 0.3vmin;
       color: $primary-color-100;
 
       .name {
-        text-align: right;
+        padding-left: 0;
+      }
+
+      .score {
+        flex-grow: 1;
       }
     }
   }

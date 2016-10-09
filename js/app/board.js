@@ -234,8 +234,10 @@ define([
     this.$pieces = this.$view.find('.pieces');
     this.$ptn = this.$view.find('.ptn');
     this.$scores = this.$view.find('.scores');
-    this.$score1 = this.$scores.find('.player1 .score');
-    this.$score2 = this.$scores.find('.player2 .score');
+    this.$bar1 = this.$scores.find('.player1');
+    this.$bar2 = this.$scores.find('.player2');
+    this.$score1 = this.$bar1.find('.score');
+    this.$score2 = this.$bar2.find('.score');
 
     this.$controls.find('.first').on('touchstart click', this.first);
     this.$controls.find('.prev').on('touchstart click', this.prev);
@@ -349,8 +351,11 @@ define([
 
 
   Board.prototype.update_scores = function() {
+    var total = (this.flat_score[1] + this.flat_score[2])/100;
     this.$score1.text(this.flat_score[1]);
     this.$score2.text(this.flat_score[2]);
+    this.$bar1.width(total ? this.flat_score[1]/total+'%' : '');
+    this.$bar2.width(total ? this.flat_score[2]/total+'%' : '');
   };
 
 
