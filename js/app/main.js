@@ -183,7 +183,7 @@ requirejs({locale: navigator.language}, [
   });
 
 
-  // Make board opacity controls work
+  // Update opacity controls when value changes
   config.on_change('board_opacity', function (opacity) {
     app.$viewer.css('opacity', opacity/100);
   });
