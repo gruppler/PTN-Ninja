@@ -190,8 +190,8 @@ define([
 
     scroll_to_ply: function () {
       if (this.$ptn.$ply) {
-        this.$ptn.scrollTop(
-          this.$ptn.scrollTop() + this.$ptn.$ply.offset().top
+        this.$editor.scrollTop(
+          this.$editor.scrollTop() + this.$ptn.$ply.offset().top
           - (window.innerHeight - this.$ptn.$ply.height())/2
         );
       }

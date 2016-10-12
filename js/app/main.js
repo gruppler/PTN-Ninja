@@ -55,6 +55,7 @@ requirejs({locale: navigator.language}, [
   app.$body = $('body');
   app.$ptn = $('#ptn');
   app.$viewer = $('#viewer');
+  app.$editor = $('#editor');
   app.$fab = $('#fab');
   app.$download = $('#download');
   app.$open = $('#open');
