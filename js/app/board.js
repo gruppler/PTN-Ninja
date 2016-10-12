@@ -240,9 +240,9 @@ define([
     this.$score2 = this.$bar2.find('.score');
 
     this.$controls.find('.first').on('touchstart click', this.first);
-    this.$controls.find('.prev').on('touchstart click', this.prev);
+    this.$controls.find('.prev').on('touchstart click', this.prev_ply);
     this.$controls.find('.play').on('touchstart click', this.playpause);
-    this.$controls.find('.next').on('touchstart click', this.next);
+    this.$controls.find('.next').on('touchstart click', this.next_ply);
     this.$controls.find('.last').on('touchstart click', this.last);
 
     this.$squares.append.apply(
