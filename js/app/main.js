@@ -267,6 +267,7 @@ requirejs({locale: navigator.language}, [
   if (config.animate_board) {
     app.$html.removeClass('animate-board');
     app.toggle_edit_mode(app.$html.hasClass('error') || !location.hash);
+    app.$html.height(); // Update DOM before re-enabling animations
     app.$html.addClass('animate-board');
   } else {
     app.toggle_edit_mode(app.$html.hasClass('error') || !location.hash);
