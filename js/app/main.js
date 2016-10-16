@@ -269,6 +269,7 @@ requirejs({locale: navigator.language}, [
   }
   app.$viewer.afterTransition();
 
+
   // Open the relevant menu accordion
   if (app.mode == 'edit') {
     app.$menu_edit.addClass('mdl-accordion--opened');

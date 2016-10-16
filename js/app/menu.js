@@ -101,6 +101,7 @@ define([
       max: 100,
       step: 5,
       value: config.board_opacity,
+      title: config.board_opacity,
       'data-realtime': true,
       'data-id': 'board_opacity'
     },{
@@ -163,6 +164,7 @@ define([
       max: 200,
       step: 10,
       value: config.play.speed,
+      title: config.play.speed,
       'data-id': 'speed',
       'data-mode': 'play'
     },{
@@ -337,7 +339,7 @@ define([
     });
 
     // Switch mode when expanding/collapsing either accordion
-    $menu.on('click', '#menu-edit, #menu-play', app.toggle_edit_mode);
+    $menu.on('click', '#menu-edit .mdl-accordion__button, > #menu-play > .mdl-accordion__button', app.toggle_edit_mode);
 
     // Close menu after selecting an anchor item
     $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);
