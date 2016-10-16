@@ -121,7 +121,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       this.$view[0].style = this.tpl.location(this);
       this.$view[0].className = this.tpl.piece_class(this);
       this.$stone[0].className = this.tpl.stone_class(this);
-      this.$stone.removeClass('F S').addClass(this.stone);
     }
 
     // Update road visualization

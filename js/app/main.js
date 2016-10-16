@@ -263,11 +263,14 @@ requirejs({locale: navigator.language}, [
   app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash, !sessionStorage.ptn);
 
 
-  // Start in Play Mode if loading from valid hash
-  if (location.hash && !app.$html.hasClass('error')) {
-    app.toggle_edit_mode(false);
+  // Set initial mode
+  if (config.animate_board) {
+    app.$html.removeClass('animate-board');
   }
-  app.$viewer.afterTransition();
+  app.toggle_edit_mode(app.$html.hasClass('error') || !location.hash);
+  if (config.animate_board) {
+    app.$html.addClass('animate-board');
+  }
 
 
   // Open the relevant menu accordion
