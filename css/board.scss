@@ -366,8 +366,8 @@ $stone-thickness: 0.3vmin;
 
   .ptn {
     opacity: 0;
-    margin-top: calc(-2em - #{$edge});
     padding-top: 0.5em;
+    margin-top: -2.5em;
     will-change: margin-top;
     will-change: content, opacity, margin-top;
 
@@ -391,10 +391,6 @@ $stone-thickness: 0.3vmin;
   }
 }
 
-
-.row-label-container {
-  width: 2em;
-}
 
 .labels {
   @include unselectable;
@@ -443,8 +439,8 @@ $stone-thickness: 0.3vmin;
     flex-direction: row;
     width: 100%;
     line-height: 2em;
-    height: 2em;
-    margin-top: -2em;
+    height: 1.5em;
+    margin-top: -1.5em;
 
     html.board-only & {
       height: 2em;
