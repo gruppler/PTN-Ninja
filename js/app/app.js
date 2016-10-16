@@ -44,6 +44,7 @@ define([
     hotkeys: hotkeys,
     menu: menu,
 
+    mode: 'play',
     board: new Board(),
     game: new Game(new Board()),
 
@@ -224,6 +225,9 @@ define([
       }
 
       this.$ptn.attr('contenteditable', this.game.is_editing);
+      this.mode = this.game.is_editing ? 'edit' : 'play';
+      this.config.update_flags();
+      this.board.resize();
     },
 
     // Read and parse the file

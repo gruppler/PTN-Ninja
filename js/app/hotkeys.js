@@ -180,43 +180,43 @@ define(['app/messages'], function (Messages) {
       },
 
       'a': function (event, $focus, $parent) {
-        app.config.toggle('show_annotations');
-        notify_toggle(t.Show_Annotations, app.config.show_annotations);
+        app.config.toggle('show_annotations', 'play');
+        notify_toggle(t.Show_Annotations, app.config.play.show_annotations);
       },
 
       'c': function (event, $focus, $parent) {
-        app.config.toggle('show_play_controls');
-        notify_toggle(t.Play_Controls, app.config.show_play_controls);
+        app.config.toggle('show_play_controls', 'play');
+        notify_toggle(t.Play_Controls, app.config.play.show_play_controls);
       },
 
       'h': function (event, $focus, $parent) {
-        app.config.toggle('playmode_square_hl');
-        notify_toggle(t.Highlight_Squares, app.config.playmode_square_hl);
+        app.config.toggle('square_hl', 'play');
+        notify_toggle(t.Square_Highlights, app.config.play.square_hl);
       },
 
       'r': function (event, $focus, $parent) {
-        app.config.toggle('show_roads');
-        notify_toggle(t.Road_Connections, app.config.show_roads);
+        app.config.toggle('show_roads', 'play');
+        notify_toggle(t.Road_Connections, app.config.play.show_roads);
       },
 
       's': function (event, $focus, $parent) {
-        app.config.toggle('show_player_scores');
-        notify_toggle(t.Player_Scores, app.config.show_player_scores);
+        app.config.toggle('show_player_scores', 'play');
+        notify_toggle(t.Player_Scores, app.config.play.show_player_scores);
       },
 
       'm': function (event, $focus, $parent) {
-        app.config.toggle('show_current_move');
-        notify_toggle(t.Current_Move, app.config.show_current_move);
+        app.config.toggle('show_current_move', 'play');
+        notify_toggle(t.Current_Move, app.config.play.show_current_move);
       },
 
       'u': function (event, $focus, $parent) {
-        app.config.toggle('show_unplayed_pieces');
-        notify_toggle(t.Unplayed_Pieces, app.config.show_unplayed_pieces);
+        app.config.toggle('show_unplayed_pieces', 'play');
+        notify_toggle(t.Unplayed_Pieces, app.config.play.show_unplayed_pieces);
       },
 
       'x': function (event, $focus, $parent) {
-        app.config.toggle('show_axis_labels');
-        notify_toggle(t.Axis_Labels, app.config.show_axis_labels);
+        app.config.toggle('show_axis_labels', 'play');
+        notify_toggle(t.Axis_Labels, app.config.play.show_axis_labels);
       }
 
     }

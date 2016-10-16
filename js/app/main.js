@@ -144,7 +144,7 @@ requirejs({locale: navigator.language}, [
     'show_current_move',
     'show_unplayed_pieces',
     'show_play_controls'
-  ], app.board.resize)
+  ], app.board.resize);
 
 
   // Update current ply display
@@ -169,7 +169,7 @@ requirejs({locale: navigator.language}, [
 
 
   // Make playback speed respond immediately to speed changes
-  config.on_change('play_speed', function (speed) {
+  config.on_change('speed', function (speed) {
     var now = new Date().getTime()
       , next_frame = app.board.play_timestamp + 6e4/speed;
 
@@ -181,7 +181,7 @@ requirejs({locale: navigator.language}, [
         setTimeout(app.board.next, next_frame - now);
       }
     }
-  });
+  }, 'play');
 
 
   // Update opacity controls when value changes
@@ -251,7 +251,11 @@ requirejs({locale: navigator.language}, [
 
   // Bind update events to game parsing
   bililiteRange.fancyText(app.$ptn[0], function () {
-    return app.game.parse(app.$ptn.text());
+    var text = app.$ptn.text().trim();
+
+    if (text) {
+      return app.game.parse(text);
+    }
   }, 100);
 
 
@@ -264,6 +268,13 @@ requirejs({locale: navigator.language}, [
     app.toggle_edit_mode(false);
   }
   app.$viewer.afterTransition();
+
+  // Open the relevant menu accordion
+  if (app.mode == 'edit') {
+    app.$menu_edit.addClass('mdl-accordion--opened');
+  } else {
+    app.$menu_play.addClass('mdl-accordion--opened');
+  }
 
 
   // Bind hotkeys

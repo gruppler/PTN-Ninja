@@ -269,7 +269,8 @@ define([
     var $parent = this.$view.parent()
       , vw = $parent.width()
       , vh = $parent.height()
-      , unplayed_ratio = config.show_unplayed_pieces ?
+      , board_config = config[app.mode]
+      , unplayed_ratio = board_config.show_unplayed_pieces ?
           1 + 1.75/this.size : 1
       , margin, width, height, size;
 
@@ -281,17 +282,17 @@ define([
     width = vw;
     height = vh;
 
-    if (config.show_axis_labels) {
+    if (board_config.show_axis_labels) {
       width -= this.$row_labels.width();
       height -= this.$col_labels.outerHeight();
     }
-    if (config.show_player_scores) {
+    if (board_config.show_player_scores) {
       height -= this.$scores.outerHeight();
     }
-    if (config.show_current_move) {
+    if (board_config.show_current_move) {
       height -= this.$ptn.outerHeight();
     }
-    if (config.show_play_controls) {
+    if (board_config.show_play_controls) {
       height -= this.$controls.outerHeight();
     }
 
@@ -560,7 +561,7 @@ define([
   Board.prototype.next = function (event) {
     if (this.is_playing) {
       clearTimeout(this.play_timer);
-      this.play_timer = setTimeout(this.next, 6e4/config.play_speed);
+      this.play_timer = setTimeout(this.next, 6e4/config.play.speed);
       this.play_timestamp = new Date().getTime();
     }
 

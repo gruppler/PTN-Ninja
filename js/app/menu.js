@@ -66,31 +66,17 @@ define([
       label: t.Load_Sample_Game,
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
+    },{
+      label: t.Animate_Board,
+      type: 'checkbox',
+      checked: config.animate_board,
+      'data-id': 'animate_board'
     }]
   },{
     id: 'edit',
     label: t.Edit_Mode,
     icon: 'mode_edit',
     items: [{
-      label: t.Highlight_Squares,
-      type: 'checkbox',
-      checked: config.editmode_square_hl,
-      'data-id': 'editmode_square_hl'
-    },{
-      label: t.Show_Parse_Errors,
-      type: 'checkbox',
-      checked: config.show_parse_errors,
-      'data-id': 'show_parse_errors'
-    },{
-      label: t.Board_Opacity,
-      type: 'slider',
-      min: 0,
-      max: 100,
-      step: 5,
-      value: config.board_opacity,
-      'data-realtime': true,
-      'data-id': 'board_opacity'
-    },{
       label: t.Undo,
       icon: 'undo',
       onclick: 'app.undo()',
@@ -108,69 +94,125 @@ define([
       label: t.Revert_Game,
       icon: 'restore',
       onclick: 'app.revert_game()'
+    },{
+      label: t.Board_Opacity,
+      type: 'slider',
+      min: 0,
+      max: 100,
+      step: 5,
+      value: config.board_opacity,
+      'data-realtime': true,
+      'data-id': 'board_opacity'
+    },{
+      label: t.Show_Parse_Errors,
+      type: 'checkbox',
+      checked: config.edit.show_parse_errors,
+      'data-id': 'show_parse_errors',
+      'data-mode': 'edit'
+    },{
+      label: t.Square_Highlights,
+      type: 'checkbox',
+      checked: config.edit.square_hl,
+      'data-id': 'square_hl',
+      'data-mode': 'edit'
+    },{
+      label: t.Road_Connections,
+      type: 'checkbox',
+      checked: config.edit.show_roads,
+      'data-id': 'show_roads',
+      'data-mode': 'edit'
+    },{
+      label: t.Axis_Labels,
+      type: 'checkbox',
+      checked: config.edit.show_axis_labels,
+      'data-id': 'show_axis_labels',
+      'data-mode': 'edit'
+    },{
+      label: t.Player_Scores,
+      type: 'checkbox',
+      checked: config.edit.show_player_scores,
+      'data-id': 'show_player_scores',
+      'data-mode': 'edit'
+    },{
+      label: t.Current_Move,
+      type: 'checkbox',
+      checked: config.edit.show_current_move,
+      'data-id': 'show_current_move',
+      'data-mode': 'edit'
+    },{
+      label: t.Unplayed_Pieces,
+      type: 'checkbox',
+      checked: config.edit.show_unplayed_pieces,
+      'data-id': 'show_unplayed_pieces',
+      'data-mode': 'edit'
+    },{
+      label: t.Play_Controls,
+      type: 'checkbox',
+      checked: config.edit.show_play_controls,
+      'data-id': 'show_play_controls',
+      'data-mode': 'edit'
     }]
   },{
     id: 'play',
     label: t.Play_Mode,
     icon: 'play_arrow',
     items: [{
-      label: t.Highlight_Squares,
-      type: 'checkbox',
-      checked: config.playmode_square_hl,
-      'data-id': 'playmode_square_hl'
-    },{
-      label: t.Show_Annotations,
-      type: 'checkbox',
-      checked: config.show_annotations,
-      'data-id': 'show_annotations'
-    },{
       label: t.Play_Speed,
       type: 'slider',
       min: 20,
       max: 200,
       step: 10,
-      value: config.play_speed,
-      'data-id': 'play_speed'
-    }]
-  },{
-    id: 'board',
-    label: t.Board_Settings,
-    icon: 'settings',
-    items: [{
-      label: t.Animate_Board,
-      type: 'checkbox',
-      checked: config.animate_board,
-      'data-id': 'animate_board'
+      value: config.play.speed,
+      'data-id': 'speed',
+      'data-mode': 'play'
     },{
-      label: t.Axis_Labels,
+      label: t.Show_Annotations,
       type: 'checkbox',
-      checked: config.show_axis_labels,
-      'data-id': 'show_axis_labels'
+      checked: config.play.show_annotations,
+      'data-id': 'show_annotations',
+      'data-mode': 'play'
     },{
-      label: t.Player_Scores,
+      label: t.Square_Highlights,
       type: 'checkbox',
-      checked: config.show_player_scores,
-      'data-id': 'show_player_scores'
-    },{
-      label: t.Current_Move,
-      type: 'checkbox',
-      checked: config.show_current_move,
-      'data-id': 'show_current_move'
-    },{
-      label: t.Unplayed_Pieces,
-      type: 'checkbox',
-      checked: config.show_unplayed_pieces,
-      'data-id': 'show_unplayed_pieces'
-    },{
-      label: t.Play_Controls,
-      type: 'checkbox',
-      checked: config.show_play_controls,
-      'data-id': 'show_play_controls'
+      checked: config.play.square_hl,
+      'data-id': 'square_hl',
+      'data-mode': 'play'
     },{
       label: t.Road_Connections,
       type: 'checkbox',
-      checked: config.show_roads,
-      'data-id': 'show_roads'
+      checked: config.play.show_roads,
+      'data-id': 'show_roads',
+      'data-mode': 'play'
+    },{
+      label: t.Axis_Labels,
+      type: 'checkbox',
+      checked: config.play.show_axis_labels,
+      'data-id': 'show_axis_labels',
+      'data-mode': 'play'
+    },{
+      label: t.Player_Scores,
+      type: 'checkbox',
+      checked: config.play.show_player_scores,
+      'data-id': 'show_player_scores',
+      'data-mode': 'play'
+    },{
+      label: t.Current_Move,
+      type: 'checkbox',
+      checked: config.play.show_current_move,
+      'data-id': 'show_current_move',
+      'data-mode': 'play'
+    },{
+      label: t.Unplayed_Pieces,
+      type: 'checkbox',
+      checked: config.play.show_unplayed_pieces,
+      'data-id': 'show_unplayed_pieces',
+      'data-mode': 'play'
+    },{
+      label: t.Play_Controls,
+      type: 'checkbox',
+      checked: config.play.show_play_controls,
+      'data-id': 'show_play_controls',
+      'data-mode': 'play'
     }]
   }];
 
@@ -294,6 +336,9 @@ define([
       $(this).parent('.mdl-accordion').toggleClass('mdl-accordion--opened');
     });
 
+    // Switch mode when expanding/collapsing either accordion
+    $menu.on('click', '#menu-edit, #menu-play', app.toggle_edit_mode);
+
     // Close menu after selecting an anchor item
     $menu.on('click', 'a:not(.keep-open)', app.menu.toggle);
 
@@ -307,39 +352,58 @@ define([
     // Update config when inputs change
     $menu.on('change', 'input[type=checkbox][data-id]', function () {
       var $this = $(this)
-        , prop = $this.data('id');
+        , prop = $this.data('id')
+        , mode = $this.data('mode');
 
-      config.toggle(prop, $this.checked, 'menu');
+      config.toggle(prop, mode, 'menu');
     }).on('change input', 'input[type=range][data-id]', function (event) {
       var $this = $(this)
-        , prop = $this.data('id');
+        , prop = $this.data('id')
+        , mode = $this.data('mode');
 
       if (event.type == 'change' || $this.data('realtime')) {
-        config.set(prop, 1*this.value, 'menu');
+        config.set(prop, 1*this.value, mode, 'menu');
       }
     });
 
     // Update checkboxes when config changes
     $menu.find('.mdl-checkbox').each(function () {
       var that = this
-        , prop = $(this).find('input').data('id');
+        , $input = $(this).find('input')
+        , input_prop = $input.data('id')
+        , input_mode = $input.data('mode');
 
-      config.on_change(prop, function (value, prop, initiator) {
-        if (initiator != 'menu') {
-          if (value) {
-            that.MaterialCheckbox.check();
-          } else {
-            that.MaterialCheckbox.uncheck();
+      config.on_change(
+        input_prop,
+        function (value, prop, mode, initiator) {
+          if (initiator != 'menu' && mode == input_mode) {
+            if (value) {
+              that.MaterialCheckbox.check();
+            } else {
+              that.MaterialCheckbox.uncheck();
+            }
           }
-        }
-      });
+        },
+        input_mode
+      );
     });
 
     // Update sliders when config changes
     $menu.find('.mdl-slider').each(function () {
+      var that = this
+        , $input = $(this)
+        , input_prop = $input.data('id')
+        , input_mode = $input.data('mode');
+
       config.on_change(
-        $(this).data('id'),
-        _.bind(this.MaterialSlider.change, this.MaterialSlider)
+        input_prop,
+        function (value, prop, mode, initiator) {
+          if (initiator != 'menu') {
+            that.MaterialSlider.change();
+          }
+          $input.attr('title', value);
+        },
+        input_mode
       );
     });
   };

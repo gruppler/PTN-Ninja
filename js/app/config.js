@@ -10,35 +10,71 @@ define(['lodash'], function (_) {
 
   var config = {
 
-    defaults: {
-      // Edit Mode
-      editmode_square_hl: true,
-      show_parse_errors: true,
-      board_opacity: 50,
+    presets: {
+      minimal: {
+        show_axis_labels: false,
+        show_player_scores: false,
+        show_current_move: false,
+        show_unplayed_pieces: false,
+        show_play_controls: false
+      },
+      edit_mode: {
+        square_hl: true,
+        show_roads: true,
+        show_axis_labels: true,
+        show_player_scores: true,
+        show_current_move: false,
+        show_unplayed_pieces: false,
+        show_play_controls: false
+      },
+      full: {
+        square_hl: true,
+        show_roads: true,
+        show_axis_labels: true,
+        show_player_scores: true,
+        show_current_move: true,
+        show_unplayed_pieces: true,
+        show_play_controls: true
+      }
+    },
 
-      // Play Mode
-      playmode_square_hl: true,
-      show_annotations: true,
-      play_speed: 40, // BPM
+    defaults: {
+      edit: {
+        board_opacity: 50,
+        show_parse_errors: true
+      },
+
+      play: {
+        speed: 60, // BPM
+        show_annotations: true
+      },
 
       // Board
-      animate_board: true,
-      show_axis_labels: true,
-      show_player_scores: true,
-      show_current_move: true,
-      show_unplayed_pieces: true,
-      show_play_controls: true,
-      show_roads: true
+      animate_board: true
     },
 
-    toggle: function (prop) {
-      this.set(prop, !this[prop]);
+    toggle: function (prop, mode, initiator) {
+      this.set(
+        prop,
+        mode ? !this[mode][prop] : !this[prop],
+        mode,
+        initiator
+      );
     },
 
-    set: function (prop, value, initiator) {
-      this[prop] = value;
-      localStorage[prop] = JSON.stringify(value);
+    set: function (prop, value, mode, initiator) {
+      if (mode) {
+        this[mode][prop] = value;
+        localStorage[mode+'.'+prop] = JSON.stringify(value);
+      } else {
+        this[prop] = value;
+        localStorage[prop] = JSON.stringify(value);
+      }
 
+      this.on_change(prop, null, mode, initiator);
+    },
+
+    set_css_flag: function (prop, value) {
       if (app.$html && _.isBoolean(value)) {
         if (value) {
           app.$html.addClass(prop.replace(/_/g, '-'));
@@ -46,24 +82,45 @@ define(['lodash'], function (_) {
           app.$html.removeClass(prop.replace(/_/g, '-'));
         }
       }
-
-      this.on_change(prop, null, initiator);
     },
 
-    load: function () {
-      var prop, stored;
+    update_flags: function () {
+      var prop, value;
 
-      for (var prop in this.defaults) {
-        stored = localStorage[prop];
-        if (stored) {
-          this.set(prop, JSON.parse(stored));
-        } else {
-          this[prop] = this.defaults[prop];
-        }
+      for (prop in this[app.mode]) {
+        value = this[app.mode][prop];
+        this.set_css_flag(prop, value);
       }
     },
 
-    on_change: function (prop, fn, initiator) {
+    load_preset: function (preset, mode, silent) {
+      _.assignIn(this[mode], this.presets[preset]);
+      if (!silent && mode == app.mode) {
+        this.update_flags();
+      }
+    },
+
+    load: function () {
+      var i = 0, prop, stored, mode;
+
+      _.assignIn(this, this.defaults);
+      config.load_preset('edit_mode', 'edit', true);
+      config.load_preset('full', 'play', true);
+
+      while (prop = localStorage.key(i++)) {
+        stored = localStorage[prop];
+        mode = prop.match(/(\w+)\./);
+        if (mode) {
+          mode = mode[1];
+          prop = prop.substr(mode.length + 1);
+        }
+        this.set(prop, JSON.parse(stored), mode);
+      }
+    },
+
+    on_change: function (prop, fn, mode, initiator) {
+      var value, i;
+
       function _listen(prop) {
         if (!(prop in callbacks)) {
           callbacks[prop] = [fn];
@@ -79,7 +136,24 @@ define(['lodash'], function (_) {
           _listen(prop);
         }
       } else {
-        _.invokeMap(callbacks[prop], 'call', config, config[prop], prop, initiator);
+        value = mode ? this[mode][prop] : this[prop];
+
+        // Update CSS flags when any config changes
+        if (!mode || mode == app.mode) {
+          this.set_css_flag(prop, value);
+        }
+
+        if (prop in callbacks) {
+          for (i = 0; i < callbacks[prop].length; i++) {
+            callbacks[prop][i].call(
+              this,
+              value,
+              prop,
+              mode,
+              initiator
+            );
+          }
+        }
       }
 
       return this;

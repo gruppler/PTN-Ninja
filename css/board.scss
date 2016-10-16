@@ -129,8 +129,7 @@ $stone-thickness: 0.3vmin;
         transition: opacity $time-smooth $natural;
       }
     }
-    html.editmode-square-hl.editmode &.active:before,
-    html.playmode-square-hl.playmode &.active:before {
+    html.square-hl &.active:before {
       opacity: 0.65;
     }
 
