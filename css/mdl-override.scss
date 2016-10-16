@@ -86,7 +86,9 @@ a {
   }
 
   .mdl-accordion__content {
-    transition: margin-top $time-smooth $natural;
+    #menu.is-visible & {
+      transition: margin-top $time-smooth $natural;
+    }
 
     .mdl-navigation__link:hover + & {
       will-change: margin-top;
