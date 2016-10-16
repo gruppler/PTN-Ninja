@@ -73,8 +73,11 @@
   overflow: auto;
   color: $primary-color-200;
   z-index: 1;
-  transition: opacity $time-smooth $natural;
   will-change: opacity;
+
+  html.animate-board & {
+    transition: opacity $time-smooth $natural;
+  }
 
   html.playmode & {
     @include unselectable;

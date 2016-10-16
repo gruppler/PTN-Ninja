@@ -13,7 +13,10 @@ $stone-thickness: 0.3vmin;
   justify-content: center;
   font-size: 2.5vmin;
   will-change: opacity;
-  transition: opacity $time-smooth $natural;
+
+  html.animate-board & {
+    transition: opacity $time-smooth $natural;
+  }
 
   html.playmode & {
     opacity: 1 !important;
@@ -42,7 +45,7 @@ $stone-thickness: 0.3vmin;
   > *:last-child {
     will-change: flex-grow;
 
-    #viewer.animated & {
+    html.animate-board #viewer.animated & {
       transition: flex-grow $time-smooth $natural;
     }
   }
@@ -185,17 +188,12 @@ $stone-thickness: 0.3vmin;
 
     html.animate-board & {
       transition: transform $time-smooth $natural,
-        opacity $time-smooth/2 $natural;
+        opacity $time-smooth $natural;
     }
 
     &.unplayed {
       html:not(.show-unplayed-pieces) & {
         opacity: 0;
-      }
-
-      html.animate-board.show-unplayed-pieces & {
-        transition: transform $time-smooth $natural,
-          opacity $time-smooth/2 $natural $time-smooth/2;
       }
     }
 
@@ -370,7 +368,7 @@ $stone-thickness: 0.3vmin;
   .ptn {
     opacity: 0;
     margin-top: calc(-2em - #{$edge});
-    padding-top: $edge;
+    padding-top: 0.5em;
     will-change: margin-top;
     will-change: content, opacity, margin-top;
 
@@ -396,12 +394,7 @@ $stone-thickness: 0.3vmin;
 
 
 .row-label-container {
-  html.show-axis-labels & {
-    width: calc(2em - #{$edge});
-  }
-  html.show-axis-labels.board-only & {
-    width: 2em;
-  }
+  width: 2em;
 }
 
 .labels {
@@ -419,8 +412,8 @@ $stone-thickness: 0.3vmin;
     will-change: opacity, right;
 
     html.animate-board & {
-      transition: opacity $time-smooth $natural
-        , right $time-smooth $natural;
+      transition: opacity $time-smooth $natural,
+        right $time-smooth $natural;
     }
 
     html.show-axis-labels & {
@@ -451,8 +444,8 @@ $stone-thickness: 0.3vmin;
     flex-direction: row;
     width: 100%;
     line-height: 2em;
-    height: calc(2em - #{$edge});
-    margin-top: calc(-2em + #{$edge});
+    height: 2em;
+    margin-top: -2em;
 
     html.board-only & {
       height: 2em;
