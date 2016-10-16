@@ -8,7 +8,7 @@
   position: absolute;
   top: $edge;
   bottom: 0;
-  left: $edge;
+  left: $fab-height;
   right: $toolbar-height - $fab-height/2;
   pointer-events: none;
   overflow: hidden;
