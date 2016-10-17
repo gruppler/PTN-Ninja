@@ -126,7 +126,7 @@ $stone-thickness: 0.3vmin;
       background-color: $accent-color-500;
 
       html.animate-board & {
-        transition: opacity $time-smooth $natural;
+        transition: opacity $time-smooth linear;
       }
     }
     html.square-hl &.active:before {
