@@ -25,7 +25,7 @@ Key|Action
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn file
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn file
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load default PTN
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Load sample PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
 
 ### Play Mode
 Key|Action
@@ -54,6 +54,7 @@ Key|Action
 :--|:--
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>y</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Backspace/Delete</kbd>|Trim to current ply*
 
 *This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.

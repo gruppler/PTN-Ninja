@@ -48,7 +48,9 @@ define(['app/messages'], function (Messages) {
       },
 
       '^?': function (event, $focus, $parent) {
-        app.game.parse(app.sample_ptn, true);
+        app.about();
+        event.preventDefault();
+        event.stopPropagation();
       }
 
     },
@@ -69,10 +71,9 @@ define(['app/messages'], function (Messages) {
       },
 
       '^Delete': function (event, $focus, $parent) {
+        app.board.trim_to_current_ply();
         event.stopPropagation();
         event.preventDefault();
-
-        app.board.trim_to_current_ply();
       },
 
       '[': function (event, $focus, $parent) {
@@ -98,10 +99,9 @@ define(['app/messages'], function (Messages) {
       },
 
       'Tab': function (event, $focus, $parent) {
+        app.insert_text('\t', true);
         event.stopPropagation();
         event.preventDefault();
-
-        app.insert_text('\t', true);
       },
 
       'Enter': function (event, $focus, $parent) {
