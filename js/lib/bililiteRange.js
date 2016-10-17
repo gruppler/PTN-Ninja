@@ -42,7 +42,7 @@ bililiteRange = function(el, debug){
 	if (debug){
 		ret = new NothingRange(); // Easier to force it to use the no-selection type than to try to find an old browser
 	}else if (window.getSelection && el.setSelectionRange){
-		// Standards. Element is an input or textarea 
+		// Standards. Element is an input or textarea
 		// note that some input elements do not allow selections
 		try{
 			el.selectionStart; // even getting the selection in such an element will throw
@@ -113,7 +113,7 @@ bililiteRange = function(el, debug){
 		});
 	}
 	if (!('oninput' in el)){
-		// give IE8 a chance. Note that this still fails in IE11, which has has oninput on contenteditable elements but does not 
+		// give IE8 a chance. Note that this still fails in IE11, which has has oninput on contenteditable elements but does not
 		// dispatch input events. See http://connect.microsoft.com/IE/feedback/details/794285/ie10-11-input-event-does-not-fire-on-div-with-contenteditable-set
 		// TODO: revisit this when I have IE11 running on my development machine
 		var inputhack = function() {ret.dispatch({type: 'input', bubbles: true}) };
@@ -241,11 +241,15 @@ Range.prototype = {
 	clone: function(){
 		return bililiteRange(this._el).bounds(this.bounds());
 	},
-	all: function(text){
+	all: function(text, is_replace){
 		if (arguments.length){
 			this.dispatch ({type: 'beforeinput', bubbles: true, data: text});
-			this._el[this._textProp] = text;
-			this.dispatch ({type: 'input', bubbles: true, data: text});
+			if (is_replace && this.data().highlighter) {
+				this.data().highlighter(this, text);
+			} else {
+				this._el[this._textProp] = text;
+				this.dispatch ({type: 'input', bubbles: true, data: text});
+			}
 			return this;
 		}else{
 			return this._el[this._textProp].replace(/\r/g, ''); // need to correct for IE's CrLf weirdness
@@ -399,7 +403,7 @@ IERange.prototype._nativeRange = function (bounds){
 		}
 		if (bounds[0] > 0) rng.moveStart('character', bounds[0]);
 	}
-	return rng;					
+	return rng;
 };
 IERange.prototype._nativeSelect = function (rng){
 	rng.select();
@@ -513,7 +517,7 @@ W3CRange.prototype._nativeRange = function (bounds){
 		rng.collapse (true);
 		w3cmoveBoundary (rng, bounds[1]-bounds[0], false, this._el);
 	}
-	return rng;					
+	return rng;
 };
 W3CRange.prototype._nativeSelect = function (rng){
 	this._win.getSelection().removeAllRanges();
@@ -613,11 +617,11 @@ var     START_TO_END                   = 1;
 var     END_TO_END                     = 2;
 var     END_TO_START                   = 3;
 // from the Mozilla documentation, for range.compareBoundaryPoints(how, sourceRange)
-// -1, 0, or 1, indicating whether the corresponding boundary-point of range is respectively before, equal to, or after the corresponding boundary-point of sourceRange. 
+// -1, 0, or 1, indicating whether the corresponding boundary-point of range is respectively before, equal to, or after the corresponding boundary-point of sourceRange.
     // * Range.END_TO_END compares the end boundary-point of sourceRange to the end boundary-point of range.
     // * Range.END_TO_START compares the end boundary-point of sourceRange to the start boundary-point of range.
     // * Range.START_TO_END compares the start boundary-point of sourceRange to the end boundary-point of range.
-    // * Range.START_TO_START compares the start boundary-point of sourceRange to the start boundary-point of range. 
+    // * Range.START_TO_START compares the start boundary-point of sourceRange to the start boundary-point of range.
 function w3cstart(rng, constraint){
 	if (rng.compareBoundaryPoints (START_TO_START, constraint) <= 0) return 0; // at or before the beginning
 	if (rng.compareBoundaryPoints (END_TO_START, constraint) >= 0) return constraint.toString().length;
@@ -703,7 +707,7 @@ try {
 	Object.defineProperty(Data.prototype, 'monitored', {
 		value: {}
 	});
-	
+
 	bililiteRange.data = function (name, newdesc){
 		newdesc = newdesc || {};
 		var desc = Object.getOwnPropertyDescriptor(Data.prototype, name) || {};

@@ -62,6 +62,9 @@ requirejs({locale: navigator.language}, [
   app.$menu_edit = $('#menu-edit');
   app.$menu_play = $('#menu-play');
 
+  app.range = bililiteRange(app.$ptn[0]);
+  app.range.undo(0);
+
 
   // Add boolean preferences to html class
   app.$html.addClass(
@@ -95,11 +98,11 @@ requirejs({locale: navigator.language}, [
 
 
   // Update $ptn if parsing starts somewhere else
-  app.game.on_parse_start(function (is_original) {
-    if (app.$ptn.text() != app.game.ptn) {
-      app.$ptn.text(app.game.ptn);
-    }
-  });
+  // app.game.on_parse_start(function (is_original) {
+  //   if (app.$ptn.text() != app.game.ptn) {
+  //     app.$ptn.text(app.game.ptn);
+  //   }
+  // });
 
 
   // Re-render $ptn
@@ -126,7 +129,7 @@ requirejs({locale: navigator.language}, [
     });
 
     if (is_original) {
-      bililiteRange(app.$ptn[0]).undo(0);
+      app.clear_undo_history();
     }
   });
 
@@ -235,7 +238,7 @@ requirejs({locale: navigator.language}, [
       event.stopPropagation();
     }).on('hashchange', function () {
       app.board.ply_id = 0;
-      app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash, true);
+      app.game.parse(app.hash || app.default_ptn, !!app.hash, true);
     });
   }
 
@@ -250,17 +253,27 @@ requirejs({locale: navigator.language}, [
 
 
   // Bind update events to game parsing
-  bililiteRange.fancyText(app.$ptn[0], function () {
-    var text = app.$ptn.text().trim();
+  bililiteRange.fancyText(app.$ptn[0], function (editor, text) {
+    text = text || app.$ptn.text();
 
     if (text) {
       return app.game.parse(text);
     }
+    return false;
   }, 100);
 
 
   // Load the initial PTN
-  app.game.parse(location.hash.substr(1) || app.default_ptn, !!location.hash, !sessionStorage.ptn);
+  app.game.parse(
+    app.hash || app.default_ptn,
+    !!app.hash,
+    !sessionStorage.ptn
+  );
+  app.clear_undo_history();
+
+
+  // Listen for caret movement
+  app.$ptn.on('keyup mouseup', app.set_position_from_caret);
 
 
   // Set initial mode
@@ -314,98 +327,5 @@ requirejs({locale: navigator.language}, [
       app.hotkeys.global[event.keymap](event, $focus, $parent);
     }
   });
-
-
-  // Update board when cursor moves
-  app.set_position_from_caret = function (event) {
-    var focus, $focus
-      , $ply, ply_id
-      , $square, squares, square, i;
-
-    if (!app.game.is_editing) {
-      return;
-    }
-
-    focus = getSelection().focusNode.parentNode;
-    if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
-      focus = focus.nextSibling;
-    }
-    if (focus.className == 'opening quote') {
-      focus = focus.nextSibling;
-    }
-    $focus = $(focus);
-
-    if ($.contains(app.$ptn.$body[0], focus)) {
-      // Body
-
-      if ($focus.hasClass('text')) {
-        $focus = $focus.closest('.comment');
-        $ply = $focus.prevAll('.ply');
-      } else if ($focus.hasClass('space')) {
-        $ply = $focus.next('.ply');
-      } else if ($focus.is('.win, .loss, .draw')) {
-        $focus = $focus.closest('.result');
-        $ply = $focus.prevAll('.ply');
-      } else {
-        $ply = $focus.closest('.ply');
-      }
-
-      if (!$ply.length) {
-        $ply = $focus.prevAll('.ply');
-      }
-      if (!$ply.length) {
-        $ply = $focus.nextAll('.ply');
-      }
-
-      ply_id = 1*$ply.data('id');
-
-      if (_.isInteger(ply_id)) {
-        app.board.go_to_ply(
-          ply_id,
-          app.board.ply_id != ply_id
-            || !app.board.ply_is_done
-            || event.type != 'mouseup'
-        );
-      }
-
-    } else if (
-      app.$ptn.$header.$tps.length
-      && (
-        app.$ptn.$header.$tps[0] == focus
-        || $.contains(app.$ptn.$header.$tps[0], focus)
-      )
-    ) {
-      // TPS
-
-      if ($focus.hasClass('separator')) {
-        $square = $focus.next().closest('.square');
-      } else if (app.$ptn.$header.$tps[0] == focus) {
-        $square = $(app.$ptn.$header.$tps[0].querySelector('.square'));
-      } else {
-        $square = $focus.closest('.square');
-      }
-
-      if ($square && $square.length) {
-        square = app.board.squares[$square.data('square')];
-        if (square) {
-          squares = [square];
-
-          if ($square.hasClass('space')) {
-            for (i = 0; i < 1*$square.data('count') - 1; i++) {
-              squares.push(_.last(squares).neighbors['>']);
-            }
-          }
-        }
-      }
-
-      app.board.go_to_ply(0, false);
-      app.board.set_active_squares(squares);
-    } else {
-      // Clear square highlighting
-      app.board.set_active_squares();
-    }
-  };
-  app.set_position_from_caret = _.throttle(app.set_position_from_caret, 100);
-  app.$ptn.on('keyup mouseup', app.set_position_from_caret);
 
 });

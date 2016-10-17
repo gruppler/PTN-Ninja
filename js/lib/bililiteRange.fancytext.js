@@ -67,8 +67,10 @@ bililiteRange.fancyText = function(editor, highlighter, threshold){
 		}
 	}
 	if (highlighter){
+		rng.data().highlighter = highlighter;
 		highlight();
 		rng.listen('input', debounce(highlight, threshold));
+		rng.listen('replace', highlight);
 	}
 	rng.listen('paste', function(evt){
 		// Firefox changes newlines to br's on paste!

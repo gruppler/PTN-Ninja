@@ -53,6 +53,7 @@ define([
     sample_ptn: sample_ptn,
 
     is_in_iframe: top.location != self.location,
+    hash: location.hash.substr(1),
 
     tpl: {
       dialog: _.template(
@@ -173,6 +174,7 @@ define([
     revert_game: function (confirmed) {
       if (confirmed === true) {
         this.game.revert();
+        this.clear_undo_history();
       } else if (_.isUndefined(confirmed)) {
         this.confirm(t.confirm.Revert_Game, this.revert_game);
       }
@@ -181,12 +183,32 @@ define([
 
     // Edit Mode Functions
 
+    clear_undo_history: function () {
+      app.range.data().undos = false;
+    },
+
     undo: function (event) {
-      bililiteRange.undo(event || {target: this.$ptn[0], preventDefault: nop});
+      var undos = app.range.data().undos;
+
+      if (undos && undos.undo != undos) {
+        app.range.undo();
+      }
+
+      if (event) {
+        event.preventDefault();
+      }
     },
 
     redo: function (event) {
-      bililiteRange.redo(event || {target: this.$ptn[0], preventDefault: nop});
+      var undos = app.range.data().undos;
+
+      if (undos && undos.redo != undos) {
+        app.range.undo(-1);
+      }
+
+      if (event) {
+        event.preventDefault();
+      }
     },
 
     scroll_to_ply: function () {
@@ -195,6 +217,95 @@ define([
           this.$editor.scrollTop() + this.$ptn.$ply.offset().top
           - (window.innerHeight - this.$ptn.$ply.height())/2
         );
+      }
+    },
+
+    set_position_from_caret: function (event) {
+      var focus, $focus
+        , $ply, ply_id
+        , $square, squares, square, i;
+
+      if (!app.game.is_editing) {
+        return;
+      }
+
+      focus = getSelection().focusNode.parentNode;
+      if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
+        focus = focus.nextSibling;
+      }
+      if (focus.className == 'opening quote') {
+        focus = focus.nextSibling;
+      }
+      $focus = $(focus);
+
+      if ($.contains(app.$ptn.$body[0], focus)) {
+        // Body
+
+        if ($focus.hasClass('text')) {
+          $focus = $focus.closest('.comment');
+          $ply = $focus.prevAll('.ply');
+        } else if ($focus.hasClass('space')) {
+          $ply = $focus.next('.ply');
+        } else if ($focus.is('.win, .loss, .draw')) {
+          $focus = $focus.closest('.result');
+          $ply = $focus.prevAll('.ply');
+        } else {
+          $ply = $focus.closest('.ply');
+        }
+
+        if (!$ply.length) {
+          $ply = $focus.prevAll('.ply');
+        }
+        if (!$ply.length) {
+          $ply = $focus.nextAll('.ply');
+        }
+
+        ply_id = 1*$ply.data('id');
+
+        if (_.isInteger(ply_id)) {
+          app.board.go_to_ply(
+            ply_id,
+            app.board.ply_id != ply_id
+              || !app.board.ply_is_done
+              || event.type != 'mouseup'
+          );
+        }
+
+      } else if (
+        app.$ptn.$header.$tps.length
+        && (
+          app.$ptn.$header.$tps[0] == focus
+          || $.contains(app.$ptn.$header.$tps[0], focus)
+        )
+      ) {
+        // TPS
+
+        if ($focus.hasClass('separator')) {
+          $square = $focus.next().closest('.square');
+        } else if (app.$ptn.$header.$tps[0] == focus) {
+          $square = $(app.$ptn.$header.$tps[0].querySelector('.square'));
+        } else {
+          $square = $focus.closest('.square');
+        }
+
+        if ($square && $square.length) {
+          square = app.board.squares[$square.data('square')];
+          if (square) {
+            squares = [square];
+
+            if ($square.hasClass('space')) {
+              for (i = 0; i < 1*$square.data('count') - 1; i++) {
+                squares.push(_.last(squares).neighbors['>']);
+              }
+            }
+          }
+        }
+
+        app.board.go_to_ply(0, false);
+        app.board.set_active_squares(squares);
+      } else {
+        // Clear square highlighting
+        app.board.set_active_squares();
       }
     },
 
@@ -238,9 +349,8 @@ define([
         var reader = new FileReader();
         reader.onload = function (event) {
           that.board.ply_id = 0;
-          that.game.parse(event.target.result);
-          bililiteRange(that.$ptn[0]).undo(0);
-          location.hash = that.game.ptn_compressed;
+          that.game.parse(event.target.result, false, true);
+          location.hash = app.hash = that.game.ptn_compressed;
         }
         reader.readAsText(file);
       }
@@ -248,7 +358,7 @@ define([
 
     // Insert text into PTN before or after caret
     insert_text: function (text, before) {
-      bililiteRange(this.$ptn[0]).bounds('selection')
+      app.range.bounds('selection')
         .text(text, before ? 'end' : 'start')
         .select();
     },
@@ -292,6 +402,8 @@ define([
 
     return $readme.html();
   })();
+
+  app.set_position_from_caret = _.throttle(app.set_position_from_caret, 100);
 
   return app;
 

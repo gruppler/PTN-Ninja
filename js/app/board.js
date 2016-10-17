@@ -266,6 +266,10 @@ define([
 
 
   Board.prototype.resize = function (from_config) {
+    if (!this.$view) {
+      return;
+    }
+
     var $parent = this.$view.parent()
       , vw = $parent.width()
       , vh = $parent.height()

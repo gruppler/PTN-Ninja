@@ -56,17 +56,15 @@ define(['app/messages'], function (Messages) {
     // Edit Mode
     edit: {
 
-      '^z': function (event, $focus, $parent) {
-        event.stopPropagation();
-        event.preventDefault();
-
+      '^z': function (event) {
         app.undo(event);
       },
 
-      '^Z': function (event, $focus, $parent) {
-        event.stopPropagation();
-        event.preventDefault();
+      '^Z': function (event) {
+        app.redo(event);
+      },
 
+      '^y': function (event) {
         app.redo(event);
       },
 
