@@ -87,6 +87,8 @@
 }
 
 #ptn {
+  box-sizing: border-box;
+  min-height: 100vh;
   font-weight: 300;
   font-size: 1.3em;
   line-height: 2em;
