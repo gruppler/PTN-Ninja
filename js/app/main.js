@@ -256,7 +256,7 @@ requirejs({locale: navigator.language}, [
   bililiteRange.fancyText(app.$ptn[0], function (editor, text) {
     text = text || app.$ptn.text();
 
-    if (text) {
+    if (text && text != '\n') {
       return app.game.parse(text);
     }
     return false;
