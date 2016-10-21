@@ -97,14 +97,6 @@ requirejs({locale: navigator.language}, [
   });
 
 
-  // Update $ptn if parsing starts somewhere else
-  // app.game.on_parse_start(function (is_original) {
-  //   if (app.$ptn.text() != app.game.ptn) {
-  //     app.$ptn.text(app.game.ptn);
-  //   }
-  // });
-
-
   // Re-render $ptn
   // Initialize board
   // Update Permalink
@@ -131,6 +123,8 @@ requirejs({locale: navigator.language}, [
     if (is_original) {
       app.clear_undo_history();
     }
+
+    app.save_scroll_position();
   });
 
 
@@ -140,14 +134,15 @@ requirejs({locale: navigator.language}, [
     app.board.resize();
   });
 
-  app.$window.on('resize', app.board.resize);
+
+  app.$window.on('resize', app.resize);
   app.config.on_change([
     'show_axis_labels',
     'show_player_scores',
     'show_current_move',
     'show_unplayed_pieces',
     'show_play_controls'
-  ], app.board.resize);
+  ], app.resize);
 
 
   // Update current ply display
@@ -274,6 +269,7 @@ requirejs({locale: navigator.language}, [
 
   // Listen for caret movement
   app.$ptn.on('keyup mouseup', app.set_position_from_caret);
+  app.$editor.on('scroll', app.save_scroll_position);
 
 
   // Set initial mode

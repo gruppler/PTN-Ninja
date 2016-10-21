@@ -276,18 +276,22 @@ define([
       , board_config = config[app.mode]
       , unplayed_ratio = board_config.show_unplayed_pieces ?
           1 + 1.75/this.size : 1
-      , margin, width, height, size;
+      , axis_width = 16
+      , margin, width, height, size, unplayed_size;
 
-    if (!config.board_only) {
-      vw -= 32;
-      vh -= 32;
-    }
-
+    // Subtract enabled board elements' dimensions
+    // to find remaining available proportional board space
     width = vw;
     height = vh;
 
+    if (!config.board_only) {
+      width -= 32;
+      height -= 32;
+    }
+
     if (board_config.show_axis_labels) {
-      width -= this.$row_labels.width();
+      axis_width = this.$row_labels.width();
+      width -= axis_width;
       height -= this.$col_labels.outerHeight();
     }
     if (board_config.show_player_scores) {
@@ -305,6 +309,7 @@ define([
     } else {
       size = height;
     }
+    unplayed_size = size * (unplayed_ratio - 1);
 
     if (_.isBoolean(from_config)) {
       $parent.transition();
@@ -313,7 +318,14 @@ define([
       width: size,
       height: size
     });
-    this.$unplayed_bg.width(size * (unplayed_ratio - 1));
+    this.$unplayed_bg.width(unplayed_size);
+
+    if (app.game.is_editing) {
+      app.set_editor_width(
+        vw,
+        size + board_config.show_unplayed_pieces * unplayed_size + axis_width
+      );
+    }
   };
 
 

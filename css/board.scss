@@ -18,9 +18,13 @@ $stone-thickness: 0.3vmin;
     transition: opacity $time-smooth $natural;
   }
 
-  html.playmode & {
+  html.playmode &,
+  html.side-by-side & {
     opacity: 1 !important;
     z-index: 1;
+  }
+  html.side-by-side & {
+    transition: none;
   }
 
   @media (max-width: $mobile/2) and (orientation: portrait) {
@@ -28,7 +32,7 @@ $stone-thickness: 0.3vmin;
       font-size: 14px;
     }
   }
-    @media (max-height: $mobile/2) and (orientation: landscape) {
+  @media (max-height: $mobile/2) and (orientation: landscape) {
     & {
       font-size: 14px;
     }

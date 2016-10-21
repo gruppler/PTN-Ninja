@@ -73,10 +73,14 @@
   overflow: auto;
   color: $primary-color-200;
   z-index: 1;
-  will-change: opacity;
+  will-change: scroll-position, opacity, width;
 
   html.animate-board & {
     transition: opacity $time-smooth $natural;
+  }
+  html.animate-board #viewer.animated + & {
+    transition: opacity $time-smooth $natural,
+      width $time-smooth $natural;
   }
 
   html.playmode & {
@@ -97,7 +101,6 @@
   padding-right: $edge;
   margin: 0;
   white-space: pre-wrap;
-  will-change: scroll-position;
 
   &:focus {
     outline: none;

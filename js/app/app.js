@@ -183,6 +183,78 @@ define([
 
     // Edit Mode Functions
 
+    resize: function (event) {
+      app.board.resize(event);
+      app.restore_scroll_position();
+    },
+
+    set_editor_width: function (vw, board_width) {
+      var editor_width = vw - board_width - 16;
+
+      if (editor_width < 340) {
+        if (app.is_side_by_side) {
+          app.is_side_by_side = false;
+          app.$editor.css('width', '100%');
+          app.$html.removeClass('side-by-side');
+        }
+      } else {
+        if (!app.is_side_by_side) {
+          app.is_side_by_side = true;
+          app.$html.addClass('side-by-side');
+        }
+        app.$editor.css('width', editor_width+'px');
+      }
+    },
+
+    save_scroll_position: function () {
+      var scrollTop = app.$editor.scrollTop()
+        , vh = app.$editor.height()
+        , vmid = vh / 2
+        , $header = app.$ptn.children('.header')
+        , $body = app.$ptn.children('.body')
+        , body_offset = $body.offset()
+        , top, $siblings, i;
+
+      top = app.$focus ? app.$focus.offset().top : undefined;
+
+      if (app.$focus && top > 0 && top < vh) {
+        // If the focused element is within view, use it
+        app.$scroll_middle = app.$focus;
+        app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+      } else {
+        // Find the line-level element in the middle of the viewport
+        if (body_offset && body_offset.top <= vmid) {
+          $siblings = $body.children();
+        } else {
+          $siblings = $header.children();
+        }
+        for (
+          i = 0;
+          i < $siblings.length && $siblings.eq(i).offset().top < vmid;
+          i++
+        ) {}
+
+        app.$scroll_middle = $siblings.eq(i ? i - 1 : 0);
+        app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+      }
+
+    },
+
+    restore_scroll_position: function () {
+      if (!app.$scroll_middle) {
+        return;
+      }
+
+      var offset = app.$scroll_middle.offset().top - app.scroll_middle_offset
+        , vmid = app.$editor.height() / 2;
+
+      app.$editor.scrollTop(app.$editor.scrollTop() + (offset - vmid));
+    },
+
+    clear_scroll_position: function () {
+      app.$scroll_middle = null;
+    },
+
     clear_undo_history: function () {
       app.range.data().undos = false;
     },
@@ -237,6 +309,7 @@ define([
         focus = focus.nextSibling;
       }
       $focus = $(focus);
+      app.$focus = $focus;
 
       if ($.contains(app.$ptn.$body[0], focus)) {
         // Body
@@ -333,6 +406,7 @@ define([
         this.$html.removeClass('editmode');
         this.$menu_play.addClass('mdl-accordion--opened');
         this.$menu_edit.removeClass('mdl-accordion--opened');
+        this.clear_scroll_position();
       }
 
       this.$ptn.attr('contenteditable', this.game.is_editing);
