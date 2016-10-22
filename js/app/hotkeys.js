@@ -177,6 +177,11 @@ define(['app/messages'], function (Messages) {
         notify_toggle(t.Animate_Board, app.config.animate_board);
       },
 
+      'F': function (event, $focus, $parent) {
+        app.config.toggle('show_fab');
+        notify_toggle(t.Show_FAB, app.config.show_fab);
+      },
+
       'a': function (event, $focus, $parent) {
         app.config.toggle('show_annotations', 'play');
         notify_toggle(t.Show_Annotations, app.config.play.show_annotations);

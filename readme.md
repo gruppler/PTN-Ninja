@@ -33,13 +33,14 @@ Key|Action
 <kbd>Space</kbd>|Play/Pause
 <kbd>&larr;</kbd>|Previous Ply
 <kbd>&rarr;</kbd>|Next Ply
-<kbd>Shift</kbd> + <kbd>&larr;</kbd>|Backward
-<kbd>Shift</kbd> + <kbd>&rarr;</kbd>|Forward
+<kbd>Shift</kbd> + <kbd>&larr;</kbd>|Previous Half-Ply
+<kbd>Shift</kbd> + <kbd>&rarr;</kbd>|Next Half-Ply
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&darr;</kbd>|Next Move
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
+<kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button
 <kbd>a</kbd>|Toggle Annotations
 <kbd>c</kbd>|Toggle Play Controls
 <kbd>h</kbd>|Toggle Square Highlight

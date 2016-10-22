@@ -50,7 +50,8 @@ define(['lodash'], function (_) {
       },
 
       // Board
-      animate_board: true
+      animate_board: true,
+      show_fab: true
     },
 
     toggle: function (prop, mode, initiator) {

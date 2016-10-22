@@ -118,7 +118,16 @@
   right: $toolbar-height - $fab-height/2;
   bottom: $toolbar-height - $fab-height/2;
   box-shadow: $shadow3;
+  opacity: 0;
+  pointer-events: none;
   z-index: 2;
+  transition: opacity $time-smooth ease-in-out;
+  will-change: opacity;
+
+  html.show-fab & {
+    opacity: 1;
+    pointer-events: all;
+  }
 
   &:hover {
     box-shadow: $shadow4;
@@ -133,8 +142,11 @@
     top: 0;
     line-height: $fab-height;
     transform: translate(-50%);
-    transition: all $time-smooth ease-in-out;
     will-change: opacity, transform;
+
+    html.show-fab & {
+      transition: all $time-smooth ease-in-out;
+    }
 
     &.play {
       transform: translate(-50%) rotate(179deg);

@@ -71,6 +71,11 @@ define([
       type: 'checkbox',
       checked: config.animate_board,
       'data-id': 'animate_board'
+    },{
+      label: t.Show_FAB,
+      type: 'checkbox',
+      checked: config.show_fab,
+      'data-id': 'show_fab'
     }]
   },{
     id: 'edit',

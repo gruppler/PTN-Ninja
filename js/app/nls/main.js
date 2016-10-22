@@ -46,6 +46,7 @@ define({
     Round: "Round",
     Share: "Share",
     Show_Annotations: "Show Annotations",
+    Show_FAB: "Show Mode Button",
     Show_Hide_Errors: "Show/Hide Errors",
     Show_Parse_Errors: "Show Parse Errors",
     Site: "Site",
