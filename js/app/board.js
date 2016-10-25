@@ -31,6 +31,7 @@ define([
 
     _.bindAll(this, [
       'resize',
+      'update_view',
       'play',
       'pause',
       'playpause',
@@ -331,7 +332,7 @@ define([
 
   Board.prototype.update_view = function() {
     _.invokeMap(
-      _.filter(this.all_pieces, { needs_updated: true }),
+      _.filter(this.all_pieces, { needs_updated: true, captor: null }),
       'render'
     );
 
