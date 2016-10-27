@@ -172,6 +172,11 @@ define(['app/messages'], function (Messages) {
         app.board.prev_move(event);
       },
 
+      '3': function (event, $focus, $parent) {
+        app.config.toggle('board_3d');
+        notify_toggle(t.Board_3D, app.config.board_3d);
+      },
+
       'A': function (event, $focus, $parent) {
         app.config.toggle('animate_board');
         notify_toggle(t.Animate_Board, app.config.animate_board);

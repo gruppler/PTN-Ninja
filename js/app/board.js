@@ -27,11 +27,14 @@ define([
     this.pieces = {};
     this.flat_score = {1:0, 2:0};
     this.init_callbacks = [];
+    this.resize_callbacks = [];
     this.ply_callbacks = [];
 
     _.bindAll(this, [
       'resize',
       'update_view',
+      'reposition_pieces',
+      'rotate',
       'play',
       'pause',
       'playpause',
@@ -58,6 +61,17 @@ define([
       this.init_callbacks.push(fn);
     } else {
       _.invokeMap(this.init_callbacks, 'call', this, this);
+    }
+
+    return this;
+  };
+
+
+  Board.prototype.on_resize = function (fn) {
+    if (fn) {
+      this.resize_callbacks.push(fn);
+    } else {
+      _.invokeMap(this.resize_callbacks, 'call', this, this);
     }
 
     return this;
@@ -228,7 +242,6 @@ define([
     this.$view = $(this.tpl.board(this));
     this.$board = this.$view.find('.board');
     this.$unplayed_bg = this.$view.find('.unplayed-bg').parent();
-    this.$controls = this.$view.filter('.controls');
     this.$row_labels = this.$view.find('.row.labels');
     this.$col_labels = this.$view.find('.col.labels');
     this.$squares = this.$view.find('.squares');
@@ -240,11 +253,7 @@ define([
     this.$score1 = this.$bar1.find('.score');
     this.$score2 = this.$bar2.find('.score');
 
-    this.$controls.find('.first').on('touchstart click', this.first);
-    this.$controls.find('.prev').on('touchstart click', this.prev_ply);
-    this.$controls.find('.play').on('touchstart click', this.playpause);
-    this.$controls.find('.next').on('touchstart click', this.next_ply);
-    this.$controls.find('.last').on('touchstart click', this.last);
+    this.rotate();
 
     this.$squares.append.apply(
       this.$squares,
@@ -271,9 +280,8 @@ define([
       return;
     }
 
-    var $parent = this.$view.parent()
-      , vw = $parent.width()
-      , vh = $parent.height()
+    var vw = app.$viewer.width()
+      , vh = app.$viewer.height()
       , board_config = config[app.mode]
       , unplayed_ratio = board_config.show_unplayed_pieces ?
           1 + 1.75/this.size : 1
@@ -302,7 +310,7 @@ define([
       height -= this.$ptn.outerHeight();
     }
     if (board_config.show_play_controls) {
-      height -= this.$controls.outerHeight();
+      height -= app.$controls.outerHeight();
     }
 
     if (width < height * unplayed_ratio) {
@@ -313,7 +321,7 @@ define([
     unplayed_size = size * (unplayed_ratio - 1);
 
     if (_.isBoolean(from_config)) {
-      $parent.transition();
+      app.$viewer.transition();
     }
     this.$board.css({
       width: size,
@@ -321,12 +329,13 @@ define([
     });
     this.$unplayed_bg.width(unplayed_size);
 
-    if (app.game.is_editing) {
-      app.set_editor_width(
-        vw,
-        size + board_config.show_unplayed_pieces * unplayed_size + axis_width
-      );
-    }
+    this.vw = vw;
+    this.vh = vh;
+    this.width = size
+      + board_config.show_unplayed_pieces * unplayed_size
+      + axis_width;
+
+    this.on_resize();
   };
 
 
@@ -338,6 +347,23 @@ define([
 
     this.update_scores();
     this.on_ply();
+  };
+
+
+  Board.prototype.reposition_pieces = function() {
+    _.invokeMap(
+      _.compact(_.map(this.squares, 'piece'))
+        .concat(this.pieces[1].F)
+        .concat(this.pieces[1].C)
+        .concat(this.pieces[2].F)
+        .concat(this.pieces[2].C),
+      'render'
+    );
+  };
+
+
+  Board.prototype.rotate = function () {
+    this.$view.css('transform', this.tpl.board_rotation(config));
   };
 
 
@@ -712,89 +738,75 @@ define([
 
     col: _.template('<span class="col"><%=obj%></span>'),
 
+    board_rotation: _.template(
+      'translate3d('+
+        '<%=5*board_rotation[0]%>em, '+
+        '<%=-5*board_rotation[1]%>em, '+
+        '<%=-15*board_rotation[2]%>em'+
+      ') rotate3d('+
+        '<%=board_rotation[1]%>, '+
+        '<%=board_rotation[0]%>, '+
+        '0, '+
+        '<%=board_rotation[2]*board_max_angle%>deg'+
+      ')'
+    ),
+
     board: _.template(
-      '<div class="table-wrapper">'+
-        '<div></div>'+
+      '<div class="table size-<%=size%>">'+
 
-        '<div class="table size-<%=size%>">'+
+        '<div class="top">'+
+          '<div></div>'+
 
-          '<div class="top">'+
-            '<div></div>'+
-
-            '<div>'+
-              '<div class="scores">'+
-                '<span class="player1">'+
-                  '<span class="name"><%=game.config.player1%></span>'+
-                  '<span class="score"><%=flat_score[1]%></span>'+
-                '</span>'+
-                '<span class="player2">'+
-                  '<span class="score"><%=flat_score[2]%></span>'+
-                  '<span class="name"><%=game.config.player2%></span>'+
-                '</span>'+
-              '</div>'+
+          '<div>'+
+            '<div class="scores">'+
+              '<span class="player1">'+
+                '<span class="name"><%=game.config.player1%></span>'+
+                '<span class="score"><%=flat_score[1]%></span>'+
+              '</span>'+
+              '<span class="player2">'+
+                '<span class="score"><%=flat_score[2]%></span>'+
+                '<span class="name"><%=game.config.player2%></span>'+
+              '</span>'+
             '</div>'+
-
-            '<div></div>'+
           '</div>'+
 
-          '<div class="middle">'+
+          '<div></div>'+
+        '</div>'+
 
-            '<div class="left row-label-container">'+
-              '<div class="row labels">'+
-                '<%=_.map(rows, tpl.row).join("")%>'+
-              '</div>'+
+        '<div class="middle">'+
+
+          '<div class="left row-label-container">'+
+            '<div class="row labels">'+
+              '<%=_.map(rows, tpl.row).join("")%>'+
             '</div>'+
-
-            '<div class="center">'+
-              '<div class="board">'+
-                '<div class="squares"></div>'+
-                '<div class="pieces"></div>'+
-              '</div>'+
-            '</div>'+
-
-            '<div class="right unplayed-bg-cell">'+
-              '<div class="unplayed-bg"></div>'+
-            '</div>'+
-
           '</div>'+
 
-          '<div class="bottom">'+
-            '<div></div>'+
-
-            '<div>'+
-              '<div class="col labels">'+
-                '<%=_.map(cols, tpl.col).join("")%>'+
-              '</div>'+
-              '<div class="ptn"></div>'+
+          '<div class="center">'+
+            '<div class="board">'+
+              '<div class="squares"></div>'+
+              '<div class="pieces"></div>'+
             '</div>'+
+          '</div>'+
 
-            '<div></div>'+
+          '<div class="right unplayed-bg-cell">'+
+            '<div class="unplayed-bg"></div>'+
           '</div>'+
 
         '</div>'+
 
-        '<div></div>'+
-      '</div>'+
+        '<div class="bottom">'+
+          '<div></div>'+
 
-      '<div class="controls">'+
-        '<div class="buttons">'+
-          '<button class="first mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.First_Ply%>">'+
-            '<i class="material-icons">first_page</i>'+
-          '</button>'+
-          '<button class="prev mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Previous_Ply%>">'+
-            '<i class="material-icons">chevron_left</i>'+
-          '</button>'+
-          '<button class="play mdl-button--colored mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.PlayPause%>">'+
-            '<i class="material-icons play">play_arrow</i>'+
-            '<i class="material-icons pause">pause</i>'+
-          '</button>'+
-          '<button class="next mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Next_Ply%>">'+
-            '<i class="material-icons">chevron_right</i>'+
-          '</button>'+
-          '<button class="last mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect" title="<%=t.Last_Ply%>">'+
-            '<i class="material-icons">last_page</i>'+
-          '</button>'+
+          '<div>'+
+            '<div class="col labels">'+
+              '<%=_.map(cols, tpl.col).join("")%>'+
+            '</div>'+
+            '<div class="ptn"></div>'+
+          '</div>'+
+
+          '<div></div>'+
         '</div>'+
+
       '</div>'
     )
   };

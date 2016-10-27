@@ -39,6 +39,7 @@ Key|Action
 <kbd>&darr;</kbd>|Next Move
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
+<kbd>3</kbd>|Toggle 3D Board
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button
 <kbd>a</kbd>|Toggle Annotations

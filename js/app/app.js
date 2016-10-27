@@ -188,6 +188,41 @@ define([
       app.restore_scroll_position();
     },
 
+    rotate_board: function (event) {
+      if (_.isBoolean(event)) {
+        config.set('board_rotation', [0, 0, 0]);
+        return;
+      }
+
+      var x, y, magnitude;
+
+      if (event.originalEvent.touches) {
+        x = (event.originalEvent.touches[0].clientX + event.originalEvent.touches[1].clientX)/2;
+        y = (event.originalEvent.touches[0].clientY + event.originalEvent.touches[1].clientY)/2;
+      } else {
+        x = event.clientX;
+        y = event.clientY;
+      }
+
+      x = Math.max(-1, Math.min(1,
+        app.dragging.rotation[0]
+        + app.config.board_rotate_sensitivity
+          * (x - app.dragging.x) / app.board.width
+      ));
+
+      y = Math.max(-1, Math.min(1,
+        app.dragging.rotation[1]
+        - app.config.board_rotate_sensitivity
+          * (y - app.dragging.y) / app.board.width
+      ));
+
+      magnitude = Math.sqrt(x*x + y*y);
+
+      config.set('board_rotation', [x, y, magnitude]);
+      event.preventDefault();
+      event.stopPropagation();
+    },
+
     set_editor_width: function (vw, board_width) {
       var editor_width = vw - board_width - 16;
 
@@ -297,7 +332,7 @@ define([
         , $ply, ply_id
         , $square, squares, square, i;
 
-      if (!app.game.is_editing) {
+      if (!app.game.is_editing || app.dragging) {
         return;
       }
 

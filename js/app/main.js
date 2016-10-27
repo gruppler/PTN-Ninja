@@ -51,10 +51,13 @@ requirejs({locale: navigator.language}, [
   app.menu.render();
 
   app.$window = $(window);
+  app.$document = $(document);
   app.$html = $('html');
   app.$body = $('body');
   app.$ptn = $('#ptn');
   app.$viewer = $('#viewer');
+  app.$board_view = app.$viewer.find('.table-wrapper');
+  app.$controls = app.$viewer.find('.controls');
   app.$editor = $('#editor');
   app.$fab = $('#fab');
   app.$download = $('#download');
@@ -97,6 +100,24 @@ requirejs({locale: navigator.language}, [
   });
 
 
+  // Initialize play controls
+  app.$controls.find('.first')
+      .on('touchstart click', app.board.first)
+      .attr('title', t.First_Ply);
+  app.$controls.find('.prev')
+    .on('touchstart click', app.board.prev_ply)
+    .attr('title', t.Previous_Ply);
+  app.$controls.find('.play')
+    .on('touchstart click', app.board.playpause)
+    .attr('title', t.PlayPause);
+  app.$controls.find('.next')
+    .on('touchstart click', app.board.next_ply)
+    .attr('title', t.Next_Ply);
+  app.$controls.find('.last')
+    .on('touchstart click', app.board.last)
+    .attr('title', t.Last_Ply);
+
+
   // Re-render $ptn
   // Initialize board
   // Update Permalink
@@ -130,11 +151,12 @@ requirejs({locale: navigator.language}, [
 
   // Re-render $viewer after board initialization
   app.board.on_init(function () {
-    app.$viewer.empty().append(app.board.render());
+    app.$board_view.empty().append(app.board.render());
     app.board.resize();
   });
 
 
+  // Resize board after window resize and board config changes
   app.$window.on('resize', app.resize);
   app.config.on_change([
     'show_axis_labels',
@@ -143,6 +165,17 @@ requirejs({locale: navigator.language}, [
     'show_unplayed_pieces',
     'show_play_controls'
   ], app.resize);
+
+
+  // Update editor width after every board resize
+  app.board.on_resize(function () {
+    if (app.game.is_editing) {
+      app.set_editor_width(
+        app.board.vw,
+        app.board.width
+      );
+    }
+  });
 
 
   // Update current ply display
@@ -187,6 +220,54 @@ requirejs({locale: navigator.language}, [
     app.$viewer.css('opacity', opacity/100);
   });
   config.on_change('board_opacity');
+
+  // Update piece positioning after toggling 3D
+  config.on_change('board_3d', app.board.reposition_pieces);
+  config.on_change('board_3d', app.rotate_board);
+
+  // Change perspective in 3D mode
+  config.on_change('board_rotation', app.board.rotate);
+  app.$viewer.on('mousedown touchstart', '.view-wrapper', function (event) {
+    if (
+      !config.board_3d
+      || event.type == 'touchstart'
+        && event.originalEvent.touches.length != 2
+    ) {
+      return;
+    }
+
+    var x, y;
+
+    if (event.originalEvent.touches) {
+      x = (event.originalEvent.touches[0].clientX + event.originalEvent.touches[1].clientX)/2;
+      y = (event.originalEvent.touches[0].clientY + event.originalEvent.touches[1].clientY)/2;
+    } else {
+      x = event.clientX;
+      y = event.clientY;
+    }
+
+    app.dragging = {
+      x: x,
+      y: y,
+      rotation: config.board_rotation
+    };
+
+    app.$document.on(
+      'mousemove touchmove',
+      app.rotate_board
+    );
+
+    app.$document.on(
+      'mouseup touchstop',
+      function () {
+        app.$document.off('mousemove touchmove', app.rotate_board);
+        delete app.dragging;
+      }
+    );
+
+    event.preventDefault();
+    event.stopPropagation();
+  });
 
 
   // Initialize Download Button

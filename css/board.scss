@@ -39,7 +39,7 @@ $stone-thickness: 0.3vmin;
   }
 }
 
-.table-wrapper {
+.view-wrapper {
   flex-grow: 1;
   display: flex;
   flex-direction: row;
@@ -54,7 +54,7 @@ $stone-thickness: 0.3vmin;
     }
   }
 
-  > *:not(.table) {
+  > *:not(.table-wrapper) {
     flex-grow: 1;
 
     html.editmode &:last-child {
@@ -64,6 +64,14 @@ $stone-thickness: 0.3vmin;
     html:not(.board-only) & {
       min-width: $edge;
     }
+  }
+}
+
+.table-wrapper {
+  html.board-3d & {
+    perspective: 100vmin;
+    perspective-origin: center;
+    transform-style: preserve-3d;
   }
 }
 
@@ -90,6 +98,13 @@ $stone-thickness: 0.3vmin;
     html.animate-board & {
       transition: height $time-smooth $natural;
     }
+  }
+
+  html.board-3d & {
+    transform-style: preserve-3d;
+  }
+  html:not(.board-3d) & {
+    transform: none !important;
   }
 
 }
@@ -283,10 +298,21 @@ $stone-thickness: 0.3vmin;
     }
 
     &.immovable {
-      .stone { opacity: 0; }
+      .stone {
+        opacity: 0;
+
+        html.board-3d & {
+          opacity: 0.25;
+        }
+      }
+
       .captive {
         opacity: 1;
         right: 5%;
+
+        html.board-3d & {
+          opacity: 0;
+        }
       }
     }
   }

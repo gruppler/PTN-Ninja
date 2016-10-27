@@ -67,6 +67,11 @@ define([
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'
     },{
+      label: t.Board_3D,
+      type: 'checkbox',
+      checked: config.board_3d,
+      'data-id': 'board_3d'
+    },{
       label: t.Animate_Board,
       type: 'checkbox',
       checked: config.animate_board,

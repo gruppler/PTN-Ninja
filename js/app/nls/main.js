@@ -6,6 +6,7 @@ define({
 
     Animate_Board: "Animate Board",
     Axis_Labels: "Axis Labels",
+    Board_3D: "3D Board",
     Board_Opacity: "Board Opacity",
     Board_Settings: "Board Settings",
     Cancel: "Cancel",

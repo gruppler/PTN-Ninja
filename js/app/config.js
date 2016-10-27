@@ -50,6 +50,10 @@ define(['lodash'], function (_) {
       },
 
       // Board
+      board_rotation: [0, 0, 0],
+      board_max_angle: 45,
+      board_rotate_sensitivity: 2,
+      board_3d: false,
       animate_board: true,
       show_fab: true
     },

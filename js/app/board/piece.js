@@ -69,9 +69,11 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
     // Set Z
     if (this.captor) {
+      // Captive
       this.z = this.captor.captives.length - this.stack_index;
       this.is_immovable = this.stack_index >= this.board.size - 1;
     } else if (this.captives.length) {
+      // Captor
       this.z = this.captives.length + 1;
       this.is_immovable = false;
       _.invokeMap(this.captives, 'render');
@@ -82,34 +84,60 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
     // Set X and Y
     if (square) {
+      // Played pieces
+
       this.x = 100*square.col;
       this.y = -100*square.row;
-      if(this.is_immovable) {
-        this.y += captive_offset*(1 - this.z);
-      } else {
-        this.y += captive_offset*(
-          1 - this.z + 1*(this.stone == 'S' && !!this.captives.length)
-        );
 
-        if ((this.captor||this).z > this.board.size) {
-          this.y += captive_offset*((this.captor||this).z - this.board.size);
+      if (!config.board_3d) {
+        // 2D
+
+        if(this.is_immovable) {
+          this.y += captive_offset*(1 - this.z);
+        } else {
+          this.y += captive_offset*(
+            1 - this.z + 1*(this.stone == 'S' && !!this.captives.length)
+          );
+
+          if ((this.captor||this).z > this.board.size) {
+            this.y += captive_offset*((this.captor||this).z - this.board.size);
+          }
         }
       }
     } else {
       // Unplayed pieces
-      this.z += this.board.piece_counts.total;
-      this.x = 100*this.board.size;
 
-      if (this.player == 2) {
+      if (config.board_3d) {
+        // 3D
+
+        this.x = 100*this.board.size;
+
+        if (this.player == 2) {
+          this.x += 75;
+        }
+
+        this.y = (this.board.size - 1) * -100
+          * Math.floor(this.piece_index / this.board.size) / Math.floor(this.board.piece_counts.total / this.board.size);
+
+        this.z = this.z % this.board.size + 1;
+      } else {
+        // 2D
+
         this.z += this.board.piece_counts.total;
-        this.x += 75;
-      }
+        this.x = 100*this.board.size;
 
-      this.y = (this.board.size - 1) * -100 * this.piece_index / this.board.piece_counts.total;
+        if (this.player == 2) {
+          this.z += this.board.piece_counts.total;
+          this.x += 75;
+        }
+
+        this.y = (this.board.size - 1) * -100 * this.piece_index / this.board.piece_counts.total;
+      }
     }
 
     this.x = Math.round(1000*this.x)/1000;
     this.y = Math.round(1000*this.y)/1000;
+    this.z -= 1;
 
     // Render or update the view
     if (!this.$view) {
@@ -178,7 +206,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       '<% } %>'
     ),
     location: _.template(
-      'transform: translate3d(<%=x%>%, <%=y%>%, <%=z%>px);'
+      'transform: translate3d(<%=x%>%, <%=y%>%, <%=z%>em);'
     ),
     stone_class: _.template('stone p<%=player%> <%=stone%>'),
     piece: _.template(

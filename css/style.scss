@@ -78,10 +78,6 @@
   html.animate-board & {
     transition: opacity $time-smooth $natural;
   }
-  html.animate-board #viewer.animated + & {
-    transition: opacity $time-smooth $natural,
-      width $time-smooth $natural;
-  }
 
   html.playmode & {
     @include unselectable;
