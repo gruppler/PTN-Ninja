@@ -269,6 +269,10 @@ requirejs({locale: navigator.language}, [
 
     event.preventDefault();
     event.stopPropagation();
+  }).on('dblclick', function (event) {
+    if (config.board_3d && (event.metaKey || event.ctrlKey)) {
+      app.rotate_board(false);
+    }
   });
 
 
