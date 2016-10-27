@@ -227,11 +227,13 @@ requirejs({locale: navigator.language}, [
 
   // Change perspective in 3D mode
   config.on_change('board_rotation', app.board.rotate);
-  app.$viewer.on('mousedown touchstart', '.view-wrapper', function (event) {
+  app.$viewer.on('mousedown touchstart', function (event) {
     if (
       !config.board_3d
       || event.type == 'touchstart'
         && event.originalEvent.touches.length != 2
+      || event.type == 'mousedown'
+        && !event.metaKey && !event.ctrlKey
     ) {
       return;
     }
