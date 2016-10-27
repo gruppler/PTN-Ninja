@@ -260,7 +260,7 @@ requirejs({locale: navigator.language}, [
     );
 
     app.$document.on(
-      'mouseup touchstop',
+      'mouseup touchend',
       function () {
         app.$document.off('mousemove touchmove', app.rotate_board);
         delete app.dragging;
