@@ -223,7 +223,6 @@ requirejs({locale: navigator.language}, [
 
   // Update piece positioning after toggling 3D
   config.on_change('board_3d', app.board.reposition_pieces);
-  config.on_change('board_3d', app.rotate_board);
 
   // Change perspective in 3D mode
   config.on_change('board_rotation', app.board.rotate);
