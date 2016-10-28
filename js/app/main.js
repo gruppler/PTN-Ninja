@@ -233,7 +233,7 @@ requirejs({locale: navigator.language}, [
       || event.type == 'touchstart'
         && event.originalEvent.touches.length != 2
       || event.type == 'mousedown'
-        && !event.metaKey && !event.ctrlKey
+        && !event.metaKey && !event.ctrlKey && event.which != 2
     ) {
       return;
     }
@@ -270,7 +270,7 @@ requirejs({locale: navigator.language}, [
     event.preventDefault();
     event.stopPropagation();
   }).on('dblclick', function (event) {
-    if (config.board_3d && (event.metaKey || event.ctrlKey)) {
+    if (config.board_3d && (event.metaKey || event.ctrlKey || event.which == 2)) {
       app.rotate_board(false);
     }
   });
