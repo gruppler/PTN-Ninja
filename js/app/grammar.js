@@ -75,7 +75,7 @@ define(['lodash'], function (_) {
     });
   });
   _.each(grammar, function (expression, token) {
-    grammar[token] = new RegExp(expression, /_grouped$/.test(token) ? '' : 'g');
+    grammar[token] = new RegExp(expression, /_grouped/.test(token) ? '' : 'g');
   });
 
   return {
