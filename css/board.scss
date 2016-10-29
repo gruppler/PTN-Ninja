@@ -327,6 +327,7 @@ $stone-thickness: 0.3vmin;
   }
 
   .scores {
+    overflow: hidden;
     margin-bottom: -2.5em;
     padding-bottom: 0.5em;
     will-change: margin-bottom;
