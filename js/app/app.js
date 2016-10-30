@@ -270,7 +270,9 @@ define([
         ) {}
 
         app.$scroll_middle = $siblings.eq(i ? i - 1 : 0);
-        app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+        if (app.$scroll_middle.length) {
+          app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+        }
       }
 
     },
