@@ -46,6 +46,9 @@ define([
     }
 
     if (!r.tags[this.key].test(this.value) && this.key != 'tps') {
+      game.m.error(
+        t.error.invalid_tag_value({tag: this.name, value: this.value})
+      );
       game.is_valid = false;
       return false;
     }
