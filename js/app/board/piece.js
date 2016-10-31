@@ -78,8 +78,15 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       this.is_immovable = false;
       _.invokeMap(this.captives, 'render');
     } else {
-      this.z = square ? 1 : this.piece_index;
       this.is_immovable = false;
+      if (square) {
+        this.z = 1;
+      } else if(config.board_3d && this.stone == 'C') {
+        this.z = this.piece_index
+          - (this.board.piece_counts.F % this.board.size);
+      } else {
+        this.z = this.piece_index;
+      }
     }
 
     // Set X and Y
@@ -116,8 +123,21 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           this.x += 75;
         }
 
-        this.y = (this.board.size - 1) * -100
-          * Math.floor(this.piece_index / this.board.size) / Math.floor(this.board.piece_counts.total / this.board.size);
+        if (this.stone == 'C') {
+          this.y = (this.board.size - 1) * -100;
+        } else {
+          this.y = (this.board.size - 1) * -100
+            * Math.floor(this.piece_index / this.board.size)
+            / Math.floor(
+              this.board.piece_counts.F / (
+                this.board.size
+                - 1*!!(
+                  this.board.piece_counts.C
+                  && (this.board.piece_counts.F % this.board.size)
+                )
+              )
+            );
+        }
 
         this.z = this.z % this.board.size + 1;
       } else {
