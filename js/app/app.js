@@ -216,6 +216,13 @@ define([
           * (y - app.dragging.y) / app.board.width
       ));
 
+      if (Math.abs(x) < 0.05) {
+        x = 0;
+      }
+      if (Math.abs(y) < 0.05) {
+        y = 0;
+      }
+
       magnitude = Math.sqrt(x*x + y*y);
 
       config.set('board_rotation', [x, y, magnitude]);
