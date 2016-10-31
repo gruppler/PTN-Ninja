@@ -326,10 +326,12 @@ $stone-thickness: 0.3vmin;
     overflow: hidden;
     margin-bottom: -2.5em;
     padding-bottom: 0.5em;
-    will-change: margin-bottom;
+    opacity: 0;
+    will-change: opacity, margin-bottom;
 
     html.animate-board & {
-      transition: margin-bottom $time-smooth $natural;
+      transition: margin-bottom $time-smooth $natural,
+        opacity $time-smooth $natural;
     }
 
     html.show-player-scores & {
