@@ -740,8 +740,8 @@ define([
 
     board_rotation: _.template(
       'translate3d('+
-        '<%=board_rotation[0]*5%>em, '+
-        '<%=board_rotation[1]*-5%>em, '+
+        '<%=board_rotation[0]*board_max_angle/9%>em, '+
+        '<%=board_rotation[1]*board_max_angle/-9%>em, '+
         '<%=board_rotation[2]*board_max_angle/-3%>em'+
       ') rotate3d('+
         '<%=board_rotation[1]%>, '+
