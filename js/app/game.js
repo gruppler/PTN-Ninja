@@ -115,8 +115,7 @@ define([
     header = header[0].match(r.grammar.tag);
     this.config = {};
     for (var i = 0; i < header.length; i++) {
-      this.tags[i] = new Tag(header[i], this);
-      this.tags[i].index = i;
+      new Tag(header[i], this);
     }
     missing_tags = _.difference(
       r.required_tags,
@@ -128,27 +127,9 @@ define([
     }
 
     // Body
-    body = body.match(r.grammar.move);
     if (body) {
-      for (var i = 0; i < body.length; i++) {
-        this.moves[i] = new Move(body[i], this);
-        this.moves[i].index = i;
-        this.moves[i].id = i;
-
-        if (this.moves[i].ply1) {
-          this.moves[i].ply1.id = this.plys.length;
-          this.plys.push(this.moves[i].ply1);
-        }
-
-        if (this.moves[i].ply2) {
-          this.moves[i].ply2.id = this.plys.length;
-          this.plys.push(this.moves[i].ply2);
-        }
-
-        if (this.moves[i].result && (this.moves[i].ply2 || this.moves[i].ply1)) {
-          (this.moves[i].ply2 || this.moves[i].ply1).result = this.moves[i].result;
-        }
-      }
+      // Recursively parse moves
+      new Move(body, this);
 
       if (this.plys.length) {
         this.plys[0].is_first = true;
@@ -176,7 +157,7 @@ define([
   };
 
   Game.prototype.trim_to_current_ply = function (board) {
-    var ply = this.plys[board.ply_id]
+    var ply = this.plys[board.ply_index]
       , tag = _.find(this.tags, { key: 'tps' })
       , new_tag = new Tag('\n[TPS "'+board.to_tps()+'"]', this);
 
@@ -185,7 +166,7 @@ define([
       if (ply.move.ply1 == ply) {
         ply.move.ply1 = null;
       }
-      board.ply_id = 0;
+      board.ply_index = 0;
       board.ply_is_done = false;
     }
 

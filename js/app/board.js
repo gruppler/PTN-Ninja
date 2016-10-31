@@ -16,9 +16,9 @@ define([
   var Board = function (game) {
     var that = this;
 
-    this.ply_id = 0;
+    this.ply_index = 0;
     this.ply_is_done = false;
-    this.comments_ply_id = -2;
+    this.comments_ply_index = -2;
     this.size = 5;
     this.squares = {};
     this.rows = [];
@@ -82,7 +82,7 @@ define([
     if (fn) {
       this.ply_callbacks.push(fn);
     } else {
-      _.invokeMap(this.ply_callbacks, 'call', this, this.game.plys[this.ply_id]);
+      _.invokeMap(this.ply_callbacks, 'call', this, this.game.plys[this.ply_index]);
     }
 
     return this;
@@ -90,9 +90,9 @@ define([
 
 
   Board.prototype.clear = function () {
-    this.ply_id = 0;
+    this.ply_index = 0;
     this.ply_is_done = false;
-    this.comments_ply_id = -2;
+    this.comments_ply_index = -2;
     this.squares = {};
     this.all_pieces = [];
     this.flat_score[1] = 0;
@@ -129,7 +129,7 @@ define([
     this.piece_counts = _.clone(app.piece_counts[this.size]);
     this.tps = game.config.tps && game.config.tps.is_valid ? game.config.tps : undefined;
 
-    this.saved_ply_id = this.ply_id;
+    this.saved_ply_index = this.ply_index;
     this.saved_ply_is_done = this.ply_is_done;
     this.clear();
 
@@ -210,7 +210,7 @@ define([
 
 
   Board.prototype.to_tps = function () {
-    var ply = this.game.plys[this.ply_id] || this.game.plys[this.ply_id - 1]
+    var ply = this.game.plys[this.ply_index] || this.game.plys[this.ply_index - 1]
       , squares = []
       , i, j;
 
@@ -234,7 +234,7 @@ define([
     return squares + ' ' +
       (ply ? ply.turn - 1 || 2 : 1) +
       ' ' +
-      (ply.move.id + 1 + 1*(ply.turn == 2));
+      (ply.move.linenum.value);
   };
 
 
@@ -267,7 +267,7 @@ define([
     );
 
     this.go_to_ply(
-      _.isUndefined(this.saved_ply_id) ? 0 : this.saved_ply_id,
+      _.isUndefined(this.saved_ply_index) ? 0 : this.saved_ply_index,
       this.saved_ply_is_done
     );
 
@@ -370,25 +370,25 @@ define([
   Board.prototype.update_plys = function(current_ply) {
     var ply1, ply2, $ply1, $ply2;
 
-    if (current_ply) {
+    if (current_ply && !current_ply.move.is_invalid) {
       ply1 = current_ply.move.ply1;
       ply2 = current_ply.move.ply2;
 
       this.$ptn.html(current_ply.move.print());
       $ply1 = this.$ptn.find('.ply:eq(0)');
       $ply2 = this.$ptn.find('.ply:eq(1)');
-    }
 
-    if (ply1) {
-      if (ply1.turn == 1) {
-        if (ply1 == current_ply) {
-          $ply1.addClass('active');
+      if (ply1) {
+        if (ply1.turn == 1) {
+          if (ply1 == current_ply) {
+            $ply1.addClass('active');
+          }
         }
       }
-    }
-    if (ply2) {
-      if (ply2 == current_ply) {
-        $ply2.addClass('active');
+      if (ply2) {
+        if (ply2 == current_ply) {
+          $ply2.addClass('active');
+        }
       }
     }
   };
@@ -410,11 +410,11 @@ define([
       return true;
     }
 
-    if (this.ply_id >= this.game.plys.length || this.ply_id < 0) {
+    if (this.ply_index >= this.game.plys.length || this.ply_index < 0) {
       return false;
     }
 
-    ply = this.game.plys[this.ply_id];
+    ply = this.game.plys[this.ply_index];
     square = this.squares[ply.square];
 
     if (ply.is_illegal) {
@@ -451,11 +451,11 @@ define([
       return true;
     }
 
-    if (this.ply_id > this.game.plys.length || this.ply_id < 0) {
+    if (this.ply_index > this.game.plys.length || this.ply_index < 0) {
       return false;
     }
 
-    ply = this.game.plys[this.ply_id];
+    ply = this.game.plys[this.ply_index];
     square = this.squares[ply.square];
 
     if (ply.is_nop) {
@@ -511,18 +511,18 @@ define([
   Board.prototype.show_comments = function (ply) {
     var that = this
       , result = this.game.config.result
-      , comments_ply_id = (!ply || ply.is_first && !this.ply_is_done) ? -1 : ply.id;
+      , comments_ply_index = (!ply || ply.is_first && !this.ply_is_done) ? -1 : ply.index;
 
-    if (this.defer_render || this.comments_ply_id == comments_ply_id) {
+    if (this.defer_render || this.comments_ply_index == comments_ply_index) {
       return;
     }
 
-    this.comments_ply_id = comments_ply_id;
+    this.comments_ply_index = comments_ply_index;
 
     this.m.clear();
 
     // Show comments before first move
-    if (comments_ply_id == -1) {
+    if (comments_ply_index == -1) {
       if (this.game.comments) {
         _.map(this.game.comments.concat().reverse(), this.comment);
       }
@@ -552,7 +552,7 @@ define([
 
 
   Board.prototype.play = function () {
-    if (this.game.plys[this.ply_id]) {
+    if (this.game.plys[this.ply_index]) {
       this.is_playing = true;
       this.next();
       app.$html.addClass('playing');
@@ -589,8 +589,8 @@ define([
       this.pause();
     }
 
-    if (!this.ply_is_done && this.ply_id) {
-      this.ply_id--;
+    if (!this.ply_is_done && this.ply_index) {
+      this.ply_index--;
       this.ply_is_done = true;
       if (!this.defer_render) {
         this.on_ply();
@@ -615,8 +615,8 @@ define([
       this.pause();
     }
 
-    if (this.ply_is_done && this.ply_id < this.game.plys.length - 1) {
-      this.ply_id++;
+    if (this.ply_is_done && this.ply_index < this.game.plys.length - 1) {
+      this.ply_index++;
       this.ply_is_done = false;
       if (!this.defer_render) {
         this.on_ply();
@@ -636,8 +636,8 @@ define([
     }
 
     this.undo_ply();
-    if (this.ply_id) {
-      this.ply_id--;
+    if (this.ply_index) {
+      this.ply_index--;
       this.ply_is_done = true;
     }
   };
@@ -651,8 +651,8 @@ define([
       this.pause();
     }
 
-    if (this.ply_is_done && this.ply_id < this.game.plys.length - 1) {
-      this.ply_id++;
+    if (this.ply_is_done && this.ply_index < this.game.plys.length - 1) {
+      this.ply_index++;
       this.ply_is_done = false;
     }
     return this.do_ply();
@@ -665,7 +665,7 @@ define([
       event.preventDefault();
     }
 
-    this.go_to_ply(this.ply_id - 2, this.ply_is_done && this.ply_id > 1);
+    this.go_to_ply(this.ply_index - 2, this.ply_is_done && this.ply_index > 1);
   };
 
 
@@ -675,7 +675,7 @@ define([
       event.preventDefault();
     }
 
-    this.go_to_ply(this.ply_id + 2, this.ply_is_done);
+    this.go_to_ply(this.ply_index + 2, this.ply_is_done);
   };
 
 
@@ -699,24 +699,24 @@ define([
   };
 
 
-  Board.prototype.go_to_ply = function (ply_id, do_ply, is_silent) {
+  Board.prototype.go_to_ply = function (ply_index, do_ply, is_silent) {
     this.pause();
     this.defer_render = true;
 
-    if (ply_id < 0) {
+    if (ply_index < 0) {
       do_ply = false;
-    } else if (ply_id >= this.game.plys.length) {
+    } else if (ply_index >= this.game.plys.length) {
       do_ply = true;
     }
 
-    ply_id = Math.min(this.game.plys.length - 1, Math.max(0, ply_id));
+    ply_index = Math.min(this.game.plys.length - 1, Math.max(0, ply_index));
 
-    while (this.ply_id < ply_id && this.do_ply()) {
-      this.ply_id++;
+    while (this.ply_index < ply_index && this.do_ply()) {
+      this.ply_index++;
       this.ply_is_done = false;
     }
-    while (this.ply_id > ply_id && this.undo_ply()) {
-      this.ply_id--;
+    while (this.ply_index > ply_index && this.undo_ply()) {
+      this.ply_index--;
       this.ply_is_done = true;
     }
 

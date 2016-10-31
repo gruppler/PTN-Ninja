@@ -15,6 +15,9 @@ define([
   var Tag = function (string, game) {
     var parts = string.match(r.grammar.tag_grouped);
 
+    this.index = game.tags.length;
+    game.tags[this.index] = this;
+
     this.text = string;
 
     if (!parts) {

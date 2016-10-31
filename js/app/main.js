@@ -184,7 +184,7 @@ requirejs({locale: navigator.language}, [
       app.$ptn.$ply.removeClass('active');
     }
     app.$ptn.$ply = ply ?
-      app.$ptn.find('.ply[data-id="'+ply.id+'"]:first').addClass('active') :
+      app.$ptn.find('.ply[data-index="'+ply.index+'"]:first').addClass('active') :
       null;
 
     if (app.board.ply_is_done) {
@@ -224,7 +224,7 @@ requirejs({locale: navigator.language}, [
   // Update piece positioning after toggling 3D
   config.on_change('board_3d', app.board.reposition_pieces);
 
-  // Change perspective in 3D mode
+  // Rotate board in 3D mode
   config.on_change('board_rotation', app.board.rotate);
   app.$viewer.on('mousedown touchstart', function (event) {
     if (
@@ -318,7 +318,7 @@ requirejs({locale: navigator.language}, [
       event.preventDefault();
       event.stopPropagation();
     }).on('hashchange', function () {
-      app.board.ply_id = 0;
+      app.board.ply_index = 0;
       app.game.parse(app.hash || app.default_ptn, !!app.hash, true);
     });
   }

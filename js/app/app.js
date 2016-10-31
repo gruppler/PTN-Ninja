@@ -331,7 +331,7 @@ define([
 
     set_position_from_caret: function (event) {
       var focus, $focus
-        , $ply, ply_id
+        , $ply, ply_index
         , $square, squares, square, i;
 
       if (!app.game.is_editing || app.dragging) {
@@ -370,12 +370,12 @@ define([
           $ply = $focus.nextAll('.ply');
         }
 
-        ply_id = 1*$ply.data('id');
+        ply_index = 1*$ply.data('index');
 
-        if (_.isInteger(ply_id)) {
+        if (_.isInteger(ply_index)) {
           app.board.go_to_ply(
-            ply_id,
-            app.board.ply_id != ply_id
+            ply_index,
+            app.board.ply_index != ply_index
               || !app.board.ply_is_done
               || event.type != 'mouseup'
           );
@@ -459,7 +459,7 @@ define([
       if (file && /\.ptn$|\.txt$/i.test(file.name)) {
         var reader = new FileReader();
         reader.onload = function (event) {
-          that.board.ply_id = 0;
+          that.board.ply_index = 0;
           that.game.parse(event.target.result, false, true);
           location.hash = app.hash = that.game.ptn_compressed;
         }

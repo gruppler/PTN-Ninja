@@ -58,11 +58,11 @@ define(['lodash'], function (_) {
     nop_grouped: '(\\s*)(\\S+)',
     ply: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
-    linenum: '(?:^|\\s)+\\d+\\.',
-    linenum_grouped: '(^|\\s+)\\d+\\.',
-    move: '(?:(?:<linenum><comment>(?:<nop>|<ply>)?<comment><ply>?<comment><result>?<comment>)|<nonmove>)[ \\t]*',
-    move_grouped: '(?:(?:(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>))|(<nonmove>))(\\s*)',
-    nonmove: '(?:[^]+)',
+    linenum: '(?:^|\\s)+\\d+\\.?',
+    linenum_grouped: '(^|\\s+)(\\d+)(\\.?)',
+    move: '(?:<linenum><comment>(?:<nop>|<ply>)?<comment><ply>?<comment><result>?<comment>[ \\t]*[^]*)',
+    move_grouped: '(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)(\\s*)([^]*)',
+    move_only: '^<move>$',
 
     header: '^<tag>+$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)((?:\\s|--)*)$'
@@ -75,7 +75,10 @@ define(['lodash'], function (_) {
     });
   });
   _.each(grammar, function (expression, token) {
-    grammar[token] = new RegExp(expression, /_grouped/.test(token) ? '' : 'g');
+    grammar[token] = new RegExp(
+      expression,
+      /_grouped|_only/.test(token) ? '' : 'g'
+    );
   });
 
   return {

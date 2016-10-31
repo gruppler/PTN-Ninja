@@ -20,13 +20,7 @@ define([
       , second_player = 2
       , first_turn = 1;
 
-    if (parts[9]) {
-      game.is_valid = false;
-      this.text = string;
-      this.print = game.print_invalid;
-      game.m.error(t.error.invalid_movetext({text: _.trim(string)[0]}));
-      return this;
-    }
+    this.game = game;
 
     this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
@@ -81,17 +75,36 @@ define([
     if (parts[7]) {
       this.result = new Result(parts[7], game);
       this.result.comments = _.map(this.comments4, 'text');
+      if (this.ply2) {
+        this.ply2.result = this.result;
+      } else if (this.ply1) {
+        this.ply1.result = this.result;
+      }
     } else {
       this.result = null;
     }
 
-    this.suffix = parts[10];
+    this.suffix = parts[9];
+
+    this.index = game.moves.length;
+    game.moves[this.index] = this;
+
+    if (parts[10]) {
+      if (r.grammar.move_only.test(parts[10])) {
+        new Move(parts[10], game);
+      } else {
+        this.text = parts[10];
+        this.is_invalid = true;
+        game.is_valid = false;
+        game.m.error(t.error.invalid_movetext({text: _.trim(this.text)[0]}));
+      }
+    }
 
     return this;
   };
 
   Move.prototype.print = function(){
-    var output = '<span class="move" data-id="'+this.id+'">';
+    var output = '<span class="move" data-index="'+this.index+'">';
 
     output += this.linenum.print();
     if (this.comments1) {
@@ -117,6 +130,9 @@ define([
     }
     if (this.suffix) {
       output += '<span class="space">'+this.suffix+'</span>';
+    }
+    if (this.text) {
+      output += this.game.print_invalid.call(this);
     }
     output += '</span>';
 
@@ -150,11 +166,14 @@ define([
     if (this.comments4) {
       output += _.invokeMap(this.comments4, 'print_text').join('');
     }
+    if (this.suffix) {
+      output += this.suffix;
+    }
     if (this.text) {
       output += this.text;
     }
 
-    return output + (this.suffix || '');
+    return output;
   };
 
   return Move;

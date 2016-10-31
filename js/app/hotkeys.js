@@ -105,26 +105,17 @@ define(['app/messages'], function (Messages) {
       },
 
       'Enter': function (event, $focus, $parent) {
-        var $prev = $focus.prev('.move')
+        var $move = $parent.parent('.move')
           , move;
 
-        if (!$prev.length) {
-          $prev = $parent.prev('.move');
-        }
-
-        if (!$prev.length) {
-          $prev = $focus.closest('.invalid');
-          if ($prev.length) {
-            $prev = $prev.prev('.move');
+        if (app.game.moves.length) {
+          if ($move.length && $parent.is(':last-child')) {
+            move = app.game.moves[$move.data('index')] || app.game.moves[0];
+          } else if ($parent.hasClass('body')) {
+            move = _.last(app.game.moves);
           }
-          if (!$prev.length) {
-            $prev = $prev.closest('.move');
-          }
-        }
 
-        if ($prev.length) {
-          move = app.game.moves[$prev.data('id')];
-          if (move.ply2) {
+          if (move && move.ply2) {
             app.insert_text((move.linenum.value + 1)+'.'+move.ply1.prefix, true);
           }
         }

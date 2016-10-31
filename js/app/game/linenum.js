@@ -11,7 +11,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     this.prefix = parts[1];
     this.value = game.get_linenum();
-    this.text = ''+this.value + '.';
+    if (parts[3]) {
+      this.text = this.value + parts[3];
+    } else {
+      this.text = parts[2];
+    }
 
     return this;
   };

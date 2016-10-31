@@ -44,6 +44,9 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     var ply_group = string.match(r.grammar.ply_grouped)
       , parts, i;
 
+    this.index = game.plys.length;
+    game.plys[game.plys.length] = this;
+
     this.move = move;
 
     this.is_nop = false;
@@ -138,7 +141,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<span '+
       'class="ply player<%=this.player%>'+
         '<%=this.is_illegal ? " illegal" : ""%>" '+
-      'data-id="<%=this.id%>"'+
+      'data-index="<%=this.index%>"'+
     '>'+
       '<% if (this.stone_text) { %>'+
         '<span class="stone"><%=this.stone_text%></span>'+
@@ -156,7 +159,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<span '+
       'class="ply player<%=this.player%>'+
         '<%=this.is_illegal ? " illegal" : ""%>" '+
-        'data-id="<%=this.id%>"'+
+        'data-index="<%=this.index%>"'+
       '>'+
       '<span class="count_text"><%=this.count_text%></span>'+
       '<span class="column"><%=this.col%></span>'+
@@ -176,7 +179,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.print_nop = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="ply nop" data-id="<%=this.id%>">'+
+    '<span class="ply nop" data-index="<%=this.index%>">'+
       '<%=this.text%>'+
     '</span>'
   );
