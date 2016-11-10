@@ -136,10 +136,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return this;
   };
 
+  Ply.prototype.is_current = function () {
+    return app.board.ply_index == this.index;
+  };
+
   Ply.prototype.print_place = _.template(
     '<span class="space"><%=this.prefix%></span>'+
     '<span '+
       'class="ply player<%=this.player%>'+
+        '<%=this.is_current() ? " active" : ""%>" '+
         '<%=this.is_illegal ? " illegal" : ""%>" '+
       'data-index="<%=this.index%>"'+
     '>'+

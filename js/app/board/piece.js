@@ -205,7 +205,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       });
     }
 
-    if (!$.contains(app.$html[0], this.$view[0])) {
+    if (!app.$html[0].contains(this.$view[0])) {
       this.board.$pieces.append(this.$view);
     }
 

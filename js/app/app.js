@@ -355,16 +355,23 @@ define([
       $focus = $(focus);
       app.$focus = $focus;
 
-      if ($.contains(app.$ptn.$body[0], focus)) {
+      if (app.$ptn.$body[0].contains(focus)) {
         // Body
 
-        if ($focus.hasClass('text')) {
+        if ($focus.hasClass('body')) {
+          $ply = $focus.find('.ply').last();
+        } else if ($focus.hasClass('text')) {
           $focus = $focus.closest('.comment');
           $ply = $focus.prevAll('.ply');
         } else if ($focus.hasClass('space')) {
           $ply = $focus.next('.ply');
         } else if ($focus.is('.win, .loss, .draw')) {
           $focus = $focus.closest('.result');
+          $ply = $focus.prevAll('.ply');
+        } else if ($focus.hasClass('invalid')) {
+          $ply = $focus.prevAll('.ply');
+        } else if ($focus.is('.invalid .first-letter')) {
+          $focus = $focus.parent();
           $ply = $focus.prevAll('.ply');
         } else {
           $ply = $focus.closest('.ply');
@@ -384,7 +391,7 @@ define([
             ply_index,
             app.board.ply_index != ply_index
               || !app.board.ply_is_done
-              || event.type != 'mouseup'
+              || !event || event.type != 'mouseup'
           );
         }
 
@@ -392,7 +399,7 @@ define([
         app.$ptn.$header.$tps.length
         && (
           app.$ptn.$header.$tps[0] == focus
-          || $.contains(app.$ptn.$header.$tps[0], focus)
+          || app.$ptn.$header.$tps[0].contains(focus)
         )
       ) {
         // TPS
@@ -451,6 +458,7 @@ define([
         this.$menu_play.addClass('mdl-accordion--opened');
         this.$menu_edit.removeClass('mdl-accordion--opened');
         this.clear_scroll_position();
+        this.board.set_active_squares(this.get_current_ply().squares);
       }
 
       this.$ptn.attr('contenteditable', this.game.is_editing);
@@ -484,6 +492,10 @@ define([
     // [0, 0] to 'a1'
     i_to_square: function (square) {
       return String.fromCharCode(a + square[0]) + (square[1] + 1);
+    },
+
+    get_current_ply: function () {
+      return this.game.plys[this.board.ply_index];
     },
 
     // ('a', '1') to [0, 0]

@@ -115,7 +115,12 @@ define(['app/messages'], function (Messages) {
             move = _.last(app.game.moves);
           }
 
-          if (move && move.ply2) {
+          if (
+            move && (
+              move.ply2
+              || move.ply1.turn == 2 - (move.linenum.value == 1)
+            )
+          ) {
             app.insert_text((move.linenum.value + 1)+'.'+move.ply1.prefix, true);
           }
         }

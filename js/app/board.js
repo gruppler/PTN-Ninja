@@ -234,7 +234,7 @@ define([
     return squares + ' ' +
       (ply ? ply.turn - 1 || 2 : 1) +
       ' ' +
-      (ply.move.linenum.value);
+      (ply.move.linenum.value + (ply.turn == 2));
   };
 
 
@@ -451,7 +451,7 @@ define([
       return true;
     }
 
-    if (this.ply_index > this.game.plys.length || this.ply_index < 0) {
+    if (this.ply_index >= this.game.plys.length || this.ply_index < 0) {
       return false;
     }
 

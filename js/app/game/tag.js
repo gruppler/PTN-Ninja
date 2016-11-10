@@ -12,10 +12,10 @@ define([
   'lodash'
 ], function (Result, TPS, r, t, _) {
 
-  var Tag = function (string, game) {
+  var Tag = function (string, game, index) {
     var parts = string.match(r.grammar.tag_grouped);
 
-    this.index = game.tags.length;
+    this.index = _.isNumber(index) ? index : game.tags.length;
     game.tags[this.index] = this;
 
     this.text = string;
@@ -55,9 +55,7 @@ define([
 
     if (this.key == 'result' && this.value) {
       new Result(this.value, game);
-      this.print_value = function () {
-        return game.config.result.print_value();
-      };
+      this.print_value = _.bind(game.config.result.print_value, game.config.result);
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game);
       this.print_value = _.bind(game.config.tps.print, game.config.tps);

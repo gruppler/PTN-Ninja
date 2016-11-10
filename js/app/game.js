@@ -158,22 +158,27 @@ define([
 
   Game.prototype.trim_to_current_ply = function (board) {
     var ply = this.plys[board.ply_index]
-      , tag = _.find(this.tags, { key: 'tps' })
-      , new_tag = new Tag('\n[TPS "'+board.to_tps()+'"]', this);
+      , old_tag = _.find(this.tags, { key: 'tps' });
+
+    new Tag(
+      '\n[TPS "'+board.to_tps()+'"]',
+      this,
+      old_tag ? old_tag.index : false
+    );
 
     if (ply) {
       this.moves.splice(0, ply.move.index + (ply.turn == 2));
       if (ply.move.ply1 == ply) {
         ply.move.ply1 = null;
+        ply.move.comments1 = null;
+        ply.move.comments2 = null;
+      }
+      if (ply.turn == 2 && this.moves[0] && this.moves[0].linenum) {
+        this.moves[0].linenum.prefix = ply.move.suffix
+          + this.moves[0].linenum.prefix;
       }
       board.ply_index = 0;
       board.ply_is_done = false;
-    }
-
-    if (tag) {
-      this.tags[tag.index] = new_tag;
-    } else {
-      this.tags.push(new_tag);
     }
 
     this.parse(this.print_text());

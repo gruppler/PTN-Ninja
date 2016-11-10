@@ -131,6 +131,10 @@ requirejs({locale: navigator.language}, [
     app.$ptn.$body = app.$ptn.find('span.body');
     if (app.game.is_valid) {
       app.board.init(app.game);
+
+      if (app.game.is_editing && app.$focus && !document.contains(app.$focus[0])) {
+        app.set_position_from_caret();
+      }
     }
 
     href = '#'+app.game.ptn_compressed;
