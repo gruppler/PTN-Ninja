@@ -57,7 +57,7 @@ Key|Action
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>y</kbd>|Redo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Backspace/Delete</kbd>|Trim to current ply*
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current ply*
 
 *This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
 

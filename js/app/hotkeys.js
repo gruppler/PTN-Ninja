@@ -70,7 +70,7 @@ define(['app/messages'], function (Messages) {
         app.redo(event);
       },
 
-      '^Delete': function (event, $focus, $parent) {
+      '^C': function (event, $focus, $parent) {
         app.board.trim_to_current_ply();
         event.stopPropagation();
         event.preventDefault();
