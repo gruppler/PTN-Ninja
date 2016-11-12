@@ -371,6 +371,7 @@ requirejs({locale: navigator.language}, [
   } else {
     app.toggle_edit_mode(app.$html.hasClass('error') || !location.hash);
   }
+  app.restore_caret();
 
 
   // Open the relevant menu accordion

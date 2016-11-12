@@ -158,7 +158,8 @@ define([
 
   Game.prototype.trim_to_current_ply = function (board) {
     var ply = this.plys[board.ply_index]
-      , old_tag = _.find(this.tags, { key: 'tps' });
+      , old_tag = _.find(this.tags, { key: 'tps' })
+      , bounds;
 
     new Tag(
       '\n[TPS "'+board.to_tps()+'"]',
@@ -182,6 +183,9 @@ define([
     }
 
     this.parse(this.print_text());
+
+    bounds = this.plys.length ? this.get_bounds(this.plys[0])[1] : 'end';
+    app.set_caret(bounds);
   };
 
   Game.prototype.print = function () {
@@ -206,6 +210,47 @@ define([
     output += this.suffix;
 
     return output;
+  };
+
+  Game.prototype.get_bounds = function (ply) {
+    var bounds = [0, 0];
+
+    // Count all tags
+    bounds[0] += _.invokeMap(this.tags, 'print_text').join('').length;
+
+    // Count game comment
+    if (this.comment_text) {
+      bounds[0] += _.invokeMap(this.comment_text, 'print_text').join('').length;
+    }
+
+    // Count all moves preceding ply's move
+    bounds[0] += _.invokeMap(
+      this.moves.slice(0, ply.move.index),
+      'print_text'
+    ).join('').length;
+
+    // Count all move elements preceding ply
+    if (ply.move.linenum) {
+      bounds[0] += ply.move.linenum.print_text().length;
+    }
+    if (ply.move.comments1) {
+      bounds[0] += _.invokeMap(ply.move.comments1, 'print_text').join('').length;
+    }
+    if (ply == ply.move.ply2) {
+      if (ply.move.ply1) {
+        bounds[0] += ply.move.ply1.print_text().length;
+      }
+      if (ply.move.comments2) {
+        bounds[0] += _.invokeMap(ply.move.comments2, 'print_text').join('').length;
+      }
+    }
+
+    bounds[1] = bounds[0] + ply.print_text().length;
+    if (ply.prefix) {
+      bounds[0] += ply.prefix.length;
+    }
+
+    return bounds;
   };
 
   Game.prototype.m = new Messages('parse');

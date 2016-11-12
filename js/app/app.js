@@ -248,6 +248,54 @@ define([
       }
     },
 
+    save_caret: function () {
+      this.range.last_bounds = this.range.bounds('selection').bounds();
+    },
+
+    restore_caret: function () {
+      if (this.range.last_bounds) {
+        this.set_caret(this.range.last_bounds);
+      } else if (this.game.plys.length) {
+        this.set_caret(
+          this.game.get_bounds(
+            this.game.plys[this.board.ply_index]
+          )[1]
+        );
+      } else {
+        this.set_caret('end');
+      }
+
+      if (this.game.is_editing) {
+        this.$ptn[0].focus();
+      }
+    },
+
+    move_caret: function (relative_bounds) {
+      if (!this.range.last_bounds) {
+        return;
+      }
+
+      if (_.isArray(relative_bounds)) {
+        relative_bounds[0] += this.range.last_bounds[0];
+        relative_bounds[1] += this.range.last_bounds[1];
+      } else {
+        relative_bounds = [
+          this.range.last_bounds[0] + relative_bounds,
+          this.range.last_bounds[1] + relative_bounds
+        ];
+      }
+
+      this.set_caret(relative_bounds);
+    },
+
+    set_caret: function (bounds) {
+      if (_.isNumber(bounds)) {
+        bounds = [bounds, bounds];
+      }
+      this.range.bounds(bounds).select();
+      this.save_caret();
+    },
+
     save_scroll_position: function () {
       var scrollTop = app.$editor.scrollTop()
         , vh = app.$editor.height()
@@ -343,6 +391,8 @@ define([
       if (!app.game.is_editing || app.dragging) {
         return;
       }
+
+      app.save_caret();
 
       focus = getSelection().focusNode.parentNode;
       if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
@@ -450,6 +500,8 @@ define([
 
         this.board.pause();
         this.scroll_to_ply();
+        this.range.last_bounds = null;
+        this.restore_caret();
       } else if (was_editing && !this.game.is_editing) {
         this.$viewer.transition();
         this.$html.addClass('playmode');
@@ -457,7 +509,9 @@ define([
         this.$menu_play.addClass('mdl-accordion--opened');
         this.$menu_edit.removeClass('mdl-accordion--opened');
         this.clear_scroll_position();
-        this.board.set_active_squares(this.get_current_ply().squares);
+        if (this.game.plys.length) {
+          this.board.set_active_squares(this.get_current_ply().squares);
+        }
       }
 
       this.$ptn.attr('contenteditable', this.game.is_editing);
@@ -514,6 +568,7 @@ define([
     'redo',
     'scroll_to_ply',
     'toggle_edit_mode',
+    'restore_caret',
     'insert_text'
   ]);
 
