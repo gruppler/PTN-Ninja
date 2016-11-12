@@ -234,17 +234,17 @@ define([
       var editor_width = vw - board_width - 16;
 
       if (editor_width < 340) {
-        if (app.is_side_by_side) {
-          app.is_side_by_side = false;
-          app.$editor.css('width', '100%');
-          app.$html.removeClass('side-by-side');
+        if (this.is_side_by_side) {
+          this.is_side_by_side = false;
+          this.$editor.css('width', '100%');
+          this.$html.removeClass('side-by-side');
         }
       } else {
-        if (!app.is_side_by_side) {
-          app.is_side_by_side = true;
-          app.$html.addClass('side-by-side');
+        if (!this.is_side_by_side) {
+          this.is_side_by_side = true;
+          this.$html.addClass('side-by-side');
         }
-        app.$editor.css('width', editor_width+'px');
+        this.$editor.css('width', editor_width+'px');
       }
     },
 
@@ -281,7 +281,6 @@ define([
           app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
         }
       }
-
     },
 
     restore_scroll_position: function () {

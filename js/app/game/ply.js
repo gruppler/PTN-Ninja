@@ -137,7 +137,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   };
 
   Ply.prototype.is_current = function () {
-    return app.board.ply_index == this.index;
+    return app.board && app.board.ply_index == this.index;
   };
 
   Ply.prototype.print_place = _.template(
@@ -190,7 +190,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   );
 
   Ply.prototype.print_text = function () {
-    return this.prefix + this.text;
+    return this.prefix + this.text + this.evaluation;
   };
 
   return Ply;
