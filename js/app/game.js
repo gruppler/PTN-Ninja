@@ -189,6 +189,7 @@ define([
 
     bounds = this.plys.length ? this.get_bounds(this.plys[0])[1] : 'end';
     app.set_caret(bounds);
+    app.scroll_to_ply();
   };
 
   Game.prototype.print = function () {
