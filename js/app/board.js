@@ -635,11 +635,11 @@ define([
       this.pause();
     }
 
-    this.undo_ply();
-    if (this.ply_index) {
+    if (!this.ply_is_done && this.ply_index) {
       this.ply_index--;
       this.ply_is_done = true;
     }
+    return this.undo_ply();
   };
 
 
