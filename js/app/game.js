@@ -174,7 +174,10 @@ define([
         ply.move.comments1 = null;
         ply.move.comments2 = null;
       }
-      if (ply.turn == 2 && this.moves[0] && this.moves[0].linenum) {
+      if (
+        this.moves.length && this.moves[0].linenum
+        && (ply.move.index || ply.turn == 2)
+      ) {
         this.moves[0].linenum.prefix = ply.move.suffix
           + this.moves[0].linenum.prefix;
       }
