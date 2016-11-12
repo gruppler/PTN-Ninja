@@ -52,7 +52,7 @@ define([
       target: '_blank',
       rel: 'noopener'
     },{
-      label: t.Download,
+      label: t.Save,
       icon: 'file_download',
       id: 'download',
       href: '#'
