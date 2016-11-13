@@ -175,7 +175,7 @@ requirejs({locale: navigator.language}, [
 
   // Update editor width after every board resize
   app.board.on_resize(function () {
-    if (app.game.is_editing) {
+    if (app.game.is_editing || !app.$editor.attr('style')) {
       app.set_editor_width(
         app.board.vw,
         app.board.width

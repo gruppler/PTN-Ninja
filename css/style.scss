@@ -71,6 +71,7 @@
 
 #editor {
   overflow: auto;
+  overflow-wrap: break-word;
   color: $primary-color-200;
   direction: rtl;
   z-index: 1;
@@ -106,7 +107,6 @@
 
   html.playmode & {
     cursor: default;
-    overflow: hidden;
     will-change: auto;
   }
 }
