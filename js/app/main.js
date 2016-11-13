@@ -394,9 +394,7 @@ requirejs({locale: navigator.language}, [
       return;
     }
 
-    event.keymap
-      .replace('~', '^')
-      .replace('Backspace', 'Delete');
+    event.keymap.replace('~', '^');
 
     if (app.current_dialogs.length) {
       // Modal Dialog
