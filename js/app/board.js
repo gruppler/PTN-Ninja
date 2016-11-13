@@ -552,7 +552,10 @@ define([
 
 
   Board.prototype.play = function () {
-    if (this.game.plys[this.ply_index]) {
+    if (
+      this.game.plys[this.ply_index]
+      && this.ply_index != this.game.plys.length - 1
+    ) {
       this.is_playing = true;
       this.next();
       app.$html.addClass('playing');
