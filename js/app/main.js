@@ -149,7 +149,9 @@ requirejs({locale: navigator.language}, [
       app.clear_undo_history();
     }
 
-    app.save_scroll_position();
+    if (app.game.is_editing && app.game.caret_moved) {
+      _.defer(app.restore_caret);
+    }
   });
 
 

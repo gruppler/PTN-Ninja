@@ -6,8 +6,11 @@
 
 define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
-  var Comment = function (string) {
+  var Comment = function (string, game) {
     var parts = string.match(r.grammar.comment_grouped);
+
+    this.char_index = game.char_index;
+    game.char_index += string.length;
 
     if (!parts) {
       this.prefix = string;
@@ -35,11 +38,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return this.prefix + this.text + this.suffix;
   };
 
-  Comment.parse = function(string) {
+  Comment.parse = function(string, game) {
     var comments = _.map(
       string.match(r.grammar.comment_text),
       function (comment) {
-        return new Comment(comment);
+        return new Comment(comment, game);
       }
     );
 

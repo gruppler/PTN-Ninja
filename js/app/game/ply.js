@@ -47,6 +47,9 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     this.index = game.plys.length;
     game.plys[game.plys.length] = this;
 
+    this.char_index = game.char_index;
+    game.char_index += string.length;
+
     this.move = move;
 
     this.is_nop = false;

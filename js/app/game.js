@@ -54,7 +54,7 @@ define([
   };
 
   Game.prototype.parse = function (input, is_from_URL, is_original) {
-    var plaintext, header, body, i, file, tag, missing_tags, tps;
+    var plaintext, header, body, i, file, missing_tags, tps;
 
     if (is_from_URL) {
       if (/^[A-Za-z0-9$+-]+$/.test(input)) {
@@ -65,19 +65,15 @@ define([
       }
       if (plaintext == this.ptn) {
         return false;
-      } else {
-        this.ptn = plaintext;
-        this.ptn_compressed = input;
       }
     } else if (input == this.ptn) {
       return false;
     } else {
-      this.ptn = input;
-      this.ptn_compressed = compress(input);
+      plaintext = input;
     }
 
     if (is_original) {
-      this.original_ptn = this.ptn;
+      this.original_ptn = plaintext;
       sessionStorage.ptn = this.original_ptn;
     } else if (!this.original_ptn) {
       this.original_ptn = sessionStorage.ptn;
@@ -86,13 +82,15 @@ define([
     this.on_parse_start(false, is_original);
 
     this.is_valid = true;
+    this.caret_moved = false;
     this.result = null;
     this.tags.length = 0;
     this.moves.length = 0;
     this.plys.length = 0;
     this.m.clear('error');
+    this.char_index = 0;
 
-    file = this.ptn.match(r.grammar.ptn_grouped);
+    file = plaintext.match(r.grammar.ptn_grouped);
     if (!file) {
       this.m.error(t.error.invalid_file_format);
       this.is_valid = false;
@@ -100,8 +98,6 @@ define([
     }
 
     header = file[1];
-    this.comment_text = Comment.parse(file[2]);
-    this.comments = this.comment_text ? _.map(this.comment_text, 'text') : null;
     body = file[3];
     this.suffix = file[4] || '';
 
@@ -126,6 +122,10 @@ define([
       this.is_valid = false;
     }
 
+    // Game comments
+    this.comment_text = Comment.parse(file[2], this);
+    this.comments = this.comment_text ? _.map(this.comment_text, 'text') : null;
+
     // Body
     if (body) {
       // Recursively parse moves
@@ -136,6 +136,9 @@ define([
         _.last(this.plys).is_last = true;
       }
     }
+
+    this.ptn = this.print_text();
+    this.ptn_compressed = compress(this.ptn);
 
     if (this.simulator.validate(this)) {
       this.on_parse_end(false, is_original);
@@ -217,44 +220,10 @@ define([
   };
 
   Game.prototype.get_bounds = function (ply) {
-    var bounds = [0, 0];
-
-    // Count all tags
-    bounds[0] += _.invokeMap(this.tags, 'print_text').join('').length;
-
-    // Count game comment
-    if (this.comment_text) {
-      bounds[0] += _.invokeMap(this.comment_text, 'print_text').join('').length;
-    }
-
-    // Count all moves preceding ply's move
-    bounds[0] += _.invokeMap(
-      this.moves.slice(0, ply.move.index),
-      'print_text'
-    ).join('').length;
-
-    // Count all move elements preceding ply
-    if (ply.move.linenum) {
-      bounds[0] += ply.move.linenum.print_text().length;
-    }
-    if (ply.move.comments1) {
-      bounds[0] += _.invokeMap(ply.move.comments1, 'print_text').join('').length;
-    }
-    if (ply == ply.move.ply2) {
-      if (ply.move.ply1) {
-        bounds[0] += ply.move.ply1.print_text().length;
-      }
-      if (ply.move.comments2) {
-        bounds[0] += _.invokeMap(ply.move.comments2, 'print_text').join('').length;
-      }
-    }
-
-    bounds[1] = bounds[0] + ply.print_text().length;
-    if (ply.prefix) {
-      bounds[0] += ply.prefix.length;
-    }
-
-    return bounds;
+    return [
+      ply.char_index + ply.prefix.length,
+      ply.char_index + ply.print_text().length
+    ];
   };
 
   Game.prototype.m = new Messages('parse');

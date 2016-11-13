@@ -11,10 +11,18 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     this.prefix = parts[1];
     this.value = game.get_linenum();
-    if (parts[3]) {
-      this.text = this.value + parts[3];
-    } else {
-      this.text = parts[2];
+    this.text = this.value + '.';
+
+    this.char_index = game.char_index;
+    game.char_index += this.prefix.length + this.text.length;
+
+    if (
+      string.length != this.prefix.length + this.text.length
+      && app.range.last_bounds && app.range.last_bounds[1] >= game.char_index - 1
+    ) {
+      app.range.last_bounds[0] += this.text.length - string.length;
+      app.range.last_bounds[1] = app.range.last_bounds[0];
+      game.caret_moved = true;
     }
 
     return this;

@@ -392,7 +392,9 @@ define([
         return;
       }
 
-      app.save_caret();
+      if (event) {
+        app.save_caret();
+      }
 
       focus = getSelection().focusNode.parentNode;
       if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
@@ -568,7 +570,11 @@ define([
     'redo',
     'scroll_to_ply',
     'toggle_edit_mode',
+    'set_editor_width',
+    'save_caret',
     'restore_caret',
+    'move_caret',
+    'set_caret',
     'insert_text'
   ]);
 

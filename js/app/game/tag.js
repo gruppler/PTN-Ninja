@@ -18,6 +18,9 @@ define([
     this.index = _.isNumber(index) ? index : game.tags.length;
     game.tags[this.index] = this;
 
+    this.char_index = game.char_index;
+    game.char_index += string.length;
+
     this.text = string;
 
     if (!parts) {

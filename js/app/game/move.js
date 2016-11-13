@@ -21,6 +21,7 @@ define([
       , first_turn = 1;
 
     this.game = game;
+    this.char_index = game.char_index;
 
     this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
@@ -38,10 +39,7 @@ define([
       second_player = 1;
     }
 
-    this.comments1 = Comment.parse(parts[2]);
-    this.comments2 = Comment.parse(parts[4]);
-    this.comments3 = Comment.parse(parts[6]);
-    this.comments4 = Comment.parse(parts[8]);
+    this.comments1 = Comment.parse(parts[2], game);
 
     if (parts[3]) {
       this.ply1 = new Ply(parts[3], first_player, game, this);
@@ -64,6 +62,8 @@ define([
       this.ply1.comments = _.map(this.comments2, 'text');
     }
 
+    this.comments2 = Comment.parse(parts[4], game);
+
     if (parts[5]) {
       this.ply2 = new Ply(parts[5], second_player, game, this);
       this.ply2.comments = _.map(this.comments3, 'text');
@@ -71,6 +71,8 @@ define([
     } else {
       this.ply2 = null;
     }
+
+    this.comments3 = Comment.parse(parts[6], game);
 
     if (parts[7]) {
       this.result = new Result(parts[7], game);
@@ -84,7 +86,10 @@ define([
       this.result = null;
     }
 
+    this.comments4 = Comment.parse(parts[8], game);
+
     this.suffix = parts[9];
+    game.char_index += this.suffix.length;
 
     this.index = game.moves.length;
     game.moves[this.index] = this;
