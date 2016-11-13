@@ -541,6 +541,10 @@ html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
     color: $whitish;
     width: 40px;
     height: 40px;
+
+    + button {
+      margin-left: 20px;
+    }
   }
 
   button.play {

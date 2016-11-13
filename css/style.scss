@@ -119,8 +119,15 @@
   opacity: 0;
   pointer-events: none;
   z-index: 2;
-  transition: opacity $time-smooth ease-in-out;
-  will-change: opacity;
+  transition: opacity $time-smooth ease-in-out,
+    transform $time-smooth ease-in-out;
+  will-change: opacity, transform;
+
+  @media (max-width: 450px) {
+    html.show-play-controls & {
+      transform: translateY(-$fab-height);
+    }
+  }
 
   html.show-fab & {
     opacity: 1;
