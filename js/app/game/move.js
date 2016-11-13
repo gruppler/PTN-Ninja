@@ -50,6 +50,9 @@ define([
     } else {
       this.ply1 = null;
     }
+
+    this.comments2 = Comment.parse(parts[4], game);
+
     if (this.comments1) {
       if (this.comments2) {
         this.ply1.comments = _.map(this.comments1, 'text').concat(
@@ -62,20 +65,22 @@ define([
       this.ply1.comments = _.map(this.comments2, 'text');
     }
 
-    this.comments2 = Comment.parse(parts[4], game);
-
     if (parts[5]) {
       this.ply2 = new Ply(parts[5], second_player, game, this);
+
+      this.comments3 = Comment.parse(parts[6], game);
+
       this.ply2.comments = _.map(this.comments3, 'text');
       this.ply2.turn = 2;
     } else {
       this.ply2 = null;
     }
 
-    this.comments3 = Comment.parse(parts[6], game);
-
     if (parts[7]) {
       this.result = new Result(parts[7], game);
+
+      this.comments4 = Comment.parse(parts[8], game);
+
       this.result.comments = _.map(this.comments4, 'text');
       if (this.ply2) {
         this.ply2.result = this.result;
@@ -85,8 +90,6 @@ define([
     } else {
       this.result = null;
     }
-
-    this.comments4 = Comment.parse(parts[8], game);
 
     this.suffix = parts[9];
     game.char_index += this.suffix.length;
