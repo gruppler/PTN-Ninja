@@ -698,7 +698,7 @@ define([
       event.preventDefault();
     }
 
-    this.go_to_ply(this.game.plys.length, true);
+    this.go_to_ply(this.game.plys.length - 1, true);
   };
 
 
