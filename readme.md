@@ -14,7 +14,19 @@ If you want to support this project, you can...
 
 ## Getting Started
 
-To load a "**.ptn**" file, **drag** the file into the window, or copy the contents and paste into the editor. Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner). If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). The editor checks the validity of the syntax as well as the legality of each ply.
+To load a "**.ptn**" file, **drag** the file into the window, or select **Open** from the menu, or copy the contents and paste into the editor.
+
+Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
+
+If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). The editor checks the validity of the syntax as well as the legality of each ply. You can click the error message to move the caret to the relevant position in the PTN.
+
+## 3D Mode
+
+3D Mode is experimental and may not work well or at all on some browsers or devices.
+
+In 3D Mode, you can rotate the view by **dragging** with **two fingers** on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> **dragging**, or by <kbd>middle-click</kbd> **dragging**.
+
+You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-left-click</kbd>, or with a <kbd>double-middle-click</kbd>.
 
 ## Hotkeys
 ### Global

@@ -68,15 +68,21 @@ define(['lodash'], function (_) {
     },
 
     set: function (prop, value, mode, initiator) {
+      var is_first_change;
+
       if (mode) {
+        console.log(prop, localStorage[mode+'.'+prop]);
+        is_first_change = _.isUndefined(localStorage[mode+'.'+prop]);
         this[mode][prop] = value;
         localStorage[mode+'.'+prop] = JSON.stringify(value);
       } else {
+        console.log(prop, localStorage[prop]);
+        is_first_change = _.isUndefined(localStorage[prop]);
         this[prop] = value;
         localStorage[prop] = JSON.stringify(value);
       }
 
-      this.on_change(prop, null, mode, initiator);
+      this.on_change(prop, null, mode, initiator, is_first_change);
     },
 
     set_css_flag: function (prop, value) {
@@ -123,7 +129,7 @@ define(['lodash'], function (_) {
       }
     },
 
-    on_change: function (prop, fn, mode, initiator) {
+    on_change: function (prop, fn, mode, initiator, is_first_change) {
       var value, i;
 
       function _listen(prop) {
@@ -155,7 +161,8 @@ define(['lodash'], function (_) {
               value,
               prop,
               mode,
-              initiator
+              initiator,
+              is_first_change
             );
           }
         }

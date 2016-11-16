@@ -76,6 +76,12 @@ define({
       }
     },
 
+    info: {
+      board_3d: "<p>3D Mode is experimental and may not work well or at all on some browsers or devices.</p>"+
+        "<p>In 3D Mode, you can rotate the view by <strong>dragging</strong> with <strong>two fingers</strong> on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> <strong>dragging</strong>, or by <kbd>middle-click</kbd> <strong>dragging</strong>.</p>"+
+        "<p>You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-left-click</kbd>, or with a <kbd>double-middle-click</kbd>.</p>"
+    },
+
     error: {
       illegal_ply: "Illegal ply: \"<b><%=ply%></b>\"",
       invalid_movetext: "Invalid movetext: \"<b><%=text%></b>\"",

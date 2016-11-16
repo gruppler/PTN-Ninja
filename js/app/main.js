@@ -6,6 +6,7 @@
 
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
+  'app/messages',
   'app/config',
   'app/app',
   'filesaver',
@@ -17,7 +18,7 @@ requirejs({locale: navigator.language}, [
   'bililiteRange.undo',
   'bililiteRange.fancytext',
   'domReady!'
-], function (t, config, app, saveAs, _, $) {
+], function (t, Messages, config, app, saveAs, _, $) {
 
   var baseurl = location.origin + location.pathname;
 
@@ -64,6 +65,7 @@ requirejs({locale: navigator.language}, [
   app.$open = $('#open');
   app.$menu_edit = $('#menu-edit');
   app.$menu_play = $('#menu-play');
+  app.m = new Messages('global');
 
   app.range = bililiteRange(app.$ptn[0]);
   app.range.undo(0);
@@ -229,6 +231,11 @@ requirejs({locale: navigator.language}, [
 
   // Update piece positioning after toggling 3D
   config.on_change('board_3d', app.board.reposition_pieces);
+  config.on_change('board_3d', function (value, prop, n, i, is_first_change) {
+    if (is_first_change) {
+      app.m.info(t.info.board_3d);
+    }
+  });
 
   // Rotate board in 3D mode
   config.on_change('board_rotation', app.board.rotate);
