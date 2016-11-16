@@ -219,10 +219,11 @@ define([
     return output;
   };
 
-  Game.prototype.get_bounds = function (ply) {
+  Game.prototype.get_bounds = function (token) {
     return [
-      ply.char_index + ply.prefix.length,
-      ply.char_index + ply.print_text().length
+      token.char_index + (token.prefix ? token.prefix.length : 0),
+      token.char_index + (token.print_text ? token.print_text().length : 0)
+        - (token.suffix ? token.suffix.length : '')
     ];
   };
 

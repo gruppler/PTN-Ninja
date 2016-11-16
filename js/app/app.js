@@ -264,10 +264,6 @@ define([
       } else {
         this.set_caret('end');
       }
-
-      if (this.game.is_editing) {
-        this.$ptn[0].focus();
-      }
     },
 
     move_caret: function (relative_bounds) {
@@ -294,6 +290,14 @@ define([
       }
       this.range.bounds(bounds).select();
       this.save_caret();
+
+      if (this.game.is_editing) {
+        this.$ptn[0].focus();
+      }
+    },
+
+    select_token_text: function (token) {
+      this.set_caret(this.game.get_bounds(token));
     },
 
     save_scroll_position: function () {
@@ -575,6 +579,7 @@ define([
     'restore_caret',
     'move_caret',
     'set_caret',
+    'select_token_text',
     'insert_text'
   ]);
 

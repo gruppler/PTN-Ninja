@@ -14,7 +14,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '1/2': 'draw'
   };
 
-  var Result = function (string, game) {
+  var Result = function (string, game, tag) {
     var parts = string.match(r.grammar.result_grouped);
 
     game.config.result = this;

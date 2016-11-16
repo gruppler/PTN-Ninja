@@ -13,7 +13,8 @@ define([
 ], function (Result, TPS, r, t, _) {
 
   var Tag = function (string, game, index) {
-    var parts = string.match(r.grammar.tag_grouped);
+    var that = this
+      , parts = string.match(r.grammar.tag_grouped);
 
     this.index = _.isNumber(index) ? index : game.tags.length;
     game.tags[this.index] = this;
@@ -26,7 +27,11 @@ define([
     if (!parts) {
       game.is_valid = false;
       this.print = game.print_invalid;
-      game.m.error(t.error.invalid_tag({tag: _.truncate(string, {length: 5})}));
+      game.m.error(
+        t.error.invalid_tag({tag: _.truncate(string, {length: 5})})
+      ).click(function () {
+        app.select_token_text(that);
+      });
       return this;
     }
 
@@ -43,7 +48,14 @@ define([
 
     if (!(this.key in r.tags)) {
       this.icon = 'unknown';
-      game.m.error(t.error.invalid_tag({tag: parts[2]}));
+      game.m.error(
+        t.error.invalid_tag({tag: parts[2]})
+      ).click(function () {
+        app.set_caret([
+          that.char_index + that.prefix.length,
+          that.char_index + that.prefix.length + that.name.length
+        ]);
+      });
       game.is_valid = false;
       return false;
     }
@@ -51,16 +63,23 @@ define([
     if (!r.tags[this.key].test(this.value) && this.key != 'tps') {
       game.m.error(
         t.error.invalid_tag_value({tag: this.name, value: this.value})
-      );
+      ).click(function () {
+        app.set_caret([
+          that.char_index + string.length
+            - that.value.length - that.q2.length - that.suffix.length,
+          that.char_index + string.length
+            - that.q2.length - that.suffix.length
+        ]);
+      });
       game.is_valid = false;
       return false;
     }
 
     if (this.key == 'result' && this.value) {
-      new Result(this.value, game);
+      new Result(this.value, game, this);
       this.print_value = _.bind(game.config.result.print_value, game.config.result);
     } else if(this.key == 'tps') {
-      game.config.tps = new TPS(this.value, game);
+      game.config.tps = new TPS(this.value, game, this);
       this.print_value = _.bind(game.config.tps.print, game.config.tps);
     }else{
       game.config[this.key] = this.value;

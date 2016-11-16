@@ -6,15 +6,30 @@
 
 define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
-  var TPS = function (string, game) {
-    var parts = string.match(r.grammar.tps_grouped)
+  var TPS = function (string, game, tag) {
+    var that = this
+      , parts = string.match(r.grammar.tps_grouped)
       , tps;
 
     this.is_valid = true;
+    this.invalid_dimensions = false;
+
+    if (tag) {
+      this.tag = tag;
+      this.char_index = tag.char_index + tag.print_text().length
+        - string.length - tag.q2.length - tag.suffix.length;
+    }
 
     // Invalid
     if (!parts[1]) {
-      game.m.error(t.error.invalid_tag_value({tag: t.TPS, value: string}));
+      game.m.error(
+        t.error.invalid_tag_value({tag: t.TPS, value: string})
+      ).click(function () {
+        app.set_caret([
+          that.char_index,
+          that.char_index + string.length
+        ]);
+      });
       this.is_valid = false;
       game.is_valid = false;
       this.text = string;
@@ -30,19 +45,45 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     this.move = parts[5];
     this.suffix = parts[6];
 
-    if (this.invalid_dimensions) {
-      game.m.error(t.error.invalid_TPS_dimensions);
+    if (this.invalid_dimensions !== false) {
+      game.m.error(
+        t.error.invalid_TPS_dimensions
+      ).click(function () {
+        app.set_caret(that.invalid_dimensions);
+      });
     } else if (this.suffix && /\S/.test(this.suffix)) {
-      game.m.error(t.error.invalid_tag_value({tag: t.TPS, value: this.suffix}));
+      game.m.error(
+        t.error.invalid_tag_value({tag: t.TPS, value: this.suffix})
+      ).click(function () {
+        app.set_caret([
+          that.char_index + string.length - that.suffix.length,
+          that.char_index + string.length
+        ]);
+      });
     } else if (!this.is_valid) {
-      game.m.error(t.error.invalid_tag_value({
-        tag: t.TPS,
-        value: _.find(this.squares, {error: true}).text
-      }));
+      game.m.error(
+        t.error.invalid_tag_value({
+          tag: t.TPS,
+          value: _.find(this.squares, {error: true}).text
+        })
+      ).click(function () {
+        app.set_caret([
+          that.char_index,
+          that.char_index + string.length
+        ]);
+      });
     } else if (!this.player) {
-      game.m.error(t.error.tps_missing_player);
+      game.m.error(
+        t.error.tps_missing_player
+      ).click(function () {
+        app.set_caret(that.char_index + string.length);
+      });
     } else if (!this.move) {
-      game.m.error(t.error.tps_missing_move);
+      game.m.error(
+        t.error.tps_missing_move
+      ).click(function () {
+        app.set_caret(that.char_index + string.length);
+      });
     }
 
     this.player *= 1;
@@ -75,10 +116,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '</span>'
   );
 
-  TPS.Square = function (string, row, col) {
+  TPS.Square = function (string, row, col, char_index) {
     var parts = string.match(r.grammar.col_grouped)
       , stack_parts;
 
+    this.char_index = char_index;
     this.square = app.i_to_square([col, row]);
 
     if (parts[2]) {
@@ -101,24 +143,25 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   TPS.Square.parse = function(tps, string, size) {
     var row = size - 1, col = 0
-      , squares;
+      , squares, char_index = tps.char_index;
 
     var squares = _.map(
       _.compact(string.match(r.grammar.cols)),
       function (square, i) {
-        square = new TPS.Square(square, row, col);
+        square = new TPS.Square(square, row, col, char_index);
+        char_index += square.text.length + square.separator.length;
 
         if (col >= size || row < 0) {
           square.error = true;
           square.separator_error = square.separator == ',';
-          tps.invalid_dimensions = true;
+          tps.invalid_dimensions = char_index;
         }
 
         if (square.is_space) {
           col += square.count;
           if (col > size) {
             square.error = true;
-            tps.invalid_dimensions = true;
+            tps.invalid_dimensions = char_index;
           }
         } else {
           col++;
@@ -127,14 +170,14 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
         if (square.separator == '/') {
           if (col < size || row == 0) {
             square.separator_error = true;
-            tps.invalid_dimensions = true;
+            tps.invalid_dimensions = char_index;
           }
 
           row--;
           col = 0;
         } else if (square.separator == ',' && col == size) {
           square.separator_error = true;
-          tps.invalid_dimensions = true;
+          tps.invalid_dimensions = char_index;
         }
 
         return square;
@@ -142,7 +185,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     );
 
     if (row != 0 || col < size) {
-      tps.invalid_dimensions = true;
+      tps.invalid_dimensions = char_index;
     }
 
     return squares || [];

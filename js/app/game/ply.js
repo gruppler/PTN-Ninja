@@ -41,7 +41,8 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   }
 
   var Ply = function (string, player, game, move) {
-    var ply_group = string.match(r.grammar.ply_grouped)
+    var that = this
+      , ply_group = string.match(r.grammar.ply_grouped)
       , parts, i;
 
     this.index = game.plys.length;
@@ -65,7 +66,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.text = ply_group[2];
 
       if (!game.config.tps || game.config.tps.player == 1) {
-        game.m.error(t.error.invalid_ply({ply: this.text}));
+        game.m.error(
+          t.error.invalid_ply({ply: this.text})
+        ).click(function () {
+          app.select_token_text(that);
+        });
         this.is_illegal = true;
         this.text = this.prefix + this.text;
         this.print = game.print_invalid;
@@ -97,7 +102,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.stone_text = parts[5] || '';
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
-        game.m.error(t.error.invalid_ply({ply: this.text}));
+        game.m.error(
+          t.error.invalid_ply({ply: this.text})
+        ).click(function () {
+          app.select_token_text(that);
+        });
         this.is_illegal = true;
       }
     } else if (ply_group[3]) {
@@ -123,7 +132,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.is_illegal = true;
       this.text = string;
       this.print = game.print_invalid;
-      game.m.error(t.error.invalid_movetext({text: _.trim(string)[0]}));
+      game.m.error(
+        t.error.invalid_movetext({text: _.trim(string)[0]})
+      ).click(function () {
+        app.select_token_text(that);
+      });
       return this;
     }
 
@@ -132,7 +145,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       (this.col.charCodeAt(0) - '`'.charCodeAt(0)) > game.config.size
     ) {
       game.is_valid = false;
-      game.m.error(t.error.invalid_square({square: this.col+this.row}));
+      game.m.error(
+        t.error.invalid_square({square: this.col+this.row})
+      ).click(function () {
+        app.select_token_text(that);
+      });
       this.is_illegal = true;
     }
 

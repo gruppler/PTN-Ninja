@@ -104,7 +104,11 @@ define([
         this.text = parts[10];
         this.is_invalid = true;
         game.is_valid = false;
-        game.m.error(t.error.invalid_movetext({text: _.trim(this.text)[0]}));
+        game.m.error(
+          t.error.invalid_movetext({text: _.trim(this.text)[0]})
+        ).click(function () {
+          app.set_caret(game.char_index);
+        });
       }
     }
 

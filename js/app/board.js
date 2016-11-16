@@ -479,7 +479,9 @@ define([
   Board.prototype.illegal_ply = function (ply) {
     this.m_parse.error(
       t.error.illegal_ply({ ply: ply.text })
-    );
+    ).click(function () {
+      app.select_token_text(ply);
+    });
     ply.is_illegal = true;
     return false;
   };
@@ -488,7 +490,12 @@ define([
   Board.prototype.invalid_tps = function (square) {
     this.m_parse.error(
       t.error.invalid_tag_value({tag: t.TPS, value: square.text})
-    );
+    ).click(function () {
+      app.set_caret([
+        square.char_index,
+        square.char_index + square.text.length
+      ]);
+    });
     square.error = true;
 
     return false;
