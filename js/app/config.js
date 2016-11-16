@@ -71,12 +71,10 @@ define(['lodash'], function (_) {
       var is_first_change;
 
       if (mode) {
-        console.log(prop, localStorage[mode+'.'+prop]);
         is_first_change = _.isUndefined(localStorage[mode+'.'+prop]);
         this[mode][prop] = value;
         localStorage[mode+'.'+prop] = JSON.stringify(value);
       } else {
-        console.log(prop, localStorage[prop]);
         is_first_change = _.isUndefined(localStorage[prop]);
         this[prop] = value;
         localStorage[prop] = JSON.stringify(value);
