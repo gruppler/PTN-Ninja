@@ -52,7 +52,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "$0: Converting CRLF to LF"
-find ./ -type f -exec dos2unix {} \;
+find ./ -type f -not -path '*/\.*' -not -path './dist/*' -exec dos2unix {} \;
 
 echo "$0: Committing"
 git commit -a -F="$TEMPFILE"
