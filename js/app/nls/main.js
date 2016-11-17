@@ -95,7 +95,8 @@ define({
       invalid_TPS_dimensions: "Invalid TPS dimensions",
       missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>",
       tps_missing_player: "Invalid TPS: Missing player",
-      tps_missing_move: "Invalid TPS: Missing move number"
+      tps_missing_move: "Invalid TPS: Missing move number",
+      unrecognized_tag: "Unrecognized tag: \"<b><%=tag%></b>\""
     }
 
   }

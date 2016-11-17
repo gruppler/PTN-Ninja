@@ -88,6 +88,7 @@ define([
     this.moves.length = 0;
     this.plys.length = 0;
     this.m.clear('error');
+    this.m.clear('warning');
     this.char_index = 0;
 
     file = plaintext.match(r.grammar.ptn_grouped);

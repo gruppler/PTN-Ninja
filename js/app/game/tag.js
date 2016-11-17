@@ -48,20 +48,21 @@ define([
 
     if (!(this.key in r.tags)) {
       this.icon = 'unknown';
-      game.m.error(
-        t.error.invalid_tag({tag: parts[2]})
+      game.m.warning(
+        t.error.unrecognized_tag({tag: parts[2]})
       ).click(function () {
         app.set_caret([
           that.char_index + that.prefix.length,
           that.char_index + that.prefix.length + that.name.length
         ]);
       });
-      game.is_valid = false;
-      return false;
+      return this;
+    } else if (r.required_tags.indexOf(this.key) >= 0) {
+      this.is_required = true;
     }
 
     if (!r.tags[this.key].test(this.value) && this.key != 'tps') {
-      game.m.error(
+      game.m[this.is_required ? 'error' : 'warning'](
         t.error.invalid_tag_value({tag: this.name, value: this.value})
       ).click(function () {
         app.set_caret([
@@ -71,8 +72,11 @@ define([
             - that.q2.length - that.suffix.length
         ]);
       });
-      game.is_valid = false;
-      return false;
+      if (this.is_required) {
+        game.is_valid = false;
+        return false;
+      }
+      return this;
     }
 
     if (this.key == 'result' && this.value) {

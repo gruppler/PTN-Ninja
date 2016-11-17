@@ -15,15 +15,15 @@ define(['lodash'], function (_) {
   };
 
   var other_tags = {
-    'event': /^(.*)$/,
-    'site': /^(.*)$/,
-    'round': /^(\d+)$/,
-    'rating1': /^(\d+)$/,
-    'rating2': /^(\d+)$/,
+    'event': /^.*$/,
+    'site': /^.*$/,
+    'round': /^\d+$/,
+    'rating1': /^\d+$/,
+    'rating2': /^\d+$/,
     'tps': /^[1-9xSC\/,]+\s+[1,2]\s+\d+$/,
-    'points': /^(\d+)$/,
-    'time': /^\d\d(?::\d\d){1,2}$/,
-    'clock': /^(\d+min(?:\+\d+sec))$/
+    'points': /^\d+$/,
+    'time': /^\d\d(:\d\d){1,2}$/,
+    'clock': /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/
   };
 
   var grammar = {
