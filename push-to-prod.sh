@@ -13,6 +13,10 @@ else
   version="v$1"
 fi
 
+pause () {
+  read -rsp $'Press any key to continue...\n' -n1 key
+}
+
 # Dump all commit messages since last tag
 if [[ ! -f $TEMPFILE ]]; then
   echo "$version" > $TEMPFILE
@@ -26,6 +30,7 @@ fi
 "${EDITOR:-vim}" $TEMPFILE
 
 echo "$0: Switching to master"
+pause
 git checkout master
 if [[ $? -ne 0 ]]; then
   echo 1>&2 "$0: Failed to switch to master branch"
@@ -64,6 +69,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "$0: Pushing tagged commit"
+pause
 git push origin --follow-tags
 if [[ $? -ne 0 ]]; then
   echo 1>&2 "$0: Failed to push tagged commit"
@@ -71,6 +77,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "$0: Pushing build to production"
+pause
 git subtree push --prefix dist origin gh-pages
 if [[ $? -ne 0 ]]; then
   read -p "$0: Failed! Try forcing it? [Y|n] " -n 1 -r
