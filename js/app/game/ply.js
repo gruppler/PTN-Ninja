@@ -45,6 +45,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       , ply_group = string.match(r.grammar.ply_grouped)
       , parts, i;
 
+    this.is_valid = true;
     this.index = game.plys.length;
     game.plys[game.plys.length] = this;
 

@@ -417,7 +417,7 @@ define([
     ply = this.game.plys[this.ply_index];
     square = this.squares[ply.square];
 
-    if (ply.is_illegal) {
+    if (ply.is_illegal || !ply.is_valid) {
       this.pause();
       return false;
     }
@@ -457,6 +457,10 @@ define([
 
     ply = this.game.plys[this.ply_index];
     square = this.squares[ply.square];
+
+    if (ply.is_illegal || !ply.is_valid) {
+      return false;
+    }
 
     if (ply.is_nop) {
       ply_result = true;
