@@ -203,9 +203,9 @@ define(['app/messages'], function (Messages) {
         notify_toggle(t.Road_Connections, app.config.play.show_roads);
       },
 
-      's': function (event, $focus, $parent) {
-        app.config.toggle('show_player_scores', 'play');
-        notify_toggle(t.Player_Scores, app.config.play.show_player_scores);
+      'f': function (event, $focus, $parent) {
+        app.config.toggle('show_flat_counts', 'play');
+        notify_toggle(t.Flat_Counts, app.config.play.show_flat_counts);
       },
 
       'm': function (event, $focus, $parent) {

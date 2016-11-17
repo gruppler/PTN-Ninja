@@ -172,7 +172,7 @@ requirejs({locale: navigator.language}, [
   app.$window.on('resize', app.resize);
   app.config.on_change([
     'show_axis_labels',
-    'show_player_scores',
+    'show_flat_counts',
     'show_current_move',
     'show_unplayed_pieces',
     'show_play_controls'

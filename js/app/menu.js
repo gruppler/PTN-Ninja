@@ -139,10 +139,10 @@ define([
       'data-id': 'show_axis_labels',
       'data-mode': 'edit'
     },{
-      label: t.Player_Scores,
+      label: t.Flat_Counts,
       type: 'checkbox',
-      checked: config.edit.show_player_scores,
-      'data-id': 'show_player_scores',
+      checked: config.edit.show_flat_counts,
+      'data-id': 'show_flat_counts',
       'data-mode': 'edit'
     },{
       label: t.Current_Move,
@@ -202,10 +202,10 @@ define([
       'data-id': 'show_axis_labels',
       'data-mode': 'play'
     },{
-      label: t.Player_Scores,
+      label: t.Flat_Counts,
       type: 'checkbox',
-      checked: config.play.show_player_scores,
-      'data-id': 'show_player_scores',
+      checked: config.play.show_flat_counts,
+      'data-id': 'show_flat_counts',
       'data-mode': 'play'
     },{
       label: t.Current_Move,

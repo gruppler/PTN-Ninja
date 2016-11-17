@@ -13,7 +13,7 @@ define(['lodash'], function (_) {
     presets: {
       minimal: {
         show_axis_labels: false,
-        show_player_scores: false,
+        show_flat_counts: false,
         show_current_move: false,
         show_unplayed_pieces: false,
         show_play_controls: false
@@ -22,7 +22,7 @@ define(['lodash'], function (_) {
         square_hl: true,
         show_roads: true,
         show_axis_labels: true,
-        show_player_scores: true,
+        show_flat_counts: true,
         show_current_move: false,
         show_unplayed_pieces: false,
         show_play_controls: false
@@ -31,7 +31,7 @@ define(['lodash'], function (_) {
         square_hl: true,
         show_roads: true,
         show_axis_labels: true,
-        show_player_scores: true,
+        show_flat_counts: true,
         show_current_move: true,
         show_unplayed_pieces: true,
         show_play_controls: true

@@ -303,7 +303,7 @@ define([
       width -= axis_width;
       height -= this.$col_labels.outerHeight();
     }
-    if (board_config.show_player_scores) {
+    if (board_config.show_flat_counts) {
       height -= this.$scores.outerHeight();
     }
     if (board_config.show_current_move) {

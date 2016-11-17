@@ -334,7 +334,7 @@ $stone-thickness: 0.3vmin;
         opacity $time-smooth $natural;
     }
 
-    html.show-player-scores & {
+    html.show-flat-counts & {
       opacity: 1;
       margin-bottom: 0;
     }
