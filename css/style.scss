@@ -82,10 +82,7 @@ kbd {
 }
 
 #ptn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
+  @include position-fill;
   overflow: auto;
   overflow-wrap: break-word;
   direction: ltr;
