@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="playmode">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -26,66 +26,66 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <title>PTN Ninja</title>
-    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:400,700|Roboto+Slab:400,700|Source+Code+Pro:300,400,600,700'>
-    <link rel="stylesheet" href="css/icons/style.css" charset="utf-8">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:400,500,700|Roboto+Slab:400,700|Source+Code+Pro:300,400,600,700'>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/icon?family=Material+Icons'>
+    <link rel='stylesheet' href='https://code.getmdl.io/1.2.1/material.blue_grey-light_green.min.css'>
+    <script defer src="https://code.getmdl.io/1.2.1/material.min.js"></script>
+
     <link rel="stylesheet" href="css/style.css" charset="utf-8">
     <script data-main="js/app" src="js/require.js" charset="utf-8"></script>
+
+    <title>PTN Ninja</title>
   </head>
-  <body class="playmode">
-    <div id="app">
+  <body>
 
-      <div id="viewer"></div>
+    <div class="mdl-layout mdl-js-layout">
 
-      <div id="editor">
-        <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
-      </div>
+      <div id="menu" class="mdl-layout__drawer"></div>
 
-      <div id="controls">
-        <div class="buttons">
-          <button class="flat round first">
-            <i class="icon-first"></i>
-          </button>
-          <button class="flat round prev">
-            <i class="icon-left"></i>
-          </button>
-          <button class="flat round cta play">
-            <i class="icon-play"></i>
-            <i class="icon-pause"></i>
-          </button>
-          <button class="flat round next">
-            <i class="icon-right"></i>
-          </button>
-          <button class="flat round last">
-            <i class="icon-last"></i>
-          </button>
+      <main id="app" class="mdl-layout__content">
+
+        <div id="viewer">
+          <div class="view-wrapper">
+            <div></div>
+            <div class="table-wrapper"></div>
+            <div></div>
+          </div>
+          <div class="controls">
+            <div class="buttons">
+              <button class="first mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">first_page</i>
+              </button>
+              <button class="prev mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">chevron_left</i>
+              </button>
+              <button class="play mdl-button--colored mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons play">play_arrow</i>
+                <i class="material-icons pause">pause</i>
+              </button>
+              <button class="next mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">chevron_right</i>
+              </button>
+              <button class="last mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">last_page</i>
+              </button>
+            </div>
+          </div>
         </div>
+
+        <div id="editor">
+          <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0"></pre>
+        </div>
+
+        <div id="messages"></div>
+
+      </main>
+
+      <div id="fab" class="mdl-button mdl-js-button mdl-button--fab mdl-button--colored">
+        <i class="material-icons play">play_arrow</i>
+        <i class="material-icons edit">mode_edit</i>
+        <i class="material-icons error">error</i>
       </div>
 
-    </div>
-
-    <div id="messages"></div>
-
-    <div id="fab" class="fab cta">
-      <i class="icon-play"></i>
-      <i class="icon-edit"></i>
-      <i class="icon-error"></i>
-    </div>
-
-    <div id="share-menu">
-      <div id="share" class="fab cta small">
-        <i class="icon-share"></i>
-      </div>
-      <a id="permalink" href="#" target="_blank" class="fab small">
-        <i class="icon-link"></i>
-      </a>
-      <a id="download" href="#" target="_blank" class="fab small">
-        <i class="icon-download"></i>
-      </a>
-      <div class="fab small">
-        <i class="icon-open"></i>
-        <input id="open" type="file" accept=".ptn,.txt"/>
-      </div>
     </div>
 
   </body>

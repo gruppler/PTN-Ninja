@@ -1,36 +1,65 @@
 define({
 
   root: {
-    App_Title: "PTN Ninja",
+    app_title: "PTN Ninja",
+    About_App: "About PTN Ninja",
 
+    Animate_Board: "Animate Board",
+    Axis_Labels: "Axis Labels",
+    Board_3D: "3D Board",
+    Board_Opacity: "Board Opacity",
+    Board_Settings: "Board Settings",
+    Cancel: "Cancel",
     Clock: "Clock",
+    Close: "Close",
+    Current_Move: "Current Move",
     Date: "Date",
-    Download: "Download",
     Edit_Mode: "Edit Mode",
     Event: "Event",
     First_Ply: "First Ply",
+    Flat_Counts: "Flat Counts",
     Last_Ply: "Last Ply",
+    Load_Sample_Game: "Load Sample Game",
     Next_Ply: "Next Ply",
+    Off: "Off",
+    OK: "OK",
+    On: "On",
     Open: "Open",
-    Permalink: "Permalink",
-    Play_Mode: "Play Mode",
+    Permalink: "Link to this game",
     PlayPause: "Play/Pause",
+    Play_Controls: "Play Controls",
+    Play_Mode: "Play Mode",
+    Play_Speed: "Play Speed",
     Player1: "Player1",
+    Player1_name: "White",
     Player2: "Player2",
+    Player2_name: "Black",
     Points: "Points",
+    Preferences: "Preferences",
     Previous_Ply: "Previous Ply",
     Rating1: "Rating1",
     Rating2: "Rating2",
+    Redo: "Redo",
     Result: "Result",
+    Revert_Game: "Revert Game",
+    Road_Connections: "Road Connections",
     Round: "Round",
+    Save: "Save",
     Share: "Share",
-    ShowHide_Errors: "Show/Hide Errors",
+    Show_Annotations: "Show Annotations",
+    Show_FAB: "Show Mode Button",
+    Show_Hide_Errors: "Show/Hide Errors",
+    Show_Parse_Errors: "Show Parse Errors",
     Site: "Site",
     Size: "Size",
+    Square_Highlights: "Square Highlights",
     TPS: "TPS",
     Tak: "Tak",
     Time: "Time",
     Tinue: "Tinuë",
+    Trim_to_current_ply: "Trim to current ply",
+    Undo: "Undo",
+    Unplayed_Pieces: "Unplayed Pieces",
     n_characters: "<%=n%> characters",
 
     result: {
@@ -40,10 +69,18 @@ define({
       'tie': "It's a tie"
     },
 
-    success: {},
+    confirm: {
+      Revert_Game: {
+        title: "Revert Game",
+        content: "Are you sure you want to revert the game to its original state?"
+      }
+    },
 
-    warning: {
-      long_url: "The permalink is over 2000 characters long, which might not work in some browsers."
+    help: {
+      board_3d_experimental: "3D Mode is experimental and may not work well or at all on some browsers or devices. It works best on Chrome.",
+      board_rotation:
+        "<p>In 3D Mode, you can rotate the view by <strong>dragging</strong> with <strong>two fingers</strong> on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> <strong>dragging</strong>, or by <kbd>middle-click</kbd> <strong>dragging</strong>.</p>"+
+        "<p>You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-left-click</kbd>, or with a <kbd>double-middle-click</kbd>.</p>"
     },
 
     error: {
@@ -56,12 +93,10 @@ define({
       invalid_tag: "Invalid tag: \"<b><%=tag%></b>\"",
       invalid_tag_value: "Invalid <%=tag%>: \"<b><%=value%></b>\"",
       invalid_TPS_dimensions: "Invalid TPS dimensions",
-      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>"
-    },
-
-    help: {},
-
-    info: {},
+      missing_tags: "Missing required tag(s): <b><%=_.map(tags, _.upperFirst).join('</b>, <b>')%></b>",
+      tps_missing_player: "Invalid TPS: Missing player",
+      tps_missing_move: "Invalid TPS: Missing move number"
+    }
 
   }
 

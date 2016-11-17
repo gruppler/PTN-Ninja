@@ -18,5 +18,10 @@
     'jquery': 'jquery.min',
     'filesaver': 'FileSaver.min',
     'lzstring': 'lz-string.min'
-  }
+  },
+  stubModules: [
+    'showdown',
+    'mdown',
+    'text'
+  ]
 })

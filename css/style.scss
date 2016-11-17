@@ -2,132 +2,175 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
+@import 'dialog-polyfill.scss';
 @import 'mixins.scss';
 @import 'variables.scss';
 @import 'global.scss';
-@import 'button.scss';
+@import 'menu.scss';
 @import 'messages.scss';
 @import 'grammar.scss';
 @import 'board.scss';
+@import 'mdl-override.scss';
+
+.mdl-dialog.scrolling {
+  width: 600px;
+  max-width: 100vw;
+  height: 90vh;
+  top: 5vh;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 650px) {
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .mdl-dialog__title {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    padding-bottom: 20px;
+  }
+
+  .mdl-dialog__content {
+    overflow: auto;
+    flex-shrink: 1;
+    flex-grow: 1;
+  }
+
+  .mdl-dialog__actions {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+}
+
+kbd {
+  display: inline-block;
+  background-color: $primary-color-50;
+  border: 1px solid $primary-color-100;
+  color: $primary-color-900;
+  font-family: $monospace;
+  font-size: inherit;
+  margin: 1px 0;
+  padding: 0.125rem 0.25rem 0;
+  border-radius: 3px;
+}
+
+#app, #editor, #viewer {
+  @include position-fill;
+}
 
 #app {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  background-color: $primary-color-500;
+  color: $primary-color-text;
+  overflow: hidden;
 }
 
 #editor {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  color: $primary-color-light;
-  font-family: $monospace;
-  flex-grow: 1;
+  color: $primary-color-200;
   z-index: 1;
-  transition: all $time-smooth $natural;
 
-  body.playmode & {
+  html.animate-board & {
+    transition: opacity $time-smooth $natural;
+  }
+
+  html.playmode & {
     @include unselectable;
     pointer-events: none;
     opacity: 0;
   }
-
-  &:before {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to right, rgba($primary-color-dark, 0.8) 10em, rgba($primary-color-dark, 0) 30em);
-    transition: opacity $time-smooth $natural;
-
-    body.playmode & {
-      opacity: 0;
-    }
-  }
 }
 
 #ptn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  @include position-fill;
   overflow: auto;
+  overflow-wrap: break-word;
+  direction: ltr;
+  box-sizing: border-box;
+  min-height: 100vh;
   font-weight: 300;
   font-size: 1.3em;
-  line-height: 1.5em;
+  line-height: 2em;
   padding: $edge;
-  padding-right: $edge + $fab-height-small;
+  padding-top: $edge + $button-height;
+  padding-right: $edge;
   margin: 0;
   white-space: pre-wrap;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  will-change: scroll-position;
 
   &:focus {
     outline: none;
   }
 
-  body.playmode & {
+  html.playmode & {
     cursor: default;
-    overflow: hidden;
-  }
-
-  .ply {
-    transition: all $time-quick ease-out;
-  }
-  body.editmode & .ply {
-    &:hover {
-      box-shadow: $shadow2;
-    }
-    &:active,
-    &.active {
-      box-shadow: $shadow4;
-    }
   }
 }
 
 #fab {
   position: absolute;
-  right: $edge;
+  right: $toolbar-height - $fab-height/2;
   bottom: $toolbar-height - $fab-height/2;
+  box-shadow: $shadow3;
+  opacity: 0;
+  pointer-events: none;
   z-index: 2;
+  transition: opacity $time-smooth ease-in-out,
+    transform $time-smooth ease-in-out;
+
+  @media (max-width: 450px) {
+    html.show-play-controls & {
+      transform: translateY(-$fab-height);
+    }
+  }
+
+  html.show-fab & {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  &:hover {
+    box-shadow: $shadow4;
+  }
+  &:active {
+    box-shadow: $shadow5;
+  }
 
   i {
     opacity: 0;
     position: absolute;
-    left: 50%;
+    top: 0;
+    line-height: $fab-height;
     transform: translate(-50%);
-    transition: all $time-smooth ease-in-out;
+    will-change: opacity, transform;
 
-    &.icon-play {
+    html.show-fab & {
+      transition: all $time-smooth ease-in-out;
+    }
+
+    &.play {
       transform: translate(-50%) rotate(179deg);
     }
-    &.icon-edit {
+    &.edit {
       transform: translate(-50%) rotate(-90deg);
     }
   }
 
-  body.editmode & {
-    i.icon-play {
+  html.editmode & {
+    i.play {
       opacity: 1;
       transform: translate(-50%);
     }
   }
 
-  body.playmode & {
-    i.icon-edit {
+  html.playmode & {
+    i.edit {
       opacity: 1;
       transform: translate(-50%);
     }
   }
 
-  body.error & {
+  html.error & {
     background-color: $error-color;
     color: $error-text-color;
 
@@ -138,103 +181,8 @@
     i {
       opacity: 0 !important;
     }
-    i.icon-error {
+    i.error {
       opacity: 1 !important;
     }
   }
-}
-
-#controls {
-  background-color: $primary-color-darker;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  flex-shrink: 0;
-  z-index: 1;
-  height: $toolbar-height;
-  transform: translateY(100%);
-  transition: transform $time-smooth $natural;
-
-  body.playmode & {
-    transform: none;
-  }
-
-  > div {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: $edge/2 $edge;
-  }
-
-  button {
-    color: $whitish;
-
-    + button {
-      margin-left: $edge/2;
-    }
-  }
-
-  button.play {
-    i {
-      transition: opacity $time-smooth $natural;
-
-      &.icon-pause {
-        position: absolute;
-        top: 0;
-        left: 0.5em;
-        opacity: 0;
-      }
-    }
-
-    body.playing & {
-      i.icon-play {
-        opacity: 0;
-      }
-      i.icon-pause {
-        opacity: 1;
-      }
-    }
-  }
-}
-
-#share-menu {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: $fab-height-small;
-  padding: $edge;
-  overflow: visible;
-  z-index: 1;
-
-  .fab + .fab {
-    margin-top: $edge;
-    opacity: 0;
-    transform: scale(0);
-    pointer-events: none;
-    transition: all $time-quick $natural;
-  }
-
-  &:hover {
-    .fab + .fab {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: all;
-    }
-  }
-}
-
-.fab.small .icon-share {
-  margin-left: -2px;
-}
-
-#open {
-  display: block;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  opacity: 0;
 }

@@ -27,39 +27,45 @@ define(['lodash'], function (_) {
   };
 
   var grammar = {
-    col: '(?:x[1-9]?|[12]+[SC]?)',
-    row: '(?:<col>(?:,<col>){0,8})',
-    tps: '^<row>(?:\\/<row>){2,8}\\s+[12]\\s+\\d+$',
-    tps_grouped: '(<row>(?:\\/<row>){2,8})\\s+([12])\\s+(\\d+)',
+    space: '(?:x[1-9]?)',
+    stack: '(?:[12]+[SC]?)',
+    stack_grouped: '([12]*)([12][SC]?)',
+    separator: '[,\\/]',
+    col: '(?:<space>|<stack>)',
+    cols: '(<col>?<separator>?)',
+    col_grouped: '(<space>?)(<stack>?)(<separator>?)',
+    tps_grouped: '((?:<col>|<separator>)*)(?:(\\s+)([12]))?(?:(\\s+)([1-9]\\d*))?([^]*)',
 
     tag: '(?:\\s*\\[.*\\]?)',
-    tag_grouped: '(\\s*\\[\\s*)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',
+    tag_grouped: '(\\s*\\[\\s*?)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',
     count: '[1-9]?',
-    direction: '(?:\\+|-|<|>)',
+    direction: '(?:[-+<>])',
     drops: '[1-9]*',
     place: '(?:<stone><square>)',
     place_grouped: '(<stone>)(<square>)',
     slide: '(?:<count><square><direction><drops><stone>)',
     slide_grouped: '(<count>)(<square>)(<direction>)(<drops>)(<stone>)',
-    comment: '(?:\\s*\\{[^}]*\\}?)*',
+    comment: '(?:\\s*?\\{[^}]*\\}?)*',
     comment_text: '\\s*\\{\\s*[^}]*[^}\\s]?\\s*\\}?',
     comment_grouped: '(\\s*\\{\\s*)([^}]*[^}\\s])?(\\s*\\}?)',
-    result: '(?:[\\s-]*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
-    result_grouped: '([\\s-]*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',
+    result: '(?:(?:\\s|--)*(?:R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2))',
+    result_grouped: '((?:\\s|--)*)(R-0|0-R|F-0|0-F|1-0|0-1|1\\/2-1\\/2)',
     evaluation: '[?!\'"]*',
+    nop: '(?:\\s*load)',
+    nop_grouped: '(\\s*)(\\S+)',
     ply: '(?:\\s*(?:<slide>|<place>)<evaluation>)',
     ply_grouped: '(\\s*)(?:(<slide>)|(<place>))(<evaluation>)',
-    linenum: '\\s+\\d+\\.?',
-    linenum_grouped: '(\\s+)(\\d+\\.?)',
-    move: '(?:<linenum><comment><ply>?<comment><ply>?<comment><result>?<comment>)|<nonmove>',
-    move_grouped: '(?:(<linenum>)(<comment>)(<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>))|(<nonmove>)',
-    nonmove: '(?:[^]+)',
+    linenum: '(?:^|\\s)+\\d+\\.',
+    linenum_grouped: '(^|\\s+)(\\d+)\\.',
+    move: '(?:<linenum><comment>(?:<nop>|<ply>)?<comment><ply>?<comment><result>?<comment>[ \\t]*[^]*)',
+    move_grouped: '^(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)(\\s*)([^]*)',
+    move_only: '^<move>$',
 
     header: '^<tag>+$',
-    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)([\\s-]*)$'
+    ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)((?:\\s|--)*)$'
   };
 
   var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));
@@ -69,7 +75,10 @@ define(['lodash'], function (_) {
     });
   });
   _.each(grammar, function (expression, token) {
-    grammar[token] = new RegExp(expression, /_grouped$/.test(token) ? '' : 'g');
+    grammar[token] = new RegExp(
+      expression,
+      /_grouped|_only/.test(token) ? '' : 'g'
+    );
   });
 
   return {

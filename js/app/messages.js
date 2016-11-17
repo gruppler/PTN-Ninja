@@ -7,21 +7,22 @@
 define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   var Messages, $messages;
 
-  var $window = $(window)
-    , $body = $('body');
+  var tpl = {
+    message: _.template(
+      '<div class="message <%=type%>">'+
+        '<div class="content">'+
+          '<i class="material-icons"><%=icon%></i><%=message%>'+
+          '<i class="material-icons close">close</i>'+
+        '</div>'+
+      '</div>'
+    ),
 
-  var template = _.template(
-    '<div class="message <%=type%>">'+
-      '<div class="content">'+
-        '<i class="icon-<%=icon%>"></i><%=message%>'+
-        '<i class="icon-x"></i>'+
-      '</div>'+
-    '</div>'
-  );
+    group: _.template('<div class="messages-<%=group%>">')
+  };
 
   $messages = $('#messages');
   $messages
-    .on('click', 'i.icon-x', remove_message)
+    .on('click', 'i.close', remove_message)
     .on('remove', remove_message);
 
   Messages = function(group) {
@@ -29,26 +30,23 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     this.group = group || 'general';
     this.$messages = $messages.children('.messages-'+group);
     if (!this.$messages.length) {
-      this.$messages = $('<div class="messages-'+group+'">').appendTo($messages);
+      this.$messages = $(tpl.group({group: group})).appendTo($messages);
     }
 
     return this;
   };
 
-  Messages.prototype.add = function (message, seconds, group, type, icon) {
-    var $message = $(template({
+  Messages.prototype.add = function (message, seconds, group, type, icon, prepend) {
+    var $message = $(tpl.message({
       type: type,
       icon: icon || type,
       group: group || this.group,
       message: message || '&nbsp;'
     }));
-    $message.addClass('animating');
-    this.$messages.append($message);
-    $message.height();
-    $message.removeClass('animating');
+    this.$messages[prepend ? 'prepend' : 'append']($message);
 
-    $window.trigger(type+':'+(group || this.group));
-    $window.trigger(type);
+    app.$window.trigger(type+':'+(group || this.group));
+    app.$window.trigger(type);
 
     if (seconds) {
       setTimeout(_.bind(remove_message, $message), seconds*1000);
@@ -57,29 +55,30 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return $message;
   };
 
-  Messages.prototype.clear = function (type, animate) {
+  Messages.prototype.clear = function (type) {
     var $messages = this.$messages.children(type ? '.'+type : '');
 
-    if (animate) {
-      $messages.map(remove_message);
-    } else{
+    if ($messages.length) {
       $messages.remove();
+      app.$window.trigger('clear:'+(type ? type+':' : '')+this.group);
+
+      return true;
     }
 
-    $window.trigger('clear:'+(type ? type+':' : '')+this.group);
+    return false;
   };
 
   Messages.prototype.clear_all = function (type) {
     $messages.find('.message'+(type ? '.'+type : '')).remove();
-    $window.trigger('clear' + (type ? ':'+type : ''));
+    app.$window.trigger('clear' + (type ? ':'+type : ''));
   };
 
   Messages.prototype.success = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'success');
+    return this.add(message, seconds, group, 'success', 'check_circle', true);
   };
 
   Messages.prototype.warning = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'warning');
+    return this.add(message, seconds, group, 'warning', false, true);
   };
 
   Messages.prototype.error = function (message, seconds, group) {
@@ -87,23 +86,23 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.help = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'help');
+    return this.add(message, seconds, group, 'help', false, true);
   };
 
   Messages.prototype.info = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'info');
+    return this.add(message, seconds, group, 'info', false, true);
   };
 
   Messages.prototype.comment = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'comment');
+    return this.add(message, seconds, group, 'comment', 'mode_comment');
   };
 
   Messages.prototype.player1 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player1', 'player');
+    return this.add(message, seconds, group, 'player1', 'person');
   };
 
   Messages.prototype.player2 = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'player2', 'player');
+    return this.add(message, seconds, group, 'player2', 'person');
   };
 
   function remove_message() {
@@ -111,13 +110,7 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     if (!$message.hasClass('message')) {
       $message = $message.closest('.message');
     }
-    if ($message.hasClass('animating')) {
-      $message.remove();
-    } else {
-      $message.afterTransition(function () {
-        $message.remove();
-      }).addClass('animating');
-    }
+    $message.remove();
   }
 
   return Messages;

@@ -4,50 +4,43 @@
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
 #messages {
+  z-index: 2;
+  position: absolute;
+  top: $edge;
+  bottom: 0;
+  left: $fab-height;
+  right: $toolbar-height - $fab-height/2;
+  pointer-events: none;
+  overflow: hidden;
+
   > div {
-    position: absolute;
-    top: -0.5em;
-    left: 0;
-    padding: $edge;
-    overflow: auto;
+    padding-bottom: $edge;
     max-height: 100%;
-    max-width: calc(100% - #{$edge + $fab-height});
+    max-width: 100%;
     box-sizing: border-box;
+    pointer-events: all;
     z-index: 1;
-  }
 
-  .messages-parse,
-  .messages-board {
-    opacity: 0;
-    transform: translateX(-100%);
-    transition: all $time-smooth $natural;
-  }
-
-  .messages-parse.visible,
-  body.playmode & .messages-board {
-    transform: translateX(0);
-    opacity: 1;
+    &:empty,
+    html.playmode &.messages-parse,
+    html.editmode &.messages-board,
+    html.playmode:not(.show-annotations) &.messages-board,
+    html.editmode:not(.show-parse-errors) &.messages-parse {
+      display: none;
+    }
   }
 
   .message {
-    float: left;
-    clear: left;
+    float: right;
+    clear: right;
     position: relative;
-    white-space: nowrap;
     border-radius: 2px;
     margin-top: 0.5em;
-    margin-right: $edge;
-    max-width: 100%;
+    max-width: 450px;
     box-shadow: $shadow1;
-    transition: all $time-smooth $natural;
-
-    &.animating {
-      opacity: 0;
-      margin-top: calc(-1.22em - 2rem);
-    }
 
     .content {
-      margin: 1rem calc(#{$edge*2} + 1.5rem);
+      margin: 0.8rem calc(#{$edge*2} + 1.5rem);
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -59,7 +52,7 @@
       top: 0;
       font-size: 1.5em;
 
-      &.icon-x {
+      &.close {
         opacity: 0.5;
         left: auto;
         right: 0;
@@ -102,18 +95,18 @@
     }
 
     &.comment {
-      background-color: $accent-color;
+      background-color: $accent-color-500;
       color: $primary-color-text;
     }
 
     &.player1 {
-      background-color: $primary-color-lightest;
-      color: $primary-color-darker;
+      background-color: $primary-color-50;
+      color: $primary-color-700;
     }
 
     &.player2 {
-      background-color: $primary-color-darker;
-      color: $primary-color-lightest;
+      background-color: $primary-color-700;
+      color: $primary-color-50;
     }
   }
 }
