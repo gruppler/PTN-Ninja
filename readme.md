@@ -35,8 +35,8 @@ Key|Action
 <kbd>Esc</kbd>|Toggle Menu
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|FAB Action
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn File
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|__O__pen .ptn File
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load __D__efault PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|**O**pen .ptn File
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load **D**efault PTN
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
 
 ### Play Mode
@@ -51,17 +51,17 @@ Key|Action
 <kbd>&darr;</kbd>|Next Move
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
-<kbd>3</kbd>|Toggle __3__D Board
-<kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board __A__nimations
-<kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (__F__AB)
-<kbd>a</kbd>|Toggle __A__nnotations
-<kbd>c</kbd>|Toggle Play __C__ontrols
-<kbd>h</kbd>|Toggle Square __H__ighlight
-<kbd>r</kbd>|Toggle __R__oad Connections
-<kbd>s</kbd>|Toggle Player __S__cores
-<kbd>m</kbd>|Toggle Current __M__ove
-<kbd>u</kbd>|Toggle __U__nplayed Pieces
-<kbd>x</kbd>|Toggle A__x__is Labels
+<kbd>3</kbd>|Toggle **3**D Board
+<kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board **A**nimations
+<kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (**F**AB)
+<kbd>a</kbd>|Toggle **A**nnotations
+<kbd>c</kbd>|Toggle Play **C**ontrols
+<kbd>h</kbd>|Toggle Square **H**ighlight
+<kbd>r</kbd>|Toggle **R**oad Connections
+<kbd>s</kbd>|Toggle Player **S**cores
+<kbd>m</kbd>|Toggle Current **M**ove
+<kbd>u</kbd>|Toggle **U**nplayed Pieces
+<kbd>x</kbd>|Toggle A**x**is Labels
 
 ### Edit Mode
 Key|Action
