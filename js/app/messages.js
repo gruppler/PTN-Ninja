@@ -36,14 +36,14 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
     return this;
   };
 
-  Messages.prototype.add = function (message, seconds, group, type, icon) {
+  Messages.prototype.add = function (message, seconds, group, type, icon, prepend) {
     var $message = $(tpl.message({
       type: type,
       icon: icon || type,
       group: group || this.group,
       message: message || '&nbsp;'
     }));
-    this.$messages.prepend($message);
+    this.$messages[prepend ? 'prepend' : 'append']($message);
 
     app.$window.trigger(type+':'+(group || this.group));
     app.$window.trigger(type);
@@ -74,11 +74,11 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.success = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'success', 'check_circle');
+    return this.add(message, seconds, group, 'success', 'check_circle', true);
   };
 
   Messages.prototype.warning = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'warning');
+    return this.add(message, seconds, group, 'warning', false, true);
   };
 
   Messages.prototype.error = function (message, seconds, group) {
@@ -86,11 +86,11 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.help = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'help');
+    return this.add(message, seconds, group, 'help', false, true);
   };
 
   Messages.prototype.info = function (message, seconds, group) {
-    return this.add(message, seconds, group, 'info');
+    return this.add(message, seconds, group, 'info', false, true);
   };
 
   Messages.prototype.comment = function (message, seconds, group) {

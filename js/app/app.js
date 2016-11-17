@@ -53,6 +53,10 @@ define([
     sample_ptn: sample_ptn,
 
     is_in_iframe: top.location != self.location,
+    is_blink: (
+      (window.chrome || (window.Intl && Intl.v8BreakIterator))
+      && 'CSS' in window
+    ),
     hash: location.hash.substr(1),
 
     tpl: {

@@ -237,7 +237,10 @@ requirejs({locale: navigator.language}, [
   config.on_change('board_3d', app.board.reposition_pieces);
   config.on_change('board_3d', function (value, prop, n, i, is_first_change) {
     if (is_first_change) {
-      app.m.info(t.info.board_3d);
+      if (!app.is_blink) {
+        app.m.help(t.help.board_3d_experimental);
+      }
+      app.m.help(t.help.board_rotation);
     }
   });
 
