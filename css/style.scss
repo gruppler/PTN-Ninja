@@ -67,12 +67,9 @@ kbd {
 }
 
 #editor {
-  overflow: auto;
-  overflow-wrap: break-word;
   color: $primary-color-200;
-  direction: rtl;
   z-index: 1;
-  will-change: scroll-position, opacity, width;
+  will-change: opacity, width;
 
   html.animate-board & {
     transition: opacity $time-smooth $natural;
@@ -86,6 +83,12 @@ kbd {
 }
 
 #ptn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  overflow: auto;
+  overflow-wrap: break-word;
   direction: ltr;
   box-sizing: border-box;
   min-height: 100vh;
@@ -97,6 +100,7 @@ kbd {
   padding-right: $edge;
   margin: 0;
   white-space: pre-wrap;
+  will-change: scroll-position;
 
   &:focus {
     outline: none;

@@ -284,7 +284,7 @@ define([
       this.set_caret(relative_bounds);
     },
 
-    set_caret: function (bounds) {
+    set_caret: function (bounds, no_scroll) {
       if (_.isNumber(bounds)) {
         bounds = [bounds, bounds];
       }
@@ -293,6 +293,9 @@ define([
 
       if (this.game.is_editing) {
         this.$ptn[0].focus();
+        if (!no_scroll) {
+          this.range.scrollIntoView();
+        }
       }
     },
 
@@ -301,9 +304,8 @@ define([
     },
 
     save_scroll_position: function () {
-      var scrollTop = app.$editor.scrollTop()
-        , vh = app.$editor.height()
-        , vmid = vh / 2
+      var scrollTop = app.$ptn.scrollTop()
+        , vh = app.$ptn.height()
         , $header = app.$ptn.children('.header')
         , $body = app.$ptn.children('.body')
         , body_offset = $body.offset()
@@ -314,23 +316,23 @@ define([
       if (app.$focus && top > 0 && top < vh) {
         // If the focused element is within view, use it
         app.$scroll_middle = app.$focus;
-        app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+        app.scroll_middle_offset = app.$scroll_middle.offset().top;
       } else {
         // Find the line-level element in the middle of the viewport
-        if (body_offset && body_offset.top <= vmid) {
+        if (body_offset && body_offset.top <= 0) {
           $siblings = $body.children();
         } else {
           $siblings = $header.children();
         }
         for (
           i = 0;
-          i < $siblings.length && $siblings.eq(i).offset().top < vmid;
+          i < $siblings.length && $siblings.eq(i).offset().top < 0;
           i++
         ) {}
 
         app.$scroll_middle = $siblings.eq(i ? i - 1 : 0);
         if (app.$scroll_middle.length) {
-          app.scroll_middle_offset = app.$scroll_middle.offset().top - vmid;
+          app.scroll_middle_offset = app.$scroll_middle.offset().top;
         }
       }
     },
@@ -340,10 +342,10 @@ define([
         return;
       }
 
-      var offset = app.$scroll_middle.offset().top - app.scroll_middle_offset
-        , vmid = app.$editor.height() / 2;
-
-      app.$editor.scrollTop(app.$editor.scrollTop() + (offset - vmid));
+      app.$ptn.scrollTop(
+        app.$ptn.scrollTop()
+          + app.$scroll_middle.offset().top - app.scroll_middle_offset
+      );
     },
 
     clear_scroll_position: function () {
@@ -507,6 +509,7 @@ define([
 
         this.board.pause();
         this.scroll_to_ply();
+        this.save_scroll_position();
         this.range.last_bounds = null;
         this.restore_caret();
       } else if (was_editing && !this.game.is_editing) {

@@ -372,7 +372,7 @@ requirejs({locale: navigator.language}, [
 
   // Listen for caret movement
   app.$ptn.on('keyup mouseup', app.set_position_from_caret);
-  app.$editor.on('scroll', app.save_scroll_position);
+  app.$ptn.on('scroll', app.save_scroll_position);
 
 
   // Set initial mode
