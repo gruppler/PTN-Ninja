@@ -190,7 +190,7 @@ define([
 
     rotate_board: function (event) {
       if (_.isBoolean(event)) {
-        config.set('board_rotation', [0, 0, 0]);
+        config.set('board_rotation', config.defaults.board_rotation);
         return;
       }
 
