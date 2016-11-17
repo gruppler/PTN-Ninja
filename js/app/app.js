@@ -352,6 +352,7 @@ define([
 
     clear_undo_history: function () {
       app.range.data().undos = false;
+      app.range.pushstate();
     },
 
     undo: function (event) {

@@ -189,6 +189,7 @@ define([
     }
 
     this.parse(this.print_text());
+    app.range.pushstate();
 
     bounds = this.plys.length ? this.get_bounds(this.plys[0])[1] : 'end';
     app.set_caret(bounds);

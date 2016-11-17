@@ -43,6 +43,10 @@ bililiteRange.fn.undo = function(n){
 	return this;
 };
 
+bililiteRange.fn.pushstate = function(){
+	new undostate (this);
+};
+
 function getundostate(rng){
 	var undos = rng.data().undos;
 	if (undos) return undos;
@@ -56,7 +60,7 @@ function undostate (rng){
 	this.text = rng.all();
 	var laststate = rng.data().undos;
 	if (laststate && this.text == laststate.text) return; // is this too inefficient, to compare each time?
-	this.bounds = rng.bounds('selection').bounds();
+	this.bounds = rng.bounds('selection').bounds() || rng.last_bounds;
 	this.undo = this; // set up a doubly linked list that never ends (so undo with only one element on the list does nothing)
 	this.redo = this;
 	if (laststate) {
@@ -72,7 +76,7 @@ function restore (state, dir, rng){
 	state = state[dir];
 	state.lastevent = dir; // mark the undo/redo so we don't add the change in text to the undo stack
 	rng.data().undos = state;
-	rng.all(state.text, true).bounds(state.bounds).select(); // restore the old state
+	rng.all(state.text, true).bounds(state.bounds || [0,0]).select(); // restore the old state
 }
 
 function setuplisteners (rng){
