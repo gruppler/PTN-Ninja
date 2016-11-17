@@ -64,7 +64,7 @@ define([
           '</div>'+
           '<div class="mdl-dialog__actions">'+
             '<% _.each(actions, function (action) { %>'+
-              '<button type="button" class="mdl-button mdl-button--flat mdl-js-ripple-effect'+
+              '<button type="button" class="mdl-button mdl-button--flat'+
                 '<%= action.className ? " "+action.className : "" %>"'+
                 '<% _.each(_.omit(action, ["label", "value", "callback", "className"]), function(value, key) { %>'+
                   '<% if (_.isBoolean(value)) { %>'+
@@ -292,7 +292,7 @@ define([
       this.save_caret();
 
       if (this.game.is_editing) {
-        this.$ptn[0].focus();
+        this.$ptn.focus();
         if (!no_scroll) {
           this.range.scrollIntoView();
         }

@@ -69,7 +69,6 @@ kbd {
 #editor {
   color: $primary-color-200;
   z-index: 1;
-  will-change: opacity, width;
 
   html.animate-board & {
     transition: opacity $time-smooth $natural;
@@ -121,7 +120,6 @@ kbd {
   z-index: 2;
   transition: opacity $time-smooth ease-in-out,
     transform $time-smooth ease-in-out;
-  will-change: opacity, transform;
 
   @media (max-width: 450px) {
     html.show-play-controls & {

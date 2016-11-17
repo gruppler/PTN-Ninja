@@ -14,7 +14,7 @@ define([
 
   var $panel = $('#app')
     , $menu = $('#menu')
-    , $menu_button = $('.mdl-layout__drawer-button').addClass('mdl-button mdl-js-button mdl-button--icon mdl-js-ripple-effect');
+    , $menu_button = $('.mdl-layout__drawer-button').addClass('mdl-button mdl-js-button mdl-button--icon');
 
   var Menu = {};
 

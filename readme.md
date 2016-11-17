@@ -22,7 +22,7 @@ If there are any problems with the PTN, the FAB will turn red, and clicking it w
 
 ## 3D Mode
 
-3D Mode is experimental and may not work well or at all on some browsers or devices.
+3D Mode is experimental and may not work well or at all on some browsers or devices. It works best on Chrome.
 
 In 3D Mode, you can rotate the view by **dragging** with **two fingers** on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> **dragging**, or by <kbd>middle-click</kbd> **dragging**.
 

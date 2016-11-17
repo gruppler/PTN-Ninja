@@ -58,7 +58,6 @@
         right: 0;
         cursor: default;
         transition: opacity $time-smooth $natural;
-        will-change: opacity;
 
         &:hover {
           opacity: 1;
