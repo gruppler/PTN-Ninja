@@ -33,7 +33,7 @@ You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-lef
 Key|Action
 :--|:--
 <kbd>Esc</kbd>|Toggle Menu
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|FAB Action
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|Toggle Edit/Play Mode
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|**O**pen .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load **D**efault PTN

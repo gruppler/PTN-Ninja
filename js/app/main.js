@@ -90,7 +90,11 @@ requirejs({locale: navigator.language}, [
     event.stopPropagation();
     event.preventDefault();
     if (app.$html.hasClass('error')) {
-      config.toggle('show_parse_errors');
+      if (app.game.is_editing) {
+        config.toggle('show_parse_errors');
+      } else {
+        app.toggle_edit_mode(true);
+      }
     } else {
       app.toggle_edit_mode();
     }

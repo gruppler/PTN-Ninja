@@ -24,7 +24,7 @@ define(['app/messages'], function (Messages) {
       },
 
       '^Spacebar': function (event, $focus, $parent) {
-        app.$fab.click();
+        app.toggle_edit_mode();
         event.preventDefault();
         event.stopPropagation();
       },

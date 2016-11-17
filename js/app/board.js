@@ -541,7 +541,7 @@ define([
     }
 
     // Show result
-    if (ply.is_last && result && result.message) {
+    if (ply.is_last && this.game.is_valid && result && result.message) {
       this.m['player'+result.victor](result.message);
       if (result.comments) {
         _.map(result.comments.concat().reverse(), this.comment);
