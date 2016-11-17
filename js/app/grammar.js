@@ -61,7 +61,7 @@ define(['lodash'], function (_) {
     linenum: '(?:^|\\s)+\\d+\\.',
     linenum_grouped: '(^|\\s+)(\\d+)\\.',
     move: '(?:<linenum><comment>(?:<nop>|<ply>)?<comment><ply>?<comment><result>?<comment>[ \\t]*[^]*)',
-    move_grouped: '(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)(\\s*)([^]*)',
+    move_grouped: '^(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)(\\s*)([^]*)',
     move_only: '^<move>$',
 
     header: '^<tag>+$',

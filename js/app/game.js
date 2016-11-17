@@ -155,8 +155,8 @@ define([
 
   Game.prototype.get_linenum = function () {
     return this.config.tps && this.config.tps.move ?
-      this.config.tps.move + this.moves.length :
-      this.moves.length + 1;
+      this.config.tps.move + this.moves.length - 1 :
+      this.moves.length;
   };
 
   Game.prototype.trim_to_current_ply = function (board) {

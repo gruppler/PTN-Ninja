@@ -23,6 +23,22 @@ define([
     this.game = game;
     this.char_index = game.char_index;
 
+    this.index = game.moves.length;
+    game.moves[this.index] = this;
+
+    if (!parts) {
+      this.text = string;
+      this.is_invalid = true;
+      game.is_valid = false;
+      game.m.error(
+        t.error.invalid_movetext({text: _.trim(this.text)[0]})
+      ).click(function () {
+        app.set_caret(game.char_index);
+      });
+
+      return this;
+    }
+
     this.linenum = new Linenum(parts[1], game, _.compact(parts.slice(2)).length);
 
     if(game.config.tps && this.linenum.value == game.config.tps.move){
@@ -94,9 +110,6 @@ define([
     this.suffix = parts[9];
     game.char_index += this.suffix.length;
 
-    this.index = game.moves.length;
-    game.moves[this.index] = this;
-
     if (parts[10]) {
       if (r.grammar.move_only.test(parts[10])) {
         new Move(parts[10], game);
@@ -118,7 +131,9 @@ define([
   Move.prototype.print = function(){
     var output = '<span class="move" data-index="'+this.index+'">';
 
-    output += this.linenum.print();
+    if (this.linenum) {
+      output += this.linenum.print();
+    }
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print').join('');
     }
