@@ -6,7 +6,6 @@
 
 requirejs({locale: navigator.language}, [
   'i18n!nls/main',
-  'app/config',
   'app/messages',
   'app/config',
   'app/app',

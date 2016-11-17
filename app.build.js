@@ -7,7 +7,7 @@
   modules: [{
     name: 'app'
   }],
-  fileExclusionRegExp: /^\.|^(app\.build|liga)\.js$|\.(map|json|scss|txt)$|demo/,
+  fileExclusionRegExp: /^\.|^push-to-prod\.sh$|^(app\.build|liga)\.js$|\.(map|scss|txt)$|demo/,
   paths: {
     'app': '../app',
     'model': '../app/model',
