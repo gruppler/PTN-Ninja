@@ -123,7 +123,9 @@ define(['lodash'], function (_) {
           mode = mode[1];
           prop = prop.substr(mode.length + 1);
         }
-        this.set(prop, JSON.parse(stored), mode);
+        try {
+          this.set(prop, JSON.parse(stored), mode);
+        } catch (e) {}
       }
     },
 
