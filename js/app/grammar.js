@@ -36,8 +36,8 @@ define(['lodash'], function (_) {
     col_grouped: '(<space>?)(<stack>?)(<separator>?)',
     tps_grouped: '((?:<col>|<separator>)*)(?:(\\s+)([12]))?(?:(\\s+)([1-9]\\d*))?([^]*)',
 
-    tag: '(?:\\s*\\[.*\\]?)',
-    tag_grouped: '(\\s*\\[\\s*?)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',
+    tag: '(?:[^\\[]*\\[.*\\]?)',
+    tag_grouped: '([^\\[]*\\[\\s*?)(\\S+)(\\s*)([\'"]?)([^\\4]*)(\\4)([^]*\\]?)',
 
     stone: '[FSC]?',
     square: '[a-i][1-9]',
@@ -64,7 +64,6 @@ define(['lodash'], function (_) {
     move_grouped: '^(<linenum>)(<comment>)(<nop>|<ply>?)(<comment>)(<ply>?)(<comment>)(<result>?)(<comment>)(\\s*)([^]*)',
     move_only: '^<move>$',
 
-    header: '^<tag>+$',
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)((?:\\s|--)*)$'
   };
 

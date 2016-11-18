@@ -81,6 +81,9 @@ define([
 
     this.on_parse_start(false, is_original);
 
+    this.text = false;
+    this.comment_text = false;
+    this.comments = false;
     this.is_valid = true;
     this.caret_moved = false;
     this.result = null;
@@ -93,49 +96,45 @@ define([
 
     file = plaintext.match(r.grammar.ptn_grouped);
     if (!file) {
-      this.m.error(t.error.invalid_file_format);
+      this.m.error(t.error.invalid_notation);
       this.is_valid = false;
-      return false;
-    }
+      this.text = plaintext;
+    } else {
 
-    header = file[1];
-    body = file[3];
-    this.suffix = file[4] || '';
+      header = file[1];
+      body = file[3];
+      this.suffix = file[4] || '';
 
-    // Header
-    header = header.match(r.grammar.header);
-    if (!header) {
-      this.m.error(t.error.invalid_header);
-      this.is_valid = false;
-      return false;
-    }
-    header = header[0].match(r.grammar.tag);
-    this.config = {};
-    for (var i = 0; i < header.length; i++) {
-      new Tag(header[i], this);
-    }
-    missing_tags = _.difference(
-      r.required_tags,
-      _.map(this.tags, 'key')
-    );
-    if (missing_tags.length) {
-      this.m.error(t.error.missing_tags({tags: missing_tags}));
-      this.is_valid = false;
-    }
-
-    // Game comments
-    this.comment_text = Comment.parse(file[2], this);
-    this.comments = this.comment_text ? _.map(this.comment_text, 'text') : null;
-
-    // Body
-    if (body) {
-      // Recursively parse moves
-      new Move(body, this);
-
-      if (this.plys.length) {
-        this.plys[0].is_first = true;
-        _.last(this.plys).is_last = true;
+      // Header
+      header = header.match(r.grammar.tag);
+      this.config = {};
+      for (var i = 0; i < header.length; i++) {
+        new Tag(header[i], this);
       }
+      missing_tags = _.difference(
+        r.required_tags,
+        _.map(this.tags, 'key')
+      );
+      if (missing_tags.length) {
+        this.m.error(t.error.missing_tags({tags: missing_tags}));
+        this.is_valid = false;
+      }
+
+      // Game comments
+      this.comment_text = Comment.parse(file[2], this);
+      this.comments = this.comment_text ? _.map(this.comment_text, 'text') : null;
+
+      // Body
+      if (body) {
+        // Recursively parse moves
+        new Move(body, this);
+
+        if (this.plys.length) {
+          this.plys[0].is_first = true;
+          _.last(this.plys).is_last = true;
+        }
+      }
+
     }
 
     this.ptn = this.print_text();
@@ -198,13 +197,30 @@ define([
   };
 
   Game.prototype.print = function () {
-    var output = '<span class="header">';
+    var output = '';
 
-    output += _.invokeMap(this.tags, 'print').join('');
+    if (this.text) {
+      output += this.print_invalid();
+    }
+
+    output += '<span class="header">';
+
+    if (this.tags) {
+      output += _.invokeMap(this.tags, 'print').join('');
+    }
+
     output += '</span><span class="body">'
-    output += this.comment_text ? _.invokeMap(this.comment_text, 'print').join('') : '';
-    output += _.invokeMap(this.moves, 'print').join('');
-    output += this.suffix;
+
+    if (this.comment_text) {
+      output += _.invokeMap(this.comment_text, 'print').join('');
+    }
+    if (this.moves) {
+      output += _.invokeMap(this.moves, 'print').join('');
+    }
+    if (this.suffix) {
+      output += this.suffix;
+    }
+
     output += '</span>';
 
     return output;
