@@ -34,7 +34,7 @@ Key|Action
 :--|:--
 <kbd>Esc</kbd>|Toggle Menu
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|Toggle Edit/Play Mode
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Download .ptn File
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Save .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load Default PTN
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
