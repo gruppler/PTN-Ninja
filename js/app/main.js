@@ -305,6 +305,11 @@ requirejs({locale: navigator.language}, [
       ' vs ' +
       (app.game.config.player2 || t.Player2) +
       (
+        app.game.config.result ?
+        ' ' + app.game.config.result.text.replace(/\//g, '-')
+        : ''
+      ) +
+      (
         app.game.config.date ?
         ' ' + app.game.config.date
         : ''
