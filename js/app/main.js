@@ -375,7 +375,15 @@ requirejs({locale: navigator.language}, [
 
   // Listen for caret movement
   app.$ptn.on('keyup mouseup', app.set_position_from_caret);
-  app.$ptn.on('scroll', app.save_scroll_position);
+  if (app.supports_passive) {
+    app.$ptn[0].addEventListener(
+      'scroll',
+      app.save_scroll_position,
+      {passive: true}
+    );
+  } else {
+    app.$ptn.on('scroll', app.save_scroll_position);
+  }
 
 
   // Set initial mode

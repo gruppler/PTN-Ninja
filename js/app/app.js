@@ -574,6 +574,17 @@ define([
     }
   };
 
+  // Test for passive event handlers
+  app.supports_passive = false;
+  try {
+    var opts = Object.defineProperty({}, 'passive', {
+      get: function() {
+        app.supports_passive = true;
+      }
+    });
+    window.addEventListener('test', null, opts);
+  } catch (e) {}
+
   _.bindAll(app, [
     'dialog',
     'confirm',
