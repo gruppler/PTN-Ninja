@@ -566,10 +566,11 @@ define([
     if (
       this.game.plys[this.ply_index]
       && this.ply_index != this.game.plys.length - 1
+      || !this.ply_is_done
     ) {
       this.is_playing = true;
-      this.next();
       app.$html.addClass('playing');
+      this.next();
     }
   };
 
