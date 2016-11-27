@@ -313,6 +313,11 @@ requirejs({locale: navigator.language}, [
         app.game.config.date ?
         ' ' + app.game.config.date
         : ''
+      ) +
+      (
+        app.game.config.time ?
+        '-' + app.game.config.time.replace(/\D/g, '.')
+        : ''
       )
       + '.ptn',
       true
