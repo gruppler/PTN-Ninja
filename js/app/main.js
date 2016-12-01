@@ -206,7 +206,7 @@ requirejs({locale: navigator.language}, [
     }
 
     app.board.show_comments(ply);
-    app.board.update_plys(ply);
+    app.board.update_ptn(ply);
     app.board.set_active_squares(ply ? ply.squares : false);
   });
 

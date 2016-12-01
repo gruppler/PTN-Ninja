@@ -239,6 +239,8 @@ define([
 
 
   Board.prototype.render = function () {
+    var that = this;
+
     this.$view = $(this.tpl.board(this));
     this.$board = this.$view.find('.board');
     this.$unplayed_bg = this.$view.find('.unplayed-bg').parent();
@@ -247,6 +249,8 @@ define([
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
     this.$ptn = this.$view.find('.ptn');
+    this.$ptn.$prev_move = this.$ptn.find('.prev_move');
+    this.$ptn.$next_move = this.$ptn.find('.next_move');
     this.$scores = this.$view.find('.scores');
     this.$bar1 = this.$scores.find('.player1');
     this.$bar2 = this.$scores.find('.player2');
@@ -270,6 +274,18 @@ define([
       _.isUndefined(this.saved_ply_index) ? 0 : this.saved_ply_index,
       this.saved_ply_is_done
     );
+
+    this.$ptn.on('click tap', '.ply', function (event) {
+      var $ply = $(event.currentTarget)
+        , ply_index = $ply.data('index');
+
+      that.go_to_ply(
+        ply_index,
+        that.ply_index != ply_index
+          || !that.ply_is_done
+      );
+    }).on('click tap', '.prev_move', this.prev_move)
+      .on('click tap', '.next_move', this.next_move);
 
     return this.$view;
   };
@@ -367,14 +383,19 @@ define([
   };
 
 
-  Board.prototype.update_plys = function(current_ply) {
+  Board.prototype.update_ptn = function(current_ply) {
     var ply1, ply2, $ply1, $ply2;
 
     if (current_ply && !current_ply.move.is_invalid) {
       ply1 = current_ply.move.ply1;
       ply2 = current_ply.move.ply2;
 
-      this.$ptn.html(current_ply.move.print());
+      if (this.$move && this.$move.length) {
+        this.$move.remove();
+      }
+      this.$move = $(current_ply.move.print());
+
+      this.$ptn.$prev_move.after(this.$move);
       $ply1 = this.$ptn.find('.ply:eq(0)');
       $ply2 = this.$ptn.find('.ply:eq(1)');
 
@@ -390,6 +411,15 @@ define([
           $ply2.addClass('active');
         }
       }
+
+      this.$ptn.$prev_move.attr(
+        'disabled',
+        current_ply.index == 0 && !this.ply_is_done
+      );
+      this.$ptn.$next_move.attr(
+        'disabled',
+        current_ply.index == this.game.plys.length - 1 && this.ply_is_done
+      );
     }
   };
 
@@ -816,7 +846,14 @@ define([
             '<div class="col labels">'+
               '<%=_.map(cols, tpl.col).join("")%>'+
             '</div>'+
-            '<div class="ptn"></div>'+
+            '<div class="ptn">'+
+              '<button class="prev_move mdl-button mdl-js-button mdl-button--icon" disabled>'+
+                '<i class="material-icons">&#xE316;</i>'+
+              '</button>'+
+              '<button class="next_move mdl-button mdl-js-button mdl-button--icon" disabled>'+
+                '<i class="material-icons">&#xE313;</i>'+
+              '</button>'+
+            '</div>'+
           '</div>'+
 
           '<div></div>'+

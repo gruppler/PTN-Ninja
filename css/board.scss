@@ -11,7 +11,10 @@ $stone-thickness: 0.3vmin;
   flex-wrap: nowrap;
   align-items: stretch;
   justify-content: center;
-  font-size: 2.5vmin;
+
+  &, & .table .material-icons, & .table .mdl-button--icon {
+    font-size: 2.5vmin;
+  }
 
   html.animate-board & {
     transition: opacity $time-smooth $natural;
@@ -27,12 +30,12 @@ $stone-thickness: 0.3vmin;
   }
 
   @media (max-width: $mobile/2) and (orientation: portrait) {
-    & {
+    &, & .table .material-icons, & .table .mdl-button--icon {
       font-size: 14px;
     }
   }
   @media (max-height: $mobile/2) and (orientation: landscape) {
-    & {
+    &, & .table .material-icons, & .table .mdl-button--icon {
       font-size: 14px;
     }
   }
@@ -421,6 +424,34 @@ $stone-thickness: 0.3vmin;
 
     .player1, .player2 {
       padding: 0 0.2em;
+    }
+
+    .move {
+      position: absolute;
+      left: 2.5em;
+      right: 2.5em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .prev_move,
+    .next_move {
+      position: absolute;
+      width: 2em;
+      height: 2em;
+      @include unselectable;
+
+      .material-icons {
+        transform: translate(-1em, -1em);
+        line-height: 2em;
+        width: 2em;
+      }
+    }
+    .prev_move {
+      left: 0;
+    }
+    .next_move {
+      right: 0;
     }
   }
 }
