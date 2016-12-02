@@ -87,6 +87,7 @@ $stone-thickness: 0.3vmin;
       display: table-cell;
       position: relative;
       vertical-align: middle;
+      transform-style: preserve-3d;
 
       html.animate-board & {
         transition: width $time-smooth $natural;
