@@ -10,9 +10,6 @@
   fileExclusionRegExp: /^\.|^push-to-prod\.sh$|^(app\.build|liga)\.js$|\.(map|scss|txt)$|demo/,
   paths: {
     'app': '../app',
-    'model': '../app/model',
-    'view': '../app/view',
-    'util': '../app/util',
     'nls': '../app/nls',
     'lodash': 'lodash.min',
     'jquery': 'jquery.min',
