@@ -55,6 +55,10 @@ define([
       second_player = 1;
     }
 
+    this.first_player = first_player;
+    this.second_player = second_player;
+    this.first_turn = first_turn;
+
     this.comments1 = Comment.parse(parts[2], game);
 
     if (parts[3]) {
@@ -126,6 +130,45 @@ define([
     }
 
     return this;
+  };
+
+  Move.prototype.insert_ply = function(ply, turn, is_done, flattens){
+    var ply, prev_move;
+
+    if (turn == 1) {
+      if (this.ply1) {
+        ply = this.ply1.prefix + ply;
+      } else if (
+        (prev_move = this.game.moves[this.index - 1])
+          && prev_move.ply1
+      ) {
+        ply = prev_move.ply1.prefix + ply;
+      } else {
+        ply = ' ' + ply;
+      }
+      ply = this.ply1 = new Ply(ply, this.first_player, this.game, this);
+      this.ply1.turn = this.first_turn;
+    } else {
+      if (this.ply2) {
+        ply = this.ply2.prefix + ply;
+      } else if (
+        (prev_move = this.game.moves[this.index - 1])
+          && prev_move.ply2
+      ) {
+        ply = prev_move.ply2.prefix + ply;
+      } else {
+        ply = ' ' + ply;
+      }
+      ply = this.ply2 = new Ply(ply, this.second_player, this.game, this);
+      this.ply2.turn = this.second_turn;
+    }
+
+    if (_.isNumber(flattens)) {
+      ply.flattens = flattens;
+    }
+
+    app.update_after_ply_insert(ply.index, is_done);
+    return ply;
   };
 
   Move.prototype.print = function(){

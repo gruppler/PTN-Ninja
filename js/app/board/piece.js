@@ -8,6 +8,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
   var Piece = function (board, player, stone) {
     this.needs_updated = true;
+    this.is_selected = false;
     this.board = board;
     this.player = 1*player || 1;
     this.stone = stone || 'F';
@@ -24,7 +25,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     board.all_pieces.push(this);
     board.pieces[this.player][this.true_stone].push(this);
 
-    _.bindAll(this, 'render');
+    _.bindAll(this, 'render', 'select');
 
     return this;
   };
@@ -96,7 +97,13 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       this.x = 100*square.col;
       this.y = -100*square.row;
 
-      if (!config.board_3d) {
+      if (config.board_3d) {
+        // 3D
+
+        if (this.is_selected) {
+          this.z += 3;
+        }
+      } else {
         // 2D
 
         if(this.is_immovable) {
@@ -104,6 +111,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         } else {
           this.y += captive_offset*(
             1 - this.z + 1*(this.stone == 'S' && !!this.captives.length)
+            - (this.is_selected ? 3 : 0)
           );
 
           if ((this.captor||this).z > this.board.size) {
@@ -212,6 +220,19 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.needs_updated = false;
 
     return this.$view;
+  };
+
+  Piece.prototype.select = function () {
+    if (this.board.ply_index != this.ply.index) {
+      this.board.selected_pieces = [this].concat(
+        this.captives.slice(0, this.board.size - 1)
+      );
+      for (var i = 0; i < this.board.selected_pieces.length; i++) {
+        this.board.selected_pieces[i].is_selected = true;
+      }
+      this.render();
+      this.board.update_valid_squares();
+    }
   };
 
   Piece.prototype.tpl = {

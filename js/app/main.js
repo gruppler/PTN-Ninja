@@ -131,10 +131,7 @@ requirejs({locale: navigator.language}, [
   app.game.on_parse_end(function (is_original) {
     var href, length;
 
-    app.$ptn.html(app.game.print());
-    app.$ptn.$header = app.$ptn.find('span.header');
-    app.$ptn.$header.$tps = app.$ptn.$header.find('span.value.tps');
-    app.$ptn.$body = app.$ptn.find('span.body');
+    app.update_ptn();
     if (app.game.is_valid) {
       app.board.init(app.game);
 
@@ -191,24 +188,7 @@ requirejs({locale: navigator.language}, [
 
 
   // Update current ply display
-  app.board.on_ply(function (ply) {
-    if (app.$ptn.$ply && app.$ptn.$ply.length) {
-      app.$ptn.$ply.removeClass('active');
-    }
-    app.$ptn.$ply = ply ?
-      app.$ptn.find('.ply[data-index="'+ply.index+'"]:first').addClass('active') :
-      null;
-
-    if (app.board.ply_is_done) {
-      app.$html.addClass('ply-is-done');
-    } else {
-      app.$html.removeClass('ply-is-done');
-    }
-
-    app.board.show_comments(ply);
-    app.board.update_ptn(ply);
-    app.board.set_active_squares(ply ? ply.squares : false);
-  });
+  app.board.on_ply(app.update_after_ply);
 
 
   // Make playback speed respond immediately to speed changes
@@ -246,49 +226,14 @@ requirejs({locale: navigator.language}, [
 
   // Rotate board in 3D mode
   config.on_change('board_rotation', app.board.rotate);
-  app.$viewer.on('mousedown touchstart', function (event) {
-    if (
-      !config.board_3d
-      || event.type == 'touchstart'
-        && event.originalEvent.touches.length != 2
-      || event.type == 'mousedown'
-        && !event.metaKey && !event.ctrlKey && event.button != 1
-    ) {
-      return;
-    }
-
-    var x, y;
-
-    if (event.originalEvent.touches) {
-      x = (event.originalEvent.touches[0].clientX + event.originalEvent.touches[1].clientX)/2;
-      y = (event.originalEvent.touches[0].clientY + event.originalEvent.touches[1].clientY)/2;
-    } else {
-      x = event.clientX;
-      y = event.clientY;
-    }
-
-    app.dragging = {
-      x: x,
-      y: y,
-      rotation: config.board_rotation
-    };
-
-    app.$document.on(
-      'mousemove touchmove',
-      app.rotate_board
-    );
-
-    app.$document.on(
-      'mouseup touchend',
-      function () {
-        app.$document.off('mousemove touchmove', app.rotate_board);
-        delete app.dragging;
-      }
-    );
-
-    event.preventDefault();
-    event.stopPropagation();
-  }).on('dblclick', function (event) {
+  app.$viewer.on(
+    'mousedown touchstart',
+    app.board.rotate_handler
+  ).on(
+    'mousedown touchstart',
+    '.square.valid',
+    app.board.select_square
+  ).on('dblclick', function (event) {
     if (config.board_3d && (event.metaKey || event.ctrlKey || event.button == 1)) {
       app.rotate_board(false);
     }
@@ -357,7 +302,6 @@ requirejs({locale: navigator.language}, [
   // UI changes for parse errors
   app.$window.on('error:parse', function () {
     app.$html.addClass('error');
-    app.toggle_edit_mode(true);
   }).on('clear:error:parse', function () {
     app.$html.removeClass('error');
   });

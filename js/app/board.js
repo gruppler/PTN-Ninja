@@ -16,6 +16,7 @@ define([
   var Board = function (game) {
     var that = this;
 
+    this.turn = 1;
     this.ply_index = 0;
     this.ply_is_done = false;
     this.comments_ply_index = -2;
@@ -26,12 +27,16 @@ define([
     this.all_pieces = [];
     this.pieces = {};
     this.flat_score = {1:0, 2:0};
+    this.selected_pieces = [];
+    this.tmp_ply = null;
     this.init_callbacks = [];
     this.resize_callbacks = [];
     this.ply_callbacks = [];
 
     _.bindAll(this, [
       'resize',
+      'rotate_handler',
+      'select_square',
       'update_view',
       'reposition_pieces',
       'rotate',
@@ -90,6 +95,7 @@ define([
 
 
   Board.prototype.clear = function () {
+    this.turn = 1;
     this.ply_index = 0;
     this.ply_is_done = false;
     this.comments_ply_index = -2;
@@ -97,6 +103,8 @@ define([
     this.all_pieces = [];
     this.flat_score[1] = 0;
     this.flat_score[2] = 0;
+    this.selected_pieces.length = 0;
+    this.tmp_ply = null;
     this.pieces = {
       1: {
         F: [],
@@ -180,6 +188,9 @@ define([
           }
         }
       });
+      if (this.tps.player) {
+        this.turn = this.tps.player;
+      }
     }
 
     if (silent !== true) {
@@ -355,6 +366,83 @@ define([
   };
 
 
+  Board.prototype.rotate_handler = function (event) {
+    if (
+      !config.board_3d
+      || event.type == 'touchstart'
+        && event.originalEvent.touches.length != 2
+      || event.type == 'mousedown'
+        && !event.metaKey && !event.ctrlKey && event.button != 1
+    ) {
+      return;
+    }
+
+    var x, y;
+
+    if (event.originalEvent.touches) {
+      x = (event.originalEvent.touches[0].clientX + event.originalEvent.touches[1].clientX)/2;
+      y = (event.originalEvent.touches[0].clientY + event.originalEvent.touches[1].clientY)/2;
+    } else {
+      x = event.clientX;
+      y = event.clientY;
+    }
+
+    app.dragging = {
+      x: x,
+      y: y,
+      rotation: config.board_rotation
+    };
+
+    app.$document.on(
+      'mousemove touchmove',
+      app.rotate_board
+    );
+
+    app.$document.on(
+      'mouseup touchend',
+      function () {
+        app.$document.off('mousemove touchmove', app.rotate_board);
+        delete app.dragging;
+      }
+    );
+
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+
+  Board.prototype.select_square = function (event) {
+    if (
+      event.type == 'touchstart'
+        && event.originalEvent.touches.length != 1
+      || event.type == 'mousedown'
+        && (event.metaKey || event.ctrlKey || event.button != 0)
+    ) {
+      return;
+    }
+
+    var square = $(event.currentTarget).data('model');
+
+    square.select();
+
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+
+  Board.prototype.deselect_all = function () {
+    var piece;
+
+    while (piece = this.selected_pieces.length) {
+      this.selected_pieces.pop().is_selected = false;
+    }
+
+    if (piece) {
+      piece.render();
+    }
+  };
+
+
   Board.prototype.update_view = function() {
     _.invokeMap(
       _.filter(this.all_pieces, { needs_updated: true, captor: null }),
@@ -440,7 +528,11 @@ define([
       return true;
     }
 
-    if (this.ply_index >= this.game.plys.length || this.ply_index < 0) {
+    if (
+      this.selected_pieces.length
+      || this.ply_index >= this.game.plys.length
+      || this.ply_index < 0
+    ) {
       return false;
     }
 
@@ -461,6 +553,7 @@ define([
     }
 
     this.ply_is_done = true;
+    this.turn = ply.player == 1 ? 2 : 1;
 
     if (!this.defer_render) {
       this.on_ply();
@@ -481,7 +574,11 @@ define([
       return true;
     }
 
-    if (this.ply_index >= this.game.plys.length || this.ply_index < 0) {
+    if (
+      this.selected_pieces.length
+      || this.ply_index >= this.game.plys.length
+      || this.ply_index < 0
+    ) {
       return false;
     }
 
@@ -501,6 +598,7 @@ define([
     }
 
     this.ply_is_done = false;
+    this.turn = ply.player;
 
     if (!this.defer_render) {
       this.on_ply();
@@ -511,11 +609,13 @@ define([
 
 
   Board.prototype.illegal_ply = function (ply) {
-    this.m_parse.error(
-      t.error.illegal_ply({ ply: ply.text })
-    ).click(function () {
-      app.select_token_text(ply);
-    });
+    if (this.game.is_editing) {
+      this.m_parse.error(
+        t.error.illegal_ply({ ply: ply.text })
+      ).click(function () {
+        app.select_token_text(ply);
+      });
+    }
     ply.is_illegal = true;
     return false;
   };
@@ -544,6 +644,68 @@ define([
           squares = _.pick(this.squares, squares);
         }
         _.invokeMap(squares, 'set_active');
+      }
+    }
+  };
+
+
+  Board.prototype.update_valid_squares = function () {
+    if (!this.$view) {
+      return;
+    }
+
+    var that = this
+      , current_ply = this.game.plys[this.ply_index]
+      , square, direction, neighbor;
+
+    function check_neighbor(square, neighbor) {
+      if (
+        neighbor && (
+          !neighbor.piece
+          || neighbor.piece.stone != 'C' && (
+            neighbor.piece.stone != 'S'
+            || that.selected_pieces[0].stone == 'C'
+              && that.selected_pieces.length == 1
+          )
+        )
+      ) {
+        neighbor.$view.addClass('valid');
+      }
+    }
+
+    if (this.tmp_ply) {
+      this.$squares.children().removeClass('valid');
+      square = this.selected_pieces[0].square;
+      square.$view.addClass('valid');
+      check_neighbor(
+        square,
+        square.neighbors[this.tmp_ply.direction]
+      );
+    } else if (this.selected_pieces.length) {
+      this.$squares.children().removeClass('valid');
+      square = this.selected_pieces[0].square;
+      square.$view.addClass('valid');
+      for (direction in square.neighbors) {
+        check_neighbor(square, square.neighbors[direction]);
+      }
+    } else {
+      for (square in this.squares) {
+        square = this.squares[square];
+        if (
+          square.piece
+          && (
+            square.piece.player == this.turn
+            || square.piece.ply == current_ply
+          )
+          || !square.piece && (
+            that.pieces[this.turn].F.length
+            || that.pieces[this.turn].C.length
+          )
+        ) {
+          square.$view.addClass('valid');
+        } else {
+          square.$view.removeClass('valid');
+        }
       }
     }
   };
@@ -745,6 +907,10 @@ define([
 
 
   Board.prototype.go_to_ply = function (ply_index, do_ply, is_silent) {
+    if (this.selected_pieces.length) {
+      return false;
+    }
+
     this.pause();
     this.defer_render = true;
 

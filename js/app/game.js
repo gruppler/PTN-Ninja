@@ -159,6 +159,32 @@ define([
       this.moves.length;
   };
 
+  Game.prototype.insert_ply = function (ply, index, is_done, flattens) {
+    var old_ply = _.isUndefined(index) ? null : this.plys[index]
+      , turn, move;
+
+    if (old_ply) {
+      this.char_index = old_ply.char_index;
+      turn = old_ply.turn;
+      move = old_ply.move;
+      this.plys.splice(old_ply.index);
+      this.moves.splice(move.index + 1);
+      if (turn == 1) {
+        move.ply2 = null;
+      }
+    } else {
+      turn = this.plys.length && _.last(this.plys).turn == 1 ? 2 : 1;
+      move = _.last(this.moves);
+      if (move.ply2 || move.ply1 && move.ply1.turn == 2) {
+        // New move
+        move.suffix = '\n';
+        move = new Move((move.index + 2) + '.'+move.ply1.prefix, this);
+      }
+    }
+
+    return move.insert_ply(ply, turn, is_done, flattens);
+  };
+
   Game.prototype.trim_to_current_ply = function (board) {
     var ply = this.plys[board.ply_index]
       , old_tag = _.find(this.tags, { key: 'tps' })

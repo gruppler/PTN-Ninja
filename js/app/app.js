@@ -187,6 +187,63 @@ define([
 
     // Edit Mode Functions
 
+    update_ptn: function () {
+      app.$ptn.html(app.game.print());
+      app.$ptn.$header = app.$ptn.find('span.header');
+      app.$ptn.$header.$tps = app.$ptn.$header.find('span.value.tps');
+      app.$ptn.$body = app.$ptn.find('span.body');
+      app.$ptn.$ply = app.$ptn.$body.find('.ply.active:first');
+    },
+
+    set_active_ply: function (ply) {
+      app.$ptn.$ply = ply ?
+      app.$ptn.find('.ply[data-index="'+ply.index+'"]:first') :
+      null;
+
+      if (app.$ptn.$ply && app.$ptn.$ply.length) {
+        app.$ptn.$ply.addClass('active');
+      }
+    },
+
+    update_after_ply: function (ply) {
+      if (app.$ptn.$ply && app.$ptn.$ply.length) {
+        if (app.$ptn.$ply.data('model') != ply) {
+          app.$ptn.$ply.removeClass('active');
+          app.set_active_ply(ply);
+        }
+      } else {
+        app.set_active_ply(ply);
+      }
+
+      if (app.board.ply_is_done) {
+        app.$html.addClass('ply-is-done');
+      } else {
+        app.$html.removeClass('ply-is-done');
+      }
+
+      app.board.show_comments(ply);
+      app.board.update_ptn(ply);
+      app.board.set_active_squares(ply ? ply.squares : false);
+      app.board.update_valid_squares();
+    },
+
+    update_after_ply_insert: function (index, is_done) {
+      app.board.tmp_ply = null;
+      app.update_ptn();
+      app.range.pushstate();
+
+      if (is_done) {
+        app.board.ply_index = Math.min(app.game.plys.length - 1, index);
+        app.board.ply_is_done = true;
+        app.board.turn = app.get_current_ply().player == 1 ? 2 : 1;
+        app.update_after_ply(app.get_current_ply());
+      } else {
+        app.board.go_to_ply(index, true);
+      }
+
+      app.scroll_to_ply();
+    },
+
     resize: function (event) {
       app.board.resize(event);
       app.restore_scroll_position();
@@ -262,7 +319,7 @@ define([
       } else if (this.game.plys.length) {
         this.set_caret(
           this.game.get_bounds(
-            this.game.plys[this.board.ply_index]
+            this.get_current_ply()
           )[1]
         );
       } else {
@@ -386,9 +443,10 @@ define([
     },
 
     scroll_to_ply: function () {
-      if (this.$ptn.$ply) {
-        this.$editor.scrollTop(
-          this.$editor.scrollTop() + this.$ptn.$ply.offset().top
+      var offset;
+      if (this.$ptn.$ply && (offset = this.$ptn.$ply.offset())) {
+        this.$ptn.scrollTop(
+          this.$ptn.scrollTop() + offset.top
           - (window.innerHeight - this.$ptn.$ply.height())/2
         );
       }

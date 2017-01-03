@@ -117,6 +117,7 @@ $stone-thickness: 0.3vmin;
   font-size: inherit;
   z-index: 2;
   will-change: width, height;
+  transform-style: preserve-3d;
 
   html.animate-board #viewer.animated & {
     transition: width $time-smooth $natural,
@@ -126,14 +127,18 @@ $stone-thickness: 0.3vmin;
   .squares,
   .pieces {
     @include position-fill;
+    pointer-events: none;
   }
 
   .squares {
     background-color: darken($primary-color-300, 1.5%);
+    pointer-events: all;
+    transform-style: preserve-3d;
   }
 
   .square {
     position: absolute;
+    transform-style: preserve-3d;
 
     &.light {
       background-color: $primary-color-300;
@@ -148,10 +153,11 @@ $stone-thickness: 0.3vmin;
       background-color: $accent-color-500;
 
       html.animate-board & {
-        transition: opacity $time-smooth linear;
+        transition: opacity $time-quick linear;
       }
     }
-    html.square-hl &.active:before {
+    html.square-hl &.active:before,
+    html.square-hl &.valid:hover:before {
       opacity: 0.65;
     }
 
