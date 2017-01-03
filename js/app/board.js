@@ -430,19 +430,6 @@ define([
   };
 
 
-  Board.prototype.deselect_all = function () {
-    var piece;
-
-    while (piece = this.selected_pieces.length) {
-      this.selected_pieces.pop().is_selected = false;
-    }
-
-    if (piece) {
-      piece.render();
-    }
-  };
-
-
   Board.prototype.update_view = function() {
     _.invokeMap(
       _.filter(this.all_pieces, { needs_updated: true, captor: null }),

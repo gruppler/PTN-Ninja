@@ -203,7 +203,14 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         );
       } else {
         // Select piece or stack
-        piece.select();
+        this.board.selected_pieces = [piece].concat(
+          piece.captives.slice(0, this.board.size - 1)
+        );
+        for (var i = 0; i < this.board.selected_pieces.length; i++) {
+          this.board.selected_pieces[i].is_selected = true;
+        }
+        piece.render();
+        this.board.update_valid_squares();
         this.board.set_active_squares([this]);
       }
     } else {

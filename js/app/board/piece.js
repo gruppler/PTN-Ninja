@@ -25,7 +25,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     board.all_pieces.push(this);
     board.pieces[this.player][this.true_stone].push(this);
 
-    _.bindAll(this, 'render', 'select');
+    _.bindAll(this, 'render');
 
     return this;
   };
@@ -220,19 +220,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.needs_updated = false;
 
     return this.$view;
-  };
-
-  Piece.prototype.select = function () {
-    if (this.board.ply_index != this.ply.index) {
-      this.board.selected_pieces = [this].concat(
-        this.captives.slice(0, this.board.size - 1)
-      );
-      for (var i = 0; i < this.board.selected_pieces.length; i++) {
-        this.board.selected_pieces[i].is_selected = true;
-      }
-      this.render();
-      this.board.update_valid_squares();
-    }
   };
 
   Piece.prototype.tpl = {
