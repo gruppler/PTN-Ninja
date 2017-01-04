@@ -182,7 +182,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     } else if (this.piece) {
       piece = this.piece;
 
-      if (this.board.ply_index == piece.ply.index) {
+      if (piece.ply && this.board.ply_index == piece.ply.index) {
         // Cycle through F, S, C
         if (piece.stone == 'F') {
           stone = 'S';
