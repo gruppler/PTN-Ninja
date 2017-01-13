@@ -151,10 +151,6 @@ $stone-thickness: 0.3vmin;
       opacity: 0;
       pointer-events: none;
       background-color: $accent-color-500;
-
-      html.animate-board & {
-        transition: opacity $time-quick linear;
-      }
     }
     html.square-hl &.active:before,
     html.square-hl &.valid:hover:before {
