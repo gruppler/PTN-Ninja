@@ -63,6 +63,10 @@ define([
       type: 'file',
       accept: '.ptn,.txt'
     },{
+      label: t.New_Game,
+      icon: 'insert_drive_file',
+      onclick: 'app.game.parse(app.default_ptn, true)'
+    },{
       label: t.Load_Sample_Game,
       icon: 'apps',
       onclick: 'app.game.parse(app.sample_ptn, true)'

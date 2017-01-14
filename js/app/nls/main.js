@@ -21,6 +21,7 @@ define({
     Flat_Counts: "Flat Counts",
     Last_Ply: "Last Ply",
     Load_Sample_Game: "Load Sample Game",
+    New_Game: "New Game",
     Next_Ply: "Next Ply",
     Off: "Off",
     OK: "OK",
