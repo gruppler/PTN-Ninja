@@ -172,14 +172,18 @@ define([
       if (turn == 1) {
         move.ply2 = null;
       }
-    } else {
+    } else if (this.moves.length) {
       turn = this.plys.length && _.last(this.plys).turn == 1 ? 2 : 1;
       move = _.last(this.moves);
       if (move.ply2 || move.ply1 && move.ply1.turn == 2) {
         // New move
         move.suffix = '\n';
-        move = new Move((move.index + 2) + '.'+move.ply1.prefix, this);
+        move = new Move((move.linenum.value + 1) + '.', this);
       }
+    } else {
+      turn = 1;
+      move = new Move(this.suffix + this.get_linenum() + '.', this);
+      this.suffix = '';
     }
 
     return move.insert_ply(ply, turn, is_done, flattens);
@@ -188,7 +192,13 @@ define([
   Game.prototype.trim_to_current_ply = function (board) {
     var ply = this.plys[board.ply_index]
       , old_tag = _.find(this.tags, { key: 'tps' })
-      , bounds;
+      , prefix, bounds;
+
+    if (this.moves.length && this.moves[0].linenum) {
+      prefix = this.moves[0].linenum.prefix;
+    } else {
+      return;
+    }
 
     new Tag(
       '\n[TPS "'+board.to_tps()+'"]',
@@ -198,17 +208,15 @@ define([
 
     if (ply) {
       this.moves.splice(0, ply.move.index + (ply.turn == 2));
+      if (this.moves.length) {
+        this.moves[0].linenum.prefix = prefix;
+      } else {
+        this.suffix = prefix;
+      }
       if (ply.move.ply1 == ply) {
         ply.move.ply1 = null;
         ply.move.comments1 = null;
         ply.move.comments2 = null;
-      }
-      if (
-        this.moves.length && this.moves[0].linenum
-        && (ply.move.index || ply.turn == 2)
-      ) {
-        this.moves[0].linenum.prefix = ply.move.suffix
-          + this.moves[0].linenum.prefix;
       }
       board.ply_index = 0;
       board.ply_is_done = false;

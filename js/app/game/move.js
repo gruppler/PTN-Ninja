@@ -138,10 +138,7 @@ define([
     if (turn == 1) {
       if (this.ply1) {
         ply = this.ply1.prefix + ply;
-      } else if (
-        (prev_move = this.game.moves[this.index - 1])
-          && prev_move.ply1
-      ) {
+      } else if ((prev_move = _.last(this.game.moves)) && prev_move.ply1) {
         ply = prev_move.ply1.prefix + ply;
       } else {
         ply = ' ' + ply;
@@ -151,16 +148,13 @@ define([
     } else {
       if (this.ply2) {
         ply = this.ply2.prefix + ply;
-      } else if (
-        (prev_move = this.game.moves[this.index - 1])
-          && prev_move.ply2
-      ) {
+      } else if ((prev_move = _.last(this.game.moves)) && prev_move.ply2) {
         ply = prev_move.ply2.prefix + ply;
       } else {
         ply = ' ' + ply;
       }
       ply = this.ply2 = new Ply(ply, this.second_player, this.game, this);
-      this.ply2.turn = this.second_turn;
+      this.ply2.turn = 2;
     }
 
     if (_.isNumber(flattens)) {
