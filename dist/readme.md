@@ -14,6 +14,8 @@ If you want to support this project, you can...
 
 ## Getting Started
 
+Click or tap on a square to place a piece. Select it again to cycle the stone type. To move a stack, select the square, then select further squares to drop pieces.
+
 To load a "**.ptn**" file, **drag** the file into the window, or select **Open** from the menu, or copy the contents and paste into the editor.
 
 Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
