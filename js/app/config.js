@@ -6,9 +6,12 @@
 
 define(['lodash'], function (_) {
 
-  var callbacks = {};
+  var mobile_width = 1024
+    , callbacks = {};
 
   var config = {
+
+    mobile_width: mobile_width,
 
     presets: {
       minimal: {
@@ -54,7 +57,7 @@ define(['lodash'], function (_) {
       board_max_angle: 30,
       board_rotate_sensitivity: 3,
       board_3d: false,
-      board_shadows: false,
+      board_shadows: window.innerWidth > mobile_width,
       animate_board: true,
       show_fab: true
     },

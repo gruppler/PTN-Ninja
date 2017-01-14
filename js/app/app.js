@@ -573,7 +573,9 @@ define([
         this.scroll_to_ply();
         this.save_scroll_position();
         this.range.last_bounds = null;
-        this.restore_caret();
+        if (innerWidth > this.config.mobile_width) {
+          this.restore_caret();
+        }
       } else if (was_editing && !this.game.is_editing) {
         this.$viewer.transition();
         this.$html.addClass('playmode');
@@ -581,6 +583,9 @@ define([
         this.$menu_play.addClass('mdl-accordion--opened');
         this.$menu_edit.removeClass('mdl-accordion--opened');
         this.clear_scroll_position();
+        if (innerWidth <= this.config.mobile_width) {
+          this.$ptn.blur();
+        }
         if (this.game.plys.length) {
           this.board.set_active_squares(this.get_current_ply().squares);
         }
