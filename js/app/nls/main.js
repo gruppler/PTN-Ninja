@@ -9,6 +9,7 @@ define({
     Board_3D: "3D Board",
     Board_Opacity: "Board Opacity",
     Board_Settings: "Board Settings",
+    Board_Shadows: "Board Shadows",
     Cancel: "Cancel",
     Clock: "Clock",
     Close: "Close",

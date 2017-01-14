@@ -54,6 +54,7 @@ define(['lodash'], function (_) {
       board_max_angle: 30,
       board_rotate_sensitivity: 3,
       board_3d: false,
+      board_shadows: false,
       animate_board: true,
       show_fab: true
     },

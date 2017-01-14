@@ -72,6 +72,11 @@ define([
       checked: config.board_3d,
       'data-id': 'board_3d'
     },{
+      label: t.Board_Shadows,
+      type: 'checkbox',
+      checked: config.board_shadows,
+      'data-id': 'board_shadows'
+    },{
       label: t.Animate_Board,
       type: 'checkbox',
       checked: config.animate_board,
