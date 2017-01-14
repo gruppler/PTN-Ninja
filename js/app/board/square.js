@@ -127,7 +127,11 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           tmp_ply.drops[tmp_ply.drops.length - 1] += 1;
         }
         if (!this.board.selected_pieces.length) {
-          this.board.set_active_squares(app.get_current_ply().squares);
+          this.board.set_active_squares(
+            this.board.game.plys.length ?
+              app.get_current_ply().squares
+              : []
+            );
         }
       } else {
         // Drop selected piece in different square

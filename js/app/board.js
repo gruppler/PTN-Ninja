@@ -682,7 +682,7 @@ define([
           square.piece
           && (
             square.piece.player == this.turn
-            || square.piece.ply == current_ply
+            || square.piece.ply === current_ply
           )
           || !square.piece && (
             that.pieces[this.turn].F.length
