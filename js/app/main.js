@@ -224,6 +224,15 @@ requirejs({locale: navigator.language}, [
     }
   });
 
+  // Open menu on left edge touch
+  app.$body.on('touchstart', function (event) {
+    if (event.originalEvent.touches[0].clientX < 10) {
+      app.menu.open();
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+
   // Rotate board in 3D mode
   config.on_change('board_rotation', app.board.rotate);
   app.$viewer.on(
