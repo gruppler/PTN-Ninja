@@ -255,7 +255,11 @@ $stone-thickness: 0.3vmin;
       will-change: transform;
 
       html.animate-board & {
-        transition: transform $time-smooth $natural;
+        transition: transform $time-smooth $natural,
+          width $time-smooth $natural,
+          border-radius $time-smooth $natural,
+          opacity $time-smooth $natural,
+          margin-left $time-smooth $natural;
       }
     }
 
