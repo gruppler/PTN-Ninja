@@ -301,9 +301,9 @@ requirejs({locale: navigator.language}, [
     }).on('dragleave', function(event) {
       event.preventDefault();
       event.stopPropagation();
-    }).on('hashchange', function () {
-      app.board.ply_index = 0;
-      app.game.parse(app.hash || app.default_ptn, !!app.hash, true);
+    // }).on('hashchange', function () {
+    //   app.board.ply_index = 0;
+    //   app.game.parse(app.hash || app.default_ptn, !!app.hash, true);
     });
   }
 
