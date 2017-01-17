@@ -21,6 +21,8 @@ define([
   'dialog-polyfill'
 ], function (t, config, hotkeys, menu, Game, Board, readme, sample_ptn, _, $) {
 
+  var baseurl = location.origin + location.pathname;
+
   var d = new Date()
     , today = d.getFullYear() +'.'+
     _.padStart(d.getMonth()+1,2,0) +'.'+
@@ -187,6 +189,39 @@ define([
 
     // Edit Mode Functions
 
+    update_after_parse: function (is_original) {
+      app.update_ptn();
+      if (app.game.is_valid) {
+        app.board.init(app.game);
+
+        if (app.game.is_editing && app.$focus && !document.contains(app.$focus[0])) {
+          app.set_position_from_caret();
+        }
+      }
+
+      app.update_permalink();
+
+      if (is_original) {
+        app.clear_undo_history();
+      }
+
+      if (app.game.is_editing && app.game.caret_moved) {
+        _.defer(app.restore_caret);
+      }
+    },
+
+    update_permalink: function () {
+      var href, length;
+
+      href = '#'+app.game.ptn_compressed;
+      length = (baseurl + href).length;
+
+      app.$permalink.attr({
+        href: href,
+        title: t.n_characters({n: length})
+      });
+    },
+
     update_ptn: function () {
       app.$ptn.html(app.game.print());
       app.$ptn.$header = app.$ptn.find('span.header');
@@ -222,14 +257,16 @@ define([
       }
 
       app.board.show_comments(ply);
-      app.board.update_ptn(ply);
+      app.board.update_ptn();
       app.board.set_active_squares(ply ? ply.squares : false);
       app.board.update_valid_squares();
     },
 
     update_after_ply_insert: function (index, is_done) {
       app.board.tmp_ply = null;
+      app.board.show_comments(app.get_current_ply());
       app.update_ptn();
+      app.update_permalink();
       app.range.pushstate();
 
       if (is_done) {

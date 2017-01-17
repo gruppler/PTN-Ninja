@@ -20,8 +20,6 @@ requirejs({locale: navigator.language}, [
   'domReady!'
 ], function (t, Messages, config, app, saveAs, _, $) {
 
-  var baseurl = location.origin + location.pathname;
-
   window.app = app;
   window.t = t;
 
@@ -128,34 +126,7 @@ requirejs({locale: navigator.language}, [
   // Initialize board
   // Update Permalink
   app.$permalink = $('#permalink');
-  app.game.on_parse_end(function (is_original) {
-    var href, length;
-
-    app.update_ptn();
-    if (app.game.is_valid) {
-      app.board.init(app.game);
-
-      if (app.game.is_editing && app.$focus && !document.contains(app.$focus[0])) {
-        app.set_position_from_caret();
-      }
-    }
-
-    href = '#'+app.game.ptn_compressed;
-    length = (baseurl + href).length;
-
-    app.$permalink.attr({
-      href: href,
-      title: t.n_characters({n: length})
-    });
-
-    if (is_original) {
-      app.clear_undo_history();
-    }
-
-    if (app.game.is_editing && app.game.caret_moved) {
-      _.defer(app.restore_caret);
-    }
-  });
+  app.game.on_parse_end(app.update_after_parse);
 
 
   // Re-render $viewer after board initialization

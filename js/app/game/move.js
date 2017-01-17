@@ -161,7 +161,6 @@ define([
       ply.flattens = flattens;
     }
 
-    app.update_after_ply_insert(ply.index, is_done);
     return ply;
   };
 

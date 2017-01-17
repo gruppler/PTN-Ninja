@@ -161,7 +161,7 @@ define([
 
   Game.prototype.insert_ply = function (ply, index, is_done, flattens) {
     var old_ply = _.isUndefined(index) ? null : this.plys[index]
-      , turn, move;
+      , turn, move, ply;
 
     if (old_ply) {
       this.char_index = old_ply.char_index;
@@ -186,7 +186,13 @@ define([
       this.suffix = '';
     }
 
-    return move.insert_ply(ply, turn, is_done, flattens);
+    ply = move.insert_ply(ply, turn, is_done, flattens);
+
+    this.ptn = this.print_text();
+    this.ptn_compressed = compress(this.ptn);
+    app.update_after_ply_insert(ply.index, is_done);
+
+    return ply;
   };
 
   Game.prototype.trim_to_current_ply = function (board) {
