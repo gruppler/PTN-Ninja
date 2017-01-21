@@ -458,8 +458,9 @@ define([
   };
 
 
-  Board.prototype.update_ptn = function(current_ply) {
-    var ply1, ply2, $ply1, $ply2;
+  Board.prototype.update_ptn = function() {
+    var current_ply = this.game.plys[this.ply_index] || this.game.plys[0]
+      , ply1, ply2, $ply1, $ply2;
 
     if (current_ply && !current_ply.move.is_invalid) {
       ply1 = current_ply.move.ply1;
