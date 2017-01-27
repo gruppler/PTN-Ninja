@@ -7,13 +7,37 @@
 define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
   var Square = function (board, row, col) {
+    this.needs_updated = false;
     this.board = board;
     this.col = col;
     this.row = row;
-    this.square = app.i_to_square([col, row]);
+    this.coord = app.i_to_square([col, row]);
     this.color = (row % 2 != col % 2) ? 'dark' : 'light';
     this.piece = null;
+    this.player = 0;
     this.neighbors = {};
+
+    this.is_edge = false;
+
+    this.edges = [];
+    this.connections = [];
+
+    if (row == 0) {
+      this.is_edge = true;
+      this.edges.push('-');
+    }
+    if (row == board.size - 1) {
+      this.is_edge = true;
+      this.edges.push('+');
+    }
+    if (col == 0) {
+      this.is_edge = true;
+      this.edges.push('<');
+    }
+    if (col == board.size - 1) {
+      this.is_edge = true;
+      this.edges.push('>');
+    }
 
     _.bindAll(this, 'render', 'select');
 
@@ -56,44 +80,77 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     return this.set_piece(piece, false);
   };
 
+  Square.prototype.set_connection = function (direction, on) {
+    var index = this.connections.indexOf(direction);
+
+    if (on) {
+      if (index < 0) {
+        this.connections.push(direction);
+        this.needs_updated = true;
+      }
+    } else if (index >= 0) {
+      this.connections.splice(index, 1);
+      this.needs_updated = true;
+    }
+  };
+
   Square.prototype.set_piece = function (piece, captives) {
-    var that = this
-      , previous_piece = this.piece;
+    var previous_piece = this.piece
+      , direction, opposite_direction, neighbor;
 
     this.piece = piece || null;
-
-    if (this.$view) {
-      this.$view.removeClass('p1 p2');
-    }
 
     if (previous_piece && previous_piece.stone == 'F') {
       this.board.flat_score[previous_piece.player]--;
     }
 
     if (piece) {
+      this.player = piece.player;
       this.board.flat_score[piece.player] += 1*(piece.stone == 'F');
       piece.square = this;
       piece.set_captives(captives || piece.captives);
       piece.render();
+      this.needs_updated = true;
     } else if (previous_piece) {
+      this.player = 0;
       previous_piece.render();
+      this.needs_updated = true;
+    }
 
-      if (this.$view) {
-        this.$view.removeClass(_.values(this.board.direction_name).join(' '));
-        _.each(this.board.direction_name, function (dn, d) {
-          if (that.neighbors[d]) {
-            that.$view.removeClass(dn);
-            that.neighbors[d].$view.removeClass(
-              that.board.direction_name[
-                that.board.opposite_direction[d]
-              ]
-            );
-          }
-        })
+    for (direction in this.board.direction_names) {
+      opposite_direction = this.board.opposite_direction[direction];
+      neighbor = this.neighbors[direction];
+
+      if (neighbor) {
+        if (
+          piece
+          && neighbor.player == this.player
+          && piece.stone != 'S'
+          && neighbor.piece.stone != 'S'
+        ) {
+          // Connected to neighbor
+          this.set_connection(direction, true);
+          neighbor.set_connection(opposite_direction, true);
+        } else {
+          // Disconnected from neighbor
+          this.set_connection(direction, false);
+          neighbor.set_connection(opposite_direction, false);
+        }
+
+        if (neighbor.needs_updated) {
+          neighbor.update_view();
+        }
+      } else if (piece && piece.stone != 'S') {
+        // Board edge connection
+        this.set_connection(direction, true);
+      } else {
+        // Non-road square
+        this.set_connection(direction, false);
       }
     }
 
-    if (!this.board.defer_render) {
+    if (this.$view && this.needs_updated && !this.board.defer_render) {
+      this.update_view();
       this.board.update_scores();
     }
 
@@ -111,6 +168,30 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.$view.data('model', this);
 
     return this.$view;
+  };
+
+  Square.prototype.update_view = function () {
+    var coord, square;
+
+    if (!this.$view) {
+      return;
+    }
+
+    if (this.board.defer_render) {
+      this.needs_updated = true;
+      return;
+    }
+
+    this.$view.removeClass('p1 p2');
+    if (this.player) {
+      this.$view.addClass('p'+this.player);
+    }
+
+    this.$view
+      .removeClass(_.values(this.board.direction_names).join(' '))
+      .addClass(_.map(this.connections, this.board.direction_name).join(' '));
+
+    this.needs_updated = false;
   };
 
   Square.prototype.select = function () {
@@ -145,7 +226,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         } else {
           tmp_ply = this.board.tmp_ply = {
             count: this.board.selected_pieces.length,
-            square: prev_square.square,
+            square: prev_square.coord,
             direction: _.findKey(prev_square.neighbors, this),
             drops: [1]
           };
@@ -202,7 +283,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         }
         this.board.go_to_ply(this.board.ply_index, false);
         this.board.game.insert_ply(
-          stone + this.square,
+          stone + this.coord,
           this.board.ply_index
         );
       } else {
@@ -216,6 +297,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         piece.render();
         this.board.update_valid_squares();
         this.board.set_active_squares([this]);
+        this.$view.addClass('selected');
       }
     } else {
       // Place piece as new ply
@@ -228,7 +310,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         }
       }
       this.board.game.insert_ply(
-        stone + this.square,
+        stone + this.coord,
         this.board.ply_index + 1*this.board.ply_is_done
       );
     }
@@ -267,7 +349,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     var that = this
       , square = this
       , piece = this.piece
-      , moving_stack, remaining_stack, i;
+      , moving_stack, remaining_stack, i
+      , was_render_deferred = this.board.defer_render;
 
     function illegal() {
       return that.board.illegal_ply(ply);
@@ -281,6 +364,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     ) {
       return illegal();
     }
+
+    this.board.defer_render = true;
 
     remaining_stack = piece.captives.splice(ply.count - 1);
     square.set_piece(remaining_stack[0], remaining_stack.slice(1));
@@ -310,6 +395,11 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       }
 
       square.set_piece(remaining_stack[0], remaining_stack.slice(1));
+    }
+
+    if (!was_render_deferred) {
+      this.board.defer_render = false;
+      this.board.update_view();
     }
 
     return true;

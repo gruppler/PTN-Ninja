@@ -51,7 +51,8 @@ define([
       'prev_move',
       'next_move',
       'first',
-      'last'
+      'last',
+      'direction_name'
     ]);
 
     if (game) {
@@ -160,7 +161,7 @@ define([
     for (row = 0; row < this.size; row++) {
       for (col = 0; col < this.size; col++) {
         square = new Square(this, row, col);
-        this.squares[square.square] = square;
+        this.squares[square.coord] = square;
         if (row) {
           square.neighbors['-'] = this.squares[app.i_to_square([col, row-1])];
           this.squares[app.i_to_square([col, row-1])].neighbors['+'] = square;
@@ -185,7 +186,7 @@ define([
     if (this.tps) {
       _.each(this.tps.squares, function (square) {
         if (!square.is_space && !square.error) {
-          if (!that.squares[square.square].parse(square.text)) {
+          if (!that.squares[square.coord].parse(square.text)) {
             that.invalid_tps(square);
           }
         }
@@ -219,6 +220,155 @@ define([
     if (this.game.plys.length) {
       this.game.trim_to_current_ply(this);
     }
+  };
+
+
+  Board.prototype.find_roads = function () {
+    var possible_roads = { 1: {}, 2: {} };
+
+    // Recursively follow a square and return all connected squares and edges
+    function _follow_road(square) {
+      var squares = {}
+        , edges = {}
+        , i, neighbor, road;
+
+      squares[square.coord] = square;
+      delete possible_roads[square.player][square.coord];
+
+      if (square.is_edge) {
+        // Note which edge(s) the road touches
+        edges[square.edges[0]] = true;
+        if (square.edges[1]) {
+          edges[square.edges[1]] = true;
+        }
+      }
+
+      for (i = 0; i < square.connections.length; i++) {
+        neighbor = square.neighbors[square.connections[i]];
+        if (
+          neighbor
+          && _.has(possible_roads[square.player], neighbor.coord)
+        ) {
+          // Haven't been to this friendly neighbor yet; find out where it goes
+          road = _follow_road(neighbor);
+          // Report back squares and edges
+          _.assign(squares, road.squares);
+          _.assign(edges, road.edges);
+        }
+      }
+
+      return {
+        squares: squares,
+        edges: edges
+      };
+    }
+
+    // Remove all dead_ends and their non-junction neighbors from squares
+    // Mutates squares, but not dead_ends
+    function _remove_dead_ends(dead_ends, squares) {
+      var next_neighbors
+        , i, j, square, neighbor;
+
+      dead_ends = dead_ends.concat();
+
+      while (dead_ends.length) {
+        for (i = 0; i < dead_ends.length; i++) {
+          square = dead_ends[i];
+
+          next_neighbors = [];
+          for (var j = 0; j < square.connections.length; j++) {
+            neighbor = square.neighbors[square.connections[j]];
+            if (neighbor && _.has(squares, neighbor.coord)) {
+              next_neighbors.push(neighbor);
+            }
+          }
+
+          if (next_neighbors.length < 2) {
+            delete squares[square.coord];
+            dead_ends[i] = next_neighbors[0];
+          } else {
+            dead_ends[i] = undefined;
+          }
+        }
+        dead_ends = _.compact(dead_ends);
+      }
+    }
+
+    // Gather player-controlled squares and dead ends
+    var edge_dead_ends = {
+          1: { ns: [], ew: [] },
+          2: { ns: [], ew: [] }
+        }
+      , non_edge_dead_ends = []
+      , coord, square, edges;
+
+    for (coord in this.squares) {
+      square = this.squares[coord];
+      edges = square.is_edge ? square.edges.join('') : null;
+
+      if (square.connections.length - square.edges.length == 1) {
+        if (square.is_edge) {
+          // An edge with exactly one friendly neighbor
+          possible_roads[square.player][coord] = square;
+
+          if (square.edges.length == 1) {
+            if (/[+-]/.test(edges)) {
+              edge_dead_ends[square.player].ns.push(square);
+            } else if (/[<>]/.test(edges)) {
+              edge_dead_ends[square.player].ew.push(square);
+            }
+          }
+        } else {
+          // A non-edge dead end
+          non_edge_dead_ends.push(square);
+        }
+      } else if (square.connections.length - square.edges.length > 1) {
+        // An intersection
+        possible_roads[square.player][coord] = square;
+      }
+    }
+
+    // Remove dead ends not connected to edges
+    _remove_dead_ends(non_edge_dead_ends, possible_roads[1]);
+    _remove_dead_ends(non_edge_dead_ends, possible_roads[2]);
+
+    // Find roads that actually bridge opposite edges
+    var roads = { 1: [], 2: [], squares: {} }
+      , road;
+
+    for (i = 1; i <= 2; i++) {
+      while (!_.isEmpty(possible_roads[i])) {
+        // Start with any square in possible_roads
+        for (coord in possible_roads[i]) break;
+
+        // Follow the square to get all connected squares
+        road = _follow_road(possible_roads[i][coord]);
+
+        // Find connected opposite edge pair(s)
+        road.edges.ns = road.edges['-'] && road.edges['+'] || false;
+        road.edges.ew = road.edges['<'] && road.edges['>'] || false;
+
+        if (road.edges.ns || road.edges.ew) {
+          if (!road.edges.ns || !road.edges.ew) {
+            // Remove dead ends connected to the non-winning edges
+            _remove_dead_ends(
+              edge_dead_ends[i][road.edges.ns ? 'ew' : 'ns'],
+              road.squares
+            );
+          }
+
+          // Keep the road; at least one opposite edge pair is connected
+          roads[i].push({
+            ns: road.edges.ns,
+            ew: road.edges.ew,
+            squares: road.squares
+          });
+          _.assign(roads.squares, road.squares);
+        }
+      }
+    }
+
+    return roads;
   };
 
 
@@ -436,6 +586,10 @@ define([
     _.invokeMap(
       _.filter(this.all_pieces, { needs_updated: true, captor: null }),
       'render'
+    );
+    _.invokeMap(
+      _.filter(this.squares, { needs_updated: true }),
+      'update_view'
     );
 
     this.update_scores();
@@ -1034,11 +1188,15 @@ define([
     '>': '<'
   };
 
-  Board.prototype.direction_name = {
+  Board.prototype.direction_names = {
     '+': 'up',
     '-': 'down',
     '<': 'left',
     '>': 'right'
+  };
+
+  Board.prototype.direction_name = function (direction) {
+    return this.direction_names[direction];
   };
 
   return Board;

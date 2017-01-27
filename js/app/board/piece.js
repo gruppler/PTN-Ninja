@@ -179,40 +179,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       this.$stone[0].className = this.tpl.stone_class(this);
     }
 
-    // Update road visualization
-    if (!this.captor && square) {
-      square.$view.removeClass('p1 p2').addClass('p'+this.player);
-      _.each(this.board.direction_name, function (dn, d) {
-        if (square.neighbors[d]) {
-          if (
-            that.stone != 'S' &&
-            square.neighbors[d].piece &&
-            square.neighbors[d].piece.player == that.player &&
-            square.neighbors[d].piece.stone != 'S'
-          ) {
-            square.$view.addClass(dn);
-            square.neighbors[d].$view.addClass(
-              that.board.direction_name[
-                that.board.opposite_direction[d]
-              ]
-            );
-          } else {
-            square.$view.removeClass(dn);
-            square.neighbors[d].$view.removeClass(
-              that.board.direction_name[
-                that.board.opposite_direction[d]
-              ]
-            );
-          }
-        } else if (that.stone != 'S') {
-          // Edge
-          square.$view.addClass(dn);
-        } else {
-          square.$view.removeClass(dn);
-        }
-      });
-    }
-
     if (!app.$html[0].contains(this.$view[0])) {
       this.board.$pieces.append(this.$view);
     }
