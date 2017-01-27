@@ -114,8 +114,8 @@ define([
       }
 
       _.each(actions, function (action, i) {
-        var value = 'value' in action ? action.value : i
-          , callback = 'callback' in action ? action.callback : false;
+        var value = _.has(action, 'value') ? action.value : i
+          , callback = _.has(action, 'callback') ? action.callback : false;
 
         $action = $actions.eq(i);
 

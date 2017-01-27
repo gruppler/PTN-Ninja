@@ -46,7 +46,7 @@ define([
     this.key = this.name.toLowerCase();
     this.icon = this.key;
 
-    if (!(this.key in r.tags)) {
+    if (!_.has(r.tags, this.key)) {
       this.icon = 'unknown';
       game.m.warning(
         t.error.unrecognized_tag({tag: parts[2]})

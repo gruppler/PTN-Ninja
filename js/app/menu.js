@@ -240,15 +240,15 @@ define([
   Menu.tpl = {
 
     item: function (obj) {
-      if ('items' in obj) {
-        if ('label' in obj) {
+      if (_.has(obj, 'items')) {
+        if (_.has(obj, 'label')) {
           return app.menu.tpl.accordion(obj);
         } else {
           return app.menu.tpl.section(obj);
         }
-      } else if ('href' in obj || 'onclick' in obj) {
+      } else if (_.has(obj, 'href') || _.has(obj, 'onclick')) {
         return app.menu.tpl.anchor(obj);
-      } else if ('type' in obj) {
+      } else if (_.has(obj, 'type')) {
         return app.menu.tpl[obj.type](obj);
       }
     },

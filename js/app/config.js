@@ -137,7 +137,7 @@ define(['lodash'], function (_) {
       var value, i;
 
       function _listen(prop) {
-        if (!(prop in callbacks)) {
+        if (!_.has(callbacks, prop)) {
           callbacks[prop] = [fn];
         } else {
           callbacks[prop].push(fn);
@@ -158,7 +158,7 @@ define(['lodash'], function (_) {
           this.set_css_flag(prop, value);
         }
 
-        if (prop in callbacks) {
+        if (_.has(callbacks, prop)) {
           for (i = 0; i < callbacks[prop].length; i++) {
             callbacks[prop][i].call(
               this,

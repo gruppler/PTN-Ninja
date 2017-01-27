@@ -359,13 +359,13 @@ requirejs({locale: navigator.language}, [
         dialog.close();
         $(dialog).remove();
       }
-    } else if (app.game.is_editing && event.keymap in app.hotkeys.edit) {
+    } else if (app.game.is_editing && _.has(app.hotkeys.edit, event.keymap)) {
       // Edit Mode
       app.hotkeys.edit[event.keymap](event, $focus, $parent);
-    } else if (!app.game.is_editing && event.keymap in app.hotkeys.play) {
+    } else if (!app.game.is_editing && _.has(app.hotkeys.play, event.keymap)) {
       // Play Mode
       app.hotkeys.play[event.keymap](event, $focus, $parent);
-    } else if (event.keymap in app.hotkeys.global) {
+    } else if (_.has(app.hotkeys.global, event.keymap)) {
       // Global
       app.hotkeys.global[event.keymap](event, $focus, $parent);
     }
