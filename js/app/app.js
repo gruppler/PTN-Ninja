@@ -260,12 +260,11 @@ define([
       app.board.update_ptn();
       app.board.set_active_squares(ply ? ply.squares : false);
       app.board.update_valid_squares();
+      app.$html.removeClass('p1 p2').addClass('p'+app.board.turn);
     },
 
     update_after_ply_insert: function (index, is_done) {
       app.board.tmp_ply = null;
-      app.board.show_comments(app.get_current_ply());
-      app.update_ptn();
       app.update_permalink();
       app.range.pushstate();
 
@@ -275,6 +274,7 @@ define([
         app.board.turn = app.get_current_ply().player == 1 ? 2 : 1;
         app.update_after_ply(app.get_current_ply());
       } else {
+        app.update_ptn();
         app.board.go_to_ply(index, true);
       }
 
@@ -623,7 +623,7 @@ define([
         if (innerWidth <= this.config.mobile_width) {
           this.$ptn.blur();
         }
-        if (this.game.plys.length) {
+        if (this.game.plys.length && !this.board.selected_pieces.length) {
           this.board.set_active_squares(this.get_current_ply().squares);
         }
       }

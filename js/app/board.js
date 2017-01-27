@@ -19,6 +19,7 @@ define([
     this.turn = 1;
     this.ply_index = 0;
     this.ply_is_done = false;
+    this.is_eog = false;
     this.comments_ply_index = -2;
     this.size = 5;
     this.squares = {};
@@ -98,6 +99,7 @@ define([
     this.turn = 1;
     this.ply_index = 0;
     this.ply_is_done = false;
+    this.is_eog = false;
     this.comments_ply_index = -2;
     this.squares = {};
     this.all_pieces = [];
@@ -541,7 +543,7 @@ define([
     }
 
     this.ply_is_done = true;
-    this.turn = ply.player == 1 ? 2 : 1;
+    this.turn = ply.turn == 1 ? 2 : 1;
 
     if (!this.defer_render) {
       this.on_ply();
@@ -586,7 +588,7 @@ define([
     }
 
     this.ply_is_done = false;
-    this.turn = ply.player;
+    this.turn = ply.turn;
 
     if (!this.defer_render) {
       this.on_ply();
@@ -662,37 +664,34 @@ define([
     }
 
     if (this.tmp_ply) {
-      this.$squares.children().removeClass('valid');
+      this.$squares.children().removeClass('valid selected placed');
       square = this.selected_pieces[0].square;
-      square.$view.addClass('valid');
+      square.$view.addClass('valid selected');
+
       check_neighbor(
         square,
         square.neighbors[this.tmp_ply.direction]
       );
     } else if (this.selected_pieces.length) {
-      this.$squares.children().removeClass('valid');
+      this.$squares.children().removeClass('valid selected placed');
       square = this.selected_pieces[0].square;
-      square.$view.addClass('valid');
+      square.$view.addClass('valid selected');
       for (direction in square.neighbors) {
         check_neighbor(square, square.neighbors[direction]);
       }
     } else {
       for (square in this.squares) {
         square = this.squares[square];
-        if (
-          square.piece
-          && (
-            square.piece.player == this.turn
-            || square.piece.ply === current_ply
-          )
-          || !square.piece && (
-            that.pieces[this.turn].F.length
-            || that.pieces[this.turn].C.length
-          )
-        ) {
-          square.$view.addClass('valid');
-        } else {
-          square.$view.removeClass('valid');
+        if (square.piece) {
+          if (square.piece.ply === current_ply) {
+            square.$view.addClass('valid placed').removeClass('selected');
+          } else if (square.piece.player == this.turn) {
+            square.$view.addClass('valid').removeClass('selected placed');
+          } else {
+            square.$view.removeClass('valid selected placed');
+          }
+        } else if(!this.is_eog) {
+          square.$view.addClass('valid').removeClass('selected placed');
         }
       }
     }
@@ -744,9 +743,11 @@ define([
 
   Board.prototype.play = function () {
     if (
-      this.game.plys[this.ply_index]
-      && this.ply_index != this.game.plys.length - 1
-      || !this.ply_is_done
+      !this.selected_pieces.length && (
+        this.game.plys[this.ply_index]
+        && this.ply_index != this.game.plys.length - 1
+        || !this.ply_is_done
+      )
     ) {
       this.is_playing = true;
       app.$html.addClass('playing');

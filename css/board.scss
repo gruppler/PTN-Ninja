@@ -155,8 +155,19 @@ $stone-thickness: 0.3vmin;
     html.square-hl &.active:before {
       opacity: 0.6;
     }
-    &.valid:hover:before {
-      opacity: 0.8 !important;
+    &.valid {
+      &.selected:before {
+        opacity: 0.6 !important;
+      }
+      &:hover:before {
+        opacity: 0.4 !important;
+      }
+      &.p1.selected:before,
+      &.p1:hover:before,
+      html.p1 &:not(.placed):hover:before { background-color: $primary-color-100 }
+      &.p2.selected:before,
+      &.p2:hover:before,
+      html.p2 &:not(.placed):hover:before { background-color: $primary-color-700 }
     }
 
     .road {
@@ -400,6 +411,10 @@ $stone-thickness: 0.3vmin;
       background-color: $primary-color-100;
       color: $primary-color-700;
 
+      html.p1 & {
+        border-bottom: 0.25em solid $accent-color-600;
+      }
+
       .name {
         padding-right: 0;
         flex-grow: 1;
@@ -410,6 +425,10 @@ $stone-thickness: 0.3vmin;
       right: 0;
       background-color: $primary-color-700;
       color: $primary-color-100;
+
+      html.p2 & {
+        border-bottom: 0.25em solid $accent-color-600;
+      }
 
       .name {
         padding-left: 0;

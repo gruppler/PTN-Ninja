@@ -161,12 +161,13 @@ define([
 
   Game.prototype.insert_ply = function (ply, index, is_done, flattens) {
     var old_ply = _.isUndefined(index) ? null : this.plys[index]
-      , turn, move, ply;
+      , turn, move, ply, comments;
 
     if (old_ply) {
       this.char_index = old_ply.char_index;
       turn = old_ply.turn;
       move = old_ply.move;
+      comments = old_ply.comments;
       this.plys.splice(old_ply.index);
       this.moves.splice(move.index + 1);
       if (turn == 1) {
@@ -187,6 +188,7 @@ define([
     }
 
     ply = move.insert_ply(ply, turn, is_done, flattens);
+    ply.comments = comments || [];
 
     this.ptn = this.print_text();
     this.ptn_compressed = compress(this.ptn);
