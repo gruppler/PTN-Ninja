@@ -47,17 +47,6 @@ define(['app/messages'], function (Messages) {
         event.stopPropagation();
       },
 
-      '^?': function (event, $focus, $parent) {
-        app.about();
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-    },
-
-    // Edit Mode
-    edit: {
-
       '^z': function (event) {
         app.undo(event);
       },
@@ -69,6 +58,17 @@ define(['app/messages'], function (Messages) {
       '^y': function (event) {
         app.redo(event);
       },
+
+      '^?': function (event, $focus, $parent) {
+        app.about();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+    },
+
+    // Edit Mode
+    edit: {
 
       '^C': function (event, $focus, $parent) {
         app.board.trim_to_current_ply();
