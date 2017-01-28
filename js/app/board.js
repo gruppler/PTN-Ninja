@@ -392,7 +392,12 @@ define([
     _remove_dead_ends(non_edge_dead_ends, possible_roads[2]);
 
     // Find roads that actually bridge opposite edges
-    var roads = { 1: [], 2: [], squares: {} }
+    var roads = {
+          1: [], 2: [],
+          squares: {
+            1: {}, 2: {}, all: {}
+          }
+        }
       , road;
 
     for (i = 1; i <= 2; i++) {
@@ -422,12 +427,15 @@ define([
             ew: road.edges.ew,
             squares: _.keys(road.squares)
           });
-          _.assign(roads.squares, road.squares);
+          _.assign(roads.squares[i], road.squares);
+          _.assign(roads.squares.all, road.squares);
         }
       }
     }
 
-    roads.squares = _.keys(roads.squares);
+    roads.squares[1] = _.keys(roads.squares[1]);
+    roads.squares[2] = _.keys(roads.squares[2]);
+    roads.squares.all = _.keys(roads.squares.all);
     roads.length = roads[1].length + roads[2].length;
 
     return roads;
@@ -862,7 +870,7 @@ define([
 
     if (ply) {
       if (ply.result && ply.result.roads && this.ply_is_done) {
-        this.set_active_squares(ply.result.roads.squares);
+        this.set_active_squares(ply.result.roads.squares[ply.result.victor]);
       } else {
         this.set_active_squares(ply.squares);
       }

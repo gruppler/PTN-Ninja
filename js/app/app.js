@@ -270,15 +270,12 @@ define([
         app.board.ply_index = Math.min(app.game.plys.length - 1, index);
         app.board.ply_is_done = true;
         app.board.turn = app.get_current_ply().player == 1 ? 2 : 1;
-        if (app.board.check_game_end()) {
-          app.update_ptn();
-          app.board.update_ptn();
-        }
+        app.board.check_game_end();
+        app.update_ptn();
         app.update_after_ply(app.get_current_ply());
       } else {
         app.board.go_to_ply(index, true);
         if (app.board.check_game_end()) {
-          app.board.update_ptn();
           app.update_after_ply(app.get_current_ply());
         }
         app.update_ptn();
