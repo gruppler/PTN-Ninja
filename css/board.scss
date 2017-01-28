@@ -157,10 +157,10 @@ $stone-thickness: 0.3vmin;
     }
     &.valid {
       &.selected:before {
-        opacity: 0.6 !important;
+        opacity: 0.5 !important;
       }
       &:hover:before {
-        opacity: 0.4 !important;
+        opacity: 0.3 !important;
       }
       &.p1.selected:before,
       &.p1:hover:before,
