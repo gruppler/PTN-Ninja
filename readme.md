@@ -39,6 +39,9 @@ Key|Action
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Save .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn File
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load Default PTN
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
+<kbd>&#x2318;/Ctrl</kbd> + <kbd>y</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
 
 ### Play Mode
@@ -57,6 +60,7 @@ Key|Action
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 <kbd>a</kbd>|Toggle Annotations
+<kbd>s</kbd>|Toggle Board Shadows
 <kbd>c</kbd>|Toggle Play Controls
 <kbd>h</kbd>|Toggle Square Highlight
 <kbd>r</kbd>|Toggle Road Connections
@@ -68,9 +72,6 @@ Key|Action
 ### Edit Mode
 Key|Action
 :--|:--
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>y</kbd>|Redo
 <kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current ply*
 
 *This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
