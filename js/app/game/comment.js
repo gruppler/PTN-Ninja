@@ -9,6 +9,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   var Comment = function (string, game) {
     var parts = string.match(r.grammar.comment_grouped);
 
+    this.game = game;
     this.char_index = game.char_index;
     game.char_index += string.length;
 

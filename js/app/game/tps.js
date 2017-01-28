@@ -194,7 +194,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   TPS.Square.prototype.print_space = _.template(
     '<span '+
       'class="square space<%=this.error ? " illegal":""%>" '+
-      'data-square="<%=this.square%>" '+
+      'data-coord="<%=this.coord%>" '+
       'data-count="<%=this.count%>"'+
     '>'+
       '<%=this.text%>'+
@@ -207,7 +207,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   TPS.Square.prototype.print_stack = _.template(
     '<span '+
       'class="square stack<%=this.error ? " illegal":""%>" '+
-      'data-square="<%=this.square%>"'+
+      'data-coord="<%=this.coord%>"'+
     '>'+
       '<% _.map(this.pieces, function(piece, i) { %>'+
         '<span class="piece player<%=piece[0]%>">'+

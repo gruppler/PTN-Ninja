@@ -575,7 +575,7 @@ define([
         }
 
         if ($square && $square.length) {
-          square = app.board.squares[$square.data('square')];
+          square = app.board.squares[$square.data('coord')];
           if (square) {
             squares = [square];
 
