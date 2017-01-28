@@ -80,8 +80,10 @@ define([
     }
 
     if (this.key == 'result' && this.value) {
-      new Result(this.value, game, this);
-      this.print_value = _.bind(game.config.result.print_value, game.config.result);
+      new Result(this.value, game);
+      this.print_value = function () {
+        return game.config.result ? game.config.result.print_value() : '';
+      };
     } else if(this.key == 'tps') {
       game.config.tps = new TPS(this.value, game, this);
       this.print_value = _.bind(game.config.tps.print, game.config.tps);

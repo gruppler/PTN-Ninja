@@ -258,26 +258,34 @@ define([
 
       app.board.show_comments(ply);
       app.board.update_ptn();
-      app.board.set_active_squares(ply ? ply.squares : false);
+      app.board.update_active_squares();
       app.board.update_valid_squares();
       app.$html.removeClass('p1 p2').addClass('p'+app.board.turn);
     },
 
-    update_after_ply_insert: function (index, is_done) {
+    update_after_ply_insert: function (index, is_already_done) {
       app.board.tmp_ply = null;
-      app.update_permalink();
-      app.range.pushstate();
 
-      if (is_done) {
+      if (is_already_done) {
         app.board.ply_index = Math.min(app.game.plys.length - 1, index);
         app.board.ply_is_done = true;
         app.board.turn = app.get_current_ply().player == 1 ? 2 : 1;
+        if (app.board.check_game_end()) {
+          app.update_ptn();
+          app.board.update_ptn();
+        }
         app.update_after_ply(app.get_current_ply());
       } else {
-        app.update_ptn();
         app.board.go_to_ply(index, true);
+        if (app.board.check_game_end()) {
+          app.board.update_ptn();
+          app.update_after_ply(app.get_current_ply());
+        }
+        app.update_ptn();
       }
 
+      app.update_permalink();
+      app.range.pushstate();
       app.scroll_to_ply();
     },
 
@@ -624,7 +632,7 @@ define([
           this.$ptn.blur();
         }
         if (this.game.plys.length && !this.board.selected_pieces.length) {
-          this.board.set_active_squares(this.get_current_ply().squares);
+          this.board.update_active_squares();
         }
       }
 

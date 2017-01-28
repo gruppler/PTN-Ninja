@@ -111,7 +111,11 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       piece.set_captives(captives || piece.captives);
       piece.render();
       this.needs_updated = true;
+      if (!previous_piece) {
+        this.board.empty_count -= 1;
+      }
     } else if (previous_piece) {
+      this.board.empty_count += 1;
       this.player = 0;
       previous_piece.render();
       this.needs_updated = true;

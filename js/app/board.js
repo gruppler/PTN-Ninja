@@ -28,6 +28,7 @@ define([
     this.all_pieces = [];
     this.pieces = {};
     this.flat_score = {1:0, 2:0};
+    this.empty_count = this.size * this.size;
     this.selected_pieces = [];
     this.tmp_ply = null;
     this.init_callbacks = [];
@@ -106,6 +107,7 @@ define([
     this.all_pieces = [];
     this.flat_score[1] = 0;
     this.flat_score[2] = 0;
+    this.empty_count = this.size * this.size;
     this.selected_pieces.length = 0;
     this.tmp_ply = null;
     this.pieces = {
@@ -137,6 +139,7 @@ define([
     this.defer_render = true;
     this.game = game;
     this.size = 1*game.config.size;
+    this.empty_count = this.size * this.size;
     this.piece_counts = _.clone(app.piece_counts[this.size]);
     this.tps = game.config.tps && game.config.tps.is_valid ? game.config.tps : undefined;
 
@@ -208,6 +211,7 @@ define([
   Board.prototype.validate = function (game) {
     if (this.init(game, true)) {
       this.go_to_ply(game.plys.length, true, true);
+      this.check_game_end();
       this.clear();
       return true;
     } else {
@@ -220,6 +224,61 @@ define([
     if (this.game.plys.length) {
       this.game.trim_to_current_ply(this);
     }
+  };
+
+
+  // Returns true if game end, or if not game end but ply has result
+  Board.prototype.check_game_end = function () {
+    var current_ply = this.game.plys[this.ply_index]
+      , pieces = this.pieces[this.turn == 1 ? 2 : 1]
+      , roads = this.find_roads()
+      , result;
+
+    this.is_eog = false;
+
+    if (!current_ply) {
+      return false;
+    }
+
+    if (roads && roads.length) {
+      // Road
+      if (roads[current_ply.turn].length) {
+        result = current_ply.turn == 1 ? 'R-0' : '0-R';
+      } else if (roads[current_ply.turn == 1 ? 2 : 1].length) {
+        // Completed opponent's road
+        result = current_ply.turn == 1 ? '0-R' : 'R-0';
+      }
+    } else if (this.empty_count == 0 || pieces.F.concat(pieces.C).length == 0) {
+      // Last empty square or last piece
+      if (this.flat_score[1] == this.flat_score[2]) {
+        // Draw
+        result = '1/2-1/2';
+      } else if (this.flat_score[1] > this.flat_score[2]) {
+        result = 'F-0';
+      } else {
+        result = '0-F';
+      }
+    } else if (current_ply.move.result && current_ply.move.result.type != '1') {
+      // Not game end, so remove result
+      if (current_ply.is_last()) {
+        current_ply.move.result = null;
+        this.game.config.result = null;
+      }
+      current_ply.result = null;
+      this.game.update_text();
+      // Return true to indicate a change was made
+      return true;
+    } else {
+      return false;
+    }
+
+    result = current_ply.move.insert_result(result, current_ply.turn);
+    if (roads && roads.length) {
+      result.roads = roads;
+    }
+
+    this.is_eog = true;
+    return true;
   };
 
 
@@ -361,12 +420,15 @@ define([
           roads[i].push({
             ns: road.edges.ns,
             ew: road.edges.ew,
-            squares: road.squares
+            squares: _.keys(road.squares)
           });
           _.assign(roads.squares, road.squares);
         }
       }
     }
+
+    roads.squares = _.keys(roads.squares);
+    roads.length = roads[1].length + roads[2].length;
 
     return roads;
   };
@@ -697,13 +759,14 @@ define([
     }
 
     this.ply_is_done = true;
+    this.is_eog = !!ply.result;
     this.turn = ply.turn == 1 ? 2 : 1;
 
     if (!this.defer_render) {
       this.on_ply();
     }
 
-    if (ply.is_last) {
+    if (ply.is_last()) {
       this.pause();
     }
 
@@ -742,6 +805,7 @@ define([
     }
 
     this.ply_is_done = false;
+    this.is_eog = false;
     this.turn = ply.turn;
 
     if (!this.defer_render) {
@@ -793,6 +857,21 @@ define([
   };
 
 
+  Board.prototype.update_active_squares = function () {
+    var ply = this.game.plys[this.ply_index];
+
+    if (ply) {
+      if (ply.result && ply.result.roads && this.ply_is_done) {
+        this.set_active_squares(ply.result.roads.squares);
+      } else {
+        this.set_active_squares(ply.squares);
+      }
+    } else {
+      this.set_active_squares();
+    }
+  };
+
+
   Board.prototype.update_valid_squares = function () {
     if (!this.$view) {
       return;
@@ -833,7 +912,7 @@ define([
       for (direction in square.neighbors) {
         check_neighbor(square, square.neighbors[direction]);
       }
-    } else {
+    } else if(!this.is_eog) {
       for (square in this.squares) {
         square = this.squares[square];
         if (square.piece) {
@@ -844,29 +923,28 @@ define([
           } else {
             square.$view.removeClass('valid selected placed');
           }
-        } else if(!this.is_eog) {
+        } else {
           square.$view.addClass('valid').removeClass('selected placed');
         }
       }
+    } else {
+      this.$squares.children().removeClass('valid selected placed');
     }
   };
 
 
   Board.prototype.show_comments = function (ply) {
     var that = this
-      , result = this.game.config.result
-      , comments_ply_index = (!ply || ply.is_first && !this.ply_is_done) ? -1 : ply.index;
+      , result = this.game.config.result;
 
-    if (this.defer_render || this.comments_ply_index == comments_ply_index) {
+    if (this.defer_render) {
       return;
     }
-
-    this.comments_ply_index = comments_ply_index;
 
     this.m.clear();
 
     // Show comments before first move
-    if (comments_ply_index == -1) {
+    if (!ply || ply.is_first() && !this.ply_is_done) {
       if (this.game.comments) {
         _.map(this.game.comments.concat().reverse(), this.comment);
       }
@@ -874,7 +952,12 @@ define([
     }
 
     // Show result
-    if (ply.is_last && this.game.is_valid && result && result.message) {
+    if (
+      this.ply_is_done && (
+        ply.result
+        || result && result.type == '1' && ply.is_last()
+      )
+    ) {
       this.m['player'+result.victor](result.message);
       if (result.comments) {
         _.map(result.comments.concat().reverse(), this.comment);

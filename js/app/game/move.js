@@ -132,7 +132,7 @@ define([
     return this;
   };
 
-  Move.prototype.insert_ply = function(ply, turn, is_done, flattens){
+  Move.prototype.insert_ply = function(ply, turn, is_done, flattens) {
     var ply, prev_move;
 
     if (turn == 1) {
@@ -163,6 +163,28 @@ define([
 
     return ply;
   };
+
+  Move.prototype.insert_result = function (string, turn, silently) {
+    var ply = this['ply' + turn]
+      , old_result
+      , prefix = ' ';
+
+    if (ply) {
+      old_result = ply.result;
+      if (old_result) {
+        prefix = old_result.prefix;
+      }
+
+      ply.result = new Result(prefix + string, this.game);
+      this.result = ply.result;
+      ply.result.comments = _.map(this.comments4, 'text');
+
+      if (!silently) {
+        this.game.update_text();
+      }
+      return ply.result;
+    }
+  }
 
   Move.prototype.print = function(){
     var output = '<span class="move" data-index="'+this.index+'">';

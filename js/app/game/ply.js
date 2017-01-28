@@ -45,6 +45,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       , ply_group = string.match(r.grammar.ply_grouped)
       , parts, i;
 
+    this.game = game;
     this.is_valid = true;
     this.index = game.plys.length;
     game.plys[game.plys.length] = this;
@@ -159,6 +160,14 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
   Ply.prototype.is_current = function () {
     return app.board && app.board.ply_index == this.index;
+  };
+
+  Ply.prototype.is_first = function () {
+    return this.index == 0;
+  };
+
+  Ply.prototype.is_last = function () {
+    return this.index == this.game.plys.length - 1;
   };
 
   Ply.prototype.print_place = _.template(

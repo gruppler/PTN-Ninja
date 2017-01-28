@@ -14,7 +14,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '1/2': 'draw'
   };
 
-  var Result = function (string, game, tag) {
+  var Result = function (string, game) {
     var parts = string.match(r.grammar.result_grouped);
 
     game.config.result = this;
@@ -35,12 +35,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     if (this.player2 == '0') {
       this.victor = 1;
+      this.type = this.player1;
       this.message = t.result[this.player1]({ player: game.config.player1 });
     } else if (this.player1 == '0') {
       this.victor = 2;
+      this.type = this.player2;
       this.message = t.result[this.player2]({ player: game.config.player2 });
     } else {
       this.victor = 2;
+      this.type = 'D';
       this.message = t.result.tie;
     }
 

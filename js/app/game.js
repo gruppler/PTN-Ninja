@@ -86,7 +86,6 @@ define([
     this.comments = false;
     this.is_valid = true;
     this.caret_moved = false;
-    this.result = null;
     this.tags.length = 0;
     this.moves.length = 0;
     this.plys.length = 0;
@@ -128,17 +127,11 @@ define([
       if (body) {
         // Recursively parse moves
         new Move(body, this);
-
-        if (this.plys.length) {
-          this.plys[0].is_first = true;
-          _.last(this.plys).is_last = true;
-        }
       }
 
     }
 
-    this.ptn = this.print_text();
-    this.ptn_compressed = compress(this.ptn);
+    this.update_text();
 
     if (this.simulator.validate(this)) {
       this.on_parse_end(false, is_original);
@@ -157,6 +150,11 @@ define([
     return this.config.tps && this.config.tps.move ?
       this.config.tps.move + this.moves.length - 1 :
       this.moves.length;
+  };
+
+  Game.prototype.update_text = function () {
+    this.ptn = this.print_text();
+    this.ptn_compressed = compress(this.ptn);
   };
 
   Game.prototype.insert_ply = function (ply, index, is_done, flattens) {
@@ -190,8 +188,7 @@ define([
     ply = move.insert_ply(ply, turn, is_done, flattens);
     ply.comments = comments || [];
 
-    this.ptn = this.print_text();
-    this.ptn_compressed = compress(this.ptn);
+    this.update_text();
     app.update_after_ply_insert(ply.index, is_done);
 
     return ply;
