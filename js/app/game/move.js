@@ -180,7 +180,7 @@ define([
       ply.result.comments = _.map(this.comments4, 'text');
 
       if (!silently) {
-        this.game.update_text();
+        this.game.update_text(true);
       }
       return ply.result;
     }
@@ -224,38 +224,48 @@ define([
     return output;
   };
 
-  Move.prototype.print_text = function(){
+  Move.prototype.print_text = function(update_char_index){
     var output = '';
 
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+    }
+
     if (this.linenum) {
-      output += this.linenum.print_text();
+      output += this.linenum.print_text(update_char_index);
     }
     if (this.comments1) {
-      output += _.invokeMap(this.comments1, 'print_text').join('');
+      output += _.invokeMap(this.comments1, 'print_text', update_char_index).join('');
     }
     if (this.ply1) {
-      output += this.ply1.print_text();
+      output += this.ply1.print_text(update_char_index);
     }
     if (this.comments2) {
-      output += _.invokeMap(this.comments2, 'print_text').join('');
+      output += _.invokeMap(this.comments2, 'print_text', update_char_index).join('');
     }
     if (this.ply2) {
-      output += this.ply2.print_text();
+      output += this.ply2.print_text(update_char_index);
     }
     if (this.comments3) {
-      output += _.invokeMap(this.comments3, 'print_text').join('');
+      output += _.invokeMap(this.comments3, 'print_text', update_char_index).join('');
     }
     if (this.result) {
-      output += this.result.print_text();
+      output += this.result.print_text(update_char_index);
     }
     if (this.comments4) {
-      output += _.invokeMap(this.comments4, 'print_text').join('');
+      output += _.invokeMap(this.comments4, 'print_text', update_char_index).join('');
     }
     if (this.suffix) {
       output += this.suffix;
+      if (update_char_index) {
+        this.game.char_index += this.suffix.length;
+      }
     }
     if (this.text) {
       output += this.text;
+      if (update_char_index) {
+        this.game.char_index += this.text.length;
+      }
     }
 
     return output;

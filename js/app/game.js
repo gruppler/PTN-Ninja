@@ -152,8 +152,8 @@ define([
       this.moves.length;
   };
 
-  Game.prototype.update_text = function () {
-    this.ptn = this.print_text();
+  Game.prototype.update_text = function (update_char_index) {
+    this.ptn = this.print_text(update_char_index);
     this.ptn_compressed = compress(this.ptn);
   };
 
@@ -265,12 +265,16 @@ define([
     return output;
   };
 
-  Game.prototype.print_text = function () {
+  Game.prototype.print_text = function (update_char_index) {
     var output = '';
 
-    output += _.invokeMap(this.tags, 'print_text').join('');
+    if (update_char_index) {
+      this.char_index = 0;
+    }
+
+    output += _.invokeMap(this.tags, 'print_text', update_char_index).join('');
     output += this.comment_text ? _.invokeMap(this.comment_text, 'print_text').join('') : '';
-    output += _.invokeMap(this.moves, 'print_text').join('');
+    output += _.invokeMap(this.moves, 'print_text', update_char_index).join('');
     output += this.suffix;
 
     return output;

@@ -11,7 +11,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.board = board;
     this.col = col;
     this.row = row;
-    this.coord = app.i_to_square([col, row]);
+    this.coord = app.square_coord([col, row]);
     this.color = (row % 2 != col % 2) ? 'dark' : 'light';
     this.piece = null;
     this.player = 0;

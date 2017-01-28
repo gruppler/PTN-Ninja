@@ -166,12 +166,12 @@ define([
         square = new Square(this, row, col);
         this.squares[square.coord] = square;
         if (row) {
-          square.neighbors['-'] = this.squares[app.i_to_square([col, row-1])];
-          this.squares[app.i_to_square([col, row-1])].neighbors['+'] = square;
+          square.neighbors['-'] = this.squares[app.square_coord([col, row-1])];
+          this.squares[app.square_coord([col, row-1])].neighbors['+'] = square;
         }
         if (col) {
-          square.neighbors['<'] = this.squares[app.i_to_square([col-1, row])];
-          this.squares[app.i_to_square([col-1, row])].neighbors['>'] = square;
+          square.neighbors['<'] = this.squares[app.square_coord([col-1, row])];
+          this.squares[app.square_coord([col-1, row])].neighbors['>'] = square;
         }
       }
     }
@@ -265,7 +265,7 @@ define([
         this.game.config.result = null;
       }
       current_ply.result = null;
-      this.game.update_text();
+      this.game.update_text(true);
       // Return true to indicate a change was made
       return true;
     } else {
@@ -453,7 +453,7 @@ define([
       squares[i] = [];
       for (j = 0; j < this.size; j++) {
         squares[i][j] = this.squares[
-          app.i_to_square([j, this.size - 1 - i])
+          app.square_coord([j, this.size - 1 - i])
         ].to_tps();
       }
       squares[i] = squares[i].join(',');

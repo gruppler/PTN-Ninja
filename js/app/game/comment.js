@@ -34,8 +34,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '</span>'
   );
 
-  Comment.prototype.print_text = function () {
-    return this.prefix + this.text + this.suffix;
+  Comment.prototype.print_text = function (update_char_index) {
+    var text = this.prefix + this.text + this.suffix;
+
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+      this.game.char_index += text.length;
+    }
+
+    return text;
   };
 
   Comment.parse = function(string, game) {

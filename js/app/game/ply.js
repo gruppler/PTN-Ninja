@@ -15,25 +15,25 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       case '+':
         while (i--) {
           square[1]++;
-          squares.push(app.i_to_square(square));
+          squares.push(app.square_coord(square));
         }
         break;
       case '-':
         while (i--) {
           square[1]--;
-          squares.push(app.i_to_square(square));
+          squares.push(app.square_coord(square));
         }
         break;
       case '<':
         while (i--) {
           square[0]--;
-          squares.push(app.i_to_square(square));
+          squares.push(app.square_coord(square));
         }
         break;
       case '>':
         while (i--) {
           square[0]++;
-          squares.push(app.i_to_square(square));
+          squares.push(app.square_coord(square));
         }
     }
 
@@ -219,8 +219,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '</span>'
   );
 
-  Ply.prototype.print_text = function () {
-    return this.prefix + this.text + this.evaluation;
+  Ply.prototype.print_text = function (update_char_index) {
+    var text = this.prefix + this.text + this.evaluation;
+
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+      this.game.char_index += text.length;
+    }
+
+    return text;
   };
 
   return Ply;

@@ -9,6 +9,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   var Linenum = function (string, game) {
     var parts = string.match(r.grammar.linenum_grouped);
 
+    this.game = game;
     this.prefix = parts[1];
     this.value = game.get_linenum();
     this.text = this.value + '.';
@@ -33,8 +34,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<span class="linenum"><%=this.text%></span>'
   );
 
-  Linenum.prototype.print_text = function () {
-    return this.prefix + this.text;
+  Linenum.prototype.print_text = function (update_char_index) {
+    var text = this.prefix + this.text;
+
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+      this.game.char_index += text.length;
+    }
+
+    return text;
   };
 
   return Linenum;

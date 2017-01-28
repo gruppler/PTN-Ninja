@@ -662,7 +662,7 @@ define([
     },
 
     // [0, 0] to 'a1'
-    i_to_square: function (square) {
+    square_coord: function (square) {
       return String.fromCharCode(a + square[0]) + (square[1] + 1);
     },
 

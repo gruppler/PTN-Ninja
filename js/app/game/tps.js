@@ -121,7 +121,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       , stack_parts;
 
     this.char_index = char_index;
-    this.square = app.i_to_square([col, row]);
+    this.coord = app.square_coord([col, row]);
 
     if (parts[2]) {
       this.is_space = false;

@@ -16,6 +16,7 @@ define([
     var that = this
       , parts = string.match(r.grammar.tag_grouped);
 
+    this.game = game;
     this.index = _.isNumber(index) ? index : game.tags.length;
     game.tags[this.index] = this;
 
@@ -113,7 +114,24 @@ define([
     return ''+this.value;
   };
 
-  Tag.prototype.print_text = function () {
+  Tag.prototype.print_text = function (update_char_index) {
+    if (this.key == 'result') {
+      this.value = this.game.config.result ?
+        _.trim(this.game.config.result.print_text()) : '';
+      this.text = this.prefix
+        + this.name
+        + this.separator
+        + this.q1
+        + this.value
+        + this.q2
+        + this.suffix;
+    }
+
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+      this.game.char_index += this.text.length;
+    }
+
     return this.text;
   };
 
