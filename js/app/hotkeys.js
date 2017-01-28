@@ -188,6 +188,11 @@ define(['app/messages'], function (Messages) {
         notify_toggle(t.Show_Annotations, app.config.play.show_annotations);
       },
 
+      's': function (event, $focus, $parent) {
+        app.config.toggle('board_shadows');
+        notify_toggle(t.Board_Shadows, app.config.board_shadows);
+      },
+
       'c': function (event, $focus, $parent) {
         app.config.toggle('show_play_controls', 'play');
         notify_toggle(t.Play_Controls, app.config.play.show_play_controls);

@@ -60,6 +60,7 @@ Key|Action
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 <kbd>a</kbd>|Toggle Annotations
+<kbd>s</kbd>|Toggle Board Shadows
 <kbd>c</kbd>|Toggle Play Controls
 <kbd>h</kbd>|Toggle Square Highlight
 <kbd>r</kbd>|Toggle Road Connections
