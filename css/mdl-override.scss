@@ -8,11 +8,20 @@ a {
 }
 
 .mdl-button {
-  &:hover {
-    background-color: rgba(0,0,0,0.05);
+  transition: none;
+
+  &:hover,
+  &:focus:not(:active) {
+    background-color: transparent;
   }
-  &:active {
+  &:hover:active {
     background-color: rgba(0,0,0,0.1);
+  }
+  @media (hover:hover) {
+    &:hover,
+    &:hover:focus:not(:active) {
+      background-color: rgba(0,0,0,0.05);
+    }
   }
 }
 
@@ -90,8 +99,10 @@ a {
       transition: margin-top $time-smooth $natural;
     }
 
-    .mdl-navigation__link:hover + & {
-      will-change: margin-top;
+    @media (hover:hover) {
+      .mdl-navigation__link:hover + & {
+        will-change: margin-top;
+      }
     }
   }
 

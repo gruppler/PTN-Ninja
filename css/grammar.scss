@@ -31,9 +31,11 @@ $ptn-bg-radius: 0.2em;
     box-shadow: 0 0 0 0.1em $primary-color-100;
     background-color: $primary-color-100;
 
-    &.ply:hover {
-      background-color: $primary-color-50;
-      box-shadow: 0 0 0 0.1em $primary-color-50;
+    @media (hover:hover) {
+      &.ply:hover {
+        background-color: $primary-color-50;
+        box-shadow: 0 0 0 0.1em $primary-color-50;
+      }
     }
     &.ply:active,
     &.ply.active {
@@ -50,9 +52,11 @@ $ptn-bg-radius: 0.2em;
     box-shadow: 0 0 0 0.1em $primary-color-800;
     background-color: $primary-color-800;
 
-    &.ply:hover {
-      background-color: $primary-color-900;
-      box-shadow: 0 0 0 0.1em $primary-color-900;
+    @media (hover:hover) {
+      &.ply:hover {
+        background-color: $primary-color-900;
+        box-shadow: 0 0 0 0.1em $primary-color-900;
+      }
     }
     &.ply:active,
     &.ply.active {

@@ -159,15 +159,18 @@ $stone-thickness: 0.3vmin;
       &.selected:before {
         opacity: 0.5 !important;
       }
-      &:hover:before {
-        opacity: 0.3 !important;
+      &.p1.selected:before { background-color: $primary-color-100 }
+      &.p2.selected:before { background-color: $primary-color-700 }
+
+      @media (hover:hover) {
+        &:hover:before {
+          opacity: 0.3 !important;
+        }
+        &.p1:hover:before,
+        html.p1 &:not(.placed):hover:before { background-color: $primary-color-100 }
+        &.p2:hover:before,
+        html.p2 &:not(.placed):hover:before { background-color: $primary-color-700 }
       }
-      &.p1.selected:before,
-      &.p1:hover:before,
-      html.p1 &:not(.placed):hover:before { background-color: $primary-color-100 }
-      &.p2.selected:before,
-      &.p2:hover:before,
-      html.p2 &:not(.placed):hover:before { background-color: $primary-color-700 }
     }
 
     .road {
