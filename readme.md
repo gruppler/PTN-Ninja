@@ -13,22 +13,38 @@ If you want to support this project, you can...
 * [Donate USD](https://www.paypal.me/gruppler)
 
 ## Getting Started
-
-Click or tap on a square to place a piece. Select it again to cycle the stone type. To move a stack, select the square, then select further squares to drop pieces.
-
-To load a "**.ptn**" file, **drag** the file into the window, or select **Open** from the menu, or copy the contents and paste into the editor.
-
 Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
 
 If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). The editor checks the validity of the syntax as well as the legality of each ply. You can click the error message to move the caret to the relevant position in the PTN.
 
-## 3D Mode
+### Placing a stone
+- <kbd>Click</kbd> or <kbd>tap</kbd> on a square to place a flat stone
+- <kbd>Click</kbd> or <kbd>tap</kbd> it again to cycle the stone type
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to place a standing stone
+- <kbd>Long-click</kbd> to Place a cap stone
 
+### Moving a stack
+- <kbd>Click</kbd> or <kbd>tap</kbd> a square
+- <kbd>Click</kbd> or <kbd>tap</kbd> further squares to drop pieces
+
+### Opening a File
+- <kbd>Drag</kbd> the file into the window
+- Select **Open** from the menu
+- Copy the contents and paste into the editor
+
+### 3D Mode
 3D Mode is experimental and may not work well or at all on some browsers or devices. It works best on Chrome.
 
-In 3D Mode, you can rotate the view by **dragging** with **two fingers** on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> **dragging**, or by <kbd>middle-click</kbd> **dragging**.
+#### Rotate the Board
+- <kbd>Two-finger-drag</kbd>
+- <kbd>&#x2318;/Ctrl</kbd> + <kbd>left-click</kbd> <kbd>drag</kbd>
+- <kbd>Middle-click</kbd> + <kbd>drag</kbd>
 
-You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-left-click</kbd>, or with a <kbd>double-middle-click</kbd>.
+#### Reset the Board Rotation
+- <kbd>Two-finger-long-touch</kbd>
+- <kbd>&#x2318;/Ctrl</kbd> + <kbd>click-hold</kbd>
+- <kbd>&#x2318;/Ctrl</kbd><kbd>-click-hold</kbd>
+- <kbd>middle-click-hold</kbd>
 
 ## Hotkeys
 ### Global

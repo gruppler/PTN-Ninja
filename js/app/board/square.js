@@ -198,7 +198,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.needs_updated = false;
   };
 
-  Square.prototype.select = function () {
+  Square.prototype.select = function (event) {
     var tmp_ply = this.board.tmp_ply
       , piece, stone;
 
@@ -306,12 +306,24 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     } else {
       // Place piece as new ply
       stone = '';
-      if (!this.board.pieces[this.board.turn].F.length) {
+      if (
+        event && event.click_duration && event.type != 'touchstart'
+        || !this.board.pieces[this.board.turn].F.length
+      ) {
+        // Long-click, or no flats left
         if (this.board.pieces[this.board.turn].C.length) {
           stone = 'C';
         } else {
-          return;
+          stone = 'S';
         }
+      } else if (
+        event && (
+          event.button == 2
+          || event.click_duration && event.type == 'touchstart'
+        )
+      ) {
+        // Long-touch, or right-click
+        stone = 'S';
       }
       this.board.game.insert_ply(
         stone + this.coord,

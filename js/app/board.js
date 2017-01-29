@@ -633,22 +633,60 @@ define([
   };
 
 
+  Board.prototype.reset_rotation = function (event) {
+    if (
+      config.board_3d
+      && (
+        !event
+        || event.metaKey || event.ctrlKey || event.button == 1
+        || (
+          event.click_duration
+          && (
+            event.button == 1
+            || event.originalEvent.type == 'touchstart'
+              && event.originalEvent.touches.length == 2
+          )
+        )
+      )
+    ) {
+      app.rotate_board(false);
+    }
+  };
+
+
   Board.prototype.select_square = function (event) {
     if (
-      event.type == 'touchstart'
+      app.dragging
+      || event.type == 'touchstart'
         && event.originalEvent.touches.length != 1
       || event.type == 'mousedown'
-        && (event.metaKey || event.ctrlKey || event.button != 0)
+        && (
+          event.metaKey || event.ctrlKey
+          || event.button != 0 && event.button != 1
+        )
     ) {
       return;
     }
 
-    var square = $(event.currentTarget).data('model');
+    var square = $(event.target).data('model');
 
-    square.select();
+    square.select(event);
 
     event.preventDefault();
     event.stopPropagation();
+  };
+
+
+  Board.prototype.deselect_all = function () {
+    var piece;
+
+    while (piece = this.selected_pieces.length) {
+      this.selected_pieces.pop().is_selected = false;
+    }
+
+    if (piece) {
+      piece.render();
+    }
   };
 
 

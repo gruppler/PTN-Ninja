@@ -173,6 +173,7 @@ $stone-thickness: 0.3vmin;
     .road {
       @include position-fill;
       opacity: 0.25;
+      pointer-events: none;
 
       > div {
         opacity: 0;

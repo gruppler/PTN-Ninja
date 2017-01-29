@@ -43,6 +43,64 @@ requirejs({locale: navigator.language}, [
   })();
 
 
+  // Long-click/press
+  $.fn.longClick = function(selector, callback, normal_callback) {
+    var timeout = 350
+      , $this = $(this);
+
+    if (_.isFunction(selector)) {
+      if (_.isFunction(callback)) {
+        normal_callback = callback;
+      }
+      callback = selector;
+      selector = '';
+    }
+
+    function start(event) {
+      if ($this.timer) {
+        return;
+      }
+
+      if (event.type == 'touchstart') {
+        $this.off('mousedown', selector, start);
+        $this.on('touchend', selector, normal_click);
+      } else {
+        $this.on('mouseup', selector, normal_click);
+      }
+
+      $this.on('mouseout', selector, cancel);
+
+      $this.timer = setTimeout(function () {
+        cancel();
+
+        event.click_duration = timeout;
+        event.preventDefault();
+        event.stopPropagation();
+
+        callback(event);
+      }, timeout);
+    }
+
+    function cancel() {
+      clearTimeout($this.timer);
+      $this.timer = null;
+      $this.off('touchend mouseup', selector, normal_click);
+      $this.off('mouseout', selector, cancel);
+    }
+
+    function normal_click(event) {
+      if (_.isFunction(normal_callback)) {
+        normal_callback(event);
+      }
+      cancel();
+    }
+
+    $this.on('touchstart mousedown', selector, start);
+
+    return this;
+  };
+
+
   $('title').text(t.app_title);
 
 
@@ -209,15 +267,13 @@ requirejs({locale: navigator.language}, [
   app.$viewer.on(
     'mousedown touchstart',
     app.board.rotate_handler
-  ).on(
-    'mousedown touchstart',
+  ).longClick(
     '.square.valid',
+    app.board.select_square,
     app.board.select_square
-  ).on('dblclick', function (event) {
-    if (config.board_3d && (event.metaKey || event.ctrlKey || event.button == 1)) {
-      app.rotate_board(false);
-    }
-  });
+  ).on('contextmenu', function (event) {
+    event.preventDefault();
+  }).longClick(app.board.reset_rotation)
 
 
   // Initialize Download Button
