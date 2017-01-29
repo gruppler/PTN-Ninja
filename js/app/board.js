@@ -937,6 +937,11 @@ define([
       }
     } else {
       this.$squares.children().removeClass('valid selected placed');
+      if (!current_ply.is_slide) {
+        square = app.square_coord(current_ply.square);
+        this.$squares.children('.c'+square.join('.r'))
+          .addClass('valid placed');
+      }
     }
   };
 

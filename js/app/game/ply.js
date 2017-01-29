@@ -9,7 +9,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   function get_slide_squares(ply) {
     var squares = [ply.square]
       , i = ply.drops.length
-      , square = app.square_to_i([ply.col, ply.row]);
+      , square = app.square_coord(ply.square);
 
     switch (ply.direction) {
       case '+':

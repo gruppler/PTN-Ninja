@@ -661,22 +661,21 @@ define([
         .select();
     },
 
-    // [0, 0] to 'a1'
+    // Convert between [0, 0] and 'a1'
     square_coord: function (square) {
-      return String.fromCharCode(a + square[0]) + (square[1] + 1);
+      if (_.isString(square)) {
+        return [
+          square[0].charCodeAt(0) - a,
+          1*square[1] - 1
+        ];
+      } else if (_.isArray(square)) {
+        return String.fromCharCode(a + square[0]) + (square[1] + 1);
+      }
     },
 
     get_current_ply: function () {
       return this.game.plys[this.board.ply_index];
     },
-
-    // ('a', '1') to [0, 0]
-    square_to_i: function (square) {
-      return [
-        square[0].charCodeAt(0) - a,
-        1*square[1] - 1
-      ];
-    }
   };
 
   // Test for passive event handlers
