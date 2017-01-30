@@ -200,75 +200,16 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
   Square.prototype.select = function (event) {
     var tmp_ply = this.board.tmp_ply
+      , is_alt_select = event && (!!event.click_duration || event.button == 2)
+      , player = this.board.current_linenum() == 1 ?
+          (this.board.turn == 1 ? 2 : 1) : this.board.turn
       , piece, stone;
 
+
     if (this.board.selected_pieces.length) {
-      if (this.board.selected_pieces[0].square == this) {
-        // Drop selected piece in current square
-        this.board.selected_pieces.pop().is_selected = false;
-        this.piece.render();
-
-        if (tmp_ply) {
-          tmp_ply.drops[tmp_ply.drops.length - 1] += 1;
-        }
-        if (!this.board.selected_pieces.length) {
-          this.board.set_active_squares(
-            this.board.game.plys.length ?
-              app.get_current_ply().squares
-              : []
-            );
-        }
-      } else {
-        // Drop selected piece in different square
-        var prev_square = this.board.selected_pieces[0].square
-          , remaining_stack = prev_square.piece.captives.slice(
-              this.board.selected_pieces.length - 1
-            );
-
-        if (tmp_ply) {
-          tmp_ply.drops.push(1);
-        } else {
-          tmp_ply = this.board.tmp_ply = {
-            count: this.board.selected_pieces.length,
-            square: prev_square.coord,
-            direction: _.findKey(prev_square.neighbors, this),
-            drops: [1]
-          };
-        }
-
-        // Record wall flattening
-        if (this.piece && this.piece.stone == 'S') {
-          tmp_ply.flattens = tmp_ply.drops.length - 1;
-        }
-
-        _.last(this.board.selected_pieces).is_selected = false;
-        prev_square.set_piece(remaining_stack[0], remaining_stack.slice(1));
-        this.set_piece(
-          this.board.selected_pieces[0],
-          this.board.selected_pieces.slice(1).concat(
-            this.piece ? [this.piece].concat(this.piece.captives) : []
-          )
-        );
-        this.board.selected_pieces.pop();
-        this.set_active();
-      }
-
-      if (tmp_ply && !this.board.selected_pieces.length) {
-        // Insert slide as new ply
-        this.board.game.insert_ply(
-          ''
-          + (tmp_ply.count > 1 ? tmp_ply.count : '')
-          + tmp_ply.square
-          + tmp_ply.direction
-          + (tmp_ply.drops.length > 1 ? tmp_ply.drops.join('') : ''),
-          this.board.ply_index + 1*this.board.ply_is_done,
-          true,
-          tmp_ply.flattens
-        );
-      }
-
-      this.board.update_valid_squares();
+      this.drop_selection(is_alt_select);
     } else if (this.piece) {
+      // Nothing selected yet, but this square has a piece
       piece = this.piece;
 
       if (piece.ply && this.board.ply_index == piece.ply.index) {
@@ -277,8 +218,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           stone = 'S';
         } else {
           if (
-            piece.stone == 'C' && this.board.pieces[piece.player].F.length
-            || piece.stone == 'S' && !this.board.pieces[piece.player].C.length
+            piece.stone == 'C' && this.board.pieces[player].F.length
+            || piece.stone == 'S' && !this.board.pieces[player].C.length
           ) {
             stone = '';
           } else {
@@ -292,8 +233,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         );
       } else {
         // Select piece or stack
-        this.board.selected_pieces = [piece].concat(
-          piece.captives.slice(0, this.board.size - 1)
+        this.board.selected_pieces = is_alt_select ?
+          [piece] : [piece].concat(piece.captives.slice(0, this.board.size - 1)
         );
         for (var i = 0; i < this.board.selected_pieces.length; i++) {
           this.board.selected_pieces[i].is_selected = true;
@@ -306,30 +247,127 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     } else {
       // Place piece as new ply
       stone = '';
+
       if (
-        event && event.click_duration && event.type != 'touchstart'
-        || !this.board.pieces[this.board.turn].F.length
+        is_alt_select && event.button === 0
+        || !this.board.pieces[player].F.length
       ) {
-        // Long-click, or no flats left
-        if (this.board.pieces[this.board.turn].C.length) {
+        // Long-left-click, or no flats left
+        if (this.board.pieces[player].C.length) {
           stone = 'C';
         } else {
           stone = 'S';
         }
-      } else if (
-        event && (
-          event.button == 2
-          || event.click_duration && event.type == 'touchstart'
-        )
-      ) {
-        // Long-touch, or right-click
+      } else if (is_alt_select) {
+        // Long-touch but not long-click
         stone = 'S';
       }
+
       this.board.game.insert_ply(
         stone + this.coord,
         this.board.ply_index + 1*this.board.ply_is_done
       );
     }
+  };
+
+  Square.prototype.drop_selection = function (drop_all) {
+    var tmp_ply = this.board.tmp_ply
+      , is_alt_select = event && event.click_duration
+      , piece;
+
+    if (this.board.selected_pieces[0].square == this) {
+      // Drop selected piece (or pieces if long-click) in current square
+      if (drop_all) {
+        piece = this.piece;
+        this.board.deselect_all(true);
+        if (tmp_ply) {
+          tmp_ply.drops[tmp_ply.drops.length - 1] += this.board.selected_pieces.length;
+        }
+        this.board.selected_pieces.length = 0;
+      } else {
+        piece = this.board.selected_pieces.pop();
+        piece.is_selected = false;
+        if (tmp_ply) {
+          tmp_ply.drops[tmp_ply.drops.length - 1] += 1;
+        }
+      }
+      piece.render();
+
+      if (!this.board.selected_pieces.length) {
+        this.board.set_active_squares(
+          this.board.game.plys.length ?
+            app.get_current_ply().squares
+            : []
+          );
+      }
+    } else {
+      // Drop selected piece (or pieces if long-click) in different square
+      var prev_square = this.board.selected_pieces[0].square
+        , remaining_stack = prev_square.piece.captives.slice(
+            this.board.selected_pieces.length - 1
+          );
+
+      // Update or create temporary ply
+      if (tmp_ply) {
+        tmp_ply.drops.push(
+          drop_all ? this.board.selected_pieces.length : 1
+        );
+      } else {
+        tmp_ply = this.board.tmp_ply = {
+          count: this.board.selected_pieces.length,
+          square: prev_square.coord,
+          direction: _.findKey(prev_square.neighbors, this),
+          drops: [drop_all ? this.board.selected_pieces.length : 1]
+        };
+      }
+
+      // Record wall flattening
+      if (this.piece && this.piece.stone == 'S') {
+        tmp_ply.flattens = tmp_ply.drops.length - 1;
+      }
+
+      // Mark dropped piece(s) as not selected
+      if (drop_all) {
+        this.board.deselect_all(true);
+      } else {
+        _.last(this.board.selected_pieces).is_selected = false;
+      }
+
+      // Place the selection on this square, leaving behind remaining_stack
+      prev_square.set_piece(remaining_stack[0], remaining_stack.slice(1));
+      this.set_piece(
+        this.board.selected_pieces[0],
+        this.board.selected_pieces.slice(1).concat(
+          this.piece ? [this.piece].concat(this.piece.captives) : []
+        )
+      );
+
+      // Update selection
+      if (drop_all) {
+        this.board.selected_pieces.length = 0;
+      } else {
+        this.board.selected_pieces.length -= 1;
+      }
+
+      this.set_active();
+    }
+
+    if (tmp_ply && !this.board.selected_pieces.length) {
+      // Temporary ply and nothing selected
+      // Insert slide as new ply
+      this.board.game.insert_ply(
+        ''
+        + (tmp_ply.count > 1 ? tmp_ply.count : '')
+        + tmp_ply.square
+        + tmp_ply.direction
+        + (tmp_ply.drops.length > 1 ? tmp_ply.drops.join('') : ''),
+        this.board.ply_index + 1*this.board.ply_is_done,
+        true,
+        tmp_ply.flattens
+      );
+    }
+
+    this.board.update_valid_squares();
   };
 
   Square.prototype.place = function (ply) {

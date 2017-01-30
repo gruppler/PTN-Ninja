@@ -38,6 +38,7 @@ define([
     _.bindAll(this, [
       'resize',
       'rotate_handler',
+      'reset_rotation',
       'select_square',
       'update_view',
       'reposition_pieces',
@@ -223,6 +224,18 @@ define([
   Board.prototype.trim_to_current_ply = function () {
     if (this.game.plys.length) {
       this.game.trim_to_current_ply(this);
+    }
+  };
+
+
+  Board.prototype.current_linenum = function () {
+    var current_ply = this.game.plys[this.ply_index];
+    if (current_ply) {
+      return current_ply.move.linenum.value
+        + 1*(this.ply_is_done && current_ply.turn == 2);
+    } else {
+      return this.game.config.tps && this.game.config.tps.move ?
+        this.game.config.tps.move : 1;
     }
   };
 
@@ -644,7 +657,7 @@ define([
           && (
             event.button == 1
             || event.originalEvent.type == 'touchstart'
-              && event.originalEvent.touches.length == 2
+              && event.target == app.$viewer[0]
           )
         )
       )
@@ -677,15 +690,26 @@ define([
   };
 
 
-  Board.prototype.deselect_all = function () {
-    var piece;
+  Board.prototype.deselect_all = function (silently) {
+    if (silently) {
+      for (var i = 0; i < this.selected_pieces.length; i++) {
+        this.selected_pieces[i].is_selected = false;
+      }
+    } else if (this.tmp_ply) {
+      this.selected_pieces[0].square.drop_selection(true);
+    } else {
+      var piece;
 
-    while (piece = this.selected_pieces.length) {
-      this.selected_pieces.pop().is_selected = false;
-    }
+      while (this.selected_pieces.length) {
+        piece = this.selected_pieces.pop();
+        piece.is_selected = false;
+      }
 
-    if (piece) {
-      piece.render();
+      if (piece) {
+        piece.render();
+        this.update_valid_squares();
+        this.update_active_squares();
+      }
     }
   };
 

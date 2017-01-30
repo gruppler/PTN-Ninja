@@ -18,7 +18,12 @@ define(['app/messages'], function (Messages) {
     global: {
 
       'Escape': function (event, $focus, $parent) {
-        app.menu.toggle();
+        if (app.board.selected_pieces.length) {
+          app.board.deselect_all();
+        } else {
+          app.menu.toggle();
+        }
+
         event.preventDefault();
         event.stopPropagation();
       },

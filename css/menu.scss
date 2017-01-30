@@ -1,5 +1,6 @@
 
 .mdl-layout__drawer-button i {
+  @include unselectable;
   color: $white !important;
 }
 
