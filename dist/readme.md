@@ -13,37 +13,70 @@ If you want to support this project, you can...
 * [Donate USD](https://www.paypal.me/gruppler)
 
 ## Getting Started
-
-Click or tap on a square to place a piece. Select it again to cycle the stone type. To move a stack, select the square, then select further squares to drop pieces.
-
-To load a "**.ptn**" file, **drag** the file into the window, or select **Open** from the menu, or copy the contents and paste into the editor.
-
 Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
 
-If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). The editor checks the validity of the syntax as well as the legality of each ply. You can click the error message to move the caret to the relevant position in the PTN.
+### Edit Mode
+If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). You can click the error message to move the caret to the relevant position in the PTN. The editor checks the validity of the syntax as well as the legality of each ply.
+
+### Play Mode
+Navigate the game using the play controls, hotkeys, or by interacting directly with the plies the current move displayed below the board.
+
+#### Place a Stone
+- <kbd>Click</kbd> or <kbd>tap</kbd> on a square to place a flat stone
+- <kbd>Click</kbd> or <kbd>tap</kbd> it again to cycle the stone type
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to place a standing stone
+- <kbd>Long-click</kbd> places a cap stone
+
+#### Move a Piece or Stack
+- <kbd>Click</kbd> or <kbd>tap</kbd> a square to select the piece or stack
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to select the top piece of a stack
+- <kbd>Click</kbd> or <kbd>tap</kbd> further squares to drop pieces
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to drop the selected stack
+- <kbd>Esc</kbd> also drops the selected stack in place
+
+#### Open a File
+- <kbd>Drag</kbd> the file into the window
+- Or, press <kbd>Ctrl or &#x2318;</kbd> + <kbd>o</kbd>
+- Or, select **Open** from the menu
+- Or, copy the contents and paste into the editor
 
 ## 3D Mode
-
 3D Mode is experimental and may not work well or at all on some browsers or devices. It works best on Chrome.
 
-In 3D Mode, you can rotate the view by **dragging** with **two fingers** on a touchscreen, or by holding <kbd>&#x2318;/Ctrl</kbd> while <kbd>left-click</kbd> **dragging**, or by <kbd>middle-click</kbd> **dragging**.
+#### Rotate the Board
+- <kbd>Two-finger-drag</kbd>
+- <kbd>Ctrl or &#x2318;</kbd> + <kbd>left-click</kbd> <kbd>drag</kbd>
+- <kbd>Middle-click</kbd> + <kbd>drag</kbd>
 
-You can reset the board rotation with <kbd>&#x2318;/Ctrl</kbd> + <kbd>double-left-click</kbd>, or with a <kbd>double-middle-click</kbd>.
+#### Reset the Board Rotation
+- <kbd>Long-touch</kbd> outside the board
+- <kbd>Ctrl or &#x2318;</kbd> + <kbd>click-hold</kbd>
+- <kbd>middle-click-hold</kbd>
 
+---
 ## Hotkeys
 ### Global
 Key|Action
 :--|:--
-<kbd>Esc</kbd>|Toggle Menu
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Space</kbd>|Toggle Edit/Play Mode
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>s</kbd>|Save .ptn File
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>o</kbd>|Open .ptn File
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>d</kbd>|Load Default PTN
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>z</kbd>|Undo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>y</kbd>|Redo
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
+<kbd>Esc</kbd>|Toggle Menu, or drop selected stack
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>Space</kbd>|Toggle Edit/Play Mode
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>s</kbd>|Save .ptn File
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>o</kbd>|Open .ptn File
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>d</kbd>|Load Default PTN
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>z</kbd>|Undo
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>y</kbd>|Redo
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>Shift</kbd> + <kbd>/</kbd>|Help/About PTN Ninja
 
+---
+### Edit Mode
+Key|Action
+:--|:--
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current ply*
+
+\*This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
+
+---
 ### Play Mode
 Key|Action
 :--|:--
@@ -54,27 +87,20 @@ Key|Action
 <kbd>Shift</kbd> + <kbd>&rarr;</kbd>|Next Half-Ply
 <kbd>&uarr;</kbd>|Previous Move
 <kbd>&darr;</kbd>|Next Move
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>&larr;</kbd>|First Ply
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>&rarr;</kbd>|Last Ply
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>&larr;</kbd>|First Ply
+<kbd>Ctrl or &#x2318;</kbd> + <kbd>&rarr;</kbd>|Last Ply
 <kbd>3</kbd>|Toggle 3D Board
+<kbd>s</kbd>|Toggle Board Shadows
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 <kbd>a</kbd>|Toggle Annotations
-<kbd>s</kbd>|Toggle Board Shadows
-<kbd>c</kbd>|Toggle Play Controls
 <kbd>h</kbd>|Toggle Square Highlight
 <kbd>r</kbd>|Toggle Road Connections
-<kbd>f</kbd>|Toggle Player Flat Count
+<kbd>x</kbd>|Toggle Axis Labels
+<kbd>f</kbd>|Toggle Flat Counts
 <kbd>m</kbd>|Toggle Current Move
 <kbd>u</kbd>|Toggle Unplayed Pieces
-<kbd>x</kbd>|Toggle Axis Labels
-
-### Edit Mode
-Key|Action
-:--|:--
-<kbd>&#x2318;/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current ply*
-
-*This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
+<kbd>c</kbd>|Toggle Play Controls
 
 
 ## Legal
