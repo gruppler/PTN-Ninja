@@ -355,7 +355,11 @@ define([
             }
           }
 
-          if (next_neighbors.length < 2) {
+          if (
+            !next_neighbors.length
+            || next_neighbors.length == 1
+              && square.is_edge && next_neighbors[0].is_edge
+          ) {
             delete squares[square.coord];
             dead_ends[i] = next_neighbors[0];
           } else {
@@ -367,11 +371,11 @@ define([
     }
 
     // Gather player-controlled squares and dead ends
-    var edge_dead_ends = {
+    var possible_dead_ends = {
           1: { ns: [], ew: [] },
           2: { ns: [], ew: [] }
         }
-      , non_edge_dead_ends = []
+      , dead_ends = []
       , coord, square, edges;
 
     for (coord in this.squares) {
@@ -384,15 +388,25 @@ define([
           possible_roads[square.player][coord] = square;
 
           if (square.edges.length == 1) {
-            if (/[+-]/.test(edges)) {
-              edge_dead_ends[square.player].ns.push(square);
-            } else if (/[<>]/.test(edges)) {
-              edge_dead_ends[square.player].ew.push(square);
+            if (
+              square.connections.indexOf(
+                this.opposite_direction[square.edges[0]]
+              ) >= 0
+            ) {
+              // A potentially essential edge dead end
+              if (/[+-]/.test(edges)) {
+                possible_dead_ends[square.player].ns.push(square);
+              } else if (/[<>]/.test(edges)) {
+                possible_dead_ends[square.player].ew.push(square);
+              }
+            } else {
+              // A non-essential edge dead end
+              dead_ends.push(square);
             }
           }
         } else {
           // A non-edge dead end
-          non_edge_dead_ends.push(square);
+          dead_ends.push(square);
         }
       } else if (square.connections.length - square.edges.length > 1) {
         // An intersection
@@ -401,8 +415,8 @@ define([
     }
 
     // Remove dead ends not connected to edges
-    _remove_dead_ends(non_edge_dead_ends, possible_roads[1]);
-    _remove_dead_ends(non_edge_dead_ends, possible_roads[2]);
+    _remove_dead_ends(dead_ends, possible_roads[1]);
+    _remove_dead_ends(dead_ends, possible_roads[2]);
 
     // Find roads that actually bridge opposite edges
     var roads = {
@@ -429,7 +443,7 @@ define([
           if (!road.edges.ns || !road.edges.ew) {
             // Remove dead ends connected to the non-winning edges
             _remove_dead_ends(
-              edge_dead_ends[i][road.edges.ns ? 'ew' : 'ns'],
+              possible_dead_ends[i][road.edges.ns ? 'ew' : 'ns'],
               road.squares
             );
           }
