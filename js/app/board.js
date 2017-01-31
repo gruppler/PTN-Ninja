@@ -633,35 +633,37 @@ define([
       app.rotate_board
     );
 
-    app.$document.on(
-      'mouseup touchend',
-      function () {
-        app.$document.off('mousemove touchmove', app.rotate_board);
-        delete app.dragging;
-      }
-    );
+    app.$document.on('mouseup touchend', this.stop_rotating);
 
     event.preventDefault();
     event.stopPropagation();
   };
 
 
+  Board.prototype.stop_rotating = function () {
+    app.$document.off('mousemove touchmove', app.rotate_board);
+    delete app.dragging;
+  };
+
+
   Board.prototype.reset_rotation = function (event) {
     if (
+      // 3D enabled
       config.board_3d
       && (
         !event
-        || event.metaKey || event.ctrlKey || event.button == 1
-        || (
-          event.click_duration
+        || event.target == app.$viewer[0]
+        && (
+          event.metaKey || event.ctrlKey || event.button == 1
+          || event.click_duration
           && (
             event.button == 1
             || event.originalEvent.type == 'touchstart'
-              && event.target == app.$viewer[0]
           )
         )
       )
     ) {
+      this.stop_rotating();
       app.rotate_board(false);
     }
   };

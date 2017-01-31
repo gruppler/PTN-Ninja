@@ -46,7 +46,9 @@ requirejs({locale: navigator.language}, [
   // Long-click/press
   $.fn.longClick = function(selector, callback, normal_callback) {
     var timeout = 350
-      , $this = $(this);
+      , max_distance = 5
+      , $this = $(this)
+      , coords = {};
 
     if (_.isFunction(selector)) {
       if (_.isFunction(callback)) {
@@ -61,6 +63,9 @@ requirejs({locale: navigator.language}, [
         return;
       }
 
+      coords.x = event.clientX;
+      coords.y = event.clientY;
+
       if (event.type == 'touchstart') {
         $this.off('mousedown', selector, start);
         $this.on('touchend', selector, normal_click);
@@ -68,6 +73,7 @@ requirejs({locale: navigator.language}, [
         $this.on('mouseup', selector, normal_click);
       }
 
+      app.$document.on('mousemove', selector, cancel_if_too_far);
       $this.on('mouseout', selector, cancel);
 
       $this.timer = setTimeout(function () {
@@ -85,7 +91,19 @@ requirejs({locale: navigator.language}, [
       clearTimeout($this.timer);
       $this.timer = null;
       $this.off('touchend mouseup', selector, normal_click);
+      app.$document.off('mousemove', selector, cancel_if_too_far);
       $this.off('mouseout', selector, cancel);
+    }
+
+    function cancel_if_too_far(event) {
+      if (
+        max_distance < Math.sqrt(
+          Math.pow(coords.x - event.clientX, 2)
+          + Math.pow(coords.y - event.clientY, 2)
+        )
+      ) {
+        cancel();
+      }
     }
 
     function normal_click(event) {
