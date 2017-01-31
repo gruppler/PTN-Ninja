@@ -94,13 +94,13 @@ Key|Action
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 <kbd>a</kbd>|Toggle Annotations
-<kbd>h</kbd>|Toggle Square Highlight
-<kbd>r</kbd>|Toggle Road Connections
 <kbd>x</kbd>|Toggle Axis Labels
-<kbd>f</kbd>|Toggle Flat Counts
 <kbd>m</kbd>|Toggle Current Move
-<kbd>u</kbd>|Toggle Unplayed Pieces
+<kbd>f</kbd>|Toggle Flat Counts
 <kbd>c</kbd>|Toggle Play Controls
+<kbd>r</kbd>|Toggle Road Connections
+<kbd>h</kbd>|Toggle Square Highlight
+<kbd>u</kbd>|Toggle Unplayed Pieces
 
 
 ## Legal

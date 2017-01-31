@@ -193,22 +193,16 @@ define([
       'data-id': 'show_annotations',
       'data-mode': 'play'
     },{
-      label: t.Square_Highlights,
-      type: 'checkbox',
-      checked: config.play.square_hl,
-      'data-id': 'square_hl',
-      'data-mode': 'play'
-    },{
-      label: t.Road_Connections,
-      type: 'checkbox',
-      checked: config.play.show_roads,
-      'data-id': 'show_roads',
-      'data-mode': 'play'
-    },{
       label: t.Axis_Labels,
       type: 'checkbox',
       checked: config.play.show_axis_labels,
       'data-id': 'show_axis_labels',
+      'data-mode': 'play'
+    },{
+      label: t.Play_Controls,
+      type: 'checkbox',
+      checked: config.play.show_play_controls,
+      'data-id': 'show_play_controls',
       'data-mode': 'play'
     },{
       label: t.Flat_Counts,
@@ -223,16 +217,22 @@ define([
       'data-id': 'show_current_move',
       'data-mode': 'play'
     },{
+      label: t.Road_Connections,
+      type: 'checkbox',
+      checked: config.play.show_roads,
+      'data-id': 'show_roads',
+      'data-mode': 'play'
+    },{
+      label: t.Square_Highlights,
+      type: 'checkbox',
+      checked: config.play.square_hl,
+      'data-id': 'square_hl',
+      'data-mode': 'play'
+    },{
       label: t.Unplayed_Pieces,
       type: 'checkbox',
       checked: config.play.show_unplayed_pieces,
       'data-id': 'show_unplayed_pieces',
-      'data-mode': 'play'
-    },{
-      label: t.Play_Controls,
-      type: 'checkbox',
-      checked: config.play.show_play_controls,
-      'data-id': 'show_play_controls',
       'data-mode': 'play'
     }]
   }];
