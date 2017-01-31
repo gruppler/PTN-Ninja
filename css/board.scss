@@ -388,10 +388,12 @@ $stone-thickness: 0.3vmin;
       display: flex;
       box-sizing: border-box;
       border-radius: $stone-thickness;
+      border-bottom: 0 solid $accent-color-600;
       will-change: width;
 
       html.animate-board & {
-        transition: width $time-smooth $natural;
+        transition: width $time-smooth $natural,
+          border-bottom-width $time-quick linear $time-smooth;
       }
     }
 
@@ -415,7 +417,7 @@ $stone-thickness: 0.3vmin;
       color: $primary-color-700;
 
       html.p1 & {
-        border-bottom: 0.25em solid $accent-color-600;
+        border-bottom-width: 0.3em;
       }
 
       .name {
@@ -430,7 +432,7 @@ $stone-thickness: 0.3vmin;
       color: $primary-color-100;
 
       html.p2 & {
-        border-bottom: 0.25em solid $accent-color-600;
+        border-bottom-width: 0.3em;
       }
 
       .name {
