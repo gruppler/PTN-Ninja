@@ -201,8 +201,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
   Square.prototype.select = function (event) {
     var tmp_ply = this.board.tmp_ply
       , is_alt_select = event && (!!event.click_duration || event.button == 2)
-      , player = this.board.current_linenum() == 1 ?
-          (this.board.turn == 1 ? 2 : 1) : this.board.turn
+      , linenum = this.board.current_linenum()
+      , player = linenum == 1 ? (this.board.turn == 1 ? 2 : 1) : this.board.turn
       , piece, stone;
 
 
@@ -212,14 +212,17 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       // Nothing selected yet, but this square has a piece
       piece = this.piece;
 
-      if (piece.ply && this.board.ply_index == piece.ply.index) {
+      if (
+        piece.ply && this.board.ply_index == piece.ply.index
+        && !(linenum == 2 && this.board.turn == 1)
+      ) {
         // Cycle through F, S, C
         if (piece.stone == 'F') {
           stone = 'S';
         } else {
           if (
-            piece.stone == 'C' && this.board.pieces[player].F.length
-            || piece.stone == 'S' && !this.board.pieces[player].C.length
+            piece.stone == 'C' && this.board.pieces[player == 1 ? 2 : 1].F.length
+            || piece.stone == 'S' && !this.board.pieces[player == 1 ? 2 : 1].C.length
           ) {
             stone = '';
           } else {
