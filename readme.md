@@ -16,42 +16,48 @@ If you want to support this project, you can...
 Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
 
 ### Edit Mode
-If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). You can click the error message to move the caret to the relevant position in the PTN. The editor checks the validity of the syntax as well as the legality of each ply.
+<kbd>Tap</kbd> or <kbd>click</kbd> a **ply** to move the board to that point in the game. <kbd>Tap</kbd> or <kbd>click</kbd> again **within the current ply** to toggle the done/undone state of the ply.
 
-### Play Mode
-Navigate the game using the play controls, hotkeys, or by interacting directly with the plies the current move displayed below the board.
+If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). You can <kbd>tap</kbd> or <kbd>click</kbd> the **error message** to move the caret to the relevant position in the PTN.
 
-#### Place a Stone
-- <kbd>Click</kbd> or <kbd>tap</kbd> on a square to place a flat stone
-- <kbd>Click</kbd> or <kbd>tap</kbd> it again to cycle the stone type
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to place a standing stone
-- <kbd>Long-click</kbd> places a cap stone
+The editor checks the validity of the syntax as well as the legality of each ply, and automatically maintains the correct game result and move numbers.
 
-#### Move a Piece or Stack
-- <kbd>Click</kbd> or <kbd>tap</kbd> a square to select the piece or stack
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to select the top piece of a stack
-- <kbd>Click</kbd> or <kbd>tap</kbd> further squares to drop pieces
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a square to drop the selected stack
-- <kbd>Esc</kbd> also drops the selected stack in place
-
-#### Open a File
-- <kbd>Drag</kbd> the file into the window
+#### Load a Game
+- <kbd>Drag</kbd> a **.ptn file** into the window
 - Or, press <kbd>Ctrl or &#x2318;</kbd> + <kbd>o</kbd>
 - Or, select **Open** from the menu
 - Or, copy the contents and paste into the editor
 
-## 3D Mode
-3D Mode is experimental and may not work well or at all on some browsers or devices. It works best on Chrome.
+### Play Mode
+- Navigate the game using the **Play Controls** or **arrow hotkeys** listed below
+- <kbd>Tap</kbd> or <kbd>click</kbd> the **buttons** displayed around the Current Move to navigate by move (two plies)
+- <kbd>Tap</kbd> or <kbd>click</kbd> the **plies** of the Current Move
+
+#### Place a Stone
+- <kbd>Tap</kbd> or <kbd>click</kbd> on a **square** to place a flat stone
+- <kbd>Tap</kbd> or <kbd>click</kbd> the **square** again to cycle the stone type
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to place a standing stone
+- <kbd>Long-click</kbd> a **square** to place a cap stone
+
+#### Move a Piece or Stack
+- <kbd>Tap</kbd> or <kbd>click</kbd> a **square** to select the piece or stack
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to select the **top piece** of a stack
+- <kbd>Tap</kbd> or <kbd>click</kbd> further **squares** to drop pieces
+- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to drop the selected stack
+- <kbd>Esc</kbd> also drops the selected stack in place
+
+### 3D Mode
+3D Mode is experimental and may not work well or at all on some browsers or devices. It works best in Chrome.
 
 #### Rotate the Board
 - <kbd>Two-finger-drag</kbd>
-- <kbd>Ctrl or &#x2318;</kbd> + <kbd>left-click</kbd> <kbd>drag</kbd>
-- <kbd>Middle-click</kbd> + <kbd>drag</kbd>
+- Or, <kbd>Ctrl or &#x2318;</kbd> + <kbd>left-click</kbd> <kbd>drag</kbd>
+- Or, <kbd>middle-click</kbd> + <kbd>drag</kbd>
 
 #### Reset the Board Rotation
 - <kbd>Long-touch</kbd> outside the board
-- <kbd>Ctrl or &#x2318;</kbd> + <kbd>click-hold</kbd>
-- <kbd>middle-click-hold</kbd>
+- Or, <kbd>Ctrl or &#x2318;</kbd> + <kbd>click-hold</kbd> outside the board
+- Or, <kbd>middle-click-hold</kbd> outside the board
 
 ---
 ## Hotkeys
@@ -94,13 +100,13 @@ Key|Action
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 <kbd>a</kbd>|Toggle Annotations
-<kbd>h</kbd>|Toggle Square Highlight
-<kbd>r</kbd>|Toggle Road Connections
 <kbd>x</kbd>|Toggle Axis Labels
-<kbd>f</kbd>|Toggle Flat Counts
 <kbd>m</kbd>|Toggle Current Move
-<kbd>u</kbd>|Toggle Unplayed Pieces
+<kbd>f</kbd>|Toggle Flat Counts
 <kbd>c</kbd>|Toggle Play Controls
+<kbd>r</kbd>|Toggle Road Connections
+<kbd>h</kbd>|Toggle Square Highlight
+<kbd>u</kbd>|Toggle Unplayed Pieces
 
 
 ## Legal
