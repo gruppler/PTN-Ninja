@@ -260,7 +260,10 @@ define([
       app.board.update_ptn();
       app.board.update_active_squares();
       app.board.update_valid_squares();
-      app.$html.removeClass('p1 p2').addClass('p'+app.board.turn);
+      app.$html.removeClass('p1 p2');
+      if (!app.board.is_eog) {
+        app.$html.addClass('p'+app.board.turn);
+      }
     },
 
     update_after_ply_insert: function (index, is_already_done) {
