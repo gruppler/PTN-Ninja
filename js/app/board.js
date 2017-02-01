@@ -996,37 +996,19 @@ define([
       }
     }
 
-    function check_neighbor(square, neighbor) {
-      if (
-        neighbor && (
-          !neighbor.piece
-          || neighbor.piece.stone != 'C' && (
-            neighbor.piece.stone != 'S'
-            || that.selected_pieces[0].stone == 'C'
-              && that.selected_pieces.length == 1
-          )
-        )
-      ) {
-        if (!neighbor.is_valid) {
-          neighbor.needs_updated = true;
-        }
-        neighbor.is_valid = true;
-      }
-    }
-
     if (this.tmp_ply) {
       clear_all();
       square = this.selected_pieces[0].square;
       square.is_valid = true;
       square.is_selected = true;
-      check_neighbor(square, square.neighbors[this.tmp_ply.direction]);
+      this.validate_neighbor(square, square.neighbors[this.tmp_ply.direction]);
     } else if (this.selected_pieces.length) {
       clear_all();
       square = this.selected_pieces[0].square;
       square.is_valid = true;
       square.is_selected = true;
       for (direction in square.neighbors) {
-        check_neighbor(square, square.neighbors[direction]);
+        this.validate_neighbor(square, square.neighbors[direction]);
       }
     } else if(!this.is_eog) {
       for (square in this.squares) {
@@ -1064,6 +1046,27 @@ define([
     if (this.$view) {
       this.update_squares();
     }
+  };
+
+
+  Board.prototype.validate_neighbor = function (square, neighbor) {
+    if (
+      neighbor && (
+        !neighbor.piece
+        || neighbor.piece.stone != 'C' && (
+          neighbor.piece.stone != 'S'
+          || this.selected_pieces[0].stone == 'C'
+            && this.selected_pieces.length == 1
+        )
+      )
+    ) {
+      if (!neighbor.is_valid) {
+        neighbor.needs_updated = true;
+      }
+      neighbor.is_valid = true;
+      return true;
+    }
+    return false;
   };
 
 

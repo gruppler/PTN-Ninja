@@ -292,7 +292,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
   Square.prototype.drop_selection = function (drop_all) {
     var tmp_ply = this.board.tmp_ply
       , is_alt_select = event && event.click_duration
-      , piece;
+      , piece, direction;
 
     if (this.board.selected_pieces[0].square == this) {
       // Drop selected piece (or pieces if long-click) in current square
@@ -328,14 +328,21 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
       // Update or create temporary ply
       if (tmp_ply) {
+        if (!this.board.validate_neighbor(this, this.neighbors[tmp_ply.direction])) {
+          drop_all = true;
+        }
         tmp_ply.drops.push(
           drop_all ? this.board.selected_pieces.length : 1
         );
       } else {
+        direction = _.findKey(prev_square.neighbors, this);
+        if (!this.board.validate_neighbor(this, this.neighbors[direction])) {
+          drop_all = true;
+        }
         tmp_ply = this.board.tmp_ply = {
           count: this.board.selected_pieces.length,
           square: prev_square.coord,
-          direction: _.findKey(prev_square.neighbors, this),
+          direction: direction,
           drops: [drop_all ? this.board.selected_pieces.length : 1]
         };
       }
