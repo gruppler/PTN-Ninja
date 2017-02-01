@@ -18,6 +18,9 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.neighbors = {};
 
     this.is_edge = false;
+    this.is_valid = false;
+    this.is_selected = false;
+    this.is_placed = false;
 
     this.edges = [];
     this.connections = [];
@@ -175,7 +178,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
   };
 
   Square.prototype.update_view = function () {
-    var coord, square;
+    var coord, square, classes = [];
 
     if (!this.$view) {
       return;
@@ -186,14 +189,27 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       return;
     }
 
-    this.$view.removeClass('p1 p2');
+    this.$view.removeClass(
+      'p1 p2 valid selected placed '
+      + _.values(this.board.direction_names).join(' ')
+    );
     if (this.player) {
-      this.$view.addClass('p'+this.player);
+      classes.push('p'+this.player);
+    }
+    if (this.is_valid) {
+      classes.push('valid');
+    }
+    if (this.is_selected) {
+      classes.push('selected');
+    }
+    if (this.is_placed) {
+      classes.push('placed');
     }
 
-    this.$view
-      .removeClass(_.values(this.board.direction_names).join(' '))
-      .addClass(_.map(this.connections, this.board.direction_name).join(' '));
+    this.$view.addClass(
+      classes.join(' ')+' '
+      + _.map(this.connections, this.board.direction_name).join(' ')
+    );
 
     this.needs_updated = false;
   };
@@ -354,6 +370,8 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
       this.set_active();
     }
+
+    this.is_selected = !!this.piece && this.piece.is_selected;
 
     if (tmp_ply && !this.board.selected_pieces.length) {
       // Temporary ply and nothing selected

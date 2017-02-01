@@ -718,6 +718,7 @@ define([
     if (silently) {
       for (var i = 0; i < this.selected_pieces.length; i++) {
         this.selected_pieces[i].is_selected = false;
+        this.selected_pieces[i].square.is_selected = false;
       }
     } else if (this.tmp_ply) {
       this.selected_pieces[0].square.drop_selection(true);
@@ -739,17 +740,26 @@ define([
 
 
   Board.prototype.update_view = function() {
-    _.invokeMap(
-      _.filter(this.all_pieces, { needs_updated: true, captor: null }),
-      'render'
-    );
+    this.update_pieces();
+    this.update_squares();
+    this.update_scores();
+    this.on_ply();
+  };
+
+
+  Board.prototype.update_squares = function() {
     _.invokeMap(
       _.filter(this.squares, { needs_updated: true }),
       'update_view'
     );
+  };
 
-    this.update_scores();
-    this.on_ply();
+
+  Board.prototype.update_pieces = function() {
+    _.invokeMap(
+      _.filter(this.all_pieces, { needs_updated: true, captor: null }),
+      'render'
+    );
   };
 
 
@@ -975,6 +985,17 @@ define([
       , current_ply = this.game.plys[this.ply_index]
       , square, direction, neighbor;
 
+    function clear_all() {
+      var coord, square;
+      for (coord in that.squares) {
+        square = that.squares[coord];
+        square.needs_updated = true;
+        square.is_valid = false;
+        square.is_selected = false;
+        square.is_placed = false;
+      }
+    }
+
     function check_neighbor(square, neighbor) {
       if (
         neighbor && (
@@ -986,48 +1007,62 @@ define([
           )
         )
       ) {
-        neighbor.$view.addClass('valid');
+        if (!neighbor.is_valid) {
+          neighbor.needs_updated = true;
+        }
+        neighbor.is_valid = true;
       }
     }
 
     if (this.tmp_ply) {
-      this.$squares.children().removeClass('valid selected placed');
+      clear_all();
       square = this.selected_pieces[0].square;
-      square.$view.addClass('valid selected');
-
-      check_neighbor(
-        square,
-        square.neighbors[this.tmp_ply.direction]
-      );
+      square.is_valid = true;
+      square.is_selected = true;
+      check_neighbor(square, square.neighbors[this.tmp_ply.direction]);
     } else if (this.selected_pieces.length) {
-      this.$squares.children().removeClass('valid selected placed');
+      clear_all();
       square = this.selected_pieces[0].square;
-      square.$view.addClass('valid selected');
+      square.is_valid = true;
+      square.is_selected = true;
       for (direction in square.neighbors) {
         check_neighbor(square, square.neighbors[direction]);
       }
     } else if(!this.is_eog) {
       for (square in this.squares) {
         square = this.squares[square];
+        square.needs_updated = true;
         if (square.piece) {
           if (square.piece.ply === current_ply) {
-            square.$view.addClass('valid placed').removeClass('selected');
+            square.is_valid = true;
+            square.is_selected = false;
+            square.is_placed = true;
           } else if (square.piece.player == this.turn) {
-            square.$view.addClass('valid').removeClass('selected placed');
+            square.is_valid = true;
+            square.is_selected = false;
+            square.is_placed = false;
           } else {
-            square.$view.removeClass('valid selected placed');
+            square.is_valid = false;
+            square.is_selected = false;
+            square.is_placed = false;
           }
         } else {
-          square.$view.addClass('valid').removeClass('selected placed');
+          square.is_valid = true;
+          square.is_selected = false;
+          square.is_placed = false;
         }
       }
     } else {
-      this.$squares.children().removeClass('valid selected placed');
-      if (!current_ply.is_slide) {
-        square = app.square_coord(current_ply.square);
-        this.$squares.children('.c'+square.join('.r'))
-          .addClass('valid placed');
+      clear_all();
+      if (current_ply && !current_ply.is_slide) {
+        square = this.squares[current_ply.square];
+        square.is_valid = true;
+        square.is_placed = true;
       }
+    }
+
+    if (this.$view) {
+      this.update_squares();
     }
   };
 
