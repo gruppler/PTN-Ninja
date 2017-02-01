@@ -355,13 +355,21 @@ define([
             }
           }
 
-          if (
-            !next_neighbors.length
-            || next_neighbors.length == 1
-              && square.is_edge && next_neighbors[0].is_edge
-          ) {
+          if (!next_neighbors.length) {
+            // No eligible neighbors
             delete squares[square.coord];
-            dead_ends[i] = next_neighbors[0];
+            dead_ends[i] = undefined;
+          } else if (next_neighbors.length == 1) {
+            // Only one eligible neighbor
+            delete squares[square.coord];
+
+            if (square.edges.length == next_neighbors[0].edges.length) {
+              // That neighbor is not a corner
+              delete squares[square.coord];
+              dead_ends[i] = next_neighbors[0];
+            } else {
+              dead_ends[i] = undefined;
+            }
           } else {
             dead_ends[i] = undefined;
           }
