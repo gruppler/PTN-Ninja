@@ -180,7 +180,7 @@ define([
         move = new Move((move.linenum.value + 1) + '.', this);
       }
     } else {
-      turn = 1;
+      turn = this.config.tps.player ? this.config.tps.player : 1;
       move = new Move(this.suffix + this.get_linenum() + '.', this);
       this.suffix = '';
     }
