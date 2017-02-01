@@ -158,7 +158,8 @@ $stone-thickness: 0.3vmin;
       opacity: 0.6;
     }
     &.valid {
-      &.selected:before {
+      &.selected:before,
+      &.selected:hover:before {
         opacity: 0.5 !important;
       }
       &.p1.selected:before { background-color: $primary-color-100 }
