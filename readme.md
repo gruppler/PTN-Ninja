@@ -2,6 +2,7 @@
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...
 
+* Useful for transcription of live games, even on a phone.
 * Intuitive, with a minimal UI that is enjoyable to use.
 * Interactive, with an editing experience that teaches or aides understanding of notation.
 * Responsive, with a fluid design that works as well on a phone as it does in fullscreen on a desktop.
