@@ -328,7 +328,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
       // Update or create temporary ply
       if (tmp_ply) {
-        if (!this.board.validate_neighbor(this, this.neighbors[tmp_ply.direction])) {
+        if (!this.board.validate_neighbor(this, this.neighbors[tmp_ply.direction], 1)) {
           drop_all = true;
         }
         tmp_ply.drops.push(
@@ -336,7 +336,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         );
       } else {
         direction = _.findKey(prev_square.neighbors, this);
-        if (!this.board.validate_neighbor(this, this.neighbors[direction])) {
+        if (!this.board.validate_neighbor(this, this.neighbors[direction], 1)) {
           drop_all = true;
         }
         tmp_ply = this.board.tmp_ply = {

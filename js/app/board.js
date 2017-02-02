@@ -1049,14 +1049,14 @@ define([
   };
 
 
-  Board.prototype.validate_neighbor = function (square, neighbor) {
+  Board.prototype.validate_neighbor = function (square, neighbor, pending_drops) {
     if (
       neighbor && (
         !neighbor.piece
         || neighbor.piece.stone != 'C' && (
           neighbor.piece.stone != 'S'
           || this.selected_pieces[0].stone == 'C'
-            && this.selected_pieces.length == 1
+            && this.selected_pieces.length == 1 + (pending_drops || 0)
         )
       )
     ) {
