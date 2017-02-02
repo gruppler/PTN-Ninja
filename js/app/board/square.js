@@ -246,6 +246,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
       if (
         piece.ply && this.board.ply_index == piece.ply.index
+        && linenum != 1
         && !(linenum == 2 && this.board.turn == 1)
       ) {
         // Cycle through F, S, C
@@ -266,7 +267,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           stone + this.coord,
           this.board.ply_index
         );
-      } else {
+      } else if (linenum != 1) {
         // Select piece or stack
         this.board.selected_pieces = is_alt_select ?
           [piece] : [piece].concat(piece.captives.slice(0, this.board.size - 1)
@@ -283,19 +284,21 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       // Place piece as new ply
       stone = '';
 
-      if (
-        is_alt_select && event.button === 0
-        || !this.board.pieces[player].F.length
-      ) {
-        // Long-left-click, or no flats left
-        if (this.board.pieces[player].C.length) {
-          stone = 'C';
-        } else {
+      if (linenum != 1) {
+        if (
+          is_alt_select && event.button === 0
+          || !this.board.pieces[player].F.length
+        ) {
+          // Long-left-click, or no flats left
+          if (this.board.pieces[player].C.length) {
+            stone = 'C';
+          } else {
+            stone = 'S';
+          }
+        } else if (is_alt_select) {
+          // Long-touch but not long-click
           stone = 'S';
         }
-      } else if (is_alt_select) {
-        // Long-touch but not long-click
-        stone = 'S';
       }
 
       this.board.game.insert_ply(
