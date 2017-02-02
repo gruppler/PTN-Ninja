@@ -798,7 +798,7 @@ define([
       $ply2 = this.$ptn.find('.ply:eq(1)');
 
       if (ply1) {
-        if (ply1.turn == 1) {
+        if (ply1.turn == current_ply.move.first_turn) {
           if (ply1 == current_ply) {
             $ply1.addClass('active');
           }

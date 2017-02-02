@@ -135,7 +135,7 @@ define([
   Move.prototype.insert_ply = function(ply, turn, is_done, flattens) {
     var ply, prev_move;
 
-    if (turn == 1 || this.first_turn == 2) {
+    if (turn == this.first_turn) {
       if (this.ply1) {
         ply = this.ply1.prefix + ply;
       } else if ((prev_move = _.last(this.game.moves)) && prev_move.ply1) {
