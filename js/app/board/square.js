@@ -310,7 +310,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
   Square.prototype.drop_selection = function (drop_all) {
     var tmp_ply = this.board.tmp_ply
-      , is_alt_select = event && event.click_duration
       , piece, direction;
 
     if (this.board.selected_pieces[0].square == this) {
