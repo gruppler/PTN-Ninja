@@ -263,11 +263,8 @@ requirejs({locale: navigator.language}, [
   // Update piece positioning after toggling 3D
   config.on_change('board_3d', app.board.reposition_pieces);
   config.on_change('board_3d', function (value, prop, n, i, is_first_change) {
-    if (is_first_change) {
-      if (!app.is_blink) {
-        app.m.help(t.help.board_3d_experimental);
-      }
-      app.m.help(t.help.board_rotation);
+    if (is_first_change && !app.is_blink) {
+      app.m.help(t.help.board_3d_experimental);
     }
   });
 
