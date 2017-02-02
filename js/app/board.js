@@ -315,13 +315,10 @@ define([
         }
       }
 
-      for (i = 0; i < square.connections.length; i++) {
-        neighbor = square.neighbors[square.connections[i]];
-        if (
-          neighbor
-          && _.has(possible_roads[square.player], neighbor.coord)
-        ) {
-          // Haven't been to this friendly neighbor yet; find out where it goes
+      for (i = 0; i < square.road_connections.length; i++) {
+        neighbor = square.neighbors[square.road_connections[i]];
+        if (_.has(possible_roads[square.player], neighbor.coord)) {
+          // Haven't gone this way yet; find out where it goes
           road = _follow_road(neighbor);
           // Report back squares and edges
           _.assign(squares, road.squares);
@@ -348,28 +345,16 @@ define([
           square = dead_ends[i];
 
           next_neighbors = [];
-          for (var j = 0; j < square.connections.length; j++) {
-            neighbor = square.neighbors[square.connections[j]];
-            if (neighbor && _.has(squares, neighbor.coord)) {
+          for (var j = 0; j < square.road_connections.length; j++) {
+            neighbor = square.neighbors[square.road_connections[j]];
+            if (_.has(squares, neighbor.coord)) {
               next_neighbors.push(neighbor);
             }
           }
 
-          if (!next_neighbors.length) {
-            // No eligible neighbors
+          if (next_neighbors.length < 2) {
             delete squares[square.coord];
-            dead_ends[i] = undefined;
-          } else if (next_neighbors.length == 1) {
-            // Only one eligible neighbor
-            delete squares[square.coord];
-
-            if (square.edges.length == next_neighbors[0].edges.length) {
-              // That neighbor is not a corner
-              delete squares[square.coord];
-              dead_ends[i] = next_neighbors[0];
-            } else {
-              dead_ends[i] = undefined;
-            }
+            dead_ends[i] = next_neighbors[0];
           } else {
             dead_ends[i] = undefined;
           }
@@ -390,33 +375,23 @@ define([
       square = this.squares[coord];
       edges = square.is_edge ? square.edges.join('') : null;
 
-      if (square.connections.length - square.edges.length == 1) {
+      if (square.road_connections.length == 1) {
         if (square.is_edge) {
           // An edge with exactly one friendly neighbor
           possible_roads[square.player][coord] = square;
 
-          if (square.edges.length == 1) {
-            if (
-              square.connections.indexOf(
-                this.opposite_direction[square.edges[0]]
-              ) >= 0
-            ) {
-              // A potentially essential edge dead end
-              if (/[+-]/.test(edges)) {
-                possible_dead_ends[square.player].ns.push(square);
-              } else if (/[<>]/.test(edges)) {
-                possible_dead_ends[square.player].ew.push(square);
-              }
-            } else {
-              // A non-essential edge dead end
-              dead_ends.push(square);
+          if (!square.is_corner) {
+            if (square.is_ns) {
+              possible_dead_ends[square.player].ns.push(square);
+            } else if (square.is_ew) {
+              possible_dead_ends[square.player].ew.push(square);
             }
           }
         } else {
           // A non-edge dead end
           dead_ends.push(square);
         }
-      } else if (square.connections.length - square.edges.length > 1) {
+      } else if (square.road_connections.length > 1) {
         // An intersection
         possible_roads[square.player][coord] = square;
       }

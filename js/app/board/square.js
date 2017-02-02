@@ -18,29 +18,38 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.neighbors = {};
 
     this.is_edge = false;
+    this.is_corner = false;
+    this.is_ns = false;
+    this.is_ew = false;
     this.is_valid = false;
     this.is_selected = false;
     this.is_placed = false;
 
     this.edges = [];
     this.connections = [];
+    this.road_connections = [];
 
     if (row == 0) {
       this.is_edge = true;
+      this.is_ns = true;
       this.edges.push('-');
     }
     if (row == board.size - 1) {
       this.is_edge = true;
+      this.is_ns = true;
       this.edges.push('+');
     }
     if (col == 0) {
       this.is_edge = true;
+      this.is_ew = true;
       this.edges.push('<');
     }
     if (col == board.size - 1) {
       this.is_edge = true;
+      this.is_ew = true;
       this.edges.push('>');
     }
+    this.is_corner = this.edges.length == 2;
 
     _.bindAll(this, 'render', 'select');
 
@@ -83,16 +92,23 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     return this.set_piece(piece, false);
   };
 
-  Square.prototype.set_connection = function (direction, on) {
-    var index = this.connections.indexOf(direction);
+  Square.prototype.set_connection = function (direction, on, is_edge) {
+    var index = this.connections.indexOf(direction)
+      , road_index = !is_edge ? this.road_connections.indexOf(direction) : -1;
 
     if (on) {
       if (index < 0) {
         this.connections.push(direction);
+        if (!is_edge) {
+          this.road_connections.push(direction);
+        }
         this.needs_updated = true;
       }
     } else if (index >= 0) {
       this.connections.splice(index, 1);
+      if (!is_edge && road_index >= 0) {
+        this.road_connections.splice(road_index, 1);
+      }
       this.needs_updated = true;
     }
   };
@@ -149,7 +165,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         }
       } else if (piece && piece.stone != 'S') {
         // Board edge connection
-        this.set_connection(direction, true);
+        this.set_connection(direction, true, true);
       } else {
         // Non-road square
         this.set_connection(direction, false);
