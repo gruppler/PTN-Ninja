@@ -80,8 +80,10 @@ define([
       return this;
     }
 
-    if (this.key == 'result' && this.value) {
-      new Result(this.value, game);
+    if (this.key == 'result') {
+      if (this.value) {
+        new Result(this.value, game);
+      }
       this.print_value = function () {
         return game.config.result ? game.config.result.print_value() : '';
       };

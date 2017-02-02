@@ -168,19 +168,19 @@ define([
       comments = old_ply.comments;
       this.plys.splice(old_ply.index);
       this.moves.splice(move.index + 1);
-      if (turn == 1) {
+      if (turn == 1 || move.first_turn == 2) {
         move.ply2 = null;
       }
     } else if (this.moves.length) {
-      turn = this.plys.length && _.last(this.plys).turn == 1 ? 2 : 1;
       move = _.last(this.moves);
-      if (move.ply2 || move.ply1 && move.ply1.turn == 2) {
+      turn = this.plys.length && _.last(this.plys).turn == 1 ? 2 : 1;
+      if (this.plys.length && turn == 1) {
         // New move
         move.suffix = '\n';
         move = new Move((move.linenum.value + 1) + '.', this);
       }
     } else {
-      turn = this.config.tps.player ? this.config.tps.player : 1;
+      turn = this.config.tps ? this.config.tps.player : 1;
       move = new Move(this.suffix + this.get_linenum() + '.', this);
       this.suffix = '';
     }
