@@ -11,13 +11,14 @@ a {
   transition: none;
 
   &:hover,
-  &:focus:not(:active) {
+  &:focus:not(:active),
+  &:hover:focus:not(:active) {
     background-color: transparent;
   }
   &:hover:active {
     background-color: rgba(0,0,0,0.1);
   }
-  @media (hover:hover) {
+  html.can-hover & {
     &:hover,
     &:hover:focus:not(:active) {
       background-color: rgba(0,0,0,0.05);
@@ -29,10 +30,8 @@ a {
   &:hover {
     background-color: transparent;
 
-    @media (hover:hover) {
-      & {
-        background-color: rgba(0,0,0,0.1);
-      }
+    html.can-hover & {
+      background-color: rgba(0,0,0,0.1);
     }
   }
   &:active {
@@ -114,7 +113,7 @@ a {
       transition: margin-top $time-smooth $natural;
     }
 
-    @media (hover:hover) {
+    html.can-hover & {
       .mdl-navigation__link:hover + & {
         will-change: margin-top;
       }

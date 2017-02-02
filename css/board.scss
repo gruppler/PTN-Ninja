@@ -165,7 +165,7 @@ $stone-thickness: 0.3vmin;
       &.p1.selected:before { background-color: $primary-color-100 }
       &.p2.selected:before { background-color: $primary-color-700 }
 
-      @media (hover:hover) {
+      html.can-hover & {
         &:hover:before {
           opacity: 0.3 !important;
         }

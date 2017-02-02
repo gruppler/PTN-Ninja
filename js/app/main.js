@@ -151,6 +151,16 @@ requirejs({locale: navigator.language}, [
   app.$menu_edit = $('#menu-edit');
   app.$menu_play = $('#menu-play');
   app.m = new Messages('global');
+  app.can_hover = false;
+
+  app.$window.one('mousemove', function (event) {
+    if (!app.touches) {
+      app.can_hover = true;
+      app.$html.addClass('can-hover');
+    }
+  }).one('touchstart', function (event) {
+    app.$window.off('mousemove');
+  });
 
   app.range = bililiteRange(app.$ptn[0]);
   app.range.undo(0);

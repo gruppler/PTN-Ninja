@@ -31,7 +31,7 @@ $ptn-bg-radius: 0.2em;
     box-shadow: 0 0 0 0.1em $primary-color-100;
     background-color: $primary-color-100;
 
-    @media (hover:hover) {
+    html.can-hover & {
       &.ply:hover {
         background-color: $primary-color-50;
         box-shadow: 0 0 0 0.1em $primary-color-50;
@@ -52,7 +52,7 @@ $ptn-bg-radius: 0.2em;
     box-shadow: 0 0 0 0.1em $primary-color-800;
     background-color: $primary-color-800;
 
-    @media (hover:hover) {
+    html.can-hover & {
       &.ply:hover {
         background-color: $primary-color-900;
         box-shadow: 0 0 0 0.1em $primary-color-900;
