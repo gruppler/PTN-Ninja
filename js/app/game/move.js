@@ -165,7 +165,7 @@ define([
   };
 
   Move.prototype.insert_result = function (string, turn, silently) {
-    var ply = this['ply' + turn]
+    var ply = this['ply' + (this.first_turn == 2 ? 1 : turn)]
       , old_result
       , prefix = ' ';
 
