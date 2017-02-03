@@ -40,7 +40,7 @@ $ptn-bg-radius: 0.2em;
     &.ply:active,
     &.ply.active {
       background-color: $primary-color-100;
-      box-shadow: 0 0 0 0.15em $accent-color-600;
+      box-shadow: 0 0 0 0.15em $accent-color-600 !important;
 
       html.ply-is-done & {
         background-color: $white;
@@ -61,7 +61,7 @@ $ptn-bg-radius: 0.2em;
     &.ply:active,
     &.ply.active {
       background-color: $primary-color-800;
-      box-shadow: 0 0 0 0.15em $accent-color-600;
+      box-shadow: 0 0 0 0.15em $accent-color-600 !important;
 
       html.ply-is-done & {
         background-color: $black;

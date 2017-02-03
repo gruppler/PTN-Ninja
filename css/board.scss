@@ -169,10 +169,14 @@ $stone-thickness: 0.3vmin;
         &:hover:before {
           opacity: 0.3 !important;
         }
-        &.p1:hover:before,
-        html.p1 &:not(.placed):hover:before { background-color: $primary-color-100 }
-        &.p2:hover:before,
-        html.p2 &:not(.placed):hover:before { background-color: $primary-color-700 }
+        &.p1:hover:before { background-color: $primary-color-100 }
+        &.p2:hover:before { background-color: $primary-color-700 }
+      }
+      html.can-hover.p1 &:not(.placed):hover:before {
+        background-color: $primary-color-100
+      }
+      html.can-hover.p2 &:not(.placed):hover:before {
+        background-color: $primary-color-700
       }
     }
 
