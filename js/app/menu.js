@@ -14,7 +14,7 @@ define([
 
   var $panel = $('#app')
     , $menu = $('#menu')
-    , $menu_button = $('.mdl-layout__drawer-button').addClass('mdl-button mdl-js-button mdl-button--icon');
+    , $menu_button;
 
   var Menu = {};
 
@@ -33,10 +33,6 @@ define([
   Menu.toggle = function () {
     $menu_button.click();
   };
-
-  $menu_button.focus(function () {
-    $menu_button.blur();
-  });
 
   Menu.content = [{
     id: 'global',
@@ -343,6 +339,8 @@ define([
   };
 
   Menu.render = function () {
+    $menu_button = $('.mdl-layout__drawer-button')
+      .addClass('mdl-button mdl-js-button mdl-button--icon');
     $menu.html(this.tpl.menu(this));
 
     // Initialize widgets

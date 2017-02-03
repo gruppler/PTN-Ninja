@@ -17,12 +17,17 @@ requirejs({locale: navigator.language}, [
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
+  'material',
   'domReady!'
 ], function (t, Messages, config, app, saveAs, _, $) {
 
   window.app = app;
   window.t = t;
 
+  app.$window = $(window);
+  app.$document = $(document);
+  app.$html = $('html');
+  app.$body = $('body');
 
   // Templatize i18n strings
   (function () {
@@ -132,14 +137,13 @@ requirejs({locale: navigator.language}, [
 
   $('title').text(t.app_title);
 
+  if (!app.$html.hasClass('mdl-js')) {
+    componentHandler.init();
+  }
 
   // Initialize Menu
   app.menu.render();
 
-  app.$window = $(window);
-  app.$document = $(document);
-  app.$html = $('html');
-  app.$body = $('body');
   app.$ptn = $('#ptn');
   app.$viewer = $('#viewer');
   app.$board_view = app.$viewer.find('.table-wrapper');
