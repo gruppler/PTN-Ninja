@@ -208,7 +208,7 @@ define([
     update_permalink: function () {
       var href, length;
 
-      href = '#'+app.game.ptn_compressed;
+      href = '?#'+app.game.ptn_compressed;
       length = (baseurl + href).length;
 
       app.$permalink.attr({
