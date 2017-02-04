@@ -1058,7 +1058,7 @@ define([
     // Show comments before first move
     if (!ply || ply.is_first() && !this.ply_is_done) {
       if (this.game.comments) {
-        _.map(this.game.comments.concat().reverse(), this.comment);
+        _.map(this.game.comments.concat(), this.comment);
       }
       return;
     }
@@ -1072,13 +1072,13 @@ define([
     ) {
       this.m['player'+result.victor](result.message);
       if (result.comments) {
-        _.map(result.comments.concat().reverse(), this.comment);
+        _.map(result.comments.concat(), this.comment);
       }
     }
 
     // Show ply comments
     if (ply.comments) {
-      _.map(ply.comments.concat().reverse(), this.comment);
+      _.map(ply.comments.concat(), this.comment);
     }
 
     // Show Tak and Tinue
