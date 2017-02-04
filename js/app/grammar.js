@@ -67,11 +67,13 @@ define(['lodash'], function (_) {
     ptn_grouped: '^(<tag>+)(<comment>)((?:.|\\s)*?)((?:\\s|--)*)$'
   };
 
-  var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'));
+  var tokens = (new RegExp('<'+_.keys(grammar).join('>|<')+'>', 'g'))
+    , get_token = function (token) {
+        return grammar[_.trim(token, '<>')];
+      };
+
   _.each(grammar, function (expression, token) {
-    grammar[token] = expression.replace(tokens, function (token) {
-      return grammar[_.trim(token, '<>')];
-    });
+    grammar[token] = expression.replace(tokens, get_token);
   });
   _.each(grammar, function (expression, token) {
     grammar[token] = new RegExp(
