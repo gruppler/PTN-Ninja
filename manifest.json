@@ -1,5 +1,6 @@
 {
 	"name": "PTN Ninja",
+	"short_name": "PTN Ninja",
 	"icons": [
 		{
 			"src": "\/android-chrome-36x36.png",
@@ -38,6 +39,6 @@
 			"density": 4
 		}
 	],
-	"start_url": "http:\/\/ptn.ninja",
+	"start_url": "https:\/\/ptn.ninja",
 	"display": "standalone"
 }

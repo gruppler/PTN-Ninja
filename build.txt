@@ -1,6 +1,16 @@
 
+css/fonts/fonts.css
+----------------
+css/fonts/fonts.css
+
+css/material.css
+----------------
+css/material.css
+
 css/style.css
 ----------------
+css/fonts/fonts.css
+css/material.css
 css/style.css
 
 js/app.js
@@ -42,5 +52,6 @@ js/app/app.js
 js/lib/FileSaver.min.js
 js/lib/jquery.keymap.js
 js/lib/jquery.aftertransition.js
+js/lib/material.js
 js/app/main.js
 js/app.js
