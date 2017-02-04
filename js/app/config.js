@@ -7,11 +7,16 @@
 define(['lodash'], function (_) {
 
   var mobile_width = 1024
+    , is_in_iframe = top.location != self.location
+    , is_blink = (window.chrome || window.Intl && Intl.v8BreakIterator)
+        && 'CSS' in window
     , callbacks = {};
 
   var config = {
 
     mobile_width: mobile_width,
+    is_in_iframe: is_in_iframe,
+    is_blink: is_blink,
 
     presets: {
       minimal: {
@@ -56,7 +61,7 @@ define(['lodash'], function (_) {
       board_rotation: [0, 0.55, 0.55],
       board_max_angle: 30,
       board_rotate_sensitivity: 3,
-      board_3d: false,
+      board_3d: is_blink,
       board_shadows: window.innerWidth > mobile_width,
       animate_board: true,
       show_fab: true
