@@ -1082,7 +1082,7 @@ define([
     }
 
     // Show Tak and Tinue
-    if (ply.evaluation && /['"]/.test(ply.evaluation)) {
+    if (this.ply_is_done && ply.evaluation && /['"]/.test(ply.evaluation)) {
       this.m['player'+ply.player](
         /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
       );
