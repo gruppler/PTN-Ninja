@@ -5,6 +5,7 @@ define({
     About_App: "About PTN Ninja",
 
     Animate_Board: "Animate Board",
+    Annotations: "Annotations",
     Axis_Labels: "Axis Labels",
     Board_3D: "3D Board",
     Board_Opacity: "Board Opacity",
@@ -48,7 +49,6 @@ define({
     Round: "Round",
     Save: "Save",
     Share: "Share",
-    Show_Annotations: "Show Annotations",
     Show_FAB: "Show Mode Button",
     Show_Hide_Errors: "Show/Hide Errors",
     Show_Parse_Errors: "Show Parse Errors",

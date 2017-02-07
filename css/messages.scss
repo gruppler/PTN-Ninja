@@ -24,7 +24,7 @@
     &:empty,
     html.playmode &.messages-parse,
     html.editmode &.messages-board,
-    html.playmode:not(.show-annotations) &.messages-board,
+    html.playmode:not(.annotations) &.messages-board,
     html.editmode:not(.show-parse-errors) &.messages-parse {
       display: none;
     }

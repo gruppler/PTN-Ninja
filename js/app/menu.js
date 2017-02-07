@@ -183,10 +183,10 @@ define([
       'data-id': 'speed',
       'data-mode': 'play'
     },{
-      label: t.Show_Annotations,
+      label: t.Annotations,
       type: 'checkbox',
-      checked: config.play.show_annotations,
-      'data-id': 'show_annotations',
+      checked: config.play.annotations,
+      'data-id': 'annotations',
       'data-mode': 'play'
     },{
       label: t.Axis_Labels,

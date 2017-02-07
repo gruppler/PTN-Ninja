@@ -189,8 +189,8 @@ define(['app/messages'], function (Messages) {
       },
 
       'a': function (event, $focus, $parent) {
-        app.config.toggle('show_annotations', 'play');
-        notify_toggle(t.Show_Annotations, app.config.play.show_annotations);
+        app.config.toggle('annotations', 'play');
+        notify_toggle(t.Annotations, app.config.play.annotations);
       },
 
       's': function (event, $focus, $parent) {

@@ -54,7 +54,7 @@ define(['lodash'], function (_) {
 
       play: {
         speed: 60, // BPM
-        show_annotations: true
+        annotations: true
       },
 
       // Board
