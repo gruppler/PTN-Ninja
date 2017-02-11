@@ -282,8 +282,8 @@ requirejs({locale: navigator.language}, [
   // Update opacity controls when value changes
   config.on_change('board_opacity', function (opacity) {
     app.$viewer.css('opacity', opacity/100);
-  });
-  config.on_change('board_opacity');
+  }, 'edit');
+  config.on_change('board_opacity', false, 'edit');
 
   // Update piece positioning after toggling 3D
   config.on_change('board_3d', app.board.reposition_pieces);
