@@ -58,7 +58,7 @@ define(['lodash'], function (_) {
       },
 
       // Board
-      board_rotation: [0, 0.55, 0.55],
+      board_rotation: [0, 0.85, 0.85],
       board_max_angle: 30,
       board_rotate_sensitivity: 3,
       board_3d: is_blink,
