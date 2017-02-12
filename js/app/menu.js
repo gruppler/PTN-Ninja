@@ -126,6 +126,12 @@ define([
       'data-id': 'show_parse_errors',
       'data-mode': 'edit'
     },{
+      label: t.Annotations,
+      type: 'checkbox',
+      checked: config.edit.annotations,
+      'data-id': 'annotations',
+      'data-mode': 'edit'
+    },{
       label: t.Square_Highlights,
       type: 'checkbox',
       checked: config.edit.square_hl,

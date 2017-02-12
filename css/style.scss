@@ -81,6 +81,10 @@ kbd {
     pointer-events: none;
     opacity: 0;
   }
+
+  html.show-play-controls & {
+    bottom: $toolbar-height;
+  }
 }
 
 #ptn {
@@ -106,6 +110,10 @@ kbd {
 
   html.playmode & {
     cursor: default;
+  }
+
+  html.show-play-controls & {
+    min-height: calc(100vh - #{$toolbar-height});
   }
 }
 

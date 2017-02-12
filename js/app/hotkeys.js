@@ -54,14 +54,20 @@ define(['app/messages'], function (Messages) {
 
       '^z': function (event) {
         app.undo(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '^Z': function (event) {
         app.redo(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '^y': function (event) {
         app.redo(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '^?': function (event, $focus, $parent) {
@@ -83,23 +89,31 @@ define(['app/messages'], function (Messages) {
 
       '[': function (event, $focus, $parent) {
         app.insert_text(']');
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '"': function (event, $focus, $parent) {
         if (!$focus.closest('.ply').length) {
           app.insert_text('"');
+          event.preventDefault();
+          event.stopPropagation();
         }
       },
 
       '\'': function (event, $focus, $parent) {
         if (!$focus.closest('.ply').length) {
           app.insert_text('\'');
+          event.preventDefault();
+          event.stopPropagation();
         }
       },
 
       '{': function (event, $focus, $parent) {
         if ($focus.closest('.body').length) {
           app.insert_text('}');
+          event.preventDefault();
+          event.stopPropagation();
         }
       },
 
@@ -139,99 +153,149 @@ define(['app/messages'], function (Messages) {
 
       'Spacebar': function (event, $focus, $parent) {
         app.board.playpause(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'ArrowLeft': function (event, $focus, $parent) {
         app.board.prev_ply(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'ArrowRight': function (event, $focus, $parent) {
         app.board.next_ply(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '+ArrowLeft': function (event, $focus, $parent) {
         app.board.prev(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '+ArrowRight': function (event, $focus, $parent) {
         app.board.next(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '^ArrowLeft': function (event, $focus, $parent) {
         app.board.first(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       '^ArrowRight': function (event, $focus, $parent) {
         app.board.last(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'ArrowDown': function (event, $focus, $parent) {
         app.board.next_move(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'ArrowUp': function (event, $focus, $parent) {
         app.board.prev_move(event);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
-      '3': function (event, $focus, $parent) {
+      'd': function (event, $focus, $parent) {
         app.config.toggle('board_3d');
         notify_toggle(t.Board_3D, app.config.board_3d);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'A': function (event, $focus, $parent) {
         app.config.toggle('animate_board');
         notify_toggle(t.Animate_Board, app.config.animate_board);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'F': function (event, $focus, $parent) {
         app.config.toggle('show_fab');
         notify_toggle(t.Show_FAB, app.config.show_fab);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'a': function (event, $focus, $parent) {
-        app.config.toggle('annotations', 'play');
-        notify_toggle(t.Annotations, app.config.play.annotations);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('annotations', mode);
+        notify_toggle(t.Annotations, app.config[mode].annotations);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       's': function (event, $focus, $parent) {
         app.config.toggle('board_shadows');
         notify_toggle(t.Board_Shadows, app.config.board_shadows);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'c': function (event, $focus, $parent) {
-        app.config.toggle('show_play_controls', 'play');
-        notify_toggle(t.Play_Controls, app.config.play.show_play_controls);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_play_controls', mode);
+        notify_toggle(t.Play_Controls, app.config[mode].show_play_controls);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'h': function (event, $focus, $parent) {
-        app.config.toggle('square_hl', 'play');
-        notify_toggle(t.Square_Highlights, app.config.play.square_hl);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('square_hl', mode);
+        notify_toggle(t.Square_Highlights, app.config[mode].square_hl);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'r': function (event, $focus, $parent) {
-        app.config.toggle('show_roads', 'play');
-        notify_toggle(t.Road_Connections, app.config.play.show_roads);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_roads', mode);
+        notify_toggle(t.Road_Connections, app.config[mode].show_roads);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'f': function (event, $focus, $parent) {
-        app.config.toggle('show_flat_counts', 'play');
-        notify_toggle(t.Flat_Counts, app.config.play.show_flat_counts);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_flat_counts', mode);
+        notify_toggle(t.Flat_Counts, app.config[mode].show_flat_counts);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'm': function (event, $focus, $parent) {
-        app.config.toggle('show_current_move', 'play');
-        notify_toggle(t.Current_Move, app.config.play.show_current_move);
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_current_move', mode);
+        notify_toggle(t.Current_Move, app.config[mode].show_current_move);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
-      'u': function (event, $focus, $parent) {
-        app.config.toggle('show_unplayed_pieces', 'play');
-        notify_toggle(t.Unplayed_Pieces, app.config.play.show_unplayed_pieces);
+        'u': function (event, $focus, $parent) {
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_unplayed_pieces', mode);
+        notify_toggle(t.Unplayed_Pieces, app.config[mode].show_unplayed_pieces);
+        event.preventDefault();
+        event.stopPropagation();
       },
 
       'x': function (event, $focus, $parent) {
-        app.config.toggle('show_axis_labels', 'play');
-        notify_toggle(t.Axis_Labels, app.config.play.show_axis_labels);
       }
+        var mode = app.game.is_editing ? 'edit' : 'play';
+        app.config.toggle('show_axis_labels', mode);
+        notify_toggle(t.Axis_Labels, app.config[mode].show_axis_labels);
+        event.preventDefault();
+        event.stopPropagation();
 
     }
 

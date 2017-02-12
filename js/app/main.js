@@ -146,6 +146,7 @@ requirejs({locale: navigator.language}, [
 
   app.$ptn = $('#ptn');
   app.$viewer = $('#viewer');
+  app.$view_wrapper = app.$viewer.children('.view-wrapper');
   app.$board_view = app.$viewer.find('.table-wrapper');
   app.$controls = app.$viewer.find('.controls');
   app.$editor = $('#editor');
@@ -281,7 +282,7 @@ requirejs({locale: navigator.language}, [
 
   // Update opacity controls when value changes
   config.on_change('board_opacity', function (opacity) {
-    app.$viewer.css('opacity', opacity/100);
+    app.$view_wrapper.css('opacity', opacity/100);
   }, 'edit');
   config.on_change('board_opacity', false, 'edit');
 
@@ -455,10 +456,15 @@ requirejs({locale: navigator.language}, [
         dialog.close();
         $(dialog).remove();
       }
-    } else if (app.game.is_editing && _.has(app.hotkeys.edit, event.keymap)) {
+    } else if (app.game.is_editing && app.$ptn.is(':focus')) {
       // Edit Mode
-      app.hotkeys.edit[event.keymap](event, $focus, $parent);
-    } else if (!app.game.is_editing && _.has(app.hotkeys.play, event.keymap)) {
+      if (_.has(app.hotkeys.edit, event.keymap)) {
+        app.hotkeys.edit[event.keymap](event, $focus, $parent);
+      } else if (_.has(app.hotkeys.global, event.keymap)) {
+        // Global
+        app.hotkeys.global[event.keymap](event, $focus, $parent);
+      }
+    } else if (_.has(app.hotkeys.play, event.keymap)) {
       // Play Mode
       app.hotkeys.play[event.keymap](event, $focus, $parent);
     } else if (_.has(app.hotkeys.global, event.keymap)) {

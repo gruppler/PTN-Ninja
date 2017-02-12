@@ -16,19 +16,6 @@ $stone-thickness: 0.3vmin;
     font-size: 2.5vmin;
   }
 
-  html.animate-board & {
-    transition: opacity $time-smooth $natural;
-  }
-
-  html.playmode &,
-  html.side-by-side & {
-    opacity: 1 !important;
-    z-index: 1;
-  }
-  html.side-by-side & {
-    transition: none;
-  }
-
   @media (max-width: $mobile/2) and (orientation: portrait) {
     &, & .table .material-icons, & .table .mdl-button--icon {
       font-size: 14px;
@@ -49,11 +36,25 @@ $stone-thickness: 0.3vmin;
   align-items: center;
   justify-content: center;
 
+  html.animate-board & {
+    transition: opacity $time-smooth $natural;
+  }
+
+  html.playmode &,
+  html.side-by-side & {
+    opacity: 1 !important;
+    z-index: 1;
+  }
+  html.side-by-side & {
+    transition: none;
+  }
+
   > *:last-child {
     will-change: flex-grow;
 
     html.animate-board #viewer.animated & {
-      transition: flex-grow $time-smooth $natural;
+      transition: flex-grow $time-smooth $natural,
+        opacity $time-smooth $natural;
     }
   }
 

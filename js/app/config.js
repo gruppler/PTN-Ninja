@@ -20,6 +20,7 @@ define(['lodash'], function (_) {
 
     presets: {
       minimal: {
+        annotations: true,
         show_axis_labels: false,
         show_flat_counts: false,
         show_current_move: false,
@@ -27,6 +28,7 @@ define(['lodash'], function (_) {
         show_play_controls: false
       },
       edit_mode: {
+        annotations: false,
         square_hl: true,
         show_roads: true,
         show_axis_labels: true,
@@ -36,6 +38,7 @@ define(['lodash'], function (_) {
         show_play_controls: false
       },
       full: {
+        annotations: true,
         square_hl: true,
         show_roads: true,
         show_axis_labels: true,
@@ -53,8 +56,7 @@ define(['lodash'], function (_) {
       },
 
       play: {
-        speed: 60, // BPM
-        annotations: true
+        speed: 60 // BPM
       },
 
       // Board
