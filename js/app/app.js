@@ -223,6 +223,56 @@ define([
       app.$ptn.$header.$tps = app.$ptn.$header.find('span.value.tps');
       app.$ptn.$body = app.$ptn.find('span.body');
       app.$ptn.$ply = app.$ptn.$body.find('.ply.active:first');
+      this.update_ptn_branch();
+    },
+
+    update_ptn_branch: function (branch) {
+      var i, move, $move
+        , ply1_is_in_branch
+        , ply2_is_in_branch;
+
+      if (_.isUndefined(branch)) {
+        branch = app.board.target_branch;
+      }
+
+      if (!app.game.plys.length) {
+        return;
+      }
+
+      for (i = 0; i < app.game.moves.length; i++) {
+        move = app.game.moves[i];
+        ply1_is_in_branch = false;
+        ply2_is_in_branch = false;
+        $move = app.$ptn.$body.children('.move[data-index='+i+']');
+
+        if (move.ply1 && move.ply1.is_in_branch(branch)) {
+          ply1_is_in_branch = true;
+          app.$ptn.$body.find('.ply[data-index='+move.ply1.index+']')
+            .removeClass('other-branch');
+        }
+
+        if (move.ply2 && move.ply2.is_in_branch(branch)) {
+          ply2_is_in_branch = true;
+          app.$ptn.$body.find('.ply[data-index='+move.ply2.index+']')
+            .removeClass('other-branch');
+        }
+
+        if (ply1_is_in_branch || ply2_is_in_branch) {
+          $move.add($move.find('.other-branch'))
+            .removeClass('other-branch');
+
+          if (move.ply1 && !ply1_is_in_branch) {
+            app.$ptn.$body.find('.ply[data-index='+move.ply1.index+']')
+              .addClass('other-branch');
+          } else if (move.ply2 && !ply2_is_in_branch) {
+            app.$ptn.$body.find('.ply[data-index='+move.ply2.index+']')
+              .addClass('other-branch');
+          }
+        } else {
+          app.$ptn.$body.find('.move[data-index='+i+']')
+            .addClass('other-branch');
+        }
+      }
     },
 
     set_active_ply: function (ply) {
@@ -251,7 +301,7 @@ define([
         app.$html.removeClass('ply-is-done');
       }
 
-      app.board.show_comments(ply);
+      app.board.show_messages();
       app.board.update_ptn();
       app.board.update_active_squares();
       app.board.update_valid_squares();
@@ -267,14 +317,14 @@ define([
       if (is_already_done) {
         app.board.ply_index = Math.min(app.game.plys.length - 1, index);
         app.board.ply_is_done = true;
-        app.board.turn = app.get_current_ply().player == 1 ? 2 : 1;
+        app.board.turn = app.board.current_ply.player == 1 ? 2 : 1;
         app.board.check_game_end();
         app.update_ptn();
-        app.update_after_ply(app.get_current_ply());
+        app.update_after_ply(app.board.current_ply);
       } else {
         app.board.go_to_ply(index, true);
         if (app.board.check_game_end()) {
-          app.update_after_ply(app.get_current_ply());
+          app.update_after_ply(app.board.current_ply);
         }
         app.update_ptn();
       }
@@ -356,10 +406,10 @@ define([
     restore_caret: function () {
       if (this.range.last_bounds) {
         this.set_caret(this.range.last_bounds);
-      } else if (this.game.plys.length) {
+      } else if (this.board.current_ply) {
         this.set_caret(
           this.game.get_bounds(
-            this.get_current_ply()
+            this.board.current_ply
           )[1]
         );
       } else {
@@ -610,6 +660,7 @@ define([
         this.$menu_play.removeClass('mdl-accordion--opened');
 
         this.board.pause();
+        this.update_ptn_branch();
         this.scroll_to_ply();
         this.save_scroll_position();
         this.range.last_bounds = null;
@@ -669,11 +720,7 @@ define([
       } else if (_.isArray(square)) {
         return String.fromCharCode(a + square[0]) + (square[1] + 1);
       }
-    },
-
-    get_current_ply: function () {
-      return this.game.plys[this.board.ply_index];
-    },
+    }
   };
 
   // Test for passive event handlers

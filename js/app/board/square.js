@@ -333,7 +333,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       if (!this.board.selected_pieces.length) {
         this.board.set_active_squares(
           this.board.game.plys.length ?
-            app.get_current_ply().squares
+            this.board.current_ply.squares
             : []
           );
       }

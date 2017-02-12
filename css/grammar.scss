@@ -320,4 +320,8 @@ $ptn-bg-radius: 0.2em;
     box-shadow: none !important;
     color: $error-color !important;
   }
+
+  #editor & .other-branch {
+    opacity: 0.5;
+  }
 }

@@ -8,13 +8,14 @@ define([
   'app/config',
   'app/game/tag',
   'app/game/move',
+  'app/game/linenum',
   'app/game/comment',
   'app/grammar',
   'app/messages',
   'i18n!nls/main',
   'lodash',
   'lzstring',
-], function (config, Tag, Move, Comment, r, Messages, t, _) {
+], function (config, Tag, Move, Linenum, Comment, r, Messages, t, _) {
 
   var compress = LZString.compressToEncodedURIComponent
     , decompress = LZString.decompressFromEncodedURIComponent;
@@ -25,6 +26,8 @@ define([
     this.config = {};
     this.tags = [];
     this.moves = [];
+    this.indexed_moves = {};
+    this.branches = {};
     this.plys = [];
     this.ptn = '';
     this.callbacks_start = [];
@@ -88,6 +91,8 @@ define([
     this.caret_moved = false;
     this.tags.length = 0;
     this.moves.length = 0;
+    this.indexed_moves = {};
+    this.branches = {};
     this.plys.length = 0;
     this.m.clear('error');
     this.m.clear('warning');
@@ -144,12 +149,30 @@ define([
 
   Game.prototype.revert = function () {
     this.parse(this.original_ptn, false, true);
-  }
+  };
+
+  Game.prototype.get_unique_id = function (id) {
+    while (_.has(this.indexed_moves, id)) {
+      id += '1.';
+    }
+    return id;
+  };
 
   Game.prototype.get_linenum = function () {
+    var last_move = _.last(this.moves);
+
+    if (last_move && last_move.linenum) {
+      return Linenum.parse_id(
+        last_move.linenum.branch+(last_move.linenum.value + 1)+'.'
+      );
+    } else {
+      return Linenum.parse_id(this.get_first_linenum()+'.');
+    }
+  };
+
+  Game.prototype.get_first_linenum = function () {
     return this.config.tps && this.config.tps.move ?
-      this.config.tps.move + this.moves.length - 1 :
-      this.moves.length;
+      this.config.tps.move : 1;
   };
 
   Game.prototype.update_text = function (update_char_index) {
@@ -181,7 +204,7 @@ define([
       }
     } else {
       turn = this.config.tps ? this.config.tps.player : 1;
-      move = new Move(this.suffix + this.get_linenum() + '.', this);
+      move = new Move(this.suffix + this.get_linenum().id, this);
       this.suffix = '';
     }
 

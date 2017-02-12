@@ -18,9 +18,13 @@ define([
 
     this.turn = 1;
     this.ply_index = 0;
+    this.current_ply = null;
+    this.current_move = null;
+    this.current_branch = '';
+    this.target_branch = '';
+    this.current_id = '';
     this.ply_is_done = false;
     this.is_eog = false;
-    this.comments_ply_index = -2;
     this.size = 5;
     this.squares = {};
     this.rows = [];
@@ -34,12 +38,14 @@ define([
     this.init_callbacks = [];
     this.resize_callbacks = [];
     this.ply_callbacks = [];
+    this.branch_callbacks = [];
 
     _.bindAll(this, [
       'resize',
       'rotate_handler',
       'reset_rotation',
       'select_square',
+      'select_branch',
       'update_view',
       'reposition_pieces',
       'rotate',
@@ -91,7 +97,18 @@ define([
     if (fn) {
       this.ply_callbacks.push(fn);
     } else {
-      _.invokeMap(this.ply_callbacks, 'call', this, this.game.plys[this.ply_index]);
+      _.invokeMap(this.ply_callbacks, 'call', this, this.current_ply);
+    }
+
+    return this;
+  };
+
+
+  Board.prototype.on_branch_change = function (fn) {
+    if (fn) {
+      this.branch_callbacks.push(fn);
+    } else {
+      _.invokeMap(this.branch_callbacks, 'call', this, this.current_branch);
     }
 
     return this;
@@ -101,9 +118,13 @@ define([
   Board.prototype.clear = function () {
     this.turn = 1;
     this.ply_index = 0;
+    this.current_ply = null;
+    this.current_move = null;
+    this.current_branch = '';
+    this.target_branch = '';
+    this.current_id = '';
     this.ply_is_done = false;
     this.is_eog = false;
-    this.comments_ply_index = -2;
     this.squares = {};
     this.all_pieces = [];
     this.flat_score[1] = 0;
@@ -210,9 +231,18 @@ define([
 
 
   Board.prototype.validate = function (game) {
+    var branch;
+
     if (this.init(game, true)) {
-      this.go_to_ply(game.plys.length, true, true);
+      this.last(false, true);
       this.check_game_end();
+      this.first(false, true);
+      for (branch in this.branches) {
+        this.target_branch = branch;
+        this.last(false, true);
+        this.check_game_end();
+        this.first(false, true);
+      }
       this.clear();
       return true;
     } else {
@@ -229,10 +259,9 @@ define([
 
 
   Board.prototype.current_linenum = function () {
-    var current_ply = this.game.plys[this.ply_index];
-    if (current_ply) {
-      return current_ply.move.linenum.value
-        + 1*(this.ply_is_done && current_ply.turn == 2);
+    if (this.current_ply) {
+      return this.current_move.linenum.value
+        + 1*(this.ply_is_done && this.current_ply.turn == 2);
     } else {
       return this.game.config.tps && this.game.config.tps.move ?
         this.game.config.tps.move : 1;
@@ -242,24 +271,23 @@ define([
 
   // Returns true if game end, or if not game end but ply has result
   Board.prototype.check_game_end = function () {
-    var current_ply = this.game.plys[this.ply_index]
-      , pieces = this.pieces[this.turn == 1 ? 2 : 1]
+    var pieces = this.pieces[this.turn == 1 ? 2 : 1]
       , roads = this.find_roads()
       , result;
 
     this.is_eog = false;
 
-    if (!current_ply) {
+    if (!this.current_ply) {
       return false;
     }
 
     if (roads && roads.length) {
       // Road
-      if (roads[current_ply.turn].length) {
-        result = current_ply.turn == 1 ? 'R-0' : '0-R';
-      } else if (roads[current_ply.turn == 1 ? 2 : 1].length) {
+      if (roads[this.current_ply.turn].length) {
+        result = this.current_ply.turn == 1 ? 'R-0' : '0-R';
+      } else if (roads[this.current_ply.turn == 1 ? 2 : 1].length) {
         // Completed opponent's road
-        result = current_ply.turn == 1 ? '0-R' : 'R-0';
+        result = this.current_ply.turn == 1 ? '0-R' : 'R-0';
       }
     } else if (this.empty_count == 0 || pieces.F.concat(pieces.C).length == 0) {
       // Last empty square or last piece
@@ -271,13 +299,13 @@ define([
       } else {
         result = '0-F';
       }
-    } else if (current_ply.move.result && current_ply.move.result.type != '1') {
-      // Not game end, so remove result
-      if (current_ply.is_last()) {
-        current_ply.move.result = null;
+    } else if (this.current_move.result && this.current_move.result.type != '1') {
+      // Not game end, so remove result (unless it's a win by default)
+      if (!this.current_ply.next) {
+        this.current_move.result = null;
         this.game.config.result = null;
       }
-      current_ply.result = null;
+      this.current_ply.result = null;
       this.game.update_text(true);
       // Return true to indicate a change was made
       return true;
@@ -285,7 +313,7 @@ define([
       return false;
     }
 
-    result = current_ply.move.insert_result(result, current_ply.turn);
+    result = this.current_move.insert_result(result, this.current_ply.turn);
     if (roads && roads.length) {
       result.roads = roads;
     }
@@ -453,7 +481,7 @@ define([
 
 
   Board.prototype.to_tps = function () {
-    var ply = this.game.plys[this.ply_index] || this.game.plys[this.ply_index - 1]
+    var ply = this.current_ply || this.game.plys[this.ply_index - 1]
       , squares = []
       , i, j;
 
@@ -689,6 +717,27 @@ define([
   };
 
 
+  Board.prototype.select_branch = function (event) {
+    var ply = $(event.currentTarget).data('ply');
+
+    if (ply && this.target_branch == ply.branch) {
+      this.target_branch = ply.original.branch;
+      this.on_branch_change(this.target_branch);
+      if (this.ply_index > ply.original.index) {
+        this.go_to_ply(ply.original.index, false);
+      } else {
+        this.go_to_ply(this.ply_index, this.ply_is_done);
+      }
+    } else if (event && $(event.target).hasClass('close')) {
+      return;
+    } else {
+      this.target_branch = ply.branch;
+      this.on_branch_change();
+      this.go_to_ply(ply.index, false);
+    }
+  };
+
+
   Board.prototype.deselect_all = function (silently) {
     if (silently) {
       for (var i = 0; i < this.selected_pieces.length; i++) {
@@ -724,7 +773,7 @@ define([
 
   Board.prototype.update_squares = function() {
     _.invokeMap(
-      _.filter(this.squares, { needs_updated: true }),
+      _.filter(this.squares, 'needs_updated'),
       'update_view'
     );
   };
@@ -756,7 +805,7 @@ define([
 
 
   Board.prototype.update_ptn = function() {
-    var current_ply = this.game.plys[this.ply_index] || this.game.plys[0]
+    var current_ply = this.current_ply || this.game.plys[0]
       , ply1, ply2, $ply1, $ply2;
 
     if (current_ply && !current_ply.move.is_invalid) {
@@ -787,11 +836,11 @@ define([
 
       this.$ptn.$prev_move.attr(
         'disabled',
-        current_ply.index == 0 && !this.ply_is_done
+        !current_ply.prev && !this.ply_is_done
       );
       this.$ptn.$next_move.attr(
         'disabled',
-        current_ply.index == this.game.plys.length - 1 && this.ply_is_done
+        !current_ply.next && this.ply_is_done
       );
     }
   };
@@ -807,45 +856,40 @@ define([
 
 
   Board.prototype.do_ply = function () {
-    var ply, square, piece, ply_result;
+    var square, ply_result;
 
     if (this.ply_is_done) {
       return true;
     }
 
-    if (
-      this.selected_pieces.length
-      || this.ply_index >= this.game.plys.length
-      || this.ply_index < 0
-    ) {
+    if (this.selected_pieces.length) {
       return false;
     }
 
-    ply = this.game.plys[this.ply_index];
-    square = this.squares[ply.square];
+    square = this.squares[this.current_ply.square];
 
-    if (ply.is_illegal || !ply.is_valid) {
+    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
       this.pause();
       return false;
     }
 
-    if (ply.is_nop) {
+    if (this.current_ply.is_nop) {
       ply_result = true;
-    } else if (ply.is_slide) {
-      ply_result = square.slide(ply);
+    } else if (this.current_ply.is_slide) {
+      ply_result = square.slide(this.current_ply);
     } else {
-      ply_result = square.place(ply);
+      ply_result = square.place(this.current_ply);
     }
 
     this.ply_is_done = true;
-    this.is_eog = !!ply.result;
-    this.turn = ply.turn == 1 ? 2 : 1;
+    this.is_eog = !!this.current_ply.result;
+    this.turn = this.current_ply.turn == 1 ? 2 : 1;
 
     if (!this.defer_render) {
       this.on_ply();
     }
 
-    if (ply.is_last()) {
+    if (!this.current_ply.next) {
       this.pause();
     }
 
@@ -854,38 +898,33 @@ define([
 
 
   Board.prototype.undo_ply = function () {
-    var ply, square, piece, ply_result;
+    var square, ply_result;
 
     if (!this.ply_is_done) {
       return true;
     }
 
-    if (
-      this.selected_pieces.length
-      || this.ply_index >= this.game.plys.length
-      || this.ply_index < 0
-    ) {
+    if (this.selected_pieces.length) {
       return false;
     }
 
-    ply = this.game.plys[this.ply_index];
-    square = this.squares[ply.square];
+    square = this.squares[this.current_ply.square];
 
-    if (ply.is_illegal || !ply.is_valid) {
+    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
       return false;
     }
 
-    if (ply.is_nop) {
+    if (this.current_ply.is_nop) {
       ply_result = true;
-    } else if (ply.is_slide) {
-      ply_result = square.undo_slide(ply);
+    } else if (this.current_ply.is_slide) {
+      ply_result = square.undo_slide(this.current_ply);
     } else {
-      ply_result = square.undo_place(ply);
+      ply_result = square.undo_place(this.current_ply);
     }
 
     this.ply_is_done = false;
     this.is_eog = false;
-    this.turn = ply.turn;
+    this.turn = this.current_ply.turn;
 
     if (!this.defer_render) {
       this.on_ply();
@@ -937,13 +976,15 @@ define([
 
 
   Board.prototype.update_active_squares = function () {
-    var ply = this.game.plys[this.ply_index];
-
-    if (ply) {
-      if (ply.result && ply.result.roads && this.ply_is_done) {
-        this.set_active_squares(ply.result.roads.squares[ply.result.victor]);
+    if (this.current_ply) {
+      if (
+        this.current_ply.result
+        && this.current_ply.result.roads
+        && this.ply_is_done
+      ) {
+        this.set_active_squares(this.current_ply.result.roads.squares[this.current_ply.result.victor]);
       } else {
-        this.set_active_squares(ply.squares);
+        this.set_active_squares(this.current_ply.squares);
       }
     } else {
       this.set_active_squares();
@@ -957,7 +998,6 @@ define([
     }
 
     var that = this
-      , current_ply = this.game.plys[this.ply_index]
       , square, direction, neighbor;
 
     function clear_all() {
@@ -990,7 +1030,7 @@ define([
         square = this.squares[square];
         square.needs_updated = true;
         if (square.piece) {
-          if (square.piece.ply === current_ply) {
+          if (square.piece.ply === this.current_ply) {
             square.is_valid = true;
             square.is_selected = false;
             square.is_placed = true;
@@ -1011,8 +1051,8 @@ define([
       }
     } else {
       clear_all();
-      if (current_ply && !current_ply.is_slide) {
-        square = this.squares[current_ply.square];
+      if (this.current_ply && !this.current_ply.is_slide) {
+        square = this.squares[this.current_ply.square];
         square.is_valid = true;
         square.is_placed = true;
       }
@@ -1045,7 +1085,54 @@ define([
   };
 
 
-  Board.prototype.show_comments = function (ply) {
+  Board.prototype.show_branch = function (ply, key) {
+    this.m_branch.option(
+      '<span class="ptn">'+ply.move.print()+'</span>',
+      key,
+      'call_split'
+    ).data('ply', ply).click(this.select_branch);
+  }
+
+
+  Board.prototype.show_branches = function () {
+    var key = 1
+      , branches
+      , branch;
+
+    this.m_branch.clear();
+
+    if (this.current_ply) {
+      if (this.target_branch) {
+        this.show_branch(this.game.branches[this.target_branch], 0);
+      }
+
+      if (!this.ply_is_done) {
+        if (!_.isEmpty(this.current_ply.branches)) {
+          branches = this.current_ply.branches;
+        }
+      } else if (
+        this.current_ply.next
+        && !_.isEmpty(this.current_ply.next.branches)
+      ) {
+        branches = this.current_ply.next.branches;
+      }
+
+      for (branch in branches) {
+        if (branch != this.target_branch) {
+          this.show_branch(branches[branch], key);
+
+          if (key == 9) {
+            key = false;
+          } else if (key) {
+            key++;
+          }
+        }
+      }
+    }
+  };
+
+
+  Board.prototype.show_messages = function () {
     var that = this
       , result = this.game.config.result;
 
@@ -1056,18 +1143,19 @@ define([
     this.m.clear();
 
     // Show comments before first move
-    if (!ply || ply.is_first() && !this.ply_is_done) {
+    if (!this.current_ply || !this.current_ply.prev && !this.ply_is_done) {
       if (this.game.comments) {
         _.map(this.game.comments.concat(), this.comment);
       }
+      this.show_branches();
       return;
     }
 
     // Show result
     if (
       this.ply_is_done && (
-        ply.result
-        || result && result.type == '1' && ply.is_last()
+        this.current_ply.result
+        || result && result.type == '1' && !this.current_ply.next
       )
     ) {
       this.m['player'+result.victor](result.message);
@@ -1077,23 +1165,29 @@ define([
     }
 
     // Show ply comments
-    if (ply.comments) {
-      _.map(ply.comments.concat(), this.comment);
+    if (this.current_ply.comments) {
+      _.map(this.current_ply.comments.concat(), this.comment);
     }
 
     // Show Tak and Tinue
-    if (this.ply_is_done && ply.evaluation && /['"]/.test(ply.evaluation)) {
-      this.m['player'+ply.player](
-        /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
+    if (
+      this.ply_is_done
+      && this.current_ply.evaluation
+      && /['"]/.test(this.current_ply.evaluation)
+    ) {
+      this.m['player'+this.current_ply.player](
+        /"|''/.test(this.current_ply.evaluation) ? t.Tinue : t.Tak
       );
     }
+
+    this.show_branches();
   };
 
 
   Board.prototype.play = function () {
     if (
       !this.selected_pieces.length && (
-        this.game.plys[this.ply_index]
+        this.current_ply
         && this.ply_index != this.game.plys.length - 1
         || !this.ply_is_done
       )
@@ -1134,11 +1228,12 @@ define([
       this.pause();
     }
 
-    if (!this.ply_is_done && this.ply_index) {
-      this.ply_index--;
-      this.ply_is_done = true;
-      if (!this.defer_render) {
-        this.on_ply();
+    if (!this.ply_is_done) {
+      if (this.current_ply && this.current_ply.prev) {
+        this.set_current_ply(this.current_ply.prev.index, true);
+        if (!this.defer_render) {
+          this.on_ply();
+        }
       }
     } else {
       this.undo_ply();
@@ -1147,24 +1242,25 @@ define([
 
 
   Board.prototype.next = function (event) {
-    if (this.is_playing) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+      this.pause();
+    } else if (this.is_playing) {
       clearTimeout(this.play_timer);
       this.play_timer = setTimeout(this.next, 6e4/config.play.speed);
       this.play_timestamp = new Date().getTime();
     }
 
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-
-      this.pause();
-    }
-
-    if (this.ply_is_done && this.ply_index < this.game.plys.length - 1) {
-      this.ply_index++;
-      this.ply_is_done = false;
-      if (!this.defer_render) {
-        this.on_ply();
+    if (this.ply_is_done) {
+      if (this.current_ply && this.current_ply.next) {
+        this.set_current_ply(
+          this.current_ply.next.get_branch(this.target_branch).index,
+          false
+        );
+        if (!this.defer_render) {
+          this.on_ply();
+        }
       }
     } else {
       return this.do_ply();
@@ -1176,13 +1272,11 @@ define([
     if (event) {
       event.stopPropagation();
       event.preventDefault();
-
       this.pause();
     }
 
-    if (!this.ply_is_done && this.ply_index) {
-      this.ply_index--;
-      this.ply_is_done = true;
+    if (!this.ply_is_done && this.current_ply.prev) {
+      this.set_current_ply(this.current_ply.prev.index, true);
     }
     return this.undo_ply();
   };
@@ -1192,13 +1286,14 @@ define([
     if (event) {
       event.stopPropagation();
       event.preventDefault();
-
       this.pause();
     }
 
-    if (this.ply_is_done && this.ply_index < this.game.plys.length - 1) {
-      this.ply_index++;
-      this.ply_is_done = false;
+    if (this.ply_is_done && this.current_ply.next) {
+      this.set_current_ply(
+        this.current_ply.next.get_branch(this.target_branch).index
+        , false
+      );
     }
     return this.do_ply();
   };
@@ -1208,65 +1303,201 @@ define([
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+      // Don't need to pause because this.go_to_ply pauses
     }
 
-    this.go_to_ply(this.ply_index - 2, this.ply_is_done && this.ply_index > 1);
+    if (!this.current_ply) {
+      return;
+    } else if (
+      this.current_move.prev
+      && !this.ply_is_done
+      && this.current_ply.turn == this.current_move.first_turn
+    ) {
+      // Go to beginning of next move
+      this.go_to_ply(
+        (this.current_move.prev.ply1 || this.current_move.prev.ply2).index,
+        false
+      );
+    } else {
+      // Go to beginning of move
+      this.go_to_ply(this.current_move.ply1.index, false);
+    }
   };
 
 
   Board.prototype.next_move = function (event) {
+    var next;
+
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+      // Don't need to pause because this.go_to_ply pauses
     }
 
-    this.go_to_ply(this.ply_index + 2, this.ply_is_done);
+    if (!this.current_ply) {
+      return;
+    } else if (
+      this.ply_is_done
+      && this.current_ply.turn == this.current_move.second_turn
+      && this.current_move.next
+    ) {
+      // Go to end of next move
+      next = this.current_move.next.get_branch(this.target_branch);
+      if (next.ply2 || next.ply1) {
+        this.go_to_ply((next.ply2 || next.ply1).index, true);
+      }
+    } else {
+      // Go to end of move
+      next = this.current_move.get_branch(this.target_branch);
+      this.go_to_ply((next.ply2 || next.ply1).index, true);
+    }
   };
 
 
-  Board.prototype.first = function (event) {
+  Board.prototype.first = function (event, silently) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+      this.pause();
     }
 
-    this.go_to_ply(0, false);
+    if (!this.current_ply) {
+      return;
+    }
+
+    this.defer_render = true;
+    while (this.current_ply.prev && this.undo_ply()) {
+      this.set_current_ply(this.current_ply.prev.index, true);
+    }
+    this.undo_ply();
+
+    if (!silently) {
+      this.defer_render = false;
+      this.update_view();
+    }
   };
 
 
-  Board.prototype.last = function (event) {
+  Board.prototype.last = function (event, silently) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
+      this.pause();
     }
 
-    this.go_to_ply(this.game.plys.length - 1, true);
+    if (!this.current_ply) {
+      return;
+    }
+
+    this.defer_render = true;
+    while (
+      this.current_ply
+      && this.do_ply()
+      && this.current_ply.next
+    ) {
+      this.set_current_ply(
+        this.current_ply.next.get_branch(this.target_branch).index,
+        false
+      );
+    }
+    this.do_ply();
+
+    if (!silently) {
+      this.defer_render = false;
+      this.update_view();
+    }
   };
 
 
-  Board.prototype.go_to_ply = function (ply_index, do_ply, is_silent) {
-    if (this.selected_pieces.length) {
+  Board.prototype.set_current_ply = function (index, ply_is_done) {
+    if (_.isBoolean(ply_is_done)) {
+      this.ply_is_done = ply_is_done;
+    }
+    this.ply_index = index || 0;
+    this.current_ply = this.game.plys[index] || null;
+    this.current_move = this.current_ply ? this.current_ply.move : null;
+    if (this.current_ply) {
+      this.current_branch = this.current_ply.branch;
+      if (
+        this.target_branch != this.current_branch
+        && !this.current_ply.is_in_branch(this.target_branch)
+      ) {
+        // Switch to a different branch
+        this.target_branch = this.current_branch;
+        this.on_branch_change();
+      }
+    }
+    this.current_id = this.current_move ? this.current_move.id : '';
+  };
+
+
+  Board.prototype.go_to_ply = function (target_index, do_ply, is_silent) {
+    var that = this
+      , target_ply = this.game.plys[target_index];
+
+    if (!target_ply || this.selected_pieces.length || !this.game.plys.length) {
       return false;
+    }
+
+    var original_target_branch = this.target_branch
+      , target_move = target_ply.move
+      , target_branch = target_move.branch
+      , target_id = target_move.id
+      , common_id;
+
+    if (!this.current_ply) {
+      this.set_current_ply(0, false);
     }
 
     this.pause();
     this.defer_render = true;
 
-    if (ply_index < 0) {
-      do_ply = false;
-    } else if (ply_index >= this.game.plys.length) {
-      do_ply = true;
+    function backward_while(condition) {
+      while (
+        condition()
+        && that.current_ply.prev
+        && that.undo_ply()
+      ) {
+        that.set_current_ply(that.current_ply.prev.index, true);
+      }
     }
 
-    ply_index = Math.min(this.game.plys.length - 1, Math.max(0, ply_index));
-
-    while (this.ply_index < ply_index && this.do_ply()) {
-      this.ply_index++;
-      this.ply_is_done = false;
+    function forward_while(condition) {
+      while (
+        condition()
+        && that.current_ply
+        && that.do_ply()
+        && that.current_ply.next
+      ) {
+        that.set_current_ply(
+          that.current_ply.next.get_branch(target_branch).index,
+          false
+        );
+      }
     }
-    while (this.ply_index > ply_index && this.undo_ply()) {
-      this.ply_index--;
-      this.ply_is_done = true;
+
+    // If not on the target branch, go to the beginning
+    if (this.current_branch != target_branch) {
+      backward_while(function () {
+        return that.current_branch != target_branch
+          || that.ply_index > target_index;
+      });
+      this.undo_ply();
+      this.target_branch = original_target_branch;
+      this.set_current_ply(
+        (this.current_ply.original || this.current_ply)
+          .get_branch(target_branch).index
+      );
+    }
+
+    if (target_index > this.ply_index) {
+      forward_while(function () {
+        return that.ply_index < target_index;
+      });
+    } else if (target_index < this.ply_index) {
+      backward_while(function () {
+        return that.ply_index > target_index;
+      });
     }
 
     if (do_ply) {
@@ -1369,6 +1600,7 @@ define([
 
 
   Board.prototype.m = new Messages('board');
+  Board.prototype.m_branch = new Messages('branch', true);
 
   Board.prototype.m_parse = new Messages('parse');
 

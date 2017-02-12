@@ -54,6 +54,11 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     game.char_index += string.length;
 
     this.move = move;
+    this.prev = null;
+    this.next = null;
+    this.original = null;
+    this.branches = {};
+    this.branch = move.branch;
 
     this.is_nop = false;
     this.is_illegal = false;
@@ -66,8 +71,12 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       ply_group = string.match(r.grammar.nop_grouped)
       this.prefix = ply_group[1];
       this.text = ply_group[2];
+      this.evaluation = '';
 
-      if (!game.config.tps || game.config.tps.player == 1) {
+      if (
+        !move.original
+        && (!game.config.tps || game.config.tps.player == 1)
+      ) {
         game.m.error(
           t.error.invalid_ply({ply: this.text})
         ).click(function () {
@@ -100,7 +109,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       this.drops_text = parts[4] || '',
       this.drops = parts[4] ? parts[4].split('').map(_.toInteger) : [this.count];
       this.squares = get_slide_squares(this);
-      this.flattens = {};
+      this.flattens = null;
       this.stone_text = parts[5] || '';
       this.evaluation = ply_group[4] || '';
       if (_.sum(this.drops) != this.count) {
@@ -162,12 +171,60 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return app.board && app.board.ply_index == this.index;
   };
 
-  Ply.prototype.is_first = function () {
-    return this.index == 0;
+  Ply.prototype.get_branch = function (branch) {
+    if (branch) {
+      if (branch == this.branch || _.isEmpty(this.branches)) {
+        return this;
+      } else if (_.has(this.branches, branch)) {
+        return this.branches[branch];
+      } else {
+        branch = this.game.branches[branch] || this.game.plys[0];
+        while (branch.branch && branch.original) {
+          branch = branch.original;
+          if (this.branch == branch.branch) {
+            return this;
+          } else if (_.has(this.branches, branch.branch)) {
+            return this.branches[branch.branch];
+          }
+          if (!branch.original) {
+            branch = branch.branch ?
+              this.game.branches[branch.branch]
+              : this.game.plys[0];
+          }
+        }
+      }
+      return this;
+    } else {
+      return this.original || this;
+    }
   };
 
-  Ply.prototype.is_last = function () {
-    return this.index == this.game.plys.length - 1;
+  Ply.prototype.is_in_branch = function (branch) {
+    if (this.branch == branch) {
+      // In same branch
+      return true;
+    } else if (_.startsWith(this.branch, branch)) {
+      // In a child or sibling branch
+      return false;
+    } else if (_.startsWith(branch, this.branch)) {
+      // In a parent branch
+      branch = this.game.branches[branch] || this.game.plys[0];
+      while (branch.branch && branch.original) {
+        branch = branch.original;
+        if (branch.branch == this.branch) {
+          return branch.index > this.index;
+        }
+        if (!branch.original) {
+          branch = branch.branch ?
+            this.game.branches[branch.branch]
+            : this.game.plys[0];
+        }
+      }
+      return false;
+    } else {
+      // In a different branch
+      return false;
+    }
   };
 
   Ply.prototype.print_place = _.template(

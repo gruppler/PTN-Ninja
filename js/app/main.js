@@ -262,6 +262,7 @@ requirejs({locale: navigator.language}, [
 
   // Update current ply display
   app.board.on_ply(app.update_after_ply);
+  app.board.on_branch_change(app.update_ptn_branch);
 
 
   // Make playback speed respond immediately to speed changes

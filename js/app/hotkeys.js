@@ -141,10 +141,17 @@ define(['app/messages'], function (Messages) {
           if (
             move && (
               move.ply2
-              || move.ply1 && move.ply1.turn == 2 - (move.linenum.value == 1)
+              || move.ply1 && move.first_turn == 2
             )
           ) {
-            app.insert_text((move.linenum.value + 1)+'.'+move.ply1.prefix, true);
+            app.insert_text(
+              move.linenum.branch
+              +(move.linenum.value + 1)
+              +'.'+move.ply1.prefix,
+              true
+            );
+            event.preventDefault();
+            event.stopPropagation();
           }
         }
       }

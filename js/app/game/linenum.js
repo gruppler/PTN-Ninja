@@ -6,13 +6,14 @@
 
 define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
-  var Linenum = function (string, game) {
+  var Linenum = function (string, move, game) {
     var parts = string.match(r.grammar.linenum_grouped);
 
+    this.move = game;
     this.game = game;
     this.prefix = parts[1];
-    this.value = game.get_linenum();
-    this.text = this.value + '.';
+    this.id = parts[2];
+    _.assign(this, Linenum.parse_id(this.id));
 
     this.char_index = game.char_index;
     game.char_index += this.prefix.length + this.text.length;
@@ -28,6 +29,22 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     return this;
   };
+
+  Linenum.parse_id = function (id) {
+    var linenum = {id: id}
+      , indices;
+
+    linenum.text = id;
+    linenum.original = (linenum.id.replace(/((?:\b)1\.)+$/, '') || '1.');
+    indices = _.compact(linenum.id.split('.'));
+    linenum.value = 1*indices.pop();
+    linenum.branch = indices.join('.');
+    if (linenum.branch) {
+      linenum.branch += '.';
+    }
+
+    return linenum;
+  }
 
   Linenum.prototype.print = _.template(
     '<span class="space"><%=this.prefix%></span>'+
