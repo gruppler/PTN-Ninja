@@ -72,7 +72,7 @@ $stone-thickness: 0.3vmin;
 
 .table-wrapper {
   html.board-3d & {
-    perspective: 100vmin;
+    perspective: 150vmin;
     perspective-origin: center;
     transform-style: preserve-3d;
   }
