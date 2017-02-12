@@ -5,33 +5,30 @@
 'use strict';
 
 define(['jquery', 'lodash', 'domReady!'], function ($, _) {
-  var Messages, $messages;
+  var Messages, $messages, $messages_left, $messages_right;
 
   var tpl = {
     message: _.template(
-      '<div class="message <%=type%>">'+
+      '<div class="messages-<%=group%> message <%=type%>">'+
         '<div class="content">'+
           '<i class="material-icons"><%=icon%></i><%=message%>'+
           '<i class="material-icons close">close</i>'+
         '</div>'+
       '</div>'
-    ),
-
-    group: _.template('<div class="messages-<%=group%>">')
+    )
   };
 
   $messages = $('#messages');
+  $messages_left = $('<div class="left">').appendTo($messages);
+  $messages_right = $('<div class="right">').appendTo($messages);
   $messages
     .on('click', 'i.close', remove_message)
     .on('remove', remove_message);
 
-  Messages = function(group) {
+  Messages = function(group, is_left) {
     this.enabled = true;
     this.group = group || 'general';
-    this.$messages = $messages.children('.messages-'+group);
-    if (!this.$messages.length) {
-      this.$messages = $(tpl.group({group: group})).appendTo($messages);
-    }
+    this.$messages = is_left ? $messages_left : $messages_right;
 
     return this;
   };
@@ -56,7 +53,10 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
   };
 
   Messages.prototype.clear = function (type) {
-    var $messages = this.$messages.children(type ? '.'+type : '');
+    var $messages = this.$messages.children(
+          '.messages-'+this.group
+          +(type ? '.'+type : '')
+        );
 
     if ($messages.length) {
       $messages.remove();
@@ -103,6 +103,24 @@ define(['jquery', 'lodash', 'domReady!'], function ($, _) {
 
   Messages.prototype.player2 = function (message, seconds, group) {
     return this.add(message, seconds, group, 'player2', 'person');
+  };
+
+  Messages.prototype.option = function (message, key, icon) {
+    var $message = this.add(
+      (!_.isUndefined(key) ? '<kbd>'+key+'</kbd> ' : '')
+      + message,
+      false,
+      false, 'option', icon || ''
+    );
+
+    if (!_.isUndefined(key)) {
+      $message.attr('data-option', key);
+      if (key == 0) {
+        $message.addClass('selected');
+      }
+    }
+
+    return $message;
   };
 
   function remove_message() {

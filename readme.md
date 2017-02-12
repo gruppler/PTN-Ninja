@@ -96,7 +96,8 @@ Key|Action
 <kbd>&darr;</kbd>|Next Move
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>&rarr;</kbd>|Last Ply
-<kbd>3</kbd>|Toggle 3D Board
+<kbd>0-9</kbd>|Select option 0-9
+<kbd>d</kbd>|Toggle 3D Board
 <kbd>s</kbd>|Toggle Board Shadows
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
 <kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)

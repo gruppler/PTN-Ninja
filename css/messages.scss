@@ -4,35 +4,59 @@
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
 #messages {
+  overflow: hidden;
   z-index: 2;
   position: absolute;
-  top: $edge;
+  top: 0;
   bottom: 0;
   left: $fab-height;
-  right: $toolbar-height - $fab-height/2;
+  right: $toolbar-height - $fab-height/2 - $edge;
   pointer-events: none;
-  overflow: hidden;
+
+  html.show-play-controls & {
+    bottom: $toolbar-height;
+  }
 
   > div {
-    padding-bottom: $edge;
+    display: inline-block;
+    padding: $edge;
     max-height: 100%;
     max-width: 100%;
     box-sizing: border-box;
     pointer-events: all;
     z-index: 1;
 
+    &.left {
+      float: left;
+      .message {
+        float: left;
+        clear: left;
+      }
+    }
+    &.right {
+      float: right;
+      .message {
+        float: right;
+        clear: right;
+      }
+    }
+
     &:empty,
-    html.playmode &.messages-parse,
-    html.editmode &.messages-board,
-    html.playmode:not(.annotations) &.messages-board,
-    html.editmode:not(.show-parse-errors) &.messages-parse {
+    html.playmode & .messages-parse,
+    html.editmode & .messages-branch,
+    html:not(.annotations) & .messages-board,
+    html.editmode:not(.show-parse-errors) & .messages-parse {
       display: none;
+    }
+
+    &:after {
+      content: '';
+      display: block;
+      clear: both;
     }
   }
 
   .message {
-    float: right;
-    clear: right;
     position: relative;
     border-radius: 2px;
     margin-top: 0.5em;
@@ -41,8 +65,6 @@
 
     .content {
       margin: 0.8rem calc(#{$edge*2} + 1.5rem);
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     i {
@@ -107,6 +129,28 @@
     &.player2 {
       background-color: $primary-color-700;
       color: $primary-color-50;
+    }
+
+    &.option {
+      background-color: $primary-color-400;
+      color: $primary-color-50;
+
+      &.selected {
+        box-shadow: 0 0 0 2px $accent-color-500;
+      }
+
+      kbd, .label {
+        margin-right: $edge;
+      }
+      .label {
+        font-weight: 500;
+      }
+      .linenum {
+        font-weight: 600;
+      }
+      .comment {
+        display: none;
+      }
     }
   }
 }

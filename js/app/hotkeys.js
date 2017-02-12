@@ -12,6 +12,10 @@ define(['app/messages'], function (Messages) {
     return m.info(property+': <strong>'+(status ? t.On : t.Off)+'</strong>', 1.5);
   }
 
+  function select_option(option) {
+    app.$body.find('[data-option='+option+']:visible:first').click();
+  }
+
   return {
 
     // Global
@@ -290,12 +294,23 @@ define(['app/messages'], function (Messages) {
       },
 
       'x': function (event, $focus, $parent) {
-      }
         var mode = app.game.is_editing ? 'edit' : 'play';
         app.config.toggle('show_axis_labels', mode);
         notify_toggle(t.Axis_Labels, app.config[mode].show_axis_labels);
         event.preventDefault();
         event.stopPropagation();
+      },
+
+      0: _.wrap(0, select_option),
+      1: _.wrap(1, select_option),
+      2: _.wrap(2, select_option),
+      3: _.wrap(3, select_option),
+      4: _.wrap(4, select_option),
+      5: _.wrap(5, select_option),
+      6: _.wrap(6, select_option),
+      7: _.wrap(7, select_option),
+      8: _.wrap(8, select_option),
+      9: _.wrap(9, select_option)
 
     }
 
