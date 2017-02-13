@@ -14,10 +14,18 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '1/2': 'draw'
   };
 
-  var Result = function (string, game) {
+  var Result = function (string, game, move) {
     var parts = string.match(r.grammar.result_grouped);
 
-    game.config.result = this;
+    this.game = game;
+    this.move = move || null;
+
+    if (
+      move && !move.branch
+      || !game.config.result
+    ) {
+      game.config.result = this;
+    }
 
     if (!string.length) {
       this.print = function () {
@@ -69,8 +77,15 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return '<span>'+this.prefix+'</span>' + this.print_value();
   };
 
-  Result.prototype.print_text = function () {
-    return this.prefix + this.text;
+  Result.prototype.print_text = function (update_char_index) {
+    var text = this.prefix + this.text;
+
+    if (update_char_index) {
+      this.char_index = this.game.char_index;
+      this.game.char_index += text.length;
+    }
+
+    return text;
   };
 
   return Result;

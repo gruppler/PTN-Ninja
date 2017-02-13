@@ -221,6 +221,8 @@ define([
       }
     }
 
+    this.set_current_ply(0, false);
+
     if (silent !== true) {
       this.defer_render = false;
       this.on_init();
@@ -236,12 +238,10 @@ define([
     if (this.init(game, true)) {
       this.last(false, true);
       this.check_game_end();
-      this.first(false, true);
-      for (branch in this.branches) {
-        this.target_branch = branch;
+      for (branch in this.game.branches) {
+        this.go_to_ply(this.game.branches[branch].index, true, true);
         this.last(false, true);
         this.check_game_end();
-        this.first(false, true);
       }
       this.clear();
       return true;
@@ -512,6 +512,7 @@ define([
   Board.prototype.render = function () {
     var that = this;
 
+    this.set_current_ply(0, false);
     this.$view = $(this.tpl.board(this));
     this.$board = this.$view.find('.board');
     this.$unplayed_bg = this.$view.find('.unplayed-bg').parent();
@@ -536,15 +537,22 @@ define([
     );
 
     this.$pieces.empty();
-    _.invokeMap(
-      _.filter(this.all_pieces, {captive: null}),
-      'render'
+    this.$pieces.append.apply(
+      this.$pieces,
+      _.invokeMap(
+        this.all_pieces,
+        'render'
+      )
     );
 
-    this.go_to_ply(
-      _.isUndefined(this.saved_ply_index) ? 0 : this.saved_ply_index,
-      this.saved_ply_is_done
-    );
+    if (this.game.plys.length) {
+      this.go_to_ply(
+        _.isUndefined(this.saved_ply_index) ? 0 : this.saved_ply_index,
+        this.saved_ply_is_done
+      );
+    } else {
+      this.on_ply();
+    }
 
     this.$ptn.on('click tap', '.ply', function (event) {
       var $ply = $(event.currentTarget)
@@ -815,7 +823,7 @@ define([
       if (this.$move && this.$move.length) {
         this.$move.remove();
       }
-      this.$move = $(current_ply.move.print());
+      this.$move = $(current_ply.move.print_for_board(this.target_branch));
 
       this.$ptn.$prev_move.after(this.$move);
       $ply1 = this.$ptn.find('.ply:eq(0)');
@@ -935,13 +943,11 @@ define([
 
 
   Board.prototype.illegal_ply = function (ply) {
-    if (this.game.is_editing) {
-      this.m_parse.error(
-        t.error.illegal_ply({ ply: ply.text })
-      ).click(function () {
-        app.select_token_text(ply);
-      });
-    }
+    this.m_parse.error(
+      t.error.illegal_ply({ ply: ply.text })
+    ).click(function () {
+      app.select_token_text(ply);
+    });
     ply.is_illegal = true;
     return false;
   };
@@ -1134,7 +1140,8 @@ define([
 
   Board.prototype.show_messages = function () {
     var that = this
-      , result = this.game.config.result;
+      , result = this.current_ply && this.current_ply.result ?
+          this.current_ply.result : this.game.config.result;
 
     if (this.defer_render) {
       return;
@@ -1444,10 +1451,6 @@ define([
       , target_branch = target_move.branch
       , target_id = target_move.id
       , common_id;
-
-    if (!this.current_ply) {
-      this.set_current_ply(0, false);
-    }
 
     this.pause();
     this.defer_render = true;

@@ -83,7 +83,6 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
           app.select_token_text(that);
         });
         this.is_illegal = true;
-        this.text = this.prefix + this.text;
         this.print = game.print_invalid;
       }
 

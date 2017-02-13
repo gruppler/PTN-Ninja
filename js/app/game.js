@@ -296,7 +296,11 @@ define([
     }
 
     output += _.invokeMap(this.tags, 'print_text', update_char_index).join('');
-    output += this.comment_text ? _.invokeMap(this.comment_text, 'print_text', update_char_index).join('') : '';
+    if (this.comment_text) {
+      output += _.invokeMap(
+        this.comment_text, 'print_text', update_char_index
+      ).join('');
+    }
     output += _.invokeMap(this.moves, 'print_text', update_char_index).join('');
     output += this.suffix;
 

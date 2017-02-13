@@ -74,7 +74,7 @@ define([
       });
     }
 
-    if(game.config.tps && this.linenum.original == game.config.tps.move+'.'){
+    if (game.config.tps && this.linenum.original == game.config.tps.move+'.') {
       if (game.config.tps.player == 1) {
         this.first_player = (this.is_reversed) ? 2 : 1;
         this.second_player = this.first_player - 1 || 2;
@@ -108,7 +108,7 @@ define([
     }
 
     if (parts[7]) {
-      this.result = new Result(parts[7], game);
+      this.result = new Result(parts[7], game, this);
 
       this.comments4 = Comment.parse(parts[8], game);
 
@@ -190,7 +190,7 @@ define([
     this.ply2.comments = _.map(this.comments3, 'text');
   };
 
-  Move.prototype.insert_ply = function(ply, turn, is_done, flattens) {
+  Move.prototype.insert_ply = function (ply, turn, is_done, flattens) {
     var ply, prev_move;
 
     if (turn == 1 || this.first_turn == 2) {
@@ -231,7 +231,7 @@ define([
         prefix = old_result.prefix;
       }
 
-      ply.result = new Result(prefix + string, this.game);
+      ply.result = new Result(prefix + string, this.game, this);
       this.result = ply.result;
       ply.result.comments = _.map(this.comments4, 'text');
 
@@ -261,7 +261,7 @@ define([
     }
   };
 
-  Move.prototype.print = function(){
+  Move.prototype.print = function () {
     var output = '<span class="move" data-index="'+this.index+'">';
 
     if (this.linenum) {
@@ -299,7 +299,31 @@ define([
     return output;
   };
 
-  Move.prototype.print_text = function(update_char_index){
+  Move.prototype.print_for_board = function (branch) {
+    var output = '<span class="move" data-index="'+this.index+'">';
+
+    if (this.linenum) {
+      output += this.linenum.print();
+    }
+    if (this.ply1) {
+      output += (
+        this.ply1.is_nop ?
+          this.ply1.original
+          : this.ply1.get_branch(branch)
+      ).print();
+    }
+    if (this.ply2) {
+      output += this.ply2.get_branch(branch).print();
+    }
+    if (this.result) {
+      output += this.result.print();
+    }
+    output += '</span>';
+
+    return output;
+  };
+
+  Move.prototype.print_text = function (update_char_index) {
     var output = '';
 
     if (update_char_index) {

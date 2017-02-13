@@ -12,8 +12,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     this.move = game;
     this.game = game;
     this.prefix = parts[1];
-    this.id = parts[2];
-    _.assign(this, Linenum.parse_id(this.id));
+    _.assign(this, Linenum.parse_id(parts[2]));
 
     this.char_index = game.char_index;
     game.char_index += this.prefix.length + this.text.length;
@@ -34,6 +33,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     var linenum = {id: id}
       , indices;
 
+    linenum.id = id;
     linenum.text = id;
     linenum.original = (linenum.id.replace(/((?:\b)1\.)+$/, '') || '1.');
     indices = _.compact(linenum.id.split('.'));
