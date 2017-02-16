@@ -35,13 +35,17 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     linenum.id = id;
     linenum.text = id;
-    linenum.original = (linenum.id.replace(/((?:\b)1\.)+$/, '') || '1.');
     indices = _.compact(linenum.id.split('.'));
     linenum.value = 1*indices.pop();
     linenum.branch = indices.join('.');
     if (linenum.branch) {
       linenum.branch += '.';
     }
+
+    linenum.original = linenum.id.replace(
+      new RegExp('((?:\\b)0\\.)*(?:\\b)' + linenum.value + '\\.$'),
+      ''
+    ) || linenum.value+'.';
 
     return linenum;
   }

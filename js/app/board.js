@@ -300,11 +300,6 @@ define([
         result = '0-F';
       }
     } else if (this.current_move.result && this.current_move.result.type != '1') {
-      // Not game end, so remove result (unless it's a win by default)
-      if (!this.current_ply.next) {
-        this.current_move.result = null;
-        this.game.config.result = null;
-      }
       this.current_ply.result = null;
       this.game.update_text(true);
       // Return true to indicate a change was made
@@ -481,7 +476,7 @@ define([
 
 
   Board.prototype.to_tps = function () {
-    var ply = this.current_ply || this.game.plys[this.ply_index - 1]
+    var ply = this.current_ply
       , squares = []
       , i, j;
 
@@ -728,16 +723,19 @@ define([
   Board.prototype.select_branch = function (event) {
     var ply = $(event.currentTarget).data('ply');
 
-    if (ply && this.target_branch == ply.branch) {
+    if (event && $(event.target).hasClass('close')) {
+      return;
+    } else if (ply && this.target_branch == ply.branch) {
       this.target_branch = ply.original.branch;
       this.on_branch_change(this.target_branch);
-      if (this.ply_index > ply.original.index) {
+      if (
+        this.ply_index == ply.index
+        || this.current_move.linenum.value > ply.original.move.linenum.value
+      ) {
         this.go_to_ply(ply.original.index, false);
       } else {
         this.go_to_ply(this.ply_index, this.ply_is_done);
       }
-    } else if (event && $(event.target).hasClass('close')) {
-      return;
     } else {
       this.target_branch = ply.branch;
       this.on_branch_change();
@@ -813,42 +811,41 @@ define([
 
 
   Board.prototype.update_ptn = function() {
-    var current_ply = this.current_ply || this.game.plys[0]
-      , ply1, ply2, $ply1, $ply2;
+    var ply1, ply2, $ply1, $ply2;
 
-    if (current_ply && !current_ply.move.is_invalid) {
-      ply1 = current_ply.move.ply1;
-      ply2 = current_ply.move.ply2;
+    if (this.current_ply && !this.current_ply.move.is_invalid) {
+      ply1 = this.current_ply.move.plys[0];
+      ply2 = this.current_ply.move.plys[1];
 
       if (this.$move && this.$move.length) {
         this.$move.remove();
       }
-      this.$move = $(current_ply.move.print_for_board(this.target_branch));
+      this.$move = $(this.current_ply.move.print_for_board(this.target_branch));
 
       this.$ptn.$prev_move.after(this.$move);
       $ply1 = this.$ptn.find('.ply:eq(0)');
       $ply2 = this.$ptn.find('.ply:eq(1)');
 
       if (ply1) {
-        if (ply1.turn == current_ply.move.first_turn) {
-          if (ply1 == current_ply) {
+        if (ply1.turn == this.current_ply.move.first_turn) {
+          if (ply1 == this.current_ply) {
             $ply1.addClass('active');
           }
         }
       }
       if (ply2) {
-        if (ply2 == current_ply) {
+        if (ply2 == this.current_ply) {
           $ply2.addClass('active');
         }
       }
 
       this.$ptn.$prev_move.attr(
         'disabled',
-        !current_ply.prev && !this.ply_is_done
+        !this.current_ply.prev && !this.ply_is_done
       );
       this.$ptn.$next_move.attr(
         'disabled',
-        !current_ply.next && this.ply_is_done
+        !this.current_ply.next && this.ply_is_done
       );
     }
   };
@@ -889,7 +886,7 @@ define([
       ply_result = square.place(this.current_ply);
     }
 
-    this.ply_is_done = true;
+    this.ply_is_done = ply_result;
     this.is_eog = !!this.current_ply.result;
     this.turn = this.current_ply.turn == 1 ? 2 : 1;
 
@@ -1193,9 +1190,10 @@ define([
 
   Board.prototype.play = function () {
     if (
-      !this.selected_pieces.length && (
-        this.current_ply
-        && this.ply_index != this.game.plys.length - 1
+      !this.selected_pieces.length
+      && this.current_ply
+      && (
+        this.current_ply.next
         || !this.ply_is_done
       )
     ) {
@@ -1316,18 +1314,18 @@ define([
     if (!this.current_ply) {
       return;
     } else if (
-      this.current_move.prev
-      && !this.ply_is_done
+      !this.ply_is_done
       && this.current_ply.turn == this.current_move.first_turn
+      && this.current_move.prev
     ) {
       // Go to beginning of next move
       this.go_to_ply(
-        (this.current_move.prev.ply1 || this.current_move.prev.ply2).index,
+        _.first(this.current_move.prev.plys).index,
         false
       );
     } else {
       // Go to beginning of move
-      this.go_to_ply(this.current_move.ply1.index, false);
+      this.go_to_ply(_.first(this.current_move.plys).index, false);
     }
   };
 
@@ -1350,13 +1348,13 @@ define([
     ) {
       // Go to end of next move
       next = this.current_move.next.get_branch(this.target_branch);
-      if (next.ply2 || next.ply1) {
-        this.go_to_ply((next.ply2 || next.ply1).index, true);
+      if (next.plys.length) {
+        this.go_to_ply(_.last(next.plys).index, true);
       }
     } else {
       // Go to end of move
       next = this.current_move.get_branch(this.target_branch);
-      this.go_to_ply((next.ply2 || next.ply1).index, true);
+      this.go_to_ply(_.last(next.plys).index, true);
     }
   };
 
@@ -1373,10 +1371,13 @@ define([
     }
 
     this.defer_render = true;
-    while (this.current_ply.prev && this.undo_ply()) {
+    while (
+      this.current_ply
+      && this.undo_ply()
+      && this.current_ply.prev
+    ) {
       this.set_current_ply(this.current_ply.prev.index, true);
     }
-    this.undo_ply();
 
     if (!silently) {
       this.defer_render = false;
@@ -1407,7 +1408,6 @@ define([
         false
       );
     }
-    this.do_ply();
 
     if (!silently) {
       this.defer_render = false;
@@ -1483,6 +1483,7 @@ define([
     if (this.current_branch != target_branch) {
       backward_while(function () {
         return that.current_branch != target_branch
+          || that.current_move.linenum.value > target_move.linenum.value
           || that.ply_index > target_index;
       });
       this.undo_ply();
@@ -1493,13 +1494,21 @@ define([
       );
     }
 
-    if (target_index > this.ply_index) {
+    if (
+      this.current_move.linenum.value < target_move.linenum.value
+      || this.ply_index < target_index
+    ) {
       forward_while(function () {
-        return that.ply_index < target_index;
+        return that.current_move.linenum.value < target_move.linenum.value
+          || that.ply_index < target_index;
       });
-    } else if (target_index < this.ply_index) {
+    } else if (
+      this.current_move.linenum.value > target_move.linenum.value
+      || this.ply_index > target_index
+    ) {
       backward_while(function () {
-        return that.ply_index > target_index;
+        return that.current_move.linenum.value > target_move.linenum.value
+          || that.ply_index > target_index;
       });
     }
 

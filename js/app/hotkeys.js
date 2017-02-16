@@ -140,14 +140,14 @@ define(['app/messages'], function (Messages) {
 
           if (
             move && (
-              move.ply2
-              || move.ply1 && move.first_turn == 2
+              move.plys[1]
+              || move.plys[0] && move.first_turn == 2
             )
           ) {
             app.insert_text(
               move.linenum.branch
               +(move.linenum.value + 1)
-              +'.'+move.ply1.prefix,
+              +'.'+move.plys[0].prefix,
               true
             );
             event.preventDefault();

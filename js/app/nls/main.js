@@ -85,6 +85,7 @@ define({
     error: {
       duplicate_linenum: "Duplicate move number: \"<b><%=id%></b>\"",
       illegal_ply: "Illegal ply: \"<b><%=ply%></b>\"",
+      invalid_linenum: "Invalid move number: \"<b><%=id%></b>\"",
       invalid_movetext: "Invalid movetext: \"<b><%=text%></b>\"",
       invalid_notation: "Invalid notation",
       invalid_ply: "Invalid ply: \"<b><%=ply%></b>\"",

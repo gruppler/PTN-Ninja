@@ -23,7 +23,7 @@ define([
     this.char_index = game.char_index;
 
     this.index = game.moves.length;
-    this.prev = _.last(game.moves) || null;
+    this.prev = null;
     this.next = null;
     this.original = null;
     this.branches = {};
@@ -33,6 +33,7 @@ define([
     this.second_player = 2;
     this.first_turn = 1;
     this.second_turn = 2;
+    this.plys = [];
 
     // Invalid move
     if (!parts) {
@@ -53,17 +54,28 @@ define([
     this.id = this.linenum.id;
     this.branch = this.linenum.branch;
     this.is_reversed = (this.linenum.original == '1.');
-    if (
-      this.linenum.branch != expected_linenum.branch
-      && _.has(game.indexed_moves, this.linenum.original)
-    ) {
+
+    this.prev = game.indexed_moves[
+      this.branch + (this.linenum.value - 1)+'.'
+    ] || null;
+
+    if (this.branch != expected_linenum.branch && !this.prev) {
       // Starts a new branch
-      this.original = game.indexed_moves[this.linenum.original];
-      this.original.branches[this.branch] = this;
-      this.prev = this.original.prev;
+      this.original = game.indexed_moves[this.linenum.original] || null;
+      if (!this.original) {
+        game.m.error(
+          t.error.invalid_linenum({id: this.id})
+        ).click(function () {
+          app.set_caret(game.char_index);
+        });
+      } else {
+        this.original.branches[this.branch] = this;
+        this.prev = this.original.prev;
+      }
     } else if(this.prev) {
       this.prev.next = this;
     }
+
     if (!_.has(game.indexed_moves, this.id)) {
       game.indexed_moves[this.id] = this;
     } else {
@@ -95,16 +107,12 @@ define([
       ply = new Ply(parts[3], this.first_player, game, this);
       this.comments2 = Comment.parse(parts[4], game);
       this.set_ply1(ply);
-    } else {
-      this.ply1 = null;
     }
 
     if (parts[5]) {
       ply = new Ply(parts[5], this.second_player, game, this);
       this.comments3 = Comment.parse(parts[6], game);
       this.set_ply2(ply);
-    } else {
-      this.ply2 = null;
     }
 
     if (parts[7]) {
@@ -113,10 +121,8 @@ define([
       this.comments4 = Comment.parse(parts[8], game);
 
       this.result.comments = _.map(this.comments4, 'text');
-      if (this.ply2) {
-        this.ply2.result = this.result;
-      } else if (this.ply1) {
-        this.ply1.result = this.result;
+      if (this.plys.length) {
+        _.last(this.plys).result = this.result;
       }
     } else {
       this.result = null;
@@ -144,73 +150,77 @@ define([
   };
 
   Move.prototype.set_ply1 = function (ply) {
-    this.ply1 = ply;
-    this.ply1.turn = this.first_turn;
+    this.plys[0] = ply;
+    this.plys[0].turn = this.first_turn;
 
     if (this.original) {
-      this.ply1.original = this.original.ply1;
-      if (!this.ply1.is_nop) {
-        this.ply1.original.branches[this.branch] = this.ply1;
-        this.game.branches[this.branch] = this.ply1;
-        this.ply1.prev = this.ply1.original.prev;
+      this.plys[0].original = this.original.plys[0];
+      if (!this.plys[0].is_nop) {
+        this.plys[0].original.branches[this.branch] = this.plys[0];
+        this.game.branches[this.branch] = this.plys[0];
+        this.plys[0].prev = this.plys[0].original.prev;
       }
-    } else if (this.ply1.is_nop) {
+    } else if (this.plys[0].is_nop) {
       this.second_player = this.first_player;
     } else if (this.prev) {
-      this.ply1.prev = this.prev.ply2 || this.prev.ply1;
-      this.ply1.prev.next = this.ply1;
+      this.plys[0].prev = this.prev.plys[1] || this.prev.plys[0];
+      this.plys[0].prev.next = this.plys[0];
     }
 
     if (this.comments1) {
       if (this.comments2) {
-        this.ply1.comments = _.map(this.comments1, 'text').concat(
+        this.plys[0].comments = _.map(this.comments1, 'text').concat(
           _.map(this.comments2, 'text')
         );
       } else {
-        this.ply1.comments = _.map(this.comments1, 'text');
+        this.plys[0].comments = _.map(this.comments1, 'text');
       }
     } else if (this.comments2) {
-      this.ply1.comments = _.map(this.comments2, 'text');
+      this.plys[0].comments = _.map(this.comments2, 'text');
     }
+
+    return ply;
   };
 
   Move.prototype.set_ply2 = function (ply) {
-    this.ply2 = ply;
-    this.ply2.turn = this.second_turn;
-    if (this.original && this.ply1.is_nop) {
-      this.ply2.prev = this.ply1.original;
-      this.ply2.original = this.original.ply2;
-      (this.original.ply2 || this.original.ply1).branches[this.branch] = this.ply2;
-      this.game.branches[this.branch] = this.ply2;
+    this.plys[1] = ply;
+    this.plys[1].turn = this.second_turn;
+    if (this.original && this.plys[0].is_nop) {
+      this.plys[1].prev = this.plys[0].original;
+      this.plys[1].original = this.original.plys[1];
+      (this.original.plys[1] || this.original.plys[0]).branches[this.branch] = this.plys[1];
+      this.game.branches[this.branch] = this.plys[1];
     } else {
-      this.ply2.prev = this.ply1;
+      this.plys[1].prev = this.plys[0];
     }
-    this.ply1.next = this.ply2;
+    this.plys[0].next = this.plys[1];
 
-    this.ply2.comments = _.map(this.comments3, 'text');
+    this.plys[1].comments = _.map(this.comments3, 'text');
+
+    return ply;
   };
 
   Move.prototype.insert_ply = function (ply, turn, is_done, flattens) {
     var ply, prev_move;
 
     if (turn == 1 || this.first_turn == 2) {
-      if (this.ply1) {
-        ply = this.ply1.prefix + ply;
-      } else if ((prev_move = this.game.moves[this.index - 1]) && prev_move.ply1) {
-        ply = prev_move.ply1.prefix + ply;
+      if (this.plys[0]) {
+        ply = this.plys[0].prefix + ply;
+      } else if ((prev_move = this.game.moves[this.index - 1]) && prev_move.plys[0]) {
+        ply = prev_move.plys[0].prefix + ply;
       } else {
         ply = ' '+ply;
       }
-      this.set_ply1(new Ply(ply, this.first_player, this.game, this));
+      ply = this.set_ply1(new Ply(ply, this.first_player, this.game, this));
     } else {
-      if (this.ply2) {
-        ply = this.ply2.prefix + ply;
-      } else if ((prev_move = this.game.moves[this.index - 1]) && prev_move.ply2) {
-        ply = prev_move.ply2.prefix + ply;
+      if (this.plys[1]) {
+        ply = this.plys[1].prefix + ply;
+      } else if ((prev_move = this.game.moves[this.index - 1]) && prev_move.plys[1]) {
+        ply = prev_move.plys[1].prefix + ply;
       } else {
         ply = ' '+ply;
       }
-      this.set_ply2(new Ply(ply, this.second_player, this.game, this));
+      ply = this.set_ply2(new Ply(ply, this.second_player, this.game, this));
     }
 
     if (_.isNumber(flattens)) {
@@ -221,7 +231,7 @@ define([
   };
 
   Move.prototype.insert_result = function (string, turn, silently) {
-    var ply = this['ply' + (this.first_turn == 2 ? 1 : turn)]
+    var ply = this.plys[(this.first_turn == 2 ? 1 : turn) - 1]
       , old_result
       , prefix = ' ';
 
@@ -270,14 +280,14 @@ define([
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print').join('');
     }
-    if (this.ply1) {
-      output += this.ply1.print();
+    if (this.plys[0]) {
+      output += this.plys[0].print();
     }
     if (this.comments2) {
       output += _.invokeMap(this.comments2, 'print').join('');
     }
-    if (this.ply2) {
-      output += this.ply2.print();
+    if (this.plys[1]) {
+      output += this.plys[1].print();
     }
     if (this.comments3) {
       output += _.invokeMap(this.comments3, 'print').join('');
@@ -305,15 +315,15 @@ define([
     if (this.linenum) {
       output += this.linenum.print();
     }
-    if (this.ply1) {
+    if (this.plys[0]) {
       output += (
-        this.ply1.is_nop ?
-          this.ply1.original
-          : this.ply1.get_branch(branch)
+        this.plys[0].is_nop ?
+          this.plys[0].original
+          : this.plys[0].get_branch(branch)
       ).print();
     }
-    if (this.ply2) {
-      output += this.ply2.get_branch(branch).print();
+    if (this.plys[1]) {
+      output += this.plys[1].get_branch(branch).print();
     }
     if (this.result) {
       output += this.result.print();
@@ -336,14 +346,14 @@ define([
     if (this.comments1) {
       output += _.invokeMap(this.comments1, 'print_text', update_char_index).join('');
     }
-    if (this.ply1) {
-      output += this.ply1.print_text(update_char_index);
+    if (this.plys[0]) {
+      output += this.plys[0].print_text(update_char_index);
     }
     if (this.comments2) {
       output += _.invokeMap(this.comments2, 'print_text', update_char_index).join('');
     }
-    if (this.ply2) {
-      output += this.ply2.print_text(update_char_index);
+    if (this.plys[1]) {
+      output += this.plys[1].print_text(update_char_index);
     }
     if (this.comments3) {
       output += _.invokeMap(this.comments3, 'print_text', update_char_index).join('');

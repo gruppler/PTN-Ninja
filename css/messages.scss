@@ -136,7 +136,9 @@
       color: $primary-color-50;
 
       &.selected {
-        box-shadow: 0 0 0 2px $accent-color-500;
+        border: 2px solid $accent-color-500;
+        margin-top: calc(0.5em - 2px);
+        margin-left: -2px;
       }
 
       kbd, .label {

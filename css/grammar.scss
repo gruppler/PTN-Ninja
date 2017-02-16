@@ -316,12 +316,21 @@ $ptn-bg-radius: 0.2em;
   }
 
   .illegal, .illegal * {
-    background: transparent !important;
     box-shadow: none !important;
     color: $error-color !important;
   }
 
-  #editor & .other-branch {
-    opacity: 0.5;
+  #editor & {
+    .move, .ply {
+      transition: opacity $time-smooth $natural;
+    }
+
+    .other-branch {
+      opacity: 0.3;
+
+      html.can-hover &:hover {
+        opacity: 0.8;
+      }
+    }
   }
 }

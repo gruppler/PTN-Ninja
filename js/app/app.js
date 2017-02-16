@@ -245,15 +245,15 @@ define([
         ply2_is_in_branch = false;
         $move = app.$ptn.$body.children('.move[data-index='+i+']');
 
-        if (move.ply1 && move.ply1.is_in_branch(branch)) {
+        if (move.plys[0] && move.plys[0].is_in_branch(branch)) {
           ply1_is_in_branch = true;
-          app.$ptn.$body.find('.ply[data-index='+move.ply1.index+']')
+          app.$ptn.$body.find('.ply[data-index='+move.plys[0].index+']')
             .removeClass('other-branch');
         }
 
-        if (move.ply2 && move.ply2.is_in_branch(branch)) {
+        if (move.plys[1] && move.plys[1].is_in_branch(branch)) {
           ply2_is_in_branch = true;
-          app.$ptn.$body.find('.ply[data-index='+move.ply2.index+']')
+          app.$ptn.$body.find('.ply[data-index='+move.plys[1].index+']')
             .removeClass('other-branch');
         }
 
@@ -261,23 +261,24 @@ define([
           $move.add($move.find('.other-branch'))
             .removeClass('other-branch');
 
-          if (move.ply1 && !ply1_is_in_branch) {
-            app.$ptn.$body.find('.ply[data-index='+move.ply1.index+']')
+          if (move.plys[0] && !ply1_is_in_branch) {
+            app.$ptn.$body.find('.ply[data-index='+move.plys[0].index+']')
               .addClass('other-branch');
-          } else if (move.ply2 && !ply2_is_in_branch) {
-            app.$ptn.$body.find('.ply[data-index='+move.ply2.index+']')
+          } else if (move.plys[1] && !ply2_is_in_branch) {
+            app.$ptn.$body.find('.ply[data-index='+move.plys[1].index+']')
               .addClass('other-branch');
           }
         } else {
           app.$ptn.$body.find('.move[data-index='+i+']')
-            .addClass('other-branch');
+            .addClass('other-branch')
+            .find('.other-branch').removeClass('other-branch');
         }
       }
     },
 
     set_active_ply: function (ply) {
       app.$ptn.$ply = ply ?
-      app.$ptn.find('.ply[data-index="'+ply.index+'"]:first') :
+      app.$ptn.find('.ply[data-index="'+ply.index+'"]') :
       null;
 
       if (app.$ptn.$ply && app.$ptn.$ply.length) {

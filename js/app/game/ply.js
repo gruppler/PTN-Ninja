@@ -166,10 +166,6 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     return this;
   };
 
-  Ply.prototype.is_current = function () {
-    return app.board && app.board.ply_index == this.index;
-  };
-
   Ply.prototype.get_branch = function (branch) {
     if (branch) {
       if (branch == this.branch || _.isEmpty(this.branches)) {
@@ -211,7 +207,8 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
       while (branch.branch && branch.original) {
         branch = branch.original;
         if (branch.branch == this.branch) {
-          return branch.index > this.index;
+          return branch.move.linenum.value > this.move.linenum.value
+            || branch.index > this.index;
         }
         if (!branch.original) {
           branch = branch.branch ?
@@ -230,7 +227,6 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     '<span class="space"><%=this.prefix%></span>'+
     '<span '+
       'class="ply player<%=this.player%>'+
-        '<%=this.is_current() ? " active" : ""%>" '+
         '<%=this.is_illegal ? " illegal" : ""%>" '+
       'data-index="<%=this.index%>"'+
     '>'+

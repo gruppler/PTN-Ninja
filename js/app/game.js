@@ -241,8 +241,8 @@ define([
       } else {
         this.suffix = prefix;
       }
-      if (ply.move.ply1 == ply) {
-        ply.move.ply1 = null;
+      if (ply.move.plys[0] == ply) {
+        ply.move.plys[0] = null;
         ply.move.comments1 = null;
         ply.move.comments2 = null;
       }
@@ -318,6 +318,7 @@ define([
   Game.prototype.m = new Messages('parse');
 
   Game.prototype.print_invalid = _.template(
+    '<span class="space"><%=this.prefix%></span>'+
     '<span class="invalid">'+
       '<%=this.text.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
     '</span>'
