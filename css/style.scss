@@ -2,11 +2,12 @@
 // Attribution-NonCommercial-ShareAlike 4.0 International License.
 // http://creativecommons.org/licenses/by-nc-sa/4.0/
 
-@import 'fonts/fonts.css';
-@import 'material.css';
-@import 'dialog-polyfill.scss';
 @import 'mixins.scss';
 @import 'variables.scss';
+@import 'fonts/fonts.css';
+@import 'kbd.css';
+@import 'material.css';
+@import 'dialog-polyfill.scss';
 @import 'global.scss';
 @import 'menu.scss';
 @import 'messages.scss';
@@ -24,8 +25,9 @@
 
   @media (max-width: 650px) {
     top: 0;
+    bottom: 0;
     width: 100vw;
-    height: 100vh;
+    height: auto;
   }
 
   .mdl-dialog__title {
@@ -44,19 +46,6 @@
     border-top: 1px solid rgba(0,0,0,0.1);
     flex-shrink: 0;
   }
-}
-
-kbd {
-  display: inline-block;
-  background-color: $primary-color-50;
-  border: 1px solid $primary-color-100;
-  color: $primary-color-900;
-  font-family: $monospace;
-  font-size: inherit;
-  margin: -0.5em 0 0;
-  line-height: 1.5em;
-  padding: 0.125rem 0.25rem 0;
-  border-radius: 3px;
 }
 
 #app, #editor, #viewer {
@@ -86,6 +75,11 @@ kbd {
   html.show-play-controls & {
     bottom: $toolbar-height;
   }
+
+  .background {
+    @include position-fill;
+    background-color: $primary-color-500;
+  }
 }
 
 #ptn {
@@ -94,7 +88,6 @@ kbd {
   overflow-wrap: break-word;
   direction: ltr;
   box-sizing: border-box;
-  min-height: 100vh;
   font-weight: 300;
   font-size: 1.3em;
   line-height: 2em;
@@ -112,16 +105,12 @@ kbd {
   html.playmode & {
     cursor: default;
   }
-
-  html.show-play-controls & {
-    min-height: calc(100vh - #{$toolbar-height});
-  }
 }
 
 #fab {
   position: absolute;
-  right: $toolbar-height - $fab-height/2;
-  bottom: $toolbar-height - $fab-height/2;
+  right: $edge2;
+  bottom: $edge2;
   box-shadow: $shadow3;
   opacity: 0;
   pointer-events: none;
@@ -129,9 +118,18 @@ kbd {
   transition: opacity $time-smooth ease-in-out,
     transform $time-smooth ease-in-out;
 
-  @media (max-width: 450px) {
+  @media (max-width: 570px) {
     html.show-play-controls & {
       transform: translateY(-$fab-height);
+    }
+  }
+
+  @media (max-width: 430px) {
+    html.show-current-move & {
+      transform: translateY(-$fab-height);
+    }
+    html.show-play-controls.show-current-move & {
+      transform: translateY(-$fab-height*1.5);
     }
   }
 

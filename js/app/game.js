@@ -151,11 +151,21 @@ define([
     this.parse(this.original_ptn, false, true);
   };
 
-  Game.prototype.get_unique_id = function (id) {
-    while (_.has(this.indexed_moves, id)) {
-      id += '1.';
+  Game.prototype.get_unique_id = function (linenum) {
+    var new_id, suffix;
+
+    if (_.isString(linenum)) {
+      linenum = Linenum.parse_id(linenum);
     }
-    return id;
+
+    new_id = linenum.id;
+    suffix = linenum.value+'.';
+
+    while (_.has(this.indexed_moves, new_id + suffix)) {
+      new_id += '0.';
+    }
+
+    return new_id + suffix;
   };
 
   Game.prototype.get_linenum = function () {
@@ -320,7 +330,7 @@ define([
   Game.prototype.print_invalid = _.template(
     '<span class="space"><%=this.prefix%></span>'+
     '<span class="invalid">'+
-      '<%=this.text.replace(/(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
+      '<%=this.text.replace(/^\\s*(\\S)/, \'<span class="first-letter">$1</span>\')%>'+
     '</span>'
   );
 

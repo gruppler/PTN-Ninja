@@ -186,8 +186,25 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     }
   };
 
+  Square.prototype.set_option = function (option) {
+    if (this.$view) {
+      this.$view.addClass('option');
+
+      if (_.isUndefined(option) || _.isString(option) && !option.length) {
+        return;
+      }
+
+      if (this.$view.$option.text().length) {
+        this.$view.$option.text(this.$view.$option.text()+', '+option);
+      } else {
+        this.$view.$option.text(option);
+      }
+    }
+  };
+
   Square.prototype.render = function () {
     this.$view = $(this.tpl(this));
+    this.$view.$option = this.$view.find('.option-number');
     this.$view.data('model', this);
 
     return this.$view;
@@ -546,6 +563,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
         '<div class="left"></div>'+
         '<div class="right"></div>'+
       '</div>'+
+      '<div class="option-number"></div>'+
     '</div>'
   );
 

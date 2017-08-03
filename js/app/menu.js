@@ -132,7 +132,13 @@ define([
       'data-id': 'annotations',
       'data-mode': 'edit'
     },{
-      label: t.Square_Highlights,
+      label: t.Highlight_Branches,
+      type: 'checkbox',
+      checked: config.edit.show_branches,
+      'data-id': 'show_branches',
+      'data-mode': 'edit'
+    },{
+      label: t.Highlight_Square,
       type: 'checkbox',
       checked: config.edit.square_hl,
       'data-id': 'square_hl',
@@ -154,12 +160,6 @@ define([
       type: 'checkbox',
       checked: config.edit.show_flat_counts,
       'data-id': 'show_flat_counts',
-      'data-mode': 'edit'
-    },{
-      label: t.Current_Move,
-      type: 'checkbox',
-      checked: config.edit.show_current_move,
-      'data-id': 'show_current_move',
       'data-mode': 'edit'
     },{
       label: t.Unplayed_Pieces,
@@ -225,7 +225,13 @@ define([
       'data-id': 'show_roads',
       'data-mode': 'play'
     },{
-      label: t.Square_Highlights,
+      label: t.Highlight_Branches,
+      type: 'checkbox',
+      checked: config.play.show_branches,
+      'data-id': 'show_branches',
+      'data-mode': 'play'
+    },{
+      label: t.Highlight_Square,
       type: 'checkbox',
       checked: config.play.square_hl,
       'data-id': 'square_hl',
@@ -423,10 +429,14 @@ define([
       config.on_change(
         input_prop,
         function (value, prop, mode, initiator) {
+          $input.attr({
+            value: value,
+            title: value
+          });
+
           if (initiator != 'menu') {
             that.MaterialSlider.change();
           }
-          $input.attr('title', value);
         },
         input_mode
       );

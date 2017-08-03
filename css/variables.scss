@@ -27,6 +27,7 @@ $accent-color-800: #558B2F;
 $accent-color-900: #33691E;
 
 $divider-color: rgba(0,0,0,0.12);
+$branch-color: #2196F3;
 
 $success-color: #4CAF50;
 $success-text-color: $blackish;
@@ -50,11 +51,13 @@ $mobile: 1024px;
 $desktop: 1025px;
 $aspect-centered: '11/10';
 $aspect-compact: '7/10';
-$edge: 16px;
 $scrollbar: 8px;
 $toolbar-height: 56px;
 $button-height: 36px;
 $fab-height: 56px;
+$message-width: 350px;
+$edge: 16px;
+$edge2: $toolbar-height - $fab-height/2;
 
 /* Animations */
 $time-slow: 1s;

@@ -19,12 +19,23 @@ define(['lodash'], function (_) {
     is_blink: is_blink,
 
     presets: {
+      full: {
+        annotations: true,
+        square_hl: true,
+        show_roads: true,
+        show_axis_labels: true,
+        show_flat_counts: true,
+        show_branches: true,
+        show_current_move: true,
+        show_unplayed_pieces: true,
+        show_play_controls: true
+      },
       minimal: {
         annotations: true,
         show_axis_labels: false,
         show_flat_counts: false,
         show_current_move: false,
-        show_unplayed_pieces: false,
+        show_unplayed_pieces: true,
         show_play_controls: false
       },
       edit_mode: {
@@ -33,16 +44,18 @@ define(['lodash'], function (_) {
         show_roads: true,
         show_axis_labels: true,
         show_flat_counts: true,
+        show_branches: true,
         show_current_move: false,
         show_unplayed_pieces: false,
-        show_play_controls: false
+        show_play_controls: true
       },
-      full: {
+      play_mode: {
         annotations: true,
         square_hl: true,
-        show_roads: true,
-        show_axis_labels: true,
+        show_roads: false,
+        show_axis_labels: false,
         show_flat_counts: true,
+        show_branches: true,
         show_current_move: true,
         show_unplayed_pieces: true,
         show_play_controls: true
@@ -51,7 +64,7 @@ define(['lodash'], function (_) {
 
     defaults: {
       edit: {
-        board_opacity: 50,
+        board_opacity: 35,
         show_parse_errors: true
       },
 
@@ -125,7 +138,7 @@ define(['lodash'], function (_) {
 
       _.assignIn(this, this.defaults);
       config.load_preset('edit_mode', 'edit', true);
-      config.load_preset('full', 'play', true);
+      config.load_preset('play_mode', 'play', true);
 
       while (prop = localStorage.key(i++)) {
         stored = localStorage[prop];

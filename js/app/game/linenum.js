@@ -35,7 +35,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
 
     linenum.id = id;
     linenum.text = id;
-    indices = _.compact(linenum.id.split('.'));
+    indices = _.initial(linenum.id.split('.'));
     linenum.value = 1*indices.pop();
     linenum.branch = indices.join('.');
     if (linenum.branch) {
@@ -43,16 +43,22 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     }
 
     linenum.original = linenum.id.replace(
-      new RegExp('((?:\\b)0\\.)*(?:\\b)' + linenum.value + '\\.$'),
+      new RegExp('(\\.0)*\\.*' + linenum.value + '\\.$'),
       ''
-    ) || linenum.value+'.';
+    ) || linenum.value;
+    if (linenum.original) {
+      linenum.original += '.';
+    }
 
     return linenum;
   }
 
   Linenum.prototype.print = _.template(
     '<span class="space"><%=this.prefix%></span>'+
-    '<span class="linenum"><%=this.text%></span>'
+    '<span class="linenum">'+
+      '<span class="branch"><%=this.branch%></span>'+
+      '<span class="value"><%=this.value%>.</span>'+
+    '</span>'
   );
 
   Linenum.prototype.print_text = function (update_char_index) {

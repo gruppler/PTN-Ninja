@@ -78,9 +78,6 @@ define([
             '<% }) %>'+
           '</div>'+
         '</dialog>'
-      ),
-      board_settings: _.template(
-        ''
       )
     },
 
@@ -160,18 +157,6 @@ define([
       );
     },
 
-    board_settings: function () {
-      this.dialog(
-        t.Board_Settings,
-        this.tpl.board_settings({
-          t: t,
-          config: this.config
-        }),
-        [{label: t.Close}],
-        'scrolling'
-      );
-    },
-
     revert_game: function (confirmed) {
       if (confirmed === true) {
         this.game.revert();
@@ -183,6 +168,62 @@ define([
 
 
     // Edit Mode Functions
+
+    toggle_edit_mode: function (on) {
+      var was_editing = this.game.is_editing;
+
+      if (_.isBoolean(on)) {
+        this.game.is_editing = on;
+      } else {
+        this.game.is_editing = !this.game.is_editing;
+      }
+
+      if (!was_editing && this.game.is_editing) {
+        this.$viewer.transition();
+        this.$html.addClass('editmode');
+        this.$html.removeClass('playmode');
+        this.$menu_edit.addClass('mdl-accordion--opened');
+        this.$menu_play.removeClass('mdl-accordion--opened');
+
+        this.update_ptn_branch();
+        this.scroll_to_ply(true);
+        this.save_scroll_position();
+        if (this.can_hover) {
+          this.editable_on();
+        }
+      } else if (was_editing && !this.game.is_editing) {
+        this.$viewer.transition();
+        this.$html.addClass('playmode');
+        this.$html.removeClass('editmode');
+        this.$menu_play.addClass('mdl-accordion--opened');
+        this.$menu_edit.removeClass('mdl-accordion--opened');
+        this.clear_scroll_position();
+        this.$ptn.blur();
+        this.editable_off();
+        if (this.game.plys.length && !this.board.selected_pieces.length) {
+          this.board.update_active_squares();
+        }
+      }
+
+      this.mode = this.game.is_editing ? 'edit' : 'play';
+      this.config.update_flags();
+      this.board.resize();
+    },
+
+    toggle_editable: function (is_on) {
+      is_on = _.isBoolean(is_on) ? is_on : !app.$ptn.prop('contenteditable');
+
+      app.$ptn.prop('contenteditable', is_on);
+      return is_on;
+    },
+
+    editable_on: function () {
+      return app.toggle_editable(true);
+    },
+
+    editable_off: function () {
+      return app.toggle_editable(false);
+    },
 
     update_after_parse: function (is_original) {
       app.update_ptn();
@@ -223,7 +264,7 @@ define([
       app.$ptn.$header.$tps = app.$ptn.$header.find('span.value.tps');
       app.$ptn.$body = app.$ptn.find('span.body');
       app.$ptn.$ply = app.$ptn.$body.find('.ply.active:first');
-      this.update_ptn_branch();
+      app.update_ptn_branch();
     },
 
     update_ptn_branch: function (branch) {
@@ -247,13 +288,13 @@ define([
 
         if (move.plys[0] && move.plys[0].is_in_branch(branch)) {
           ply1_is_in_branch = true;
-          app.$ptn.$body.find('.ply[data-index='+move.plys[0].index+']')
+          $move.find('.ply[data-index='+move.plys[0].index+']')
             .removeClass('other-branch');
         }
 
         if (move.plys[1] && move.plys[1].is_in_branch(branch)) {
           ply2_is_in_branch = true;
-          app.$ptn.$body.find('.ply[data-index='+move.plys[1].index+']')
+          $move.find('.ply[data-index='+move.plys[1].index+']')
             .removeClass('other-branch');
         }
 
@@ -262,16 +303,17 @@ define([
             .removeClass('other-branch');
 
           if (move.plys[0] && !ply1_is_in_branch) {
-            app.$ptn.$body.find('.ply[data-index='+move.plys[0].index+']')
+            $move.find('.ply[data-index='+move.plys[0].index+']')
               .addClass('other-branch');
           } else if (move.plys[1] && !ply2_is_in_branch) {
-            app.$ptn.$body.find('.ply[data-index='+move.plys[1].index+']')
+            $move.find('.ply[data-index='+move.plys[1].index+']')
               .addClass('other-branch');
           }
+        } else if (!move.plys.length && _.startsWith(branch, move.branch)) {
+          $move.add($move.find('.other-branch'))
+            .removeClass('other-branch');
         } else {
-          app.$ptn.$body.find('.move[data-index='+i+']')
-            .addClass('other-branch')
-            .find('.other-branch').removeClass('other-branch');
+          $move.addClass('other-branch') .find('.other-branch').removeClass('other-branch');
         }
       }
     },
@@ -287,6 +329,9 @@ define([
     },
 
     update_after_ply: function (ply) {
+      var is_first = !ply || !ply.prev && !app.board.ply_is_done
+        , is_last = !ply || !ply.next && app.board.ply_is_done;
+
       if (app.$ptn.$ply && app.$ptn.$ply.length) {
         if (app.$ptn.$ply.data('model') != ply) {
           app.$ptn.$ply.removeClass('active');
@@ -302,13 +347,32 @@ define([
         app.$html.removeClass('ply-is-done');
       }
 
+      app.$controls.$first.attr('disabled', is_first);
+      app.$controls.$prev_move.attr('disabled', is_first);
+      app.$controls.$prev.attr('disabled', is_first);
+      app.$controls.$next.attr('disabled', is_last);
+      app.$controls.$next_move.attr('disabled', is_last);
+      app.$controls.$last.attr('disabled', is_last);
+
+      app.$ptn.$body.children().removeClass('branch-option');
+      app.board.clear_options();
       app.board.show_messages();
       app.board.update_ptn();
       app.board.update_active_squares();
       app.board.update_valid_squares();
+      for (var i = 0; i < app.board.branch_options.length; i++) {
+        app.$ptn.$body.children(
+          '.move[data-index='+app.board.branch_options[i].move.index+']'
+        ).addClass('branch-option');
+      }
       app.$html.removeClass('p1 p2');
-      if (!app.board.is_eog) {
+      if (app.board.is_eog) {
+        app.$html.addClass('p'+app.board.current_ply.player);
+      } else {
         app.$html.addClass('p'+app.board.turn);
+      }
+      if (!app.$ptn.prop('contenteditable') || !app.$ptn.is(':focus')) {
+        app.scroll_to_ply();
       }
     },
 
@@ -384,6 +448,10 @@ define([
 
     set_editor_width: function (vw, board_width) {
       var editor_width = vw - board_width - 16;
+
+      if (!this.game.is_editing) {
+        return;
+      }
 
       if (editor_width < 340) {
         if (this.is_side_by_side) {
@@ -533,19 +601,34 @@ define([
       }
     },
 
-    scroll_to_ply: function () {
+    scroll_to_ply: function (instantly) {
       var offset;
-      if (this.$ptn.$ply && (offset = this.$ptn.$ply.offset())) {
-        this.$ptn.scrollTop(
-          this.$ptn.scrollTop() + offset.top
-          - (window.innerHeight - this.$ptn.$ply.height())/2
-        );
+
+      if (
+        app.game.is_editing
+        && this.$ptn.$ply
+        && (offset = this.$ptn.$ply.offset())
+      ) {
+        offset = offset.top
+          - (window.innerHeight - this.$ptn.$ply.height()) / 2;
+
+        if (offset) {
+          if (instantly) {
+            this.$ptn.stop().scrollTop(this.$ptn.scrollTop() + offset);
+          } else {
+            this.$ptn.stop().animate({
+              scrollTop: this.$ptn.scrollTop() + offset
+            }, {
+              duration: 200
+            });
+          }
+        }
       }
     },
 
     set_position_from_caret: function (event) {
       var focus, $focus
-        , $ply, ply_index
+        , ply, move
         , $square, squares, square, i;
 
       if (!app.game.is_editing || app.dragging) {
@@ -553,10 +636,17 @@ define([
       }
 
       if (event) {
+        if (event.type == 'keyup' && app.$ptn.prop('contenteditable') != 'true') {
+          return;
+        }
+
         app.save_caret();
       }
 
-      focus = getSelection().focusNode.parentNode;
+      focus = getSelection().focusNode;
+      if (focus) {
+        focus = focus.parentNode;
+      }
       if (focus.nodeType == Node.TEXT_NODE && focus.nextSibling) {
         focus = focus.nextSibling;
       }
@@ -570,39 +660,51 @@ define([
         // Body
 
         if ($focus.hasClass('body')) {
-          $ply = $focus.find('.ply').last();
+          ply = _.last(app.game.plys);
+        } else if (
+          $focus.is('.linenum, .branch, .value, .invalid, .invalid .first-letter')
+        ) {
+          move = app.game.moves[1*$focus.closest('.move').data('index')];
+          if (move) {
+            if (move.plys.length) {
+              ply = move.plys[0];
+            } else if (move.prev && move.prev.plys.length) {
+              ply = _.last(move.prev.plys);
+            } else if (move.original && move.original.plys.length) {
+              ply = move.original.plys[0];
+            }
+          }
+        } else if ($focus.hasClass('comment')) {
+          ply = app.game.plys[
+            1*$focus.prevAll('.ply').add($focus.next('.ply')).data('index')
+          ];
         } else if ($focus.hasClass('text')) {
           $focus = $focus.closest('.comment');
-          $ply = $focus.prevAll('.ply');
+          ply = app.game.plys[
+            1*$focus.prevAll('.ply').add($focus.next('.ply')).data('index')
+          ];
         } else if ($focus.hasClass('space')) {
-          $ply = $focus.next('.ply');
+          ply = app.game.plys[
+            1*$focus.next('.ply').data('index')
+          ];
         } else if ($focus.is('.win, .loss, .draw')) {
           $focus = $focus.closest('.result');
-          $ply = $focus.prevAll('.ply');
-        } else if ($focus.hasClass('invalid')) {
-          $ply = $focus.prevAll('.ply');
-        } else if ($focus.is('.invalid .first-letter')) {
-          $focus = $focus.parent();
-          $ply = $focus.prevAll('.ply');
+          ply = app.game.plys[1*$focus.prevAll('.ply').data('index')];
+        } else if ($focus.hasClass('result')) {
+          ply = app.game.plys[1*$focus.prevAll('.ply').data('index')];
         } else {
-          $ply = $focus.closest('.ply');
+          move = app.game.moves[1*$focus.closest('.move').data('index')];
+          ply = app.game.plys[1*$focus.closest('.ply').data('index')];
         }
 
-        if (!$ply.length) {
-          $ply = $focus.prevAll('.ply');
-        }
-        if (!$ply.length) {
-          $ply = $focus.nextAll('.ply');
-        }
-
-        ply_index = 1*$ply.data('index');
-
-        if (_.isInteger(ply_index)) {
+        if (ply) {
+          if (ply.is_nop && ply.original) {
+            ply = ply.original;
+          }
           app.board.go_to_ply(
-            ply_index,
-            app.board.ply_index != ply_index
-              || !app.board.ply_is_done
-              || !event || event.type != 'mouseup'
+            ply.index,
+            app.board.ply_index == ply.index && !app.board.ply_is_done
+              || !event || event.type == 'keyup'
           );
         }
 
@@ -642,51 +744,6 @@ define([
         // Clear square highlighting
         app.board.set_active_squares();
       }
-    },
-
-    toggle_edit_mode: function (on) {
-      var was_editing = this.game.is_editing;
-
-      if (_.isBoolean(on)) {
-        this.game.is_editing = on;
-      } else {
-        this.game.is_editing = !this.game.is_editing;
-      }
-
-      if (!was_editing && this.game.is_editing) {
-        this.$viewer.transition();
-        this.$html.addClass('editmode');
-        this.$html.removeClass('playmode');
-        this.$menu_edit.addClass('mdl-accordion--opened');
-        this.$menu_play.removeClass('mdl-accordion--opened');
-
-        this.board.pause();
-        this.update_ptn_branch();
-        this.scroll_to_ply();
-        this.save_scroll_position();
-        this.range.last_bounds = null;
-        if (innerWidth > this.config.mobile_width) {
-          this.restore_caret();
-        }
-      } else if (was_editing && !this.game.is_editing) {
-        this.$viewer.transition();
-        this.$html.addClass('playmode');
-        this.$html.removeClass('editmode');
-        this.$menu_play.addClass('mdl-accordion--opened');
-        this.$menu_edit.removeClass('mdl-accordion--opened');
-        this.clear_scroll_position();
-        if (innerWidth <= this.config.mobile_width) {
-          this.$ptn.blur();
-        }
-        if (this.game.plys.length && !this.board.selected_pieces.length) {
-          this.board.update_active_squares();
-        }
-      }
-
-      this.$ptn.attr('contenteditable', this.game.is_editing);
-      this.mode = this.game.is_editing ? 'edit' : 'play';
-      this.config.update_flags();
-      this.board.resize();
     },
 
     // Read and parse the file

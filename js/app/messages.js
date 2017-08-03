@@ -5,30 +5,33 @@
 'use strict';
 
 define(['jquery', 'lodash', 'domReady!'], function ($, _) {
-  var Messages, $messages, $messages_left, $messages_right;
+  var Messages, $messages;
 
   var tpl = {
     message: _.template(
-      '<div class="messages-<%=group%> message <%=type%>">'+
+      '<div class="messages-<%=group%> message <%=type%>" tabindex="0">'+
         '<div class="content">'+
-          '<i class="material-icons"><%=icon%></i><%=message%>'+
-          '<i class="material-icons close">close</i>'+
+          '<i class="material-icons type"><%=icon%></i><%=message%>'+
+        '</div>'+
+        '<div class="actions">'+
+          '<button class="mdl-button mdl-js-button mdl-button--icon close">'+
+            '<i class="material-icons">close</i>'+
+          '</button>'+
         '</div>'+
       '</div>'
     )
   };
 
-  $messages = $('#messages');
-  $messages_left = $('<div class="left">').appendTo($messages);
-  $messages_right = $('<div class="right">').appendTo($messages);
+  $messages = $('#message-container');
+
   $messages
-    .on('click', 'i.close', remove_message)
+    .on('click', '.close', remove_message)
     .on('remove', remove_message);
 
-  Messages = function(group, is_left) {
+  Messages = function(group) {
     this.enabled = true;
     this.group = group || 'general';
-    this.$messages = is_left ? $messages_left : $messages_right;
+    this.$messages = $messages;
 
     return this;
   };

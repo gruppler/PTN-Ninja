@@ -204,6 +204,14 @@ $ptn-bg-radius: 0.2em;
   .linenum {
     color: $primary-color-900;
     font-weight: 400;
+    @include neutral-bg;
+
+    .branch {
+      opacity: 0.75;
+    }
+    .value {
+      font-weight: 700;
+    }
   }
 
   .stone {
@@ -321,15 +329,23 @@ $ptn-bg-radius: 0.2em;
   }
 
   #editor & {
-    .move, .ply {
-      transition: opacity $time-smooth $natural;
-    }
-
     .other-branch {
       opacity: 0.3;
 
-      html.can-hover &:hover {
+      html.can-hover &:hover,
+      &:focus {
         opacity: 0.8;
+      }
+    }
+
+    .branch-option {
+      &.other-branch,
+      .other-branch {
+        opacity: 0.8;
+      }
+
+      .linenum {
+        background-color: rgba($info-color, 0.5);
       }
     }
   }

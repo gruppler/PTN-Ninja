@@ -45,40 +45,65 @@
             <div class="table-wrapper"></div>
             <div></div>
           </div>
+
+          <div class="current-move ptn">
+            <div class="controls">
+              <button class="prev_move mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">&#xE316;</i>
+              </button>
+              <button class="branch_button mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">&#xE0B6;</i>
+              </button>
+              <button class="next_move mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">&#xE313;</i>
+              </button>
+            </div>
+            <div class="branches"></div>
+          </div>
+
           <div class="controls">
             <div class="buttons">
               <button class="first mdl-button mdl-js-button mdl-button--icon">
-                <i class="material-icons">first_page</i>
+                <i class="material-icons">&#xE5DC;</i>
+              </button>
+              <button class="prev_move mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">&#xE316;</i>
               </button>
               <button class="prev mdl-button mdl-js-button mdl-button--icon">
-                <i class="material-icons">chevron_left</i>
+                <i class="material-icons">&#xE314;</i>
               </button>
               <button class="play mdl-button--colored mdl-button mdl-js-button mdl-button--icon">
-                <i class="material-icons play">play_arrow</i>
-                <i class="material-icons pause">pause</i>
+                <i class="material-icons play">&#xE037;</i>
+                <i class="material-icons pause">&#xE034;</i>
               </button>
               <button class="next mdl-button mdl-js-button mdl-button--icon">
-                <i class="material-icons">chevron_right</i>
+                <i class="material-icons">&#xE315;</i>
+              </button>
+              <button class="next_move mdl-button mdl-js-button mdl-button--icon">
+                <i class="material-icons">&#xE313;</i>
               </button>
               <button class="last mdl-button mdl-js-button mdl-button--icon">
-                <i class="material-icons">last_page</i>
+                <i class="material-icons">&#xE5DD;</i>
               </button>
             </div>
           </div>
         </div>
 
         <div id="editor">
+          <div class="background"></div>
           <pre id="ptn" class="ptn" contenteditable="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0"></pre>
         </div>
 
-        <div id="messages"></div>
+        <div id="messages">
+          <div id="message-container"></div>
+        </div>
 
       </main>
 
       <div id="fab" class="mdl-button mdl-js-button mdl-button--fab mdl-button--colored">
-        <i class="material-icons play">play_arrow</i>
-        <i class="material-icons edit">mode_edit</i>
-        <i class="material-icons error">error</i>
+        <i class="material-icons play">&#xE037;</i>
+        <i class="material-icons edit">&#xE254;</i>
+        <i class="material-icons error">&#xE000;</i>
       </div>
 
     </div>

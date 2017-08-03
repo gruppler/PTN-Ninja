@@ -149,22 +149,39 @@ requirejs({locale: navigator.language}, [
   app.$view_wrapper = app.$viewer.children('.view-wrapper');
   app.$board_view = app.$viewer.find('.table-wrapper');
   app.$controls = app.$viewer.find('.controls');
+  app.$controls.$first = app.$controls.find('button.first');
+  app.$controls.$prev_move = app.$controls.find('button.prev_move');
+  app.$controls.$prev = app.$controls.find('button.prev');
+  app.$controls.$play = app.$controls.find('button.play');
+  app.$controls.$next = app.$controls.find('button.next');
+  app.$controls.$next_move = app.$controls.find('button.next_move');
+  app.$controls.$last = app.$controls.find('button.last');
   app.$editor = $('#editor');
+  app.$editor.$bg = app.$editor.find('.background');
   app.$fab = $('#fab');
   app.$download = $('#download');
   app.$open = $('#open');
   app.$menu_edit = $('#menu-edit');
   app.$menu_play = $('#menu-play');
+  app.$messages = $('#messages');
   app.m = new Messages('global');
-  app.can_hover = false;
 
+  // Require a long-press to edit unless there's a mouse
+  // (and presumably a keyboard)
+  app.$ptn.longClick(app.editable_on);
+  app.$ptn.on('blur', app.editable_off);
+
+  app.can_hover = false;
   app.$window.one('mousemove', function (event) {
     if (!app.touches) {
       app.can_hover = true;
       app.$html.addClass('can-hover');
+      app.toggle_editable(true);
+      app.$ptn.off('blur', app.editable_off);
     }
   }).one('touchstart', function (event) {
     app.$window.off('mousemove');
+    app.editable_off();
   });
 
   app.range = bililiteRange(app.$ptn[0]);
@@ -207,19 +224,25 @@ requirejs({locale: navigator.language}, [
 
 
   // Initialize play controls
-  app.$controls.find('.first')
-      .on('touchstart click', app.board.first)
-      .attr('title', t.First_Ply);
-  app.$controls.find('.prev')
+  app.$controls.$first
+    .on('touchstart click', app.board.first)
+    .attr('title', t.First_Ply);
+  app.$controls.$prev_move
+    .on('touchstart click', app.board.prev_move)
+    .attr('title', t.Previous_Move);
+  app.$controls.$prev
     .on('touchstart click', app.board.prev_ply)
     .attr('title', t.Previous_Ply);
-  app.$controls.find('.play')
+  app.$controls.$play
     .on('touchstart click', app.board.playpause)
     .attr('title', t.PlayPause);
-  app.$controls.find('.next')
+  app.$controls.$next
     .on('touchstart click', app.board.next_ply)
     .attr('title', t.Next_Ply);
-  app.$controls.find('.last')
+  app.$controls.$next_move
+    .on('touchstart click', app.board.next_move)
+    .attr('title', t.Next_Move);
+  app.$controls.$last
     .on('touchstart click', app.board.last)
     .attr('title', t.Last_Ply);
 
@@ -241,6 +264,7 @@ requirejs({locale: navigator.language}, [
   // Resize board after window resize and board config changes
   app.$window.on('resize', app.resize);
   app.config.on_change([
+    'board_3d',
     'show_axis_labels',
     'show_flat_counts',
     'show_current_move',
@@ -251,12 +275,7 @@ requirejs({locale: navigator.language}, [
 
   // Update editor width after every board resize
   app.board.on_resize(function () {
-    if (app.game.is_editing || !app.$editor.attr('style')) {
-      app.set_editor_width(
-        app.board.vw,
-        app.board.width
-      );
-    }
+    app.set_editor_width(app.board.vw, app.board.width);
   });
 
 
@@ -283,7 +302,7 @@ requirejs({locale: navigator.language}, [
 
   // Update opacity controls when value changes
   config.on_change('board_opacity', function (opacity) {
-    app.$view_wrapper.css('opacity', opacity/100);
+    app.$editor.$bg.css('opacity', (100 - opacity)/100);
   }, 'edit');
   config.on_change('board_opacity', false, 'edit');
 
@@ -427,7 +446,6 @@ requirejs({locale: navigator.language}, [
   } else {
     app.toggle_edit_mode(app.$html.hasClass('error'));
   }
-  app.restore_caret();
 
 
   // Open the relevant menu accordion
@@ -457,7 +475,11 @@ requirejs({locale: navigator.language}, [
         dialog.close();
         $(dialog).remove();
       }
-    } else if (app.game.is_editing && app.$ptn.is(':focus')) {
+    } else if (
+      app.game.is_editing
+      && app.$ptn.prop('contenteditable') == 'true'
+      && app.$ptn.is(':focus')
+    ) {
       // Edit Mode
       if (_.has(app.hotkeys.edit, event.keymap)) {
         app.hotkeys.edit[event.keymap](event, $focus, $parent);

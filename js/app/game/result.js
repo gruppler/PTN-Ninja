@@ -20,10 +20,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     this.game = game;
     this.move = move || null;
 
-    if (
-      move && !move.branch
-      || !game.config.result
-    ) {
+    if (move && !move.branch) {
       game.config.result = this;
     }
 
@@ -74,7 +71,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
   );
 
   Result.prototype.print = function () {
-    return '<span>'+this.prefix+'</span>' + this.print_value();
+    return '<span class="space">'+this.prefix+'</span>' + this.print_value();
   };
 
   Result.prototype.print_text = function (update_char_index) {

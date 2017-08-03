@@ -12,17 +12,17 @@ $stone-thickness: 0.3vmin;
   align-items: stretch;
   justify-content: center;
 
-  &, & .table .material-icons, & .table .mdl-button--icon {
+  .view-wrapper {
     font-size: 2.5vmin;
   }
 
   @media (max-width: $mobile/2) and (orientation: portrait) {
-    &, & .table .material-icons, & .table .mdl-button--icon {
+    .view-wrapper {
       font-size: 14px;
     }
   }
   @media (max-height: $mobile/2) and (orientation: landscape) {
-    &, & .table .material-icons, & .table .mdl-button--icon {
+    .view-wrapper {
       font-size: 14px;
     }
   }
@@ -36,25 +36,11 @@ $stone-thickness: 0.3vmin;
   align-items: center;
   justify-content: center;
 
-  html.animate-board & {
-    transition: opacity $time-smooth $natural;
-  }
-
-  html.playmode &,
-  html.side-by-side & {
-    opacity: 1 !important;
-    z-index: 1;
-  }
-  html.side-by-side & {
-    transition: none;
-  }
-
   > *:last-child {
     will-change: flex-grow;
 
     html.animate-board #viewer.animated & {
-      transition: flex-grow $time-smooth $natural,
-        opacity $time-smooth $natural;
+      transition: flex-grow $time-smooth $natural;
     }
   }
 
@@ -116,11 +102,9 @@ $stone-thickness: 0.3vmin;
 
 .board {
   @include unselectable;
-  background-color: $primary-color-500;
   font-size: inherit;
   z-index: 2;
   will-change: width, height;
-  transform-style: preserve-3d;
 
   html.animate-board #viewer.animated & {
     transition: width $time-smooth $natural,
@@ -147,37 +131,66 @@ $stone-thickness: 0.3vmin;
       background-color: $primary-color-300;
     }
 
-    &:before {
+    &:before,
+    &:after {
       content: '';
       display: block;
       @include position-fill;
       opacity: 0;
       pointer-events: none;
       background-color: $accent-color-500;
+      z-index: -3;
+    }
+    &:after {
+      background-color: $branch-color;
     }
     html.square-hl &.active:before {
-      opacity: 0.6;
+      opacity: 0.75;
     }
     &.valid {
-      &.selected:before,
-      &.selected:hover:before {
+      &.selected:after,
+      &.selected:hover:after {
         opacity: 0.5 !important;
       }
-      &.p1.selected:before { background-color: $primary-color-100 }
-      &.p2.selected:before { background-color: $primary-color-700 }
+      &.p1.selected:after { background-color: $primary-color-100 }
+      &.p2.selected:after { background-color: $primary-color-700 }
 
       html.can-hover & {
-        &:hover:before {
+        &:hover:after {
           opacity: 0.3 !important;
         }
-        &.p1:hover:before { background-color: $primary-color-100 }
-        &.p2:hover:before { background-color: $primary-color-700 }
+        &.p1:hover:after { background-color: $primary-color-100 }
+        &.p2:hover:after { background-color: $primary-color-700 }
       }
-      html.can-hover.p1 &:not(.placed):hover:before {
+      html.can-hover.p1 &:not(.placed):hover:after {
         background-color: $primary-color-100
       }
-      html.can-hover.p2 &:not(.placed):hover:before {
+      html.can-hover.p2 &:not(.placed):hover:after {
         background-color: $primary-color-700
+      }
+    }
+
+    html.show-branches & {
+      &.option:after {
+        opacity: 0.3;
+      }
+
+      .option-number {
+        display: block;
+      }
+    }
+    .option-number {
+      text-align: center;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      font-size: 0.8em;
+      line-height: 1em;
+      display: none;
+
+      &:empty {
+        display: none !important;
       }
     }
 
@@ -243,6 +256,14 @@ $stone-thickness: 0.3vmin;
     &.unplayed {
       html:not(.show-unplayed-pieces) & {
         opacity: 0;
+      }
+      html.animate-board & {
+        transition: transform $time-smooth $natural,
+          opacity $time-smooth/2;
+      }
+      html.animate-board.show-unplayed-pieces & {
+        transition: transform $time-smooth $natural,
+          opacity $time-smooth/2 $time-smooth/2;
       }
     }
 
@@ -362,15 +383,12 @@ $stone-thickness: 0.3vmin;
 }
 
 #viewer {
-  .scores, .ptn {
+  .scores {
+    @include unselectable;
     position: relative;
     white-space: nowrap;
     height: 2em;
     line-height: 2em;
-  }
-
-  .scores {
-    @include unselectable;
     overflow: hidden;
     margin-bottom: -2.5em;
     padding-bottom: 0.5em;
@@ -393,13 +411,24 @@ $stone-thickness: 0.3vmin;
       width: 50%;
       display: flex;
       box-sizing: border-box;
-      border-radius: $stone-thickness;
-      border-bottom: 0 solid $accent-color-600;
       will-change: width;
+
+      &:before {
+        content: '';
+        position: absolute;
+        bottom: -0.5em;
+        width: 0;
+        height: 0.5em;
+        background: $accent-color-500;
+      }
 
       html.animate-board & {
         transition: width $time-smooth $natural,
           border-bottom-width $time-quick linear $time-smooth;
+
+        &:before {
+          transition: width $time-smooth $natural;
+        }
       }
     }
 
@@ -418,12 +447,17 @@ $stone-thickness: 0.3vmin;
     }
 
     > .player1 {
+      border-radius: $ptn-bg-radius 0 0 0;
       left: 0;
       background-color: $primary-color-100;
       color: $primary-color-700;
 
-      html.p1 & {
-        border-bottom-width: 0.3em;
+      &:before {
+        right: 0;
+      }
+
+      html.p1 &:before {
+        width: 100%;
       }
 
       .name {
@@ -433,12 +467,17 @@ $stone-thickness: 0.3vmin;
     }
 
     > .player2 {
+      border-radius: 0 $ptn-bg-radius 0 0;
       right: 0;
       background-color: $primary-color-700;
       color: $primary-color-100;
 
-      html.p2 & {
-        border-bottom-width: 0.3em;
+      &:before {
+        left: 0;
+      }
+
+      html.p2 &:before {
+        width: 100%;
       }
 
       .name {
@@ -451,54 +490,106 @@ $stone-thickness: 0.3vmin;
     }
   }
 
-  .ptn {
+  .current-move,
+  .branches {
+    @include unselectable;
+    position: relative;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
     pointer-events: all;
-    opacity: 0;
-    padding-top: 0.5em;
-    margin-top: -2.5em;
-    will-change: margin-top;
-    will-change: content, opacity, margin-top;
+    z-index: 1;
+  }
 
-    html.animate-board & {
-      transition: opacity $time-smooth $natural,
-        margin-top $time-smooth $natural;
-    }
+  .current-move {
+    font-size: 1.25em;
+    margin-bottom: -2.5em;
+    opacity: 0;
+    will-change: content, opacity, margin-bottom;
 
     html.show-current-move & {
       opacity: 1;
-      margin-top: 0;
+      margin-bottom: 0;
     }
 
-    .player1, .player2 {
-      padding: 0 0.2em;
+    html.animate-board & {
+      transition: opacity $time-smooth $natural,
+        margin-bottom $time-smooth $natural,
+        bottom $time-smooth $natural;
     }
 
-    .move {
+    html.board-3d & {
       position: absolute;
-      left: 2.5em;
-      right: 2.5em;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      bottom: 0;
+    }
+    html.board-3d.show-play-controls & {
+      position: absolute;
+      bottom: $toolbar-height;
     }
 
-    .prev_move,
-    .next_move {
-      position: absolute;
+    .mdl-button {
       width: 2em;
       height: 2em;
-      @include unselectable;
+      margin-bottom: 0.2em;
+    }
 
-      .material-icons {
-        transform: translate(-1em, -1em);
-        line-height: 2em;
-        width: 2em;
+    .branch_button {
+      margin-right: 0.2em;
+
+      &:not(.visible) {
+        display: none;
+      }
+
+      &:hover, &:active {
+        background-color: rgba($branch-color, 0.5);
+      }
+      &.active {
+        background-color: rgba($branch-color, 0.75);
       }
     }
-    .prev_move {
-      left: 0;
+
+    .move .space:first-child {
+      display: none;
     }
-    .next_move {
-      right: 0;
+
+    .ply {
+      cursor: pointer;
+      padding: 0 0.2em;
+    }
+  }
+
+  .branches {
+    position: absolute;
+    top: -0.5em;
+    transform: translateY(-100%);
+    flex-direction: column;
+    border-radius: 2px;
+    background-color: $primary-color-400;
+    box-shadow: $shadow1;
+    overflow: hidden;
+
+    &:empty, &:not(.visible) {
+      display: none;
+    }
+
+    > .branch {
+      @include unselectable;
+      position: relative;
+      max-width: $message-width;
+      overflow-wrap: break-word;
+      padding: 0.75em;
+      white-space: nowrap;
+      cursor: pointer;
+      z-index: 1;
+
+      &:hover, &:active {
+        background-color: rgba($branch-color, 0.5);
+      }
+
+      .ptn {
+        margin-left: 0.5em;
+        pointer-events: none;
+      }
     }
   }
 }
@@ -568,7 +659,7 @@ $stone-thickness: 0.3vmin;
   background-color: $primary-color-400;
 }
 
-html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
+html.animate-board .unplayed-bg-cell {
   transition: none;
 }
 
@@ -594,7 +685,7 @@ html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
   }
 }
 
-.controls {
+#viewer > .controls {
   @include unselectable;
   background-color: $primary-color-800;
   overflow: hidden;
@@ -622,7 +713,6 @@ html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
   }
 
   button {
-    color: $whitish;
     width: 40px;
     height: 40px;
 
@@ -649,6 +739,21 @@ html.animate-board #viewer:not(.animated) .unplayed-bg-cell {
       i.pause {
         opacity: 1;
       }
+    }
+  }
+
+  @media (max-width: 430px) {
+    button.prev_move, button.next_move {
+      display: none;
+    }
+  }
+}
+
+.current-move > .controls {
+  @media (min-width: 431px) {
+    button.prev_move, button.next_move {
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }

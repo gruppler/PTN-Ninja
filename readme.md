@@ -10,55 +10,55 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddi
 If you want to support this project, you can...
 
 * [Report an issue](https://github.com/gruppler/PTN-Ninja/issues/)
-* [Donate Bitcoins](bitcoin:12mD2HUNb4MJoLfVDDLS1wep1hdhrSY3L8)
+* [Become a Patron](https://www.patreon.com/gruppler)
 * [Donate USD](https://www.paypal.me/gruppler)
 
 ## Getting Started
 Toggle between **Edit Mode** and **Play Mode** using the FAB (the big button in the lower-right corner).
 
 ### Edit Mode
-<kbd>Tap</kbd> or <kbd>click</kbd> a **ply** to move the board to that point in the game. <kbd>Tap</kbd> or <kbd>click</kbd> again **within the current ply** to toggle the done/undone state of the ply.
+**Tap** or **click** a **ply** to move the board to that point in the game. **Tap** or **click** again **within the current ply** to toggle the done/undone state of the ply.
 
-If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). You can <kbd>tap</kbd> or <kbd>click</kbd> the **error message** to move the caret to the relevant position in the PTN.
+If there are any problems with the PTN, the FAB will turn red, and clicking it will display the error message(s). You can **tap** or **click** the **error message** to move the caret to the relevant position in the PTN.
 
-The editor checks the validity of the syntax as well as the legality of each ply, and automatically maintains the correct game result and move numbers.
+The editor checks the validity of the syntax as well as the legality of each ply, and automatically maintains the correct game result(s).
 
 #### Load a Game
-- <kbd>Drag</kbd> a **.ptn file** into the window
+- **Drag** a **.ptn file** into the window
 - Or, press <kbd>Ctrl or &#x2318;</kbd> + <kbd>o</kbd>
 - Or, select **Open** from the menu
-- Or, copy the contents and paste into the editor
+- Or, **copy** the contents and **paste** into the editor
 
 ### Play Mode
 - Navigate the game using the **Play Controls** or **arrow hotkeys** listed below
-- <kbd>Tap</kbd> or <kbd>click</kbd> the **buttons** displayed around the Current Move to navigate by move (two plies)
-- <kbd>Tap</kbd> or <kbd>click</kbd> the **plies** of the Current Move
+- **Tap** or **click** the **buttons** displayed around the Current Move to navigate by move (two plies)
+- **Tap** or **click** the **plies** of the Current Move
 
 #### Place a Stone
-- <kbd>Tap</kbd> or <kbd>click</kbd> on a **square** to place a flat stone
-- <kbd>Tap</kbd> or <kbd>click</kbd> the **square** again to cycle the stone type
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to place a standing stone
-- <kbd>Long-click</kbd> a **square** to place a cap stone
+- **Tap** or **click** on a **square** to place a flat stone
+- Then, **tap** or **click** the **square** again to cycle the stone type
+- Or, **long-touch** or **right-click** a **square** to place a standing stone
+- Or, **long-click** a **square** to place a cap stone
 
 #### Move a Piece or Stack
-- <kbd>Tap</kbd> or <kbd>click</kbd> a **square** to select the piece or stack
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to select the **top piece** of a stack
-- <kbd>Tap</kbd> or <kbd>click</kbd> further **squares** to drop pieces
-- <kbd>Long-touch</kbd> or <kbd>right-click</kbd> a **square** to drop the selected stack
-- <kbd>Esc</kbd> also drops the selected stack in place
+- **Tap** or **click** a **square** to select the piece or stack
+- Or, **long-touch** or **right-click** a **square** to select the **top piece** of a stack
+- Then, **tap** or **click** further **squares** to drop pieces
+- Or, **long-touch** or **right-click** a **square** to drop the selected stack
+- Or, press <kbd>Esc</kbd> to drop the selected stack in place
 
 ### 3D Mode
 3D Mode is experimental and may not work well or at all on some browsers or devices. It works best in Chrome.
 
 #### Rotate the Board
-- <kbd>Two-finger-drag</kbd>
-- Or, <kbd>Ctrl or &#x2318;</kbd> + <kbd>left-click</kbd> <kbd>drag</kbd>
-- Or, <kbd>middle-click</kbd> + <kbd>drag</kbd>
+- **Two-finger-drag**
+- Or, <kbd>Ctrl or &#x2318;</kbd> + **left-click** **drag**
+- Or, **middle-click** + **drag**
 
 #### Reset the Board Rotation
-- <kbd>Long-touch</kbd> outside the board
-- Or, <kbd>Ctrl or &#x2318;</kbd> + <kbd>click-hold</kbd> outside the board
-- Or, <kbd>middle-click-hold</kbd> outside the board
+- **Long-touch** outside the board
+- Or, <kbd>Ctrl or &#x2318;</kbd> + **click-hold** outside the board
+- Or, **middle-click-hold** outside the board
 
 ---
 ## Hotkeys
@@ -96,7 +96,8 @@ Key|Action
 <kbd>&darr;</kbd>|Next Move
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>&larr;</kbd>|First Ply
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>&rarr;</kbd>|Last Ply
-<kbd>0-9</kbd>|Select option 0-9
+<kbd>1</kbd> &ndash; <kbd>9</kbd>|Select Branch 1-9
+<kbd>0</kbd>|Select Original Branch
 <kbd>d</kbd>|Toggle 3D Board
 <kbd>s</kbd>|Toggle Board Shadows
 <kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
@@ -107,7 +108,8 @@ Key|Action
 <kbd>f</kbd>|Toggle Flat Counts
 <kbd>c</kbd>|Toggle Play Controls
 <kbd>r</kbd>|Toggle Road Connections
-<kbd>h</kbd>|Toggle Square Highlight
+<kbd>b</kbd>|Toggle Branch Highlight
+<kbd>h</kbd>|Toggle Selected Square Highlight
 <kbd>u</kbd>|Toggle Unplayed Pieces
 
 

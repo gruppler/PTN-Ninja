@@ -1,7 +1,17 @@
 
-.mdl-layout__drawer-button i {
+.mdl-layout__drawer-button {
   @include unselectable;
-  color: $white !important;
+  color: $whitish;
+
+  &:active {
+    color: white;
+  }
+
+  html.can-hover & {
+    &:hover, &:active {
+      color: white;
+    }
+  }
 }
 
 #menu {

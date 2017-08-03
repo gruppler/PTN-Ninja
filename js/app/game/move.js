@@ -162,7 +162,7 @@ define([
       }
     } else if (this.plys[0].is_nop) {
       this.second_player = this.first_player;
-    } else if (this.prev) {
+    } else if (this.prev && this.prev.plys.length) {
       this.plys[0].prev = this.prev.plys[1] || this.prev.plys[0];
       this.plys[0].prev.next = this.plys[0];
     }
@@ -185,7 +185,7 @@ define([
   Move.prototype.set_ply2 = function (ply) {
     this.plys[1] = ply;
     this.plys[1].turn = this.second_turn;
-    if (this.original && this.plys[0].is_nop) {
+    if (this.original && this.original.plys.length && this.plys[0].is_nop) {
       this.plys[1].prev = this.plys[0].original;
       this.plys[1].original = this.original.plys[1];
       (this.original.plys[1] || this.original.plys[0]).branches[this.branch] = this.plys[1];
@@ -261,7 +261,7 @@ define([
           if (branch in this.branches) {
             return this.branches[branch];
           } else {
-            branch = branch.replace(/\d+\.$/, '');
+            branch = branch.replace(/\d+\.+$/, '');
           }
         }
         return this;

@@ -22,6 +22,7 @@ define([
     this.current_move = null;
     this.current_branch = '';
     this.target_branch = '';
+    this.branch_options = [];
     this.current_id = '';
     this.ply_is_done = false;
     this.is_eog = false;
@@ -46,6 +47,7 @@ define([
       'reset_rotation',
       'select_square',
       'select_branch',
+      'toggle_branches',
       'update_view',
       'reposition_pieces',
       'rotate',
@@ -108,7 +110,7 @@ define([
     if (fn) {
       this.branch_callbacks.push(fn);
     } else {
-      _.invokeMap(this.branch_callbacks, 'call', this, this.current_branch);
+      _.invokeMap(this.branch_callbacks, 'call', this, this.target_branch);
     }
 
     return this;
@@ -122,6 +124,7 @@ define([
     this.current_move = null;
     this.current_branch = '';
     this.target_branch = '';
+    this.branch_options.length = 0;
     this.current_id = '';
     this.ply_is_done = false;
     this.is_eog = false;
@@ -507,6 +510,11 @@ define([
   Board.prototype.render = function () {
     var that = this;
 
+    if (this.$view) {
+      this.$ptn.off();
+      this.$branch_button.off();
+    }
+
     this.set_current_ply(0, false);
     this.$view = $(this.tpl.board(this));
     this.$board = this.$view.find('.board');
@@ -515,7 +523,9 @@ define([
     this.$col_labels = this.$view.find('.col.labels');
     this.$squares = this.$view.find('.squares');
     this.$pieces = this.$view.find('.pieces');
-    this.$ptn = this.$view.find('.ptn');
+    this.$ptn = app.$viewer.find('.current-move');
+    this.$branches = this.$ptn.find('.branches');
+    this.$branch_button = this.$ptn.find('.branch_button');
     this.$ptn.$prev_move = this.$ptn.find('.prev_move');
     this.$ptn.$next_move = this.$ptn.find('.next_move');
     this.$scores = this.$view.find('.scores');
@@ -523,6 +533,8 @@ define([
     this.$bar2 = this.$scores.find('.player2');
     this.$score1 = this.$bar1.find('.score');
     this.$score2 = this.$bar2.find('.score');
+
+    this.$branch_button.on('touchstart click', this.toggle_branches);
 
     this.rotate();
 
@@ -549,14 +561,14 @@ define([
       this.on_ply();
     }
 
-    this.$ptn.on('click tap', '.ply', function (event) {
+    this.$ptn.on('click tap', '.move .ply', function (event) {
       var $ply = $(event.currentTarget)
         , ply_index = $ply.data('index');
 
       that.go_to_ply(
         ply_index,
-        that.ply_index != ply_index
-          || !that.ply_is_done
+        that.ply_index == ply_index
+          && !that.ply_is_done
       );
     }).on('click tap', '.prev_move', this.prev_move)
       .on('click tap', '.next_move', this.next_move);
@@ -596,7 +608,7 @@ define([
     if (board_config.show_flat_counts) {
       height -= this.$scores.outerHeight();
     }
-    if (board_config.show_current_move) {
+    if (board_config.show_current_move && !config.board_3d) {
       height -= this.$ptn.outerHeight();
     }
     if (board_config.show_play_controls) {
@@ -721,26 +733,16 @@ define([
 
 
   Board.prototype.select_branch = function (event) {
-    var ply = $(event.currentTarget).data('ply');
+    this.$branches.removeClass('visible');
+    this.go_to_ply(
+      $(event.currentTarget).data('ply').index
+    );
+  };
 
-    if (event && $(event.target).hasClass('close')) {
-      return;
-    } else if (ply && this.target_branch == ply.branch) {
-      this.target_branch = ply.original.branch;
-      this.on_branch_change(this.target_branch);
-      if (
-        this.ply_index == ply.index
-        || this.current_move.linenum.value > ply.original.move.linenum.value
-      ) {
-        this.go_to_ply(ply.original.index, false);
-      } else {
-        this.go_to_ply(this.ply_index, this.ply_is_done);
-      }
-    } else {
-      this.target_branch = ply.branch;
-      this.on_branch_change();
-      this.go_to_ply(ply.index, false);
-    }
+  Board.prototype.toggle_branches = function (event) {
+    this.$branches.toggleClass('visible');
+    event.preventDefault();
+    event.stopPropagation();
   };
 
 
@@ -822,7 +824,7 @@ define([
       }
       this.$move = $(this.current_ply.move.print_for_board(this.target_branch));
 
-      this.$ptn.$prev_move.after(this.$move);
+      this.$branch_button.after(this.$move);
       $ply1 = this.$ptn.find('.ply:eq(0)');
       $ply2 = this.$ptn.find('.ply:eq(1)');
 
@@ -838,15 +840,100 @@ define([
           $ply2.addClass('active');
         }
       }
+    }
 
-      this.$ptn.$prev_move.attr(
-        'disabled',
-        !this.current_ply.prev && !this.ply_is_done
-      );
-      this.$ptn.$next_move.attr(
-        'disabled',
-        !this.current_ply.next && this.ply_is_done
-      );
+    this.show_branches();
+  };
+
+
+  Board.prototype.show_branch = function (ply, key) {
+    var $branch;
+
+    if (
+      key > 0
+      || ply == this.current_ply.original && !this.ply_is_done
+      || ply == this.current_ply.next && this.ply_is_done
+    ) {
+      _.invokeMap(_.pick(this.squares, ply.squares), 'set_option', '');
+      this.squares[ply.square].set_option(key);
+      this.branch_options.push(ply);
+    }
+
+    $branch = $(this.tpl.branch({
+      move: ply.move,
+      key: key
+    })).data('ply', ply).click(this.select_branch);
+
+    this.$branches.append($branch);
+  };
+
+
+  Board.prototype.show_branches = function () {
+    var key = 1
+      , branches = {}
+      , branch;
+
+    this.$branches.empty();
+
+    if (!this.current_ply) {
+      return false;
+    }
+
+    // Show original branch
+    if (this.target_branch) {
+      this.show_branch(this.game.branches[this.target_branch].original, 0);
+    }
+
+    // Show alternative branches
+    if (!this.ply_is_done) {
+      if (!_.isEmpty(this.current_ply.branches)) {
+        branches = _.assign(branches, this.current_ply.branches);
+      }
+      if (
+        this.current_ply.original
+        && !_.isEmpty(this.current_ply.original.branches)
+      ) {
+        branches = _.assign(branches, this.current_ply.original.branches);
+      }
+    } else if (this.current_ply.next) {
+      if (!_.isEmpty(this.current_ply.next.branches)) {
+        branches = _.assign(branches, this.current_ply.next.branches);
+      }
+      if (
+        this.current_ply.next.original
+        && !_.isEmpty(this.current_ply.next.original.branches)
+      ) {
+        branches = _.assign(branches, this.current_ply.next.original.branches);
+      }
+    }
+
+    for (branch in branches) {
+      if (
+        this.target_branch != branch
+        && (
+          !this.target_branch
+          || !branches[branch].is_in_branch(this.target_branch)
+        )
+      ) {
+        this.show_branch(branches[branch], key);
+
+        if (key == 9) {
+          key = false;
+        } else if (key) {
+          key++;
+        }
+      }
+    }
+
+    if (!this.target_branch && _.isEmpty(branches)) {
+      this.$branch_button.removeClass('visible');
+    } else {
+      this.$branch_button.addClass('visible');
+      if (this.target_branch) {
+        this.$branch_button.addClass('active');
+      } else {
+        this.$branch_button.removeClass('active');
+      }
     }
   };
 
@@ -860,111 +947,6 @@ define([
   };
 
 
-  Board.prototype.do_ply = function () {
-    var square, ply_result;
-
-    if (this.ply_is_done) {
-      return true;
-    }
-
-    if (this.selected_pieces.length) {
-      return false;
-    }
-
-    square = this.squares[this.current_ply.square];
-
-    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
-      this.pause();
-      return false;
-    }
-
-    if (this.current_ply.is_nop) {
-      ply_result = true;
-    } else if (this.current_ply.is_slide) {
-      ply_result = square.slide(this.current_ply);
-    } else {
-      ply_result = square.place(this.current_ply);
-    }
-
-    this.ply_is_done = ply_result;
-    this.is_eog = !!this.current_ply.result;
-    this.turn = this.current_ply.turn == 1 ? 2 : 1;
-
-    if (!this.defer_render) {
-      this.on_ply();
-    }
-
-    if (!this.current_ply.next) {
-      this.pause();
-    }
-
-    return ply_result;
-  };
-
-
-  Board.prototype.undo_ply = function () {
-    var square, ply_result;
-
-    if (!this.ply_is_done) {
-      return true;
-    }
-
-    if (this.selected_pieces.length) {
-      return false;
-    }
-
-    square = this.squares[this.current_ply.square];
-
-    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
-      return false;
-    }
-
-    if (this.current_ply.is_nop) {
-      ply_result = true;
-    } else if (this.current_ply.is_slide) {
-      ply_result = square.undo_slide(this.current_ply);
-    } else {
-      ply_result = square.undo_place(this.current_ply);
-    }
-
-    this.ply_is_done = false;
-    this.is_eog = false;
-    this.turn = this.current_ply.turn;
-
-    if (!this.defer_render) {
-      this.on_ply();
-    }
-
-    return ply_result;
-  };
-
-
-  Board.prototype.illegal_ply = function (ply) {
-    this.m_parse.error(
-      t.error.illegal_ply({ ply: ply.text })
-    ).click(function () {
-      app.select_token_text(ply);
-    });
-    ply.is_illegal = true;
-    return false;
-  };
-
-
-  Board.prototype.invalid_tps = function (square) {
-    this.m_parse.error(
-      t.error.invalid_tag_value({tag: t.TPS, value: square.text})
-    ).click(function () {
-      app.set_caret([
-        square.char_index,
-        square.char_index + square.text.length
-      ]);
-    });
-    square.error = true;
-
-    return false;
-  };
-
-
   Board.prototype.set_active_squares = function (squares) {
     if (this.$view) {
       this.$squares.children().removeClass('active');
@@ -974,6 +956,15 @@ define([
         }
         _.invokeMap(squares, 'set_active');
       }
+    }
+  };
+
+
+  Board.prototype.clear_options = function () {
+    this.branch_options.length = 0;
+    if (this.$view) {
+      this.$squares.children('.option').removeClass('option')
+        .find('.option-number').empty();
     }
   };
 
@@ -1088,53 +1079,6 @@ define([
   };
 
 
-  Board.prototype.show_branch = function (ply, key) {
-    this.m_branch.option(
-      '<span class="ptn">'+ply.move.print()+'</span>',
-      key,
-      'call_split'
-    ).data('ply', ply).click(this.select_branch);
-  }
-
-
-  Board.prototype.show_branches = function () {
-    var key = 1
-      , branches
-      , branch;
-
-    this.m_branch.clear();
-
-    if (this.current_ply) {
-      if (this.target_branch) {
-        this.show_branch(this.game.branches[this.target_branch], 0);
-      }
-
-      if (!this.ply_is_done) {
-        if (!_.isEmpty(this.current_ply.branches)) {
-          branches = this.current_ply.branches;
-        }
-      } else if (
-        this.current_ply.next
-        && !_.isEmpty(this.current_ply.next.branches)
-      ) {
-        branches = this.current_ply.next.branches;
-      }
-
-      for (branch in branches) {
-        if (branch != this.target_branch) {
-          this.show_branch(branches[branch], key);
-
-          if (key == 9) {
-            key = false;
-          } else if (key) {
-            key++;
-          }
-        }
-      }
-    }
-  };
-
-
   Board.prototype.show_messages = function () {
     var that = this
       , result = this.current_ply && this.current_ply.result ?
@@ -1151,7 +1095,6 @@ define([
       if (this.game.comments) {
         _.map(this.game.comments.concat(), this.comment);
       }
-      this.show_branches();
       return;
     }
 
@@ -1168,23 +1111,123 @@ define([
       }
     }
 
+    // Show Tak and Tinue
+    var ply = this.ply_is_done ? this.current_ply : this.current_ply.prev;
+    if (ply && ply.evaluation && /['"]/.test(ply.evaluation)) {
+      this.m['player'+ply.player](
+        /"|''/.test(ply.evaluation) ? t.Tinue : t.Tak
+      );
+    }
+
     // Show ply comments
     if (this.current_ply.comments) {
       _.map(this.current_ply.comments.concat(), this.comment);
     }
+  };
 
-    // Show Tak and Tinue
-    if (
-      this.ply_is_done
-      && this.current_ply.evaluation
-      && /['"]/.test(this.current_ply.evaluation)
-    ) {
-      this.m['player'+this.current_ply.player](
-        /"|''/.test(this.current_ply.evaluation) ? t.Tinue : t.Tak
-      );
+
+  Board.prototype.illegal_ply = function (ply) {
+    this.m_parse.error(
+      t.error.illegal_ply({ ply: ply.text })
+    ).click(function () {
+      app.select_token_text(ply);
+    });
+    ply.is_illegal = true;
+    return false;
+  };
+
+
+  Board.prototype.invalid_tps = function (square) {
+    this.m_parse.error(
+      t.error.invalid_tag_value({tag: t.TPS, value: square.text})
+    ).click(function () {
+      app.set_caret([
+        square.char_index,
+        square.char_index + square.text.length
+      ]);
+    });
+    square.error = true;
+
+    return false;
+  };
+
+
+  Board.prototype.do_ply = function () {
+    var square, ply_result;
+
+    if (this.ply_is_done) {
+      return true;
     }
 
-    this.show_branches();
+    if (!this.current_ply || this.selected_pieces.length) {
+      return false;
+    }
+
+    square = this.squares[this.current_ply.square];
+
+    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
+      this.pause();
+      return false;
+    }
+
+    if (this.current_ply.is_nop) {
+      ply_result = true;
+    } else if (this.current_ply.is_slide) {
+      ply_result = square.slide(this.current_ply);
+    } else {
+      ply_result = square.place(this.current_ply);
+    }
+
+    this.ply_is_done = ply_result;
+    this.is_eog = !!this.current_ply.result;
+    this.turn = this.current_ply.turn == 1 ? 2 : 1;
+
+    if (!this.defer_render) {
+      this.on_ply();
+    }
+
+    if (!this.current_ply.next) {
+      this.pause();
+    }
+
+    return ply_result;
+  };
+
+
+  Board.prototype.undo_ply = function () {
+    var square, ply_result;
+
+    if (!this.ply_is_done) {
+      return true;
+    }
+
+    if (!this.current_ply || this.selected_pieces.length) {
+      return false;
+    }
+
+    square = this.squares[this.current_ply.square];
+
+    if (this.current_ply.is_illegal || !this.current_ply.is_valid) {
+      return false;
+    }
+
+    if (this.current_ply.is_nop) {
+      ply_result = true;
+    } else if (this.current_ply.is_slide) {
+      ply_result = square.undo_slide(this.current_ply);
+    } else {
+      ply_result = square.undo_place(this.current_ply);
+    }
+
+    this.ply_is_done = false;
+    this.is_eog = false;
+    this.turn = this.current_ply.turn;
+
+    if (!this.defer_render) {
+      this.on_ply();
+    }
+
+    return ply_result;
   };
 
 
@@ -1205,9 +1248,11 @@ define([
 
 
   Board.prototype.pause = function () {
-    clearTimeout(this.play_timer);
-    this.is_playing = false;
-    app.$html.removeClass('playing');
+    if (this.is_playing) {
+      clearTimeout(this.play_timer);
+      this.is_playing = false;
+      app.$html.removeClass('playing');
+    }
   };
 
 
@@ -1233,8 +1278,10 @@ define([
       this.pause();
     }
 
-    if (!this.ply_is_done) {
-      if (this.current_ply && this.current_ply.prev) {
+    if (!this.current_ply) {
+      return false;
+    } else if (!this.ply_is_done) {
+      if (this.current_ply.prev) {
         this.set_current_ply(this.current_ply.prev.index, true);
         if (!this.defer_render) {
           this.on_ply();
@@ -1257,8 +1304,10 @@ define([
       this.play_timestamp = new Date().getTime();
     }
 
-    if (this.ply_is_done) {
-      if (this.current_ply && this.current_ply.next) {
+    if (!this.current_ply) {
+      return false;
+    } else if (this.ply_is_done) {
+      if (this.current_ply.next) {
         this.set_current_ply(
           this.current_ply.next.get_branch(this.target_branch).index,
           false
@@ -1280,7 +1329,9 @@ define([
       this.pause();
     }
 
-    if (!this.ply_is_done && this.current_ply.prev) {
+    if (!this.current_ply) {
+      return false;
+    } else if (!this.ply_is_done && this.current_ply.prev) {
       this.set_current_ply(this.current_ply.prev.index, true);
     }
     return this.undo_ply();
@@ -1294,13 +1345,18 @@ define([
       this.pause();
     }
 
-    if (this.ply_is_done && this.current_ply.next) {
-      this.set_current_ply(
+    if (!this.current_ply) {
+      return false;
+    } else if (this.current_ply.next) {
+      this.go_to_ply(
         this.current_ply.next.get_branch(this.target_branch).index
         , false
       );
+      this.on_ply();
+      return true;
+    } else {
+      return this.do_ply();
     }
-    return this.do_ply();
   };
 
 
@@ -1312,7 +1368,7 @@ define([
     }
 
     if (!this.current_ply) {
-      return;
+      return false;
     } else if (
       !this.ply_is_done
       && this.current_ply.turn == this.current_move.first_turn
@@ -1340,7 +1396,7 @@ define([
     }
 
     if (!this.current_ply) {
-      return;
+      return false;
     } else if (
       this.ply_is_done
       && this.current_ply.turn == this.current_move.second_turn
@@ -1355,6 +1411,13 @@ define([
       // Go to end of move
       next = this.current_move.get_branch(this.target_branch);
       this.go_to_ply(_.last(next.plys).index, true);
+    }
+    if (this.current_ply.next) {
+      this.set_current_ply(
+        this.current_ply.next.get_branch(this.target_branch).index
+        , false
+      );
+      this.on_ply();
     }
   };
 
@@ -1458,8 +1521,9 @@ define([
     function backward_while(condition) {
       while (
         condition()
-        && that.current_ply.prev
+        && that.current_ply
         && that.undo_ply()
+        && that.current_ply.prev
       ) {
         that.set_current_ply(that.current_ply.prev.index, true);
       }
@@ -1534,13 +1598,20 @@ define([
       'translate3d('+
         '<%=board_rotation[0]*board_max_angle/9%>em, '+
         '<%=board_rotation[1]*board_max_angle/-9%>em, '+
-        '<%=board_rotation[2]*board_max_angle/-3%>em'+
+        '<%=board_rotation[2]*board_max_angle/-3.5%>em'+
       ') rotate3d('+
         '<%=board_rotation[1]%>, '+
         '<%=board_rotation[0]%>, '+
         '0, '+
         '<%=board_rotation[2]*board_max_angle%>deg'+
       ')'
+    ),
+
+    branch: _.template(
+      '<div class="branch<% key == 0 ? "selected" : ""%>" data-option="<%=key%>">'
+        +'<kbd><%=key%></kbd>'
+        +'<span class="ptn"><%=move.print()%></span>'
+      +'</div>'
     ),
 
     board: _.template(
@@ -1592,14 +1663,6 @@ define([
           '<div>'+
             '<div class="col labels">'+
               '<%=_.map(cols, tpl.col).join("")%>'+
-            '</div>'+
-            '<div class="ptn">'+
-              '<button class="prev_move mdl-button mdl-js-button mdl-button--icon" disabled>'+
-                '<i class="material-icons">&#xE316;</i>'+
-              '</button>'+
-              '<button class="next_move mdl-button mdl-js-button mdl-button--icon" disabled>'+
-                '<i class="material-icons">&#xE313;</i>'+
-              '</button>'+
             '</div>'+
           '</div>'+
 
