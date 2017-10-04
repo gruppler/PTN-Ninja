@@ -92,10 +92,13 @@
     button {
       opacity: 0;
       cursor: default;
-      transition: opacity $time-smooth $natural;
       color: $white;
       background-color: rgba(0,0,0,0.5) !important;
       pointer-events: none;
+
+      html.animate-ui & {
+        transition: opacity $time-smooth $natural;
+      }
 
       &:hover,
       &:focus {

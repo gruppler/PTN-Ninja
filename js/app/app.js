@@ -179,7 +179,6 @@ define([
       }
 
       if (!was_editing && this.game.is_editing) {
-        this.$viewer.transition();
         this.$html.addClass('editmode');
         this.$html.removeClass('playmode');
         this.$menu_edit.addClass('mdl-accordion--opened');
@@ -192,7 +191,6 @@ define([
           this.editable_on();
         }
       } else if (was_editing && !this.game.is_editing) {
-        this.$viewer.transition();
         this.$html.addClass('playmode');
         this.$html.removeClass('editmode');
         this.$menu_play.addClass('mdl-accordion--opened');
@@ -400,7 +398,7 @@ define([
     },
 
     resize: function (event) {
-      app.board.resize(event);
+      app.board.resize();
       app.restore_scroll_position();
     },
 
@@ -422,13 +420,13 @@ define([
 
       x = Math.max(-1, Math.min(1,
         app.dragging.rotation[0]
-        + app.config.board_rotate_sensitivity
+        + config.board_rotate_sensitivity
           * (x - app.dragging.x) / app.board.width
       ));
 
       y = Math.max(-1, Math.min(1,
         app.dragging.rotation[1]
-        - app.config.board_rotate_sensitivity
+        - config.board_rotate_sensitivity
           * (y - app.dragging.y) / app.board.width
       ));
 
@@ -613,7 +611,7 @@ define([
           - (window.innerHeight - this.$ptn.$ply.height()) / 2;
 
         if (offset) {
-          if (instantly) {
+          if (instantly || !config.animate_ui) {
             this.$ptn.stop().scrollTop(this.$ptn.scrollTop() + offset);
           } else {
             this.$ptn.stop().animate({

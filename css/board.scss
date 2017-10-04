@@ -39,7 +39,7 @@ $stone-thickness: 0.3vmin;
   > *:last-child {
     will-change: flex-grow;
 
-    html.animate-board #viewer.animated & {
+    html.animate-ui & {
       transition: flex-grow $time-smooth $natural;
     }
   }
@@ -77,7 +77,7 @@ $stone-thickness: 0.3vmin;
       vertical-align: middle;
       transform-style: preserve-3d;
 
-      html.animate-board & {
+      html.animate-ui & {
         transition: width $time-smooth $natural;
       }
 
@@ -86,7 +86,7 @@ $stone-thickness: 0.3vmin;
       }
     }
 
-    html.animate-board & {
+    html.animate-ui & {
       transition: height $time-smooth $natural;
     }
   }
@@ -106,7 +106,7 @@ $stone-thickness: 0.3vmin;
   z-index: 2;
   will-change: width, height;
 
-  html.animate-board #viewer.animated & {
+  html.animate-ui & {
     transition: width $time-smooth $natural,
       height $time-smooth $natural;
   }
@@ -150,14 +150,14 @@ $stone-thickness: 0.3vmin;
     &.valid {
       &.selected:after,
       &.selected:hover:after {
-        opacity: 0.5 !important;
+        opacity: 0.25 !important;
       }
       &.p1.selected:after { background-color: $primary-color-100 }
       &.p2.selected:after { background-color: $primary-color-700 }
 
       html.can-hover & {
         &:hover:after {
-          opacity: 0.3 !important;
+          opacity: 0.35 !important;
         }
         &.p1:hover:after { background-color: $primary-color-100 }
         &.p2:hover:after { background-color: $primary-color-700 }
@@ -172,7 +172,7 @@ $stone-thickness: 0.3vmin;
 
     html.show-branches & {
       &.option:after {
-        opacity: 0.3;
+        opacity: 0.35;
       }
 
       .option-number {
@@ -392,16 +392,13 @@ $stone-thickness: 0.3vmin;
     overflow: hidden;
     margin-bottom: -2.5em;
     padding-bottom: 0.5em;
-    opacity: 0;
-    will-change: opacity, margin-bottom;
+    will-change: margin-bottom;
 
-    html.animate-board & {
-      transition: margin-bottom $time-smooth $natural,
-        opacity $time-smooth $natural;
+    html.animate-ui & {
+      transition: margin-bottom $time-smooth $natural;
     }
 
     html.show-flat-counts & {
-      opacity: 1;
       margin-bottom: 0;
     }
 
@@ -420,13 +417,11 @@ $stone-thickness: 0.3vmin;
         width: 0;
         height: 0.5em;
         background: $accent-color-500;
+        will-change: width;
       }
 
       html.animate-board & {
-        transition: width $time-smooth $natural,
-          border-bottom-width $time-quick linear $time-smooth;
-
-        &:before {
+        &, &:before {
           transition: width $time-smooth $natural;
         }
       }
@@ -493,15 +488,15 @@ $stone-thickness: 0.3vmin;
   .current-move,
   .branches {
     @include unselectable;
-    position: relative;
     align-self: center;
     display: flex;
     flex-direction: column;
-    pointer-events: all;
     z-index: 1;
   }
 
   .current-move {
+    pointer-events: all;
+    position: relative;
     font-size: 1.25em;
     margin-bottom: -2.5em;
     opacity: 0;
@@ -512,10 +507,9 @@ $stone-thickness: 0.3vmin;
       margin-bottom: 0;
     }
 
-    html.animate-board & {
+    html.animate-ui & {
       transition: opacity $time-smooth $natural,
-        margin-bottom $time-smooth $natural,
-        bottom $time-smooth $natural;
+        margin-bottom $time-smooth $natural;
     }
 
     html.board-3d & {
@@ -540,11 +534,11 @@ $stone-thickness: 0.3vmin;
         display: none;
       }
 
-      &:hover, &:active {
-        background-color: rgba($branch-color, 0.5);
-      }
-      &.active {
+      &:hover, &.active {
         background-color: rgba($branch-color, 0.75);
+      }
+      &.active:hover, &:active {
+        background-color: $branch-color;
       }
     }
 
@@ -561,15 +555,25 @@ $stone-thickness: 0.3vmin;
   .branches {
     position: absolute;
     top: -0.5em;
-    transform: translateY(-100%);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%);
     flex-direction: column;
     border-radius: 2px;
     background-color: $primary-color-400;
     box-shadow: $shadow1;
     overflow: hidden;
+    will-change: content, opacity, transform;
 
-    &:empty, &:not(.visible) {
-      display: none;
+    &:not(:empty).visible {
+      pointer-events: all;
+      opacity: 1;
+      transform: translateY(-100%);
+    }
+
+    html.animate-ui &.visible {
+      transition: opacity $time-smooth $natural,
+        transform $time-smooth $natural;
     }
 
     > .branch {
@@ -582,8 +586,16 @@ $stone-thickness: 0.3vmin;
       cursor: pointer;
       z-index: 1;
 
-      &:hover, &:active {
+      &:hover {
         background-color: rgba($branch-color, 0.5);
+      }
+
+      &:active {
+        background-color: $branch-color;
+      }
+
+      &.active {
+        background-color: $accent-color-500;
       }
 
       .ptn {
@@ -609,7 +621,7 @@ $stone-thickness: 0.3vmin;
   &.row {
     will-change: opacity, right;
 
-    html.animate-board & {
+    html.animate-ui & {
       transition: opacity $time-smooth $natural,
         right $time-smooth $natural;
     }
@@ -630,7 +642,7 @@ $stone-thickness: 0.3vmin;
   &.col {
     will-change: opacity, margin-top;
 
-    html.animate-board & {
+    html.animate-ui & {
       transition: opacity $time-smooth $natural,
         margin-top $time-smooth $natural;
     }
@@ -659,8 +671,12 @@ $stone-thickness: 0.3vmin;
   background-color: $primary-color-400;
 }
 
-html.animate-board .unplayed-bg-cell {
-  transition: none;
+.unplayed-bg-cell {
+  will-change: width;
+
+  html:not(.animate-ui) & {
+    transition: none;
+  }
 }
 
 
@@ -694,7 +710,7 @@ html.animate-board .unplayed-bg-cell {
   will-change: margin-bottom;
   z-index: 2;
 
-  html.animate-board & {
+  html.animate-ui & {
     transition: margin-bottom $time-smooth $natural;
   }
 

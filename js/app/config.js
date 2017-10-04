@@ -79,6 +79,7 @@ define(['lodash'], function (_) {
       board_3d: is_blink,
       board_shadows: window.innerWidth > mobile_width,
       animate_board: true,
+      animate_ui: true,
       show_fab: true
     },
 

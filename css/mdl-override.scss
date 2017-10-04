@@ -100,6 +100,12 @@ a {
   border-top: 1px solid $divider-color;
 }
 
+.mdl-layout__drawer, .mdl-layout__obfuscator {
+  html:not(.animate-ui) & {
+    transition: none;
+  }
+}
+
 .mdl-accordion {
   &.mdl-accordion--opened {
     border-top: 1px solid $divider-color;
@@ -117,7 +123,7 @@ a {
   }
 
   .mdl-accordion__content {
-    #menu.is-visible & {
+    html.animate-ui #menu.is-visible & {
       transition: margin-top $time-smooth $natural;
     }
 
@@ -128,7 +134,7 @@ a {
     }
   }
 
-  .mdl-accordion__icon {
+  html.animate-ui & .mdl-accordion__icon {
     transition: transform $time-smooth $natural;
 
     position: absolute;

@@ -5,6 +5,7 @@ define({
     About_App: "About PTN Ninja",
 
     Animate_Board: "Animate Board",
+    Animate_UI: "Animate UI",
     Annotations: "Annotations",
     Axis_Labels: "Axis Labels",
     Board_3D: "3D Board",

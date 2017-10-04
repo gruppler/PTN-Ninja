@@ -13,7 +13,6 @@ requirejs({locale: navigator.language}, [
   'lodash',
   'jquery',
   'jquery.keymap',
-  'jquery.aftertransition',
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
@@ -495,5 +494,7 @@ requirejs({locale: navigator.language}, [
       app.hotkeys.global[event.keymap](event, $focus, $parent);
     }
   });
+
+  app.$html.removeClass('loading');
 
 });

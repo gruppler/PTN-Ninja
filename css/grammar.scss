@@ -272,7 +272,7 @@ $ptn-bg-radius: 0.2em;
     }
 
     &.nop {
-      color: $primary-color-300;
+      color: rgba(#fff, 0.25);
       font-weight: normal;
     }
   }
@@ -345,7 +345,7 @@ $ptn-bg-radius: 0.2em;
       }
 
       .linenum {
-        background-color: rgba($info-color, 0.5);
+        background-color: $branch-color;
       }
     }
   }

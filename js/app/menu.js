@@ -82,6 +82,11 @@ define([
       checked: config.animate_board,
       'data-id': 'animate_board'
     },{
+      label: t.Animate_UI,
+      type: 'checkbox',
+      checked: config.animate_ui,
+      'data-id': 'animate_ui'
+    },{
       label: t.Show_FAB,
       type: 'checkbox',
       checked: config.show_fab,

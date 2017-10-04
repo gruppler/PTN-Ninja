@@ -577,7 +577,7 @@ define([
   };
 
 
-  Board.prototype.resize = function (from_config) {
+  Board.prototype.resize = function () {
     if (!this.$view) {
       return;
     }
@@ -622,9 +622,6 @@ define([
     }
     unplayed_size = size * (unplayed_ratio - 1);
 
-    if (_.isBoolean(from_config)) {
-      app.$viewer.transition();
-    }
     this.$board.css({
       width: size,
       height: size
