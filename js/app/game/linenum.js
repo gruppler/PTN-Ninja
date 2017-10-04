@@ -43,7 +43,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     }
 
     linenum.original = linenum.id.replace(
-      new RegExp('(\\.0)*\\.*' + linenum.value + '\\.$'),
+      new RegExp('(-\\d*)*(\\.0)*\\.*' + linenum.value + '\\.$'),
       ''
     ) || linenum.value;
     if (linenum.original) {

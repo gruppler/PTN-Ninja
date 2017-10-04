@@ -98,19 +98,21 @@ Key|Action
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>&rarr;</kbd>|Last Ply
 <kbd>1</kbd> &ndash; <kbd>9</kbd>|Select Branch 1-9
 <kbd>0</kbd>|Select Original Branch
-<kbd>d</kbd>|Toggle 3D Board
-<kbd>s</kbd>|Toggle Board Shadows
-<kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
-<kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
+<kbd>b</kbd>|Toggle Branch List
 <kbd>a</kbd>|Toggle Annotations
 <kbd>x</kbd>|Toggle Axis Labels
 <kbd>m</kbd>|Toggle Current Move
 <kbd>f</kbd>|Toggle Flat Counts
 <kbd>c</kbd>|Toggle Play Controls
-<kbd>r</kbd>|Toggle Road Connections
-<kbd>b</kbd>|Toggle Branch Highlight
+<kbd>Shift</kbd> + <kbd>b</kbd>|Toggle Branch Highlight
 <kbd>h</kbd>|Toggle Selected Square Highlight
+<kbd>r</kbd>|Toggle Road Connections
 <kbd>u</kbd>|Toggle Unplayed Pieces
+<kbd>d</kbd>|Toggle 3D Board
+<kbd>s</kbd>|Toggle Board Shadows
+<kbd>Shift</kbd> + <kbd>a</kbd>|Toggle Board Animations
+<kbd>Shift</kbd> + <kbd>u</kbd>|Toggle UI Animations
+<kbd>Shift</kbd> + <kbd>f</kbd>|Toggle Mode Button (FAB)
 
 
 ## Legal

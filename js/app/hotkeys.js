@@ -239,6 +239,10 @@ define(['app/messages'], function (Messages) {
         { trailing: false }
       ),
 
+      'b': function (event, $focus, $parent) {
+        app.board.$branch_button.click();
+      },
+
       'd': function (event, $focus, $parent) {
         app.config.toggle('board_3d');
         notify_toggle(t.Board_3D, app.config.board_3d);
@@ -256,6 +260,13 @@ define(['app/messages'], function (Messages) {
       'A': function (event, $focus, $parent) {
         app.config.toggle('animate_board');
         notify_toggle(t.Animate_Board, app.config.animate_board);
+        event.preventDefault();
+        event.stopPropagation();
+      },
+
+      'U': function (event, $focus, $parent) {
+        app.config.toggle('animate_ui');
+        notify_toggle(t.Animate_UI, app.config.animate_ui);
         event.preventDefault();
         event.stopPropagation();
       },
@@ -312,7 +323,7 @@ define(['app/messages'], function (Messages) {
         event.stopPropagation();
       },
 
-      'b': function (event, $focus, $parent) {
+      'B': function (event, $focus, $parent) {
         app.config.toggle('show_branches', app.mode);
         notify_toggle(t.Highlight_Branches, app.config[app.mode].show_branches);
         event.preventDefault();

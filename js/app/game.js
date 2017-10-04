@@ -162,7 +162,7 @@ define([
     suffix = linenum.value+'.';
 
     while (_.has(this.indexed_moves, new_id + suffix)) {
-      new_id += '0.';
+      new_id += '.';
     }
 
     return new_id + suffix;

@@ -261,7 +261,7 @@ define([
           if (branch in this.branches) {
             return this.branches[branch];
           } else {
-            branch = branch.replace(/\d+\.+$/, '');
+            branch = branch.replace(/\d+(-\d*)?\.+$/, '');
           }
         }
         return this;

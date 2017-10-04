@@ -730,7 +730,9 @@ define([
 
 
   Board.prototype.select_branch = function (event) {
-    this.$branches.removeClass('visible');
+    if ('button' in event) {
+      this.$branches.removeClass('visible');
+    }
     this.go_to_ply(
       $(event.currentTarget).data('ply').index
     );
@@ -844,21 +846,25 @@ define([
 
 
   Board.prototype.show_branch = function (ply, key) {
-    var $branch;
+    var $branch
+      , is_selected = ply.is_in_branch(this.target_branch);
 
-    if (
-      key > 0
-      || ply == this.current_ply.original && !this.ply_is_done
-      || ply == this.current_ply.next && this.ply_is_done
-    ) {
-      _.invokeMap(_.pick(this.squares, ply.squares), 'set_option', '');
-      this.squares[ply.square].set_option(key);
+    if (!is_selected) {
+      if (
+        key > 0
+        || ply == this.current_ply.original && !this.ply_is_done
+        || ply == this.current_ply.next && this.ply_is_done
+      ) {
+        _.invokeMap(_.pick(this.squares, ply.squares), 'set_option', '');
+        this.squares[ply.square].set_option(key);
+      }
       this.branch_options.push(ply);
     }
 
     $branch = $(this.tpl.branch({
       move: ply.move,
-      key: key
+      key: key,
+      active: is_selected
     })).data('ply', ply).click(this.select_branch);
 
     this.$branches.append($branch);
@@ -905,20 +911,12 @@ define([
     }
 
     for (branch in branches) {
-      if (
-        this.target_branch != branch
-        && (
-          !this.target_branch
-          || !branches[branch].is_in_branch(this.target_branch)
-        )
-      ) {
-        this.show_branch(branches[branch], key);
+      this.show_branch(branches[branch], key);
 
-        if (key == 9) {
-          key = false;
-        } else if (key) {
-          key++;
-        }
+      if (key == 9) {
+        key = false;
+      } else if (key) {
+        key++;
       }
     }
 
@@ -1021,7 +1019,7 @@ define([
         square = this.squares[square];
         square.needs_updated = true;
         if (square.piece) {
-          if (square.piece.ply === this.current_ply) {
+          if (this.current_ply && square.piece.ply === this.current_ply) {
             square.is_valid = true;
             square.is_selected = false;
             square.is_placed = true;
@@ -1605,7 +1603,7 @@ define([
     ),
 
     branch: _.template(
-      '<div class="branch<% key == 0 ? "selected" : ""%>" data-option="<%=key%>">'
+      '<div class="branch<%= active ? " active" : "" %>" data-option="<%=key%>">'
         +'<kbd><%=key%></kbd>'
         +'<span class="ptn"><%=move.print()%></span>'
       +'</div>'
