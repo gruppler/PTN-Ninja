@@ -1000,7 +1000,7 @@ define([
       }
     }
 
-    if (this.tmp_ply) {
+    if (this.tmp_ply && this.selected_pieces.length) {
       clear_all();
       square = this.selected_pieces[0].square;
       square.is_valid = true;

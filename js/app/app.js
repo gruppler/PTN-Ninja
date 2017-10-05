@@ -651,6 +651,9 @@ define([
       if (focus.className == 'opening quote') {
         focus = focus.nextSibling;
       }
+      if (focus.className == 'space') {
+        focus = focus.previousSibling;
+      }
       $focus = $(focus);
       app.$focus = $focus;
 
