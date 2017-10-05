@@ -391,15 +391,18 @@ $stone-thickness: 0.3vmin;
     line-height: 2em;
     overflow: hidden;
     margin-bottom: -2.5em;
+    opacity: 0;
     padding-bottom: 0.5em;
-    will-change: margin-bottom;
+    will-change: margin-bottom, opacity;
 
     html.animate-ui & {
-      transition: margin-bottom $time-smooth $natural;
+      transition: margin-bottom $time-smooth $natural,
+        opacity $time-smooth $natural;
     }
 
     html.show-flat-counts & {
       margin-bottom: 0;
+      opacity: 1;
     }
 
     > .player1, > .player2 {

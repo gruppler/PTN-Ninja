@@ -206,6 +206,10 @@ $ptn-bg-radius: 0.2em;
     font-weight: 400;
     @include neutral-bg;
 
+    &.active {
+      background-color: $accent-color-600 !important;
+    }
+
     .branch {
       opacity: 0.75;
     }
@@ -339,8 +343,7 @@ $ptn-bg-radius: 0.2em;
     }
 
     .branch-option {
-      &.other-branch,
-      .other-branch {
+      &.other-branch {
         opacity: 0.8;
       }
 

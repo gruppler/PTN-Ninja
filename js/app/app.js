@@ -322,7 +322,7 @@ define([
       null;
 
       if (app.$ptn.$ply && app.$ptn.$ply.length) {
-        app.$ptn.$ply.addClass('active');
+        app.$ptn.$ply.prevAll('.linenum').andSelf().addClass('active');
       }
     },
 
@@ -332,7 +332,7 @@ define([
 
       if (app.$ptn.$ply && app.$ptn.$ply.length) {
         if (app.$ptn.$ply.data('model') != ply) {
-          app.$ptn.$ply.removeClass('active');
+          app.$ptn.$ply.prevAll('.linenum').andSelf().removeClass('active');
           app.set_active_ply(ply);
         }
       } else {
