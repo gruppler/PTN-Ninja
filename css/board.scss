@@ -209,8 +209,8 @@ $stone-thickness: 0.3vmin;
         will-change: opacity;
 
         html.animate-board & {
-          transition: opacity $time-smooth/2 $natural,
-            background-color $time-smooth $natural;
+          transition: opacity $time-smooth/2 linear,
+            background-color $time-smooth linear;
         }
       }
 
@@ -230,8 +230,8 @@ $stone-thickness: 0.3vmin;
     html.animate-board.show-roads &.down .road .down,
     html.animate-board.show-roads &.left .road .left,
     html.animate-board.show-roads &.right .road .right {
-      transition: opacity $time-smooth/2 $natural $time-smooth/2,
-        background-color $time-smooth $natural;
+      transition: opacity $time-smooth/2 linear $time-smooth/2,
+        background-color $time-smooth linear;
     }
 
     &.p1 .road > div { background-color: $primary-color-100 }
@@ -250,7 +250,7 @@ $stone-thickness: 0.3vmin;
 
     html.animate-board & {
       transition: transform $time-smooth $natural,
-        opacity $time-smooth $natural;
+        opacity $time-smooth linear;
     }
 
     &.unplayed {
@@ -397,7 +397,7 @@ $stone-thickness: 0.3vmin;
 
     html.animate-ui & {
       transition: margin-bottom $time-smooth $natural,
-        opacity $time-smooth $natural;
+        opacity $time-smooth linear;
     }
 
     html.show-flat-counts & {
@@ -511,7 +511,7 @@ $stone-thickness: 0.3vmin;
     }
 
     html.animate-ui & {
-      transition: opacity $time-smooth $natural,
+      transition: opacity $time-smooth linear,
         margin-bottom $time-smooth $natural;
     }
 
@@ -575,7 +575,7 @@ $stone-thickness: 0.3vmin;
     }
 
     html.animate-ui &.visible {
-      transition: opacity $time-smooth $natural,
+      transition: opacity $time-smooth linear,
         transform $time-smooth $natural;
     }
 
@@ -625,7 +625,7 @@ $stone-thickness: 0.3vmin;
     will-change: opacity, right;
 
     html.animate-ui & {
-      transition: opacity $time-smooth $natural,
+      transition: opacity $time-smooth linear,
         right $time-smooth $natural;
     }
 
@@ -646,7 +646,7 @@ $stone-thickness: 0.3vmin;
     will-change: opacity, margin-top;
 
     html.animate-ui & {
-      transition: opacity $time-smooth $natural,
+      transition: opacity $time-smooth linear,
         margin-top $time-smooth $natural;
     }
 
@@ -743,7 +743,7 @@ $stone-thickness: 0.3vmin;
   button.play {
 
     i {
-      transition: opacity $time-smooth $natural;
+      transition: opacity $time-smooth linear;
 
       &.pause {
         position: absolute;

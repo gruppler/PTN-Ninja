@@ -67,7 +67,7 @@ html.loading * {
   z-index: 1;
 
   html.animate-ui & {
-    transition: opacity $time-smooth $natural;
+    transition: opacity $time-smooth linear;
   }
 
   html.playmode & {
