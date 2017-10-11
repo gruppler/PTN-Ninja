@@ -119,7 +119,7 @@ define([
   Tag.prototype.print_text = function (update_char_index) {
     if (this.key == 'result') {
       this.value = this.game.config.result ?
-        _.trim(this.game.config.result.print_text()) : '';
+        this.game.config.result.text : '';
       this.text = this.prefix
         + this.name
         + this.separator
