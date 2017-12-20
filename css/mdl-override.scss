@@ -136,7 +136,8 @@ a {
 
   html.animate-ui & .mdl-accordion__icon {
     transition: transform $time-smooth $natural;
-
+  }
+  .mdl-accordion__icon {
     position: absolute;
     right: 16px;
   }
