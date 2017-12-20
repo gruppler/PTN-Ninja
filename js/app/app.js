@@ -377,20 +377,12 @@ define([
     update_after_ply_insert: function (index, is_already_done) {
       app.board.tmp_ply = null;
 
-      if (is_already_done) {
-        app.board.ply_index = Math.min(app.game.plys.length - 1, index);
-        app.board.ply_is_done = true;
-        app.board.turn = app.board.current_ply.player == 1 ? 2 : 1;
-        app.board.check_game_end();
-        app.update_ptn();
-        app.update_after_ply(app.board.current_ply);
-      } else {
-        app.board.go_to_ply(index, true);
-        if (app.board.check_game_end()) {
-          app.update_after_ply(app.board.current_ply);
-        }
-        app.update_ptn();
-      }
+      app.board.set_current_ply(index, !!is_already_done);
+      app.board.go_to_ply(index, true, true);
+      app.board.check_game_end();
+      app.update_ptn();
+      app.board.defer_render = false;
+      app.board.update_view();
 
       app.update_permalink();
       app.range.pushstate();
@@ -529,7 +521,7 @@ define([
         , body_offset = $body.offset()
         , top, $siblings, i;
 
-      top = app.$focus ? app.$focus.offset().top : undefined;
+      top = app.$focus && app.$focus.length ? app.$focus.offset().top : undefined;
 
       if (app.$focus && top > 0 && top < vh) {
         // If the focused element is within view, use it

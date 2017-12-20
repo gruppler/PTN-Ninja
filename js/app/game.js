@@ -190,36 +190,43 @@ define([
     this.ptn_compressed = compress(this.ptn);
   };
 
-  Game.prototype.insert_ply = function (ply, index, is_done, flattens) {
-    var old_ply = _.isUndefined(index) ? null : this.plys[index]
-      , turn, move, ply, comments;
+  Game.prototype.insert_ply = function (ply, branch, linenum, turn, is_done, flattens) {
+    var move_id = branch + linenum + '.'
+      , prev_move_id = branch + (linenum - 1) + '.'
+      , move = this.indexed_moves[move_id]
+      , prev_move;
 
-    if (old_ply) {
-      this.char_index = old_ply.char_index;
-      turn = old_ply.turn;
-      move = old_ply.move;
-      comments = old_ply.comments;
-      this.plys.splice(old_ply.index);
-      this.moves.splice(move.index + 1);
-      if (turn == 1 || move.first_turn == 2) {
-        move.ply2 = null;
+    if (!move) {
+      if (prev_move_id in this.indexed_moves) {
+        prev_move = this.indexed_moves[prev_move_id];
+        move = new Move(move_id, this);
+        this.moves.splice(prev_move.index + 1, 0, this.moves.pop());
+        for (var i = prev_move.index + 1; i < this.moves.length; i++) {
+          this.moves[i].index = i;
+        }
+        move.suffix = prev_move.suffix;
+        prev_move.suffix = '\n';
+      } else {
+        move = new Move(this.suffix + move_id, this);
+        this.suffix = '';
       }
-    } else if (this.moves.length) {
-      move = _.last(this.moves);
-      turn = this.plys.length && _.last(this.plys).turn == 1 ? 2 : 1;
-      if (this.plys.length && turn == 1) {
-        // New move
-        move.suffix = '\n';
-        move = new Move((move.linenum.value + 1) + '.', this);
-      }
-    } else {
-      turn = this.config.tps ? this.config.tps.player : 1;
-      move = new Move(this.suffix + this.get_linenum().id, this);
-      this.suffix = '';
     }
 
-    ply = move.insert_ply(ply, turn, is_done, flattens);
-    ply.comments = comments || [];
+    if (move.plys[turn - 1]) {
+      if (move.plys[turn - 1].text == ply) {
+        app.update_after_ply_insert(move.plys[turn - 1].index, is_done);
+        return move.plys[turn - 1];
+      }
+      // New branch
+      move_id = this.get_unique_id(move.linenum);
+      move = new Move('\n\n' + move_id, this);
+
+      if (turn == 2) {
+        move.insert_ply('--', 1);
+      }
+    }
+
+    ply = move.insert_ply(ply, turn, flattens);
 
     this.update_text();
     app.update_after_ply_insert(ply.index, is_done);

@@ -200,7 +200,7 @@ define([
     return ply;
   };
 
-  Move.prototype.insert_ply = function (ply, turn, is_done, flattens) {
+  Move.prototype.insert_ply = function (ply, turn, flattens) {
     var ply, prev_move;
 
     if (turn == 1 || this.first_turn == 2) {

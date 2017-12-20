@@ -280,9 +280,12 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           }
         }
         this.board.go_to_ply(this.board.ply_index, false);
+        this.board.current_move.plys.pop();
         this.board.game.insert_ply(
           stone + this.coord,
-          this.board.ply_index
+          this.board.current_branch,
+          this.board.current_linenum(),
+          this.board.turn
         );
       } else if (linenum != 1) {
         // Select piece or stack
@@ -320,7 +323,9 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
 
       this.board.game.insert_ply(
         stone + this.coord,
-        this.board.ply_index + 1*this.board.ply_is_done
+        this.board.current_branch,
+        this.board.current_linenum(),
+        this.board.turn
       );
     }
   };
@@ -330,7 +335,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       , piece, direction;
 
     if (this.board.selected_pieces[0].square == this) {
-      // Drop selected piece (or pieces if long-click) in current square
+      // Drop selected piece (or pieces if drop_all) in current square
       if (drop_all) {
         piece = this.piece;
         this.board.deselect_all(true);
@@ -355,7 +360,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           );
       }
     } else {
-      // Drop selected piece (or pieces if long-click) in different square
+      // Drop selected piece (or pieces if drop_all) in different square
       var prev_square = this.board.selected_pieces[0].square
         , remaining_stack = prev_square.piece.captives.slice(
             this.board.selected_pieces.length - 1
@@ -420,11 +425,13 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       // Insert slide as new ply
       this.board.game.insert_ply(
         ''
-        + (tmp_ply.count > 1 ? tmp_ply.count : '')
-        + tmp_ply.square
-        + tmp_ply.direction
-        + (tmp_ply.drops.length > 1 ? tmp_ply.drops.join('') : ''),
-        this.board.ply_index + 1*this.board.ply_is_done,
+          + (tmp_ply.count > 1 ? tmp_ply.count : '')
+          + tmp_ply.square
+          + tmp_ply.direction
+          + (tmp_ply.drops.length > 1 ? tmp_ply.drops.join('') : ''),
+        this.board.current_branch,
+        this.board.current_linenum(),
+        this.board.turn,
         true,
         tmp_ply.flattens
       );

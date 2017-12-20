@@ -1482,6 +1482,13 @@ define([
     this.current_ply = this.game.plys[index] || null;
     this.current_move = this.current_ply ? this.current_ply.move : null;
     if (this.current_ply) {
+      if (ply_is_done) {
+        this.is_eog = !!this.current_ply.result;
+        this.turn = this.current_ply.turn == 1 ? 2 : 1;
+      } else {
+        this.is_eog = false;
+        this.turn = this.current_ply.turn;
+      }
       this.current_branch = this.current_ply.branch;
       if (
         this.target_branch != this.current_branch

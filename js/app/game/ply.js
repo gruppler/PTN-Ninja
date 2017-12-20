@@ -54,6 +54,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
     game.char_index += string.length;
 
     this.move = move;
+    this.comments = [];
     this.prev = null;
     this.next = null;
     this.original = null;
