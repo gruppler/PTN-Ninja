@@ -582,7 +582,7 @@ $stone-thickness: 0.3vmin;
     > .branch {
       @include unselectable;
       position: relative;
-      max-width: $message-width;
+      max-width: calc(100vw - #{$edge*2});
       overflow-wrap: break-word;
       padding: 0.75em;
       white-space: nowrap;
