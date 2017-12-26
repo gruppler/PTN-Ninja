@@ -227,7 +227,11 @@ define([
         return move.plys[turn - 1];
       }
       // New branch
-      move_id = this.get_unique_id(move.linenum);
+      if (move.plys[turn - 1].original) {
+        move_id = this.get_unique_id(move.original.linenum);
+      } else {
+        move_id = this.get_unique_id(move.linenum);
+      }
       move = new Move('\n\n' + move_id, this);
 
       if (turn == 2) {
