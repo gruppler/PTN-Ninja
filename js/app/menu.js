@@ -91,6 +91,11 @@ define([
       type: 'checkbox',
       checked: config.show_fab,
       'data-id': 'show_fab'
+    },{
+      label: t.Branch_Numbering,
+      type: 'checkbox',
+      checked: config.branch_numbering,
+      'data-id': 'branch_numbering'
     }]
   },{
     id: 'edit',

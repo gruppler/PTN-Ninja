@@ -152,20 +152,29 @@ define([
   };
 
   Game.prototype.get_unique_id = function (linenum) {
-    var new_id, suffix;
+    var new_id, prefix, suffix;
 
     if (_.isString(linenum)) {
       linenum = Linenum.parse_id(linenum);
     }
 
-    new_id = linenum.id;
-    suffix = linenum.value+'.';
-
-    while (_.has(this.indexed_moves, new_id + suffix)) {
-      new_id += '.';
+    if (config.branch_numbering) {
+      new_id = 1;
+      prefix = linenum.branch + linenum.value + '-';
+      suffix = '.'+linenum.value+'.';
+      while (_.has(this.indexed_moves, prefix + new_id + suffix)) {
+        new_id++;
+      }
+    } else {
+      new_id = linenum.id;
+      prefix = '';
+      suffix = linenum.value+'.';
+      while (_.has(this.indexed_moves, new_id + suffix)) {
+        new_id += '.';
+      }
     }
 
-    return new_id + suffix;
+    return prefix + new_id + suffix;
   };
 
   Game.prototype.get_linenum = function () {

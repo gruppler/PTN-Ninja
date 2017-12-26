@@ -12,6 +12,7 @@ define({
     Board_Opacity: "Board Opacity",
     Board_Settings: "Board Settings",
     Board_Shadows: "Board Shadows",
+    Branch_Numbering: "Branch Numbering",
     Cancel: "Cancel",
     Clock: "Clock",
     Close: "Close",

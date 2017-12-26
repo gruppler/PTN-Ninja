@@ -80,7 +80,8 @@ define(['lodash'], function (_) {
       board_shadows: window.innerWidth > mobile_width,
       animate_board: true,
       animate_ui: true,
-      show_fab: true
+      show_fab: true,
+      branch_numbering: false
     },
 
     toggle: function (prop, mode, initiator) {
