@@ -360,7 +360,7 @@ define([
 
     // Remove all dead_ends and their non-junction neighbors from squares
     // Mutates squares, but not dead_ends
-    function _remove_dead_ends(dead_ends, squares) {
+    function _remove_dead_ends(dead_ends, squares, ordinality) {
       var next_neighbors
         , i, j, square, neighbor;
 
@@ -378,7 +378,12 @@ define([
             }
           }
 
-          if (next_neighbors.length < 2) {
+          if (
+            next_neighbors.length < 2 && (
+              !square.is_edge ||
+              ordinality && square[ordinality == 'ns' ? 'is_ns' : 'is_ew']
+            )
+          ) {
             delete squares[square.coord];
             dead_ends[i] = next_neighbors[0];
           } else {
@@ -453,7 +458,8 @@ define([
             // Remove dead ends connected to the non-winning edges
             _remove_dead_ends(
               possible_dead_ends[i][road.edges.ns ? 'ew' : 'ns'],
-              road.squares
+              road.squares,
+							road.edges.ns ? 'ew' : 'ns'
             );
           }
 
