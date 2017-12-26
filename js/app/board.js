@@ -303,7 +303,7 @@ define([
         result = '0-F';
       }
     } else if (this.current_move.result && this.current_move.result.type != '1') {
-      this.current_ply.result = null;
+      this.current_move.result = null;
       this.game.update_text(true);
       // Return true to indicate a change was made
       return true;
@@ -883,7 +883,7 @@ define([
     }
 
     // Show original branch
-    if (this.target_branch) {
+    if (this.target_branch && this.target_branch in this.game.branches) {
       this.show_branch(this.game.branches[this.target_branch].original, 0);
     }
 

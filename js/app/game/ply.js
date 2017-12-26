@@ -175,7 +175,7 @@ define(['app/grammar', 'i18n!nls/main', 'lodash'], function (r, t, _) {
         return this.branches[branch];
       } else {
         branch = this.game.branches[branch] || this.game.plys[0];
-        while (branch.branch && branch.original) {
+        while (branch && branch.branch && branch.original) {
           branch = branch.original;
           if (this.branch == branch.branch) {
             return this;
