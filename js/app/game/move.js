@@ -86,7 +86,7 @@ define([
       });
     }
 
-    if (game.config.tps && this.linenum.original == game.config.tps.move+'.') {
+    if (game.config.tps && this.linenum.value == game.config.tps.move) {
       if (game.config.tps.player == 1) {
         this.first_player = (this.is_reversed) ? 2 : 1;
         this.second_player = this.first_player - 1 || 2;
