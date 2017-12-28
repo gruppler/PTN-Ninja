@@ -247,6 +247,19 @@ define([
     return ply;
   };
 
+  Game.prototype.delete_branch = function (move, exclude_branch) {
+    if (move.branch === exclude_branch) {
+      return;
+    }
+    _.remove(this.moves, move);
+    if (move.next) {
+      this.delete_branch(move.next, exclude_branch);
+    }
+    for (var branch in move.branches) {
+      this.delete_branch(move.branches[branch], exclude_branch);
+    }
+  };
+
   Game.prototype.trim_to_current_ply = function (board) {
     var ply = this.plys[board.ply_index]
       , old_tag = _.find(this.tags, { key: 'tps' })
@@ -265,16 +278,50 @@ define([
     );
 
     if (ply) {
-      this.moves.splice(0, ply.move.index + (ply.turn == 2));
-      if (this.moves.length) {
-        this.moves[0].linenum.prefix = prefix;
+      if (ply.turn == 2) {
+        _.remove(this.moves, function (move) {
+          return move.linenum.value <= ply.move.linenum.value
+            || move.branch.indexOf(ply.branch) != 0;
+        });
       } else {
-        this.suffix = prefix;
-      }
-      if (ply.move.plys[0] == ply) {
+        _.remove(this.moves, function (move) {
+          return move.linenum.value < ply.move.linenum.value
+            || move.branch.indexOf(ply.branch) != 0;
+        });
         ply.move.plys[0] = null;
         ply.move.comments1 = null;
         ply.move.comments2 = null;
+        if (ply.next && !_.isEmpty(ply.next.branches)) {
+          for (var branch in ply.next.branches) {
+            ply.next.branches[branch].move.plys[0] = null;
+            ply.next.branches[branch].move.comments1 = null;
+            ply.next.branches[branch].move.comments2 = null;
+          }
+        }
+      }
+
+      // Remove orphaned branches
+      for(var branch in this.branches){
+        var branch_ply = this.branches[branch];
+        var move = branch_ply.move;
+        if (
+          this.moves.indexOf(move.original) < 0 ||
+          move.original.plys[branch_ply.original.turn - 1] != branch_ply.original
+        ) {
+          this.delete_branch(move, ply.branch);
+        }
+      }
+
+      if (this.moves.length) {
+        this.moves[0].linenum.prefix = prefix;
+        if (ply.branch) {
+          var prefix = new RegExp('^'+ply.branch.replace(/\./g, '\\.'));
+          _.each(this.moves, function (move) {
+            move.linenum.text = move.linenum.text.replace(prefix, '');
+          });
+        }
+      } else {
+        this.suffix = prefix;
       }
       board.ply_index = 0;
       board.ply_is_done = false;
@@ -284,6 +331,7 @@ define([
     app.range.pushstate();
 
     bounds = this.plys.length ? this.get_bounds(this.plys[0])[1] : 'end';
+    app.update_ptn_branch();
     app.set_caret(bounds);
     app.scroll_to_ply();
   };
