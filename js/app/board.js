@@ -845,6 +845,8 @@ define([
           $ply2.addClass('active');
         }
       }
+    } else {
+      this.$move.empty();
     }
 
     this.show_branches();
@@ -885,6 +887,7 @@ define([
     this.$branches.empty();
 
     if (!this.current_ply) {
+      this.$branch_button.removeClass('visible');
       return false;
     }
 
