@@ -53,7 +53,7 @@ define([
     this.linenum = new Linenum(parts[1], this, game, expected_linenum);
     this.id = this.linenum.id;
     this.branch = this.linenum.branch;
-    this.is_reversed = (this.linenum.original == '1.');
+    this.is_reversed = (this.linenum.value == 1);
 
     this.prev = game.indexed_moves[
       this.branch + (this.linenum.value - 1)+'.'
