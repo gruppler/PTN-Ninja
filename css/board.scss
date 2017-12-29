@@ -769,6 +769,8 @@ $stone-thickness: 0.3vmin;
 }
 
 .current-move > .controls {
+  white-space: nowrap;
+
   @media (min-width: 431px) {
     button.prev_move, button.next_move {
       opacity: 0;
