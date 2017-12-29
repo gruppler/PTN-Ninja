@@ -845,7 +845,7 @@ define([
           $ply2.addClass('active');
         }
       }
-    } else {
+    } else if (this.$move) {
       this.$move.empty();
     }
 

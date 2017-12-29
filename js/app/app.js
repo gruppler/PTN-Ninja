@@ -18,7 +18,8 @@ define([
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
-  'dialog-polyfill'
+  'dialog-polyfill',
+  'smoothscroll'
 ], function (t, config, hotkeys, menu, Game, Board, readme, sample_ptn, _, $) {
 
   var baseurl = location.origin + location.pathname;
