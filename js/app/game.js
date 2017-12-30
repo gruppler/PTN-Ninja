@@ -203,7 +203,7 @@ define([
     var move_id = branch + linenum + '.'
       , prev_move_id = branch + (linenum - 1) + '.'
       , move = this.indexed_moves[move_id]
-      , prev_move;
+      , prev_move, current_ply;
 
     if (!move) {
       if (prev_move_id in this.indexed_moves) {
@@ -221,13 +221,13 @@ define([
       }
     }
 
-    if (move.plys[turn - 1]) {
-      if (move.plys[turn - 1].text == ply) {
-        app.update_after_ply_insert(move.plys[turn - 1].index, is_done);
-        return move.plys[turn - 1];
+    if (current_ply = move.plys[turn - move.first_turn]) {
+      if (current_ply.text == ply) {
+        app.update_after_ply_insert(current_ply.index, is_done);
+        return current_ply;
       }
       // New branch
-      if (move.plys[turn - 1].original) {
+      if (current_ply.original) {
         move_id = this.get_unique_id(move.original.linenum);
       } else {
         move_id = this.get_unique_id(move.linenum);
