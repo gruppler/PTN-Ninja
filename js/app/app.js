@@ -205,6 +205,7 @@ define([
       }
 
       this.mode = this.game.is_editing ? 'edit' : 'play';
+      this.update_url();
       this.config.update_flags();
       this.board.resize();
     },
@@ -235,6 +236,7 @@ define([
       }
 
       app.update_permalink();
+      app.update_url();
 
       if (is_original) {
         app.clear_undo_history();
@@ -255,6 +257,23 @@ define([
         href: href,
         title: t.n_characters({n: length})
       });
+    },
+
+    update_url: function () {
+      var url = app.game.ptn_compressed;
+
+      if (app.board.current_ply) {
+        url += '&ply='+app.board.current_ply.index;
+        if (app.board.ply_is_done) {
+          url += '!';
+        }
+      }
+
+      if (app.mode == 'edit') {
+        url += '&mode=edit';
+      }
+
+      history.replaceState(undefined, undefined, '?#'+url);
     },
 
     update_ptn: function () {
@@ -331,6 +350,8 @@ define([
       var is_first = !ply || !ply.prev && !app.board.ply_is_done
         , is_last = !ply || !ply.next && app.board.ply_is_done;
 
+      app.update_url();
+
       if (app.$ptn.$ply && app.$ptn.$ply.length) {
         if (app.$ptn.$ply.data('model') != ply) {
           app.$ptn.$ply.prevAll('.linenum').andSelf().removeClass('active');
@@ -386,6 +407,7 @@ define([
       app.board.update_view();
 
       app.update_permalink();
+      app.update_url();
       app.range.pushstate();
       app.scroll_to_ply();
     },
@@ -749,7 +771,8 @@ define([
         reader.onload = function (event) {
           that.board.ply_index = 0;
           that.game.parse(event.target.result, false, true);
-          location.hash = app.hash = that.game.ptn_compressed;
+          app.hash = that.game.ptn_compressed;
+          app.update_url();
         }
         reader.readAsText(file);
       }

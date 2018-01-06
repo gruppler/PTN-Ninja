@@ -376,7 +376,7 @@ requirejs({locale: navigator.language}, [
   });
 
 
-  // Listen for dropped files and hash change
+  // Listen for dropped files
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     app.$window.on('drop', function(event) {
       event.stopPropagation();
@@ -388,9 +388,6 @@ requirejs({locale: navigator.language}, [
     }).on('dragleave', function(event) {
       event.preventDefault();
       event.stopPropagation();
-    // }).on('hashchange', function () {
-    //   app.board.ply_index = 0;
-    //   app.game.parse(app.hash || app.default_ptn, !!app.hash, true);
     });
   }
 
@@ -413,6 +410,22 @@ requirejs({locale: navigator.language}, [
     return false;
   }, 100);
 
+  // Parse URL parameters
+  var ply_index, ply_is_done
+
+  if (app.hash.indexOf('&') >= 0) {
+    ply_index = app.hash.match(/&ply=(\d+!?)/);
+    if (ply_index) {
+      ply_is_done = ply_index[1].indexOf('!') > 0;
+      ply_index = parseInt(ply_index[1], 10);
+    }
+
+    if (app.hash.indexOf('&mode=edit') >= 0) {
+      app.mode = 'edit';
+    }
+
+    app.hash = app.hash.replace(/&.*$/, '');
+  }
 
   // Load the initial PTN
   app.game.parse(
@@ -421,6 +434,11 @@ requirejs({locale: navigator.language}, [
     !sessionStorage.ptn
   );
   app.clear_undo_history();
+
+  // Go to initial ply
+  if (_.isNumber(ply_index)) {
+    app.board.go_to_ply(ply_index, ply_is_done);
+  }
 
 
   // Listen for caret movement
@@ -439,11 +457,11 @@ requirejs({locale: navigator.language}, [
   // Set initial mode
   if (config.animate_board) {
     app.$html.removeClass('animate-board');
-    app.toggle_edit_mode(app.$html.hasClass('error'));
+    app.toggle_edit_mode(app.mode == 'edit' || app.$html.hasClass('error'));
     app.$html.height(); // Update DOM before re-enabling animations
     app.$html.addClass('animate-board');
   } else {
-    app.toggle_edit_mode(app.$html.hasClass('error'));
+    app.toggle_edit_mode(app.mode == 'edit' || app.$html.hasClass('error'));
   }
 
 
