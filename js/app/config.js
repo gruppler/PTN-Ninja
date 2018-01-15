@@ -81,7 +81,8 @@ define(['lodash'], function (_) {
       animate_board: true,
       animate_ui: true,
       show_fab: true,
-      branch_numbering: false
+      branch_numbering: false,
+      last_session: ''
     },
 
     toggle: function (prop, mode, initiator) {

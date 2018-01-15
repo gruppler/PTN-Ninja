@@ -55,7 +55,7 @@ define([
 
     sample_ptn: sample_ptn,
 
-    hash: location.hash.substr(1),
+    hash: (location.hash || config.last_session).substr(1),
 
     tpl: {
       dialog: _.template(
@@ -274,6 +274,7 @@ define([
       }
 
       history.replaceState(undefined, undefined, '?#'+url);
+      config.set('last_session', location.hash);
     },
 
     update_ptn: function () {

@@ -252,6 +252,11 @@ requirejs({locale: navigator.language}, [
   app.$permalink = $('#permalink');
   app.game.on_parse_end(app.update_after_parse);
 
+  // Store game before unloading
+  app.$window.on('unload', function () {
+    app.config.set('last_session', location.hash);
+  });
+
 
   // Re-render $viewer after board initialization
   app.board.on_init(function () {
