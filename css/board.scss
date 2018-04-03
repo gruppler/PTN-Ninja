@@ -202,15 +202,19 @@ $stone-thickness: 0.3vmin;
       > div {
         opacity: 0;
         position: absolute;
-        top: 35%;
-        bottom: 35%;
-        left: 35%;
-        right: 35%;
-        will-change: opacity;
+        top: 50%;
+        bottom: 50%;
+        left: 50%;
+        right: 50%;
+        will-change: opacity, left, right;
 
         html.animate-board & {
           transition: opacity $time-smooth/2 linear,
-            background-color $time-smooth linear;
+            background-color $time-smooth linear,
+            left $time-smooth $natural,
+            right $time-smooth $natural,
+            top $time-smooth $natural,
+            bottom $time-smooth $natural;
         }
       }
 
@@ -221,17 +225,27 @@ $stone-thickness: 0.3vmin;
     }
 
     html.show-roads &.up .road .up,
-    html.show-roads &.down .road .down,
+    html.show-roads &.down .road .down {
+      opacity: 1;
+      left: 35%;
+      right: 35%;
+    }
     html.show-roads &.left .road .left,
     html.show-roads &.right .road .right {
       opacity: 1;
+      top: 35%;
+      bottom: 35%;
     }
     html.animate-board.show-roads &.up .road .up,
     html.animate-board.show-roads &.down .road .down,
     html.animate-board.show-roads &.left .road .left,
     html.animate-board.show-roads &.right .road .right {
       transition: opacity $time-smooth/2 linear $time-smooth/2,
-        background-color $time-smooth linear;
+        background-color $time-smooth linear,
+        left $time-smooth $natural,
+        right $time-smooth $natural,
+        top $time-smooth $natural,
+        bottom $time-smooth $natural;
     }
 
     &.p1 .road > div { background-color: $primary-color-100 }
