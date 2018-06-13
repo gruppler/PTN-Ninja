@@ -111,7 +111,10 @@ define([
 
       // Header
       header = header.match(r.grammar.tag);
-      this.config = {};
+      this.config = {
+        player1: t.Player1_name,
+        player2: t.Player2_name
+      };
       for (var i = 0; i < header.length; i++) {
         new Tag(header[i], this);
       }

@@ -7,14 +7,14 @@
 define(['lodash'], function (_) {
 
   var required_tags = {
-    'player1': /^(.*)$/,
-    'player2': /^(.*)$/,
-    'date': /^(\d\d\d\d)\.(\d\d?)\.(\d\d?)$/,
-    'size': /^([3-9])$/,
-    'result': /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|)$/
+    'size': /^([3-9])$/
   };
 
   var other_tags = {
+    'player1': /^(.*)$/,
+    'player2': /^(.*)$/,
+    'date': /^(\d\d\d\d)\.(\d\d?)\.(\d\d?)$/,
+    'result': /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|)$/,
     'event': /^.*$/,
     'site': /^.*$/,
     'round': /^\d+$/,
