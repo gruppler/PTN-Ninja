@@ -106,6 +106,6 @@ define({
       unrecognized_tag: "Unrecognized tag: \"<b><%=tag%></b>\""
     }
 
-  }
-
+  },
+  "cs-CZ": true
 });
