@@ -211,10 +211,10 @@ $stone-thickness: 0.3vmin;
         html.animate-board & {
           transition: opacity $time-smooth/2 linear,
             background-color $time-smooth linear,
-            left $time-smooth $natural,
-            right $time-smooth $natural,
-            top $time-smooth $natural,
-            bottom $time-smooth $natural;
+            left $time-smooth/2 $natural,
+            right $time-smooth/2 $natural,
+            top $time-smooth/2 $natural,
+            bottom $time-smooth/2 $natural;
         }
       }
 
@@ -242,10 +242,10 @@ $stone-thickness: 0.3vmin;
     html.animate-board.show-roads &.right .road .right {
       transition: opacity $time-smooth/2 linear $time-smooth/2,
         background-color $time-smooth linear,
-        left $time-smooth $natural,
-        right $time-smooth $natural,
-        top $time-smooth $natural,
-        bottom $time-smooth $natural;
+        left $time-smooth/2 $natural $time-smooth/2,
+        right $time-smooth/2 $natural $time-smooth/2,
+        top $time-smooth/2 $natural $time-smooth/2,
+        bottom $time-smooth/2 $natural $time-smooth/2;
     }
 
     &.p1 .road > div { background-color: $primary-color-100 }
