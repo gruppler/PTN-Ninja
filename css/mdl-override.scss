@@ -96,8 +96,12 @@ a {
   opacity: 0;
 }
 
-.mdl-layout__drawer nav {
-  border-top: 1px solid $divider-color;
+.mdl-layout__drawer {
+  width: $menu-width;
+  transform: translateX(-$menu-width);
+  nav {
+    border-top: 1px solid $divider-color;
+  }
 }
 
 .mdl-layout__drawer, .mdl-layout__obfuscator {

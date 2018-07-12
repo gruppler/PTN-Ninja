@@ -107,5 +107,5 @@ define({
     }
 
   },
-  "cs-CZ": true
+  "cs": true
 });
