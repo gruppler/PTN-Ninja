@@ -39,7 +39,7 @@ define([
     items: [{
       label: t.About_App,
       icon: 'help',
-      onclick: 'app.about()',
+      onclick: 'app.about()'
     },{
       label: t.Permalink,
       icon: 'link',
@@ -61,7 +61,7 @@ define([
     },{
       label: t.New_Game,
       icon: 'insert_drive_file',
-      onclick: 'app.game.parse(app.default_ptn, true)'
+      onclick: 'app.new_game()'
     },{
       label: t.Load_Sample_Game,
       icon: 'apps',

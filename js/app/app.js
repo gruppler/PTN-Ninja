@@ -25,9 +25,11 @@ define([
   var baseurl = location.origin + location.pathname;
 
   var d = new Date()
-    , today = d.getFullYear() +'.'+
-    _.padStart(d.getMonth()+1,2,0) +'.'+
-    _.padStart(d.getDate(),2,0)
+    , today = function () {
+        return d.getFullYear() +'.'+
+        _.padStart(d.getMonth()+1,2,0) +'.'+
+        _.padStart(d.getDate(),2,0);
+      }
     , a = 'a'.charCodeAt(0)
     , nop = function () {};
 
@@ -51,7 +53,9 @@ define([
     board: new Board(),
     game: new Game(new Board()),
 
-    default_ptn: '[Date "'+today+'"]\n[Player1 "'+t.Player1_name+'"]\n[Player2 "'+t.Player2_name+'"]\n[Result ""]\n[Size "5"]\n\n1. ',
+    default_ptn: function () {
+      return '[Date "'+today()+'"]\n[Player1 "'+config.player1+'"]\n[Player2 "'+config.player2+'"]\n[Size "'+config.board_size+'"]\n[Result ""]\n\n1. ';
+    },
 
     sample_ptn: sample_ptn,
 
@@ -87,55 +91,67 @@ define([
 
     current_dialogs: [],
 
-    dialog: function (title, content, actions, className) {
+    dialog: function (opt) {
       var that = this;
 
       var $dialog = $(
             this.tpl.dialog({
-              title: title,
-              content: content,
-              actions: actions || []
+              title: opt.title,
+              content: opt.content,
+              actions: opt.actions || []
             })
-          ).addClass(className).appendTo(this.$body);
+          ).addClass(opt.className).appendTo(this.$body);
 
       var dialog = $dialog[0]
         , $actions = $dialog.find('.mdl-dialog__actions button')
         , $action;
 
+      function close () {
+        dialog.close();
+        _.pull(that.current_dialogs, dialog);
+        $dialog.remove();
+      }
+
       if (!dialog.showModal) {
         dialogPolyfill.registerDialog(dialog);
       }
 
-      _.each(actions, function (action, i) {
+      $dialog.find('[class^=mdl]').each(function (i, element) {
+        componentHandler.upgradeElement(element);
+      });
+
+      _.each(opt.actions, function (action, i) {
         var value = _.has(action, 'value') ? action.value : i
           , callback = _.has(action, 'callback') ? action.callback : false;
 
         $action = $actions.eq(i);
 
-        $actions.eq(i).click(function () {
-          dialog.close();
-          _.pull(that.current_dialogs, dialog);
-          $dialog.remove();
-        });
-
         if (callback) {
           $action.click(function () {
-            callback(value);
+            callback(value, $dialog);
           });
         }
+        $actions.eq(i).click(close);
       });
 
       dialog.showModal();
       this.current_dialogs.push(dialog);
+      $dialog.find('input:eq(0)').focus();
+      if (opt.callback) {
+        $dialog.find('form').submit(function (event) {
+          opt.callback(event);
+          close();
+        });
+      }
 
       return dialog;
     },
 
     confirm: function (text, callback) {
-      var dialog = this.dialog(
-        text.title,
-        text.content,
-        [{
+      var dialog = this.dialog({
+        title: text.title,
+        content: text.content,
+        actions: [{
           label: t.OK,
           value: true,
           callback: callback
@@ -144,18 +160,62 @@ define([
           value: false,
           callback: callback
         }]
-      );
+      });
 
       return dialog;
     },
 
     about: function () {
-      this.dialog(
-        t.app_title,
-        readme,
-        [{label: t.Close}],
-        'scrolling'
-      );
+      this.dialog({
+        title: t.app_title,
+        content: readme,
+        actions: [{label: t.Close}],
+        className: 'scrolling'
+      });
+    },
+
+    create_new_game: function (event) {
+      $(event.target).find('input').each(function (i, input) {
+        if (input.name) {
+          config.set(input.name, input.value);
+        }
+      })
+      app.game.parse(app.default_ptn(), true);
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    },
+
+    new_game: function () {
+      this.dialog({
+        title: t.New_Game,
+        content: '<form>'+
+          '<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">'+
+            '<input class="mdl-textfield__input" type="number" name="board_size" min="3" max="9" pattern="[3-9]" value="'+config.board_size+'" id="board_size">'+
+            '<label class="mdl-textfield__label" for="board_size">'+t.Size+'</label>'+
+          '</div>'+
+          '<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">'+
+            '<input class="mdl-textfield__input" type="text" name="player1" value="'+config.player1+'" id="player1">'+
+            '<label class="mdl-textfield__label" for="player1">'+t.Player1+'</label>'+
+          '</div>'+
+          '<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">'+
+            '<input class="mdl-textfield__input" type="text" name="player2" value="'+config.player2+'" id="player2">'+
+            '<label class="mdl-textfield__label" for="player2">'+t.Player2+'</label>'+
+          '</div>'+
+          '<input type="submit" hidden>'+
+        '</form>',
+        callback: function (event) {
+          app.create_new_game(event);
+        },
+        actions: [{
+          label: t.OK,
+          callback: function (n, $dialog) {
+            $dialog.find('form').submit();
+          }
+        }, {
+          label: t.Cancel
+        }],
+      });
     },
 
     revert_game: function (confirmed) {

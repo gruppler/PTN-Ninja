@@ -4,7 +4,7 @@
 
 'use strict';
 
-define(['lodash'], function (_) {
+define(['i18n!nls/main', 'lodash'], function (t, _) {
 
   var mobile_width = 1024
     , is_in_iframe = top.location != self.location
@@ -73,6 +73,9 @@ define(['lodash'], function (_) {
       },
 
       // Board
+      player1: t.Player1_name,
+      player2: t.Player2_name,
+      board_size: 5,
       board_rotation: [0, 0.85, 0.85],
       board_max_angle: 30,
       board_rotate_sensitivity: 3,

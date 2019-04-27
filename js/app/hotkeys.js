@@ -50,12 +50,6 @@ define(['app/messages'], function (Messages) {
         event.stopPropagation();
       },
 
-      '^d': function (event, $focus, $parent) {
-        app.game.parse(app.default_ptn, true);
-        event.preventDefault();
-        event.stopPropagation();
-      },
-
       '^z': function (event) {
         app.undo(event);
         event.preventDefault();
@@ -160,6 +154,12 @@ define(['app/messages'], function (Messages) {
 
     // Play Mode
     play: {
+
+      'n': function (event, $focus, $parent) {
+        app.new_game();
+        event.preventDefault();
+        event.stopPropagation();
+      },
 
       'Spacebar': function (event, $focus, $parent) {
         app.board.playpause(event);
