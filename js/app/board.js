@@ -1351,15 +1351,15 @@ define([
 
     if (!this.current_ply) {
       return false;
+    } else if (!this.ply_is_done) {
+      return this.do_ply();
     } else if (this.current_ply.next) {
       this.go_to_ply(
         this.current_ply.next.get_branch(this.target_branch).index
-        , false
+        , true
       );
       this.on_ply();
       return true;
-    } else {
-      return this.do_ply();
     }
   };
 
@@ -1415,13 +1415,6 @@ define([
       // Go to end of move
       next = this.current_move.get_branch(this.target_branch);
       this.go_to_ply(_.last(next.plys).index, true);
-    }
-    if (this.current_ply.next) {
-      this.set_current_ply(
-        this.current_ply.next.get_branch(this.target_branch).index
-        , false
-      );
-      this.on_ply();
     }
   };
 

@@ -780,8 +780,7 @@ define([
           }
           app.board.go_to_ply(
             ply.index,
-            app.board.ply_index == ply.index && !app.board.ply_is_done
-              || !event || event.type == 'keyup'
+            app.board.ply_index != ply.index || !app.board.ply_is_done || !event || event.type == 'keyup'
           );
         }
 
