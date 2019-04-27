@@ -31,7 +31,16 @@ define([
         _.padStart(d.getDate(),2,0);
       }
     , a = 'a'.charCodeAt(0)
-    , nop = function () {};
+    , nop = function () {}
+    , default_ptn_tpl = _.template(
+        '[Date "<%=today%>"]\n'+
+        '[Player1 "<%=player1%>"]\n'+
+        '[Player2 "<%=player2%>"]\n'+
+        '[Size "<%=size%>"]\n'+
+        '[Result ""]\n'+
+        '\n'+
+        '1. '
+      );
 
   var app = {
 
@@ -54,7 +63,12 @@ define([
     game: new Game(new Board()),
 
     default_ptn: function () {
-      return '[Date "'+today()+'"]\n[Player1 "'+config.player1+'"]\n[Player2 "'+config.player2+'"]\n[Size "'+config.board_size+'"]\n[Result ""]\n\n1. ';
+      return default_ptn_tpl({
+        today: today(),
+        player1: config.player1,
+        player2: config.player2,
+        size: config.board_size
+      });
     },
 
     sample_ptn: sample_ptn,

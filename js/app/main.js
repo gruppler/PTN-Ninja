@@ -434,7 +434,7 @@ requirejs({locale: navigator.language}, [
 
   // Load the initial PTN
   app.game.parse(
-    app.hash || app.default_ptn,
+    app.hash || app.default_ptn(),
     !!app.hash,
     !sessionStorage.ptn
   );

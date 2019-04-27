@@ -102,12 +102,16 @@ define(['i18n!nls/main', 'lodash'], function (t, _) {
 
       if (mode) {
         is_first_change = _.isUndefined(localStorage[mode+'.'+prop]);
-        this[mode][prop] = value;
-        localStorage[mode+'.'+prop] = JSON.stringify(value);
+        if (this[mode][prop] != value) {
+          this[mode][prop] = value;
+          localStorage[mode+'.'+prop] = JSON.stringify(value);
+        }
       } else {
         is_first_change = _.isUndefined(localStorage[prop]);
-        this[prop] = value;
-        localStorage[prop] = JSON.stringify(value);
+        if (this[prop] != value) {
+          this[prop] = value;
+          localStorage[prop] = JSON.stringify(value);
+        }
       }
 
       this.on_change(prop, null, mode, initiator, is_first_change);
