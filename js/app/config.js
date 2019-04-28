@@ -84,7 +84,7 @@ define(['i18n!nls/main', 'lodash'], function (t, _) {
       animate_board: true,
       animate_ui: true,
       show_fab: true,
-      branch_numbering: false,
+      branch_numbering: true,
       last_session: ''
     },
 
