@@ -9,7 +9,7 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddi
 
 If you want to support this project, you can...
 
-* [Report an issue](https://github.com/gruppler/PTN-Ninja/issues/)
+* [Report an issue or feature request](https://github.com/gruppler/PTN-Ninja/issues/)
 * [Become a Patron](https://www.patreon.com/gruppler)
 * [Donate USD](https://www.paypal.me/gruppler)
 
@@ -69,7 +69,6 @@ Key|Action
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>Space</kbd>|Toggle Edit/Play Mode
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>s</kbd>|Save .ptn File
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>o</kbd>|Open .ptn File
-<kbd>Ctrl or &#x2318;</kbd> + <kbd>d</kbd>|Load Default PTN
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>z</kbd>|Undo
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>Shift</kbd> + <kbd>z</kbd>|Redo
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>y</kbd>|Redo
@@ -87,6 +86,7 @@ Key|Action
 ### Play Mode
 Key|Action
 :--|:--
+<kbd>n</kbd>|New Game
 <kbd>Space</kbd>|Play/Pause
 <kbd>&larr;</kbd>|Previous Ply
 <kbd>&rarr;</kbd>|Next Ply
