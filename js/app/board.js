@@ -857,7 +857,7 @@ define([
     var $branch
       , is_selected = ply.is_in_branch(this.target_branch);
 
-    if (!is_selected) {
+    if (!is_selected || this.ply_is_done) {
       if (
         key > 0
         || ply == this.current_ply.original && !this.ply_is_done
@@ -881,6 +881,7 @@ define([
 
   Board.prototype.show_branches = function () {
     var key = 1
+      , original
       , branches = {}
       , branch;
 
@@ -893,12 +894,13 @@ define([
 
     // Show original branch
     if (this.target_branch && this.target_branch in this.game.branches) {
-      this.show_branch(this.game.branches[this.target_branch].original, 0);
+      original = this.game.branches[this.target_branch].original;
     }
 
     // Show alternative branches
     if (!this.ply_is_done) {
       if (!_.isEmpty(this.current_ply.branches)) {
+        original = this.current_ply;
         branches = _.assign(branches, this.current_ply.branches);
       }
       if (
@@ -909,6 +911,7 @@ define([
       }
     } else if (this.current_ply.next) {
       if (!_.isEmpty(this.current_ply.next.branches)) {
+        original = this.current_ply.next;
         branches = _.assign(branches, this.current_ply.next.branches);
       }
       if (
@@ -917,6 +920,11 @@ define([
       ) {
         branches = _.assign(branches, this.current_ply.next.original.branches);
       }
+    }
+
+    // Show original branch
+    if (original) {
+      this.show_branch(original, 0);
     }
 
     for (branch in branches) {
