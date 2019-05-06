@@ -171,7 +171,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     if (!this.$view) {
       this.$view = $(this.tpl.piece(this));
       this.$stone = this.$view.find('.stone');
-      this.$captive = this.$view.find('.captive');
       this.$view.data('model', this);
     } else {
       this.$view[0].style = this.tpl.location(this);
@@ -207,7 +206,6 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       '<div class="<%=tpl.piece_class(obj)%>" '+
         ' style="<%=tpl.location(obj)%>"'+
       '>'+
-        '<div class="captive p<%=player%>"></div>'+
         '<div class="<%=tpl.stone_class(obj)%>"></div>'+
       '</div>'
     )

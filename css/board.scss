@@ -281,12 +281,24 @@ $stone-thickness: 0.3vmin;
       }
     }
 
-    .stone, .captive {
+    .stone {
       border: 1px solid $blackish;
+      width: 50%;
+      height: 50%;
+      margin: 25%;
+      bottom: 0;
+      right: 0;
+      border-radius: 10%;
+      position: absolute;
+      will-change: transform, width, height, border-radius;
 
       html.board-shadows & {
         border-color: rgba(0, 0, 0, 0);
         box-shadow: 0 0.5px 2.5px rgba(0,0,0,0.5);
+      }
+
+      html.animate-board & {
+        transition: all $time-smooth $natural;
       }
 
       &.p1 {
@@ -299,29 +311,19 @@ $stone-thickness: 0.3vmin;
       }
     }
 
-    &.immovable {
-      .stone { opacity: 0; }
-      .captive { opacity: 1; }
-    }
-
-    .stone {
-      width: 50%;
-      height: 50%;
-      margin: 25%;
-      border-radius: 10%;
-      position: relative;
-      will-change: transform;
-
-      html.animate-board & {
-        transition: all $time-smooth $natural;
-      }
+    html:not(.board-3d) &.immovable .stone {
+      bottom: 0;
+      right: -18%;
+      width: 15%;
+      height: 7.5%;
+      border-radius: 15%/30%;
     }
 
     &:not(.unplayed) .stone.S {
       width: 18.75%;
+      right: 15%;
       border-radius: 27%/10%;
-      margin-left: 40.625%;
-      will-change: transform, width, border-radius, margin-left, box-shadow;
+      will-change: transform, width, border-radius, box-shadow;
 
       &.p1 {
         background-color: $primary-color-50;
@@ -360,38 +362,8 @@ $stone-thickness: 0.3vmin;
       }
     }
 
-    .captive {
-      position: absolute;
-      bottom: 25%;
-      right: 25%;
-      width: 15%;
-      height: 7.5%;
-      opacity: 0;
-      border-radius: 15%/30%;
-      will-change: opacity, right;
-
-      html.animate-board & {
-        transition: all $time-smooth $natural;
-      }
-    }
-
-    &.immovable {
-      .stone {
-        opacity: 0;
-
-        html.board-3d & {
-          opacity: 0.25;
-        }
-      }
-
-      .captive {
-        opacity: 1;
-        right: 5%;
-
-        html.board-3d & {
-          opacity: 0;
-        }
-      }
+    html.board-3d &.immovable .stone {
+      opacity: 0.25;
     }
   }
 }
