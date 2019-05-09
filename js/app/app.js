@@ -341,6 +341,9 @@ define([
         if (app.board.ply_is_done) {
           url += '!';
         }
+        if (app.board.target_branch) {
+          url += '&branch='+app.board.target_branch;
+        }
       }
 
       if (app.mode == 'edit') {

@@ -416,7 +416,9 @@ requirejs({locale: navigator.language}, [
   }, 100);
 
   // Parse URL parameters
-  var ply_index, ply_is_done
+  var ply_index
+    , ply_is_done
+    , target_branch = null;
 
   if (app.hash.indexOf('&') >= 0) {
     ply_index = app.hash.match(/&ply=(\d+!?)/);
@@ -427,6 +429,10 @@ requirejs({locale: navigator.language}, [
 
     if (app.hash.indexOf('&mode=edit') >= 0) {
       app.mode = 'edit';
+    }
+
+    if (app.hash.indexOf('&branch=') >= 0) {
+      target_branch = app.hash.match(/&branch=([0-9.-]+)/)[1];
     }
 
     app.hash = app.hash.replace(/&.*$/, '');
@@ -442,6 +448,7 @@ requirejs({locale: navigator.language}, [
 
   // Go to initial ply
   if (_.isNumber(ply_index)) {
+    app.board.target_branch = target_branch;
     app.board.go_to_ply(ply_index, ply_is_done);
   }
 
