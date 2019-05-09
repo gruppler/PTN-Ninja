@@ -12,7 +12,7 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
     this.col = col;
     this.row = row;
     this.coord = app.square_coord([col, row]);
-    this.color = (row % 2 != col % 2) ? 'dark' : 'light';
+    this.color = (row % 2 != col % 2) ? 'light' : 'dark';
     this.piece = null;
     this.player = 0;
     this.neighbors = {};
