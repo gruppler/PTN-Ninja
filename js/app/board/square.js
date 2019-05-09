@@ -280,7 +280,9 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
           }
         }
         this.board.go_to_ply(this.board.ply_index, false);
-        this.board.current_move.plys.pop();
+        if (!piece.ply.next) {
+          this.board.current_move.plys.pop();
+        }
         this.board.game.insert_ply(
           stone + this.coord,
           this.board.current_branch,
