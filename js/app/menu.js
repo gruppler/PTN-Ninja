@@ -65,7 +65,7 @@ define([
     },{
       label: t.Load_Sample_Game,
       icon: 'apps',
-      onclick: 'app.game.parse(app.sample_ptn, true)'
+      onclick: 'app.game.parse(app.sample_ptn, true); app.clear_undo_history();'
     },{
       label: t.Board_3D,
       type: 'checkbox',
