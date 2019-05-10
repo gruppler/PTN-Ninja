@@ -28,6 +28,7 @@ $accent-color-900: #33691E;
 
 $divider-color: rgba(0,0,0,0.12);
 $branch-color: #2196F3;
+$branch-color-selected: mix($branch-color, $accent-color-500, 50);
 
 $success-color: #4CAF50;
 $success-text-color: $blackish;

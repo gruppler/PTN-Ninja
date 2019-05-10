@@ -195,9 +195,9 @@ define(['app/config', 'i18n!nls/main', 'lodash'], function (config, t, _) {
       }
 
       if (this.$view.$option.text().length) {
-        this.$view.$option.text(this.$view.$option.text()+', '+option);
+        this.$view.$option.html(this.$view.$option.html()+', '+option);
       } else {
-        this.$view.$option.text(option);
+        this.$view.$option.html(option);
       }
     }
   };

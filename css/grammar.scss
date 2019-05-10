@@ -344,11 +344,14 @@ $ptn-bg-radius: 0.2em;
 
     .branch-option {
       &.other-branch {
-        opacity: 0.8;
+        opacity: 0.6;
+        .linenum {
+          background-color: $branch-color;
+        }
       }
 
       .linenum {
-        background-color: $branch-color;
+        background-color: $branch-color-selected;
       }
     }
   }

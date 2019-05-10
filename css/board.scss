@@ -188,6 +188,11 @@ $stone-thickness: 0.3vmin;
       font-size: 0.8em;
       line-height: 1em;
       display: none;
+      color: rgba($primary-color-text, 0.6);
+
+      strong {
+        color: $primary-color-text;
+      }
 
       &:empty {
         display: none !important;

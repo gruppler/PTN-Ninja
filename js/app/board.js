@@ -857,17 +857,17 @@ define([
     var $branch
       , is_selected = ply.is_in_branch(this.target_branch);
 
-    if (!is_selected || this.ply_is_done) {
-      if (
-        key > 0
-        || ply == this.current_ply.original && !this.ply_is_done
-        || ply == this.current_ply.next && this.ply_is_done
-      ) {
-        _.invokeMap(_.pick(this.squares, ply.squares), 'set_option', '');
-        this.squares[ply.square].set_option(key);
-      }
-      this.branch_options.push(ply);
+    if (
+      key > 0
+      || this.ply_is_done && ply == this.current_ply.next
+      || !this.ply_is_done && (
+        ply == this.current_ply || ply == this.current_ply.original
+      )
+    ) {
+      _.invokeMap(_.pick(this.squares, ply.squares), 'set_option', '');
+      this.squares[ply.square].set_option(is_selected ? '<strong>'+key+'</strong>' : key);
     }
+    this.branch_options.push(ply);
 
     $branch = $(this.tpl.branch({
       move: ply.move,
@@ -893,7 +893,10 @@ define([
     }
 
     // Show original branch
-    if (this.target_branch && this.target_branch in this.game.branches) {
+    if (
+      this.target_branch
+      && this.current_branch.indexOf(this.target_branch) >= 0
+    ) {
       original = this.game.branches[this.target_branch].original;
     }
 
@@ -907,6 +910,7 @@ define([
         this.current_ply.original
         && !_.isEmpty(this.current_ply.original.branches)
       ) {
+        original = this.current_ply.original;
         branches = _.assign(branches, this.current_ply.original.branches);
       }
     } else if (this.current_ply.next) {
@@ -918,6 +922,7 @@ define([
         this.current_ply.next.original
         && !_.isEmpty(this.current_ply.next.original.branches)
       ) {
+        original = this.current_ply.next.original;
         branches = _.assign(branches, this.current_ply.next.original.branches);
       }
     }
@@ -959,9 +964,11 @@ define([
   };
 
 
-  Board.prototype.set_active_squares = function (squares) {
+  Board.prototype.set_active_squares = function (squares, preseve_existing) {
     if (this.$view) {
-      this.$squares.children().removeClass('active');
+      if (!preseve_existing) {
+        this.$squares.children().removeClass('active');
+      }
       if (squares && squares.length) {
         if (_.isString(squares[0])) {
           squares = _.pick(this.squares, squares);
@@ -982,6 +989,7 @@ define([
 
 
   Board.prototype.update_active_squares = function () {
+    var next_branch;
     if (this.current_ply) {
       if (
         this.current_ply.result
@@ -991,6 +999,13 @@ define([
         this.set_active_squares(this.current_ply.result.roads.squares[this.current_ply.result.victor]);
       } else {
         this.set_active_squares(this.current_ply.squares);
+
+        if (this.current_ply.next) {
+          next_branch = this.current_ply.next.get_branch(this.target_branch);
+          if (this.branch_options.indexOf(next_branch) >= 0) {
+            this.set_active_squares(next_branch.squares, true);
+          }
+        }
       }
     } else {
       this.set_active_squares();
