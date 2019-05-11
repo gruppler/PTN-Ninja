@@ -79,8 +79,11 @@ Key|Action
 Key|Action
 :--|:--
 <kbd>Ctrl or &#x2318;</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current ply*
+<kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>c</kbd>|Trim to current board**
 
-\*This deletes all plies before and including the current ply, storing the current board position in a TPS tag in the header.
+\*This deletes all plies before and including the current ply, storing the current board state in a TPS tag in the header.
+
+\*\*This deletes all moves, storing the current board state in a TPS tag in the header.
 
 ---
 ### Play Mode

@@ -116,6 +116,10 @@ define([
       icon: 'content_cut',
       onclick: 'app.board.trim_to_current_ply()'
     },{
+      label: t.Trim_to_current_board,
+      icon: 'content_cut',
+      onclick: 'app.board.trim_to_current_ply(true)'
+    },{
       label: t.Revert_Game,
       icon: 'restore',
       onclick: 'app.revert_game()'

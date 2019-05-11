@@ -66,6 +66,7 @@ define({
     Tak: "Tak",
     Time: "Time",
     Tinue: "Tinuë",
+    Trim_to_current_board: "Trim to current board",
     Trim_to_current_ply: "Trim to current ply",
     Undo: "Undo",
     Unplayed_Pieces: "Unplayed Pieces",

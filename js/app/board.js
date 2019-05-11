@@ -254,9 +254,9 @@ define([
   };
 
 
-  Board.prototype.trim_to_current_ply = function () {
+  Board.prototype.trim_to_current_ply = function (remove_all) {
     if (this.game.plys.length) {
-      this.game.trim_to_current_ply(this);
+      this.game.trim_to_current_ply(this, remove_all);
     }
   };
 
@@ -488,8 +488,6 @@ define([
     var ply = this.current_ply
       , squares = []
       , i, j;
-
-    this.do_ply();
 
     for (i = 0; i < this.size; i++) {
       squares[i] = [];

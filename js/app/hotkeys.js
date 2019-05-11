@@ -85,6 +85,12 @@ define(['app/messages'], function (Messages) {
         event.preventDefault();
       },
 
+      '%C': function (event, $focus, $parent) {
+        app.board.trim_to_current_ply(true);
+        event.stopPropagation();
+        event.preventDefault();
+      },
+
       '[': function (event, $focus, $parent) {
         if ($focus.closest('.header').length) {
           app.insert_text(']');

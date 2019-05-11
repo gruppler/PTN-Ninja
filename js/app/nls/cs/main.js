@@ -64,6 +64,7 @@ define({
   Tak: "Tak",
   Time: "Čas",
   Tinue: "Tinuë",
+  Trim_to_current_board: "Oříznout na aktuální desku",
   Trim_to_current_ply: "Oříznout na aktuální vrstvu",
   Undo: "Krok zpět",
   Unplayed_Pieces: "Nezahrané figurky",

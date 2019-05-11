@@ -263,7 +263,7 @@ define([
     }
   };
 
-  Game.prototype.trim_to_current_ply = function (board) {
+  Game.prototype.trim_to_current_ply = function (board, remove_all) {
     var ply = this.plys[board.ply_index]
       , old_tag = _.find(this.tags, { key: 'tps' })
       , prefix, bounds;
@@ -274,58 +274,68 @@ define([
       return;
     }
 
+    if (!remove_all) {
+      board.do_ply();
+    }
+
     new Tag(
       '\n[TPS "'+board.to_tps()+'"]',
       this,
       old_tag ? old_tag.index : false
     );
 
-    if (ply) {
-      if (ply.turn == 2) {
-        _.remove(this.moves, function (move) {
-          return move.linenum.value <= ply.move.linenum.value
-            || move.branch.indexOf(ply.branch) != 0;
-        });
-      } else {
-        _.remove(this.moves, function (move) {
-          return move.linenum.value < ply.move.linenum.value
-            || move.branch.indexOf(ply.branch) != 0;
-        });
-        ply.move.plys[0] = null;
-        ply.move.comments1 = null;
-        ply.move.comments2 = null;
-        if (ply.next && !_.isEmpty(ply.next.branches)) {
-          for (var branch in ply.next.branches) {
-            ply.next.branches[branch].move.plys[0] = null;
-            ply.next.branches[branch].move.comments1 = null;
-            ply.next.branches[branch].move.comments2 = null;
+    if (remove_all) {
+      this.moves.length = 0;
+      this.suffix = prefix;
+    } else {
+      if (ply) {
+        if (ply.turn == 2) {
+          _.remove(this.moves, function (move) {
+            return move.linenum.value <= ply.move.linenum.value
+              || move.branch.indexOf(ply.branch) != 0;
+          });
+        } else {
+          _.remove(this.moves, function (move) {
+            return move.linenum.value < ply.move.linenum.value
+              || move.branch.indexOf(ply.branch) != 0;
+          });
+          ply.move.plys[0] = null;
+          ply.move.comments1 = null;
+          ply.move.comments2 = null;
+          if (ply.next && !_.isEmpty(ply.next.branches)) {
+            for (var branch in ply.next.branches) {
+              ply.next.branches[branch].move.plys[0] = null;
+              ply.next.branches[branch].move.comments1 = null;
+              ply.next.branches[branch].move.comments2 = null;
+            }
           }
         }
-      }
 
-      // Remove orphaned branches
-      for(var branch in this.branches){
-        var branch_ply = this.branches[branch];
-        var move = branch_ply.move;
-        if (
-          this.moves.indexOf(move.original) < 0 ||
-          move.original.plys[branch_ply.original.turn - 1] != branch_ply.original
-        ) {
-          this.delete_branch(move, ply.branch);
+        // Remove orphaned branches
+        for(var branch in this.branches){
+          var branch_ply = this.branches[branch];
+          var move = branch_ply.move;
+          if (
+            this.moves.indexOf(move.original) < 0 ||
+            move.original.plys[branch_ply.original.turn - 1] != branch_ply.original
+          ) {
+            this.delete_branch(move, ply.branch);
+          }
+        }
+
+        if (this.moves.length) {
+          this.moves[0].linenum.prefix = prefix;
+          if (ply.branch) {
+            var prefix = new RegExp('^'+ply.branch.replace(/\./g, '\\.'));
+            _.each(this.moves, function (move) {
+              move.linenum.text = move.linenum.text.replace(prefix, '');
+            });
+          }
+        } else {
+          this.suffix = prefix;
         }
       }
 
-      if (this.moves.length) {
-        this.moves[0].linenum.prefix = prefix;
-        if (ply.branch) {
-          var prefix = new RegExp('^'+ply.branch.replace(/\./g, '\\.'));
-          _.each(this.moves, function (move) {
-            move.linenum.text = move.linenum.text.replace(prefix, '');
-          });
-        }
-      } else {
-        this.suffix = prefix;
-      }
       board.ply_index = 0;
       board.ply_is_done = false;
     }
