@@ -505,9 +505,8 @@ define([
     });
 
     return squares + ' ' +
-      (ply ? ply.turn - 1 || 2 : 1) +
-      ' ' +
-      (ply.move.linenum.value + (ply.turn == 2));
+      this.turn + ' ' +
+      (ply.move.linenum.value + 1*(this.turn == 1 && this.ply_is_done));
   };
 
 
