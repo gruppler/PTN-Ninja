@@ -15,12 +15,12 @@ define([
   'text!../../sample.ptn',
   'lodash',
   'jquery',
+  'dialog-polyfill',
   'bililiteRange',
   'bililiteRange.undo',
   'bililiteRange.fancytext',
-  'dialog-polyfill',
   'smoothscroll'
-], function (t, config, hotkeys, menu, Game, Board, readme, sample_ptn, _, $) {
+], function (t, config, hotkeys, menu, Game, Board, readme, sample_ptn, _, $, dialogPolyfill) {
 
   var baseurl = location.origin + location.pathname;
 
