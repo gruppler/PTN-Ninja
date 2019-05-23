@@ -49,10 +49,10 @@ js/lib/showdown.js
 js/lib/mdown.js
 mdown!app/../../readme.md
 text!app/../../sample.ptn
+js/lib/dialog-polyfill.js
 js/lib/bililiteRange.js
 js/lib/bililiteRange.undo.js
 js/lib/bililiteRange.fancytext.js
-js/lib/dialog-polyfill.js
 js/lib/smoothscroll.js
 js/app/app.js
 js/lib/FileSaver.min.js
