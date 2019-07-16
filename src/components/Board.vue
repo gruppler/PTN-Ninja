@@ -102,7 +102,15 @@ export default {
   computed: {
     flats() {
       let flats = [0, 0];
-      // this.game.state.squares.forEach()
+      let piece;
+      this.game.state.squares.forEach(row =>
+        row.forEach(square => {
+          if (square.length) {
+            piece = square[square.length - 1];
+            flats[piece.color - 1] += !piece.isSelected && !piece.isCapstone;
+          }
+        })
+      );
       return flats;
     },
     flatWidths() {
