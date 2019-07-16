@@ -2,9 +2,7 @@
   <div
     class="piece"
     :style="{
-      transform: `translateZ(${z}em)`,
-      left: x + '%',
-      bottom: y + '%'
+      transform: `translate3d(${x}%, -${y}%, ${z}px)`
     }"
   >
     <div
@@ -34,7 +32,7 @@ export default {
         : false;
     },
     x() {
-      let x = 100 / this.game.size;
+      let x = 100;
       if (this.state) {
         x *= this.state.x;
       } else {
@@ -43,26 +41,34 @@ export default {
       return x;
     },
     y() {
-      let y = 100 / this.game.size;
+      let y = 100;
+      let spacing = this.game.size * 1.25;
       if (this.state) {
         y *= this.state.y;
-        y += 1.25 * this.state.z;
-        if (
-          !this.$store.state.board3D &&
-          this.state.stackHeight > this.game.size &&
-          this.state.z >= this.state.stackHeight - this.game.size
-        ) {
-          y -= 1.25 * (this.state.stackHeight - this.game.size);
+        y += spacing * this.state.z;
+        if (!this.$store.state.board3D) {
+          if (
+            this.state.stackHeight > this.game.size &&
+            this.state.z >= this.state.stackHeight - this.game.size
+          ) {
+            y -= spacing * (this.state.stackHeight - this.game.size);
+          }
+          if (this.state.isStanding && this.state.stackHeight > 1) {
+            y -= spacing;
+          }
         }
       } else {
         y *= this.game.size - 1;
         if (this.type === "F") {
           y *=
-            this.game.pieceCounts.total - this.index - this.game.pieceCounts.C;
+            this.game.pieceCounts.total -
+            this.index -
+            this.game.pieceCounts.C -
+            1;
         } else {
-          y *= this.game.pieceCounts.total - this.index;
+          y *= this.game.pieceCounts.total - this.index - 1;
         }
-        y /= this.game.pieceCounts.total;
+        y /= this.game.pieceCounts.total - 1;
       }
       return y;
     },
@@ -90,7 +96,7 @@ export default {
   position absolute
   bottom 0
   left 0
-  will-change transform, bottom, left, opacity
+  will-change transform, opacity
   transition all $generic-hover-transition
 
   .stone
@@ -108,7 +114,7 @@ export default {
 
     .board-container.piece-shadows &
       border-color transparent
-      box-shadow 0 0.5px 2.5px rgba(#000, .5)
+      box-shadow $shadow-1
 
     &.p1
       background-color $blue-grey-2
@@ -126,12 +132,12 @@ export default {
         background-color $blue-grey-1
         transform rotate(-45deg)
         .board-container.piece-shadows &
-          box-shadow -1px 1px 2px rgba(#000, .5)
+          box-shadow -1px 1px 2px rgba(#000, .3)
       &.p2
         background-color $blue-grey-8
         transform rotate(45deg)
         .board-container.piece-shadows &
-          box-shadow 1px 1px 2px rgba(#000, .5)
+          box-shadow 1px 1px 2px rgba(#000, .3)
     &.C
       border-radius 50%
       &.p1
@@ -143,7 +149,7 @@ export default {
       bottom 0
       left 51%
       width 15%
-      height 7.5%
+      height 8%
       border-radius 15%/30%
 
     .board-container.board-3d &.immovable
