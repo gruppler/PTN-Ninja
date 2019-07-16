@@ -1,10 +1,11 @@
 import { LocalStorage } from "quasar";
+import { Platform } from "quasar";
 
 const defaults = {
   axisLabels: true,
   board3D: false,
   flatCounts: true,
-  pieceShadows: true,
+  pieceShadows: !Platform.is.mobile,
   showControls: true,
   showPTN: true,
   showProgress: true,
