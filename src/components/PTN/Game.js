@@ -8,7 +8,6 @@ import Evaluation from "./Evaluation";
 import Result from "./Result";
 import Nop from "./Nop";
 import Move from "./Move";
-import Piece from "../Board/Piece.js";
 
 import { last, map, times, trimStart } from "lodash";
 
@@ -20,6 +19,18 @@ const pieceCounts = {
   7: { F: 40, C: 2, total: 42 },
   8: { F: 50, C: 2, total: 52 }
 };
+
+class Piece {
+  constructor({ x, y, z, stackHeight, color, isStanding, isCapstone }) {
+    this.x = x;
+    this.y = y;
+    this.z = z || 0;
+    this.stackHeight = stackHeight || 1;
+    this.color = color;
+    this.isStanding = isStanding || false;
+    this.isCapstone = isCapstone || false;
+  }
+}
 
 export default class Game {
   constructor(notation, { name, state }) {

@@ -82,8 +82,8 @@
 </template>
 
 <script>
-import Piece from "./Board/Piece.vue";
-import Square from "./Board/Square";
+import Piece from "./Piece";
+import Square from "./Square";
 import Ply from "./PTN/Ply";
 
 export default {
