@@ -28,7 +28,7 @@
                   :linenum="message.ply.move.linenum"
                   :game="game"
                 />
-                <Ply :ply="message.ply" :game="game" :noBranches="true" />
+                <Ply :ply="message.ply" :game="game" :delay="500" />
               </div>
             </template>
           </div>

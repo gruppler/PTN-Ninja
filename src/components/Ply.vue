@@ -80,7 +80,7 @@ import Ply from "./Ply";
 export default {
   name: "Ply",
   components: { Ply },
-  props: ["ply", "game", "noBranches", "noClick"],
+  props: ["ply", "game", "noBranches", "noClick", "delay"],
   computed: {
     isSelected() {
       return this.game ? this.game.state.plyID === this.ply.id : false;
@@ -97,8 +97,18 @@ export default {
   methods: {
     select(ply, isDone) {
       if (isDone === undefined) {
-        isDone =
-          ply.id === this.game.state.ply.id ? !this.game.state.plyIsDone : true;
+        if (ply.id === this.game.state.ply.id) {
+          isDone = !this.game.state.plyIsDone;
+        } else if (this.delay) {
+          isDone = false;
+          setTimeout(() => {
+            if (ply.id === this.game.state.ply.id) {
+              this.select(ply, true);
+            }
+          }, this.delay);
+        } else {
+          isDone = true;
+        }
       }
       if (this.game.goToPly(ply.id, isDone)) {
         this.$store.dispatch("SET_STATE", this.game.state);
