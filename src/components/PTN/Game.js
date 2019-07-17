@@ -10,7 +10,7 @@ import Nop from "./Nop";
 import Move from "./Move";
 import Piece from "../Board/Piece.js";
 
-import { map, times, trimStart } from "lodash";
+import { last, map, times, trimStart } from "lodash";
 
 const pieceCounts = {
   3: { F: 10, C: 0, total: 10 },
@@ -20,8 +20,6 @@ const pieceCounts = {
   7: { F: 40, C: 2, total: 42 },
   8: { F: 50, C: 2, total: 52 }
 };
-
-const top = stack => stack[stack.length - 1];
 
 export default class Game {
   constructor(notation, { name, state }) {
@@ -275,10 +273,10 @@ export default class Game {
         square.forEach(piece => (piece.stackHeight = square.length));
 
         if (flatten) {
-          top(square).isStanding = true;
+          last(square).isStanding = true;
         }
       } else {
-        if (square.length && top(square).isStanding) {
+        if (square.length && last(square).isStanding) {
           if (stack[0].isCapstone) {
             if (!flatten) {
               flatten = ply.wallSmash = "*";
@@ -290,7 +288,7 @@ export default class Game {
           }
         }
         if (flatten) {
-          top(square).isStanding = false;
+          last(square).isStanding = false;
           square.forEach(piece => (piece.stackHeight = square.length));
         }
 
@@ -357,7 +355,7 @@ export default class Game {
   }
 
   last() {
-    return this.goToPly(top(this.state.plies).id, true);
+    return this.goToPly(last(this.state.plies).id, true);
   }
 
   prev() {

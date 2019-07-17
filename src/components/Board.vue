@@ -5,11 +5,11 @@
       ['size-' + game.size]: true,
       ['turn-' + game.state.player]: true,
       'axis-labels': $store.state.axisLabels,
-      'flat-counts': $store.state.flatCounts,
-      'unplayed-pieces': $store.state.unplayedPieces,
-      'piece-shadows': $store.state.pieceShadows,
       'board-3D': $store.state.board3D,
-      'show-showControls': $store.state.showControls
+      'flat-counts': $store.state.flatCounts,
+      'highlight-squares': $store.state.highlightSquares,
+      'piece-shadows': $store.state.pieceShadows,
+      'unplayed-pieces': $store.state.unplayedPieces
     }"
     :style="{ maxWidth, fontSize }"
   >
@@ -41,16 +41,14 @@
 
       <div class="board relative-position">
         <div class="squares absolute-fit row">
-          <template v-for="y in (1, game.size)">
-            <Square
-              v-for="x in (1, game.size)"
-              :key="x - 1 + ',' + (game.size - y)"
-              :x="x - 1"
-              :y="game.size - y"
-            />
-          </template>
+          <Square
+            v-for="square in squares"
+            :key="square"
+            :id="square"
+            :game="game"
+          />
         </div>
-        <div class="pieces absolute-fit">
+        <div class="pieces absolute-fit no-pointer-events">
           <template v-for="color in [1, 2]">
             <Piece
               v-for="i in game.pieceCounts.F"
@@ -86,6 +84,7 @@
 <script>
 import Piece from "./Board/Piece.vue";
 import Square from "./Board/Square";
+import Ply from "./PTN/Ply";
 
 export default {
   name: "Board",
@@ -138,6 +137,15 @@ export default {
           Math.max(10, Math.min(20, Math.round(this.size.height * 0.04))) + "px"
         );
       }
+    },
+    squares() {
+      let squares = [];
+      for (var y = this.game.size - 1; y >= 0; y--) {
+        for (var x = 0; x < this.game.size; x++) {
+          squares.push(Ply.itoa(x, y));
+        }
+      }
+      return squares;
     }
   },
   methods: {

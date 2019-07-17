@@ -26,10 +26,33 @@ export default class Ply extends Ptn {
     this.evaluation = evaluation;
     this.result = result;
     this.branches = branches;
+    this.squares = [this.column + this.row];
+    if (this.isMovement()) {
+      const [xOffset, yOffset] = this.directionModifier();
+      let x = this.x;
+      let y = this.y;
+      let i = this.distribution.length;
+      while (i--) {
+        x += xOffset;
+        y += yOffset;
+        this.squares.push(Ply.itoa(x, y));
+      }
+    }
   }
 
   static parse(notation, params = {}) {
     return new Ply(notation, params);
+  }
+
+  static atoi(row, col) {
+    return {
+      x: "abcdefgh".indexOf(col),
+      y: parseInt(row, 10) - 1
+    };
+  }
+
+  static itoa(x, y) {
+    return "abcdefgh"[x] + (y + 1);
   }
 
   text() {

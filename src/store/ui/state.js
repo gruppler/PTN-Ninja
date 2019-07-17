@@ -5,10 +5,12 @@ const defaults = {
   axisLabels: true,
   board3D: false,
   flatCounts: true,
+  highlightSquares: true,
   pieceShadows: !Platform.is.mobile,
   showControls: true,
   showPTN: true,
   showProgress: true,
+  showRoads: true,
   showText: true,
   textTab: "notes",
   unplayedPieces: true
