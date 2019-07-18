@@ -29,12 +29,10 @@ export default class Move {
           move.linenum.branch === this.linenum.parentBranch &&
           move.linenum.number === this.linenum.parentNumber
       );
-      if (original) {
-        if (original[key]) {
-          original[key].branches[0] = original[key];
-          original[key].branches.push(ply);
-          this[key].branches = original[key].branches;
-        }
+      if (original && original[key]) {
+        original[key].branches[0] = original[key];
+        original[key].branches.push(ply);
+        this[key].branches = original[key].branches;
       }
     }
   }

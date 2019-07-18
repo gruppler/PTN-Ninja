@@ -55,6 +55,15 @@ export default class Ply extends Ptn {
     return "abcdefgh"[x] + (y + 1);
   }
 
+  branch(targetBranch = "") {
+    const branches = this.branches.map(ply => ply.move.linenum.branch);
+    if (branches.length) {
+      return branches.find(branch => targetBranch.startsWith(branch)) || this;
+    } else {
+      return this;
+    }
+  }
+
   text() {
     return (
       (this.minPieceCount || "") +

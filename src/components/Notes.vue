@@ -13,23 +13,29 @@
                 text-color="grey-10"
                 text-sanitize
               />
-              <div
-                v-if="message.ply"
-                ref="plies"
-                class="fullwidth-padded-md q-py-xs q-mb-md"
-                :class="{
-                  'q-mt-lg': i > 0,
-                  highlight: game.state.plyID === message.ply.id
-                }"
-                :key="i"
-              >
-                <Linenum
-                  v-if="message.ply.move.linenum"
-                  :linenum="message.ply.move.linenum"
-                  :game="game"
+              <template v-if="message.ply">
+                <q-separator
+                  class="q-mt-md"
+                  v-if="i > 0"
+                  :key="'separator' + i"
                 />
-                <Ply :ply="message.ply" :game="game" :delay="500" />
-              </div>
+                <div
+                  ref="plies"
+                  class="fullwidth-padded-md q-py-xs q-mb-md"
+                  :class="{
+                    'q-mt-md': i > 0,
+                    highlight: game.state.plyID === message.ply.id
+                  }"
+                  :key="'ply' + i"
+                >
+                  <Linenum
+                    v-if="message.ply.move.linenum"
+                    :linenum="message.ply.move.linenum"
+                    :game="game"
+                  />
+                  <Ply :ply="message.ply" :game="game" :delay="500" />
+                </div>
+              </template>
             </template>
           </div>
         </div>

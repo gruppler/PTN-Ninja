@@ -16,23 +16,25 @@
                 :sent="wasSent(message)"
                 text-sanitize
               />
-              <div
-                v-if="message.ply"
-                ref="plies"
-                class="fullwidth-padded-md q-py-xs q-mb-md"
-                :class="{
-                  'q-mt-lg': i > 0,
-                  highlight: isCurrentPly(message.ply)
-                }"
-                :key="i"
-              >
-                <Linenum
-                  v-if="message.ply.move.linenum"
-                  :linenum="message.ply.move.linenum"
-                  :game="game"
-                />
-                <Ply :ply="message.ply" :game="game" :noBranches="true" />
-              </div>
+              <template v-if="message.ply">
+                <q-separator class="q-mt-md" v-if="i > 0" :key="i" />
+                <div
+                  ref="plies"
+                  class="fullwidth-padded-md q-py-xs q-mb-md"
+                  :class="{
+                    'q-mt-md': i > 0,
+                    highlight: game.state.plyID === message.ply.id
+                  }"
+                  :key="i"
+                >
+                  <Linenum
+                    v-if="message.ply.move.linenum"
+                    :linenum="message.ply.move.linenum"
+                    :game="game"
+                  />
+                  <Ply :ply="message.ply" :game="game" :delay="500" />
+                </div>
+              </template>
             </template>
           </div>
         </div>
@@ -175,9 +177,6 @@ export default {
     },
     wasSent(message) {
       return message.player == this.player;
-    },
-    isCurrentPly(ply) {
-      return this.game.state.plyID === ply.id;
     },
     send() {
       if (this.message) {

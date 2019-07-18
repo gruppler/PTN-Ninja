@@ -179,7 +179,7 @@ export default class Game {
 
   // After _setPly, update the rest of the state
   updateState() {
-    let newPly = this.plies[this.state.plyID];
+    let newPly = this.plies[this.state.plyID].branch(this.state.targetBranch);
     let newMove = newPly.move;
     let newBranch = newMove.linenum.branch;
 
@@ -207,7 +207,7 @@ export default class Game {
         move =>
           newBranch === move.linenum.branch ||
           (newBranch.startsWith(move.linenum.branch) &&
-            move.linenum.number <= newMove.linenum.number)
+            move.linenum.number < newMove.linenum.number)
       );
       this.state.moves.forEach((move, index) => (move.index = index));
     }
@@ -218,7 +218,7 @@ export default class Game {
         : null;
       this.state.nextPly =
         newPly.index < this.state.plies.length - 1
-          ? this.state.plies[newPly.index + 1]
+          ? this.state.plies[newPly.index + 1].branch(this.state.targetBranch)
           : null;
     }
 

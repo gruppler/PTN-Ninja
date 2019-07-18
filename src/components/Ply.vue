@@ -30,7 +30,7 @@
         }}</span>
       </span>
       <q-btn
-        v-if="ply.branches && ply.branches.length && !noBranches"
+        v-if="!noBranches && ply.branches.length"
         @click.stop="select(ply, false)"
         icon="arrow_drop_down"
         size="md"
@@ -51,13 +51,17 @@
               @click="select(branch, true)"
               clickable
             >
-              <strong class="q-pa-sm text-white">{{ i }}</strong>
-              <Ply
-                :ply="branch"
-                :game="game"
-                :noBranches="true"
-                :noClick="true"
-              />
+              <q-item-section side>
+                <strong class="q-pa-sm text-white">{{ i }}</strong>
+              </q-item-section>
+              <q-item-label>
+                <Ply
+                  :ply="branch"
+                  :game="game"
+                  :noBranches="true"
+                  :noClick="true"
+                />
+              </q-item-label>
             </q-item>
           </q-list>
         </q-menu>
@@ -75,12 +79,9 @@
 </template>
 
 <script>
-import Ply from "./Ply";
-
 export default {
   name: "Ply",
-  components: { Ply },
-  props: ["ply", "game", "noBranches", "noClick", "delay"],
+  props: ["game", "ply", "noBranches", "noClick", "delay"],
   computed: {
     isSelected() {
       return this.game ? this.game.state.plyID === this.ply.id : false;

@@ -24,14 +24,30 @@
         icon="keyboard_arrow_right"
       />
       <q-btn @click="last" round flat :disable="isLast" icon="last_page" />
-      <q-btn round flat :disable="isLast" icon="call_split" />
+      <q-btn
+        round
+        flat
+        :disable="!hasBranches"
+        :color="game.state.targetBranch ? 'accent' : ''"
+        icon="call_split"
+      >
+        <BranchMenu
+          @input="selectBranch"
+          v-if="hasBranches"
+          :game="game"
+          :branches="game.state.ply.branches"
+        />
+      </q-btn>
     </div>
   </div>
 </template>
 
 <script>
+import BranchMenu from "./BranchMenu";
+
 export default {
   name: "PlayControls",
+  components: { BranchMenu },
   props: ["game"],
   data() {
     return {
@@ -44,6 +60,9 @@ export default {
     },
     isLast() {
       return !this.game.state.nextPly && this.game.state.plyIsDone;
+    },
+    hasBranches() {
+      return !!this.game.state.ply.branches.length;
     }
   },
   methods: {
@@ -70,12 +89,21 @@ export default {
         this.game.last();
         this.$store.dispatch("SET_STATE", this.game.state);
       }
+    },
+    selectBranch(ply) {
+      if (this.game.goToPly(ply.id, true)) {
+        this.$store.dispatch("SET_STATE", this.game.state);
+      }
     }
   }
 };
 </script>
 
 <style lang="stylus" scoped>
+.q-btn.disabled {
+  opacity: 0.3 !important;
+}
+
 .row
   max-width 500px
   margin 0 auto
