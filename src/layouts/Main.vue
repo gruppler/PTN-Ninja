@@ -110,13 +110,8 @@ export default {
   },
   props: ["ptn", "state", "name"],
   data() {
-    const game = this.newGame(this.ptn, { name: this.name, state: this.state });
     return {
-      game: {
-        name: this.name || game.generateName(),
-        ptn: game.text(),
-        state: game.state
-      },
+      game: this.getGame(),
       dialogNewGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
@@ -176,15 +171,32 @@ export default {
           "1. "
       );
     },
-    updateGame() {
-      let game = this.games[0];
-      if (game) {
+    getGame() {
+      let game;
+      if (this.ptn) {
+        // Add game from URL then redirect to /
+        game = Game.parse(this.ptn, { name: this.name, state: this.state });
+        if (game) {
+          this.$store.dispatch("ADD_GAME", {
+            ptn: this.ptn,
+            name: game.name,
+            state: game.state
+          });
+          this.$router.replace("/");
+        }
+      } else if (this.$store.state.games && this.$store.state.games.length) {
+        game = this.$store.state.games[0];
         game = Game.parse(game.ptn, {
           name: game.name,
           state: game.state
         });
-        this.game = game;
+      } else {
+        game = this.newGame();
       }
+      return game;
+    },
+    updateGame() {
+      this.game = this.getGame();
     },
     menuAction(action) {
       switch (action) {
@@ -234,9 +246,12 @@ export default {
   created() {
     Game.importLang(this.$t);
     if (!this.games.length) {
-      this.$store.dispatch("ADD_GAME", this.game);
+      this.$store.dispatch("ADD_GAME", {
+        ptn: this.game.text(),
+        name: this.game.name,
+        state: this.game.state
+      });
     }
-    this.updateGame();
   },
   mounted() {
     // Listen for dropped files
@@ -244,19 +259,6 @@ export default {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
-    }
-
-    // Add game from URL then redirect to /
-    if (this.ptn) {
-      const game = Game.parse(game.ptn);
-      if (game) {
-        this.$store.dispatch("ADD_GAME", {
-          ptn: this.ptn,
-          name: this.name || game.generateName(),
-          state: this.state
-        });
-        this.$router.replace("/");
-      }
     }
   },
   beforeDestroy() {

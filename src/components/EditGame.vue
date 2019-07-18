@@ -28,7 +28,7 @@ export default {
   props: ["value", "game"],
   data() {
     return {
-      name: this.game.name
+      name: ""
     };
   },
   methods: {
@@ -45,6 +45,13 @@ export default {
         this.game.name = this.name;
       }
       this.close();
+    }
+  },
+  watch: {
+    value(isVisible) {
+      if (isVisible) {
+        this.name = this.game.name;
+      }
     }
   }
 };

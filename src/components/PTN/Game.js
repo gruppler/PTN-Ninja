@@ -39,7 +39,7 @@ export default class Game {
     let moveNumber = 1;
     let move = new Move({ game: this });
 
-    this.name = name;
+    this.name = params.name;
     this.state = {};
     this.tags = {};
     this.moves = [move];
@@ -166,6 +166,9 @@ export default class Game {
     this.updateState();
     if (params.state) {
       this.goToPly(params.state.plyID, params.state.plyIsDone);
+    }
+    if (!this.name) {
+      this.name = this.generateName();
     }
   }
 

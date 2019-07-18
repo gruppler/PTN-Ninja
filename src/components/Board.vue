@@ -78,7 +78,7 @@
       <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
     </div>
 
-    <q-resize-observer @resize="resize" debounce="0" />
+    <q-resize-observer @resize="resize" debounce="20" />
   </div>
 </template>
 

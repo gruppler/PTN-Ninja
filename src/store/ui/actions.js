@@ -16,7 +16,8 @@ export const ADD_GAME = ({ commit }, game) => {
   LocalStorage.set("games", games);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.state) {
-    LocalStorage.set("state-" + game.name, pick(game.state, GAME_STATE_PROPS));
+    game.state = pick(game.state, GAME_STATE_PROPS);
+    LocalStorage.set("state-" + game.name, game.state);
   }
   commit("ADD_GAME", game);
 };
@@ -43,7 +44,10 @@ export const SET_NAME = ({ state, commit }, name) => {
   LocalStorage.remove("ptn-" + oldName);
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, state.games[0].state);
+  LocalStorage.set(
+    "state-" + name,
+    pick(state.games[0].state, GAME_STATE_PROPS)
+  );
   commit("SET_NAME", name);
 };
 

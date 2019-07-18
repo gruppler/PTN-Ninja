@@ -2,19 +2,19 @@ import { LocalStorage } from "quasar";
 import { Platform } from "quasar";
 
 const defaults = {
-  player1: "",
-  player2: "",
-  size: 5,
   axisLabels: true,
   board3D: false,
   flatCounts: true,
   highlightSquares: true,
   pieceShadows: !Platform.is.mobile,
+  player1: "",
+  player2: "",
   showControls: true,
   showPTN: true,
   showProgress: true,
   showRoads: true,
   showText: true,
+  size: 5,
   textTab: "notes",
   unplayedPieces: true
 };
