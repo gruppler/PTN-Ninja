@@ -21,26 +21,26 @@ const pieceCounts = {
 };
 
 class Piece {
-  constructor({ x, y, z, stackHeight, color, isStanding, isCapstone }) {
-    this.x = x;
-    this.y = y;
-    this.z = z || 0;
-    this.stackHeight = stackHeight || 1;
-    this.color = color;
-    this.isStanding = isStanding || false;
-    this.isCapstone = isCapstone || false;
+  constructor(params) {
+    this.x = params.x;
+    this.y = params.y;
+    this.z = params.z || 0;
+    this.stackHeight = params.stackHeight || 1;
+    this.color = params.color;
+    this.isStanding = params.isStanding || false;
+    this.isCapstone = params.isCapstone || false;
   }
 }
 
 export default class Game {
-  constructor(notation, { name, state }) {
+  constructor(notation, params = { name: "", state: null }) {
     let item, key, ply;
     let branch = "";
     let moveNumber = 1;
     let move = new Move({ game: this });
 
     this.name = name;
-    this.state = { plyID: 0, plyIsDone: false };
+    this.state = {};
     this.tags = {};
     this.moves = [move];
     this.plies = [];
@@ -164,7 +164,9 @@ export default class Game {
 
     this.pieceCounts = pieceCounts[this.size];
     this.updateState();
-    this.goToPly(state.plyID, state.plyIsDone);
+    if (params.state) {
+      this.goToPly(params.state.plyID, params.state.plyIsDone);
+    }
   }
 
   static parse(notation, { name = "", state = {} }) {
@@ -179,14 +181,18 @@ export default class Game {
 
   // After _setPly, update the rest of the state
   updateState() {
-    let newPly = this.plies[this.state.plyID].branch(this.state.targetBranch);
-    let newMove = newPly.move;
-    let newBranch = newMove.linenum.branch;
-
+    if (!("plyID" in this.state)) {
+      this.state.plyID = 0;
+    }
+    if (!("plyIsDone" in this.state)) {
+      this.state.plyIsDone = false;
+    }
+    if (!("targetBranch" in this.state)) {
+      this.state.targetBranch = "";
+    }
     if (!this.state.squares) {
       this.state.squares = new Marray.two(this.size, this.size, () => []);
     }
-
     if (!this.state.pieces) {
       this.state.pieces = {
         1: { F: [], C: [] },
@@ -194,44 +200,53 @@ export default class Game {
       };
     }
 
-    if (this.state.branch !== newBranch || !this.state.plies) {
-      this.state.plies = this.plies.filter(
-        ply =>
-          newBranch === ply.move.linenum.branch ||
-          (newBranch.startsWith(ply.move.linenum.branch) &&
-            ply.move.linenum.number <= newMove.linenum.number)
-      );
-      this.state.plies.forEach((ply, index) => (ply.index = index));
+    if (!(this.state.plyID in this.plies)) {
+      this.state.branch = "";
+      this.state.player = 1;
+    } else {
+      let newPly = this.plies[this.state.plyID].branch(this.state.targetBranch);
+      let newMove = newPly.move;
+      let newBranch = newMove.linenum.branch;
 
-      this.state.moves = this.moves.filter(
-        move =>
-          newBranch === move.linenum.branch ||
-          (newBranch.startsWith(move.linenum.branch) &&
-            move.linenum.number < newMove.linenum.number)
-      );
-      this.state.moves.forEach((move, index) => (move.index = index));
-    }
+      if (this.state.branch !== newBranch || !this.state.plies) {
+        this.state.plies = this.plies.filter(
+          ply =>
+            newBranch === ply.move.linenum.branch ||
+            (newBranch.startsWith(ply.move.linenum.branch) &&
+              ply.move.linenum.number <= newMove.linenum.number)
+        );
+        this.state.plies.forEach((ply, index) => (ply.index = index));
 
-    if (this.state.ply !== newPly) {
-      this.state.prevPly = newPly.index
-        ? this.state.plies[newPly.index - 1]
-        : null;
-      this.state.nextPly =
-        newPly.index < this.state.plies.length - 1
-          ? this.state.plies[newPly.index + 1].branch(this.state.targetBranch)
+        this.state.moves = this.moves.filter(
+          move =>
+            newBranch === move.linenum.branch ||
+            (newBranch.startsWith(move.linenum.branch) &&
+              move.linenum.number < newMove.linenum.number)
+        );
+        this.state.moves.forEach((move, index) => (move.index = index));
+      }
+
+      if (this.state.ply !== newPly) {
+        this.state.prevPly = newPly.index
+          ? this.state.plies[newPly.index - 1]
           : null;
+        this.state.nextPly =
+          newPly.index < this.state.plies.length - 1
+            ? this.state.plies[newPly.index + 1].branch(this.state.targetBranch)
+            : null;
+      }
+
+      this.state.ply = newPly;
+      this.state.move = newMove;
+      this.state.branch = newBranch;
+
+      this.state.player =
+        this.state.plyIsDone && this.state.nextPly
+          ? this.state.nextPly.player
+          : this.state.ply.player;
     }
 
-    this.state.ply = newPly;
-    this.state.move = newMove;
-    this.state.branch = newBranch;
-
-    this.state.player =
-      this.state.plyIsDone && this.state.nextPly
-        ? this.state.nextPly.player
-        : this.state.ply.player;
-
-    // TODO: Trigger mutation event
+    // TODO: Trigger state mutation event
   }
 
   _doPly(ply) {
@@ -291,7 +306,7 @@ export default class Game {
           if (stack[0].isCapstone) {
             if (!flatten) {
               flatten = ply.wallSmash = "*";
-              // TODO: Trigger mutation event mutation event
+              // TODO: Trigger ptn mutation event mutation event
             }
           } else {
             console.error("Illegal ply");
@@ -409,9 +424,18 @@ export default class Game {
     );
   }
 
-  generateName(player1Default = "1", player2Default = "2") {
-    const player1 = this.tag("player1", player1Default);
-    const player2 = this.tag("player2", player2Default);
+  static t = {
+    Black: "Black",
+    White: "White"
+  };
+
+  static importLang(t) {
+    Game.t = Object.keys(Game.t).map(t);
+  }
+
+  generateName() {
+    const player1 = this.tag("player1", Game.t["White"]);
+    const player2 = this.tag("player2", Game.t["Black"]);
     const result = this.tag("result").replace(/\//g, "-");
     const date = this.tag("date");
     const time = this.tag("time").replace(/\D/g, ".");
@@ -427,10 +451,8 @@ export default class Game {
 
   tag(key, defaultValue) {
     return key in this.tags && this.tags[key].value
-      ? this.tags[key].value.text
-        ? this.tags[key].value.text
-        : this.tags[key].value
-      : defaultValue
+      ? this.tags[key].valueText
+      : defaultValue !== undefined
       ? defaultValue
       : "";
   }

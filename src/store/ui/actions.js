@@ -12,55 +12,49 @@ export const SET_UI = ({ state, commit }, [key, value]) => {
 
 export const ADD_GAME = ({ commit }, game) => {
   let games = LocalStorage.getItem("games") || [];
-  games.unshift({ ...game, state: pick(game.state, GAME_STATE_PROPS) });
+  games.unshift(game.name);
   LocalStorage.set("games", games);
+  LocalStorage.set("ptn-" + game.name, game.ptn);
+  if (game.state) {
+    LocalStorage.set("state-" + game.name, pick(game.state, GAME_STATE_PROPS));
+  }
   commit("ADD_GAME", game);
 };
 
 export const REMOVE_GAME = ({ commit }, index) => {
   let games = LocalStorage.getItem("games") || [];
-  games.splice(index, 1);
+  const name = games.splice(index, 1);
   LocalStorage.set("games", games);
+  LocalStorage.remove("ptn-" + name);
+  LocalStorage.remove("state-" + name);
   commit("REMOVE_GAME", index);
 };
 
-export const UPDATE_GAMES = ({ state, commit }, games) => {
-  LocalStorage.set(
-    "games",
-    state.games.map(game => ({
-      ptn: game.text(),
-      name: game.name,
-      state: pick(game.state, GAME_STATE_PROPS)
-    }))
-  );
-  commit("UPDATE_GAME", games);
-};
-
-export const UPDATE_PTN = ({ commit }, ptn) => {
-  let games = LocalStorage.getItem("games") || [];
-  games[0].ptn = ptn;
-  LocalStorage.set("games", games);
+export const UPDATE_PTN = ({ state, commit }, ptn) => {
+  LocalStorage.set("ptn-" + state.games[0].name, ptn);
   commit("UPDATE_PTN", ptn);
 };
 
-export const SET_NAME = ({ commit }, name) => {
+export const SET_NAME = ({ state, commit }, name) => {
+  let oldName = state.games[0].name;
   let games = LocalStorage.getItem("games");
-  games[0].name = name;
+  games[0] = name;
   LocalStorage.set("games", games);
+  LocalStorage.remove("ptn-" + oldName);
+  LocalStorage.set("ptn-" + name, state.games[0].ptn);
+  LocalStorage.remove("state-" + oldName);
+  LocalStorage.set("state-" + name, state.games[0].state);
   commit("SET_NAME", name);
 };
 
-export const SET_STATE = ({ state, commit, dispatch }, gameState) => {
+export const SET_STATE = ({ state, commit }, gameState) => {
   if (!state.embed) {
-    dispatch("SAVE_GAME_STATE", pick(gameState, GAME_STATE_PROPS));
+    LocalStorage.set(
+      "state-" + state.games[0].name,
+      pick(gameState, GAME_STATE_PROPS)
+    );
   }
   commit("SET_STATE", gameState);
-};
-
-export const SAVE_GAME_STATE = (context, gameState) => {
-  let games = LocalStorage.getItem("games");
-  games[0].state = pick(gameState, GAME_STATE_PROPS);
-  LocalStorage.set("games", games);
 };
 
 export const SELECT_GAME = ({ commit }, index) => {

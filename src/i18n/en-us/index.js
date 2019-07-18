@@ -9,6 +9,7 @@ export default {
   Animate_UI: "Animate UI",
   Annotations: "Annotations",
   Axis_Labels: "Axis Labels",
+  Black: "Black",
   Board_3D: "3D Board",
   Board_Opacity: "Board Opacity",
   Board_Settings: "Board Settings",
@@ -45,10 +46,8 @@ export default {
   Play_Controls: "Play Controls",
   Play_Mode: "Play Mode",
   Play_Speed: "Play Speed",
-  Player1: "Player1",
-  Player1_name: "White",
-  Player2: "Player2",
-  Player2_name: "Black",
+  Player1: "Player 1",
+  Player2: "Player 2",
   Points: "Points",
   Preferences: "Preferences",
   Previous_Move: "Previous Move",
@@ -75,6 +74,7 @@ export default {
   Trim_to_current_ply: "Trim to current ply",
   Undo: "Undo",
   Unplayed_Pieces: "Unplayed Pieces",
+  White: "White",
   n_characters: "{n} characters",
 
   result: {

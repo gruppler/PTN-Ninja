@@ -87,7 +87,7 @@ export default {
       return this.game ? this.game.state.plyID === this.ply.id : false;
     },
     isDone() {
-      return this.game
+      return this.game && this.ply
         ? this.game.state.plyID === this.ply.id
           ? this.game.state.plyIsDone
           : this.game.state.branch.startsWith(this.ply.move.linenum.branch) &&

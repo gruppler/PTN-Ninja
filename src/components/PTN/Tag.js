@@ -1,5 +1,18 @@
+import Game from "./Game";
 import TPS from "./TPS";
 import Result from "./Result";
+import { padStart } from "lodash";
+
+const today = function() {
+  const d = new Date();
+  return (
+    d.getFullYear() +
+    "." +
+    padStart(d.getMonth() + 1, 2, 0) +
+    "." +
+    padStart(d.getDate(), 2, 0)
+  );
+};
 
 export default class Tag {
   constructor(notation) {
@@ -21,16 +34,18 @@ export default class Tag {
         break;
       case "player1":
         if (!this.value.length) {
-          this.value = this.$t("Player1_name");
+          this.value = Game.t["White"];
         }
         break;
       case "player2":
         if (!this.value.length) {
-          this.value = this.$t("Player2_name");
+          this.value = Game.t["Black"];
         }
         break;
       case "date":
-        this.value = this.value;
+        if (!this.value.length) {
+          this.value = today();
+        }
         break;
       case "result":
         this.value = Result.parse(this.value);
@@ -65,7 +80,8 @@ export default class Tag {
       default:
         throw new Error("Unrecognized tag");
     }
-    this.valueText = this.value.text ? this.value.text : this.value;
+    this.valueText =
+      this.value.text !== undefined ? this.value.text : this.value;
   }
 
   static parse(notation) {

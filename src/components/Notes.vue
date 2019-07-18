@@ -106,19 +106,21 @@ export default {
       return messages;
     },
     currentPlyIndex() {
-      let ply;
-      let index = 0;
-      for (let plyID in this.log) {
-        ply = this.game.plies[plyID];
-        if (!ply) {
-          continue;
+      let index = -1;
+      if (this.game.state.ply) {
+        let ply;
+        for (let plyID in this.log) {
+          ply = this.game.plies[plyID];
+          if (!ply) {
+            continue;
+          }
+          if (ply.index === this.game.state.ply.index) {
+            return index;
+          } else if (index && ply.index > this.game.state.ply.index) {
+            return index - 1;
+          }
+          index++;
         }
-        if (ply.index === this.game.state.ply.index) {
-          return index;
-        } else if (index && ply.index > this.game.state.ply.index) {
-          return index - 1;
-        }
-        index++;
       }
       return index;
     }

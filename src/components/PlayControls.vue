@@ -62,7 +62,7 @@ export default {
       return !this.game.state.nextPly && this.game.state.plyIsDone;
     },
     hasBranches() {
-      return !!this.game.state.ply.branches.length;
+      return this.game.state.ply && !!this.game.state.ply.branches.length;
     }
   },
   methods: {

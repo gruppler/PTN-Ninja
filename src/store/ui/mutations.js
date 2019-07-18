@@ -19,10 +19,6 @@ export const REMOVE_GAME = (state, index) => {
   state.games.splice(index, 1);
 };
 
-export const UPDATE_GAMES = (state, games) => {
-  state.games = games;
-};
-
 export const UPDATE_PTN = (state, ptn) => {
   state.games[0].ptn = ptn;
 };

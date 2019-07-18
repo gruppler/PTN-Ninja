@@ -24,7 +24,7 @@
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
           </q-item-section>
-          <q-item-section side>
+          <q-item-section v-if="games.length > 1" side>
             <q-btn
               @click.stop="close(scope.opt.value)"
               icon="close"
@@ -36,13 +36,17 @@
         </q-item>
       </template>
 
-      <template v-slot:after>
+      <template v-slot:before>
         <q-badge
           class="text-subtitle2"
           transparent
           :label="games.length"
           :alert="true ? 'accent' : false"
         />
+      </template>
+
+      <template v-slot:after>
+        <q-btn icon="edit" @click.stop="edit" flat dense />
       </template>
     </q-select>
   </div>
@@ -71,6 +75,9 @@ export default {
     },
     close(index) {
       this.$store.dispatch("REMOVE_GAME", index);
+    },
+    edit() {
+      this.$emit("edit");
     }
   }
 };

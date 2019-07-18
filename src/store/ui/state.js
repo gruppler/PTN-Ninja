@@ -2,6 +2,9 @@ import { LocalStorage } from "quasar";
 import { Platform } from "quasar";
 
 const defaults = {
+  player1: "",
+  player2: "",
+  size: 5,
   axisLabels: true,
   board3D: false,
   flatCounts: true,
@@ -16,16 +19,22 @@ const defaults = {
   unplayedPieces: true
 };
 
-let state = { embed: false, games: [], defaults, ...defaults };
+let state = { embed: window !== window.top, games: [], defaults, ...defaults };
 
-function load(key, initial) {
-  return key in localStorage ? LocalStorage.getItem(key) : initial;
-}
+const load = (key, initial) =>
+  LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
-if (window === window.top) {
-  for (let key in state) {
-    state[key] = load(key, state[key]);
+if (!state.embed) {
+  if (!LocalStorage.isEmpty()) {
+    for (let key in state) {
+      state[key] = load(key, state[key]);
+    }
   }
+  state.games = load("games", []).map(name => ({
+    name,
+    ptn: load("ptn-" + name),
+    state: load("state-" + name)
+  }));
 }
 
 export default state;

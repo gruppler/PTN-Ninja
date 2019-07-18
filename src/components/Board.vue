@@ -12,6 +12,7 @@
       'unplayed-pieces': $store.state.unplayedPieces
     }"
     :style="{ maxWidth, fontSize }"
+    :key="game.name"
   >
     <div class="flat-counter row">
       <div class="player1 relative-position" :style="{ width: flatWidths[0] }">
@@ -19,13 +20,13 @@
           <div class="name ellipsis col-shrink">
             {{ game.tags.player1.value }}
           </div>
-          <div class="flats q-pl-sm">{{ flats[0] }}</div>
+          <div class="flats ellipsis q-pl-sm">{{ flats[0] }}</div>
         </div>
         <div class="turn-indicator"></div>
       </div>
       <div class="player2 relative-position" :style="{ width: flatWidths[1] }">
         <div class="row absolute-fit no-wrap q-px-sm">
-          <div class="flats q-pr-sm">{{ flats[1] }}</div>
+          <div class="flats ellipsis q-pr-sm">{{ flats[1] }}</div>
           <div class="name ellipsis col-shrink">
             {{ game.tags.player2.value }}
           </div>

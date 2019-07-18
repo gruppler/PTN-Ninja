@@ -76,10 +76,7 @@ export default {
       return Game.parse(this.ptn, { name: this.name, state: this.state });
     },
     title() {
-      return (
-        this.name ||
-        this.game.generateName(this.$t("Player1_name"), this.$t("Player2_name"))
-      );
+      return this.name || this.game.generateName();
     }
   },
   methods: {

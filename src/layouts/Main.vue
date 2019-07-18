@@ -2,12 +2,11 @@
   <q-layout class="non-selectable" view="hHh LpR fFf">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar>
-        <q-btn flat round icon="notes" @click="left = !left" />
+        <q-btn icon="notes" @click="left = !left" flat dense />
         <QToolbarTitle>
-          <GameSelector @input="updateGame" />
+          <GameSelector :games="games" @input="updateGame" @edit="edit" />
         </QToolbarTitle>
-        <q-btn flat round icon="edit" @click.stop="edit" />
-        <q-btn flat round icon="chat" @click="right = !right" />
+        <q-btn icon="chat" @click="right = !right" flat dense />
       </q-toolbar>
     </q-header>
 
@@ -73,9 +72,7 @@
       <NewGame />
     </q-dialog>
 
-    <q-dialog v-model="dialogEditGame">
-      <EditGame />
-    </q-dialog>
+    <EditGame v-model="dialogEditGame" :game="game" />
 
     <q-dialog v-model="dialogUISettings">
       <UISettings />
@@ -113,8 +110,13 @@ export default {
   },
   props: ["ptn", "state", "name"],
   data() {
+    const game = this.newGame(this.ptn, { name: this.name, state: this.state });
     return {
-      game: null,
+      game: {
+        name: this.name || game.generateName(),
+        ptn: game.text(),
+        state: game.state
+      },
       dialogNewGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
@@ -153,29 +155,36 @@ export default {
       return this.$store.state.showProgress;
     },
     progress() {
-      return (
-        (this.game.state.ply.index + 1 * this.game.state.plyIsDone) /
-        this.game.state.plies.length
-      );
+      return this.game.state.plies && this.game.state.plies.length
+        ? (this.game.state.ply.index + 1 * this.game.state.plyIsDone) /
+            this.game.state.plies.length
+        : 0;
     },
     games() {
       return this.$store.state.games;
     }
   },
   methods: {
+    newGame() {
+      return new Game(
+        '[Date ""]\n' +
+          `[Player1 "${this.$store.state.player1}"]\n` +
+          `[Player2 "${this.$store.state.player2}"]\n` +
+          `[Size "${this.$store.state.size}"]\n` +
+          '[Result ""]\n' +
+          "\n" +
+          "1. "
+      );
+    },
     updateGame() {
       let game = this.games[0];
-      game = Game.parse(game.ptn, {
-        name: game.name,
-        state: game.state
-      });
-      if (!game.name) {
-        this.$store.dispatch(
-          "SET_NAME",
-          game.generateName(this.$t("Player1_name"), this.$t("Player2_name"))
-        );
+      if (game) {
+        game = Game.parse(game.ptn, {
+          name: game.name,
+          state: game.state
+        });
+        this.game = game;
       }
-      this.game = game;
     },
     menuAction(action) {
       switch (action) {
@@ -217,7 +226,16 @@ export default {
       event.stopPropagation();
     }
   },
+  watch: {
+    games() {
+      this.updateGame();
+    }
+  },
   created() {
+    Game.importLang(this.$t);
+    if (!this.games.length) {
+      this.$store.dispatch("ADD_GAME", this.game);
+    }
     this.updateGame();
   },
   mounted() {
@@ -230,12 +248,15 @@ export default {
 
     // Add game from URL then redirect to /
     if (this.ptn) {
-      this.$store.dispatch("ADD_GAME", {
-        ptn: this.ptn,
-        name: this.name,
-        state: this.state
-      });
-      this.$router.replace("/");
+      const game = Game.parse(game.ptn);
+      if (game) {
+        this.$store.dispatch("ADD_GAME", {
+          ptn: this.ptn,
+          name: this.name || game.generateName(),
+          state: this.state
+        });
+        this.$router.replace("/");
+      }
     }
   },
   beforeDestroy() {
