@@ -72,6 +72,7 @@ export default class Ply extends Ptn {
       this.row +
       (this.direction || "") +
       (this.minDistribution || "") +
+      (this.wallSmash || "") +
       (this.evaluation ? this.evaluation.text : "") +
       (this.result ? " " + this.result.text : "")
     );
