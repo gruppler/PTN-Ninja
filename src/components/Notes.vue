@@ -2,42 +2,48 @@
   <div class="notes column no-wrap">
     <div class="col-grow relative-position">
       <q-scroll-area class="absolute-fit">
-        <div ref="log">
-          <div class="q-pa-md">
-            <template v-for="(message, i) in messages">
+        <div class="q-pa-md">
+          <div
+            v-if="log[-1]"
+            ref="messages"
+            class="fullwidth-padded-md q-py-xs q-mb-md"
+            :class="{ highlight: !game.state.plyID && !game.state.plyIsDone }"
+            key="-1"
+          >
+            <q-chat-message
+              key="preface"
+              :text="log[-1].map(comment => comment.message)"
+              bg-color="accent"
+              text-color="grey-10"
+              text-sanitize
+            />
+          </div>
+          <template v-for="(comments, plyID) in log">
+            <div
+              v-if="plyID >= 0"
+              ref="messages"
+              class="fullwidth-padded-md q-py-xs q-mb-md"
+              :class="{ highlight: game.state.plyID == plyID }"
+              :key="plyID"
+            >
+              <div>
+                <Linenum
+                  v-if="game.plies[plyID].move.linenum"
+                  :linenum="game.plies[plyID].move.linenum"
+                  :game="game"
+                />
+                <Ply :ply="game.plies[plyID]" :game="game" :delay="500" />
+              </div>
+
               <q-chat-message
-                v-if="!message.ply"
-                :key="i"
-                :text="message.text"
+                :key="plyID + '-messages'"
+                :text="comments.map(comment => comment.message)"
                 bg-color="accent"
                 text-color="grey-10"
                 text-sanitize
               />
-              <template v-if="message.ply">
-                <q-separator
-                  class="q-mt-md"
-                  v-if="i > 0"
-                  :key="'separator' + i"
-                />
-                <div
-                  ref="plies"
-                  class="fullwidth-padded-md q-py-xs q-mb-md"
-                  :class="{
-                    'q-mt-md': i > 0,
-                    highlight: game.state.plyID === message.ply.id
-                  }"
-                  :key="'ply' + i"
-                >
-                  <Linenum
-                    v-if="message.ply.move.linenum"
-                    :linenum="message.ply.move.linenum"
-                    :game="game"
-                  />
-                  <Ply :ply="message.ply" :game="game" :delay="500" />
-                </div>
-              </template>
-            </template>
-          </div>
+            </div>
+          </template>
         </div>
       </q-scroll-area>
     </div>
@@ -73,7 +79,6 @@
 <script>
 import Linenum from "./Linenum";
 import Ply from "./Ply";
-import { scroll } from "quasar";
 
 export default {
   name: "Notes",
@@ -89,40 +94,22 @@ export default {
     log() {
       return this.game.notes;
     },
-    messages() {
-      let messages = [];
-      for (let plyID in this.log) {
-        if (plyID >= 0) {
-          messages.push({ ply: this.game.plies[plyID] });
-          messages.push({
-            text: this.log[plyID].map(comment => comment.message)
-          });
-        } else {
-          messages.unshift({
-            text: this.log[plyID].map(comment => comment.message)
-          });
-        }
-      }
-      return messages;
-    },
     currentPlyIndex() {
-      let index = -1;
-      if (this.game.state.ply) {
-        let ply;
-        for (let plyID in this.log) {
-          ply = this.game.plies[plyID];
-          if (!ply) {
-            continue;
+      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+        return 0;
+      } else if (this.game.state.ply) {
+        let ids = Object.keys(this.log)
+          .map(id => 1 * id)
+          .sort();
+        for (let i = 0; i < ids.length; i++) {
+          if (ids[i] === this.game.state.plyID) {
+            return i;
+          } else if (ids[i] > this.game.state.plyID) {
+            return i - !!i;
           }
-          if (ply.index === this.game.state.ply.index) {
-            return index;
-          } else if (index && ply.index > this.game.state.ply.index) {
-            return index - 1;
-          }
-          index++;
         }
       }
-      return index;
+      return 0;
     }
   },
   methods: {
@@ -132,20 +119,22 @@ export default {
       this.message = "";
       this.$refs.input.focus();
     },
-    scroll(duration = 0) {
-      this.$nextTick(() => {
-        if (this.$refs.plies && this.currentPlyIndex in this.$refs.plies) {
-          const el = this.$refs.plies[this.currentPlyIndex];
-          const target = scroll.getScrollTarget(el);
-          const offset = el.offsetTop;
-          scroll.setScrollPosition(target, offset, duration);
-        }
-      });
+    scroll(smooth) {
+      const message = this.$refs.messages[this.currentPlyIndex];
+      if (message) {
+        message.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "start"
+        });
+      }
     }
   },
   watch: {
+    game() {
+      this.scroll();
+    },
     currentPlyIndex() {
-      this.scroll(150);
+      this.scroll(true);
     }
   },
   mounted() {

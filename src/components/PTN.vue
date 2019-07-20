@@ -1,5 +1,5 @@
 <template>
-  <q-scroll-area ref="scrollarea">
+  <q-scroll-area>
     <div class="ptn q-py-md" v-if="game">
       <Move
         v-for="(move, index) in game.state.moves"
@@ -14,31 +14,27 @@
 
 <script>
 import Move from "./Move";
-import { scroll } from "quasar";
 
 export default {
   name: "PTN",
   components: { Move },
   props: ["game"],
   methods: {
-    scroll(duration = 0) {
-      this.$nextTick(() => {
-        if (
-          this.$refs.moves &&
-          this.game.state.move.index in this.$refs.moves
-        ) {
-          const el = this.$refs.moves[this.game.state.move.index].$el;
-          const target = scroll.getScrollTarget(el);
-          const offset =
-            el.offsetTop - (target.offsetHeight + el.offsetHeight) / 2;
-          scroll.setScrollPosition(target, offset, duration);
-        }
-      });
+    scroll(smooth) {
+      if (this.$refs.moves && this.game.state.move.index in this.$refs.moves) {
+        this.$refs.moves[this.game.state.move.index].$el.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "center"
+        });
+      }
     }
   },
   watch: {
-    "game.state.move.id"() {
-      this.scroll(150);
+    game() {
+      this.scroll();
+    },
+    "game.state.ply.id"() {
+      this.scroll(true);
     }
   },
   mounted() {

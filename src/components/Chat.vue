@@ -2,41 +2,39 @@
   <div class="chat column no-wrap">
     <div class="col-grow relative-position">
       <q-scroll-area class="absolute-fit">
-        <div ref="log">
-          <div class="q-pa-md">
-            <template v-for="(message, i) in messages">
-              <q-chat-message
-                v-if="!message.ply"
+        <div class="q-pa-md">
+          <template v-for="(message, i) in messages">
+            <q-chat-message
+              v-if="!message.ply"
+              :key="i"
+              :text="message.text"
+              :bg-color="bgColor(message)"
+              :text-color="textColor(message)"
+              :stamp="relativeTime(message)"
+              :title="absoluteTime(message)"
+              :sent="wasSent(message)"
+              text-sanitize
+            />
+            <template v-if="message.ply">
+              <q-separator class="q-mt-md" v-if="i > 0" :key="i" />
+              <div
+                ref="plies"
+                class="fullwidth-padded-md q-py-xs q-mb-md"
+                :class="{
+                  'q-mt-md': i > 0,
+                  highlight: game.state.plyID === message.ply.id
+                }"
                 :key="i"
-                :text="message.text"
-                :bg-color="bgColor(message)"
-                :text-color="textColor(message)"
-                :stamp="relativeTime(message)"
-                :title="absoluteTime(message)"
-                :sent="wasSent(message)"
-                text-sanitize
-              />
-              <template v-if="message.ply">
-                <q-separator class="q-mt-md" v-if="i > 0" :key="i" />
-                <div
-                  ref="plies"
-                  class="fullwidth-padded-md q-py-xs q-mb-md"
-                  :class="{
-                    'q-mt-md': i > 0,
-                    highlight: game.state.plyID === message.ply.id
-                  }"
-                  :key="i"
-                >
-                  <Linenum
-                    v-if="message.ply.move.linenum"
-                    :linenum="message.ply.move.linenum"
-                    :game="game"
-                  />
-                  <Ply :ply="message.ply" :game="game" :delay="500" />
-                </div>
-              </template>
+              >
+                <Linenum
+                  v-if="message.ply.move.linenum"
+                  :linenum="message.ply.move.linenum"
+                  :game="game"
+                />
+                <Ply :ply="message.ply" :game="game" :delay="500" />
+              </div>
             </template>
-          </div>
+          </template>
         </div>
       </q-scroll-area>
     </div>
@@ -76,7 +74,6 @@
 <script>
 import Linenum from "./Linenum";
 import Ply from "./Ply";
-import { scroll } from "quasar";
 
 export default {
   name: "Chat",
@@ -123,21 +120,21 @@ export default {
       return messages;
     },
     currentPlyIndex() {
-      let ply;
-      let index = 0;
-      for (let plyID in this.log) {
-        ply = this.game.plies[plyID];
-        if (!ply) {
-          continue;
+      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+        return 0;
+      } else if (this.game.state.ply) {
+        let ids = Object.keys(this.log)
+          .map(id => 1 * id)
+          .sort();
+        for (let i = 0; i < ids.length; i++) {
+          if (ids[i] === this.game.state.plyID) {
+            return i;
+          } else if (ids[i] > this.game.state.plyID) {
+            return i - !!i;
+          }
         }
-        if (ply.index === this.game.state.ply.index) {
-          return index;
-        } else if (index && ply.index > this.game.state.ply.index) {
-          return index - 1;
-        }
-        index++;
       }
-      return index;
+      return 0;
     }
   },
   methods: {
@@ -189,20 +186,19 @@ export default {
         this.updateTimer();
       }
     },
-    scroll(duration = 0) {
-      this.$nextTick(() => {
-        if (this.$refs.plies && this.currentPlyIndex in this.$refs.plies) {
-          const el = this.$refs.plies[this.currentPlyIndex];
-          const target = scroll.getScrollTarget(el);
-          const offset = el.offsetTop;
-          scroll.setScrollPosition(target, offset, duration);
-        }
-      });
+    scroll(smooth) {
+      const ply = this.$refs.plies[this.currentPlyIndex];
+      if (ply) {
+        ply.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "start"
+        });
+      }
     }
   },
   watch: {
     currentPlyIndex() {
-      this.scroll(150);
+      this.scroll(true);
     }
   },
   mounted() {
