@@ -2,14 +2,21 @@
   <div
     class="ptn move q-px-md"
     :class="{
-      'current-branch': isCurrentBranch,
       'current-move': isCurrentMove,
       linebreak
     }"
   >
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <Ply v-if="move.ply1" :ply="move.ply1" :game="game" />
+      <Ply
+        v-if="move.ply1"
+        :ply="
+          $store.state.showAllBranches
+            ? move.ply1
+            : move.ply1Original || move.ply1
+        "
+        :game="game"
+      />
       <Ply v-if="move.ply2" :ply="move.ply2" :game="game" />
     </div>
   </div>
@@ -25,18 +32,16 @@ export default {
   props: ["move", "game"],
   computed: {
     nextMove() {
-      return this.move.index < this.game.moves.length - 1
-        ? this.game.moves[this.move.index + 1]
+      return this.move.id < this.game.moves.length - 1
+        ? this.game.moves[this.move.id + 1]
         : null;
     },
     isCurrentMove() {
       return this.game.state.move.id === this.move.id;
     },
-    isCurrentBranch() {
-      return this.game.state.branch.startsWith(this.move.linenum.branch);
-    },
     linebreak() {
       return (
+        this.$store.state.showAllBranches &&
         this.nextMove &&
         this.nextMove.linenum.branch != this.move.linenum.branch
       );

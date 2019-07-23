@@ -31,40 +31,18 @@
       </span>
       <q-btn
         v-if="!noBranches && ply.branches.length"
-        @click.stop="select(ply, false)"
+        @click.stop="nop"
         icon="arrow_drop_down"
         size="md"
         flat
         dense
       >
-        <q-menu
-          content-class="bg-primary"
-          align="bottom right"
-          self="top left"
-          auto-close
-          dark
-        >
-          <q-list dense>
-            <q-item
-              v-for="(branch, i) in ply.branches"
-              :key="i"
-              @click="select(branch, true)"
-              clickable
-            >
-              <q-item-section side>
-                <strong class="q-pa-sm text-white">{{ i }}</strong>
-              </q-item-section>
-              <q-item-label>
-                <Ply
-                  :ply="branch"
-                  :game="game"
-                  :noBranches="true"
-                  :noClick="true"
-                />
-              </q-item-label>
-            </q-item>
-          </q-list>
-        </q-menu>
+        <BranchMenu
+          @input="selectBranch"
+          v-if="ply.branches.length"
+          :game="game"
+          :branches="ply.branches"
+        />
       </q-btn>
     </q-chip>
     <span class="result" v-if="ply.result">
@@ -79,8 +57,11 @@
 </template>
 
 <script>
+import BranchMenu from "./BranchMenu";
+
 export default {
   name: "Ply",
+  components: { BranchMenu },
   props: ["game", "ply", "noBranches", "noClick", "delay"],
   computed: {
     isSelected() {
@@ -90,13 +71,16 @@ export default {
       return this.game && this.ply
         ? this.game.state.plyID === this.ply.id
           ? this.game.state.plyIsDone
-          : this.game.state.branch.startsWith(this.ply.move.linenum.branch) &&
-            this.game.state.ply.id > this.ply.id
+          : this.ply.isInBranch(this.game.state.targetBranch) &&
+            this.game.state.ply.index > this.ply.index
         : true;
     }
   },
   methods: {
     select(ply, isDone) {
+      if (this.noClick) {
+        return;
+      }
       if (isDone === undefined) {
         if (ply.id === this.game.state.ply.id) {
           isDone = !this.game.state.plyIsDone;
@@ -114,7 +98,12 @@ export default {
       if (this.game.goToPly(ply.id, isDone)) {
         this.$store.dispatch("SET_STATE", this.game.state);
       }
-    }
+    },
+    selectBranch(ply) {
+      this.game.setTarget(ply);
+      this.$store.dispatch("SET_STATE", this.game.state);
+    },
+    nop() {}
   }
 };
 </script>

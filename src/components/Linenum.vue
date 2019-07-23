@@ -1,8 +1,11 @@
 <template>
   <span class="ptn linenum">
-    <span class="branch" v-if="this.linenum.branch">{{
-      this.linenum.branch
-    }}</span>
+    <span
+      class="branch"
+      v-if="this.linenum.branch && $store.state.showAllBranches"
+    >
+      {{ this.linenum.branch }}
+    </span>
     <span class="number">{{ this.linenum.number }}. </span>
   </span>
 </template>

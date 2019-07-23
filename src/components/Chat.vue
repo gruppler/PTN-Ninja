@@ -187,9 +187,11 @@ export default {
       }
     },
     scroll(smooth) {
-      const ply = this.$refs.plies[this.currentPlyIndex];
-      if (ply) {
-        ply.scrollIntoView({
+      const message = this.$refs.messages
+        ? this.$refs.messages[this.currentPlyIndex]
+        : null;
+      if (message) {
+        message.scrollIntoView({
           behavior: smooth ? "smooth" : "auto",
           block: "start"
         });

@@ -9,7 +9,7 @@ import Result from "./Result";
 import Nop from "./Nop";
 import Move from "./Move";
 
-import { last, map, times, trimStart } from "lodash";
+import { defaults, last, map, times, trimStart } from "lodash";
 
 const pieceCounts = {
   3: { F: 10, C: 0, total: 10 },
@@ -37,31 +37,70 @@ export default class Game {
     let item, key, ply;
     let branch = "";
     let moveNumber = 1;
-    let move = new Move({ game: this });
+    let move = new Move({ game: this, id: 0, index: 0 });
 
     this.name = params.name;
     this.state = {};
     this.tags = {};
     this.moves = [move];
+    this.branches = {};
     this.plies = [];
     this.chatlog = {};
     this.notes = {};
 
     notation = trimStart(notation);
 
+    // Parse HEAD
+    while (notation.length && notation[0] === "[") {
+      // Tag
+      item = Tag.parse(notation);
+      key = item.key.toLowerCase();
+      this.tags[key] = item;
+      notation = trimStart(notation.substr(item.ptn.length));
+      delete item.ptn;
+    }
+
+    if (this.tags.date) {
+      if (this.tags.time) {
+        this.datetime = new Date(
+          this.tags.date.value + " " + this.tags.time.value
+        );
+      } else {
+        this.datetime = new Date(this.tags.date.value);
+      }
+    } else if (this.tags.time) {
+      this.datetime = new Date(this.tags.time.value);
+    } else {
+      this.datetime = new Date();
+    }
+
+    if (this.tags.size) {
+      this.size = this.tags.size.value;
+    } else {
+      if (this.tags.tps) {
+        this.size = this.tags.tps.value.size;
+      } else {
+        throw new Error("Missing board size");
+      }
+    }
+
+    if (this.tags.tps) {
+      this.firstMoveNumber = this.tags.tps.linenum;
+      this.firstPlayer = this.tags.tps.player;
+      moveNumber = this.tags.tps.number;
+      if (this.tags.tps.player === 2) {
+        move.setPly(new Nop(), 1);
+      }
+    } else {
+      this.firstMoveNumber = 1;
+      this.firstPlayer = 1;
+    }
+
+    this.pieceCounts = pieceCounts[this.size];
+
+    // Parse BODY
     while (notation.length) {
-      if (notation[0] === "[") {
-        // Tag
-        item = Tag.parse(notation);
-        key = item.key.toLowerCase();
-        this.tags[key] = item;
-        if (key === "tps") {
-          moveNumber = item.value.number;
-          if (item.value.player === 2) {
-            move.setPly(new Nop(), 1);
-          }
-        }
-      } else if (notation[0] === "{") {
+      if (notation[0] === "{") {
         // Comment
         item = Comment.parse(notation);
         let plyID = this.plies.length - 1;
@@ -125,7 +164,11 @@ export default class Game {
           this.moves.push(move);
         }
         this.plies.push(ply);
+        if (!(ply.branch in this.branches)) {
+          this.branches[ply.branch] = ply;
+        }
       } else if (/[?!'"]/.test(notation[0])) {
+        // Evalutaion
         item = Evaluation.parse(notation);
         if (ply) {
           ply.evaluation = item;
@@ -138,34 +181,12 @@ export default class Game {
       delete item.ptn;
     }
 
-    if (this.tags.date) {
-      if (this.tags.time) {
-        this.datetime = new Date(
-          this.tags.date.value + " " + this.tags.time.value
-        );
-      } else {
-        this.datetime = new Date(this.tags.date.value);
-      }
-    } else if (this.tags.time) {
-      this.datetime = new Date(this.tags.time.value);
-    } else {
-      this.datetime = new Date();
-    }
-
-    if (this.tags.size) {
-      this.size = this.tags.size.value;
-    } else {
-      if (this.tags.tps) {
-        this.size = this.tags.tps.value.size;
-      } else {
-        throw new Error("Missing board size");
-      }
-    }
-
-    this.pieceCounts = pieceCounts[this.size];
-    this.updateState();
     if (params.state) {
+      this.state.targetBranch = params.state.targetBranch;
+      this.updateState();
       this.goToPly(params.state.plyID, params.state.plyIsDone);
+    } else {
+      this.updateState();
     }
     if (!this.name) {
       this.name = this.generateName();
@@ -182,66 +203,86 @@ export default class Game {
     this.updateState();
   }
 
+  setTarget(ply) {
+    this.state.targetBranch = ply.branch;
+    if (
+      ply.branches.includes(this.state.ply) ||
+      !this.state.ply.isInBranch(this.state.targetBranch)
+    ) {
+      this.goToPly(ply.id, this.state.plyIsDone);
+    } else {
+      this.updateState(true);
+    }
+  }
+
   // After _setPly, update the rest of the state
-  updateState() {
-    if (!("plyID" in this.state)) {
-      this.state.plyID = 0;
-    }
-    if (!("plyIsDone" in this.state)) {
-      this.state.plyIsDone = false;
-    }
-    if (!("targetBranch" in this.state)) {
-      this.state.targetBranch = "";
-    }
-    if (!this.state.squares) {
-      this.state.squares = new Marray.two(this.size, this.size, () => []);
-    }
-    if (!this.state.pieces) {
-      this.state.pieces = {
+  updateState(forceUpdate = false) {
+    this.state = defaults(this.state, {
+      plyID: 0,
+      plyIsDone: false,
+      player: 1,
+      branch: "",
+      targetBranch: "",
+      squares: new Marray.two(this.size, this.size, () => []),
+      pieces: {
         1: { F: [], C: [] },
         2: { F: [], C: [] }
-      };
-    }
+      }
+    });
 
-    if (!(this.state.plyID in this.plies)) {
-      this.state.branch = "";
-      this.state.player = 1;
-    } else {
-      let newPly = this.plies[this.state.plyID].branch(this.state.targetBranch);
+    if (this.state.plyID in this.plies) {
+      let newPly = this.plies[this.state.plyID];
       let newMove = newPly.move;
-      let newBranch = newMove.linenum.branch;
+      let newBranch = newPly.branch;
+      let newNumber = newMove.linenum.number;
 
-      if (this.state.branch !== newBranch || !this.state.plies) {
-        this.state.plies = this.plies.filter(
-          ply =>
-            newBranch === ply.move.linenum.branch ||
-            (newBranch.startsWith(ply.move.linenum.branch) &&
-              ply.move.linenum.number <= newMove.linenum.number)
-        );
-        this.state.plies.forEach((ply, index) => (ply.index = index));
-
-        this.state.moves = this.moves.filter(
-          move =>
-            newBranch === move.linenum.branch ||
-            (newBranch.startsWith(move.linenum.branch) &&
-              move.linenum.number < newMove.linenum.number)
-        );
-        this.state.moves.forEach((move, index) => (move.index = index));
+      // Update lists of current branch's plies and moves
+      if (
+        forceUpdate ||
+        !this.state.plies ||
+        this.state.branch !== newBranch ||
+        newPly.getBranch(this.state.targetBranch) !== newPly
+      ) {
+        let ply;
+        this.state.plies = [];
+        this.state.moves = [];
+        for (let id = 0; id < this.plies.length; id++) {
+          ply = this.plies[id].getBranch(this.state.targetBranch);
+          if (
+            this.state.moves.length &&
+            (ply.move.linenum.number < last(this.state.moves).linenum.number ||
+              !ply.move.linenum.branch.startsWith(
+                last(this.state.moves).linenum.branch
+              ))
+          ) {
+            break;
+          }
+          id = ply.id;
+          this.state.plies.push(ply);
+          if (ply.player === 2 || !ply.move.ply2) {
+            this.state.moves.push(ply.move);
+          }
+          if (ply.result) {
+            break;
+          }
+        }
       }
 
-      if (this.state.ply !== newPly) {
+      // Update previous and next plies
+      if (forceUpdate || this.state.ply !== newPly) {
         this.state.prevPly = newPly.index
           ? this.state.plies[newPly.index - 1]
           : null;
         this.state.nextPly =
           newPly.index < this.state.plies.length - 1
-            ? this.state.plies[newPly.index + 1].branch(this.state.targetBranch)
+            ? this.state.plies[newPly.index + 1]
             : null;
       }
 
       this.state.ply = newPly;
       this.state.move = newMove;
       this.state.branch = newBranch;
+      this.state.number = newNumber;
 
       this.state.player =
         this.state.plyIsDone && this.state.nextPly
@@ -252,8 +293,9 @@ export default class Game {
     // TODO: Trigger state mutation event
   }
 
-  _doPly(ply) {
-    if (this._doMoveset(ply)) {
+  _doPly() {
+    const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
+    if (ply && this._doMoveset(ply)) {
       this._setPly(ply.id, true);
       return true;
     } else {
@@ -261,8 +303,9 @@ export default class Game {
     }
   }
 
-  _undoPly(ply) {
-    if (this._doMoveset(ply, true)) {
+  _undoPly() {
+    const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
+    if (ply && this._doMoveset(ply, true)) {
       this._setPly(ply.id, false);
       return true;
     } else {
@@ -344,35 +387,87 @@ export default class Game {
       return false;
     }
 
-    const targetState = {
-      ply: targetPly,
-      plyIsDone: isDone,
-      branch: targetPly.move.linenum.branch
+    const log = label => {
+      console.log(
+        label,
+        this.state.branch + this.state.number + ".",
+        this.state.ply.text(),
+        this.state.plyIsDone,
+        this.state
+      );
     };
 
-    this.state.targetBranch = targetState.branch;
+    const target = {
+      ply: targetPly,
+      plyIsDone: isDone,
+      move: targetPly.move,
+      branch: targetPly.move.linenum.branch,
+      number: targetPly.move.linenum.number
+    };
 
-    // Go back until we find a common branch
-    while (!targetState.branch.startsWith(this.state.branch)) {
-      this._undoPly(this.state.plyIsDone ? this.state.ply : this.state.prevPly);
+    if (
+      !this.state.targetBranch.startsWith(target.branch) ||
+      target.number > this.state.number ||
+      (target.number === this.state.number &&
+        target.ply.player === this.state.ply.player)
+    ) {
+      this.state.targetBranch = target.branch;
     }
 
-    // Go forward until we reach the target ply
-    while (this.state.ply.index < targetState.ply.index) {
-      this._doPly(this.state.plyIsDone ? this.state.nextPly : this.state.ply);
+    log("started at");
+
+    if (this.state.branch !== target.branch || this.state.plyID > plyID) {
+      while (
+        (!target.branch.startsWith(this.state.branch) ||
+          this.state.number > target.number ||
+          this.state.ply.index > target.ply.index ||
+          this.state.plyIsDone) &&
+        this._undoPly()
+      ) {
+        // Go back until we're on a common branch and before the target ply
+      }
+      log("went back to");
     }
 
-    // Go backward until we reach the target ply
-    while (this.state.ply.index > targetState.ply.index) {
-      this._undoPly(this.state.plyIsDone ? this.state.ply : this.state.prevPly);
+    if (this.state.branch !== target.branch) {
+      this._setPly(this.state.ply.getBranch(target.branch).id);
+      log("switched branch to");
+    }
+
+    if (
+      this.state.number < target.number ||
+      this.state.ply.index < target.ply.index
+    ) {
+      while (
+        (this.state.number < target.number ||
+          this.state.ply.index < target.ply.index) &&
+        this._doPly()
+      ) {
+        // Go forward until we reach the target ply
+      }
+      log("went forward to");
+    } else if (
+      this.state.number > target.number ||
+      this.state.ply.index > target.ply.index
+    ) {
+      while (
+        (this.state.number > target.number ||
+          this.state.ply.index > target.ply.index) &&
+        this._undoPly()
+      ) {
+        // Go backward until we reach the target ply
+      }
+      log("went back again to");
     }
 
     // Do or undo the target ply
-    if (targetState.plyIsDone !== this.state.plyIsDone) {
-      if (targetState.plyIsDone) {
-        this._doPly(this.state.ply);
+    if (target.plyIsDone !== this.state.plyIsDone) {
+      if (target.plyIsDone) {
+        this._doPly();
+        log("did ply");
       } else {
-        this._undoPly(this.state.ply);
+        this._undoPly();
+        log("undid ply");
       }
     }
 
@@ -389,7 +484,7 @@ export default class Game {
 
   prev() {
     if (this.state.plyIsDone) {
-      return this._undoPly(this.state.ply);
+      return this._undoPly();
     } else if (this.state.prevPly) {
       return this.goToPly(this.state.prevPly.id, false);
     }
@@ -398,7 +493,7 @@ export default class Game {
 
   next() {
     if (!this.state.plyIsDone) {
-      return this._doPly(this.state.ply);
+      return this._doPly();
     } else if (this.state.nextPly) {
       return this.goToPly(this.state.nextPly.id, true);
     }
@@ -462,14 +557,14 @@ export default class Game {
 
   getMoveComments(move) {
     let comments = [];
-    if (move.ply1 && "index" in move.ply1) {
-      comments[0] = (this.notes[move.ply1.index] || []).concat(
-        this.chatlog[move.ply1.index] || []
+    if (move.ply1 && "id" in move.ply1) {
+      comments[0] = (this.notes[move.ply1.id] || []).concat(
+        this.chatlog[move.ply1.id] || []
       );
     }
-    if (move.ply2 && "index" in move.ply2) {
-      comments[1] = (this.notes[move.ply2.index] || []).concat(
-        this.chatlog[move.ply2.index] || []
+    if (move.ply2 && "id" in move.ply2) {
+      comments[1] = (this.notes[move.ply2.id] || []).concat(
+        this.chatlog[move.ply2.id] || []
       );
     }
     return comments;

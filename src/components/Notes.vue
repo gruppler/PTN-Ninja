@@ -20,7 +20,11 @@
           </div>
           <template v-for="(comments, plyID) in log">
             <div
-              v-if="plyID >= 0"
+              v-if="
+                plyID >= 0 &&
+                  ($store.state.showAllBranches ||
+                    game.plies[plyID].isInBranch(game.state.targetBranch))
+              "
               ref="messages"
               class="fullwidth-padded-md q-py-xs q-mb-md"
               :class="{ highlight: game.state.plyID == plyID }"
@@ -120,7 +124,9 @@ export default {
       this.$refs.input.focus();
     },
     scroll(smooth) {
-      const message = this.$refs.messages[this.currentPlyIndex];
+      const message = this.$refs.messages
+        ? this.$refs.messages[this.currentPlyIndex]
+        : null;
       if (message) {
         message.scrollIntoView({
           behavior: smooth ? "smooth" : "auto",

@@ -6,7 +6,7 @@
     auto-close
     dark
   >
-    <q-list dense>
+    <q-list class="branch-menu" dense>
       <q-item
         v-for="(ply, i) in branches"
         :key="i"
@@ -14,7 +14,12 @@
         clickable
       >
         <q-item-section side>
-          <strong class="q-pa-sm text-white">{{ i }}</strong>
+          <strong
+            class="option-number q-pa-sm"
+            :class="{ selected: ply.isInBranch(game.state.targetBranch) }"
+          >
+            {{ i }}
+          </strong>
         </q-item-section>
         <q-item-label>
           <Ply :ply="ply" :game="game" :noBranches="true" :noClick="true" />
@@ -25,11 +30,11 @@
 </template>
 
 <script>
-import Ply from "./Ply";
-
 export default {
   name: "BranchMenu",
-  components: { Ply },
+  components: {
+    Ply: () => import("./Ply")
+  },
   props: ["game", "branches"],
   methods: {
     select(ply) {
@@ -39,4 +44,12 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="stylus">
+.branch-menu .option-number
+  line-height 1em
+  border-radius $generic-border-radius
+  color #fff
+  &.selected
+    background-color $accent
+    color $grey-10
+</style>

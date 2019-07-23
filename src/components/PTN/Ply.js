@@ -55,12 +55,46 @@ export default class Ply extends Ptn {
     return "abcdefgh"[x] + (y + 1);
   }
 
-  branch(targetBranch = "") {
-    const branches = this.branches.map(ply => ply.move.linenum.branch);
-    if (branches.length) {
-      return branches.find(branch => targetBranch.startsWith(branch)) || this;
+  getBranch(targetBranch = "") {
+    if (this.branches.length) {
+      return (
+        this.branches.find(ply =>
+          ply.move.linenum.branch.startsWith(targetBranch)
+        ) || this
+      );
     } else {
       return this;
+    }
+  }
+
+  isInBranch(branch) {
+    if (this.branch === branch) {
+      // In same branch
+      return true;
+    } else if (this.branch.startsWith(branch)) {
+      // In a child or sibling branch
+      return false;
+    } else if (branch.startsWith(this.branch)) {
+      // In a parent branch
+      let ply = this.game.branches[branch] || this.game.plies[0];
+      while (ply.branch && ply.branches[0] !== ply) {
+        ply = ply.branches[0];
+        if (ply.branch == this.branch) {
+          return (
+            ply.move.linenum.number > this.move.linenum.number ||
+            ply.index > this.index
+          );
+        }
+        if (!ply.branches[0]) {
+          ply = ply.branch
+            ? this.game.branches[ply.branch]
+            : this.game.plies[0];
+        }
+      }
+      return false;
+    } else {
+      // In a different branch
+      return false;
     }
   }
 

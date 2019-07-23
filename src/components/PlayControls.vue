@@ -27,7 +27,7 @@
       <q-btn
         round
         flat
-        :disable="!hasBranches"
+        :disable="!game.state.targetBranch && !hasBranches"
         :color="game.state.targetBranch ? 'accent' : ''"
         icon="call_split"
       >
@@ -36,6 +36,12 @@
           v-if="hasBranches"
           :game="game"
           :branches="game.state.ply.branches"
+        />
+        <BranchMenu
+          @input="selectBranch"
+          v-if="!hasBranches && game.state.targetBranch"
+          :game="game"
+          :branches="game.branches[game.state.targetBranch].branches"
         />
       </q-btn>
     </div>
@@ -91,9 +97,8 @@ export default {
       }
     },
     selectBranch(ply) {
-      if (this.game.goToPly(ply.id, true)) {
-        this.$store.dispatch("SET_STATE", this.game.state);
-      }
+      this.game.setTarget(ply);
+      this.$store.dispatch("SET_STATE", this.game.state);
     }
   }
 };

@@ -2,7 +2,7 @@
   <q-scroll-area>
     <div class="ptn q-py-md" v-if="game">
       <Move
-        v-for="(move, index) in game.state.moves"
+        v-for="(move, index) in moves"
         ref="moves"
         :move="move"
         :game="game"
@@ -19,6 +19,13 @@ export default {
   name: "PTN",
   components: { Move },
   props: ["game"],
+  computed: {
+    moves() {
+      return this.$store.state.showAllBranches
+        ? this.game.moves
+        : this.game.state.moves;
+    }
+  },
   methods: {
     scroll(smooth) {
       if (this.$refs.moves && this.game.state.move.index in this.$refs.moves) {
