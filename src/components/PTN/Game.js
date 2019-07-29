@@ -35,7 +35,7 @@ class Piece {
 export default class Game {
   constructor(notation, params = { name: "", state: null }) {
     let item, key, ply;
-    let branch = "";
+    let branch = null;
     let moveNumber = 1;
     let move = new Move({ game: this, id: 0, index: 0 });
 
@@ -88,9 +88,6 @@ export default class Game {
       this.firstMoveNumber = this.tags.tps.value.linenum;
       this.firstPlayer = this.tags.tps.value.player;
       moveNumber = this.tags.tps.value.number;
-      if (this.tags.tps.value.player === 2) {
-        move.setPly(new Nop(), 1);
-      }
     } else {
       this.firstMoveNumber = 1;
       this.firstPlayer = 1;
@@ -122,6 +119,9 @@ export default class Game {
           });
           this.moves.push(move);
         }
+        if (branch !== item.branch && this.firstPlayer === 2) {
+          move.setPly(Nop.parse("--"), 1);
+        }
         branch = item.branch;
         moveNumber = item.number;
         ply = null;
@@ -151,6 +151,9 @@ export default class Game {
           // Player 2 ply
           ply.player = 2;
           ply.color = moveNumber === 1 ? 1 : 2;
+          if (!move.ply1) {
+            move.setPly(Nop.parse("--"), 1);
+          }
           move.setPly(ply, 2);
         } else {
           // New move
@@ -158,7 +161,7 @@ export default class Game {
           move = new Move({
             game: this,
             id: this.moves.length,
-            linenum: new Linenum(branch + moveNumber),
+            linenum: new Linenum(branch + moveNumber + ". "),
             ply1: ply
           });
           this.moves.push(move);
