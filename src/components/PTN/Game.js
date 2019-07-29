@@ -85,10 +85,10 @@ export default class Game {
     }
 
     if (this.tags.tps) {
-      this.firstMoveNumber = this.tags.tps.linenum;
-      this.firstPlayer = this.tags.tps.player;
-      moveNumber = this.tags.tps.number;
-      if (this.tags.tps.player === 2) {
+      this.firstMoveNumber = this.tags.tps.value.linenum;
+      this.firstPlayer = this.tags.tps.value.player;
+      moveNumber = this.tags.tps.value.number;
+      if (this.tags.tps.value.player === 2) {
         move.setPly(new Nop(), 1);
       }
     } else {
@@ -181,15 +181,19 @@ export default class Game {
       delete item.ptn;
     }
 
-    if (params.state) {
-      this.state.targetBranch = params.state.targetBranch;
-      this.updateState();
-      this.goToPly(params.state.plyID, params.state.plyIsDone);
-    } else {
-      this.updateState();
-    }
     if (!this.name) {
       this.name = this.generateName();
+    }
+
+    if (params.state) {
+      this.state.targetBranch = params.state.targetBranch;
+    }
+    this.updateState();
+    if (this.tags.tps) {
+      this._doTPS(this.tags.tps.value);
+    }
+    if (params.state) {
+      this.goToPly(params.state.plyID, params.state.plyIsDone);
     }
   }
 
@@ -378,6 +382,43 @@ export default class Game {
     });
 
     return true;
+  }
+
+  _doTPS({ size, grid }) {
+    let stack, square, piece, type;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < grid[y].length; x++) {
+        if (grid[y][x][0] === "x") {
+          if (/\d/.test(grid[y][x][1])) {
+            x += 1 * grid[y][x][1] - 1;
+          } else {
+            continue;
+          }
+        } else {
+          stack = grid[y][x].split("");
+          square = this.state.squares[y][x];
+          while ((piece = stack.shift())) {
+            if (/[SC]/.test(stack[0])) {
+              type = stack.shift();
+            } else {
+              type = "flat";
+            }
+            piece = new Piece({
+              x,
+              y,
+              z: square.length,
+              color: 1 * piece,
+              isStanding: type === "S",
+              isCapstone: type === "C"
+            });
+            square.push(piece);
+            this.state.pieces[piece.color][piece.isCapstone ? "C" : "F"].push(
+              piece
+            );
+          }
+        }
+      }
+    }
   }
 
   goToPly(plyID, isDone) {

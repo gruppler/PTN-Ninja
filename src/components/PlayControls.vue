@@ -28,7 +28,7 @@
         round
         flat
         :disable="!game.state.targetBranch && !hasBranches"
-        :color="game.state.targetBranch ? 'accent' : ''"
+        :color="hasBranches ? 'accent' : ''"
         icon="call_split"
       >
         <BranchMenu

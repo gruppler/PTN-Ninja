@@ -28,7 +28,11 @@ export default {
   },
   methods: {
     scroll(smooth) {
-      if (this.$refs.moves && this.game.state.move.index in this.$refs.moves) {
+      if (
+        this.$refs.moves &&
+        this.game.state.move &&
+        this.game.state.move.index in this.$refs.moves
+      ) {
         this.$refs.moves[this.game.state.move.index].$el.scrollIntoView({
           behavior: smooth ? "smooth" : "auto",
           block: "center"
