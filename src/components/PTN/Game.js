@@ -387,19 +387,14 @@ export default class Game {
     return true;
   }
 
-  _doTPS({ size, grid }) {
-    let stack, square, piece, type;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < grid[y].length; x++) {
-        if (grid[y][x][0] === "x") {
-          if (/\d/.test(grid[y][x][1])) {
-            x += 1 * grid[y][x][1] - 1;
-          } else {
-            continue;
-          }
-        } else {
-          stack = grid[y][x].split("");
+  _doTPS({ grid }) {
+    let stack, square, piece, type, stackHeight;
+    grid.forEach((row, y) => {
+      row.forEach((col, x) => {
+        if (col[0] !== "x") {
+          stack = col.split("");
           square = this.state.squares[y][x];
+          stackHeight = col.match(/[12]/g).length;
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();
@@ -410,6 +405,7 @@ export default class Game {
               x,
               y,
               z: square.length,
+              stackHeight,
               color: 1 * piece,
               isStanding: type === "S",
               isCapstone: type === "C"
@@ -420,8 +416,8 @@ export default class Game {
             );
           }
         }
-      }
-    }
+      });
+    });
   }
 
   goToPly(plyID, isDone) {
