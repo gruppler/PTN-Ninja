@@ -242,25 +242,27 @@ export default class Game {
       let newMove = newPly.move;
       let newBranch = newPly.branch;
       let newNumber = newMove.linenum.number;
+      let ply;
 
       // Update lists of current branch's plies and moves
       if (
         forceUpdate ||
         !this.state.plies ||
-        this.state.branch !== newBranch ||
-        newPly.getBranch(this.state.targetBranch) !== newPly
+        (this.state.branch !== newBranch &&
+          newPly.isInBranch(this.state.targetBranch))
       ) {
-        let ply;
         this.state.plies = [];
         this.state.moves = [];
         for (let id = 0; id < this.plies.length; id++) {
           ply = this.plies[id].getBranch(this.state.targetBranch);
           if (
-            this.state.moves.length &&
-            (ply.move.linenum.number < last(this.state.moves).linenum.number ||
-              !ply.move.linenum.branch.startsWith(
-                last(this.state.moves).linenum.branch
-              ))
+            this.state.plies.includes(ply) ||
+            (this.state.moves.length &&
+              (ply.move.linenum.number <
+                last(this.state.moves).linenum.number ||
+                !ply.move.linenum.branch.startsWith(
+                  last(this.state.moves).linenum.branch
+                )))
           ) {
             break;
           }
@@ -447,9 +449,7 @@ export default class Game {
 
     if (
       !this.state.targetBranch.startsWith(target.branch) ||
-      target.number > this.state.number ||
-      (target.number === this.state.number &&
-        target.ply.player === this.state.ply.player)
+      target.index >= this.state.ply.index
     ) {
       this.state.targetBranch = target.branch;
     }
@@ -515,7 +515,7 @@ export default class Game {
   }
 
   first() {
-    return this.goToPly(0, false);
+    return this.goToPly(this.state.plies[0].id, false);
   }
 
   last() {

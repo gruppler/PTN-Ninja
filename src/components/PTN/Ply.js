@@ -57,11 +57,7 @@ export default class Ply extends Ptn {
 
   getBranch(targetBranch = "") {
     if (this.branches.length) {
-      return (
-        this.branches.find(ply =>
-          ply.move.linenum.branch.startsWith(targetBranch)
-        ) || this
-      );
+      return this.branches.find(ply => ply.isInBranch(targetBranch)) || this;
     } else {
       return this;
     }
@@ -76,16 +72,15 @@ export default class Ply extends Ptn {
       return false;
     } else if (branch.startsWith(this.branch)) {
       // In a parent branch
-      let ply = this.game.branches[branch] || this.game.plies[0];
+      let ply = this.game.branches[branch];
+      if (!ply) {
+        return false;
+      }
       while (ply.branch && ply.branches[0] !== ply) {
         ply = ply.branches[0];
         if (ply.branch == this.branch) {
-          return (
-            ply.move.linenum.number > this.move.linenum.number ||
-            ply.index > this.index
-          );
-        }
-        if (!ply.branches[0]) {
+          return ply.index > this.index;
+        } else {
           ply = ply.branch
             ? this.game.branches[ply.branch]
             : this.game.plies[0];
