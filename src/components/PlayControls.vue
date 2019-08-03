@@ -2,9 +2,22 @@
   <div class="full-width justify-center">
     <div class="row no-wrap justify-around items-center">
       <q-btn round flat :disable="!isLast" icon="undo" />
-      <q-btn @click="first" round flat :disable="isFirst" icon="first_page" />
+      <q-btn
+        @click="first"
+        @shortkey="first"
+        v-shortkey.once="['ctrl' + 'arrowleft']"
+        round
+        flat
+        :disable="isFirst"
+        icon="first_page"
+      />
       <q-btn
         @click="prev"
+        @shortkey="prev"
+        v-shortkey.once="{
+          whole: ['arrowleft'],
+          half: ['shift' + 'arrowleft']
+        }"
         round
         flat
         :disable="isFirst"
@@ -12,19 +25,36 @@
       />
       <q-btn
         @click="playpause"
+        @shortkey="playpause"
+        v-shortkey.once="['space']"
         round
         color="accent"
         :icon="isPlaying ? 'pause' : 'play_arrow'"
       />
       <q-btn
         @click="next"
+        @shortkey="next"
+        v-shortkey.once="{
+          whole: ['arrowright'],
+          half: ['shift' + 'arrowright']
+        }"
         round
         flat
         :disable="isLast"
         icon="keyboard_arrow_right"
       />
-      <q-btn @click="last" round flat :disable="isLast" icon="last_page" />
       <q-btn
+        @click="last"
+        @shortkey="last"
+        v-shortkey.once="['ctrl', 'arrowright']"
+        round
+        flat
+        :disable="isLast"
+        icon="last_page"
+      />
+      <q-btn
+        v-shortkey.once="options"
+        @shortkey="selectOption"
         round
         flat
         :disable="!game.state.targetBranch && !hasBranches"
@@ -39,7 +69,7 @@
         />
         <BranchMenu
           @input="selectBranch"
-          v-if="!hasBranches && game.state.targetBranch"
+          v-else-if="game.state.targetBranch"
           :game="game"
           :branches="game.branches[game.state.targetBranch].branches"
         />
@@ -50,6 +80,8 @@
 
 <script>
 import BranchMenu from "./BranchMenu";
+
+import { zipObject } from "lodash";
 
 export default {
   name: "PlayControls",
@@ -71,6 +103,17 @@ export default {
     },
     hasBranches() {
       return this.game.state.ply && !!this.game.state.ply.branches.length;
+    },
+    branches() {
+      return this.hasBranches
+        ? this.game.state.ply.branches
+        : this.game.branches[this.game.state.targetBranch].branches;
+    },
+    options() {
+      return zipObject(
+        Object.keys(this.branches),
+        Object.keys(this.branches).map(key => [key])
+      );
     }
   },
   methods: {
@@ -101,7 +144,7 @@ export default {
     },
     prev(event) {
       if (!this.isFirst) {
-        this.game.prev(event.shiftKey);
+        this.game.prev(event.shiftKey || event.srcKey === "half");
         this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
@@ -113,7 +156,9 @@ export default {
       }
       if (!this.isLast) {
         this.isPlaying =
-          this.game.next(this.isPlaying || event.shiftKey) && this.isPlaying;
+          this.game.next(
+            this.isPlaying || event.shiftKey || event.srcKey === "half"
+          ) && this.isPlaying;
         this.$store.dispatch("SET_STATE", this.game.state);
         if (this.isLast && this.isPlaying) {
           this.pause();
@@ -132,6 +177,9 @@ export default {
     selectBranch(ply) {
       this.game.setTarget(ply);
       this.$store.dispatch("SET_STATE", this.game.state);
+    },
+    selectOption(event) {
+      this.selectBranch(this.branches[event.srcKey]);
     }
   },
   watch: {

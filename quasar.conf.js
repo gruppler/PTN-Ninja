@@ -8,7 +8,8 @@ module.exports = function (ctx) {
       'addressbar-color',
       'axios',
       'i18n',
-      'moment'
+      'moment',
+      'shortkey'
     ],
 
     css: [
