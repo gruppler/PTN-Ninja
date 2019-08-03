@@ -14,12 +14,12 @@
         clickable
       >
         <q-item-section side>
-          <strong
-            class="option-number q-pa-sm"
+          <span
+            class="option-number text-subtitle2 q-pa-sm"
             :class="{ selected: ply.isInBranch(game.state.targetBranch) }"
           >
             {{ i }}
-          </strong>
+          </span>
         </q-item-section>
         <q-item-label>
           <Ply :ply="ply" :game="game" :noBranches="true" :noClick="true" />
