@@ -522,20 +522,20 @@ export default class Game {
     return this.goToPly(last(this.state.plies).id, true);
   }
 
-  prev() {
+  prev(half = false) {
     if (this.state.plyIsDone) {
       return this._undoPly();
     } else if (this.state.prevPly) {
-      return this.goToPly(this.state.prevPly.id, false);
+      return this.goToPly(this.state.prevPly.id, half);
     }
     return false;
   }
 
-  next() {
+  next(half = false) {
     if (!this.state.plyIsDone) {
       return this._doPly();
     } else if (this.state.nextPly) {
-      return this.goToPly(this.state.nextPly.id, true);
+      return this.goToPly(this.state.nextPly.id, !half);
     }
     return false;
   }

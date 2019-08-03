@@ -78,15 +78,15 @@ export default {
         this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
-    prev() {
+    prev(event) {
       if (!this.isFirst) {
-        this.game.prev();
+        this.game.prev(event.shiftKey);
         this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
-    next() {
+    next(event) {
       if (!this.isLast) {
-        this.game.next();
+        this.game.next(event.shiftKey);
         this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
