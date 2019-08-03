@@ -3,7 +3,7 @@
     <div class="ptn q-py-md" v-if="game">
       <Move
         v-for="(move, index) in moves"
-        ref="moves"
+        :ref="move.id"
         :move="move"
         :game="game"
         :key="index"
@@ -27,14 +27,12 @@ export default {
     }
   },
   methods: {
-    scroll(smooth) {
-      if (
-        this.$refs.moves &&
-        this.game.state.move &&
-        this.game.state.move.index in this.$refs.moves
-      ) {
-        this.$refs.moves[this.game.state.move.index].$el.scrollIntoView({
-          behavior: smooth ? "smooth" : "auto",
+    scroll() {
+      const move = this.game.state.ply
+        ? this.$refs[this.game.state.move.id][0]
+        : null;
+      if (move) {
+        move.$el.scrollIntoView({
           block: "center"
         });
       }
@@ -42,10 +40,10 @@ export default {
   },
   watch: {
     game() {
-      this.scroll();
+      this.$nextTick(this.scroll);
     },
     "game.state.ply.id"() {
-      this.scroll(true);
+      this.scroll();
     }
   },
   mounted() {

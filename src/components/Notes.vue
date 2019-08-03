@@ -5,9 +5,9 @@
         <div class="q-pa-md">
           <div
             v-if="log[-1]"
-            ref="messages"
             class="fullwidth-padded-md q-py-xs q-mb-md"
             :class="{ highlight: !game.state.plyID && !game.state.plyIsDone }"
+            ref="-1"
             key="-1"
           >
             <q-chat-message
@@ -20,15 +20,11 @@
           </div>
           <template v-for="(comments, plyID) in log">
             <div
-              v-if="
-                plyID >= 0 &&
-                  ($store.state.showAllBranches ||
-                    game.plies[plyID].isInBranch(game.state.targetBranch))
-              "
-              ref="messages"
+              v-if="plyID >= 0"
               class="fullwidth-padded-md q-py-xs q-mb-md"
               :class="{ highlight: game.state.plyID == plyID }"
               :key="plyID"
+              :ref="plyID"
             >
               <div>
                 <Linenum
@@ -84,6 +80,8 @@
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 
+import { pickBy } from "lodash";
+
 export default {
   name: "Notes",
   components: { Ply, Linenum },
@@ -96,24 +94,35 @@ export default {
   },
   computed: {
     log() {
-      return this.game.notes;
+      return this.$store.state.showAllBranches
+        ? this.game.notes
+        : pickBy(
+            this.game.notes,
+            (notes, id) =>
+              id < 0 ||
+              this.game.plies[id].isInBranch(this.game.state.targetBranch)
+          );
     },
-    currentPlyIndex() {
+    currentPlyID() {
+      const ids = Object.keys(this.log)
+        .map(id => 1 * id)
+        .sort((a, b) => a - b);
       if (!this.game.state.plyID && !this.game.state.plyIsDone) {
-        return 0;
+        return ids[0];
       } else if (this.game.state.ply) {
-        let ids = Object.keys(this.log)
-          .map(id => 1 * id)
-          .sort();
         for (let i = 0; i < ids.length; i++) {
           if (ids[i] === this.game.state.plyID) {
-            return i;
-          } else if (ids[i] > this.game.state.plyID) {
-            return i - !!i;
+            return this.game.state.plyID;
+          } else if (
+            ids[i] in this.game.plies &&
+            this.game.plies[ids[i]].index > this.game.state.ply.index
+          ) {
+            return ids[i - !!i];
           }
         }
+        return ids[ids.length - 1];
       }
-      return 0;
+      return null;
     }
   },
   methods: {
@@ -123,24 +132,24 @@ export default {
       this.message = "";
       this.$refs.input.focus();
     },
-    scroll(smooth) {
-      const message = this.$refs.messages
-        ? this.$refs.messages[this.currentPlyIndex]
-        : null;
+    scroll() {
+      let message = this.$refs[this.currentPlyID];
+      if (message && this.currentPlyID >= 0) {
+        message = message[0];
+      }
       if (message) {
         message.scrollIntoView({
-          behavior: smooth ? "smooth" : "auto",
           block: "start"
         });
       }
     }
   },
   watch: {
-    game() {
-      this.scroll();
+    log() {
+      this.$nextTick(this.scroll);
     },
-    currentPlyIndex() {
-      this.scroll(true);
+    currentPlyID() {
+      this.scroll();
     }
   },
   mounted() {
