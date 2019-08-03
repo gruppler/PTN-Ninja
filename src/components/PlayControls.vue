@@ -11,7 +11,7 @@
         icon="keyboard_arrow_left"
       />
       <q-btn
-        @click="isPlaying = !isPlaying"
+        @click="playpause"
         round
         color="accent"
         :icon="isPlaying ? 'pause' : 'play_arrow'"
@@ -57,7 +57,9 @@ export default {
   props: ["game"],
   data() {
     return {
-      isPlaying: false
+      isPlaying: false,
+      timer: null,
+      timestamp: null
     };
   },
   computed: {
@@ -72,6 +74,25 @@ export default {
     }
   },
   methods: {
+    play() {
+      if (!this.isLast) {
+        this.isPlaying = true;
+        this.next(true);
+      }
+    },
+    pause() {
+      if (this.isPlaying) {
+        clearTimeout(this.timer);
+        this.isPlaying = false;
+      }
+    },
+    playpause() {
+      if (this.isPlaying) {
+        this.pause();
+      } else {
+        this.play();
+      }
+    },
     first() {
       if (!this.isFirst) {
         this.game.first();
@@ -85,20 +106,48 @@ export default {
       }
     },
     next(event) {
+      if (this.isPlaying) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+        this.timestamp = new Date().getTime();
+      }
       if (!this.isLast) {
-        this.game.next(event.shiftKey);
+        this.isPlaying =
+          this.game.next(this.isPlaying || event.shiftKey) && this.isPlaying;
         this.$store.dispatch("SET_STATE", this.game.state);
+        if (this.isLast && this.isPlaying) {
+          this.pause();
+        }
       }
     },
     last() {
       if (!this.isLast) {
         this.game.last();
         this.$store.dispatch("SET_STATE", this.game.state);
+        if (this.isPlaying) {
+          this.pause();
+        }
       }
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
       this.$store.dispatch("SET_STATE", this.game.state);
+    }
+  },
+  watch: {
+    // Make playback speed respond immediately to speed changes
+    "$store.state.playSpeed"(speed) {
+      let now = new Date().getTime();
+      let nextFrame = this.timestamp + 6e4 / speed;
+
+      if (this.isPlaying) {
+        if (nextFrame < now) {
+          this.next();
+        } else {
+          clearTimeout(this.timer);
+          setTimeout(this.next, nextFrame - now);
+        }
+      }
     }
   }
 };

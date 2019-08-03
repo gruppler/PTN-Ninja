@@ -9,6 +9,7 @@ const defaults = {
   pieceShadows: !Platform.is.mobile,
   player1: "",
   player2: "",
+  playSpeed: 60, //BPM
   showAllBranches: false,
   showControls: true,
   showPTN: true,

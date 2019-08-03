@@ -211,14 +211,18 @@ export default class Game {
   }
 
   setTarget(ply) {
+    if (this.state.selectedPieces.length) {
+      return false;
+    }
     this.state.targetBranch = ply.branch;
     if (
       ply.branches.includes(this.state.ply) ||
       !this.state.ply.isInBranch(this.state.targetBranch)
     ) {
-      this.goToPly(ply.id, this.state.plyIsDone);
+      return this.goToPly(ply.id, this.state.plyIsDone);
     } else {
       this.updateState(true);
+      return true;
     }
   }
 
@@ -234,7 +238,8 @@ export default class Game {
       pieces: {
         1: { F: [], C: [] },
         2: { F: [], C: [] }
-      }
+      },
+      selectedPieces: []
     });
 
     if (this.state.plyID in this.plies) {
@@ -298,8 +303,6 @@ export default class Game {
           ? this.state.nextPly.player
           : this.state.ply.player;
     }
-
-    // TODO: Trigger state mutation event
   }
 
   _doPly() {
@@ -425,7 +428,7 @@ export default class Game {
   goToPly(plyID, isDone) {
     const targetPly = this.plies[plyID];
 
-    if (!targetPly) {
+    if (!targetPly || this.state.selectedPieces.length) {
       return false;
     }
 
@@ -523,6 +526,9 @@ export default class Game {
   }
 
   prev(half = false) {
+    if (this.state.selectedPieces.length) {
+      return false;
+    }
     if (this.state.plyIsDone) {
       return this._undoPly();
     } else if (this.state.prevPly) {
@@ -532,6 +538,9 @@ export default class Game {
   }
 
   next(half = false) {
+    if (this.state.selectedPieces.length) {
+      return false;
+    }
     if (!this.state.plyIsDone) {
       return this._doPly();
     } else if (this.state.nextPly) {
