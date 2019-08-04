@@ -184,6 +184,8 @@ export default class Game {
       delete item.ptn;
     }
 
+    this._updatePTN();
+
     if (!this.name) {
       this.name = this.generateName();
     }
@@ -202,6 +204,10 @@ export default class Game {
 
   static parse(notation, { name = "", state = {} }) {
     return new Game(notation, { name, state });
+  }
+
+  _updatePTN() {
+    this.ptn = this.text();
   }
 
   _setPly(plyID, isDone) {
@@ -299,8 +305,10 @@ export default class Game {
       this.state.number = newNumber;
 
       this.state.player =
-        this.state.plyIsDone && this.state.nextPly
-          ? this.state.nextPly.player
+        this.state.plyIsDone && !this.state.ply.result
+          ? this.state.ply.player === 1
+            ? 2
+            : 1
           : this.state.ply.player;
     }
   }
@@ -364,7 +372,7 @@ export default class Game {
           if (stack[0].isCapstone) {
             if (!flatten) {
               flatten = ply.wallSmash = "*";
-              // TODO: Trigger ptn mutation event mutation event
+              this._updatePTN();
             }
           } else {
             console.error("Illegal ply");
@@ -621,11 +629,12 @@ export default class Game {
 
   addComment(log, message) {
     message = Comment.parse("{" + message + "}");
-    let plyID = this.state.plyID;
+    const plyID = this.state.plyID;
     if (!this[log][plyID]) {
       this[log][plyID] = [];
     }
     this[log][plyID].push(message);
+    this._updatePTN();
     return message;
   }
 

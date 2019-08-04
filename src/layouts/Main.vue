@@ -93,7 +93,8 @@ import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
 
 import Game from "../components/PTN/Game";
-import { each } from "lodash";
+import { each, pick } from "lodash";
+import { GAME_STATE_PROPS } from "../constants";
 
 export default {
   components: {
@@ -157,6 +158,14 @@ export default {
     },
     games() {
       return this.$store.state.games;
+    },
+    gameState() {
+      let state = pick(this.game.state, GAME_STATE_PROPS);
+      state.game = this.game;
+      return state;
+    },
+    gameText() {
+      return { ptn: this.game.ptn, game: this.game };
     }
   },
   methods: {
@@ -241,6 +250,16 @@ export default {
   watch: {
     games() {
       this.updateGame();
+    },
+    gameState(newState, oldState) {
+      if (oldState.game === newState.game) {
+        this.$store.dispatch("SET_STATE", newState);
+      }
+    },
+    gameText(newText, oldText) {
+      if (oldText.game === newText.game) {
+        this.$store.dispatch("UPDATE_PTN", newText.ptn);
+      }
     }
   },
   created() {

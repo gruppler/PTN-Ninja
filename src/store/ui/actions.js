@@ -1,7 +1,6 @@
 import { LocalStorage } from "quasar";
 import { pick } from "lodash";
-
-const GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
+import { GAME_STATE_PROPS } from "../../constants";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -52,12 +51,10 @@ export const SET_NAME = ({ state, commit }, name) => {
 };
 
 export const SET_STATE = ({ state, commit }, gameState) => {
-  if (!state.embed) {
-    LocalStorage.set(
-      "state-" + state.games[0].name,
-      pick(gameState, GAME_STATE_PROPS)
-    );
-  }
+  LocalStorage.set(
+    "state-" + state.games[0].name,
+    pick(gameState, GAME_STATE_PROPS)
+  );
   commit("SET_STATE", gameState);
 };
 

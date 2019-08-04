@@ -1,7 +1,7 @@
 <template>
   <div class="full-width justify-center">
     <div class="row no-wrap justify-around items-center">
-      <q-btn round flat :disable="!isLast" icon="undo" />
+      <q-btn round flat :disable="!!game.state.nextPly" icon="backspace" />
       <q-btn
         @click="first"
         @shortkey="first"
@@ -139,36 +139,34 @@ export default {
     first() {
       if (!this.isFirst) {
         this.game.first();
-        this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
     prev(event) {
       if (!this.isFirst) {
         this.game.prev(event.shiftKey || event.srcKey === "half");
-        this.$store.dispatch("SET_STATE", this.game.state);
       }
     },
     next(event) {
-      if (this.isPlaying) {
-        clearTimeout(this.timer);
-        this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
-        this.timestamp = new Date().getTime();
-      }
-      if (!this.isLast) {
-        this.isPlaying =
-          this.game.next(
-            this.isPlaying || event.shiftKey || event.srcKey === "half"
-          ) && this.isPlaying;
-        this.$store.dispatch("SET_STATE", this.game.state);
-        if (this.isLast && this.isPlaying) {
-          this.pause();
+      requestAnimationFrame(() => {
+        if (this.isPlaying) {
+          clearTimeout(this.timer);
+          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timestamp = new Date().getTime();
         }
-      }
+        if (!this.isLast) {
+          this.isPlaying =
+            this.game.next(
+              this.isPlaying || event.shiftKey || event.srcKey === "half"
+            ) && this.isPlaying;
+          if (this.isLast && this.isPlaying) {
+            this.pause();
+          }
+        }
+      });
     },
     last() {
       if (!this.isLast) {
         this.game.last();
-        this.$store.dispatch("SET_STATE", this.game.state);
         if (this.isPlaying) {
           this.pause();
         }
@@ -176,7 +174,6 @@ export default {
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
-      this.$store.dispatch("SET_STATE", this.game.state);
     },
     selectOption(event) {
       this.selectBranch(this.branches[event.srcKey]);

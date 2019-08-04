@@ -180,7 +180,6 @@ export default {
         this.game.addChatMessage(
           `+${this.getTime()}:${this.player}: ${this.message}`
         );
-        this.$store.dispatch("UPDATE_PTN", this.game.text());
         this.message = "";
         this.$refs.input.focus();
         this.updateTimer();

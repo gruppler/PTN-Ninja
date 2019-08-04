@@ -78,7 +78,7 @@
       <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
     </div>
 
-    <q-resize-observer @resize="resize" debounce="20" />
+    <q-resize-observer @resize="resize" />
   </div>
 </template>
 
@@ -135,7 +135,14 @@ export default {
         return "3vmin";
       } else {
         return (
-          Math.max(10, Math.min(20, Math.round(this.size.height * 0.04))) + "px"
+          Math.max(
+            8,
+            Math.min(
+              22,
+              Math.round(this.space.width * 0.033),
+              Math.round(this.space.height * 0.033)
+            )
+          ) + "px"
         );
       }
     },
@@ -180,7 +187,7 @@ $radius = 5px
       width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
 
 .flat-counter
-  height 2em
+  height 2.25em
   padding-bottom $turn-indicator-height
   line-height @height - @padding-bottom
   .board-container:not(.flat-counts) &

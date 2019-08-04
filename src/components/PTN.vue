@@ -28,9 +28,10 @@ export default {
   },
   methods: {
     scroll() {
-      const move = this.game.state.ply
-        ? this.$refs[this.game.state.move.id][0]
-        : null;
+      const move =
+        this.game.state.ply && this.game.state.move.id in this.$refs
+          ? this.$refs[this.game.state.move.id][0]
+          : null;
       if (move) {
         move.$el.scrollIntoView({
           block: "center"

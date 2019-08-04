@@ -32,7 +32,11 @@
                   :linenum="game.plies[plyID].move.linenum"
                   :game="game"
                 />
-                <Ply :ply="game.plies[plyID]" :game="game" :delay="500" />
+                <Ply
+                  :ply="game.plies[plyID]"
+                  :game="game"
+                  :delay="6e4 / $store.state.playSpeed"
+                />
               </div>
 
               <q-chat-message
@@ -128,7 +132,6 @@ export default {
   methods: {
     send() {
       this.game.addNote(this.message);
-      this.$store.dispatch("UPDATE_PTN", this.game.text());
       this.message = "";
       this.$refs.input.focus();
     },

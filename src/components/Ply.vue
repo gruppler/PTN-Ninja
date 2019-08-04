@@ -95,13 +95,10 @@ export default {
           isDone = true;
         }
       }
-      if (this.game.goToPly(ply.id, isDone)) {
-        this.$store.dispatch("SET_STATE", this.game.state);
-      }
+      this.game.goToPly(ply.id, isDone);
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
-      this.$store.dispatch("SET_STATE", this.game.state);
     },
     nop() {}
   }
