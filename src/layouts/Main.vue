@@ -20,7 +20,14 @@
       </q-page>
     </q-page-container>
 
-    <q-drawer :value="left" @input="showPTN" side="left" persistent bordered>
+    <q-drawer
+      id="left-drawer"
+      :value="left"
+      @input="showPTN"
+      side="left"
+      persistent
+      bordered
+    >
       <PTN class="fit" :game="game" />
     </q-drawer>
 
@@ -39,7 +46,6 @@
           @input="showTextTab"
           active-color="accent"
           indicator-color="accent"
-          dense
         >
           <q-tab name="chat">{{ $t("Chat") }}</q-tab>
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
@@ -298,8 +304,12 @@ footer
   .controls
     height 58px
 
-.q-drawer
-  background rgba($blue-grey-5, 0.75)
+
+#left-drawer, #right-drawer
+  .q-drawer
+    background rgba($blue-grey-5, 0.75)
+    .q-drawer__content
+      overflow hidden
 
 #right-drawer
   .q-tab-panel

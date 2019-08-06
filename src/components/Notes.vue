@@ -2,10 +2,10 @@
   <div class="notes column no-wrap">
     <div class="col-grow relative-position">
       <q-scroll-area class="absolute-fit">
-        <div class="q-pa-md">
+        <div class="q-px-md">
           <div
             v-if="log[-1]"
-            class="fullwidth-padded-md q-py-xs q-mb-md"
+            class="fullwidth-padded-md q-py-xs"
             :class="{ highlight: !game.state.plyID && !game.state.plyIsDone }"
             ref="-1"
             key="-1"
@@ -21,7 +21,7 @@
           <template v-for="(comments, plyID) in log">
             <div
               v-if="plyID >= 0"
-              class="fullwidth-padded-md q-py-xs q-pr-sm q-mb-md"
+              class="fullwidth-padded-md q-py-xs"
               :class="{ highlight: game.state.plyID == plyID }"
               :key="plyID"
               :ref="plyID"
@@ -39,49 +39,49 @@
                 />
               </div>
               <q-chat-message
-                :data-ply="plyID"
-                :key="plyID + '-messages'"
-                :text="comments.map(comment => comment.message)"
+                v-for="(comment, index) in comments"
+                :key="`message-${plyID}-${index}`"
+                :id="`message-${plyID}-${index}`"
                 bg-color="accent"
                 text-color="grey-10"
                 text-sanitize
-              />
+                sent
+              >
+                <span>{{ comment.message }}</span>
+                <q-menu
+                  context-menu
+                  auto-close
+                  :target="`#message-${plyID}-${index}`"
+                >
+                  <q-list dark class="bg-secondary text-white">
+                    <q-item @click="edit(plyID, index)" clickable>
+                      <q-item-section side>
+                        <q-icon name="edit" />
+                      </q-item-section>
+                      <q-item-section>{{ $t("Edit") }}</q-item-section>
+                    </q-item>
+                    <q-item @click="remove(plyID, index)" clickable>
+                      <q-item-section side>
+                        <q-icon name="delete" />
+                      </q-item-section>
+                      <q-item-section>{{ $t("Delete") }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-chat-message>
             </div>
           </template>
-          <q-menu
-            ref="menu"
-            context-menu
-            auto-close
-            @show="menu"
-            @hide="selected = null"
-          >
-            <q-list dark class="bg-secondary text-white">
-              <q-item @click="edit" clickable>
-                <q-item-section side>
-                  <q-icon name="edit" />
-                </q-item-section>
-                <q-item-section>{{ $t("Edit") }}</q-item-section>
-              </q-item>
-              <q-item @click="remove" clickable>
-                <q-item-section side>
-                  <q-icon name="delete" />
-                </q-item-section>
-                <q-item-section>{{ $t("Delete") }}</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
         </div>
       </q-scroll-area>
+      <q-resize-observer @resize="scroll" />
     </div>
     <div>
       <q-separator />
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
-        @keydown.esc="
-          editing = null;
-          message = '';
-        "
+        @keydown.esc="cancelEdit"
+        @blur="cancelEdit"
         debounce="50"
         class="col-grow q-pa-sm items-end"
         v-model="message"
@@ -121,7 +121,6 @@ export default {
     return {
       message: "",
       timer: null,
-      selected: null,
       editing: null
     };
   },
@@ -179,32 +178,20 @@ export default {
         this.$refs.input.focus();
       }
     },
-    menu(event) {
-      const message = event.target.closest(".q-message-text");
-      if (message) {
-        this.selected = {
-          plyID: 1 * message.closest(".q-message").dataset.ply,
-          index: Array.prototype.indexOf.call(
-            message.parentElement.children,
-            message
-          )
-        };
-      } else {
-        event.stopPropagation();
+    edit(plyID, index) {
+      const log = this.log[plyID][index];
+      this.editing = { plyID, index };
+      this.message = log.message;
+      this.$nextTick(this.$refs.input.focus);
+    },
+    cancelEdit() {
+      if (this.editing) {
+        this.editing = null;
+        this.message = "";
       }
     },
-    edit() {
-      if (this.selected) {
-        const log = this.log[this.selected.plyID][this.selected.index];
-        this.editing = Object.assign({}, this.selected);
-        this.message = log.message;
-        this.$refs.input.focus();
-      }
-    },
-    remove() {
-      if (this.selected) {
-        this.game.removeNote(this.selected.plyID, this.selected.index);
-      }
+    remove(plyID, index) {
+      this.game.removeNote(plyID, index);
     },
     scroll() {
       let message = this.$refs[this.currentPlyID];
@@ -213,7 +200,7 @@ export default {
       }
       if (message) {
         message.scrollIntoView({
-          block: "start"
+          block: "end"
         });
       }
     }
@@ -227,9 +214,18 @@ export default {
     }
   },
   mounted() {
-    this.scroll();
+    this.$nextTick(this.scroll);
   }
 };
 </script>
 
-<style lang="stylus"></style>
+<style lang="stylus">
+.notes
+  .q-message:not(:last-child)
+    margin-bottom 3px
+    .q-message-text
+      border-radius $generic-border-radius
+      min-height 2em
+      &:before
+        display none
+</style>

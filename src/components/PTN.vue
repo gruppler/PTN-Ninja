@@ -1,15 +1,18 @@
 <template>
-  <q-scroll-area>
-    <div class="ptn q-py-md" v-if="game">
-      <Move
-        v-for="(move, index) in moves"
-        :ref="move.id"
-        :move="move"
-        :game="game"
-        :key="index"
-      />
-    </div>
-  </q-scroll-area>
+  <div>
+    <q-scroll-area class="fit">
+      <div class="ptn q-py-md" v-if="game">
+        <Move
+          v-for="(move, index) in moves"
+          :ref="move.id"
+          :move="move"
+          :game="game"
+          :key="index"
+        />
+      </div>
+    </q-scroll-area>
+    <q-resize-observer @resize="scroll" />
+  </div>
 </template>
 
 <script>
