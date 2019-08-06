@@ -23,7 +23,7 @@ export default {
   Date: "Date",
   Delete: "Delete",
   Dismiss: "Dismiss",
-  Edit_Mode: "Edit Mode",
+  Edit: "Edit",
   Event: "Event",
   First_Ply: "First Ply",
   Flat_Counts: "Flat Counts",

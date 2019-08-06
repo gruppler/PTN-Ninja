@@ -9,7 +9,7 @@ import Result from "./Result";
 import Nop from "./Nop";
 import Move from "./Move";
 
-import { defaults, last, map, times, trimStart } from "lodash";
+import { defaults, last, map, omit, times, trimStart } from "lodash";
 
 const pieceCounts = {
   3: { F: 10, C: 0, total: 10 },
@@ -631,19 +631,50 @@ export default class Game {
     message = Comment.parse("{" + message + "}");
     const plyID = this.state.plyID;
     if (!this[log][plyID]) {
-      this[log][plyID] = [];
+      this[log] = Object.assign({ [plyID]: [message] }, this[log]);
+    } else {
+      this[log][plyID].push(message);
     }
-    this[log][plyID].push(message);
     this._updatePTN();
     return message;
+  }
+  editComment(log, plyID, index, message) {
+    if (this[log][plyID] && this[log][plyID][index]) {
+      this[log][plyID][index].message = message;
+      this._updatePTN();
+      return this[log][plyID][index];
+    }
+    return null;
+  }
+  removeComment(log, plyID, index = this.state.plyID) {
+    if (this[log][plyID]) {
+      if (this[log][plyID].length > 1) {
+        this[log][plyID].splice(index, 1);
+      } else {
+        this[log] = omit(this[log], plyID);
+      }
+      this._updatePTN();
+    }
   }
 
   addChatMessage(message) {
     return this.addComment("chatlog", message);
   }
+  editChatMessage(plyID, index, message) {
+    return this.editComment("chatlog", plyID, index, message);
+  }
+  removeChatMessage(plyID, index) {
+    return this.removeComment("chatlog", plyID, index);
+  }
 
   addNote(message) {
     return this.addComment("notes", message);
+  }
+  editNote(plyID, index, message) {
+    return this.editComment("notes", plyID, index, message);
+  }
+  removeNote(plyID, index) {
+    return this.removeComment("notes", plyID, index);
   }
 
   isValid() {

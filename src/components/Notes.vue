@@ -21,7 +21,7 @@
           <template v-for="(comments, plyID) in log">
             <div
               v-if="plyID >= 0"
-              class="fullwidth-padded-md q-py-xs q-mb-md"
+              class="fullwidth-padded-md q-py-xs q-pr-sm q-mb-md"
               :class="{ highlight: game.state.plyID == plyID }"
               :key="plyID"
               :ref="plyID"
@@ -38,8 +38,8 @@
                   :delay="6e4 / $store.state.playSpeed"
                 />
               </div>
-
               <q-chat-message
+                :data-ply="plyID"
                 :key="plyID + '-messages'"
                 :text="comments.map(comment => comment.message)"
                 bg-color="accent"
@@ -48,6 +48,28 @@
               />
             </div>
           </template>
+          <q-menu
+            ref="menu"
+            context-menu
+            auto-close
+            @show="menu"
+            @hide="selected = null"
+          >
+            <q-list dark class="bg-secondary text-white">
+              <q-item @click="edit" clickable>
+                <q-item-section side>
+                  <q-icon name="edit" />
+                </q-item-section>
+                <q-item-section>{{ $t("Edit") }}</q-item-section>
+              </q-item>
+              <q-item @click="remove" clickable>
+                <q-item-section side>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>{{ $t("Delete") }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </div>
       </q-scroll-area>
     </div>
@@ -56,6 +78,11 @@
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
+        @keydown.esc="
+          editing = null;
+          message = '';
+        "
+        debounce="50"
         class="col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Note')"
@@ -68,7 +95,7 @@
         <template v-slot:append>
           <q-btn
             @click="send"
-            icon="add"
+            :icon="!editing ? 'add' : 'edit'"
             :disabled="!message.length"
             flat
             dense
@@ -93,7 +120,9 @@ export default {
   data() {
     return {
       message: "",
-      timer: null
+      timer: null,
+      selected: null,
+      editing: null
     };
   },
   computed: {
@@ -108,6 +137,9 @@ export default {
           );
     },
     currentPlyID() {
+      if (!this.log) {
+        return null;
+      }
       const ids = Object.keys(this.log)
         .map(id => 1 * id)
         .sort((a, b) => a - b);
@@ -131,9 +163,48 @@ export default {
   },
   methods: {
     send() {
-      this.game.addNote(this.message);
-      this.message = "";
-      this.$refs.input.focus();
+      if (this.message.trim()) {
+        this.message = this.message.trim();
+        if (this.editing) {
+          this.game.editNote(
+            this.editing.plyID,
+            this.editing.index,
+            this.message
+          );
+          this.editing = null;
+        } else {
+          this.game.addNote(this.message);
+        }
+        this.message = "";
+        this.$refs.input.focus();
+      }
+    },
+    menu(event) {
+      const message = event.target.closest(".q-message-text");
+      if (message) {
+        this.selected = {
+          plyID: 1 * message.closest(".q-message").dataset.ply,
+          index: Array.prototype.indexOf.call(
+            message.parentElement.children,
+            message
+          )
+        };
+      } else {
+        event.stopPropagation();
+      }
+    },
+    edit() {
+      if (this.selected) {
+        const log = this.log[this.selected.plyID][this.selected.index];
+        this.editing = Object.assign({}, this.selected);
+        this.message = log.message;
+        this.$refs.input.focus();
+      }
+    },
+    remove() {
+      if (this.selected) {
+        this.game.removeNote(this.selected.plyID, this.selected.index);
+      }
     },
     scroll() {
       let message = this.$refs[this.currentPlyID];
