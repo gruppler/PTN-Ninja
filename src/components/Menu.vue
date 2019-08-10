@@ -1,11 +1,12 @@
 <template>
-  <q-fab color="accent" icon="add" direction="up">
+  <q-fab color="accent" text-color="grey-10" icon="add" direction="up">
     <q-fab-action
       v-for="item in items"
       :key="item.icon"
       :icon="item.icon"
       @click="$emit('input', item.action)"
       color="accent"
+      text-color="grey-10"
     />
   </q-fab>
 </template>

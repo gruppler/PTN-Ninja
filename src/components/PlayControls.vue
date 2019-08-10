@@ -29,6 +29,7 @@
         v-shortkey.once="['space']"
         round
         color="accent"
+        text-color="grey-10"
         :icon="isPlaying ? 'pause' : 'play_arrow'"
       />
       <q-btn
