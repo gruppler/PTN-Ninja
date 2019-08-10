@@ -107,6 +107,7 @@ export default {
 
 <style lang="stylus">
 .ptn
+  line-height 2em
   text-indent 0
 
 .nop

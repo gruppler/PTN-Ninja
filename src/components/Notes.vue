@@ -26,7 +26,7 @@
               :key="plyID"
               :ref="plyID"
             >
-              <div>
+              <div class="ply-container">
                 <Linenum
                   v-if="game.plies[plyID].move.linenum"
                   :linenum="game.plies[plyID].move.linenum"
@@ -120,7 +120,6 @@ export default {
   data() {
     return {
       message: "",
-      timer: null,
       editing: null
     };
   },
@@ -181,8 +180,10 @@ export default {
     edit(plyID, index) {
       const log = this.log[plyID][index];
       this.editing = { plyID, index };
-      this.message = log.message;
-      this.$nextTick(this.$refs.input.focus);
+      setTimeout(() => {
+        this.$refs.input.focus();
+        this.message = log.message;
+      }, 100);
     },
     cancelEdit() {
       if (this.editing) {
@@ -228,4 +229,7 @@ export default {
       min-height 2em
       &:before
         display none
+  .ply-container
+    padding-left 1em
+    text-indent -1em
 </style>

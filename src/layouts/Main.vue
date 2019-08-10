@@ -45,15 +45,15 @@
           active-color="accent"
           indicator-color="accent"
         >
-          <q-tab name="chat">{{ $t("Chat") }}</q-tab>
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
+          <q-tab name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
-          <q-tab-panel name="chat">
-            <Chat class="fit" :game="game" />
-          </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes class="fit" :game="game" />
+          </q-tab-panel>
+          <q-tab-panel name="chat">
+            <Chat class="fit" :game="game" />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -61,11 +61,11 @@
 
     <q-footer reveal>
       <q-linear-progress
-        :class="{ visible: showProgress }"
+        :class="{ visible: $store.state.showProgress }"
         :value="progress"
         color="accent"
       />
-      <div class="controls" :class="{ visible: showControls }">
+      <div class="controls" :class="{ visible: $store.state.showControls }">
         <q-toolbar class="q-pa-sm bg-secondary text-white">
           <PlayControls :game="game" />
         </q-toolbar>
@@ -147,12 +147,6 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
       }
-    },
-    showControls() {
-      return this.$store.state.showControls;
-    },
-    showProgress() {
-      return this.$store.state.showProgress;
     },
     progress() {
       return this.game.state.plies && this.game.state.plies.length
