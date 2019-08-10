@@ -5,7 +5,7 @@
       <q-btn
         @click="first"
         @shortkey="first"
-        v-shortkey.once="['ctrl' + 'arrowleft']"
+        v-shortkey="['ctrl' + 'arrowleft']"
         round
         flat
         :disable="isFirst"
@@ -14,7 +14,7 @@
       <q-btn
         @click="prev"
         @shortkey="prev"
-        v-shortkey.once="{
+        v-shortkey="{
           whole: ['arrowleft'],
           half: ['shift' + 'arrowleft']
         }"
@@ -26,7 +26,7 @@
       <q-btn
         @click="playpause"
         @shortkey="playpause"
-        v-shortkey.once="['space']"
+        v-shortkey="['space']"
         round
         color="accent"
         text-color="grey-10"
@@ -35,7 +35,7 @@
       <q-btn
         @click="next"
         @shortkey="next"
-        v-shortkey.once="{
+        v-shortkey="{
           whole: ['arrowright'],
           half: ['shift' + 'arrowright']
         }"
@@ -47,14 +47,14 @@
       <q-btn
         @click="last"
         @shortkey="last"
-        v-shortkey.once="['ctrl', 'arrowright']"
+        v-shortkey="['ctrl', 'arrowright']"
         round
         flat
         :disable="isLast"
         icon="last_page"
       />
       <q-btn
-        v-shortkey.once="options"
+        v-shortkey="options"
         @shortkey="selectOption"
         round
         flat
@@ -82,7 +82,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { zipObject } from "lodash";
+import { throttle, zipObject } from "lodash";
 
 export default {
   name: "PlayControls",
@@ -92,7 +92,9 @@ export default {
     return {
       isPlaying: false,
       timer: null,
-      timestamp: null
+      timestamp: null,
+      next: null,
+      prev: null
     };
   },
   computed: {
@@ -142,12 +144,12 @@ export default {
         this.game.first();
       }
     },
-    prev(event) {
+    _prev(event) {
       if (!this.isFirst) {
         this.game.prev(event.shiftKey || event.srcKey === "half");
       }
     },
-    next(event) {
+    _next(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
@@ -195,6 +197,10 @@ export default {
         }
       }
     }
+  },
+  created() {
+    this.next = throttle(this._next, 250);
+    this.prev = throttle(this._prev, 250);
   }
 };
 </script>
