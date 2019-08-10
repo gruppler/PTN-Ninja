@@ -120,7 +120,8 @@ export default {
       dialogNewGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
-      size: null
+      size: null,
+      notifyClosers: []
     };
   },
   computed: {
@@ -220,6 +221,30 @@ export default {
           console.log(action);
       }
     },
+    showNotifications() {
+      if (!this.right && this.game.state.plyID in this.game.notes) {
+        this.game.notes[this.game.state.plyID]
+          .concat()
+          .reverse()
+          .forEach(note => {
+            this.notifyClosers.push(
+              this.$q.notify({
+                color: "accent",
+                message: note.message,
+                icon: "chat",
+                position: "top-right",
+                actions: [{ icon: "close", color: "secondary" }],
+                classes: "text-grey-10",
+                timeout: 0
+              })
+            );
+          });
+      }
+    },
+    hideNotifications() {
+      this.notifyClosers.forEach(close => close());
+      this.notifyClosers = [];
+    },
     edit() {
       this.dialogEditGame = true;
     },
@@ -255,6 +280,13 @@ export default {
     gameState(newState, oldState) {
       if (oldState.game === newState.game) {
         this.$store.dispatch("SET_STATE", newState);
+        if (oldState.plyID !== newState.plyID) {
+          this.hideNotifications();
+          this.showNotifications();
+        }
+      } else {
+        this.hideNotifications();
+        this.showNotifications();
       }
     },
     gameText(newText, oldText) {
@@ -265,6 +297,13 @@ export default {
     gameName(newName, oldName) {
       if (oldName.game === newName.game) {
         this.$store.dispatch("SET_NAME", newName.name);
+      }
+    },
+    right(visible) {
+      if (visible) {
+        this.hideNotifications();
+      } else {
+        this.showNotifications();
       }
     }
   },
@@ -285,6 +324,8 @@ export default {
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
     }
+    this.hideNotifications();
+    this.showNotifications();
   },
   beforeDestroy() {
     window.removeEventListener("drop", this.openFiles);
