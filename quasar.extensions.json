@@ -1,6 +1,6 @@
 {
   "@quasar/icon-genie": {
-    "minify_dev": "optipng",
+    "minify_dev": "zopfli",
     "minify_build": "zopfli",
     "cordova": {
       "background_color": "#8ca0ab",
