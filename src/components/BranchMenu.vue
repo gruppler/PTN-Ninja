@@ -21,7 +21,7 @@
             {{ i }}
           </span>
         </q-item-section>
-        <q-item-label>
+        <q-item-label class="ellipsis">
           <Ply :ply="ply" :game="game" :noBranches="true" :noClick="true" />
         </q-item-label>
       </q-item>

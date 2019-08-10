@@ -78,20 +78,30 @@
       <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
     </div>
 
-    <q-resize-observer @resize="resize" />
+    <Move
+      v-show="game.state.ply && $store.state.showMove"
+      class="q-pt-sm"
+      :class="{ 'lt-md': $store.state.showPTN }"
+      :move="game.state.move"
+      :game="game"
+    />
+
+    <q-resize-observer @resize="resize" debounce="0" />
   </div>
 </template>
 
 <script>
 import Piece from "./Piece";
 import Square from "./Square";
+import Move from "./Move";
 import Ply from "./PTN/Ply";
 
 export default {
   name: "Board",
   components: {
     Square,
-    Piece
+    Piece,
+    Move
   },
   props: ["game", "space"],
   data() {
@@ -172,6 +182,10 @@ $radius = 5px
 .board-container
   width 100%
   will-change width, font-size
+
+  .move
+    background transparent
+    text-align center
 
 .flat-counter, .x-axis
   width 100%

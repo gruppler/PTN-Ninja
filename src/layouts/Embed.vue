@@ -11,7 +11,7 @@
     <q-page-container class="bg-primary">
       <q-page class="flex flex-center">
         <Board :game="game" :space="size" />
-        <q-resize-observer @resize="resize" />
+        <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 

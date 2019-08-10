@@ -13,6 +13,7 @@ const defaults = {
   showAllBranches: false,
   showControls: true,
   showPTN: true,
+  showMove: true,
   showProgress: true,
   showRoads: true,
   showText: true,

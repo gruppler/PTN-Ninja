@@ -1,6 +1,6 @@
 <template>
   <div
-    class="ptn move q-px-md"
+    class="ptn move"
     :class="{
       'current-move': isCurrentMove,
       linebreak

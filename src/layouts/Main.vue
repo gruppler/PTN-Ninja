@@ -16,7 +16,7 @@
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
-        <q-resize-observer @resize="resize" />
+        <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 
