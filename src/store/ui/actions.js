@@ -9,8 +9,9 @@ export const SET_UI = ({ state, commit }, [key, value]) => {
   }
 };
 
-export const ADD_GAME = ({ commit }, game) => {
+export const ADD_GAME = ({ commit, getters }, game) => {
   let games = LocalStorage.getItem("games") || [];
+  game.name = getters.uniqueName(game.name);
   games.unshift(game.name);
   LocalStorage.set("games", games);
   LocalStorage.set("ptn-" + game.name, game.ptn);
@@ -35,9 +36,10 @@ export const UPDATE_PTN = ({ state, commit }, ptn) => {
   commit("UPDATE_PTN", ptn);
 };
 
-export const SET_NAME = ({ state, commit }, name) => {
+export const SET_NAME = ({ state, commit, getters }, name) => {
   let oldName = state.games[0].name;
-  let games = LocalStorage.getItem("games");
+  let games = LocalStorage.getItem("games", true);
+  name = getters.uniqueName(name);
   games[0] = name;
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + oldName);

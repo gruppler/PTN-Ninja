@@ -41,7 +41,7 @@ export default {
         if (!this.name) {
           this.name = this.game.generateName();
         }
-        this.$store.dispatch("SET_NAME", this.name);
+        this.name = this.$store.getters.uniqueName(this.name, true);
         this.game.name = this.name;
       }
       this.close();

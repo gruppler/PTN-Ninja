@@ -4,7 +4,7 @@
       <q-toolbar>
         <q-btn icon="notes" @click="left = !left" flat dense />
         <QToolbarTitle>
-          <GameSelector :games="games" @input="updateGame" @edit="edit" />
+          <GameSelector @input="updateGame" @edit="edit" />
         </QToolbarTitle>
         <q-btn icon="chat" @click="right = !right" flat dense />
       </q-toolbar>
@@ -164,6 +164,9 @@ export default {
     },
     gameText() {
       return { ptn: this.game.ptn, game: this.game };
+    },
+    gameName() {
+      return { name: this.game.name, game: this.game };
     }
   },
   methods: {
@@ -257,6 +260,11 @@ export default {
     gameText(newText, oldText) {
       if (oldText.game === newText.game) {
         this.$store.dispatch("UPDATE_PTN", newText.ptn);
+      }
+    },
+    gameName(newName, oldName) {
+      if (oldName.game === newName.game) {
+        this.$store.dispatch("SET_NAME", newName.name);
       }
     }
   },
