@@ -76,21 +76,21 @@
       <q-resize-observer @resize="scroll" />
     </div>
     <div>
-      <q-separator />
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
         @keydown.esc="cancelEdit"
         @blur="cancelEdit"
         debounce="50"
-        class="col-grow q-pa-sm items-end"
+        class="bg-secondary text-accent col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Note')"
         dense
         rounded
         autogrow
         outlined
-        standout="bg-accent text-secondary"
+        color="accent"
+        bg-color="accent"
       >
         <template v-slot:append>
           <q-btn

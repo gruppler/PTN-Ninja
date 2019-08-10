@@ -26,7 +26,6 @@
       @input="showPTN"
       side="left"
       persistent
-      bordered
     >
       <PTN class="fit" :game="game" />
     </q-drawer>
@@ -37,7 +36,6 @@
       @input="showText"
       side="right"
       persistent
-      bordered
     >
       <div class="absolute-fit column">
         <q-tabs
