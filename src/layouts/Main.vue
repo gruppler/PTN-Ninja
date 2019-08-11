@@ -73,11 +73,7 @@
     </q-drawer>
 
     <q-footer reveal>
-      <q-linear-progress
-        :class="{ visible: $store.state.showProgress }"
-        :value="progress"
-        color="accent"
-      />
+      <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <div class="controls" :class="{ visible: $store.state.showControls }">
         <q-toolbar class="q-pa-sm bg-secondary text-white">
           <PlayControls :game="game" />
@@ -103,6 +99,7 @@ import GameSelector from "../components/GameSelector";
 import Menu from "../components/Menu";
 import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
+import Scrubber from "../components/Scrubber";
 import NewGame from "../components/NewGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
@@ -120,6 +117,7 @@ export default {
     Menu,
     PTN,
     PlayControls,
+    Scrubber,
     NewGame,
     EditGame,
     UISettings
@@ -159,12 +157,6 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
       }
-    },
-    progress() {
-      return this.game.state.plies && this.game.state.plies.length
-        ? (this.game.state.ply.index + 0.5 * this.game.state.plyIsDone) /
-            (this.game.state.plies.length - 0.5)
-        : 0;
     },
     games() {
       return this.$store.state.games;
@@ -347,14 +339,12 @@ export default {
 
 <style lang="stylus">
 footer
-  .controls, .q-linear-progress
+  .controls
     will-change height
     transition all $generic-hover-transition
+    height 58px
     &:not(.visible)
       height 0
-  .controls
-    height 58px
-
 
 #left-drawer, #right-drawer
   .q-drawer

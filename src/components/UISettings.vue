@@ -132,10 +132,10 @@
 
               <q-item tag="label" v-ripple>
                 <q-item-section>
-                  <q-item-label>{{ $t("Game_Progress") }}</q-item-label>
+                  <q-item-label>{{ $t("Scrub_Bar") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showProgress" />
+                  <q-toggle color="accent" v-model="showScrubber" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -164,7 +164,7 @@ const props = [
   "showAllBranches",
   "showControls",
   "showMove",
-  "showProgress",
+  "showScrubber",
   "showRoads",
   "unplayedPieces"
 ];

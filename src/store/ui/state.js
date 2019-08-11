@@ -15,7 +15,7 @@ const defaults = {
   showControls: true,
   showPTN: true,
   showMove: true,
-  showProgress: true,
+  showScrubber: true,
   showRoads: true,
   showText: true,
   size: 5,

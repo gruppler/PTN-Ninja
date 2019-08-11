@@ -24,7 +24,7 @@
     </q-drawer>
 
     <q-footer reveal>
-      <q-linear-progress v-if="showProgress" :value="progress" color="accent" />
+      <Scrubber :game="game" v-if="showScrubber" />
       <q-toolbar v-if="showControls" class="q-pa-sm bg-secondary text-white">
         <PlayControls />
       </q-toolbar>
@@ -37,6 +37,7 @@ import Board from "../components/Board";
 import Notes from "../components/Notes";
 import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
+import Scrubber from "../components/Scrubber";
 
 import Game from "../components/PTN/Game";
 
@@ -45,7 +46,8 @@ export default {
     Board,
     Notes,
     PTN,
-    PlayControls
+    PlayControls,
+    Scrubber
   },
   props: ["ptn", "name", "state"],
   data() {
@@ -63,14 +65,8 @@ export default {
     showControls() {
       return this.state.showControls;
     },
-    showProgress() {
-      return this.$store.state.showProgress;
-    },
-    progress() {
-      return (
-        (this.game.state.ply.index + 1 * this.game.state.plyIsDone) /
-        this.game.state.plies.length
-      );
+    showScrubber() {
+      return this.state.showScrubber;
     },
     game() {
       return Game.parse(this.ptn, { name: this.name, state: this.state });
