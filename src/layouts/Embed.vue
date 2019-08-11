@@ -84,7 +84,7 @@ export default {
       this.size = size;
     }
   },
-  mounted() {
+  created() {
     this.$store.commit("SET_EMBED_GAME", this.game);
   }
 };

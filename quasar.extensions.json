@@ -3,7 +3,7 @@
     "minify_dev": "zopfli",
     "minify_build": "zopfli",
     "cordova": {
-      "background_color": "#8ca0ab",
+      "background_color": "#263238",
       "splashscreen_type": "generate"
     },
     "build_always": false,

@@ -95,7 +95,7 @@
         <template v-slot:append>
           <q-btn
             @click="send"
-            :icon="!editing ? 'add' : 'edit'"
+            :icon="editing ? 'edit' : 'add_comment'"
             :disabled="!message.length"
             flat
             dense

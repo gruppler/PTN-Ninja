@@ -46,7 +46,7 @@
       </template>
 
       <template v-slot:after>
-        <q-btn icon="edit" @click.stop="edit" flat dense />
+        <slot />
       </template>
     </q-select>
   </div>

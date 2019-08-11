@@ -56,3 +56,10 @@
 
 .q-menu
   user-select none
+
+.q-notification.note
+  transition transform $generic-hover-transition,
+    opacity $generic-hover-transition
+  @media (min-width: $breakpoint-sm-min)
+    &
+      max-width 45vw

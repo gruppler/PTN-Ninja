@@ -4,9 +4,22 @@
       <q-toolbar>
         <q-btn icon="notes" @click="left = !left" flat dense />
         <QToolbarTitle>
-          <GameSelector @input="updateGame" @edit="edit" />
+          <GameSelector @input="updateGame">
+            <q-btn
+              icon="edit"
+              @click.stop="edit"
+              text-color="white"
+              flat
+              dense
+            />
+          </GameSelector>
         </QToolbarTitle>
-        <q-btn icon="chat" @click="right = !right" flat dense />
+        <q-btn
+          :icon="textTab == 'notes' ? 'comment' : 'chat'"
+          @click="right = !right"
+          flat
+          dense
+        />
       </q-toolbar>
     </q-header>
 
@@ -151,8 +164,8 @@ export default {
     },
     progress() {
       return this.game.state.plies && this.game.state.plies.length
-        ? (this.game.state.ply.index + 1 * this.game.state.plyIsDone) /
-            this.game.state.plies.length
+        ? (this.game.state.ply.index + 0.5 * this.game.state.plyIsDone) /
+            (this.game.state.plies.length - 0.5)
         : 0;
     },
     games() {
@@ -231,10 +244,10 @@ export default {
               this.$q.notify({
                 color: "accent",
                 message: note.message,
-                icon: "chat",
+                icon: "comment",
                 position: "top-right",
                 actions: [{ icon: "close", color: "secondary" }],
-                classes: "text-grey-10",
+                classes: "note text-grey-10",
                 timeout: 0
               })
             );

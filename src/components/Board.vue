@@ -80,7 +80,7 @@
 
     <Move
       v-show="game.state.ply && $store.state.showMove"
-      class="q-pt-sm"
+      class="q-mt-sm"
       :class="{ 'lt-md': $store.state.showPTN }"
       :move="game.state.move"
       :game="game"
@@ -131,16 +131,26 @@ export default {
       ];
     },
     maxWidth() {
+      if (this.isInputFocused()) {
+        return this.maxWidth;
+      }
       if (!this.space || !this.size) {
         return "100%";
       } else {
         return (
-          Math.round((this.size.width * this.space.height) / this.size.height) +
-          "px"
+          Math.max(
+            Math.round(
+              (this.size.width * this.space.height) / this.size.height
+            ),
+            200
+          ) + "px"
         );
       }
     },
     fontSize() {
+      if (this.isInputFocused()) {
+        return this.fontSize;
+      }
       if (!this.space || !this.size) {
         return "3vmin";
       } else {
@@ -167,6 +177,10 @@ export default {
     }
   },
   methods: {
+    isInputFocused() {
+      const active = document.activeElement;
+      return active && /TEXT|INPUT/.test(active.tagName);
+    },
     resize(size) {
       this.size = size;
     }
@@ -182,10 +196,14 @@ $radius = 5px
 .board-container
   width 100%
   will-change width, font-size
+  text-align center
 
   .move
-    background transparent
-    text-align center
+    display inline-block
+    border-radius $radius
+    padding 0 .5em
+    background-color rgba(#fff, .15)
+
 
 .flat-counter, .x-axis
   width 100%
@@ -201,6 +219,7 @@ $radius = 5px
       width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
 
 .flat-counter
+  text-align left
   height 2.25em
   padding-bottom $turn-indicator-height
   line-height @height - @padding-bottom
@@ -225,18 +244,17 @@ $radius = 5px
     flex-grow 1
 
 .turn-indicator
-  width 0
+  opacity 0
+  width 100%
   height $turn-indicator-height
   position absolute
   bottom - $turn-indicator-height
   background $accent
-  will-change width
-  transition width $generic-hover-transition
+  will-change opacity
+  transition opacity $generic-hover-transition
   .board-container.turn-1 .player1 &,
   .board-container.turn-2 .player2 &
-    width 100%
-  .player1 &
-    right 0
+    opacity 1
 
 .x-axis, .y-axis
   color $blue-grey-2

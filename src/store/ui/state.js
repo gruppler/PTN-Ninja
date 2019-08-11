@@ -6,6 +6,7 @@ const defaults = {
   board3D: false,
   flatCounts: true,
   highlightSquares: true,
+  isInputFocused: false,
   pieceShadows: !Platform.is.mobile,
   player1: "",
   player2: "",
@@ -22,7 +23,7 @@ const defaults = {
   unplayedPieces: true
 };
 
-let state = { embed: window !== window.top, games: [], defaults, ...defaults };
+let state = { embed: false, games: [], defaults, ...defaults };
 
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;

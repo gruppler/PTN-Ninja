@@ -5,8 +5,8 @@
       v-if="!ply.isNop"
       @click="select(ply)"
       :class="{ selected: isSelected }"
-      :color="ply.color == 1 ? 'blue-grey-2' : 'blue-grey-9'"
-      :text-color="ply.color == 1 ? 'blue-grey-9' : 'blue-grey-2'"
+      :color="ply.color == 1 ? 'blue-grey-2' : 'blue-grey-10'"
+      :text-color="ply.color == 1 ? 'blue-grey-10' : 'blue-grey-2'"
       :outline="!isDone"
       :clickable="!noClick"
       square
@@ -119,8 +119,8 @@ export default {
   }
   &:not(.q-chip--outline)
     border 1px solid
-    &.bg-blue-grey-9
-      border-color $blue-grey-9
+    &.bg-blue-grey-10
+      border-color $blue-grey-10
     &.bg-blue-grey-2
       border-color $blue-grey-2
   &.selected
@@ -135,31 +135,46 @@ export default {
 
   &.color1
     .pieceCount
-      color $green-dark
+      color $blue-dark
     .specialPiece
       color $orange-dark
     .direction
-      color $green-dark
-    .distribution
       color $blue-dark
+    .distribution
+      color $green-dark
     .wallSmash
-      color $red-dark
+      color $orange-dark
     .evaluation
-      color $red-dark
+      color $orange-dark
 
-  &.color2, .q-chip--outline &.color1
+  &.color2
     .pieceCount
-      color $green-light
+      color $blue-light
     .specialPiece
       color $orange-light
     .direction
-      color $green-light
-    .distribution
       color $blue-light
+    .distribution
+      color $green-light
     .wallSmash
-      color $red-light
+      color $orange-light
     .evaluation
-      color $red-light
+      color $orange-light
+
+  .q-chip--outline &
+    &.color1, &.color2
+      .pieceCount
+        color $blue-med
+      .specialPiece
+        color $orange-med
+      .direction
+        color $blue-med
+      .distribution
+        color $green-med
+      .wallSmash
+        color $orange-med
+      .evaluation
+        color $orange-med
 
 .result
   white-space nowrap
