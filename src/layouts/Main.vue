@@ -23,7 +23,11 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container class="bg-primary">
+    <q-page-container
+      class="bg-primary"
+      v-shortkey="hotkeys"
+      @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
+    >
       <q-page ref="page" class="flex flex-center">
         <Board :game="game" :space="size" />
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -106,7 +110,7 @@ import UISettings from "../components/UISettings";
 
 import Game from "../components/PTN/Game";
 import { each, pick } from "lodash";
-import { GAME_STATE_PROPS } from "../constants";
+import { GAME_STATE_PROPS, HOTKEYS } from "../constants";
 
 export default {
   components: {
@@ -130,7 +134,8 @@ export default {
       dialogUISettings: false,
       dialogEditGame: false,
       size: null,
-      notifyClosers: []
+      notifyClosers: [],
+      hotkeys: HOTKEYS.UI
     };
   },
   computed: {
@@ -225,7 +230,11 @@ export default {
       }
     },
     showNotifications() {
-      if (!this.right && this.game.state.plyID in this.game.notes) {
+      if (
+        !this.right &&
+        this.$store.state.notifyNotes &&
+        this.game.state.plyID in this.game.notes
+      ) {
         this.game.notes[this.game.state.plyID]
           .concat()
           .reverse()
@@ -307,6 +316,13 @@ export default {
         this.hideNotifications();
       } else {
         this.showNotifications();
+      }
+    },
+    "$store.state.notifyNotes"(visible) {
+      if (visible) {
+        this.showNotifications();
+      } else {
+        this.hideNotifications();
       }
     }
   },

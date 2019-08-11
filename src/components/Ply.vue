@@ -38,7 +38,7 @@
         dense
       >
         <BranchMenu
-          @input="selectBranch"
+          @select="selectBranch"
           v-if="ply.branches.length"
           :game="game"
           :branches="ply.branches"

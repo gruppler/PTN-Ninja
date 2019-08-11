@@ -1,5 +1,7 @@
 <template>
   <q-menu
+    :value="value"
+    @input="$emit('input', $event)"
     content-class="bg-primary"
     align="bottom right"
     self="top left"
@@ -35,10 +37,10 @@ export default {
   components: {
     Ply: () => import("./Ply")
   },
-  props: ["game", "branches"],
+  props: ["value", "game", "branches"],
   methods: {
     select(ply) {
-      this.$emit("input", ply);
+      this.$emit("select", ply);
     }
   }
 };

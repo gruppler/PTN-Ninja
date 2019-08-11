@@ -24,7 +24,7 @@
             default-opened
           >
             <q-list>
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Axis_Labels") }}</q-item-label>
                 </q-item-section>
@@ -33,7 +33,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.showRoads" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Road_Connections") }}</q-item-label>
                 </q-item-section>
@@ -42,7 +42,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.pieceShadows" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Piece_Shadows") }}</q-item-label>
                 </q-item-section>
@@ -51,7 +51,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.flatCounts" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Flat_Counts") }}</q-item-label>
                 </q-item-section>
@@ -60,7 +60,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.unplayedPieces" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Unplayed_Pieces") }}</q-item-label>
                 </q-item-section>
@@ -69,7 +69,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.showMove" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Current_Move") }}</q-item-label>
                 </q-item-section>
@@ -78,7 +78,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Highlight_Square") }}</q-item-label>
                 </q-item-section>
@@ -112,7 +112,7 @@
             switch-toggle-side
           >
             <q-list>
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Show_All_Branches") }}</q-item-label>
                 </q-item-section>
@@ -121,7 +121,18 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.notifyNotes" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("Show_Note_Notifications")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="notifyNotes" />
+                </q-item-section>
+              </q-item>
+
+              <q-item tag="label" :title="hotkeys.showControls" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Play_Controls") }}</q-item-label>
                 </q-item-section>
@@ -130,7 +141,7 @@
                 </q-item-section>
               </q-item>
 
-              <q-item tag="label" v-ripple>
+              <q-item tag="label" :title="hotkeys.showScrubber" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Scrub_Bar") }}</q-item-label>
                 </q-item-section>
@@ -154,18 +165,20 @@
 
 <script>
 import { zipObject } from "lodash";
+import { HOTKEYS_FORMATTED } from "../constants";
 
 const props = [
   "axisLabels",
   "flatCounts",
   "highlightSquares",
+  "notifyNotes",
   "pieceShadows",
   "playSpeed",
   "showAllBranches",
   "showControls",
   "showMove",
-  "showScrubber",
   "showRoads",
+  "showScrubber",
   "unplayedPieces"
 ];
 
@@ -173,7 +186,9 @@ export default {
   name: "UISettings",
   props: ["value"],
   data() {
-    return {};
+    return {
+      hotkeys: HOTKEYS_FORMATTED.UI
+    };
   },
   computed: zipObject(
     props,

@@ -66,6 +66,7 @@ export default {
   Show_All_Branches: "Show All Branches",
   Show_Hide_Errors: "Show/Hide Errors",
   Show_Parse_Errors: "Show Parse Errors",
+  Show_Note_Notifications: "Show Note Notifications",
   Site: "Site",
   Size: "Size",
   TPS: "TPS",

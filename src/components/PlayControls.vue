@@ -5,7 +5,7 @@
       <q-btn
         @click="first"
         @shortkey="first"
-        v-shortkey="['ctrl' + 'arrowleft']"
+        v-shortkey="hotkeys.first"
         round
         flat
         :disable="isFirst"
@@ -15,8 +15,8 @@
         @click="prev"
         @shortkey="prev"
         v-shortkey="{
-          whole: ['arrowleft'],
-          half: ['shift' + 'arrowleft']
+          whole: hotkeys.prev,
+          half: hotkeys.prevHalf
         }"
         round
         flat
@@ -26,7 +26,7 @@
       <q-btn
         @click="playpause"
         @shortkey="playpause"
-        v-shortkey="['space']"
+        v-shortkey="hotkeys.playpause"
         round
         color="accent"
         text-color="grey-10"
@@ -36,8 +36,8 @@
         @click="next"
         @shortkey="next"
         v-shortkey="{
-          whole: ['arrowright'],
-          half: ['shift' + 'arrowright']
+          whole: hotkeys.next,
+          half: hotkeys.nextHalf
         }"
         round
         flat
@@ -47,14 +47,14 @@
       <q-btn
         @click="last"
         @shortkey="last"
-        v-shortkey="['ctrl', 'arrowright']"
+        v-shortkey="hotkeys.last"
         round
         flat
         :disable="isLast"
         icon="last_page"
       />
       <q-btn
-        v-shortkey="options"
+        v-shortkey="{ ...options, toggle: hotkeys.branch }"
         @shortkey="selectOption"
         round
         flat
@@ -63,7 +63,8 @@
         icon="call_split"
       >
         <BranchMenu
-          @input="selectBranch"
+          v-model="branchMenu"
+          @select="selectBranch"
           :game="game"
           :branches="this.branches"
         />
@@ -76,6 +77,7 @@
 import BranchMenu from "./BranchMenu";
 
 import { throttle, zipObject } from "lodash";
+import { HOTKEYS } from "../constants";
 
 export default {
   name: "PlayControls",
@@ -87,7 +89,9 @@ export default {
       timer: null,
       timestamp: null,
       next: null,
-      prev: null
+      prev: null,
+      branchMenu: false,
+      hotkeys: HOTKEYS.CONTROLS
     };
   },
   computed: {
@@ -176,7 +180,13 @@ export default {
       this.game.setTarget(ply);
     },
     selectOption(event) {
-      this.selectBranch(this.branches[event.srcKey]);
+      if (event.srcKey === "toggle") {
+        if (this.branches.length) {
+          this.branchMenu = !this.branchMenu;
+        }
+      } else {
+        this.selectBranch(this.branches[event.srcKey]);
+      }
     }
   },
   watch: {

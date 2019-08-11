@@ -9,6 +9,13 @@ export const SET_UI = ({ state, commit }, [key, value]) => {
   }
 };
 
+export const TOGGLE_UI = ({ state, commit }, key) => {
+  if (key in state.defaults) {
+    LocalStorage.set(key, !state[key]);
+    commit("SET_UI", [key, !state[key]]);
+  }
+};
+
 export const ADD_GAME = ({ commit, getters }, game) => {
   let games = LocalStorage.getItem("games") || [];
   game.name = getters.uniqueName(game.name);
