@@ -18,7 +18,7 @@
       <div class="player1 relative-position" :style="{ width: flatWidths[0] }">
         <div class="row absolute-fit no-wrap q-px-sm">
           <div class="name ellipsis col-shrink">
-            {{ game.tags.player1.value }}
+            {{ player1 }}
           </div>
           <div class="flats ellipsis q-pl-sm">{{ flats[0] }}</div>
         </div>
@@ -28,7 +28,7 @@
         <div class="row absolute-fit no-wrap q-px-sm">
           <div class="flats ellipsis q-pr-sm">{{ flats[1] }}</div>
           <div class="name ellipsis col-shrink">
-            {{ game.tags.player2.value }}
+            {{ player2 }}
           </div>
         </div>
         <div class="turn-indicator"></div>
@@ -110,6 +110,12 @@ export default {
     };
   },
   computed: {
+    player1() {
+      return this.game.tags.player1.value;
+    },
+    player2() {
+      return this.game.tags.player2.value;
+    },
     flats() {
       let flats = [0, 0];
       let piece;
@@ -132,7 +138,7 @@ export default {
     },
     maxWidth() {
       if (this.isInputFocused()) {
-        return this.maxWidth;
+        return this.$el.style.maxWidth;
       }
       if (!this.space || !this.size) {
         return "100%";
@@ -149,7 +155,7 @@ export default {
     },
     fontSize() {
       if (this.isInputFocused()) {
-        return this.fontSize;
+        return this.$el.style.fontSize;
       }
       if (!this.space || !this.size) {
         return "3vmin";
@@ -203,6 +209,10 @@ $radius = 5px
     border-radius $radius
     padding 0 .5em
     background-color rgba(#fff, .15)
+    transition opacity $generic-hover-transition
+    opacity 1
+    &.lt-md
+      opacity 0
 
 
 .flat-counter, .x-axis

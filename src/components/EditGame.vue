@@ -8,7 +8,6 @@
           @keyup.enter="save"
           color="accent"
           dark
-          clearable
           autofocus
         />
 
@@ -18,7 +17,6 @@
           @keyup.enter="save"
           color="accent"
           dark
-          clearable
         >
           <template v-slot:prepend>
             <q-icon name="person" />
@@ -31,7 +29,6 @@
           @keyup.enter="save"
           color="accent"
           dark
-          clearable
         >
           <template v-slot:prepend>
             <q-icon name="person_outline" />

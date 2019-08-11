@@ -199,8 +199,8 @@ export default {
     }
   },
   created() {
-    this.next = throttle(this._next, 350);
-    this.prev = throttle(this._prev, 350);
+    this.next = throttle(this._next, 350, { trailing: false });
+    this.prev = throttle(this._prev, 350, { trailing: false });
   }
 };
 </script>
