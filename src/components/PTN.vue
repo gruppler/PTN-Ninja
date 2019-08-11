@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-scroll-area class="fit">
+    <div class="fit scroll">
       <div class="ptn q-py-md" v-if="game">
         <Move
           class="q-px-md"
@@ -11,7 +11,7 @@
           :key="index"
         />
       </div>
-    </q-scroll-area>
+    </div>
     <q-resize-observer @resize="scroll" />
   </div>
 </template>

@@ -63,3 +63,15 @@
   @media (min-width: $breakpoint-sm-min)
     &
       max-width 45vw
+
+::-webkit-scrollbar
+  width 8px
+  height 8px
+  background transparent
+::-webkit-scrollbar-thumb
+  border none
+  box-shadow none
+  background $separator-color
+  min-height 40px
+  .q-card--dark &
+    background $separator-dark-color

@@ -1,8 +1,8 @@
 <template>
   <div class="chat column no-wrap">
     <div class="col-grow relative-position">
-      <q-scroll-area class="absolute-fit">
-        <div class="q-pa-md">
+      <div class="absolute-fit scroll">
+        <div class="q-px-md">
           <template v-for="(message, i) in messages">
             <q-chat-message
               v-if="!message.ply"
@@ -36,7 +36,8 @@
             </template>
           </template>
         </div>
-      </q-scroll-area>
+      </div>
+      <q-resize-observer @resize="scroll" />
     </div>
     <div>
       <q-separator />

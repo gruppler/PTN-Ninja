@@ -1,7 +1,7 @@
 <template>
   <div class="notes column no-wrap">
     <div class="col-grow relative-position">
-      <q-scroll-area class="absolute-fit">
+      <div class="absolute-fit scroll">
         <div class="q-px-md">
           <div
             v-if="log[-1]"
@@ -72,7 +72,7 @@
             </div>
           </template>
         </div>
-      </q-scroll-area>
+      </div>
       <q-resize-observer @resize="scroll" />
     </div>
     <div>
