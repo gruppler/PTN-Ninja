@@ -584,10 +584,6 @@ export default class Game {
     White: "White"
   };
 
-  static importLang(t) {
-    Game.t = Object.keys(Game.t).map(t);
-  }
-
   generateName() {
     const player1 = this.tag("player1", Game.t["White"]);
     const player2 = this.tag("player2", Game.t["Black"]);
@@ -610,6 +606,13 @@ export default class Game {
       : defaultValue !== undefined
       ? defaultValue
       : "";
+  }
+
+  setTag(key, value) {
+    this.tags = Object.assign(this.tags, {
+      [key]: Tag.parse(`[${key} "${value}"]`)
+    });
+    this._updatePTN();
   }
 
   getMoveComments(move) {

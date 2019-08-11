@@ -321,7 +321,6 @@ export default {
     }
   },
   created() {
-    Game.importLang(this.$t);
     if (!this.games.length) {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),

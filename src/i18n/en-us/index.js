@@ -70,6 +70,7 @@ export default {
   Tak: "Tak",
   Time: "Time",
   Tinue: "Tinuë",
+  Title: "Title",
   Trim_to_current_board: "Trim to current board",
   Trim_to_current_ply: "Trim to current ply",
   Undo: "Undo",

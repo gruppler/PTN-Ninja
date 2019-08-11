@@ -1,4 +1,3 @@
-import Game from "./Game";
 import TPS from "./TPS";
 import Result from "./Result";
 import { padStart } from "lodash";
@@ -34,12 +33,12 @@ export default class Tag {
         break;
       case "player1":
         if (!this.value.length) {
-          this.value = Game.t["White"];
+          this.value = "";
         }
         break;
       case "player2":
         if (!this.value.length) {
-          this.value = Game.t["Black"];
+          this.value = "";
         }
         break;
       case "date":

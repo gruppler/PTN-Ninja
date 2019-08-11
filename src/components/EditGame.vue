@@ -4,14 +4,39 @@
       <q-card-section>
         <q-input
           v-model="name"
+          :label="$t('Title')"
           @keyup.enter="save"
           color="accent"
           dark
           clearable
-          dense
-          filled
           autofocus
         />
+
+        <q-input
+          v-model="player1"
+          :label="$t('Player1')"
+          @keyup.enter="save"
+          color="accent"
+          dark
+          clearable
+        >
+          <template v-slot:prepend>
+            <q-icon name="person" />
+          </template>
+        </q-input>
+
+        <q-input
+          v-model="player2"
+          :label="$t('Player2')"
+          @keyup.enter="save"
+          color="accent"
+          dark
+          clearable
+        >
+          <template v-slot:prepend>
+            <q-icon name="person_outline" />
+          </template>
+        </q-input>
       </q-card-section>
       <q-separator />
       <q-card-actions align="right">
@@ -28,7 +53,9 @@ export default {
   props: ["value", "game"],
   data() {
     return {
-      name: ""
+      name: "",
+      player1: this.game.tag("player1"),
+      player2: this.game.tag("player2")
     };
   },
   methods: {
@@ -44,6 +71,18 @@ export default {
         this.name = this.$store.getters.uniqueName(this.name, true);
         this.game.name = this.name;
       }
+
+      this.player1 = (this.player1 || "").trim();
+      this.player2 = (this.player2 || "").trim();
+      if (this.player1 !== this.game.tag("player1")) {
+        this.game.setTag("player1", this.player1);
+        this.player1 = this.game.tag("player1");
+      }
+      if (this.player2 !== this.game.tag("player2")) {
+        this.game.setTag("player2", this.player2);
+        this.player2 = this.game.tag("player2");
+      }
+
       this.close();
     }
   },
@@ -51,6 +90,8 @@ export default {
     value(isVisible) {
       if (isVisible) {
         this.name = this.game.name;
+        this.player1 = this.game.tag("player1");
+        this.player2 = this.game.tag("player2");
       }
     }
   }
