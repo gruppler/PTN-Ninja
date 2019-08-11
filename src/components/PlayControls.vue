@@ -108,9 +108,13 @@ export default {
       return this.game.state.ply && !!this.game.state.ply.branches.length;
     },
     branches() {
-      return this.hasBranches
-        ? this.game.state.ply.branches
-        : this.game.branches[this.game.state.targetBranch].branches;
+      if (this.hasBranches) {
+        return this.game.state.ply.branches;
+      } else if (this.game.state.targetBranch in this.game.branches) {
+        return this.game.branches;
+      } else {
+        return [];
+      }
     },
     options() {
       return zipObject(

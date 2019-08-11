@@ -79,9 +79,11 @@
     </div>
 
     <Move
+      v-if="game.state.move"
       v-show="game.state.ply && $store.state.showMove"
       class="q-mt-sm"
       :class="{ 'lt-md': $store.state.showPTN }"
+      :key="game.state.move.id"
       :move="game.state.move"
       :game="game"
     />
