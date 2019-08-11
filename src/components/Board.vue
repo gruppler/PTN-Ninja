@@ -210,6 +210,7 @@ $radius = 5px
     display inline-block
     border-radius $radius
     padding 0 .5em
+    margin-bottom 0
     background-color rgba(#fff, .15)
     transition opacity $generic-hover-transition
     opacity 1

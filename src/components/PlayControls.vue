@@ -64,15 +64,8 @@
       >
         <BranchMenu
           @input="selectBranch"
-          v-if="hasBranches"
           :game="game"
-          :branches="game.state.ply.branches"
-        />
-        <BranchMenu
-          @input="selectBranch"
-          v-else-if="game.state.targetBranch"
-          :game="game"
-          :branches="game.branches[game.state.targetBranch].branches"
+          :branches="this.branches"
         />
       </q-btn>
     </div>
@@ -105,13 +98,13 @@ export default {
       return !this.game.state.nextPly && this.game.state.plyIsDone;
     },
     hasBranches() {
-      return this.game.state.ply && !!this.game.state.ply.branches.length;
+      return this.game.state.ply && this.game.state.ply.branches.length;
     },
     branches() {
       if (this.hasBranches) {
         return this.game.state.ply.branches;
       } else if (this.game.state.targetBranch in this.game.branches) {
-        return this.game.branches;
+        return this.game.branches[this.game.state.targetBranch].branches;
       } else {
         return [];
       }
@@ -203,8 +196,8 @@ export default {
     }
   },
   created() {
-    this.next = throttle(this._next, 350, { trailing: false });
-    this.prev = throttle(this._prev, 350, { trailing: false });
+    this.next = throttle(this._next, 350);
+    this.prev = throttle(this._prev, 350);
   }
 };
 </script>

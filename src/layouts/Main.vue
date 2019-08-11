@@ -15,7 +15,7 @@
           </GameSelector>
         </QToolbarTitle>
         <q-btn
-          :icon="textTab == 'notes' ? 'comment' : 'chat'"
+          :icon="textTab == 'notes' ? 'comment' : 'chat_bubble'"
           @click="right = !right"
           flat
           dense

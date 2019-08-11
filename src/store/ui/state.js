@@ -8,15 +8,15 @@ const defaults = {
   highlightSquares: true,
   isInputFocused: false,
   pieceShadows: !Platform.is.mobile,
+  playSpeed: 60, //BPM
   player1: "",
   player2: "",
-  playSpeed: 60, //BPM
   showAllBranches: false,
   showControls: true,
-  showPTN: true,
   showMove: true,
-  showScrubber: true,
+  showPTN: true,
   showRoads: true,
+  showScrubber: true,
   showText: true,
   size: 5,
   textTab: "notes",
