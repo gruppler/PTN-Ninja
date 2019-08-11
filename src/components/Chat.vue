@@ -44,7 +44,8 @@
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
-        class="col-grow q-pa-sm items-end"
+        debounce="50"
+        class="bg-secondary col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Message')"
         :dark="player === 2"
@@ -52,9 +53,8 @@
         rounded
         autogrow
         outlined
-        :standout="
-          player === 1 ? 'bg-grey-2 text-accent' : 'bg-secondary text-accent'
-        "
+        color="accent"
+        :bg-color="player === 1 ? 'white' : 'secondary'"
       >
         <template v-slot:append>
           <q-btn
