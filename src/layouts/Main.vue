@@ -91,9 +91,7 @@
 
     <EditGame v-model="dialogEditGame" :game="game" />
 
-    <q-dialog v-model="dialogUISettings">
-      <UISettings />
-    </q-dialog>
+    <UISettings v-model="dialogUISettings" />
   </q-layout>
 </template>
 

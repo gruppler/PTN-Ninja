@@ -14,7 +14,7 @@
     }"
   >
     <div class="hl selected" />
-    <div class="road">
+    <div class="road" v-if="$store.state.showRoads">
       <div class="n" />
       <div class="e" />
       <div class="s" />

@@ -35,6 +35,7 @@ module.exports = function (ctx) {
         'QChip',
         'QDialog',
         'QDrawer',
+        'QExpansionItem',
         'QFab',
         'QFabAction',
         'QFooter',
@@ -61,6 +62,7 @@ module.exports = function (ctx) {
         'QTabPanel',
         'QTabPanels',
         'QTabs',
+        'QToggle',
         'QToolbar',
         'QToolbarTitle'
       ],
