@@ -179,13 +179,13 @@ export default {
     selectBranch(ply) {
       this.game.setTarget(ply);
     },
-    selectOption(event) {
-      if (event.srcKey === "toggle") {
+    selectOption({ srcKey }) {
+      if (srcKey === "toggle") {
         if (this.branches.length) {
           this.branchMenu = !this.branchMenu;
         }
       } else {
-        this.selectBranch(this.branches[event.srcKey]);
+        this.selectBranch(this.branches[srcKey]);
       }
     }
   },
