@@ -20,12 +20,12 @@ export const HOTKEYS = {
     unplayedPieces: ["u"]
   },
   CONTROLS: {
-    first: ["ctrl" + "arrowleft"],
+    first: ["ctrl", "arrowleft"],
     prev: ["arrowleft"],
-    prevHalf: ["shift" + "arrowleft"],
+    prevHalf: ["shift", "arrowleft"],
     playpause: ["space"],
     next: ["arrowright"],
-    nextHalf: ["shift" + "arrowright"],
+    nextHalf: ["shift", "arrowright"],
     last: ["ctrl", "arrowright"],
     branch: ["b"]
   }
