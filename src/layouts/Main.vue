@@ -85,12 +85,8 @@
       </div>
     </q-footer>
 
-    <q-dialog v-model="dialogNewGame">
-      <NewGame />
-    </q-dialog>
-
+    <NewGame v-model="dialogNewGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
-
     <UISettings v-model="dialogUISettings" />
   </q-layout>
 </template>
