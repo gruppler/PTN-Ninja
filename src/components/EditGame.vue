@@ -1,6 +1,6 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
-    <q-card style="width: 500px" class="bg-secondary text-accent" dark>
+    <q-card style="width: 500px" class="bg-secondary" dark>
       <q-card-section>
         <q-input
           v-model="name"
@@ -8,34 +8,38 @@
           @keyup.enter="save"
           color="accent"
           dark
-          autofocus
         />
 
-        <q-input
-          v-model="player1"
-          :label="$t('Player1')"
-          @keyup.enter="save"
-          color="accent"
-          dark
-        >
-          <template v-slot:prepend>
-            <q-icon name="person" />
-          </template>
-        </q-input>
+        <div class="row">
+          <div class="col">
+            <q-input
+              v-model="player1"
+              :label="$t('Player1')"
+              @keyup.enter="save"
+              color="accent"
+              dark
+            >
+              <template v-slot:prepend>
+                <q-icon name="person" />
+              </template>
+            </q-input>
 
-        <q-input
-          v-model="player2"
-          :label="$t('Player2')"
-          @keyup.enter="save"
-          color="accent"
-          dark
-        >
-          <template v-slot:prepend>
-            <q-icon name="person_outline" />
-          </template>
-        </q-input>
+            <q-input
+              v-model="player2"
+              :label="$t('Player2')"
+              @keyup.enter="save"
+              color="accent"
+              dark
+            >
+              <template v-slot:prepend>
+                <q-icon name="person_outline" />
+              </template>
+            </q-input>
+          </div>
+          <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
+        </div>
       </q-card-section>
-      <q-separator />
+      <q-separator dark />
       <q-card-actions align="right">
         <q-btn :label="$t('OK')" @click="save" flat />
         <q-btn :label="$t('Cancel')" flat v-close-popup />
@@ -81,6 +85,11 @@ export default {
       }
 
       this.close();
+    },
+    swapPlayers() {
+      const player1 = this.player1;
+      this.player1 = this.player2;
+      this.player2 = player1;
     }
   },
   watch: {
