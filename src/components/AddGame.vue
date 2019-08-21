@@ -126,7 +126,7 @@ import Game from "./PTN/Game";
 import { each } from "lodash";
 
 export default {
-  name: "NewGame",
+  name: "AddGame",
   props: ["value"],
   data() {
     return {

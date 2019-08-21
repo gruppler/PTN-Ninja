@@ -85,7 +85,7 @@
       </div>
     </q-footer>
 
-    <NewGame v-model="dialogNewGame" />
+    <AddGame v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
   </q-layout>
@@ -100,7 +100,7 @@ import Menu from "../components/Menu";
 import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
-import NewGame from "../components/NewGame";
+import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
 
@@ -118,7 +118,7 @@ export default {
     PTN,
     PlayControls,
     Scrubber,
-    NewGame,
+    AddGame,
     EditGame,
     UISettings
   },
@@ -126,7 +126,7 @@ export default {
   data() {
     return {
       game: this.getGame(),
-      dialogNewGame: false,
+      dialogAddGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
       size: null,
@@ -216,7 +216,7 @@ export default {
     menuAction(action) {
       switch (action) {
         case "add":
-          this.dialogNewGame = true;
+          this.dialogAddGame = true;
           break;
         case "settings":
           this.dialogUISettings = true;
