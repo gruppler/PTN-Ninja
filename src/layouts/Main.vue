@@ -104,7 +104,7 @@ import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
 
-import Game from "../components/PTN/Game";
+import Game from "../PTN/Game";
 import { each, pick } from "lodash";
 import { GAME_STATE_PROPS, HOTKEYS } from "../constants";
 
