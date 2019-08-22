@@ -96,7 +96,7 @@
 import Piece from "./Piece";
 import Square from "./Square";
 import Move from "./Move";
-import Ply from "./PTN/Ply";
+import Ply from "../PTN/Ply";
 
 export default {
   name: "Board",

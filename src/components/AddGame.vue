@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import Game from "./PTN/Game";
+import Game from "../PTN/Game";
 
 import { each } from "lodash";
 

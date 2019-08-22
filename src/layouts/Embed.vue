@@ -39,7 +39,7 @@ import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 
-import Game from "../components/PTN/Game";
+import Game from "../PTN/Game";
 
 export default {
   components: {
