@@ -125,7 +125,7 @@ export default {
         row.forEach(square => {
           if (square.length) {
             piece = square[square.length - 1];
-            flats[piece.color - 1] += !piece.isSelected && !piece.isCapstone;
+            flats[piece.color - 1] += !piece.isStanding && !piece.isCapstone;
           }
         })
       );
