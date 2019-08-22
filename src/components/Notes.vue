@@ -11,12 +11,36 @@
             key="-1"
           >
             <q-chat-message
-              key="preface"
-              :text="log[-1].map(comment => comment.message)"
+              v-for="(comment, index) in log[-1]"
+              :key="`message--1-${index}`"
+              :id="`message--1-${index}`"
               bg-color="accent"
               text-color="grey-10"
               text-sanitize
-            />
+              sent
+            >
+              <span>{{ comment.message }}</span>
+              <q-menu
+                context-menu
+                auto-close
+                :target="`#message--1-${index} > div > div`"
+              >
+                <q-list dark class="bg-secondary text-white">
+                  <q-item @click="edit(-1, index)" clickable>
+                    <q-item-section side>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>{{ $t("Edit") }}</q-item-section>
+                  </q-item>
+                  <q-item @click="remove(-1, index)" clickable>
+                    <q-item-section side>
+                      <q-icon name="delete" />
+                    </q-item-section>
+                    <q-item-section>{{ $t("Delete") }}</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-chat-message>
           </div>
           <template v-for="(comments, plyID) in log">
             <div
@@ -51,7 +75,7 @@
                 <q-menu
                   context-menu
                   auto-close
-                  :target="`#message-${plyID}-${index}`"
+                  :target="`#message-${plyID}-${index} > div > div`"
                 >
                   <q-list dark class="bg-secondary text-white">
                     <q-item @click="edit(plyID, index)" clickable>
