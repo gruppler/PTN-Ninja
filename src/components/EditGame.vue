@@ -1,5 +1,10 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
+  <q-dialog
+    :value="value"
+    @input="$emit('input', $event)"
+    no-backdrop-dismiss
+    no-route-dismiss
+  >
     <q-card style="width: 500px" class="bg-secondary" dark>
       <q-card-section>
         <q-input

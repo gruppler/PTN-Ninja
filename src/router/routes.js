@@ -43,7 +43,21 @@ const routes = [
       }
 
       return { ptn, name, state };
-    }
+    },
+    children: [
+      {
+        name: "add",
+        path: "/add"
+      },
+      {
+        name: "settings",
+        path: "/settings"
+      },
+      {
+        name: "edit",
+        path: "/edit"
+      }
+    ]
   }
 ];
 

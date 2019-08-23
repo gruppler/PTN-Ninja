@@ -126,9 +126,6 @@ export default {
   data() {
     return {
       game: this.getGame(),
-      dialogAddGame: false,
-      dialogUISettings: false,
-      dialogEditGame: false,
       size: null,
       notifyClosers: [],
       hotkeys: HOTKEYS.UI
@@ -157,6 +154,57 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
+      }
+    },
+    dialogAddGame: {
+      get() {
+        return this.$route.name === "add";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "add") {
+            this.$router.push({ name: "add" });
+          }
+        } else {
+          if (this.$route.name == "add") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogUISettings: {
+      get() {
+        return this.$route.name === "settings";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "settings") {
+            this.$router.push({ name: "settings" });
+          }
+        } else {
+          if (this.$route.name == "settings") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogEditGame: {
+      get() {
+        return this.$route.name === "edit";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "edit") {
+            this.$router.push({ name: "edit" });
+          }
+        } else {
+          if (this.$route.name == "edit") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
       }
     },
     games() {
