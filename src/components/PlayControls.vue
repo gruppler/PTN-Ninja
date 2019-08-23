@@ -1,7 +1,12 @@
 <template>
   <div class="full-width justify-center">
     <div class="row no-wrap justify-around items-center">
-      <q-btn round flat :disable="!!game.state.nextPly" icon="backspace" />
+      <q-btn
+        round
+        flat
+        :disable="!game.state.ply || !!game.state.nextPly"
+        icon="backspace"
+      />
       <q-btn
         @click="first"
         @shortkey="first"
@@ -99,7 +104,10 @@ export default {
       return !this.game.state.prevPly && !this.game.state.plyIsDone;
     },
     isLast() {
-      return !this.game.state.nextPly && this.game.state.plyIsDone;
+      return (
+        (!this.game.state.nextPly && this.game.state.plyIsDone) ||
+        !this.game.state.ply
+      );
     },
     hasBranches() {
       return this.game.state.ply && this.game.state.ply.branches.length;

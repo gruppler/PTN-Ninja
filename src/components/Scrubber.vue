@@ -5,6 +5,7 @@
     :min="0"
     :max="maxPosition"
     :value="position"
+    :disabled="!game.plies.length"
     @input="scrub"
     color="accent"
     dense
@@ -26,7 +27,7 @@ export default {
     maxPosition() {
       return this.game.state.plies && this.game.state.plies.length
         ? this.game.state.plies.length - 0.5
-        : 0;
+        : 1;
     }
   },
   methods: {

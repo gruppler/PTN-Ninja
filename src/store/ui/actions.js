@@ -4,14 +4,18 @@ import { GAME_STATE_PROPS } from "../../constants";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
-    LocalStorage.set(key, value);
+    if (!state.embed) {
+      LocalStorage.set(key, value);
+    }
     commit("SET_UI", [key, value]);
   }
 };
 
 export const TOGGLE_UI = ({ state, commit }, key) => {
   if (key in state.defaults) {
-    LocalStorage.set(key, !state[key]);
+    if (!state.embed) {
+      LocalStorage.set(key, !state[key]);
+    }
     commit("SET_UI", [key, !state[key]]);
   }
 };

@@ -87,7 +87,7 @@ export default class Game {
     if (this.tags.tps) {
       this.firstMoveNumber = this.tags.tps.value.linenum;
       this.firstPlayer = this.tags.tps.value.player;
-      moveNumber = this.tags.tps.value.number;
+      moveNumber = this.tags.tps.value.linenum;
     } else {
       this.firstMoveNumber = 1;
       this.firstPlayer = 1;
@@ -182,6 +182,10 @@ export default class Game {
 
       notation = trimStart(notation.substr(item.ptn.length));
       delete item.ptn;
+    }
+
+    if (!this.moves[0].linenum) {
+      this.moves[0].linenum = new Linenum(moveNumber + ". ");
     }
 
     this._updatePTN();

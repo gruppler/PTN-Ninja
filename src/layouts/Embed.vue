@@ -9,25 +9,27 @@
     </q-header>
 
     <q-page-container class="bg-primary">
-      <q-page class="flex flex-center">
+      <q-page ref="page" class="flex flex-center">
         <Board :game="game" :space="size" />
         <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 
-    <q-drawer v-model="left" side="left" persistent bordered>
+    <q-drawer v-model="left" side="left" persistent>
       <PTN class="fit" :game="game" />
     </q-drawer>
 
-    <q-drawer v-model="right" side="right" persistent bordered>
+    <q-drawer v-model="right" side="right" persistent>
       <Notes class="fit" :game="game" />
     </q-drawer>
 
     <q-footer reveal>
-      <Scrubber :game="game" v-if="showScrubber" />
-      <q-toolbar v-if="showControls" class="q-pa-sm bg-secondary text-white">
-        <PlayControls />
-      </q-toolbar>
+      <Scrubber :game="game" v-if="$store.state.showScrubber" />
+      <div class="controls" v-if="$store.state.showControls">
+        <q-toolbar class="q-pa-sm bg-secondary text-white">
+          <PlayControls :game="game" />
+        </q-toolbar>
+      </div>
     </q-footer>
   </q-layout>
 </template>
@@ -52,24 +54,27 @@ export default {
   props: ["ptn", "name", "state"],
   data() {
     return {
-      size: null
+      game: Game.parse(this.ptn, { name: this.name, state: this.state }),
+      size: null,
+      notifyClosers: []
     };
   },
   computed: {
-    left() {
-      return this.state.showPTN;
+    left: {
+      get() {
+        return this.$store.state.showPTN;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["showPTN", value]);
+      }
     },
-    right() {
-      return this.state.showText;
-    },
-    showControls() {
-      return this.state.showControls;
-    },
-    showScrubber() {
-      return this.state.showScrubber;
-    },
-    game() {
-      return Game.parse(this.ptn, { name: this.name, state: this.state });
+    right: {
+      get() {
+        return this.$store.state.showText;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["showText", value]);
+      }
     },
     title() {
       return this.name || this.game.generateName();
@@ -78,10 +83,61 @@ export default {
   methods: {
     resize(size) {
       this.size = size;
+      this.size.height = parseInt(this.$refs.page.style.minHeight, 10);
+    },
+    showNotifications() {
+      if (
+        !this.right &&
+        this.$store.state.notifyNotes &&
+        this.game.state.plyID in this.game.notes
+      ) {
+        this.game.notes[this.game.state.plyID]
+          .concat()
+          .reverse()
+          .forEach(note => {
+            this.notifyClosers.push(
+              this.$q.notify({
+                color: "accent",
+                message: note.message,
+                icon: "comment",
+                position: "top-right",
+                actions: [{ icon: "close", color: "secondary" }],
+                classes: "note text-grey-10",
+                timeout: 0
+              })
+            );
+          });
+      }
+    },
+    hideNotifications() {
+      this.notifyClosers.forEach(close => close());
+      this.notifyClosers = [];
+    }
+  },
+  watch: {
+    "game.state"(newState, oldState) {
+      if (oldState.plyID !== newState.plyID) {
+        this.hideNotifications();
+        this.showNotifications();
+      }
+    },
+    right(visible) {
+      if (visible) {
+        this.hideNotifications();
+      } else {
+        this.showNotifications();
+      }
     }
   },
   created() {
-    this.$store.commit("SET_EMBED_GAME", this.game);
+    this.$store.commit("SET_EMBED_GAME");
+    Object.keys(this.state).forEach(key => {
+      this.$store.commit("SET_UI", [key, this.state[key]]);
+    });
+  },
+  mounted() {
+    this.hideNotifications();
+    this.showNotifications();
   }
 };
 </script>
