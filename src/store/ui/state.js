@@ -18,7 +18,7 @@ const defaults = {
   showPTN: true,
   showRoads: true,
   showScrubber: true,
-  showText: true,
+  showText: false,
   size: 5,
   textTab: "notes",
   unplayedPieces: true
