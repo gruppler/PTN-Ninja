@@ -86,6 +86,7 @@
       :key="game.state.move.id"
       :move="game.state.move"
       :game="game"
+      currentOnly
     />
 
     <q-resize-observer @resize="resize" debounce="0" />

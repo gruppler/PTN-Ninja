@@ -55,42 +55,43 @@ export default class Ply extends Ptn {
     return "abcdefgh"[x] + (y + 1);
   }
 
-  getBranch(targetBranch = "") {
+  getBranch(branch = "") {
     if (this.branches.length) {
-      return this.branches.find(ply => ply.isInBranch(targetBranch)) || this;
+      return this.branches.find(ply => ply.isInBranch(branch)) || this;
     } else {
       return this;
     }
   }
 
+  hasBranch(branch) {
+    return (
+      this.branches.length && this.branches.find(ply => ply.isInBranch(branch))
+    );
+  }
+
   isInBranch(branch) {
-    if (this.branch === branch) {
+    if (!(branch in this.game.branches)) {
+      // Nonexistent branch
+      return false;
+    } else if (this.branch === branch) {
       // In same branch
       return true;
     } else if (this.branch.startsWith(branch)) {
-      // In a child or sibling branch
+      // In a descendant or sibling branch
       return false;
     } else if (branch.startsWith(this.branch)) {
-      // In a parent branch
-      let ply = this.game.branches[branch];
-      if (!ply) {
-        return false;
+      // In an ancestor branch
+      let ply = this.game.branches[branch].branches[0];
+      while (ply.index && ply.branch !== this.branch) {
+        // Ascend the tree to find a common branch
+        ply = this.game.branches[ply.branch].branches[0];
       }
-      while (ply.branch && ply.branches[0] !== ply) {
-        ply = ply.branches[0];
-        if (ply.branch == this.branch) {
-          return ply.index > this.index;
-        } else {
-          ply = ply.branch
-            ? this.game.branches[ply.branch]
-            : this.game.plies[0];
-        }
+      if (ply && ply.branch === this.branch) {
+        // Check whether branch descended from this
+        return this.index < ply.index;
       }
-      return false;
-    } else {
-      // In a different branch
-      return false;
     }
+    return false;
   }
 
   text() {

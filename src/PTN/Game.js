@@ -83,6 +83,19 @@ export default class Game {
         throw new Error("Missing board size");
       }
     }
+    this.stateTemplate = {
+      plyID: 0,
+      plyIsDone: false,
+      player: 1,
+      branch: "",
+      targetBranch: "",
+      squares: new Marray.two(this.size, this.size, () => []),
+      pieces: {
+        1: { F: [], C: [] },
+        2: { F: [], C: [] }
+      },
+      selectedPieces: []
+    };
 
     if (this.tags.tps) {
       this.firstMoveNumber = this.tags.tps.value.linenum;
@@ -119,9 +132,6 @@ export default class Game {
           });
           this.moves.push(move);
         }
-        if (branch !== item.branch && this.firstPlayer === 2) {
-          move.setPly(Nop.parse("--"), 1);
-        }
         branch = item.branch;
         moveNumber = item.number;
         ply = null;
@@ -136,12 +146,19 @@ export default class Game {
         item = Nop.parse(notation);
         if (!move.ply1) {
           move.setPly(item, 1);
-        } else if (!move.ply2) {
+        } else if (!move.ply2 && !move.ply1.result) {
           move.setPly(item, 2);
         }
       } else if (/[1-8a-hCSF]/.test(notation[0])) {
         // Ply
         item = ply = Ply.parse(notation, { id: this.plies.length });
+        if (
+          move.linenum.number === this.firstMoveNumber &&
+          this.firstPlayer === 2 &&
+          !move.pl1
+        ) {
+          move.setPly(Nop.parse("--"), 1);
+        }
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
@@ -214,9 +231,9 @@ export default class Game {
     this.ptn = this.text();
   }
 
-  _setPly(plyID, isDone) {
+  _setPly(plyID, isDone = false) {
     this.state.plyID = plyID;
-    this.state.plyIsDone = isDone || false;
+    this.state.plyIsDone = isDone;
     this.updateState();
   }
 
@@ -227,7 +244,7 @@ export default class Game {
     this.state.targetBranch = ply.branch;
     if (
       ply.branches.includes(this.state.ply) ||
-      !this.state.ply.isInBranch(this.state.targetBranch)
+      !this.state.plies.includes(ply)
     ) {
       return this.goToPly(ply.id, this.state.plyIsDone);
     } else {
@@ -237,63 +254,39 @@ export default class Game {
   }
 
   // After _setPly, update the rest of the state
-  updateState(forceUpdate = false) {
-    this.state = defaults(this.state, {
-      plyID: 0,
-      plyIsDone: false,
-      player: 1,
-      branch: "",
-      targetBranch: "",
-      squares: new Marray.two(this.size, this.size, () => []),
-      pieces: {
-        1: { F: [], C: [] },
-        2: { F: [], C: [] }
-      },
-      selectedPieces: []
-    });
+  updateState() {
+    this.state = defaults(this.state, this.stateTemplate);
 
     if (this.state.plyID in this.plies) {
       let newPly = this.plies[this.state.plyID];
       let newMove = newPly.move;
       let newBranch = newPly.branch;
       let newNumber = newMove.linenum.number;
-      let ply;
+      const isDifferentBranch =
+        this.state.branch !== newBranch ||
+        !this.state.targetBranch != this.state._targetBranch;
 
       // Update lists of current branch's plies and moves
-      if (
-        forceUpdate ||
-        !this.state.plies ||
-        (this.state.branch !== newBranch &&
-          newPly.isInBranch(this.state.targetBranch))
-      ) {
-        this.state.plies = [];
+      if (isDifferentBranch || !this.state.plies) {
+        if (newPly.isInBranch(this.state.targetBranch)) {
+          this.state.plies = this.plies.filter(ply =>
+            ply.isInBranch(this.state.targetBranch)
+          );
+        } else {
+          this.state.plies = this.plies.filter(ply =>
+            ply.isInBranch(this.state.branch)
+          );
+        }
         this.state.moves = [];
-        for (let id = 0; id < this.plies.length; id++) {
-          ply = this.plies[id].getBranch(this.state.targetBranch);
-          if (
-            this.state.plies.includes(ply) ||
-            (this.state.moves.length &&
-              (ply.move.linenum.number <
-                last(this.state.moves).linenum.number ||
-                !ply.move.linenum.branch.startsWith(
-                  last(this.state.moves).linenum.branch
-                )))
-          ) {
-            break;
-          }
-          id = ply.id;
-          this.state.plies.push(ply);
+        this.state.plies.forEach(ply => {
           if (ply.player === 2 || !ply.move.ply2) {
             this.state.moves.push(ply.move);
           }
-          if (ply.result) {
-            break;
-          }
-        }
+        });
       }
 
       // Update previous and next plies
-      if (forceUpdate || this.state.ply !== newPly) {
+      if (isDifferentBranch || this.state.ply !== newPly) {
         this.state.prevPly = newPly.index
           ? this.state.plies[newPly.index - 1]
           : null;
@@ -303,6 +296,7 @@ export default class Game {
             : null;
       }
 
+      this.state._targetBranch = this.state.targetBranch;
       this.state.ply = newPly;
       this.state.move = newMove;
       this.state.branch = newBranch;
@@ -379,7 +373,7 @@ export default class Game {
               this._updatePTN();
             }
           } else {
-            console.error("Illegal ply");
+            console.error("Invalid ply");
             return false;
           }
         }
@@ -390,6 +384,10 @@ export default class Game {
 
         times(count, () => {
           let piece = stack.pop();
+          if (!piece) {
+            console.error("Invalid ply");
+            return false;
+          }
           Object.assign(piece, {
             x,
             y,
@@ -450,7 +448,7 @@ export default class Game {
         this.state.branch + this.state.number + ".",
         this.state.ply.text(),
         this.state.plyIsDone,
-        this.state
+        Object.assign({}, this.state)
       );
     };
 
@@ -458,58 +456,50 @@ export default class Game {
       ply: targetPly,
       plyIsDone: isDone,
       move: targetPly.move,
-      branch: targetPly.move.linenum.branch,
+      branch: targetPly.branch,
       number: targetPly.move.linenum.number
     };
 
-    if (
-      !this.state.targetBranch.startsWith(target.branch) ||
-      target.index >= this.state.ply.index
-    ) {
-      this.state.targetBranch = target.branch;
-    }
-
     log("started at");
 
-    if (this.state.branch !== target.branch || this.state.plyID > plyID) {
-      while (
-        (!target.branch.startsWith(this.state.branch) ||
-          this.state.number > target.number ||
-          this.state.ply.index > target.ply.index ||
-          this.state.plyIsDone) &&
-        this._undoPly()
-      ) {
-        // Go back until we're on a common branch and before the target ply
-      }
+    // Set targetBranch if target is outside of it
+    if (!targetPly.isInBranch(this.state.targetBranch)) {
+      this.state.targetBranch = target.branch;
+      this.updateState();
+    }
+
+    // If current ply is outside target branch...
+    let wentBack = false;
+    while (
+      !this.state.ply.isInBranch(target.branch) &&
+      !this.state.ply.hasBranch(target.branch) &&
+      this._undoPly()
+    ) {
+      // ...go back until we're on an ancestor or sibling of the target branch
+      wentBack = true;
+    }
+    if (wentBack) {
       log("went back to");
     }
 
-    if (this.state.branch !== target.branch) {
-      this._setPly(this.state.ply.getBranch(target.branch).id);
+    if (
+      this.state.branch !== target.branch &&
+      this.state.ply.hasBranch(target.branch)
+    ) {
+      if (this.state.plyIsDone) {
+        this._undoPly();
+      }
+      this._setPly(this.state.ply.getBranch(target.branch).id, false);
       log("switched branch to");
     }
 
-    if (
-      this.state.number < target.number ||
-      this.state.ply.index < target.ply.index
-    ) {
-      while (
-        (this.state.number < target.number ||
-          this.state.ply.index < target.ply.index) &&
-        this._doPly()
-      ) {
+    if (this.state.ply.index < target.ply.index) {
+      while (this.state.ply.index < target.ply.index && this._doPly()) {
         // Go forward until we reach the target ply
       }
       log("went forward to");
-    } else if (
-      this.state.number > target.number ||
-      this.state.ply.index > target.ply.index
-    ) {
-      while (
-        (this.state.number > target.number ||
-          this.state.ply.index > target.ply.index) &&
-        this._undoPly()
-      ) {
+    } else if (this.state.ply.index > target.ply.index) {
+      while (this.state.ply.index > target.ply.index && this._undoPly()) {
         // Go backward until we reach the target ply
       }
       log("went back again to");

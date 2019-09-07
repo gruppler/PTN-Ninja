@@ -18,7 +18,7 @@
         <q-item-section side>
           <span
             class="option-number text-subtitle2 q-pa-sm"
-            :class="{ selected: ply.isInBranch(game.state.targetBranch) }"
+            :class="{ selected: game.state.plies.includes(ply) }"
           >
             {{ i }}
           </span>

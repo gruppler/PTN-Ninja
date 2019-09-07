@@ -154,8 +154,7 @@ export default {
         : pickBy(
             this.game.notes,
             (notes, id) =>
-              id < 0 ||
-              this.game.plies[id].isInBranch(this.game.state.targetBranch)
+              id < 0 || this.game.state.plies.includes(this.game.plies[id])
           );
     },
     currentPlyID() {

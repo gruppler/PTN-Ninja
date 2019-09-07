@@ -3,6 +3,9 @@ export default class Move {
     this.game = parts.game;
     this.id = parts.id;
     this.linenum = parts.linenum;
+    if (this.linenum) {
+      this.linenum.move = this;
+    }
     this.ply1 = null;
     this.ply2 = null;
     if (parts.ply1) {

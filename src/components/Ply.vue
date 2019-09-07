@@ -71,7 +71,7 @@ export default {
       return this.game && this.ply
         ? this.game.state.plyID === this.ply.id
           ? this.game.state.plyIsDone
-          : this.ply.isInBranch(this.game.state.targetBranch) &&
+          : this.game.state.plies.includes(this.ply) &&
             this.game.state.ply.index > this.ply.index
         : true;
     }

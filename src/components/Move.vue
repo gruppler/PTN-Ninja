@@ -3,7 +3,8 @@
     class="ptn move"
     :class="{
       'current-move': isCurrentMove,
-      linebreak
+      linebreak,
+      'current-only': currentOnly !== undefined
     }"
   >
     <div class="move-wrapper">
@@ -11,13 +12,21 @@
       <Ply
         v-if="move.ply1"
         :ply="
-          $store.state.showAllBranches
+          $store.state.showAllBranches && currentOnly === undefined
             ? move.ply1
             : move.ply1Original || move.ply1
         "
         :game="game"
       />
-      <Ply v-if="move.ply2" :ply="move.ply2" :game="game" />
+      <Ply
+        v-if="move.ply2"
+        :ply="
+          $store.state.showAllBranches && currentOnly === undefined
+            ? move.ply2
+            : move.ply2.getBranch(game.state.targetBranch)
+        "
+        :game="game"
+      />
     </div>
   </div>
 </template>
@@ -29,7 +38,7 @@ import Ply from "./Ply";
 export default {
   name: "Move",
   components: { Linenum, Ply },
-  props: ["move", "game"],
+  props: ["move", "game", "currentOnly"],
   computed: {
     nextMove() {
       return this.move.id < this.game.moves.length - 1
@@ -60,6 +69,9 @@ export default {
   .move-wrapper
     padding-left 1em
     text-indent -1em
+
+  &.current-only .linenum .branch
+    display none
 
   &.linebreak
     margin-bottom 1.5em
