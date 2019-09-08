@@ -71,7 +71,7 @@ export default {
     text-indent -1em
 
   &.current-only .linenum .branch
-    display none
+    background-color transparent
 
   &.linebreak
     margin-bottom 1.5em
