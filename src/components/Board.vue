@@ -125,8 +125,8 @@ export default {
     flatWidths() {
       let total = (this.flats[0] + this.flats[1]) / 100;
       return [
-        total ? this.flats[0] / total + "%" : "",
-        total ? this.flats[1] / total + "%" : ""
+        total ? (this.flats[0] / total).toPrecision(4) + "%" : "",
+        total ? (this.flats[1] / total).toPrecision(4) + "%" : ""
       ];
     },
     maxWidth() {
