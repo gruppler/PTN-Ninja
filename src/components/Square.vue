@@ -143,50 +143,48 @@ export default {
     bottom 0
     left 0
     right 0
-    opacity .25
     pointer-events none
     > div
       opacity 0
       position absolute
-      top 50%
-      bottom 50%
-      left 50%
-      right 50%
       will-change opacity, top, bottom, left, right
-      transition background-color $time linear,
-        opacity $half-time linear,
-        top $half-time $easing,
-        bottom $half-time $easing,
-        left $half-time $easing,
-        right $half-time $easing
+      transition all $half-time $easing,
+        background-color $time linear,
+        opacity $half-time linear
+      &.n, &.s
+        left 35%
+        right 35%
+      &.e, &.w
+        top 35%
+        bottom 35%
       &.n
-        top 0
-      &.e
-        right 0
+        top 35%
+        bottom 70%
       &.s
-        bottom 0
+        top 70%
+        bottom 35%
+      &.e
+        left 70%
+        right 35%
       &.w
-        left 0
-  &.n .road .n,
+        left 35%
+        right 70%
+  &.n .road .n
+    top 0
   &.s .road .s
-    opacity 1
-    left 35%
-    right 35%
-  &.e .road .e,
+    bottom 0
+  &.e .road .e
+    right 0
   &.w .road .w
-    opacity 1
-    top 35%
-    bottom 35%
+    left 0
   &.n .road .n,
   &.e .road .e,
   &.s .road .s,
   &.w .road .w
-    transition background-color $time linear,
-      opacity $half-time linear $half-time,
-      top $half-time $easing $half-time,
-      bottom $half-time $easing $half-time,
-      left $half-time $easing $half-time,
-      right $half-time $easing $half-time
+    opacity .25
+    transition all $half-time $easing $half-time,
+      background-color $time linear,
+      opacity $half-time linear $half-time
   &.p1 .road > div
     background-color $blue-grey-2
   &.p2 .road > div
