@@ -5,12 +5,18 @@
       dark: x % 2 === y % 2,
       light: x % 2 !== y % 2,
       ['p' + color]: !!color,
+      'no-roads': !$store.state.showRoads,
+      road: isInRoad,
       selected,
       valid,
       n,
       e,
       s,
-      w
+      w,
+      rn,
+      re,
+      rs,
+      rw
     }"
   >
     <div class="hl selected" />
@@ -43,11 +49,22 @@ export default {
     selected() {
       return (
         this.game.state.ply &&
-        this.game.state.ply.squares.includes(this.square.id)
+        this.game.state.ply.squares.includes(this.square.coord)
       );
     },
     valid() {
       return !this.piece || this.color === this.game.state.player;
+    },
+    road() {
+      return this.game.state.plyIsDone && this.game.state.ply.result
+        ? this.game.state.ply.result.road
+        : null;
+    },
+    roadSquares() {
+      return this.road ? this.road.squares[this.color] || [] : [];
+    },
+    isInRoad() {
+      return this.road && this.roadSquares.includes(this.square.coord);
     },
     n() {
       if (this.color && !this.piece.isStanding) {
@@ -100,6 +117,34 @@ export default {
         }
       }
       return false;
+    },
+    rn() {
+      return (
+        this.isInRoad &&
+        ((this.road.edges[this.color].ns && this.square.edges.includes("n")) ||
+          (this.square.n && this.roadSquares.includes(this.square.n.coord)))
+      );
+    },
+    rs() {
+      return (
+        this.isInRoad &&
+        ((this.road.edges[this.color].ns && this.square.edges.includes("s")) ||
+          (this.square.s && this.roadSquares.includes(this.square.s.coord)))
+      );
+    },
+    re() {
+      return (
+        this.isInRoad &&
+        ((this.road.edges[this.color].ew && this.square.edges.includes("e")) ||
+          (this.square.e && this.roadSquares.includes(this.square.e.coord)))
+      );
+    },
+    rw() {
+      return (
+        this.isInRoad &&
+        ((this.road.edges[this.color].ew && this.square.edges.includes("w")) ||
+          (this.square.w && this.roadSquares.includes(this.square.w.coord)))
+      );
     }
   }
 };
@@ -131,6 +176,8 @@ export default {
   &.valid:hover .hl.hover
     opacity .35
     cursor pointer
+  &.no-roads.road .hl.hover
+    opacity .25
 
   .road
     position absolute
@@ -180,6 +227,11 @@ export default {
     transition all $half-time $easing $half-time,
       background-color $time linear,
       opacity $half-time linear $half-time
+  &.rn .road .n,
+  &.re .road .e,
+  &.rs .road .s,
+  &.rw .road .w
+    opacity 0.8
   &.p1 .road > div
     background-color $blue-grey-2
   &.p2 .road > div

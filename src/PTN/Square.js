@@ -3,7 +3,7 @@ import Ply from "./Ply";
 export default class Square extends Array {
   constructor(x, y, size) {
     super();
-    this.id = Ply.itoa(x, y);
+    this.coord = Ply.itoa(x, y);
     this.x = x;
     this.y = y;
     this.edges = "";
@@ -12,6 +12,11 @@ export default class Square extends Array {
     this.isNS = false;
     this.isEW = false;
     this.isSelected = false;
+    this.neighbors = [];
+    this.n = null;
+    this.e = null;
+    this.s = null;
+    this.w = null;
 
     if (y == size - 1) {
       this.edges += "n";
@@ -34,18 +39,5 @@ export default class Square extends Array {
       this.isEW = true;
     }
     this.isCorner = this.edges.length == 2;
-  }
-
-  n(squares) {
-    return this.edges.includes("n") ? null : squares[this.y + 1][this.x];
-  }
-  s(squares) {
-    return this.edges.includes("s") ? null : squares[this.y - 1][this.x];
-  }
-  e(squares) {
-    return this.edges.includes("e") ? null : squares[this.y][this.x + 1];
-  }
-  w(squares) {
-    return this.edges.includes("w") ? null : squares[this.y][this.x - 1];
   }
 }

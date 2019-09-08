@@ -11,7 +11,16 @@ import Move from "./Move";
 import Piece from "./Piece";
 import Square from "./Square";
 
-import { defaults, last, map, omit, times, trimStart } from "lodash";
+import {
+  compact,
+  defaults,
+  last,
+  isEmpty,
+  map,
+  omit,
+  times,
+  trimStart
+} from "lodash";
 
 const pieceCounts = {
   3: { F: 10, C: 0, total: 10 },
@@ -93,18 +102,22 @@ export default class Game {
     };
     this.stateTemplate.squares.forEach(row => {
       row.forEach(square => {
-        square.n = square.edges.includes("n")
-          ? null
-          : this.stateTemplate.squares[square.y + 1][square.x];
-        square.s = square.edges.includes("s")
-          ? null
-          : this.stateTemplate.squares[square.y - 1][square.x];
-        square.e = square.edges.includes("e")
-          ? null
-          : this.stateTemplate.squares[square.y][square.x + 1];
-        square.w = square.edges.includes("w")
-          ? null
-          : this.stateTemplate.squares[square.y][square.x - 1];
+        if (!square.edges.includes("n")) {
+          square.n = this.stateTemplate.squares[square.y + 1][square.x];
+          square.neighbors.push(square.n);
+        }
+        if (!square.edges.includes("s")) {
+          square.s = this.stateTemplate.squares[square.y - 1][square.x];
+          square.neighbors.push(square.s);
+        }
+        if (!square.edges.includes("e")) {
+          square.e = this.stateTemplate.squares[square.y][square.x + 1];
+          square.neighbors.push(square.e);
+        }
+        if (!square.edges.includes("w")) {
+          square.w = this.stateTemplate.squares[square.y][square.x - 1];
+          square.neighbors.push(square.w);
+        }
       });
     });
 
@@ -336,6 +349,13 @@ export default class Game {
   _doPly() {
     const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
     if (ply && this._doMoveset(ply)) {
+      if (ply.result && ply.result.type === "R" && !ply.result.road) {
+        if (ply.result.player1 === "R") {
+          ply.result.road = this.findRoads(1);
+        } else if (ply.result.player2 === "R") {
+          ply.result.road = this.findRoads(2);
+        }
+      }
       this._setPly(ply.id, true);
       return true;
     } else {
@@ -565,6 +585,180 @@ export default class Game {
       return this.goToPly(this.state.nextPly.id, !half);
     }
     return false;
+  }
+
+  findRoads(player) {
+    let possibleRoads = { 1: {}, 2: {} };
+    let connections = {};
+    let players = player ? [player] : [1, 2];
+
+    // Recursively follow a square and return all connected squares and edges
+    function _followRoad(square) {
+      let squares = {};
+      let edges = {};
+      let road;
+      let player = last(square).color;
+
+      squares[square.coord] = square;
+      delete possibleRoads[player][square.coord];
+
+      if (square.isEdge) {
+        // Note which edge(s) the road touches
+        edges[square.edges[0]] = true;
+        if (square.edges[1]) {
+          edges[square.edges[1]] = true;
+        }
+      }
+
+      connections[square.coord].forEach(neighbor => {
+        if (neighbor.coord in possibleRoads[player]) {
+          // Haven't gone this way yet; find out where it goes
+          road = _followRoad(neighbor);
+          // Report back squares and edges
+          Object.assign(squares, road.squares);
+          Object.assign(edges, road.edges);
+        }
+      });
+
+      return {
+        squares: squares,
+        edges: edges
+      };
+    }
+
+    // Remove all deadEnds and their non-junction neighbors from squares
+    // Mutates squares, but not deadEnds
+    function _removeDeadEnds(deadEnds, squares, ordinality) {
+      let nextNeighbors, square;
+
+      deadEnds = deadEnds.concat();
+
+      while (deadEnds.length) {
+        for (let i = 0; i < deadEnds.length; i++) {
+          square = deadEnds[i];
+
+          nextNeighbors = [];
+          connections[square.coord].forEach(neighbor => {
+            if (neighbor.coord in squares) {
+              nextNeighbors.push(neighbor);
+            }
+          });
+
+          if (
+            (nextNeighbors.length < 2 && !square.is_edge) ||
+            (ordinality && square[ordinality == "ns" ? "isNS" : "isEW"])
+          ) {
+            delete squares[square.coord];
+            deadEnds[i] = nextNeighbors[0];
+          } else {
+            deadEnds[i] = undefined;
+          }
+        }
+        deadEnds = compact(deadEnds);
+      }
+    }
+
+    // Gather player-controlled squares and dead ends
+    let possibleDeadEnds = {
+        1: { ns: [], ew: [] },
+        2: { ns: [], ew: [] }
+      },
+      deadEnds = [];
+
+    this.state.squares.forEach(row =>
+      row.forEach(square => {
+        if (square.length) {
+          let player = last(square).color;
+          connections[square.coord] = square.neighbors.filter(neighbor => {
+            neighbor = last(neighbor);
+            return (
+              neighbor && !neighbor.isStanding && neighbor.color === player
+            );
+          });
+
+          if (connections[square.coord].length === 1) {
+            if (square.isEdge) {
+              // An edge with exactly one friendly neighbor
+              possibleRoads[player][square.coord] = square;
+
+              if (!square.isCorner) {
+                if (square.isNS) {
+                  possibleDeadEnds[player].ns.push(square);
+                } else if (square.isEW) {
+                  possibleDeadEnds[player].ew.push(square);
+                }
+              }
+            } else {
+              // A non-edge dead end
+              deadEnds.push(square);
+            }
+          } else if (connections[square.coord].length > 1) {
+            // An intersection
+            possibleRoads[player][square.coord] = square;
+          }
+        } else {
+          connections[square.coord] = [];
+        }
+      })
+    );
+
+    // Remove dead ends not connected to edges
+    players.forEach(player => _removeDeadEnds(deadEnds, possibleRoads[player]));
+
+    // Find roads that actually bridge opposite edges
+    let roads = {
+        1: [],
+        2: [],
+        squares: {
+          1: {},
+          2: {}
+        },
+        edges: {
+          1: { ns: false, ew: false },
+          2: { ns: false, ew: false }
+        }
+      },
+      road;
+
+    players.forEach(player => {
+      while (!isEmpty(possibleRoads[player])) {
+        // Follow any square to get all connected squares
+        road = _followRoad(
+          possibleRoads[player][Object.keys(possibleRoads[player])[0]]
+        );
+
+        // Find connected opposite edge pair(s)
+        road.edges.ns = (road.edges.s && road.edges.n) || false;
+        road.edges.ew = (road.edges.w && road.edges.e) || false;
+
+        if (road.edges.ns || road.edges.ew) {
+          if (!road.edges.ns || !road.edges.ew) {
+            // Remove dead ends connected to the non-winning edges
+            _removeDeadEnds(
+              possibleDeadEnds[player][road.edges.ns ? "ew" : "ns"],
+              road.squares,
+              road.edges.ns ? "ew" : "ns"
+            );
+          }
+
+          // Keep the road; at least one opposite edge pair is connected
+          roads[player].push({
+            ns: road.edges.ns,
+            ew: road.edges.ew,
+            squares: Object.keys(road.squares)
+          });
+          Object.assign(roads.squares[player], road.squares);
+          if (road.edges.ns) roads.edges[player].ns = true;
+          if (road.edges.ew) roads.edges[player].ew = true;
+        }
+      }
+    });
+
+    roads.squares[1] = Object.keys(roads.squares[1]) || [];
+    roads.squares[2] = Object.keys(roads.squares[2]) || [];
+    roads.length = roads[1].length + roads[2].length;
+
+    return roads;
   }
 
   text() {

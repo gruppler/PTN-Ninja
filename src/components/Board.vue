@@ -44,7 +44,7 @@
         <div class="squares absolute-fit row">
           <Square
             v-for="square in squares"
-            :key="square.id"
+            :key="square.coord"
             :x="square.x"
             :y="square.y"
             :game="game"
