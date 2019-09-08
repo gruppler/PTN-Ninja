@@ -28,7 +28,7 @@ export default {
     },
     immovable() {
       return this.state
-        ? this.state.stackHeight - this.state.z > this.game.size
+        ? this.state.square.length - this.state.z > this.game.size
         : false;
     },
     x() {
@@ -48,12 +48,12 @@ export default {
         y += spacing * this.state.z;
         if (!this.$store.state.board3D) {
           if (
-            this.state.stackHeight > this.game.size &&
-            this.state.z >= this.state.stackHeight - this.game.size
+            this.state.square.length > this.game.size &&
+            this.state.z >= this.state.square.length - this.game.size
           ) {
-            y -= spacing * (this.state.stackHeight - this.game.size);
+            y -= spacing * (this.state.square.length - this.game.size);
           }
-          if (this.state.isStanding && this.state.stackHeight > 1) {
+          if (this.state.isStanding && this.state.square.length > 1) {
             y -= spacing;
           }
         }

@@ -44,8 +44,9 @@
         <div class="squares absolute-fit row">
           <Square
             v-for="square in squares"
-            :key="square"
-            :id="square"
+            :key="square.id"
+            :x="square.x"
+            :y="square.y"
             :game="game"
           />
         </div>
@@ -97,7 +98,6 @@
 import Piece from "./Piece";
 import Square from "./Square";
 import Move from "./Move";
-import Ply from "../PTN/Ply";
 
 export default {
   name: "Board",
@@ -120,17 +120,7 @@ export default {
       return this.game.tags.player2.value;
     },
     flats() {
-      let flats = [0, 0];
-      let piece;
-      this.game.state.squares.forEach(row =>
-        row.forEach(square => {
-          if (square.length) {
-            piece = square[square.length - 1];
-            flats[piece.color - 1] += !piece.isStanding && !piece.isCapstone;
-          }
-        })
-      );
-      return flats;
+      return this.game.state.flats;
     },
     flatWidths() {
       let total = (this.flats[0] + this.flats[1]) / 100;
@@ -179,7 +169,7 @@ export default {
       let squares = [];
       for (var y = this.game.size - 1; y >= 0; y--) {
         for (var x = 0; x < this.game.size; x++) {
-          squares.push(Ply.itoa(x, y));
+          squares.push(this.game.state.squares[y][x]);
         }
       }
       return squares;
@@ -217,7 +207,6 @@ $radius = 5px
     opacity 1
     &.lt-md
       opacity 0
-
 
 .flat-counter, .x-axis
   width 100%

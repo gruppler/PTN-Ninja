@@ -29,26 +29,21 @@ import { last } from "lodash";
 
 export default {
   name: "Square",
-  props: ["game", "id"],
+  props: ["game", "x", "y"],
   computed: {
-    x() {
-      return "abcdefgh".indexOf(this.id[0]);
-    },
-    y() {
-      return parseInt(this.id[1], 10) - 1;
-    },
-    state() {
+    square() {
       return this.game.state.squares[this.y][this.x];
     },
     piece() {
-      return this.state.length ? last(this.state) : null;
+      return last(this.square);
     },
     color() {
       return this.piece ? this.piece.color : "";
     },
     selected() {
       return (
-        this.game.state.ply && this.game.state.ply.squares.includes(this.id)
+        this.game.state.ply &&
+        this.game.state.ply.squares.includes(this.square.id)
       );
     },
     valid() {
@@ -56,23 +51,10 @@ export default {
     },
     n() {
       if (this.color && !this.piece.isStanding) {
-        if (this.y === this.game.size - 1) {
+        if (this.square.edges.includes("n")) {
           return true;
         } else {
-          const neighbor = last(this.game.state.squares[this.y + 1][this.x]);
-          return (
-            neighbor && !neighbor.isStanding && neighbor.color === this.color
-          );
-        }
-      }
-      return false;
-    },
-    e() {
-      if (this.color && !this.piece.isStanding) {
-        if (this.x === this.game.size - 1) {
-          return true;
-        } else {
-          const neighbor = last(this.game.state.squares[this.y][this.x + 1]);
+          const neighbor = last(this.square.n);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -82,10 +64,23 @@ export default {
     },
     s() {
       if (this.color && !this.piece.isStanding) {
-        if (this.y === 0) {
+        if (this.square.edges.includes("s")) {
           return true;
         } else {
-          const neighbor = last(this.game.state.squares[this.y - 1][this.x]);
+          const neighbor = last(this.square.s);
+          return (
+            neighbor && !neighbor.isStanding && neighbor.color === this.color
+          );
+        }
+      }
+      return false;
+    },
+    e() {
+      if (this.color && !this.piece.isStanding) {
+        if (this.square.edges.includes("e")) {
+          return true;
+        } else {
+          const neighbor = last(this.square.e);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -95,10 +90,10 @@ export default {
     },
     w() {
       if (this.color && !this.piece.isStanding) {
-        if (this.x === 0) {
+        if (this.square.edges.includes("w")) {
           return true;
         } else {
-          const neighbor = last(this.game.state.squares[this.y][this.x - 1]);
+          const neighbor = last(this.square.w);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );

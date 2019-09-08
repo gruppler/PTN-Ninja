@@ -8,6 +8,8 @@ import Evaluation from "./Evaluation";
 import Result from "./Result";
 import Nop from "./Nop";
 import Move from "./Move";
+import Piece from "./Piece";
+import Square from "./Square";
 
 import { defaults, last, map, omit, times, trimStart } from "lodash";
 
@@ -19,18 +21,6 @@ const pieceCounts = {
   7: { F: 40, C: 2, total: 42 },
   8: { F: 50, C: 2, total: 52 }
 };
-
-class Piece {
-  constructor(params) {
-    this.x = params.x;
-    this.y = params.y;
-    this.z = params.z || 0;
-    this.stackHeight = params.stackHeight || 1;
-    this.color = params.color;
-    this.isStanding = params.isStanding || false;
-    this.isCapstone = params.isCapstone || false;
-  }
-}
 
 export default class Game {
   constructor(notation, params = { name: "", state: null }) {
@@ -89,13 +79,34 @@ export default class Game {
       player: 1,
       branch: "",
       targetBranch: "",
-      squares: new Marray.two(this.size, this.size, () => []),
+      flats: [0, 0],
+      squares: new Marray.two(
+        this.size,
+        this.size,
+        (y, x) => new Square(x, y, this.size)
+      ),
       pieces: {
         1: { F: [], C: [] },
         2: { F: [], C: [] }
       },
       selectedPieces: []
     };
+    this.stateTemplate.squares.forEach(row => {
+      row.forEach(square => {
+        square.n = square.edges.includes("n")
+          ? null
+          : this.stateTemplate.squares[square.y + 1][square.x];
+        square.s = square.edges.includes("s")
+          ? null
+          : this.stateTemplate.squares[square.y - 1][square.x];
+        square.e = square.edges.includes("e")
+          ? null
+          : this.stateTemplate.squares[square.y][square.x + 1];
+        square.w = square.edges.includes("w")
+          ? null
+          : this.stateTemplate.squares[square.y][square.x - 1];
+      });
+    });
 
     if (this.tags.tps) {
       this.firstMoveNumber = this.tags.tps.value.linenum;
@@ -302,6 +313,17 @@ export default class Game {
       this.state.branch = newBranch;
       this.state.number = newNumber;
 
+      let flats = [0, 0];
+      this.state.squares.forEach(row => {
+        row.forEach(square => {
+          if (square.length) {
+            let piece = last(square);
+            flats[piece.color - 1] += !piece.isStanding && !piece.isCapstone;
+          }
+        });
+      });
+      this.state.flats = flats;
+
       this.state.player =
         this.state.plyIsDone && !this.state.ply.result
           ? this.state.ply.player === 1
@@ -349,8 +371,7 @@ export default class Game {
           this.state.pieces[ply.color][ply.pieceType].pop();
         } else {
           let piece = new Piece({
-            x,
-            y,
+            square,
             color: ply.color,
             isStanding: ply.specialPiece === "S",
             isCapstone: ply.specialPiece === "C"
@@ -360,7 +381,6 @@ export default class Game {
         }
       } else if (action === "pop") {
         times(count, () => stack.push(square.pop()));
-        square.forEach(piece => (piece.stackHeight = square.length));
 
         if (flatten) {
           last(square).isStanding = true;
@@ -379,7 +399,6 @@ export default class Game {
         }
         if (flatten) {
           last(square).isStanding = false;
-          square.forEach(piece => (piece.stackHeight = square.length));
         }
 
         times(count, () => {
@@ -389,13 +408,13 @@ export default class Game {
             return false;
           }
           Object.assign(piece, {
+            square,
             x,
             y,
             z: square.length
           });
           square.push(piece);
         });
-        square.forEach(piece => (piece.stackHeight = square.length));
       }
     });
 
@@ -403,13 +422,12 @@ export default class Game {
   }
 
   _doTPS({ grid }) {
-    let stack, square, piece, type, stackHeight;
+    let stack, square, piece, type;
     grid.forEach((row, y) => {
       row.forEach((col, x) => {
         if (col[0] !== "x") {
           stack = col.split("");
           square = this.state.squares[y][x];
-          stackHeight = col.match(/[12]/g).length;
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();
@@ -417,10 +435,8 @@ export default class Game {
               type = "flat";
             }
             piece = new Piece({
-              x,
-              y,
+              square,
               z: square.length,
-              stackHeight,
               color: 1 * piece,
               isStanding: type === "S",
               isCapstone: type === "C"
