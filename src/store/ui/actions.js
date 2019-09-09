@@ -1,4 +1,4 @@
-import { LocalStorage } from "quasar";
+import { Loading, LocalStorage } from "quasar";
 import { pick } from "lodash";
 import { GAME_STATE_PROPS } from "../../constants";
 
@@ -82,11 +82,13 @@ export const OPEN_FILE = ({ dispatch }, file) => {
   if (file && /\.ptn$|\.txt$/i.test(file.name)) {
     var reader = new FileReader();
     reader.onload = event => {
+      Loading.hide();
       dispatch("ADD_GAME", {
         name: file.name.replace(/\.ptn$|\.txt$/, ""),
         ptn: event.target.result
       });
     };
+    Loading.show();
     reader.readAsText(file);
   }
 };
