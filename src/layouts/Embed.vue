@@ -11,6 +11,9 @@
     <q-page-container class="bg-primary">
       <q-page ref="page" class="flex flex-center">
         <Board :game="game" :space="size" />
+        <q-page-sticky position="top-right" :offset="[18, 18]">
+          <FullscreenToggle color="white" />
+        </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
@@ -40,6 +43,7 @@ import Notes from "../components/Notes";
 import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
+import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
 
@@ -49,7 +53,8 @@ export default {
     Notes,
     PTN,
     PlayControls,
-    Scrubber
+    Scrubber,
+    FullscreenToggle
   },
   props: ["ptn", "name", "state"],
   data() {

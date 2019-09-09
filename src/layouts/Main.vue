@@ -33,6 +33,9 @@
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
+        <q-page-sticky position="top-right" :offset="[18, 18]">
+          <FullscreenToggle color="white" />
+        </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
@@ -103,6 +106,7 @@ import Scrubber from "../components/Scrubber";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
+import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
 import { each, pick } from "lodash";
@@ -120,7 +124,8 @@ export default {
     Scrubber,
     AddGame,
     EditGame,
-    UISettings
+    UISettings,
+    FullscreenToggle
   },
   props: ["ptn", "state", "name"],
   data() {
