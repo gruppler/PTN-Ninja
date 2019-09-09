@@ -628,9 +628,11 @@ export default class Game {
 
     // Remove all deadEnds and their non-junction neighbors from squares
     function _removeDeadEnds(deadEnds, squares, winningEdge) {
+      deadEnds = deadEnds.concat();
       while (deadEnds.length) {
         deadEnds.forEach((square, i) => {
-          let isWinningEdge = square.isEdge && square["is" + winningEdge];
+          let isWinningEdge =
+            (square.isEdge && !winningEdge) || square["is" + winningEdge];
           let nextNeighbors = [];
           connections[square.coord].forEach(neighbor => {
             if (neighbor.coord in squares) {
@@ -687,6 +689,9 @@ export default class Game {
         }
       })
     );
+
+    // Remove dead ends not connected to edges
+    players.forEach(player => _removeDeadEnds(deadEnds, possibleRoads[player]));
 
     // Find roads that actually bridge opposite edges
     let roads = {
