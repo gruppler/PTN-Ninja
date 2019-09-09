@@ -68,10 +68,10 @@ export default {
     },
     n() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("n")) {
+        if (this.square.edges.includes("N")) {
           return true;
         } else {
-          const neighbor = last(this.square.n);
+          const neighbor = last(this.square.N);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -81,10 +81,10 @@ export default {
     },
     s() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("s")) {
+        if (this.square.edges.includes("S")) {
           return true;
         } else {
-          const neighbor = last(this.square.s);
+          const neighbor = last(this.square.S);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -94,10 +94,10 @@ export default {
     },
     e() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("e")) {
+        if (this.square.edges.includes("E")) {
           return true;
         } else {
-          const neighbor = last(this.square.e);
+          const neighbor = last(this.square.E);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -107,10 +107,10 @@ export default {
     },
     w() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("w")) {
+        if (this.square.edges.includes("W")) {
           return true;
         } else {
-          const neighbor = last(this.square.w);
+          const neighbor = last(this.square.W);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -121,29 +121,29 @@ export default {
     rn() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].ns && this.square.edges.includes("n")) ||
-          (this.square.n && this.roadSquares.includes(this.square.n.coord)))
+        ((this.road.edges[this.color].NS && this.square.edges.includes("N")) ||
+          (this.square.N && this.roadSquares.includes(this.square.N.coord)))
       );
     },
     rs() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].ns && this.square.edges.includes("s")) ||
-          (this.square.s && this.roadSquares.includes(this.square.s.coord)))
+        ((this.road.edges[this.color].NS && this.square.edges.includes("S")) ||
+          (this.square.S && this.roadSquares.includes(this.square.S.coord)))
       );
     },
     re() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].ew && this.square.edges.includes("e")) ||
-          (this.square.e && this.roadSquares.includes(this.square.e.coord)))
+        ((this.road.edges[this.color].EW && this.square.edges.includes("E")) ||
+          (this.square.E && this.roadSquares.includes(this.square.E.coord)))
       );
     },
     rw() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].ew && this.square.edges.includes("w")) ||
-          (this.square.w && this.roadSquares.includes(this.square.w.coord)))
+        ((this.road.edges[this.color].EW && this.square.edges.includes("W")) ||
+          (this.square.W && this.roadSquares.includes(this.square.W.coord)))
       );
     }
   }
@@ -226,7 +226,7 @@ export default {
     opacity .25
     transition all $half-time $easing $half-time,
       background-color $time linear,
-      opacity $half-time linear $half-time
+      opacity $time linear
   &.rn .road .n,
   &.re .road .e,
   &.rs .road .s,

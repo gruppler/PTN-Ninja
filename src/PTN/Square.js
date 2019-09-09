@@ -13,28 +13,28 @@ export default class Square extends Array {
     this.isEW = false;
     this.isSelected = false;
     this.neighbors = [];
-    this.n = null;
-    this.e = null;
-    this.s = null;
-    this.w = null;
+    this.N = null;
+    this.E = null;
+    this.S = null;
+    this.W = null;
 
     if (y == size - 1) {
-      this.edges += "n";
+      this.edges += "N";
       this.isEdge = true;
       this.isNS = true;
     }
     if (y == 0) {
-      this.edges += "s";
+      this.edges += "S";
       this.isEdge = true;
       this.isNS = true;
     }
     if (x == size - 1) {
-      this.edges += "e";
+      this.edges += "E";
       this.isEdge = true;
       this.isEW = true;
     }
     if (x == 0) {
-      this.edges += "w";
+      this.edges += "W";
       this.isEdge = true;
       this.isEW = true;
     }

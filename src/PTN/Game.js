@@ -102,21 +102,21 @@ export default class Game {
     };
     this.stateTemplate.squares.forEach(row => {
       row.forEach(square => {
-        if (!square.edges.includes("n")) {
-          square.n = this.stateTemplate.squares[square.y + 1][square.x];
-          square.neighbors.push(square.n);
+        if (!square.edges.includes("N")) {
+          square.N = this.stateTemplate.squares[square.y + 1][square.x];
+          square.neighbors.push(square.N);
         }
-        if (!square.edges.includes("s")) {
-          square.s = this.stateTemplate.squares[square.y - 1][square.x];
-          square.neighbors.push(square.s);
+        if (!square.edges.includes("S")) {
+          square.S = this.stateTemplate.squares[square.y - 1][square.x];
+          square.neighbors.push(square.S);
         }
-        if (!square.edges.includes("e")) {
-          square.e = this.stateTemplate.squares[square.y][square.x + 1];
-          square.neighbors.push(square.e);
+        if (!square.edges.includes("E")) {
+          square.E = this.stateTemplate.squares[square.y][square.x + 1];
+          square.neighbors.push(square.E);
         }
-        if (!square.edges.includes("w")) {
-          square.w = this.stateTemplate.squares[square.y][square.x - 1];
-          square.neighbors.push(square.w);
+        if (!square.edges.includes("W")) {
+          square.W = this.stateTemplate.squares[square.y][square.x - 1];
+          square.neighbors.push(square.W);
         }
       });
     });
@@ -627,17 +627,11 @@ export default class Game {
     }
 
     // Remove all deadEnds and their non-junction neighbors from squares
-    // Mutates squares, but not deadEnds
-    function _removeDeadEnds(deadEnds, squares, ordinality) {
-      let nextNeighbors, square;
-
-      deadEnds = deadEnds.concat();
-
+    function _removeDeadEnds(deadEnds, squares, winningEdge) {
       while (deadEnds.length) {
-        for (let i = 0; i < deadEnds.length; i++) {
-          square = deadEnds[i];
-
-          nextNeighbors = [];
+        deadEnds.forEach((square, i) => {
+          let isWinningEdge = square.isEdge && square["is" + winningEdge];
+          let nextNeighbors = [];
           connections[square.coord].forEach(neighbor => {
             if (neighbor.coord in squares) {
               nextNeighbors.push(neighbor);
@@ -645,30 +639,29 @@ export default class Game {
           });
 
           if (
-            (nextNeighbors.length < 2 && !square.is_edge) ||
-            (ordinality && square[ordinality == "ns" ? "isNS" : "isEW"])
+            nextNeighbors.length < 2 &&
+            (!isWinningEdge ||
+              (nextNeighbors[0] && nextNeighbors[0]["is" + winningEdge]))
           ) {
             delete squares[square.coord];
             deadEnds[i] = nextNeighbors[0];
           } else {
             deadEnds[i] = undefined;
           }
-        }
+        });
         deadEnds = compact(deadEnds);
       }
     }
 
     // Gather player-controlled squares and dead ends
-    let possibleDeadEnds = {
-        1: { ns: [], ew: [] },
-        2: { ns: [], ew: [] }
-      },
+    let possibleDeadEnds = { 1: [], 2: [] },
       deadEnds = [];
 
     this.state.squares.forEach(row =>
       row.forEach(square => {
-        if (square.length) {
-          let player = last(square).color;
+        let piece = last(square);
+        if (piece && !piece.isStanding) {
+          let player = piece.color;
           connections[square.coord] = square.neighbors.filter(neighbor => {
             neighbor = last(neighbor);
             return (
@@ -680,14 +673,7 @@ export default class Game {
             if (square.isEdge) {
               // An edge with exactly one friendly neighbor
               possibleRoads[player][square.coord] = square;
-
-              if (!square.isCorner) {
-                if (square.isNS) {
-                  possibleDeadEnds[player].ns.push(square);
-                } else if (square.isEW) {
-                  possibleDeadEnds[player].ew.push(square);
-                }
-              }
+              possibleDeadEnds[player].push(square);
             } else {
               // A non-edge dead end
               deadEnds.push(square);
@@ -702,21 +688,19 @@ export default class Game {
       })
     );
 
-    // Remove dead ends not connected to edges
-    players.forEach(player => _removeDeadEnds(deadEnds, possibleRoads[player]));
-
     // Find roads that actually bridge opposite edges
     let roads = {
         1: [],
         2: [],
         squares: {
-          1: {},
-          2: {}
+          1: [],
+          2: []
         },
         edges: {
-          1: { ns: false, ew: false },
-          2: { ns: false, ew: false }
-        }
+          1: { NS: false, EW: false },
+          2: { NS: false, EW: false }
+        },
+        length: 0
       },
       road;
 
@@ -728,35 +712,33 @@ export default class Game {
         );
 
         // Find connected opposite edge pair(s)
-        road.edges.ns = (road.edges.s && road.edges.n) || false;
-        road.edges.ew = (road.edges.w && road.edges.e) || false;
+        road.edges.NS = (road.edges.S && road.edges.N) || false;
+        road.edges.EW = (road.edges.W && road.edges.E) || false;
 
-        if (road.edges.ns || road.edges.ew) {
-          if (!road.edges.ns || !road.edges.ew) {
+        if (road.edges.NS || road.edges.EW) {
+          if (!road.edges.NS || !road.edges.EW) {
             // Remove dead ends connected to the non-winning edges
             _removeDeadEnds(
-              possibleDeadEnds[player][road.edges.ns ? "ew" : "ns"],
+              possibleDeadEnds[player],
               road.squares,
-              road.edges.ns ? "ew" : "ns"
+              road.edges.NS ? "NS" : "EW"
             );
           }
 
           // Keep the road; at least one opposite edge pair is connected
           roads[player].push({
-            ns: road.edges.ns,
-            ew: road.edges.ew,
+            NS: road.edges.NS,
+            EW: road.edges.EW,
             squares: Object.keys(road.squares)
           });
           Object.assign(roads.squares[player], road.squares);
-          if (road.edges.ns) roads.edges[player].ns = true;
-          if (road.edges.ew) roads.edges[player].ew = true;
+          if (road.edges.NS) roads.edges[player].NS = true;
+          if (road.edges.EW) roads.edges[player].EW = true;
         }
       }
+      roads.squares[player] = Object.keys(roads.squares[player]) || [];
+      roads.length += roads[player].length;
     });
-
-    roads.squares[1] = Object.keys(roads.squares[1]) || [];
-    roads.squares[2] = Object.keys(roads.squares[2]) || [];
-    roads.length = roads[1].length + roads[2].length;
 
     return roads;
   }
