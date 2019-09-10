@@ -69,6 +69,7 @@ export default {
   Show_Hide_Errors: "Show/Hide Errors",
   Show_Parse_Errors: "Show Parse Errors",
   Show_Note_Notifications: "Show Note Notifications",
+  Show_Tak_Notifications: "Show Tak Notifications",
   Site: "Site",
   Size: "Size",
   TPS: "TPS",
@@ -87,8 +88,8 @@ export default {
   result: {
     "1": "{player} wins by default",
     F: "{player} wins by flats",
-    R: "{player} wins by building a road",
-    tie: "It's a tie"
+    R: "{player} wins by road",
+    "1/2": "It's a tie"
   },
 
   confirm: {

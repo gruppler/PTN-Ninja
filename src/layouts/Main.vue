@@ -279,8 +279,12 @@ export default {
       }
     },
     showNotifications() {
+      if (this.right) {
+        return;
+      }
+      const ply = this.game.state.ply;
+
       if (
-        !this.right &&
         this.$store.state.notifyNotes &&
         this.game.state.plyID in this.game.notes
       ) {
@@ -300,6 +304,43 @@ export default {
               })
             );
           });
+      }
+
+      if (
+        this.$store.state.notifyTak &&
+        ply.evaluation &&
+        (ply.evaluation.tak || ply.evaluation.tinue)
+      ) {
+        let color = ply.color === 1 ? "grey-10" : "grey-2";
+        this.notifyClosers.push(
+          this.$q.notify({
+            color: ply.color === 1 ? "blue-grey-2" : "blue-grey-10",
+            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
+            icon: ply.color === 1 ? "person" : "person_outline",
+            position: "top-right",
+            actions: [{ icon: "close", color }],
+            classes: "note text-" + color,
+            timeout: 0
+          })
+        );
+      }
+
+      if (ply.result) {
+        let result = ply.result;
+        let color = result.winner === 1 ? "grey-10" : "grey-2";
+        this.notifyClosers.push(
+          this.$q.notify({
+            color: result.winner === 1 ? "blue-grey-2" : "blue-grey-10",
+            message: this.$t("result." + result.type, {
+              player: this.game.tags["player" + result.winner].value
+            }),
+            icon: result.winner === 1 ? "person" : "person_outline",
+            position: "top-right",
+            actions: [{ icon: "close", color }],
+            classes: "note text-" + color,
+            timeout: 0
+          })
+        );
       }
     },
     hideNotifications() {

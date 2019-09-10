@@ -8,6 +8,7 @@ const defaults = {
   highlightSquares: true,
   isInputFocused: false,
   notifyNotes: true,
+  notifyTak: true,
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM
   player1: "",
