@@ -9,7 +9,7 @@ export default class Result {
     [this.ptn, , this.player1, this.player2] = matchData;
     this.text = this.ptn;
     this.type = this.player2 === "0" ? this.player1 : this.player2;
-    this.road = null;
+    this.roads = null;
   }
 
   static parse(notation) {

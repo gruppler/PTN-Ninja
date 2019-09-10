@@ -55,16 +55,16 @@ export default {
     valid() {
       return !this.piece || this.color === this.game.state.player;
     },
-    road() {
+    roads() {
       return this.game.state.plyIsDone && this.game.state.ply.result
-        ? this.game.state.ply.result.road
+        ? this.game.state.ply.result.roads
         : null;
     },
     roadSquares() {
-      return this.road ? this.road.squares[this.color] || [] : [];
+      return this.roads ? this.roads.squares[this.color] || [] : [];
     },
     isInRoad() {
-      return this.road && this.roadSquares.includes(this.square.coord);
+      return this.roads && this.roadSquares.includes(this.square.coord);
     },
     n() {
       if (this.color && !this.piece.isStanding) {
@@ -121,28 +121,28 @@ export default {
     rn() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].NS && this.square.edges.includes("N")) ||
+        ((this.roads.edges[this.color].NS && this.square.edges.includes("N")) ||
           (this.square.N && this.roadSquares.includes(this.square.N.coord)))
       );
     },
     rs() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].NS && this.square.edges.includes("S")) ||
+        ((this.roads.edges[this.color].NS && this.square.edges.includes("S")) ||
           (this.square.S && this.roadSquares.includes(this.square.S.coord)))
       );
     },
     re() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].EW && this.square.edges.includes("E")) ||
+        ((this.roads.edges[this.color].EW && this.square.edges.includes("E")) ||
           (this.square.E && this.roadSquares.includes(this.square.E.coord)))
       );
     },
     rw() {
       return (
         this.isInRoad &&
-        ((this.road.edges[this.color].EW && this.square.edges.includes("W")) ||
+        ((this.roads.edges[this.color].EW && this.square.edges.includes("W")) ||
           (this.square.W && this.roadSquares.includes(this.square.W.coord)))
       );
     }

@@ -349,14 +349,18 @@ export default class Game {
   _doPly() {
     const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
     if (ply && this._doMoveset(ply)) {
-      if (ply.result && ply.result.type === "R" && !ply.result.road) {
-        if (ply.result.player1 === "R") {
-          ply.result.road = this.findRoads(1);
-        } else if (ply.result.player2 === "R") {
-          ply.result.road = this.findRoads(2);
-        }
-      }
       this._setPly(ply.id, true);
+      if (ply.result) {
+        if (ply.result.type === "R" && !ply.result.roads) {
+          if (ply.result.player1 === "R") {
+            ply.result.roads = this.findRoads(1);
+          } else if (ply.result.player2 === "R") {
+            ply.result.roads = this.findRoads(2);
+          }
+        }
+      } else if (ply.index === this.state.plies.length - 1) {
+        this.checkGameEnd();
+      }
       return true;
     } else {
       return false;
@@ -585,6 +589,68 @@ export default class Game {
       return this.goToPly(this.state.nextPly.id, !half);
     }
     return false;
+  }
+
+  checkGameEnd() {
+    let player = this.state.ply.player;
+    let pieces = this.state.pieces[player == 1 ? 2 : 1];
+    let roads = this.findRoads();
+    let result;
+
+    if (!this.state.ply) {
+      return false;
+    }
+
+    if (roads && roads.length) {
+      // Check current player first
+      if (roads[player].length) {
+        result = player == 1 ? "R-0" : "0-R";
+      } else if (roads[player == 1 ? 2 : 1].length) {
+        // Completed opponent's road
+        result = player == 1 ? "0-R" : "R-0";
+      }
+    } else if (
+      pieces.F.length + pieces.C.length === 0 ||
+      !this.state.squares.find(row => row.find(square => !square.length))
+    ) {
+      // Last empty square or last piece
+      if (this.state.flats[0] == this.state.flats[1]) {
+        // Draw
+        result = "1/2-1/2";
+      } else if (this.state.flats[0] > this.state.flats[1]) {
+        result = "F-0";
+      } else {
+        result = "0-F";
+      }
+    } else if (
+      pieces.F.length + pieces.C.length === 0 ||
+      !this.state.squares.find(row => row.find(square => !square.length))
+    ) {
+      // Last empty square or last piece
+      if (this.state.flats[0] == this.state.flats[1]) {
+        // Draw
+        result = "1/2-1/2";
+      } else if (this.state.flats[0] > this.state.flats[1]) {
+        result = "F-0";
+      } else {
+        result = "0-F";
+      }
+    } else if (this.state.ply.result && this.state.ply.result.type != "1") {
+      this.state.ply.result = null;
+      this._updatePTN();
+      return false;
+    } else {
+      return false;
+    }
+
+    result = Result.parse(result);
+    if (roads && roads.length) {
+      result.roads = roads;
+    }
+    this.state.ply.result = result;
+    this._updatePTN();
+
+    return true;
   }
 
   findRoads(player) {
