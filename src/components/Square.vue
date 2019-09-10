@@ -6,7 +6,7 @@
       light: x % 2 !== y % 2,
       ['p' + color]: !!color,
       'no-roads': !$store.state.showRoads,
-      road: isInRoad,
+      road: !!road,
       selected,
       valid,
       n,
@@ -56,22 +56,35 @@ export default {
       return !this.piece || this.color === this.game.state.player;
     },
     roads() {
-      return this.game.state.plyIsDone && this.game.state.ply.result
+      return this.color &&
+        this.game.state.plyIsDone &&
+        this.game.state.ply.result
         ? this.game.state.ply.result.roads
         : null;
     },
-    roadSquares() {
-      return this.roads ? this.roads.squares[this.color] || [] : [];
-    },
-    isInRoad() {
-      return this.roads && this.roadSquares.includes(this.square.coord);
+    road() {
+      if (this.roads) {
+        let roads = this.roads[this.color].filter(road =>
+          road.squares.includes(this.square.coord)
+        );
+        if (roads.length > 1) {
+          return {
+            squares: this.roads.squares[this.color],
+            edges: this.roads.edges[this.color]
+          };
+        } else {
+          return roads[0] || null;
+        }
+      } else {
+        return null;
+      }
     },
     n() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("N")) {
+        if (this.square.edges.N) {
           return true;
         } else {
-          const neighbor = last(this.square.N);
+          const neighbor = last(this.square.neighbors.N);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -81,10 +94,10 @@ export default {
     },
     s() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("S")) {
+        if (this.square.edges.S) {
           return true;
         } else {
-          const neighbor = last(this.square.S);
+          const neighbor = last(this.square.neighbors.S);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -94,10 +107,10 @@ export default {
     },
     e() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("E")) {
+        if (this.square.edges.E) {
           return true;
         } else {
-          const neighbor = last(this.square.E);
+          const neighbor = last(this.square.neighbors.E);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -107,10 +120,10 @@ export default {
     },
     w() {
       if (this.color && !this.piece.isStanding) {
-        if (this.square.edges.includes("W")) {
+        if (this.square.edges.W) {
           return true;
         } else {
-          const neighbor = last(this.square.W);
+          const neighbor = last(this.square.neighbors.W);
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -120,30 +133,34 @@ export default {
     },
     rn() {
       return (
-        this.isInRoad &&
-        ((this.roads.edges[this.color].NS && this.square.edges.includes("N")) ||
-          (this.square.N && this.roadSquares.includes(this.square.N.coord)))
+        this.road &&
+        ((this.road.edges.NS && this.square.edges.N) ||
+          (this.square.neighbors.N &&
+            this.road.squares.includes(this.square.neighbors.N.coord)))
       );
     },
     rs() {
       return (
-        this.isInRoad &&
-        ((this.roads.edges[this.color].NS && this.square.edges.includes("S")) ||
-          (this.square.S && this.roadSquares.includes(this.square.S.coord)))
+        this.road &&
+        ((this.road.edges.NS && this.square.edges.S) ||
+          (this.square.neighbors.S &&
+            this.road.squares.includes(this.square.neighbors.S.coord)))
       );
     },
     re() {
       return (
-        this.isInRoad &&
-        ((this.roads.edges[this.color].EW && this.square.edges.includes("E")) ||
-          (this.square.E && this.roadSquares.includes(this.square.E.coord)))
+        this.road &&
+        ((this.road.edges.EW && this.square.edges.E) ||
+          (this.square.neighbors.E &&
+            this.road.squares.includes(this.square.neighbors.E.coord)))
       );
     },
     rw() {
       return (
-        this.isInRoad &&
-        ((this.roads.edges[this.color].EW && this.square.edges.includes("W")) ||
-          (this.square.W && this.roadSquares.includes(this.square.W.coord)))
+        this.road &&
+        ((this.road.edges.EW && this.square.edges.W) ||
+          (this.square.neighbors.W &&
+            this.road.squares.includes(this.square.neighbors.W.coord)))
       );
     }
   }

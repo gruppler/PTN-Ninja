@@ -12,6 +12,7 @@ import Piece from "./Piece";
 import Square from "./Square";
 
 import {
+  cloneDeep,
   compact,
   defaults,
   last,
@@ -102,21 +103,21 @@ export default class Game {
     };
     this.stateTemplate.squares.forEach(row => {
       row.forEach(square => {
-        if (!square.edges.includes("N")) {
-          square.N = this.stateTemplate.squares[square.y + 1][square.x];
-          square.neighbors.push(square.N);
+        if (!square.edges.N) {
+          square.neighbors.N = this.stateTemplate.squares[square.y + 1][square.x];
+          square.neighbors.push(square.neighbors.N);
         }
-        if (!square.edges.includes("S")) {
-          square.S = this.stateTemplate.squares[square.y - 1][square.x];
-          square.neighbors.push(square.S);
+        if (!square.edges.S) {
+          square.neighbors.S = this.stateTemplate.squares[square.y - 1][square.x];
+          square.neighbors.push(square.neighbors.S);
         }
-        if (!square.edges.includes("E")) {
-          square.E = this.stateTemplate.squares[square.y][square.x + 1];
-          square.neighbors.push(square.E);
+        if (!square.edges.E) {
+          square.neighbors.E = this.stateTemplate.squares[square.y][square.x + 1];
+          square.neighbors.push(square.neighbors.E);
         }
-        if (!square.edges.includes("W")) {
-          square.W = this.stateTemplate.squares[square.y][square.x - 1];
-          square.neighbors.push(square.W);
+        if (!square.edges.W) {
+          square.neighbors.W = this.stateTemplate.squares[square.y][square.x - 1];
+          square.neighbors.push(square.neighbors.W);
         }
       });
     });
@@ -775,6 +776,16 @@ export default class Game {
       },
       road;
 
+    function _addRoad(road) {
+      roads[player].push({
+        edges: road.edges,
+        squares: Object.keys(road.squares)
+      });
+      Object.assign(roads.squares[player], road.squares);
+      if (road.edges.NS) roads.edges[player].NS = true;
+      if (road.edges.EW) roads.edges[player].EW = true;
+    }
+
     players.forEach(player => {
       while (!isEmpty(possibleRoads[player])) {
         // Follow any square to get all connected squares
@@ -794,17 +805,25 @@ export default class Game {
               road.squares,
               road.edges.NS ? "NS" : "EW"
             );
+            _addRoad(road);
+          } else {
+            // Double road; split into two separate roads
+            let road2 = cloneDeep(road);
+            road.edges.EW = false;
+            road2.edges.NS = false;
+            _removeDeadEnds(
+              possibleDeadEnds[player],
+              road.squares,
+              "NS"
+            );
+            _removeDeadEnds(
+              possibleDeadEnds[player],
+              road2.squares,
+              "EW"
+            );
+            _addRoad(road);
+            _addRoad(road2);
           }
-
-          // Keep the road; at least one opposite edge pair is connected
-          roads[player].push({
-            NS: road.edges.NS,
-            EW: road.edges.EW,
-            squares: Object.keys(road.squares)
-          });
-          Object.assign(roads.squares[player], road.squares);
-          if (road.edges.NS) roads.edges[player].NS = true;
-          if (road.edges.EW) roads.edges[player].EW = true;
         }
       }
       roads.squares[player] = Object.keys(roads.squares[player]) || [];

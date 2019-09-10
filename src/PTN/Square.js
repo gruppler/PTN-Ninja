@@ -6,35 +6,43 @@ export default class Square extends Array {
     this.coord = Ply.itoa(x, y);
     this.x = x;
     this.y = y;
-    this.edges = "";
+    this.edges = [];
+    this.edges.N = false;
+    this.edges.S = false;
+    this.edges.E = false;
+    this.edges.W = false;
     this.isEdge = false;
     this.isCorner = false;
     this.isNS = false;
     this.isEW = false;
-    this.isSelected = false;
     this.neighbors = [];
-    this.N = null;
-    this.E = null;
-    this.S = null;
-    this.W = null;
+    this.neighbors.N = null;
+    this.neighbors.E = null;
+    this.neighbors.S = null;
+    this.neighbors.W = null;
+    this.isSelected = false;
 
     if (y == size - 1) {
-      this.edges += "N";
+      this.edges.push("N");
+      this.edges.N = true;
       this.isEdge = true;
       this.isNS = true;
     }
     if (y == 0) {
-      this.edges += "S";
+      this.edges.push("S");
+      this.edges.S = true;
       this.isEdge = true;
       this.isNS = true;
     }
     if (x == size - 1) {
-      this.edges += "E";
+      this.edges.push("E");
+      this.edges.E = true;
       this.isEdge = true;
       this.isEW = true;
     }
     if (x == 0) {
-      this.edges += "W";
+      this.edges.push("W");
+      this.edges.W = true;
       this.isEdge = true;
       this.isEW = true;
     }
