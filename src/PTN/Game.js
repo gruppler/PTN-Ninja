@@ -776,7 +776,7 @@ export default class Game {
       },
       road;
 
-    function _addRoad(road) {
+    function _addRoad(road, player) {
       roads[player].push({
         edges: road.edges,
         squares: Object.keys(road.squares)
@@ -805,7 +805,7 @@ export default class Game {
               road.squares,
               road.edges.NS ? "NS" : "EW"
             );
-            _addRoad(road);
+            _addRoad(road, player);
           } else {
             // Double road; split into two separate roads
             let road2 = cloneDeep(road);
@@ -813,8 +813,8 @@ export default class Game {
             road2.edges.NS = false;
             _removeDeadEnds(possibleDeadEnds[player], road.squares, "NS");
             _removeDeadEnds(possibleDeadEnds[player], road2.squares, "EW");
-            _addRoad(road);
-            _addRoad(road2);
+            _addRoad(road, player);
+            _addRoad(road2, player);
           }
         }
       }
