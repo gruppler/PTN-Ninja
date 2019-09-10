@@ -83,7 +83,7 @@ export default class Game {
         throw new Error("Missing board size");
       }
     }
-    this.stateTemplate = {
+    this._state = {
       plyID: 0,
       plyIsDone: false,
       player: 1,
@@ -101,22 +101,22 @@ export default class Game {
       },
       selectedPieces: []
     };
-    this.stateTemplate.squares.forEach(row => {
+    this._state.squares.forEach(row => {
       row.forEach(square => {
         if (!square.edges.N) {
-          square.neighbors.N = this.stateTemplate.squares[square.y + 1][square.x];
+          square.neighbors.N = this._state.squares[square.y + 1][square.x];
           square.neighbors.push(square.neighbors.N);
         }
         if (!square.edges.S) {
-          square.neighbors.S = this.stateTemplate.squares[square.y - 1][square.x];
+          square.neighbors.S = this._state.squares[square.y - 1][square.x];
           square.neighbors.push(square.neighbors.S);
         }
         if (!square.edges.E) {
-          square.neighbors.E = this.stateTemplate.squares[square.y][square.x + 1];
+          square.neighbors.E = this._state.squares[square.y][square.x + 1];
           square.neighbors.push(square.neighbors.E);
         }
         if (!square.edges.W) {
-          square.neighbors.W = this.stateTemplate.squares[square.y][square.x - 1];
+          square.neighbors.W = this._state.squares[square.y][square.x - 1];
           square.neighbors.push(square.neighbors.W);
         }
       });
@@ -280,7 +280,7 @@ export default class Game {
 
   // After _setPly, update the rest of the state
   updateState() {
-    this.state = defaults(this.state, this.stateTemplate);
+    this.state = defaults(this.state, this._state);
 
     if (this.state.plyID in this.plies) {
       let newPly = this.plies[this.state.plyID];
@@ -811,16 +811,8 @@ export default class Game {
             let road2 = cloneDeep(road);
             road.edges.EW = false;
             road2.edges.NS = false;
-            _removeDeadEnds(
-              possibleDeadEnds[player],
-              road.squares,
-              "NS"
-            );
-            _removeDeadEnds(
-              possibleDeadEnds[player],
-              road2.squares,
-              "EW"
-            );
+            _removeDeadEnds(possibleDeadEnds[player], road.squares, "NS");
+            _removeDeadEnds(possibleDeadEnds[player], road2.squares, "EW");
             _addRoad(road);
             _addRoad(road2);
           }
