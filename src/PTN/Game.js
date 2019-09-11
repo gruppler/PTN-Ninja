@@ -353,11 +353,7 @@ export default class Game {
       this._setPly(ply.id, true);
       if (ply.result) {
         if (ply.result.type === "R" && !ply.result.roads) {
-          if (ply.result.player1 === "R") {
-            ply.result.roads = this.findRoads(1);
-          } else if (ply.result.player2 === "R") {
-            ply.result.roads = this.findRoads(2);
-          }
+          ply.result.roads = this.findRoads();
         }
       } else if (ply.index === this.state.plies.length - 1) {
         this.checkGameEnd();
