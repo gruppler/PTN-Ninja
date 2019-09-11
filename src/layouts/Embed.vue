@@ -46,6 +46,8 @@ import Scrubber from "../components/Scrubber";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
+import { pick } from "lodash";
+import { GAME_STATE_PROPS } from "../constants";
 
 export default {
   components: {
@@ -65,6 +67,9 @@ export default {
     };
   },
   computed: {
+    gameState() {
+      return pick(this.game.state, GAME_STATE_PROPS);
+    },
     left: {
       get() {
         return this.$store.state.showPTN;
@@ -91,8 +96,13 @@ export default {
       this.size.height = parseInt(this.$refs.page.style.minHeight, 10);
     },
     showNotifications() {
+      if (this.right) {
+        console.log(this.right);
+        return;
+      }
+      const ply = this.game.state.ply;
+
       if (
-        !this.right &&
         this.$store.state.notifyNotes &&
         this.game.state.plyID in this.game.notes
       ) {
@@ -113,6 +123,24 @@ export default {
             );
           });
       }
+
+      if (ply && ply.result) {
+        let result = ply.result;
+        let color = result.winner === 1 ? "grey-10" : "grey-2";
+        this.notifyClosers.push(
+          this.$q.notify({
+            color: result.winner === 1 ? "blue-grey-2" : "blue-grey-10",
+            message: this.$t("result." + result.type, {
+              player: this.game.tags["player" + result.winner].value
+            }),
+            icon: result.winner === 1 ? "person" : "person_outline",
+            position: "top-right",
+            actions: [{ icon: "close", color }],
+            classes: "note text-" + color,
+            timeout: 0
+          })
+        );
+      }
     },
     hideNotifications() {
       this.notifyClosers.forEach(close => close());
@@ -120,7 +148,7 @@ export default {
     }
   },
   watch: {
-    "game.state"(newState, oldState) {
+    gameState(newState, oldState) {
       if (oldState.plyID !== newState.plyID) {
         this.hideNotifications();
         this.showNotifications();

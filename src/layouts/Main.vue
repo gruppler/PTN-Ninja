@@ -283,12 +283,14 @@ export default {
         return;
       }
       const ply = this.game.state.ply;
+      let plyID = this.game.state.plyID;
 
-      if (
-        this.$store.state.notifyNotes &&
-        this.game.state.plyID in this.game.notes
-      ) {
-        this.game.notes[this.game.state.plyID]
+      if (!plyID && !this.game.state.plyIsDone && "-1" in this.game.notes) {
+        plyID = -1;
+      }
+
+      if (this.$store.state.notifyNotes && plyID in this.game.notes) {
+        this.game.notes[plyID]
           .concat()
           .reverse()
           .forEach(note => {
@@ -306,26 +308,7 @@ export default {
           });
       }
 
-      if (
-        this.$store.state.notifyTak &&
-        ply.evaluation &&
-        (ply.evaluation.tak || ply.evaluation.tinue)
-      ) {
-        let color = ply.color === 1 ? "grey-10" : "grey-2";
-        this.notifyClosers.push(
-          this.$q.notify({
-            color: ply.color === 1 ? "blue-grey-2" : "blue-grey-10",
-            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
-            icon: ply.color === 1 ? "person" : "person_outline",
-            position: "top-right",
-            actions: [{ icon: "close", color }],
-            classes: "note text-" + color,
-            timeout: 0
-          })
-        );
-      }
-
-      if (ply.result) {
+      if (ply && ply.result) {
         let result = ply.result;
         let color = result.winner === 1 ? "grey-10" : "grey-2";
         this.notifyClosers.push(
