@@ -46,7 +46,7 @@ export default {
         : null;
     },
     isCurrentMove() {
-      return this.game.state.move.id === this.move.id;
+      return this.game.state.move && this.game.state.move.id === this.move.id;
     },
     linebreak() {
       return (

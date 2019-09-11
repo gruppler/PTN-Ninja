@@ -217,11 +217,11 @@ export default {
     },
     gameState() {
       let state = pick(this.game.state, GAME_STATE_PROPS);
-      state.game = this.game;
+      state.name = this.game.name;
       return state;
     },
     gameText() {
-      return { ptn: this.game.ptn, game: this.game };
+      return { ptn: this.game.ptn, name: this.game.name };
     },
     gameName() {
       return { name: this.game.name, game: this.game };
@@ -363,7 +363,7 @@ export default {
       this.updateGame();
     },
     gameState(newState, oldState) {
-      if (oldState.game === newState.game) {
+      if (oldState.name === newState.name) {
         this.$store.dispatch("SET_STATE", newState);
         if (oldState.plyID !== newState.plyID) {
           this.hideNotifications();
@@ -375,7 +375,7 @@ export default {
       }
     },
     gameText(newText, oldText) {
-      if (oldText.game === newText.game) {
+      if (oldText.name === newText.name) {
         this.$store.dispatch("UPDATE_PTN", newText.ptn);
       }
     },
