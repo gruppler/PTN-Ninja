@@ -39,7 +39,7 @@ export default {
     }
   },
   created() {
-    this.scrub = throttle(this.scrub, 350);
+    this.scrub = throttle(this.scrub, 10);
   }
 };
 </script>

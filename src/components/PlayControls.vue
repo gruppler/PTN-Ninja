@@ -214,8 +214,8 @@ export default {
     }
   },
   created() {
-    this.next = throttle(this._next, 350);
-    this.prev = throttle(this._prev, 350);
+    this.next = throttle(this._next, 250);
+    this.prev = throttle(this._prev, 250);
   }
 };
 </script>
