@@ -33,7 +33,7 @@
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
-        <q-page-sticky position="top-right" :offset="[18, 18]">
+        <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle color="white" />
         </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />

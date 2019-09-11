@@ -11,7 +11,7 @@
     <q-page-container class="bg-primary">
       <q-page ref="page" class="flex flex-center">
         <Board :game="game" :space="size" />
-        <q-page-sticky position="top-right" :offset="[18, 18]">
+        <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle color="white" />
         </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />
