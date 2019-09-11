@@ -125,15 +125,6 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" :title="hotkeys.notifyTak" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Show_Tak_Notifications") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle color="accent" v-model="notifyTak" />
-              </q-item-section>
-            </q-item>
-
             <q-item tag="label" :title="hotkeys.showControls" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Play_Controls") }}</q-item-label>
@@ -173,7 +164,6 @@ const props = [
   "flatCounts",
   "highlightSquares",
   "notifyNotes",
-  "notifyTak",
   "pieceShadows",
   "playSpeed",
   "showAllBranches",

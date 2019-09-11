@@ -20,30 +20,16 @@
               group="new"
               default-opened
             >
-              <q-card-section class="q-pt-none">
-                <q-input
-                  v-model="size"
-                  type="number"
-                  :min="3"
-                  :max="8"
-                  :label="$t('Size')"
-                  @keyup.enter="createGame"
-                  color="accent"
-                  dark
-                >
-                  <template v-slot:prepend>
-                    <q-icon name="grid_on" />
-                  </template>
-                </q-input>
-
+              <q-card-section class="q-pt-none q-gutter-y-md column">
                 <div class="row">
-                  <div class="col">
+                  <div class="col q-gutter-y-md">
                     <q-input
                       v-model="player1"
                       :label="$t('Player1')"
                       @keyup.enter="createGame"
                       color="accent"
                       dark
+                      filled
                     >
                       <template v-slot:prepend>
                         <q-icon name="person" />
@@ -56,6 +42,7 @@
                       @keyup.enter="createGame"
                       color="accent"
                       dark
+                      filled
                     >
                       <template v-slot:prepend>
                         <q-icon name="person_outline" />
@@ -64,11 +51,9 @@
                   </div>
                   <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
                 </div>
-              </q-card-section>
-            </q-expansion-item>
-            <q-expansion-item icon="cloud" :label="$t('Remote')" group="new">
-              <q-card-section class="q-pt-none">
+
                 <q-input
+                  class="size"
                   v-model="size"
                   type="number"
                   :min="3"
@@ -77,6 +62,27 @@
                   @keyup.enter="createGame"
                   color="accent"
                   dark
+                  filled
+                >
+                  <template v-slot:prepend>
+                    <q-icon name="grid_on" />
+                  </template>
+                </q-input>
+              </q-card-section>
+            </q-expansion-item>
+            <q-expansion-item icon="cloud" :label="$t('Remote')" group="new">
+              <q-card-section class="q-pt-none">
+                <q-input
+                  class="size"
+                  v-model="size"
+                  type="number"
+                  :min="3"
+                  :max="8"
+                  :label="$t('Size')"
+                  @keyup.enter="createGame"
+                  color="accent"
+                  dark
+                  filled
                 >
                   <template v-slot:prepend>
                     <q-icon name="grid_on" />
@@ -189,4 +195,7 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="stylus">
+.q-field.size
+  width 8em
+</style>

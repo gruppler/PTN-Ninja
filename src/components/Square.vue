@@ -240,7 +240,7 @@ export default {
   &.e .road .e,
   &.s .road .s,
   &.w .road .w
-    opacity .25
+    opacity .2
     transition all $half-time $easing $half-time,
       background-color $time linear,
       opacity $time linear

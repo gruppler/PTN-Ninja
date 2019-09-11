@@ -6,23 +6,25 @@
     no-route-dismiss
   >
     <q-card style="width: 500px" class="bg-secondary" dark>
-      <q-card-section>
+      <q-card-section class="q-gutter-y-md column">
         <q-input
           v-model="name"
           :label="$t('Title')"
           @keyup.enter="save"
           color="accent"
           dark
+          filled
         />
 
         <div class="row">
-          <div class="col">
+          <div class="col q-gutter-y-md">
             <q-input
               v-model="player1"
               :label="$t('Player1')"
               @keyup.enter="save"
               color="accent"
               dark
+              filled
             >
               <template v-slot:prepend>
                 <q-icon name="person" />
@@ -35,6 +37,7 @@
               @keyup.enter="save"
               color="accent"
               dark
+              filled
             >
               <template v-slot:prepend>
                 <q-icon name="person_outline" />
