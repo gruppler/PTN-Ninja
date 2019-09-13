@@ -102,6 +102,7 @@
                 />
               </q-item-section>
             </q-item>
+            <div class="absolute-fit inset-shadow no-pointer-events" />
           </q-list>
         </q-expansion-item>
 
@@ -142,6 +143,7 @@
                 <q-toggle color="accent" v-model="showScrubber" />
               </q-item-section>
             </q-item>
+            <div class="absolute-fit inset-shadow no-pointer-events" />
           </q-list>
         </q-expansion-item>
       </q-list>

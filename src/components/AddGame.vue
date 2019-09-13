@@ -15,12 +15,11 @@
         <q-tab-panel name="new" class="q-pa-none">
           <q-list separator dark>
             <q-expansion-item
-              icon="folder_open"
+              icon="people_alt"
               :label="$t('Local')"
               group="new"
-              default-opened
             >
-              <q-card-section class="q-pt-none q-gutter-y-md column">
+              <q-card-section class="q-gutter-y-md column">
                 <div class="row">
                   <div class="col q-gutter-y-md">
                     <q-input
@@ -68,10 +67,15 @@
                     <q-icon name="grid_on" />
                   </template>
                 </q-input>
+                <div class="absolute-fit inset-shadow no-pointer-events" />
               </q-card-section>
             </q-expansion-item>
-            <q-expansion-item icon="cloud" :label="$t('Remote')" group="new">
-              <q-card-section class="q-pt-none">
+            <q-expansion-item
+              icon="settings_ethernet"
+              :label="$t('Remote')"
+              group="new"
+            >
+              <q-card-section>
                 <q-input
                   class="size"
                   v-model="size"
@@ -88,6 +92,7 @@
                     <q-icon name="grid_on" />
                   </template>
                 </q-input>
+                <div class="absolute-fit inset-shadow no-pointer-events" />
               </q-card-section>
             </q-expansion-item>
           </q-list>

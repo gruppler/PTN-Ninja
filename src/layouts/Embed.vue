@@ -31,7 +31,14 @@
     </q-page-container>
 
     <q-drawer v-model="left" side="left" persistent>
-      <PTN class="fit" :game="game" />
+      <div class="absolute-fit column">
+        <q-toolbar class="bg-secondary text-white"></q-toolbar>
+        <div class="col-grow relative-position">
+          <PTN class="absolute-fit" :game="game" />
+        </div>
+        <q-toolbar class="footer-toolbar bg-secondary text-white"></q-toolbar>
+      </div>
+      <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer v-model="right" side="right" persistent>

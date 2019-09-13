@@ -61,6 +61,7 @@
         </div>
         <q-toolbar class="footer-toolbar bg-secondary text-white"></q-toolbar>
       </div>
+      <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
@@ -90,6 +91,7 @@
           </q-tab-panel>
         </q-tab-panels>
       </div>
+      <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-footer reveal>
