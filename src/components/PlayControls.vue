@@ -63,7 +63,7 @@
         @shortkey="selectOption"
         round
         flat
-        :disable="!game.state.targetBranch && !hasBranches"
+        :disable="!branches.length"
         :color="hasBranches ? 'accent' : ''"
         icon="call_split"
       >
@@ -71,7 +71,7 @@
           v-model="branchMenu"
           @select="selectBranch"
           :game="game"
-          :branches="this.branches"
+          :branches="branches"
         />
       </q-btn>
     </div>
@@ -110,15 +110,34 @@ export default {
       );
     },
     hasBranches() {
-      return this.game.state.ply && this.game.state.ply.branches.length;
+      return !!(this.game.state.ply && this.game.state.ply.branches.length);
     },
     branches() {
       if (this.hasBranches) {
+        // Current ply's branches
         return this.game.state.ply.branches;
-      } else if (this.game.state.targetBranch in this.game.branches) {
+      } else if (
+        this.game.state.targetBranch &&
+        this.game.state.targetBranch in this.game.branches
+      ) {
+        // Selected branch siblings
         return this.game.branches[this.game.state.targetBranch].branches;
       } else {
-        return [];
+        // Most recent branch
+        let index = this.game.state.ply ? this.game.state.ply.index : 0;
+        let ply = this.game.state.plies
+          .concat()
+          .reverse()
+          .find(
+            ply => Object.keys(ply.branches).length > 1 && index > ply.index
+          );
+        if (!ply) {
+          // Next branch
+          ply = this.game.state.plies.find(
+            ply => Object.keys(ply.branches).length > 1 && index < ply.index
+          );
+        }
+        return ply ? ply.branches : [];
       }
     },
     options() {
