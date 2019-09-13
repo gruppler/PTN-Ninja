@@ -116,12 +116,6 @@ export default {
       if (this.hasBranches) {
         // Current ply's branches
         return this.game.state.ply.branches;
-      } else if (
-        this.game.state.targetBranch &&
-        this.game.state.targetBranch in this.game.branches
-      ) {
-        // Selected branch siblings
-        return this.game.branches[this.game.state.targetBranch].branches;
       } else {
         // Most recent branch
         let index = this.game.state.ply ? this.game.state.ply.index : 0;
@@ -136,6 +130,14 @@ export default {
           ply = this.game.state.plies.find(
             ply => Object.keys(ply.branches).length > 1 && index < ply.index
           );
+        }
+        if (
+          !ply &&
+          this.game.state.targetBranch &&
+          this.game.state.targetBranch in this.game.branches
+        ) {
+          // Selected branch siblings
+          ply = this.game.branches[this.game.state.targetBranch];
         }
         return ply ? ply.branches : [];
       }
