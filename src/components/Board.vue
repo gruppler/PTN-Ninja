@@ -245,6 +245,8 @@ $radius = 5px
     background $gray-dark
   .player1 .name, .player2 .flats
     flex-grow 1
+  .flats
+    flex-shrink 0
 
 .turn-indicator
   opacity 0

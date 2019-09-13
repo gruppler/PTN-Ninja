@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="fit scroll">
+    <div class="absolute-fit scroll">
       <div class="ptn q-py-md" v-if="game">
         <Move
           class="q-px-md"
@@ -12,6 +12,7 @@
         />
       </div>
     </div>
+    <div class="absolute-fit inset-shadow no-pointer-events" />
     <q-resize-observer @resize="scroll" />
   </div>
 </template>

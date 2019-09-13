@@ -268,12 +268,13 @@ export default class Game {
     }
     this.state.targetBranch = ply.branch;
     if (
-      ply.branches.includes(this.state.ply) ||
-      !this.state.plies.includes(ply)
+      this.state.ply &&
+      (ply.branches.includes(this.state.ply) ||
+        !this.state.ply.isInBranch(ply.branch))
     ) {
       return this.goToPly(ply.id, this.state.plyIsDone);
     } else {
-      this.updateState(true);
+      this.updateState();
       return true;
     }
   }
@@ -289,7 +290,7 @@ export default class Game {
       let newNumber = newMove.linenum.number;
       const isDifferentBranch =
         this.state.branch !== newBranch ||
-        !this.state.targetBranch != this.state._targetBranch;
+        this.state.targetBranch !== this.state._targetBranch;
 
       // Update lists of current branch's plies and moves
       if (isDifferentBranch || !this.state.plies) {

@@ -97,6 +97,7 @@
           </template>
         </div>
       </div>
+      <div class="absolute-fit inset-shadow no-pointer-events" />
       <q-resize-observer @resize="scroll" />
     </div>
     <div>
@@ -106,7 +107,7 @@
         @keydown.esc="cancelEdit"
         @blur="cancelEdit"
         debounce="50"
-        class="bg-secondary text-accent col-grow q-pa-sm items-end"
+        class="footer-toolbar bg-secondary text-accent col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Note')"
         dense

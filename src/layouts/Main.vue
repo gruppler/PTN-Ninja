@@ -1,8 +1,14 @@
 <template>
-  <q-layout class="non-selectable" view="hHh LpR fFf">
+  <q-layout class="non-selectable" view="lHr LpR lFr">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar>
-        <q-btn icon="notes" @click="left = !left" flat dense />
+        <q-btn
+          icon="notes"
+          @click="left = !left"
+          :color="left ? 'accent' : ''"
+          flat
+          dense
+        />
         <QToolbarTitle>
           <GameSelector @input="updateGame">
             <q-btn
@@ -17,6 +23,7 @@
         <q-btn
           :icon="textTab == 'notes' ? 'comment' : 'chat_bubble'"
           @click="right = !right"
+          :color="right ? 'accent' : ''"
           flat
           dense
         />
@@ -47,7 +54,13 @@
       side="left"
       persistent
     >
-      <PTN class="fit" :game="game" />
+      <div class="absolute-fit column">
+        <q-toolbar class="bg-secondary text-white"></q-toolbar>
+        <div class="col-grow relative-position">
+          <PTN class="absolute-fit" :game="game" />
+        </div>
+        <q-toolbar class="footer-toolbar bg-secondary text-white"></q-toolbar>
+      </div>
     </q-drawer>
 
     <q-drawer
@@ -442,6 +455,8 @@ footer
       overflow hidden
 
 #right-drawer
+  .q-tabs
+    height $toolbar-min-height
   .q-tab-panel
     padding 0
 </style>

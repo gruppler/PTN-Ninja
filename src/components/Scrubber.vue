@@ -46,7 +46,7 @@ export default {
 
 <style lang="stylus" scoped>
 .scrubber
-  margin-top -10px
-  margin-bottom -8px
+  position absolute
+  top -12px
   z-index 1
 </style>

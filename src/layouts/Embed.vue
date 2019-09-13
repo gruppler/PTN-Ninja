@@ -1,10 +1,22 @@
 <template>
-  <q-layout class="non-selectable" view="hHh LpR fFf">
+  <q-layout class="non-selectable" view="lHr LpR lFr">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar>
-        <q-btn flat round icon="notes" @click="left = !left" />
+        <q-btn
+          icon="notes"
+          @click="left = !left"
+          :color="left ? 'accent' : ''"
+          flat
+          dense
+        />
         <q-toolbar-title>{{ title }}</q-toolbar-title>
-        <q-btn flat round icon="chat" @click="right = !right" />
+        <q-btn
+          icon="chat"
+          @click="right = !right"
+          :color="right ? 'accent' : ''"
+          flat
+          dense
+        />
       </q-toolbar>
     </q-header>
 

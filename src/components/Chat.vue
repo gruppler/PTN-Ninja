@@ -37,6 +37,7 @@
           </template>
         </div>
       </div>
+      <div class="absolute-fit inset-shadow no-pointer-events" />
       <q-resize-observer @resize="scroll" />
     </div>
     <div>
@@ -45,7 +46,7 @@
         ref="input"
         @keydown.shift.enter.prevent="send"
         debounce="50"
-        class="bg-secondary col-grow q-pa-sm items-end"
+        class="footer-toolbar bg-secondary col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Message')"
         :dark="player === 2"
