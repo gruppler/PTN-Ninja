@@ -42,6 +42,7 @@
           v-if="ply.branches.length"
           :game="game"
           :branches="ply.branches"
+          v-model="menu"
         />
       </q-btn>
     </q-chip>
@@ -63,6 +64,11 @@ export default {
   name: "Ply",
   components: { BranchMenu },
   props: ["game", "ply", "noBranches", "noClick", "delay"],
+  data() {
+    return {
+      menu: false
+    };
+  },
   computed: {
     isSelected() {
       return this.game ? this.game.state.plyID === this.ply.id : false;

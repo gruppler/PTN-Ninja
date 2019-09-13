@@ -14,7 +14,7 @@ const defaults = {
   showAllBranches: false,
   showControls: true,
   showMove: true,
-  showPTN: true,
+  showPTN: false,
   showRoads: true,
   showScrubber: true,
   showText: false,
