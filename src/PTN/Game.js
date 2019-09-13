@@ -475,6 +475,7 @@ export default class Game {
 
   goToPly(plyID, isDone) {
     const targetPly = this.plies[plyID];
+    let switchBranch = this.state.targetBranch !== this.state._targetBranch;
 
     if (!targetPly || this.state.selectedPieces.length) {
       return false;
@@ -502,6 +503,7 @@ export default class Game {
 
     // Set targetBranch if target is outside of it
     if (!targetPly.isInBranch(this.state.targetBranch)) {
+      switchBranch = true;
       this.state.targetBranch = target.branch;
       this.updateState();
     }
@@ -521,6 +523,7 @@ export default class Game {
     }
 
     if (
+      switchBranch &&
       this.state.branch !== target.branch &&
       this.state.ply.hasBranch(target.branch)
     ) {
