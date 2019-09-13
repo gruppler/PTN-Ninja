@@ -126,12 +126,6 @@ export default {
           .find(
             ply => Object.keys(ply.branches).length > 1 && index > ply.index
           );
-        if (!ply) {
-          // Next branch
-          ply = this.game.state.plies.find(
-            ply => Object.keys(ply.branches).length > 1 && index < ply.index
-          );
-        }
         if (
           !ply &&
           this.game.state.targetBranch &&
@@ -139,6 +133,12 @@ export default {
         ) {
           // Selected branch siblings
           ply = this.game.branches[this.game.state.targetBranch];
+        }
+        if (!ply) {
+          // Next branch
+          ply = this.game.state.plies.find(
+            ply => Object.keys(ply.branches).length > 1 && index < ply.index
+          );
         }
         return ply ? ply.branches : [];
       }
