@@ -10,10 +10,14 @@
 <script>
 export default {
   name: "Linenum",
-  props: ["linenum", "game"],
+  props: ["linenum", "game", "noBranch"],
   computed: {
     showBranch() {
-      return this.linenum.branch && this.$store.state.showAllBranches;
+      return (
+        this.noBranch === undefined &&
+        this.linenum.branch &&
+        this.$store.state.showAllBranches
+      );
     },
     isSelected() {
       const ply1 = this.linenum.move.ply1;

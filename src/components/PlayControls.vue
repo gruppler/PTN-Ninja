@@ -72,6 +72,7 @@
           @select="selectBranch"
           :game="game"
           :branches="branches"
+          linenum
         />
       </q-btn>
     </div>

@@ -37,12 +37,7 @@
       </template>
 
       <template v-slot:before>
-        <q-badge
-          class="text-subtitle2"
-          transparent
-          :label="games.length"
-          :alert="true ? 'accent' : false"
-        />
+        <q-badge class="text-subtitle2" :label="games.length" />
       </template>
 
       <template v-slot:after>

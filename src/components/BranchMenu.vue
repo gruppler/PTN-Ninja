@@ -3,9 +3,8 @@
     :value="value"
     @input="$emit('input', $event)"
     content-class="bg-primary"
-    align="bottom right"
-    self="top left"
     auto-close
+    cover
     dark
   >
     <q-list class="branch-menu" dense>
@@ -16,15 +15,27 @@
         clickable
       >
         <q-item-section side>
-          <span
+          <q-badge
             class="option-number text-subtitle2 q-pa-sm"
             :class="{ selected: game.state.plies.includes(ply) }"
-          >
-            {{ i }}
-          </span>
+            :label="i"
+          />
         </q-item-section>
-        <q-item-label class="ellipsis">
-          <Ply :ply="ply" :game="game" :noBranches="true" :noClick="true" />
+        <q-item-label>
+          <Linenum
+            v-if="linenum !== undefined"
+            :linenum="ply.move.linenum"
+            :game="game"
+            noBranch
+            class="ellipsis"
+          />
+          <Ply
+            :ply="ply"
+            :game="game"
+            :noBranches="true"
+            :noClick="true"
+            class="ellipsis"
+          />
         </q-item-label>
       </q-item>
     </q-list>
@@ -35,9 +46,10 @@
 export default {
   name: "BranchMenu",
   components: {
+    Linenum: () => import("./Linenum"),
     Ply: () => import("./Ply")
   },
-  props: ["value", "game", "branches"],
+  props: ["value", "game", "branches", "linenum"],
   methods: {
     select(ply) {
       this.$emit("select", ply);
@@ -50,6 +62,7 @@ export default {
 .branch-menu .option-number
   line-height 1em
   border-radius $generic-border-radius
+  background-color $blue-grey-8
   color #fff
   &.selected
     background-color $accent
