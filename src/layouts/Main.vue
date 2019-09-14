@@ -1,13 +1,13 @@
 <template>
   <q-layout class="non-selectable" view="lHr LpR lFr">
     <q-header elevated class="bg-secondary text-white">
-      <q-toolbar>
+      <q-toolbar class="q-pa-none">
         <q-btn
           icon="notes"
           @click="left = !left"
           :color="left ? 'accent' : ''"
+          stretch
           flat
-          dense
         />
         <QToolbarTitle>
           <GameSelector @input="updateGame">
@@ -15,8 +15,9 @@
               icon="edit"
               @click.stop="edit"
               text-color="white"
-              flat
+              class="q-pa-sm"
               dense
+              flat
             />
           </GameSelector>
         </QToolbarTitle>
@@ -24,8 +25,8 @@
           :icon="textTab == 'notes' ? 'comment' : 'chat_bubble'"
           @click="right = !right"
           :color="right ? 'accent' : ''"
+          stretch
           flat
-          dense
         />
       </q-toolbar>
     </q-header>
@@ -55,11 +56,55 @@
       persistent
     >
       <div class="absolute-fit column">
-        <q-toolbar class="bg-secondary text-white"></q-toolbar>
+        <q-toolbar class="bg-secondary text-white q-pa-none">
+          <q-btn-group class="full-width" spread stretch flat unelevated>
+            <q-btn
+              @click="showAllBranches = !showAllBranches"
+              icon="call_split"
+              :title="$t('Show_All_Branches')"
+              :text-color="showAllBranches ? 'accent' : ''"
+            />
+            <CopyButton :game="game" />
+            <q-btn
+              icon="assignment_returned"
+              :title="$t('Paste_from_Clipboard')"
+            />
+            <q-btn :title="$t('Trim')">
+              <q-icon name="flip" class="rotate-270" />
+              <q-menu auto-close square>
+                <q-list dark class="bg-secondary text-white">
+                  <q-item clickable>
+                    <q-item-section side>
+                      <q-icon name="flip" class="rotate-270" />
+                    </q-item-section>
+                    <q-item-section>{{
+                      $t("Trim_to_current_ply")
+                    }}</q-item-section>
+                  </q-item>
+                  <q-item clickable>
+                    <q-item-section side>
+                      <q-icon name="apps" />
+                    </q-item-section>
+                    <q-item-section>{{
+                      $t("Trim_to_current_board")
+                    }}</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </q-btn-group>
+        </q-toolbar>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
-        <q-toolbar class="footer-toolbar bg-secondary text-white"></q-toolbar>
+        <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
+          <q-btn-group class="full-width" spread stretch flat unelevated>
+            <q-btn icon="undo" :title="$t('Undo')" />
+            <q-btn icon="redo" :title="$t('Redo')" />
+            <TakButton :game="game" />
+            <TinueButton :game="game" />
+          </q-btn-group>
+        </q-toolbar>
       </div>
       <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -118,6 +163,9 @@ import Menu from "../components/Menu";
 import PTN from "../components/PTN";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
+import CopyButton from "../components/CopyButton";
+import TakButton from "../components/TakButton";
+import TinueButton from "../components/TinueButton";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
@@ -137,6 +185,9 @@ export default {
     PTN,
     PlayControls,
     Scrubber,
+    CopyButton,
+    TakButton,
+    TinueButton,
     AddGame,
     EditGame,
     UISettings,
@@ -174,6 +225,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
+      }
+    },
+    showAllBranches: {
+      get() {
+        return this.$store.state.showAllBranches;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
     },
     dialogAddGame: {

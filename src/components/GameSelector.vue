@@ -30,7 +30,6 @@
               icon="close"
               flat
               dense
-              round
             />
           </q-item-section>
         </q-item>

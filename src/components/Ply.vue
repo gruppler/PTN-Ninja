@@ -1,6 +1,6 @@
 <template>
   <span class="ptn" v-if="ply">
-    <span v-if="ply.isNop" class="nop">{{ ply.text() }} </span>
+    <span v-if="ply.isNop" class="nop">{{ ply.text() }}</span>
     <q-chip
       v-if="!ply.isNop"
       @click="select(ply)"

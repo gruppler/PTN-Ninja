@@ -50,6 +50,9 @@ export default {
     },
     "game.state.ply.id"() {
       this.scroll();
+    },
+    "$store.state.showAllBranches"() {
+      this.$nextTick(this.scroll);
     }
   },
   mounted() {

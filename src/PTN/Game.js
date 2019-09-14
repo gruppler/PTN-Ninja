@@ -86,6 +86,8 @@ export default class Game {
     this._state = {
       plyID: 0,
       plyIsDone: false,
+      isTak: false,
+      isTinue: false,
       player: 1,
       branch: "",
       targetBranch: "",
@@ -291,6 +293,17 @@ export default class Game {
       const isDifferentBranch =
         this.state.branch !== newBranch ||
         this.state.targetBranch !== this.state._targetBranch;
+
+      this.state.isTak = false;
+      this.state.isTinue = false;
+      if (newPly.evaluation) {
+        if (newPly.evaluation.tak) {
+          this.state.isTak = true;
+        }
+        if (newPly.evaluation.tinue) {
+          this.state.isTinue = true;
+        }
+      }
 
       // Update lists of current branch's plies and moves
       if (isDifferentBranch || !this.state.plies) {

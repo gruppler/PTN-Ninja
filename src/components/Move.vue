@@ -9,24 +9,26 @@
   >
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <Ply
-        v-if="move.ply1"
-        :ply="
-          $store.state.showAllBranches && currentOnly === undefined
-            ? move.ply1
-            : move.ply1Original || move.ply1
-        "
-        :game="game"
-      />
-      <Ply
-        v-if="move.ply2"
-        :ply="
-          $store.state.showAllBranches && currentOnly === undefined
-            ? move.ply2
-            : move.ply2.getBranch(game.state.targetBranch)
-        "
-        :game="game"
-      />
+      <span class="text-no-wrap">
+        <Ply
+          v-if="move.ply1"
+          :ply="
+            $store.state.showAllBranches && currentOnly === undefined
+              ? move.ply1
+              : move.ply1Original || move.ply1
+          "
+          :game="game"
+        />
+        <Ply
+          v-if="move.ply2"
+          :ply="
+            $store.state.showAllBranches && currentOnly === undefined
+              ? move.ply2
+              : move.ply2.getBranch(game.state.targetBranch)
+          "
+          :game="game"
+        />
+      </span>
     </div>
   </div>
 </template>
