@@ -33,8 +33,8 @@
     <q-drawer
       v-model="left"
       side="left"
-      :no-swipe-open="is.desktop"
-      :no-swipe-close="is.desktop"
+      :no-swipe-open="!Platform.has.touch"
+      :no-swipe-close="!Platform.has.touch"
       persistent
     >
       <div class="absolute-fit column">
@@ -74,8 +74,8 @@
     <q-drawer
       v-model="right"
       side="right"
-      :no-swipe-open="is.desktop"
-      :no-swipe-close="is.desktop"
+      :no-swipe-open="!Platform.has.touch"
+      :no-swipe-close="!Platform.has.touch"
       persistent
     >
       <Notes class="fit" :game="game" />
@@ -128,15 +128,13 @@ export default {
   props: ["ptn", "name", "state"],
   data() {
     return {
+      Platform,
       game: Game.parse(this.ptn, { name: this.name, state: this.state }),
       size: null,
       notifyClosers: []
     };
   },
   computed: {
-    is() {
-      return Platform.is;
-    },
     gameState() {
       return pick(this.game.state, GAME_STATE_PROPS);
     },

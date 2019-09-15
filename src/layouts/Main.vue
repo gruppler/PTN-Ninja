@@ -53,6 +53,8 @@
       :value="left"
       @input="showPTN"
       side="left"
+      :no-swipe-open="!Platform.has.touch"
+      :no-swipe-close="!Platform.has.touch"
       persistent
     >
       <div class="absolute-fit column">
@@ -116,6 +118,8 @@
       :value="right"
       @input="showText"
       side="right"
+      :no-swipe-open="!Platform.has.touch"
+      :no-swipe-close="!Platform.has.touch"
       persistent
     >
       <div class="absolute-fit column">
@@ -180,6 +184,8 @@ import Game from "../PTN/Game";
 import { each, pick } from "lodash";
 import { GAME_STATE_PROPS, HOTKEYS } from "../constants";
 
+import { Platform } from "quasar";
+
 export default {
   components: {
     Board,
@@ -202,6 +208,7 @@ export default {
   props: ["ptn", "state", "name"],
   data() {
     return {
+      Platform,
       game: this.getGame(),
       size: null,
       notifyClosers: [],
