@@ -71,6 +71,7 @@ export default {
   Show_All_Branches: "Show All Branches",
   Show_Hide_Errors: "Show/Hide Errors",
   Show_Parse_Errors: "Show Parse Errors",
+  Show_Game_Notifications: "Show Game Notifications",
   Show_Note_Notifications: "Show Note Notifications",
   Show_Tak_Notifications: "Show Tak Notifications",
   Site: "Site",

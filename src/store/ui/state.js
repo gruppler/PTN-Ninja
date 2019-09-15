@@ -6,6 +6,7 @@ const defaults = {
   board3D: false,
   flatCounts: true,
   highlightSquares: true,
+  notifyGame: true,
   notifyNotes: true,
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM

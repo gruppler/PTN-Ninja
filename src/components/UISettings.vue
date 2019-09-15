@@ -117,6 +117,15 @@
               </q-item-section>
             </q-item>
 
+            <q-item tag="label" :title="hotkeys.notifyGame" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Show_Game_Notifications") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle color="accent" v-model="notifyGame" />
+              </q-item-section>
+            </q-item>
+
             <q-item tag="label" :title="hotkeys.notifyNotes" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Show_Note_Notifications") }}</q-item-label>
@@ -165,6 +174,7 @@ const props = [
   "axisLabels",
   "flatCounts",
   "highlightSquares",
+  "notifyGame",
   "notifyNotes",
   "pieceShadows",
   "playSpeed",
