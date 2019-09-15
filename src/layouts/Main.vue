@@ -41,8 +41,8 @@
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
-        <q-page-sticky position="bottom-left" :offset="[18, 18]">
-          <FullscreenToggle color="white" />
+        <q-page-sticky position="top-left" :offset="[18, 18]">
+          <FullscreenToggle class="dimmed-btn" color="white" />
         </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
@@ -62,6 +62,7 @@
               @click="showAllBranches = !showAllBranches"
               :title="$t('Show_All_Branches')"
               :text-color="showAllBranches ? 'accent' : ''"
+              class="no-border-radius"
             >
               <q-icon name="call_split" class="rotate-180" />
             </q-btn>
@@ -70,7 +71,7 @@
               icon="assignment_returned"
               :title="$t('Paste_from_Clipboard')"
             />
-            <q-btn :title="$t('Trim')">
+            <q-btn :title="$t('Trim')" class="no-border-radius">
               <q-icon name="flip" class="rotate-270" />
               <q-menu auto-close square>
                 <q-list dark class="bg-secondary text-white">
@@ -100,10 +101,10 @@
         </div>
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group class="full-width" spread stretch flat unelevated>
-            <q-btn icon="undo" :title="$t('Undo')" />
+            <q-btn icon="undo" :title="$t('Undo')" class="no-border-radius" />
             <q-btn icon="redo" :title="$t('Redo')" />
             <TakButton :game="game" />
-            <TinueButton :game="game" />
+            <TinueButton :game="game" class="no-border-radius" />
           </q-btn-group>
         </q-toolbar>
       </div>
@@ -143,7 +144,7 @@
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <div class="controls" :class="{ visible: $store.state.showControls }">
-        <q-toolbar class="q-pa-sm bg-secondary text-white">
+        <q-toolbar class="footer-toolbar q-pa-sm bg-secondary text-white">
           <PlayControls :game="game" />
         </q-toolbar>
       </div>

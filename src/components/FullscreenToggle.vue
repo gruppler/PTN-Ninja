@@ -16,9 +16,4 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.fullscreen-toggle
-  opacity .25
-  &:hover
-    opacity 1
-</style>
+<style lang="stylus"></style>

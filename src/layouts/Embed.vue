@@ -23,14 +23,20 @@
     <q-page-container class="bg-primary">
       <q-page ref="page" class="flex flex-center">
         <Board :game="game" :space="size" />
-        <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <FullscreenToggle color="white" />
+        <q-page-sticky position="top-left" :offset="[18, 18]">
+          <FullscreenToggle class="dimmed-btn" color="white" />
         </q-page-sticky>
         <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 
-    <q-drawer v-model="left" side="left" persistent>
+    <q-drawer
+      v-model="left"
+      side="left"
+      :no-swipe-open="is.desktop"
+      :no-swipe-close="is.desktop"
+      persistent
+    >
       <div class="absolute-fit column">
         <q-toolbar class="bg-secondary text-white q-pa-none">
           <q-btn-group class="full-width" spread stretch flat unelevated>
@@ -38,6 +44,7 @@
               @click="showAllBranches = !showAllBranches"
               :title="$t('Show_All_Branches')"
               :text-color="showAllBranches ? 'accent' : ''"
+              class="no-border-radius"
             >
               <q-icon name="call_split" class="rotate-180" />
             </q-btn>
@@ -45,6 +52,7 @@
             <q-btn
               icon="assignment_returned"
               :title="$t('Paste_from_Clipboard')"
+              class="no-border-radius"
             />
           </q-btn-group>
         </q-toolbar>
@@ -53,17 +61,23 @@
         </div>
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group class="full-width" spread stretch flat unelevated>
-            <q-btn icon="undo" :title="$t('Undo')" />
+            <q-btn icon="undo" :title="$t('Undo')" class="no-border-radius" />
             <q-btn icon="redo" :title="$t('Redo')" />
             <TakButton :game="game" />
-            <TinueButton :game="game" />
+            <TinueButton :game="game" class="no-border-radius" />
           </q-btn-group>
         </q-toolbar>
       </div>
       <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-drawer v-model="right" side="right" persistent>
+    <q-drawer
+      v-model="right"
+      side="right"
+      :no-swipe-open="is.desktop"
+      :no-swipe-close="is.desktop"
+      persistent
+    >
       <Notes class="fit" :game="game" />
     </q-drawer>
 
@@ -93,6 +107,8 @@ import Game from "../PTN/Game";
 import { pick } from "lodash";
 import { GAME_STATE_PROPS } from "../constants";
 
+import { Platform } from "quasar";
+
 export default {
   components: {
     Board,
@@ -114,6 +130,9 @@ export default {
     };
   },
   computed: {
+    is() {
+      return Platform.is;
+    },
     gameState() {
       return pick(this.game.state, GAME_STATE_PROPS);
     },

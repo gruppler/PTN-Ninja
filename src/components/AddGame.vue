@@ -192,9 +192,7 @@ export default {
       this.close();
     },
     swapPlayers() {
-      const player1 = this.player1;
-      this.player1 = this.player2;
-      this.player2 = player1;
+      [this.player1, this.player2] = [this.player2, this.player1];
     }
   }
 };

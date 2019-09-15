@@ -118,6 +118,7 @@ export default {
 
 .nop
   color $gray-light
+  margin-right .5em
 
 .q-chip
   * {

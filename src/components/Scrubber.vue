@@ -1,11 +1,11 @@
 <template>
   <q-slider
+    v-if="!!game.plies.length"
     class="scrubber"
     :step="0.5"
     :min="0"
     :max="maxPosition"
     :value="position"
-    :disabled="!game.plies.length"
     @input="scrub"
     color="accent"
     dense
@@ -27,12 +27,12 @@ export default {
     maxPosition() {
       return this.game.state.plies && this.game.state.plies.length
         ? this.game.state.plies.length - 0.5
-        : 1;
+        : 0;
     }
   },
   methods: {
     scrub(position) {
-      if (this.game) {
+      if (this.game && this.game.state.plies) {
         const ply = this.game.state.plies[Math.floor(position)];
         this.game.goToPly(ply.id, position > ply.index);
       }

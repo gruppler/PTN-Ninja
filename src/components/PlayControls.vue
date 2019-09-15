@@ -117,7 +117,7 @@ export default {
       if (this.hasBranches) {
         // Current ply's branches
         return this.game.state.ply.branches;
-      } else {
+      } else if (this.game.state.plies) {
         // Most recent branch
         let index = this.game.state.ply ? this.game.state.ply.index : 0;
         let ply = this.game.state.plies
@@ -142,6 +142,7 @@ export default {
         }
         return ply ? ply.branches : [];
       }
+      return [];
     },
     options() {
       return zipObject(
