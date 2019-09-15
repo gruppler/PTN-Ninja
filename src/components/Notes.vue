@@ -6,7 +6,7 @@
           <div
             v-if="log[-1]"
             class="fullwidth-padded-md q-py-xs"
-            :class="{ highlight: !game.state.plyID && !game.state.plyIsDone }"
+            :class="{ highlight: !game.state.plyID }"
             ref="-1"
             key="-1"
           >

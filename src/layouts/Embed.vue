@@ -89,6 +89,8 @@
         </q-toolbar>
       </div>
     </q-footer>
+
+    <Notifications v-if="showNotifications" :game="game" :state="gameState" />
   </q-layout>
 </template>
 
@@ -96,6 +98,7 @@
 import Board from "../components/Board";
 import Notes from "../components/Notes";
 import PTN from "../components/PTN";
+import Notifications from "../components/Notifications";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import CopyButton from "../components/CopyButton";
@@ -114,6 +117,7 @@ export default {
     Board,
     Notes,
     PTN,
+    Notifications,
     PlayControls,
     Scrubber,
     CopyButton,
@@ -160,6 +164,9 @@ export default {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
     },
+    showNotifications() {
+      return this.$store.state.notifyNotes && !this.right;
+    },
     title() {
       return this.name || this.game.generateName();
     }
@@ -168,72 +175,6 @@ export default {
     resize(size) {
       this.size = size;
       this.size.height = parseInt(this.$refs.page.style.minHeight, 10);
-    },
-    showNotifications() {
-      if (this.right) {
-        console.log(this.right);
-        return;
-      }
-      const ply = this.game.state.ply;
-
-      if (
-        this.$store.state.notifyNotes &&
-        this.game.state.plyID in this.game.notes
-      ) {
-        this.game.notes[this.game.state.plyID]
-          .concat()
-          .reverse()
-          .forEach(note => {
-            this.notifyClosers.push(
-              this.$q.notify({
-                color: "accent",
-                message: note.message,
-                icon: "comment",
-                position: "top-right",
-                actions: [{ icon: "close", color: "secondary" }],
-                classes: "note text-grey-10",
-                timeout: 0
-              })
-            );
-          });
-      }
-
-      if (ply && ply.result) {
-        let result = ply.result;
-        let color = result.winner === 1 ? "grey-10" : "grey-2";
-        this.notifyClosers.push(
-          this.$q.notify({
-            color: result.winner === 1 ? "blue-grey-2" : "blue-grey-10",
-            message: this.$t("result." + result.type, {
-              player: this.game.tags["player" + result.winner].value
-            }),
-            icon: result.winner === 1 ? "person" : "person_outline",
-            position: "top-right",
-            actions: [{ icon: "close", color }],
-            classes: "note text-" + color,
-            timeout: 0
-          })
-        );
-      }
-    },
-    hideNotifications() {
-      this.notifyClosers.forEach(close => close());
-      this.notifyClosers = [];
-    }
-  },
-  watch: {
-    gameState(newState, oldState) {
-      if (oldState.plyID !== newState.plyID) {
-        this.hideNotifications();
-        this.showNotifications();
-      }
-    },
-    right(visible) {
-      if (visible) {
-        this.hideNotifications();
-      } else {
-        this.showNotifications();
-      }
     }
   },
   created() {
@@ -241,10 +182,6 @@ export default {
     Object.keys(this.state).forEach(key => {
       this.$store.commit("SET_UI", [key, this.state[key]]);
     });
-  },
-  mounted() {
-    this.hideNotifications();
-    this.showNotifications();
   }
 };
 </script>

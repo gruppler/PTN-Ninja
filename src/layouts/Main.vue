@@ -153,6 +153,8 @@
     <AddGame v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
+
+    <Notifications v-if="showNotifications" :game="game" :state="gameState" />
   </q-layout>
 </template>
 
@@ -163,6 +165,7 @@ import Chat from "../components/Chat";
 import GameSelector from "../components/GameSelector";
 import Menu from "../components/Menu";
 import PTN from "../components/PTN";
+import Notifications from "../components/Notifications";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import CopyButton from "../components/CopyButton";
@@ -185,6 +188,7 @@ export default {
     GameSelector,
     Menu,
     PTN,
+    Notifications,
     PlayControls,
     Scrubber,
     CopyButton,
@@ -236,6 +240,9 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
+    },
+    showNotifications() {
+      return this.$store.state.notifyNotes && !this.right;
     },
     dialogAddGame: {
       get() {
@@ -354,58 +361,6 @@ export default {
           console.log(action);
       }
     },
-    showNotifications() {
-      if (this.right) {
-        return;
-      }
-      const ply = this.game.state.ply;
-      let plyID = this.game.state.plyID;
-
-      if (!plyID && !this.game.state.plyIsDone && "-1" in this.game.notes) {
-        plyID = -1;
-      }
-
-      if (this.$store.state.notifyNotes && plyID in this.game.notes) {
-        this.game.notes[plyID]
-          .concat()
-          .reverse()
-          .forEach(note => {
-            this.notifyClosers.push(
-              this.$q.notify({
-                color: "accent",
-                message: note.message,
-                icon: "comment",
-                position: "top-right",
-                actions: [{ icon: "close", color: "secondary" }],
-                classes: "note text-grey-10",
-                timeout: 0
-              })
-            );
-          });
-      }
-
-      if (ply && ply.result) {
-        let result = ply.result;
-        let color = result.winner === 1 ? "grey-10" : "grey-2";
-        this.notifyClosers.push(
-          this.$q.notify({
-            color: result.winner === 1 ? "blue-grey-2" : "blue-grey-10",
-            message: this.$t("result." + result.type, {
-              player: this.game.tags["player" + result.winner].value
-            }),
-            icon: result.winner === 1 ? "person" : "person_outline",
-            position: "top-right",
-            actions: [{ icon: "close", color }],
-            classes: "note text-" + color,
-            timeout: 0
-          })
-        );
-      }
-    },
-    hideNotifications() {
-      this.notifyClosers.forEach(close => close());
-      this.notifyClosers = [];
-    },
     edit() {
       this.dialogEditGame = true;
     },
@@ -441,13 +396,6 @@ export default {
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {
         this.$store.dispatch("SET_STATE", newState);
-        if (oldState.plyID !== newState.plyID) {
-          this.hideNotifications();
-          this.showNotifications();
-        }
-      } else {
-        this.hideNotifications();
-        this.showNotifications();
       }
     },
     gameText(newText, oldText) {
@@ -458,20 +406,6 @@ export default {
     gameName(newName, oldName) {
       if (oldName.game === newName.game) {
         this.$store.dispatch("SET_NAME", newName.name);
-      }
-    },
-    right(visible) {
-      if (visible) {
-        this.hideNotifications();
-      } else {
-        this.showNotifications();
-      }
-    },
-    "$store.state.notifyNotes"(visible) {
-      if (visible) {
-        this.showNotifications();
-      } else {
-        this.hideNotifications();
       }
     }
   },
@@ -491,8 +425,6 @@ export default {
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
     }
-    this.hideNotifications();
-    this.showNotifications();
   },
   beforeDestroy() {
     window.removeEventListener("drop", this.openFiles);
