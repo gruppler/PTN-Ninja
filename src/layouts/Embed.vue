@@ -36,10 +36,11 @@
           <q-btn-group class="full-width" spread stretch flat unelevated>
             <q-btn
               @click="showAllBranches = !showAllBranches"
-              icon="call_split"
               :title="$t('Show_All_Branches')"
               :text-color="showAllBranches ? 'accent' : ''"
-            />
+            >
+              <q-icon name="call_split" class="rotate-180" />
+            </q-btn>
             <CopyButton :game="game" />
             <q-btn
               icon="assignment_returned"

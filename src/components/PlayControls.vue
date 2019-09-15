@@ -65,8 +65,8 @@
         flat
         :disable="!branches.length"
         :color="hasBranches ? 'accent' : ''"
-        icon="call_split"
       >
+        <q-icon name="call_split" class="rotate-180" />
         <BranchMenu
           v-model="branchMenu"
           @select="selectBranch"
