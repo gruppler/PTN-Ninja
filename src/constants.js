@@ -1,6 +1,6 @@
-import { zipObject } from "lodash";
+import { upperFirst, zipObject } from "lodash";
 
-export const GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
+export const MIN_GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
 
 export const HOTKEYS = {
   UI: {
@@ -34,12 +34,10 @@ export const HOTKEYS = {
 
 export const HOTKEYS_FORMATTED = zipObject(
   Object.keys(HOTKEYS),
-  Object.values(HOTKEYS).map(group =>
+  Object.values(HOTKEYS).map(category =>
     zipObject(
-      Object.keys(group),
-      Object.values(group).map(keys =>
-        keys.map(key => key[0].toUpperCase() + key.substr(1)).join(" + ")
-      )
+      Object.keys(category),
+      Object.values(category).map(keys => keys.map(upperFirst).join(" + "))
     )
   )
 );

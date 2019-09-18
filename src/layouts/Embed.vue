@@ -116,7 +116,7 @@ import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
 import { pick } from "lodash";
-import { GAME_STATE_PROPS } from "../constants";
+import { MIN_GAME_STATE_PROPS } from "../constants";
 
 import { Platform } from "quasar";
 
@@ -144,7 +144,7 @@ export default {
   },
   computed: {
     gameState() {
-      return pick(this.game.state, GAME_STATE_PROPS);
+      return pick(this.game.state, MIN_GAME_STATE_PROPS);
     },
     left: {
       get() {

@@ -190,7 +190,7 @@ import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
 import { each, pick } from "lodash";
-import { GAME_STATE_PROPS, HOTKEYS } from "../constants";
+import { MIN_GAME_STATE_PROPS, HOTKEYS } from "../constants";
 
 import { Platform } from "quasar";
 
@@ -360,7 +360,7 @@ export default {
       return this.$store.state.games;
     },
     gameState() {
-      let state = pick(this.game.state, GAME_STATE_PROPS);
+      let state = pick(this.game.state, MIN_GAME_STATE_PROPS);
       state.name = this.game.name;
       return state;
     },

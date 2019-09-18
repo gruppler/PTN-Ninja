@@ -1,6 +1,6 @@
 import { Loading, LocalStorage } from "quasar";
 import { pick } from "lodash";
-import { GAME_STATE_PROPS } from "../../constants";
+import { MIN_GAME_STATE_PROPS } from "../../constants";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -27,7 +27,7 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   LocalStorage.set("games", games);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.state) {
-    game.state = pick(game.state, GAME_STATE_PROPS);
+    game.state = pick(game.state, MIN_GAME_STATE_PROPS);
     LocalStorage.set("state-" + game.name, game.state);
   }
   commit("ADD_GAME", game);
@@ -58,7 +58,7 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
   LocalStorage.remove("state-" + oldName);
   LocalStorage.set(
     "state-" + name,
-    pick(state.games[0].state, GAME_STATE_PROPS)
+    pick(state.games[0].state, MIN_GAME_STATE_PROPS)
   );
   commit("SET_NAME", name);
 };
@@ -66,7 +66,7 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
 export const SET_STATE = ({ state, commit }, gameState) => {
   LocalStorage.set(
     "state-" + state.games[0].name,
-    pick(gameState, GAME_STATE_PROPS)
+    pick(gameState, MIN_GAME_STATE_PROPS)
   );
   commit("SET_STATE", gameState);
 };
