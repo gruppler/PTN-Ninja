@@ -274,7 +274,10 @@ export default class Game {
       (ply.branches.includes(this.state.ply) ||
         !this.state.ply.isInBranch(ply.branch))
     ) {
-      return this.goToPly(ply.id, this.state.plyIsDone);
+      return this.goToPly(
+        ply.id,
+        ply.index < this.state.ply.index || this.state.plyIsDone
+      );
     } else {
       this.updateState();
       return true;
