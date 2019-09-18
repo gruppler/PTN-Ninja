@@ -128,8 +128,8 @@ module.exports = function (ctx) {
         description: 'An editor and viewer for Portable Tak Notation',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#263238',
-        theme_color: '#8bc34a',
+        background_color: '#607d8b',
+        theme_color: '#263238',
         icons: [
           {
             'src': 'statics/icons/icon-128x128.png',
