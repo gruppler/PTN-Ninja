@@ -158,15 +158,8 @@
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
 
-    <Notifications
-      v-if="showNoteNotifications"
-      :notifications="noteNotifications"
-      color="accent"
-    />
-    <Notifications
-      v-if="showGameNotifications"
-      :notifications="gameNotifications"
-    />
+    <NoteNotifications :game="game" />
+    <GameNotifications :game="game" />
   </q-layout>
 </template>
 
@@ -177,7 +170,8 @@ import Chat from "../components/Chat";
 import GameSelector from "../components/GameSelector";
 import Menu from "../components/Menu";
 import PTN from "../components/PTN";
-import Notifications from "../components/Notifications";
+import GameNotifications from "../components/GameNotifications";
+import NoteNotifications from "../components/NoteNotifications";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import CopyButton from "../components/CopyButton";
@@ -202,7 +196,8 @@ export default {
     GameSelector,
     Menu,
     PTN,
-    Notifications,
+    GameNotifications,
+    NoteNotifications,
     PlayControls,
     Scrubber,
     CopyButton,
@@ -255,56 +250,6 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
-    },
-    showNoteNotifications() {
-      return this.$store.state.notifyNotes && !this.right;
-    },
-    showGameNotifications() {
-      return this.$store.state.notifyGame;
-    },
-    noteNotifications() {
-      const plyID = this.game.state.plyID;
-      let notes = [];
-      if (!plyID && "-1" in this.game.notes) {
-        notes = notes.concat(this.game.notes["-1"]);
-      }
-      if (plyID in this.game.notes) {
-        notes = notes.concat(this.game.notes[plyID]);
-      }
-      return notes.map(note => ({
-        message: note.message,
-        icon: "comment",
-        classes: "note"
-      }));
-    },
-    gameNotifications() {
-      const ply = this.game.state.ply;
-      let alerts = [];
-      if (ply && this.game.state.plyIsDone) {
-        if (ply.result) {
-          // Game end
-          const result = ply.result;
-          alerts.push({
-            message: this.$t("result." + result.type, {
-              player: this.game.tags["player" + result.winner].value
-            }),
-            player: result.winner
-          });
-        }
-        if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
-          // Tak or Tinue
-          alerts.push({
-            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
-            player: ply.player
-          });
-        }
-      }
-      return alerts.map(alert => ({
-        message: alert.message,
-        color: alert.player === 1 ? "blue-grey-2" : "blue-grey-10",
-        icon: alert.player === 1 ? "person" : "person_outline",
-        textColor: alert.player === 1 ? "grey-10" : "grey-2"
-      }));
     },
     dialogAddGame: {
       get() {
