@@ -8,6 +8,7 @@ export const HOTKEYS = {
     board3D: ["d"],
     flatCounts: ["f"],
     highlightSquares: ["h"],
+    notifyGame: ["g"],
     notifyNotes: ["a"],
     pieceShadows: ["s"],
     showAllBranches: ["shift", "b"],
