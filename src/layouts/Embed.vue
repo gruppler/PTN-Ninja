@@ -187,7 +187,8 @@ export default {
       }
       return notes.map(note => ({
         message: note.message,
-        icon: "comment"
+        icon: "comment",
+        classes: "note"
       }));
     },
     gameNotifications() {
