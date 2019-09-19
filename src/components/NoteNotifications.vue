@@ -17,9 +17,13 @@ export default {
       );
     },
     notifications() {
+      const ply = this.game.state.ply;
       const plyID = this.game.state.plyID;
+      if (!ply) {
+        return [];
+      }
       let notes = [];
-      if (!plyID && "-1" in this.game.notes) {
+      if ("-1" in this.game.notes && !ply.index && !this.game.state.plyIsDone) {
         notes = notes.concat(this.game.notes["-1"]);
       }
       if (plyID in this.game.notes) {

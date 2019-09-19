@@ -1,5 +1,5 @@
 <script>
-import { defaults } from "lodash";
+import { defaults, isEqual, omit } from "lodash";
 
 export default {
   name: "Notifications",
@@ -17,6 +17,7 @@ export default {
   data() {
     return {
       closers: [],
+      previous: null,
       default: {
         color: this.color,
         position: "top-right",
@@ -27,24 +28,31 @@ export default {
     };
   },
   methods: {
-    show() {
-      this.closers = this.notifications
-        .concat()
-        .reverse()
-        .map(notification => {
-          const color = notification.textColor || this.textColor;
+    format() {
+      this.previous = this.notifications.map(n => omit(n, "actions"));
+      return this.notifications.reverse().map(notification => {
+        const color = notification.textColor || this.textColor;
+        if (notification.classes) {
           notification.classes += " text-" + color;
-          if (notification.actions) {
-            notification.actions = notification.actions.map(action =>
-              defaults(action, { color })
-            );
-          }
-          this.default.actions = this.default.actions.map(action => ({
-            ...action,
-            color
-          }));
-          return this.$q.notify(defaults(notification, this.default));
-        });
+        } else {
+          notification.classes = "text-" + color;
+        }
+        if (notification.actions) {
+          notification.actions = notification.actions.map(action =>
+            defaults(action, { color })
+          );
+        }
+        this.default.actions = this.default.actions.map(action => ({
+          ...action,
+          color
+        }));
+        return this;
+      });
+    },
+    show() {
+      this.closers = this.notifications.map(notification => {
+        return this.$q.notify(defaults(notification, this.default));
+      });
     },
     hide() {
       this.closers.forEach(close => close());
@@ -52,12 +60,17 @@ export default {
     }
   },
   watch: {
-    notifications() {
-      this.hide();
-      this.show();
+    notifications(current) {
+      current = current.map(n => omit(n, "actions"));
+      if (!isEqual(current, this.previous)) {
+        this.format();
+        this.hide();
+        this.show();
+      }
     }
   },
   created() {
+    this.format();
     this.show();
   },
   beforeDestroy() {

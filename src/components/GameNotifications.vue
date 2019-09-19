@@ -14,9 +14,11 @@ export default {
       return this.$store.state.notifyGame;
     },
     notifications() {
-      const ply = this.game.state.ply;
+      const ply = this.game.state.plyIsDone
+        ? this.game.state.ply
+        : this.game.state.prevPly;
       let alerts = [];
-      if (ply && this.game.state.plyIsDone) {
+      if (ply) {
         if (ply.result) {
           // Game end
           const result = ply.result;
