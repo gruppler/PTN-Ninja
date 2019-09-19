@@ -29,7 +29,11 @@ export default {
   },
   methods: {
     format() {
+      if (this.notifications.isFormatted) {
+        return;
+      }
       this.previous = this.notifications.map(n => omit(n, "actions"));
+      this.notifications.isFormatted = true;
       return this.notifications.reverse().map(notification => {
         const color = notification.textColor || this.textColor;
         if (notification.classes) {
