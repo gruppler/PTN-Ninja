@@ -82,7 +82,7 @@ export default class Ply extends Ptn {
     } else if (branch.startsWith(this.branch)) {
       // In an ancestor branch
       let ply = this.game.branches[branch].branches[0];
-      while (ply.index && ply.branch !== this.branch) {
+      while (ply && ply.index && ply.branch !== this.branch) {
         // Ascend the tree to find a common branch
         ply = this.game.branches[ply.branch].branches[0];
       }

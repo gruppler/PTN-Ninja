@@ -14,6 +14,7 @@ export default class Linenum {
       this.parentNumber = parseInt(this.branch.match(parentRegex, "")[1], 10);
       this.isRoot = this.number === this.parentNumber;
     }
+    this.move = null;
   }
 
   static parse(notation) {
