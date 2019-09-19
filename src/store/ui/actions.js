@@ -78,6 +78,14 @@ export const SELECT_GAME = ({ commit }, index) => {
   commit("SELECT_GAME", index);
 };
 
+export const UNDO = ({ commit }) => {
+  commit("UNDO");
+};
+
+export const REDO = ({ commit }) => {
+  commit("REDO");
+};
+
 export const OPEN_FILE = ({ dispatch }, file) => {
   if (file && /\.ptn$|\.txt$/i.test(file.name)) {
     var reader = new FileReader();

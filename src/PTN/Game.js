@@ -86,8 +86,6 @@ export default class Game {
     this._state = {
       plyID: 0,
       plyIsDone: false,
-      isTak: false,
-      isTinue: false,
       player: 1,
       branch: "",
       targetBranch: "",
@@ -296,17 +294,6 @@ export default class Game {
       const isDifferentBranch =
         this.state.branch !== newBranch ||
         this.state.targetBranch !== this.state._targetBranch;
-
-      this.state.isTak = false;
-      this.state.isTinue = false;
-      if (newPly.evaluation) {
-        if (newPly.evaluation.tak) {
-          this.state.isTak = true;
-        }
-        if (newPly.evaluation.tinue) {
-          this.state.isTinue = true;
-        }
-      }
 
       // Update lists of current branch's plies and moves
       if (isDifferentBranch || !this.state.plies) {
@@ -606,6 +593,58 @@ export default class Game {
       return this.goToPly(this.state.nextPly.id, !half);
     }
     return false;
+  }
+
+  toggleEvaluation(type) {
+    const ply = this.state.ply;
+    const types = { tak: "'", tinue: '"', "?": "?", "!": "!" };
+    if (!ply) {
+      return false;
+    }
+    if (!ply.evaluation) {
+      if (!(type in types)) {
+        return false;
+      }
+      ply.evaluation = Evaluation.parse(types[type]);
+    } else {
+      switch (type) {
+        case "tak":
+          if (ply.evaluation.tak) {
+            ply.evaluation = Evaluation.parse(
+              ply.evaluation.text.replace(/[']/g, "")
+            );
+          } else {
+            ply.evaluation = Evaluation.parse(
+              ply.evaluation.text.replace(/['"]/g, "") + "'"
+            );
+          }
+          break;
+        case "tinue":
+          if (ply.evaluation.tinue) {
+            ply.evaluation = Evaluation.parse(
+              ply.evaluation.text.replace(/['"]/g, "")
+            );
+          } else {
+            ply.evaluation = Evaluation.parse(
+              ply.evaluation.text.replace(/[']/g, "") + '"'
+            );
+          }
+          break;
+        case "?":
+        case "!":
+          if (ply.evaluation[type]) {
+            ply.evaluation = Evaluation.parse(
+              ply.evaluation.text.replace(new RegExp(`[${type}]`, "g"), "")
+            );
+          } else {
+            ply.evaluation = Evaluation.parse(ply.evaluation.text + type);
+          }
+          break;
+        default:
+          return false;
+      }
+    }
+    this._updatePTN();
   }
 
   checkGameEnd() {

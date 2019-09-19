@@ -102,12 +102,26 @@
           <PTN class="absolute-fit" :game="game" />
         </div>
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
-          <q-btn-group class="full-width" spread stretch flat unelevated>
-            <q-btn icon="undo" :title="$t('Undo')" class="no-border-radius" />
-            <q-btn icon="redo" :title="$t('Redo')" />
-            <TakButton :game="game" />
-            <TinueButton :game="game" class="no-border-radius" />
+          <q-btn-group spread stretch flat unelevated>
+            <q-btn
+              @click="$store.dispatch('UNDO')"
+              icon="undo"
+              :title="$t('Undo')"
+            />
+            <q-btn
+              @click="$store.dispatch('REDO')"
+              icon="redo"
+              :title="$t('Redo')"
+            />
           </q-btn-group>
+          <EvalButtons
+            class="full-width"
+            spread
+            stretch
+            flat
+            unelevated
+            :game="game"
+          />
         </q-toolbar>
       </div>
       <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
@@ -175,8 +189,7 @@ import NoteNotifications from "../components/NoteNotifications";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import CopyButton from "../components/CopyButton";
-import TakButton from "../components/TakButton";
-import TinueButton from "../components/TinueButton";
+import EvalButtons from "../components/EvalButtons";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
@@ -201,8 +214,7 @@ export default {
     PlayControls,
     Scrubber,
     CopyButton,
-    TakButton,
-    TinueButton,
+    EvalButtons,
     AddGame,
     EditGame,
     UISettings,
