@@ -1,5 +1,5 @@
 <template>
-  <q-btn-group v-bind="$attrs">
+  <q-btn-group class="eval-buttons" v-bind="$attrs">
     <q-btn
       :label="$t('Tak')"
       :class="{ active: isTak }"
@@ -49,8 +49,9 @@ export default {
 };
 </script>
 
-<style lang="stylus" scoped>
-.q-btn.active
-  background-color $orange-light
-  color $gray-dark
+<style lang="stylus">
+.eval-buttons
+  .q-btn.active
+    background-color $orange-light
+    color $gray-dark
 </style>
