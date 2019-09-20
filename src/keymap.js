@@ -1,7 +1,5 @@
 import { upperFirst, zipObject } from "lodash";
 
-export const MIN_GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
-
 export const HOTKEYS = {
   UI: {
     axisLabels: ["x"],
@@ -29,6 +27,10 @@ export const HOTKEYS = {
     playpause: ["space"],
     prev: ["arrowleft"],
     prevHalf: ["shift", "arrowleft"]
+  },
+  ACTIONS: {
+    REDO: ["ctrl", "shift", "z"],
+    UNDO: ["ctrl", "z"]
   }
 };
 

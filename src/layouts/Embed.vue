@@ -62,14 +62,16 @@
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('UNDO')"
+              @click="game.undo()"
               icon="undo"
               :title="$t('Undo')"
+              :disabled="!game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('REDO')"
+              @click="game.redo()"
               icon="redo"
               :title="$t('Redo')"
+              :disabled="!game.canRedo"
             />
           </q-btn-group>
           <EvalButtons
@@ -122,8 +124,6 @@ import EvalButtons from "../components/EvalButtons";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
-import { pick } from "lodash";
-import { MIN_GAME_STATE_PROPS } from "../constants";
 
 import { Platform } from "quasar";
 
@@ -151,7 +151,7 @@ export default {
   },
   computed: {
     gameState() {
-      return pick(this.game.state, MIN_GAME_STATE_PROPS);
+      return this.game.minState;
     },
     left: {
       get() {

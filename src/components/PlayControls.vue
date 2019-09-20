@@ -83,7 +83,7 @@
 import BranchMenu from "./BranchMenu";
 
 import { throttle, zipObject } from "lodash";
-import { HOTKEYS } from "../constants";
+import { HOTKEYS } from "../keymap";
 
 export default {
   name: "PlayControls",

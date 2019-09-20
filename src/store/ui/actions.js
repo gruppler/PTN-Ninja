@@ -1,6 +1,4 @@
 import { Loading, LocalStorage } from "quasar";
-import { pick } from "lodash";
-import { MIN_GAME_STATE_PROPS } from "../../constants";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -27,7 +25,6 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   LocalStorage.set("games", games);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.state) {
-    game.state = pick(game.state, MIN_GAME_STATE_PROPS);
     LocalStorage.set("state-" + game.name, game.state);
   }
   commit("ADD_GAME", game);
@@ -56,18 +53,12 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
   LocalStorage.remove("ptn-" + oldName);
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set(
-    "state-" + name,
-    pick(state.games[0].state, MIN_GAME_STATE_PROPS)
-  );
+  LocalStorage.set("state-" + name, state.games[0].state);
   commit("SET_NAME", name);
 };
 
 export const SET_STATE = ({ state, commit }, gameState) => {
-  LocalStorage.set(
-    "state-" + state.games[0].name,
-    pick(gameState, MIN_GAME_STATE_PROPS)
-  );
+  LocalStorage.set("state-" + state.games[0].name, gameState);
   commit("SET_STATE", gameState);
 };
 
@@ -78,12 +69,12 @@ export const SELECT_GAME = ({ commit }, index) => {
   commit("SELECT_GAME", index);
 };
 
-export const UNDO = ({ commit }) => {
-  commit("UNDO");
+export const UNDO = ({ commit }, game) => {
+  commit("UNDO", game);
 };
 
-export const REDO = ({ commit }) => {
-  commit("REDO");
+export const REDO = ({ commit }, game) => {
+  commit("REDO", game);
 };
 
 export const OPEN_FILE = ({ dispatch }, file) => {

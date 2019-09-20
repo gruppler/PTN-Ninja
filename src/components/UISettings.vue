@@ -168,7 +168,7 @@
 
 <script>
 import { zipObject } from "lodash";
-import { HOTKEYS_FORMATTED } from "../constants";
+import { HOTKEYS_FORMATTED } from "../keymap";
 
 const props = [
   "axisLabels",

@@ -184,7 +184,11 @@ export default {
           "\n" +
           "1. "
       );
-      this.$store.dispatch("ADD_GAME", game);
+      this.$store.dispatch("ADD_GAME", {
+        ptn: game.ptn,
+        name: game.name,
+        state: game.minState
+      });
       this.close();
     },
     loadGames(event) {

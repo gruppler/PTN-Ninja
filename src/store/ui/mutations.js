@@ -34,10 +34,10 @@ export const SELECT_GAME = (state, index) => {
   state.games.unshift(state.games.splice(index, 1)[0]);
 };
 
-export const UNDO = state => {
-  state;
+export const UNDO = (state, game) => {
+  game.undo();
 };
 
-export const REDO = state => {
-  state;
+export const REDO = (state, game) => {
+  game.redo();
 };

@@ -1,4 +1,5 @@
 import Marray from "marray";
+import Diff from "diff-match-patch";
 
 import Tag from "./Tag";
 import Comment from "./Comment";
@@ -15,10 +16,11 @@ import {
   cloneDeep,
   compact,
   defaults,
-  last,
   isEmpty,
+  last,
   map,
   omit,
+  pick,
   times,
   trimStart
 } from "lodash";
@@ -32,8 +34,15 @@ const pieceCounts = {
   8: { F: 50, C: 2, total: 52 }
 };
 
+const diff = new Diff();
+const maxHistoryLength = 20;
+const MIN_GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
+
 export default class Game {
-  constructor(notation, params = { name: "", state: null }) {
+  constructor(
+    notation,
+    params = { name: "", state: null, history: [], historyIndex: 0 }
+  ) {
     let item, key, ply;
     let branch = null;
     let moveNumber = 1;
@@ -41,6 +50,8 @@ export default class Game {
 
     this.name = params.name;
     this.state = {};
+    this.history = params.history || [];
+    this.historyIndex = params.historyIndex || 0;
     this.tags = {};
     this.moves = [move];
     this.branches = {};
@@ -246,14 +257,87 @@ export default class Game {
     if (params.state) {
       this.goToPly(params.state.plyID, params.state.plyIsDone);
     }
+    window.game = this;
   }
 
   static parse(notation, { name = "", state = {} }) {
     return new Game(notation, { name, state });
   }
 
-  _updatePTN() {
-    this.ptn = this.text();
+  get minState() {
+    return pick(this.state, MIN_GAME_STATE_PROPS);
+  }
+
+  _applyPatch(patch, state) {
+    const result = diff.patch_apply(patch, this.ptn);
+    if (result && result.length) {
+      this.state = state;
+      Object.assign(
+        this,
+        omit(Game.parse(result[0], this), ["history", "historyIndex"])
+      );
+    }
+  }
+
+  get canUndo() {
+    return this.historyIndex > 0;
+  }
+
+  get canRedo() {
+    return this.historyIndex < this.history.length - 1;
+  }
+
+  undo() {
+    if (!this.canUndo) {
+      return false;
+    }
+    const history = this.history[this.historyIndex--];
+    const state = this.minState;
+    this._applyPatch(history.patchesUndo, history.state);
+    history.state = state;
+    return true;
+  }
+
+  redo() {
+    if (!this.canRedo) {
+      return false;
+    }
+    const history = this.history[++this.historyIndex];
+    const state = this.minState;
+    this._applyPatch(history.patchesRedo, history.state);
+    history.state = state;
+    return true;
+  }
+
+  recordChange(mutate) {
+    const before = {
+      state: this.minState,
+      ptn: this.ptn
+    };
+    mutate();
+    if (this.history.length > maxHistoryLength) {
+      this.history.shift();
+      this.historyIndex = this.history.length - 1;
+    }
+    this.history.length = this.historyIndex + 1;
+    this.history.push({
+      state: before.state,
+      patchesRedo: diff.patch_make(before.ptn, this.ptn),
+      patchesUndo: diff.patch_make(this.ptn, before.ptn)
+    });
+    this.historyIndex++;
+  }
+
+  clearHistory() {
+    this.history.length = this.historyIndex = 0;
+  }
+
+  _updatePTN(recordChange) {
+    if (recordChange && this.ptn) {
+      this.recordChange(() => (this.ptn = this.text()));
+    } else {
+      this.ptn = this.text();
+    }
   }
 
   _setPly(plyID, isDone = false) {
@@ -644,7 +728,7 @@ export default class Game {
           return false;
       }
     }
-    this._updatePTN();
+    this._updatePTN(true);
   }
 
   checkGameEnd() {
@@ -935,7 +1019,7 @@ export default class Game {
     this.tags = Object.assign(this.tags, {
       [key]: Tag.parse(`[${key} "${value}"]`)
     });
-    this._updatePTN();
+    this._updatePTN(true);
   }
 
   getMoveComments(move) {
@@ -961,13 +1045,13 @@ export default class Game {
     } else {
       this[log][plyID].push(message);
     }
-    this._updatePTN();
+    this._updatePTN(true);
     return message;
   }
   editComment(log, plyID, index, message) {
     if (this[log][plyID] && this[log][plyID][index]) {
       this[log][plyID][index].message = message;
-      this._updatePTN();
+      this._updatePTN(true);
       return this[log][plyID][index];
     }
     return null;
@@ -979,7 +1063,7 @@ export default class Game {
       } else {
         this[log] = omit(this[log], plyID);
       }
-      this._updatePTN();
+      this._updatePTN(true);
     }
   }
 

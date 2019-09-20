@@ -33,10 +33,15 @@
 
     <q-page-container
       class="bg-primary"
-      v-shortkey="hotkeys"
+      v-shortkey="hotkeys.UI"
       @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
     >
-      <q-page ref="page" class="flex flex-center">
+      <q-page
+        ref="page"
+        class="flex flex-center"
+        v-shortkey="hotkeys.ACTIONS"
+        @shortkey="$store.dispatch($event.srcKey, game)"
+      >
         <Board :game="game" :space="size" />
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
@@ -104,14 +109,16 @@
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('UNDO')"
+              @click="game.undo()"
               icon="undo"
               :title="$t('Undo')"
+              :disabled="!game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('REDO')"
+              @click="game.redo()"
               icon="redo"
               :title="$t('Redo')"
+              :disabled="!game.canRedo"
             />
           </q-btn-group>
           <EvalButtons
@@ -196,8 +203,8 @@ import UISettings from "../components/UISettings";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
-import { each, pick } from "lodash";
-import { MIN_GAME_STATE_PROPS, HOTKEYS } from "../constants";
+import { each } from "lodash";
+import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
 
@@ -227,7 +234,7 @@ export default {
       game: this.getGame(),
       size: null,
       notifyClosers: [],
-      hotkeys: HOTKEYS.UI
+      hotkeys: HOTKEYS
     };
   },
   computed: {
@@ -318,7 +325,7 @@ export default {
       return this.$store.state.games;
     },
     gameState() {
-      let state = pick(this.game.state, MIN_GAME_STATE_PROPS);
+      let state = this.game.minState;
       state.name = this.game.name;
       return state;
     },
@@ -350,7 +357,7 @@ export default {
           this.$store.dispatch("ADD_GAME", {
             ptn: this.ptn,
             name: game.name,
-            state: game.state
+            state: game.minState
           });
           this.$router.replace("/");
         }
@@ -414,7 +421,7 @@ export default {
     },
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {
-        this.$store.dispatch("SET_STATE", newState);
+        this.$store.dispatch("SET_STATE", this.game.minState);
       }
     },
     gameText(newText, oldText) {
@@ -433,7 +440,7 @@ export default {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),
         name: this.game.name,
-        state: this.game.state
+        state: this.game.minState
       });
     }
   },
