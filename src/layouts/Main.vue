@@ -109,13 +109,13 @@
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="game.undo()"
+              @click="$store.dispatch('UNDO', game)"
               icon="undo"
               :title="$t('Undo')"
               :disabled="!game.canUndo"
             />
             <q-btn
-              @click="game.redo()"
+              @click="$store.dispatch('REDO', game)"
               icon="redo"
               :title="$t('Redo')"
               :disabled="!game.canRedo"
@@ -203,7 +203,7 @@ import UISettings from "../components/UISettings";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
-import { each } from "lodash";
+import { each, isEqual } from "lodash";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
@@ -329,6 +329,13 @@ export default {
       state.name = this.game.name;
       return state;
     },
+    gameHistory() {
+      return {
+        history: this.game.history.concat(),
+        index: this.game.historyIndex,
+        name: this.game.name
+      };
+    },
     gameText() {
       return { ptn: this.game.ptn, name: this.game.name };
     },
@@ -363,10 +370,7 @@ export default {
         }
       } else if (this.$store.state.games && this.$store.state.games.length) {
         game = this.$store.state.games[0];
-        game = Game.parse(game.ptn, {
-          name: game.name,
-          state: game.state
-        });
+        game = Game.parse(game.ptn, game);
       } else {
         game = this.newGame();
       }
@@ -422,6 +426,16 @@ export default {
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {
         this.$store.dispatch("SET_STATE", this.game.minState);
+      }
+    },
+    gameHistory(newHistory, oldHistory) {
+      if (oldHistory.name === newHistory.name) {
+        if (oldHistory.index !== newHistory.index) {
+          this.$store.dispatch("SAVE_UNDO_INDEX", this.game);
+        }
+        if (!isEqual(oldHistory.history, newHistory.history)) {
+          this.$store.dispatch("SAVE_UNDO_HISTORY", this.game);
+        }
       }
     },
     gameText(newText, oldText) {

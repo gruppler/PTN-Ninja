@@ -27,6 +27,10 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   if (game.state) {
     LocalStorage.set("state-" + game.name, game.state);
   }
+  if (game.history) {
+    LocalStorage.set("history-" + game.name, game.history);
+    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+  }
   commit("ADD_GAME", game);
 };
 
@@ -36,6 +40,8 @@ export const REMOVE_GAME = ({ commit }, index) => {
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + name);
   LocalStorage.remove("state-" + name);
+  LocalStorage.remove("history-" + name);
+  LocalStorage.remove("historyIndex-" + name);
   commit("REMOVE_GAME", index);
 };
 
@@ -54,6 +60,13 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
   LocalStorage.set("state-" + name, state.games[0].state);
+  LocalStorage.remove("history-" + oldName);
+  LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
+  LocalStorage.remove("historyIndex-" + oldName);
+  LocalStorage.set(
+    "historyIndex-" + state.games[0].name,
+    state.games[0].historyIndex
+  );
   commit("SET_NAME", name);
 };
 
@@ -75,6 +88,16 @@ export const UNDO = ({ commit }, game) => {
 
 export const REDO = ({ commit }, game) => {
   commit("REDO", game);
+};
+
+export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
+  LocalStorage.set("history-" + game.name, game.history);
+  commit("SAVE_UNDO_HISTORY", game);
+};
+
+export const SAVE_UNDO_INDEX = ({ commit }, game) => {
+  LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+  commit("SAVE_UNDO_INDEX", game);
 };
 
 export const OPEN_FILE = ({ dispatch }, file) => {

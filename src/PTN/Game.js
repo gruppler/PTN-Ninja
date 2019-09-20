@@ -17,6 +17,7 @@ import {
   compact,
   defaults,
   isEmpty,
+  isEqual,
   last,
   map,
   omit,
@@ -260,8 +261,8 @@ export default class Game {
     window.game = this;
   }
 
-  static parse(notation, { name = "", state = {} }) {
-    return new Game(notation, { name, state });
+  static parse(notation, params) {
+    return new Game(notation, params);
   }
 
   get minState() {
@@ -279,22 +280,29 @@ export default class Game {
     }
   }
 
+  _reversePatch(patches) {
+    patches = cloneDeep(patches);
+    patches.forEach(patch => patch.diffs.forEach(diff => (diff[0] *= -1)));
+    return patches;
+  }
+
   get canUndo() {
     return this.historyIndex > 0;
   }
 
   get canRedo() {
-    return this.historyIndex < this.history.length - 1;
+    return this.historyIndex < this.history.length;
   }
 
   undo() {
     if (!this.canUndo) {
       return false;
     }
-    const history = this.history[this.historyIndex--];
-    const state = this.minState;
-    this._applyPatch(history.patchesUndo, history.state);
-    history.state = state;
+    const history = this.history[--this.historyIndex];
+    this._applyPatch(
+      this._reversePatch(diff.patch_fromText(history.patch)),
+      history.state
+    );
     return true;
   }
 
@@ -302,10 +310,11 @@ export default class Game {
     if (!this.canRedo) {
       return false;
     }
-    const history = this.history[++this.historyIndex];
-    const state = this.minState;
-    this._applyPatch(history.patchesRedo, history.state);
-    history.state = state;
+    const history = this.history[this.historyIndex++];
+    this._applyPatch(
+      diff.patch_fromText(history.patch),
+      history.afterState || history.state
+    );
     return true;
   }
 
@@ -315,17 +324,19 @@ export default class Game {
       ptn: this.ptn
     };
     mutate();
-    if (this.history.length > maxHistoryLength) {
-      this.history.shift();
-      this.historyIndex = this.history.length - 1;
-    }
-    this.history.length = this.historyIndex + 1;
+    this.history.length = this.historyIndex;
     this.history.push({
       state: before.state,
-      patchesRedo: diff.patch_make(before.ptn, this.ptn),
-      patchesUndo: diff.patch_make(this.ptn, before.ptn)
+      patch: diff.patch_toText(diff.patch_make(before.ptn, this.ptn)),
+      afterState: isEqual(before.state, this.minState)
+        ? undefined
+        : this.minState
     });
     this.historyIndex++;
+    if (this.history.length > maxHistoryLength) {
+      this.history.shift();
+      this.historyIndex = this.history.length;
+    }
   }
 
   clearHistory() {
@@ -1015,10 +1026,11 @@ export default class Game {
       : "";
   }
 
-  setTag(key, value) {
-    this.tags = Object.assign(this.tags, {
-      [key]: Tag.parse(`[${key} "${value}"]`)
+  setTags(tags) {
+    Object.keys(tags).forEach(key => {
+      tags[key] = Tag.parse(`[${key} "${tags[key]}"]`);
     });
+    Object.assign(this.tags, tags);
     this._updatePTN(true);
   }
 

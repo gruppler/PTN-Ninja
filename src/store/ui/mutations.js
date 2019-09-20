@@ -41,3 +41,11 @@ export const UNDO = (state, game) => {
 export const REDO = (state, game) => {
   game.redo();
 };
+
+export const SAVE_UNDO_HISTORY = (state, game) => {
+  state.games[0].history = game.history.concat();
+};
+
+export const SAVE_UNDO_INDEX = (state, game) => {
+  state.games[0].historyIndex = game.historyIndex;
+};

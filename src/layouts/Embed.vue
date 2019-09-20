@@ -62,13 +62,13 @@
         <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="game.undo()"
+              @click="$store.dispatch('UNDO', game)"
               icon="undo"
               :title="$t('Undo')"
               :disabled="!game.canUndo"
             />
             <q-btn
-              @click="game.redo()"
+              @click="$store.dispatch('REDO', game)"
               icon="redo"
               :title="$t('Redo')"
               :disabled="!game.canRedo"

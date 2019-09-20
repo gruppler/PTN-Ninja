@@ -19,7 +19,7 @@
         <div class="row">
           <div class="col q-gutter-y-md">
             <q-input
-              v-model="player1"
+              v-model="tags.player1"
               :label="$t('Player1')"
               @keyup.enter="save"
               color="accent"
@@ -32,7 +32,7 @@
             </q-input>
 
             <q-input
-              v-model="player2"
+              v-model="tags.player2"
               :label="$t('Player2')"
               @keyup.enter="save"
               color="accent"
@@ -63,8 +63,10 @@ export default {
   data() {
     return {
       name: "",
-      player1: this.game.tag("player1"),
-      player2: this.game.tag("player2")
+      tags: {
+        player1: null,
+        player2: null
+      }
     };
   },
   methods: {
@@ -81,29 +83,37 @@ export default {
         this.game.name = this.name;
       }
 
-      this.player1 = (this.player1 || "").trim();
-      this.player2 = (this.player2 || "").trim();
-      if (this.player1 !== this.game.tag("player1")) {
-        this.game.setTag("player1", this.player1);
-        this.player1 = this.game.tag("player1");
-      }
-      if (this.player2 !== this.game.tag("player2")) {
-        this.game.setTag("player2", this.player2);
-        this.player2 = this.game.tag("player2");
+      let changedTags = {};
+      Object.keys(this.tags).forEach(key => {
+        const value = (this.tags[key] || "").trim();
+        if (value !== this.game.tag(key)) {
+          changedTags[key] = value;
+        }
+      });
+      if (Object.keys(changedTags).length) {
+        this.game.setTags(changedTags);
+        this.updateTags();
       }
 
       this.close();
     },
     swapPlayers() {
-      [this.player1, this.player2] = [this.player2, this.player1];
+      [this.tags.player1, this.tags.player2] = [
+        this.tags.player2,
+        this.tags.player1
+      ];
+    },
+    updateTags() {
+      Object.keys(this.tags).forEach(key => {
+        this.tags[key] = this.game.tag(key);
+      });
     }
   },
   watch: {
     value(isVisible) {
       if (isVisible) {
         this.name = this.game.name;
-        this.player1 = this.game.tag("player1");
-        this.player2 = this.game.tag("player2");
+        this.updateTags();
       }
     }
   }

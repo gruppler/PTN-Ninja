@@ -38,7 +38,9 @@ if (!state.embed) {
   state.games = load("games", []).map(name => ({
     name,
     ptn: load("ptn-" + name),
-    state: load("state-" + name)
+    state: load("state-" + name),
+    history: load("history-" + name),
+    historyIndex: load("historyIndex-" + name)
   }));
 }
 
