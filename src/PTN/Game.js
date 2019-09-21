@@ -1007,12 +1007,12 @@ export default class Game {
     White: "White"
   };
 
-  generateName() {
-    const player1 = this.tag("player1", Game.t["White"]);
-    const player2 = this.tag("player2", Game.t["Black"]);
-    const result = this.tag("result").replace(/\//g, "-");
-    const date = this.tag("date");
-    const time = this.tag("time").replace(/\D/g, ".");
+  generateName(tags = {}) {
+    const player1 = tags.player1 || this.tag("player1", Game.t["White"]);
+    const player2 = tags.player2 || this.tag("player2", Game.t["Black"]);
+    const result = (tags.result || this.tag("result")).replace(/\//g, "-");
+    const date = tags.date || this.tag("date");
+    const time = (tags.time || this.tag("time")).replace(/\D/g, ".");
     return (
       player1 +
       " vs " +

@@ -14,7 +14,16 @@
           color="accent"
           dark
           filled
-        />
+        >
+          <template v-slot:append>
+            <q-btn
+              @click="name = game.generateName(tags)"
+              icon="refresh"
+              dense
+              flat
+            />
+          </template>
+        </q-input>
 
         <div class="row">
           <div class="col q-gutter-y-md">
