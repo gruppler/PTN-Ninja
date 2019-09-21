@@ -133,6 +133,7 @@ export default class Game {
         }
       });
     });
+    Object.assign(this.state, this._state);
 
     if (this.tags.tps) {
       this.firstMoveNumber = this.tags.tps.value.linenum;
@@ -248,15 +249,20 @@ export default class Game {
       this.name = this.generateName();
     }
 
-    if (params.state) {
-      this.state.targetBranch = params.state.targetBranch;
-    }
-    this.updateState();
     if (this.tags.tps) {
       this._doTPS(this.tags.tps.value);
+      this.updateState();
     }
-    if (params.state) {
+    if (
+      params.state &&
+      (params.state.plyID !== this.state.plyID || params.state.plyIsDone)
+    ) {
+      this.state.targetBranch = params.state.targetBranch;
+      this.updateState();
+      this.state._targetBranch = "";
       this.goToPly(params.state.plyID, params.state.plyIsDone);
+    } else if (!this.state.ply) {
+      this.updateState();
     }
     window.game = this;
   }
@@ -273,10 +279,7 @@ export default class Game {
     const result = diff.patch_apply(patch, this.ptn);
     if (result && result.length) {
       this.state = state;
-      Object.assign(
-        this,
-        omit(Game.parse(result[0], this), ["history", "historyIndex"])
-      );
+      Object.assign(this, Game.parse(result[0], this));
     }
   }
 
@@ -343,7 +346,7 @@ export default class Game {
     this.history.length = this.historyIndex = 0;
   }
 
-  _updatePTN(recordChange) {
+  _updatePTN(recordChange = false) {
     if (recordChange && this.ptn) {
       this.recordChange(() => (this.ptn = this.text()));
     } else {
@@ -805,9 +808,25 @@ export default class Game {
   }
 
   findRoads(player) {
+    const players = player ? [player] : [1, 2];
     let possibleRoads = { 1: {}, 2: {} };
     let connections = {};
-    let players = player ? [player] : [1, 2];
+    let possibleDeadEnds = { 1: [], 2: [] };
+    let deadEnds = [];
+    let roads = {
+      1: [],
+      2: [],
+      squares: {
+        1: [],
+        2: []
+      },
+      edges: {
+        1: { NS: false, EW: false },
+        2: { NS: false, EW: false }
+      },
+      length: 0
+    };
+    let road;
 
     // Recursively follow a square and return all connected squares and edges
     function _followRoad(square) {
@@ -872,10 +891,18 @@ export default class Game {
       }
     }
 
-    // Gather player-controlled squares and dead ends
-    let possibleDeadEnds = { 1: [], 2: [] },
-      deadEnds = [];
+    // Add a road to the output
+    function _addRoad(road, player) {
+      roads[player].push({
+        edges: road.edges,
+        squares: Object.keys(road.squares)
+      });
+      Object.assign(roads.squares[player], road.squares);
+      if (road.edges.NS) roads.edges[player].NS = true;
+      if (road.edges.EW) roads.edges[player].EW = true;
+    }
 
+    // Gather player-controlled squares and dead ends
     this.state.squares.forEach(row =>
       row.forEach(square => {
         let piece = last(square);
@@ -911,31 +938,6 @@ export default class Game {
     players.forEach(player => _removeDeadEnds(deadEnds, possibleRoads[player]));
 
     // Find roads that actually bridge opposite edges
-    let roads = {
-        1: [],
-        2: [],
-        squares: {
-          1: [],
-          2: []
-        },
-        edges: {
-          1: { NS: false, EW: false },
-          2: { NS: false, EW: false }
-        },
-        length: 0
-      },
-      road;
-
-    function _addRoad(road, player) {
-      roads[player].push({
-        edges: road.edges,
-        squares: Object.keys(road.squares)
-      });
-      Object.assign(roads.squares[player], road.squares);
-      if (road.edges.NS) roads.edges[player].NS = true;
-      if (road.edges.EW) roads.edges[player].EW = true;
-    }
-
     players.forEach(player => {
       while (!isEmpty(possibleRoads[player])) {
         // Follow any square to get all connected squares

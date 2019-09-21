@@ -134,8 +134,6 @@
 <script>
 import Game from "../PTN/Game";
 
-import { each } from "lodash";
-
 export default {
   name: "AddGame",
   props: ["value"],
@@ -192,7 +190,7 @@ export default {
       this.close();
     },
     loadGames(event) {
-      each(event.target.files, file => this.$store.dispatch("OPEN_FILE", file));
+      this.$store.dispatch("OPEN_FILES", event.target.files);
       this.close();
     },
     swapPlayers() {

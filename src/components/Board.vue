@@ -167,8 +167,8 @@ export default {
     },
     squares() {
       let squares = [];
-      for (var y = this.game.size - 1; y >= 0; y--) {
-        for (var x = 0; x < this.game.size; x++) {
+      for (let y = this.game.size - 1; y >= 0; y--) {
+        for (let x = 0; x < this.game.size; x++) {
           squares.push(this.game.state.squares[y][x]);
         }
       }

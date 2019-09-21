@@ -31,7 +31,12 @@
                   :linenum="message.ply.move.linenum"
                   :game="game"
                 />
-                <Ply :ply="message.ply" :game="game" :delay="500" />
+                <Ply
+                  class="text-no-wrap"
+                  :ply="message.ply"
+                  :game="game"
+                  :delay="6e4 / $store.state.playSpeed"
+                />
               </div>
             </template>
           </template>
@@ -104,7 +109,7 @@ export default {
         if (plyID >= 0) {
           messages.push({ ply: this.game.plies[plyID] });
         }
-        for (var i = 0; i < this.log[plyID].length; i++) {
+        for (let i = 0; i < this.log[plyID].length; i++) {
           let message = this.parseMessage(this.log[plyID][i]);
           if (
             previous &&

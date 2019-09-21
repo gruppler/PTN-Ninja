@@ -203,7 +203,7 @@ import UISettings from "../components/UISettings";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
-import { each, isEqual } from "lodash";
+import { isEqual } from "lodash";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
@@ -410,9 +410,7 @@ export default {
     openFiles(event) {
       event.stopPropagation();
       event.preventDefault();
-      each(event.dataTransfer.files, file =>
-        this.$store.dispatch("OPEN_FILE", file)
-      );
+      this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
     },
     nop(event) {
       event.preventDefault();
@@ -420,8 +418,14 @@ export default {
     }
   },
   watch: {
-    games() {
-      this.updateGame();
+    games(newGames, oldGames) {
+      if (
+        !newGames[0] ||
+        !oldGames[0] ||
+        newGames[0].name !== oldGames[0].name
+      ) {
+        this.updateGame();
+      }
     },
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {

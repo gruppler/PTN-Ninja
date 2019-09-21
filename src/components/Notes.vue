@@ -59,6 +59,7 @@
                   :game="game"
                 />
                 <Ply
+                  class="text-no-wrap"
                   :ply="game.plies[plyID]"
                   :game="game"
                   :delay="6e4 / $store.state.playSpeed"

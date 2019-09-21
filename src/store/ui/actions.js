@@ -100,17 +100,25 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const OPEN_FILE = ({ dispatch }, file) => {
-  if (file && /\.ptn$|\.txt$/i.test(file.name)) {
-    var reader = new FileReader();
-    reader.onload = event => {
-      Loading.hide();
-      dispatch("ADD_GAME", {
-        name: file.name.replace(/\.ptn$|\.txt$/, ""),
-        ptn: event.target.result
-      });
-    };
-    Loading.show();
-    reader.readAsText(file);
-  }
+export const OPEN_FILES = ({ dispatch }, files) => {
+  let count = 0;
+  files = Array.from(files);
+  files.forEach(file => {
+    if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+      let reader = new FileReader();
+      reader.onload = event => {
+        dispatch("ADD_GAME", {
+          name: file.name.replace(/\.ptn$|\.txt$/, ""),
+          ptn: event.target.result
+        });
+        if (!--count) {
+          Loading.hide();
+        }
+      };
+      if (!count++) {
+        Loading.show();
+      }
+      reader.readAsText(file);
+    }
+  });
 };
