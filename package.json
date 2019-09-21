@@ -26,7 +26,7 @@
     "vue-shortkey": "^3.1.7"
   },
   "devDependencies": {
-    "@quasar/app": "^1.1.0",
+    "@quasar/app": "^1.1.1",
     "@quasar/quasar-app-extension-icon-genie": "^1.0.2",
     "@vue/eslint-config-prettier": "^4.0.0",
     "babel-eslint": "^10.0.1",

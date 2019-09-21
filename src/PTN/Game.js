@@ -583,6 +583,9 @@ export default class Game {
     }
 
     const log = label => {
+      if (process.env.NODE_ENV === "production") {
+        return;
+      }
       console.log(
         label,
         this.state.branch + this.state.number + ".",

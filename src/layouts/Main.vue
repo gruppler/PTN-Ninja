@@ -387,8 +387,6 @@ export default {
         case "settings":
           this.dialogUISettings = true;
           break;
-        default:
-          console.log(action);
       }
     },
     edit() {
