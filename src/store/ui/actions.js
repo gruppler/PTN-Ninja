@@ -82,24 +82,6 @@ export const SELECT_GAME = ({ commit }, index) => {
   commit("SELECT_GAME", index);
 };
 
-export const UNDO = ({ commit }, game) => {
-  commit("UNDO", game);
-};
-
-export const REDO = ({ commit }, game) => {
-  commit("REDO", game);
-};
-
-export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
-  LocalStorage.set("history-" + game.name, game.history);
-  commit("SAVE_UNDO_HISTORY", game);
-};
-
-export const SAVE_UNDO_INDEX = ({ commit }, game) => {
-  LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-  commit("SAVE_UNDO_INDEX", game);
-};
-
 export const OPEN_FILES = ({ dispatch }, files) => {
   let count = 0;
   files = Array.from(files);
@@ -121,4 +103,22 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.readAsText(file);
     }
   });
+};
+
+export const UNDO = ({ commit }, game) => {
+  commit("UNDO", game);
+};
+
+export const REDO = ({ commit }, game) => {
+  commit("REDO", game);
+};
+
+export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
+  LocalStorage.set("history-" + game.name, game.history);
+  commit("SAVE_UNDO_HISTORY", game);
+};
+
+export const SAVE_UNDO_INDEX = ({ commit }, game) => {
+  LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+  commit("SAVE_UNDO_INDEX", game);
 };
