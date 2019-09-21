@@ -168,11 +168,12 @@
 
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
-      <div class="controls" :class="{ visible: $store.state.showControls }">
-        <q-toolbar class="footer-toolbar q-pa-sm bg-secondary text-white">
-          <PlayControls :game="game" />
-        </q-toolbar>
-      </div>
+      <q-toolbar
+        v-if="$store.state.showControls"
+        class="footer-toolbar q-pa-sm bg-secondary text-white"
+      >
+        <PlayControls :game="game" />
+      </q-toolbar>
     </q-footer>
 
     <AddGame v-model="dialogAddGame" />
@@ -322,7 +323,7 @@ export default {
       }
     },
     games() {
-      return this.$store.state.games;
+      return this.$store.state.games.concat();
     },
     gameState() {
       let state = this.game.minState;
@@ -417,11 +418,7 @@ export default {
   },
   watch: {
     games(newGames, oldGames) {
-      if (
-        !newGames[0] ||
-        !oldGames[0] ||
-        newGames[0].name !== oldGames[0].name
-      ) {
+      if (!newGames[0] || !oldGames[0] || newGames[0] !== oldGames[0]) {
         this.updateGame();
       }
     },
@@ -477,14 +474,6 @@ export default {
 </script>
 
 <style lang="stylus">
-footer
-  .controls
-    will-change height
-    transition all $generic-hover-transition
-    height 58px
-    &:not(.visible)
-      height 0
-
 #left-drawer, #right-drawer
   .q-drawer
     background rgba($blue-grey-5, 0.75)

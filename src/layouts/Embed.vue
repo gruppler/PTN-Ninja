@@ -99,11 +99,12 @@
 
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
-      <div class="controls" v-if="$store.state.showControls">
-        <q-toolbar class="q-pa-sm bg-secondary text-white">
-          <PlayControls :game="game" />
-        </q-toolbar>
-      </div>
+      <q-toolbar
+        v-if="$store.state.showControls"
+        class="q-pa-sm bg-secondary text-white"
+      >
+        <PlayControls :game="game" />
+      </q-toolbar>
     </q-footer>
 
     <NoteNotifications :game="game" />
