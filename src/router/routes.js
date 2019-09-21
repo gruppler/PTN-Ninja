@@ -1,13 +1,14 @@
 import { decompressFromEncodedURIComponent } from "lz-string";
+import { Platform } from "quasar";
 
 const routes = [
   {
     name: "local",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {
-      return window === window.top
-        ? import("layouts/Main")
-        : import("layouts/Embed");
+      return Platform.within.iframe
+        ? import("layouts/Embed")
+        : import("layouts/Main");
     },
     props(route) {
       let stateRaw = (route.params.state || "").substr(1).split("&");

@@ -33,8 +33,8 @@
     <q-drawer
       v-model="left"
       side="left"
-      :no-swipe-open="!Platform.has.touch"
-      :no-swipe-close="!Platform.has.touch"
+      :no-swipe-open="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">
@@ -90,8 +90,8 @@
     <q-drawer
       v-model="right"
       side="right"
-      :no-swipe-open="!Platform.has.touch"
-      :no-swipe-close="!Platform.has.touch"
+      :no-swipe-open="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <Notes class="fit" :game="game" />

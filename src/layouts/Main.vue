@@ -58,8 +58,8 @@
       :value="left"
       @input="showPTN"
       side="left"
-      :no-swipe-open="!Platform.has.touch"
-      :no-swipe-close="!Platform.has.touch"
+      :no-swipe-open="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">
@@ -139,8 +139,8 @@
       :value="right"
       @input="showText"
       side="right"
-      :no-swipe-open="!Platform.has.touch"
-      :no-swipe-close="!Platform.has.touch"
+      :no-swipe-open="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">

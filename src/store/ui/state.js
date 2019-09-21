@@ -24,7 +24,7 @@ const defaults = {
   unplayedPieces: true
 };
 
-let state = { embed: false, games: [], defaults, ...defaults };
+let state = { embed: Platform.within.iframe, games: [], defaults, ...defaults };
 
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
