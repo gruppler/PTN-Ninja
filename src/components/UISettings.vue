@@ -79,7 +79,9 @@
 
             <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Highlight_Square") }}</q-item-label>
+                <q-item-label>{{
+                  $t("Highlight_Current_Squares")
+                }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="highlightSquares" />

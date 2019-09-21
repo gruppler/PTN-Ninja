@@ -30,7 +30,7 @@ export default {
   Event: "Event",
   First_Ply: "First Ply",
   Flat_Counts: "Flat Counts",
-  Highlight_Square: "Highlight Square",
+  Highlight_Current_Squares: "Highlight Current Squares",
   Last_Ply: "Last Ply",
   Load_Game: "Load Game",
   Load_Sample_Game: "Load Sample Game",
