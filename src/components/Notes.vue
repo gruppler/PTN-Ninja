@@ -12,7 +12,7 @@
             />
             <div
               class="fullwidth-padded-md q-py-xs"
-              :class="{ highlight: isCurrent(plyID) }"
+              :class="{ highlight: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
               :key="plyID"
               :ref="plyID"
             >

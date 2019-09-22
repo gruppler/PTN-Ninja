@@ -51,7 +51,7 @@ export default class Game {
 
     this.name = params.name;
     this.state = {};
-    this.history = params.history || [];
+    this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
     this.tags = {};
     this.moves = [move];
@@ -327,18 +327,21 @@ export default class Game {
       ptn: this.ptn
     };
     mutate();
-    this.history.length = this.historyIndex;
-    this.history.push({
-      state: before.state,
-      patch: diff.patch_toText(diff.patch_make(before.ptn, this.ptn)),
-      afterState: isEqual(before.state, this.minState)
-        ? undefined
-        : this.minState
-    });
-    this.historyIndex++;
-    if (this.history.length > maxHistoryLength) {
-      this.history.shift();
-      this.historyIndex = this.history.length;
+    const patch = diff.patch_toText(diff.patch_make(before.ptn, this.ptn));
+    if (patch) {
+      this.history.length = this.historyIndex;
+      this.history.push({
+        state: before.state,
+        patch,
+        afterState: isEqual(before.state, this.minState)
+          ? undefined
+          : this.minState
+      });
+      this.historyIndex++;
+      if (this.history.length > maxHistoryLength) {
+        this.history.shift();
+        this.historyIndex = this.history.length;
+      }
     }
   }
 
