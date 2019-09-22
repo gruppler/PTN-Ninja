@@ -171,17 +171,20 @@ export default {
       if (!this.game.state.plyID && !this.game.state.plyIsDone) {
         return ids[0];
       } else if (this.game.state.ply) {
-        for (let i = 0; i < ids.length; i++) {
-          if (ids[i] === this.game.state.plyID) {
-            return this.game.state.plyID;
-          } else if (
-            ids[i] in this.game.plies &&
-            this.game.plies[ids[i]].index > this.game.state.ply.index
-          ) {
-            return ids[i - !!i];
+        if (this.game.state.plyID in this.log) {
+          return this.game.state.plyID;
+        } else {
+          for (let i = ids.length - 1; i >= 0; i--) {
+            if (
+              ids[i] in this.game.plies &&
+              this.game.plies[ids[i]].branch === this.game.state.branch &&
+              this.game.plies[ids[i]].index < this.game.state.ply.index
+            ) {
+              return ids[i];
+            }
           }
+          return ids[ids.length - 1];
         }
-        return ids[ids.length - 1];
       }
       return null;
     }

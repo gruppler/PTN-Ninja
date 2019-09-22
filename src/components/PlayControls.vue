@@ -68,6 +68,7 @@
       >
         <q-icon name="call_split" class="rotate-180" />
         <BranchMenu
+          v-if="$store.state.showControls"
           v-model="branchMenu"
           @select="selectBranch"
           :game="game"

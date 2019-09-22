@@ -1,96 +1,107 @@
 <template>
-  <div
-    class="board-container q-pa-md"
-    :class="{
-      ['size-' + game.size]: true,
-      ['turn-' + game.state.player]: true,
-      'axis-labels': $store.state.axisLabels,
-      'board-3D': $store.state.board3D,
-      'flat-counts': $store.state.flatCounts,
-      'highlight-squares': $store.state.highlightSquares,
-      'piece-shadows': $store.state.pieceShadows,
-      'unplayed-pieces': $store.state.unplayedPieces
-    }"
-    :style="{ maxWidth, fontSize }"
-    :key="game.name"
-  >
-    <div class="flat-counter row">
-      <div class="player1 relative-position" :style="{ width: flatWidths[0] }">
-        <div class="row absolute-fit no-wrap q-px-sm">
-          <div class="name ellipsis col-shrink">
-            {{ player1 }}
+  <div class="flex flex-center">
+    <div
+      class="board-container q-pa-md"
+      :class="{
+        ['size-' + game.size]: true,
+        ['turn-' + game.state.player]: true,
+        'axis-labels': $store.state.axisLabels,
+        'board-3D': $store.state.board3D,
+        'flat-counts': $store.state.flatCounts,
+        'highlight-squares': $store.state.highlightSquares,
+        'piece-shadows': $store.state.pieceShadows,
+        'unplayed-pieces': $store.state.unplayedPieces
+      }"
+      :style="{ maxWidth, fontSize }"
+      :key="game.name"
+    >
+      <div class="flat-counter row">
+        <div
+          class="player1 relative-position"
+          :style="{ width: flatWidths[0] }"
+        >
+          <div class="row absolute-fit no-wrap q-px-sm">
+            <div class="name ellipsis col-shrink">
+              {{ player1 }}
+            </div>
+            <div class="flats ellipsis q-pl-sm">{{ flats[0] }}</div>
           </div>
-          <div class="flats ellipsis q-pl-sm">{{ flats[0] }}</div>
+          <div class="turn-indicator"></div>
         </div>
-        <div class="turn-indicator"></div>
+        <div
+          class="player2 relative-position"
+          :style="{ width: flatWidths[1] }"
+        >
+          <div class="row absolute-fit no-wrap q-px-sm">
+            <div class="flats ellipsis q-pr-sm">{{ flats[1] }}</div>
+            <div class="name ellipsis col-shrink">
+              {{ player2 }}
+            </div>
+          </div>
+          <div class="turn-indicator"></div>
+        </div>
       </div>
-      <div class="player2 relative-position" :style="{ width: flatWidths[1] }">
-        <div class="row absolute-fit no-wrap q-px-sm">
-          <div class="flats ellipsis q-pr-sm">{{ flats[1] }}</div>
-          <div class="name ellipsis col-shrink">
-            {{ player2 }}
+
+      <div class="row no-wrap">
+        <div class="y-axis column">
+          <div v-for="i in (1, game.size)" :key="i">
+            {{ game.size - i + 1 }}
           </div>
         </div>
-        <div class="turn-indicator"></div>
-      </div>
-    </div>
 
-    <div class="row no-wrap">
-      <div class="y-axis column">
-        <div v-for="i in (1, game.size)" :key="i">{{ game.size - i + 1 }}</div>
-      </div>
-
-      <div class="board relative-position">
-        <div class="squares absolute-fit row">
-          <Square
-            v-for="square in squares"
-            :key="square.coord"
-            :x="square.x"
-            :y="square.y"
-            :game="game"
-          />
-        </div>
-        <div class="pieces absolute-fit no-pointer-events">
-          <template v-for="color in [1, 2]">
-            <Piece
-              v-for="i in game.pieceCounts.F"
-              :key="`${color}-F${i}`"
+        <div class="board relative-position">
+          <div class="squares absolute-fit row">
+            <Square
+              v-for="square in squares"
+              :key="square.coord"
+              :x="square.x"
+              :y="square.y"
               :game="game"
-              :color="color"
-              :index="i - 1"
-              type="F"
             />
-            <Piece
-              v-for="i in game.pieceCounts.C"
-              :key="`${color}-C${i}`"
-              :game="game"
-              :color="color"
-              :index="i - 1"
-              type="C"
-            />
-          </template>
+          </div>
+          <div class="pieces absolute-fit no-pointer-events">
+            <template v-for="color in [1, 2]">
+              <Piece
+                v-for="i in game.pieceCounts.F"
+                :key="`${color}-F${i}`"
+                :game="game"
+                :color="color"
+                :index="i - 1"
+                type="F"
+              />
+              <Piece
+                v-for="i in game.pieceCounts.C"
+                :key="`${color}-C${i}`"
+                :game="game"
+                :color="color"
+                :index="i - 1"
+                type="C"
+              />
+            </template>
+          </div>
         </div>
+
+        <div class="unplayed-bg"></div>
       </div>
 
-      <div class="unplayed-bg"></div>
+      <div class="x-axis row items-end">
+        <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
+      </div>
+
+      <Move
+        v-if="game.state.move"
+        v-show="game.state.ply && $store.state.showMove"
+        class="q-mt-md"
+        :class="{ 'lt-md': $store.state.showPTN }"
+        :key="game.state.move.id"
+        :move="game.state.move"
+        :game="game"
+        currentOnly
+      />
+
+      <q-resize-observer @resize="resizeBoard" debounce="10" />
     </div>
-
-    <div class="x-axis row items-end">
-      <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
-    </div>
-
-    <Move
-      v-if="game.state.move"
-      v-show="game.state.ply && $store.state.showMove"
-      class="q-mt-md"
-      :class="{ 'lt-md': $store.state.showPTN }"
-      :key="game.state.move.id"
-      :move="game.state.move"
-      :game="game"
-      currentOnly
-    />
-
-    <q-resize-observer @resize="resize" debounce="0" />
+    <q-resize-observer @resize="resizeSpace" debounce="10" />
   </div>
 </template>
 
@@ -106,10 +117,11 @@ export default {
     Piece,
     Move
   },
-  props: ["game", "space"],
+  props: ["game"],
   data() {
     return {
-      size: null
+      size: null,
+      space: null
     };
   },
   computed: {
@@ -180,8 +192,11 @@ export default {
       const active = document.activeElement;
       return active && /TEXT|INPUT/.test(active.tagName);
     },
-    resize(size) {
+    resizeBoard(size) {
       this.size = size;
+    },
+    resizeSpace(size) {
+      this.space = size;
     }
   }
 };

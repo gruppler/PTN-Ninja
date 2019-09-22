@@ -37,19 +37,17 @@
       @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
     >
       <q-page
-        ref="page"
-        class="flex flex-center"
         v-shortkey="hotkeys.ACTIONS"
         @shortkey="$store.dispatch($event.srcKey, game)"
+        style="overflow-hidden"
       >
-        <Board :game="game" :space="size" />
+        <Board class="absolute-fit" :game="game" />
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle class="dimmed-btn" color="white" />
         </q-page-sticky>
-        <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 
@@ -169,7 +167,7 @@
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
-        v-if="$store.state.showControls"
+        v-show="$store.state.showControls"
         class="footer-toolbar q-pa-sm bg-secondary text-white"
       >
         <PlayControls :game="game" />
@@ -233,8 +231,6 @@ export default {
     return {
       Platform,
       game: this.getGame(),
-      size: null,
-      notifyClosers: [],
       hotkeys: HOTKEYS
     };
   },
@@ -401,10 +397,6 @@ export default {
     },
     showTextTab(value) {
       this.textTab = value;
-    },
-    resize(size) {
-      this.size = size;
-      this.size.height = parseInt(this.$refs.page.style.minHeight, 10);
     },
     openFiles(event) {
       event.stopPropagation();

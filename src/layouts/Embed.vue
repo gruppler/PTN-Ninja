@@ -21,12 +21,11 @@
     </q-header>
 
     <q-page-container class="bg-primary">
-      <q-page ref="page" class="flex flex-center">
-        <Board :game="game" :space="size" />
+      <q-page ref="page">
+        <Board class="absolute-fit" :game="game" />
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle class="dimmed-btn" color="white" />
         </q-page-sticky>
-        <q-resize-observer @resize="resize" debounce="0" />
       </q-page>
     </q-page-container>
 
@@ -100,7 +99,7 @@
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
-        v-if="$store.state.showControls"
+        v-show="$store.state.showControls"
         class="q-pa-sm bg-secondary text-white"
       >
         <PlayControls :game="game" />
@@ -145,9 +144,7 @@ export default {
   data() {
     return {
       Platform,
-      game: Game.parse(this.ptn, { name: this.name, state: this.state }),
-      size: null,
-      notifyClosers: []
+      game: Game.parse(this.ptn, { name: this.name, state: this.state })
     };
   },
   computed: {
@@ -180,12 +177,6 @@ export default {
     },
     title() {
       return this.name || this.game.generateName();
-    }
-  },
-  methods: {
-    resize(size) {
-      this.size = size;
-      this.size.height = parseInt(this.$refs.page.style.minHeight, 10);
     }
   },
   created() {
