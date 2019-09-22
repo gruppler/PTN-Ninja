@@ -25,7 +25,7 @@
           <q-list style="max-height: 50vh">
             <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Axis_Labels") }}</q-item-label>
+                <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="axisLabels" />
@@ -34,7 +34,7 @@
 
             <q-item tag="label" :title="hotkeys.showRoads" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Road_Connections") }}</q-item-label>
+                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="showRoads" />
@@ -43,7 +43,7 @@
 
             <q-item tag="label" :title="hotkeys.pieceShadows" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Piece_Shadows") }}</q-item-label>
+                <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="pieceShadows" />
@@ -52,7 +52,7 @@
 
             <q-item tag="label" :title="hotkeys.flatCounts" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Flat_Counts") }}</q-item-label>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="flatCounts" />
@@ -61,7 +61,7 @@
 
             <q-item tag="label" :title="hotkeys.unplayedPieces" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Unplayed_Pieces") }}</q-item-label>
+                <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="unplayedPieces" />
@@ -70,7 +70,7 @@
 
             <q-item tag="label" :title="hotkeys.showMove" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Current_Move") }}</q-item-label>
+                <q-item-label>{{ $t("Current Move") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="showMove" />
@@ -80,7 +80,7 @@
             <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
               <q-item-section>
                 <q-item-label>{{
-                  $t("Highlight_Current_Squares")
+                  $t("Highlight Current Squares")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -90,7 +90,7 @@
 
             <q-item>
               <q-item-section>
-                {{ $t("Play_Speed") }}
+                {{ $t("Play Speed") }}
                 <q-slider
                   v-model="playSpeed"
                   :min="30"
@@ -112,7 +112,7 @@
           <q-list style="max-height: 50vh">
             <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Show_All_Branches") }}</q-item-label>
+                <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="showAllBranches" />
@@ -121,7 +121,7 @@
 
             <q-item tag="label" :title="hotkeys.notifyGame" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Show_Game_Notifications") }}</q-item-label>
+                <q-item-label>{{ $t("Game Notifications") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="notifyGame" />
@@ -130,7 +130,7 @@
 
             <q-item tag="label" :title="hotkeys.notifyNotes" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Show_Note_Notifications") }}</q-item-label>
+                <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="notifyNotes" />
@@ -139,7 +139,7 @@
 
             <q-item tag="label" :title="hotkeys.showControls" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Play_Controls") }}</q-item-label>
+                <q-item-label>{{ $t("Play Controls") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="showControls" />
@@ -148,7 +148,7 @@
 
             <q-item tag="label" :title="hotkeys.showScrubber" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Scrub_Bar") }}</q-item-label>
+                <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="showScrubber" />

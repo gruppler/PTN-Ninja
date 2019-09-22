@@ -1,5 +1,5 @@
 <template>
-  <q-btn @click="copy" icon="file_copy" :title="$t('Copy_to_Clipboard')" />
+  <q-btn @click="copy" icon="file_copy" :title="$t('Copy to Clipboard')" />
 </template>
 
 <script>

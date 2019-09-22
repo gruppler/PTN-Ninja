@@ -2,8 +2,8 @@
   <q-dialog :value="value" @input="$emit('input', $event)" no-route-dismiss>
     <q-card style="width: 500px" class="bg-secondary" dark>
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
-        <q-tab name="new" :label="$t('New_Game')" />
-        <q-tab name="load" :label="$t('Load_Game')" />
+        <q-tab name="new" :label="$t('New Game')" />
+        <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
       <q-tab-panels

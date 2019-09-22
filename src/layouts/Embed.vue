@@ -41,7 +41,7 @@
           <q-btn-group class="full-width" spread stretch flat unelevated>
             <q-btn
               @click="showAllBranches = !showAllBranches"
-              :title="$t('Show_All_Branches')"
+              :title="$t('Show All Branches')"
               :text-color="showAllBranches ? 'accent' : ''"
               class="no-border-radius"
             >
@@ -50,7 +50,7 @@
             <CopyButton :game="game" />
             <q-btn
               icon="assignment_returned"
-              :title="$t('Paste_from_Clipboard')"
+              :title="$t('Paste from Clipboard')"
               class="no-border-radius"
             />
           </q-btn-group>

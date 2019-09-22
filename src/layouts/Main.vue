@@ -65,7 +65,7 @@
           <q-btn-group class="full-width" spread stretch flat unelevated>
             <q-btn
               @click="showAllBranches = !showAllBranches"
-              :title="$t('Show_All_Branches')"
+              :title="$t('Show All Branches')"
               :text-color="showAllBranches ? 'accent' : ''"
               class="no-border-radius"
             >
@@ -74,7 +74,7 @@
             <CopyButton :game="game" />
             <q-btn
               icon="assignment_returned"
-              :title="$t('Paste_from_Clipboard')"
+              :title="$t('Paste from Clipboard')"
             />
             <q-btn :title="$t('Trim')" class="no-border-radius">
               <q-icon name="flip" class="rotate-270" />
@@ -85,7 +85,7 @@
                       <q-icon name="flip" class="rotate-270" />
                     </q-item-section>
                     <q-item-section>{{
-                      $t("Trim_to_current_ply")
+                      $t("Trim to current ply")
                     }}</q-item-section>
                   </q-item>
                   <q-item clickable>
@@ -93,7 +93,7 @@
                       <q-icon name="apps" />
                     </q-item-section>
                     <q-item-section>{{
-                      $t("Trim_to_current_board")
+                      $t("Trim to current board")
                     }}</q-item-section>
                   </q-item>
                 </q-list>
