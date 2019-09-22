@@ -48,6 +48,9 @@
 
 .q-dialog
   z-index 9998
+  .q-expansion-item .q-list
+    overflow-x hidden
+    overflow-y auto
 
 .q-field__append
   align-self flex-end
@@ -65,8 +68,6 @@
   top $toolbar-min-height
 
 .q-notification
-  word-wrap break-word
-  word-break break-all
   transition transform $generic-hover-transition,
     opacity $generic-hover-transition
   @media (min-width: $breakpoint-sm-min)
@@ -74,6 +75,9 @@
       max-width 45vw
   &.note
     white-space pre-line
+    .q-notification__message
+      text-overflow ellipsis
+      overflow hidden
 
 .q-slider__pin-value-marker-text
   color $secondary

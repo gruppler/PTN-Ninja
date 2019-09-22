@@ -22,7 +22,7 @@
           group="settings"
           default-opened
         >
-          <q-list style="max-height: 50vh" class="scroll">
+          <q-list style="max-height: 50vh">
             <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Axis_Labels") }}</q-item-label>
@@ -109,7 +109,7 @@
         </q-expansion-item>
 
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
-          <q-list style="max-height: 50vh" class="scroll">
+          <q-list style="max-height: 50vh">
             <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Show_All_Branches") }}</q-item-label>
