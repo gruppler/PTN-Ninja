@@ -17,7 +17,8 @@
         >
           <template v-slot:append>
             <q-btn
-              @click="name = game.generateName(tags)"
+              v-show="name !== generatedName"
+              @click="name = generatedName"
               icon="refresh"
               dense
               flat
@@ -77,6 +78,11 @@ export default {
         player2: null
       }
     };
+  },
+  computed: {
+    generatedName() {
+      return this.game.generateName(this.tags);
+    }
   },
   methods: {
     close() {
