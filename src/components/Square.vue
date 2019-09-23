@@ -207,9 +207,12 @@ export default {
       opacity 0
       position absolute
       will-change opacity, top, bottom, left, right
-      transition all $half-time $easing,
+      transition opacity $time linear,
         background-color $time linear,
-        opacity $half-time linear
+        top $time $easing,
+        bottom $time $easing,
+        left $time $easing,
+        right $time $easing
       &.n, &.s
         left 35%
         right 35%
@@ -241,9 +244,12 @@ export default {
   &.s .road .s,
   &.w .road .w
     opacity .2
-    transition all $half-time $easing $half-time,
+    transition opacity $time linear,
       background-color $time linear,
-      opacity $time linear
+      top $half-time $easing $half-time,
+      bottom $half-time $easing $half-time,
+      left $half-time $easing $half-time,
+      right $half-time $easing $half-time
   &.rn .road .n,
   &.re .road .e,
   &.rs .road .s,

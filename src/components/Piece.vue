@@ -97,7 +97,8 @@ export default {
   bottom 0
   left 0
   will-change transform, opacity
-  transition all $generic-hover-transition
+  transition transform $generic-hover-transition,
+    opacity $generic-hover-transition
 
   .stone
     position absolute
@@ -109,8 +110,14 @@ export default {
     box-sizing border-box
     border 1px solid rgba(#000, .8)
     border-radius 10%
-    will-change transform, width, height, left, border-radius
-    transition all $generic-hover-transition
+    will-change transform, width, height, left, border-radius, background-color, box-shadow
+    transition transform $generic-hover-transition,
+      width $generic-hover-transition,
+      height $generic-hover-transition,
+      left $generic-hover-transition,
+      border-radius $generic-hover-transition,
+      background-color $generic-hover-transition,
+      box-shadow $generic-hover-transition
 
     .board-container.piece-shadows &
       border-color transparent
