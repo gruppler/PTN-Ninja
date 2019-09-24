@@ -203,7 +203,7 @@ export default class Game {
         if (
           move.linenum.number === this.firstMoveNumber &&
           this.firstPlayer === 2 &&
-          !move.pl1
+          !move.ply1
         ) {
           move.setPly(Nop.parse("--"), 1);
         }
@@ -216,9 +216,6 @@ export default class Game {
           // Player 2 ply
           ply.player = 2;
           ply.color = moveNumber === 1 ? 1 : 2;
-          if (!move.ply1) {
-            move.setPly(Nop.parse("--"), 1);
-          }
           move.setPly(ply, 2);
         } else {
           // New move
@@ -900,7 +897,8 @@ export default class Game {
       // Drop in current square
       if (altSelect) {
         if (
-          this.state.selected.initialCount > this.state.selected.pieces.length
+          this.state.selected.initialCount - 1 >
+          this.state.selected.pieces.length
         ) {
           // Undo last drop
           this.state.selected.pieces.unshift(
@@ -911,6 +909,9 @@ export default class Game {
         } else {
           // Drop all
           this.state.selected.pieces = [];
+          last(
+            this.state.selected.moveset
+          ).count = this.state.selected.initialCount;
         }
       } else {
         this.state.selected.pieces.shift();
