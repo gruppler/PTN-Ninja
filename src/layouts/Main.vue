@@ -448,8 +448,7 @@ export default {
         state: this.game.minState
       });
     }
-  },
-  mounted() {
+
     // Listen for dropped files
     if (window.File && window.FileReader && window.FileList && window.Blob) {
       window.addEventListener("drop", this.openFiles, true);
