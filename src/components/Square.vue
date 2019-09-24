@@ -190,8 +190,6 @@ export default {
     altSelect() {
       if (this.valid) {
         this.game.selectSquare(this.square, true);
-      } else {
-        this.game.cancelMove();
       }
     }
   }

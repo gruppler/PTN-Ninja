@@ -759,7 +759,10 @@ export default class Game {
             currentSquare.y - prevSquare.y
           ])
         ];
-        neighbors = [currentSquare.neighbors[direction]];
+        neighbors = [
+          currentSquare.neighbors[direction],
+          this.state.selected.squares[0]
+        ];
       }
 
       if (neighbors.includes(square)) {
@@ -914,6 +917,12 @@ export default class Game {
         last(this.state.selected.moveset).count +=
           move.action === "pop" ? -1 : 1;
       }
+    } else if (
+      this.state.selected.moveset.length > 1 &&
+      square === this.state.selected.squares[0]
+    ) {
+      // Selected initial square to cancel move
+      this.cancelMove();
     } else {
       // Drop in different square
       const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
