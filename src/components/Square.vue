@@ -6,27 +6,33 @@
       light: x % 2 !== y % 2,
       ['p' + color]: !!color,
       'no-roads': !$store.state.showRoads,
-      road: !!road,
+      current,
       selected,
+      placed,
       valid,
+      connected: n || e || s || w,
       n,
       e,
       s,
       w,
+      road: !!road,
       rn,
       re,
       rs,
       rw
     }"
+    @click.left="select"
+    @click.right.prevent="altSelect"
   >
-    <div class="hl selected" />
+    <div class="hl current" />
     <div class="road" v-if="$store.state.showRoads">
       <div class="n" />
       <div class="e" />
       <div class="s" />
       <div class="w" />
+      <div class="center" />
     </div>
-    <div class="hl hover" />
+    <div class="hl player" />
   </div>
 </template>
 
@@ -46,14 +52,25 @@ export default {
     color() {
       return this.piece ? this.piece.color : "";
     },
-    selected() {
+    current() {
       return (
         this.game.state.ply &&
         this.game.state.ply.squares.includes(this.square.coord)
       );
     },
+    selected() {
+      return this.game.state.selected.squares.includes(this.square);
+    },
+    placed() {
+      return (
+        this.piece &&
+        this.piece.ply &&
+        this.piece.ply === this.game.state.ply &&
+        this.game.state.number > 1
+      );
+    },
     valid() {
-      return !this.piece || this.color === this.game.state.player;
+      return this.game.isValidSquare(this.square);
     },
     roads() {
       return this.color &&
@@ -163,6 +180,20 @@ export default {
             this.road.squares.includes(this.square.neighbors.W.coord)))
       );
     }
+  },
+  methods: {
+    select() {
+      if (this.valid) {
+        this.game.selectSquare(this.square);
+      }
+    },
+    altSelect() {
+      if (this.valid) {
+        this.game.selectSquare(this.square, true);
+      } else {
+        this.game.cancelMove();
+      }
+    }
   }
 };
 </script>
@@ -181,19 +212,27 @@ export default {
     right 0
     opacity 0
 
-  .hl.selected
+  .hl.current
     background $accent
-  .board-container.highlight-squares &.selected .hl.selected
+  .board-container.highlight-squares &.current .hl.current
     opacity .75;
 
-  .board-container.turn-1 &.valid .hl.hover
-    background-color $blue-grey-2
-  .board-container.turn-2 &.valid .hl.hover
-    background-color $blue-grey-8
-  &.valid:hover .hl.hover
+  .board-container.color-1 &
+    .hl.player
+      background-color $blue-grey-2
+    &.placed .hl.player
+      background-color $blue-grey-8
+  .board-container.color-2 &
+    .hl.player
+      background-color $blue-grey-8
+    &.placed .hl.player
+      background-color $blue-grey-2
+  &.valid:hover .hl.player
     opacity .35
     cursor pointer
-  &.no-roads.road .hl.hover
+  &.selected .hl.player
+    opacity .5
+  &.no-roads.road .hl.player
     opacity .25
 
   .road
@@ -213,6 +252,12 @@ export default {
         bottom $time $easing,
         left $time $easing,
         right $time $easing
+      &.center
+        top 25%
+        bottom 25%
+        left 25%
+        right 25%
+        border-radius 50%
       &.n, &.s
         left 35%
         right 35%
@@ -239,6 +284,7 @@ export default {
     right 0
   &.w .road .w
     left 0
+  &.connected .road .center,
   &.n .road .n,
   &.e .road .e,
   &.s .road .s,
@@ -255,8 +301,19 @@ export default {
   &.rs .road .s,
   &.rw .road .w
     opacity 0.8
+  &.connected .road .center
+    opacity 1
+    transition opacity $time linear
   &.p1 .road > div
     background-color $blue-grey-2
   &.p2 .road > div
     background-color $blue-grey-8
+  &.p1 .road > .center
+    background-color $blue-grey-3
+  &.p2 .road > .center
+    background-color $blue-grey-5
+  &.p1.current .road > .center
+    background-color mix($blue-grey-2, $accent)
+  &.p2.current .road > .center
+    background-color mix($blue-grey-6, $accent)
 </style>

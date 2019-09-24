@@ -30,7 +30,8 @@ export const HOTKEYS = {
   },
   ACTIONS: {
     REDO: ["ctrl", "shift", "z"],
-    UNDO: ["ctrl", "z"]
+    UNDO: ["ctrl", "z"],
+    CANCEL_MOVE: ["esc"]
   }
 };
 

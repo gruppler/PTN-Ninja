@@ -27,12 +27,12 @@ import {
 } from "lodash";
 
 const pieceCounts = {
-  3: { F: 10, C: 0, total: 10 },
-  4: { F: 15, C: 0, total: 15 },
-  5: { F: 21, C: 1, total: 22 },
-  6: { F: 30, C: 1, total: 31 },
-  7: { F: 40, C: 2, total: 42 },
-  8: { F: 50, C: 2, total: 52 }
+  3: { flat: 10, cap: 0, total: 10 },
+  4: { flat: 15, cap: 0, total: 15 },
+  5: { flat: 21, cap: 1, total: 22 },
+  6: { flat: 30, cap: 1, total: 31 },
+  7: { flat: 40, cap: 2, total: 42 },
+  8: { flat: 50, cap: 2, total: 52 }
 };
 
 const diff = new Diff();
@@ -49,6 +49,7 @@ export default class Game {
     let moveNumber = 1;
     let move = new Move({ game: this, id: 0, index: 0 });
 
+    this.isLocal = true;
     this.name = params.name;
     this.state = {};
     this.history = params.history ? params.history.concat() : [];
@@ -98,7 +99,11 @@ export default class Game {
     this._state = {
       plyID: 0,
       plyIsDone: false,
+      isGameEnd: false,
+      isFirstMove: false,
+      turn: 1,
       player: 1,
+      color: 1,
       branch: "",
       targetBranch: "",
       flats: [0, 0],
@@ -108,10 +113,15 @@ export default class Game {
         (y, x) => new Square(x, y, this.size)
       ),
       pieces: {
-        1: { F: [], C: [] },
-        2: { F: [], C: [] }
+        1: { flat: [], cap: [] },
+        2: { flat: [], cap: [] }
       },
-      selectedPieces: []
+      selected: {
+        pieces: [],
+        squares: [],
+        moveset: [],
+        initialCount: 0
+      }
     };
     this._state.squares.forEach(row => {
       row.forEach(square => {
@@ -364,7 +374,7 @@ export default class Game {
   }
 
   setTarget(ply) {
-    if (this.state.selectedPieces.length) {
+    if (this.state.selected.pieces.length) {
       return false;
     }
     this.state.targetBranch = ply.branch;
@@ -428,30 +438,52 @@ export default class Game {
       this.state.move = newMove;
       this.state.branch = newBranch;
       this.state.number = newNumber;
+    }
 
-      let flats = [0, 0];
-      this.state.squares.forEach(row => {
-        row.forEach(square => {
-          if (square.length) {
-            let piece = last(square);
-            flats[piece.color - 1] += !piece.isStanding && !piece.isCapstone;
-          }
-        });
+    let flats = [0, 0];
+    this.state.squares.forEach(row => {
+      row.forEach(square => {
+        if (square.length) {
+          let piece = last(square);
+          flats[piece.color - 1] += piece.isFlat;
+        }
       });
-      this.state.flats = flats;
+    });
+    this.state.flats = flats;
 
-      this.state.player =
-        this.state.plyIsDone && !this.state.ply.result
+    this.state.isFirstMove =
+      this.state.number === 1 &&
+      (!this.state.ply || this.state.ply.index < 1 || !this.state.plyIsDone);
+
+    if (this.state.ply) {
+      this.state.isGameEnd = this.state.plyIsDone && !!this.state.ply.result;
+      if (this.state.isGameEnd) {
+        this.state.turn = this.state.ply.player;
+      } else {
+        this.state.turn = this.state.plyIsDone
           ? this.state.ply.player === 1
             ? 2
             : 1
           : this.state.ply.player;
+      }
+    } else {
+      this.state.turn = this.firstPlayer;
+    }
+
+    if (this.state.isFirstMove) {
+      this.state.color = this.state.turn === 1 ? 2 : 1;
+    } else {
+      this.state.color = this.state.turn;
+    }
+
+    if (this.isLocal) {
+      this.state.player = this.state.turn;
     }
   }
 
   _doPly() {
     const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
-    if (ply && this._doMoveset(ply)) {
+    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
       if (ply.result) {
         if (ply.result.type === "R" && !ply.result.roads) {
@@ -468,7 +500,7 @@ export default class Game {
 
   _undoPly() {
     const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
-    if (ply && this._doMoveset(ply, true)) {
+    if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
       this._setPly(ply.id, false);
       return true;
     } else {
@@ -476,9 +508,8 @@ export default class Game {
     }
   }
 
-  _doMoveset(ply, isUndo = false) {
+  _doMoveset(moveset, color = 1, ply = null) {
     let stack = [];
-    const moveset = isUndo ? ply.toUndoMoveset() : ply.toMoveset();
 
     if (moveset[0].errors) {
       console.error(moveset[0].errors);
@@ -489,29 +520,33 @@ export default class Game {
       const square = this.state.squares[y][x];
 
       if (type) {
-        if (isUndo) {
-          square.pop();
-          this.state.pieces[ply.color][ply.pieceType].pop();
+        if (action === "pop") {
+          // Undo placement
+          let piece = square.pop();
+          this.state.pieces[color][piece.type].pop();
         } else {
+          // Do placement
           let piece = new Piece({
+            ply,
             square,
-            color: ply.color,
-            isStanding: ply.specialPiece === "S",
-            isCapstone: ply.specialPiece === "C"
+            game: this,
+            color,
+            type
           });
           square.push(piece);
-          this.state.pieces[ply.color][ply.pieceType].push(piece);
+          this.state.pieces[color][piece.type].push(piece);
         }
       } else if (action === "pop") {
+        // Undo movement
         times(count, () => stack.push(square.pop()));
-
         if (flatten) {
           last(square).isStanding = true;
         }
       } else {
+        // Do movement
         if (square.length && last(square).isStanding) {
           if (stack[0].isCapstone) {
-            if (!flatten) {
+            if (ply && !flatten) {
               flatten = ply.wallSmash = "*";
               this._updatePTN();
             }
@@ -530,18 +565,26 @@ export default class Game {
             console.error("Invalid ply");
             return false;
           }
-          Object.assign(piece, {
-            square,
-            x,
-            y,
-            z: square.length
-          });
+          piece.square = square;
           square.push(piece);
         });
       }
     });
 
     return true;
+  }
+
+  _undoMoveset(moveset, color = 1, ply = null) {
+    return this._doMoveset(
+      moveset
+        .map(move => ({
+          ...move,
+          action: move.action === "pop" ? "push" : "pop"
+        }))
+        .reverse(),
+      color,
+      ply
+    );
   }
 
   _doTPS({ grid }) {
@@ -559,15 +602,12 @@ export default class Game {
             }
             piece = new Piece({
               square,
-              z: square.length,
+              game: this,
               color: 1 * piece,
-              isStanding: type === "S",
-              isCapstone: type === "C"
+              type
             });
             square.push(piece);
-            this.state.pieces[piece.color][piece.isCapstone ? "C" : "F"].push(
-              piece
-            );
+            this.state.pieces[piece.color][piece.type].push(piece);
           }
         }
       });
@@ -578,7 +618,7 @@ export default class Game {
     const targetPly = this.plies[plyID];
     let switchBranch = this.state.targetBranch !== this.state._targetBranch;
 
-    if (!targetPly || this.state.selectedPieces.length) {
+    if (!targetPly || this.state.selected.pieces.length) {
       return false;
     }
 
@@ -673,7 +713,7 @@ export default class Game {
   }
 
   prev(half = false) {
-    if (this.state.selectedPieces.length) {
+    if (this.state.selected.pieces.length) {
       return false;
     }
     if (this.state.plyIsDone) {
@@ -685,7 +725,7 @@ export default class Game {
   }
 
   next(half = false) {
-    if (this.state.selectedPieces.length) {
+    if (this.state.selected.pieces.length) {
       return false;
     }
     if (!this.state.plyIsDone) {
@@ -694,6 +734,261 @@ export default class Game {
       return this.goToPly(this.state.nextPly.id, !half);
     }
     return false;
+  }
+
+  isValidSquare(square, assumeSoloCap = false) {
+    const piece = square.length ? last(square) : null;
+
+    if (this.state.selected.pieces.length) {
+      // Move in progress
+      const currentSquare = this.state.selected.pieces[0].square;
+      let neighbors = currentSquare.neighbors.concat();
+
+      if (square === currentSquare) {
+        return true;
+      }
+
+      if (this.state.selected.moveset.length > 1) {
+        // Direction is defined
+        const prevSquare = this.state.selected.squares[
+          this.state.selected.squares.length - 2
+        ];
+        const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
+          Ply.getDirection([
+            currentSquare.x - prevSquare.x,
+            currentSquare.y - prevSquare.y
+          ])
+        ];
+        neighbors = [currentSquare.neighbors[direction]];
+      }
+
+      if (neighbors.includes(square)) {
+        // Neighbor square
+        if (square.length === 0) {
+          // Empty square
+          return true;
+        }
+        if (piece.isCapstone) {
+          // Occupied by a capstone
+          return false;
+        }
+        if (!piece.isStanding) {
+          // Occupied by a flat
+          return true;
+        }
+        if (
+          last(this.state.selected.pieces).isCapstone &&
+          (this.state.selected.pieces.length === 1 || assumeSoloCap)
+        ) {
+          // Potential wall smash
+          return true;
+        }
+      }
+    } else if (!this.state.isGameEnd) {
+      if (this.state.turn === this.state.player) {
+        // Placement
+        if (!piece) {
+          // Empty square
+          return true;
+        }
+        if (piece.color === this.state.turn && !this.state.isFirstMove) {
+          // Player's piece
+          return true;
+        }
+      }
+      if (
+        this.state.ply &&
+        piece.ply === this.state.ply &&
+        !this.state.isFirstMove
+      ) {
+        // Piece just placed; valid for stone cycling
+        return true;
+      }
+    }
+    return false;
+  }
+
+  selectSquare(square, altSelect = false) {
+    if (!this.isValidSquare(square)) {
+      return false;
+    }
+
+    const piece = square.length ? square[square.length - 1] : null;
+    let move = last(this.state.selected.moveset);
+
+    let types = [];
+    if (
+      this.state.pieces[this.state.turn].flat.length < this.pieceCounts.flat
+    ) {
+      types.push("flat", "wall");
+    }
+    if (this.state.pieces[this.state.turn].cap.length < this.pieceCounts.cap) {
+      types.push("cap");
+    }
+    if (altSelect) {
+      types.reverse();
+    }
+
+    if (!move) {
+      move = {
+        action: "push",
+        x: square.x,
+        y: square.y,
+        count: 1,
+        type: ""
+      };
+      this.state.selected.moveset.push(move);
+    }
+
+    if (this.state.selected.pieces.length) {
+      this.dropSelection(square, altSelect);
+    } else if (piece) {
+      // Nothing selected yet, but this square has a piece
+      if (piece.ply && this.state.ply === piece.ply && this.state.number > 1) {
+        // Cycle through F, S, C
+        move.type =
+          types[
+            (types.indexOf(piece.isStanding ? "wall" : piece.type) + 1) %
+              types.length
+          ];
+        if (this.state.plyIsDone) {
+          this._undoPly();
+        }
+        if (!this.state.nextPly) {
+          this.state.move.plies.pop();
+        }
+        this.insertPly(Ply.fromMoveset([move]));
+        this.cancelMove();
+      } else {
+        // Select piece or stack
+        if (altSelect) {
+          this.state.selected.pieces.push(piece);
+        } else {
+          this.state.selected.pieces.push(...square.slice(-this.size));
+          move.count = this.state.selected.pieces.length;
+        }
+        this.state.selected.initialCount = this.state.selected.pieces.length;
+        this.state.selected.squares.push(square);
+        move.action = "pop";
+      }
+    } else {
+      // Place piece as new ply
+      if (this.state.isFirstMove) {
+        move.type = "flat";
+      } else {
+        move.type = types[0];
+      }
+      this.insertPly(Ply.fromMoveset([move]));
+      this.cancelMove();
+    }
+
+    return true;
+  }
+
+  dropSelection(square, altSelect = false) {
+    const currentSquare = this.state.selected.pieces[0].square;
+    let move = last(this.state.selected.moveset);
+
+    if (!this.isValidSquare(square)) {
+      return false;
+    }
+
+    if (square === currentSquare) {
+      // Drop in current square
+      if (altSelect) {
+        if (
+          this.state.selected.initialCount > this.state.selected.pieces.length
+        ) {
+          // Undo last drop
+          this.state.selected.pieces.unshift(
+            square[square.length - this.state.selected.pieces.length - 1]
+          );
+          last(this.state.selected.moveset).count -=
+            move.action === "pop" ? -1 : 1;
+        } else {
+          // Drop all
+          this.state.selected.pieces = [];
+        }
+      } else {
+        this.state.selected.pieces.shift();
+        last(this.state.selected.moveset).count +=
+          move.action === "pop" ? -1 : 1;
+      }
+    } else {
+      // Drop in different square
+      const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
+        Ply.getDirection([
+          square.x - currentSquare.x,
+          square.y - currentSquare.y
+        ])
+      ];
+      const neighbor = square.neighbors[direction];
+      const piece = last(square);
+
+      this.state.selected.initialCount = this.state.selected.pieces.length;
+      this.state.selected.squares.push(square);
+      move = {
+        action: "push",
+        x: square.x,
+        y: square.y,
+        count: altSelect ? this.state.selected.pieces.length : 1,
+        flatten: piece && piece.isStanding
+      };
+      this.state.selected.moveset.push(move);
+
+      if (move.flatten) {
+        piece.isStanding = false;
+      }
+
+      // Move selection from currentSquare to new square
+      currentSquare.splice(
+        -this.state.selected.pieces.length,
+        this.state.selected.pieces.length
+      );
+      square.push(...this.state.selected.pieces);
+      this.state.selected.pieces.forEach(piece => (piece.square = square));
+      if (altSelect) {
+        // Drop all
+        this.state.selected.pieces = [];
+      } else {
+        this.state.selected.pieces.shift();
+      }
+
+      // If there's nowhere left to continue, drop the rest
+      if (
+        this.state.selected.pieces.length > 0 &&
+        (!neighbor || !this.isValidSquare(neighbor, true))
+      ) {
+        move.count += this.state.selected.pieces.length;
+        this.state.selected.pieces = [];
+      }
+    }
+
+    if (this.state.selected.pieces.length === 0) {
+      if (this.state.selected.moveset.length > 1) {
+        this.insertPly(Ply.fromMoveset(this.state.selected.moveset), true);
+      }
+      this.state.selected.squares = [];
+      this.state.selected.moveset = [];
+      this.state.selected.initialCount = 0;
+    }
+  }
+
+  cancelMove() {
+    if (this.state.selected.moveset.length > 1) {
+      last(
+        this.state.selected.moveset
+      ).count = this.state.selected.initialCount;
+      this._undoMoveset(this.state.selected.moveset, this.state.color);
+    }
+    this.state.selected.pieces = [];
+    this.state.selected.squares = [];
+    this.state.selected.moveset = [];
+    this.state.selected.initialCount = 0;
+  }
+
+  insertPly(ply, isAlreadyDone = false) {
+    console.log(ply, isAlreadyDone);
   }
 
   toggleEvaluation(type) {
@@ -767,7 +1062,7 @@ export default class Game {
         result = player == 1 ? "0-R" : "R-0";
       }
     } else if (
-      pieces.F.length + pieces.C.length === 0 ||
+      pieces.flat.length + pieces.cap.length === 0 ||
       !this.state.squares.find(row => row.find(square => !square.length))
     ) {
       // Last empty square or last piece
@@ -780,7 +1075,7 @@ export default class Game {
         result = "0-F";
       }
     } else if (
-      pieces.F.length + pieces.C.length === 0 ||
+      pieces.flat.length + pieces.cap.length === 0 ||
       !this.state.squares.find(row => row.find(square => !square.length))
     ) {
       // Last empty square or last piece

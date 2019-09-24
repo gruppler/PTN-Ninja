@@ -34,6 +34,10 @@ export const SELECT_GAME = (state, index) => {
   state.games.unshift(state.games.splice(index, 1)[0]);
 };
 
+export const CANCEL_MOVE = (state, game) => {
+  game.cancelMove();
+};
+
 export const UNDO = (state, game) => {
   game.undo();
 };

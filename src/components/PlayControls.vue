@@ -4,7 +4,7 @@
       <q-btn
         round
         flat
-        :disable="!game.state.ply || !!game.state.nextPly"
+        :disable="!game.state.ply || !!game.state.nextPly || plyInProgress"
         icon="backspace"
       />
       <q-btn
@@ -13,7 +13,7 @@
         v-shortkey="hotkeys.first"
         round
         flat
-        :disable="isFirst"
+        :disable="isFirst || plyInProgress"
         icon="first_page"
       />
       <q-btn
@@ -25,7 +25,7 @@
         }"
         round
         flat
-        :disable="isFirst"
+        :disable="isFirst || plyInProgress"
         icon="keyboard_arrow_left"
       />
       <q-btn
@@ -35,6 +35,7 @@
         round
         color="accent"
         text-color="grey-10"
+        :disable="!game.state.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play_arrow'"
       />
       <q-btn
@@ -46,7 +47,7 @@
         }"
         round
         flat
-        :disable="isLast"
+        :disable="isLast || plyInProgress"
         icon="keyboard_arrow_right"
       />
       <q-btn
@@ -55,7 +56,7 @@
         v-shortkey="hotkeys.last"
         round
         flat
-        :disable="isLast"
+        :disable="isLast || plyInProgress"
         icon="last_page"
       />
       <q-btn
@@ -63,7 +64,7 @@
         @shortkey="selectOption"
         round
         flat
-        :disable="!branches.length"
+        :disable="!branches.length || plyInProgress"
         :color="hasBranches ? 'accent' : ''"
       >
         <q-icon name="call_split" class="rotate-180" />
@@ -110,6 +111,9 @@ export default {
         (!this.game.state.nextPly && this.game.state.plyIsDone) ||
         !this.game.state.ply
       );
+    },
+    plyInProgress() {
+      return this.game.state.selected.pieces.length !== 0;
     },
     hasBranches() {
       return !!(this.game.state.ply && this.game.state.ply.branches.length);

@@ -6,8 +6,7 @@ export default class Move {
     if (this.linenum) {
       this.linenum.move = this;
     }
-    this.ply1 = null;
-    this.ply2 = null;
+    this.plies = [];
     if (parts.ply1) {
       this.setPly(parts.ply1, 1);
     }
@@ -18,6 +17,20 @@ export default class Move {
       parts.index !== undefined
         ? parts.index
         : this.linenum.number - this.game.firstMoveNumber;
+  }
+
+  get ply1() {
+    return this.plies[0] || null;
+  }
+  set ply1(ply) {
+    return (this.plies[0] = ply);
+  }
+
+  get ply2() {
+    return this.plies[1] || null;
+  }
+  set ply2(ply) {
+    return (this.plies[1] = ply);
   }
 
   setPly(ply, player = 1) {

@@ -4,7 +4,8 @@
       class="board-container q-pa-md"
       :class="{
         ['size-' + game.size]: true,
-        ['turn-' + game.state.player]: true,
+        ['turn-' + game.state.turn]: true,
+        ['color-' + game.state.color]: true,
         'axis-labels': $store.state.axisLabels,
         'board-3D': $store.state.board3D,
         'flat-counts': $store.state.flatCounts,
@@ -61,22 +62,16 @@
           </div>
           <div class="pieces absolute-fit no-pointer-events">
             <template v-for="color in [1, 2]">
-              <Piece
-                v-for="i in game.pieceCounts.F"
-                :key="`${color}-F${i}`"
-                :game="game"
-                :color="color"
-                :index="i - 1"
-                type="F"
-              />
-              <Piece
-                v-for="i in game.pieceCounts.C"
-                :key="`${color}-C${i}`"
-                :game="game"
-                :color="color"
-                :index="i - 1"
-                type="C"
-              />
+              <template v-for="type in ['flat', 'cap']">
+                <Piece
+                  v-for="i in game.pieceCounts[type]"
+                  :key="`${color}-${type}-${i}`"
+                  :game="game"
+                  :color="color"
+                  :type="type"
+                  :index="i - 1"
+                />
+              </template>
             </template>
           </div>
         </div>

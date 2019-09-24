@@ -1,4 +1,4 @@
-import Ptn from "ptn";
+import Ptn from "./ptn";
 
 export default class Ply extends Ptn {
   constructor(
@@ -13,7 +13,6 @@ export default class Ply extends Ptn {
     }
   ) {
     super(notation);
-    this.pieceType = this.specialPiece === "C" ? "C" : "F";
     this.specialPiece = this.specialPiece === "F" ? "" : this.specialPiece;
     if (this.isMovement()) {
       this.minDistribution =

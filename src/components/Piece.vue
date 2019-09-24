@@ -9,9 +9,9 @@
       class="stone"
       :class="{
         ['p' + color]: true,
-        [type]: true,
-        S: state && state.isStanding,
-        unplayed: !state,
+        C: type === 'cap',
+        S: piece && piece.isStanding,
+        unplayed: !piece,
         immovable
       }"
     />
@@ -19,22 +19,22 @@
 </template>
 
 <script>
+const SELECTED_GAP = 3;
+
 export default {
   name: "Piece",
   props: ["game", "color", "type", "index"],
   computed: {
-    state() {
+    piece() {
       return this.game.state.pieces[this.color][this.type][this.index];
     },
     immovable() {
-      return this.state
-        ? this.state.square.length - this.state.z > this.game.size
-        : false;
+      return this.piece ? this.piece.isImmovable : false;
     },
     x() {
       let x = 100;
-      if (this.state) {
-        x *= this.state.x;
+      if (this.piece) {
+        x *= this.piece.x;
       } else {
         x *= this.game.size + 0.75 * (this.color === 2);
       }
@@ -43,30 +43,31 @@ export default {
     y() {
       let y = 100;
       let spacing = this.game.size * 1.25;
-      if (this.state) {
-        y *= this.state.y;
-        y += spacing * this.state.z;
+      if (this.piece) {
+        y *= this.piece.y;
+        y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
         if (!this.$store.state.board3D) {
           if (
-            this.state.square.length > this.game.size &&
-            this.state.z >= this.state.square.length - this.game.size
+            this.piece.square.length > this.game.size &&
+            this.piece.z >= this.piece.square.length - this.game.size
           ) {
-            y -= spacing * (this.state.square.length - this.game.size);
+            y -= spacing * (this.piece.square.length - this.game.size);
           }
-          if (this.state.isStanding && this.state.square.length > 1) {
+          if (this.piece.isStanding && this.piece.square.length > 1) {
             y -= spacing;
           }
         }
       } else {
+        // Unplayed piece
         y *= this.game.size - 1;
-        if (this.type === "F") {
+        if (this.type === "cap") {
+          y *= this.game.pieceCounts.total - this.index - 1;
+        } else {
           y *=
             this.game.pieceCounts.total -
             this.index -
-            this.game.pieceCounts.C -
+            this.game.pieceCounts.cap -
             1;
-        } else {
-          y *= this.game.pieceCounts.total - this.index - 1;
         }
         y /= this.game.pieceCounts.total - 1;
       }
@@ -74,12 +75,13 @@ export default {
     },
     z() {
       let z;
-      if (this.state) {
-        z = this.state.z;
+      if (this.piece) {
+        z = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       } else {
+        // Unplayed piece
         z = this.game.pieceCounts.total - this.index;
-        if (this.type === "C") {
-          z += this.game.pieceCounts.F;
+        if (this.type === "cap") {
+          z += this.game.pieceCounts.flat;
         }
         if (this.color === 2) {
           z += this.game.pieceCounts.total;

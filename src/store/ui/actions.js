@@ -109,6 +109,10 @@ export const UNDO = ({ commit }, game) => {
   commit("UNDO", game);
 };
 
+export const CANCEL_MOVE = ({ commit }, game) => {
+  commit("CANCEL_MOVE", game);
+};
+
 export const REDO = ({ commit }, game) => {
   commit("REDO", game);
 };

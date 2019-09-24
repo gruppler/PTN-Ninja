@@ -20,7 +20,6 @@ export default class Square extends Array {
     this.neighbors.E = null;
     this.neighbors.S = null;
     this.neighbors.W = null;
-    this.isSelected = false;
 
     if (y == size - 1) {
       this.edges.push("N");
