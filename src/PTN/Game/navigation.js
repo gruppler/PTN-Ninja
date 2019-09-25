@@ -1,6 +1,6 @@
 import Piece from "../Piece";
 
-import { defaults, last, times } from "lodash";
+import { last, times } from "lodash";
 
 export default class GameNavigation {
   _setPly(plyID, isDone = false) {
@@ -23,97 +23,6 @@ export default class GameNavigation {
     } else {
       this.updateState();
       return true;
-    }
-  }
-
-  // After _setPly, update the rest of the state
-  updateState() {
-    this.state = defaults(this.state, this._state);
-
-    if (this.state.plyID in this.plies) {
-      let newPly = this.plies[this.state.plyID];
-      let newMove = newPly.move;
-      let newBranch = newPly.branch;
-      let newNumber = newMove.linenum.number;
-      const isDifferentBranch =
-        this.state.branch !== newBranch ||
-        this.state.targetBranch !== this.state._targetBranch;
-
-      // Update lists of current branch's plies and moves
-      if (isDifferentBranch || !this.state.plies) {
-        if (newPly.isInBranch(this.state.targetBranch)) {
-          this.state.plies = this.plies.filter(ply =>
-            ply.isInBranch(this.state.targetBranch)
-          );
-        } else {
-          this.state.plies = this.plies.filter(ply =>
-            ply.isInBranch(this.state.branch)
-          );
-        }
-        this.state.moves = [];
-        this.state.plies.forEach(ply => {
-          if (ply.player === 2 || !ply.move.ply2) {
-            this.state.moves.push(ply.move);
-          }
-        });
-      }
-
-      // Update previous and next plies
-      if (isDifferentBranch || this.state.ply !== newPly) {
-        this.state.prevPly = newPly.index
-          ? this.state.plies[newPly.index - 1]
-          : null;
-        this.state.nextPly =
-          newPly.index < this.state.plies.length - 1
-            ? this.state.plies[newPly.index + 1]
-            : null;
-      }
-
-      this.state._targetBranch = this.state.targetBranch;
-      this.state.ply = newPly;
-      this.state.move = newMove;
-      this.state.branch = newBranch;
-      this.state.number = newNumber;
-    }
-
-    let flats = [0, 0];
-    this.state.squares.forEach(row => {
-      row.forEach(square => {
-        if (square.length) {
-          let piece = last(square);
-          flats[piece.color - 1] += piece.isFlat;
-        }
-      });
-    });
-    this.state.flats = flats;
-
-    this.state.isFirstMove =
-      this.state.number === 1 &&
-      (!this.state.ply || this.state.ply.index < 1 || !this.state.plyIsDone);
-
-    if (this.state.ply) {
-      this.state.isGameEnd = this.state.plyIsDone && !!this.state.ply.result;
-      if (this.state.isGameEnd) {
-        this.state.turn = this.state.ply.player;
-      } else {
-        this.state.turn = this.state.plyIsDone
-          ? this.state.ply.player === 1
-            ? 2
-            : 1
-          : this.state.ply.player;
-      }
-    } else {
-      this.state.turn = this.firstPlayer;
-    }
-
-    if (this.state.isFirstMove) {
-      this.state.color = this.state.turn === 1 ? 2 : 1;
-    } else {
-      this.state.color = this.state.turn;
-    }
-
-    if (this.isLocal) {
-      this.state.player = this.state.turn;
     }
   }
 
