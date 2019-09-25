@@ -244,18 +244,18 @@ export default {
       opacity 0
       position absolute
       will-change opacity, top, bottom, left, right
-      transition opacity $time linear,
-        background-color $time linear,
-        top $time $easing,
-        bottom $time $easing,
-        left $time $easing,
-        right $time $easing
+      transition opacity $two-thirds-time $easing-reverse,
+        background-color $two-thirds-time $easing-reverse,
+        top $half-time $easing-reverse,
+        bottom $half-time $easing-reverse,
+        left $half-time $easing-reverse,
+        right $half-time $easing-reverse
       &.center
-        top 25%
-        bottom 25%
-        left 25%
-        right 25%
-        border-radius 50%
+        top 30%
+        bottom 30%
+        left 30%
+        right 30%
+        border-radius 10%
       &.n, &.s
         left 35%
         right 35%
@@ -288,30 +288,20 @@ export default {
   &.s .road .s,
   &.w .road .w
     opacity .2
-    transition opacity $time linear,
-      background-color $time linear,
+    transition opacity $two-thirds-time $easing $one-third-time,
+      background-color $two-thirds-time $easing $one-third-time,
       top $half-time $easing $half-time,
       bottom $half-time $easing $half-time,
       left $half-time $easing $half-time,
       right $half-time $easing $half-time
+  &.road .road .center,
   &.rn .road .n,
   &.re .road .e,
   &.rs .road .s,
   &.rw .road .w
     opacity 0.8
-  &.connected .road .center
-    opacity 1
-    transition opacity $time linear
   &.p1 .road > div
     background-color $blue-grey-2
   &.p2 .road > div
     background-color $blue-grey-8
-  &.p1 .road > .center
-    background-color $blue-grey-3
-  &.p2 .road > .center
-    background-color $blue-grey-5
-  &.p1.current .road > .center
-    background-color mix($blue-grey-2, $accent)
-  &.p2.current .road > .center
-    background-color mix($blue-grey-6, $accent)
 </style>
