@@ -12,6 +12,7 @@
         C: type === 'cap',
         S: piece && piece.isStanding,
         unplayed: !piece,
+        firstSelected,
         immovable
       }"
     />
@@ -30,6 +31,9 @@ export default {
     },
     immovable() {
       return this.piece ? this.piece.isImmovable : false;
+    },
+    firstSelected() {
+      return this.piece && this.piece === this.game.state.selected.pieces[0];
     },
     x() {
       let x = 100;
@@ -124,6 +128,8 @@ export default {
     .board-container.piece-shadows &
       border-color transparent
       box-shadow $shadow-1
+      &.firstSelected
+        box-shadow @box-shadow, 0 2.8vmin 1.5vmin $elevation-umbra
 
     &.p1
       background-color $blue-grey-2
@@ -142,11 +148,15 @@ export default {
         transform rotate(-45deg)
         .board-container.piece-shadows &
           box-shadow -1px 1px 2px rgba(#000, .3)
+          &.firstSelected
+            box-shadow @box-shadow, -1.8vmin 1.8vmin 1.5vmin $elevation-umbra
       &.p2
         background-color $blue-grey-8
         transform rotate(45deg)
         .board-container.piece-shadows &
           box-shadow 1px 1px 2px rgba(#000, .3)
+          &.firstSelected
+            box-shadow @box-shadow, 1.8vmin 1.8vmin 1.5vmin $elevation-umbra
     &.C
       border-radius 50%
       &.p1
