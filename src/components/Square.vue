@@ -225,13 +225,14 @@ export default {
       background-color $blue-grey-8
     &.placed .hl.player
       background-color $blue-grey-2
-  &.valid:hover .hl.player
-    opacity .35
-    cursor pointer
   &.selected .hl.player
     opacity .5
   &.no-roads.road .hl.player
     opacity .25
+  @media (pointer: fine)
+    &.valid:hover .hl.player
+      opacity .35
+      cursor pointer
 
   .road
     position absolute
