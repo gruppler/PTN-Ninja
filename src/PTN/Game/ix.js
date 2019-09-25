@@ -69,6 +69,7 @@ export default class GameIX {
       if (
         this.state.ply &&
         piece.ply === this.state.ply &&
+        piece.ply.player === this.state.player &&
         !this.state.isFirstMove
       ) {
         // Piece just placed; valid for stone cycling
@@ -157,6 +158,7 @@ export default class GameIX {
 
   dropSelection(square, altSelect = false) {
     const currentSquare = this.state.selected.pieces[0].square;
+    const isFirstMove = this.state.selected.moveset.length === 1;
     let move = last(this.state.selected.moveset);
 
     if (!this.isValidSquare(square)) {
@@ -167,7 +169,7 @@ export default class GameIX {
       // Drop in current square
       if (altSelect) {
         if (
-          this.state.selected.initialCount - 1 >
+          this.state.selected.initialCount - 1 * !isFirstMove >
           this.state.selected.pieces.length
         ) {
           // Undo last drop
@@ -188,10 +190,7 @@ export default class GameIX {
         last(this.state.selected.moveset).count +=
           move.action === "pop" ? -1 : 1;
       }
-    } else if (
-      this.state.selected.moveset.length > 1 &&
-      square === this.state.selected.squares[0]
-    ) {
+    } else if (!isFirstMove && square === this.state.selected.squares[0]) {
       // Selected initial square to cancel move
       this.cancelMove();
     } else {

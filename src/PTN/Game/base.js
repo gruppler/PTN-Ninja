@@ -313,13 +313,17 @@ export default class GameBase {
       this.state.move = newMove;
       this.state.branch = newBranch;
       this.state.number = newNumber;
+    } else if (this.moves.length) {
+      this.state.move = this.moves[0];
+      this.state.branch = this.state.move.linenum.branch;
+      this.state.number = this.state.move.linenum.number;
     }
 
     let flats = [0, 0];
     this.state.squares.forEach(row => {
       row.forEach(square => {
         if (square.length) {
-          let piece = last(square);
+          const piece = last(square);
           flats[piece.color - 1] += piece.isFlat;
         }
       });
