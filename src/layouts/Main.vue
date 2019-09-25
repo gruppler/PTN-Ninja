@@ -356,7 +356,7 @@ export default {
       let game;
       if (this.ptn) {
         // Add game from URL then redirect to /
-        game = Game.parse(this.ptn, { name: this.name, state: this.state });
+        game = new Game(this.ptn, { name: this.name, state: this.state });
         if (game) {
           this.$store.dispatch("ADD_GAME", {
             ptn: this.ptn,
@@ -367,7 +367,7 @@ export default {
         }
       } else if (this.$store.state.games && this.$store.state.games.length) {
         game = this.$store.state.games[0];
-        game = Game.parse(game.ptn, game);
+        game = new Game(game.ptn, game);
       } else {
         game = this.newGame();
       }

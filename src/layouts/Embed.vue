@@ -144,7 +144,7 @@ export default {
   data() {
     return {
       Platform,
-      game: Game.parse(this.ptn, { name: this.name, state: this.state })
+      game: new Game(this.ptn, { name: this.name, state: this.state })
     };
   },
   computed: {
