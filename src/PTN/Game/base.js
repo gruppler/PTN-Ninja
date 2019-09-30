@@ -262,8 +262,6 @@ export default class GameBase {
     } else if (!this.state.ply) {
       this.updateState();
     }
-
-    window.game = this;
   }
 
   updateState() {

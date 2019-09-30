@@ -371,6 +371,7 @@ export default {
       } else {
         game = this.newGame();
       }
+      window.game = game;
       return game;
     },
     updateGame() {
