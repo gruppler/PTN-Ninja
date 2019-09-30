@@ -10,7 +10,7 @@
           flat
         />
         <QToolbarTitle>
-          <GameSelector @input="updateGame">
+          <GameSelector>
             <q-btn
               icon="edit"
               @click.stop="edit"
