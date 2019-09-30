@@ -1,4 +1,4 @@
-import Ptn from "./ptn";
+import Ptn from "ptn";
 
 export default class Ply extends Ptn {
   constructor(
