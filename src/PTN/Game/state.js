@@ -3,7 +3,7 @@ import Marray from "marray";
 import Piece from "../Piece";
 import Square from "../Square";
 
-import { defaults, last, memoize, pick } from "lodash";
+import { defaults, last, memoize } from "lodash";
 
 export default class GameState {
   constructor(game, state = null) {
@@ -87,10 +87,11 @@ export default class GameState {
   }
 
   getPlies() {
-    if (!this.ply) {
-      return null;
-    }
-    if (this.ply.isInBranch(this.targetBranch)) {
+    if (!this.game.plies) {
+      return [];
+    } else if (!this.ply) {
+      return this.game.plies;
+    } else if (this.ply.isInBranch(this.targetBranch)) {
       return this.game.plies.filter(ply => ply.isInBranch(this.targetBranch));
     } else {
       return this.game.plies.filter(ply => ply.isInBranch(this.branch));
@@ -98,16 +99,15 @@ export default class GameState {
   }
 
   getMoves() {
-    if (!this.plies) {
-      return null;
-    }
     let moves = [];
-    this.plies.forEach(ply => {
-      if (ply.player === 2 || !ply.move.ply2) {
-        moves.push(ply.move);
-      }
-    });
-    return moves;
+    if (this.plies) {
+      this.plies.forEach(ply => {
+        if (ply.player === 2 || !ply.move.ply2) {
+          moves.push(ply.move);
+        }
+      });
+    }
+    return moves.length ? moves : this.game.moves;
   }
 
   getPly() {
@@ -115,7 +115,7 @@ export default class GameState {
   }
 
   getMove() {
-    return this.ply ? this.ply.move : null;
+    return this.ply ? this.ply.move : this.moves[0];
   }
 
   getBranch() {
@@ -168,11 +168,15 @@ export default class GameState {
   }
 
   get min() {
-    return pick(this, ["targetBranch", "plyID", "plyIsDone"]);
+    return {
+      targetBranch: this.targetBranch,
+      plyIndex: this.ply ? this.ply.index : 0,
+      plyIsDone: this.plyIsDone
+    };
   }
 
   get isGameEnd() {
-    return this.plyIsDone && !!this.ply.result;
+    return this.ply && this.plyIsDone && !!this.ply.result;
   }
 
   get isFirstMove() {

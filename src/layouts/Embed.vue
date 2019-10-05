@@ -148,9 +148,6 @@ export default {
     };
   },
   computed: {
-    gameState() {
-      return this.game.minState;
-    },
     left: {
       get() {
         return this.$store.state.showPTN;

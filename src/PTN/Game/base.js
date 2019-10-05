@@ -204,12 +204,12 @@ export default class GameBase {
 
     this.saveBoardState();
 
-    if (
-      params.state &&
-      (params.state.plyID !== this.state.plyID || params.state.plyIsDone)
-    ) {
+    if (params.state) {
       this.state.targetBranch = params.state.targetBranch;
-      this.goToPly(params.state.plyID, params.state.plyIsDone);
+      ply = this.state.plies[params.state.plyIndex];
+      if (ply && (ply.id || params.state.plyIsDone)) {
+        this.goToPly(ply.id, params.state.plyIsDone);
+      }
     }
   }
 

@@ -28,7 +28,7 @@ const routes = [
 
       if (state.ply) {
         state.plyIsDone = state.ply.endsWith("!");
-        state.plyID = parseInt(state.ply, 10);
+        state.plyIndex = parseInt(state.ply, 10);
         delete state.ply;
       }
 

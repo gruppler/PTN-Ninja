@@ -74,6 +74,7 @@ export default {
     },
     roads() {
       return this.color &&
+        this.game.state.ply &&
         this.game.state.plyIsDone &&
         this.game.state.ply.result
         ? this.game.state.ply.result.roads

@@ -20,7 +20,7 @@ export default {
   props: ["game"],
   computed: {
     position() {
-      return this.game.state.plies && this.game.state.plies.length
+      return this.game.state.ply && this.game.state.plies.length
         ? this.game.state.ply.index + 0.5 * this.game.state.plyIsDone
         : 0;
     },
