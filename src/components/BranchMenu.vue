@@ -2,6 +2,8 @@
   <q-menu
     :value="value"
     @input="$emit('input', $event)"
+    transition-show="scale"
+    transition-hide="scale"
     content-class="bg-primary"
     auto-close
     cover
