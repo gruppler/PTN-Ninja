@@ -223,10 +223,12 @@ export default class GameBase {
     const result = (tags.result || this.tag("result")).replace(/\//g, "-");
     const date = tags.date || this.tag("date");
     const time = (tags.time || this.tag("time")).replace(/\D/g, ".");
+    const size = ` ${this.size}x${this.size}`;
     return (
       player1 +
       " vs " +
       player2 +
+      size +
       (result ? " " + result : "") +
       (date ? " " + date : "") +
       (time ? "-" + time : "")
