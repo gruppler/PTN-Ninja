@@ -31,7 +31,7 @@ export default class GameState {
       get: memoize(this.getBranch, () => this.plyID)
     });
     Object.defineProperty(this, "number", {
-      get: memoize(this.getNumber, () => this.ply.index)
+      get: memoize(this.getNumber, () => this.plyID)
     });
     Object.defineProperty(this, "board", {
       get: memoize(this.getBoard, () => this.boardPly),
@@ -159,6 +159,9 @@ export default class GameState {
 
   get boardPly() {
     let ply = !this.plyIsDone && this.prevPly ? this.prevPly : this.ply;
+    if (!ply) {
+      return null;
+    }
     if (!this.plyIsDone && ply.branches.length) {
       ply = ply.branches[0];
     }

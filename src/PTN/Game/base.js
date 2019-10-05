@@ -262,11 +262,20 @@ export default class GameBase {
   saveBoardState() {
     let ply = this.state.ply;
     // Save board state if it's not already saved
-    if (ply.id in this.boards && this.state.plyIsDone in this.boards[ply.id]) {
+    if (
+      ply &&
+      ply.id in this.boards &&
+      this.state.plyIsDone in this.boards[ply.id]
+    ) {
       return;
     }
+
     const board = this.state.board;
-    this._saveBoardState(board, ply.id, this.state.plyIsDone);
+    this._saveBoardState(board, ply ? ply.id : 0, this.state.plyIsDone);
+
+    if (!ply) {
+      return;
+    }
 
     // Set aliases too
     if (!this.state.plyIsDone) {
