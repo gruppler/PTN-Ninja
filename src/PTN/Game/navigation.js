@@ -202,7 +202,6 @@ export default class GameNavigation {
       } else {
         // Failed to find a close board state, so go to the beginning
         // (This should theoretically never happen)
-        console.log("Failed to find a close board state");
         this.state.setBoard(this.boards[0].false, 0, false);
       }
     } else if (

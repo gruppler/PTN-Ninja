@@ -154,7 +154,6 @@ export default class GameState {
     );
     this.plyID = plyID;
     this.plyIsDone = plyIsDone;
-    console.log("Set board", plyID, plyIsDone);
   }
 
   get boardPly() {
