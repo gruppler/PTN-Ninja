@@ -7,6 +7,7 @@
       :options="games"
       @input="select"
       :display-value="game.label"
+      behavior="menu"
       popup-content-class="bg-secondary"
       color="accent"
       options-dark
