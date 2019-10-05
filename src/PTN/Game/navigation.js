@@ -6,7 +6,6 @@ export default class GameNavigation {
   _setPly(plyID, isDone = false) {
     this.state.plyID = plyID;
     this.state.plyIsDone = isDone;
-    this.updateState();
   }
 
   setTarget(ply) {
@@ -21,7 +20,6 @@ export default class GameNavigation {
     ) {
       return this.goToPly(ply.id, this.state.plyIsDone);
     } else {
-      this.updateState();
       return true;
     }
   }
@@ -36,6 +34,13 @@ export default class GameNavigation {
         }
       } else if (ply.index === this.state.plies.length - 1) {
         this.checkGameEnd();
+      }
+      if (
+        this.state.isGameEnd ||
+        (this.state.nextPly && this.state.nextPly.branches.length)
+      ) {
+        // Save board state if it's not already
+        this.saveBoardState();
       }
       return true;
     } else {
@@ -84,7 +89,7 @@ export default class GameNavigation {
       } else if (action === "pop") {
         // Undo movement
         times(count, () => stack.push(square.pop()));
-        if (flatten) {
+        if (flatten && square.length) {
           last(square).isStanding = true;
         }
       } else {
@@ -100,8 +105,11 @@ export default class GameNavigation {
             return false;
           }
         }
-        if (flatten) {
+        if (flatten && square.length) {
           last(square).isStanding = false;
+        } else if (flatten) {
+          ply.wallSmash = "";
+          this._updatePTN();
         }
 
         times(count, () => {
@@ -161,88 +169,82 @@ export default class GameNavigation {
 
   goToPly(plyID, isDone) {
     const targetPly = this.plies[plyID];
-    let switchBranch = this.state.targetBranch !== this.state._targetBranch;
 
     if (!targetPly || this.state.selected.pieces.length) {
       return false;
     }
 
-    const log = label => {
-      if (process.env.NODE_ENV === "production") {
-        return;
-      }
-      console.log(
-        label,
-        this.state.branch + this.state.number + ".",
-        this.state.ply.text(),
-        this.state.plyIsDone,
-        Object.assign({}, this.state)
-      );
-    };
-
     const target = {
-      ply: targetPly,
       plyIsDone: isDone,
       move: targetPly.move,
       branch: targetPly.branch,
       number: targetPly.move.linenum.number
     };
 
-    log("started at");
+    // Load a board state?
+    if (!this.state.ply.isInBranch(target.branch)) {
+      let parentPly = this.branches[target.branch];
+      while (parentPly && !(parentPly.id in this.boards)) {
+        // Find the closest branch that has a saved board state
+        parentPly = this.branches[parentPly.branches[0].branch];
+      }
+      if (
+        parentPly &&
+        parentPly.id in this.boards &&
+        "false" in this.boards[parentPly.id]
+      ) {
+        // Load the board state
+        this.state.setBoard(
+          this.boards[parentPly.id].false,
+          parentPly.id,
+          false
+        );
+      } else {
+        // Failed to find a close board state, so go to the beginning
+        // (This should theoretically never happen)
+        console.log("Failed to find a close board state");
+        this.state.setBoard(this.boards[0].false, 0, false);
+      }
+    } else if (
+      plyID in this.boards &&
+      Math.abs(targetPly.index - this.state.ply.index) > this.size * this.size
+    ) {
+      // Load board state if it exists and is far enough away
+      if (!(isDone in this.boards[plyID])) {
+        isDone = !isDone;
+      }
+      this.state.setBoard(this.boards[plyID][isDone], plyID, isDone);
+    }
 
     // Set targetBranch if target is outside of it
     if (!targetPly.isInBranch(this.state.targetBranch)) {
-      switchBranch = true;
       this.state.targetBranch = target.branch;
-      this.updateState();
     }
 
-    // If current ply is outside target branch...
-    let wentBack = false;
-    while (
-      !this.state.ply.isInBranch(target.branch) &&
-      !this.state.ply.hasBranch(target.branch) &&
-      this._undoPly()
-    ) {
-      // ...go back until we're on an ancestor or sibling of the target branch
-      wentBack = true;
-    }
-    if (wentBack) {
-      log("went back to");
-    }
-
-    if (
-      switchBranch &&
-      this.state.branch !== target.branch &&
-      this.state.ply.hasBranch(target.branch)
-    ) {
+    if (this.state.ply.branches.includes(targetPly)) {
+      // Switch to the target branch if we're on a sibling
       if (this.state.plyIsDone) {
         this._undoPly();
       }
-      this._setPly(this.state.ply.getBranch(target.branch).id, false);
-      log("switched branch to");
+      this._setPly(targetPly.id, false);
     }
 
-    if (this.state.ply.index < target.ply.index) {
-      while (this.state.ply.index < target.ply.index && this._doPly()) {
+    if (this.state.ply.index < targetPly.index) {
+      while (this.state.ply.index < targetPly.index && this._doPly()) {
         // Go forward until we reach the target ply
       }
-      log("went forward to");
-    } else if (this.state.ply.index > target.ply.index) {
-      while (this.state.ply.index > target.ply.index && this._undoPly()) {
+    } else if (this.state.ply.index > targetPly.index) {
+      while (this.state.ply.index > targetPly.index && this._undoPly()) {
         // Go backward until we reach the target ply
       }
-      log("went back again to");
     }
 
     // Do or undo the target ply
     if (target.plyIsDone !== this.state.plyIsDone) {
       if (target.plyIsDone) {
         this._doPly();
-        log("did ply");
       } else {
         this._undoPly();
-        log("undid ply");
       }
     }
 

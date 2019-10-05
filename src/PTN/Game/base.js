@@ -1,5 +1,3 @@
-import Marray from "marray";
-
 import Comment from "../Comment";
 import Evaluation from "../Evaluation";
 import Linenum from "../Linenum";
@@ -7,10 +5,11 @@ import Move from "../Move";
 import Nop from "../Nop";
 import Ply from "../Ply";
 import Result from "../Result";
-import Square from "../Square";
 import Tag from "../Tag";
 
-import { defaults, each, last, map, pick, trimStart } from "lodash";
+import GameState from "./state";
+
+import { each, map, trimStart } from "lodash";
 
 const pieceCounts = {
   3: { flat: 10, cap: 0, total: 10 },
@@ -20,8 +19,6 @@ const pieceCounts = {
   7: { flat: 40, cap: 2, total: 42 },
   8: { flat: 50, cap: 2, total: 52 }
 };
-
-const MIN_GAME_STATE_PROPS = ["targetBranch", "plyID", "plyIsDone"];
 
 export default class GameBase {
   static t = {
@@ -40,11 +37,12 @@ export default class GameBase {
 
     this.isLocal = true;
     this.name = params.name;
-    this.state = {};
+    this.state = null;
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
     this.tags = {};
     this.moves = [move];
+    this.boards = {};
     this.branches = {};
     this.plies = [];
     this.chatlog = {};
@@ -86,54 +84,8 @@ export default class GameBase {
       }
     }
 
-    this._state = {
-      plyID: 0,
-      plyIsDone: false,
-      isGameEnd: false,
-      isFirstMove: false,
-      turn: 1,
-      player: 1,
-      color: 1,
-      branch: "",
-      targetBranch: "",
-      flats: [0, 0],
-      squares: new Marray.two(
-        this.size,
-        this.size,
-        (y, x) => new Square(x, y, this.size)
-      ),
-      pieces: {
-        1: { flat: [], cap: [] },
-        2: { flat: [], cap: [] }
-      },
-      selected: {
-        pieces: [],
-        squares: [],
-        moveset: [],
-        initialCount: 0
-      }
-    };
-    this._state.squares.forEach(row => {
-      row.forEach(square => {
-        if (!square.edges.N) {
-          square.neighbors.N = this._state.squares[square.y + 1][square.x];
-          square.neighbors.push(square.neighbors.N);
-        }
-        if (!square.edges.S) {
-          square.neighbors.S = this._state.squares[square.y - 1][square.x];
-          square.neighbors.push(square.neighbors.S);
-        }
-        if (!square.edges.E) {
-          square.neighbors.E = this._state.squares[square.y][square.x + 1];
-          square.neighbors.push(square.neighbors.E);
-        }
-        if (!square.edges.W) {
-          square.neighbors.W = this._state.squares[square.y][square.x - 1];
-          square.neighbors.push(square.neighbors.W);
-        }
-      });
-    });
-    Object.assign(this.state, this._state);
+    // Initialize game state
+    this.state = new GameState(this);
 
     if (this.tags.tps) {
       this.firstMoveNumber = this.tags.tps.value.linenum;
@@ -183,9 +135,9 @@ export default class GameBase {
         // Placeholder
         item = Nop.parse(notation);
         if (!move.ply1) {
-          move.setPly(item, 1);
+          move.ply1 = item;
         } else if (!move.ply2 && !move.ply1.result) {
-          move.setPly(item, 2);
+          move.ply2 = item;
         }
       } else if (/[1-8a-hCSF]/.test(notation[0])) {
         // Ply
@@ -195,18 +147,18 @@ export default class GameBase {
           this.firstPlayer === 2 &&
           !move.ply1
         ) {
-          move.setPly(Nop.parse("--"), 1);
+          move.ply1 = Nop.parse("--");
         }
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
           ply.color = moveNumber === 1 ? 2 : 1;
-          move.setPly(ply, 1);
+          move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
           ply.color = moveNumber === 1 ? 1 : 2;
-          move.setPly(ply, 2);
+          move.ply2 = ply;
         } else {
           // New move
           moveNumber += 1;
@@ -248,118 +200,21 @@ export default class GameBase {
 
     if (this.tags.tps) {
       this._doTPS(this.tags.tps.value);
-      this.updateState();
     }
+
+    this.saveBoardState();
 
     if (
       params.state &&
       (params.state.plyID !== this.state.plyID || params.state.plyIsDone)
     ) {
       this.state.targetBranch = params.state.targetBranch;
-      this.updateState();
-      this.state._targetBranch = "";
       this.goToPly(params.state.plyID, params.state.plyIsDone);
-    } else if (!this.state.ply) {
-      this.updateState();
-    }
-  }
-
-  updateState() {
-    this.state = defaults(this.state, this._state);
-
-    if (this.state.plyID in this.plies) {
-      let newPly = this.plies[this.state.plyID];
-      let newMove = newPly.move;
-      let newBranch = newPly.branch;
-      let newNumber = newMove.linenum.number;
-      const isDifferentBranch =
-        this.state.branch !== newBranch ||
-        this.state.targetBranch !== this.state._targetBranch;
-
-      // Update lists of current branch's plies and moves
-      if (isDifferentBranch || !this.state.plies) {
-        if (newPly.isInBranch(this.state.targetBranch)) {
-          this.state.plies = this.plies.filter(ply =>
-            ply.isInBranch(this.state.targetBranch)
-          );
-        } else {
-          this.state.plies = this.plies.filter(ply =>
-            ply.isInBranch(this.state.branch)
-          );
-        }
-        this.state.moves = [];
-        this.state.plies.forEach(ply => {
-          if (ply.player === 2 || !ply.move.ply2) {
-            this.state.moves.push(ply.move);
-          }
-        });
-      }
-
-      // Update previous and next plies
-      if (isDifferentBranch || this.state.ply !== newPly) {
-        this.state.prevPly = newPly.index
-          ? this.state.plies[newPly.index - 1]
-          : null;
-        this.state.nextPly =
-          newPly.index < this.state.plies.length - 1
-            ? this.state.plies[newPly.index + 1]
-            : null;
-      }
-
-      this.state._targetBranch = this.state.targetBranch;
-      this.state.ply = newPly;
-      this.state.move = newMove;
-      this.state.branch = newBranch;
-      this.state.number = newNumber;
-    } else if (this.moves.length) {
-      this.state.move = this.moves[0];
-      this.state.branch = this.state.move.linenum.branch;
-      this.state.number = this.state.move.linenum.number;
-    }
-
-    let flats = [0, 0];
-    this.state.squares.forEach(row => {
-      row.forEach(square => {
-        if (square.length) {
-          const piece = last(square);
-          flats[piece.color - 1] += piece.isFlat;
-        }
-      });
-    });
-    this.state.flats = flats;
-
-    this.state.isFirstMove =
-      this.state.number === 1 &&
-      (!this.state.ply || this.state.ply.index < 1 || !this.state.plyIsDone);
-
-    if (this.state.ply) {
-      this.state.isGameEnd = this.state.plyIsDone && !!this.state.ply.result;
-      if (this.state.isGameEnd) {
-        this.state.turn = this.state.ply.player;
-      } else {
-        this.state.turn = this.state.plyIsDone
-          ? this.state.ply.player === 1
-            ? 2
-            : 1
-          : this.state.ply.player;
-      }
-    } else {
-      this.state.turn = this.firstPlayer;
-    }
-
-    if (this.state.isFirstMove) {
-      this.state.color = this.state.turn === 1 ? 2 : 1;
-    } else {
-      this.state.color = this.state.turn;
-    }
-
-    if (this.isLocal) {
-      this.state.player = this.state.turn;
     }
   }
 
   get minState() {
-    return pick(this.state, MIN_GAME_STATE_PROPS);
+    return this.state.min;
   }
 
   generateName(tags = {}) {
@@ -392,6 +247,49 @@ export default class GameBase {
     });
     Object.assign(this.tags, tags);
     this._updatePTN(true);
+  }
+
+  _saveBoardState(board, plyID, plyIsDone) {
+    if (!(plyID in this.boards)) {
+      this.boards[plyID] = { [plyIsDone]: board };
+    } else if (!(plyIsDone in this.boards[plyID])) {
+      this.boards[plyID][plyIsDone] = board;
+    }
+  }
+
+  saveBoardState() {
+    let ply = this.state.ply;
+    // Save board state if it's not already saved
+    if (ply.id in this.boards && this.state.plyIsDone in this.boards[ply.id]) {
+      return;
+    }
+    const board = this.state.board;
+    this._saveBoardState(board, ply.id, this.state.plyIsDone);
+
+    // Set aliases too
+    if (!this.state.plyIsDone) {
+      if (ply.branches.length) {
+        // Siblings
+        ply.branches.forEach(ply => this._saveBoardState(board, ply.id, false));
+      }
+      // Previous ply
+      ply = this.state.prevPly;
+      if (ply) {
+        this._saveBoardState(board, ply.id, true);
+      }
+    } else {
+      // Next ply, plus all its siblings
+      ply = this.state.nextPly;
+      if (ply) {
+        if (ply.branches.length) {
+          ply.branches.forEach(ply => {
+            this._saveBoardState(board, ply.id, false);
+          });
+        } else {
+          this._saveBoardState(board, ply.id, false);
+        }
+      }
+    }
   }
 
   _updatePTN(recordChange = false) {

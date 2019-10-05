@@ -1,12 +1,53 @@
+import { defaults } from "lodash";
+
 export default class Piece {
   constructor(params) {
-    this.game = params.game;
-    this.ply = params.ply || null;
-    this.square = params.square;
-    this.color = params.color;
-    this.isStanding = /S|wall/.test(params.type);
-    this.isCapstone = /C|cap/.test(params.type);
-    this.type = this.isCapstone ? "cap" : "flat";
+    defaults(this, {
+      game: null,
+      square: null,
+      ply: null,
+      color: 1,
+      isStanding: false,
+      isCapstone: false
+    });
+    Object.keys(params).forEach(key => (this[key] = params[key]));
+  }
+
+  get state() {
+    return {
+      ply: this.ply ? this.ply.id : undefined,
+      type: this.typeCode || undefined,
+      x: this.x,
+      y: this.y,
+      z: this.z
+    };
+  }
+
+  set state(state) {
+    if (state.ply && state.ply in this.game) {
+      this.ply = this.game.plies[state.ply];
+    }
+    if (state.type) {
+      this.type = state.type;
+    }
+    const square = this.game.state.squares[state.y][state.x];
+    if (square) {
+      this.square = square;
+      square[state.z] = this;
+    }
+  }
+
+  get typeCode() {
+    return this.isCapstone ? "C" : this.isStanding ? "S" : "";
+  }
+
+  get type() {
+    return this.isCapstone ? "cap" : "flat";
+  }
+
+  set type(type) {
+    this.isStanding = /S|wall/.test(type);
+    this.isCapstone = /C|cap/.test(type);
   }
 
   get x() {

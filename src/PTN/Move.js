@@ -8,10 +8,10 @@ export default class Move {
     }
     this.plies = [];
     if (parts.ply1) {
-      this.setPly(parts.ply1, 1);
+      this.ply1 = parts.ply1;
     }
     if (parts.ply2) {
-      this.setPly(parts.ply2, 2);
+      this.ply2 = parts.ply2;
     }
     this.index =
       parts.index !== undefined
@@ -23,28 +23,27 @@ export default class Move {
     return this.plies[0] || null;
   }
   set ply1(ply) {
-    return (this.plies[0] = ply);
+    return this.setPly(ply, 0);
   }
 
   get ply2() {
     return this.plies[1] || null;
   }
   set ply2(ply) {
-    return (this.plies[1] = ply);
+    return this.setPly(ply, 1);
   }
 
-  setPly(ply, player = 1) {
-    const key = "ply" + player;
-    this[key] = ply;
+  setPly(ply, index = 0) {
+    this.plies[index] = ply;
     ply.game = this.game;
     ply.move = this;
     ply.branch = this.linenum.branch;
-    ply.index = this.index * 2 + player - this.game.firstPlayer;
+    ply.index = this.index * 2 + index - this.game.firstPlayer + 1;
     if (
       !ply.isNop &&
       this.linenum.branch &&
       this.linenum.isRoot &&
-      (player === 1 || this.ply1.isNop)
+      (index === 0 || this.ply1.isNop)
     ) {
       // Looks like we're adding a new branch
       const original = this.game.moves.find(
@@ -52,12 +51,12 @@ export default class Move {
           move.linenum.branch === this.linenum.parentBranch &&
           move.linenum.number === this.linenum.parentNumber
       );
-      if (original && original[key]) {
+      if (original && original.plies[index]) {
         // Add this ply to the original ply's branch list,
         // making sure the first one is the original itself
-        original[key].branches[0] = original[key];
-        original[key].branches.push(ply);
-        this[key].branches = original[key].branches;
+        original.plies[index].branches[0] = original.plies[index];
+        original.plies[index].branches.push(ply);
+        this.plies[index].branches = original.plies[index].branches;
 
         if (this.ply1.isNop) {
           // If first ply is placeholder, save reference to its original
