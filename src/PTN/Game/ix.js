@@ -139,7 +139,7 @@ export default class GameIX {
           this.state.selected.pieces.push(...square.slice(-this.size));
           move.count = this.state.selected.pieces.length;
         }
-        this.state.selected.initialCount = this.state.selected.pieces.length;
+        this.state.selected.initialCount = Math.min(this.size, square.length);
         this.state.selected.squares.push(square);
         move.action = "pop";
       }
