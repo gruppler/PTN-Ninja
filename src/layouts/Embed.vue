@@ -37,24 +37,7 @@
       persistent
     >
       <div class="absolute-fit column">
-        <q-toolbar class="bg-secondary text-white q-pa-none">
-          <q-btn-group class="full-width" spread stretch flat unelevated>
-            <q-btn
-              @click="showAllBranches = !showAllBranches"
-              :title="$t('Show All Branches')"
-              :text-color="showAllBranches ? 'accent' : ''"
-              class="no-border-radius"
-            >
-              <q-icon name="call_split" class="rotate-180" />
-            </q-btn>
-            <CopyButton :game="game" />
-            <q-btn
-              icon="assignment_returned"
-              :title="$t('Paste from Clipboard')"
-              class="no-border-radius"
-            />
-          </q-btn-group>
-        </q-toolbar>
+        <PTNTools :game="game" />
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -119,7 +102,7 @@ import GameNotifications from "../components/GameNotifications";
 import NoteNotifications from "../components/NoteNotifications";
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
-import CopyButton from "../components/CopyButton";
+import PTNTools from "../components/PTNTools";
 import EvalButtons from "../components/EvalButtons";
 import FullscreenToggle from "../components/FullscreenToggle";
 
@@ -136,7 +119,7 @@ export default {
     NoteNotifications,
     PlayControls,
     Scrubber,
-    CopyButton,
+    PTNTools,
     EvalButtons,
     FullscreenToggle
   },
@@ -162,14 +145,6 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showText", value]);
-      }
-    },
-    showAllBranches: {
-      get() {
-        return this.$store.state.showAllBranches;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
     },
     title() {
