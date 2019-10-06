@@ -9,6 +9,7 @@
       <q-tab-panels
         v-model="tab"
         class="bg-secondary text-accent"
+        keep-alive
         animated
         dark
       >
