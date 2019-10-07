@@ -138,6 +138,7 @@ export default {
     margin-right -0.7em
 
 .ply
+  font-family 'Source Code Pro'
   font-weight bold
 
   &.color1
@@ -184,6 +185,7 @@ export default {
         color $orange-med
 
 .result
+  font-family 'Source Code Pro'
   white-space nowrap
   font-weight bold
   height 24px

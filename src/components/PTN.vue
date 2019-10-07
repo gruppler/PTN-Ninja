@@ -63,7 +63,6 @@ export default {
 
 <style lang="stylus">
 .ptn
-  font-family 'Source Code Pro'
   color $blue-grey-10
   > *
     font-size 18px

@@ -1,8 +1,11 @@
 <template>
   <span class="ptn linenum">
-    <span class="branch" :class="{ selected: isSelected }" v-if="showBranch">{{
-      this.linenum.branch
-    }}</span>
+    <span
+      class="branch q-pa-xs q-mr-xs"
+      :class="{ selected: isSelected }"
+      v-if="showBranch"
+      >{{ this.linenum.branch }}</span
+    >
     <span class="number">{{ this.linenum.number }}. </span>
   </span>
 </template>
@@ -44,6 +47,7 @@ export default {
 <style lang="stylus">
 .linenum
   .branch
+    font-size 0.8em
     white-space nowrap
     &.selected
       background-color rgba($accent, 0.75)
