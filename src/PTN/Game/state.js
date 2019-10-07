@@ -11,12 +11,15 @@ export default class GameState {
 
     defaults(this, state, {
       targetBranch: "",
-      plyID: 0,
+      plyID: -1,
       plyIsDone: false
     });
 
     Object.defineProperty(this, "plies", {
       get: memoize(this.getPlies, this.branchKey)
+    });
+    Object.defineProperty(this, "plyIDs", {
+      get: memoize(this.getPlyIDs, this.branchKey)
     });
     Object.defineProperty(this, "moves", {
       get: memoize(this.getMoves, this.branchKey)
@@ -79,15 +82,17 @@ export default class GameState {
 
   branchKey() {
     if (this.plyID in this.game.plies) {
-      return `${this.targetBranch}${this.ply &&
-        this.ply.isInBranch(this.targetBranch)}`;
+      return (
+        `${this.targetBranch}${this.game.plies.length}` +
+        (this.ply && this.ply.isInBranch(this.targetBranch))
+      );
     } else {
       return this.plyID;
     }
   }
 
   getPlies() {
-    if (!this.game.plies) {
+    if (!this.game.plies.length) {
       return [];
     } else if (!this.ply) {
       return this.game.plies;
@@ -96,6 +101,10 @@ export default class GameState {
     } else {
       return this.game.plies.filter(ply => ply.isInBranch(this.branch));
     }
+  }
+
+  getPlyIDs() {
+    return this.plies.map(ply => ply.id);
   }
 
   getMoves() {
@@ -111,7 +120,9 @@ export default class GameState {
   }
 
   getPly() {
-    return this.plyID in this.game.plies ? this.game.plies[this.plyID] : null;
+    return this.plyID in this.game.plies
+      ? this.game.plies[this.plyID]
+      : this.game.plies[0] || null;
   }
 
   getMove() {
@@ -123,7 +134,7 @@ export default class GameState {
   }
 
   getNumber() {
-    return this.move && this.move.linenum ? this.move.linenum.number : "";
+    return this.move ? this.move.number : "";
   }
 
   getBoard() {
@@ -173,6 +184,16 @@ export default class GameState {
       plyIndex: this.ply ? this.ply.index : 0,
       plyIsDone: this.plyIsDone
     };
+  }
+
+  get plyIndex() {
+    return this.ply ? this.ply.index : -1;
+  }
+
+  set plyIndex(index) {
+    if (this.plies.length > index) {
+      this.plyID = this.plies[index].id;
+    }
   }
 
   get isGameEnd() {

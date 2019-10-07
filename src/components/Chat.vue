@@ -33,7 +33,7 @@
                 />
                 <Ply
                   class="text-no-wrap"
-                  :ply="message.ply"
+                  :plyID="message.ply.id"
                   :game="game"
                   :delay="6e4 / $store.state.playSpeed"
                 />

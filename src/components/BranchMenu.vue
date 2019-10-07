@@ -32,7 +32,7 @@
             class="ellipsis"
           />
           <Ply
-            :ply="ply"
+            :plyID="ply.id"
             :game="game"
             :noBranches="true"
             :noClick="true"

@@ -39,7 +39,6 @@ export default class GameNavigation {
         this.state.isGameEnd ||
         (this.state.nextPly && this.state.nextPly.branches.length)
       ) {
-        // Save board state if it's not already
         this.saveBoardState();
       }
       return true;
@@ -52,6 +51,9 @@ export default class GameNavigation {
     const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
     if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
       this._setPly(ply.id, false);
+      if (ply.branches.length) {
+        this.saveBoardState();
+      }
       return true;
     } else {
       return false;
@@ -178,7 +180,7 @@ export default class GameNavigation {
       plyIsDone: isDone,
       move: targetPly.move,
       branch: targetPly.branch,
-      number: targetPly.move.linenum.number
+      number: targetPly.move.number
     };
 
     // Load a board state?

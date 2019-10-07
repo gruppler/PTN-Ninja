@@ -6,6 +6,10 @@ export default class Move {
     if (this.linenum) {
       this.linenum.move = this;
     }
+    this.index =
+      parts.index !== undefined
+        ? parts.index
+        : this.linenum.number - this.game.firstMoveNumber;
     this.plies = [];
     if (parts.ply1) {
       this.ply1 = parts.ply1;
@@ -13,10 +17,13 @@ export default class Move {
     if (parts.ply2) {
       this.ply2 = parts.ply2;
     }
-    this.index =
-      parts.index !== undefined
-        ? parts.index
-        : this.linenum.number - this.game.firstMoveNumber;
+  }
+
+  get number() {
+    return this.linenum.number;
+  }
+  get branch() {
+    return this.linenum.branch;
   }
 
   get ply1() {
@@ -48,8 +55,8 @@ export default class Move {
       // Looks like we're adding a new branch
       const original = this.game.moves.find(
         move =>
-          move.linenum.branch === this.linenum.parentBranch &&
-          move.linenum.number === this.linenum.parentNumber
+          move.branch === this.linenum.parentBranch &&
+          move.number === this.linenum.parentNumber
       );
       if (original && original.plies[index]) {
         // Add this ply to the original ply's branch list,

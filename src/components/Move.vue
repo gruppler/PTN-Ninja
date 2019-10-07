@@ -12,19 +12,19 @@
       <span class="text-no-wrap">
         <Ply
           v-if="move.ply1"
-          :ply="
+          :plyID="
             $store.state.showAllBranches && currentOnly === undefined
-              ? move.ply1
-              : move.ply1Original || move.ply1
+              ? move.ply1.id
+              : (move.ply1Original || move.ply1).id
           "
           :game="game"
         />
         <Ply
           v-if="move.ply2"
-          :ply="
+          :plyID="
             $store.state.showAllBranches && currentOnly === undefined
-              ? move.ply2
-              : move.ply2.getBranch(game.state.targetBranch)
+              ? move.ply2.id
+              : move.ply2.getBranch(game.state.targetBranch).id
           "
           :game="game"
         />
@@ -43,9 +43,9 @@ export default {
   props: ["move", "game", "currentOnly"],
   computed: {
     nextMove() {
-      return this.move.id < this.game.moves.length - 1
-        ? this.game.moves[this.move.id + 1]
-        : null;
+      const moves = this.game.movesSorted;
+      const index = moves.findIndex(move => move === this.move);
+      return index < moves.length - 1 ? moves[index + 1] : null;
     },
     isCurrentMove() {
       return this.game.state.move && this.game.state.move.id === this.move.id;
@@ -54,7 +54,7 @@ export default {
       return (
         this.$store.state.showAllBranches &&
         this.nextMove &&
-        this.nextMove.linenum.branch != this.move.linenum.branch
+        this.nextMove.branch != this.move.branch
       );
     }
   }

@@ -4,11 +4,11 @@
       <div class="ptn q-py-md" v-if="game">
         <Move
           class="q-px-md"
-          v-for="(move, index) in moves"
+          v-for="move in moves"
           :ref="move.id"
           :move="move"
           :game="game"
-          :key="index"
+          :key="move.linenum.text()"
         />
       </div>
     </div>
@@ -27,7 +27,7 @@ export default {
   computed: {
     moves() {
       return this.$store.state.showAllBranches
-        ? this.game.moves
+        ? this.game.movesSorted
         : this.game.state.moves;
     }
   },
@@ -48,7 +48,7 @@ export default {
     game() {
       this.$nextTick(this.scroll);
     },
-    "game.state.ply.id"() {
+    "game.state.plyID"() {
       this.scroll();
     },
     "$store.state.showAllBranches"() {

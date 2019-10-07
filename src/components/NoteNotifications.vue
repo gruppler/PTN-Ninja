@@ -26,7 +26,7 @@ export default {
       if ("-1" in this.game.notes && !ply.index && !this.game.state.plyIsDone) {
         notes = notes.concat(this.game.notes["-1"]);
       }
-      if (plyID in this.game.notes) {
+      if (plyID >= 0 in this.game.notes) {
         notes = notes.concat(this.game.notes[plyID]);
       }
       return notes.map(note => ({

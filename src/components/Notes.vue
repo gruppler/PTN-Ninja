@@ -24,7 +24,7 @@
                 />
                 <Ply
                   class="text-no-wrap"
-                  :ply="game.plies[plyID]"
+                  :plyID="plyID"
                   :game="game"
                   :delay="6e4 / $store.state.playSpeed"
                 />
@@ -209,7 +209,7 @@ export default {
       return (
         ply1 &&
         ply1.branch === ply2.branch &&
-        ply2.move.linenum.number - ply1.move.linenum.number <= 1
+        ply2.move.number - ply1.move.number <= 1
       );
     },
     scroll() {

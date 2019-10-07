@@ -9,6 +9,7 @@
       :text-color="ply.color == 1 ? 'blue-grey-10' : 'blue-grey-2'"
       :outline="!isDone"
       :clickable="!noClick"
+      :key="ply.id"
       square
       dense
     >
@@ -63,13 +64,16 @@ import BranchMenu from "./BranchMenu";
 export default {
   name: "Ply",
   components: { BranchMenu },
-  props: ["game", "ply", "noBranches", "noClick", "delay"],
+  props: ["game", "plyID", "noBranches", "noClick", "delay"],
   data() {
     return {
       menu: false
     };
   },
   computed: {
+    ply() {
+      return this.game.plies[this.plyID];
+    },
     isSelected() {
       return this.game ? this.game.state.plyID === this.ply.id : false;
     },
@@ -77,7 +81,7 @@ export default {
       return this.game && this.ply
         ? this.game.state.plyID === this.ply.id
           ? this.game.state.plyIsDone
-          : this.game.state.plies.includes(this.ply) &&
+          : this.game.state.plyIDs.includes(this.ply.id) &&
             this.game.state.ply.index > this.ply.index
         : true;
     }

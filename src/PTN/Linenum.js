@@ -1,5 +1,5 @@
 export default class Linenum {
-  constructor(notation) {
+  constructor(notation, game) {
     const matchData = notation.match(/((?:\d+(?:[-:]\d+)?\.+)*)(\d+\.)\s+/);
 
     if (!matchData) {
@@ -11,14 +11,16 @@ export default class Linenum {
     if (this.branch) {
       const parentRegex = /(\d+)(-\d+)?\.(0?\.)*$/;
       this.parentBranch = this.branch.replace(parentRegex, "");
-      this.parentNumber = parseInt(this.branch.match(parentRegex, "")[1], 10);
-      this.isRoot = this.number === this.parentNumber;
+      this.isRoot = !(this.branch in game.branches);
+      this.parentNumber = this.isRoot
+        ? this.number
+        : game.branches[this.branch].move.number;
     }
     this.move = null;
   }
 
-  static parse(notation) {
-    return new Linenum(notation);
+  static parse(notation, game) {
+    return new Linenum(notation, game);
   }
 
   text() {

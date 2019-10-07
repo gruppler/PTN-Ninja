@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { each, map, trimStart } from "lodash";
+import { each, flatten, map, memoize, trimStart } from "lodash";
 
 const pieceCounts = {
   3: { flat: 10, cap: 0, total: 10 },
@@ -30,6 +30,13 @@ export default class GameBase {
     notation,
     params = { name: "", state: null, history: [], historyIndex: 0 }
   ) {
+    Object.defineProperty(this, "movesGrouped", {
+      get: memoize(this.getMovesGrouped, () => this.moves.length)
+    });
+    Object.defineProperty(this, "movesSorted", {
+      get: memoize(this.getMovesSorted, () => this.moves.length)
+    });
+
     let item, key, ply;
     let branch = null;
     let moveNumber = 1;
@@ -111,7 +118,7 @@ export default class GameBase {
         this[log][plyID].push(item);
       } else if (/^[\d-:]+\./.test(notation)) {
         // Line number
-        item = Linenum.parse(notation);
+        item = Linenum.parse(notation, this);
         if (!move.linenum) {
           move.linenum = item;
         } else {
@@ -143,7 +150,7 @@ export default class GameBase {
         // Ply
         item = ply = Ply.parse(notation, { id: this.plies.length });
         if (
-          move.linenum.number === this.firstMoveNumber &&
+          move.number === this.firstMoveNumber &&
           this.firstPlayer === 2 &&
           !move.ply1
         ) {
@@ -165,7 +172,7 @@ export default class GameBase {
           move = new Move({
             game: this,
             id: this.moves.length,
-            linenum: new Linenum(branch + moveNumber + ". "),
+            linenum: new Linenum(branch + moveNumber + ". ", this),
             ply1: ply
           });
           this.moves.push(move);
@@ -189,7 +196,7 @@ export default class GameBase {
     }
 
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = new Linenum(moveNumber + ". ");
+      this.moves[0].linenum = new Linenum(moveNumber + ". ", this);
     }
 
     this._updatePTN();
@@ -207,14 +214,41 @@ export default class GameBase {
     if (params.state) {
       this.state.targetBranch = params.state.targetBranch;
       ply = this.state.plies[params.state.plyIndex];
-      if (ply && (ply.id || params.state.plyIsDone)) {
-        this.goToPly(ply.id, params.state.plyIsDone);
+      if (ply) {
+        if (ply.id || params.state.plyIsDone) {
+          this.goToPly(ply.id, params.state.plyIsDone);
+        } else {
+          this.state.plyID = ply.id;
+        }
       }
     }
   }
 
   get minState() {
     return this.state.min;
+  }
+
+  static sortPlies(a, b) {
+    return a.index !== b.index
+      ? a.index - b.index
+      : a.branch < b.branch
+      ? -1
+      : 1;
+  }
+
+  getMovesGrouped() {
+    const moves = Object.values(this.branches)
+      .sort(GameBase.sortPlies)
+      .map(ply =>
+        this.moves
+          .filter(move => move.branch === ply.branch)
+          .sort(move => move.index)
+      );
+    return moves.length ? moves : [this.moves];
+  }
+
+  getMovesSorted() {
+    return flatten(this.movesGrouped);
   }
 
   generateName(tags = {}) {
@@ -312,7 +346,6 @@ export default class GameBase {
   }
 
   text() {
-    let prevMove = null;
     return (
       map(this.tags, tag => tag.text()).join("\n") +
       "\n\n" +
@@ -322,14 +355,11 @@ export default class GameBase {
       (this.chatlog[-1]
         ? this.chatlog[-1].map(comment => comment.text()).join("\n") + "\n\n"
         : "") +
-      map(this.moves, move => {
-        let text = move.text(this.getMoveComments(move));
-        if (prevMove && prevMove.linenum.branch != move.linenum.branch) {
-          text = "\n" + text;
-        }
-        prevMove = move;
-        return text;
-      }).join("\n")
+      this.movesGrouped
+        .map(moves =>
+          moves.map(move => move.text(this.getMoveComments(move))).join("\n")
+        )
+        .join("\n\n")
     );
   }
 

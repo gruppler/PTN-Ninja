@@ -32,12 +32,12 @@ export default {
           ply1.branches &&
           ply1.branches.length &&
           ply1.branches[0] !== ply1 &&
-          this.game.state.plies.includes(ply1)) ||
+          this.game.state.plyIDs.includes(ply1.id)) ||
           (ply2 &&
             ply2.branches &&
             ply2.branches.length &&
             ply2.branches[0] !== ply2 &&
-            this.game.state.plies.includes(ply2)))
+            this.game.state.plyIDs.includes(ply2.id)))
       );
     }
   }
