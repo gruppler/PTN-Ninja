@@ -1,8 +1,6 @@
 <template>
   <span class="ptn" v-if="ply">
-    <span v-if="ply.isNop" class="nop">{{ ply.text() }}</span>
     <q-chip
-      v-if="!ply.isNop"
       @click="select(ply)"
       :class="{ selected: isSelected }"
       :color="ply.color == 1 ? 'blue-grey-2' : 'blue-grey-10'"
@@ -116,14 +114,6 @@ export default {
 </script>
 
 <style lang="stylus">
-.ptn
-  line-height 2em
-  text-indent 0
-
-.nop
-  color $gray-light
-  margin-right .5em
-
 .q-chip
   * {
     vertical-align baseline !important

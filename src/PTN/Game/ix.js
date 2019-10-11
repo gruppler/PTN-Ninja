@@ -287,7 +287,10 @@ export default class GameIX {
     if (!move.plies[ply.player - 1]) {
       // Next ply in the move
       move.setPly(ply, ply.player - 1);
-    } else if (!move || (ply.player === 1 && !this.state.nextPly)) {
+    } else if (
+      !move ||
+      (ply.player === 1 && !this.state.nextPly && this.state.plyIsDone)
+    ) {
       // Next move in the branch
       const number = this.state.number + 1;
       move = this.moves.find(
@@ -331,9 +334,6 @@ export default class GameIX {
     }
 
     this.plies.push(ply);
-    if (!(ply.branch in this.branches)) {
-      this.branches[ply.branch] = ply;
-    }
 
     this.recordChange(() => {
       if (!isAlreadyDone) {
@@ -350,12 +350,12 @@ export default class GameIX {
 
   newBranchID() {
     const number = this.state.number || this.firstMoveNumber;
-    const prefix = this.state.branch || "";
+    const prefix = this.branches[this.state.branch].branches[0].branch || "";
     let i = 1;
     let branch;
     do {
-      branch = prefix + number + "-" + i++;
+      branch = prefix + number + "-" + i++ + ".";
     } while (branch in this.branches);
-    return branch + ".";
+    return branch;
   }
 }
