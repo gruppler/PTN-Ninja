@@ -33,7 +33,11 @@
           </span>
           <Ply
             v-else
-            :plyID="move.ply2.getBranch(game.state.targetBranch).id"
+            :plyID="
+              $store.state.showAllBranches && currentOnly === undefined
+                ? move.ply2.id
+                : move.ply2.getBranch(game.state.targetBranch).id
+            "
             :game="game"
           />
         </template>
