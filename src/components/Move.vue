@@ -43,6 +43,7 @@
         </template>
       </span>
     </div>
+    <q-separator v-if="separator" class="fullwidth-padded-md" dark />
   </div>
 </template>
 
@@ -65,9 +66,17 @@ export default {
     },
     linebreak() {
       return (
+        this.currentOnly === undefined &&
         this.$store.state.showAllBranches &&
         this.nextMove &&
         this.nextMove.branch != this.move.branch
+      );
+    },
+    separator() {
+      return (
+        this.linebreak &&
+        (!this.move.branch ||
+          this.nextMove.branch.split(".")[0] !== this.move.branch.split(".")[0])
       );
     }
   }
@@ -90,4 +99,8 @@ export default {
 
   &.linebreak
     margin-bottom 1.5em
+
+  .q-separator
+    position relative
+    bottom -.75em
 </style>

@@ -230,9 +230,10 @@ export default class GameBase {
   }
 
   static sortPlies(a, b) {
-    return a.index !== b.index
+    return a.branch === b.branch
       ? a.index - b.index
-      : a.branch < b.branch
+      : a.branch.substr(0, a.branch.length - 1) <
+        b.branch.substr(0, b.branch.length - 1)
       ? -1
       : 1;
   }
