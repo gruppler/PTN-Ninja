@@ -9,39 +9,33 @@
   >
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <span class="text-no-wrap">
-        <template v-if="move.ply1">
-          <span
-            v-if="
-              move.ply1.isNop &&
-                (!move.ply1Original ||
-                  ($store.state.showAllBranches && currentOnly === undefined))
-            "
-            class="nop"
-          >
-            {{ move.ply1.text() }}
-          </span>
-          <Ply
-            v-else
-            :plyID="(move.ply1Original || move.ply1).id"
-            :game="game"
-          />
-        </template>
-        <template v-if="move.ply2">
-          <span v-if="move.ply2.isNop" class="nop">
-            {{ move.ply2.text() }}
-          </span>
-          <Ply
-            v-else
-            :plyID="
-              $store.state.showAllBranches && currentOnly === undefined
-                ? move.ply2.id
-                : move.ply2.getBranch(game.state.targetBranch).id
-            "
-            :game="game"
-          />
-        </template>
-      </span>
+      <template v-if="move.ply1">
+        <span
+          v-if="
+            move.ply1.isNop &&
+              (!move.ply1Original ||
+                ($store.state.showAllBranches && currentOnly === undefined))
+          "
+          class="nop"
+        >
+          {{ move.ply1.text() }}
+        </span>
+        <Ply v-else :plyID="(move.ply1Original || move.ply1).id" :game="game" />
+      </template>
+      <template v-if="move.ply2">
+        <span v-if="move.ply2.isNop" class="nop">
+          {{ move.ply2.text() }}
+        </span>
+        <Ply
+          v-else
+          :plyID="
+            $store.state.showAllBranches && currentOnly === undefined
+              ? move.ply2.id
+              : move.ply2.getBranch(game.state.targetBranch).id
+          "
+          :game="game"
+        />
+      </template>
     </div>
     <q-separator v-if="separator" class="fullwidth-padded-md" dark />
   </div>
@@ -91,8 +85,8 @@ export default {
     background-color $highlight
 
   .move-wrapper
-    padding-left 1em
-    text-indent -1em
+    display flex
+    flex-direction row
 
   &.current-only .linenum .branch
     background-color transparent

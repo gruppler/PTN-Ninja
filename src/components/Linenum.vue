@@ -6,7 +6,7 @@
       v-if="showBranch"
       >{{ this.linenum.branch }}</span
     >
-    <span class="number">{{ this.linenum.number }}. </span>
+    <span class="number">{{ this.linenum.number }}.&nbsp;</span>
   </span>
 </template>
 
