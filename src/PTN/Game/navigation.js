@@ -172,7 +172,7 @@ export default class GameNavigation {
   goToPly(plyID, isDone) {
     const targetPly = this.plies[plyID];
 
-    if (!targetPly || this.state.selected.pieces.length) {
+    if (!targetPly || !this.state.ply || this.state.selected.pieces.length) {
       return false;
     }
 

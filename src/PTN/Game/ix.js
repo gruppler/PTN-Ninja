@@ -311,7 +311,14 @@ export default class GameIX {
       }
     } else {
       // New branch
-      ply.branch = this.newBranchID();
+      if (!this.state.plyIsDone && this.state.ply.branches.length) {
+        ply.branch = this.newBranchID(
+          this.state.ply.branches[0].branch,
+          this.state.number
+        );
+      } else {
+        ply.branch = this.newBranchID(this.state.branch, this.state.number);
+      }
       move = new Move({
         game: this,
         id: this.moves.length,
@@ -323,6 +330,7 @@ export default class GameIX {
       move.setPly(ply, ply.player - 1);
       this.moves.push(move);
       this.branches[ply.branch] = ply;
+      this.state.targetBranch = ply.branch;
     }
 
     if (
@@ -343,16 +351,15 @@ export default class GameIX {
         this._setPly(ply.id, true);
       }
       if (!this.checkGameEnd()) {
+        // Update PTN if checking for game end didn't
         this._updatePTN();
       }
     });
   }
 
-  newBranchID() {
-    const number = this.state.number || this.firstMoveNumber;
-    const prefix = this.branches[this.state.branch].branches[0].branch || "";
+  newBranchID(branch, number) {
+    const prefix = branch || "";
     let i = 1;
-    let branch;
     do {
       branch = prefix + number + "-" + i++ + ".";
     } while (branch in this.branches);

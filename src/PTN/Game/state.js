@@ -38,7 +38,7 @@ export default class GameState {
       get: memoize(this.getNumber, () => this.plyID)
     });
     Object.defineProperty(this, "board", {
-      get: memoize(this.getBoard, () => this.boardPly),
+      get: memoize(this.getBoard, () => JSON.stringify(this.boardPly)),
       set: this.setBoard
     });
 
@@ -169,14 +169,19 @@ export default class GameState {
   }
 
   get boardPly() {
-    let ply = !this.plyIsDone && this.prevPly ? this.prevPly : this.ply;
+    let ply = this.ply;
+    let isDone = this.plyIsDone;
+    if (!this.plyIsDone && this.prevPly) {
+      ply = this.prevPly;
+      isDone = true;
+    }
     if (!ply) {
       return null;
     }
-    if (!this.plyIsDone && ply.branches.length) {
+    if (!isDone && ply.branches.length) {
       ply = ply.branches[0];
     }
-    return { id: ply.id, isDone: this.plyIsDone && ply === this.ply };
+    return { id: ply.id, isDone };
   }
 
   get min() {
