@@ -9,7 +9,8 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { each, flatten, map, memoize, trimStart } from "lodash";
+import { each, flatten, map, trimStart } from "lodash";
+import memoize from "./memoize";
 
 const pieceCounts = {
   3: { flat: 10, cap: 0, total: 10 },

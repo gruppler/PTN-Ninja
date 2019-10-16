@@ -3,7 +3,8 @@ import Marray from "marray";
 import Piece from "../Piece";
 import Square from "../Square";
 
-import { defaults, last, memoize } from "lodash";
+import { defaults, last } from "lodash";
+import memoize from "./memoize";
 
 export default class GameState {
   constructor(game, state = null) {
@@ -81,10 +82,10 @@ export default class GameState {
   }
 
   branchKey() {
-    if (this.plyID in this.game.plies) {
+    if (this.ply) {
       return (
         `${this.targetBranch}${this.game.plies.length}` +
-        (this.ply && this.ply.isInBranch(this.targetBranch))
+        this.ply.isInBranch(this.targetBranch)
       );
     } else {
       return this.plyID;
@@ -134,7 +135,7 @@ export default class GameState {
   }
 
   getNumber() {
-    return this.move ? this.move.number : "";
+    return this.ply ? this.ply.move.number : "";
   }
 
   getBoard() {
