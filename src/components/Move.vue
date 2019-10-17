@@ -79,8 +79,6 @@ export default {
 
 <style lang="stylus">
 .move
-  line-height 2em
-
   .move-wrapper
     display flex
     flex-direction row
@@ -95,8 +93,9 @@ export default {
     margin-bottom 1.5em
 
   .nop
+    font-family 'Source Code Pro'
+    padding 4px 8px;
     color $gray-light
-    padding 0 .5em
 
   .q-separator
     position relative

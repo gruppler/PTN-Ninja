@@ -125,7 +125,6 @@ export default {
 .ply
   font-family 'Source Code Pro'
   font-weight bold
-  line-height 2em
 
   &.color1
     .pieceCount

@@ -1,12 +1,9 @@
 <template>
   <span class="ptn linenum">
-    <span
-      class="branch q-pa-xs q-mr-xs"
-      :class="{ selected: isSelected }"
-      v-if="showBranch"
-      >{{ this.linenum.branch }}</span
-    >
-    <span class="number q-py-xs">{{ this.linenum.number }}.&nbsp;</span>
+    <span class="branch" :class="{ selected: isSelected }" v-if="showBranch">{{
+      this.linenum.branch
+    }}</span>
+    <span class="number">{{ this.linenum.number }}.&nbsp;</span>
   </span>
 </template>
 
@@ -51,6 +48,7 @@ export default {
   align-items flex-start
   .branch
     font-size 0.8em
+    padding 4px 8px;
     white-space nowrap
     &.selected
       background-color rgba($accent, 0.75)
@@ -58,4 +56,5 @@ export default {
   .number
     font-size 0.9em
     font-weight bold
+    padding 4px 0;
 </style>
