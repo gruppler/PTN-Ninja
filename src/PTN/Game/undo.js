@@ -1,4 +1,3 @@
-import Game from "../Game";
 import Diff from "diff-match-patch";
 import { cloneDeep, isEqual } from "lodash";
 
@@ -9,8 +8,7 @@ export default class GameUndo {
   _applyPatch(patch, state) {
     const result = diff.patch_apply(patch, this.ptn);
     if (result && result.length) {
-      this.state = state;
-      Object.assign(this, new Game(result[0], this));
+      this.init(result[0], { ...this, state });
     }
   }
 

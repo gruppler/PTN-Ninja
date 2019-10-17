@@ -27,15 +27,21 @@ export default class GameBase {
     White: "White"
   };
 
-  constructor(
+  constructor(notation, params) {
+    this.init(notation, params);
+  }
+
+  init(
     notation,
     params = { name: "", state: null, history: [], historyIndex: 0 }
   ) {
     Object.defineProperty(this, "movesGrouped", {
-      get: memoize(this.getMovesGrouped, () => this.moves.length)
+      get: memoize(this.getMovesGrouped, () => this.moves.length),
+      configurable: true
     });
     Object.defineProperty(this, "movesSorted", {
-      get: memoize(this.getMovesSorted, () => this.moves.length)
+      get: memoize(this.getMovesSorted, () => this.moves.length),
+      configurable: true
     });
 
     let item, key, ply;
