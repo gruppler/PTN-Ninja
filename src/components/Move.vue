@@ -2,40 +2,46 @@
   <div
     class="move"
     :class="{
-      'current-move': isCurrentMove && currentOnly === undefined,
+      'current-move': isCurrentMove,
       linebreak,
       'current-only': currentOnly !== undefined
     }"
   >
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <template v-if="move.ply1 && (!player || player === 1)">
-        <span
-          v-if="
-            move.ply1.isNop &&
-              (!move.ply1Original ||
-                ($store.state.showAllBranches && currentOnly === undefined))
-          "
-          class="ptn nop"
-        >
-          {{ move.ply1.text() }}
-        </span>
-        <Ply v-else :plyID="(move.ply1Original || move.ply1).id" :game="game" />
-      </template>
-      <template v-if="move.ply2 && (!player || player === 2)">
-        <span v-if="move.ply2.isNop" class="ptn nop">
-          {{ move.ply2.text() }}
-        </span>
-        <Ply
-          v-else
-          :plyID="
-            $store.state.showAllBranches && currentOnly === undefined
-              ? move.ply2.id
-              : move.ply2.getBranch(game.state.targetBranch).id
-          "
-          :game="game"
-        />
-      </template>
+      <div class="plies">
+        <template v-if="move.ply1 && (!player || player === 1)">
+          <span
+            v-if="
+              move.ply1.isNop &&
+                (!move.ply1Original ||
+                  ($store.state.showAllBranches && currentOnly === undefined))
+            "
+            class="ptn nop"
+          >
+            {{ move.ply1.text() }}
+          </span>
+          <Ply
+            v-else
+            :plyID="(move.ply1Original || move.ply1).id"
+            :game="game"
+          />
+        </template>
+        <template v-if="move.ply2 && (!player || player === 2)">
+          <span v-if="move.ply2.isNop" class="ptn nop">
+            {{ move.ply2.text() }}
+          </span>
+          <Ply
+            v-else
+            :plyID="
+              $store.state.showAllBranches && currentOnly === undefined
+                ? move.ply2.id
+                : move.ply2.getBranch(game.state.targetBranch).id
+            "
+            :game="game"
+          />
+        </template>
+      </div>
     </div>
     <q-separator v-if="separator" class="fullwidth-padded-md" dark />
   </div>
@@ -56,7 +62,11 @@ export default {
       return index < moves.length - 1 ? moves[index + 1] : null;
     },
     isCurrentMove() {
-      return this.game.state.move && this.game.state.move.id === this.move.id;
+      return (
+        this.currentOnly === undefined &&
+        this.game.state.move &&
+        this.game.state.move.id === this.move.id
+      );
     },
     linebreak() {
       return (
@@ -79,9 +89,8 @@ export default {
 
 <style lang="stylus">
 .move
-  .move-wrapper
-    display flex
-    flex-direction row
+  .plies
+    display inline-block
 
   &.current-move
     background-color $highlight
@@ -94,8 +103,9 @@ export default {
 
   .nop
     font-family 'Source Code Pro'
-    padding 4px 8px;
+    padding 4px 8px
     color $gray-light
+    white-space nowrap
 
   .q-separator
     position relative

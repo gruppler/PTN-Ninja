@@ -43,12 +43,13 @@ export default {
 
 <style lang="stylus">
 .linenum
-  display flex
+  display inline-flex
   flex-direction row
   align-items flex-start
   .branch
     font-size 0.8em
-    padding 4px 8px;
+    padding 4px
+    margin 0 4px 0 -4px
     white-space nowrap
     &.selected
       background-color rgba($accent, 0.75)
@@ -56,5 +57,5 @@ export default {
   .number
     font-size 0.9em
     font-weight bold
-    padding 4px 0;
+    padding 4px 0
 </style>
