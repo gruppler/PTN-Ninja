@@ -1,29 +1,29 @@
 <template>
   <div
-    class="ptn move"
+    class="move"
     :class="{
-      'current-move': isCurrentMove,
+      'current-move': isCurrentMove && currentOnly === undefined,
       linebreak,
       'current-only': currentOnly !== undefined
     }"
   >
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <template v-if="move.ply1">
+      <template v-if="move.ply1 && (!player || player === 1)">
         <span
           v-if="
             move.ply1.isNop &&
               (!move.ply1Original ||
                 ($store.state.showAllBranches && currentOnly === undefined))
           "
-          class="nop"
+          class="ptn nop"
         >
           {{ move.ply1.text() }}
         </span>
         <Ply v-else :plyID="(move.ply1Original || move.ply1).id" :game="game" />
       </template>
-      <template v-if="move.ply2">
-        <span v-if="move.ply2.isNop" class="nop">
+      <template v-if="move.ply2 && (!player || player === 2)">
+        <span v-if="move.ply2.isNop" class="ptn nop">
           {{ move.ply2.text() }}
         </span>
         <Ply
@@ -48,7 +48,7 @@ import Ply from "./Ply";
 export default {
   name: "Move",
   components: { Linenum, Ply },
-  props: ["move", "game", "currentOnly"],
+  props: ["move", "game", "currentOnly", "player"],
   computed: {
     nextMove() {
       const moves = this.game.movesSorted;
@@ -81,18 +81,22 @@ export default {
 .move
   line-height 2em
 
-  &.current-move
-    background-color $highlight
-
   .move-wrapper
     display flex
     flex-direction row
+
+  &.current-move
+    background-color $highlight
 
   &.current-only .linenum .branch
     background-color transparent
 
   &.linebreak
     margin-bottom 1.5em
+
+  .nop
+    color $gray-light
+    padding 0 .5em
 
   .q-separator
     position relative

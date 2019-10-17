@@ -6,7 +6,7 @@
       v-if="showBranch"
       >{{ this.linenum.branch }}</span
     >
-    <span class="number">{{ this.linenum.number }}.&nbsp;</span>
+    <span class="number q-py-xs">{{ this.linenum.number }}.&nbsp;</span>
   </span>
 </template>
 
@@ -46,6 +46,9 @@ export default {
 
 <style lang="stylus">
 .linenum
+  display flex
+  flex-direction row
+  align-items flex-start
   .branch
     font-size 0.8em
     white-space nowrap
@@ -53,5 +56,6 @@ export default {
       background-color rgba($accent, 0.75)
       border-radius $generic-border-radius
   .number
+    font-size 0.9em
     font-weight bold
 </style>

@@ -6,7 +6,7 @@
       :color="ply.color == 1 ? 'blue-grey-2' : 'blue-grey-10'"
       :text-color="ply.color == 1 ? 'blue-grey-10' : 'blue-grey-2'"
       :outline="!isDone"
-      :clickable="!noClick"
+      :clickable="noClick === undefined"
       :key="ply.id"
       square
       dense
@@ -29,7 +29,7 @@
         }}</span>
       </span>
       <q-btn
-        v-if="!noBranches && ply.branches.length"
+        v-if="noBranches === undefined && ply.branches.length"
         @click.stop="nop"
         icon="arrow_drop_down"
         size="md"
@@ -62,7 +62,7 @@ import BranchMenu from "./BranchMenu";
 export default {
   name: "Ply",
   components: { BranchMenu },
-  props: ["game", "plyID", "noBranches", "noClick", "delay"],
+  props: ["game", "plyID", "noBranches", "noClick"],
   data() {
     return {
       menu: false
@@ -86,21 +86,14 @@ export default {
   },
   methods: {
     select(ply, isDone) {
-      if (this.noClick) {
+      if (this.noClick !== undefined) {
         return;
       }
       if (isDone === undefined) {
         if (ply.id === this.game.state.ply.id) {
           isDone = !this.game.state.plyIsDone;
-        } else if (this.delay) {
-          isDone = false;
-          setTimeout(() => {
-            if (ply.id === this.game.state.ply.id) {
-              this.select(ply, true);
-            }
-          }, this.delay);
         } else {
-          isDone = true;
+          isDone = this.game.state.plyIsDone;
         }
       }
       this.game.goToPly(ply.id, isDone);
@@ -115,9 +108,7 @@ export default {
 
 <style lang="stylus">
 .q-chip
-  * {
-    vertical-align baseline !important
-  }
+  font-size inherit
   &:not(.q-chip--outline)
     border 1px solid
     &.bg-blue-grey-10
@@ -134,6 +125,7 @@ export default {
 .ply
   font-family 'Source Code Pro'
   font-weight bold
+  line-height 2em
 
   &.color1
     .pieceCount
@@ -184,6 +176,7 @@ export default {
   font-weight bold
   height 24px
   margin 4px
+  vertical-align middle
   .color1, .color2
     padding 2px 6px
   .color1

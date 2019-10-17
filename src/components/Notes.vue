@@ -17,16 +17,11 @@
               :ref="plyID"
             >
               <div v-if="plyID >= 0" class="ply-container">
-                <Linenum
-                  v-if="game.plies[plyID].move.linenum"
-                  :linenum="game.plies[plyID].move.linenum"
+                <Move
                   :game="game"
-                />
-                <Ply
-                  class="text-no-wrap"
-                  :plyID="plyID"
-                  :game="game"
-                  :delay="6e4 / $store.state.playSpeed"
+                  :move="game.plies[plyID].move"
+                  :player="game.plies[plyID].player"
+                  currentOnly
                 />
               </div>
               <q-chat-message
@@ -100,14 +95,13 @@
 </template>
 
 <script>
-import Linenum from "./Linenum";
-import Ply from "./Ply";
+import Move from "./Move";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Ply, Linenum },
+  components: { Move },
   props: ["game"],
   data() {
     return {
@@ -250,7 +244,5 @@ export default {
       &:before
         display none
   .ply-container
-    padding-left 1em
     padding-bottom .5em
-    text-indent -1em
 </style>

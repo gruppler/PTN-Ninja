@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="absolute-fit scroll">
-      <div class="ptn q-py-md" v-if="game">
+      <div class="q-py-md" v-if="game">
         <Move
           class="q-px-md"
           v-for="move in moves"
@@ -61,10 +61,4 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ptn
-  color $blue-grey-10
-  > *
-    font-size 18px
-    vertical-align middle
-</style>
+<style lang="stylus"></style>

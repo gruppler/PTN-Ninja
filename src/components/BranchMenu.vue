@@ -23,7 +23,7 @@
             :label="i"
           />
         </q-item-section>
-        <q-item-label>
+        <q-item-label class="row no-wrap">
           <Linenum
             v-if="linenum !== undefined"
             :linenum="ply.move.linenum"
@@ -34,8 +34,8 @@
           <Ply
             :plyID="ply.id"
             :game="game"
-            :noBranches="true"
-            :noClick="true"
+            noBranches
+            noClick
             class="ellipsis"
           />
         </q-item-label>
