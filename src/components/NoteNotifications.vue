@@ -18,16 +18,15 @@ export default {
     },
     notifications() {
       const ply = this.game.state.ply;
-      const plyID = this.game.state.plyID;
       if (!ply) {
         return [];
       }
       let notes = [];
-      if ("-1" in this.game.notes && !ply.index && !this.game.state.plyIsDone) {
+      if (!ply.index && !this.game.state.plyIsDone && "-1" in this.game.notes) {
         notes = notes.concat(this.game.notes["-1"]);
       }
-      if (plyID >= 0 in this.game.notes) {
-        notes = notes.concat(this.game.notes[plyID]);
+      if (ply.id >= 0 && ply.id in this.game.notes) {
+        notes = notes.concat(this.game.notes[ply.id]);
       }
       return notes.map(note => ({
         message: note.message,
