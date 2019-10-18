@@ -41,7 +41,7 @@ export default class GameComments {
     return null;
   }
 
-  removeComment(log, plyID, index = this.state.plyID) {
+  removeComment(log, plyID, index) {
     if (this[log][plyID]) {
       if (this[log][plyID].length > 1) {
         this[log][plyID].splice(index, 1);
@@ -49,6 +49,12 @@ export default class GameComments {
         this[log] = omit(this[log], plyID);
       }
       this._updatePTN(true);
+    }
+  }
+
+  removePlyComments(plyID) {
+    if (this.notes[plyID]) {
+      this.notes = omit(this.notes, plyID);
     }
   }
 

@@ -137,7 +137,7 @@ export default class GameState {
   }
 
   getNumber() {
-    return this.ply ? this.ply.move.number : "";
+    return this.ply ? this.ply.move.number : this.game.firstMoveNumber;
   }
 
   getBoard() {

@@ -4,14 +4,14 @@ import { cloneDeep, compact, isEmpty, last } from "lodash";
 
 export default class GameEnd {
   checkGameEnd() {
+    if (!this.state.ply) {
+      return false;
+    }
+
     let player = this.state.ply.player;
     let pieces = this.state.pieces[player == 1 ? 2 : 1];
     let roads = this.findRoads();
     let result;
-
-    if (!this.state.ply) {
-      return false;
-    }
 
     if (roads && roads.length) {
       // Check current player first

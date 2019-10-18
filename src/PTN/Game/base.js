@@ -179,7 +179,7 @@ export default class GameBase {
           move = new Move({
             game: this,
             id: this.moves.length,
-            linenum: new Linenum(branch + moveNumber + ". ", this),
+            linenum: Linenum.parse(branch + moveNumber + ". ", this),
             ply1: ply
           });
           this.moves.push(move);
@@ -203,7 +203,7 @@ export default class GameBase {
     }
 
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = new Linenum(moveNumber + ". ", this);
+      this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this);
     }
 
     this._updatePTN();

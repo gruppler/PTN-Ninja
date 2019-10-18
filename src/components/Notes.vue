@@ -16,12 +16,12 @@
               :key="plyID"
               :ref="plyID"
             >
-              <div v-if="plyID >= 0" class="ply-container">
+              <div v-if="plyID >= 0 && game.plies[plyID]" class="ply-container">
                 <Move
                   :game="game"
                   :move="game.plies[plyID].move"
                   :player="game.plies[plyID].player"
-                  currentOnly
+                  noDecoration
                 />
               </div>
               <q-chat-message
@@ -202,6 +202,7 @@ export default {
       const ply2 = this.game.plies[plyID2];
       return (
         ply1 &&
+        ply2 &&
         ply1.branch === ply2.branch &&
         ply2.move.number - ply1.move.number <= 1
       );

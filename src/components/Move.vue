@@ -54,7 +54,7 @@ import Ply from "./Ply";
 export default {
   name: "Move",
   components: { Linenum, Ply },
-  props: ["move", "game", "currentOnly", "player"],
+  props: ["move", "game", "currentOnly", "noDecoration", "player"],
   computed: {
     nextMove() {
       const moves = this.game.movesSorted;
@@ -63,6 +63,7 @@ export default {
     },
     isCurrentMove() {
       return (
+        this.noDecoration === undefined &&
         this.currentOnly === undefined &&
         this.game.state.move &&
         this.game.state.move.id === this.move.id
@@ -70,6 +71,7 @@ export default {
     },
     linebreak() {
       return (
+        this.noDecoration === undefined &&
         this.currentOnly === undefined &&
         this.$store.state.showAllBranches &&
         this.nextMove &&
