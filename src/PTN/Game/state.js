@@ -98,9 +98,11 @@ export default class GameState {
     } else if (!this.ply) {
       return this.game.plies;
     } else if (this.ply.isInBranch(this.targetBranch)) {
-      return this.game.plies.filter(ply => ply.isInBranch(this.targetBranch));
+      return this.game.plies.filter(
+        ply => ply && ply.isInBranch(this.targetBranch)
+      );
     } else {
-      return this.game.plies.filter(ply => ply.isInBranch(this.branch));
+      return this.game.plies.filter(ply => ply && ply.isInBranch(this.branch));
     }
   }
 

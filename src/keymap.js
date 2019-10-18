@@ -19,6 +19,7 @@ export const HOTKEYS = {
     unplayedPieces: ["u"]
   },
   CONTROLS: {
+    deletePly: ["del"],
     branch: ["b"],
     first: ["ctrl", "arrowleft"],
     last: ["ctrl", "arrowright"],

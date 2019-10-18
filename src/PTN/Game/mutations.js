@@ -3,7 +3,81 @@ import Move from "../Move";
 import Nop from "../Nop";
 import Ply from "../Ply";
 
+import { compact } from "lodash";
+
 export default class GameMutations {
+  deletePly(plyID, removeDescendents = false, isCascading = false) {
+    const ply = this.plies[plyID];
+    if (!ply) {
+      return false;
+    }
+    const move = ply.move;
+    const prevPly = this.state.prevPly;
+
+    // Remove branch(es)
+    if (ply.branches && ply.branches.length > 1) {
+      if (ply.branches[0] === ply) {
+        // Remove all branches if original
+        ply.branches
+          .slice(1)
+          .forEach(ply => this.deletePly(ply.id, true, true));
+      } else {
+        // Remove branch
+        delete this.branches[ply.branch];
+        if (ply.branches.length === 2) {
+          ply.branches[0].branches = [];
+        } else {
+          ply.branches.splice(ply.branches.indexOf(ply), 1);
+        }
+      }
+    }
+
+    // Remove descendents
+    if (removeDescendents) {
+      const nextPly = this.plies.find(
+        nextPly =>
+          nextPly &&
+          nextPly.branch === ply.branch &&
+          nextPly.index === ply.index + 1
+      );
+
+      if (nextPly) {
+        this.deletePly(nextPly.id, true, true);
+      }
+    }
+
+    // Remove self
+    move.setPly(null, ply.player - 1);
+    this.plies[ply.id] = null;
+    if (this.state.plies.includes(ply)) {
+      this.state.plies[ply.index] = null;
+    }
+
+    // Remove move if necessary
+    if (move.plies.length === 0 && this.moves.length > 1) {
+      this.moves.splice(this.moves.indexOf(move), 1);
+    }
+
+    // Finish up
+    if (!isCascading) {
+      this.recordChange(() => {
+        this.plies = compact(this.plies);
+        this.plies.forEach((ply, id) => (ply.id = id));
+        this.moves = compact(this.moves);
+        this.moves.forEach((move, id) => (move.id = id));
+        if (prevPly) {
+          this.goToPly(prevPly.id, true);
+        } else {
+          if (this.state.plyIsDone) {
+            this._undoPly();
+          }
+          this._setPly(-1, false);
+        }
+        this._updatePTN();
+      });
+    }
+  }
+
   insertPly(ply, isAlreadyDone = false) {
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, { id: this.plies.length });

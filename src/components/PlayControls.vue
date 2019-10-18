@@ -2,6 +2,9 @@
   <div class="full-width justify-center">
     <div class="row no-wrap justify-around items-center">
       <q-btn
+        @click="deletePly"
+        @shortkey="deletePly"
+        v-shortkey="hotkeys.deletePly"
         round
         flat
         :disable="!game.state.ply || !!game.state.nextPly || plyInProgress"
@@ -157,6 +160,15 @@ export default {
     }
   },
   methods: {
+    deletePly() {
+      if (
+        this.game.state.ply &&
+        !this.game.state.nextPly &&
+        !this.plyInProgress
+      ) {
+        this.game.deletePly(this.game.state.plyID);
+      }
+    },
     play() {
       if (!this.isLast) {
         this.isPlaying = true;

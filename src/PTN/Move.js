@@ -42,6 +42,15 @@ export default class Move {
 
   setPly(ply, index = 0) {
     this.plies[index] = ply;
+    if (!ply) {
+      if (index === 1 || this.plies.length === 1) {
+        this.plies.length--;
+      }
+      if (this.plies.length === 1 && this.plies[0].isNop) {
+        this.plies.length--;
+      }
+      return;
+    }
     ply.game = this.game;
     ply.move = this;
     ply.branch = this.linenum.branch;
@@ -71,6 +80,7 @@ export default class Move {
         }
       }
     }
+    this.plies = this.plies.concat();
   }
 
   text(comments) {
