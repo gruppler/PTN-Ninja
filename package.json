@@ -22,13 +22,13 @@
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
     "ptn": "^0.2.0",
-    "quasar": "^1.2.2",
+    "quasar": "^1.2.4",
     "vue-i18n": "^7.3.3",
     "vue-moment": "^4.0.0",
     "vue-shortkey": "^3.1.7"
   },
   "devDependencies": {
-    "@quasar/app": "^1.2.1",
+    "@quasar/app": "^1.2.2",
     "@quasar/quasar-app-extension-icon-genie": "^1.1.1",
     "@vue/eslint-config-prettier": "^4.0.0",
     "babel-eslint": "^10.0.3",
