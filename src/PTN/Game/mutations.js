@@ -113,6 +113,31 @@ export default class GameMutations {
         this.moves.push(move);
       }
     } else {
+      // Check to see if ply already exists
+      let equalPly = null;
+      if (this.state.plyIsDone) {
+        if (this.state.nextPly && this.state.nextPly.isEqual(ply)) {
+          equalPly = this.state.nextPly;
+        }
+      } else if (this.state.ply) {
+        if (this.state.ply.isEqual(ply)) {
+          equalPly = this.state.ply;
+        } else if (this.state.ply.branches.length) {
+          equalPly = this.state.ply.branches.find(branch =>
+            branch.isEqual(ply)
+          );
+        }
+      }
+      if (equalPly) {
+        if (isAlreadyDone) {
+          this._setPly(equalPly.id, true);
+          this._afterPly(equalPly);
+        } else {
+          this.goToPly(equalPly.id, true);
+        }
+        return;
+      }
+
       // New branch
       if (
         !this.state.plyIsDone &&

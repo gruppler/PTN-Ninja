@@ -24,23 +24,27 @@ export default class GameNavigation {
     }
   }
 
+  _afterPly(ply) {
+    if (ply.result) {
+      if (ply.result.type === "R" && !ply.result.roads) {
+        ply.result.roads = this.findRoads();
+      }
+    } else if (ply.index === this.state.plies.length - 1) {
+      this.checkGameEnd();
+    }
+    if (
+      this.state.isGameEnd ||
+      (this.state.nextPly && this.state.nextPly.branches.length)
+    ) {
+      this.saveBoardState();
+    }
+  }
+
   _doPly() {
     const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
     if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
-      if (ply.result) {
-        if (ply.result.type === "R" && !ply.result.roads) {
-          ply.result.roads = this.findRoads();
-        }
-      } else if (ply.index === this.state.plies.length - 1) {
-        this.checkGameEnd();
-      }
-      if (
-        this.state.isGameEnd ||
-        (this.state.nextPly && this.state.nextPly.branches.length)
-      ) {
-        this.saveBoardState();
-      }
+      this._afterPly(ply);
       return true;
     } else {
       return false;

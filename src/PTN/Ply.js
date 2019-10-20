@@ -1,5 +1,16 @@
 import Ptn from "ptn";
 
+import { pick, isEqual } from "lodash";
+
+const minProps = [
+  "column",
+  "direction",
+  "distribution",
+  "pieceCount",
+  "row",
+  "specialPiece"
+];
+
 export default class Ply extends Ptn {
   constructor(
     notation,
@@ -91,6 +102,14 @@ export default class Ply extends Ptn {
       }
     }
     return false;
+  }
+
+  get min() {
+    return pick(this, minProps);
+  }
+
+  isEqual(ply) {
+    return isEqual(this.min, ply.min);
   }
 
   text() {
