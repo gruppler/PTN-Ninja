@@ -90,8 +90,9 @@ export default class GameIX {
 
     let types = [];
     if (
+      (piece && piece.type === "flat") ||
       this.state.pieces[piece ? piece.color : this.state.turn].flat.length <
-      this.pieceCounts.flat
+        this.pieceCounts.flat
     ) {
       types.push("flat", "wall");
     }
