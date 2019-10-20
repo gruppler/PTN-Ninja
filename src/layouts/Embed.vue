@@ -21,7 +21,11 @@
     </q-header>
 
     <q-page-container class="bg-primary">
-      <q-page ref="page">
+      <q-page
+        v-shortkey="hotkeys.ACTIONS"
+        @shortkey="$store.dispatch($event.srcKey, game)"
+        class="overflow-hidden"
+      >
         <Board class="absolute-fit" :game="game" />
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle class="dimmed-btn" color="white" />
@@ -107,6 +111,7 @@ import EvalButtons from "../components/EvalButtons";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
+import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
 
@@ -127,7 +132,8 @@ export default {
   data() {
     return {
       Platform,
-      game: new Game(this.ptn, { name: this.name, state: this.state })
+      game: new Game(this.ptn, { name: this.name, state: this.state }),
+      hotkeys: HOTKEYS
     };
   },
   computed: {

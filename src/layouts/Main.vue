@@ -39,7 +39,7 @@
       <q-page
         v-shortkey="hotkeys.ACTIONS"
         @shortkey="$store.dispatch($event.srcKey, game)"
-        style="overflow-hidden"
+        class="overflow-hidden"
       >
         <Board class="absolute-fit" :game="game" />
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -163,10 +163,10 @@ import UISettings from "../components/UISettings";
 import FullscreenToggle from "../components/FullscreenToggle";
 
 import Game from "../PTN/Game";
-import { isEqual } from "lodash";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
+import { isEqual } from "lodash";
 
 export default {
   components: {
