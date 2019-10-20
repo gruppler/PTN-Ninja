@@ -4,7 +4,12 @@ import Nop from "../Nop";
 import Ply from "../Ply";
 
 export default class GameMutations {
-  deletePly(plyID, removeDescendents = false, isCascading = false) {
+  deletePly(
+    plyID,
+    recordChange = true,
+    removeDescendents = false,
+    isCascading = false
+  ) {
     const ply = this.plies[plyID];
     if (!ply) {
       return false;
@@ -18,7 +23,7 @@ export default class GameMutations {
         // Remove all branches if original
         ply.branches
           .slice(1)
-          .forEach(ply => this.deletePly(ply.id, true, true));
+          .forEach(ply => this.deletePly(ply.id, false, true, true));
       } else {
         // Remove branch
         delete this.branches[ply.branch];
@@ -40,7 +45,7 @@ export default class GameMutations {
       );
 
       if (nextPly) {
-        this.deletePly(nextPly.id, true, true);
+        this.deletePly(nextPly.id, false, true, true);
       }
     }
 
@@ -56,7 +61,7 @@ export default class GameMutations {
 
     // Finish up
     if (!isCascading) {
-      this.recordChange(() => {
+      let finish = () => {
         if (prevPly) {
           this.goToPly(prevPly.id, true);
         } else {
@@ -66,7 +71,12 @@ export default class GameMutations {
           this._setPly(-1, false);
         }
         this._updatePTN();
-      });
+      };
+      if (recordChange) {
+        this.recordChange(finish);
+      } else {
+        finish();
+      }
       this.init(this.ptn, { ...this, state: this.minState });
     }
   }
