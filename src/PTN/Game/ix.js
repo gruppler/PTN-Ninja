@@ -90,11 +90,15 @@ export default class GameIX {
 
     let types = [];
     if (
-      this.state.pieces[this.state.turn].flat.length < this.pieceCounts.flat
+      this.state.pieces[piece ? piece.color : this.state.turn].flat.length <
+      this.pieceCounts.flat
     ) {
       types.push("flat", "wall");
     }
-    if (this.state.pieces[this.state.turn].cap.length < this.pieceCounts.cap) {
+    if (
+      this.state.pieces[piece ? piece.color : this.state.turn].cap.length <
+      this.pieceCounts.cap
+    ) {
       types.push("cap");
     }
     if (altSelect) {
@@ -127,7 +131,7 @@ export default class GameIX {
           this._undoPly();
         }
         if (!this.state.nextPly) {
-          this.state.move.plies.pop();
+          this.deletePly(piece.ply.id);
         }
         this.insertPly(Ply.fromMoveset([move]));
         this.cancelMove();

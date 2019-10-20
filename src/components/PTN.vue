@@ -49,7 +49,7 @@ export default {
       this.$nextTick(this.scroll);
     },
     "game.state.plyID"() {
-      this.scroll();
+      this.$nextTick(this.scroll);
     },
     "$store.state.showAllBranches"() {
       this.$nextTick(this.scroll);
