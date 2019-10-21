@@ -23,6 +23,15 @@
           default-opened
         >
           <q-list style="max-height: 50vh">
+            <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle color="accent" v-model="animateBoard" />
+              </q-item-section>
+            </q-item>
+
             <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -173,6 +182,7 @@ import { zipObject } from "lodash";
 import { HOTKEYS_FORMATTED } from "../keymap";
 
 const props = [
+  "animateBoard",
   "axisLabels",
   "flatCounts",
   "highlightSquares",

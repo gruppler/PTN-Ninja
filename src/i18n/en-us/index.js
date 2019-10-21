@@ -2,6 +2,7 @@ export default {
   app_title: "PTN Ninja",
   "About App": "About PTN Ninja",
 
+  "Animate Board": "Animate Board",
   "Axis Labels": "Axis Labels",
   Black: "Black",
   Board: "Board",

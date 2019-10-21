@@ -2,6 +2,7 @@ import { upperFirst, zipObject } from "lodash";
 
 export const HOTKEYS = {
   UI: {
+    animateBoard: ["shift", "a"],
     axisLabels: ["x"],
     board3D: ["d"],
     flatCounts: ["f"],

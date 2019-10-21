@@ -6,6 +6,7 @@
         ['size-' + game.size]: true,
         ['turn-' + game.state.turn]: true,
         ['color-' + game.state.color]: true,
+        'no-animations': !$store.state.animateBoard,
         'axis-labels': $store.state.axisLabels,
         'board-3D': $store.state.board3D,
         'flat-counts': $store.state.flatCounts,
@@ -212,6 +213,10 @@ $radius = 5px
   width 100%
   will-change width, font-size
   text-align center
+
+  &.no-animations
+    .piece, .stone, .road > div, .flat-counter > div, .turn-indicator
+      transition none !important
 
   .move
     display inline-block
