@@ -55,7 +55,7 @@ export default class GameUndo {
       state: this.minState,
       ptn: this.ptn
     };
-    mutate();
+    mutate.call(this);
     const patch = diff.patch_toText(diff.patch_make(before.ptn, this.ptn));
     if (patch) {
       this.history.length = this.historyIndex;
