@@ -46,7 +46,7 @@ export default {
     },
     y() {
       let y = 100;
-      let spacing = this.game.size * 1.25;
+      let spacing = 7;
       if (this.piece) {
         y *= this.piece.y;
         y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);

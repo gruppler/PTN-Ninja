@@ -48,11 +48,7 @@
 .q-item.q-router-link--active, .q-item--active
   color $accent
 
-.q-page-sticky
-  z-index 1000
-
 .q-dialog
-  z-index 9998
   .q-expansion-item .q-list
     overflow-x hidden
     overflow-y auto
@@ -67,10 +63,12 @@
 
 .q-menu
   user-select none
-  z-index 9501
 
 .q-notifications__list--top
   top $toolbar-min-height
+
+.q-notifications__list
+  z-index 5000
 
 .q-notification
   transition transform $generic-hover-transition,

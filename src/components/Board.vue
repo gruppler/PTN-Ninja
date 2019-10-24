@@ -17,7 +17,7 @@
       :style="{ maxWidth, fontSize }"
       :key="game.name"
     >
-      <div class="flat-counter row">
+      <div class="flat-counter row no-wrap">
         <div
           class="player1 relative-position"
           :style="{ width: flatWidths[0] }"
@@ -213,6 +213,7 @@ $radius = 5px
   width 100%
   will-change width, font-size
   text-align center
+  z-index 0
 
   &.no-animations
     .piece, .stone, .road > div, .flat-counter > div, .turn-indicator
@@ -287,7 +288,6 @@ $radius = 5px
   line-height 1em
 .x-axis
   height $axis-size
-  overflow hidden
   .board-container:not(.axis-labels) &
     height 0
     opacity 0
