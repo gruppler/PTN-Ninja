@@ -24,6 +24,7 @@ module.exports = function(ctx) {
         "QCardSection",
         "QChatMessage",
         "QChip",
+        "QDate",
         "QDialog",
         "QDrawer",
         "QExpansionItem",
@@ -44,6 +45,7 @@ module.exports = function(ctx) {
         "QPage",
         "QPageContainer",
         "QPageSticky",
+        "QPopupProxy",
         "QResizeObserver",
         "QScrollArea",
         "QSelect",
@@ -53,6 +55,7 @@ module.exports = function(ctx) {
         "QTabPanel",
         "QTabPanels",
         "QTabs",
+        "QTime",
         "QToggle",
         "QToolbar",
         "QToolbarTitle"

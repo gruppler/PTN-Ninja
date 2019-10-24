@@ -56,6 +56,61 @@
           </div>
           <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
         </div>
+
+        <div v-if="showAll || tags.date || tags.time" class="row q-gutter-x-md">
+          <q-input
+            class="col-grow"
+            v-model="tags.date"
+            :label="$t('Date')"
+            @keyup.enter="save"
+            mask="####.##.##"
+            color="accent"
+            dark
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="event" />
+            </template>
+            <q-popup-proxy ref="qDateProxy">
+              <q-date
+                @input="() => $refs.qDateProxy.hide()"
+                v-model="tags.date"
+                mask="YYYY.MM.DD"
+                color="accent"
+                text-color="grey-10"
+                today-btn
+                dark
+              />
+            </q-popup-proxy>
+          </q-input>
+
+          <q-input
+            class="col-grow"
+            v-model="tags.time"
+            :label="$t('Time')"
+            @keyup.enter="save"
+            mask="##:##:##"
+            color="accent"
+            dark
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="access_time" />
+            </template>
+            <q-popup-proxy ref="qTimeProxy">
+              <q-time
+                @input="() => $refs.qTimeProxy.hide()"
+                v-model="tags.time"
+                color="accent"
+                text-color="grey-10"
+                format24h
+                with-seconds
+                now-btn
+                dark
+              />
+            </q-popup-proxy>
+          </q-input>
+        </div>
       </q-card-section>
       <q-separator dark />
       <q-card-actions align="right">
@@ -72,10 +127,22 @@ export default {
   props: ["value", "game"],
   data() {
     return {
+      showAll: true,
       name: "",
       tags: {
         player1: null,
-        player2: null
+        player2: null,
+        date: null,
+        time: null,
+        result: null,
+        event: null,
+        site: null,
+        round: null,
+        rating1: null,
+        rating2: null,
+        tps: null,
+        points: null,
+        clock: null
       }
     };
   },
