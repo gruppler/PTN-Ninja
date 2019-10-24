@@ -49,6 +49,10 @@ export default class Move {
     return this.setPly(ply, 1);
   }
 
+  get firstPly() {
+    return this.plies.find(ply => ply && !ply.isNop) || null;
+  }
+
   setPly(ply, index = 0) {
     this.plies[index] = ply;
     if (!ply) {

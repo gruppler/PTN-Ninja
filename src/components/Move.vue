@@ -81,8 +81,7 @@ export default {
     separator() {
       return (
         this.linebreak &&
-        (!this.move.branch ||
-          this.nextMove.branch.split(".")[0] !== this.move.branch.split(".")[0])
+        (!this.move.branch || !this.nextMove.firstPly.branches[0].branch)
       );
     }
   }
