@@ -41,6 +41,9 @@ export default class GameState {
       get: memoize(this.getBoard, () => JSON.stringify(this.boardPly)),
       set: this.setBoard
     });
+    Object.defineProperty(this, "tps", {
+      get: memoize(this.getTPS, () => JSON.stringify(this.boardPly))
+    });
 
     this.selected = {
       pieces: [],
@@ -154,6 +157,29 @@ export default class GameState {
         cap: this.pieces[2].cap.map(piece => piece.state)
       }
     };
+  }
+
+  getTPS() {
+    const grid = this.squares
+      .map(row => {
+        return row
+          .map(square => {
+            if (square.length) {
+              return square.map(piece => piece.color + piece.typeCode).join("");
+            } else {
+              return "x";
+            }
+          })
+          .join(",");
+      })
+      .reverse()
+      .join("/")
+      .replace(/x((,x)+)/g, spaces => "x" + (1 + spaces.length) / 2);
+
+    const ply = this.game.plies[this.boardPly.id];
+    const number = ply.move.number + 1 * (ply.player === 2);
+
+    return `${grid} ${this.turn} ${number}`;
   }
 
   setBoard(pieces, plyID, plyIsDone) {

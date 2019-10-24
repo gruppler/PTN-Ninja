@@ -46,6 +46,14 @@ export const REDO = (state, game) => {
   game.redo();
 };
 
+export const TRIM_TO_PLY = (state, game) => {
+  game.trimToPly();
+};
+
+export const TRIM_TO_BOARD = (state, game) => {
+  game.trimToBoard();
+};
+
 export const SAVE_UNDO_HISTORY = (state, game) => {
   state.games[0].history = game.history.concat();
 };

@@ -105,16 +105,24 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   });
 };
 
-export const UNDO = ({ commit }, game) => {
-  commit("UNDO", game);
-};
-
 export const CANCEL_MOVE = ({ commit }, game) => {
   commit("CANCEL_MOVE", game);
 };
 
+export const UNDO = ({ commit }, game) => {
+  commit("UNDO", game);
+};
+
 export const REDO = ({ commit }, game) => {
   commit("REDO", game);
+};
+
+export const TRIM_TO_BOARD = ({ commit }, game) => {
+  commit("TRIM_TO_BOARD", game);
+};
+
+export const TRIM_TO_PLY = ({ commit }, game) => {
+  commit("TRIM_TO_PLY", game);
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

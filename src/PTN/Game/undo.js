@@ -1,8 +1,8 @@
 import Diff from "diff-match-patch";
-import { cloneDeep, isEqual } from "lodash";
+import { isEqual } from "lodash";
 
 const diff = new Diff();
-const maxHistoryLength = 20;
+const maxHistoryLength = 10;
 
 export default class GameUndo {
   _applyPatch(patch, state) {
@@ -10,12 +10,6 @@ export default class GameUndo {
     if (result && result.length) {
       this.init(result[0], { ...this, state });
     }
-  }
-
-  _reversePatch(patches) {
-    patches = cloneDeep(patches);
-    patches.forEach(patch => patch.diffs.forEach(diff => (diff[0] *= -1)));
-    return patches;
   }
 
   get canUndo() {
@@ -31,10 +25,7 @@ export default class GameUndo {
       return false;
     }
     const history = this.history[--this.historyIndex];
-    this._applyPatch(
-      this._reversePatch(diff.patch_fromText(history.patch)),
-      history.state
-    );
+    this._applyPatch(diff.patch_fromText(history.undoPatch), history.state);
     return true;
   }
 
@@ -62,6 +53,7 @@ export default class GameUndo {
       this.history.push({
         state: before.state,
         patch,
+        undoPatch: diff.patch_toText(diff.patch_make(this.ptn, before.ptn)),
         afterState: isEqual(before.state, this.minState)
           ? undefined
           : this.minState

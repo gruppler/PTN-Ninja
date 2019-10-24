@@ -22,8 +22,17 @@ export default class Move {
   get number() {
     return this.linenum.number;
   }
+
   get branch() {
     return this.linenum.branch;
+  }
+  set branch(branch) {
+    this.linenum.branch = branch;
+    this.plies.forEach(ply => {
+      if (ply && !ply.isNop) {
+        ply.branch = branch;
+      }
+    });
   }
 
   get ply1() {
@@ -46,7 +55,7 @@ export default class Move {
       if (index === 1 || this.plies.length === 1) {
         this.plies.length--;
       }
-      if (this.plies.length === 1 && this.plies[0].isNop) {
+      if (this.plies.length === 1 && (!this.plies[0] || this.plies[0].isNop)) {
         this.plies.length--;
       }
       return;

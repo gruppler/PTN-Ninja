@@ -2,28 +2,134 @@ import Linenum from "../Linenum";
 import Move from "../Move";
 import Nop from "../Nop";
 import Ply from "../Ply";
+import Tag from "../Tag";
+
+import { isArray } from "lodash";
 
 export default class GameMutations {
-  deletePly(
-    plyID,
-    recordChange = true,
-    removeDescendents = false,
-    isCascading = false
-  ) {
+  _renameBranch(oldBranch, newBranch) {
+    if (newBranch in this.branches) {
+      return false;
+    }
+
+    // Update moves/linenums
+    this.moves.forEach(move => {
+      if (move.branch.startsWith(oldBranch)) {
+        move.branch = move.branch.replace(oldBranch, newBranch);
+      }
+    });
+
+    // Update branches
+    let branches = {};
+    Object.values(this.branches).forEach(ply => {
+      if (ply) {
+        branches[ply.branch] = ply;
+      }
+    });
+    this.branches = branches;
+
+    // Update targetBranch
+    if (this.state.targetBranch.startsWith(oldBranch)) {
+      this.state.targetBranch = this.state.targetBranch.replace(
+        oldBranch,
+        newBranch
+      );
+    }
+
+    return true;
+  }
+
+  renameBranch(oldBranch, newBranch) {
+    this.recordChange(() => {
+      if (this._renameBranch(oldBranch, newBranch)) {
+        this._updatePTN();
+      }
+    });
+  }
+
+  _trimToPly() {
+    this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
+
+    const boardPly = this.state.boardPly;
+    const newPly = boardPly.isDone
+      ? this.state.plies[this.plies[boardPly.id].index + 1]
+      : this.plies[boardPly.id];
+
+    if (!newPly) {
+      return false;
+    }
+
+    if (newPly.branch) {
+      // Remove preceeding and non-descendent plies
+      this._deletePlies(
+        this.plies
+          .filter(
+            ply =>
+              ply.index < newPly.index ||
+              !ply.branch.startsWith(newPly.branch) ||
+              (!newPly.isInBranch(ply.branch) && !newPly.hasBranch(ply.branch))
+          )
+          .map(ply => ply.id),
+        false,
+        false
+      );
+
+      this.branches[newPly.branch] = newPly;
+
+      // Make branch primary
+      this._renameBranch(newPly.branch, "");
+    } else {
+      // Remove preceeding plies
+      this._deletePlies(
+        this.state.plies.slice(0, newPly.index).map(ply => ply.id)
+      );
+    }
+
+    this._setPly(newPly.id, false);
+
+    this._updatePTN();
+    this.init(this.ptn, { ...this, state: null });
+    return true;
+  }
+
+  trimToPly() {
+    if (!this.state.ply) {
+      return;
+    }
+    this.recordChange(this._trimToPly);
+  }
+
+  _trimToBoard() {
+    this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
+    this.branches = {};
+    this.moves = [];
+    this.plies = [];
+    this.chatlog = {};
+    this._updatePTN();
+    this.init(this.ptn, { ...this, state: null });
+  }
+
+  trimToBoard() {
+    if (!this.state.ply) {
+      return;
+    }
+    this.recordChange(this._trimToBoard);
+  }
+
+  _deletePly(plyID, removeDescendents = false, removeOrphans = true) {
     const ply = this.plies[plyID];
     if (!ply) {
       return false;
     }
     const move = ply.move;
-    const prevPly = this.state.prevPly;
 
     // Remove branch(es)
     if (ply.branches && ply.branches.length > 1) {
-      if (ply.branches[0] === ply) {
+      if (removeOrphans && ply.branches[0] === ply) {
         // Remove all branches if original
         ply.branches
           .slice(1)
-          .forEach(ply => this.deletePly(ply.id, false, true, true));
+          .forEach(ply => this._deletePly(ply.id, true, removeOrphans));
       } else {
         // Remove branch
         delete this.branches[ply.branch];
@@ -45,7 +151,7 @@ export default class GameMutations {
       );
 
       if (nextPly) {
-        this.deletePly(nextPly.id, false, true, true);
+        this._deletePly(nextPly.id, true, removeOrphans);
       }
     }
 
@@ -58,13 +164,54 @@ export default class GameMutations {
     if (move.plies.length === 0 && this.moves.length > 1) {
       this.moves.splice(this.moves.indexOf(move), 1);
     }
+    return true;
+  }
+
+  deletePly() {
+    this.deletePlies.apply(this, arguments);
+  }
+
+  _deletePlies(plyIDs, removeDescendents = false, removeOrphans = true) {
+    let success = false;
+    let i = 0;
+    while (
+      i < plyIDs.length &&
+      (success = this._deletePly(plyIDs[i++], removeDescendents, removeOrphans))
+    ) {
+      // Delete plies unless there's a problem
+    }
+    return success;
+  }
+
+  deletePlies(plyIDs, recordChange = true) {
+    let success = false;
+    let ply = this.state.ply;
+
+    if (isArray(plyIDs)) {
+      success = this._deletePlies(plyIDs);
+    } else {
+      success = this._deletePly(plyIDs);
+    }
 
     // Finish up
-    if (!isCascading) {
-      let finish = () => {
-        if (prevPly) {
-          this.goToPly(prevPly.id, true);
-        } else {
+    if (success) {
+      // Pick a new ply to go to if necessary
+      if (
+        this.state.plyID in this.plies &&
+        this.plies[this.state.plyID] === null
+      ) {
+        if (ply && ply.index < this.state.plies.length) {
+          let i = ply.index;
+          while (i >= 0 && !(ply = this.state.plies[--i])) {
+            // Go back until we've found a ply or we're at the beginning
+          }
+        }
+      }
+
+      const finish = () => {
+        if (ply) {
+          this.goToPly(ply.id, true);
+        } else if (!this.state.ply) {
           if (this.state.plyIsDone) {
             this._undoPly();
           }
@@ -72,6 +219,7 @@ export default class GameMutations {
         }
         this._updatePTN();
       };
+
       if (recordChange) {
         this.recordChange(finish);
       } else {
@@ -79,6 +227,7 @@ export default class GameMutations {
       }
       this.init(this.ptn, { ...this, state: this.minState });
     }
+    return success;
   }
 
   insertPly(ply, isAlreadyDone = false) {

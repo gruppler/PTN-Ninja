@@ -18,14 +18,14 @@
         <q-icon name="flip" class="rotate-270" />
         <q-menu auto-close square>
           <q-list dark class="bg-secondary text-white">
-            <q-item clickable>
+            <q-item clickable @click="$store.dispatch('TRIM_TO_PLY', game)">
               <q-item-section side>
                 <q-icon name="flip" class="rotate-270" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to current ply") }}</q-item-section>
             </q-item>
 
-            <q-item clickable>
+            <q-item clickable @click="$store.dispatch('TRIM_TO_BOARD', game)">
               <q-item-section side>
                 <q-icon name="apps" />
               </q-item-section>
