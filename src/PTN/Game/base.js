@@ -21,6 +21,26 @@ const pieceCounts = {
   8: { flat: 50, cap: 2, total: 52 }
 };
 
+export const generateName = (tags = {}, game) => {
+  const tag = key =>
+    (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
+  const player1 = tag("player1") || GameBase.t["White"];
+  const player2 = tag("player2") || GameBase.t["Black"];
+  const result = tag("result").replace(/1\/2/g, "50");
+  const date = tag("date");
+  const time = tag("time").replace(/\D/g, ".");
+  const size = tag("size");
+  return (
+    player1 +
+    " vs " +
+    player2 +
+    ` ${size}x${size}` +
+    (result ? " " + result : "") +
+    (date ? " " + date : "") +
+    (time ? "-" + time : "")
+  );
+};
+
 export default class GameBase {
   static t = {
     Black: "Black",
@@ -260,21 +280,7 @@ export default class GameBase {
   }
 
   generateName(tags = {}) {
-    const player1 = tags.player1 || this.tag("player1", GameBase.t["White"]);
-    const player2 = tags.player2 || this.tag("player2", GameBase.t["Black"]);
-    const result = (tags.result || this.tag("result")).replace(/\//g, "-");
-    const date = tags.date || this.tag("date");
-    const time = (tags.time || this.tag("time")).replace(/\D/g, ".");
-    const size = ` ${this.size}x${this.size}`;
-    return (
-      player1 +
-      " vs " +
-      player2 +
-      size +
-      (result ? " " + result : "") +
-      (date ? " " + date : "") +
-      (time ? "-" + time : "")
-    );
+    return generateName(tags, this);
   }
 
   tag(key, defaultValue) {
@@ -285,12 +291,17 @@ export default class GameBase {
       : "";
   }
 
-  setTags(tags) {
+  setTags(tags, recordChange = true) {
+    tags = { ...tags };
     each(tags, (tag, key) => {
-      tags[key] = Tag.parse(`[${key} "${tag}"]`);
+      if (tag) {
+        tags[key] = Tag.parse(`[${key} "${tag}"]`);
+      } else {
+        delete tags[key];
+      }
     });
     Object.assign(this.tags, tags);
-    this._updatePTN(true);
+    this._updatePTN(recordChange);
   }
 
   _saveBoardState(board, plyID, plyIsDone) {

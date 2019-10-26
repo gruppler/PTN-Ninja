@@ -15,64 +15,28 @@
       >
         <q-tab-panel name="new" class="q-pa-none">
           <q-list separator dark>
-            <q-expansion-item
-              icon="people_alt"
-              :label="$t('Local')"
-              group="new"
-            >
-              <q-card-section class="q-gutter-y-md column">
-                <div class="row">
-                  <div class="col q-gutter-y-md">
-                    <q-input
-                      v-model="player1"
-                      :label="$t('Player1')"
-                      @keyup.enter="createGame"
-                      color="accent"
-                      dark
-                      filled
-                    >
-                      <template v-slot:prepend>
-                        <q-icon name="person" />
-                      </template>
-                    </q-input>
-
-                    <q-input
-                      v-model="player2"
-                      :label="$t('Player2')"
-                      @keyup.enter="createGame"
-                      color="accent"
-                      dark
-                      filled
-                    >
-                      <template v-slot:prepend>
-                        <q-icon name="person_outline" />
-                      </template>
-                    </q-input>
-                  </div>
-                  <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
-                </div>
-
-                <q-input
-                  class="size"
-                  v-model="size"
-                  type="number"
-                  :min="3"
-                  :max="8"
-                  :label="$t('Size')"
-                  @keyup.enter="createGame"
-                  color="accent"
-                  dark
-                  filled
-                >
-                  <template v-slot:prepend>
-                    <q-icon name="grid_on" />
-                  </template>
-                </q-input>
+            <q-expansion-item icon="person" :label="$t('Local')" group="new">
+              <div class="relative-position">
+                <q-card-section class="scroll">
+                  <GameInfo
+                    style="max-height: calc(100vh - 24rem); min-height: 4rem"
+                    ref="gameInfo"
+                    :values="tags"
+                    :showAll="showAll"
+                    @save="createGame"
+                  />
+                </q-card-section>
                 <div class="absolute-fit inset-shadow no-pointer-events" />
-              </q-card-section>
+              </div>
+              <q-btn
+                class="full-width"
+                :label="$t(showAll ? 'Show Less' : 'Show More')"
+                @click="showAll = !showAll"
+                flat
+              />
             </q-expansion-item>
             <q-expansion-item
-              icon="settings_ethernet"
+              icon="people_alt"
               :label="$t('Remote')"
               group="new"
             >
@@ -84,7 +48,7 @@
                   :min="3"
                   :max="8"
                   :label="$t('Size')"
-                  @keyup.enter="createGame"
+                  @keyup.enter="$refs.gameInfo.save()"
                   color="accent"
                   dark
                   filled
@@ -99,7 +63,7 @@
           </q-list>
           <q-separator dark />
           <q-card-actions align="right">
-            <q-btn :label="$t('OK')" @click="createGame" flat />
+            <q-btn :label="$t('OK')" @click="$refs.gameInfo.save()" flat />
             <q-btn :label="$t('Cancel')" flat v-close-popup />
           </q-card-actions>
         </q-tab-panel>
@@ -133,14 +97,23 @@
 </template>
 
 <script>
+import GameInfo from "./GameInfo";
+
 import Game from "../PTN/Game";
 
 export default {
   name: "AddGame",
+  components: { GameInfo },
   props: ["value"],
   data() {
     return {
-      tab: "new"
+      tab: "new",
+      tags: {
+        player1: this.$store.state.player1,
+        player2: this.$store.state.player2,
+        size: this.$store.state.size
+      },
+      showAll: false
     };
   },
   computed: {
@@ -173,16 +146,21 @@ export default {
     close() {
       this.$emit("input", false);
     },
-    createGame() {
+    createGame({ name, tags }) {
+      this.tags = tags;
+      this.player1 = tags.player1;
+      this.player2 = tags.player2;
+      this.size = tags.size;
+
       let game = new Game(
-        '[Date ""]\n' +
-          `[Player1 "${this.player1}"]\n` +
+        `[Player1 "${this.player1}"]\n` +
           `[Player2 "${this.player2}"]\n` +
           `[Size "${this.size}"]\n` +
-          '[Result ""]\n' +
           "\n" +
-          "1. "
+          "1. ",
+        { name }
       );
+      game.setTags(tags, false);
       this.$store.dispatch("ADD_GAME", {
         ptn: game.ptn,
         name: game.name,

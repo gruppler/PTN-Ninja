@@ -1,16 +1,21 @@
 import TPS from "./TPS";
 import Result from "./Result";
-import { padStart } from "lodash";
 
-const today = function() {
-  const d = new Date();
-  return (
-    d.getFullYear() +
-    "." +
-    padStart(d.getMonth() + 1, 2, 0) +
-    "." +
-    padStart(d.getDate(), 2, 0)
-  );
+export const formats = {
+  clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
+  date: /^(\d{4})\.(\d\d)\.(\d\d)$/,
+  event: /^[^"]*$/,
+  player1: /^[^"]*$/,
+  player2: /^[^"]*$/,
+  points: /^\d*$/,
+  rating1: /^\d*$/,
+  rating2: /^\d*$/,
+  result: /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|)$/,
+  round: /^\d*$/,
+  site: /^[^"]*$/,
+  size: /^[3-8]$/,
+  time: /^\d\d(:\d\d){1,2}$/,
+  tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/
 };
 
 export default class Tag {
@@ -23,39 +28,18 @@ export default class Tag {
 
     [this.ptn, this.key, this.value] = matchData;
 
-    switch (this.key.toLowerCase()) {
-      case "size":
-        if (/^([3-8])$/.test(this.value)) {
-          this.value = 1 * this.value;
-        } else {
-          throw new Error("Invalid size: " + this.value);
-        }
-        break;
-      case "player1":
-        if (!this.value.length) {
-          this.value = "";
-        }
-        break;
-      case "player2":
-        if (!this.value.length) {
-          this.value = "";
-        }
-        break;
-      case "date":
-        if (!this.value.length) {
-          this.value = today();
-        }
-        break;
-      case "result":
-        this.value = Result.parse(this.value);
-        break;
-      case "event":
-        this.value = this.value;
-        break;
-      case "site":
-        this.value = this.value;
-        break;
-      case "round":
+    const key = this.key.toLowerCase();
+
+    if (key in formats) {
+      if (!formats[key].test(this.value)) {
+        throw new Error(`Invalid ${key}: ${this.value}`);
+      }
+    } else {
+      throw new Error("Unrecognized tag");
+    }
+
+    switch (key) {
+      case "points":
         this.value = 1 * this.value;
         break;
       case "rating1":
@@ -64,20 +48,18 @@ export default class Tag {
       case "rating2":
         this.value = 1 * this.value;
         break;
+      case "result":
+        this.value = Result.parse(this.value);
+        break;
+      case "round":
+        this.value = 1 * this.value;
+        break;
+      case "size":
+        this.value = 1 * this.value;
+        break;
       case "tps":
         this.value = TPS.parse(this.value);
         break;
-      case "points":
-        this.value = 1 * this.value;
-        break;
-      case "time":
-        this.value = this.value;
-        break;
-      case "clock":
-        this.value = this.value;
-        break;
-      default:
-        throw new Error("Unrecognized tag");
     }
     this.valueText =
       this.value.text !== undefined ? this.value.text : this.value;

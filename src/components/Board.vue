@@ -199,6 +199,9 @@ export default {
     },
     resizeSpace(size) {
       this.space = size;
+      if (this.isInputFocused()) {
+        document.activeElement.scrollIntoView();
+      }
     }
   }
 };
