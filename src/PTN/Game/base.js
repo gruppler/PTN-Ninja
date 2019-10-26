@@ -302,6 +302,9 @@ export default class GameBase {
     });
     Object.assign(this.tags, tags);
     this._updatePTN(recordChange);
+    if (this.size !== this.tag("size") && !this.plies.length) {
+      this.init(this.ptn, { ...this, state: null });
+    }
   }
 
   _saveBoardState(board, plyID, plyIsDone) {
