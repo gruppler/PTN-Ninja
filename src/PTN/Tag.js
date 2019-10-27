@@ -59,6 +59,9 @@ export default class Tag {
         break;
       case "tps":
         this.value = TPS.parse(this.value);
+        if (!this.value.isValid) {
+          throw this.value.errors;
+        }
         break;
     }
     this.valueText =

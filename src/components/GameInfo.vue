@@ -20,11 +20,9 @@
       </template>
     </q-input>
 
-    <div
-      v-show="isVisible('tps') || !game || !game.plies.length"
-      class="row q-gutter-md q-mt-none"
-    >
+    <div class="row q-gutter-md q-mt-none">
       <q-input
+        class="col-grow"
         v-model="tags.size"
         name="size"
         type="number"
@@ -32,10 +30,11 @@
         max="8"
         :label="$t('Size')"
         :rules="rules('size')"
-        :disabled="game && game.plies.length > 0"
+        :disable="game && game.plies.length > 0"
         @keyup.enter="save"
-        hide-bottom-space
+        @input="$refs.tps.validate()"
         color="accent"
+        hide-bottom-space
         filled
         dark
       >
@@ -45,104 +44,121 @@
       </q-input>
 
       <q-input
+        ref="tps"
+        v-show="tags.tps || !game || !game.plies.length"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
         :label="$t('TPS')"
         :rules="rules('tps')"
-        :disabled="game && game.plies.length > 0"
+        :disable="game && game.plies.length > 0"
         @keyup.enter="save"
-        hide-bottom-space
         color="accent"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        hide-bottom-space
         filled
         dark
       >
         <template v-slot:prepend>
           <q-icon name="apps" />
         </template>
+        <template v-slot:append>
+          <q-btn
+            v-show="$refs.tps && !$refs.tps.disable && !$refs.tps.innerError"
+            icon="edit"
+            dense
+            flat
+          />
+        </template>
       </q-input>
     </div>
 
     <div class="row">
-      <div class="col q-gutter-md">
-        <q-input
-          v-model="tags.player1"
-          name="player1"
-          :label="$t('Player1')"
-          :rules="rules('player1')"
-          @keyup.enter="save"
-          hide-bottom-space
-          color="accent"
-          filled
-          dark
-        >
-          <template v-slot:prepend>
-            <q-icon name="person" />
-          </template>
-        </q-input>
+      <div class="col">
+        <div class="row q-gutter-md q-mb-md">
+          <q-input
+            class="col-grow"
+            v-model="tags.player1"
+            name="player1"
+            :label="$t('Player1')"
+            :rules="rules('player1')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+            dark
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
 
-        <q-input
-          v-model="tags.player2"
-          name="player2"
-          :label="$t('Player2')"
-          :rules="rules('player2')"
-          @keyup.enter="save"
-          hide-bottom-space
-          color="accent"
-          filled
-          dark
-        >
-          <template v-slot:prepend>
-            <q-icon name="person_outline" />
-          </template>
-        </q-input>
+          <q-input
+            class="col-grow"
+            v-show="isVisible('rating1')"
+            v-model="tags.rating1"
+            name="rating1"
+            type="number"
+            min="0"
+            max="3000"
+            :label="$t('Rating1')"
+            :rules="rules('rating1')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+            dark
+          >
+            <template v-slot:prepend>
+              <q-icon name="star" />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="row q-gutter-md">
+          <q-input
+            class="col-grow"
+            v-model="tags.player2"
+            name="player2"
+            :label="$t('Player2')"
+            :rules="rules('player2')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+            dark
+          >
+            <template v-slot:prepend>
+              <q-icon name="person_outline" />
+            </template>
+          </q-input>
+
+          <q-input
+            class="col-grow"
+            v-show="isVisible('rating2')"
+            v-model="tags.rating2"
+            name="rating2"
+            type="number"
+            min="0"
+            max="3000"
+            :label="$t('Rating2')"
+            :rules="rules('rating2')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+            dark
+          >
+            <template v-slot:prepend>
+              <q-icon name="star_border" />
+            </template>
+          </q-input>
+        </div>
       </div>
       <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
-    </div>
-
-    <div
-      v-show="isVisible('rating1', 'rating2')"
-      class="row q-gutter-md q-mt-none"
-    >
-      <q-input
-        class="col-grow"
-        v-model="tags.rating1"
-        name="rating1"
-        type="number"
-        min="0"
-        max="3000"
-        :label="$t('Rating1')"
-        :rules="rules('rating1')"
-        @keyup.enter="save"
-        hide-bottom-space
-        color="accent"
-        filled
-        dark
-      >
-        <template v-slot:prepend>
-          <q-icon name="star" />
-        </template>
-      </q-input>
-
-      <q-input
-        class="col-grow"
-        v-model="tags.rating2"
-        name="rating2"
-        type="number"
-        min="0"
-        max="3000"
-        :label="$t('Rating2')"
-        :rules="rules('rating2')"
-        @keyup.enter="save"
-        hide-bottom-space
-        color="accent"
-        filled
-        dark
-      >
-        <template v-slot:prepend>
-          <q-icon name="star_border" />
-        </template>
-      </q-input>
     </div>
 
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
@@ -153,8 +169,8 @@
         :label="$t('Date')"
         :rules="rules('date')"
         @keyup.enter="save"
-        hide-bottom-space
         color="accent"
+        hide-bottom-space
         readonly
         filled
         dark
@@ -183,8 +199,8 @@
         :label="$t('Time')"
         :rules="rules('time')"
         @keyup.enter="save"
-        hide-bottom-space
         color="accent"
+        hide-bottom-space
         readonly
         filled
         dark
@@ -208,63 +224,31 @@
       </q-input>
     </div>
 
-    <q-input
-      v-show="isVisible('clock')"
-      v-model="tags.clock"
-      name="clock"
-      :label="$t('Clock')"
-      :rules="rules('clock')"
-      @keyup.enter="save"
-      hide-bottom-space
-      color="accent"
-      filled
-      dark
-    >
-      <template v-slot:prepend>
-        <q-icon name="timer" />
-      </template>
-    </q-input>
-
-    <q-input
-      v-show="isVisible('site')"
-      v-model="tags.site"
-      name="site"
-      :label="$t('Site')"
-      :rules="rules('site')"
-      @keyup.enter="save"
-      hide-bottom-space
-      color="accent"
-      filled
-      dark
-    >
-      <template v-slot:prepend>
-        <q-icon name="place" />
-      </template>
-    </q-input>
-
-    <q-input
-      v-show="isVisible('event')"
-      v-model="tags.event"
-      name="event"
-      :label="$t('Event')"
-      :rules="rules('event')"
-      @keyup.enter="save"
-      hide-bottom-space
-      color="accent"
-      filled
-      dark
-    >
-      <template v-slot:prepend>
-        <q-icon name="emoji_events" />
-      </template>
-    </q-input>
-
-    <div
-      v-show="isVisible('round', 'points')"
-      class="row q-gutter-md q-mt-none"
-    >
+    <div class="row q-gutter-md q-mt-none">
       <q-input
         class="col-grow"
+        v-show="isVisible('clock')"
+        v-model="tags.clock"
+        name="clock"
+        :label="$t('Clock')"
+        :rules="rules('clock')"
+        @keyup.enter="save"
+        color="accent"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        hide-bottom-space
+        filled
+        dark
+      >
+        <template v-slot:prepend>
+          <q-icon name="timer" />
+        </template>
+      </q-input>
+
+      <q-input
+        class="col-grow"
+        v-show="isVisible('round')"
         v-model="tags.round"
         name="round"
         type="number"
@@ -282,20 +266,44 @@
           <q-icon name="repeat" />
         </template>
       </q-input>
+    </div>
 
+    <div class="row q-gutter-md q-mt-none">
       <q-input
         v-if="game"
         class="col-grow"
+        v-show="isVisible('result')"
+        v-model="tags.result"
+        name="result"
+        :label="$t('Result')"
+        :rules="rules('result')"
+        @keyup.enter="save"
+        color="accent"
+        autocorrect="off"
+        spellcheck="false"
+        hide-bottom-space
+        filled
+        dark
+      >
+        <template v-slot:prepend>
+          <q-icon name="gavel" />
+        </template>
+      </q-input>
+
+      <q-input
+        v-if="game"
+        v-show="isVisible('points')"
+        class="col-grow"
         v-model="tags.points"
         name="points"
-        min="-999"
+        min="0"
         max="999"
         type="number"
         :label="$t('Points')"
         :rules="rules('points')"
         @keyup.enter="save"
-        hide-bottom-space
         color="accent"
+        hide-bottom-space
         filled
         dark
       >
@@ -306,20 +314,36 @@
     </div>
 
     <q-input
-      v-if="game"
-      v-show="isVisible('result')"
-      v-model="tags.result"
-      name="result"
-      :label="$t('Result')"
-      :rules="rules('result')"
+      v-show="isVisible('site')"
+      v-model="tags.site"
+      name="site"
+      :label="$t('Site')"
+      :rules="rules('site')"
       @keyup.enter="save"
-      hide-bottom-space
       color="accent"
+      hide-bottom-space
       filled
       dark
     >
       <template v-slot:prepend>
-        <q-icon name="gavel" />
+        <q-icon name="place" />
+      </template>
+    </q-input>
+
+    <q-input
+      v-show="isVisible('event')"
+      v-model="tags.event"
+      name="event"
+      :label="$t('Event')"
+      :rules="rules('event')"
+      @keyup.enter="save"
+      color="accent"
+      hide-bottom-space
+      filled
+      dark
+    >
+      <template v-slot:prepend>
+        <q-icon name="emoji_events" />
       </template>
     </q-input>
   </div>
@@ -327,6 +351,7 @@
 
 <script>
 import { formats } from "../PTN/Tag";
+import TPS from "../PTN/TPS";
 import { generateName } from "../PTN/Game/base";
 
 export default {
@@ -392,7 +417,15 @@ export default {
       });
     },
     rules(tag) {
-      return [value => !value || formats[tag].test(value)];
+      let rules = [value => !value || formats[tag].test(value)];
+      if (tag === "tps") {
+        const tags = this.tags;
+        rules[0] = tps =>
+          !tps ||
+          ((tps = TPS.parse(tps)) &&
+            !!(tps && tps.isValid && tps.size === 1 * tags.size));
+      }
+      return rules;
     },
     isVisible() {
       const tags = [...arguments];

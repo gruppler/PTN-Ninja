@@ -6,61 +6,26 @@
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
-      <q-tab-panels
-        v-model="tab"
-        class="bg-secondary text-accent"
-        keep-alive
-        animated
-        dark
-      >
+      <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated dark>
         <q-tab-panel name="new" class="q-pa-none">
-          <q-list separator dark>
-            <q-expansion-item icon="person" :label="$t('Local')" group="new">
-              <div class="relative-position">
-                <q-card-section class="scroll">
-                  <GameInfo
-                    style="max-height: calc(100vh - 24rem); min-height: 4rem"
-                    ref="gameInfo"
-                    :values="tags"
-                    :showAll="showAll"
-                    @save="createGame"
-                  />
-                </q-card-section>
-                <div class="absolute-fit inset-shadow no-pointer-events" />
-              </div>
-              <q-btn
-                class="full-width"
-                :label="$t(showAll ? 'Show Less' : 'Show More')"
-                @click="showAll = !showAll"
-                flat
+          <div class="relative-position">
+            <q-card-section class="scroll">
+              <GameInfo
+                style="max-height: calc(100vh - 24rem); min-height: 4rem"
+                ref="gameInfo"
+                :values="tags"
+                :showAll="showAll"
+                @save="createGame"
               />
-            </q-expansion-item>
-            <q-expansion-item
-              icon="people_alt"
-              :label="$t('Remote')"
-              group="new"
-            >
-              <q-card-section>
-                <q-input
-                  class="size"
-                  v-model="size"
-                  type="number"
-                  :min="3"
-                  :max="8"
-                  :label="$t('Size')"
-                  @keyup.enter="$refs.gameInfo.save()"
-                  color="accent"
-                  dark
-                  filled
-                >
-                  <template v-slot:prepend>
-                    <q-icon name="grid_on" />
-                  </template>
-                </q-input>
-                <div class="absolute-fit inset-shadow no-pointer-events" />
-              </q-card-section>
-            </q-expansion-item>
-          </q-list>
+            </q-card-section>
+            <div class="absolute-fit inset-shadow no-pointer-events" />
+          </div>
+          <q-btn
+            class="full-width"
+            :label="$t(showAll ? 'Show Less' : 'Show More')"
+            @click="showAll = !showAll"
+            flat
+          />
           <q-separator dark />
           <q-card-actions align="right">
             <q-btn :label="$t('OK')" @click="$refs.gameInfo.save()" flat />
@@ -86,8 +51,11 @@
                 />
               </q-item-section>
             </q-item>
-            <q-expansion-item icon="cloud" :label="$t('Remote')">
-              <q-list></q-list>
+            <q-expansion-item icon="cloud" :label="$t('Remote')" group="type">
+              <q-card-section>
+                <q-list></q-list>
+                <div class="absolute-fit inset-shadow no-pointer-events" />
+              </q-card-section>
             </q-expansion-item>
           </q-list>
         </q-tab-panel>
