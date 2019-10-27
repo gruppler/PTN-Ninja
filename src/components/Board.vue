@@ -122,10 +122,10 @@ export default {
   },
   computed: {
     player1() {
-      return this.game.tags.player1.value;
+      return this.game.tag("player1");
     },
     player2() {
-      return this.game.tags.player2.value;
+      return this.game.tag("player2");
     },
     flats() {
       return this.game.state.flats;

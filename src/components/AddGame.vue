@@ -122,14 +122,7 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
-      let game = new Game(
-        `[Player1 "${this.player1}"]\n` +
-          `[Player2 "${this.player2}"]\n` +
-          `[Size "${this.size}"]\n` +
-          "\n" +
-          "1. ",
-        { name }
-      );
+      let game = new Game(`[Size "${this.size}"]\n\n1. `, { name });
       game.setTags(tags, false);
       this.$store.dispatch("ADD_GAME", {
         ptn: game.ptn,

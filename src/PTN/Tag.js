@@ -1,6 +1,23 @@
 import TPS from "./TPS";
 import Result from "./Result";
 
+const capitalized = {
+  clock: "Clock",
+  date: "Date",
+  event: "Event",
+  player1: "Player1",
+  player2: "Player2",
+  points: "Points",
+  rating1: "Rating1",
+  rating2: "Rating2",
+  result: "Result",
+  round: "Round",
+  site: "Site",
+  size: "Size",
+  time: "Time",
+  tps: "TPS"
+};
+
 export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^(\d{4})\.(\d\d)\.(\d\d)$/,
@@ -29,6 +46,7 @@ export default class Tag {
     [this.ptn, this.key, this.value] = matchData;
 
     const key = this.key.toLowerCase();
+    this.key = capitalized[key];
 
     if (key in formats) {
       if (!formats[key].test(this.value)) {
