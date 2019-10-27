@@ -1,4 +1,5 @@
 export default {
+  site_name: "ptn.ninja",
   app_title: "PTN Ninja",
   "About App": "About PTN Ninja",
 
@@ -32,6 +33,8 @@ export default {
   "Note Notifications": "Note Notifications",
   Notes: "Notes",
   OK: "OK",
+  "Offline Play": "Offline Play",
+  "Online Play": "Online Play",
   "Paste from Clipboard": "Paste from Clipboard",
   "Piece Shadows": "Piece Shadows",
   "Play/Pause": "Play/Pause",

@@ -79,7 +79,9 @@ export default {
       tags: {
         player1: this.$store.state.player1,
         player2: this.$store.state.player2,
-        size: this.$store.state.size
+        size: this.$store.state.size,
+        site: this.$t("site_name"),
+        event: this.$t("Offline Play")
       },
       showAll: false
     };
