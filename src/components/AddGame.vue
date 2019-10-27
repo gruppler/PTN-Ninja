@@ -58,6 +58,7 @@
               </q-card-section>
             </q-expansion-item>
           </q-list>
+          <div class="absolute-fit inset-shadow no-pointer-events" />
         </q-tab-panel>
       </q-tab-panels>
     </q-card>
