@@ -377,12 +377,24 @@ export default class GameBase {
       (this.chatlog[-1]
         ? this.chatlog[-1].map(comment => comment.text()).join("\n") + "\n\n"
         : "") +
-      this.movesGrouped
-        .map(moves =>
-          moves.map(move => move.text(this.getMoveComments(move))).join("\n")
-        )
-        .join("\n\n")
+      this.moveText(true, true)
     );
+  }
+
+  moveText(showAllBranches = false, showComments = false) {
+    const printMove = move =>
+      move.text(
+        showComments ? this.getMoveComments(move) : null,
+        showAllBranches
+      );
+
+    if (showAllBranches) {
+      return this.movesGrouped
+        .map(moves => moves.map(printMove).join("\n"))
+        .join("\n\n");
+    } else {
+      return this.state.moves.map(printMove).join("\n");
+    }
   }
 
   isValid() {

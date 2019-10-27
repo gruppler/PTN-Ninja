@@ -1,6 +1,6 @@
 export default class Linenum {
   constructor(notation, game) {
-    const matchData = notation.match(/((?:\d+(?:[-:]\d+)?\.+)*)(\d+\.)\s+/);
+    const matchData = notation.match(/((?:\d+(?:[-:]\d+)?\.+)*)(\d+\.)\s*/);
 
     if (!matchData) {
       throw new Error("Invalid line number");
@@ -23,8 +23,8 @@ export default class Linenum {
     return new Linenum(notation, game);
   }
 
-  text() {
-    return (this.branch || "") + this.number + ".";
+  text(showBranch = true) {
+    return ((showBranch && this.branch) || "") + this.number + ".";
   }
 
   isValid() {

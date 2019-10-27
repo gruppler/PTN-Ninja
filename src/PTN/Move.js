@@ -96,28 +96,32 @@ export default class Move {
     this.plies = this.plies.concat();
   }
 
-  text(comments) {
+  text(comments = null, showBranch = true) {
     let ply1 = "";
     let ply2 = "";
     let comments1 = "";
     let comments2 = "";
 
-    if (this.ply1) {
-      ply1 = this.ply1.text() + " ";
+    if (!showBranch && this.ply1Original) {
+      ply1 = this.ply1Original.text();
+    } else if (this.ply1) {
+      ply1 = this.ply1.text();
     }
     if (this.ply2) {
-      ply2 = this.ply2.text() + " ";
+      ply2 = this.ply2.text();
     }
 
     if (comments) {
       if (comments[0] && comments[0].length) {
-        comments1 = comments[0].map(comment => comment.text()).join(" ") + " ";
+        comments1 = comments[0].map(comment => comment.text()).join(" ");
       }
       if (comments[1] && comments[1].length) {
         comments2 = comments[1].map(comment => comment.text()).join(" ");
       }
     }
 
-    return this.linenum.text() + " " + ply1 + comments1 + ply2 + comments2;
+    return [this.linenum.text(showBranch), ply1, comments1, ply2, comments2]
+      .filter(item => !!item.length)
+      .join(" ");
   }
 }

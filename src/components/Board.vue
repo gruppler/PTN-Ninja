@@ -15,7 +15,7 @@
         'unplayed-pieces': $store.state.unplayedPieces
       }"
       :style="{ maxWidth, fontSize }"
-      :key="game.name"
+      :key="game.name + '|' + game.tag('tps')"
     >
       <div class="flat-counter row no-wrap">
         <div

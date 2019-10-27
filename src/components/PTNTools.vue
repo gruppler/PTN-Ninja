@@ -55,7 +55,7 @@ export default {
   methods: {
     copy() {
       const el = document.createElement("textarea");
-      el.value = this.game.ptn;
+      el.value = this.game.moveText(this.showAllBranches);
       el.setAttribute("readonly", "");
       el.style = { position: "absolute", left: "-9999px" };
       document.body.appendChild(el);
