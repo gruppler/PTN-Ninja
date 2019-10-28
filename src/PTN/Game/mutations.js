@@ -348,22 +348,23 @@ export default class GameMutations {
         this._setPly(ply.id, true);
       }
 
-      if (ply.id === 0) {
-        // Record date and time if it's the first ply
+      if (ply.id === 0 && (!this.tag("date") || !this.tag("tps"))) {
+        // Record date and time
         const now = new Date();
         this.setTags(
           {
             date: `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}`,
             time: `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
           },
+          false,
           false
         );
       }
 
-      if (this.checkGameEnd()) {
-        // Record result if original branch or no result exists
+      if (this.checkGameEnd(false)) {
         if (ply.branch === "" || !this.tag("result")) {
-          this.setTags({ result: ply.result.text }, false);
+          // Record result
+          this.setTags({ result: ply.result.text }, false, false);
         }
       }
 

@@ -291,7 +291,7 @@ export default class GameBase {
       : "";
   }
 
-  setTags(tags, recordChange = true) {
+  setTags(tags, recordChange = true, updatePTN = true) {
     tags = { ...tags };
     each(tags, (tag, key) => {
       if (tag) {
@@ -301,13 +301,15 @@ export default class GameBase {
       }
     });
     Object.assign(this.tags, tags);
-    this._updatePTN(recordChange);
-    if (
-      !this.plies.length &&
-      (this.size !== this.tag("size") ||
-        (tags.tps && tags.tps !== this.tag("tps")))
-    ) {
-      this.init(this.ptn, { ...this, state: null });
+    if (updatePTN) {
+      this._updatePTN(recordChange);
+      if (
+        !this.plies.length &&
+        (this.size !== this.tag("size") ||
+          (tags.tps && tags.tps !== this.tag("tps")))
+      ) {
+        this.init(this.ptn, { ...this, state: null });
+      }
     }
   }
 

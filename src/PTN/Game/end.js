@@ -3,7 +3,7 @@ import Result from "../Result";
 import { cloneDeep, compact, isEmpty, last } from "lodash";
 
 export default class GameEnd {
-  checkGameEnd() {
+  checkGameEnd(updatePTN = true) {
     if (!this.state.ply) {
       return false;
     }
@@ -60,7 +60,9 @@ export default class GameEnd {
       result.roads = roads;
     }
     this.state.ply.result = result;
-    this._updatePTN();
+    if (updatePTN) {
+      this._updatePTN();
+    }
 
     return true;
   }

@@ -93,7 +93,7 @@ export default {
         return this.$store.state.size;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["size", value]);
+        this.$store.dispatch("SET_UI", ["size", value || ""]);
       }
     },
     player1: {
@@ -101,7 +101,7 @@ export default {
         return this.$store.state.player1;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["player1", value]);
+        this.$store.dispatch("SET_UI", ["player1", value || ""]);
       }
     },
     player2: {
@@ -109,7 +109,7 @@ export default {
         return this.$store.state.player2;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["player2", value]);
+        this.$store.dispatch("SET_UI", ["player2", value || ""]);
       }
     }
   },
