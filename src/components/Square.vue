@@ -253,11 +253,10 @@ export default {
         left $half-time $easing-reverse,
         right $half-time $easing-reverse
       &.center
-        top 30%
-        bottom 30%
-        left 30%
-        right 30%
-        border-radius 10%
+        top 35%
+        bottom 35%
+        left 35%
+        right 35%
       &.n, &.s
         left 35%
         right 35%
@@ -266,16 +265,16 @@ export default {
         bottom 35%
       &.n
         top 35%
-        bottom 70%
+        bottom 65%
       &.s
-        top 70%
+        top 65%
         bottom 35%
       &.e
-        left 70%
+        left 65%
         right 35%
       &.w
         left 35%
-        right 70%
+        right 65%
   &.n .road .n
     top 0
   &.s .road .s
