@@ -20,7 +20,7 @@ const capitalized = {
 
 export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
-  date: /^(\d{4})\.(\d\d)\.(\d\d)$/,
+  date: /^\d{4}\.\d\d\.\d\d$/,
   event: /^[^"]*$/,
   player1: /^[^"]*$/,
   player2: /^[^"]*$/,

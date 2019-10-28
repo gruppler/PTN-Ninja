@@ -239,7 +239,7 @@ export default class GameBase {
     this.saveBoardState();
 
     if (params.state) {
-      this.state.targetBranch = params.state.targetBranch;
+      this.state.targetBranch = params.state.targetBranch || "";
       ply = this.state.plies[params.state.plyIndex];
       if (ply) {
         if (ply.id || params.state.plyIsDone) {

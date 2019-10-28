@@ -181,7 +181,7 @@
         </template>
         <q-popup-proxy ref="qDateProxy">
           <q-date
-            @input="() => $refs.qDateProxy.hide()"
+            @input="$refs.qDateProxy.hide()"
             v-model="tags.date"
             name="date"
             mask="YYYY.MM.DD"
@@ -212,7 +212,7 @@
         </template>
         <q-popup-proxy ref="qTimeProxy">
           <q-time
-            @input="() => $refs.qTimeProxy.hide()"
+            @input="$refs.qTimeProxy.hide()"
             v-model="tags.time"
             name="time"
             color="accent"
