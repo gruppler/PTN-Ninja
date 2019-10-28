@@ -45,7 +45,7 @@
 
       <q-input
         ref="tps"
-        v-show="tags.tps || !game || !game.plies.length"
+        v-show="tags.tps || (showAll && (!game || !game.plies.length))"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
@@ -164,6 +164,7 @@
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
       <q-input
         class="col-grow"
+        v-show="isVisible('date')"
         v-model="tags.date"
         name="date"
         :label="$t('Date')"
@@ -194,6 +195,7 @@
 
       <q-input
         class="col-grow"
+        v-show="isVisible('time')"
         v-model="tags.time"
         name="time"
         :label="$t('Time')"
