@@ -9,7 +9,7 @@ export default class GameEnd {
     }
 
     let player = this.state.ply.player;
-    let pieces = this.state.pieces[player == 1 ? 2 : 1];
+    let pieces = this.state.pieces[player];
     let roads = this.findRoads();
     let result;
 
@@ -22,7 +22,7 @@ export default class GameEnd {
         result = player == 1 ? "0-R" : "R-0";
       }
     } else if (
-      pieces.flat.length + pieces.cap.length === 0 ||
+      pieces.flat.length + pieces.cap.length === this.pieceCounts.total ||
       !this.state.squares.find(row => row.find(square => !square.length))
     ) {
       // Last empty square or last piece

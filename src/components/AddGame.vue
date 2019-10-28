@@ -135,9 +135,6 @@ export default {
     loadGames(event) {
       this.$store.dispatch("OPEN_FILES", event.target.files);
       this.close();
-    },
-    swapPlayers() {
-      [this.player1, this.player2] = [this.player2, this.player1];
     }
   }
 };

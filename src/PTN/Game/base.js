@@ -302,7 +302,11 @@ export default class GameBase {
     });
     Object.assign(this.tags, tags);
     this._updatePTN(recordChange);
-    if (this.size !== this.tag("size") && !this.plies.length) {
+    if (
+      !this.plies.length &&
+      (this.size !== this.tag("size") ||
+        (tags.tps && tags.tps !== this.tag("tps")))
+    ) {
       this.init(this.ptn, { ...this, state: null });
     }
   }

@@ -335,6 +335,7 @@ export default class GameMutations {
 
     this.recordChange(() => {
       this.state.targetBranch = ply.branch;
+
       if (!isAlreadyDone) {
         // do ply;
         if (!this.state.ply && ply.id === 0) {
@@ -346,10 +347,27 @@ export default class GameMutations {
       } else {
         this._setPly(ply.id, true);
       }
-      if (!this.checkGameEnd()) {
-        // Update PTN if checking for game end didn't
-        this._updatePTN();
+
+      if (ply.id === 0) {
+        // Record date and time if it's the first ply
+        const now = new Date();
+        this.setTags(
+          {
+            date: `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}`,
+            time: `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
+          },
+          false
+        );
       }
+
+      if (this.checkGameEnd()) {
+        // Record result if original branch or no result exists
+        if (ply.branch === "" || !this.tag("result")) {
+          this.setTags({ result: ply.result.text }, false);
+        }
+      }
+
+      this._updatePTN();
     });
   }
 
