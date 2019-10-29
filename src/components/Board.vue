@@ -1,5 +1,8 @@
 <template>
-  <div class="flex flex-center">
+  <div
+    class="board-wrapper flex flex-center"
+    :class="{ 'board-3D': $store.state.board3D }"
+  >
     <div
       class="board-container q-pa-md"
       :class="{
@@ -8,7 +11,6 @@
         ['color-' + game.state.color]: true,
         'no-animations': !$store.state.animateBoard,
         'axis-labels': $store.state.axisLabels,
-        'board-3D': $store.state.board3D,
         'flat-counts': $store.state.flatCounts,
         'highlight-squares': $store.state.highlightSquares,
         'piece-shadows': $store.state.pieceShadows,
@@ -44,7 +46,7 @@
         </div>
       </div>
 
-      <div class="row no-wrap">
+      <div class="board-row row no-wrap">
         <div class="y-axis column">
           <div v-for="i in (1, game.size)" :key="i">
             {{ game.size - i + 1 }}
@@ -211,6 +213,16 @@ export default {
 $turn-indicator-height = 0.5em
 $axis-size = 1.5em
 $radius = 5px
+
+.board-wrapper
+  &.board-3D
+    perspective 150vmin
+    perspective-origin center
+    .board-container
+      transform-style preserve-3d
+      transform translate3d(0em, -2.83333em, -7.28571em) rotate3d(0.85, 0, 0, 25.5deg)
+    .board, .board-row, .squares, .squares > div
+      transform-style preserve-3d
 
 .board-container
   width 100%

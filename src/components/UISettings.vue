@@ -41,6 +41,15 @@
               </q-item-section>
             </q-item>
 
+            <q-item tag="label" :title="hotkeys.board3D" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Board 3D") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle color="accent" v-model="board3D" />
+              </q-item-section>
+            </q-item>
+
             <q-item tag="label" :title="hotkeys.showRoads" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -184,6 +193,7 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 const props = [
   "animateBoard",
   "axisLabels",
+  "board3D",
   "flatCounts",
   "highlightSquares",
   "notifyGame",

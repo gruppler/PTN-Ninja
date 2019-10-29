@@ -2,7 +2,7 @@
   <div
     class="piece"
     :style="{
-      transform: `translate3d(${x}%, -${y}%, ${z}px)`
+      transform: `translate3d(${x}%, -${y}%, ${z}em)`
     }"
   >
     <div
@@ -35,6 +35,9 @@ export default {
     firstSelected() {
       return this.piece && this.piece === this.game.state.selected.pieces[0];
     },
+    board3D() {
+      return this.$store.state.board3D;
+    },
     x() {
       let x = 100;
       if (this.piece) {
@@ -49,8 +52,8 @@ export default {
       let spacing = 7;
       if (this.piece) {
         y *= this.piece.y;
-        y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
-        if (!this.$store.state.board3D) {
+        if (!this.board3D) {
+          y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
           if (
             this.piece.square.length > this.game.size &&
             this.piece.z >= this.piece.square.length - this.game.size
@@ -63,17 +66,37 @@ export default {
         }
       } else {
         // Unplayed piece
-        y *= this.game.size - 1;
-        if (this.type === "cap") {
-          y *= this.game.pieceCounts.total - this.index - 1;
+        y = this.game.size - 1;
+        if (this.board3D) {
+          if (this.type !== "cap") {
+            y *=
+              Math.floor(
+                (this.game.pieceCounts[this.type] - this.index - 1) /
+                  this.game.size
+              ) /
+              Math.floor(
+                this.game.pieceCounts.flat /
+                  (this.game.size -
+                    1 *
+                      !!(
+                        this.game.pieceCounts.cap &&
+                        this.game.pieceCounts.flat % this.game.size
+                      ))
+              );
+          }
         } else {
-          y *=
-            this.game.pieceCounts.total -
-            this.index -
-            this.game.pieceCounts.cap -
-            1;
+          if (this.type === "cap") {
+            y *= this.game.pieceCounts.total - this.index - 1;
+          } else {
+            y *=
+              this.game.pieceCounts.total -
+              this.index -
+              this.game.pieceCounts.cap -
+              1;
+          }
+          y /= this.game.pieceCounts.total - 1;
         }
-        y /= this.game.pieceCounts.total - 1;
+        y *= 100;
       }
       return y;
     },
@@ -83,12 +106,19 @@ export default {
         z = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       } else {
         // Unplayed piece
-        z = this.game.pieceCounts.total - this.index;
-        if (this.type === "cap") {
-          z += this.game.pieceCounts.flat;
-        }
-        if (this.color === 2) {
-          z += this.game.pieceCounts.total;
+        if (this.board3D) {
+          z =
+            ((this.game.pieceCounts[this.type] - this.index - 1) %
+              this.game.size) +
+            1;
+        } else {
+          z = this.game.pieceCounts.total - this.index;
+          if (this.type === "cap") {
+            z += this.game.pieceCounts.flat;
+          }
+          if (this.color === 2) {
+            z += this.game.pieceCounts.total;
+          }
         }
       }
       return z;
@@ -116,8 +146,9 @@ export default {
     box-sizing border-box
     border 1px solid rgba(#000, .8)
     border-radius 10%
-    will-change transform, width, height, left, border-radius, background-color, box-shadow
-    transition transform $generic-hover-transition,
+    will-change opacity, transform, width, height, left, border-radius, background-color, box-shadow
+    transition opacity $generic-hover-transition,
+      transform $generic-hover-transition,
       width $generic-hover-transition,
       height $generic-hover-transition,
       left $generic-hover-transition,
@@ -164,14 +195,14 @@ export default {
       &.p2
         background-color $blue-grey-8
 
-    .board-container:not(.board-3d) &.immovable
+    .board-wrapper:not(.board-3D) &.immovable
       bottom 0
       left 51%
       width 15%
       height 8%
       border-radius 15%/30%
 
-    .board-container.board-3d &.immovable
+    .board-wrapper.board-3D &.immovable
       opacity 0.25
 
     .board-container:not(.unplayed-pieces) &.unplayed
