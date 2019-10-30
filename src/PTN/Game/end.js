@@ -34,19 +34,6 @@ export default class GameEnd {
       } else {
         result = "0-F";
       }
-    } else if (
-      pieces.flat.length + pieces.cap.length === 0 ||
-      !this.state.squares.find(row => row.find(square => !square.length))
-    ) {
-      // Last empty square or last piece
-      if (this.state.flats[0] == this.state.flats[1]) {
-        // Draw
-        result = "1/2-1/2";
-      } else if (this.state.flats[0] > this.state.flats[1]) {
-        result = "F-0";
-      } else {
-        result = "0-F";
-      }
     } else if (this.state.ply.result && this.state.ply.result.type != "1") {
       this.state.ply.result = null;
       this._updatePTN();

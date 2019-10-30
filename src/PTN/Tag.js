@@ -1,6 +1,8 @@
 import TPS from "./TPS";
 import Result from "./Result";
 
+import { padStart } from "lodash";
+
 const capitalized = {
   clock: "Clock",
   date: "Date",
@@ -21,18 +23,36 @@ const capitalized = {
 export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^\d{4}\.\d\d\.\d\d$/,
-  event: /^[^"]*$/,
-  player1: /^[^"]*$/,
-  player2: /^[^"]*$/,
-  points: /^\d*$/,
-  rating1: /^\d*$/,
-  rating2: /^\d*$/,
-  result: /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|)$/,
-  round: /^\d*$/,
-  site: /^[^"]*$/,
+  event: /^[^"]+$/,
+  player1: /^[^"]+$/,
+  player2: /^[^"]+$/,
+  points: /^\d+$/,
+  rating1: /^\d+$/,
+  rating2: /^\d+$/,
+  result: /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2)$/,
+  round: /^\d+$/,
+  site: /^[^"]+$/,
   size: /^[3-8]$/,
   time: /^\d\d(:\d\d){1,2}$/,
   tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/
+};
+
+export const now = () => {
+  const now = new Date();
+  return {
+    date:
+      now.getFullYear() +
+      "." +
+      padStart(now.getMonth() + 1, 2, "0") +
+      "." +
+      padStart(now.getDate(), 2, "0"),
+    time:
+      padStart(now.getHours(), 2, "0") +
+      ":" +
+      padStart(now.getMinutes(), 2, "0") +
+      ":" +
+      padStart(now.getSeconds(), 2, "0")
+  };
 };
 
 export default class Tag {
@@ -49,7 +69,7 @@ export default class Tag {
     this.key = capitalized[key];
 
     if (key in formats) {
-      if (!formats[key].test(this.value)) {
+      if (this.value && !formats[key].test(this.value)) {
         throw new Error(`Invalid ${key}: ${this.value}`);
       }
     } else {
@@ -89,6 +109,8 @@ export default class Tag {
   static parse(notation) {
     return new Tag(notation);
   }
+
+  static now = now;
 
   text() {
     return `[${this.key} "${this.valueText}"]`;

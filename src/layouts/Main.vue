@@ -296,11 +296,9 @@ export default {
   methods: {
     newGame() {
       return new Game(
-        '[Date ""]\n' +
-          `[Player1 "${this.$store.state.player1}"]\n` +
+        `[Player1 "${this.$store.state.player1}"]\n` +
           `[Player2 "${this.$store.state.player2}"]\n` +
           `[Size "${this.$store.state.size}"]\n` +
-          '[Result ""]\n' +
           "\n" +
           "1. "
       );

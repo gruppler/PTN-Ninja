@@ -8,7 +8,6 @@
       :class="{
         ['size-' + game.size]: true,
         ['turn-' + game.state.turn]: true,
-        ['color-' + game.state.color]: true,
         'no-animations': !$store.state.animateBoard,
         'axis-labels': $store.state.axisLabels,
         'flat-counts': $store.state.flatCounts,

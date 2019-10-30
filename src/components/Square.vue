@@ -216,12 +216,12 @@ export default {
   .board-container.highlight-squares &.current .hl.current
     opacity .75;
 
-  .board-container.color-1 &
+  .board-container.turn-1 &
     .hl.player
       background-color $blue-grey-2
     &.placed .hl.player
       background-color $blue-grey-8
-  .board-container.color-2 &
+  .board-container.turn-2 &
     .hl.player
       background-color $blue-grey-8
     &.placed .hl.player

@@ -350,15 +350,7 @@ export default class GameMutations {
 
       if (ply.id === 0 && (!this.tag("date") || !this.tag("tps"))) {
         // Record date and time
-        const now = new Date();
-        this.setTags(
-          {
-            date: `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}`,
-            time: `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
-          },
-          false,
-          false
-        );
+        this.setTags(Tag.now(), false, false);
       }
 
       if (this.checkGameEnd(false)) {
