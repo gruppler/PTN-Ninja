@@ -194,9 +194,16 @@ export default {
       }
     },
     _prev(event) {
-      if (!this.isFirst) {
-        this.game.prev(event.shiftKey || event.srcKey === "half");
-      }
+      requestAnimationFrame(() => {
+        if (this.isPlaying) {
+          clearTimeout(this.timer);
+          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timestamp = new Date().getTime();
+        }
+        if (!this.isFirst) {
+          this.game.prev(event.shiftKey || event.srcKey === "half");
+        }
+      });
     },
     _next(event) {
       requestAnimationFrame(() => {

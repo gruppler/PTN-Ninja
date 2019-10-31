@@ -32,10 +32,12 @@ export default {
   },
   methods: {
     scrub(position) {
-      if (this.game && this.game.state.plies) {
-        const ply = this.game.state.plies[Math.floor(position)];
-        this.game.goToPly(ply.id, position > ply.index);
-      }
+      requestAnimationFrame(() => {
+        if (this.game && this.game.state.plies) {
+          const ply = this.game.state.plies[Math.floor(position)];
+          this.game.goToPly(ply.id, position > ply.index);
+        }
+      });
     }
   },
   created() {
