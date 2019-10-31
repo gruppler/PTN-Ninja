@@ -2,6 +2,8 @@
   <div
     class="board-wrapper flex flex-center"
     :class="{ 'board-3D': $store.state.board3D }"
+    v-touch-pan.prevent.mouse="rotateBoard"
+    v-touch-hold.prevent.mouse="resetBoardRotation"
   >
     <div
       class="board-container q-pa-md"
@@ -15,7 +17,7 @@
         'piece-shadows': $store.state.pieceShadows,
         'unplayed-pieces': $store.state.unplayedPieces
       }"
-      :style="{ maxWidth, fontSize }"
+      :style="{ maxWidth, fontSize, transform }"
       :key="game.name + '|' + game.tag('tps')"
     >
       <div class="flat-counter row no-wrap">
@@ -90,6 +92,7 @@
         v-show="game.state.ply && $store.state.showMove"
         class="q-mt-md"
         :class="{ 'lt-md': $store.state.showPTN }"
+        :style="{ transform: untransform }"
         :key="game.state.move.id"
         :move="game.state.move"
         :game="game"
@@ -107,6 +110,9 @@ import Piece from "./Piece";
 import Square from "./Square";
 import Move from "./Move";
 
+const MAX_ANGLE = 30;
+const ROTATE_SENSITIVITY = 3;
+
 export default {
   name: "Board",
   components: {
@@ -118,7 +124,8 @@ export default {
   data() {
     return {
       size: null,
-      space: null
+      space: null,
+      prevBoardRotation: null
     };
   },
   computed: {
@@ -180,6 +187,42 @@ export default {
         );
       }
     },
+    boardRotation: {
+      get() {
+        return this.$store.state.boardRotation;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["boardRotation", value]);
+      }
+    },
+    transform() {
+      return (
+        `translate3d(` +
+        `${(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
+        `${(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
+        `${(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
+        `) rotate3d(` +
+        `${this.boardRotation[1]}, ` +
+        `${this.boardRotation[0]}, ` +
+        `0, ` +
+        `${this.boardRotation[2] * MAX_ANGLE}deg` +
+        `)`
+      );
+    },
+    untransform() {
+      return (
+        `translate3d(` +
+        `${-(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
+        `${-(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
+        `${-(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
+        `) rotate3d(` +
+        `${-this.boardRotation[1]}, ` +
+        `${-this.boardRotation[0]}, ` +
+        `0, ` +
+        `${this.boardRotation[2] * MAX_ANGLE}deg` +
+        `)`
+      );
+    },
     squares() {
       let squares = [];
       for (let y = this.game.size - 1; y >= 0; y--) {
@@ -203,6 +246,43 @@ export default {
       if (this.isInputFocused()) {
         document.activeElement.scrollIntoView();
       }
+    },
+    resetBoardRotation() {
+      this.boardRotation = this.$store.state.defaults.boardRotation;
+    },
+    rotateBoard(event) {
+      if (event.isFirst) {
+        this.prevBoardRotation = { ...this.boardRotation };
+      }
+
+      let x = Math.max(
+        -1,
+        Math.min(
+          1,
+          this.prevBoardRotation[0] +
+            (ROTATE_SENSITIVITY * event.offset.x) / this.size.width
+        )
+      );
+
+      let y = Math.max(
+        -1,
+        Math.min(
+          1,
+          this.prevBoardRotation[1] -
+            (ROTATE_SENSITIVITY * event.offset.y) / this.size.width
+        )
+      );
+
+      if (event.delta.x < 10 && Math.abs(x) < 0.05) {
+        x = 0;
+      }
+      if (event.delta.y < 10 && Math.abs(y) < 0.05) {
+        y = 0;
+      }
+
+      let magnitude = Math.sqrt(x * x + y * y);
+
+      this.boardRotation = [x, y, magnitude];
     }
   }
 };
@@ -219,7 +299,6 @@ $radius = 5px
     perspective-origin center
     .board-container
       transform-style preserve-3d
-      transform translate3d(0em, -2.83333em, -7.28571em) rotate3d(0.85, 0, 0, 25.5deg)
     .board, .board-row, .squares, .squares > div
       transform-style preserve-3d
 

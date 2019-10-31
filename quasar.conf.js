@@ -61,7 +61,12 @@ module.exports = function(ctx) {
         "QToolbarTitle"
       ],
 
-      directives: ["ClosePopup", "Ripple"],
+      directives: [
+        "ClosePopup",
+        "Ripple",
+        "TouchHold",
+        "TouchPan"
+      ],
 
       // Quasar plugins
       plugins: [
