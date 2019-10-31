@@ -23,6 +23,7 @@
     }"
     @click.left="select"
     @click.right.prevent="altSelect"
+    v-touch-hold:300.prevent.capture="altSelect"
   >
     <div class="hl current" />
     <div class="road" v-if="$store.state.showRoads">

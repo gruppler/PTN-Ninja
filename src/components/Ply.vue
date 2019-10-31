@@ -46,12 +46,16 @@
       </q-btn>
     </q-chip>
     <span class="result" v-if="ply.result">
-      <span class="color1" :class="'result-' + ply.result.player1">{{
-        ply.result.player1
-      }}</span>
-      <span class="color2" :class="'result-' + ply.result.player2">{{
-        ply.result.player2
-      }}</span>
+      <span
+        class="color1"
+        :class="'result-' + (ply.result.isTie ? 'tie' : ply.result.player1)"
+        >{{ ply.result.player1 }}</span
+      >
+      <span
+        class="color2"
+        :class="'result-' + (ply.result.isTie ? 'tie' : ply.result.player2)"
+        >{{ ply.result.player2 }}</span
+      >
     </span>
   </span>
 </template>
@@ -187,8 +191,8 @@ export default {
       color $blue-dark
     &.result-0
       color $red-dark
-    &.result-1\/2
-      color $orange-dark
+    &.result-tie
+      color $gray-dark
   .color2
     background-color $gray-dark
     border-radius 0 4px 4px 0
@@ -198,6 +202,6 @@ export default {
       color $blue-light
     &.result-0
       color $red-light
-    &.result-1\/2
-      color $orange-light
+    &.result-tie
+      color $gray-light
 </style>

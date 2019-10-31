@@ -4,6 +4,7 @@
     :class="{ 'board-3D': $store.state.board3D }"
     v-touch-pan.prevent.mouse="rotateBoard"
     v-touch-hold.prevent.mouse="resetBoardRotation"
+    ref="wrapper"
   >
     <div
       class="board-container q-pa-md"
@@ -19,6 +20,7 @@
       }"
       :style="{ maxWidth, fontSize, transform }"
       :key="game.name + '|' + game.tag('tps')"
+      ref="container"
     >
       <div class="flat-counter row no-wrap">
         <div
@@ -196,32 +198,32 @@ export default {
       }
     },
     transform() {
-      return (
-        `translate3d(` +
-        `${(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
-        `${(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
-        `${(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
-        `) rotate3d(` +
-        `${this.boardRotation[1]}, ` +
-        `${this.boardRotation[0]}, ` +
-        `0, ` +
-        `${this.boardRotation[2] * MAX_ANGLE}deg` +
-        `)`
-      );
+      return this.$store.state.board3D
+        ? `translate3d(` +
+            `${(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
+            `${(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
+            `${(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
+            `) rotate3d(` +
+            `${this.boardRotation[1]}, ` +
+            `${this.boardRotation[0]}, ` +
+            `0, ` +
+            `${this.boardRotation[2] * MAX_ANGLE}deg` +
+            `)`
+        : "";
     },
     untransform() {
-      return (
-        `translate3d(` +
-        `${-(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
-        `${-(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
-        `${-(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
-        `) rotate3d(` +
-        `${-this.boardRotation[1]}, ` +
-        `${-this.boardRotation[0]}, ` +
-        `0, ` +
-        `${this.boardRotation[2] * MAX_ANGLE}deg` +
-        `)`
-      );
+      return this.$store.state.board3D
+        ? `rotate3d(` +
+            `${-this.boardRotation[1]}, ` +
+            `${-this.boardRotation[0]}, ` +
+            `0, ` +
+            `${this.boardRotation[2] * MAX_ANGLE}deg` +
+            `) translate3d(` +
+            `${-(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
+            `${-(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
+            `${-(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
+            `)`
+        : "";
     },
     squares() {
       let squares = [];
@@ -247,8 +249,13 @@ export default {
         document.activeElement.scrollIntoView();
       }
     },
-    resetBoardRotation() {
-      this.boardRotation = this.$store.state.defaults.boardRotation;
+    resetBoardRotation(event) {
+      if (
+        event.evt.target === this.$refs.wrapper ||
+        event.evt.target === this.$refs.container
+      ) {
+        this.boardRotation = this.$store.state.defaults.boardRotation;
+      }
     },
     rotateBoard(event) {
       if (event.isFirst) {
