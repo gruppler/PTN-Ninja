@@ -94,7 +94,6 @@
         v-show="game.state.ply && $store.state.showMove"
         class="q-mt-md"
         :class="{ 'lt-md': $store.state.showPTN }"
-        :style="{ transform: untransform }"
         :key="game.state.move.id"
         :move="game.state.move"
         :game="game"
@@ -127,7 +126,8 @@ export default {
     return {
       size: null,
       space: null,
-      prevBoardRotation: null
+      prevBoardRotation: null,
+      boardRotation: this.$store.state.boardRotation
     };
   },
   computed: {
@@ -189,40 +189,26 @@ export default {
         );
       }
     },
-    boardRotation: {
-      get() {
-        return this.$store.state.boardRotation;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["boardRotation", value]);
-      }
-    },
     transform() {
+      const translate3d = [
+        0,
+        (this.boardRotation[1] * MAX_ANGLE) / -9 + "em",
+        (this.boardRotation[2] * MAX_ANGLE) / -3.5 + "em"
+      ].join(",");
+
+      const rotateZ =
+        -this.boardRotation[0] * this.boardRotation[1] * MAX_ANGLE * 1.5 +
+        "deg";
+
+      const rotate3d = [
+        this.boardRotation[1],
+        this.boardRotation[0],
+        0,
+        this.boardRotation[2] * MAX_ANGLE + "deg"
+      ].join(",");
+
       return this.$store.state.board3D
-        ? `translate3d(` +
-            `${(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
-            `${(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
-            `${(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
-            `) rotate3d(` +
-            `${this.boardRotation[1]}, ` +
-            `${this.boardRotation[0]}, ` +
-            `0, ` +
-            `${this.boardRotation[2] * MAX_ANGLE}deg` +
-            `)`
-        : "";
-    },
-    untransform() {
-      return this.$store.state.board3D
-        ? `rotate3d(` +
-            `${-this.boardRotation[1]}, ` +
-            `${-this.boardRotation[0]}, ` +
-            `0, ` +
-            `${this.boardRotation[2] * MAX_ANGLE}deg` +
-            `) translate3d(` +
-            `${-(this.boardRotation[0] * MAX_ANGLE) / 9}em, ` +
-            `${-(this.boardRotation[1] * MAX_ANGLE) / -9}em, ` +
-            `${-(this.boardRotation[2] * MAX_ANGLE) / -3.5}em` +
-            `)`
+        ? `translate3d(${translate3d}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
     squares() {
@@ -251,13 +237,19 @@ export default {
     },
     resetBoardRotation(event) {
       if (
-        event.evt.target === this.$refs.wrapper ||
-        event.evt.target === this.$refs.container
+        this.$store.state.board3D &&
+        (event.evt.target === this.$refs.wrapper ||
+          event.evt.target === this.$refs.container)
       ) {
         this.boardRotation = this.$store.state.defaults.boardRotation;
+        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
       }
     },
     rotateBoard(event) {
+      if (!this.$store.state.board3D) {
+        return;
+      }
+
       if (event.isFirst) {
         this.prevBoardRotation = { ...this.boardRotation };
       }
@@ -272,7 +264,7 @@ export default {
       );
 
       let y = Math.max(
-        -1,
+        0,
         Math.min(
           1,
           this.prevBoardRotation[1] -
@@ -280,16 +272,19 @@ export default {
         )
       );
 
-      if (event.delta.x < 10 && Math.abs(x) < 0.05) {
+      if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
       }
-      if (event.delta.y < 10 && Math.abs(y) < 0.05) {
+      if (event.delta.y < 2 && Math.abs(y) < 0.05) {
         y = 0;
       }
 
       let magnitude = Math.sqrt(x * x + y * y);
 
       this.boardRotation = [x, y, magnitude];
+      if (event.isFinal) {
+        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+      }
     }
   }
 };
