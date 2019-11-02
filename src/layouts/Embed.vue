@@ -26,7 +26,22 @@
         @shortkey="$store.dispatch($event.srcKey, game)"
         class="overflow-hidden"
       >
-        <Board class="absolute-fit" :game="game" />
+        <div class="column absolute-fit">
+          <Board class="col-grow" :game="game" />
+          <div class="text-center">
+            <Move
+              v-if="game.state.move"
+              v-show="game.state.ply && $store.state.showMove"
+              class="q-mb-md q-mx-md"
+              :class="{ 'lt-md': $store.state.showPTN }"
+              :key="game.state.move.id"
+              :move="game.state.move"
+              :game="game"
+              currentOnly
+              standalone
+            />
+          </div>
+        </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <FullscreenToggle class="dimmed-btn" color="white" />
         </q-page-sticky>
@@ -100,6 +115,7 @@
 
 <script>
 import Board from "../components/Board";
+import Move from "../components/Move";
 import Notes from "../components/Notes";
 import PTN from "../components/PTN";
 import GameNotifications from "../components/GameNotifications";
@@ -118,6 +134,7 @@ import { Platform } from "quasar";
 export default {
   components: {
     Board,
+    Move,
     Notes,
     PTN,
     GameNotifications,

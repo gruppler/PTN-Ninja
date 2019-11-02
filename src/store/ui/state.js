@@ -5,7 +5,7 @@ const defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
-  boardRotation: [0, 0.85, 0.85],
+  boardRotation: [0.4431946006749157, 0.7255343082114736, 0.8501890886498717],
   flatCounts: true,
   highlightSquares: true,
   notifyGame: true,

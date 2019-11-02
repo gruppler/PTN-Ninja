@@ -112,7 +112,7 @@ export default {
               this.game.size) +
             1;
         } else {
-          z = this.game.pieceCounts.total - this.index;
+          z = 2 * this.game.pieceCounts.total - this.index;
           if (this.type === "cap") {
             z += this.game.pieceCounts.flat;
           }

@@ -89,17 +89,6 @@
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
-      <Move
-        v-if="game.state.move"
-        v-show="game.state.ply && $store.state.showMove"
-        class="q-mt-md"
-        :class="{ 'lt-md': $store.state.showPTN }"
-        :key="game.state.move.id"
-        :move="game.state.move"
-        :game="game"
-        currentOnly
-      />
-
       <q-resize-observer @resize="resizeBoard" debounce="10" />
     </div>
     <q-resize-observer @resize="resizeSpace" debounce="10" />
@@ -109,7 +98,6 @@
 <script>
 import Piece from "./Piece";
 import Square from "./Square";
-import Move from "./Move";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -118,8 +106,7 @@ export default {
   name: "Board",
   components: {
     Square,
-    Piece,
-    Move
+    Piece
   },
   props: ["game"],
   data() {
@@ -190,10 +177,23 @@ export default {
       }
     },
     transform() {
+      const translateX =
+        (this.boardRotation[0] * (1 - this.boardRotation[1]) * MAX_ANGLE) / 20;
+      const translateY =
+        (this.boardRotation[1] *
+          (0.75 + 0.25 * Math.abs(this.boardRotation[0])) *
+          MAX_ANGLE) /
+        -6;
+      const translateZ =
+        (this.boardRotation[2] *
+          (0.5 + 0.5 * this.boardRotation[1]) *
+          -MAX_ANGLE) /
+        1.5;
+
       const translate3d = [
-        0,
-        (this.boardRotation[1] * MAX_ANGLE) / -9 + "em",
-        (this.boardRotation[2] * MAX_ANGLE) / -3.5 + "em"
+        translateX + "em",
+        translateY + "em",
+        translateZ + "em"
       ].join(",");
 
       const rotateZ =
@@ -275,9 +275,6 @@ export default {
       if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
       }
-      if (event.delta.y < 2 && Math.abs(y) < 0.05) {
-        y = 0;
-      }
 
       let magnitude = Math.sqrt(x * x + y * y);
 
@@ -313,16 +310,6 @@ $radius = 5px
   &.no-animations
     .piece, .stone, .road > div, .flat-counter > div, .turn-indicator
       transition none !important
-
-  .move
-    display inline-block
-    border-radius $radius
-    padding 0 .5em
-    background-color rgba(#fff, .15)
-    transition opacity $generic-hover-transition
-    opacity 1
-    &.lt-md
-      opacity 0
 
 .flat-counter, .x-axis
   width 100%

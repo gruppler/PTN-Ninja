@@ -4,7 +4,8 @@
     :class="{
       'current-move': isCurrentMove,
       linebreak,
-      'current-only': currentOnly !== undefined
+      'current-only': currentOnly !== undefined,
+      standalone: standalone !== undefined
     }"
   >
     <div class="move-wrapper">
@@ -54,7 +55,14 @@ import Ply from "./Ply";
 export default {
   name: "Move",
   components: { Linenum, Ply },
-  props: ["move", "game", "currentOnly", "noDecoration", "player"],
+  props: [
+    "move",
+    "game",
+    "currentOnly",
+    "standalone",
+    "noDecoration",
+    "player"
+  ],
   computed: {
     nextMove() {
       const moves = this.game.movesSorted;
@@ -111,4 +119,14 @@ export default {
   .q-separator
     position relative
     bottom -.75em
+
+  &.standalone
+    display inline-block
+    border-radius 5px
+    padding 0 .5em
+    background-color rgba(#fff, .15)
+    transition opacity $generic-hover-transition
+    opacity 1
+    &.lt-md
+      opacity 0
 </style>

@@ -41,7 +41,22 @@
         @shortkey="$store.dispatch($event.srcKey, game)"
         class="overflow-hidden"
       >
-        <Board class="absolute-fit" :game="game" />
+        <div class="column absolute-fit">
+          <Board class="col-grow" :game="game" />
+          <div class="board-move-container">
+            <Move
+              v-if="game.state.move"
+              v-show="game.state.ply && $store.state.showMove"
+              class="q-mb-md q-mx-md"
+              :class="{ 'lt-md': $store.state.showPTN }"
+              :key="game.state.move.id"
+              :move="game.state.move"
+              :game="game"
+              currentOnly
+              standalone
+            />
+          </div>
+        </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
         </q-page-sticky>
@@ -146,6 +161,7 @@
 
 <script>
 import Board from "../components/Board";
+import Move from "../components/Move";
 import Notes from "../components/Notes";
 import Chat from "../components/Chat";
 import GameSelector from "../components/GameSelector";
@@ -171,6 +187,7 @@ import { isEqual } from "lodash";
 export default {
   components: {
     Board,
+    Move,
     Notes,
     Chat,
     GameSelector,
@@ -428,4 +445,10 @@ export default {
     height $toolbar-min-height
   .q-tab-panel
     padding 0
+
+.board-move-container
+  text-align center
+  @media (max-width: $breakpoint-sm-max)
+    text-align left
+    margin-right 84px
 </style>
