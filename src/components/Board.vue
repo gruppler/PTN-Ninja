@@ -3,7 +3,7 @@
     class="board-wrapper flex flex-center"
     :class="{ 'board-3D': $store.state.board3D }"
     v-touch-pan.prevent.mouse="rotateBoard"
-    v-touch-hold.prevent.mouse="resetBoardRotation"
+    @click.right.self.prevent="resetBoardRotation"
     ref="wrapper"
   >
     <div
@@ -235,18 +235,17 @@ export default {
         document.activeElement.scrollIntoView();
       }
     },
-    resetBoardRotation(event) {
-      if (
-        this.$store.state.board3D &&
-        (event.evt.target === this.$refs.wrapper ||
-          event.evt.target === this.$refs.container)
-      ) {
+    resetBoardRotation() {
+      if (this.$store.state.board3D) {
         this.boardRotation = this.$store.state.defaults.boardRotation;
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
       }
     },
     rotateBoard(event) {
-      if (!this.$store.state.board3D) {
+      if (
+        !this.$store.state.board3D &&
+        event.evt.target === this.$refs.wrapper
+      ) {
         return;
       }
 

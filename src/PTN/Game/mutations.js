@@ -230,20 +230,22 @@ export default class GameMutations {
     return success;
   }
 
-  insertPly(ply, isAlreadyDone = false) {
+  insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     if (ply.constructor !== Ply) {
-      ply = Ply.parse(ply, { id: this.plies.length });
+      ply = Ply.parse(ply, {
+        id: replaceCurrent ? this.state.plyID : this.plies.length
+      });
     }
-    if (this.state.plyIsDone && this.state.nextPly) {
+    if (!replaceCurrent && this.state.plyIsDone && this.state.nextPly) {
       this._setPly(this.state.nextPly.id, false);
     }
 
     let move = this.state.move;
 
-    ply.color = this.state.color;
-    ply.player = this.state.turn;
+    ply.color = replaceCurrent ? this.state.ply.color : this.state.color;
+    ply.player = replaceCurrent ? this.state.ply.player : this.state.turn;
 
-    if (!move.plies[ply.player - 1]) {
+    if (!move.plies[ply.player - 1] || replaceCurrent) {
       // Next ply in the move
       move.setPly(ply, ply.player - 1);
       if (ply.id === 0) {
@@ -331,7 +333,12 @@ export default class GameMutations {
       move.ply1 = Nop.parse("--");
     }
 
-    this.plies.push(ply);
+    if (replaceCurrent) {
+      this.plies.splice(ply.id, 1, ply);
+      this.state.plies.splice(ply.index, 1, ply);
+    } else {
+      this.plies.push(ply);
+    }
 
     this.recordChange(() => {
       this.state.targetBranch = ply.branch;
@@ -340,6 +347,9 @@ export default class GameMutations {
         // do ply;
         if (!this.state.ply && ply.id === 0) {
           this._setPly(ply.id, false);
+          this._doPly();
+        } else if (replaceCurrent && this.state.plyIsDone) {
+          this._undoPly();
           this._doPly();
         } else {
           this.goToPly(ply.id, true);

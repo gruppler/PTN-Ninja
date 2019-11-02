@@ -128,13 +128,7 @@ export default class GameIX {
             (types.indexOf(piece.isStanding ? "wall" : piece.type) + 1) %
               types.length
           ];
-        if (this.state.plyIsDone) {
-          this._undoPly();
-        }
-        if (!this.state.nextPly) {
-          this.deletePly(piece.ply.id);
-        }
-        this.insertPly(Ply.fromMoveset([move]));
+        this.insertPly(Ply.fromMoveset([move]), false, !this.state.nextPly);
         this.cancelMove();
       } else {
         // Select piece or stack

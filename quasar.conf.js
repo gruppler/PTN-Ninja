@@ -64,7 +64,6 @@ module.exports = function(ctx) {
       directives: [
         "ClosePopup",
         "Ripple",
-        "TouchHold",
         "TouchPan"
       ],
 

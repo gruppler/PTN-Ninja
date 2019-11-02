@@ -54,6 +54,7 @@ export default class Move {
   }
 
   setPly(ply, index = 0) {
+    const oldPly = this.plies[index] || null;
     this.plies[index] = ply;
     if (!ply) {
       if (index === 1 || this.plies.length === 1) {
@@ -68,7 +69,16 @@ export default class Move {
     ply.move = this;
     ply.branch = this.linenum.branch;
     ply.index = this.index * 2 + index - this.game.firstPlayer + 1;
-    if (
+    if (oldPly) {
+      if (oldPly.branches.length) {
+        ply.branches = oldPly.branches;
+        ply.branches.splice(ply.branches.indexOf(oldPly), 1, ply);
+        if (ply.branches[0] === ply) {
+          this.game.branches[ply.branch] = ply;
+        }
+        delete this.game.boards[ply.id];
+      }
+    } else if (
       !ply.isNop &&
       this.linenum.branch &&
       this.linenum.isRoot &&
