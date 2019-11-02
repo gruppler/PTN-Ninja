@@ -18,6 +18,10 @@ export default class Evaluation {
     this["!"] = this.ptn.includes("!");
   }
 
+  isDouble(type) {
+    return (type === "?" ? /\?\?/ : /!!/).test(this.text);
+  }
+
   static parse(notation) {
     return new Evaluation(notation);
   }

@@ -82,7 +82,7 @@ export default class GameComments {
     return this.removeComment("notes", plyID, index);
   }
 
-  toggleEvaluation(type) {
+  toggleEvaluation(type, double = false) {
     const ply = this.state.ply;
     const types = { tak: "'", tinue: '"', "?": "?", "!": "!" };
     if (!ply) {
@@ -119,12 +119,20 @@ export default class GameComments {
           break;
         case "?":
         case "!":
-          if (ply.evaluation[type]) {
+          if (!double && ply.evaluation[type]) {
             ply.evaluation = Evaluation.parse(
               ply.evaluation.text.replace(new RegExp(`[${type}]`, "g"), "")
             );
           } else {
-            ply.evaluation = Evaluation.parse(ply.evaluation.text + type);
+            ply.evaluation = Evaluation.parse(
+              double
+                ? ply.evaluation.isDouble(type)
+                  ? ply.evaluation.text.replace(type + type, type)
+                  : ply.evaluation.text.includes(type)
+                  ? ply.evaluation.text.replace(type, type + type)
+                  : ply.evaluation.text + type + type
+                : ply.evaluation.text + type
+            );
           }
           break;
         default:

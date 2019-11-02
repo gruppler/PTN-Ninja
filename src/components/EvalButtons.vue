@@ -10,8 +10,20 @@
       :class="{ active: isTinue }"
       @click="toggle('tinue')"
     />
-    <q-btn label="?" :class="{ active: isQ }" @click="toggle('?')" dense />
-    <q-btn label="!" :class="{ active: isBang }" @click="toggle('!')" dense />
+    <q-btn
+      label="?"
+      :class="{ active: isQ, double: isDouble('?') }"
+      @click.left="toggle('?')"
+      @click.right.prevent="toggle('?', true)"
+      dense
+    />
+    <q-btn
+      label="!"
+      :class="{ active: isBang, double: isDouble('!') }"
+      @click.left="toggle('!')"
+      @click.right.prevent="toggle('!', true)"
+      dense
+    />
   </q-btn-group>
 </template>
 
@@ -40,10 +52,13 @@ export default {
     }
   },
   methods: {
-    toggle(type) {
+    toggle(type, double = false) {
       if (this.game) {
-        this.game.toggleEvaluation(type);
+        this.game.toggleEvaluation(type, double);
       }
+    },
+    isDouble(type) {
+      return this.eval && this.eval.isDouble(type);
     }
   }
 };
@@ -54,4 +69,6 @@ export default {
   .q-btn.active
     background-color $orange-light
     color $gray-dark
+    &.double
+      background-color $red-light
 </style>
