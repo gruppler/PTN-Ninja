@@ -179,17 +179,27 @@
         <template v-slot:prepend>
           <q-icon name="event" />
         </template>
-        <q-popup-proxy ref="qDateProxy">
+        <q-popup-proxy @before-show="proxyDate = tags.date">
           <q-date
-            @input="$refs.qDateProxy.hide()"
-            v-model="tags.date"
+            v-model="proxyDate"
             name="date"
             mask="YYYY.MM.DD"
             color="accent"
             text-color="grey-10"
             today-btn
             dark
-          />
+          >
+            <div class="row items-center justify-end q-gutter-sm">
+              <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+              <q-btn
+                :label="$t('OK')"
+                @click="tags.date = proxyDate"
+                color="accent"
+                flat
+                v-close-popup
+              />
+            </div>
+          </q-date>
         </q-popup-proxy>
       </q-input>
 
@@ -210,10 +220,9 @@
         <template v-slot:prepend>
           <q-icon name="access_time" />
         </template>
-        <q-popup-proxy ref="qTimeProxy">
+        <q-popup-proxy @before-show="proxyTime = tags.time">
           <q-time
-            @input="$refs.qTimeProxy.hide()"
-            v-model="tags.time"
+            v-model="proxyTime"
             name="time"
             color="accent"
             text-color="grey-10"
@@ -221,7 +230,18 @@
             with-seconds
             now-btn
             dark
-          />
+          >
+            <div class="row items-center justify-end q-gutter-sm">
+              <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+              <q-btn
+                :label="$t('OK')"
+                @click="tags.time = proxyTime"
+                color="accent"
+                flat
+                v-close-popup
+              />
+            </div>
+          </q-time>
         </q-popup-proxy>
       </q-input>
     </div>
@@ -377,7 +397,9 @@ export default {
         size: null,
         time: null,
         tps: null
-      }
+      },
+      proxyDate: null,
+      proxyTime: null
     };
   },
   computed: {
