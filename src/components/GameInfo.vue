@@ -68,9 +68,11 @@
         <template v-slot:append>
           <q-btn
             v-show="$refs.tps && !$refs.tps.disable && !$refs.tps.innerError"
+            @click="$store.dispatch('SET_UI', ['isEditingTPS', true])"
             icon="edit"
             dense
             flat
+            v-close-popup
           />
         </template>
       </q-input>

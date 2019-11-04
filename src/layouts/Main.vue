@@ -146,7 +146,26 @@
         v-show="$store.state.showControls"
         class="footer-toolbar q-pa-sm bg-secondary text-white"
       >
-        <PlayControls :game="game" />
+        <PieceSelector
+          class="full-width justify-center"
+          v-if="isEditingTPS"
+          v-model="selectedPiece"
+          :game="game"
+        >
+          <q-btn
+            :label="$t('Cancel')"
+            @click="isEditingTPS = false"
+            color="accent"
+            flat
+          />
+          <q-btn
+            :label="$t('OK')"
+            @click="isEditingTPS = false"
+            color="accent"
+            flat
+          />
+        </PieceSelector>
+        <PlayControls v-else :game="game" />
       </q-toolbar>
     </q-footer>
 
@@ -165,6 +184,7 @@ import Move from "../components/Move";
 import Notes from "../components/Notes";
 import Chat from "../components/Chat";
 import GameSelector from "../components/GameSelector";
+import PieceSelector from "../components/PieceSelector";
 import Menu from "../components/Menu";
 import PTN from "../components/PTN";
 import GameNotifications from "../components/GameNotifications";
@@ -191,6 +211,7 @@ export default {
     Notes,
     Chat,
     GameSelector,
+    PieceSelector,
     Menu,
     PTN,
     GameNotifications,
@@ -235,6 +256,30 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
+      }
+    },
+    isEditingTPS: {
+      get() {
+        return this.$store.state.isEditingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+      }
+    },
+    selectedPiece: {
+      get() {
+        return this.$store.state.selectedPiece;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["selectedPiece", value]);
+      }
+    },
+    editingTPS: {
+      get() {
+        return this.$store.state.editingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["editingTPS", value]);
       }
     },
     dialogAddGame: {

@@ -6,14 +6,17 @@ const defaults = {
   axisLabels: true,
   board3D: false,
   boardRotation: [0.4431946006749157, 0.7255343082114736, 0.8501890886498717],
+  editingTPS: "",
   flatCounts: true,
   highlightSquares: true,
+  isEditingTPS: false,
   notifyGame: true,
   notifyNotes: true,
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
+  selectedPiece: { player: null, type: null },
   showAllBranches: false,
   showControls: true,
   showMove: true,
@@ -26,7 +29,12 @@ const defaults = {
   unplayedPieces: true
 };
 
-let state = { embed: Platform.within.iframe, games: [], defaults, ...defaults };
+let state = {
+  embed: Platform.within.iframe,
+  games: [],
+  defaults,
+  ...defaults
+};
 
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
