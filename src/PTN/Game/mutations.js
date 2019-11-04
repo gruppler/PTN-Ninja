@@ -233,10 +233,15 @@ export default class GameMutations {
   insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
-        id: replaceCurrent ? this.state.plyID : this.plies.length
+        id:
+          replaceCurrent && !this.state.nextPly
+            ? this.state.plyID
+            : this.plies.length
       });
     }
-    if (!replaceCurrent && this.state.plyIsDone && this.state.nextPly) {
+    if (replaceCurrent && !this.state.plyIsDone && this.state.prevPly) {
+      this._setPly(this.state.prevPly.id, true);
+    } else if (!replaceCurrent && this.state.plyIsDone && this.state.nextPly) {
       this._setPly(this.state.nextPly.id, false);
     }
 
@@ -245,7 +250,7 @@ export default class GameMutations {
     ply.color = replaceCurrent ? this.state.ply.color : this.state.color;
     ply.player = replaceCurrent ? this.state.ply.player : this.state.turn;
 
-    if (!move.plies[ply.player - 1] || replaceCurrent) {
+    if (!move.plies[ply.player - 1]) {
       // Next ply in the move
       move.setPly(ply, ply.player - 1);
       if (ply.id === 0) {
@@ -276,7 +281,7 @@ export default class GameMutations {
     } else {
       // Check to see if ply already exists
       let equalPly = null;
-      if (this.state.plyIsDone) {
+      if (this.state.plyIsDone && !replaceCurrent) {
         if (this.state.nextPly && this.state.nextPly.isEqual(ply)) {
           equalPly = this.state.nextPly;
         }
@@ -294,35 +299,54 @@ export default class GameMutations {
           this._setPly(equalPly.id, true);
           this._afterPly(equalPly);
         } else {
-          this.goToPly(equalPly.id, true);
+          if (replaceCurrent && !this.state.nextPly) {
+            // Delete newly formed branch
+            this.recordChange(() => {
+              if (this.state.plyIsDone) {
+                this._undoPly();
+              }
+              let plyID = this.state.plyID;
+              this.goToPly(equalPly.id, true);
+              this.deletePly(plyID, false);
+            });
+          } else {
+            this.goToPly(equalPly.id, true);
+          }
         }
         return;
       }
 
-      // New branch
-      if (
-        !this.state.plyIsDone &&
-        this.state.ply &&
-        this.state.ply.branches.length
-      ) {
-        ply.branch = this.newBranchID(
-          this.state.ply ? this.state.ply.branches[0].branch : "",
-          this.state.number
-        );
+      if (replaceCurrent && !this.state.nextPly) {
+        // Replace ply
+        move.setPly(ply, ply.player - 1);
       } else {
-        ply.branch = this.newBranchID(this.state.branch, this.state.number);
+        // New branch
+        if (
+          (replaceCurrent || !this.state.plyIsDone) &&
+          this.state.ply &&
+          this.state.ply.branches.length
+        ) {
+          ply.branch = this.newBranchID(
+            this.state.ply ? this.state.ply.branches[0].branch : "",
+            this.state.number
+          );
+        } else {
+          ply.branch = this.newBranchID(this.state.branch, this.state.number);
+        }
+
+        move = new Move({
+          game: this,
+          id: this.moves.length,
+          linenum: new Linenum(ply.branch + this.state.number + ". ", this)
+        });
+
+        if (ply.player === 2) {
+          move.ply1 = Nop.parse("--");
+        }
+        move.setPly(ply, ply.player - 1);
+        this.moves.push(move);
+        this.branches[ply.branch] = ply;
       }
-      move = new Move({
-        game: this,
-        id: this.moves.length,
-        linenum: new Linenum(ply.branch + this.state.number + ". ", this)
-      });
-      if (ply.player === 2) {
-        move.ply1 = Nop.parse("--");
-      }
-      move.setPly(ply, ply.player - 1);
-      this.moves.push(move);
-      this.branches[ply.branch] = ply;
     }
 
     if (
@@ -333,7 +357,7 @@ export default class GameMutations {
       move.ply1 = Nop.parse("--");
     }
 
-    if (replaceCurrent) {
+    if (ply.id === this.state.plyID) {
       this.plies.splice(ply.id, 1, ply);
       this.state.plies.splice(ply.index, 1, ply);
     } else {
@@ -348,7 +372,7 @@ export default class GameMutations {
         if (!this.state.ply && ply.id === 0) {
           this._setPly(ply.id, false);
           this._doPly();
-        } else if (replaceCurrent && this.state.plyIsDone) {
+        } else if (replaceCurrent && ply.id === this.state.plyID) {
           this._undoPly();
           this._doPly();
         } else {

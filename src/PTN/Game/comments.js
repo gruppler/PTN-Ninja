@@ -92,7 +92,9 @@ export default class GameComments {
       if (!(type in types)) {
         return false;
       }
-      ply.evaluation = Evaluation.parse(types[type]);
+      ply.evaluation = Evaluation.parse(
+        types[type] + (double ? types[type] : "")
+      );
     } else {
       switch (type) {
         case "tak":
