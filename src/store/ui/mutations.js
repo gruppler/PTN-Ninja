@@ -39,11 +39,15 @@ export const CANCEL_MOVE = (state, game) => {
 };
 
 export const UNDO = (state, game) => {
-  game.undo();
+  if (!state.isEditingTPS) {
+    game.undo();
+  }
 };
 
 export const REDO = (state, game) => {
-  game.redo();
+  if (!state.isEditingTPS) {
+    game.redo();
+  }
 };
 
 export const TRIM_TO_PLY = (state, game) => {

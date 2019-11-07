@@ -22,7 +22,7 @@ const capitalized = {
 
 export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
-  date: /^\d{4}\.\d\d\.\d\d$/,
+  date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
@@ -77,6 +77,12 @@ export default class Tag {
     }
 
     switch (key) {
+      case "date":
+        this.value = this.value.split(".");
+        this.value[1] = padStart(this.value[1], 2, "0");
+        this.value[2] = padStart(this.value[2], 2, "0");
+        this.value = this.value.join(".");
+        break;
       case "points":
         this.value = 1 * this.value;
         break;

@@ -33,6 +33,12 @@ export const HOTKEYS = {
   ACTIONS: {
     REDO: ["ctrl", "shift", "z"],
     UNDO: ["ctrl", "z"]
+  },
+  PIECE: {
+    color: ["`"],
+    F: ["1"],
+    S: ["2"],
+    C: ["3"]
   }
 };
 

@@ -382,7 +382,7 @@ export default class GameMutations {
         this._setPly(ply.id, true);
       }
 
-      if (ply.id === 0 && (!this.tag("date") || !this.tag("tps"))) {
+      if (ply.id === 0 && !this.tag("date")) {
         // Record date and time
         this.setTags(Tag.now(), false, false);
       }

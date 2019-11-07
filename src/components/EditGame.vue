@@ -16,8 +16,13 @@
           @click="showAll = !showAll"
           flat
         />
-        <q-btn :label="$t('OK')" @click="$refs.gameInfo.save()" flat />
-        <q-btn :label="$t('Cancel')" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn
+          :label="$t('OK')"
+          @click="$refs.gameInfo.save()"
+          color="accent"
+          flat
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>

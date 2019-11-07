@@ -180,7 +180,7 @@
       <q-separator dark />
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Done')" flat v-close-popup />
+        <q-btn :label="$t('Done')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>

@@ -10,7 +10,7 @@
       class="board-container q-pa-md"
       :class="{
         ['size-' + game.size]: true,
-        ['turn-' + game.state.turn]: true,
+        ['turn-' + turn]: true,
         'no-animations': !$store.state.animateBoard,
         'axis-labels': $store.state.axisLabels,
         'flat-counts': $store.state.flatCounts,
@@ -67,18 +67,12 @@
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
-            <template v-for="color in [1, 2]">
-              <template v-for="type in ['flat', 'cap']">
-                <Piece
-                  v-for="i in game.pieceCounts[type]"
-                  :key="`${color}-${type}-${i}`"
-                  :game="game"
-                  :color="color"
-                  :type="type"
-                  :index="i - 1"
-                />
-              </template>
-            </template>
+            <Piece
+              v-for="piece in game.state.pieces.all.byID"
+              :key="piece.id"
+              :id="piece.id"
+              :game="game"
+            />
           </div>
         </div>
 
@@ -118,6 +112,11 @@ export default {
     };
   },
   computed: {
+    turn() {
+      return this.$store.state.isEditingTPS
+        ? this.$store.state.selectedPiece.color
+        : this.game.state.turn;
+    },
     player1() {
       return this.game.tag("player1");
     },

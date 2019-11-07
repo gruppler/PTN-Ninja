@@ -9,7 +9,7 @@ export default class GameEnd {
     }
 
     let player = this.state.ply.player;
-    let pieces = this.state.pieces[player];
+    let pieces = this.state.pieces.played[player];
     let roads = this.findRoads();
     let result;
 

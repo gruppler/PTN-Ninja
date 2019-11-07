@@ -1,48 +1,53 @@
 <template>
-  <div class="piece-selector row no-wrap">
-    <div class="col-grow" />
+  <div
+    class="piece-selector row no-wrap"
+    v-shortkey="hotkeys"
+    @shortkey="hotkey($event.srcKey)"
+  >
     <q-btn
-      @click="select(type, player === 1 ? 2 : 1)"
-      :icon="player === 1 ? 'person' : 'person_outline'"
+      @click="select(type, color === 1 ? 2 : 1)"
+      :icon="color === 1 ? 'person' : 'person_outline'"
       flat
       round
     />
-    <q-btn @click="select('F')" flat round>
+    <q-btn @click="select('F')" :disabled="!available.includes('F')" flat round>
       <div class="square" :class="{ selected: type === 'F' }">
-        <div class="stone" :class="{ ['p' + player]: true, shadows }" />
+        <div class="stone" :class="{ ['p' + color]: true, shadows }" />
       </div>
     </q-btn>
-    <q-btn @click="select('S')" flat round>
+    <q-btn @click="select('S')" :disabled="!available.includes('S')" flat round>
       <div class="square" :class="{ selected: type === 'S' }">
-        <div class="stone S" :class="{ ['p' + player]: true, shadows }" />
+        <div class="stone S" :class="{ ['p' + color]: true, shadows }" />
       </div>
     </q-btn>
-    <q-btn @click="select('C')" flat round>
+    <q-btn @click="select('C')" :disabled="!available.includes('C')" flat round>
       <div class="square" :class="{ selected: type === 'C' }">
-        <div class="stone C" :class="{ ['p' + player]: true, shadows }" />
+        <div class="stone C" :class="{ ['p' + color]: true, shadows }" />
       </div>
     </q-btn>
-    <div class="col-grow" />
     <slot />
   </div>
 </template>
 
 <script>
+import { HOTKEYS } from "../keymap";
+
 export default {
   name: "PieceSelector",
   props: ["value", "game", "types"],
   data() {
     return {
-      player: this.value.player || 1,
-      type: this.value.type || "F"
+      color: this.value.color || 1,
+      type: this.value.type || "F",
+      hotkeys: HOTKEYS.PIECE
     };
   },
   computed: {
     available() {
-      return [this.types ? this.types : ["F", "S", "C"]].filter(type => {
+      return (this.types ? this.types : ["F", "S", "C"]).filter(type => {
         type = type === "C" ? "cap" : "flat";
         return (
-          this.game.state.pieces[this.player][type].length <
+          this.game.state.pieces.played[this.color][type].length <
           this.game.pieceCounts[type]
         );
       });
@@ -52,10 +57,30 @@ export default {
     }
   },
   methods: {
-    select(type = this.type, player = this.player) {
-      this.player = player;
-      this.type = type;
-      this.$emit("input", { player: this.player, type: this.type });
+    select(type = this.type, color = this.color) {
+      this.color = color;
+      if (this.available.includes(type)) {
+        this.type = type;
+        this.$emit("input", { color: this.color, type: this.type });
+      } else if (type === this.type && this.available.length) {
+        this.type = this.available[0];
+        this.$emit("input", { color: this.color, type: this.type });
+      }
+    },
+    hotkey(key) {
+      if (key === "color") {
+        this.select(this.type, this.color === 1 ? 2 : 1);
+      } else {
+        this.select(key);
+      }
+    }
+  },
+  watch: {
+    available(available) {
+      if (available.length && !available.includes(this.type)) {
+        this.type = available[0];
+        this.$emit("input", { color: this.color, type: this.type });
+      }
     }
   }
 };

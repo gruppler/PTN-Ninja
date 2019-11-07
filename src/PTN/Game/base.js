@@ -70,6 +70,7 @@ export default class GameBase {
     let move = new Move({ game: this, id: 0, index: 0 });
 
     this.isLocal = true;
+    this.hasTPS = false;
     this.name = params.name;
     this.state = null;
     this.history = params.history ? params.history.concat() : [];
@@ -118,10 +119,8 @@ export default class GameBase {
       }
     }
 
-    // Initialize game state
-    this.state = new GameState(this);
-
     if (this.tags.tps) {
+      this.hasTPS = true;
       this.firstMoveNumber = this.tags.tps.value.linenum;
       this.firstPlayer = this.tags.tps.value.player;
       moveNumber = this.tags.tps.value.linenum;
@@ -130,7 +129,9 @@ export default class GameBase {
       this.firstPlayer = 1;
     }
 
+    // Initialize game state
     this.pieceCounts = pieceCounts[this.size];
+    this.state = new GameState(this);
 
     // Parse BODY
     while (notation.length) {
@@ -186,12 +187,12 @@ export default class GameBase {
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
-          ply.color = moveNumber === 1 ? 2 : 1;
+          ply.color = moveNumber === 1 && !this.hasTPS ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
-          ply.color = moveNumber === 1 ? 1 : 2;
+          ply.color = moveNumber === 1 && !this.hasTPS ? 1 : 2;
           move.ply2 = ply;
         } else {
           // New move
@@ -233,7 +234,7 @@ export default class GameBase {
     }
 
     if (this.tags.tps) {
-      this._doTPS(this.tags.tps.value);
+      this.doTPS();
     }
 
     this.saveBoardState();
@@ -247,7 +248,11 @@ export default class GameBase {
         } else {
           this.state.plyID = ply.id;
         }
+      } else {
+        this.state.plyID = 0;
       }
+    } else if (this.state.plies.length) {
+      this.state.plyID = 0;
     }
   }
 
@@ -301,6 +306,7 @@ export default class GameBase {
       }
     });
     Object.assign(this.tags, tags);
+    this.hasTPS = "tps" in this.tags;
     if (updatePTN) {
       this._updatePTN(recordChange);
       if (

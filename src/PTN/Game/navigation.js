@@ -1,4 +1,4 @@
-import Piece from "../Piece";
+import TPS from "../TPS";
 
 import { last, times } from "lodash";
 
@@ -72,25 +72,26 @@ export default class GameNavigation {
       return false;
     }
 
-    moveset.forEach(({ action, x, y, count = 1, flatten, type }) => {
+    for (let i = 0; i < moveset.length; i++) {
+      const move = moveset[i];
+      const action = move.action;
+      const x = move.x;
+      const y = move.y;
+      const count = move.count || 1;
+      let flatten = move.flatten;
+      const type = move.type;
       const square = this.state.squares[y][x];
 
       if (type) {
         if (action === "pop") {
           // Undo placement
-          let piece = square.pop();
-          this.state.pieces[color][piece.type].pop();
+          this.state.unplayPiece(square);
         } else {
           // Do placement
-          let piece = new Piece({
-            ply,
-            square,
-            game: this,
-            color,
-            type
-          });
-          square.push(piece);
-          this.state.pieces[color][piece.type].push(piece);
+          const piece = this.state.playPiece(color, type, square);
+          if (!piece) {
+            return false;
+          }
         }
       } else if (action === "pop") {
         // Undo movement
@@ -128,7 +129,7 @@ export default class GameNavigation {
           square.push(piece);
         });
       }
-    });
+    }
 
     return true;
   }
@@ -146,8 +147,13 @@ export default class GameNavigation {
     );
   }
 
-  _doTPS({ grid }) {
+  doTPS(tps = this.tags.tps.value) {
+    if (tps.constructor === String) {
+      tps = TPS.parse(tps);
+    }
+    const grid = tps.grid;
     let stack, square, piece, type;
+    this.state.clearBoard();
     grid.forEach((row, y) => {
       row.forEach((col, x) => {
         if (col[0] !== "x") {
@@ -159,14 +165,7 @@ export default class GameNavigation {
             } else {
               type = "flat";
             }
-            piece = new Piece({
-              square,
-              game: this,
-              color: 1 * piece,
-              type
-            });
-            square.push(piece);
-            this.state.pieces[piece.color][piece.type].push(piece);
+            this.state.playPiece(piece, type, square);
           }
         }
       });

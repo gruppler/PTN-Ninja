@@ -21,8 +21,8 @@
       rs,
       rw
     }"
-    @click.left="select"
-    @click.right.prevent="altSelect"
+    @click.left="select()"
+    @click.right.prevent="select(true)"
   >
     <div class="hl current" />
     <div class="road" v-if="$store.state.showRoads">
@@ -43,6 +43,23 @@ export default {
   name: "Square",
   props: ["game", "x", "y"],
   computed: {
+    isEditingTPS() {
+      return this.$store.state.isEditingTPS;
+    },
+    selectedPiece() {
+      return this.$store.state.selectedPiece;
+    },
+    editingTPS: {
+      get() {
+        return this.$store.state.editingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+      }
+    },
+    firstMoveNumber() {
+      return this.$store.state.firstMoveNumber;
+    },
     square() {
       return this.game.state.squares[this.y][this.x];
     },
@@ -70,7 +87,7 @@ export default {
       );
     },
     valid() {
-      return this.game.isValidSquare(this.square);
+      return this.isEditingTPS || this.game.isValidSquare(this.square);
     },
     roads() {
       return this.color &&
@@ -183,14 +200,20 @@ export default {
     }
   },
   methods: {
-    select() {
+    select(alt = false) {
       if (this.valid) {
-        this.game.selectSquare(this.square);
-      }
-    },
-    altSelect() {
-      if (this.valid) {
-        this.game.selectSquare(this.square, true);
+        this.game.selectSquare(
+          this.square,
+          alt,
+          this.isEditingTPS,
+          this.selectedPiece
+        );
+        if (this.isEditingTPS) {
+          this.editingTPS = this.game.state.getTPS(
+            this.selectedPiece.color,
+            this.firstMoveNumber
+          );
+        }
       }
     }
   }

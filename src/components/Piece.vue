@@ -8,8 +8,8 @@
     <div
       class="stone"
       :class="{
-        ['p' + color]: true,
-        C: type === 'cap',
+        ['p' + piece.color]: true,
+        C: piece.type === 'cap',
         S: piece && piece.isStanding,
         unplayed: !piece,
         firstSelected,
@@ -24,10 +24,10 @@ const SELECTED_GAP = 3;
 
 export default {
   name: "Piece",
-  props: ["game", "color", "type", "index"],
+  props: ["game", "id"],
   computed: {
     piece() {
-      return this.game.state.pieces[this.color][this.type][this.index];
+      return this.game.state.pieces.all.byID[this.id];
     },
     immovable() {
       return this.piece ? this.piece.isImmovable : false;
@@ -40,17 +40,17 @@ export default {
     },
     x() {
       let x = 100;
-      if (this.piece) {
+      if (this.piece.square) {
         x *= this.piece.x;
       } else {
-        x *= this.game.size + 0.75 * (this.color === 2);
+        x *= this.game.size + 0.75 * (this.piece.color === 2);
       }
       return x;
     },
     y() {
       let y = 100;
       let spacing = 7;
-      if (this.piece) {
+      if (this.piece.square) {
         y *= this.piece.y;
         if (!this.board3D) {
           y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
@@ -68,10 +68,12 @@ export default {
         // Unplayed piece
         y = this.game.size - 1;
         if (this.board3D) {
-          if (this.type !== "cap") {
+          if (this.piece.type !== "cap") {
             y *=
               Math.floor(
-                (this.game.pieceCounts[this.type] - this.index - 1) /
+                (this.game.pieceCounts[this.piece.type] -
+                  this.piece.index -
+                  1) /
                   this.game.size
               ) /
               Math.floor(
@@ -85,12 +87,12 @@ export default {
               );
           }
         } else {
-          if (this.type === "cap") {
-            y *= this.game.pieceCounts.total - this.index - 1;
+          if (this.piece.type === "cap") {
+            y *= this.game.pieceCounts.total - this.piece.index - 1;
           } else {
             y *=
               this.game.pieceCounts.total -
-              this.index -
+              this.piece.index -
               this.game.pieceCounts.cap -
               1;
           }
@@ -102,21 +104,21 @@ export default {
     },
     z() {
       let z;
-      if (this.piece) {
+      if (this.piece.square) {
         z = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       } else {
         // Unplayed piece
         if (this.board3D) {
           z =
-            ((this.game.pieceCounts[this.type] - this.index - 1) %
+            ((this.game.pieceCounts[this.piece.type] - this.piece.index - 1) %
               this.game.size) +
             1;
         } else {
-          z = 2 * this.game.pieceCounts.total - this.index;
-          if (this.type === "cap") {
+          z = 2 * this.game.pieceCounts.total - this.piece.index;
+          if (this.piece.type === "cap") {
             z += this.game.pieceCounts.flat;
           }
-          if (this.color === 2) {
+          if (this.piece.color === 2) {
             z += this.game.pieceCounts.total;
           }
         }

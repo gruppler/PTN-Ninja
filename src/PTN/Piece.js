@@ -17,6 +17,7 @@ export default class Piece {
     return {
       ply: this.ply ? this.ply.id : undefined,
       type: this.typeCode || undefined,
+      index: this.index,
       x: this.x,
       y: this.y,
       z: this.z
@@ -24,16 +25,19 @@ export default class Piece {
   }
 
   set state(state) {
+    this.index = state.index;
     if (state.ply && state.ply in this.game) {
       this.ply = this.game.plies[state.ply];
     }
     if (state.type) {
       this.type = state.type;
     }
-    const square = this.game.state.squares[state.y][state.x];
-    if (square) {
-      this.square = square;
-      square[state.z] = this;
+    if ("x" in state && "y" in state && "z" in state) {
+      const square = this.game.state.squares[state.y][state.x];
+      if (square) {
+        this.square = square;
+        square[state.z] = this;
+      }
     }
   }
 
@@ -51,21 +55,21 @@ export default class Piece {
   }
 
   get x() {
-    return this.square.x;
+    return this.square ? this.square.x : null;
   }
   get y() {
-    return this.square.y;
+    return this.square ? this.square.y : null;
   }
   get z() {
-    return this.square.indexOf(this);
+    return this.square ? this.square.indexOf(this) : null;
+  }
+
+  get isImmovable() {
+    return this.square ? this.square.length - this.z > this.game.size : false;
   }
 
   get isFlat() {
     return !(this.isCapstone || this.isStanding);
-  }
-
-  get isImmovable() {
-    return this.square.length - this.z > this.game.size;
   }
 
   get isSelected() {

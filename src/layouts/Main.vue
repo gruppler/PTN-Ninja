@@ -86,13 +86,13 @@
               @click="$store.dispatch('UNDO', game)"
               icon="undo"
               :title="$t('Undo')"
-              :disabled="!game.canUndo"
+              :disabled="isEditingTPS || !game.canUndo"
             />
             <q-btn
               @click="$store.dispatch('REDO', game)"
               icon="redo"
               :title="$t('Redo')"
-              :disabled="!game.canRedo"
+              :disabled="isEditingTPS || !game.canRedo"
             />
           </q-btn-group>
           <EvalButtons
@@ -147,20 +147,38 @@
         class="footer-toolbar q-pa-sm bg-secondary text-white"
       >
         <PieceSelector
-          class="full-width justify-center"
           v-if="isEditingTPS"
+          class="justify-around items-center"
+          style="width: 100%; max-width: 500px; margin: 0 auto"
           v-model="selectedPiece"
           :game="game"
         >
+          <q-input
+            type="number"
+            v-model="firstMoveNumber"
+            :label="$t('Move')"
+            :min="1"
+            :max="999"
+            color="accent"
+            filled
+            dense
+            dark
+          />
           <q-btn
             :label="$t('Cancel')"
-            @click="isEditingTPS = false"
+            @click="
+              isEditingTPS = false;
+              game.state.board = game.boards[0].false;
+            "
             color="accent"
             flat
           />
           <q-btn
             :label="$t('OK')"
-            @click="isEditingTPS = false"
+            @click="
+              game.setTags({ tps: editingTPS });
+              isEditingTPS = false;
+            "
             color="accent"
             flat
           />
@@ -264,6 +282,9 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+        if (!value) {
+          this.editingTPS = "";
+        }
       }
     },
     selectedPiece: {
@@ -272,6 +293,22 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["selectedPiece", value]);
+        this.editingTPS = this.game.state.getTPS(
+          this.selectedPiece.color,
+          this.firstMoveNumber
+        );
+      }
+    },
+    firstMoveNumber: {
+      get() {
+        return this.$store.state.firstMoveNumber;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["firstMoveNumber", 1 * value]);
+        this.editingTPS = this.game.state.getTPS(
+          this.selectedPiece.color,
+          this.firstMoveNumber
+        );
       }
     },
     editingTPS: {
@@ -381,6 +418,9 @@ export default {
       } else if (this.$store.state.games && this.$store.state.games.length) {
         game = this.$store.state.games[0];
         game = new Game(game.ptn, game);
+        if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
+          game.doTPS(this.$store.state.editingTPS);
+        }
       } else {
         game = this.newGame();
       }
@@ -425,6 +465,7 @@ export default {
   watch: {
     games(newGames, oldGames) {
       if (!newGames[0] || !oldGames[0] || newGames[0] !== oldGames[0]) {
+        this.isEditingTPS = false;
         this.updateGame();
       }
     },

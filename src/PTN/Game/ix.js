@@ -80,25 +80,42 @@ export default class GameIX {
     return false;
   }
 
-  selectSquare(square, altSelect = false) {
-    if (!this.isValidSquare(square)) {
+  selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
+    if (!editMode && !this.isValidSquare(square)) {
       return false;
     }
 
-    const piece = square.length ? square[square.length - 1] : null;
+    const piece = square.length ? last(square) : null;
+
+    if (editMode) {
+      if (altSelect) {
+        if (!piece) {
+          return false;
+        }
+        return this.state.unplayPiece(square);
+      } else if (piece && (piece.isCapstone || piece.isStanding)) {
+        return false;
+      }
+      return this.state.playPiece(
+        selectedPiece.color,
+        selectedPiece.type,
+        square
+      );
+    }
+
     let move = last(this.state.selected.moveset);
 
     let types = [];
     if (
       (piece && piece.type === "flat") ||
-      this.state.pieces[piece ? piece.color : this.state.turn].flat.length <
-        this.pieceCounts.flat
+      this.state.pieces.played[piece ? piece.color : this.state.turn].flat
+        .length < this.pieceCounts.flat
     ) {
       types.push("flat", "wall");
     }
     if (
-      this.state.pieces[piece ? piece.color : this.state.turn].cap.length <
-      this.pieceCounts.cap
+      this.state.pieces.played[piece ? piece.color : this.state.turn].cap
+        .length < this.pieceCounts.cap
     ) {
       types.push("cap");
     }

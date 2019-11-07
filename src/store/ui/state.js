@@ -7,6 +7,7 @@ const defaults = {
   board3D: false,
   boardRotation: [0.4431946006749157, 0.7255343082114736, 0.8501890886498717],
   editingTPS: "",
+  firstMoveNumber: 1,
   flatCounts: true,
   highlightSquares: true,
   isEditingTPS: false,
@@ -16,7 +17,7 @@ const defaults = {
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
-  selectedPiece: { player: null, type: null },
+  selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
   showMove: true,

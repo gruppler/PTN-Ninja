@@ -11,6 +11,7 @@ export default {
   BPM: "BPM", // Beats Per Minute
   Cancel: "Cancel",
   Chat: "Chat",
+  Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
   "Copy to Clipboard": "Copy to Clipboard",
@@ -28,6 +29,7 @@ export default {
   "Load Game": "Load Game",
   Local: "Local",
   Message: "Message",
+  Move: "Move",
   "New Game": "New Game",
   Note: "Note",
   "Note Notifications": "Note Notifications",

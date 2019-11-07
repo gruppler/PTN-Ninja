@@ -45,7 +45,7 @@
 
       <q-input
         ref="tps"
-        v-show="tags.tps || (showAll && (!game || !game.plies.length))"
+        v-show="tags.tps || (showAll && game && !game.plies.length)"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
@@ -68,7 +68,7 @@
         <template v-slot:append>
           <q-btn
             v-show="$refs.tps && !$refs.tps.disable && !$refs.tps.innerError"
-            @click="$store.dispatch('SET_UI', ['isEditingTPS', true])"
+            @click="editTPS"
             icon="edit"
             dense
             flat
@@ -181,27 +181,47 @@
         <template v-slot:prepend>
           <q-icon name="event" />
         </template>
-        <q-popup-proxy @before-show="proxyDate = tags.date">
-          <q-date
-            v-model="proxyDate"
-            name="date"
-            mask="YYYY.MM.DD"
-            color="accent"
-            text-color="grey-10"
-            today-btn
-            dark
-          >
-            <div class="row items-center justify-end q-gutter-sm">
-              <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-              <q-btn
-                :label="$t('OK')"
-                @click="tags.date = proxyDate"
-                color="accent"
-                flat
-                v-close-popup
-              />
-            </div>
-          </q-date>
+        <q-popup-proxy
+          @before-show="proxyDate = tags.date"
+          anchor="center middle"
+          self="center middle"
+          dark
+        >
+          <div>
+            <q-date
+              v-model="proxyDate"
+              name="date"
+              mask="YYYY.MM.DD"
+              color="accent"
+              text-color="grey-10"
+              today-btn
+              dark
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.date = ''"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.date = proxyDate"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-date>
+          </div>
         </q-popup-proxy>
       </q-input>
 
@@ -222,28 +242,48 @@
         <template v-slot:prepend>
           <q-icon name="access_time" />
         </template>
-        <q-popup-proxy @before-show="proxyTime = tags.time">
-          <q-time
-            v-model="proxyTime"
-            name="time"
-            color="accent"
-            text-color="grey-10"
-            format24h
-            with-seconds
-            now-btn
-            dark
-          >
-            <div class="row items-center justify-end q-gutter-sm">
-              <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-              <q-btn
-                :label="$t('OK')"
-                @click="tags.time = proxyTime"
-                color="accent"
-                flat
-                v-close-popup
-              />
-            </div>
-          </q-time>
+        <q-popup-proxy
+          @before-show="proxyTime = tags.time"
+          anchor="center middle"
+          self="center middle"
+          dark
+        >
+          <div>
+            <q-time
+              v-model="proxyTime"
+              name="time"
+              color="accent"
+              text-color="grey-10"
+              format24h
+              with-seconds
+              now-btn
+              dark
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.time = ''"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.time = proxyTime"
+                  color="accent"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-time>
+          </div>
         </q-popup-proxy>
       </q-input>
     </div>
@@ -421,6 +461,18 @@ export default {
 
       this.$emit("save", { name: this.name, tags: { ...this.tags } });
       this.updateTags();
+    },
+    editTPS() {
+      this.$store.dispatch("SET_UI", [
+        "selectedPiece",
+        { color: this.game.firstPlayer, type: "F" }
+      ]);
+      this.$store.dispatch("SET_UI", [
+        "firstMoveNumber",
+        this.game.firstMoveNumber
+      ]);
+      this.$store.dispatch("SET_UI", ["editingTPS", this.game.state.tps]);
+      this.$store.dispatch("SET_UI", ["isEditingTPS", true]);
     },
     swapPlayers() {
       [this.tags.player1, this.tags.player2] = [

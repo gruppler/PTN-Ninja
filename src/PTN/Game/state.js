@@ -50,9 +50,32 @@ export default class GameState {
     };
 
     this.pieces = {
-      1: { flat: [], cap: [] },
-      2: { flat: [], cap: [] }
+      all: {
+        1: { flat: [], cap: [] },
+        2: { flat: [], cap: [] },
+        byID: {}
+      },
+      played: {
+        1: { flat: [], cap: [] },
+        2: { flat: [], cap: [] }
+      }
     };
+    [1, 2].forEach(color => {
+      ["flat", "cap"].forEach(type => {
+        for (let index = 0; index < this.game.pieceCounts[type]; index++) {
+          const id = color + type[0] + (index + 1);
+          const piece = new Piece({
+            game: this.game,
+            id,
+            index,
+            color,
+            type
+          });
+          this.pieces.all[color][type][index] = piece;
+          this.pieces.all.byID[id] = piece;
+        }
+      });
+    });
 
     this.squares = new Marray.two(
       this.game.size,
@@ -141,20 +164,78 @@ export default class GameState {
     return this.move ? this.move.number : this.game.firstMoveNumber;
   }
 
+  playPiece(color, type, square) {
+    const isStanding = /S|wall/.test(type);
+    if (!(type in this.game.pieceCounts)) {
+      type = type === "C" ? "cap" : "flat";
+    }
+    const piece = this.pieces.all[color][type][
+      this.pieces.played[color][type].length
+    ];
+    if (piece) {
+      piece.isStanding = isStanding;
+      this.pieces.played[color][type].push(piece);
+      if ("z" in square) {
+        // Set via piece state
+        piece.square = this.squares[square.y][square.x];
+        piece.square[square.z] = piece;
+      } else {
+        // Set via square
+        piece.square = square;
+        square.push(piece);
+      }
+      return piece;
+    }
+    return null;
+  }
+
+  unplayPiece(square) {
+    const piece = square.pop();
+    if (piece) {
+      piece.isStanding = false;
+      const pieces = this.pieces.played[piece.color][piece.type];
+      if (piece.index !== pieces.length - 1) {
+        // Swap indices with the top of the stack
+        const lastPiece = pieces.pop();
+        pieces.splice(piece.index, 1, lastPiece);
+        [piece.index, lastPiece.index] = [lastPiece.index, piece.index];
+        this.pieces.all[piece.color][piece.type][piece.index] = piece;
+        this.pieces.all[piece.color][piece.type][lastPiece.index] = lastPiece;
+      } else {
+        this.pieces.played[piece.color][piece.type].pop();
+      }
+      piece.square = null;
+      return piece;
+    }
+    return null;
+  }
+
+  clearBoard() {
+    this.squares.forEach(row =>
+      row.forEach(square =>
+        square.splice(0, square.length).forEach(piece => (piece.square = null))
+      )
+    );
+    this.pieces.played[1].flat = [];
+    this.pieces.played[1].cap = [];
+    this.pieces.played[2].flat = [];
+    this.pieces.played[2].cap = [];
+  }
+
   getBoard() {
     return {
       1: {
-        flat: this.pieces[1].flat.map(piece => piece.state),
-        cap: this.pieces[1].cap.map(piece => piece.state)
+        flat: this.pieces.played[1].flat.map(piece => piece.state),
+        cap: this.pieces.played[1].cap.map(piece => piece.state)
       },
       2: {
-        flat: this.pieces[2].flat.map(piece => piece.state),
-        cap: this.pieces[2].cap.map(piece => piece.state)
+        flat: this.pieces.played[2].flat.map(piece => piece.state),
+        cap: this.pieces.played[2].cap.map(piece => piece.state)
       }
     };
   }
 
-  getTPS() {
+  getTPS(player = this.turn, number = null) {
     const grid = this.squares
       .map(row => {
         return row
@@ -171,22 +252,22 @@ export default class GameState {
       .join("/")
       .replace(/x((,x)+)/g, spaces => "x" + (1 + spaces.length) / 2);
 
-    const ply = this.game.plies[this.boardPly.id];
-    const number = ply.move.number + 1 * (ply.player === 2);
+    if (number === null) {
+      const ply = this.boardPly ? this.game.plies[this.boardPly.id] : null;
+      number = ply
+        ? ply.move.number + 1 * (ply.player === 2)
+        : this.game.firstMoveNumber;
+    }
 
-    return `${grid} ${this.turn} ${number}`;
+    return `${grid} ${player} ${number}`;
   }
 
   setBoard(pieces, plyID, plyIsDone) {
-    this.squares.forEach(row =>
-      row.forEach(square => square.splice(0, square.length))
-    );
+    this.clearBoard();
     [1, 2].forEach(color =>
       ["flat", "cap"].forEach(type => {
-        this.pieces[color][type] = pieces[color][type].map(state => {
-          const piece = new Piece({ game: this.game, color, type, state });
-          this.squares[piece.y][piece.x][piece.z] = piece;
-          return piece;
+        pieces[color][type].forEach(state => {
+          this.playPiece(color, state.type, state);
         });
       })
     );
@@ -234,7 +315,9 @@ export default class GameState {
 
   get isFirstMove() {
     return (
-      this.number === 1 && (!this.ply || this.ply.index < 1 || !this.plyIsDone)
+      !this.game.hasTPS &&
+      this.number === 1 &&
+      (!this.ply || this.ply.index < 1 || !this.plyIsDone)
     );
   }
 
