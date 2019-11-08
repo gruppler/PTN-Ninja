@@ -9,9 +9,11 @@
       <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated dark>
         <q-tab-panel name="new" class="q-pa-none">
           <div class="relative-position">
-            <q-card-section class="scroll">
+            <q-card-section
+              class="scroll"
+              style="max-height: calc(100vh - 22rem); min-height: 8rem"
+            >
               <GameInfo
-                style="max-height: calc(100vh - 24rem); min-height: 4rem"
                 ref="gameInfo"
                 :values="tags"
                 :showAll="showAll"
@@ -20,14 +22,13 @@
             </q-card-section>
             <div class="absolute-fit inset-shadow no-pointer-events" />
           </div>
-          <q-btn
-            class="full-width"
-            :label="$t(showAll ? 'Show Less' : 'Show More')"
-            @click="showAll = !showAll"
-            flat
-          />
           <q-separator dark />
           <q-card-actions align="right">
+            <q-btn
+              :label="$t(showAll ? 'Show Less' : 'Show More')"
+              @click="showAll = !showAll"
+              flat
+            />
             <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
             <q-btn
               :label="$t('OK')"

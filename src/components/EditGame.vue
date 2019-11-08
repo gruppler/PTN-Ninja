@@ -6,7 +6,10 @@
     no-route-dismiss
   >
     <q-card style="width: 500px" class="bg-secondary" dark>
-      <q-card-section style="max-height: 60vh;" class="scroll">
+      <q-card-section
+        style="max-height: calc(100vh - 18rem); min-height: 12rem"
+        class="scroll"
+      >
         <GameInfo ref="gameInfo" :game="game" :showAll="showAll" @save="save" />
       </q-card-section>
       <q-separator dark />
