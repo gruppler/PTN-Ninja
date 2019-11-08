@@ -45,27 +45,17 @@
         />
       </q-btn>
     </q-chip>
-    <span class="result" v-if="ply.result">
-      <span
-        class="color1"
-        :class="'result-' + (ply.result.isTie ? 'tie' : ply.result.player1)"
-        >{{ ply.result.player1 }}</span
-      >
-      <span
-        class="color2"
-        :class="'result-' + (ply.result.isTie ? 'tie' : ply.result.player2)"
-        >{{ ply.result.player2 }}</span
-      >
-    </span>
+    <Result :result="ply.result" />
   </span>
 </template>
 
 <script>
 import BranchMenu from "./BranchMenu";
+import Result from "./Result";
 
 export default {
   name: "Ply",
-  components: { BranchMenu },
+  components: { BranchMenu, Result },
   props: ["game", "plyID", "noBranches", "noClick"],
   data() {
     return {
@@ -172,36 +162,4 @@ export default {
         color $orange-med
       .evaluation
         color $orange-med
-
-.result
-  font-family 'Source Code Pro'
-  white-space nowrap
-  font-weight bold
-  height 24px
-  margin 4px
-  vertical-align middle
-  .color1, .color2
-    padding 2px 6px
-  .color1
-    background-color $gray-light
-    border-radius 4px 0 0 4px
-    &.result-R
-      color $green-dark
-    &.result-F
-      color $blue-dark
-    &.result-0
-      color $red-dark
-    &.result-tie
-      color $gray-dark
-  .color2
-    background-color $gray-dark
-    border-radius 0 4px 4px 0
-    &.result-R
-      color $green-light
-    &.result-F, &.result-1
-      color $blue-light
-    &.result-0
-      color $red-light
-    &.result-tie
-      color $gray-light
 </style>

@@ -333,26 +333,52 @@
     </div>
 
     <div class="row q-gutter-md q-mt-none">
-      <q-input
+      <q-select
         v-if="game"
         class="col-grow"
         v-show="isVisible('result')"
         v-model="tags.result"
         name="result"
+        :options="results"
         :label="$t('Result')"
-        :rules="rules('result')"
-        @keyup.enter="save"
         color="accent"
         autocorrect="off"
         spellcheck="false"
         hide-bottom-space
+        emit-value
         filled
         dark
       >
         <template v-slot:prepend>
           <q-icon name="gavel" />
         </template>
-      </q-input>
+
+        <template v-slot:selected>
+          <Result :result="result" />
+        </template>
+
+        <template v-slot:option="scope">
+          <q-item v-bind="scope.itemProps" v-on="scope.itemEvents">
+            <template v-if="scope.opt.label">
+              <q-item-section avatar>
+                <Result :result="scope.opt.label" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{
+                  $t("result." + scope.opt.label.type, {
+                    player:
+                      tags["player" + scope.opt.label.winner] ||
+                      (scope.opt.label.winner === 1 ? $t("White") : $t("Black"))
+                  })
+                }}</q-item-label>
+              </q-item-section>
+            </template>
+            <q-item-section v-else>
+              <q-item-label>{{ $t("None") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
+      </q-select>
 
       <q-input
         v-if="game"
@@ -416,10 +442,14 @@
 <script>
 import { formats } from "../PTN/Tag";
 import TPS from "../PTN/TPS";
+import ResultTag from "../PTN/Result";
 import { generateName } from "../PTN/Game/base";
+
+import Result from "./Result";
 
 export default {
   name: "GameInfo",
+  components: { Result },
   props: ["game", "values", "showAll"],
   data() {
     return {
@@ -441,12 +471,24 @@ export default {
         tps: null
       },
       proxyDate: null,
-      proxyTime: null
+      proxyTime: null,
+      results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
+        value => ({
+          value,
+          label: value ? ResultTag.parse(value) : ""
+        })
+      )
     };
   },
   computed: {
     generatedName() {
       return generateName(this.tags, this.game);
+    },
+    result() {
+      const result = this.tags.result
+        ? this.results.find(option => option.value === this.tags.result)
+        : false;
+      return result ? result.label : "";
     }
   },
   methods: {

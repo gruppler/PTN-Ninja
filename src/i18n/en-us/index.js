@@ -31,6 +31,7 @@ export default {
   Message: "Message",
   Move: "Move",
   "New Game": "New Game",
+  None: "None",
   Note: "Note",
   "Note Notifications": "Note Notifications",
   Notes: "Notes",
