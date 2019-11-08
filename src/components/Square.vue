@@ -202,6 +202,12 @@ export default {
   methods: {
     select(alt = false) {
       if (this.valid) {
+        if (alt && this.isEditingTPS && this.piece) {
+          this.$store.dispatch("SET_UI", [
+            "selectedPiece",
+            { color: this.piece.color, type: this.piece.typeCode }
+          ]);
+        }
         this.game.selectSquare(
           this.square,
           alt,

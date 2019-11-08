@@ -81,6 +81,10 @@ export default {
         this.type = available[0];
         this.$emit("input", { color: this.color, type: this.type });
       }
+    },
+    value(value) {
+      this.color = value.color;
+      this.type = value.type || "F";
     }
   }
 };
