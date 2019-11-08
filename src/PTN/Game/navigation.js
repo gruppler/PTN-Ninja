@@ -92,6 +92,7 @@ export default class GameNavigation {
           if (!piece) {
             return false;
           }
+          piece.ply = ply;
         }
       } else if (action === "pop") {
         // Undo movement

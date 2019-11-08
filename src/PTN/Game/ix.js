@@ -138,7 +138,11 @@ export default class GameIX {
       this.dropSelection(square, altSelect);
     } else if (piece) {
       // Nothing selected yet, but this square has a piece
-      if (piece.ply && this.state.ply === piece.ply && this.state.number > 1) {
+      if (
+        piece.ply &&
+        this.state.ply === piece.ply &&
+        !this.state.isFirstMove
+      ) {
         // Cycle through F, S, C
         move.type =
           types[

@@ -258,7 +258,10 @@ export default class GameMutations {
       }
     } else if (
       !move ||
-      (ply.player === 1 && !this.state.nextPly && this.state.plyIsDone)
+      (!replaceCurrent &&
+        ply.player === 1 &&
+        !this.state.nextPly &&
+        this.state.plyIsDone)
     ) {
       // Next move in the branch
       const number = this.state.number + 1;

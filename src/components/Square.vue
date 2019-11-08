@@ -83,7 +83,7 @@ export default {
         this.piece &&
         this.piece.ply &&
         this.piece.ply === this.game.state.ply &&
-        this.game.state.number > 1
+        !this.game.state.isFirstMove
       );
     },
     valid() {

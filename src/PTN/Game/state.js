@@ -315,7 +315,10 @@ export default class GameState {
 
   get isFirstMove() {
     return (
-      !this.game.hasTPS &&
+      (!this.game.hasTPS ||
+        !(
+          this.pieces.played[1].flat.length && this.pieces.played[2].flat.length
+        )) &&
       this.number === 1 &&
       (!this.ply || this.ply.index < 1 || !this.plyIsDone)
     );
