@@ -97,9 +97,10 @@
     border-radius 0
 
 .dimmed-btn
-  opacity .25
-  &:hover
-    opacity 1
+  opacity .15
+  @media (hover)
+    &:hover
+      opacity 1
 
 ::-webkit-scrollbar
   width 8px

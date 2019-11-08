@@ -43,7 +43,7 @@
           </div>
         </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
-          <FullscreenToggle class="dimmed-btn" color="white" />
+          <BoardToggles />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -124,7 +124,7 @@ import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import PTNTools from "../components/PTNTools";
 import EvalButtons from "../components/EvalButtons";
-import FullscreenToggle from "../components/FullscreenToggle";
+import BoardToggles from "../components/BoardToggles";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -143,7 +143,7 @@ export default {
     Scrubber,
     PTNTools,
     EvalButtons,
-    FullscreenToggle
+    BoardToggles
   },
   props: ["ptn", "name", "state"],
   data() {

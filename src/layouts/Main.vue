@@ -61,7 +61,7 @@
           <Menu @input="menuAction" />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
-          <FullscreenToggle class="dimmed-btn" color="white" />
+          <BoardToggles />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -214,7 +214,7 @@ import EvalButtons from "../components/EvalButtons";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
-import FullscreenToggle from "../components/FullscreenToggle";
+import BoardToggles from "../components/BoardToggles";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -241,7 +241,7 @@ export default {
     AddGame,
     EditGame,
     UISettings,
-    FullscreenToggle
+    BoardToggles
   },
   props: ["ptn", "state", "name"],
   data() {
