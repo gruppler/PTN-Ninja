@@ -11,36 +11,12 @@
     <div class="move-wrapper">
       <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
       <div class="plies">
-        <template v-if="move.ply1 && (!player || player === 1)">
-          <span
-            v-if="
-              move.ply1.isNop &&
-                (!move.ply1Original ||
-                  ($store.state.showAllBranches && currentOnly === undefined))
-            "
-            class="ptn nop"
-          >
-            {{ move.ply1.text() }}
-          </span>
-          <Ply
-            v-else
-            :plyID="(move.ply1Original || move.ply1).id"
-            :game="game"
-          />
+        <template v-if="ply1 && (!player || player === 1)">
+          <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
+          <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
         </template>
-        <template v-if="move.ply2 && (!player || player === 2)">
-          <span v-if="move.ply2.isNop" class="ptn nop">
-            {{ move.ply2.text() }}
-          </span>
-          <Ply
-            v-else
-            :plyID="
-              $store.state.showAllBranches && currentOnly === undefined
-                ? move.ply2.id
-                : move.ply2.getBranch(game.state.targetBranch).id
-            "
-            :game="game"
-          />
+        <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
+          <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
         </template>
       </div>
     </div>
@@ -64,6 +40,23 @@ export default {
     "player"
   ],
   computed: {
+    ply1() {
+      return this.move.ply1Original || this.move.ply1;
+    },
+    ply2() {
+      return this.move.ply2
+        ? this.$store.state.showAllBranches && this.currentOnly === undefined
+          ? this.move.ply2
+          : this.move.ply2.getBranch(this.game.state.targetBranch)
+        : null;
+    },
+    isNop() {
+      return (
+        this.move.ply1.isNop &&
+        (!this.move.ply1Original ||
+          (this.$store.state.showAllBranches && this.currentOnly === undefined))
+      );
+    },
     nextMove() {
       const moves = this.game.movesSorted;
       const index = moves.findIndex(move => move === this.move);

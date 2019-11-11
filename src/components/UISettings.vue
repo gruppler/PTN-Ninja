@@ -43,7 +43,7 @@
 
             <q-item tag="label" :title="hotkeys.board3D" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Board 3D") }}</q-item-label>
+                <q-item-label>{{ $t("3D Board") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle color="accent" v-model="board3D" />

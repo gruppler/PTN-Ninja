@@ -28,14 +28,14 @@
             v-if="linenum !== undefined"
             :linenum="ply.move.linenum"
             :game="game"
-            noBranch
+            no-branch
             class="ellipsis"
           />
           <Ply
             :plyID="ply.id"
             :game="game"
-            noBranches
-            noClick
+            no-branches
+            no-click
             class="ellipsis"
           />
         </q-item-label>

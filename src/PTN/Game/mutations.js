@@ -48,6 +48,11 @@ export default class GameMutations {
   }
 
   _trimToPly() {
+    if (this.state.plyIsDone && !this.state.nextPly) {
+      this._trimToBoard();
+      return true;
+    }
+
     this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
 
     const boardPly = this.state.boardPly;
@@ -123,6 +128,20 @@ export default class GameMutations {
     }
     const move = ply.move;
 
+    // Go backward if deleting current ply
+    if (this.state.plyID === plyID) {
+      if (this.state.plyIsDone) {
+        this._undoPly();
+      }
+      const prevPly = this.state.prevPly;
+      if (prevPly) {
+        if (ply.branch !== prevPly.branch) {
+          this.state.targetBranch = prevPly.branch;
+        }
+        this._setPly(prevPly.id, true);
+      }
+    }
+
     // Remove branch(es)
     if (ply.branches && ply.branches.length > 1) {
       if (removeOrphans && ply.branches[0] === ply) {
@@ -185,48 +204,25 @@ export default class GameMutations {
 
   deletePlies(plyIDs, recordChange = true) {
     let success = false;
-    let ply = this.state.ply;
 
-    if (isArray(plyIDs)) {
-      success = this._deletePlies(plyIDs);
-    } else {
-      success = this._deletePly(plyIDs);
-    }
-
-    // Finish up
-    if (success) {
-      // Pick a new ply to go to if necessary
-      if (
-        this.state.plyID in this.plies &&
-        this.plies[this.state.plyID] === null
-      ) {
-        if (ply && ply.index < this.state.plies.length) {
-          let i = ply.index;
-          while (i >= 0 && !(ply = this.state.plies[--i])) {
-            // Go back until we've found a ply or we're at the beginning
-          }
-        }
-      }
-
-      const finish = () => {
-        if (ply) {
-          this.goToPly(ply.id, true);
-        } else if (!this.state.ply) {
-          if (this.state.plyIsDone) {
-            this._undoPly();
-          }
-          this._setPly(-1, false);
-        }
-        this._updatePTN();
-      };
-
-      if (recordChange) {
-        this.recordChange(finish);
+    const mutate = () => {
+      if (isArray(plyIDs)) {
+        success = this._deletePlies(plyIDs);
       } else {
-        finish();
+        success = this._deletePly(plyIDs);
       }
-      this.init(this.ptn, { ...this, state: this.minState });
+      if (success) {
+        this._updatePTN();
+      }
+    };
+
+    if (recordChange) {
+      this.recordChange(mutate);
+    } else {
+      mutate();
     }
+
+    this.init(this.ptn, { ...this, state: this.minState });
     return success;
   }
 

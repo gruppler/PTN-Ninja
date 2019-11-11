@@ -10,7 +10,12 @@
         style="max-height: calc(100vh - 18rem); min-height: 12rem"
         class="scroll"
       >
-        <GameInfo ref="gameInfo" :game="game" :showAll="showAll" @save="save" />
+        <GameInfo
+          ref="gameInfo"
+          :game="game"
+          :show-all="showAll"
+          @save="save"
+        />
       </q-card-section>
       <q-separator dark />
       <q-card-actions align="right">

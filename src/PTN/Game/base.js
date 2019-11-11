@@ -37,7 +37,7 @@ export const generateName = (tags = {}, game) => {
     ` ${size}x${size}` +
     (result ? " " + result : "") +
     (date ? " " + date : "") +
-    (time ? "-" + time : "")
+    (time ? (date ? "-" : " ") + time : "")
   );
 };
 

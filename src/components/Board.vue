@@ -139,12 +139,15 @@ export default {
           : ""
       ];
     },
+    isPortrait() {
+      return this.size && this.space && this.size.width === this.space.width;
+    },
     maxWidth() {
       if (this.isInputFocused()) {
         return this.$el.style.maxWidth;
       }
       if (!this.space || !this.size) {
-        return "100%";
+        return "50%";
       } else {
         return (
           Math.max(
@@ -180,7 +183,7 @@ export default {
         (this.boardRotation[0] * (1 - this.boardRotation[1]) * MAX_ANGLE) / 20;
       const translateY =
         (this.boardRotation[1] *
-          (0.75 + 0.25 * Math.abs(this.boardRotation[0])) *
+          (0.25 + 0.25 * Math.abs(this.boardRotation[0])) *
           MAX_ANGLE) /
         -6;
       const translateZ =
@@ -279,6 +282,13 @@ export default {
       this.boardRotation = [x, y, magnitude];
       if (event.isFinal) {
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+      }
+    }
+  },
+  watch: {
+    isPortrait(isPortrait) {
+      if (isPortrait !== this.$store.state.isPortrait) {
+        this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
       }
     }
   }

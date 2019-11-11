@@ -10,7 +10,7 @@
       :class="{
         ['p' + piece.color]: true,
         C: piece.type === 'cap',
-        S: piece && piece.isStanding,
+        S: piece && piece.square && piece.isStanding,
         unplayed: !piece,
         firstSelected,
         immovable
@@ -205,7 +205,7 @@ export default {
       border-radius 15%/30%
 
     .board-wrapper.board-3D &.immovable
-      opacity 0.25
+      opacity 0.35
 
     .board-container:not(.unplayed-pieces) &.unplayed
       opacity 0

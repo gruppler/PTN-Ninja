@@ -16,7 +16,7 @@
               <GameInfo
                 ref="gameInfo"
                 :values="tags"
-                :showAll="showAll"
+                :show-all="showAll"
                 @save="createGame"
               />
             </q-card-section>
@@ -87,8 +87,7 @@ export default {
         player1: this.$store.state.player1,
         player2: this.$store.state.player2,
         size: this.$store.state.size,
-        site: this.$t("site_name"),
-        event: this.$t("Offline Play")
+        site: this.$t("site_name")
       },
       showAll: false
     };

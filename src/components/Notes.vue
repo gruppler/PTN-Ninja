@@ -21,7 +21,7 @@
                   :game="game"
                   :move="game.plies[plyID].move"
                   :player="game.plies[plyID].player"
-                  noDecoration
+                  no-decoration
                 />
               </div>
               <q-chat-message

@@ -37,7 +37,7 @@
               :key="game.state.move.id"
               :move="game.state.move"
               :game="game"
-              currentOnly
+              current-only
               standalone
             />
           </div>

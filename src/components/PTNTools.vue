@@ -10,10 +10,6 @@
         <q-icon name="call_split" class="rotate-180" />
       </q-btn>
 
-      <q-btn @click="copy" icon="file_copy" :title="$t('Copy to Clipboard')" />
-
-      <q-btn icon="assignment_returned" :title="$t('Paste from Clipboard')" />
-
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="flip" class="rotate-270" />
         <q-menu auto-close square>
@@ -34,6 +30,11 @@
           </q-list>
         </q-menu>
       </q-btn>
+
+      <q-btn @click="copy" icon="file_copy" :title="$t('Copy to Clipboard')" />
+
+      <!-- <q-btn icon="edit" :title="$t('Edit')" /> -->
+      <!-- <q-btn icon="assignment_returned" :title="$t('Paste from Clipboard')" /> -->
     </q-btn-group>
   </q-toolbar>
 </template>

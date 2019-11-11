@@ -43,9 +43,7 @@ export default {
 
 <style lang="stylus">
 .linenum
-  display inline-flex
-  flex-direction row
-  align-items flex-start
+  display inline
   .branch
     font-size 0.8em
     padding 4px

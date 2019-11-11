@@ -30,7 +30,7 @@
         max="8"
         :label="$t('Size')"
         :rules="rules('size')"
-        :disable="game && game.plies.length > 0"
+        :readonly="game && game.plies.length > 0"
         @keyup.enter="save"
         @input="$refs.tps.validate()"
         color="accent"
@@ -51,7 +51,7 @@
         name="tps"
         :label="$t('TPS')"
         :rules="rules('tps')"
-        :disable="game && game.plies.length > 0"
+        :readonly="game && game.plies.length > 0"
         @keyup.enter="save"
         color="accent"
         autocomplete="off"
@@ -67,7 +67,7 @@
         </template>
         <template v-slot:append>
           <q-btn
-            v-show="$refs.tps && !$refs.tps.disable && !$refs.tps.innerError"
+            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.innerError"
             @click="editTPS"
             icon="edit"
             dense
@@ -172,9 +172,9 @@
         :label="$t('Date')"
         :rules="rules('date')"
         @keyup.enter="save"
+        @focus.prevent="blur"
         color="accent"
         hide-bottom-space
-        readonly
         filled
         dark
       >
@@ -233,9 +233,9 @@
         :label="$t('Time')"
         :rules="rules('time')"
         @keyup.enter="save"
+        @focus.prevent="blur"
         color="accent"
         hide-bottom-space
-        readonly
         filled
         dark
       >
@@ -492,6 +492,11 @@ export default {
     }
   },
   methods: {
+    blur(event) {
+      if (event && event.srcElement && event.srcElement.blur) {
+        event.srcElement.blur();
+      }
+    },
     save() {
       this.name = (this.name || "").trim();
       if (!this.game || this.game.name !== this.name) {
