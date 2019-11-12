@@ -11,6 +11,13 @@
         />
         <q-toolbar-title>{{ title }}</q-toolbar-title>
         <q-btn
+          icon="open_in_new"
+          :to="url"
+          @click.prevent="openLink"
+          stretch
+          flat
+        />
+        <q-btn
           icon="chat"
           @click="right = !right"
           :color="right ? 'accent' : ''"
@@ -172,6 +179,14 @@ export default {
     },
     title() {
       return this.name || this.game.generateName();
+    },
+    url() {
+      return this.$store.getters.url(this.game, { state: true });
+    }
+  },
+  methods: {
+    openLink() {
+      window.open(location.origin + "#/" + this.url, "_blank");
     }
   },
   created() {
