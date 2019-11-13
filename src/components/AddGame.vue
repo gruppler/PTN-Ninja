@@ -22,21 +22,6 @@
             </q-card-section>
             <div class="absolute-fit inset-shadow no-pointer-events" />
           </div>
-          <q-separator dark />
-          <q-card-actions align="right">
-            <q-btn
-              :label="$t(showAll ? 'Show Less' : 'Show More')"
-              @click="showAll = !showAll"
-              flat
-            />
-            <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-            <q-btn
-              :label="$t('OK')"
-              @click="$refs.gameInfo.save()"
-              color="accent"
-              flat
-            />
-          </q-card-actions>
         </q-tab-panel>
 
         <q-tab-panel name="load" class="q-pa-none">
@@ -58,15 +43,33 @@
               </q-item-section>
             </q-item>
             <q-expansion-item icon="cloud" :label="$t('Remote')" group="type">
-              <q-card-section>
-                <q-list></q-list>
-                <div class="absolute-fit inset-shadow no-pointer-events" />
-              </q-card-section>
+              <q-list>
+                <q-item>
+                  <q-item-section align="center">
+                    {{ $t("Coming soon") }}
+                  </q-item-section>
+                </q-item>
+              </q-list>
+              <div class="absolute-fit inset-shadow no-pointer-events" />
             </q-expansion-item>
           </q-list>
           <div class="absolute-fit inset-shadow no-pointer-events" />
         </q-tab-panel>
       </q-tab-panels>
+
+      <q-separator dark />
+
+      <q-card-actions class="row items-center justify-end q-gutter-sm">
+        <q-btn
+          v-show="tab === 'new'"
+          :label="$t(showAll ? 'Show Less' : 'Show More')"
+          @click="showAll = !showAll"
+          flat
+        />
+        <div class="col-grow" />
+        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('OK')" @click="ok" color="accent" flat />
+      </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
@@ -140,6 +143,13 @@ export default {
     loadGames(event) {
       this.$store.dispatch("OPEN_FILES", event.target.files);
       this.close();
+    },
+    ok() {
+      if (this.tab === "new") {
+        this.$refs.gameInfo.save();
+      } else {
+        // Load online game
+      }
     }
   }
 };

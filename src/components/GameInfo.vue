@@ -342,6 +342,7 @@
         :options="results"
         :label="$t('Result')"
         color="accent"
+        popup-content-class="bg-blue-grey-9"
         autocorrect="off"
         spellcheck="false"
         hide-bottom-space

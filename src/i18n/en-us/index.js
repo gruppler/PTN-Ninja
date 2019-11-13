@@ -15,6 +15,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
+  "Coming soon": "Coming soon!",
   "Copy to Clipboard": "Copy to Clipboard",
   Copied: "Copied",
   "Current Move": "Current Move",

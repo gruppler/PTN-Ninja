@@ -93,6 +93,7 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
+const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
 
@@ -171,8 +172,8 @@ export default {
             8,
             Math.min(
               22,
-              Math.round(this.space.width * 0.033),
-              Math.round(this.space.height * 0.033)
+              Math.round(this.space.width * FONT_RATIO),
+              Math.round(this.space.height * FONT_RATIO)
             )
           ) + "px"
         );

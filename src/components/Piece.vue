@@ -10,8 +10,8 @@
       :class="{
         ['p' + piece.color]: true,
         C: piece.type === 'cap',
-        S: piece && piece.square && piece.isStanding,
-        unplayed: !piece,
+        S: piece.square && piece.isStanding,
+        unplayed: !piece.square,
         firstSelected,
         immovable
       }"
@@ -30,10 +30,10 @@ export default {
       return this.game.state.pieces.all.byID[this.id];
     },
     immovable() {
-      return this.piece ? this.piece.isImmovable : false;
+      return this.piece.square ? this.piece.isImmovable : false;
     },
     firstSelected() {
-      return this.piece && this.piece === this.game.state.selected.pieces[0];
+      return this.piece === this.game.state.selected.pieces[0];
     },
     board3D() {
       return this.$store.state.board3D;

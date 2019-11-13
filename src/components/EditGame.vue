@@ -17,13 +17,16 @@
           @save="save"
         />
       </q-card-section>
+
       <q-separator dark />
-      <q-card-actions align="right">
+
+      <q-card-actions class="row items-center justify-end q-gutter-sm">
         <q-btn
           :label="$t(showAll ? 'Show Less' : 'Show More')"
           @click="showAll = !showAll"
           flat
         />
+        <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
