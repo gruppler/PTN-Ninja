@@ -187,6 +187,7 @@
       </q-toolbar>
     </q-footer>
 
+    <Share v-model="dialogShare" :game="game" />
     <AddGame v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
@@ -211,6 +212,7 @@ import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import PTNTools from "../components/PTNTools";
 import EvalButtons from "../components/EvalButtons";
+import Share from "../components/Share";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
@@ -238,6 +240,7 @@ export default {
     Scrubber,
     PTNTools,
     EvalButtons,
+    Share,
     AddGame,
     EditGame,
     UISettings,
@@ -319,6 +322,23 @@ export default {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
       }
     },
+    dialogShare: {
+      get() {
+        return this.$route.name === "share";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "share") {
+            this.$router.push({ name: "share" });
+          }
+        } else {
+          if (this.$route.name === "share") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
     dialogAddGame: {
       get() {
         return this.$route.name === "add";
@@ -329,7 +349,7 @@ export default {
             this.$router.push({ name: "add" });
           }
         } else {
-          if (this.$route.name == "add") {
+          if (this.$route.name === "add") {
             this.$router.go(-1);
             this.$router.replace({ name: "local" });
           }
@@ -346,7 +366,7 @@ export default {
             this.$router.push({ name: "settings" });
           }
         } else {
-          if (this.$route.name == "settings") {
+          if (this.$route.name === "settings") {
             this.$router.go(-1);
             this.$router.replace({ name: "local" });
           }
@@ -363,7 +383,7 @@ export default {
             this.$router.push({ name: "edit" });
           }
         } else {
-          if (this.$route.name == "edit") {
+          if (this.$route.name === "edit") {
             this.$router.go(-1);
             this.$router.replace({ name: "local" });
           }
@@ -434,6 +454,9 @@ export default {
       switch (action) {
         case "add":
           this.dialogAddGame = true;
+          break;
+        case "share":
+          this.dialogShare = true;
           break;
         case "settings":
           this.dialogUISettings = true;
@@ -534,6 +557,7 @@ export default {
 
 .board-move-container
   text-align center
+  flex-shrink 0
   @media (max-width: $breakpoint-sm-max)
     text-align left
     margin-right 84px

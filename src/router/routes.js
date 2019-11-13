@@ -47,6 +47,10 @@ const routes = [
     },
     children: [
       {
+        name: "share",
+        path: "/share"
+      },
+      {
         name: "add",
         path: "/add"
       },
