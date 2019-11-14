@@ -1,7 +1,7 @@
 <template>
   <div
     class="board-wrapper flex flex-center"
-    :class="{ 'board-3D': $store.state.board3D }"
+    :class="{ 'board-3D': board3D }"
     v-touch-pan.prevent.mouse="rotateBoard"
     @click.right.self.prevent="resetBoardRotation"
     ref="wrapper"
@@ -70,6 +70,7 @@
             <Piece
               v-for="piece in game.state.pieces.all.byID"
               :key="piece.id"
+              :ref="piece.id"
               :id="piece.id"
               :game="game"
             />
@@ -93,6 +94,8 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
+import { last } from "lodash";
+
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -108,6 +111,9 @@ export default {
     return {
       size: null,
       space: null,
+      scale: 1,
+      x: 0,
+      y: 0,
       prevBoardRotation: null,
       boardRotation: this.$store.state.boardRotation
     };
@@ -139,6 +145,9 @@ export default {
             "%"
           : ""
       ];
+    },
+    board3D() {
+      return this.$store.state.board3D;
     },
     isPortrait() {
       return this.size && this.space && this.size.width === this.space.width;
@@ -180,24 +189,8 @@ export default {
       }
     },
     transform() {
-      const translateX =
-        (this.boardRotation[0] * (1 - this.boardRotation[1]) * MAX_ANGLE) / 20;
-      const translateY =
-        (this.boardRotation[1] *
-          (0.25 + 0.25 * Math.abs(this.boardRotation[0])) *
-          MAX_ANGLE) /
-        -6;
-      const translateZ =
-        (this.boardRotation[2] *
-          (0.5 + 0.5 * this.boardRotation[1]) *
-          -MAX_ANGLE) /
-        1.5;
-
-      const translate3d = [
-        translateX + "em",
-        translateY + "em",
-        translateZ + "em"
-      ].join(",");
+      const scale = this.scale;
+      const translate = `${this.x}px, ${this.y}px`;
 
       const rotateZ =
         -this.boardRotation[0] * this.boardRotation[1] * MAX_ANGLE * 1.5 +
@@ -210,8 +203,8 @@ export default {
         this.boardRotation[2] * MAX_ANGLE + "deg"
       ].join(",");
 
-      return this.$store.state.board3D
-        ? `translate3d(${translate3d}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
+      return this.board3D
+        ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
     squares() {
@@ -239,16 +232,14 @@ export default {
       }
     },
     resetBoardRotation() {
-      if (this.$store.state.board3D) {
+      if (this.board3D) {
         this.boardRotation = this.$store.state.defaults.boardRotation;
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.zoomFit();
       }
     },
     rotateBoard(event) {
-      if (
-        !this.$store.state.board3D &&
-        event.evt.target === this.$refs.wrapper
-      ) {
+      if (!this.board3D && event.evt.target === this.$refs.wrapper) {
         return;
       }
 
@@ -284,12 +275,89 @@ export default {
       if (event.isFinal) {
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
       }
+    },
+    getBounds(nodes) {
+      if (nodes.length === 1) {
+        return nodes[0].getBoundingClientRect();
+      } else {
+        let bbAll = {
+          top: Infinity,
+          bottom: -Infinity,
+          left: Infinity,
+          right: -Infinity,
+          width: 0,
+          height: 0,
+          x: 0,
+          y: 0
+        };
+        nodes.forEach(node => {
+          const bb = node.getBoundingClientRect();
+          bbAll.top = Math.min(bbAll.top, bb.top);
+          bbAll.bottom = Math.max(bbAll.bottom, bb.bottom);
+          bbAll.left = Math.min(bbAll.left, bb.left);
+          bbAll.right = Math.max(bbAll.right, bb.right);
+        });
+        bbAll.width = bbAll.right - bbAll.left;
+        bbAll.height = bbAll.bottom - bbAll.top;
+        bbAll.x = bbAll.left;
+        bbAll.y = bbAll.top;
+        return bbAll;
+      }
+    },
+    zoomFit() {
+      let nodes = [this.$refs.container];
+      if (this.$store.state.unplayedPieces) {
+        Object.values(this.game.state.pieces.all.byID).forEach(piece => {
+          if (!piece.square) {
+            nodes.push(this.$refs[piece.id][0].$el);
+          }
+        });
+      }
+      this.squares.forEach(square => {
+        if (square.length > 1) {
+          nodes.push(this.$refs[last(square).id][0].$el);
+        }
+      });
+      const boardBB = this.getBounds(nodes);
+      const spaceBB = this.$refs.wrapper.getBoundingClientRect();
+
+      let scale;
+      if (boardBB.width / spaceBB.width > boardBB.height / spaceBB.height) {
+        // Horizontally bound
+        scale = spaceBB.width / boardBB.width;
+      } else {
+        // Vertically bound
+        scale = spaceBB.height / boardBB.height;
+      }
+      this.x =
+        (this.x + spaceBB.x - boardBB.x) * scale +
+        ((spaceBB.width - boardBB.width) / 2) * scale;
+      this.y =
+        (this.y + spaceBB.y - boardBB.y) * scale +
+        ((spaceBB.height - boardBB.height) / 2) * scale;
+      scale *= this.scale;
+      this.scale = scale;
     }
   },
   watch: {
     isPortrait(isPortrait) {
       if (isPortrait !== this.$store.state.isPortrait) {
         this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
+      }
+    },
+    maxWidth() {
+      if (this.board3D) {
+        this.$nextTick(this.zoomFit);
+      }
+    },
+    boardRotation() {
+      if (this.board3D) {
+        this.$nextTick(this.zoomFit);
+      }
+    },
+    board3D(board3D) {
+      if (board3D) {
+        this.$nextTick(this.zoomFit);
       }
     }
   }

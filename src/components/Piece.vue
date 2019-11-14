@@ -110,16 +110,19 @@ export default {
         // Unplayed piece
         if (this.board3D) {
           z =
-            ((this.game.pieceCounts[this.piece.type] - this.piece.index - 1) %
-              this.game.size) +
-            1;
+            (this.game.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            this.game.size;
         } else {
-          z = 2 * this.game.pieceCounts.total - this.piece.index;
-          if (this.piece.type === "cap") {
-            z += this.game.pieceCounts.flat;
+          z =
+            (this.game.pieceCounts.total - this.piece.index) /
+            this.game.pieceCounts.total;
+          if (this.piece.type !== "cap") {
+            z -= this.game.pieceCounts.cap;
           }
-          if (this.piece.color === 2) {
-            z += this.game.pieceCounts.total;
+          if (this.piece.color === 1) {
+            z += 1;
+          } else {
+            z += this.game.size - 1;
           }
         }
       }
