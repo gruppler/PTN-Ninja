@@ -17,18 +17,27 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
 
 export const url = state => (game, options = {}) => {
   let url = compressToEncodedURIComponent(game.ptn);
-  let params = [];
+  let params = {};
 
-  if (game.name && game.name !== game.generateName()) {
+  if ("name" in options) {
+    params.name = options.name;
+  } else if (game.name && game.name !== game.generateName()) {
     params.name = game.name;
   }
 
+  if (options.origin) {
+    url = location.origin + "/?#/" + url;
+  }
+
   if (options.state) {
-    if (game.state.targetBranch) {
-      params.targetBranch = game.state.targetBranch;
+    if (options.state === true) {
+      options.state = game.state;
     }
-    params.ply = game.state.plyIndex;
-    if (game.state.plyIsDone) {
+    if (options.state.targetBranch) {
+      params.targetBranch = options.state.targetBranch;
+    }
+    params.ply = options.state.plyIndex;
+    if (options.state.plyIsDone) {
       params.ply += "!";
     }
   }

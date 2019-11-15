@@ -43,13 +43,15 @@ const routes = [
         ptn = decodeURIComponent(ptn);
       }
 
+      Object.keys(state).forEach(key => {
+        if (/^(true|false)$/.test(state[key])) {
+          state[key] = eval(state[key]);
+        }
+      });
+
       return { ptn, name, state };
     },
     children: [
-      {
-        name: "share",
-        path: "/share"
-      },
       {
         name: "add",
         path: "/add"
@@ -61,6 +63,10 @@ const routes = [
       {
         name: "edit",
         path: "/edit"
+      },
+      {
+        name: "embed",
+        path: "/embed"
       }
     ]
   }

@@ -1,4 +1,5 @@
-import { Loading, LocalStorage } from "quasar";
+import { Loading, LocalStorage, Notify } from "quasar";
+import { saveAs } from "file-saver";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -125,6 +126,14 @@ export const TRIM_TO_PLY = ({ commit }, game) => {
   commit("TRIM_TO_PLY", game);
 };
 
+export const SAVE = (context, game) => {
+  saveAs(
+    new Blob([game.ptn], { type: "text/plain;charset=utf-8" }),
+    game.name + ".ptn",
+    { autoBom: false }
+  );
+};
+
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
   LocalStorage.set("history-" + game.name, game.history);
   commit("SAVE_UNDO_HISTORY", game);
@@ -133,4 +142,24 @@ export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
 export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
   commit("SAVE_UNDO_INDEX", game);
+};
+
+export const COPY = function(context, { text, message }) {
+  const el = document.createElement("textarea");
+  el.value = text;
+  el.setAttribute("readonly", "");
+  el.style = { position: "absolute", left: "-9999px" };
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+  Notify.create({
+    icon: "file_copy",
+    type: "positive",
+    color: "white",
+    classes: "text-grey-10",
+    timeout: 1,
+    position: "bottom",
+    message
+  });
 };

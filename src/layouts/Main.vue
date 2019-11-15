@@ -187,10 +187,10 @@
       </q-toolbar>
     </q-footer>
 
-    <Share v-model="dialogShare" :game="game" />
     <AddGame v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
+    <EmbedConfig v-model="dialogEmbed" :game="game" />
 
     <NoteNotifications :game="game" />
     <GameNotifications :game="game" />
@@ -212,10 +212,10 @@ import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import PTNTools from "../components/PTNTools";
 import EvalButtons from "../components/EvalButtons";
-import Share from "../components/Share";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
+import EmbedConfig from "../components/EmbedConfig";
 import BoardToggles from "../components/BoardToggles";
 
 import Game from "../PTN/Game";
@@ -240,10 +240,10 @@ export default {
     Scrubber,
     PTNTools,
     EvalButtons,
-    Share,
     AddGame,
     EditGame,
     UISettings,
+    EmbedConfig,
     BoardToggles
   },
   props: ["ptn", "state", "name"],
@@ -322,23 +322,6 @@ export default {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
       }
     },
-    dialogShare: {
-      get() {
-        return this.$route.name === "share";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "share") {
-            this.$router.push({ name: "share" });
-          }
-        } else {
-          if (this.$route.name === "share") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
     dialogAddGame: {
       get() {
         return this.$route.name === "add";
@@ -384,6 +367,23 @@ export default {
           }
         } else {
           if (this.$route.name === "edit") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogEmbed: {
+      get() {
+        return this.$route.name === "embed";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "embed") {
+            this.$router.push({ name: "embed" });
+          }
+        } else {
+          if (this.$route.name === "embed") {
             this.$router.go(-1);
             this.$router.replace({ name: "local" });
           }
@@ -456,7 +456,7 @@ export default {
           this.dialogAddGame = true;
           break;
         case "share":
-          this.dialogShare = true;
+          this.share();
           break;
         case "settings":
           this.dialogUISettings = true;
@@ -474,6 +474,61 @@ export default {
     },
     showTextTab(value) {
       this.textTab = value;
+    },
+    share() {
+      this.$q
+        .bottomSheet({
+          dark: true,
+          class: "bg-secondary",
+          message: this.$t("Share"),
+          actions: [
+            {
+              label: this.$t("Copy Link"),
+              icon: "link",
+              id: "link"
+            },
+            {
+              label: this.$t("Copy PTN"),
+              icon: "file_copy",
+              id: "ptn"
+            },
+            {
+              label: this.$t("Download"),
+              icon: "save_alt",
+              id: "download"
+            },
+            {
+              label: this.$t("Embed"),
+              icon: "code",
+              id: "embed"
+            }
+          ]
+        })
+        .onOk(action => {
+          switch (action.id) {
+            case "link":
+              this.$store.dispatch("COPY", {
+                text: this.$store.getters.url(this.game, {
+                  origin: true,
+                  state: true
+                }),
+                message: this.$t("Copied")
+              });
+              break;
+            case "ptn":
+              this.$store.dispatch("COPY", {
+                text: this.game.ptn,
+                message: this.$t("Copied")
+              });
+              break;
+            case "download":
+              this.$store.dispatch("SAVE", this.game);
+              break;
+            case "embed":
+              this.dialogEmbed = true;
+              break;
+          }
+        });
     },
     openFiles(event) {
       event.stopPropagation();

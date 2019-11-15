@@ -2,7 +2,7 @@
   <div class="q-gutter-y-md column no-wrap">
     <q-input
       v-model="name"
-      name="name`"
+      name="name"
       :label="$t('Title')"
       @keyup.enter="save"
       color="accent"

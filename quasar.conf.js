@@ -71,6 +71,7 @@ module.exports = function(ctx) {
       plugins: [
         "AddressbarColor",
         "AppFullscreen",
+        "BottomSheet",
         "Loading",
         "LocalStorage",
         "Notify"

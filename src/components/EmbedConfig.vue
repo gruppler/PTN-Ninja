@@ -1,0 +1,276 @@
+<template>
+  <q-dialog
+    :value="value"
+    @input="$emit('input', $event)"
+    no-backdrop-dismiss
+    no-route-dismiss
+  >
+    <q-card style="width: 500px;" class="bg-secondary" dark>
+      <div class="column">
+        <iframe
+          :src="initialURL"
+          frameborder="0"
+          width="100%"
+          :height="previewHeight"
+          allowfullscreen
+          ref="preview"
+        />
+        <div class="relative-position">
+          <q-card-section
+            :style="{
+              maxHeight: `calc(100vh - 14rem - ${previewHeight})`,
+              minHeight: '7rem'
+            }"
+            class="scroll q-pa-none"
+          >
+            <q-list style="max-height: 50vh">
+              <q-item>
+                <q-item-section>
+                  <q-input
+                    v-model="name"
+                    name="name"
+                    :label="$t('Title')"
+                    color="accent"
+                    filled
+                    dark
+                  >
+                    <template v-slot:append>
+                      <q-btn
+                        @click="
+                          name = name === game.name ? generatedName : game.name
+                        "
+                        icon="refresh"
+                        dense
+                        flat
+                      />
+                    </template>
+                  </q-input>
+                </q-item-section>
+              </q-item>
+
+              <q-item>
+                <q-item-section>
+                  <q-input
+                    v-model="width"
+                    :label="$t('Width')"
+                    hide-bottom-space
+                    color="accent"
+                    filled
+                    dark
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-input
+                    v-model="height"
+                    :label="$t('Height')"
+                    hide-bottom-space
+                    color="accent"
+                    filled
+                    dark
+                  />
+                </q-item-section>
+              </q-item>
+
+              <q-item tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("From current ply") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="state" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.axisLabels" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.showRoads" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.flatCounts" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.unplayedPieces" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Current Move") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.showMove" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("Highlight Current Squares")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.highlightSquares" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.showAllBranches" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Play Controls") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.showControls" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="ui.showScrubber" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-show="showAll">
+                <q-item-section>
+                  {{ $t("Play Speed") }}
+                  <q-slider
+                    v-model="ui.playSpeed"
+                    :min="30"
+                    :max="160"
+                    :label-value="ui.playSpeed + ' ' + $t('BPM')"
+                    :step="10"
+                    color="accent"
+                    snap
+                    dark
+                    label
+                  />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card-section>
+          <div class="absolute-fit inset-shadow no-pointer-events" />
+        </div>
+      </div>
+
+      <q-separator dark />
+
+      <q-card-actions class="row items-center justify-end q-gutter-sm">
+        <q-btn
+          :icon="showAll ? 'unfold_less' : 'unfold_more'"
+          :label="$t(showAll ? 'Show Less' : 'Show More')"
+          @click="showAll = !showAll"
+          flat
+        />
+        <div class="col-grow" />
+        <q-btn :label="$t('Copy')" @click="copy" color="accent" flat />
+        <q-btn :label="$t('Done')" color="accent" flat v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+</template>
+
+<script>
+import { pick } from "lodash";
+
+export default {
+  name: "EmbedConfig",
+  props: ["value", "game"],
+  data() {
+    return {
+      name: this.game.name,
+      previewHeight: "333px",
+      width: "100%",
+      height: "600px",
+      state: true,
+      ui: pick(this.$store.state.defaults, [
+        "axisLabels",
+        "flatCounts",
+        "highlightSquares",
+        "playSpeed",
+        "showAllBranches",
+        "showControls",
+        "showMove",
+        "showRoads",
+        "showScrubber",
+        "unplayedPieces"
+      ]),
+      showAll: false,
+      initialURL: this.$store.getters.url(this.game, {
+        origin: true,
+        state: this.state
+      })
+    };
+  },
+  computed: {
+    generatedName() {
+      return this.game.generateName();
+    },
+    url() {
+      return this.$store.getters.url(this.game, {
+        origin: true,
+        state: this.state,
+        name: this.name,
+        ui: this.ui
+      });
+    },
+    code() {
+      return `<iframe frameborder="0" allowfullscreen src="${
+        this.url
+      }" width="${this.width}" height="${this.height}" style="width:${
+        this.width
+      }; max-width:100vw; height:${this.height}; max-height:100vh;" />`;
+    }
+  },
+  methods: {
+    copy() {
+      this.$store.dispatch("COPY", {
+        text: this.code,
+        message: this.$t("Copied")
+      });
+    },
+    close() {
+      this.$emit("input", false);
+    }
+  },
+  watch: {
+    url(url) {
+      this.$refs.preview.contentWindow.location.replace(url);
+    }
+  }
+};
+</script>
+
+<style></style>

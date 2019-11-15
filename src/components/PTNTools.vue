@@ -31,7 +31,7 @@
         </q-menu>
       </q-btn>
 
-      <q-btn @click="copy" icon="file_copy" :title="$t('Copy to Clipboard')" />
+      <q-btn @click="copy" icon="file_copy" :title="$t('Copy Moves')" />
 
       <!-- <q-btn icon="edit" :title="$t('Edit')" /> -->
       <!-- <q-btn icon="assignment_returned" :title="$t('Paste from Clipboard')" /> -->
@@ -55,14 +55,10 @@ export default {
   },
   methods: {
     copy() {
-      const el = document.createElement("textarea");
-      el.value = this.game.moveText(this.showAllBranches);
-      el.setAttribute("readonly", "");
-      el.style = { position: "absolute", left: "-9999px" };
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
+      this.$store.dispatch("COPY", {
+        text: this.game.moveText(this.showAllBranches),
+        message: this.$t("Copied")
+      });
     }
   }
 };

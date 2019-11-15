@@ -31,6 +31,7 @@ export const HOTKEYS = {
     prevHalf: ["shift", "arrowleft"]
   },
   ACTIONS: {
+    SAVE: ["ctrl", "s"],
     REDO: ["ctrl", "shift", "z"],
     UNDO: ["ctrl", "z"]
   },

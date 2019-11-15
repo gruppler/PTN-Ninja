@@ -137,6 +137,7 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
+import { defaults } from "lodash";
 
 export default {
   components: {
@@ -186,7 +187,7 @@ export default {
   },
   methods: {
     openLink() {
-      window.open(location.origin + "#/" + this.url, "_blank");
+      window.open(location.origin + "/?#/" + this.url, "_blank");
     }
   },
   created() {
@@ -194,6 +195,28 @@ export default {
     Object.keys(this.state).forEach(key => {
       this.$store.commit("SET_UI", [key, this.state[key]]);
     });
+  },
+  watch: {
+    state: {
+      handler(state, oldState) {
+        Object.keys(defaults(state, this.$store.state.defaults)).forEach(
+          key => {
+            this.$store.commit("SET_UI", [key, state[key]]);
+          }
+        );
+        this.game.state.targetBranch =
+          "targetBranch" in state ? state.targetBranch || "" : "";
+        if ("plyIndex" in state && !("plyIndex" in oldState)) {
+          const ply = this.game.state.plies[state.plyIndex];
+          if (ply) {
+            this.game.goToPly(ply.id, state.plyIsDone);
+          }
+        } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
+          this.game.goToPly(0, false);
+        }
+      },
+      deep: true
+    }
   }
 };
 </script>
