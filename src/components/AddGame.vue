@@ -62,6 +62,7 @@
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <q-btn
           v-show="tab === 'new'"
+          :icon="showAll ? 'unfold_less' : 'unfold_more'"
           :label="$t(showAll ? 'Show Less' : 'Show More')"
           @click="showAll = !showAll"
           flat
