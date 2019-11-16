@@ -6,6 +6,7 @@
       light: x % 2 !== y % 2,
       ['p' + color]: !!color,
       'no-roads': !$store.state.showRoads,
+      eog,
       current,
       selected,
       placed,
@@ -43,6 +44,9 @@ export default {
   name: "Square",
   props: ["game", "x", "y"],
   computed: {
+    eog() {
+      return this.game.state.isGameEnd;
+    },
     isEditingTPS() {
       return this.$store.state.isEditingTPS;
     },
@@ -248,12 +252,12 @@ export default {
   .board-container.turn-1 &
     .hl.player
       background-color $blue-grey-2
-    &.placed .hl.player
+    &.placed:not(.eog) .hl.player
       background-color $blue-grey-8
   .board-container.turn-2 &
     .hl.player
       background-color $blue-grey-8
-    &.placed .hl.player
+    &.placed:not(.eog) .hl.player
       background-color $blue-grey-2
   &.selected .hl.player
     opacity .5

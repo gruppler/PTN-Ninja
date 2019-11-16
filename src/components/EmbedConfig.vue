@@ -8,12 +8,12 @@
     <q-card style="width: 500px;" class="bg-secondary" dark>
       <div class="column">
         <iframe
+          ref="preview"
           :src="initialURL"
-          frameborder="0"
           width="100%"
           :height="previewHeight"
+          frameborder="0"
           allowfullscreen
-          ref="preview"
         />
         <div class="relative-position">
           <q-card-section
@@ -228,10 +228,7 @@ export default {
         "unplayedPieces"
       ]),
       showAll: false,
-      initialURL: this.$store.getters.url(this.game, {
-        origin: true,
-        state: this.state
-      })
+      initialURL: ""
     };
   },
   computed: {
@@ -247,11 +244,11 @@ export default {
       });
     },
     code() {
-      return `<iframe frameborder="0" allowfullscreen src="${
-        this.url
-      }" width="${this.width}" height="${this.height}" style="width:${
-        this.width
-      }; max-width:100vw; height:${this.height}; max-height:100vh;" />`;
+      return `<iframe src="${this.url}" width="${this.width}" height="${
+        this.height
+      }" style="width:${this.width}; max-width:100vw; height:${
+        this.height
+      }; max-height:100vh;" frameborder="0" allowfullscreen />`;
     }
   },
   methods: {
@@ -266,8 +263,15 @@ export default {
     }
   },
   watch: {
+    value(isVisible) {
+      if (isVisible) {
+        this.initialURL = this.url;
+      }
+    },
     url(url) {
-      this.$refs.preview.contentWindow.location.replace(url);
+      if (this.$refs.preview) {
+        this.$refs.preview.contentWindow.location.replace(url);
+      }
     }
   }
 };

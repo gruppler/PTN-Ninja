@@ -143,7 +143,7 @@
     <q-footer reveal>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
-        v-show="$store.state.showControls"
+        v-show="isEditingTPS || $store.state.showControls"
         class="footer-toolbar q-pa-sm bg-secondary text-white"
       >
         <PieceSelector

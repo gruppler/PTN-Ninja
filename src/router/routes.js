@@ -18,6 +18,9 @@ const routes = [
 
       for (let i = 0; i < stateRaw.length; i++) {
         let item = stateRaw[i].split("=");
+        if (/^(true|false)$/.test(item[1])) {
+          item[1] = eval(item[1]);
+        }
         state[item[0]] = item[1];
       }
 
@@ -42,12 +45,6 @@ const routes = [
       } else {
         ptn = decodeURIComponent(ptn);
       }
-
-      Object.keys(state).forEach(key => {
-        if (/^(true|false)$/.test(state[key])) {
-          state[key] = eval(state[key]);
-        }
-      });
 
       return { ptn, name, state };
     },
