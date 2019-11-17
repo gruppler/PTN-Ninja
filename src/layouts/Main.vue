@@ -251,7 +251,11 @@ export default {
     return {
       Platform,
       game: this.getGame(),
-      hotkeys: HOTKEYS
+      hotkeys: HOTKEYS,
+      dialogAddGame: false,
+      dialogUISettings: false,
+      dialogEditGame: false,
+      dialogEmbed: false
     };
   },
   computed: {
@@ -322,74 +326,6 @@ export default {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
       }
     },
-    dialogAddGame: {
-      get() {
-        return this.$route.name === "add";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "add") {
-            this.$router.push({ name: "add" });
-          }
-        } else {
-          if (this.$route.name === "add") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogUISettings: {
-      get() {
-        return this.$route.name === "settings";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "settings") {
-            this.$router.push({ name: "settings" });
-          }
-        } else {
-          if (this.$route.name === "settings") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEditGame: {
-      get() {
-        return this.$route.name === "edit";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          }
-        } else {
-          if (this.$route.name === "edit") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEmbed: {
-      get() {
-        return this.$route.name === "embed";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "embed") {
-            this.$router.push({ name: "embed" });
-          }
-        } else {
-          if (this.$route.name === "embed") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
     games() {
       return this.$store.state.games.concat();
     },
@@ -413,6 +349,9 @@ export default {
     }
   },
   methods: {
+    setWindowTitle(prefix = this.game.name) {
+      document.title = prefix + " — " + this.$t("app_title");
+    },
     newGame() {
       return new Game(
         `[Player1 "${this.$store.state.player1}"]\n` +
@@ -444,6 +383,7 @@ export default {
       } else {
         game = this.newGame();
       }
+      this.setWindowTitle(game.name);
       window.game = game;
       return game;
     },
@@ -571,6 +511,7 @@ export default {
       if (oldName.game === newName.game) {
         this.$store.dispatch("SET_NAME", newName.name);
       }
+      this.setWindowTitle(newName.name);
     }
   },
   created() {
