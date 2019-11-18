@@ -153,7 +153,7 @@ export default {
       return this.size && this.space && this.size.width === this.space.width;
     },
     maxWidth() {
-      if (this.isInputFocused()) {
+      if (this.$el && this.$el.style.maxWidth && this.isInputFocused()) {
         return this.$el.style.maxWidth;
       }
       if (!this.space || !this.size) {
@@ -170,7 +170,7 @@ export default {
       }
     },
     fontSize() {
-      if (this.isInputFocused()) {
+      if (this.$el && this.$el.style.fontSize && this.isInputFocused()) {
         return this.$el.style.fontSize;
       }
       if (!this.space || !this.size) {

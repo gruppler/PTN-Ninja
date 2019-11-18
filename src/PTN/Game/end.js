@@ -88,7 +88,9 @@ export default class GameEnd {
             );
           });
 
-          if (connections[square.coord].length === 1) {
+          let neighbors = connections[square.coord];
+
+          if (neighbors.length === 1) {
             if (square.isEdge) {
               // An edge with exactly one friendly neighbor
               possibleRoads[player][square.coord] = square;
@@ -97,9 +99,17 @@ export default class GameEnd {
               // A non-edge dead end
               deadEnds.push(square);
             }
-          } else if (connections[square.coord].length > 1) {
+          } else if (neighbors.length > 1) {
             // An intersection
             possibleRoads[player][square.coord] = square;
+            if (
+              square.isEdge &&
+              neighbors.length === 2 &&
+              neighbors.find(square => square.isEdge) &&
+              neighbors.find(square => !square.isEdge)
+            ) {
+              possibleDeadEnds[player].push(square);
+            }
           }
         } else {
           connections[square.coord] = [];

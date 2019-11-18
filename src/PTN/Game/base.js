@@ -224,7 +224,12 @@ export default class GameBase {
     }
 
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this);
+      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ". ", this);
+    } else if (
+      this.moves.length === 1 &&
+      this.moves[0].number !== this.firstMoveNumber
+    ) {
+      this.moves[0].linenum.number = this.firstMoveNumber;
     }
 
     this._updatePTN();

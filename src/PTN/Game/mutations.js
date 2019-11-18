@@ -98,7 +98,7 @@ export default class GameMutations {
   }
 
   trimToPly() {
-    if (!this.state.ply) {
+    if (!this.state.ply || (!this.state.plyID && !this.state.plyIsDone)) {
       return;
     }
     this.recordChange(this._trimToPly);
