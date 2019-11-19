@@ -121,6 +121,18 @@ export default class GameMutations {
     this.recordChange(this._trimToBoard);
   }
 
+  trimBranches() {
+    if (Object.keys(this.branches).length === 1) {
+      return;
+    }
+    this.recordChange(() => {
+      this.init(this.text(false), {
+        ...this,
+        state: { ...this.minState, targetBranch: "" }
+      });
+    });
+  }
+
   _deletePly(plyID, removeDescendents = false, removeOrphans = true) {
     const ply = this.plies[plyID];
     if (!ply) {

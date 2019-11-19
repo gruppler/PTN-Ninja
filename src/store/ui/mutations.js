@@ -50,12 +50,16 @@ export const REDO = (state, game) => {
   }
 };
 
-export const TRIM_TO_PLY = (state, game) => {
-  game.trimToPly();
+export const TRIM_BRANCHES = (state, game) => {
+  game.trimBranches();
 };
 
 export const TRIM_TO_BOARD = (state, game) => {
   game.trimToBoard();
+};
+
+export const TRIM_TO_PLY = (state, game) => {
+  game.trimToPly();
 };
 
 export const SAVE_UNDO_HISTORY = (state, game) => {

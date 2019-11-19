@@ -128,6 +128,9 @@ export default {
       if (!this.log) {
         return null;
       }
+      if (this.editing) {
+        return this.editing.plyID;
+      }
       let plyID, ply;
       if (!this.game.state.plyID && !this.game.state.plyIsDone) {
         return this.plyIDs[0];

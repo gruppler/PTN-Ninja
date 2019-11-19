@@ -41,7 +41,11 @@
         @shortkey="$store.dispatch($event.srcKey, game)"
         class="overflow-hidden"
       >
-        <div class="column absolute-fit">
+        <div
+          class="column absolute-fit"
+          v-shortkey="hotkeys.MISC"
+          @shortkey="miscShortkey"
+        >
           <Board class="col-grow" :game="game" />
           <div class="board-move-container">
             <Move
@@ -68,8 +72,7 @@
 
     <q-drawer
       id="left-drawer"
-      :value="left"
-      @input="showPTN"
+      v-model="left"
       side="left"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
@@ -110,8 +113,7 @@
 
     <q-drawer
       id="right-drawer"
-      :value="right"
-      @input="showText"
+      v-model="right"
       side="right"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
@@ -119,6 +121,7 @@
     >
       <div class="absolute-fit column">
         <q-tabs
+          v-if="hasChat"
           class="bg-secondary text-white text-weight-medium"
           :value="textTab"
           @input="showTextTab"
@@ -128,12 +131,18 @@
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
           <q-tab name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
+        <q-toolbar
+          v-else
+          class="bg-secondary text-white text-weight-medium justify-center text-uppercase"
+        >
+          {{ $t("Notes") }}
+        </q-toolbar>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
-            <Notes class="fit" :game="game" />
+            <Notes ref="notes" class="fit" :game="game" />
           </q-tab-panel>
-          <q-tab-panel name="chat">
-            <Chat class="fit" :game="game" />
+          <q-tab-panel v-if="hasChat" name="chat">
+            <Chat ref="chat" class="fit" :game="game" />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -187,7 +196,7 @@
       </q-toolbar>
     </q-footer>
 
-    <AddGame v-model="dialogAddGame" />
+    <AddGame ref="addGame" v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
     <EmbedConfig v-model="dialogEmbed" :game="game" />
@@ -275,9 +284,12 @@ export default {
         this.$store.dispatch("SET_UI", ["showText", value]);
       }
     },
+    hasChat() {
+      return this.game.hasChat;
+    },
     textTab: {
       get() {
-        return this.$store.state.textTab;
+        return this.hasChat ? this.$store.state.textTab : "notes";
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
@@ -403,14 +415,38 @@ export default {
           break;
       }
     },
+    miscShortkey({ srcKey }) {
+      switch (srcKey) {
+        case "Edit Game":
+          this.dialogEditGame = true;
+          break;
+        case "Embed Game":
+          this.dialogEmbed = true;
+          break;
+        case "Focus Text Input":
+          this.right = true;
+          this.$refs[
+            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
+          ].$refs.input.focus();
+          break;
+        case "Load Game":
+          this.$refs.addGame.tab = "load";
+          this.dialogAddGame = true;
+          break;
+        case "New Game":
+          this.$refs.addGame.tab = "new";
+          this.dialogAddGame = true;
+          break;
+        case "Preferences":
+          this.dialogUISettings = true;
+          break;
+        case "Share":
+          this.share();
+          break;
+      }
+    },
     edit() {
       this.dialogEditGame = true;
-    },
-    showPTN(value) {
-      this.left = value;
-    },
-    showText(value) {
-      this.right = value;
     },
     showTextTab(value) {
       this.textTab = value;
@@ -426,6 +462,11 @@ export default {
               label: this.$t("Copy Link"),
               icon: "link",
               id: "link"
+            },
+            {
+              label: this.$t("Copy Moves"),
+              icon: "format_list_numbered",
+              id: "moves"
             },
             {
               label: this.$t("Copy PTN"),
@@ -452,6 +493,12 @@ export default {
                   origin: true,
                   state: true
                 }),
+                message: this.$t("Copied")
+              });
+              break;
+            case "moves":
+              this.$store.dispatch("COPY", {
+                text: this.game.moveText(this.showAllBranches),
                 message: this.$t("Copied")
               });
               break;

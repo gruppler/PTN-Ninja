@@ -32,6 +32,7 @@ export const HOTKEYS = {
   },
   ACTIONS: {
     SAVE: ["ctrl", "s"],
+    OPEN: ["ctrl", "o"],
     REDO: ["ctrl", "shift", "z"],
     UNDO: ["ctrl", "z"]
   },
@@ -40,6 +41,15 @@ export const HOTKEYS = {
     F: ["1"],
     S: ["2"],
     C: ["3"]
+  },
+  MISC: {
+    "Edit Game": ["e"],
+    "Embed Game": ["shift" + "e"],
+    "Focus Text Input": ["/"],
+    "Load Game": ["l"],
+    "New Game": ["n"],
+    Preferences: ["p"],
+    Share: ["ctrl", "shift", "s"]
   }
 };
 

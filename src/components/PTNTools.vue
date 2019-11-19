@@ -14,24 +14,56 @@
         <q-icon name="flip" class="rotate-270" />
         <q-menu auto-close square>
           <q-list dark class="bg-secondary text-white">
+            <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
+              <q-item-section side>
+                <q-icon name="call_split" class="rotate-180" />
+              </q-item-section>
+              <q-item-section>{{ $t("Trim Branches") }}</q-item-section>
+            </q-item>
+
             <q-item clickable @click="$store.dispatch('TRIM_TO_PLY', game)">
               <q-item-section side>
                 <q-icon name="flip" class="rotate-270" />
               </q-item-section>
-              <q-item-section>{{ $t("Trim to current ply") }}</q-item-section>
+              <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
 
             <q-item clickable @click="$store.dispatch('TRIM_TO_BOARD', game)">
               <q-item-section side>
                 <q-icon name="apps" />
               </q-item-section>
-              <q-item-section>{{ $t("Trim to current board") }}</q-item-section>
+              <q-item-section>{{ $t("Trim to Current Board") }}</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
       </q-btn>
 
-      <q-btn @click="copy" icon="file_copy" :title="$t('Copy Moves')" />
+      <q-btn icon="file_copy" :title="$t('Copy')">
+        <q-menu auto-close square>
+          <q-list dark class="bg-secondary text-white">
+            <q-item clickable @click="copy('link')">
+              <q-item-section side>
+                <q-icon name="link" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy Link") }}</q-item-section>
+            </q-item>
+
+            <q-item clickable @click="copy('moves')">
+              <q-item-section side>
+                <q-icon name="format_list_numbered" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy Moves") }}</q-item-section>
+            </q-item>
+
+            <q-item clickable @click="copy('ptn')">
+              <q-item-section side>
+                <q-icon name="file_copy" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy PTN") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
 
       <!-- <q-btn icon="edit" :title="$t('Edit')" /> -->
       <!-- <q-btn icon="assignment_returned" :title="$t('Paste from Clipboard')" /> -->
@@ -54,9 +86,24 @@ export default {
     }
   },
   methods: {
-    copy() {
+    copy(type) {
+      let text;
+      switch (type) {
+        case "link":
+          text = this.$store.getters.url(this.game, {
+            origin: true,
+            state: true
+          });
+          break;
+        case "moves":
+          text = this.game.moveText(this.showAllBranches);
+          break;
+        case "ptn":
+          text = this.game.ptn;
+          break;
+      }
       this.$store.dispatch("COPY", {
-        text: this.game.moveText(this.showAllBranches),
+        text,
         message: this.$t("Copied")
       });
     }

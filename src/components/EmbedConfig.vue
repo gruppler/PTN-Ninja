@@ -7,14 +7,20 @@
   >
     <q-card style="width: 500px;" class="bg-secondary" dark>
       <div class="column">
-        <iframe
-          ref="preview"
-          :src="initialURL"
-          width="100%"
-          :height="previewHeight"
-          frameborder="0"
-          allowfullscreen
-        />
+        <div class="relative-position">
+          <iframe
+            ref="preview"
+            class="block"
+            @load="previewLoaded = true"
+            @error="previewError = true"
+            :src="initialURL"
+            width="100%"
+            :height="previewHeight"
+            frameborder="0"
+            allowfullscreen
+          />
+          <QInnerLoading :showing="!previewLoaded && !previewError" dark />
+        </div>
         <div class="relative-position">
           <q-card-section
             :style="{
@@ -211,27 +217,20 @@ export default {
   data() {
     return {
       name: this.game.name,
-      previewHeight: "333px",
       width: "100%",
       height: "600px",
       state: true,
-      ui: pick(this.$store.state.defaults, [
-        "axisLabels",
-        "flatCounts",
-        "highlightSquares",
-        "playSpeed",
-        "showAllBranches",
-        "showControls",
-        "showMove",
-        "showRoads",
-        "showScrubber",
-        "unplayedPieces"
-      ]),
+      ui: pick(this.$store.state.defaults, this.$store.state.embedUIOptions),
       showAll: false,
+      previewError: false,
+      previewLoaded: false,
       initialURL: ""
     };
   },
   computed: {
+    previewHeight() {
+      return this.previewError ? "0" : "333px";
+    },
     generatedName() {
       return this.game.generateName();
     },
@@ -266,6 +265,9 @@ export default {
     value(isVisible) {
       if (isVisible) {
         this.initialURL = this.url;
+      } else {
+        this.previewError = false;
+        this.previewLoaded = false;
       }
     },
     url(url) {

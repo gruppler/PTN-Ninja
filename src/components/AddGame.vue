@@ -26,21 +26,11 @@
 
         <q-tab-panel name="load" class="q-pa-none">
           <q-list separator dark>
-            <q-item @click="$refs.fileinput.click()" clickable>
+            <q-item @click="$store.dispatch('OPEN', close)" clickable>
               <q-item-section avatar>
                 <q-icon name="folder_open" />
               </q-item-section>
-              <q-item-section>
-                {{ $t("Local") }}
-                <input
-                  @input="loadGames"
-                  ref="fileinput"
-                  type="file"
-                  accept=".ptn,.txt"
-                  multiple
-                  hidden
-                />
-              </q-item-section>
+              <q-item-section>{{ $t("Local") }}</q-item-section>
             </q-item>
             <q-expansion-item icon="cloud" :label="$t('Remote')" group="type">
               <q-list>
@@ -139,10 +129,6 @@ export default {
         name: game.name,
         state: game.minState
       });
-      this.close();
-    },
-    loadGames(event) {
-      this.$store.dispatch("OPEN_FILES", event.target.files);
       this.close();
     },
     ok() {

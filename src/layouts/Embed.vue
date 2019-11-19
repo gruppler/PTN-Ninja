@@ -27,13 +27,21 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container class="bg-primary">
+    <q-page-container
+      class="bg-primary"
+      v-shortkey="hotkeys.UI"
+      @shortkey="uiShortkey"
+    >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
         @shortkey="$store.dispatch($event.srcKey, game)"
         class="overflow-hidden"
       >
-        <div class="column absolute-fit">
+        <div
+          class="column absolute-fit"
+          v-shortkey="hotkeys.MISC"
+          @shortkey="miscShortkey"
+        >
           <Board class="col-grow" :game="game" />
           <div class="text-center">
             <Move
@@ -102,7 +110,7 @@
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
-      <Notes class="fit" :game="game" />
+      <Notes ref="notes" class="fit" :game="game" />
     </q-drawer>
 
     <q-footer reveal>
@@ -137,7 +145,7 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults } from "lodash";
+import { defaults, pick } from "lodash";
 
 export default {
   components: {
@@ -158,7 +166,11 @@ export default {
     return {
       Platform,
       game: new Game(this.ptn, { name: this.name, state: this.state }),
-      hotkeys: HOTKEYS
+      hotkeys: HOTKEYS,
+      defaults: pick(
+        this.$store.state.defaults,
+        this.$store.state.embedUIOptions
+      )
     };
   },
   computed: {
@@ -188,6 +200,19 @@ export default {
   methods: {
     openLink() {
       window.open(location.origin + "/?#/" + this.url, "_blank");
+    },
+    uiShortkey({ srcKey }) {
+      if (!(srcKey in this.state)) {
+        this.$store.dispatch("TOGGLE_UI", srcKey);
+      }
+    },
+    miscShortkey({ srcKey }) {
+      switch (srcKey) {
+        case "Focus Text Input":
+          this.right = true;
+          this.$refs.notes.$refs.input.focus();
+          break;
+      }
     }
   },
   created() {
@@ -199,11 +224,10 @@ export default {
   watch: {
     state: {
       handler(state, oldState) {
-        Object.keys(defaults(state, this.$store.state.defaults)).forEach(
-          key => {
-            this.$store.commit("SET_UI", [key, state[key]]);
-          }
-        );
+        let fullState = {};
+        Object.keys(defaults(fullState, state, this.defaults)).forEach(key => {
+          this.$store.commit("SET_UI", [key, fullState[key]]);
+        });
         this.game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {

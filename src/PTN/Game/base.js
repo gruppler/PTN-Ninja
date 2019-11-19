@@ -308,6 +308,7 @@ export default class GameBase {
         tags[key] = Tag.parse(`[${key} "${tag}"]`);
       } else {
         delete tags[key];
+        delete this.tags[key];
       }
     });
     Object.assign(this.tags, tags);
@@ -384,17 +385,17 @@ export default class GameBase {
     }
   }
 
-  text() {
+  text(showAllBranches = true, showComments = true) {
     return (
       map(this.tags, tag => tag.text()).join("\n") +
       "\n\n" +
-      (this.notes[-1]
+      (showComments && this.notes[-1]
         ? this.notes[-1].map(comment => comment.text()).join("\n") + "\n\n"
         : "") +
-      (this.chatlog[-1]
+      (showComments && this.chatlog[-1]
         ? this.chatlog[-1].map(comment => comment.text()).join("\n") + "\n\n"
         : "") +
-      this.moveText(true, true)
+      this.moveText(showAllBranches, showComments)
     );
   }
 

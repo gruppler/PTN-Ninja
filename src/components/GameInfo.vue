@@ -200,7 +200,7 @@
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
                   :label="$t('Clear')"
-                  @click="tags.date = ''"
+                  @click="tags.date = null"
                   color="accent"
                   flat
                   v-close-popup
@@ -262,7 +262,7 @@
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
                   :label="$t('Clear')"
-                  @click="tags.time = ''"
+                  @click="tags.time = null"
                   color="accent"
                   flat
                   v-close-popup

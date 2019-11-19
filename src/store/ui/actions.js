@@ -83,6 +83,53 @@ export const SELECT_GAME = ({ commit }, index) => {
   commit("SELECT_GAME", index);
 };
 
+export const CANCEL_MOVE = ({ commit }, game) => {
+  commit("CANCEL_MOVE", game);
+};
+
+export const UNDO = ({ commit }, game) => {
+  commit("UNDO", game);
+};
+
+export const REDO = ({ commit }, game) => {
+  commit("REDO", game);
+};
+
+export const TRIM_BRANCHES = ({ commit }, game) => {
+  commit("TRIM_BRANCHES", game);
+};
+
+export const TRIM_TO_BOARD = ({ commit }, game) => {
+  commit("TRIM_TO_BOARD", game);
+};
+
+export const TRIM_TO_PLY = ({ commit }, game) => {
+  commit("TRIM_TO_PLY", game);
+};
+
+export const SAVE = (context, game) => {
+  saveAs(
+    new Blob([game.ptn], { type: "text/plain;charset=utf-8" }),
+    game.name + ".ptn",
+    { autoBom: false }
+  );
+};
+
+export const OPEN = ({ dispatch }, callback) => {
+  let input = document.createElement("INPUT");
+  input.type = "file";
+  input.accept = ".ptn,.txt";
+  input.multiple = true;
+  input.hidden = true;
+  input.addEventListener("input", event => {
+    dispatch("OPEN_FILES", event.target.files);
+    if (callback && typeof callback === "function") {
+      callback();
+    }
+  });
+  input.click();
+};
+
 export const OPEN_FILES = ({ dispatch }, files) => {
   let count = 0;
   files = Array.from(files);
@@ -104,34 +151,6 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.readAsText(file);
     }
   });
-};
-
-export const CANCEL_MOVE = ({ commit }, game) => {
-  commit("CANCEL_MOVE", game);
-};
-
-export const UNDO = ({ commit }, game) => {
-  commit("UNDO", game);
-};
-
-export const REDO = ({ commit }, game) => {
-  commit("REDO", game);
-};
-
-export const TRIM_TO_BOARD = ({ commit }, game) => {
-  commit("TRIM_TO_BOARD", game);
-};
-
-export const TRIM_TO_PLY = ({ commit }, game) => {
-  commit("TRIM_TO_PLY", game);
-};
-
-export const SAVE = (context, game) => {
-  saveAs(
-    new Blob([game.ptn], { type: "text/plain;charset=utf-8" }),
-    game.name + ".ptn",
-    { autoBom: false }
-  );
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

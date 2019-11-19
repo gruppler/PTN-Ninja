@@ -35,7 +35,19 @@ let state = {
   embed: Platform.within.iframe,
   games: [],
   defaults,
-  ...defaults
+  ...defaults,
+  embedUIOptions: [
+    "axisLabels",
+    "flatCounts",
+    "highlightSquares",
+    "playSpeed",
+    "showAllBranches",
+    "showControls",
+    "showMove",
+    "showRoads",
+    "showScrubber",
+    "unplayedPieces"
+  ]
 };
 
 const load = (key, initial) =>
