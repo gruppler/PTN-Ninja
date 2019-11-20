@@ -1,6 +1,7 @@
 export default {
   site_name: "ptn.ninja",
   app_title: "PTN Ninja",
+  About: "About",
   "About App": "About PTN Ninja",
 
   "Animate Board": "Animate Board",
@@ -36,6 +37,8 @@ export default {
   Fullscreen: "Fullscreen",
   "Game Notifications": "Game Notifications",
   Height: "Height",
+  Help: "Help",
+  Hotkeys: "Hotkeys",
   "Highlight Current Squares": "Highlight Current Squares",
   "Last Ply": "Last Ply",
   "Load Game": "Load Game",
@@ -84,6 +87,7 @@ export default {
   UI: "UI", // User Interface
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",
+  Usage: "Usage",
   White: "White",
   Width: "Width",
 
@@ -109,5 +113,11 @@ export default {
     tps_missing_move: "Invalid TPS: Missing move number",
     tps_missing_player: "Invalid TPS: Missing player",
     unrecognized_tag: 'Unrecognized tag: "{tag}"'
+  },
+
+  docs: {
+    about: "",
+    usage: "",
+    hotkeys: ""
   }
 };

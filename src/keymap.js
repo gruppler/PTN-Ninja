@@ -46,6 +46,8 @@ export const HOTKEYS = {
     "Edit Game": ["e"],
     "Embed Game": ["shift" + "e"],
     "Focus Text Input": ["/"],
+    Help: ["ctrl" + "shift" + "/"],
+    Hotkeys: ["ctrl" + "/"],
     "Load Game": ["l"],
     "New Game": ["n"],
     Preferences: ["p"],

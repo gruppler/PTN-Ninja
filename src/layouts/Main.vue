@@ -196,6 +196,7 @@
       </q-toolbar>
     </q-footer>
 
+    <Help ref="help" v-model="dialogHelp" />
     <AddGame ref="addGame" v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
@@ -231,6 +232,7 @@ import PieceSelector from "../components/PieceSelector";
 import Menu from "../components/Menu";
 
 // Dialogs:
+import Help from "../components/Help";
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
@@ -259,6 +261,7 @@ export default {
     GameSelector,
     PieceSelector,
     Menu,
+    Help,
     AddGame,
     EditGame,
     UISettings,
@@ -270,6 +273,7 @@ export default {
       Platform,
       game: this.getGame(),
       hotkeys: HOTKEYS,
+      dialogHelp: false,
       dialogAddGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
@@ -413,6 +417,9 @@ export default {
     },
     menuAction(action) {
       switch (action) {
+        case "help":
+          this.dialogHelp = true;
+          break;
         case "add":
           this.dialogAddGame = true;
           break;
@@ -437,6 +444,14 @@ export default {
           this.$refs[
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
+          break;
+        case "Help":
+          this.$refs.help.section = "about";
+          this.dialogHelp = true;
+          break;
+        case "Hotkeys":
+          this.$refs.help.section = "hotkeys";
+          this.dialogHelp = true;
           break;
         case "Load Game":
           this.$refs.addGame.tab = "load";
