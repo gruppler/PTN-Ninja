@@ -20,6 +20,7 @@
                 @save="createGame"
               />
             </q-card-section>
+
             <div class="absolute-fit inset-shadow no-pointer-events" />
           </div>
         </q-tab-panel>
@@ -40,9 +41,11 @@
                   </q-item-section>
                 </q-item>
               </q-list>
+
               <div class="absolute-fit inset-shadow no-pointer-events" />
             </q-expansion-item>
           </q-list>
+
           <div class="absolute-fit inset-shadow no-pointer-events" />
         </q-tab-panel>
       </q-tab-panels>

@@ -129,12 +129,17 @@
 </template>
 
 <script>
+// Essentials:
 import Board from "../components/Board";
 import Move from "../components/Move";
-import Notes from "../components/Notes";
 import PTN from "../components/PTN";
+import Notes from "../components/Notes";
+
+// Notifications:
 import GameNotifications from "../components/GameNotifications";
 import NoteNotifications from "../components/NoteNotifications";
+
+// Controls:
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import PTNTools from "../components/PTNTools";
@@ -151,8 +156,8 @@ export default {
   components: {
     Board,
     Move,
-    Notes,
     PTN,
+    Notes,
     GameNotifications,
     NoteNotifications,
     PlayControls,

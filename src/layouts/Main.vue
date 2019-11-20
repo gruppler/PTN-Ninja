@@ -207,25 +207,34 @@
 </template>
 
 <script>
+// Essentials:
 import Board from "../components/Board";
 import Move from "../components/Move";
-import Notes from "../components/Notes";
-import Chat from "../components/Chat";
-import GameSelector from "../components/GameSelector";
-import PieceSelector from "../components/PieceSelector";
-import Menu from "../components/Menu";
 import PTN from "../components/PTN";
+import Notes from "../components/Notes";
+
+// Notifications:
 import GameNotifications from "../components/GameNotifications";
 import NoteNotifications from "../components/NoteNotifications";
+
+// Controls:
 import PlayControls from "../components/PlayControls";
 import Scrubber from "../components/Scrubber";
 import PTNTools from "../components/PTNTools";
 import EvalButtons from "../components/EvalButtons";
+import BoardToggles from "../components/BoardToggles";
+
+// Excluded from Embed layout:
+import Chat from "../components/Chat";
+import GameSelector from "../components/GameSelector";
+import PieceSelector from "../components/PieceSelector";
+import Menu from "../components/Menu";
+
+// Dialogs:
 import AddGame from "../components/AddGame";
 import EditGame from "../components/EditGame";
 import UISettings from "../components/UISettings";
 import EmbedConfig from "../components/EmbedConfig";
-import BoardToggles from "../components/BoardToggles";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -237,23 +246,23 @@ export default {
   components: {
     Board,
     Move,
-    Notes,
-    Chat,
-    GameSelector,
-    PieceSelector,
-    Menu,
     PTN,
+    Notes,
     GameNotifications,
     NoteNotifications,
     PlayControls,
     Scrubber,
     PTNTools,
     EvalButtons,
+    BoardToggles,
+    Chat,
+    GameSelector,
+    PieceSelector,
+    Menu,
     AddGame,
     EditGame,
     UISettings,
-    EmbedConfig,
-    BoardToggles
+    EmbedConfig
   },
   props: ["ptn", "state", "name"],
   data() {
