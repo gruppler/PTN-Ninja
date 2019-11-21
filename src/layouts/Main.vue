@@ -79,7 +79,7 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools :game="game" />
+        <PTN-Tools :game="game" @embed="dialogEmbed = true" />
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>

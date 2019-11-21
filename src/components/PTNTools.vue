@@ -12,7 +12,7 @@
 
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="flip" class="rotate-270" />
-        <q-menu auto-close square>
+        <q-menu auto-close dark square>
           <q-list dark class="bg-secondary text-white">
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
               <q-item-section side>
@@ -38,8 +38,8 @@
         </q-menu>
       </q-btn>
 
-      <q-btn icon="file_copy" :title="$t('Copy')">
-        <q-menu auto-close square>
+      <q-btn icon="share" :title="$t('Share')">
+        <q-menu auto-close dark square>
           <q-list dark class="bg-secondary text-white">
             <q-item clickable @click="copy('link')">
               <q-item-section side>
@@ -60,6 +60,20 @@
                 <q-icon name="file_copy" />
               </q-item-section>
               <q-item-section>{{ $t("Copy PTN") }}</q-item-section>
+            </q-item>
+
+            <q-item clickable @click="download">
+              <q-item-section side>
+                <q-icon name="save_alt" />
+              </q-item-section>
+              <q-item-section>{{ $t("Download") }}</q-item-section>
+            </q-item>
+
+            <q-item v-if="!$store.state.embed" clickable @click="embed">
+              <q-item-section side>
+                <q-icon name="code" />
+              </q-item-section>
+              <q-item-section>{{ $t("Embed") }}</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -106,6 +120,12 @@ export default {
         text,
         message: this.$t("Copied")
       });
+    },
+    download() {
+      this.$store.dispatch("SAVE", this.game);
+    },
+    embed() {
+      this.$emit("embed");
     }
   }
 };
