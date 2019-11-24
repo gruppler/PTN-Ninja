@@ -67,7 +67,8 @@ export default class Move {
     }
     ply.game = this.game;
     ply.move = this;
-    ply.branch = this.linenum.branch;
+    ply.linenum = this.linenum;
+    ply.branch = this.branch;
     ply.index = this.index * 2 + index - this.game.firstPlayer + 1;
     if (oldPly) {
       if (oldPly.branches.length) {

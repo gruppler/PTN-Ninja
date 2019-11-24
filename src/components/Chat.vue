@@ -27,8 +27,8 @@
                 :key="i"
               >
                 <Linenum
-                  v-if="message.ply.move.linenum"
-                  :linenum="message.ply.move.linenum"
+                  v-if="message.ply.linenum"
+                  :linenum="message.ply.linenum"
                   :game="game"
                 />
                 <Ply

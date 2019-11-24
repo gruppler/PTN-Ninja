@@ -7,6 +7,7 @@ const defaults = {
   board3D: false,
   boardRotation: [0.5790436572786892, 0.4425154402869453, 0.7287739511858455],
   editingTPS: "",
+  editingBranch: "",
   firstMoveNumber: 1,
   flatCounts: true,
   highlightSquares: true,

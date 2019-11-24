@@ -8,8 +8,17 @@ import { isArray } from "lodash";
 
 export default class GameMutations {
   _renameBranch(oldBranch, newBranch) {
-    if (newBranch in this.branches) {
+    if (oldBranch === newBranch) {
       return false;
+    }
+    if (!Linenum.validateBranch(newBranch, true)) {
+      throw new Error(`"${newBranch}" is not a valid branch name.`);
+    }
+    if (!(oldBranch in this.branches)) {
+      throw new Error(`"${oldBranch}" is not a branch.`);
+    }
+    if (newBranch in this.branches) {
+      throw new Error(`"${newBranch}" is already a branch.`);
     }
 
     // Update moves/linenums
@@ -284,7 +293,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(this.state.branch + number + ". ", this),
+          linenum: new Linenum(this.state.branch + "/" + number + ". ", this),
           ply1: ply
         });
         this.moves.push(move);
@@ -348,7 +357,10 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(ply.branch + this.state.number + ". ", this)
+          linenum: new Linenum(
+            ply.branch + "/" + this.state.number + ". ",
+            this
+          )
         });
 
         if (ply.player === 2) {
@@ -410,10 +422,10 @@ export default class GameMutations {
   }
 
   newBranchID(branch, number) {
-    const prefix = branch || "";
+    const prefix = branch ? branch + "/" : "";
     let i = 1;
     do {
-      branch = prefix + number + "-" + i++ + ".";
+      branch = prefix + number + "-" + i++;
     } while (branch in this.branches);
     return branch;
   }

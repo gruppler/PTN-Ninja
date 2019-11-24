@@ -25,8 +25,9 @@ export default {
   font-family 'Source Code Pro'
   white-space nowrap
   font-weight bold
-  height 24px
+  height 1.5em
   margin 4px
+  display inline-block
   vertical-align middle
   .color1, .color2
     padding 2px 6px

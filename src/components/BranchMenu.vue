@@ -24,20 +24,8 @@
           />
         </q-item-section>
         <q-item-label class="row no-wrap">
-          <Linenum
-            v-if="linenum !== undefined"
-            :linenum="ply.move.linenum"
-            :game="game"
-            no-branch
-            class="ellipsis"
-          />
-          <Ply
-            :plyID="ply.id"
-            :game="game"
-            no-branches
-            no-click
-            class="ellipsis"
-          />
+          <Linenum v-if="linenum" :linenum="ply.linenum" :game="game" no-edit />
+          <Ply :plyID="ply.id" :game="game" no-branches no-click />
         </q-item-label>
       </q-item>
     </q-list>
@@ -51,7 +39,12 @@ export default {
     Linenum: () => import("./Linenum"),
     Ply: () => import("./Ply")
   },
-  props: ["value", "game", "branches", "linenum"],
+  props: {
+    value: Boolean,
+    game: Object,
+    branches: Array,
+    linenum: Boolean
+  },
   methods: {
     select(ply) {
       this.$emit("select", ply);

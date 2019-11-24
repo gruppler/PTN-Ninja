@@ -21,6 +21,7 @@
                   :game="game"
                   :move="game.plies[plyID].move"
                   :player="game.plies[plyID].player"
+                  separate-branch
                   no-decoration
                 />
               </div>

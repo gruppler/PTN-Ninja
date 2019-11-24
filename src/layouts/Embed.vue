@@ -42,8 +42,11 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board class="col-grow" :game="game" />
-          <div class="text-center">
+          <Board ref="board" class="col-grow" :game="game" />
+          <div
+            @click.right.self.prevent="$refs.board.resetBoardRotation"
+            class="text-center"
+          >
             <Move
               v-if="game.state.move"
               v-show="game.state.ply && $store.state.showMove"
@@ -52,6 +55,7 @@
               :key="game.state.move.id"
               :move="game.state.move"
               :game="game"
+              separate-branch
               current-only
               standalone
             />

@@ -1,12 +1,13 @@
 <template>
-  <span class="ptn" v-if="ply">
+  <span class="ptn ply" v-if="ply">
     <q-chip
-      @click="select(ply)"
+      @click.left="select(ply)"
+      @click.right.prevent.native="select(ply, true)"
       :class="{ selected: isSelected }"
-      :color="ply.color == 1 ? 'blue-grey-2' : 'blue-grey-10'"
-      :text-color="ply.color == 1 ? 'blue-grey-10' : 'blue-grey-2'"
+      :color="ply.color === 1 ? 'blue-grey-2' : 'blue-grey-10'"
+      :text-color="ply.color === 1 ? 'blue-grey-10' : 'blue-grey-2'"
       :outline="!isDone"
-      :clickable="noClick === undefined"
+      :clickable="!noClick"
       :key="ply.id"
       square
       dense
@@ -29,8 +30,8 @@
         }}</span>
       </span>
       <q-btn
-        v-if="noBranches === undefined && ply.branches.length"
-        @click.stop="nop"
+        v-if="!noBranches && ply.branches.length"
+        @click.stop
         icon="arrow_drop_down"
         size="md"
         flat
@@ -56,7 +57,12 @@ import Result from "./Result";
 export default {
   name: "Ply",
   components: { BranchMenu, Result },
-  props: ["game", "plyID", "noBranches", "noClick"],
+  props: {
+    game: Object,
+    plyID: Number,
+    noBranches: Boolean,
+    noClick: Boolean
+  },
   data() {
     return {
       menu: false
@@ -79,28 +85,30 @@ export default {
     }
   },
   methods: {
-    select(ply, isDone) {
-      if (this.noClick !== undefined) {
+    select(ply, invert) {
+      if (this.noClick) {
         return;
       }
-      if (isDone === undefined) {
-        if (ply.id === this.game.state.ply.id) {
-          isDone = !this.game.state.plyIsDone;
-        } else {
-          isDone = this.game.state.plyIsDone;
-        }
+      let isDone = this.game.state.plyIsDone;
+      if (invert || ply.id === this.game.state.ply.id) {
+        isDone = !isDone;
       }
       this.game.goToPly(ply.id, isDone);
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
-    },
-    nop() {}
+    }
   }
 };
 </script>
 
 <style lang="stylus">
+.ptn.ply
+  display inline-flex
+  vertical-align middle
+  flex-direction row
+  align-items center
+
 .q-chip
   font-size inherit
   &:not(.q-chip--outline)

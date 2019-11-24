@@ -4,21 +4,30 @@
     :class="{
       'current-move': isCurrentMove,
       linebreak,
-      'current-only': currentOnly !== undefined,
-      standalone: standalone !== undefined
+      'current-only': currentOnly,
+      standalone: standalone
     }"
   >
+    <Linenum
+      v-if="showSeparateBranch"
+      :linenum="move.linenum"
+      :game="game"
+      only-branch
+    />
     <div class="move-wrapper">
-      <Linenum v-if="move.linenum" :linenum="move.linenum" :game="game" />
-      <div class="plies">
-        <template v-if="ply1 && (!player || player === 1)">
-          <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
-          <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
-        </template>
-        <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-          <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
-        </template>
-      </div>
+      <Linenum
+        v-if="move.linenum"
+        :linenum="move.linenum"
+        :game="game"
+        :no-branch="noBranch || separateBranch"
+      />
+      <template v-if="ply1 && (!player || player === 1)">
+        <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
+        <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
+      </template>
+      <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
+        <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
+      </template>
     </div>
     <q-separator v-if="separator" class="fullwidth-padded-md" dark />
   </div>
@@ -31,21 +40,23 @@ import Ply from "./Ply";
 export default {
   name: "Move",
   components: { Linenum, Ply },
-  props: [
-    "move",
-    "game",
-    "currentOnly",
-    "standalone",
-    "noDecoration",
-    "player"
-  ],
+  props: {
+    move: Object,
+    game: Object,
+    player: Number,
+    currentOnly: Boolean,
+    standalone: Boolean,
+    noDecoration: Boolean,
+    separateBranch: Boolean,
+    noBranch: Boolean
+  },
   computed: {
     ply1() {
       return this.move.ply1Original || this.move.ply1;
     },
     ply2() {
       return this.move.ply2
-        ? this.$store.state.showAllBranches && this.currentOnly === undefined
+        ? this.$store.state.showAllBranches && !this.currentOnly
           ? this.move.ply2
           : this.move.ply2.getBranch(this.game.state.targetBranch)
         : null;
@@ -54,27 +65,33 @@ export default {
       return (
         this.move.ply1.isNop &&
         (!this.move.ply1Original ||
-          (this.$store.state.showAllBranches && this.currentOnly === undefined))
+          (this.$store.state.showAllBranches && !this.currentOnly))
       );
+    },
+    index() {
+      return this.game.movesSorted.findIndex(move => move === this.move);
+    },
+    prevMove() {
+      const moves = this.game.movesSorted;
+      return this.index > 0 ? moves[this.index - 1] : null;
     },
     nextMove() {
       const moves = this.game.movesSorted;
-      const index = moves.findIndex(move => move === this.move);
-      return index < moves.length - 1 ? moves[index + 1] : null;
+      return this.index < moves.length - 1 ? moves[this.index + 1] : null;
     },
     isCurrentMove() {
       return (
-        this.noDecoration === undefined &&
-        this.currentOnly === undefined &&
+        !this.noDecoration &&
+        !this.currentOnly &&
         this.game.state.move &&
         this.game.state.move.id === this.move.id
       );
     },
     linebreak() {
       return (
-        this.noDecoration === undefined &&
-        this.currentOnly === undefined &&
         this.$store.state.showAllBranches &&
+        !this.noDecoration &&
+        !this.currentOnly &&
         this.nextMove &&
         this.nextMove.branch != this.move.branch
       );
@@ -84,6 +101,17 @@ export default {
         this.linebreak &&
         (!this.move.branch || !this.nextMove.firstPly.branches[0].branch)
       );
+    },
+    showSeparateBranch() {
+      return (
+        !this.noBranch &&
+        this.move.branch &&
+        this.$store.state.showAllBranches &&
+        this.separateBranch &&
+        (this.standalone ||
+          this.player ||
+          (this.prevMove && this.prevMove.branch != this.move.branch))
+      );
     }
   }
 };
@@ -91,9 +119,6 @@ export default {
 
 <style lang="stylus">
 .move
-  .plies
-    display inline-block
-
   &.current-move
     background-color $highlight
 
@@ -108,6 +133,8 @@ export default {
     padding 4px 8px
     color $gray-light
     white-space nowrap
+    display inline-block
+    vertical-align middle
 
   .q-separator
     position relative

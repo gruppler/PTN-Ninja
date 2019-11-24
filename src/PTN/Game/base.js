@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { each, flatten, map, trimStart } from "lodash";
+import { each, flatten, intersection, map, trimStart } from "lodash";
 import memoize from "./memoize";
 
 const pieceCounts = {
@@ -144,7 +144,7 @@ export default class GameBase {
           this[log][plyID] = [];
         }
         this[log][plyID].push(item);
-      } else if (/^[\d-:]+\./.test(notation)) {
+      } else if (/^([^\s{}]+[./])*\d+\./.test(notation)) {
         // Line number
         item = Linenum.parse(notation, this);
         if (!move.linenum) {
@@ -265,18 +265,33 @@ export default class GameBase {
     return this.state.min;
   }
 
-  static sortPlies(a, b) {
-    return a.branch === b.branch
-      ? a.index - b.index
-      : a.branch.substr(0, a.branch.length - 1) <
-        b.branch.substr(0, b.branch.length - 1)
-      ? -1
-      : 1;
+  static sortBranches(a, b) {
+    if (a.branch === b.branch) {
+      // Same branch
+      return a.index - b.index;
+    } else if (a.linenum.parentBranch === b.linenum.parentBranch) {
+      return (
+        a.parentNumber - b.parentNumber || a.index - b.index || a.id - b.id
+      );
+    } else {
+      const commonAncestors = intersection(
+        a.move.linenum.ancestors,
+        b.move.linenum.ancestors
+      );
+      if (commonAncestors.length) {
+        return (
+          a.move.linenum.ancestors.length - b.move.linenum.ancestors.length ||
+          a.id - b.id
+        );
+      } else {
+        return a.id - b.id;
+      }
+    }
   }
 
   getMovesGrouped() {
     const moves = Object.values(this.branches)
-      .sort(GameBase.sortPlies)
+      .sort(GameBase.sortBranches)
       .map(ply =>
         this.moves
           .filter(move => move.branch === ply.branch)

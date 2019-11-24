@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="absolute-fit scroll">
+    <div class="absolute-fit scroll non-selectable">
       <div class="q-py-md" v-if="game">
         <Move
           class="q-px-md"
@@ -9,11 +9,12 @@
           :move="move"
           :game="game"
           :key="move.linenum.text()"
+          separate-branch
         />
       </div>
     </div>
     <div class="absolute-fit inset-shadow no-pointer-events" />
-    <q-resize-observer @resize="scroll" />
+    <q-resize-observer @resize="resize" />
   </div>
 </template>
 
@@ -33,15 +34,22 @@ export default {
   },
   methods: {
     scroll() {
-      const move =
-        this.game.state.ply && this.game.state.move.id in this.$refs
-          ? this.$refs[this.game.state.move.id][0]
-          : null;
+      const editingBranch = this.$store.state.editingBranch
+        ? this.game.branches[this.$store.state.editingBranch] || null
+        : null;
+      const move = editingBranch
+        ? this.$refs[editingBranch.move.id][0]
+        : this.game.state.ply && this.game.state.move.id in this.$refs
+        ? this.$refs[this.game.state.move.id][0]
+        : null;
       if (move) {
         move.$el.scrollIntoView({
           block: "center"
         });
       }
+    },
+    resize() {
+      this.scroll();
     }
   },
   watch: {
