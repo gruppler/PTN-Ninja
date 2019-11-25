@@ -50,12 +50,10 @@ import GameInfo from "../controls/GameInfo";
 
 import DialogHeader from "../general/DialogHeader.vue";
 import MoreToggle from "../general/MoreToggle.vue";
-import Recess from "../general/Recess";
-import SmoothReflow from "../general/SmoothReflow";
 
 export default {
   name: "EditGame",
-  components: { GameInfo, DialogHeader, MoreToggle, Recess, SmoothReflow },
+  components: { GameInfo, DialogHeader, MoreToggle },
   props: ["value", "game"],
   data() {
     return {

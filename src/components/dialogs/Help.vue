@@ -60,7 +60,6 @@
 
 <script>
 import DialogHeader from "../general/DialogHeader";
-import Recess from "../general/Recess";
 
 import VueMarkdown from "vue-markdown";
 
@@ -68,7 +67,7 @@ import { HOTKEYS_FORMATTED } from "../../keymap";
 
 export default {
   name: "Help",
-  components: { DialogHeader, Recess, VueMarkdown },
+  components: { DialogHeader, VueMarkdown },
   props: ["value"],
   data() {
     return {

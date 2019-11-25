@@ -207,14 +207,12 @@
 
 <script>
 import MoreToggle from "../general/MoreToggle.vue";
-import Recess from "../general/Recess";
-import SmoothReflow from "../general/SmoothReflow";
 
 import { pick } from "lodash";
 
 export default {
   name: "EmbedConfig",
-  components: { MoreToggle, Recess, SmoothReflow },
+  components: { MoreToggle },
   props: ["value", "game"],
   data() {
     return {

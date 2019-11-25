@@ -4,7 +4,14 @@ module.exports = function(ctx) {
   return {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
-    boot: ["addressbar-color", "axios", "i18n", "moment", "shortkey"],
+    boot: [
+      "addressbar-color",
+      "axios",
+      "i18n",
+      "moment",
+      "shortkey",
+      "globalComponents"
+    ],
 
     css: ["app.styl"],
 

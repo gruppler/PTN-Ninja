@@ -77,14 +77,12 @@
 import GameInfo from "../controls/GameInfo";
 
 import MoreToggle from "../general/MoreToggle.vue";
-import Recess from "../general/Recess";
-import SmoothReflow from "../general/SmoothReflow";
 
 import Game from "../../PTN/Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, MoreToggle, Recess, SmoothReflow },
+  components: { GameInfo, MoreToggle },
   props: ["value"],
   data() {
     return {

@@ -36,13 +36,12 @@
 </template>
 
 <script>
-import SmoothReflow from "../general/SmoothReflow.vue";
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 
 export default {
   name: "Move",
-  components: { SmoothReflow, Linenum, Ply },
+  components: { Linenum, Ply },
   props: {
     move: Object,
     game: Object,

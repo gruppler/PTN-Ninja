@@ -18,12 +18,11 @@
 </template>
 
 <script>
-import Recess from "./general/Recess";
 import Move from "./PTN/Move";
 
 export default {
   name: "PTN",
-  components: { Recess, Move },
+  components: { Move },
   props: ["game"],
   computed: {
     moves() {

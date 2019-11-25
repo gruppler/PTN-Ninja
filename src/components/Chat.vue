@@ -78,13 +78,12 @@
 </template>
 
 <script>
-import Recess from "./general/Recess";
 import Linenum from "./PTN/Linenum";
 import Ply from "./PTN/Ply";
 
 export default {
   name: "Chat",
-  components: { Recess, Ply, Linenum },
+  components: { Ply, Linenum },
   props: ["game"],
   data() {
     return {

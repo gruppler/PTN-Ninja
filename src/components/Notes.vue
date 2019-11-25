@@ -95,14 +95,13 @@
 </template>
 
 <script>
-import Recess from "./general/Recess";
 import Move from "./PTN/Move";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Recess, Move },
+  components: { Move },
   props: ["game"],
   data() {
     return {

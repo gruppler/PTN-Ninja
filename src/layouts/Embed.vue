@@ -133,7 +133,6 @@
 
 <script>
 // Essentials:
-import SmoothReflow from "../components/general/SmoothReflow";
 import Board from "../components/board/Board";
 import Move from "../components/PTN/Move";
 import PTN from "../components/PTN";
@@ -158,7 +157,6 @@ import { defaults, pick } from "lodash";
 
 export default {
   components: {
-    SmoothReflow,
     Board,
     Move,
     PTN,

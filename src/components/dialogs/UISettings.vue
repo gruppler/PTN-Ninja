@@ -180,7 +180,6 @@
 
 <script>
 import DialogHeader from "../general/DialogHeader";
-import Recess from "../general/Recess";
 
 import { zipObject } from "lodash";
 import { HOTKEYS_FORMATTED } from "../../keymap";
@@ -205,7 +204,7 @@ const props = [
 
 export default {
   name: "UISettings",
-  components: { DialogHeader, Recess },
+  components: { DialogHeader },
   props: ["value"],
   data() {
     return {
