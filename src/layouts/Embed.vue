@@ -133,9 +133,9 @@
 
 <script>
 // Essentials:
-import SmoothReflow from "../components/SmoothReflow";
-import Board from "../components/Board";
-import Move from "../components/Move";
+import SmoothReflow from "../components/general/SmoothReflow";
+import Board from "../components/board/Board";
+import Move from "../components/PTN/Move";
 import PTN from "../components/PTN";
 import Notes from "../components/Notes";
 
@@ -144,11 +144,11 @@ import GameNotifications from "../components/GameNotifications";
 import NoteNotifications from "../components/NoteNotifications";
 
 // Controls:
-import PlayControls from "../components/PlayControls";
-import Scrubber from "../components/Scrubber";
-import PTNTools from "../components/PTNTools";
-import EvalButtons from "../components/EvalButtons";
-import BoardToggles from "../components/BoardToggles";
+import PlayControls from "../components/controls/PlayControls";
+import Scrubber from "../components/controls/Scrubber";
+import PTNTools from "../components/controls/PTNTools";
+import EvalButtons from "../components/controls/EvalButtons";
+import BoardToggles from "../components/controls/BoardToggles";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";

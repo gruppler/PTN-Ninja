@@ -78,9 +78,9 @@
 </template>
 
 <script>
-import Recess from "./Recess";
-import Linenum from "./Linenum";
-import Ply from "./Ply";
+import Recess from "./general/Recess";
+import Linenum from "./PTN/Linenum";
+import Ply from "./PTN/Ply";
 
 export default {
   name: "Chat",

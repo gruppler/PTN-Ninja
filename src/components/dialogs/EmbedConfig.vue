@@ -206,9 +206,9 @@
 </template>
 
 <script>
-import MoreToggle from "./MoreToggle.vue";
-import Recess from "./Recess";
-import SmoothReflow from "./SmoothReflow";
+import MoreToggle from "../general/MoreToggle.vue";
+import Recess from "../general/Recess";
+import SmoothReflow from "../general/SmoothReflow";
 
 import { pick } from "lodash";
 

@@ -179,11 +179,11 @@
 </template>
 
 <script>
-import DialogHeader from "./DialogHeader";
-import Recess from "./Recess";
+import DialogHeader from "../general/DialogHeader";
+import Recess from "../general/Recess";
 
 import { zipObject } from "lodash";
-import { HOTKEYS_FORMATTED } from "../keymap";
+import { HOTKEYS_FORMATTED } from "../../keymap";
 
 const props = [
   "animateBoard",

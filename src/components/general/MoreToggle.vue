@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import { HOTKEYS } from "../keymap";
+import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "MoreToggle",

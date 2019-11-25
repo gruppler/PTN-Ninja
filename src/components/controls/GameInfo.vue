@@ -443,12 +443,12 @@
 </template>
 
 <script>
-import { formats } from "../PTN/Tag";
-import TPS from "../PTN/TPS";
-import ResultTag from "../PTN/Result";
-import { generateName } from "../PTN/Game/base";
+import { formats } from "../../PTN/Tag";
+import TPS from "../../PTN/TPS";
+import ResultTag from "../../PTN/Result";
+import { generateName } from "../../PTN/Game/base";
 
-import Result from "./Result";
+import Result from "../PTN/Result";
 
 export default {
   name: "GameInfo",

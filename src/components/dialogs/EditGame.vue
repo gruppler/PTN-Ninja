@@ -46,15 +46,16 @@
 </template>
 
 <script>
-import DialogHeader from "./DialogHeader.vue";
-import MoreToggle from "./MoreToggle.vue";
-import Recess from "./Recess";
-import SmoothReflow from "./SmoothReflow";
-import GameInfo from "./GameInfo";
+import GameInfo from "../controls/GameInfo";
+
+import DialogHeader from "../general/DialogHeader.vue";
+import MoreToggle from "../general/MoreToggle.vue";
+import Recess from "../general/Recess";
+import SmoothReflow from "../general/SmoothReflow";
 
 export default {
   name: "EditGame",
-  components: { DialogHeader, MoreToggle, Recess, SmoothReflow, GameInfo },
+  components: { GameInfo, DialogHeader, MoreToggle, Recess, SmoothReflow },
   props: ["value", "game"],
   data() {
     return {

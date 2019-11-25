@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import BranchMenu from "./BranchMenu";
+import BranchMenu from "../controls/BranchMenu";
 import Result from "./Result";
 
 export default {

@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import SmoothReflow from "./SmoothReflow.vue";
+import SmoothReflow from "../general/SmoothReflow.vue";
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 

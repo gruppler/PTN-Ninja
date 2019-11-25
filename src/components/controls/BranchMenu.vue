@@ -36,8 +36,8 @@
 export default {
   name: "BranchMenu",
   components: {
-    Linenum: () => import("./Linenum"),
-    Ply: () => import("./Ply")
+    Linenum: () => import("../PTN/Linenum"),
+    Ply: () => import("../PTN/Ply")
   },
   props: {
     value: Boolean,

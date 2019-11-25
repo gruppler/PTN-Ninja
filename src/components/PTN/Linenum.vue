@@ -76,8 +76,8 @@
 <script>
 import { Platform } from "quasar";
 
-import BranchMenu from "./BranchMenu";
-import Linenum from "../PTN/Linenum";
+import BranchMenu from "../controls/BranchMenu";
+import Linenum from "../../PTN/Linenum";
 
 export default {
   name: "Linenum",
