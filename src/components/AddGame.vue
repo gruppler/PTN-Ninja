@@ -6,7 +6,14 @@
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
-      <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated dark>
+      <q-tab-panels
+        v-model="tab"
+        class="bg-secondary"
+        keep-alive
+        swipeable
+        animated
+        dark
+      >
         <q-tab-panel name="new" class="q-pa-none">
           <div class="relative-position">
             <q-card-section

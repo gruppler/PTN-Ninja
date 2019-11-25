@@ -190,7 +190,7 @@ export default {
     &.only
       margin-top 0.25em
     .q-btn
-      margin -0.25em
+      margin -0.5em -0.25em
   .number
     font-size 0.9em
     font-weight bold

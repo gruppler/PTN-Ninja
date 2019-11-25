@@ -182,6 +182,7 @@
           <q-icon name="event" />
         </template>
         <q-popup-proxy
+          v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
           anchor="center middle"
           self="center middle"
@@ -243,6 +244,7 @@
           <q-icon name="access_time" />
         </template>
         <q-popup-proxy
+          v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
           anchor="center middle"
           self="center middle"
@@ -473,6 +475,8 @@ export default {
       },
       proxyDate: null,
       proxyTime: null,
+      showDatePicker: false,
+      showTimePicker: false,
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,
@@ -496,6 +500,14 @@ export default {
     blur(event) {
       if (event && event.srcElement && event.srcElement.blur) {
         event.srcElement.blur();
+        switch (event.srcElement.name) {
+          case "date":
+            this.$nextTick(() => (this.showDatePicker = true));
+            break;
+          case "time":
+            this.$nextTick(() => (this.showTimePicker = true));
+            break;
+        }
       }
     },
     save() {

@@ -442,7 +442,7 @@ $radius = 5px
     opacity 1
 
 .x-axis, .y-axis
-  color $blue-grey-2
+  color $gray-light
   justify-content space-around
   line-height 1em
 .x-axis

@@ -21,6 +21,7 @@
       />
       <q-btn
         @click="prev"
+        @click.right.prevent="prev(true)"
         @shortkey="prev"
         v-shortkey="{
           whole: hotkeys.prev,
@@ -43,6 +44,7 @@
       />
       <q-btn
         @click="next"
+        @click.right.prevent="next(true)"
         @shortkey="next"
         v-shortkey="{
           whole: hotkeys.next,
@@ -201,7 +203,7 @@ export default {
           this.timestamp = new Date().getTime();
         }
         if (!this.isFirst) {
-          this.game.prev(event.shiftKey || event.srcKey === "half");
+          this.game.prev(event === true || event.srcKey === "half");
         }
       });
     },
@@ -215,7 +217,7 @@ export default {
         if (!this.isLast) {
           this.isPlaying =
             this.game.next(
-              this.isPlaying || event.shiftKey || event.srcKey === "half"
+              this.isPlaying || event === true || event.srcKey === "half"
             ) && this.isPlaying;
           if (this.isLast && this.isPlaying) {
             this.pause();

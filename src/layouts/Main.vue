@@ -56,7 +56,6 @@
               v-show="game.state.ply && $store.state.showMove"
               class="q-mb-md q-mx-md"
               :class="{ 'lt-md': $store.state.showPTN }"
-              :key="game.state.move.id"
               :move="game.state.move"
               :game="game"
               current-only
@@ -627,11 +626,7 @@ export default {
     padding 0
 
 .board-move-container
-  text-align center
-  flex-shrink 0
   @media (max-width: $breakpoint-sm-max)
-    text-align left
+    align-items flex-start
     margin-right 84px
-  .move
-    text-align left
 </style>

@@ -8,12 +8,14 @@
       standalone: standalone
     }"
   >
-    <Linenum
-      v-if="showSeparateBranch"
-      :linenum="move.linenum"
-      :game="game"
-      only-branch
-    />
+    <SmoothReflow>
+      <Linenum
+        v-if="showSeparateBranch"
+        :linenum="move.linenum"
+        :game="game"
+        only-branch
+      />
+    </SmoothReflow>
     <div class="move-wrapper">
       <Linenum
         v-if="move.linenum"
@@ -34,12 +36,13 @@
 </template>
 
 <script>
+import SmoothReflow from "./SmoothReflow.vue";
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 
 export default {
   name: "Move",
-  components: { Linenum, Ply },
+  components: { SmoothReflow, Linenum, Ply },
   props: {
     move: Object,
     game: Object,
@@ -84,7 +87,9 @@ export default {
         !this.noDecoration &&
         !this.currentOnly &&
         this.game.state.move &&
-        this.game.state.move.id === this.move.id
+        (this.$store.state.showAllBranches
+          ? this.game.state.move.id === this.move.id
+          : this.game.state.move.index === this.move.index)
       );
     },
     linebreak() {
