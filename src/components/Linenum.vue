@@ -162,7 +162,7 @@ export default {
       this.game.renameBranch(this.linenum.branch, branchParts.join("/"));
     },
     deleteBranch() {
-      this.game.deletePly(this.game.branches[this.linenum.branch].id, true);
+      this.game.deleteBranch(this.linenum.branch);
     },
     selectBranch(ply) {
       this.game.setTarget(ply);

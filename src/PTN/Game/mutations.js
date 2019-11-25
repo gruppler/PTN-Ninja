@@ -223,14 +223,19 @@ export default class GameMutations {
     return success;
   }
 
-  deletePlies(plyIDs, recordChange = true) {
+  deletePlies(
+    plyIDs,
+    recordChange = true,
+    removeDescendents = false,
+    removeOrphans = true
+  ) {
     let success = false;
 
     const mutate = () => {
       if (isArray(plyIDs)) {
-        success = this._deletePlies(plyIDs);
+        success = this._deletePlies(plyIDs, removeDescendents, removeOrphans);
       } else {
-        success = this._deletePly(plyIDs);
+        success = this._deletePly(plyIDs, removeDescendents, removeOrphans);
       }
       if (success) {
         this._updatePTN();
@@ -245,6 +250,13 @@ export default class GameMutations {
 
     this.init(this.ptn, { ...this, state: this.minState });
     return success;
+  }
+
+  deleteBranch(branch, recordChange = true) {
+    if (!(branch in this.branches)) {
+      throw new Error(`"${branch}" does not exist.`);
+    }
+    this.deletePly(this.branches[branch].id, recordChange, true);
   }
 
   insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
