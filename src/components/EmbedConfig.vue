@@ -21,198 +21,200 @@
           />
           <QInnerLoading :showing="!previewLoaded && !previewError" dark />
         </div>
-        <div class="relative-position">
-          <q-card-section
-            :style="{
-              maxHeight: `calc(100vh - 14rem - ${previewHeight})`,
-              minHeight: '7rem'
-            }"
-            class="scroll q-pa-none"
-          >
-            <q-list style="max-height: 50vh">
-              <q-item>
-                <q-item-section>
-                  <q-input
-                    v-model="name"
-                    name="name"
-                    :label="$t('Title')"
-                    color="accent"
-                    filled
-                    dark
-                  >
-                    <template v-slot:append>
-                      <q-btn
-                        @click="
-                          name = name === game.name ? generatedName : game.name
-                        "
-                        icon="refresh"
-                        dense
-                        flat
-                      />
-                    </template>
-                  </q-input>
-                </q-item-section>
-              </q-item>
+        <SmoothReflow>
+          <Recess>
+            <q-card-section
+              :style="{
+                maxHeight: `calc(100vh - 14rem - ${previewHeight})`,
+                minHeight: '7rem'
+              }"
+              class="scroll q-pa-none"
+            >
+              <q-list style="max-height: 50vh">
+                <q-item>
+                  <q-item-section>
+                    <q-input
+                      v-model="name"
+                      name="name"
+                      :label="$t('Title')"
+                      color="accent"
+                      filled
+                      dark
+                    >
+                      <template v-slot:append>
+                        <q-btn
+                          @click="
+                            name =
+                              name === game.name ? generatedName : game.name
+                          "
+                          icon="refresh"
+                          dense
+                          flat
+                        />
+                      </template>
+                    </q-input>
+                  </q-item-section>
+                </q-item>
 
-              <q-item>
-                <q-item-section>
-                  <q-input
-                    v-model="width"
-                    :label="$t('Width')"
-                    hide-bottom-space
-                    color="accent"
-                    filled
-                    dark
-                  />
-                </q-item-section>
-                <q-item-section>
-                  <q-input
-                    v-model="height"
-                    :label="$t('Height')"
-                    hide-bottom-space
-                    color="accent"
-                    filled
-                    dark
-                  />
-                </q-item-section>
-              </q-item>
+                <q-item>
+                  <q-item-section>
+                    <q-input
+                      v-model="width"
+                      :label="$t('Width')"
+                      hide-bottom-space
+                      color="accent"
+                      filled
+                      dark
+                    />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-input
+                      v-model="height"
+                      :label="$t('Height')"
+                      hide-bottom-space
+                      color="accent"
+                      filled
+                      dark
+                    />
+                  </q-item-section>
+                </q-item>
 
-              <q-item tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("From current ply") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="state" />
-                </q-item-section>
-              </q-item>
+                <q-item tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("From current ply") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="state" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.axisLabels" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.axisLabels" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.showRoads" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showRoads" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.flatCounts" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.flatCounts" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.unplayedPieces" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.unplayedPieces" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Current Move") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.showMove" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Current Move") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showMove" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("Highlight Current Squares")
-                  }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.highlightSquares" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("Highlight Current Squares")
+                    }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.highlightSquares" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.showAllBranches" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showAllBranches" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Play Controls") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.showControls" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Play Controls") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showControls" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll" tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="ui.showScrubber" />
-                </q-item-section>
-              </q-item>
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showScrubber" />
+                  </q-item-section>
+                </q-item>
 
-              <q-item v-show="showAll">
-                <q-item-section>
-                  {{ $t("Play Speed") }}
-                  <q-slider
-                    v-model="ui.playSpeed"
-                    :min="30"
-                    :max="160"
-                    :label-value="ui.playSpeed + ' ' + $t('BPM')"
-                    :step="10"
-                    color="accent"
-                    snap
-                    dark
-                    label
-                  />
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-card-section>
-          <div class="absolute-fit inset-shadow no-pointer-events" />
-        </div>
+                <q-item v-show="showAll">
+                  <q-item-section>
+                    {{ $t("Play Speed") }}
+                    <q-slider
+                      v-model="ui.playSpeed"
+                      :min="30"
+                      :max="160"
+                      :label-value="ui.playSpeed + ' ' + $t('BPM')"
+                      :step="10"
+                      color="accent"
+                      snap
+                      dark
+                      label
+                    />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-card-section>
+          </Recess>
+        </SmoothReflow>
       </div>
 
       <q-separator dark />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
-        <q-btn
-          :icon="showAll ? 'unfold_less' : 'unfold_more'"
-          :label="$t(showAll ? 'Show Less' : 'Show More')"
-          @click="showAll = !showAll"
-          flat
-        />
+        <MoreToggle v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Copy')" @click="copy" color="accent" flat />
-        <q-btn :label="$t('Done')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script>
+import MoreToggle from "./MoreToggle.vue";
+import Recess from "./Recess";
+import SmoothReflow from "./SmoothReflow";
+
 import { pick } from "lodash";
 
 export default {
   name: "EmbedConfig",
+  components: { MoreToggle, Recess, SmoothReflow },
   props: ["value", "game"],
   data() {
     return {

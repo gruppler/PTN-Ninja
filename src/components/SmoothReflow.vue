@@ -5,8 +5,9 @@
 </template>
 
 <script>
-import { defaults } from "lodash";
 import smoothReflow from "vue-smooth-reflow";
+import { defaults } from "lodash";
+
 export default {
   name: "SmoothReflow",
   mixins: [smoothReflow],

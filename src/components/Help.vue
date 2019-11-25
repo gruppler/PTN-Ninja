@@ -1,17 +1,7 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" no-route-dismiss>
     <q-card style="width: 600px" class="bg-secondary" dark>
-      <q-card-section>
-        <q-btn
-          class="float-right"
-          icon="close"
-          color="white"
-          flat
-          round
-          v-close-popup
-        />
-        <div class="text-h6 text-white">{{ $t("Help") }}</div>
-      </q-card-section>
+      <DialogHeader>{{ $t("Help") }}</DialogHeader>
 
       <q-separator dark />
 
@@ -30,7 +20,7 @@
 
         <q-separator vertical />
 
-        <div class="relative-position col">
+        <Recess class="col">
           <div
             ref="content"
             class="scroll"
@@ -56,27 +46,29 @@
               </q-tab-panel>
             </q-tab-panels>
           </div>
-          <div class="absolute-fit inset-shadow no-pointer-events" />
-        </div>
+        </Recess>
       </div>
 
       <q-separator dark />
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Done')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script>
+import DialogHeader from "./DialogHeader";
+import Recess from "./Recess";
+
 import VueMarkdown from "vue-markdown";
 
 import { HOTKEYS_FORMATTED } from "../keymap";
 
 export default {
   name: "Help",
-  components: { VueMarkdown },
+  components: { DialogHeader, Recess, VueMarkdown },
   props: ["value"],
   data() {
     return {

@@ -6,67 +6,65 @@
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
-      <q-tab-panels
-        v-model="tab"
-        class="bg-secondary"
-        keep-alive
-        swipeable
-        animated
-        dark
-      >
-        <q-tab-panel name="new" class="q-pa-none">
-          <div class="relative-position">
-            <q-card-section
-              class="scroll"
-              style="max-height: calc(100vh - 22rem); min-height: 8rem"
-            >
-              <GameInfo
-                ref="gameInfo"
-                :values="tags"
-                :show-all="showAll"
-                @save="createGame"
-              />
-            </q-card-section>
+      <SmoothReflow>
+        <q-tab-panels
+          v-model="tab"
+          class="bg-secondary"
+          keep-alive
+          swipeable
+          animated
+          dark
+        >
+          <q-tab-panel name="new" class="q-pa-none">
+            <Recess>
+              <q-card-section
+                class="scroll"
+                style="max-height: calc(100vh - 22rem); min-height: 8rem"
+              >
+                <GameInfo
+                  ref="gameInfo"
+                  :values="tags"
+                  :show-all="showAll"
+                  @save="createGame"
+                />
+              </q-card-section>
+            </Recess>
+          </q-tab-panel>
 
-            <div class="absolute-fit inset-shadow no-pointer-events" />
-          </div>
-        </q-tab-panel>
-
-        <q-tab-panel name="load" class="q-pa-none">
-          <q-list separator dark>
-            <q-item @click="$store.dispatch('OPEN', close)" clickable>
-              <q-item-section avatar>
-                <q-icon name="folder_open" />
-              </q-item-section>
-              <q-item-section>{{ $t("Local") }}</q-item-section>
-            </q-item>
-            <q-expansion-item icon="cloud" :label="$t('Remote')" group="type">
-              <q-list>
-                <q-item>
-                  <q-item-section align="center">
-                    {{ $t("Coming soon") }}
+          <q-tab-panel name="load" class="q-pa-none">
+            <Recess>
+              <q-list separator dark>
+                <q-item @click="$store.dispatch('OPEN', close)" clickable>
+                  <q-item-section avatar>
+                    <q-icon name="folder_open" />
                   </q-item-section>
+                  <q-item-section>{{ $t("Local") }}</q-item-section>
                 </q-item>
+                <q-expansion-item
+                  icon="cloud"
+                  :label="$t('Remote')"
+                  group="type"
+                >
+                  <Recess>
+                    <q-list>
+                      <q-item>
+                        <q-item-section align="center">
+                          {{ $t("Coming soon") }}
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </Recess>
+                </q-expansion-item>
               </q-list>
-
-              <div class="absolute-fit inset-shadow no-pointer-events" />
-            </q-expansion-item>
-          </q-list>
-
-          <div class="absolute-fit inset-shadow no-pointer-events" />
-        </q-tab-panel>
-      </q-tab-panels>
+            </Recess>
+          </q-tab-panel>
+        </q-tab-panels>
+      </SmoothReflow>
 
       <q-separator dark />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
-        <q-btn
-          v-show="tab === 'new'"
-          :icon="showAll ? 'unfold_less' : 'unfold_more'"
-          :label="$t(showAll ? 'Show Less' : 'Show More')"
-          @click="showAll = !showAll"
-          flat
-        />
+        <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn :label="$t('OK')" @click="ok" color="accent" flat />
@@ -76,13 +74,16 @@
 </template>
 
 <script>
+import MoreToggle from "./MoreToggle.vue";
+import Recess from "./Recess";
+import SmoothReflow from "./SmoothReflow";
 import GameInfo from "./GameInfo";
 
 import Game from "../PTN/Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo },
+  components: { MoreToggle, Recess, SmoothReflow, GameInfo },
   props: ["value"],
   data() {
     return {

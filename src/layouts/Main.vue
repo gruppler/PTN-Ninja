@@ -47,7 +47,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <div
+          <SmoothReflow
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -62,7 +62,7 @@
               standalone
               separate-branch
             />
-          </div>
+          </SmoothReflow>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
@@ -212,6 +212,7 @@
 
 <script>
 // Essentials:
+import SmoothReflow from "../components/SmoothReflow";
 import Board from "../components/Board";
 import Move from "../components/Move";
 import PTN from "../components/PTN";
@@ -249,6 +250,7 @@ import { isEqual } from "lodash";
 
 export default {
   components: {
+    SmoothReflow,
     Board,
     Move,
     PTN,

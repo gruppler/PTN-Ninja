@@ -6,27 +6,32 @@
     no-route-dismiss
   >
     <q-card style="width: 500px" class="bg-secondary" dark>
-      <q-card-section
-        style="max-height: calc(100vh - 18rem); min-height: 12rem"
-        class="scroll"
-      >
-        <GameInfo
-          ref="gameInfo"
-          :game="game"
-          :show-all="showAll"
-          @save="save"
-        />
-      </q-card-section>
+      <DialogHeader class="text-h6 text-white">{{
+        $t("Edit Game")
+      }}</DialogHeader>
+
+      <q-separator dark />
+
+      <SmoothReflow>
+        <Recess>
+          <q-card-section
+            style="max-height: calc(100vh - 18rem); min-height: 12rem"
+            class="scroll"
+          >
+            <GameInfo
+              ref="gameInfo"
+              :game="game"
+              :show-all="showAll"
+              @save="save"
+            />
+          </q-card-section>
+        </Recess>
+      </SmoothReflow>
 
       <q-separator dark />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
-        <q-btn
-          :icon="showAll ? 'unfold_less' : 'unfold_more'"
-          :label="$t(showAll ? 'Show Less' : 'Show More')"
-          @click="showAll = !showAll"
-          flat
-        />
+        <MoreToggle v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
@@ -41,11 +46,15 @@
 </template>
 
 <script>
+import DialogHeader from "./DialogHeader.vue";
+import MoreToggle from "./MoreToggle.vue";
+import Recess from "./Recess";
+import SmoothReflow from "./SmoothReflow";
 import GameInfo from "./GameInfo";
 
 export default {
   name: "EditGame",
-  components: { GameInfo },
+  components: { DialogHeader, MoreToggle, Recess, SmoothReflow, GameInfo },
   props: ["value", "game"],
   data() {
     return {

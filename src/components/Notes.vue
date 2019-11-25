@@ -1,6 +1,6 @@
 <template>
   <div class="notes column no-wrap">
-    <div class="col-grow relative-position">
+    <Recess class="col-grow">
       <div class="absolute-fit scroll">
         <div class="q-px-md">
           <template v-for="(plyID, i) in plyIDs">
@@ -60,9 +60,8 @@
           </template>
         </div>
       </div>
-      <div class="absolute-fit inset-shadow no-pointer-events" />
       <q-resize-observer @resize="scroll" />
-    </div>
+    </Recess>
     <div>
       <q-input
         ref="input"
@@ -96,13 +95,14 @@
 </template>
 
 <script>
+import Recess from "./Recess";
 import Move from "./Move";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Move },
+  components: { Recess, Move },
   props: ["game"],
   data() {
     return {

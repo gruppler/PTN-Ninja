@@ -1,6 +1,6 @@
 <template>
   <div class="chat column no-wrap">
-    <div class="col-grow relative-position">
+    <Recess class="col-grow">
       <div class="absolute-fit scroll">
         <div class="q-px-md">
           <template v-for="(message, i) in messages">
@@ -42,9 +42,8 @@
           </template>
         </div>
       </div>
-      <div class="absolute-fit inset-shadow no-pointer-events" />
       <q-resize-observer @resize="scroll" />
-    </div>
+    </Recess>
     <div>
       <q-separator />
       <q-input
@@ -79,12 +78,13 @@
 </template>
 
 <script>
+import Recess from "./Recess";
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 
 export default {
   name: "Chat",
-  components: { Ply, Linenum },
+  components: { Recess, Ply, Linenum },
   props: ["game"],
   data() {
     return {

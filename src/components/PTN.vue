@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <Recess>
     <div class="absolute-fit scroll non-selectable">
       <div class="q-py-md" v-if="game">
         <Move
@@ -13,17 +13,17 @@
         />
       </div>
     </div>
-    <div class="absolute-fit inset-shadow no-pointer-events" />
     <q-resize-observer @resize="resize" />
-  </div>
+  </Recess>
 </template>
 
 <script>
+import Recess from "./Recess";
 import Move from "./Move";
 
 export default {
   name: "PTN",
-  components: { Move },
+  components: { Recess, Move },
   props: ["game"],
   computed: {
     moves() {

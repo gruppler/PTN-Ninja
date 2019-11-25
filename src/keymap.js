@@ -51,7 +51,8 @@ export const HOTKEYS = {
     "Load Game": ["l"],
     "New Game": ["n"],
     Preferences: ["p"],
-    Share: ["ctrl", "shift", "s"]
+    Share: ["ctrl", "shift", "s"],
+    "Show More": ["shift", "space"]
   }
 };
 
