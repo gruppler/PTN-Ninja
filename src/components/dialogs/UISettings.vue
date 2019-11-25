@@ -13,7 +13,7 @@
           default-opened
         >
           <Recess>
-            <q-list style="max-height: 50vh">
+            <q-list style="max-height: calc(100vh - 24rem)">
               <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Animate Board") }}</q-item-label>
@@ -119,7 +119,7 @@
 
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
           <Recess>
-            <q-list style="max-height: 50vh">
+            <q-list style="max-height: calc(100vh - 24rem)">
               <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
