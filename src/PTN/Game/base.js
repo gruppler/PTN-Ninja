@@ -68,6 +68,8 @@ export default class GameBase {
     let branch = null;
     let moveNumber = 1;
     let move = new Move({ game: this, id: 0, index: 0 });
+    let isDoubleBreak = false;
+    const startsWithDoubleBreak = /^\s*\n\n\s*/;
 
     this.isLocal = true;
     this.hasTPS = false;
@@ -147,6 +149,10 @@ export default class GameBase {
       } else if (/^([^\s{}]+[./])*\d+\./.test(notation)) {
         // Line number
         item = Linenum.parse(notation, this);
+        if (!isDoubleBreak && item.number !== moveNumber) {
+          // If line number is wrong, fix it
+          item.number = moveNumber;
+        }
         if (!move.linenum) {
           move.linenum = item;
         } else {
@@ -158,7 +164,7 @@ export default class GameBase {
           this.moves.push(move);
         }
         branch = item.branch;
-        moveNumber = item.number;
+        moveNumber = item.number + 1;
         ply = null;
       } else if (/^([01RF]|1\/2)-([01RF]|1\/2)/.test(notation)) {
         // Result
@@ -187,16 +193,15 @@ export default class GameBase {
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
-          ply.color = moveNumber === 1 && !this.hasTPS ? 2 : 1;
+          ply.color = move.number === 1 && !this.hasTPS ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
-          ply.color = moveNumber === 1 && !this.hasTPS ? 1 : 2;
+          ply.color = move.number === 1 && !this.hasTPS ? 1 : 2;
           move.ply2 = ply;
         } else {
           // New move
-          moveNumber += 1;
           move = new Move({
             game: this,
             id: this.moves.length,
@@ -204,6 +209,7 @@ export default class GameBase {
             ply1: ply
           });
           this.moves.push(move);
+          moveNumber += 1;
         }
         this.plies.push(ply);
         if (!(ply.branch in this.branches)) {
@@ -219,7 +225,9 @@ export default class GameBase {
         throw new Error("Invalid PTN format: " + notation);
       }
 
-      notation = trimStart(notation.substr(item.ptn.length));
+      notation = notation.substr(item.ptn.length);
+      isDoubleBreak = startsWithDoubleBreak.test(notation);
+      notation = trimStart(notation);
       delete item.ptn;
     }
 

@@ -24,6 +24,15 @@ export default class Ply extends Ptn {
     }
   ) {
     super(notation);
+
+    // Silenty fix invalid stack distributions by trimming from the end
+    while (!this.isValidStackDistribution() && this.distribution.length) {
+      this.distribution = this.distribution.substr(
+        0,
+        this.distribution.length - 1
+      );
+    }
+
     this.specialPiece = this.specialPiece === "F" ? "" : this.specialPiece;
     if (this.isMovement()) {
       this.minDistribution =
