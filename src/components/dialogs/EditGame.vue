@@ -1,9 +1,7 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
     <q-card style="width: 500px" class="bg-secondary">
-      <DialogHeader class="text-h6 text-white">{{
-        $t("Edit Game")
-      }}</DialogHeader>
+      <DialogHeader>{{ $t("Edit Game") }}</DialogHeader>
 
       <q-separator />
 

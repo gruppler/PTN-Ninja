@@ -42,8 +42,6 @@ const routes = [
 
       if (/^[A-Za-z0-9$+-]+$/.test(ptn)) {
         ptn = decompressFromEncodedURIComponent(ptn);
-      } else {
-        ptn = decodeURIComponent(ptn);
       }
 
       return { ptn, name, state };
