@@ -7,7 +7,6 @@
       @keyup.enter="save"
       color="accent"
       filled
-      dark
     >
       <template v-slot:append>
         <q-btn
@@ -36,7 +35,6 @@
         color="accent"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="grid_on" />
@@ -60,7 +58,6 @@
         spellcheck="false"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="apps" />
@@ -91,7 +88,6 @@
             color="accent"
             hide-bottom-space
             filled
-            dark
           >
             <template v-slot:prepend>
               <q-icon name="person" />
@@ -112,7 +108,6 @@
             color="accent"
             hide-bottom-space
             filled
-            dark
           >
             <template v-slot:prepend>
               <q-icon name="star" />
@@ -131,7 +126,6 @@
             color="accent"
             hide-bottom-space
             filled
-            dark
           >
             <template v-slot:prepend>
               <q-icon name="person_outline" />
@@ -152,7 +146,6 @@
             color="accent"
             hide-bottom-space
             filled
-            dark
           >
             <template v-slot:prepend>
               <q-icon name="star_border" />
@@ -176,7 +169,6 @@
         color="accent"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="event" />
@@ -186,7 +178,6 @@
           @before-show="proxyDate = tags.date"
           anchor="center middle"
           self="center middle"
-          dark
         >
           <div>
             <q-date
@@ -196,7 +187,6 @@
               color="accent"
               text-color="grey-10"
               today-btn
-              dark
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
@@ -238,7 +228,6 @@
         color="accent"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="access_time" />
@@ -248,7 +237,6 @@
           @before-show="proxyTime = tags.time"
           anchor="center middle"
           self="center middle"
-          dark
         >
           <div>
             <q-time
@@ -259,7 +247,6 @@
               format24h
               with-seconds
               now-btn
-              dark
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
@@ -305,7 +292,6 @@
         spellcheck="false"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="timer" />
@@ -326,7 +312,6 @@
         hide-bottom-space
         color="accent"
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="repeat" />
@@ -350,7 +335,6 @@
         hide-bottom-space
         emit-value
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="gavel" />
@@ -398,7 +382,6 @@
         color="accent"
         hide-bottom-space
         filled
-        dark
       >
         <template v-slot:prepend>
           <q-icon name="stars" />
@@ -416,7 +399,6 @@
       color="accent"
       hide-bottom-space
       filled
-      dark
     >
       <template v-slot:prepend>
         <q-icon name="place" />
@@ -433,7 +415,6 @@
       color="accent"
       hide-bottom-space
       filled
-      dark
     >
       <template v-slot:prepend>
         <q-icon name="emoji_events" />

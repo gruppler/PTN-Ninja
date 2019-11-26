@@ -1,9 +1,9 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-route-dismiss>
-    <q-card style="width: 600px" class="bg-secondary" dark>
+  <q-dialog :value="value" @input="$emit('input', $event)">
+    <q-card style="width: 600px" class="bg-secondary">
       <DialogHeader>{{ $t("Help") }}</DialogHeader>
 
-      <q-separator dark />
+      <q-separator />
 
       <div class="row no-wrap">
         <q-tabs
@@ -49,7 +49,7 @@
         </Recess>
       </div>
 
-      <q-separator dark />
+      <q-separator />
 
       <q-card-actions align="right">
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />

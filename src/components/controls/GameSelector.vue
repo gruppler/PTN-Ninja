@@ -10,11 +10,9 @@
       behavior="menu"
       popup-content-class="bg-secondary"
       color="accent"
-      options-dark
       emit-value
       filled
       dense
-      dark
     >
       <template v-slot:option="scope">
         <q-item

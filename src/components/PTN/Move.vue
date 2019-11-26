@@ -31,7 +31,7 @@
         <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
       </template>
     </div>
-    <q-separator v-if="separator" class="fullwidth-padded-md" dark />
+    <q-separator v-if="separator" class="fullwidth-padded-md" />
   </div>
 </template>
 

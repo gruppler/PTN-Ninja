@@ -1,6 +1,6 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-route-dismiss>
-    <q-card style="width: 500px" class="bg-secondary" dark>
+  <q-dialog :value="value" @input="$emit('input', $event)">
+    <q-card style="width: 500px" class="bg-secondary">
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
@@ -13,7 +13,6 @@
           keep-alive
           swipeable
           animated
-          dark
         >
           <q-tab-panel name="new" class="q-pa-none">
             <Recess>
@@ -33,7 +32,7 @@
 
           <q-tab-panel name="load" class="q-pa-none">
             <Recess>
-              <q-list separator dark>
+              <q-list separator>
                 <q-item @click="$store.dispatch('OPEN', close)" clickable>
                   <q-item-section avatar>
                     <q-icon name="folder_open" />
@@ -61,7 +60,7 @@
         </q-tab-panels>
       </SmoothReflow>
 
-      <q-separator dark />
+      <q-separator />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />

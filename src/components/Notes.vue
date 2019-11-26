@@ -8,7 +8,6 @@
               v-if="i && !areSequential(plyIDs[i - 1], plyID)"
               class="fullwidth-padded-md"
               :key="'divider-' + plyID"
-              dark
             />
             <div
               class="fullwidth-padded-md q-py-xs"
@@ -40,7 +39,7 @@
                   auto-close
                   :target="`#message-${plyID}-${index} > div > div`"
                 >
-                  <q-list dark class="bg-secondary text-white">
+                  <q-list class="bg-secondary text-white">
                     <q-item @click="edit(plyID, index)" clickable>
                       <q-item-section side>
                         <q-icon name="edit" />
@@ -78,6 +77,7 @@
         outlined
         color="accent"
         bg-color="accent"
+        :dark="false"
       >
         <template v-slot:append>
           <q-btn

@@ -12,8 +12,8 @@
 
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="flip" class="rotate-270" />
-        <q-menu auto-close dark square>
-          <q-list dark class="bg-secondary text-white">
+        <q-menu auto-close square>
+          <q-list class="bg-secondary text-white">
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
               <q-item-section side>
                 <q-icon name="call_split" class="rotate-180" />
@@ -39,8 +39,8 @@
       </q-btn>
 
       <q-btn icon="share" :title="$t('Share')">
-        <q-menu auto-close dark square>
-          <q-list dark class="bg-secondary text-white">
+        <q-menu auto-close square>
+          <q-list class="bg-secondary text-white">
             <q-item clickable @click="copy('link')">
               <q-item-section side>
                 <q-icon name="link" />

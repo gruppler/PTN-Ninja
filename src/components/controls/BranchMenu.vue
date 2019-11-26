@@ -7,7 +7,6 @@
     content-class="bg-primary"
     auto-close
     cover
-    dark
   >
     <q-list class="branch-menu" dense>
       <q-item

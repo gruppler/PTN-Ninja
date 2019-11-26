@@ -1,16 +1,11 @@
 <template>
-  <q-dialog
-    :value="value"
-    @input="$emit('input', $event)"
-    no-backdrop-dismiss
-    no-route-dismiss
-  >
-    <q-card style="width: 500px" class="bg-secondary" dark>
+  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
+    <q-card style="width: 500px" class="bg-secondary">
       <DialogHeader class="text-h6 text-white">{{
         $t("Edit Game")
       }}</DialogHeader>
 
-      <q-separator dark />
+      <q-separator />
 
       <SmoothReflow>
         <Recess>
@@ -28,7 +23,7 @@
         </Recess>
       </SmoothReflow>
 
-      <q-separator dark />
+      <q-separator />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-model="showAll" />

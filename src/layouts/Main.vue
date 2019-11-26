@@ -174,7 +174,6 @@
             color="accent"
             filled
             dense
-            dark
           />
           <q-btn
             :label="$t('Cancel')"
@@ -589,6 +588,7 @@ export default {
     }
   },
   created() {
+    this.$q.dark.set(true);
     if (!this.games.length) {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),

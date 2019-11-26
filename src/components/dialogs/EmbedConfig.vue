@@ -1,11 +1,6 @@
 <template>
-  <q-dialog
-    :value="value"
-    @input="$emit('input', $event)"
-    no-backdrop-dismiss
-    no-route-dismiss
-  >
-    <q-card style="width: 500px;" class="bg-secondary" dark>
+  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
+    <q-card style="width: 500px;" class="bg-secondary">
       <div class="column">
         <div class="relative-position">
           <iframe
@@ -19,7 +14,7 @@
             frameborder="0"
             allowfullscreen
           />
-          <QInnerLoading :showing="!previewLoaded && !previewError" dark />
+          <QInnerLoading :showing="!previewLoaded && !previewError" />
         </div>
         <SmoothReflow>
           <Recess>
@@ -39,7 +34,6 @@
                       :label="$t('Title')"
                       color="accent"
                       filled
-                      dark
                     >
                       <template v-slot:append>
                         <q-btn
@@ -64,7 +58,6 @@
                       hide-bottom-space
                       color="accent"
                       filled
-                      dark
                     />
                   </q-item-section>
                   <q-item-section>
@@ -74,7 +67,6 @@
                       hide-bottom-space
                       color="accent"
                       filled
-                      dark
                     />
                   </q-item-section>
                 </q-item>
@@ -182,7 +174,6 @@
                       :step="10"
                       color="accent"
                       snap
-                      dark
                       label
                     />
                   </q-item-section>
@@ -193,7 +184,7 @@
         </SmoothReflow>
       </div>
 
-      <q-separator dark />
+      <q-separator />
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-model="showAll" />

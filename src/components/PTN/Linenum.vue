@@ -32,7 +32,6 @@
             :autofocus="!Platform.is.mobile"
             autogrow
             dense
-            dark
           >
             <template v-slot:before>
               <q-btn

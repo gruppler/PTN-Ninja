@@ -1,11 +1,11 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-route-dismiss>
-    <q-card style="width: 300px" class="bg-secondary" dark>
+  <q-dialog :value="value" @input="$emit('input', $event)">
+    <q-card style="width: 300px" class="bg-secondary">
       <DialogHeader>{{ $t("Preferences") }}</DialogHeader>
 
-      <q-separator dark />
+      <q-separator />
 
-      <q-list separator dark>
+      <q-list separator>
         <q-expansion-item
           icon="apps"
           :label="$t('Board')"
@@ -108,7 +108,6 @@
                     :step="10"
                     color="accent"
                     snap
-                    dark
                     label
                   />
                 </q-item-section>
@@ -169,7 +168,7 @@
         </q-expansion-item>
       </q-list>
 
-      <q-separator dark />
+      <q-separator />
 
       <q-card-actions align="right">
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
