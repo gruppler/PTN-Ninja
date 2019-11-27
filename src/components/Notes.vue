@@ -187,6 +187,8 @@ export default {
       if (this.editing) {
         this.editing = null;
         this.message = "";
+      } else {
+        this.$refs.input.blur();
       }
     },
     remove(plyID, index) {

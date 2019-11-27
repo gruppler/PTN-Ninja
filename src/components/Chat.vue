@@ -49,6 +49,7 @@
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
+        @keydown.esc="$refs.input.blur()"
         debounce="50"
         class="footer-toolbar bg-secondary col-grow q-pa-sm items-end"
         v-model="message"
