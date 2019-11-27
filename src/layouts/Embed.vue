@@ -74,7 +74,7 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools :game="game" />
+        <PTNTools ref="tools" :game="game" />
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -216,6 +216,9 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "Edit PTN":
+          this.$refs.tools.edit = true;
+          break;
         case "Focus Text Input":
           this.right = true;
           this.$refs.notes.$refs.input.focus();

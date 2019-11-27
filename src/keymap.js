@@ -44,7 +44,8 @@ export const HOTKEYS = {
   },
   MISC: {
     "Edit Game": ["e"],
-    "Embed Game": ["shift" + "e"],
+    "Edit PTN": ["shift" + "e"],
+    "Embed Game": ["ctrl" + "e"],
     "Focus Text Input": ["/"],
     Help: ["ctrl" + "shift" + "/"],
     Hotkeys: ["ctrl" + "/"],

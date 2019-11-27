@@ -82,7 +82,7 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools :game="game" @embed="dialogEmbed = true" />
+        <PTN-Tools ref="tools" :game="game" @embed="dialogEmbed = true" />
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -437,6 +437,9 @@ export default {
       switch (srcKey) {
         case "Edit Game":
           this.dialogEditGame = true;
+          break;
+        case "Edit PTN":
+          this.$refs.tools.edit = true;
           break;
         case "Embed Game":
           this.dialogEmbed = true;
