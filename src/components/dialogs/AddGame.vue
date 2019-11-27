@@ -66,7 +66,13 @@
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-        <q-btn :label="$t('OK')" @click="ok" color="accent" flat />
+        <q-btn
+          v-show="tab === 'new'"
+          :label="$t('OK')"
+          @click="ok"
+          color="accent"
+          flat
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
