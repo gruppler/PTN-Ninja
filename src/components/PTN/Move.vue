@@ -128,6 +128,7 @@ export default {
 
   &.current-only .linenum .branch
     background-color transparent
+    color inherit
 
   &.linebreak
     margin-bottom 1.5em

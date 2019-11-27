@@ -173,6 +173,7 @@ export default {
   align-items center
   vertical-align middle
   .branch
+    font-weight bold
     font-size 0.9em
     line-height 1.3em
     padding 4px
@@ -180,13 +181,15 @@ export default {
     max-width 270px
     border-radius $generic-border-radius
     cursor pointer
+    background-color $highlight
     &.selected
-      background-color $highlight
+      background-color $accent
     &.only
       margin-top 0.25em
+      margin-bottom 0.25em
     .q-btn
       margin -0.5em -0.25em
   .number
     font-size 0.9em
-    font-weight bold
+    line-height 2.2em
 </style>
