@@ -18,8 +18,9 @@
           flat
         />
         <q-btn
-          icon="chat"
-          @click="right = !right"
+          :icon="notifyNotes ? 'speaker_notes' : 'speaker_notes_off'"
+          @click.left="right = !right"
+          @click.right.prevent="notifyNotes = !notifyNotes"
           :color="right ? 'accent' : ''"
           stretch
           flat
@@ -196,6 +197,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showText", value]);
+      }
+    },
+    notifyNotes: {
+      get() {
+        return this.$store.state.notifyNotes;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
       }
     },
     title() {

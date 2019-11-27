@@ -22,8 +22,15 @@
           </GameSelector>
         </QToolbarTitle>
         <q-btn
-          :icon="textTab == 'notes' ? 'comment' : 'chat_bubble'"
-          @click="right = !right"
+          :icon="
+            textTab == 'notes'
+              ? notifyNotes
+                ? 'speaker_notes'
+                : 'speaker_notes_off'
+              : 'chat_bubble'
+          "
+          @click.left="right = !right"
+          @click.right.prevent="notifyNotes = !notifyNotes"
           :color="right ? 'accent' : ''"
           stretch
           flat
@@ -308,6 +315,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
+      }
+    },
+    notifyNotes: {
+      get() {
+        return this.$store.state.notifyNotes;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
       }
     },
     isEditingTPS: {
