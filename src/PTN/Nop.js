@@ -9,6 +9,10 @@ export default class Nop {
     }
   }
 
+  static test(notation) {
+    return /^\s*[.-]+/.test(notation);
+  }
+
   static parse(notation) {
     return new Nop(notation);
   }

@@ -131,15 +131,12 @@ export default {
       );
     },
     branchParts() {
-      return this.linenum.branch.split(/[./]/);
+      return this.linenum.splitBranch;
     }
   },
   methods: {
     beforeEdit() {
-      this.newBranch = this.branchParts[this.branchParts.length - 1].replace(
-        /_/g,
-        " "
-      );
+      this.newBranch = this.branchParts[this.branchParts.length - 1];
       this.$store.dispatch("SET_UI", ["editingBranch", this.linenum.branch]);
     },
     afterEdit() {
@@ -148,7 +145,6 @@ export default {
       });
     },
     validateBranch(value) {
-      value = value.replace(/ /g, "_");
       return (
         value === this.linenum.branch ||
         (Linenum.validateBranch(value) &&
@@ -157,7 +153,7 @@ export default {
     },
     renameBranch() {
       let branchParts = this.branchParts.concat();
-      branchParts[branchParts.length - 1] = this.newBranch.replace(/ /g, "_");
+      branchParts[branchParts.length - 1] = this.newBranch;
       this.game.renameBranch(this.linenum.branch, branchParts.join("/"));
     },
     deleteBranch() {

@@ -27,10 +27,9 @@ export default class Ply extends Ptn {
 
     // Silenty fix invalid stack distributions by trimming from the end
     while (!this.isValidStackDistribution() && this.distribution.length) {
-      this.distribution = this.distribution.substr(
-        0,
-        this.distribution.length - 1
-      );
+      const d = this.distribution.substr(0, this.distribution.length - 1);
+      this.ptn = this.ptn.replace(this.distribution, d);
+      this.distribution = d;
     }
 
     this.specialPiece = this.specialPiece === "F" ? "" : this.specialPiece;
@@ -57,6 +56,10 @@ export default class Ply extends Ptn {
         this.squares.push(Ply.itoa(x, y));
       }
     }
+  }
+
+  static test(notation) {
+    return /^\s*[1-8a-hCSF]/.test(notation);
   }
 
   static parse(notation, params = {}) {

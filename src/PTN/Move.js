@@ -132,7 +132,7 @@ export default class Move {
     }
 
     return [this.linenum.text(showBranch), ply1, comments1, ply2, comments2]
-      .filter(item => !!item.length)
+      .filter(item => item)
       .join(" ");
   }
 }

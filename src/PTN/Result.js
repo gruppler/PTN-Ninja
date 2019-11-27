@@ -1,13 +1,13 @@
 export default class Result {
   constructor(notation) {
-    const matchData = notation.match(/((1\/2|[01RF])-(1\/2|[01RF]))?/);
+    const matchData = notation.match(/\s*((1\/2|[01RF])-(1\/2|[01RF]))?/);
 
     if (!matchData) {
       throw new Error("Invalid result");
     }
 
     [this.ptn, , this.player1, this.player2] = matchData;
-    this.text = this.ptn;
+    this.text = this.ptn.trim();
     if (this.player1 === "1/2") {
       this.player1 = "½";
       this.player2 = "½";
@@ -20,6 +20,10 @@ export default class Result {
       this.type = this["player" + this.winner];
     }
     this.roads = null;
+  }
+
+  static test(notation) {
+    return /^\s*([01RF]|1\/2)-([01RF]|1\/2)/.test(notation);
   }
 
   static parse(notation) {

@@ -22,6 +22,10 @@ export default class Evaluation {
     return (type === "?" ? /\?\?/ : /!!/).test(this.text);
   }
 
+  static test(notation) {
+    return /^[?!'"]/.test(notation);
+  }
+
   static parse(notation) {
     return new Evaluation(notation);
   }

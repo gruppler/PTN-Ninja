@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { each, flatten, intersection, map, trimStart } from "lodash";
+import { each, flatten, intersection, map } from "lodash";
 import memoize from "./memoize";
 
 const pieceCounts = {
@@ -69,7 +69,7 @@ export default class GameBase {
     let moveNumber = 1;
     let move = new Move({ game: this, id: 0, index: 0 });
     let isDoubleBreak = false;
-    const startsWithDoubleBreak = /^\s*\n\n\s*/;
+    const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
 
     this.isLocal = true;
     this.hasTPS = false;
@@ -85,15 +85,14 @@ export default class GameBase {
     this.chatlog = {};
     this.notes = {};
 
-    notation = trimStart(notation);
-
     // Parse HEAD
+    notation = notation.trimStart();
     while (notation.length && notation[0] === "[") {
       // Tag
       item = Tag.parse(notation);
       key = item.key.toLowerCase();
       this.tags[key] = item;
-      notation = trimStart(notation.substr(item.ptn.length));
+      notation = notation.substr(item.ptn.length).trimStart();
       delete item.ptn;
     }
 
@@ -137,21 +136,31 @@ export default class GameBase {
 
     // Parse BODY
     while (notation.length) {
-      if (notation[0] === "{") {
+      if (Comment.test(notation)) {
         // Comment
         item = Comment.parse(notation);
-        let plyID = this.plies.length - 1;
-        let log = item.player === null ? "notes" : "chatlog";
-        if (!this[log][plyID]) {
-          this[log][plyID] = [];
+        if (
+          isDoubleBreak &&
+          Linenum.test(notation.trimStart().substr(item.ptn.length))
+        ) {
+          // Branch identifier
+          branch = item.contents;
+        } else {
+          // Comment
+          let plyID = this.plies.length - 1;
+          let log = item.player === null ? "notes" : "chatlog";
+          if (!this[log][plyID]) {
+            this[log][plyID] = [];
+          }
+          this[log][plyID].push(item);
         }
-        this[log][plyID].push(item);
-      } else if (/^([^\s{}]+[./])*\d+\./.test(notation)) {
+      } else if (Linenum.test(notation)) {
         // Line number
         item = Linenum.parse(notation, this);
-        if (!isDoubleBreak && item.number !== moveNumber) {
-          // If line number is wrong, fix it
-          item.number = moveNumber;
+        if (branch && !item.branch) {
+          // Persist branch
+          item.branch = branch;
+          item.parseBranch(this);
         }
         if (!move.linenum) {
           move.linenum = item;
@@ -161,18 +170,18 @@ export default class GameBase {
             id: this.moves.length,
             linenum: item
           });
-          this.moves.push(move);
+          this.moves[move.id] = move;
         }
         branch = item.branch;
         moveNumber = item.number + 1;
         ply = null;
-      } else if (/^([01RF]|1\/2)-([01RF]|1\/2)/.test(notation)) {
+      } else if (Result.test(notation)) {
         // Result
         item = Result.parse(notation);
         if (ply) {
           ply.result = item;
         }
-      } else if (/^[.-]+/.test(notation)) {
+      } else if (Nop.test(notation)) {
         // Placeholder
         item = Nop.parse(notation);
         if (!move.ply1) {
@@ -180,7 +189,7 @@ export default class GameBase {
         } else if (!move.ply2 && !move.ply1.result) {
           move.ply2 = item;
         }
-      } else if (/[1-8a-hCSF]/.test(notation[0])) {
+      } else if (Ply.test(notation)) {
         // Ply
         item = ply = Ply.parse(notation, { id: this.plies.length });
         if (
@@ -215,7 +224,7 @@ export default class GameBase {
         if (!(ply.branch in this.branches)) {
           this.branches[ply.branch] = ply;
         }
-      } else if (/[?!'"]/.test(notation[0])) {
+      } else if (Evaluation.test(notation[0])) {
         // Evalutaion
         item = Evaluation.parse(notation);
         if (ply) {
@@ -225,9 +234,8 @@ export default class GameBase {
         throw new Error("Invalid PTN format: " + notation);
       }
 
-      notation = notation.substr(item.ptn.length);
+      notation = notation.trimStart().substr(item.ptn.length);
       isDoubleBreak = startsWithDoubleBreak.test(notation);
-      notation = trimStart(notation);
       delete item.ptn;
     }
 
@@ -409,17 +417,11 @@ export default class GameBase {
   }
 
   text(showAllBranches = true, showComments = true) {
-    return (
-      map(this.tags, tag => tag.text()).join("\n") +
-      "\n\n" +
-      (showComments && this.notes[-1]
-        ? this.notes[-1].map(comment => comment.text()).join("\n") + "\n\n"
-        : "") +
-      (showComments && this.chatlog[-1]
-        ? this.chatlog[-1].map(comment => comment.text()).join("\n") + "\n\n"
-        : "") +
-      this.moveText(showAllBranches, showComments)
-    );
+    return this.headerText() + this.moveText(showAllBranches, showComments);
+  }
+
+  headerText() {
+    return map(this.tags, tag => tag.text()).join("\r\n") + "\r\n\r\n";
   }
 
   moveText(showAllBranches = false, showComments = false) {
@@ -429,12 +431,29 @@ export default class GameBase {
         showAllBranches
       );
 
+    let prefix = "";
+    if (showComments) {
+      if (this.notes[-1]) {
+        prefix +=
+          this.notes[-1].map(comment => comment.text()).join("\r\n") +
+          "\r\n\r\n";
+      }
+      if (this.chatlog[-1]) {
+        prefix +=
+          this.chatlog[-1].map(comment => comment.text()).join("\r\n") +
+          "\r\n\r\n";
+      }
+    }
+
     if (showAllBranches) {
-      return this.movesGrouped
-        .map(moves => moves.map(printMove).join("\n"))
-        .join("\n\n");
+      return (
+        prefix +
+        this.movesGrouped
+          .map(moves => moves.map(printMove).join("\r\n"))
+          .join("\r\n\r\n")
+      );
     } else {
-      return this.state.moves.map(printMove).join("\n");
+      return prefix + this.state.moves.map(printMove).join("\r\n");
     }
   }
 
