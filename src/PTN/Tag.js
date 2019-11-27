@@ -93,7 +93,7 @@ export default class Tag {
         this.value = 1 * this.value;
         break;
       case "result":
-        this.value = Result.parse(this.value);
+        this.value = this.value ? Result.parse(this.value) : "";
         break;
       case "round":
         this.value = 1 * this.value;
