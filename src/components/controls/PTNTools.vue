@@ -50,6 +50,13 @@
               <q-item-section>{{ $t("Copy Link") }}</q-item-section>
             </q-item>
 
+            <q-item clickable @click="copy('ply')">
+              <q-item-section side>
+                <q-icon name="layers" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy Ply") }}</q-item-section>
+            </q-item>
+
             <q-item clickable @click="copy('moves')">
               <q-item-section side>
                 <q-icon name="format_list_numbered" />
@@ -117,6 +124,9 @@ export default {
             origin: true,
             state: true
           });
+          break;
+        case "ply":
+          text = this.game.state.ply.text();
           break;
         case "moves":
           text = this.game.moveText(this.showAllBranches);

@@ -490,6 +490,11 @@ export default {
               id: "link"
             },
             {
+              label: this.$t("Copy Ply"),
+              icon: "layers",
+              id: "ply"
+            },
+            {
               label: this.$t("Copy Moves"),
               icon: "format_list_numbered",
               id: "moves"
@@ -519,6 +524,12 @@ export default {
                   origin: true,
                   state: true
                 }),
+                message: this.$t("Copied")
+              });
+              break;
+            case "ply":
+              this.$store.dispatch("COPY", {
+                text: this.game.state.ply.text(),
                 message: this.$t("Copied")
               });
               break;

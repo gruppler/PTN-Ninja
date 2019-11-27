@@ -21,6 +21,7 @@ export default {
   "Copy PTN": "Copy PTN",
   "Copy Link": "Copy Link",
   "Copy Moves": "Copy Moves",
+  "Copy Ply": "Copy Ply",
   Copied: "Copied!",
   "Current Move": "Current Move",
   Date: "Date",
