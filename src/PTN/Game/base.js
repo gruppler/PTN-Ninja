@@ -416,6 +416,15 @@ export default class GameBase {
     }
   }
 
+  updatePTN(ptn, recordChange = true) {
+    const update = () => this.init(ptn, { ...this, state: this.minState });
+    if (recordChange) {
+      this.recordChange(update);
+    } else {
+      update();
+    }
+  }
+
   text(showAllBranches = true, showComments = true) {
     return this.headerText() + this.moveText(showAllBranches, showComments);
   }

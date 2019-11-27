@@ -28,6 +28,7 @@ export default {
   Download: "Download",
   Edit: "Edit",
   "Edit Game": "Edit Game",
+  "Edit PTN": "Edit PTN",
   Embed: "Embed",
   Event: "Event",
   "Flat Counts": "Flat Counts",

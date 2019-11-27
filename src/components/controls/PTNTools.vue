@@ -10,6 +10,8 @@
         <q-icon name="call_split" class="rotate-180" />
       </q-btn>
 
+      <q-btn @click="edit = true" icon="edit" :title="$t('Edit')" />
+
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="flip" class="rotate-270" />
         <q-menu auto-close square>
@@ -78,17 +80,24 @@
           </q-list>
         </q-menu>
       </q-btn>
-
-      <!-- <q-btn icon="edit" :title="$t('Edit')" /> -->
-      <!-- <q-btn icon="assignment_returned" :title="$t('Paste from Clipboard')" /> -->
     </q-btn-group>
+
+    <EditPTN v-model="edit" :game="game" />
   </q-toolbar>
 </template>
 
 <script>
+import EditPTN from "../dialogs/EditPTN";
+
 export default {
   name: "PTN-Tools",
+  components: { EditPTN },
   props: ["game"],
+  data() {
+    return {
+      edit: false
+    };
+  },
   computed: {
     showAllBranches: {
       get() {
