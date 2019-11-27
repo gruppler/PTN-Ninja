@@ -1,7 +1,7 @@
 import { compact, last } from "lodash";
 
 export default class Linenum {
-  constructor(notation, game) {
+  constructor(notation, game, branch = "") {
     const matchData = notation.match(/((?:[\d-]+\.+|\/)+)?(\d+\.)/);
 
     if (!matchData) {
@@ -10,6 +10,9 @@ export default class Linenum {
 
     [this.ptn, this.branch, this.number] = matchData;
     this.number = parseInt(this.number, 10);
+    if (!this.branch && branch) {
+      this.branch = branch;
+    }
     if (this.branch) {
       this.parseBranch(game);
     } else {
@@ -23,8 +26,8 @@ export default class Linenum {
     return /^\s*([\d-]+(\.+|\/))*(\d+\.)/.test(notation);
   }
 
-  static parse(notation, game) {
-    return new Linenum(notation, game);
+  static parse(notation, game, branch) {
+    return new Linenum(notation, game, branch);
   }
 
   static validateBranch(notation, isWholeBranch = false) {

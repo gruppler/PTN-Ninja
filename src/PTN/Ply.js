@@ -44,6 +44,7 @@ export default class Ply extends Ptn {
     this.evaluation = evaluation;
     this.result = result;
     this.branches = branches;
+    this.branch = "";
     this.squares = [this.column + this.row];
     if (this.isMovement()) {
       const [xOffset, yOffset] = this.directionModifier();

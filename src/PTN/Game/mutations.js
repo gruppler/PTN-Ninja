@@ -305,7 +305,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(this.state.branch + "/" + number + ". ", this),
+          linenum: new Linenum(number + ". ", this, this.state.branch),
           ply1: ply
         });
         this.moves.push(move);
@@ -369,10 +369,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(
-            ply.branch + "/" + this.state.number + ". ",
-            this
-          )
+          linenum: new Linenum(this.state.number + ". ", this, ply.branch)
         });
 
         if (ply.player === 2) {

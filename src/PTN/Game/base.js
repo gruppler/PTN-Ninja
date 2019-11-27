@@ -156,12 +156,7 @@ export default class GameBase {
         }
       } else if (Linenum.test(notation)) {
         // Line number
-        item = Linenum.parse(notation, this);
-        if (branch && !item.branch) {
-          // Persist branch
-          item.branch = branch;
-          item.parseBranch(this);
-        }
+        item = Linenum.parse(notation, this, branch);
         if (!move.linenum) {
           move.linenum = item;
         } else {
@@ -214,7 +209,7 @@ export default class GameBase {
           move = new Move({
             game: this,
             id: this.moves.length,
-            linenum: Linenum.parse(branch + moveNumber + ". ", this),
+            linenum: Linenum.parse(moveNumber + ". ", this, branch),
             ply1: ply
           });
           this.moves.push(move);
@@ -230,8 +225,10 @@ export default class GameBase {
         if (ply) {
           ply.evaluation = item;
         }
+      } else if (/[^\s]/.test(notation)) {
+        throw new Error("Invalid PTN format: " + notation.trim());
       } else {
-        throw new Error("Invalid PTN format: " + notation);
+        break;
       }
 
       notation = notation.trimStart().substr(item.ptn.length);
