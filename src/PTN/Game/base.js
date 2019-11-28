@@ -141,6 +141,7 @@ export default class GameBase {
         item = Comment.parse(notation);
         if (
           isDoubleBreak &&
+          this.plies.length &&
           Linenum.test(notation.trimStart().substr(item.ptn.length))
         ) {
           // Branch identifier
