@@ -7,48 +7,22 @@
       @click.left="selectBranch(ply)"
     >
       {{ this.branch }}
-      <q-popup-edit
-        v-model="newBranch"
-        content-class="bg-secondary"
-        :disable="noEdit"
-        :validate="validateBranch"
-        context-menu
-        @before-show="beforeEdit"
-        @save="renameBranch"
-        @hide="afterEdit"
-        anchor="bottom middle"
-        self="top left"
-      >
-        <template v-slot="{ value, emitValue, set, cancel, validate }">
-          <q-input
-            v-model="newBranch"
-            class="items-end"
-            @input="emitValue"
-            @keydown.enter.prevent="set"
-            :rules="[validateBranch]"
-            color="accent"
-            hide-bottom-space
-            no-error-icon
-            :autofocus="!Platform.is.mobile"
-            autogrow
-            dense
-          >
-            <template v-slot:before>
-              <q-btn
-                icon="check"
-                @click.stop="set"
-                :disable="validate(value) === false"
-                dense
-                flat
-              />
-            </template>
-            <template v-slot:after>
-              <q-btn icon="delete" @click.stop="deleteBranch" dense flat />
-              <q-btn icon="close" @click.stop="cancel" dense flat />
-            </template>
-          </q-input>
-        </template>
-      </q-popup-edit>
+      <q-menu v-if="!noEdit" context-menu auto-close>
+        <q-list class="bg-secondary text-white">
+          <q-item @click="renameBranch" clickable>
+            <q-item-section side>
+              <q-icon name="edit" />
+            </q-item-section>
+            <q-item-section>{{ $t("Rename") }}</q-item-section>
+          </q-item>
+          <q-item @click="deleteBranch" clickable>
+            <q-item-section side>
+              <q-icon name="delete" />
+            </q-item-section>
+            <q-item-section>{{ $t("Delete") }}</q-item-section>
+          </q-item>
+        </q-list>
+      </q-menu>
       <q-btn
         v-if="onlyBranch"
         @click.stop
@@ -69,18 +43,19 @@
     <span class="number" v-if="!onlyBranch"
       >{{ this.linenum.number }}.&nbsp;</span
     >
+
+    <RenameBranch v-model="dialogRename" :game="game" :linenum="linenum" />
   </span>
 </template>
 
 <script>
-import { Platform } from "quasar";
-
 import BranchMenu from "../controls/BranchMenu";
-import Linenum from "../../PTN/Linenum";
+
+import RenameBranch from "../dialogs/RenameBranch";
 
 export default {
   name: "Linenum",
-  components: { BranchMenu },
+  components: { BranchMenu, RenameBranch },
   props: {
     linenum: Object,
     game: Object,
@@ -90,8 +65,8 @@ export default {
   },
   data() {
     return {
-      Platform,
       menu: false,
+      dialogRename: false,
       newBranch: ""
     };
   },
@@ -129,38 +104,17 @@ export default {
             ply2.branches[0] !== ply2 &&
             this.game.state.plyIDs.includes(ply2.id)))
       );
-    },
-    branchParts() {
-      return this.linenum.splitBranch;
     }
   },
   methods: {
-    beforeEdit() {
-      this.newBranch = this.branchParts[this.branchParts.length - 1];
-      this.$store.dispatch("SET_UI", ["editingBranch", this.linenum.branch]);
-    },
-    afterEdit() {
-      this.$nextTick(() => {
-        this.$store.dispatch("SET_UI", ["editingBranch", ""]);
-      });
-    },
-    validateBranch(value) {
-      return (
-        value === this.linenum.branch ||
-        (Linenum.validateBranch(value) &&
-          !Object.keys(this.game.branches).includes(value))
-      );
+    selectBranch(ply) {
+      this.game.setTarget(ply);
     },
     renameBranch() {
-      let branchParts = this.branchParts.concat();
-      branchParts[branchParts.length - 1] = this.newBranch;
-      this.game.renameBranch(this.linenum.branch, branchParts.join("/"));
+      this.dialogRename = true;
     },
     deleteBranch() {
       this.game.deleteBranch(this.linenum.branch);
-    },
-    selectBranch(ply) {
-      this.game.setTarget(ply);
     }
   }
 };

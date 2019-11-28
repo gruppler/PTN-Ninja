@@ -64,6 +64,7 @@ export default {
   Rating1: "Rating 1",
   Rating2: "Rating 2",
   Redo: "Redo",
+  Rename: "Rename",
   Remote: "Remote",
   Result: "Result",
   "Road Connections": "Road Connections",
