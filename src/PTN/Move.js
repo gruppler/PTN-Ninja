@@ -92,14 +92,10 @@ export default class Move {
           move.number === this.linenum.parentNumber
       );
       if (original && original.plies[index]) {
-        // Add this ply to the original ply's branch list,
-        // making sure the first one is the original itself
-        original.plies[index].branches[0] = original.plies[index];
-        original.plies[index].branches.push(ply);
-        this.plies[index].branches = original.plies[index].branches;
+        original.plies[index].addBranch(ply);
 
+        // If first ply is placeholder, save reference to its original
         if (this.ply1.isNop) {
-          // If first ply is placeholder, save reference to its original
           this.ply1Original = original.ply1;
         }
       }

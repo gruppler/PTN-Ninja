@@ -26,7 +26,7 @@ export default class GameComments {
   addComment(log, message) {
     message = Comment.parse("{" + message + "}");
     const plyID =
-      !this.state.plyID && !this.state.plyIsDone ? -1 : this.state.plyID;
+      this.state.plyIndex <= 0 && !this.state.plyIsDone ? -1 : this.state.plyID;
     if (!this[log][plyID]) {
       this[log] = Object.assign({ [plyID]: [message] }, this[log]);
     } else {

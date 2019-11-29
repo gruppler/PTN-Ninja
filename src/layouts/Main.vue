@@ -498,7 +498,7 @@ export default {
     share() {
       this.$q
         .bottomSheet({
-          dark: true,
+          grid: true,
           class: "bg-secondary",
           message: this.$t("Share"),
           actions: [

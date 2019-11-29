@@ -7,7 +7,7 @@
 
       <SmoothReflow>
         <Recess>
-          <q-card-section style="height: calc(100vh - 18rem)" class="q-pa-none">
+          <q-card-section style="height: calc(100vh - 16rem)" class="q-pa-none">
             <PTN-editor ref="editor" :game="game" @save="save" />
           </q-card-section>
         </Recess>

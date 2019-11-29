@@ -20,7 +20,8 @@ export default class Ply extends Ptn {
       color = 1,
       evaluation = null,
       result = null,
-      branches = []
+      branches = [],
+      children = []
     }
   ) {
     super(notation);
@@ -44,6 +45,7 @@ export default class Ply extends Ptn {
     this.evaluation = evaluation;
     this.result = result;
     this.branches = branches;
+    this.children = children;
     this.branch = "";
     this.squares = [this.column + this.row];
     if (this.isMovement()) {
@@ -90,6 +92,29 @@ export default class Ply extends Ptn {
     return (
       this.branches.length && this.branches.find(ply => ply.isInBranch(branch))
     );
+  }
+
+  addBranch(ply) {
+    if (!this.branches.length) {
+      this.branches[0] = this;
+      this.branches.parent = this.game.branches[this.branch];
+      this.branches.parent.children.push(this);
+    }
+    this.branches.push(ply);
+    ply.branches = this.branches;
+  }
+
+  removeBranch(ply) {
+    delete this.game.branches[ply.branch];
+    if (this.branches.length === 2) {
+      this.branches.parent.children.splice(
+        this.branches.parent.indexOf(this),
+        1
+      );
+      this.branches = [];
+    } else {
+      this.branches.splice(this.branches.indexOf(ply), 1);
+    }
   }
 
   isInBranch(branch) {

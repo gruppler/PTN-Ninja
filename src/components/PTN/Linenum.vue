@@ -131,7 +131,7 @@ export default {
     font-size 0.9em
     line-height 1.3em
     padding 4px
-    margin 0 4px 0 -4px
+    margin 0
     max-width 270px
     border-radius $generic-border-radius
     cursor pointer

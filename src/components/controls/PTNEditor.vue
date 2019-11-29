@@ -5,6 +5,7 @@
       v-model="ptn"
       color="accent"
       class="ptn-editor fit"
+      no-error-icon
     />
   </form>
 </template>

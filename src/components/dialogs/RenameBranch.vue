@@ -4,14 +4,13 @@
       <q-card-section>
         <SmoothReflow>
           <q-input
+            ref="input"
             v-model="newBranch"
             @keydown.enter.prevent="save"
             :rules="[validateBranch]"
             color="accent"
             hide-bottom-space
-            no-error-icon
-            :autofocus="!Platform.is.mobile"
-            clearable
+            autofocus
             autogrow
             dense
           >
@@ -21,15 +20,19 @@
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-        <q-btn :label="$t('OK')" @click="save" color="accent" flat />
+        <q-btn
+          :label="$t('OK')"
+          :disabled="$refs.input && $refs.input.hasError"
+          @click="save"
+          color="accent"
+          flat
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script>
-import { Platform } from "quasar";
-
 import Linenum from "../../PTN/Linenum";
 
 export default {
@@ -37,7 +40,6 @@ export default {
   props: ["value", "game", "linenum"],
   data() {
     return {
-      Platform,
       newBranch: ""
     };
   },
@@ -60,7 +62,8 @@ export default {
     validateBranch(value) {
       return (
         value === this.linenum.branch ||
-        (Linenum.validateBranch(value) &&
+        (value &&
+          Linenum.validateBranch(value) &&
           !Object.keys(this.game.branches).includes(value))
       );
     },
@@ -75,6 +78,8 @@ export default {
     value(visible) {
       if (visible) {
         this.beforeEdit();
+      } else {
+        this.afterEdit();
       }
     }
   }

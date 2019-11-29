@@ -21,9 +21,13 @@ export default class GameMutations {
       throw new Error(`"${newBranch}" is already a branch.`);
     }
 
+    const startsWithOldBranch = branch => {
+      return branch === oldBranch || branch.startsWith(oldBranch + "/");
+    };
+
     // Update moves/linenums
     this.moves.forEach(move => {
-      if (move.branch.startsWith(oldBranch)) {
+      if (startsWithOldBranch(move.branch)) {
         move.branch = move.branch.replace(oldBranch, newBranch);
       }
     });
@@ -38,7 +42,7 @@ export default class GameMutations {
     this.branches = branches;
 
     // Update targetBranch
-    if (this.state.targetBranch.startsWith(oldBranch)) {
+    if (startsWithOldBranch(this.state.targetBranch)) {
       this.state.targetBranch = this.state.targetBranch.replace(
         oldBranch,
         newBranch
@@ -171,13 +175,7 @@ export default class GameMutations {
           .slice(1)
           .forEach(ply => this._deletePly(ply.id, true, removeOrphans));
       } else {
-        // Remove branch
-        delete this.branches[ply.branch];
-        if (ply.branches.length === 2) {
-          ply.branches[0].branches = [];
-        } else {
-          ply.branches.splice(ply.branches.indexOf(ply), 1);
-        }
+        ply.branches[0].removeBranch(ply);
       }
     }
 

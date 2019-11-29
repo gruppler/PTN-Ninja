@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { each, flatten, intersection, map } from "lodash";
+import { each, flatten, map, uniq } from "lodash";
 import memoize from "./memoize";
 
 const pieceCounts = {
@@ -279,38 +279,35 @@ export default class GameBase {
     return this.state.min;
   }
 
-  static sortBranches(a, b) {
-    if (a.branch === b.branch) {
-      // Same branch
-      return a.index - b.index;
-    } else if (a.linenum.parentBranch === b.linenum.parentBranch) {
-      return (
-        a.parentNumber - b.parentNumber || a.index - b.index || a.id - b.id
-      );
-    } else {
-      const commonAncestors = intersection(
-        a.move.linenum.ancestors,
-        b.move.linenum.ancestors
-      );
-      if (commonAncestors.length) {
-        return (
-          a.move.linenum.ancestors.length - b.move.linenum.ancestors.length ||
-          a.id - b.id
-        );
-      } else {
-        return a.id - b.id;
-      }
-    }
+  getBranchesSorted() {
+    let branches = Object.values(this.branches).sort(
+      (a, b) => a.index - b.index || a.id - b.id
+    );
+    let sorted = [];
+
+    const pushBranch = ply => {
+      // Self
+      sorted.push(ply.branch);
+      // Children
+      ply.children.forEach(pushChild);
+    };
+
+    const pushChild = ply => {
+      // Self
+      sorted.push(ply.branch);
+      // Siblings
+      ply.branches.slice(1).forEach(pushBranch);
+    };
+
+    pushBranch(branches[0]);
+
+    return uniq(sorted);
   }
 
   getMovesGrouped() {
-    const moves = Object.values(this.branches)
-      .sort(GameBase.sortBranches)
-      .map(ply =>
-        this.moves
-          .filter(move => move.branch === ply.branch)
-          .sort(move => move.index)
-      );
+    const moves = this.getBranchesSorted().map(branch =>
+      this.moves.filter(move => move.branch === branch).sort(move => move.index)
+    );
     return moves.length ? moves : [this.moves];
   }
 
