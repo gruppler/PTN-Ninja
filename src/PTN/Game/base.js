@@ -279,10 +279,12 @@ export default class GameBase {
     return this.state.min;
   }
 
+  plySort(a, b) {
+    return a.index - b.index || a.id - b.id;
+  }
+
   getBranchesSorted() {
-    let branches = Object.values(this.branches).sort(
-      (a, b) => a.index - b.index || a.id - b.id
-    );
+    let branches = Object.values(this.branches).sort(this.plySort);
     let sorted = [];
 
     const pushBranch = ply => {

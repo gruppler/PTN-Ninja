@@ -99,6 +99,7 @@ export default class Ply extends Ptn {
       this.branches[0] = this;
       this.branches.parent = this.game.branches[this.branch];
       this.branches.parent.children.push(this);
+      this.branches.parent.children.sort(this.game.plySort);
     }
     this.branches.push(ply);
     ply.branches = this.branches;

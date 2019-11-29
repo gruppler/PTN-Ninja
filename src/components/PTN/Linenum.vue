@@ -143,6 +143,9 @@ export default {
       margin-bottom 0.25em
     .q-btn
       margin -0.5em -0.25em
+
+    + .number
+      margin-left .5em
   .number
     font-size 0.9em
     line-height 2.2em
