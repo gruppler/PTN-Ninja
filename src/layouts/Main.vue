@@ -176,7 +176,7 @@
             type="number"
             v-model="firstMoveNumber"
             :label="$t('Move')"
-            :min="1"
+            :min="minFirstMoveNumber"
             :max="999"
             color="accent"
             filled
@@ -347,6 +347,39 @@ export default {
           this.firstMoveNumber
         );
       }
+    },
+    minFirstMoveNumber() {
+      const min1 =
+        this.game.state.pieces.played[1].cap.length +
+        this.game.state.pieces.played[1].flat.length +
+        this.game.state.squares.reduce(
+          (total, row) =>
+            row.reduce(
+              (total, square) =>
+                square.length
+                  ? total +
+                    square.slice(1).filter(piece => piece.color === 1).length
+                  : total,
+              total
+            ),
+          0
+        );
+      const min2 =
+        this.game.state.pieces.played[2].cap.length +
+        this.game.state.pieces.played[2].flat.length +
+        this.game.state.squares.reduce(
+          (total, row) =>
+            row.reduce(
+              (total, square) =>
+                square.length
+                  ? total +
+                    square.slice(1).filter(piece => piece.color === 2).length
+                  : total,
+              total
+            ),
+          0
+        );
+      return Math.max(min1, min2) + 1 * (min1 <= min2);
     },
     firstMoveNumber: {
       get() {
@@ -576,10 +609,6 @@ export default {
       event.stopPropagation();
       event.preventDefault();
       this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
-    },
-    nop(event) {
-      event.preventDefault();
-      event.stopPropagation();
     }
   },
   watch: {
@@ -614,6 +643,11 @@ export default {
         this.$store.dispatch("SET_NAME", newName.name);
       }
       this.setWindowTitle(newName.name);
+    },
+    editingTPS() {
+      if (this.firstMoveNumber < this.minFirstMoveNumber) {
+        this.firstMoveNumber = this.minFirstMoveNumber;
+      }
     }
   },
   created() {
