@@ -91,7 +91,7 @@
             name="caps"
             type="number"
             min="0"
-            max="99"
+            :max="tags.size"
             :label="$t('Caps')"
             :rules="rules('caps')"
             @keyup.enter="save"
@@ -137,7 +137,7 @@
             name="caps1"
             type="number"
             min="0"
-            max="99"
+            :max="tags.size"
             :label="$t('Caps1')"
             :rules="rules('caps1')"
             @keyup.enter="save"
@@ -178,7 +178,7 @@
             name="caps2"
             type="number"
             min="0"
-            max="99"
+            :max="tags.size"
             :label="$t('Caps2')"
             :rules="rules('caps2')"
             @keyup.enter="save"
@@ -680,14 +680,10 @@ export default {
             ? this.game.tag(key)
             : null) || null;
       });
-      if (this.game) {
-        this.showPieceCounts = this.pieceCountTags.find(
-          tag => !!this.tags[tag]
-        );
-        this.separatePieceCounts =
-          this.game.pieceCounts[1].cap !== this.game.pieceCounts[2].cap ||
-          this.game.pieceCounts[1].flat !== this.game.pieceCounts[2].flat;
-      }
+      this.showPieceCounts = this.pieceCountTags.find(tag => !!this.tags[tag]);
+      this.separatePieceCounts =
+        this.tags.cap1 !== this.tags.cap2 ||
+        this.tags.flat1 !== this.tags.flat2;
     },
     rules(tag) {
       let rules = [value => !value || formats[tag].test(value)];
