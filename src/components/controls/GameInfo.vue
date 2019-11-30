@@ -165,7 +165,6 @@
         :label="$t('Date')"
         :rules="rules('date')"
         @keyup.enter="save"
-        @focus.prevent="blur"
         color="accent"
         hide-bottom-space
         filled
@@ -176,6 +175,7 @@
         <q-popup-proxy
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
+          @before-hide="blur"
           anchor="center middle"
           self="center middle"
         >
@@ -224,7 +224,6 @@
         :label="$t('Time')"
         :rules="rules('time')"
         @keyup.enter="save"
-        @focus.prevent="blur"
         color="accent"
         hide-bottom-space
         filled
@@ -235,6 +234,7 @@
         <q-popup-proxy
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
+          @before-hide="blur"
           anchor="center middle"
           self="center middle"
         >
@@ -478,18 +478,8 @@ export default {
     }
   },
   methods: {
-    blur(event) {
-      if (event && event.srcElement && event.srcElement.blur) {
-        event.srcElement.blur();
-        switch (event.srcElement.name) {
-          case "date":
-            this.$nextTick(() => (this.showDatePicker = true));
-            break;
-          case "time":
-            this.$nextTick(() => (this.showTimePicker = true));
-            break;
-        }
-      }
+    blur() {
+      this.$nextTick(() => document.activeElement.blur());
     },
     save() {
       this.name = (this.name || "").trim();
