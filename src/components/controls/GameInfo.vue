@@ -682,8 +682,8 @@ export default {
       });
       this.showPieceCounts = this.pieceCountTags.find(tag => !!this.tags[tag]);
       this.separatePieceCounts =
-        this.tags.cap1 !== this.tags.cap2 ||
-        this.tags.flat1 !== this.tags.flat2;
+        this.tags.caps1 !== this.tags.caps2 ||
+        this.tags.flats1 !== this.tags.flats2;
     },
     rules(tag) {
       let rules = [value => !value || formats[tag].test(value)];
