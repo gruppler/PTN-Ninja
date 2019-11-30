@@ -20,26 +20,23 @@
     </q-input>
 
     <div class="row q-gutter-md q-mt-none">
-      <q-input
+      <q-select
         class="col-grow"
         v-model="tags.size"
-        name="size"
-        type="number"
-        min="3"
-        max="8"
         :label="$t('Size')"
-        :rules="rules('size')"
+        :options="sizes"
         :readonly="game && game.plies.length > 0"
-        @keyup.enter="save"
         @input="$refs.tps.validate()"
         color="accent"
-        hide-bottom-space
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="grid_on" />
+          <q-icon
+            @click.right.prevent="showPieceCounts = !showPieceCounts"
+            name="grid_on"
+          />
         </template>
-      </q-input>
+      </q-select>
 
       <q-input
         ref="tps"
@@ -73,6 +70,154 @@
           />
         </template>
       </q-input>
+    </div>
+
+    <div
+      v-if="tags.size in pieceCounts"
+      v-show="showPieceCounts && isVisible(...pieceCountTags)"
+      class="row"
+    >
+      <div class="col">
+        <div
+          v-show="!separatePieceCounts"
+          class="row q-gutter-md"
+          :class="{ 'q-mb-md': separatePieceCounts }"
+        >
+          <q-input
+            class="col-grow"
+            v-show="!separatePieceCounts"
+            v-model="tags.caps"
+            :placeholder="pieceCounts[tags.size].cap"
+            name="caps"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Caps')"
+            :rules="rules('caps')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="lens" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-show="!separatePieceCounts"
+            v-model="tags.flats"
+            :placeholder="pieceCounts[tags.size].flat"
+            name="flats"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats')"
+            :rules="rules('flats')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="stop" />
+            </template>
+          </q-input>
+        </div>
+
+        <div
+          v-show="separatePieceCounts"
+          class="row q-gutter-md"
+          :class="{ 'q-mb-md': separatePieceCounts }"
+        >
+          <q-input
+            class="col-grow"
+            v-model="tags.caps1"
+            :placeholder="tags.caps || pieceCounts[tags.size].cap"
+            name="caps1"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Caps1')"
+            :rules="rules('caps1')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="lens" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-model="tags.flats1"
+            :placeholder="tags.flats || pieceCounts[tags.size].flat"
+            name="flats1"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats1')"
+            :rules="rules('flats1')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="stop" />
+            </template>
+          </q-input>
+        </div>
+
+        <div v-show="separatePieceCounts" class="row q-gutter-md">
+          <q-input
+            class="col-grow"
+            v-model="tags.caps2"
+            :placeholder="tags.caps || pieceCounts[tags.size].cap"
+            name="caps2"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Caps2')"
+            :rules="rules('caps2')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="radio_button_unchecked" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-model="tags.flats2"
+            :placeholder="tags.flats || pieceCounts[tags.size].flat"
+            name="flats2"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats2')"
+            :rules="rules('flats2')"
+            @keyup.enter="save"
+            color="accent"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="crop_square" />
+            </template>
+          </q-input>
+        </div>
+      </div>
+      <q-btn @click="separatePieceCounts = !separatePieceCounts" dense flat>
+        <div v-show="separatePieceCounts" class="column">
+          <q-icon name="person" />
+          <q-icon name="person_outline" />
+        </div>
+        <q-icon v-show="!separatePieceCounts" name="people" />
+      </q-btn>
     </div>
 
     <div class="row">
@@ -427,7 +572,7 @@
 import { formats } from "../../PTN/Tag";
 import TPS from "../../PTN/TPS";
 import ResultTag from "../../PTN/Result";
-import { generateName } from "../../PTN/Game/base";
+import { generateName, pieceCounts } from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
 
@@ -439,6 +584,12 @@ export default {
     return {
       name: "",
       tags: {
+        caps: null,
+        caps1: null,
+        caps2: null,
+        flats: null,
+        flats1: null,
+        flats2: null,
         clock: null,
         date: null,
         event: null,
@@ -458,6 +609,11 @@ export default {
       proxyTime: null,
       showDatePicker: false,
       showTimePicker: false,
+      showPieceCounts: false,
+      separatePieceCounts: false,
+      pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
+      pieceCounts,
+      sizes: [3, 4, 5, 6, 7, 8],
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,
@@ -524,6 +680,14 @@ export default {
             ? this.game.tag(key)
             : null) || null;
       });
+      if (this.game) {
+        this.showPieceCounts = this.pieceCountTags.find(
+          tag => !!this.tags[tag]
+        );
+        this.separatePieceCounts =
+          this.game.pieceCounts[1].cap !== this.game.pieceCounts[2].cap ||
+          this.game.pieceCounts[1].flat !== this.game.pieceCounts[2].flat;
+      }
     },
     rules(tag) {
       let rules = [value => !value || formats[tag].test(value)];

@@ -12,13 +12,13 @@ import GameState from "./state";
 import { each, flatten, map, uniq } from "lodash";
 import memoize from "./memoize";
 
-const pieceCounts = {
-  3: { flat: 10, cap: 0, total: 10 },
-  4: { flat: 15, cap: 0, total: 15 },
-  5: { flat: 21, cap: 1, total: 22 },
-  6: { flat: 30, cap: 1, total: 31 },
-  7: { flat: 40, cap: 2, total: 42 },
-  8: { flat: 50, cap: 2, total: 52 }
+export const pieceCounts = {
+  3: { flat: 10, cap: 0 },
+  4: { flat: 15, cap: 0 },
+  5: { flat: 21, cap: 1 },
+  6: { flat: 30, cap: 1 },
+  7: { flat: 40, cap: 2 },
+  8: { flat: 50, cap: 2 }
 };
 
 export const generateName = (tags = {}, game) => {
@@ -131,7 +131,34 @@ export default class GameBase {
     }
 
     // Initialize game state
-    this.pieceCounts = pieceCounts[this.size];
+    this.pieceCounts = {
+      1: { ...pieceCounts[this.size] },
+      2: { ...pieceCounts[this.size] }
+    };
+    if (this.tags.flats) {
+      this.pieceCounts[1].flat = this.tags.flats.value;
+      this.pieceCounts[2].flat = this.tags.flats.value;
+    }
+    if (this.tags.caps) {
+      this.pieceCounts[1].cap = this.tags.caps.value;
+      this.pieceCounts[2].cap = this.tags.caps.value;
+    }
+    if (this.tags.flats1) {
+      this.pieceCounts[1].flat = this.tags.flats1.value;
+    }
+    if (this.tags.caps1) {
+      this.pieceCounts[1].cap = this.tags.caps1.value;
+    }
+    if (this.tags.flats2) {
+      this.pieceCounts[2].flat = this.tags.flats2.value;
+    }
+    if (this.tags.caps2) {
+      this.pieceCounts[2].cap = this.tags.caps2.value;
+    }
+    this.pieceCounts[1].total =
+      this.pieceCounts[1].flat + this.pieceCounts[1].cap;
+    this.pieceCounts[2].total =
+      this.pieceCounts[2].flat + this.pieceCounts[2].cap;
     this.state = new GameState(this);
 
     // Parse BODY
@@ -344,9 +371,16 @@ export default class GameBase {
     if (updatePTN) {
       this._updatePTN(recordChange);
       if (
-        !this.plies.length &&
-        (this.size !== this.tag("size") ||
-          (tags.tps && tags.tps !== this.tag("tps")))
+        [
+          "size",
+          "tps",
+          "caps",
+          "flats",
+          "caps1",
+          "flats1",
+          "caps2",
+          "flats2"
+        ].find(tag => tags[tag] !== this.tag(tag))
       ) {
         this.init(this.ptn, { ...this, state: null });
       }

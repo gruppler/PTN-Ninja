@@ -4,6 +4,12 @@ import Result from "./Result";
 import { padStart } from "lodash";
 
 const capitalized = {
+  caps: "Caps",
+  caps1: "Caps1",
+  caps2: "Caps2",
+  flats: "Flats",
+  flats1: "Flats1",
+  flats2: "Flats2",
   clock: "Clock",
   date: "Date",
   event: "Event",
@@ -21,6 +27,12 @@ const capitalized = {
 };
 
 export const formats = {
+  caps: /^\d+$/,
+  caps1: /^\d+$/,
+  caps2: /^\d+$/,
+  flats: /^\d+$/,
+  flats1: /^\d+$/,
+  flats2: /^\d+$/,
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
@@ -77,6 +89,14 @@ export default class Tag {
     }
 
     switch (key) {
+      case "caps":
+      case "caps1":
+      case "caps2":
+      case "flats":
+      case "flats1":
+      case "flats2":
+        this.value = 1 * this.value;
+        break;
       case "date":
         this.value = this.value.split(".");
         this.value[1] = padStart(this.value[1], 2, "0");

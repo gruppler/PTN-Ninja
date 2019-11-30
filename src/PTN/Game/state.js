@@ -62,7 +62,11 @@ export default class GameState {
     };
     [1, 2].forEach(color => {
       ["flat", "cap"].forEach(type => {
-        for (let index = 0; index < this.game.pieceCounts[type]; index++) {
+        for (
+          let index = 0;
+          index < this.game.pieceCounts[color][type];
+          index++
+        ) {
           const id = color + type[0] + (index + 1);
           const piece = new Piece({
             game: this.game,
@@ -166,7 +170,7 @@ export default class GameState {
 
   playPiece(color, type, square) {
     const isStanding = /S|wall/.test(type);
-    if (!(type in this.game.pieceCounts)) {
+    if (!(type in this.game.pieceCounts[1])) {
       type = type === "C" ? "cap" : "flat";
     }
     const piece = this.pieces.all[color][type][

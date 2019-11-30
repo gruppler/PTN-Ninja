@@ -106,16 +106,15 @@ export default class GameIX {
     let move = last(this.state.selected.moveset);
 
     let types = [];
+    let color = piece ? piece.color : this.state.turn;
     if (
       (piece && piece.type === "flat") ||
-      this.state.pieces.played[piece ? piece.color : this.state.turn].flat
-        .length < this.pieceCounts.flat
+      this.state.pieces.played[color].flat.length < this.pieceCounts[color].flat
     ) {
       types.push("flat", "wall");
     }
     if (
-      this.state.pieces.played[piece ? piece.color : this.state.turn].cap
-        .length < this.pieceCounts.cap
+      this.state.pieces.played[color].cap.length < this.pieceCounts[color].cap
     ) {
       types.push("cap");
     }

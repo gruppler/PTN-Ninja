@@ -26,6 +26,9 @@ export default {
   name: "Piece",
   props: ["game", "id"],
   computed: {
+    pieceCounts() {
+      return this.game.pieceCounts[this.piece.color];
+    },
     piece() {
       return this.game.state.pieces.all.byID[this.id];
     },
@@ -71,32 +74,30 @@ export default {
           if (this.piece.type !== "cap") {
             y *=
               Math.floor(
-                (this.game.pieceCounts[this.piece.type] -
-                  this.piece.index -
-                  1) /
+                (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
                   this.game.size
               ) /
               Math.floor(
-                this.game.pieceCounts.flat /
+                this.pieceCounts.flat /
                   (this.game.size -
                     1 *
                       !!(
-                        this.game.pieceCounts.cap &&
-                        this.game.pieceCounts.flat % this.game.size
+                        this.pieceCounts.cap &&
+                        this.pieceCounts.flat % this.game.size
                       ))
               );
           }
         } else {
           if (this.piece.type === "cap") {
-            y *= this.game.pieceCounts.total - this.piece.index - 1;
+            y *= this.pieceCounts.total - this.piece.index - 1;
           } else {
             y *=
-              this.game.pieceCounts.total -
+              this.pieceCounts.total -
               this.piece.index -
-              this.game.pieceCounts.cap -
+              this.pieceCounts.cap -
               1;
           }
-          y /= this.game.pieceCounts.total - 1;
+          y /= this.pieceCounts.total - 1;
         }
         y *= 100;
       }
@@ -110,14 +111,14 @@ export default {
         // Unplayed piece
         if (this.board3D) {
           z =
-            (this.game.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
             this.game.size;
         } else {
           z =
-            (this.game.pieceCounts.total - this.piece.index) /
-            this.game.pieceCounts.total;
+            (this.pieceCounts.total - this.piece.index) /
+            this.pieceCounts.total;
           if (this.piece.type !== "cap") {
-            z -= this.game.pieceCounts.cap;
+            z -= this.pieceCounts.cap;
           }
           if (this.piece.color === 1) {
             z += 1;

@@ -22,7 +22,8 @@ export default class GameEnd {
         result = player == 1 ? "0-R" : "R-0";
       }
     } else if (
-      pieces.flat.length + pieces.cap.length === this.pieceCounts.total ||
+      pieces.flat.length + pieces.cap.length ===
+        this.pieceCounts[player].total ||
       !this.state.squares.find(row => row.find(square => !square.length))
     ) {
       // Last empty square or last piece

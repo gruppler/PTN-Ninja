@@ -48,7 +48,7 @@ export default {
         type = type === "C" ? "cap" : "flat";
         return (
           this.game.state.pieces.played[this.color][type].length <
-          this.game.pieceCounts[type]
+          this.game.pieceCounts[this.color][type]
         );
       });
     },
