@@ -328,7 +328,9 @@ export default class GameBase {
       ply.branches.slice(1).forEach(pushBranch);
     };
 
-    pushBranch(branches[0]);
+    if (branches.length) {
+      pushBranch(branches[0]);
+    }
 
     return uniq(sorted);
   }
