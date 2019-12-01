@@ -7,18 +7,20 @@ import Tag from "../Tag";
 import { isArray } from "lodash";
 
 export default class GameMutations {
-  _renameBranch(oldBranch, newBranch) {
+  _renameBranch(oldBranch, newBranch, force = false) {
     if (oldBranch === newBranch) {
       return false;
     }
-    if (!Linenum.validateBranch(newBranch, true)) {
-      throw new Error(`"${newBranch}" is not a valid branch name.`);
-    }
-    if (!(oldBranch in this.branches)) {
-      throw new Error(`"${oldBranch}" is not a branch.`);
-    }
-    if (newBranch in this.branches) {
-      throw new Error(`"${newBranch}" is already a branch.`);
+    if (!force) {
+      if (!Linenum.validateBranch(newBranch, true)) {
+        throw new Error(`"${newBranch}" is not a valid branch name.`);
+      }
+      if (!(oldBranch in this.branches)) {
+        throw new Error(`"${oldBranch}" is not a branch.`);
+      }
+      if (newBranch in this.branches) {
+        throw new Error(`"${newBranch}" is already a branch.`);
+      }
     }
 
     const startsWithOldBranch = branch => {
@@ -68,10 +70,11 @@ export default class GameMutations {
 
     this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
 
-    const boardPly = this.state.boardPly;
-    const newPly = boardPly.isDone
-      ? this.state.plies[this.plies[boardPly.id].index + 1]
-      : this.plies[boardPly.id];
+    const boardPlyInfo = this.state.boardPly;
+    const boardPly = this.plies[boardPlyInfo.id];
+    const newPly = boardPlyInfo.isDone
+      ? this.state.plies[boardPly.index + 1]
+      : boardPly;
 
     if (!newPly) {
       return false;
@@ -79,12 +82,14 @@ export default class GameMutations {
 
     if (newPly.branch) {
       // Remove preceeding and non-descendent plies
+      newPly.children = this.branches[newPly.branch].children.filter(
+        ply => ply.index >= newPly.index
+      );
       this._deletePlies(
         this.plies
           .filter(
             ply =>
               ply.index < newPly.index ||
-              !ply.branch.startsWith(newPly.branch) ||
               (!newPly.isInBranch(ply.branch) && !newPly.hasBranch(ply.branch))
           )
           .map(ply => ply.id),
@@ -95,11 +100,11 @@ export default class GameMutations {
       this.branches[newPly.branch] = newPly;
 
       // Make branch primary
-      this._renameBranch(newPly.branch, "");
+      this._renameBranch(newPly.branch, "", true);
     } else {
       // Remove preceeding plies
       this._deletePlies(
-        this.state.plies.slice(0, newPly.index).map(ply => ply.id)
+        this.state.plies.slice(0, boardPly.index).map(ply => ply.id)
       );
     }
 

@@ -255,6 +255,7 @@ export default {
   watch: {
     value(isVisible) {
       if (isVisible) {
+        this.name = this.game.name;
         this.initialURL = this.url;
       } else {
         this.previewError = false;

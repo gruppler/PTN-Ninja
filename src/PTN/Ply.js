@@ -109,7 +109,7 @@ export default class Ply extends Ptn {
     delete this.game.branches[ply.branch];
     if (this.branches.length === 2) {
       this.branches.parent.children.splice(
-        this.branches.parent.indexOf(this),
+        this.branches.parent.children.indexOf(this),
         1
       );
       this.branches = [];
