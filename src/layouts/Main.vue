@@ -606,9 +606,12 @@ export default {
         });
     },
     openFiles(event) {
+      this.nop(event);
+      this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
+    },
+    nop(event) {
       event.stopPropagation();
       event.preventDefault();
-      this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
     }
   },
   watch: {

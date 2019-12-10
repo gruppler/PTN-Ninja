@@ -239,7 +239,7 @@ export default {
       }
     },
     rotateBoard(event) {
-      if (!this.board3D && event.evt.target === this.$refs.wrapper) {
+      if (!this.board3D) {
         return;
       }
 
