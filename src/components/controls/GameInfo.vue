@@ -212,7 +212,12 @@
           </q-input>
         </div>
       </div>
-      <q-btn @click="separatePieceCounts = !separatePieceCounts" dense flat>
+      <q-btn
+        @click="separatePieceCounts = !separatePieceCounts"
+        stretch
+        dense
+        flat
+      >
         <div v-show="separatePieceCounts" class="column">
           <q-icon name="person" />
           <q-icon name="person_outline" />
@@ -299,7 +304,7 @@
           </q-input>
         </div>
       </div>
-      <q-btn @click="swapPlayers" icon="swap_vert" dense flat />
+      <q-btn @click="swapPlayers" icon="swap_vert" stretch dense flat />
     </div>
 
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
