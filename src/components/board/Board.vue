@@ -446,6 +446,7 @@ $radius = 5px
   justify-content space-around
   line-height 1em
 .x-axis
+  align-items flex-end
   height $axis-size
   .board-container:not(.axis-labels) &
     height 0
@@ -453,6 +454,7 @@ $radius = 5px
     transform translateY(-100%)
 
 .y-axis
+  align-items flex-start
   width $axis-size
   will-change width, opacity, transform
   .board-container:not(.axis-labels) &
