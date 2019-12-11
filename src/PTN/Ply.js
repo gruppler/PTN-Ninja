@@ -26,6 +26,10 @@ export default class Ply extends Ptn {
   ) {
     super(notation);
 
+    if (this.pieceCount && !this.distribution) {
+      throw new Error("Invalid PTN format");
+    }
+
     // Silenty fix invalid stack distributions by trimming from the end
     while (!this.isValidStackDistribution() && this.distribution.length) {
       const d = this.distribution.substr(0, this.distribution.length - 1);
@@ -62,7 +66,7 @@ export default class Ply extends Ptn {
   }
 
   static test(notation) {
-    return /^\s*[1-8a-hCSF]/.test(notation);
+    return /^\s*[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?/.test(notation);
   }
 
   static parse(notation, params = {}) {

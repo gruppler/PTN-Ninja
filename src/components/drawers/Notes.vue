@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import Move from "./PTN/Move";
+import Move from "../PTN/Move";
 
 import { pickBy } from "lodash";
 

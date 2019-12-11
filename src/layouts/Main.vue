@@ -220,12 +220,12 @@
 // Essentials:
 import Board from "../components/board/Board";
 import Move from "../components/PTN/Move";
-import PTN from "../components/PTN";
-import Notes from "../components/Notes";
+import PTN from "../components/drawers/PTN";
+import Notes from "../components/drawers/Notes";
 
 // Notifications:
-import GameNotifications from "../components/GameNotifications";
-import NoteNotifications from "../components/NoteNotifications";
+import GameNotifications from "../components/notify/GameNotifications";
+import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
 import PlayControls from "../components/controls/PlayControls";
@@ -238,7 +238,7 @@ import BoardToggles from "../components/controls/BoardToggles";
 import GameSelector from "../components/controls/GameSelector";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
-import Chat from "../components/Chat";
+import Chat from "../components/drawers/Chat";
 
 // Dialogs:
 import Help from "../components/dialogs/Help";
@@ -427,6 +427,16 @@ export default {
     setWindowTitle(prefix = this.game.name) {
       document.title = prefix + " — " + this.$t("app_title");
     },
+    notifyError(message) {
+      this.$q.notify({
+        position: "top-right",
+        icon: "error",
+        classes: "text-grey-10",
+        color: "negative",
+        timeout: 2000,
+        message
+      });
+    },
     newGame() {
       return new Game(
         `[Player1 "${this.$store.state.player1}"]\n` +
@@ -438,24 +448,34 @@ export default {
     },
     getGame() {
       let game;
-      if (this.ptn) {
-        // Add game from URL then redirect to /
-        game = new Game(this.ptn, { name: this.name, state: this.state });
-        if (game) {
-          this.$store.dispatch("ADD_GAME", {
-            ptn: this.ptn,
-            name: game.name,
-            state: game.minState
-          });
-          this.$router.replace("/");
+      try {
+        if (this.ptn) {
+          // Add game from URL then redirect to /
+          game = new Game(this.ptn, { name: this.name, state: this.state });
+          if (game) {
+            this.$store.dispatch("ADD_GAME", {
+              ptn: this.ptn,
+              name: game.name,
+              state: game.minState
+            });
+            this.$router.replace("/");
+          }
+        } else if (this.$store.state.games && this.$store.state.games.length) {
+          game = this.$store.state.games[0];
+          game = new Game(game.ptn, game);
+          if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
+            game.doTPS(this.$store.state.editingTPS);
+          }
         }
-      } else if (this.$store.state.games && this.$store.state.games.length) {
-        game = this.$store.state.games[0];
-        game = new Game(game.ptn, game);
-        if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
-          game.doTPS(this.$store.state.editingTPS);
+      } catch (error) {
+        const name = game ? game.name : "";
+        game = this.newGame();
+        if (name) {
+          game.name = name;
         }
-      } else {
+        this.notifyError(this.$t(`error["${error.message}"]`));
+      }
+      if (!game) {
         game = this.newGame();
       }
       this.setWindowTitle(game.name);

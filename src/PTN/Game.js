@@ -16,4 +16,13 @@ export default class Game extends (new Aggregation(
   GameMutations,
   GameNavigation,
   GameUndo
-)) {}
+)) {
+  static validate(notation) {
+    try {
+      new Game(notation);
+    } catch (error) {
+      return error ? error.message : "";
+    }
+    return true;
+  }
+}

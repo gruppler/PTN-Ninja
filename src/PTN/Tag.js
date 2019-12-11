@@ -72,7 +72,7 @@ export default class Tag {
     const matchData = notation.match(/\[([^\s]+)\s*"([^"]*)"\]/);
 
     if (!matchData) {
-      throw new Error("Invalid tag: " + notation);
+      throw new Error("Invalid tag");
     }
 
     [this.ptn, this.key, this.value] = matchData;
@@ -82,7 +82,7 @@ export default class Tag {
 
     if (key in formats) {
       if (this.value && !formats[key].test(this.value)) {
-        throw new Error(`Invalid ${key}: ${this.value}`);
+        throw new Error("Invalid " + key);
       }
     } else {
       throw new Error("Unrecognized tag");
@@ -124,7 +124,7 @@ export default class Tag {
       case "tps":
         this.value = TPS.parse(this.value);
         if (!this.value.isValid) {
-          throw this.value.errors;
+          throw this.value.errors[0];
         }
         break;
     }

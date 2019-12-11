@@ -136,12 +136,12 @@
 // Essentials:
 import Board from "../components/board/Board";
 import Move from "../components/PTN/Move";
-import PTN from "../components/PTN";
-import Notes from "../components/Notes";
+import PTN from "../components/drawers/PTN";
+import Notes from "../components/drawers/Notes";
 
 // Notifications:
-import GameNotifications from "../components/GameNotifications";
-import NoteNotifications from "../components/NoteNotifications";
+import GameNotifications from "../components/notify/GameNotifications";
+import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
 import PlayControls from "../components/controls/PlayControls";

@@ -79,8 +79,8 @@
 </template>
 
 <script>
-import Linenum from "./PTN/Linenum";
-import Ply from "./PTN/Ply";
+import Linenum from "../PTN/Linenum";
+import Ply from "../PTN/Ply";
 
 export default {
   name: "Chat",

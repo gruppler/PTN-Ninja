@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import Move from "./PTN/Move";
+import Move from "../PTN/Move";
 
 export default {
   name: "PTN",

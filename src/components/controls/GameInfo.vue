@@ -640,10 +640,16 @@ export default {
     }
   },
   methods: {
+    validate() {
+      return this.$el.getElementsByClassName("q-field--error").length === 0;
+    },
     blur() {
       this.$nextTick(() => document.activeElement.blur());
     },
     save() {
+      if (!this.validate()) {
+        return false;
+      }
       this.name = (this.name || "").trim();
       if (!this.game || this.game.name !== this.name) {
         if (!this.name) {

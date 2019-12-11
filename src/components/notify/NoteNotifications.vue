@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Notifications from "./general/Notifications";
+import Notifications from "../general/Notifications";
 
 export default {
   name: "NoteNotifications",

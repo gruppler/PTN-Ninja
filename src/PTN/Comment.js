@@ -30,10 +30,4 @@ export default class Comment {
       "}"
     );
   }
-
-  isValid() {
-    this.errors = [];
-
-    return !this.errors.length;
-  }
 }

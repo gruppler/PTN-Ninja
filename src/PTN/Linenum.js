@@ -58,10 +58,4 @@ export default class Linenum {
       "."
     );
   }
-
-  isValid() {
-    this.errors = [];
-
-    return !this.errors.length;
-  }
 }

@@ -30,6 +30,7 @@
         <q-btn
           :label="$t('OK')"
           @click="$refs.gameInfo.save()"
+          :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
           color="accent"
           flat
         />

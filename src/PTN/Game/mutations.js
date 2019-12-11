@@ -13,13 +13,13 @@ export default class GameMutations {
     }
     if (!force) {
       if (!Linenum.validateBranch(newBranch, true)) {
-        throw new Error(`"${newBranch}" is not a valid branch name.`);
+        throw new Error("Invalid branch name");
       }
       if (!(oldBranch in this.branches)) {
-        throw new Error(`"${oldBranch}" is not a branch.`);
+        throw new Error("Invalid branch");
       }
       if (newBranch in this.branches) {
-        throw new Error(`"${newBranch}" is already a branch.`);
+        throw new Error("Branch already exists");
       }
     }
 
@@ -257,7 +257,7 @@ export default class GameMutations {
 
   deleteBranch(branch, recordChange = true) {
     if (!(branch in this.branches)) {
-      throw new Error(`"${branch}" does not exist.`);
+      throw new Error("Invalid branch");
     }
     this.deletePly(this.branches[branch].id, recordChange, true);
   }

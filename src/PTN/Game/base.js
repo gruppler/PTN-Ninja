@@ -254,7 +254,7 @@ export default class GameBase {
           ply.evaluation = item;
         }
       } else if (/[^\s]/.test(notation)) {
-        throw new Error("Invalid PTN format: " + notation.trim());
+        throw new Error("Invalid PTN format");
       } else {
         break;
       }
@@ -497,11 +497,5 @@ export default class GameBase {
     } else {
       return prefix + this.state.moves.map(printMove).join("\r\n");
     }
-  }
-
-  isValid() {
-    this.errors = [];
-
-    return !this.errors.length;
   }
 }

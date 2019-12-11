@@ -20,11 +20,11 @@ export default class Move {
   }
 
   get number() {
-    return this.linenum.number;
+    return this.linenum ? this.linenum.number : "";
   }
 
   get branch() {
-    return this.linenum.branch;
+    return this.linenum ? this.linenum.branch : "";
   }
   set branch(branch) {
     this.linenum.branch = branch;
@@ -81,6 +81,7 @@ export default class Move {
       }
     } else if (
       !ply.isNop &&
+      this.linenum &&
       this.linenum.branch &&
       this.linenum.isRoot &&
       (index === 0 || this.ply1.isNop)
