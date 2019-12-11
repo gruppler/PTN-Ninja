@@ -62,7 +62,7 @@
         </template>
         <template v-slot:append>
           <q-btn
-            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.innerError"
+            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
             @click="editTPS"
             icon="edit"
             dense
@@ -714,17 +714,18 @@ export default {
         this.tags.flats1 !== this.tags.flats2;
     },
     rules(tag) {
-      let rules = [value => !value || formats[tag].test(value)];
+      let rules = [];
       if (tag === "tps") {
         const tags = this.tags;
         rules[0] = tps =>
           !tps ||
           ((tps = TPS.parse(tps)) &&
             !!(tps && tps.isValid && tps.size === 1 * tags.size));
-      }
-      if (tag.startsWith("caps")) {
+      } else if (tag.startsWith("caps")) {
         const tags = this.tags;
         rules[0] = caps => !caps || 1 * caps <= 1 * tags.size;
+      } else {
+        rules[0] = value => !value || formats[tag].test(value);
       }
       return rules;
     },
