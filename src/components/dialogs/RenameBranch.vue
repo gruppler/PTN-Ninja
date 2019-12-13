@@ -10,6 +10,7 @@
             :rules="[validateBranch]"
             color="accent"
             hide-bottom-space
+            clearable
             autofocus
             autogrow
             dense
@@ -85,5 +86,3 @@ export default {
   }
 };
 </script>
-
-<style></style>

@@ -8,7 +8,7 @@
       <SmoothReflow>
         <Recess>
           <q-card-section
-            style="max-height: calc(100vh - 18rem); min-height: 12rem"
+            style="max-height: calc(100vh - 18rem)"
             class="scroll"
           >
             <GameInfo
@@ -78,5 +78,3 @@ export default {
   }
 };
 </script>
-
-<style></style>

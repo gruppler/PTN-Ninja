@@ -17,5 +17,3 @@ export default {
   name: "DialogHeader"
 };
 </script>
-
-<style></style>

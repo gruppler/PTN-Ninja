@@ -10,5 +10,3 @@ export default {
   name: "Recess"
 };
 </script>
-
-<style></style>

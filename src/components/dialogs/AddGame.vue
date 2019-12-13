@@ -18,7 +18,7 @@
             <Recess>
               <q-card-section
                 class="scroll"
-                style="max-height: calc(100vh - 17rem); min-height: 8rem"
+                style="max-height: calc(100vh - 17rem)"
               >
                 <GameInfo
                   ref="gameInfo"
