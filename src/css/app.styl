@@ -1,0 +1,139 @@
+// app global css
+
+@font-face
+  font-family 'Source Code Pro'
+  font-style normal
+  font-weight 300
+  src url('./fonts/Source+Code+Pro_300_normal.woff')
+
+@font-face
+  font-family 'Source Code Pro'
+  font-style normal
+  font-weight 400
+  src url('./fonts/Source+Code+Pro_400_normal.woff')
+
+@font-face
+  font-family 'Source Code Pro'
+  font-style normal
+  font-weight 600
+  src url('./fonts/Source+Code+Pro_600_normal.woff')
+
+@font-face
+  font-family 'Source Code Pro'
+  font-style normal
+  font-weight 700
+  src url('./fonts/Source+Code+Pro_700_normal.woff')
+
+kbd
+  font-family 'Source Code Pro'
+  display inline-block
+  padding .17em .5em
+  margin .1em 0
+  text-decoration none
+  cursor default
+  border-radius .3em
+  background $highlight
+  position relative
+  + kbd
+    margin-left 1rem
+    &::before
+      content '+'
+      position absolute
+      left -.5rem
+      transform translateX(-50%)
+
+.absolute-fit
+  position absolute
+  top 0
+  bottom 0
+  left 0
+  right 0
+
+.highlight
+  background-color $highlight
+
+.fullwidth-padded-md
+  padding-left $space-base
+  padding-right $space-base
+  margin-left - $space-base
+  margin-right - $space-base
+
+.ptn
+  font-size 18px
+  line-height 1.5em
+  color $blue-grey-10
+
+.board-move-container
+  display flex
+  flex-direction column
+  align-items center
+  justify-content flex-end
+  flex-shrink 0
+
+.q-item.q-router-link--active, .q-item--active
+  color $accent
+
+.q-dialog
+  .q-expansion-item .q-list
+    overflow-x hidden
+    overflow-y auto
+
+.q-field__append
+  align-self flex-end
+
+.q-message-text-content
+  white-space pre-wrap
+
+.q-menu
+  user-select none
+
+.q-notifications__list--top
+  top $toolbar-min-height
+  z-index 5000
+
+.q-notifications__list--bottom
+  bottom $toolbar-min-height
+
+.q-date--dark, .q-time--dark
+  background $secondary
+
+.q-notification
+  transition transform $generic-hover-transition,
+    opacity $generic-hover-transition
+  @media (min-width: $breakpoint-sm-min)
+    &
+      max-width 45vw
+  &.note
+    white-space pre-line
+    .q-notification__message
+      text-overflow ellipsis
+      overflow hidden
+
+.q-slider__pin-value-marker-text
+  color $secondary
+
+.q-expansion-item--expanded > .q-expansion-item__container > .q-item
+  color $accent
+
+.footer-toolbar
+  min-height 58px
+  .q-btn:not(.q-btn--round)
+    border-radius 0
+
+.dimmed-btn
+  opacity .15
+  @media (hover)
+    &:hover
+      opacity 1
+
+::-webkit-scrollbar
+  width 8px
+  height 8px
+  background transparent
+::-webkit-scrollbar-thumb
+  border 0
+  box-shadow none
+  background $separator-color
+  min-height 40px
+  .q-card--dark &
+    background $separator-dark-color
