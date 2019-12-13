@@ -154,7 +154,7 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, pick } from "lodash";
+import { defaults } from "lodash";
 
 export default {
   components: {
@@ -176,10 +176,7 @@ export default {
       Platform,
       game: new Game(this.ptn, { name: this.name, state: this.state }),
       hotkeys: HOTKEYS,
-      defaults: pick(
-        this.$store.state.defaults,
-        this.$store.state.embedUIOptions
-      )
+      defaults: { ...this.$store.state.embedConfig.ui }
     };
   },
   computed: {

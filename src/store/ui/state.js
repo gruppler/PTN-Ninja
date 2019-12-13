@@ -1,7 +1,9 @@
 import { LocalStorage } from "quasar";
 import { Platform } from "quasar";
 
-const defaults = {
+import { pick } from "lodash";
+
+let defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
@@ -32,23 +34,31 @@ const defaults = {
   unplayedPieces: true
 };
 
+const embedUIOptions = [
+  "axisLabels",
+  "flatCounts",
+  "highlightSquares",
+  "playSpeed",
+  "showAllBranches",
+  "showControls",
+  "showMove",
+  "showRoads",
+  "showScrubber",
+  "unplayedPieces"
+];
+
+defaults.embedConfig = {
+  width: "100%",
+  height: "600px",
+  state: true,
+  ui: pick(defaults, embedUIOptions)
+};
+
 let state = {
   embed: Platform.within.iframe,
   games: [],
   defaults,
-  ...defaults,
-  embedUIOptions: [
-    "axisLabels",
-    "flatCounts",
-    "highlightSquares",
-    "playSpeed",
-    "showAllBranches",
-    "showControls",
-    "showMove",
-    "showRoads",
-    "showScrubber",
-    "unplayedPieces"
-  ]
+  ...defaults
 };
 
 const load = (key, initial) =>

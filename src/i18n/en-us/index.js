@@ -81,6 +81,7 @@ export default {
   Redo: "Redo",
   Rename: "Rename",
   Remote: "Remote",
+  Reset: "Reset",
   Result: "Result",
   "Road Connections": "Road Connections",
   Round: "Round",

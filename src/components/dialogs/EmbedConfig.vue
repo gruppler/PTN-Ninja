@@ -53,7 +53,7 @@
                 <q-item>
                   <q-item-section>
                     <q-input
-                      v-model="width"
+                      v-model="config.width"
                       :label="$t('Width')"
                       hide-bottom-space
                       color="accent"
@@ -62,7 +62,7 @@
                   </q-item-section>
                   <q-item-section>
                     <q-input
-                      v-model="height"
+                      v-model="config.height"
                       :label="$t('Height')"
                       hide-bottom-space
                       color="accent"
@@ -76,7 +76,7 @@
                     <q-item-label>{{ $t("From current ply") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="state" />
+                    <q-toggle color="accent" v-model="config.state" />
                   </q-item-section>
                 </q-item>
 
@@ -84,10 +84,10 @@
                   <q-item-section>
                     {{ $t("Play Speed") }}
                     <q-slider
-                      v-model="ui.playSpeed"
+                      v-model="config.ui.playSpeed"
                       :min="30"
                       :max="160"
-                      :label-value="ui.playSpeed + ' ' + $t('BPM')"
+                      :label-value="config.ui.playSpeed + ' ' + $t('BPM')"
                       :step="10"
                       color="accent"
                       snap
@@ -101,7 +101,10 @@
                     <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showAllBranches" />
+                    <q-toggle
+                      color="accent"
+                      v-model="config.ui.showAllBranches"
+                    />
                   </q-item-section>
                 </q-item>
 
@@ -110,7 +113,7 @@
                     <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.axisLabels" />
+                    <q-toggle color="accent" v-model="config.ui.axisLabels" />
                   </q-item-section>
                 </q-item>
 
@@ -119,7 +122,7 @@
                     <q-item-label>{{ $t("Road Connections") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showRoads" />
+                    <q-toggle color="accent" v-model="config.ui.showRoads" />
                   </q-item-section>
                 </q-item>
 
@@ -128,7 +131,10 @@
                     <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.highlightSquares" />
+                    <q-toggle
+                      color="accent"
+                      v-model="config.ui.highlightSquares"
+                    />
                   </q-item-section>
                 </q-item>
 
@@ -137,7 +143,7 @@
                     <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.flatCounts" />
+                    <q-toggle color="accent" v-model="config.ui.flatCounts" />
                   </q-item-section>
                 </q-item>
 
@@ -146,7 +152,10 @@
                     <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.unplayedPieces" />
+                    <q-toggle
+                      color="accent"
+                      v-model="config.ui.unplayedPieces"
+                    />
                   </q-item-section>
                 </q-item>
 
@@ -155,7 +164,7 @@
                     <q-item-label>{{ $t("Current Move") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showMove" />
+                    <q-toggle color="accent" v-model="config.ui.showMove" />
                   </q-item-section>
                 </q-item>
 
@@ -164,7 +173,7 @@
                     <q-item-label>{{ $t("Play Controls") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showControls" />
+                    <q-toggle color="accent" v-model="config.ui.showControls" />
                   </q-item-section>
                 </q-item>
 
@@ -173,7 +182,7 @@
                     <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showScrubber" />
+                    <q-toggle color="accent" v-model="config.ui.showScrubber" />
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -186,6 +195,7 @@
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-model="showAll" />
+        <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Copy')" @click="copy" color="accent" flat />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
@@ -197,7 +207,7 @@
 <script>
 import MoreToggle from "../general/MoreToggle.vue";
 
-import { pick } from "lodash";
+import { cloneDeep } from "lodash";
 
 export default {
   name: "EmbedConfig",
@@ -206,10 +216,7 @@ export default {
   data() {
     return {
       name: this.game.name,
-      width: "100%",
-      height: "600px",
-      state: true,
-      ui: pick(this.$store.state.defaults, this.$store.state.embedUIOptions),
+      config: cloneDeep(this.$store.state.embedConfig),
       showAll: false,
       previewError: false,
       previewLoaded: false,
@@ -226,20 +233,23 @@ export default {
     url() {
       return this.$store.getters.url(this.game, {
         origin: true,
-        state: this.state,
         name: this.name,
-        ui: this.ui
+        state: this.config.state,
+        ui: this.config.ui
       });
     },
     code() {
-      return `<iframe src="${this.url}" width="${this.width}" height="${
-        this.height
-      }" style="width:${this.width}; max-width:100vw; height:${
-        this.height
+      return `<iframe src="${this.url}" width="${this.config.width}" height="${
+        this.config.height
+      }" style="width:${this.config.width}; max-width:100vw; height:${
+        this.config.height
       }; max-height:100vh;" frameborder="0" allowfullscreen />`;
     }
   },
   methods: {
+    reset() {
+      this.config = cloneDeep(this.$store.state.defaults.embedConfig);
+    },
     copy() {
       this.$store.dispatch("COPY", {
         text: this.code,
@@ -264,6 +274,12 @@ export default {
       if (this.$refs.preview) {
         this.$refs.preview.contentWindow.location.replace(url);
       }
+    },
+    config: {
+      handler(value) {
+        this.$store.dispatch("SET_UI", ["embedConfig", cloneDeep(value)]);
+      },
+      deep: true
     }
   }
 };
