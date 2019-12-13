@@ -479,7 +479,6 @@ export default {
         game = this.newGame();
       }
       this.setWindowTitle(game.name);
-      window.game = game;
       return game;
     },
     updateGame() {
