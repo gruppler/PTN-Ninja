@@ -112,7 +112,7 @@ export const HOTKEY_NAMES = {
     share: "Share",
     embedGame: "Embed",
     focusText: "Focus Text Input",
-    more: "Show More"
+    more: "Show More/Less"
   }
 };
 

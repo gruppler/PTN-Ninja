@@ -1,7 +1,7 @@
 <template>
   <q-btn
     :icon="value ? 'unfold_less' : 'unfold_more'"
-    :label="$t(value ? 'Show Less' : 'Show More')"
+    :label="$t(value ? 'Less' : 'More')"
     @click="toggle"
     v-shortkey="hotkey"
     @shortkey="toggle"
