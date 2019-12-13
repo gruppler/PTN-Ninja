@@ -189,19 +189,15 @@ export default {
       }
     },
     transform() {
+      const x = this.boardRotation[0];
+      const y = this.boardRotation[1];
+      const magnitude = Math.sqrt(x * x + y * y);
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ =
-        -this.boardRotation[0] * this.boardRotation[1] * MAX_ANGLE * 1.5 +
-        "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
 
-      const rotate3d = [
-        this.boardRotation[1],
-        this.boardRotation[0],
-        0,
-        this.boardRotation[2] * MAX_ANGLE + "deg"
-      ].join(",");
+      const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
       return this.board3D
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
@@ -269,9 +265,7 @@ export default {
         x = 0;
       }
 
-      let magnitude = Math.sqrt(x * x + y * y);
-
-      this.boardRotation = [x, y, magnitude];
+      this.boardRotation = [x, y];
       if (event.isFinal) {
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
       }
