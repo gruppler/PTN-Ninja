@@ -1,53 +1,40 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)">
     <q-card style="width: 600px" class="bg-secondary">
-      <DialogHeader>{{ $t("Help") }}</DialogHeader>
+      <q-tabs v-model="section" active-color="accent" indicator-color="accent">
+        <q-tab name="about" icon="info" :label="$t('About')" />
+        <q-tab name="usage" icon="help" :label="$t('Usage')" />
+        <q-tab name="hotkeys" icon="keyboard" :label="$t('Hotkeys')" />
+      </q-tabs>
 
-      <q-separator />
-
-      <div class="row no-wrap">
-        <q-tabs
-          v-model="section"
-          active-color="accent"
-          indicator-color="accent"
-          vertical
-          no-caps
-        >
-          <q-tab name="about" icon="info" :label="$t('About')" />
-          <q-tab name="usage" icon="help" :label="$t('Usage')" />
-          <q-tab name="hotkeys" icon="keyboard" :label="$t('Hotkeys')" />
-        </q-tabs>
-
-        <q-separator vertical />
-
-        <Recess class="col">
+      <SmoothReflow class="col">
+        <Recess>
           <div
             ref="content"
-            class="scroll"
-            style="max-height: calc(100vh - 22rem)"
+            class="help scroll"
+            style="max-height: calc(100vh - 18.5rem)"
           >
             <q-tab-panels
               v-model="section"
               class="bg-secondary col-grow"
-              transition-prev="jump-down"
-              transition-next="jump-up"
+              swipeable
               animated
             >
               <q-tab-panel name="about">
-                <vue-markdown>{{ $t("docs.about") }}</vue-markdown>
+                <q-markdown :src="about" />
               </q-tab-panel>
 
               <q-tab-panel name="usage">
-                <vue-markdown>{{ $t("docs.usage") }}</vue-markdown>
+                <q-markdown :src="usage" />
               </q-tab-panel>
 
               <q-tab-panel name="hotkeys">
-                <vue-markdown>{{ $t("docs.hotkeys") }}</vue-markdown>
+                <hotkeys />
               </q-tab-panel>
             </q-tab-panels>
           </div>
         </Recess>
-      </div>
+      </SmoothReflow>
 
       <q-separator />
 
@@ -59,28 +46,36 @@
 </template>
 
 <script>
-import DialogHeader from "../general/DialogHeader";
-
-import VueMarkdown from "vue-markdown";
-
-import { HOTKEYS_FORMATTED } from "../../keymap";
+import about from "../../i18n/en-us/about.md";
+import usage from "../../i18n/en-us/usage.md";
+import hotkeys from "../../i18n/hotkeys.vue";
 
 export default {
   name: "Help",
-  components: { DialogHeader, VueMarkdown },
+  components: { hotkeys },
   props: ["value"],
   data() {
     return {
       section: "about",
-      hotkeys: HOTKEYS_FORMATTED
+      about,
+      usage
     };
   },
   watch: {
     section() {
-      this.$refs.content.scrollTop = 0;
+      this.$nextTick(() => {
+        this.$refs.content.scrollTop = 0;
+      });
     }
   }
 };
 </script>
 
-<style></style>
+<style lang="stylus">
+.help
+  h6
+    margin-top 0
+    margin-bottom 1em
+    ~ h6
+      margin-top 1.5em
+</style>

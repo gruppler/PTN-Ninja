@@ -14,6 +14,22 @@
         >
           <Recess>
             <q-list style="max-height: calc(100vh - 24rem)">
+              <q-item>
+                <q-item-section>
+                  {{ $t("Play Speed") }}
+                  <q-slider
+                    v-model="playSpeed"
+                    :min="30"
+                    :max="160"
+                    :label-value="playSpeed + ' ' + $t('BPM')"
+                    :step="10"
+                    color="accent"
+                    snap
+                    label
+                  />
+                </q-item-section>
+              </q-item>
+
               <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Animate Board") }}</q-item-label>
@@ -50,6 +66,15 @@
                 </q-item-section>
               </q-item>
 
+              <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="accent" v-model="highlightSquares" />
+                </q-item-section>
+              </q-item>
+
               <q-item tag="label" :title="hotkeys.pieceShadows" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
@@ -83,33 +108,6 @@
                 </q-item-section>
                 <q-item-section side>
                   <q-toggle color="accent" v-model="showMove" />
-                </q-item-section>
-              </q-item>
-
-              <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("Highlight Current Squares")
-                  }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="highlightSquares" />
-                </q-item-section>
-              </q-item>
-
-              <q-item>
-                <q-item-section>
-                  {{ $t("Play Speed") }}
-                  <q-slider
-                    v-model="playSpeed"
-                    :min="30"
-                    :max="160"
-                    :label-value="playSpeed + ' ' + $t('BPM')"
-                    :step="10"
-                    color="accent"
-                    snap
-                    label
-                  />
                 </q-item-section>
               </q-item>
             </q-list>

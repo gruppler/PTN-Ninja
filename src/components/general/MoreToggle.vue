@@ -17,7 +17,7 @@ export default {
   props: ["value"],
   data() {
     return {
-      hotkey: HOTKEYS.MISC["Show More"]
+      hotkey: HOTKEYS.MISC.more
     };
   },
   methods: {

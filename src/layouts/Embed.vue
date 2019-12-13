@@ -225,10 +225,10 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "Edit PTN":
+        case "editPTN":
           this.$refs.tools.edit = true;
           break;
-        case "Focus Text Input":
+        case "focusText":
           this.right = true;
           this.$refs.notes.$refs.input.focus();
           break;

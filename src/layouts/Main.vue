@@ -503,41 +503,41 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "Edit Game":
+        case "editGame":
           this.dialogEditGame = true;
           break;
-        case "Edit PTN":
+        case "editPTN":
           this.$refs.tools.edit = true;
           break;
-        case "Embed Game":
+        case "embedGame":
           this.dialogEmbed = true;
           break;
-        case "Focus Text Input":
+        case "focusText":
           this.right = true;
           this.$refs[
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
-        case "Help":
-          this.$refs.help.section = "about";
+        case "help":
+          this.$refs.help.section = "usage";
           this.dialogHelp = true;
           break;
-        case "Hotkeys":
+        case "hotkeys":
           this.$refs.help.section = "hotkeys";
           this.dialogHelp = true;
           break;
-        case "Load Game":
+        case "loadGame":
           this.$refs.addGame.tab = "load";
           this.dialogAddGame = true;
           break;
-        case "New Game":
+        case "newGame":
           this.$refs.addGame.tab = "new";
           this.dialogAddGame = true;
           break;
-        case "Preferences":
+        case "preferences":
           this.dialogUISettings = true;
           break;
-        case "Share":
+        case "share":
           this.share();
           break;
       }

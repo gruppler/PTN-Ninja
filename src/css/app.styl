@@ -24,6 +24,23 @@
   font-weight 700
   src url('./fonts/Source+Code+Pro_700_normal.woff')
 
+kbd
+  font-family 'Source Code Pro'
+  display inline-block
+  padding .17em .5em
+  text-decoration none
+  cursor default
+  border-radius .3em
+  background $highlight
+  position relative
+  + kbd
+    margin-left 1rem
+    &::before
+      content '+'
+      position absolute
+      left -.5rem
+      transform translateX(-50%)
+
 .absolute-fit
   position absolute
   top 0

@@ -49,6 +49,7 @@ module.exports = function(ctx) {
         "QLayout",
         "QLinearProgress",
         "QList",
+        "QMarkupTable",
         "QMenu",
         "QPage",
         "QPageContainer",

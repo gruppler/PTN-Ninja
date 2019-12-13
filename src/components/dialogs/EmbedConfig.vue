@@ -80,6 +80,31 @@
                   </q-item-section>
                 </q-item>
 
+                <q-item v-show="showAll">
+                  <q-item-section>
+                    {{ $t("Play Speed") }}
+                    <q-slider
+                      v-model="ui.playSpeed"
+                      :min="30"
+                      :max="160"
+                      :label-value="ui.playSpeed + ' ' + $t('BPM')"
+                      :step="10"
+                      color="accent"
+                      snap
+                      label
+                    />
+                  </q-item-section>
+                </q-item>
+
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.showAllBranches" />
+                  </q-item-section>
+                </q-item>
+
                 <q-item v-show="showAll" tag="label" v-ripple>
                   <q-item-section>
                     <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -95,6 +120,15 @@
                   </q-item-section>
                   <q-item-section side>
                     <q-toggle color="accent" v-model="ui.showRoads" />
+                  </q-item-section>
+                </q-item>
+
+                <q-item v-show="showAll" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="ui.highlightSquares" />
                   </q-item-section>
                 </q-item>
 
@@ -127,26 +161,6 @@
 
                 <q-item v-show="showAll" tag="label" v-ripple>
                   <q-item-section>
-                    <q-item-label>{{
-                      $t("Highlight Current Squares")
-                    }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.highlightSquares" />
-                  </q-item-section>
-                </q-item>
-
-                <q-item v-show="showAll" tag="label" v-ripple>
-                  <q-item-section>
-                    <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle color="accent" v-model="ui.showAllBranches" />
-                  </q-item-section>
-                </q-item>
-
-                <q-item v-show="showAll" tag="label" v-ripple>
-                  <q-item-section>
                     <q-item-label>{{ $t("Play Controls") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
@@ -160,22 +174,6 @@
                   </q-item-section>
                   <q-item-section side>
                     <q-toggle color="accent" v-model="ui.showScrubber" />
-                  </q-item-section>
-                </q-item>
-
-                <q-item v-show="showAll">
-                  <q-item-section>
-                    {{ $t("Play Speed") }}
-                    <q-slider
-                      v-model="ui.playSpeed"
-                      :min="30"
-                      :max="160"
-                      :label-value="ui.playSpeed + ' ' + $t('BPM')"
-                      :step="10"
-                      color="accent"
-                      snap
-                      label
-                    />
                   </q-item-section>
                 </q-item>
               </q-list>
