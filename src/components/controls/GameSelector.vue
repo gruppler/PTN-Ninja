@@ -67,7 +67,26 @@ export default {
       }
     },
     close(index) {
-      this.$store.dispatch("REMOVE_GAME", index);
+      this.$q
+        .dialog({
+          title: this.$t("Confirm"),
+          message: this.$t("confirm.close", this.$store.state.games[index]),
+          persistent: true,
+          ok: {
+            label: this.$t("OK"),
+            flat: true,
+            color: "accent"
+          },
+          cancel: {
+            label: this.$t("Cancel"),
+            flat: true,
+            color: "accent"
+          },
+          class: "bg-secondary"
+        })
+        .onOk(() => {
+          this.$store.dispatch("REMOVE_GAME", index);
+        });
     },
     edit() {
       this.$emit("edit");

@@ -23,6 +23,7 @@ export default {
   Clock: "Clock",
   Close: "Close",
   "Coming soon": "Coming soon!",
+  Confirm: "Confirm",
   Copy: "Copy",
   "Copy PTN": "Copy PTN",
   "Copy Link": "Copy Link",
@@ -120,6 +121,10 @@ export default {
     F: "{player} wins by flats",
     R: "{player} wins by road",
     tie: "It's a tie"
+  },
+
+  confirm: {
+    close: "Are you sure you want to close the game '{name}'?"
   },
 
   error: {
