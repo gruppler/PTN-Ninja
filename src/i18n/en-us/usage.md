@@ -1,9 +1,15 @@
 Getting Started
 ===
+::: tip
+To **right-click** on most touchscreen devices, **long-press**.
+:::
 
-### Load a Game
-PTN Ninja can load games from URLs generated from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself. Loaded games are stored in the browser until closed via the game selector.
-- **Click** the "+" button in the main menu to create a new game or load an existing game.
+### Games
+PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
+
+PTN Ninja can load games from URLs generated from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself. Loaded games are stored in the browser until closed via the Game Selector.
+- To create a new game, **click** the "+" button in the main menu to open the New Game dialog.
+- To load an existing game, **click** the "+" button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more .ptn or .txt files into the window.
 
 ### Playback
@@ -49,8 +55,9 @@ Notes
 
 TPS Mode
 ---
-TPS Mode enables you to create any board state directly. Enter TPS Mode by **clicking** the Edit button in the TPS field of the Edit Game dialog.
-- TPS edit mode is available only for games with no plies.
+TPS Mode enables you to create any board state directly. Enter TPS Mode by **clicking** the Edit button in the TPS field of the Edit Game dialog. TPS edit mode is available only for games with no plies.
+- Select a piece type and color from the piece selector, then **click** a square to place a piece.
+- **Right-click** a square to remove a piece. The color and type of that piece will be selected.
 
 3D Mode
 ---
