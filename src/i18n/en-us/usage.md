@@ -5,9 +5,9 @@ To **right-click** on most touchscreen devices, **long-press**.
 :::
 
 ### Games
-PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
+PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
 
-PTN Ninja can load games from URLs generated from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself. Loaded games are stored in the browser until closed via the Game Selector.
+You can load games from .ptn or .txt files, or from URLs generated from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 - To create a new game, **click** the "+" button in the main menu to open the New Game dialog.
 - To load an existing game, **click** the "+" button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more .ptn or .txt files into the window.
