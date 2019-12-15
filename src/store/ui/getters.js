@@ -55,7 +55,7 @@ export const url = state => (game, options = {}) => {
     url +=
       "&" +
       Object.keys(params)
-        .map(key => key + "=" + params[key])
+        .map(key => key + "=" + encodeURIComponent(params[key]))
         .join("&");
   }
   return url;
