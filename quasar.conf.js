@@ -81,6 +81,7 @@ module.exports = function(ctx) {
         "AddressbarColor",
         "AppFullscreen",
         "BottomSheet",
+        "Dialog",
         "Loading",
         "LocalStorage",
         "Notify"
