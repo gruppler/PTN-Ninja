@@ -78,4 +78,11 @@ export default {
     margin-bottom 1em
     ~ h6
       margin-top 1.5em
+
+.body--dark .q-markdown
+  .q-markdown--link
+    color: $accent
+
+    &:hover
+      color: darken($accent, 10%)
 </style>
