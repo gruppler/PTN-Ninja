@@ -474,6 +474,10 @@ export default {
         game = this.newGame();
       }
       this.setWindowTitle(game.name);
+
+      if (process.env.DEV) {
+        window.game = game;
+      }
       return game;
     },
     updateGame() {

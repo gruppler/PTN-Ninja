@@ -7,6 +7,7 @@
       color="accent"
       class="ptn-editor fit"
       :rules="rules"
+      @paste.native.prevent="unescape"
       hide-bottom-space
       no-error-icon
     />
@@ -15,6 +16,8 @@
 
 <script>
 import Game from "../../PTN/Game";
+
+import { unescape } from "lodash";
 
 export default {
   name: "PTNEditor",
@@ -44,6 +47,9 @@ export default {
     },
     init() {
       this.ptn = this.game ? this.game.moveText(true, true) : "";
+    },
+    unescape(event) {
+      this.ptn = unescape(event.clipboardData.getData("Text"));
     }
   },
   mounted() {

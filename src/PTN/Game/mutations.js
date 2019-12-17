@@ -23,14 +23,12 @@ export default class GameMutations {
       }
     }
 
-    const startsWithOldBranch = branch => {
-      return branch === oldBranch || branch.startsWith(oldBranch + "/");
-    };
-
     // Update moves/linenums
     this.moves.forEach(move => {
-      if (startsWithOldBranch(move.branch)) {
-        move.branch = move.branch.replace(oldBranch, newBranch);
+      if (move.branch === oldBranch) {
+        move.branch = newBranch;
+      } else if (move.branch.startsWith(oldBranch + "/")) {
+        move.branch = move.branch.replace(oldBranch + "/", newBranch);
       }
     });
 
@@ -44,9 +42,11 @@ export default class GameMutations {
     this.branches = branches;
 
     // Update targetBranch
-    if (startsWithOldBranch(this.state.targetBranch)) {
+    if (this.state.targetBranch === oldBranch) {
+      this.state.targetBranch = newBranch;
+    } else if (this.state.targetBranch.startsWith(oldBranch + "/")) {
       this.state.targetBranch = this.state.targetBranch.replace(
-        oldBranch,
+        oldBranch + "/",
         newBranch
       );
     }
@@ -97,6 +97,19 @@ export default class GameMutations {
         false
       );
 
+      // Remove original descendents
+      if (newPly.branches.length && newPly.branches[0].branch === "") {
+        this._deletePlies(
+          this.plies
+            .filter(
+              ply => ply && ply.index >= newPly.index && ply.branch === ""
+            )
+            .map(ply => ply.id),
+          false,
+          false
+        );
+      }
+
       this.branches[newPly.branch] = newPly;
 
       // Make branch primary
@@ -104,7 +117,7 @@ export default class GameMutations {
     } else {
       // Remove preceeding plies
       this._deletePlies(
-        this.state.plies.slice(0, boardPly.index).map(ply => ply.id)
+        this.state.plies.slice(0, newPly.index).map(ply => ply.id)
       );
     }
 
