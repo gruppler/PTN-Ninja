@@ -211,8 +211,9 @@
     <UISettings v-model="dialogUISettings" />
     <EmbedConfig v-model="dialogEmbed" :game="game" />
 
-    <NoteNotifications :game="game" />
+    <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
+    <NoteNotifications :game="game" />
   </q-layout>
 </template>
 
@@ -224,6 +225,7 @@ import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 
 // Notifications:
+import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
@@ -259,6 +261,7 @@ export default {
     Move,
     PTN,
     Notes,
+    ErrorNotifications,
     GameNotifications,
     NoteNotifications,
     PlayControls,
@@ -281,6 +284,7 @@ export default {
     return {
       Platform,
       game: this.getGame(),
+      errors: [],
       hotkeys: HOTKEYS,
       dialogHelp: false,
       dialogAddGame: false,
@@ -427,16 +431,6 @@ export default {
     setWindowTitle(prefix = this.game.name) {
       document.title = prefix + " — " + this.$t("app_title");
     },
-    notifyError(message) {
-      this.$q.notify({
-        position: "top-right",
-        icon: "error",
-        classes: "text-grey-10",
-        color: "negative",
-        timeout: 2000,
-        message
-      });
-    },
     newGame() {
       return new Game(
         `[Player1 "${this.$store.state.player1}"]\n` +
@@ -448,6 +442,7 @@ export default {
     },
     getGame() {
       let game;
+      this.errors = [];
       try {
         if (this.ptn) {
           // Add game from URL then redirect to /
@@ -473,7 +468,7 @@ export default {
         if (name) {
           game.name = name;
         }
-        this.notifyError(this.$t(`error["${error.message}"]`));
+        this.errors.push(this.$t(`error["${error.message}"]`));
       }
       if (!game) {
         game = this.newGame();
