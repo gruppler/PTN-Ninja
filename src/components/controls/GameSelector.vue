@@ -14,12 +14,19 @@
       filled
       dense
     >
+      <template v-slot:prepend>
+        <q-icon v-if="game.isOnline" name="public" />
+      </template>
+
       <template v-slot:option="scope">
         <q-item
           class="non-selectable"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         >
+          <q-item-section side v-if="scope.opt.isOnline">
+            <q-icon name="public" />
+          </q-item-section>
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
           </q-item-section>
@@ -55,7 +62,8 @@ export default {
     games() {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
-        value: index
+        value: index,
+        isOnline: game.options.isOnline
       }));
     }
   },

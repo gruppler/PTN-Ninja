@@ -47,6 +47,7 @@ export const HOTKEYS = {
     editPTN: ["shift", "e"],
     share: ["ctrl", "shift", "s"],
     embedGame: ["ctrl", "e"],
+    online: ["o"],
     focusText: ["/"],
     more: ["shift", "space"]
   },
@@ -111,6 +112,7 @@ export const HOTKEY_NAMES = {
     editPTN: "Edit PTN",
     share: "Share",
     embedGame: "Embed",
+    online: "Play Online",
     focusText: "Focus Text Input",
     more: "Show More/Less"
   }

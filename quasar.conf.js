@@ -10,7 +10,8 @@ module.exports = function(ctx) {
       "i18n",
       "moment",
       "shortkey",
-      "globalComponents"
+      "globalComponents",
+      "firebase"
     ],
 
     css: ["app.styl"],

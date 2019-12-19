@@ -10,11 +10,20 @@
         <q-icon name="call_split" class="rotate-180" />
       </q-btn>
 
-      <q-btn @click="edit = true" icon="edit" :title="$t('Edit')" />
+      <q-btn
+        @click="edit = game.isLocal"
+        icon="edit"
+        :title="$t('Edit')"
+        :disabled="!game.isLocal"
+      />
 
-      <q-btn :title="$t('Trim')" class="no-border-radius">
+      <q-btn
+        :title="$t('Trim')"
+        class="no-border-radius"
+        :disabled="!game.isLocal"
+      >
         <q-icon name="flip" class="rotate-270" />
-        <q-menu auto-close square>
+        <q-menu v-if="game.isLocal" auto-close square>
           <q-list class="bg-secondary text-white">
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
               <q-item-section side>
@@ -43,6 +52,13 @@
       <q-btn icon="share" :title="$t('Share')">
         <q-menu auto-close square>
           <q-list class="bg-secondary text-white">
+            <q-item v-if="!$store.state.embed" clickable @click="online">
+              <q-item-section side>
+                <q-icon name="public" />
+              </q-item-section>
+              <q-item-section>{{ $t("Online") }}</q-item-section>
+            </q-item>
+
             <q-item clickable @click="copy('link')">
               <q-item-section side>
                 <q-icon name="link" />
@@ -78,7 +94,11 @@
               <q-item-section>{{ $t("Download") }}</q-item-section>
             </q-item>
 
-            <q-item v-if="!$store.state.embed" clickable @click="embed">
+            <q-item
+              v-if="!$store.state.embed && game.isLocal"
+              clickable
+              @click="embed"
+            >
               <q-item-section side>
                 <q-icon name="code" />
               </q-item-section>
@@ -145,6 +165,9 @@ export default {
     },
     embed() {
       this.$emit("embed");
+    },
+    online() {
+      this.$emit("online");
     }
   }
 };

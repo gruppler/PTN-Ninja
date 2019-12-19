@@ -12,6 +12,7 @@
     ]
   },
   "hosting": {
+    "site": "ptn-ninja",
     "public": "dist/pwa",
     "ignore": [
       "firebase.json",

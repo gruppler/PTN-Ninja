@@ -53,7 +53,13 @@ export default class GameBase {
 
   init(
     notation,
-    params = { name: "", state: null, history: [], historyIndex: 0 }
+    params = {
+      name: "",
+      state: null,
+      options: null,
+      history: [],
+      historyIndex: 0
+    }
   ) {
     Object.defineProperty(this, "movesGrouped", {
       get: memoize(this.getMovesGrouped, () => this.moves.length),
@@ -71,12 +77,12 @@ export default class GameBase {
     let isDoubleBreak = false;
     const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
 
-    this.isLocal = true;
     this.hasTPS = false;
     this.name = params.name;
     this.state = null;
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
+    this.options = params.options ? { ...params.options } : { isOnline: false };
     this.tags = {};
     this.moves = [move];
     this.boards = {};
@@ -304,6 +310,10 @@ export default class GameBase {
 
   get minState() {
     return this.state.min;
+  }
+
+  get isLocal() {
+    return !this.options.isOnline;
   }
 
   plySort(a, b) {

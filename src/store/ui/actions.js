@@ -33,6 +33,7 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   if (game.state) {
     LocalStorage.set("state-" + game.name, game.state);
   }
+  LocalStorage.set("options-" + game.name, game.options);
   if (game.history) {
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
@@ -46,6 +47,7 @@ export const REMOVE_GAME = ({ commit }, index) => {
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + name);
   LocalStorage.remove("state-" + name);
+  LocalStorage.remove("options-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
   commit("REMOVE_GAME", index);
@@ -66,13 +68,19 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
   LocalStorage.set("state-" + name, state.games[0].state);
-  LocalStorage.remove("history-" + oldName);
-  LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
-  LocalStorage.remove("historyIndex-" + oldName);
-  LocalStorage.set(
-    "historyIndex-" + state.games[0].name,
-    state.games[0].historyIndex
-  );
+  if (state.games[0].options) {
+    LocalStorage.remove("options-" + oldName);
+    LocalStorage.set("options-" + name, state.games[0].options);
+  }
+  if (state.games[0].history) {
+    LocalStorage.remove("history-" + oldName);
+    LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
+    LocalStorage.remove("historyIndex-" + oldName);
+    LocalStorage.set(
+      "historyIndex-" + state.games[0].name,
+      state.games[0].historyIndex
+    );
+  }
   commit("SET_NAME", name);
 };
 
@@ -152,6 +160,11 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.readAsText(file);
     }
   });
+};
+
+export const SAVE_OPTIONS = ({ commit }, game) => {
+  LocalStorage.set("options-" + game.name, game.options);
+  commit("SAVE_OPTIONS", game);
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

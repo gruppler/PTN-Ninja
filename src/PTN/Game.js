@@ -1,6 +1,7 @@
 import Aggregation from "../aggregation";
 
 import GameBase from "./Game/base";
+import GameOnline from "./Game/online";
 import GameComments from "./Game/comments";
 import GameEnd from "./Game/end";
 import GameIX from "./Game/ix";
@@ -10,6 +11,7 @@ import GameUndo from "./Game/undo";
 
 export default class Game extends (new Aggregation(
   GameBase,
+  GameOnline,
   GameComments,
   GameEnd,
   GameIX,

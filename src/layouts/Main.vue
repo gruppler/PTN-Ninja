@@ -89,7 +89,12 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools ref="tools" :game="game" @embed="dialogEmbed = true" />
+        <PTN-Tools
+          ref="tools"
+          :game="game"
+          @embed="dialogEmbed = true"
+          @online="dialogOnline = true"
+        />
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -210,6 +215,7 @@
     <EditGame v-model="dialogEditGame" :game="game" />
     <UISettings v-model="dialogUISettings" />
     <EmbedConfig v-model="dialogEmbed" :game="game" />
+    <ShareOnline v-model="dialogOnline" :game="game" />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -248,6 +254,7 @@ import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
+import ShareOnline from "../components/dialogs/ShareOnline";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -277,7 +284,8 @@ export default {
     AddGame,
     EditGame,
     UISettings,
-    EmbedConfig
+    EmbedConfig,
+    ShareOnline
   },
   props: ["ptn", "state", "name"],
   data() {
@@ -290,7 +298,8 @@ export default {
       dialogAddGame: false,
       dialogUISettings: false,
       dialogEditGame: false,
-      dialogEmbed: false
+      dialogEmbed: false,
+      dialogOnline: false
     };
   },
   computed: {
@@ -505,10 +514,10 @@ export default {
           this.dialogEditGame = true;
           break;
         case "editPTN":
-          this.$refs.tools.edit = true;
+          this.$refs.tools.edit = this.game.isLocal;
           break;
         case "embedGame":
-          this.dialogEmbed = true;
+          this.dialogEmbed = this.game.isLocal;
           break;
         case "focusText":
           this.right = true;
@@ -532,6 +541,9 @@ export default {
           this.$refs.addGame.tab = "new";
           this.dialogAddGame = true;
           break;
+        case "online":
+          this.dialogOnline = true;
+          break;
         case "preferences":
           this.dialogUISettings = true;
           break;
@@ -553,6 +565,11 @@ export default {
           class: "bg-secondary",
           message: this.$t("Share"),
           actions: [
+            {
+              label: this.$t("Online"),
+              icon: "public",
+              id: "online"
+            },
             {
               label: this.$t("Copy Link"),
               icon: "link",
@@ -578,15 +595,20 @@ export default {
               icon: "save_alt",
               id: "download"
             },
-            {
-              label: this.$t("Embed"),
-              icon: "code",
-              id: "embed"
-            }
+            this.game.isLocal
+              ? {
+                  label: this.$t("Embed"),
+                  icon: "code",
+                  id: "embed"
+                }
+              : {}
           ]
         })
         .onOk(action => {
           switch (action.id) {
+            case "online":
+              this.dialogOnline = true;
+              break;
             case "link":
               this.$store.dispatch("COPY", {
                 text: this.$store.getters.url(this.game, {

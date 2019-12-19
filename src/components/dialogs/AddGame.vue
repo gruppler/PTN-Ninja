@@ -40,8 +40,8 @@
                   <q-item-section>{{ $t("Local") }}</q-item-section>
                 </q-item>
                 <q-expansion-item
-                  icon="cloud"
-                  :label="$t('Remote')"
+                  icon="public"
+                  :label="$t('Online')"
                   group="type"
                 >
                   <Recess>

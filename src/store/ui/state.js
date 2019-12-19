@@ -74,6 +74,7 @@ if (!state.embed) {
     name,
     ptn: load("ptn-" + name),
     state: load("state-" + name),
+    options: load("options-" + name) || {},
     history: load("history-" + name),
     historyIndex: load("historyIndex-" + name)
   }));
