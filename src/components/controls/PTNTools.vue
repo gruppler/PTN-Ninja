@@ -52,13 +52,6 @@
       <q-btn icon="share" :title="$t('Share')">
         <q-menu auto-close square>
           <q-list class="bg-secondary text-white">
-            <q-item v-if="!$store.state.embed" clickable @click="online">
-              <q-item-section side>
-                <q-icon name="public" />
-              </q-item-section>
-              <q-item-section>{{ $t("Online") }}</q-item-section>
-            </q-item>
-
             <q-item clickable @click="copy('link')">
               <q-item-section side>
                 <q-icon name="link" />
@@ -87,11 +80,20 @@
               <q-item-section>{{ $t("Copy PTN") }}</q-item-section>
             </q-item>
 
+            <q-separator />
+
             <q-item clickable @click="download">
               <q-item-section side>
                 <q-icon name="save_alt" />
               </q-item-section>
               <q-item-section>{{ $t("Download") }}</q-item-section>
+            </q-item>
+
+            <q-item v-if="!$store.state.embed" clickable @click="online">
+              <q-item-section side>
+                <q-icon name="public" />
+              </q-item-section>
+              <q-item-section>{{ $t("Online") }}</q-item-section>
             </q-item>
 
             <q-item

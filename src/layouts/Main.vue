@@ -559,50 +559,48 @@ export default {
       this.textTab = value;
     },
     share() {
+      let actions = [
+        {
+          label: this.$t("Copy Link"),
+          icon: "link",
+          id: "link"
+        },
+        {
+          label: this.$t("Copy Ply"),
+          icon: "layers",
+          id: "ply"
+        },
+        {
+          label: this.$t("Copy Moves"),
+          icon: "format_list_numbered",
+          id: "moves"
+        },
+        {
+          label: this.$t("Copy PTN"),
+          icon: "file_copy",
+          id: "ptn"
+        },
+        {},
+        {
+          label: this.$t("Download"),
+          icon: "save_alt",
+          id: "download"
+        },
+        {
+          label: this.$t("Online"),
+          icon: "public",
+          id: "online"
+        }
+      ];
+      if (this.game.isLocal) {
+        actions.push({ label: this.$t("Embed"), icon: "code", id: "embed" });
+      }
       this.$q
         .bottomSheet({
           grid: true,
           class: "bg-secondary",
           message: this.$t("Share"),
-          actions: [
-            {
-              label: this.$t("Online"),
-              icon: "public",
-              id: "online"
-            },
-            {
-              label: this.$t("Copy Link"),
-              icon: "link",
-              id: "link"
-            },
-            {
-              label: this.$t("Copy Ply"),
-              icon: "layers",
-              id: "ply"
-            },
-            {
-              label: this.$t("Copy Moves"),
-              icon: "format_list_numbered",
-              id: "moves"
-            },
-            {
-              label: this.$t("Copy PTN"),
-              icon: "file_copy",
-              id: "ptn"
-            },
-            {
-              label: this.$t("Download"),
-              icon: "save_alt",
-              id: "download"
-            },
-            this.game.isLocal
-              ? {
-                  label: this.$t("Embed"),
-                  icon: "code",
-                  id: "embed"
-                }
-              : {}
-          ]
+          actions
         })
         .onOk(action => {
           switch (action.id) {
