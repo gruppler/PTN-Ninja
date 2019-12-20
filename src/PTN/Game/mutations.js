@@ -68,7 +68,7 @@ export default class GameMutations {
       return true;
     }
 
-    this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
+    this.tags.tps = new Tag(false, "tps", this.state.tps);
 
     const boardPlyInfo = this.state.boardPly;
     const boardPly = this.plies[boardPlyInfo.id];
@@ -136,7 +136,7 @@ export default class GameMutations {
   }
 
   _trimToBoard() {
-    this.tags.tps = Tag.parse(`[TPS "${this.state.tps}"]`);
+    this.tags.tps = new Tag(false, "tps", this.state.tps);
     this.branches = {};
     this.moves = [];
     this.plies = [];

@@ -1,4 +1,5 @@
 import { db, messaging } from "../../boot/firebase.js";
+import { omit } from "lodash";
 
 export const NOTIFICATION_INIT = context => {
   if (!messaging || !Notification) {
@@ -57,19 +58,26 @@ export const NOTIFICATION_INIT = context => {
   });
 };
 
-export const CREATE = (context, game) => {
-  context;
-  game;
-
+export const CREATE = ({ dispatch }, { game, options }) => {
+  let json = game.json;
+  Object.assign(json.options, options);
   db.collection("games")
-    .add({
-      name: game.name,
-      state: game.minState
-    })
-    .then(docRef => {
-      console.log("Document written with ID: ", docRef.id);
+    .add(omit(json, "moves"))
+    .then(doc => {
+      json.options.id = doc.id;
+      json.options.isOnline = true;
+      dispatch("SAVE_OPTIONS", { game, options: json.options }, { root: true });
+
+      let batch = db.batch();
+      const moves = doc.collection("moves");
+      json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
+      batch.commit().catch(error => {
+        console.error("Error adding moves: ", error);
+      });
     })
     .catch(error => {
       console.error("Error adding document: ", error);
     });
 };
+
+export const LOAD = () => {};

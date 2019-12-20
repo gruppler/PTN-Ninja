@@ -4,9 +4,11 @@ export default class Nop {
 
     if (matchData) {
       [this.ptn] = matchData;
-      this.raw = this.ptn || "...";
-      this.isNop = true;
+    } else {
+      this.ptn = "--";
     }
+    this.raw = this.ptn;
+    this.isNop = true;
   }
 
   static test(notation) {
@@ -18,6 +20,6 @@ export default class Nop {
   }
 
   text() {
-    return this.raw || "...";
+    return this.raw || "--";
   }
 }

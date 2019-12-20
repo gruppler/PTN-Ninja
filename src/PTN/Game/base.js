@@ -70,12 +70,7 @@ export default class GameBase {
       configurable: true
     });
 
-    let item, key, ply;
-    let branch = null;
     let moveNumber = 1;
-    let move = new Move({ game: this, id: 0, index: 0 });
-    let isDoubleBreak = false;
-    const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
 
     this.hasTPS = false;
     this.name = params.name;
@@ -84,7 +79,7 @@ export default class GameBase {
     this.historyIndex = params.historyIndex || 0;
     this.options = params.options ? { ...params.options } : { isOnline: false };
     this.tags = {};
-    this.moves = [move];
+    this.moves = [];
     this.boards = {};
     this.branches = {};
     this.plies = [];
@@ -92,14 +87,20 @@ export default class GameBase {
     this.notes = {};
 
     // Parse HEAD
-    notation = notation.trimStart();
-    while (notation.length && notation[0] === "[") {
-      // Tag
-      item = Tag.parse(notation);
-      key = item.key.toLowerCase();
-      this.tags[key] = item;
-      notation = notation.substr(item.ptn.length).trimStart();
-      delete item.ptn;
+    if (notation) {
+      let item, key;
+
+      notation = notation.trimStart();
+      while (notation.length && notation[0] === "[") {
+        // Tag
+        item = Tag.parse(notation);
+        key = item.key.toLowerCase();
+        this.tags[key] = item;
+        notation = notation.substr(item.ptn.length).trimStart();
+        delete item.ptn;
+      }
+    } else if (params.tags) {
+      this.parseJSONTags(params.tags);
     }
 
     if (this.tags.date) {
@@ -168,110 +169,125 @@ export default class GameBase {
     this.state = new GameState(this);
 
     // Parse BODY
-    while (notation.length) {
-      if (Comment.test(notation)) {
-        // Comment
-        item = Comment.parse(notation);
-        if (
-          isDoubleBreak &&
-          this.plies.length &&
-          Linenum.test(notation.trimStart().substr(item.ptn.length))
-        ) {
-          // Branch identifier
-          branch = item.contents;
-        } else {
-          // Comment
-          let plyID = this.plies.length - 1;
-          let log = item.player === null ? "notes" : "chatlog";
-          if (!this[log][plyID]) {
-            this[log][plyID] = [];
-          }
-          this[log][plyID].push(item);
-        }
-      } else if (Linenum.test(notation)) {
-        // Line number
-        item = Linenum.parse(notation, this, branch);
-        if (!move.linenum) {
-          move.linenum = item;
-        } else {
-          move = new Move({
-            game: this,
-            id: this.moves.length,
-            linenum: item
-          });
-          this.moves[move.id] = move;
-        }
-        branch = item.branch;
-        moveNumber = item.number + 1;
-        ply = null;
-      } else if (Result.test(notation)) {
-        // Result
-        item = Result.parse(notation);
-        if (ply) {
-          ply.result = item;
-        }
-      } else if (Nop.test(notation)) {
-        // Placeholder
-        item = Nop.parse(notation);
-        if (!move.ply1) {
-          move.ply1 = item;
-        } else if (!move.ply2 && !move.ply1.result) {
-          move.ply2 = item;
-        }
-      } else if (Ply.test(notation)) {
-        // Ply
-        item = ply = Ply.parse(notation, { id: this.plies.length });
-        if (
-          move.number === this.firstMoveNumber &&
-          this.firstPlayer === 2 &&
-          !move.ply1
-        ) {
-          move.ply1 = Nop.parse("--");
-        }
-        if (!move.ply1) {
-          // Player 1 ply
-          ply.player = 1;
-          ply.color = move.number === 1 && !this.hasTPS ? 2 : 1;
-          move.ply1 = ply;
-        } else if (!move.ply2) {
-          // Player 2 ply
-          ply.player = 2;
-          ply.color = move.number === 1 && !this.hasTPS ? 1 : 2;
-          move.ply2 = ply;
-        } else {
-          // New move
-          move = new Move({
-            game: this,
-            id: this.moves.length,
-            linenum: Linenum.parse(moveNumber + ". ", this, branch),
-            ply1: ply
-          });
-          this.moves.push(move);
-          moveNumber += 1;
-        }
-        this.plies.push(ply);
-        if (!(ply.branch in this.branches)) {
-          this.branches[ply.branch] = ply;
-        }
-      } else if (Evaluation.test(notation[0])) {
-        // Evalutaion
-        item = Evaluation.parse(notation);
-        if (ply) {
-          ply.evaluation = item;
-        }
-      } else if (/[^\s]/.test(notation)) {
-        throw new Error("Invalid PTN format");
-      } else {
-        break;
-      }
+    if (notation) {
+      let item, ply;
+      let branch = null;
+      let move = new Move({ game: this, id: 0, index: 0 });
+      let isDoubleBreak = false;
+      const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
 
-      notation = notation.trimStart().substr(item.ptn.length);
-      isDoubleBreak = startsWithDoubleBreak.test(notation);
-      delete item.ptn;
+      this.moves[0] = move;
+
+      while (notation.length) {
+        if (Comment.test(notation)) {
+          // Comment
+          item = Comment.parse(notation);
+          if (
+            isDoubleBreak &&
+            this.plies.length &&
+            Linenum.test(notation.trimStart().substr(item.ptn.length))
+          ) {
+            // Branch identifier
+            branch = item.contents;
+          } else {
+            // Comment
+            const plyID = this.plies.length - 1;
+            const log = item.player === null ? "notes" : "chatlog";
+            if (!this[log][plyID]) {
+              this[log][plyID] = [];
+            }
+            this[log][plyID].push(item);
+          }
+        } else if (Linenum.test(notation)) {
+          // Line number
+          item = Linenum.parse(notation, this, branch);
+          if (!move.linenum) {
+            move.linenum = item;
+          } else {
+            move = new Move({
+              game: this,
+              id: this.moves.length,
+              linenum: item
+            });
+            this.moves[move.id] = move;
+          }
+          branch = item.branch;
+          moveNumber = item.number + 1;
+          ply = null;
+        } else if (Result.test(notation)) {
+          // Result
+          item = Result.parse(notation);
+          if (ply) {
+            ply.result = item;
+          }
+        } else if (Nop.test(notation)) {
+          // Placeholder
+          item = Nop.parse(notation);
+          if (!move.ply1) {
+            move.ply1 = item;
+          } else if (!move.ply2 && !move.ply1.result) {
+            move.ply2 = item;
+          }
+        } else if (Ply.test(notation)) {
+          // Ply
+          item = ply = Ply.parse(notation, { id: this.plies.length });
+          if (
+            move.number === this.firstMoveNumber &&
+            this.firstPlayer === 2 &&
+            !move.ply1
+          ) {
+            move.ply1 = Nop.parse("--");
+          }
+          if (!move.ply1) {
+            // Player 1 ply
+            ply.player = 1;
+            ply.color = move.number === 1 && !this.hasTPS ? 2 : 1;
+            move.ply1 = ply;
+          } else if (!move.ply2) {
+            // Player 2 ply
+            ply.player = 2;
+            ply.color = move.number === 1 && !this.hasTPS ? 1 : 2;
+            move.ply2 = ply;
+          } else {
+            // New move
+            move = new Move({
+              game: this,
+              id: this.moves.length,
+              linenum: Linenum.parse(moveNumber + ".", this, branch),
+              ply1: ply
+            });
+            this.moves.push(move);
+            moveNumber += 1;
+          }
+          this.plies.push(ply);
+          if (!(ply.branch in this.branches)) {
+            this.branches[ply.branch] = ply;
+          }
+        } else if (Evaluation.test(notation[0])) {
+          // Evalutaion
+          item = Evaluation.parse(notation);
+          if (ply) {
+            ply.evaluation = item;
+          }
+        } else if (/[^\s]/.test(notation)) {
+          throw new Error("Invalid PTN format");
+        } else {
+          break;
+        }
+
+        notation = notation.trimStart().substr(item.ptn.length);
+        isDoubleBreak = startsWithDoubleBreak.test(notation);
+        delete item.ptn;
+      }
+    } else if (params.moves) {
+      if (params.comments) {
+        this.parseJSONComments(params.comments, -1);
+      }
+      this.parseJSONMoves(params.moves);
     }
 
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ". ", this);
+      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ".", this);
     } else if (
       this.moves.length === 1 &&
       this.moves[0].number !== this.firstMoveNumber
@@ -293,7 +309,7 @@ export default class GameBase {
 
     if (params.state) {
       this.state.targetBranch = params.state.targetBranch || "";
-      ply = this.state.plies[params.state.plyIndex];
+      let ply = this.state.plies[params.state.plyIndex];
       if (ply) {
         if (ply.id || params.state.plyIsDone) {
           this.goToPly(ply.id, params.state.plyIsDone);
@@ -372,7 +388,7 @@ export default class GameBase {
     tags = { ...tags };
     each(tags, (tag, key) => {
       if (tag) {
-        tags[key] = Tag.parse(`[${key} "${tag}"]`);
+        tags[key] = new Tag(false, key, tag);
       } else {
         delete tags[key];
         delete this.tags[key];

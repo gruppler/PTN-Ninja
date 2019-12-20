@@ -41,7 +41,10 @@
     <q-page-container
       class="bg-primary"
       v-shortkey="hotkeys.UI"
-      @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
+      @shortkey="
+        if (!disabledOptions.includes($event.srcKey))
+          $store.dispatch('TOGGLE_UI', $event.srcKey);
+      "
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
@@ -213,7 +216,7 @@
     <Help ref="help" v-model="dialogHelp" />
     <AddGame ref="addGame" v-model="dialogAddGame" />
     <EditGame v-model="dialogEditGame" :game="game" />
-    <UISettings v-model="dialogUISettings" />
+    <UISettings v-model="dialogUISettings" :disabled="disabledOptions" />
     <EmbedConfig v-model="dialogEmbed" :game="game" />
     <ShareOnline v-model="dialogOnline" :game="game" />
 
@@ -414,6 +417,12 @@ export default {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
       }
     },
+    disabledOptions() {
+      if (this.game.options.disableRoads) {
+        return ["showRoads"];
+      }
+      return [];
+    },
     games() {
       return this.$store.state.games.concat();
     },
@@ -460,7 +469,8 @@ export default {
             this.$store.dispatch("ADD_GAME", {
               ptn: this.ptn,
               name: game.name,
-              state: game.minState
+              state: game.minState,
+              options: game.options
             });
             this.$router.replace("/");
           }
@@ -697,7 +707,8 @@ export default {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),
         name: this.game.name,
-        state: this.game.minState
+        state: this.game.minState,
+        options: this.game.options
       });
     }
 

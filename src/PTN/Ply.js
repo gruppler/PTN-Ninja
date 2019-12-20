@@ -155,7 +155,7 @@ export default class Ply extends Ptn {
     return isEqual(this.min, ply.min);
   }
 
-  text() {
+  text(plyOnly = false) {
     return (
       (this.minPieceCount || "") +
       (this.specialPiece || "") +
@@ -164,8 +164,8 @@ export default class Ply extends Ptn {
       (this.direction || "") +
       (this.minDistribution || "") +
       (this.wallSmash || "") +
-      (this.evaluation ? this.evaluation.text : "") +
-      (this.result ? " " + this.result.text : "")
+      (!plyOnly && this.evaluation ? this.evaluation.text : "") +
+      (!plyOnly && this.result ? " " + this.result.text : "")
     );
   }
 }

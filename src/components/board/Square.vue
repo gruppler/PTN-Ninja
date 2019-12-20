@@ -5,7 +5,7 @@
       dark: x % 2 === y % 2,
       light: x % 2 !== y % 2,
       ['p' + color]: !!color,
-      'no-roads': !$store.state.showRoads,
+      'no-roads': !showRoads,
       eog,
       current,
       selected,
@@ -26,7 +26,7 @@
     @click.right.prevent="select(true)"
   >
     <div class="hl current" />
-    <div class="road" v-if="$store.state.showRoads">
+    <div class="road" v-if="showRoads">
       <div class="n" />
       <div class="e" />
       <div class="s" />
@@ -92,6 +92,9 @@ export default {
     },
     valid() {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
+    },
+    showRoads() {
+      return !this.game.options.disableRoads && this.$store.state.showRoads;
     },
     roads() {
       return this.color &&

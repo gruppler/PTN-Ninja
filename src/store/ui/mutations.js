@@ -62,8 +62,9 @@ export const TRIM_TO_PLY = (state, game) => {
   game.trimToPly();
 };
 
-export const SAVE_OPTIONS = (state, game) => {
-  state.games[0].options = { ...game.options };
+export const SAVE_OPTIONS = (state, { game, options }) => {
+  game.options = { ...options };
+  state.games[0].options = { ...options };
 };
 
 export const SAVE_UNDO_HISTORY = (state, game) => {

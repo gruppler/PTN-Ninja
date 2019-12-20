@@ -142,7 +142,8 @@ export default {
       this.$store.dispatch("ADD_GAME", {
         ptn: game.ptn,
         name: game.name,
-        state: game.minState
+        state: game.minState,
+        options: game.options
       });
       this.close();
     },

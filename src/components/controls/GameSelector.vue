@@ -25,7 +25,10 @@
           v-on="scope.itemEvents"
         >
           <q-item-section side v-if="scope.opt.isOnline">
-            <q-icon name="public" />
+            <q-icon
+              name="public"
+              :class="{ 'text-accent': !scope.opt.value }"
+            />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>

@@ -68,17 +68,21 @@ export const now = () => {
 };
 
 export default class Tag {
-  constructor(notation) {
-    const matchData = notation.match(/\[([^\s]+)\s*"([^"]*)"\]/);
+  constructor(notation, key, value) {
+    if (notation) {
+      const matchData = notation.match(/\[([^\s]+)\s*"([^"]*)"\]/);
 
-    if (!matchData) {
-      throw new Error("Invalid tag");
+      if (!matchData) {
+        throw new Error("Invalid tag");
+      }
+
+      [this.ptn, this.key, this.value] = matchData;
+      key = this.key.toLowerCase();
+      this.key = capitalized[key];
+    } else if (key) {
+      this.key = capitalized[key.toLowerCase()];
+      this.value = value;
     }
-
-    [this.ptn, this.key, this.value] = matchData;
-
-    const key = this.key.toLowerCase();
-    this.key = capitalized[key];
 
     if (key in formats) {
       if (this.value && !formats[key].test(this.value)) {

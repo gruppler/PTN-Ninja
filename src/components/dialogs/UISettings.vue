@@ -35,7 +35,11 @@
                   <q-item-label>{{ $t("Animate Board") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="animateBoard" />
+                  <q-toggle
+                    color="accent"
+                    v-model="animateBoard"
+                    :disabled="isDisabled('animateBoard')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -44,7 +48,11 @@
                   <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="axisLabels" />
+                  <q-toggle
+                    color="accent"
+                    v-model="axisLabels"
+                    :disabled="isDisabled('axisLabels')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -53,7 +61,11 @@
                   <q-item-label>{{ $t("3D Board") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="board3D" />
+                  <q-toggle
+                    color="accent"
+                    v-model="board3D"
+                    :disabled="isDisabled('board3D')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -62,7 +74,11 @@
                   <q-item-label>{{ $t("Road Connections") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showRoads" />
+                  <q-toggle
+                    color="accent"
+                    v-model="showRoads"
+                    :disabled="isDisabled('showRoads')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -71,7 +87,11 @@
                   <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="highlightSquares" />
+                  <q-toggle
+                    color="accent"
+                    v-model="highlightSquares"
+                    :disabled="isDisabled('highlightSquares')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -80,7 +100,11 @@
                   <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="pieceShadows" />
+                  <q-toggle
+                    color="accent"
+                    v-model="pieceShadows"
+                    :disabled="isDisabled('pieceShadows')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -89,7 +113,11 @@
                   <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="flatCounts" />
+                  <q-toggle
+                    color="accent"
+                    v-model="flatCounts"
+                    :disabled="isDisabled('flatCounts')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -98,7 +126,11 @@
                   <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="unplayedPieces" />
+                  <q-toggle
+                    color="accent"
+                    v-model="unplayedPieces"
+                    :disabled="isDisabled('unplayedPieces')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -107,7 +139,11 @@
                   <q-item-label>{{ $t("Current Move") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showMove" />
+                  <q-toggle
+                    color="accent"
+                    v-model="showMove"
+                    :disabled="isDisabled('showMove')"
+                  />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -122,7 +158,11 @@
                   <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showAllBranches" />
+                  <q-toggle
+                    color="accent"
+                    v-model="showAllBranches"
+                    :disabled="isDisabled('showAllBranches')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -131,7 +171,11 @@
                   <q-item-label>{{ $t("Game Notifications") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="notifyGame" />
+                  <q-toggle
+                    color="accent"
+                    v-model="notifyGame"
+                    :disabled="isDisabled('notifyGame')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -140,7 +184,11 @@
                   <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="notifyNotes" />
+                  <q-toggle
+                    color="accent"
+                    v-model="notifyNotes"
+                    :disabled="isDisabled('notifyNotes')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -149,7 +197,11 @@
                   <q-item-label>{{ $t("Play Controls") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showControls" />
+                  <q-toggle
+                    color="accent"
+                    v-model="showControls"
+                    :disabled="isDisabled('showControls')"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -158,7 +210,11 @@
                   <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="accent" v-model="showScrubber" />
+                  <q-toggle
+                    color="accent"
+                    v-model="showScrubber"
+                    :disabled="isDisabled('showScrubber')"
+                  />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -202,7 +258,7 @@ const props = [
 export default {
   name: "UISettings",
   components: { DialogHeader },
-  props: ["value"],
+  props: ["value", "disabled"],
   data() {
     return {
       hotkeys: HOTKEYS_FORMATTED.UI
@@ -212,12 +268,17 @@ export default {
     props,
     props.map(key => ({
       get() {
-        return this.$store.state[key];
+        return this.isDisabled(key) ? false : this.$store.state[key];
       },
       set(value) {
         this.$store.dispatch("SET_UI", [key, value]);
       }
     }))
-  )
+  ),
+  methods: {
+    isDisabled(key) {
+      return this.disabled && this.disabled.includes(key);
+    }
+  }
 };
 </script>

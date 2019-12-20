@@ -33,7 +33,9 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   if (game.state) {
     LocalStorage.set("state-" + game.name, game.state);
   }
-  LocalStorage.set("options-" + game.name, game.options);
+  if (game.options) {
+    LocalStorage.set("options-" + game.name, game.options);
+  }
   if (game.history) {
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
@@ -148,7 +150,8 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.onload = event => {
         dispatch("ADD_GAME", {
           name: file.name.replace(/\.ptn$|\.txt$/, ""),
-          ptn: event.target.result
+          ptn: event.target.result,
+          options: { isOnline: false }
         });
         if (!--count) {
           Loading.hide();
@@ -162,9 +165,9 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   });
 };
 
-export const SAVE_OPTIONS = ({ commit }, game) => {
-  LocalStorage.set("options-" + game.name, game.options);
-  commit("SAVE_OPTIONS", game);
+export const SAVE_OPTIONS = ({ commit }, { game, options }) => {
+  LocalStorage.set("options-" + game.name, options);
+  commit("SAVE_OPTIONS", { game, options });
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

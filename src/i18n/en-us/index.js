@@ -30,6 +30,7 @@ export default {
   "Copy Moves": "Copy Moves",
   "Copy Ply": "Copy Ply",
   Copied: "Copied!",
+  "Create Online Game": "Create Online Game",
   "Current Move": "Current Move",
   Date: "Date",
   Delete: "Delete",
