@@ -89,13 +89,6 @@
               <q-item-section>{{ $t("Download") }}</q-item-section>
             </q-item>
 
-            <q-item v-if="!$store.state.embed" clickable @click="online">
-              <q-item-section side>
-                <q-icon name="public" />
-              </q-item-section>
-              <q-item-section>{{ $t("Online") }}</q-item-section>
-            </q-item>
-
             <q-item
               v-if="!$store.state.embed && game.isLocal"
               clickable
@@ -105,6 +98,13 @@
                 <q-icon name="code" />
               </q-item-section>
               <q-item-section>{{ $t("Embed") }}</q-item-section>
+            </q-item>
+
+            <q-item v-if="!$store.state.embed" clickable @click="online">
+              <q-item-section side>
+                <q-icon name="public" />
+              </q-item-section>
+              <q-item-section>{{ $t("Online") }}</q-item-section>
             </q-item>
           </q-list>
         </q-menu>

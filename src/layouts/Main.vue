@@ -595,16 +595,17 @@ export default {
           label: this.$t("Download"),
           icon: "save_alt",
           id: "download"
-        },
-        {
-          label: this.$t("Online"),
-          icon: "public",
-          id: "online"
         }
       ];
       if (this.game.isLocal) {
         actions.push({ label: this.$t("Embed"), icon: "code", id: "embed" });
       }
+      actions.push({
+        label: this.$t("Online"),
+        icon: "public",
+        id: "online"
+      });
+
       this.$q
         .bottomSheet({
           grid: true,
