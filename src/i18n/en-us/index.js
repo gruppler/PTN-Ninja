@@ -102,6 +102,7 @@ export default {
   Site: "Site",
   Size: "Size",
   "Switch Player": "Switch Player",
+  "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System
   Tak: "Tak",
   Time: "Time",

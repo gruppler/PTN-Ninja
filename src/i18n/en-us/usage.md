@@ -1,7 +1,7 @@
 Getting Started
 ===
 ::: tip
-To **right-click** on most touchscreen devices, **long-press**.
+To **right-click** on a touchscreen devices, try **long-pressing**.
 :::
 
 ### Games

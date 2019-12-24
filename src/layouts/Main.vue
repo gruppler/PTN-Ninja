@@ -535,6 +535,11 @@ export default {
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
+        case "toggleText":
+          if (this.hasChat) {
+            this.textTab = this.textTab === "notes" ? "chat" : "notes";
+          }
+          break;
         case "help":
           this.$refs.help.section = "usage";
           this.dialogHelp = true;

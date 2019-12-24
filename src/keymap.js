@@ -49,6 +49,7 @@ export const HOTKEYS = {
     embedGame: ["ctrl", "e"],
     online: ["o"],
     focusText: ["/"],
+    toggleText: ["shift", "w"],
     more: ["shift", "space"]
   },
   PIECE: {
@@ -114,6 +115,7 @@ export const HOTKEY_NAMES = {
     embedGame: "Embed",
     online: "Play Online",
     focusText: "Focus Text Input",
+    toggleText: "Switch Text Tab",
     more: "Show More/Less"
   }
 };
