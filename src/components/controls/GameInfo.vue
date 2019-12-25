@@ -256,6 +256,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
+            :readonly="game && !game.isLocal && game.options.player !== 1"
             @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
@@ -295,6 +296,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
+            :readonly="game && !game.isLocal && game.options.player !== 2"
             @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
@@ -324,7 +326,7 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
-        :disabled="game && !game.isLocal"
+        :readonly="game && !game.isLocal"
         @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
@@ -334,6 +336,7 @@
           <q-icon name="event" />
         </template>
         <q-popup-proxy
+          v-if="!game || game.isLocal"
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
           @before-hide="blur"
@@ -384,7 +387,7 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
-        :disabled="game && !game.isLocal"
+        :readonly="game && !game.isLocal"
         @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
@@ -394,6 +397,7 @@
           <q-icon name="access_time" />
         </template>
         <q-popup-proxy
+          v-if="!game || game.isLocal"
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
           @before-hide="blur"
@@ -490,6 +494,7 @@
         name="result"
         :options="results"
         :label="$t('Result')"
+        :readonly="game && !game.isLocal"
         color="accent"
         popup-content-class="bg-blue-grey-9"
         autocorrect="off"
@@ -767,3 +772,8 @@ export default {
   }
 };
 </script>
+
+<style lang="stylus">
+.q-select .result
+  margin 0 0 -4px
+</style>
