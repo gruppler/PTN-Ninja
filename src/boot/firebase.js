@@ -8,11 +8,20 @@ let fb = firebase.initializeApp(config);
 const db = fb.firestore();
 let messaging = null;
 
+db.enablePersistence().catch(error => {
+  console.error(error);
+});
+
 try {
   messaging = fb.messaging();
   messaging.usePublicVapidKey(config.vapidKey);
 } catch (error) {
-  console.log(error);
+  console.error(error);
 }
 
 export { db, messaging };
+
+if (process.env.DEV) {
+  window.db = db;
+  window.messaging = messaging;
+}

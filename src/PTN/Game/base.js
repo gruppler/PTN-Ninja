@@ -394,7 +394,7 @@ export default class GameBase {
         delete this.tags[key];
       }
     });
-    Object.assign(this.tags, tags);
+    this.tags = Object.assign({}, this.tags, tags);
     this.hasTPS = "tps" in this.tags;
     if (updatePTN) {
       this._updatePTN(recordChange);
@@ -408,7 +408,7 @@ export default class GameBase {
           "flats1",
           "caps2",
           "flats2"
-        ].find(tag => tags[tag] !== this.tag(tag))
+        ].find(tag => tag in tags && tags[tag] !== this.tag(tag))
       ) {
         this.init(this.ptn, { ...this, state: null });
       }

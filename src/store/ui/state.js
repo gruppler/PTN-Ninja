@@ -17,10 +17,13 @@ let defaults = {
   isPortrait: false,
   notifyGame: true,
   notifyNotes: true,
+  onlineGames: [],
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
+  player: 1,
+  playerName: "",
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
@@ -30,7 +33,7 @@ let defaults = {
   showScrubber: true,
   showText: false,
   size: 5,
-  textTab: "notes",
+  textTab: "chat",
   unplayedPieces: true
 };
 

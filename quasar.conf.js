@@ -27,6 +27,7 @@ module.exports = function(ctx) {
         "QBtn",
         "QBtnDropdown",
         "QBtnGroup",
+        "QBtnToggle",
         "QCard",
         "QCardActions",
         "QCardSection",

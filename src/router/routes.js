@@ -3,6 +3,13 @@ import { Platform } from "quasar";
 
 const routes = [
   {
+    name: "online",
+    path: "/game/:gameID",
+    alias: "/player/:playerKey",
+    component: () => import("layouts/Main"),
+    props: true
+  },
+  {
     name: "local",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {
@@ -45,25 +52,7 @@ const routes = [
       }
 
       return { ptn, name, state };
-    },
-    children: [
-      {
-        name: "add",
-        path: "/add"
-      },
-      {
-        name: "settings",
-        path: "/settings"
-      },
-      {
-        name: "edit",
-        path: "/edit"
-      },
-      {
-        name: "embed",
-        path: "/embed"
-      }
-    ]
+    }
   }
 ];
 

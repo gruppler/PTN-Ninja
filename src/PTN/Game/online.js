@@ -7,14 +7,18 @@ import Ply from "../Ply";
 import Result from "../Result";
 import Tag from "../Tag";
 
-import { each, map, omit, zipObject } from "lodash";
+import { each, map, zipObject } from "lodash";
 
 export default class GameOnline {
+  get openPlayer() {
+    return this.tag("player1") ? (this.tag("player2") ? 0 : 2) : 1;
+  }
+
   get json() {
     return {
       name: this.name,
       state: this.minState,
-      options: omit(this.options, ["id", "isOnline"]),
+      options: Object.assign({}, this.options),
       tags: this.JSONTags,
       comments: this.JSONComments(
         (this.notes[-1] || []).concat(this.chatlog[-1] || [])

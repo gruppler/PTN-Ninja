@@ -73,6 +73,7 @@ export default {
   Online: "Online",
   OK: "OK",
   "Piece Shadows": "Piece Shadows",
+  Play: "Play",
   "Play/Pause": "Play/Pause",
   "Play Controls": "Play Controls",
   "Play Mode": "Play Mode",
@@ -80,8 +81,12 @@ export default {
   "Play Speed": "Play Speed",
   Player1: "Player 1",
   Player2: "Player 2",
+  "Player Name": "Player Name",
   Points: "Points",
   Preferences: "Preferences",
+  Private: "Private",
+  Public: "Public",
+  Random: "Random",
   Rating1: "Rating 1",
   Rating2: "Rating 2",
   Redo: "Redo",
@@ -101,6 +106,7 @@ export default {
   "Show PTN": "Show PTN",
   Site: "Site",
   Size: "Size",
+  Spectate: "Spectate",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System
@@ -162,6 +168,11 @@ export default {
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
     "Unrecognized tag": "Unrecognized tag"
+  },
+
+  hints: {
+    public: "Share this with your opponent and spectators",
+    private: "Share this with your other devices"
   },
 
   hotkeys: {

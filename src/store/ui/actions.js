@@ -31,7 +31,7 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   LocalStorage.set("games", games);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.state) {
-    LocalStorage.set("state-" + game.name, game.state);
+    LocalStorage.set("state-" + game.name, game.minState || game.state);
   }
   if (game.options) {
     LocalStorage.set("options-" + game.name, game.options);
@@ -163,6 +163,40 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.readAsText(file);
     }
   });
+};
+
+export const ADD_ONLINE_GAME = ({ commit }, game) => {
+  let games = LocalStorage.getItem("onlineGames") || [];
+  game = {
+    id: game.options.id,
+    name: game.name,
+    player: game.options.player,
+    playerKey: game.options.playerKey
+  };
+  if (!games.find(g => g.id === game.id && g.player === game.player)) {
+    games.unshift(game);
+    LocalStorage.set("onlineGames", games);
+    commit("ADD_ONLINE_GAME", game);
+  }
+};
+
+export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
+  debugger;
+  let games = LocalStorage.getItem("onlineGames") || [];
+  let index = games.findIndex(
+    g => g.id === game.id && g.player === game.player
+  );
+  game = {
+    id: game.options.id,
+    name: game.name,
+    player: game.options.player,
+    playerKey: game.options.playerKey
+  };
+  if (index >= 0) {
+    games[index] = game;
+    LocalStorage.set("onlineGames", games);
+    commit("UPDATE_ONLINE_GAME", { game, index });
+  }
 };
 
 export const SAVE_OPTIONS = ({ commit }, { game, options }) => {

@@ -1,7 +1,7 @@
 <template>
   <div class="game-selector no-wrap">
     <q-select
-      v-show="!!games.length"
+      v-if="games.length"
       class="text-subtitle1 no-wrap"
       :value="0"
       :options="games"
@@ -15,7 +15,7 @@
       dense
     >
       <template v-slot:prepend>
-        <q-icon v-if="game.isOnline" name="public" />
+        <q-icon v-if="game.game.isOnline" :name="gameIcon(game.game)" />
       </template>
 
       <template v-slot:option="scope">
@@ -24,10 +24,10 @@
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         >
-          <q-item-section side v-if="scope.opt.isOnline">
+          <q-item-section side v-if="scope.opt.game.isOnline">
             <q-icon
-              name="public"
-              :class="{ 'text-accent': !scope.opt.value }"
+              :name="gameIcon(scope.opt.game)"
+              :class="{ 'text-accent': scope.opt.value === 0 }"
             />
           </q-item-section>
           <q-item-section>
@@ -66,7 +66,7 @@ export default {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index,
-        isOnline: game.options.isOnline
+        game: game.options
       }));
     }
   },
@@ -76,6 +76,9 @@ export default {
         this.$store.dispatch("SELECT_GAME", index);
         this.$emit("input", this.$store.state.games[0]);
       }
+    },
+    gameIcon(game) {
+      return this.$store.getters["online/icon"](game.player);
     },
     close(index) {
       this.$q

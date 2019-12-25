@@ -62,6 +62,14 @@ export const TRIM_TO_PLY = (state, game) => {
   game.trimToPly();
 };
 
+export const ADD_ONLINE_GAME = (state, game) => {
+  state.onlineGames.unshift(game);
+};
+
+export const UPDATE_ONLINE_GAME = (state, { game, index }) => {
+  state.onlineGames[index] = game;
+};
+
 export const SAVE_OPTIONS = (state, { game, options }) => {
   game.options = { ...options };
   state.games[0].options = { ...options };

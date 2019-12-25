@@ -235,6 +235,7 @@
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
+            :readonly="game && !game.isLocal"
             @keyup.enter="save"
             color="accent"
             hide-bottom-space
@@ -273,6 +274,7 @@
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
+            :readonly="game && !game.isLocal"
             @keyup.enter="save"
             color="accent"
             hide-bottom-space
@@ -304,7 +306,14 @@
           </q-input>
         </div>
       </div>
-      <q-btn @click="swapPlayers" icon="swap_vert" stretch dense flat />
+      <q-btn
+        v-show="game && game.isLocal"
+        @click="swapPlayers"
+        icon="swap_vert"
+        stretch
+        dense
+        flat
+      />
     </div>
 
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
@@ -315,6 +324,7 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
+        :disabled="game && !game.isLocal"
         @keyup.enter="save"
         color="accent"
         hide-bottom-space
@@ -374,6 +384,7 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
+        :disabled="game && !game.isLocal"
         @keyup.enter="save"
         color="accent"
         hide-bottom-space

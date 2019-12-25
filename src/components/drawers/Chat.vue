@@ -45,7 +45,6 @@
       <q-resize-observer @resize="scroll" />
     </Recess>
     <div>
-      <q-separator />
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
@@ -97,7 +96,9 @@ export default {
       return this.game.chatlog;
     },
     player() {
-      return this.game.state.player;
+      return this.game.isLocal
+        ? this.game.state.player
+        : this.game.options.player;
     },
     time() {
       return this.game.datetime;

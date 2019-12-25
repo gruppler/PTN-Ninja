@@ -27,7 +27,7 @@
               ? notifyNotes
                 ? 'speaker_notes'
                 : 'speaker_notes_off'
-              : 'chat_bubble'
+              : 'question_answer'
           "
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
@@ -219,6 +219,7 @@
     <UISettings v-model="dialogUISettings" :disabled="disabledOptions" />
     <EmbedConfig v-model="dialogEmbed" :game="game" />
     <ShareOnline v-model="dialogOnline" :game="game" />
+    <JoinGame v-model="dialogJoinGame" :game="game" />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -258,6 +259,7 @@ import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
 import ShareOnline from "../components/dialogs/ShareOnline";
+import JoinGame from "../components/dialogs/JoinGame";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -288,9 +290,10 @@ export default {
     EditGame,
     UISettings,
     EmbedConfig,
-    ShareOnline
+    ShareOnline,
+    JoinGame
   },
-  props: ["ptn", "state", "name"],
+  props: ["ptn", "state", "name", "gameID", "playerKey"],
   data() {
     return {
       Platform,
@@ -302,7 +305,8 @@ export default {
       dialogUISettings: false,
       dialogEditGame: false,
       dialogEmbed: false,
-      dialogOnline: false
+      dialogOnline: false,
+      dialogJoinGame: false
     };
   },
   computed: {
@@ -463,7 +467,7 @@ export default {
       this.errors = [];
       try {
         if (this.ptn) {
-          // Add game from URL then redirect to /
+          // Add offline game from URL then redirect to /
           game = new Game(this.ptn, { name: this.name, state: this.state });
           if (game) {
             this.$store.dispatch("ADD_GAME", {
@@ -474,11 +478,24 @@ export default {
             });
             this.$router.replace("/");
           }
+        } else if (this.gameID || this.playerKey) {
+          // Add online game from URL
+          this.$store.dispatch("online/LOAD", {
+            gameID: this.gameID,
+            playerKey: this.playerKey
+          });
+          this.$router.replace("/");
         } else if (this.$store.state.games && this.$store.state.games.length) {
           game = this.$store.state.games[0];
           game = new Game(game.ptn, game);
           if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
             game.doTPS(this.$store.state.editingTPS);
+          }
+
+          if (game.options.isOnline) {
+            if (!game.options.player && this.game.openPlayer) {
+              this.dialogJoinGame = true;
+            }
           }
         }
       } catch (error) {
@@ -709,7 +726,8 @@ export default {
   },
   created() {
     this.$q.dark.set(true);
-    if (!this.games.length) {
+
+    if (!this.games.length && !(this.gameID || this.playerKey)) {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),
         name: this.game.name,
@@ -723,6 +741,10 @@ export default {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
+    }
+
+    if (process.env.DEV) {
+      window.main = this;
     }
   },
   beforeDestroy() {

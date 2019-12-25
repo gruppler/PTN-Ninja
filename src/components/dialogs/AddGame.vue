@@ -42,13 +42,26 @@
                 <q-expansion-item
                   icon="public"
                   :label="$t('Online')"
+                  :disable="!onlineGames.length"
                   group="type"
                 >
                   <Recess>
-                    <q-list>
-                      <q-item>
-                        <q-item-section align="center">
-                          {{ $t("Coming soon") }}
+                    <q-list class="online-games">
+                      <q-item
+                        v-for="game in onlineGames"
+                        :key="game.id"
+                        :class="{
+                          open: openGames.includes(game.name),
+                          selected: selectedGames.includes(game)
+                        }"
+                        @click="selectGame(game)"
+                        :clickable="!openGames.includes(game.name)"
+                      >
+                        <q-item-section side>
+                          <q-icon :name="gameIcon(game)" />
+                        </q-item-section>
+                        <q-item-section>
+                          {{ game.name }}
                         </q-item-section>
                       </q-item>
                     </q-list>
@@ -67,9 +80,9 @@
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
-          v-show="tab === 'new'"
           :label="$t('OK')"
           @click="ok"
+          :disabled="tab === 'load' && !selectedGames.length"
           color="accent"
           flat
         />
@@ -98,6 +111,7 @@ export default {
         size: this.$store.state.size,
         site: this.$t("site_name")
       },
+      selectedGames: [],
       showAll: false
     };
   },
@@ -125,6 +139,12 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["player2", value || ""]);
       }
+    },
+    onlineGames() {
+      return this.$store.state.onlineGames;
+    },
+    openGames() {
+      return this.$store.state.games.map(game => game.name);
     }
   },
   methods: {
@@ -147,11 +167,38 @@ export default {
       });
       this.close();
     },
+    selectGame(game) {
+      if (this.openGames.includes(game.name)) {
+        return;
+      }
+      const index = this.selectedGames.indexOf(game);
+      if (index < 0) {
+        this.selectedGames.push(game);
+      } else {
+        this.selectedGames.splice(index, 1);
+      }
+    },
+    gameIcon(game) {
+      return this.$store.getters["online/icon"](game.player);
+    },
     ok() {
       if (this.tab === "new") {
         this.$refs.gameInfo.save();
       } else {
-        // Load online game
+        if (this.selectedGames.length) {
+          // Load online game(s)
+          this.selectedGames.forEach(game => {
+            this.$store.dispatch("online/LOAD", game);
+          });
+        }
+        this.close();
+      }
+    }
+  },
+  watch: {
+    value(isVisible) {
+      if (!isVisible) {
+        this.selectedGames = [];
       }
     }
   }
@@ -161,4 +208,14 @@ export default {
 <style lang="stylus">
 .q-field.size
   width 8em
+
+.online-games
+  .open
+    &, .q-icon
+      cursor default
+      color $accent
+  .selected
+    background-color $highlight
+    &, .q-icon
+      color $accent
 </style>

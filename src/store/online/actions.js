@@ -1,9 +1,11 @@
 import { db, messaging } from "../../boot/firebase.js";
 import { omit } from "lodash";
 
+import Game from "../../PTN/Game";
+
 export const NOTIFICATION_INIT = context => {
   if (!messaging || !Notification) {
-    console.log("Messaging not supported");
+    console.error("Messaging not supported");
   }
 
   context;
@@ -29,7 +31,7 @@ export const NOTIFICATION_INIT = context => {
           }
         })
         .catch(err => {
-          console.log("An error occurred while retrieving token. ", err);
+          console.error("An error occurred while retrieving token. ", err);
           // showToken("Error retrieving Instance ID token. ", err);
           // setTokenSentToServer(false);
         });
@@ -48,36 +50,158 @@ export const NOTIFICATION_INIT = context => {
             refreshedToken;
           })
           .catch(err => {
-            console.log("Unable to retrieve refreshed token ", err);
+            console.error("Unable to retrieve refreshed token ", err);
             // showToken("Unable to retrieve refreshed token ", err);
           });
       });
     } else {
-      console.log("Unable to get permission to notify.");
+      console.error("Unable to get permission to notify.");
     }
   });
 };
 
 export const CREATE = ({ dispatch }, { game, options }) => {
   let json = game.json;
-  Object.assign(json.options, options);
+  options = Object.assign({}, json.options, options);
+  json.options = omit(options, ["id", "player", "playerKey"]);
   db.collection("games")
     .add(omit(json, "moves"))
-    .then(doc => {
-      json.options.id = doc.id;
-      json.options.isOnline = true;
-      dispatch("SAVE_OPTIONS", { game, options: json.options }, { root: true });
+    .then(gameDoc => {
+      // Add game to DB
+      options.id = gameDoc.id;
 
-      let batch = db.batch();
-      const moves = doc.collection("moves");
-      json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
-      batch.commit().catch(error => {
-        console.error("Error adding moves: ", error);
-      });
+      // Add moves to game in DB
+      if (json.moves.length) {
+        let batch = db.batch();
+        const moves = gameDoc.collection("moves");
+        json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
+        batch.commit().catch(error => {
+          console.error("Error adding moves: ", error);
+        });
+      }
+
+      // Generate player key
+      db.collection("playerKeys")
+        .add({
+          game: options.id,
+          player: options.player
+        })
+        .then(keyDoc => {
+          options.playerKey = keyDoc.id;
+
+          // Save local options
+          dispatch("SAVE_OPTIONS", { game, options }, { root: true });
+          dispatch("ADD_ONLINE_GAME", game, { root: true });
+        })
+        .catch(error => {
+          console.error("Error adding game: ", error);
+        });
     })
     .catch(error => {
-      console.error("Error adding document: ", error);
+      console.error("Error adding game: ", error);
     });
 };
 
-export const LOAD = () => {};
+export const LOAD = ({ dispatch }, { gameID, playerKey }) => {
+  const finish = (gameJSON, player = 0, key = "") => {
+    gameJSON.options.id = gameID;
+    gameJSON.options.player = player;
+    if (key) {
+      gameJSON.options.playerKey = key;
+    } else {
+      delete gameJSON.options.playerKey;
+    }
+    dispatch("ADD_ONLINE_GAME", gameJSON, { root: true });
+
+    gameJSON.ptn = new Game(false, gameJSON).ptn;
+    dispatch("ADD_GAME", gameJSON, { root: true });
+  };
+
+  if (gameID) {
+    loadGame(gameID, playerKey).then(finish);
+  } else if (playerKey) {
+    getPlayerKey(playerKey)
+      .then(key => {
+        loadGame(key.game, playerKey, key.player).then(finish);
+      })
+      .catch(error => {
+        console.error("Error loading game:", error);
+      });
+  }
+};
+
+function getPlayerKey(playerKey, id = false) {
+  return new Promise((resolve, reject) => {
+    db.collection("playerKeys")
+      .doc(playerKey)
+      .get()
+      .then(keyDoc => {
+        const key = keyDoc.data();
+        if (keyDoc.exists && (!id || key.game === id)) {
+          resolve(key);
+        } else {
+          reject(new Error("Invalid player key"));
+        }
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
+
+function loadGame(id, playerKey = "", player = false) {
+  return new Promise((resolve, reject) => {
+    const gameRef = db.collection("games").doc(id);
+
+    // Load game
+    gameRef
+      .get()
+      .then(gameDoc => {
+        if (gameDoc.exists) {
+          let gameJSON = gameDoc.data();
+
+          // Load moves
+          gameRef
+            .collection("moves")
+            .get()
+            .then(moveDocs => {
+              gameJSON.moves = [];
+              moveDocs.forEach(
+                gameDoc => (gameJSON.moves[gameDoc.id] = gameDoc.data())
+              );
+
+              if (playerKey) {
+                if (player) {
+                  // Trusted key
+                  resolve(gameJSON, player, playerKey);
+                } else {
+                  // Verify player key
+                  getPlayerKey(playerKey, gameDoc.id)
+                    .then(key => {
+                      // Success
+                      resolve(gameJSON, key.player, playerKey);
+                    })
+                    .catch(error => {
+                      console.error(error);
+                      resolve(gameJSON);
+                    });
+                }
+              } else {
+                // Spectator
+                resolve(gameJSON);
+              }
+            })
+            .catch(error => {
+              console.error(error);
+              reject(new Error("Error getting moves"));
+            });
+        } else {
+          reject(new Error("Game does not exist"));
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        reject(new Error("Error getting game:"));
+      });
+  });
+}
