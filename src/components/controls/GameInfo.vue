@@ -4,7 +4,7 @@
       v-model="name"
       name="name"
       :label="$t('Title')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       filled
     >
@@ -48,7 +48,7 @@
         :label="$t('TPS')"
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         autocomplete="off"
         autocorrect="off"
@@ -95,7 +95,7 @@
             :max="tags.size"
             :label="$t('Caps')"
             :rules="rules('caps')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -115,7 +115,7 @@
             max="99"
             :label="$t('Flats')"
             :rules="rules('flats')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -141,7 +141,7 @@
             :max="tags.size"
             :label="$t('Caps1')"
             :rules="rules('caps1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -160,7 +160,7 @@
             max="99"
             :label="$t('Flats1')"
             :rules="rules('flats1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -182,7 +182,7 @@
             :max="tags.size"
             :label="$t('Caps2')"
             :rules="rules('caps2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -201,7 +201,7 @@
             max="99"
             :label="$t('Flats2')"
             :rules="rules('flats2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -236,7 +236,7 @@
             :label="$t('Player1')"
             :rules="rules('player1')"
             :readonly="game && !game.isLocal"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -256,7 +256,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -275,7 +275,7 @@
             :label="$t('Player2')"
             :rules="rules('player2')"
             :readonly="game && !game.isLocal"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -295,7 +295,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -325,7 +325,7 @@
         :label="$t('Date')"
         :rules="rules('date')"
         :disabled="game && !game.isLocal"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -385,7 +385,7 @@
         :label="$t('Time')"
         :rules="rules('time')"
         :disabled="game && !game.isLocal"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -447,7 +447,7 @@
         name="clock"
         :label="$t('Clock')"
         :rules="rules('clock')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         autocorrect="off"
         autocapitalize="off"
@@ -470,7 +470,7 @@
         max="999"
         :label="$t('Round')"
         :rules="rules('round')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         hide-bottom-space
         color="accent"
         filled
@@ -540,7 +540,7 @@
         type="number"
         :label="$t('Points')"
         :rules="rules('points')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -557,7 +557,7 @@
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       hide-bottom-space
       filled
@@ -573,7 +573,7 @@
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       hide-bottom-space
       filled
