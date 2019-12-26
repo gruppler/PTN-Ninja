@@ -339,9 +339,9 @@
           v-if="!game || game.isLocal"
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
-          @before-hide="blur"
           anchor="center middle"
           self="center middle"
+          no-refocus
         >
           <div>
             <q-date
@@ -400,9 +400,9 @@
           v-if="!game || game.isLocal"
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
-          @before-hide="blur"
           anchor="center middle"
           self="center middle"
+          no-refocus
         >
           <div>
             <q-time
@@ -658,9 +658,6 @@ export default {
   methods: {
     validate() {
       return this.$el.getElementsByClassName("q-field--error").length === 0;
-    },
-    blur() {
-      this.$nextTick(() => document.activeElement.blur());
     },
     save() {
       if (!this.validate()) {
