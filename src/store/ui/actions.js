@@ -62,8 +62,8 @@ export const UPDATE_PTN = ({ state, commit }, ptn) => {
 
 export const SET_NAME = ({ state, commit, getters }, name) => {
   let oldName = state.games[0].name;
-  let games = LocalStorage.getItem("games", true);
-  name = getters.uniqueName(name);
+  let games = LocalStorage.getItem("games");
+  name = getters.uniqueName(name, true);
   games[0] = name;
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + oldName);
