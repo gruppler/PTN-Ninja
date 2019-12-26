@@ -25,70 +25,77 @@ export default {
   components: { QRCode },
   props: ["game"],
   data() {
-    let actions = [
-      {
-        id: "link",
-        label: this.$t("Copy Link"),
-        icon: "link",
-        action: () => this.copy("link")
-      },
-      {
-        id: "ply",
-        label: this.$t("Copy Ply"),
-        icon: "layers",
-        action: () => this.copy("ply")
-      },
-      {
-        id: "moves",
-        label: this.$t("Copy Moves"),
-        icon: "format_list_numbered",
-        action: () => this.copy("moves")
-      },
-      {
-        id: "ptn",
-        label: this.$t("Copy PTN"),
-        icon: "file_copy",
-        action: () => this.copy("ptn")
-      },
-      {}
-    ];
-    if (!this.$store.state.embed) {
-      actions.push({
-        id: "online",
-        label: this.$t("Online"),
-        icon: "public",
-        action: this.online
-      });
-    }
-    if (!this.$store.state.embed && this.game.isLocal) {
-      actions.push({
-        id: "embed",
-        label: this.$t("Embed"),
-        icon: "code",
-        action: this.embed
-      });
-    }
-    actions.push(
-      {
-        id: "download",
-        label: this.$t("Download"),
-        icon: "save_alt",
-        action: this.download
-      },
-      {
-        id: "qrcode",
-        label: this.$t("QR Code"),
-        icon: "app:qrcode",
-        action: this.qrCode
-      }
-    );
-
     return {
-      actions,
       bottomSheet: false,
       showQR: false,
       qrText: ""
     };
+  },
+  computed: {
+    actions() {
+      let actions = [
+        {
+          id: "link",
+          label: this.$t("Copy Link"),
+          icon: "link",
+          action: () => this.copy("link")
+        },
+        {
+          id: "ply",
+          label: this.$t("Copy Ply"),
+          icon: "layers",
+          action: () => this.copy("ply")
+        },
+        {
+          id: "moves",
+          label: this.$t("Copy Moves"),
+          icon: "format_list_numbered",
+          action: () => this.copy("moves")
+        },
+        {
+          id: "ptn",
+          label: this.$t("Copy PTN"),
+          icon: "file_copy",
+          action: () => this.copy("ptn")
+        },
+        {}
+      ];
+
+      if (!this.$store.state.embed) {
+        actions.push({
+          id: "online",
+          label: this.$t("Online"),
+          icon: "public",
+          action: this.online
+        });
+      }
+
+      if (!this.$store.state.embed && this.game.isLocal) {
+        actions.push({
+          id: "embed",
+          label: this.$t("Embed"),
+          icon: "code",
+          action: this.embed
+        });
+      }
+
+      actions.push(
+        {
+          id: "download",
+          label: this.$t("Download"),
+          icon: "save_alt",
+          action: this.download
+        },
+        {
+          id: "qrcode",
+          label: this.$t("QR Code"),
+          icon: "app:qrcode",
+          action: this.qrCode
+        }
+      );
+
+      return actions;
+    }
   },
   methods: {
     copy(type) {
