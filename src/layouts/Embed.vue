@@ -10,6 +10,7 @@
           flat
         />
         <q-toolbar-title>{{ title }}</q-toolbar-title>
+        <ShareButton ref="shareButton" :game="game" flat stretch />
         <q-btn
           icon="open_in_new"
           :to="url"
@@ -151,6 +152,7 @@ import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
+import ShareButton from "../components/controls/ShareButton";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -171,7 +173,8 @@ export default {
     Scrubber,
     PTNTools,
     EvalButtons,
-    BoardToggles
+    BoardToggles,
+    ShareButton
   },
   props: ["ptn", "name", "state"],
   data() {
@@ -244,6 +247,9 @@ export default {
         case "focusText":
           this.right = true;
           this.$refs.notes.$refs.input.focus();
+          break;
+        case "share":
+          this.$refs.shareButton.share();
           break;
       }
     }

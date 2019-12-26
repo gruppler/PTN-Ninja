@@ -92,12 +92,15 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools
-          ref="tools"
-          :game="game"
-          @embed="dialogEmbed = true"
-          @online="dialogOnline = true"
-        />
+        <PTN-Tools ref="tools" :game="game">
+          <ShareButton
+            ref="shareButton"
+            :title="$t('Share')"
+            :game="game"
+            @embed="dialogEmbed = true"
+            @online="dialogOnline = true"
+          />
+        </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -245,6 +248,7 @@ import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
+import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
 import GameSelector from "../components/controls/GameSelector";
@@ -281,6 +285,7 @@ export default {
     PTNTools,
     EvalButtons,
     BoardToggles,
+    ShareButton,
     Chat,
     GameSelector,
     PieceSelector,
@@ -591,90 +596,7 @@ export default {
       this.textTab = value;
     },
     share() {
-      let actions = [
-        {
-          label: this.$t("Copy Link"),
-          icon: "link",
-          id: "link"
-        },
-        {
-          label: this.$t("Copy Ply"),
-          icon: "layers",
-          id: "ply"
-        },
-        {
-          label: this.$t("Copy Moves"),
-          icon: "format_list_numbered",
-          id: "moves"
-        },
-        {
-          label: this.$t("Copy PTN"),
-          icon: "file_copy",
-          id: "ptn"
-        },
-        {},
-        {
-          label: this.$t("Download"),
-          icon: "save_alt",
-          id: "download"
-        }
-      ];
-      if (this.game.isLocal) {
-        actions.push({ label: this.$t("Embed"), icon: "code", id: "embed" });
-      }
-      actions.push({
-        label: this.$t("Online"),
-        icon: "public",
-        id: "online"
-      });
-
-      this.$q
-        .bottomSheet({
-          grid: true,
-          class: "bg-secondary",
-          message: this.$t("Share"),
-          actions
-        })
-        .onOk(action => {
-          switch (action.id) {
-            case "online":
-              this.dialogOnline = true;
-              break;
-            case "link":
-              this.$store.dispatch("COPY", {
-                text: this.$store.getters.url(this.game, {
-                  origin: true,
-                  state: true
-                }),
-                message: this.$t("Copied")
-              });
-              break;
-            case "ply":
-              this.$store.dispatch("COPY", {
-                text: this.game.state.ply.text(),
-                message: this.$t("Copied")
-              });
-              break;
-            case "moves":
-              this.$store.dispatch("COPY", {
-                text: this.game.moveText(this.showAllBranches),
-                message: this.$t("Copied")
-              });
-              break;
-            case "ptn":
-              this.$store.dispatch("COPY", {
-                text: this.game.ptn,
-                message: this.$t("Copied")
-              });
-              break;
-            case "download":
-              this.$store.dispatch("SAVE", this.game);
-              break;
-            case "embed":
-              this.dialogEmbed = true;
-              break;
-          }
-        });
+      this.$refs.shareButton.share();
     },
     openFiles(event) {
       this.nop(event);
