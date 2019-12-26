@@ -40,10 +40,10 @@
 </template>
 
 <script>
-import GameInfo from "../controls/GameInfo";
-
 import DialogHeader from "../general/DialogHeader.vue";
-import MoreToggle from "../general/MoreToggle.vue";
+
+import GameInfo from "../controls/GameInfo";
+import MoreToggle from "../controls/MoreToggle.vue";
 
 export default {
   name: "EditGame",

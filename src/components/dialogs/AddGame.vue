@@ -93,8 +93,7 @@
 
 <script>
 import GameInfo from "../controls/GameInfo";
-
-import MoreToggle from "../general/MoreToggle.vue";
+import MoreToggle from "../controls/MoreToggle.vue";
 
 import Game from "../../PTN/Game";
 

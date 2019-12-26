@@ -205,7 +205,7 @@
 </template>
 
 <script>
-import MoreToggle from "../general/MoreToggle.vue";
+import MoreToggle from "../controls/MoreToggle.vue";
 
 import { cloneDeep } from "lodash";
 
