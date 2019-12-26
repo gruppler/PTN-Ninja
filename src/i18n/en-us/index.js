@@ -93,6 +93,7 @@ export default {
   "Previous Branch End": "Previous Branch End",
   Private: "Private",
   Public: "Public",
+  "QR Code": "QR Code",
   Random: "Random",
   Rating1: "Rating 1",
   Rating2: "Rating 2",

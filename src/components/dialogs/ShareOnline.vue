@@ -149,26 +149,20 @@
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
-    <q-dialog v-model="showQR">
-      <qriously
-        v-if="qrText"
-        :value="qrText"
-        :size="250"
-        foreground="white"
-        v-close-popup
-      />
-    </q-dialog>
+    <QRCode v-model="showQR" :text="qrText" />
   </q-dialog>
 </template>
 
 <script>
 import DialogHeader from "../general/DialogHeader";
 
+import QRCode from "./QRCode";
+
 import { formats, now } from "../../PTN/Tag";
 
 export default {
   name: "ShareOnline",
-  components: { DialogHeader },
+  components: { DialogHeader, QRCode },
   props: ["value", "game"],
   data() {
     return {

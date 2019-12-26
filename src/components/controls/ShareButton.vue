@@ -4,7 +4,7 @@
       <q-list class="bg-secondary text-white">
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
-          <q-item v-else clickable @click="item.action" :key="i">
+          <q-item v-else clickable @click="item.action" :key="item.id">
             <q-item-section side>
               <q-icon :name="item.icon" />
             </q-item-section>
@@ -13,67 +13,79 @@
         </template>
       </q-list>
     </q-menu>
+    <QRCode v-model="showQR" :text="qrText" />
   </q-btn>
 </template>
 
 <script>
+import QRCode from "../dialogs/QRCode";
+
 export default {
   name: "ShareButton",
+  components: { QRCode },
   props: ["game"],
   data() {
     let actions = [
       {
+        id: "link",
         label: this.$t("Copy Link"),
         icon: "link",
-        id: "link",
         action: () => this.copy("link")
       },
       {
+        id: "ply",
         label: this.$t("Copy Ply"),
         icon: "layers",
-        id: "ply",
         action: () => this.copy("ply")
       },
       {
+        id: "moves",
         label: this.$t("Copy Moves"),
         icon: "format_list_numbered",
-        id: "moves",
         action: () => this.copy("moves")
       },
       {
+        id: "ptn",
         label: this.$t("Copy PTN"),
         icon: "file_copy",
-        id: "ptn",
         action: () => this.copy("ptn")
       },
       {},
       {
+        id: "download",
         label: this.$t("Download"),
         icon: "save_alt",
-        id: "download",
         action: this.download
       }
     ];
     if (!this.$store.state.embed) {
       if (this.game.isLocal) {
         actions.push({
+          id: "embed",
           label: this.$t("Embed"),
           icon: "code",
-          id: "embed",
           action: this.embed
         });
       }
       actions.push({
+        id: "online",
         label: this.$t("Online"),
         icon: "public",
-        id: "online",
         action: this.online
       });
     }
+    actions.push({
+      id: "qrcode",
+      label: this.$t("QR Code"),
+      icon: "app:qrcode",
+      action: this.qrCode
+    });
 
     return {
       actions,
-      bottomSheet: false
+      bottomSheet: false,
+      showQR: false,
+      qrText: ""
     };
   },
   methods: {
@@ -109,6 +121,13 @@ export default {
     },
     online() {
       this.$emit("online");
+    },
+    qrCode() {
+      this.qrText = this.$store.getters.url(this.game, {
+        origin: true,
+        state: true
+      });
+      this.showQR = true;
     },
     share() {
       if (this.bottomSheet) {
