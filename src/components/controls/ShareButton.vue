@@ -50,23 +50,9 @@ export default {
         icon: "file_copy",
         action: () => this.copy("ptn")
       },
-      {},
-      {
-        id: "download",
-        label: this.$t("Download"),
-        icon: "save_alt",
-        action: this.download
-      }
+      {}
     ];
     if (!this.$store.state.embed) {
-      if (this.game.isLocal) {
-        actions.push({
-          id: "embed",
-          label: this.$t("Embed"),
-          icon: "code",
-          action: this.embed
-        });
-      }
       actions.push({
         id: "online",
         label: this.$t("Online"),
@@ -74,12 +60,28 @@ export default {
         action: this.online
       });
     }
-    actions.push({
-      id: "qrcode",
-      label: this.$t("QR Code"),
-      icon: "app:qrcode",
-      action: this.qrCode
-    });
+    if (!this.$store.state.embed && this.game.isLocal) {
+      actions.push({
+        id: "embed",
+        label: this.$t("Embed"),
+        icon: "code",
+        action: this.embed
+      });
+    }
+    actions.push(
+      {
+        id: "download",
+        label: this.$t("Download"),
+        icon: "save_alt",
+        action: this.download
+      },
+      {
+        id: "qrcode",
+        label: this.$t("QR Code"),
+        icon: "app:qrcode",
+        action: this.qrCode
+      }
+    );
 
     return {
       actions,
