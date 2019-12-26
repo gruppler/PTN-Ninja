@@ -81,11 +81,7 @@ export default {
       return this.ply.branches;
     },
     showBranch() {
-      return (
-        !this.noBranch &&
-        this.linenum.branch &&
-        this.$store.state.showAllBranches
-      );
+      return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
       const ply1 = this.linenum.move.ply1;

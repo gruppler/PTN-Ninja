@@ -65,8 +65,8 @@
         icon="last_page"
       />
       <q-btn
-        v-shortkey="{ ...options, toggle: hotkeys.branch }"
-        @shortkey="selectOption"
+        v-shortkey="{ ...options, ...branchControls }"
+        @shortkey="branchKey"
         round
         flat
         :disable="!branches.length || plyInProgress"
@@ -104,7 +104,18 @@ export default {
       next: null,
       prev: null,
       branchMenu: false,
-      hotkeys: HOTKEYS.CONTROLS
+      hotkeys: HOTKEYS.CONTROLS,
+      branchControls: {
+        menu: HOTKEYS.CONTROLS.branch,
+        prevBranch: HOTKEYS.CONTROLS.prevBranch,
+        nextBranch: HOTKEYS.CONTROLS.nextBranch,
+        prevBranchEnd: HOTKEYS.CONTROLS.prevBranchEnd,
+        nextBranchEnd: HOTKEYS.CONTROLS.nextBranchEnd,
+        firstBranch: HOTKEYS.CONTROLS.firstBranch,
+        lastBranch: HOTKEYS.CONTROLS.lastBranch,
+        firstBranchEnd: HOTKEYS.CONTROLS.firstBranchEnd,
+        lastBranchEnd: HOTKEYS.CONTROLS.lastBranchEnd
+      }
     };
   },
   computed: {
@@ -134,7 +145,7 @@ export default {
           .concat()
           .reverse()
           .find(
-            ply => Object.keys(ply.branches).length > 1 && index > ply.index
+            ply => index > ply.index && Object.keys(ply.branches).length > 1
           );
         if (
           !ply &&
@@ -144,15 +155,16 @@ export default {
           // Selected branch siblings
           ply = this.game.branches[this.game.state.targetBranch];
         }
-        if (!ply) {
-          // Next branch
-          ply = this.game.state.plies.find(
-            ply => Object.keys(ply.branches).length > 1 && index < ply.index
-          );
-        }
-        return ply ? ply.branches : [];
+        return ply ? ply.branches : Object.values(this.game.branches);
       }
       return [];
+    },
+    branchIndex() {
+      return this.branches.length
+        ? this.branches.findIndex(branch =>
+            this.game.state.plies.includes(branch)
+          )
+        : -1;
     },
     options() {
       return zipObject(
@@ -236,14 +248,62 @@ export default {
     selectBranch(ply) {
       this.game.setTarget(ply);
     },
-    selectOption({ srcKey }) {
-      if (srcKey === "toggle") {
-        if (this.branches.length) {
-          this.branchMenu = !this.branchMenu;
-        }
-      } else {
-        this.selectBranch(this.branches[srcKey]);
+    branchKey({ srcKey }) {
+      switch (srcKey) {
+        case "menu":
+          if (this.branches.length) {
+            this.branchMenu = !this.branchMenu;
+          }
+          break;
+        case "prevBranch":
+        case "nextBranch":
+        case "prevBranchEnd":
+        case "nextBranchEnd":
+        case "firstBranch":
+        case "lastBranch":
+        case "firstBranchEnd":
+        case "lastBranchEnd":
+          this[srcKey]();
+          break;
+        default:
+          this.selectBranch(this.branches[srcKey]);
       }
+    },
+    prevBranch() {
+      if (this.branches.length && this.branchIndex > 0) {
+        this.game.setTarget(this.branches[this.branchIndex - 1]);
+      }
+    },
+    nextBranch() {
+      if (this.branches.length && this.branchIndex < this.branches.length - 1) {
+        this.game.setTarget(this.branches[this.branchIndex + 1]);
+      }
+    },
+    prevBranchEnd() {
+      this.prevBranch();
+      this.last();
+    },
+    nextBranchEnd() {
+      this.nextBranch();
+      this.last();
+    },
+    firstBranch() {
+      if (this.branches.length) {
+        this.game.setTarget(this.branches[0]);
+      }
+    },
+    lastBranch() {
+      if (this.branches.length) {
+        this.game.setTarget(this.branches[this.branches.length - 1]);
+      }
+    },
+    firstBranchEnd() {
+      this.firstBranch();
+      this.last();
+    },
+    lastBranchEnd() {
+      this.lastBranch();
+      this.last();
     }
   },
   watch: {

@@ -1,5 +1,6 @@
 <template>
   <q-menu
+    ref="menu"
     :value="value"
     @input="$emit('input', $event)"
     transition-show="scale"
@@ -47,6 +48,11 @@ export default {
   methods: {
     select(ply) {
       this.$emit("select", ply);
+    }
+  },
+  watch: {
+    branches() {
+      this.$nextTick(this.$refs.menu.updatePosition);
     }
   }
 };

@@ -17,7 +17,15 @@ export const HOTKEYS = {
     last: ["ctrl", "arrowright"],
     deletePly: ["del"],
     branch: ["b"],
-    selectBranch: ["0-9"]
+    selectBranch: ["0-9"],
+    prevBranch: ["arrowup"],
+    nextBranch: ["arrowdown"],
+    prevBranchEnd: ["shift", "arrowup"],
+    nextBranchEnd: ["shift", "arrowdown"],
+    firstBranch: ["ctrl", "arrowup"],
+    lastBranch: ["ctrl", "arrowdown"],
+    firstBranchEnd: ["ctrl", "shift", "arrowup"],
+    lastBranchEnd: ["ctrl", "shift", "arrowdown"]
   },
   UI: {
     showPTN: ["q"],
@@ -77,7 +85,15 @@ export const HOTKEY_NAMES = {
     last: "End",
     deletePly: "Delete Ply",
     branch: "Show Branch Menu",
-    selectBranch: "Select Branch"
+    selectBranch: "Select Branch",
+    prevBranch: "Previous Branch",
+    nextBranch: "Next Branch",
+    prevBranchEnd: "Previous Branch End",
+    nextBranchEnd: "Next Branch End",
+    firstBranch: "First Branch",
+    lastBranch: "Last Branch",
+    firstBranchEnd: "First Branch End",
+    lastBranchEnd: "Last Branch End"
   },
   UI: {
     showPTN: "Show PTN",

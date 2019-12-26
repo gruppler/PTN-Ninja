@@ -17,7 +17,6 @@
             <q-tab-panels
               v-model="section"
               class="bg-secondary col-grow"
-              swipeable
               animated
             >
               <q-tab-panel name="about">
