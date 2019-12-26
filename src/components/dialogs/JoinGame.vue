@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { formats } from "../../PTN/Tag";
+import { formats, now } from "../../PTN/Tag";
 
 import { omit } from "lodash";
 
@@ -89,7 +89,7 @@ export default {
 
       if (this.game.tag("player" + this.player) !== this.playerName) {
         this.game.setTags(
-          { ["player" + this.player]: this.playerName },
+          { ["player" + this.player]: this.playerName, ...now() },
           false,
           false
         );
