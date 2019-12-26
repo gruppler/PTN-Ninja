@@ -75,6 +75,13 @@
                     </template>
                     <template v-slot:append>
                       <q-btn
+                        @click="qrCode(publicCode)"
+                        icon="app:qrcode"
+                        color="accent"
+                        dense
+                        flat
+                      />
+                      <q-btn
                         @click="copy(publicCode)"
                         icon="file_copy"
                         dense
@@ -103,6 +110,13 @@
                       />
                     </template>
                     <template v-slot:append>
+                      <q-btn
+                        @click="qrCode(privateCode)"
+                        icon="app:qrcode"
+                        color="accent"
+                        dense
+                        flat
+                      />
                       <q-btn
                         @click="copy(privateCode)"
                         icon="file_copy"
@@ -135,6 +149,15 @@
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
+    <q-dialog v-model="showQR">
+      <qriously
+        v-if="qrText"
+        :value="qrText"
+        :size="250"
+        foreground="white"
+        v-close-popup
+      />
+    </q-dialog>
   </q-dialog>
 </template>
 
@@ -156,7 +179,9 @@ export default {
         { label: this.$t("Random"), value: "random" }
       ],
       playerName: this.$store.state.playerName,
-      validateName: value => formats.player1.test(value)
+      validateName: value => formats.player1.test(value),
+      qrText: "",
+      showQR: false
     };
   },
   computed: {
@@ -245,6 +270,10 @@ export default {
         text,
         message: this.$t("Copied")
       });
+    },
+    qrCode(text) {
+      this.qrText = text;
+      this.showQR = true;
     }
   },
   watch: {

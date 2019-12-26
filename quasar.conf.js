@@ -11,7 +11,8 @@ module.exports = function(ctx) {
       "moment",
       "shortkey",
       "globalComponents",
-      "firebase"
+      "firebase",
+      "qriously"
     ],
 
     css: ["app.styl"],
