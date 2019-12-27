@@ -94,7 +94,9 @@ export default {
           false
         );
         this.$store.dispatch("UPDATE_PTN", this.game.text());
-        this.game.name = this.game.generateName();
+        if (this.game.isDefaultName) {
+          this.game.name = this.game.generateName();
+        }
       }
 
       this.close();

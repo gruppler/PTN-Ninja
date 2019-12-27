@@ -380,6 +380,10 @@ export default class GameBase {
     return generateName(tags, this);
   }
 
+  get isDefaultName() {
+    return /^\S+ vs \S+ \dx\d/.test(this.name);
+  }
+
   tag(key, defaultValue) {
     return key in this.tags && this.tags[key].value
       ? this.tags[key].valueText
