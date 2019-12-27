@@ -21,8 +21,8 @@
       @click.right.prevent="toggle('?', true)"
       @shortkey="toggle('?', $event.srcKey === 'double')"
       v-shortkey="{
-        single: hotkeys.q,
-        double: hotkeys.qDouble
+        single: hotkeys.question,
+        double: hotkeys.questionDouble
       }"
       dense
     />

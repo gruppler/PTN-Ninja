@@ -4,7 +4,10 @@
       <q-btn
         @click="deletePly"
         @shortkey="deletePly"
-        v-shortkey="hotkeys.deletePly"
+        v-shortkey="{
+          delete: hotkeys.deletePly,
+          backspace: hotkeys.backspacePly
+        }"
         round
         flat
         :disable="!game.state.ply || !!game.state.nextPly || plyInProgress"

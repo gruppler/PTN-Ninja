@@ -16,6 +16,7 @@ export const HOTKEYS = {
     first: ["ctrl", "arrowleft"],
     last: ["ctrl", "arrowright"],
     deletePly: ["del"],
+    backspacePly: ["backspace"],
     branchMenu: ["b"],
     selectBranch: ["0-9"],
     prevBranch: ["arrowup"],
@@ -64,8 +65,8 @@ export const HOTKEYS = {
   EVAL: {
     tak: ["'"],
     tinue: ["shift", '"'],
-    q: ["shift", "?"],
-    qDouble: ["alt", "shift", "?"],
+    question: ["shift", "?"],
+    questionDouble: ["alt", "shift", "?"],
     bang: ["shift", "!"],
     bangDouble: ["alt", "shift", "!"]
   },
@@ -125,8 +126,8 @@ export const HOTKEY_NAMES = {
   EVAL: {
     tak: "Tak",
     tinue: "Tinue",
-    q: "?",
-    qDouble: "??",
+    question: "?",
+    questionDouble: "??",
     bang: "!",
     bangDouble: "!!"
   },

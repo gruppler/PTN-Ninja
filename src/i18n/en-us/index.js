@@ -205,6 +205,7 @@ export default {
     Arrowleft: "◀",
     Arrowright: "▶",
     Arrowup: "▲",
+    Backspace: "Backspace",
     Ctrl: "Ctrl",
     Del: "Delete",
     Shift: "Shift",

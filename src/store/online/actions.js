@@ -60,7 +60,14 @@ export const NOTIFICATION_INIT = context => {
   });
 };
 
-export const CREATE = ({ dispatch }, { game, options }) => {
+export const CREATE = ({ dispatch }, { game, tags, options }) => {
+  game.setTags(tags, false);
+  game.clearHistory();
+  dispatch("UPDATE_PTN", game.text(), { root: true });
+  if (game.isDefaultName) {
+    game.name = game.generateName();
+  }
+
   let json = game.json;
   options = Object.assign({}, json.options, options);
   json.options = omit(options, ["id", "player", "playerKey"]);

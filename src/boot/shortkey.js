@@ -1,5 +1,5 @@
 import ShortKey from "vue-shortkey";
 
 export default ({ Vue }) => {
-  Vue.use(ShortKey, { prevent: ["input", "textarea"] });
+  Vue.use(ShortKey, { prevent: ["input", "textarea", ".q-select *"] });
 };
