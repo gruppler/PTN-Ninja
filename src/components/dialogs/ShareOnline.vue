@@ -181,17 +181,16 @@ export default {
   props: ["value", "game"],
   data() {
     return {
-      privateGame: false,
-      showRoads: false,
       players: [
         { label: this.$t("Player1"), value: 1 },
         { label: this.$t("Player2"), value: 2 },
         { label: this.$t("Random"), value: "random" }
       ],
       playerName: this.$store.state.playerName,
-      validateName: value => formats.player1.test(value),
       qrText: "",
-      showQR: false
+      showQR: false,
+      showRoads: false,
+      validateName: value => formats.player1.test(value)
     };
   },
   computed: {
@@ -204,6 +203,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["player", value]);
+      }
+    },
+    privateGame: {
+      get() {
+        return this.$store.state.privateGame;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["privateGame", value]);
       }
     },
     playerBGColor() {
