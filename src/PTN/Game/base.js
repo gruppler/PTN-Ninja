@@ -286,6 +286,10 @@ export default class GameBase {
       this.parseJSONMoves(params.moves);
     }
 
+    if (!this.moves.length) {
+      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
+    }
+
     if (!this.moves[0].linenum) {
       this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ".", this);
     } else if (

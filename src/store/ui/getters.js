@@ -1,4 +1,37 @@
+import { Dialog, Notify } from "quasar";
+
 import { compressToEncodedURIComponent } from "lz-string";
+
+export const confirm = () => ({ title, message, ok, cancel, success }) => {
+  Dialog.create({
+    title,
+    message,
+    persistent: true,
+    ok: {
+      label: ok,
+      flat: true,
+      color: "accent"
+    },
+    cancel: {
+      label: cancel,
+      flat: true,
+      color: "accent"
+    },
+    class: "bg-secondary"
+  }).onOk(success);
+};
+
+export const error = () => ({ message, timeout }) => {
+  Notify.create({
+    message,
+    timeout: timeout || 0,
+    icon: "error",
+    color: "negative",
+    position: "top-right",
+    actions: [{ icon: "close", color: "grey-10" }],
+    classes: "text-grey-10"
+  });
+};
 
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
@@ -16,6 +49,10 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
 };
 
 export const url = state => (game, options = {}) => {
+  if (!game) {
+    return "";
+  }
+
   let url = compressToEncodedURIComponent(game.ptn);
   let params = {};
 
@@ -59,4 +96,27 @@ export const url = state => (game, options = {}) => {
         .join("&");
   }
   return url;
+};
+
+export const onlineURL = () => (game, isPrivate = false) => {
+  let url = location.origin + "/?#/";
+
+  if (isPrivate && game.options.playerKey) {
+    url += "player/" + game.options.playerKey;
+  } else {
+    url += "game/" + game.options.id;
+  }
+
+  return url;
+};
+
+export const gameIcon = () => player => {
+  switch (player) {
+    case 1:
+      return "person";
+    case 2:
+      return "person_outline";
+    default:
+      return "public";
+  }
 };

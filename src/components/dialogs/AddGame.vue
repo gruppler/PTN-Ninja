@@ -178,7 +178,7 @@ export default {
       }
     },
     gameIcon(game) {
-      return this.$store.getters["online/icon"](game.player);
+      return this.$store.getters.gameIcon(game.player);
     },
     ok() {
       if (this.tab === "new") {

@@ -25,6 +25,7 @@
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-model="showAll" />
+        <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
@@ -55,6 +56,17 @@ export default {
     };
   },
   methods: {
+    reset() {
+      this.$store.getters.confirm({
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.resetForm"),
+        ok: this.$t("OK"),
+        cancel: this.$t("Cancel"),
+        success: () => {
+          this.$refs.gameInfo.init();
+        }
+      });
+    },
     close() {
       this.$emit("input", false);
     },

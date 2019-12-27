@@ -5,8 +5,8 @@
       class="qr-canvas"
       :value="text"
       :size="450"
-      foreground="white"
-      background="black"
+      foreground="#eceff1"
+      background="#263238"
       :backgroundAlpha="1"
       v-close-popup
     />

@@ -181,7 +181,6 @@ export const ADD_ONLINE_GAME = ({ commit }, game) => {
 };
 
 export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
-  debugger;
   let games = LocalStorage.getItem("onlineGames") || [];
   let index = games.findIndex(
     g => g.id === game.id && g.player === game.player

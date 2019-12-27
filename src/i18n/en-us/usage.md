@@ -1,13 +1,13 @@
 Getting Started
 ===
 ::: tip
-To **right-click** on a touchscreen devices, try **long-pressing**.
+To **right-click** on a touchscreen device, try **long-pressing**.
 :::
 
 ### Games
 PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
 
-You can load games from .ptn or .txt files, or from URLs generated from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
+You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 - To create a new game, **click** the "+" button in the main menu to open the New Game dialog.
 - To load an existing game, **click** the "+" button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more .ptn or .txt files into the window.
@@ -38,6 +38,7 @@ PTN
 ---
 The PTN is hidden by default. To show it, you can click the leftmost button in the header toolbar.
 - **Click** an unselected ply to navigate to it.
+- **Click** a selected ply to do or undo it.
 - **Right-click** an unselected ply to navigate to it, toggling the done/undone state.
 
 ### Trimming

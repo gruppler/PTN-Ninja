@@ -11,7 +11,6 @@ module.exports = function(ctx) {
       "moment",
       "shortkey",
       "globalComponents",
-      "firebase",
       "qriously"
     ],
 

@@ -155,7 +155,11 @@ export default {
           // Selected branch siblings
           ply = this.game.branches[this.game.state.targetBranch];
         }
-        return ply ? ply.branches : Object.values(this.game.branches);
+        return ply
+          ? ply.branches
+          : this.game
+              .getBranchesSorted()
+              .map(branch => this.game.branches[branch]);
       }
       return [];
     },

@@ -78,29 +78,18 @@ export default {
       }
     },
     gameIcon(game) {
-      return this.$store.getters["online/icon"](game.player);
+      return this.$store.getters.gameIcon(game.player);
     },
     close(index) {
-      this.$q
-        .dialog({
-          title: this.$t("Confirm"),
-          message: this.$t("confirm.close", this.$store.state.games[index]),
-          persistent: true,
-          ok: {
-            label: this.$t("OK"),
-            flat: true,
-            color: "accent"
-          },
-          cancel: {
-            label: this.$t("Cancel"),
-            flat: true,
-            color: "accent"
-          },
-          class: "bg-secondary"
-        })
-        .onOk(() => {
+      this.$store.getters.confirm({
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.close", this.$store.state.games[index]),
+        ok: this.$t("OK"),
+        cancel: this.$t("Cancel"),
+        success: () => {
           this.$store.dispatch("REMOVE_GAME", index);
-        });
+        }
+      });
     },
     edit() {
       this.$emit("edit");

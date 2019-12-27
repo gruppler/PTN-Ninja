@@ -11,15 +11,15 @@
       @click="toggle('tinue')"
     />
     <q-btn
-      label="?"
-      :class="{ active: isQ, double: isDouble('?') }"
+      :label="isDoubleQ ? '??' : '?'"
+      :class="{ active: isQ, double: isDoubleQ }"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
       dense
     />
     <q-btn
-      label="!"
-      :class="{ active: isBang, double: isDouble('!') }"
+      :label="isDoubleBang ? '!!' : '!'"
+      :class="{ active: isBang, double: isDoubleBang }"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
       dense
@@ -49,6 +49,12 @@ export default {
     },
     isBang() {
       return this.eval && this.eval["!"];
+    },
+    isDoubleQ() {
+      return this.eval && this.eval.isDouble("?");
+    },
+    isDoubleBang() {
+      return this.eval && this.eval.isDouble("!");
     }
   },
   methods: {
@@ -56,9 +62,6 @@ export default {
       if (this.game) {
         this.game.toggleEvaluation(type, double);
       }
-    },
-    isDouble(type) {
-      return this.eval && this.eval.isDouble(type);
     }
   }
 };

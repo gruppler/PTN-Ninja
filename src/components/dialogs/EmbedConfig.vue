@@ -197,8 +197,14 @@
         <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t('Copy')" @click="copy" color="accent" flat />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        <q-btn
+          :label="$t('Copy')"
+          @click="copy"
+          color="accent"
+          flat
+          v-close-popup
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -248,7 +254,15 @@ export default {
   },
   methods: {
     reset() {
-      this.config = cloneDeep(this.$store.state.defaults.embedConfig);
+      this.$store.getters.confirm({
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.resetEmbed"),
+        ok: this.$t("OK"),
+        cancel: this.$t("Cancel"),
+        success: () => {
+          this.config = cloneDeep(this.$store.state.defaults.embedConfig);
+        }
+      });
     },
     copy() {
       this.$store.dispatch("COPY", {

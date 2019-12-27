@@ -35,6 +35,11 @@
 <script>
 export default {
   name: "BranchMenu",
+  data() {
+    return {
+      isClosing: false
+    };
+  },
   components: {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply")
@@ -47,12 +52,20 @@ export default {
   },
   methods: {
     select(ply) {
+      this.isClosing = true;
       this.$emit("select", ply);
     }
   },
   watch: {
     branches() {
-      this.$nextTick(this.$refs.menu.updatePosition);
+      if (!this.isClosing) {
+        this.$nextTick(this.$refs.menu.updatePosition);
+      }
+    },
+    value(isVisible) {
+      if (isVisible) {
+        this.isClosing = false;
+      }
     }
   }
 };

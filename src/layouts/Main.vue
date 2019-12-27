@@ -563,26 +563,42 @@ export default {
           }
           break;
         case "help":
-          this.$refs.help.section = "usage";
-          this.dialogHelp = true;
+          if (!this.dialogHelp || this.$refs.help.section !== "usage") {
+            this.$refs.help.section = "usage";
+            this.dialogHelp = true;
+          } else {
+            this.dialogHelp = false;
+          }
           break;
         case "hotkeys":
-          this.$refs.help.section = "hotkeys";
-          this.dialogHelp = true;
+          if (!this.dialogHelp || this.$refs.help.section !== "hotkeys") {
+            this.$refs.help.section = "hotkeys";
+            this.dialogHelp = true;
+          } else {
+            this.dialogHelp = false;
+          }
           break;
         case "loadGame":
-          this.$refs.addGame.tab = "load";
-          this.dialogAddGame = true;
+          if (!this.dialogAddGame || this.$refs.addGame.tab !== "load") {
+            this.$refs.addGame.tab = "load";
+            this.dialogAddGame = true;
+          } else {
+            this.dialogAddGame = false;
+          }
           break;
         case "newGame":
-          this.$refs.addGame.tab = "new";
-          this.dialogAddGame = true;
+          if (!this.dialogAddGame || this.$refs.addGame.tab !== "new") {
+            this.$refs.addGame.tab = "new";
+            this.dialogAddGame = true;
+          } else {
+            this.dialogAddGame = false;
+          }
           break;
         case "online":
-          this.dialogOnline = true;
+          this.dialogOnline = !this.dialogOnline;
           break;
         case "preferences":
-          this.dialogUISettings = true;
+          this.dialogUISettings = !this.dialogUISettings;
           break;
         case "share":
           this.share();

@@ -10,7 +10,8 @@
     "lint": "eslint --ext .js,.vue src",
     "dev": "quasar dev -m pwa",
     "build": "quasar build -m electron",
-    "deploy": "quasar build -m pwa && firebase deploy --only hosting"
+    "deploy": "quasar build -m pwa && firebase deploy --only hosting:live",
+    "dev-deploy": "quasar build -m pwa && firebase deploy --only hosting:dev"
   },
   "dependencies": {
     "@kazupon/vue-i18n-loader": "^0.4.1",

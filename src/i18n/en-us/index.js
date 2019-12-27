@@ -142,7 +142,10 @@ export default {
   },
 
   confirm: {
-    close: "Are you sure you want to close the game '{name}'?"
+    close: "Are you sure you want to close the game '{name}'?",
+    resetEmbed:
+      "Are you sure you want to reset your embed settings to default?",
+    resetForm: "Are you sure you want to reset the form?"
   },
 
   error: {

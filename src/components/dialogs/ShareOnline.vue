@@ -135,6 +135,7 @@
       <q-separator />
 
       <q-card-actions align="right">
+        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
         <q-btn
           v-show="isLocal"
           @click="create"
@@ -146,9 +147,9 @@
           color="accent"
           flat
         />
-        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </q-card>
+
     <QRCode v-model="showQR" :text="qrText" />
   </q-dialog>
 </template>
@@ -211,12 +212,12 @@ export default {
     publicCode() {
       return this.game.isLocal
         ? ""
-        : this.$store.getters["online/url"](this.game) || "";
+        : this.$store.getters.onlineURL(this.game) || "";
     },
     privateCode() {
       return this.game.isLocal
         ? ""
-        : this.$store.getters["online/url"](this.game, true) || "";
+        : this.$store.getters.onlineURL(this.game, true) || "";
     }
   },
   methods: {
