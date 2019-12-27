@@ -1,11 +1,15 @@
 <template>
   <div class="game-selector no-wrap">
     <q-select
+      ref="select"
       v-if="games.length"
       class="text-subtitle1 no-wrap"
       :value="0"
       :options="games"
       @input="select"
+      @keydown.esc="$refs.select.blur"
+      @keydown.delete="close($refs.select.optionIndex)"
+      @keydown.backspace="close($refs.select.optionIndex)"
       :display-value="game.label"
       behavior="menu"
       popup-content-class="bg-secondary"

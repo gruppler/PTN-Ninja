@@ -10,7 +10,7 @@
           flat
         />
         <QToolbarTitle>
-          <GameSelector>
+          <GameSelector ref="gameSelector">
             <q-btn
               icon="edit"
               @click.stop="edit"
@@ -550,6 +550,9 @@ export default {
           break;
         case "embedGame":
           this.dialogEmbed = this.game.isLocal;
+          break;
+        case "focusGame":
+          this.$refs.gameSelector.$refs.select.showPopup();
           break;
         case "focusText":
           this.right = true;

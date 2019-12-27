@@ -48,6 +48,7 @@ export default {
   Flats: "Flats",
   Flats1: "Flats 1",
   Flats2: "Flats 2",
+  "Focus Game Selector": "Focus Game Selector",
   "Focus Text Input": "Focus Text Input",
   Forward: "Forward",
   "Forward Half-Step": "Forward Half-Step",
