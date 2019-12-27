@@ -247,7 +247,9 @@ export default {
     code() {
       return `<iframe src="${this.url}" width="${this.config.width}" height="${
         this.config.height
-      }" style="width:${this.config.width}; max-width:100vw; height:${
+      }" style="width:${
+        this.config.width
+      }; max-width:calc(100vw - 30px); height:${
         this.config.height
       }; max-height:100vh;" frameborder="0" allowfullscreen />`;
     }

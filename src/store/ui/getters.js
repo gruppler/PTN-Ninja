@@ -6,7 +6,7 @@ export const confirm = () => ({ title, message, ok, cancel, success }) => {
   Dialog.create({
     title,
     message,
-    persistent: true,
+    "no-backdrop-dismiss": true,
     ok: {
       label: ok,
       flat: true,
