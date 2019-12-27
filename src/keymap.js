@@ -54,8 +54,9 @@ export const HOTKEYS = {
     editGame: ["e"],
     editPTN: ["shift", "e"],
     share: ["ctrl", "shift", "s"],
-    embedGame: ["ctrl", "e"],
     online: ["o"],
+    embedGame: ["ctrl", "e"],
+    qrCode: ["shift", "q"],
     focusText: ["/"],
     toggleText: ["shift", "w"],
     more: ["shift", "space"]
@@ -128,8 +129,9 @@ export const HOTKEY_NAMES = {
     editGame: "Edit Game",
     editPTN: "Edit PTN",
     share: "Share",
-    embedGame: "Embed",
     online: "Play Online",
+    embedGame: "Embed",
+    qrCode: "QR Code",
     focusText: "Focus Text Input",
     toggleText: "Switch Text Tab",
     more: "Show More/Less"

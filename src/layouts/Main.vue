@@ -600,6 +600,13 @@ export default {
         case "preferences":
           this.dialogUISettings = !this.dialogUISettings;
           break;
+        case "qrCode":
+          if (this.$refs.shareButton.showQR) {
+            this.$refs.shareButton.showQR = false;
+          } else {
+            this.$refs.shareButton.qrCode();
+          }
+          break;
         case "share":
           this.share();
           break;

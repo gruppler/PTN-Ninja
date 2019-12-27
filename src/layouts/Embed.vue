@@ -248,6 +248,13 @@ export default {
           this.right = true;
           this.$refs.notes.$refs.input.focus();
           break;
+        case "qrCode":
+          if (this.$refs.shareButton.showQR) {
+            this.$refs.shareButton.showQR = false;
+          } else {
+            this.$refs.shareButton.qrCode();
+          }
+          break;
         case "share":
           this.$refs.shareButton.share();
           break;
