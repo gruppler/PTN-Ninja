@@ -16,7 +16,7 @@ export const HOTKEYS = {
     first: ["ctrl", "arrowleft"],
     last: ["ctrl", "arrowright"],
     deletePly: ["del"],
-    branch: ["b"],
+    branchMenu: ["b"],
     selectBranch: ["0-9"],
     prevBranch: ["arrowup"],
     nextBranch: ["arrowdown"],
@@ -61,6 +61,14 @@ export const HOTKEYS = {
     toggleText: ["shift", "w"],
     more: ["shift", "space"]
   },
+  EVAL: {
+    tak: ["'"],
+    tinue: ["shift", '"'],
+    q: ["shift", "?"],
+    qDouble: ["alt", "shift", "?"],
+    bang: ["shift", "!"],
+    bangDouble: ["alt", "shift", "!"]
+  },
   PIECE: {
     color: ["`"],
     F: ["1"],
@@ -85,7 +93,7 @@ export const HOTKEY_NAMES = {
     first: "Beginning",
     last: "End",
     deletePly: "Delete Ply",
-    branch: "Show Branch Menu",
+    branchMenu: "Show Branch Menu",
     selectBranch: "Select Branch",
     prevBranch: "Previous Branch",
     nextBranch: "Next Branch",
@@ -113,6 +121,14 @@ export const HOTKEY_NAMES = {
     showMove: "Current Move",
     showControls: "Play Controls",
     showScrubber: "Scrub Bar"
+  },
+  EVAL: {
+    tak: "Tak",
+    tinue: "Tinue",
+    q: "?",
+    qDouble: "??",
+    bang: "!",
+    bangDouble: "!!"
   },
   PIECE: {
     color: "Switch Player",

@@ -4,17 +4,26 @@
       :label="$t('Tak')"
       :class="{ active: isTak }"
       @click="toggle('tak')"
+      @shortkey="toggle('tak')"
+      v-shortkey="hotkeys.tak"
     />
     <q-btn
       :label="$t('Tinue')"
       :class="{ active: isTinue }"
       @click="toggle('tinue')"
+      @shortkey="toggle('tinue')"
+      v-shortkey="hotkeys.tinue"
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
       :class="{ active: isQ, double: isDoubleQ }"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
+      @shortkey="toggle('?', $event.srcKey === 'double')"
+      v-shortkey="{
+        single: hotkeys.q,
+        double: hotkeys.qDouble
+      }"
       dense
     />
     <q-btn
@@ -22,15 +31,27 @@
       :class="{ active: isBang, double: isDoubleBang }"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
+      @shortkey="toggle('!', $event.srcKey === 'double')"
+      v-shortkey="{
+        single: hotkeys.bang,
+        double: hotkeys.bangDouble
+      }"
       dense
     />
   </q-btn-group>
 </template>
 
 <script>
+import { HOTKEYS } from "../../keymap";
+
 export default {
   name: "EvalButtons",
   props: ["game"],
+  data() {
+    return {
+      hotkeys: HOTKEYS.EVAL
+    };
+  },
   computed: {
     ply() {
       return this.game ? this.game.state.ply : null;

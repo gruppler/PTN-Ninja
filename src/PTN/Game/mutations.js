@@ -220,6 +220,12 @@ export default class GameMutations {
     if (move.plies.length === 0 && this.moves.length > 1) {
       this.moves.splice(this.moves.indexOf(move), 1);
     }
+
+    // Make sure target branch exists
+    if (!(this.state.targetBranch in this.branches)) {
+      this.state.targetBranch = this.state.ply.branch;
+    }
+
     return true;
   }
 

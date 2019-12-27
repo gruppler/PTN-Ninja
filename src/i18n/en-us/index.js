@@ -134,6 +134,10 @@ export default {
   Walls: "Walls",
   White: "White",
   Width: "Width",
+  "?": "?",
+  "??": "??",
+  "!": "!",
+  "!!": "!!",
 
   result: {
     "1": "{player} wins by default",
@@ -192,9 +196,11 @@ export default {
     UI: "UI Toggles", // User Interface
     CONTROLS: "Play Controls",
     ACTIONS: "Global Actions",
+    EVAL: "Evaluation",
     PIECE: "Piece Selector (TPS Mode)",
     MISC: "Miscellaneous",
     "0-9": "0–9",
+    Alt: "Alt",
     Arrowdown: "▼",
     Arrowleft: "◀",
     Arrowright: "▶",

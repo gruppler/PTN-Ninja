@@ -69,7 +69,7 @@
         @shortkey="branchKey"
         round
         flat
-        :disable="!branches.length || plyInProgress"
+        :disable="branches.length < 2 || plyInProgress"
         :color="hasBranches ? 'accent' : ''"
       >
         <q-icon name="call_split" class="rotate-180" />
@@ -89,8 +89,20 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { throttle, zipObject } from "lodash";
+import { omit, pick, throttle, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
+
+const BRANCH_KEYS = [
+  "branchMenu",
+  "prevBranch",
+  "nextBranch",
+  "prevBranchEnd",
+  "nextBranchEnd",
+  "firstBranch",
+  "lastBranch",
+  "firstBranchEnd",
+  "lastBranchEnd"
+];
 
 export default {
   name: "PlayControls",
@@ -104,18 +116,8 @@ export default {
       next: null,
       prev: null,
       branchMenu: false,
-      hotkeys: HOTKEYS.CONTROLS,
-      branchControls: {
-        menu: HOTKEYS.CONTROLS.branch,
-        prevBranch: HOTKEYS.CONTROLS.prevBranch,
-        nextBranch: HOTKEYS.CONTROLS.nextBranch,
-        prevBranchEnd: HOTKEYS.CONTROLS.prevBranchEnd,
-        nextBranchEnd: HOTKEYS.CONTROLS.nextBranchEnd,
-        firstBranch: HOTKEYS.CONTROLS.firstBranch,
-        lastBranch: HOTKEYS.CONTROLS.lastBranch,
-        firstBranchEnd: HOTKEYS.CONTROLS.firstBranchEnd,
-        lastBranchEnd: HOTKEYS.CONTROLS.lastBranchEnd
-      }
+      hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
+      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS)
     };
   },
   computed: {
@@ -132,7 +134,7 @@ export default {
       return this.game.state.selected.pieces.length !== 0;
     },
     hasBranches() {
-      return !!(this.game.state.ply && this.game.state.ply.branches.length);
+      return !!(this.game.state.ply && this.game.state.ply.branches.length > 1);
     },
     branches() {
       if (this.hasBranches) {
