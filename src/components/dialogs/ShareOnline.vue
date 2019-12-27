@@ -35,6 +35,7 @@
                     </q-input>
                   </q-item-section>
                 </q-item>
+
                 <q-item>
                   <q-item-section>
                     <q-btn-toggle
@@ -48,6 +49,19 @@
                     />
                   </q-item-section>
                 </q-item>
+
+                <q-item tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Private Game") }}</q-item-label>
+                    <q-item-label caption>{{
+                      $t("hints.privateGame")
+                    }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle color="accent" v-model="privateGame" />
+                  </q-item-section>
+                </q-item>
+
                 <q-item tag="label" v-ripple>
                   <q-item-section>
                     <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -167,6 +181,7 @@ export default {
   props: ["value", "game"],
   data() {
     return {
+      privateGame: false,
       showRoads: false,
       players: [
         { label: this.$t("Player1"), value: 1 },
@@ -255,6 +270,7 @@ export default {
         game: this.game,
         options: {
           isOnline: true,
+          isUnlisted: this.privateGame,
           disableRoads: !this.showRoads,
           player
         }

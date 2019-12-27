@@ -92,6 +92,7 @@ export default {
   "Previous Branch": "Previous Branch",
   "Previous Branch End": "Previous Branch End",
   Private: "Private",
+  "Private Game": "Private Game",
   Public: "Public",
   "QR Code": "QR Code",
   Random: "Random",
@@ -183,7 +184,8 @@ export default {
 
   hints: {
     public: "Share this with your opponent and spectators",
-    private: "Share this with your other devices"
+    private: "Share this with your other devices",
+    privateGame: "This game will not be listed"
   },
 
   hotkeys: {
