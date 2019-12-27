@@ -111,7 +111,7 @@ export default {
           text = this.game.state.ply.text();
           break;
         case "moves":
-          text = this.game.moveText(this.showAllBranches);
+          text = this.game.moveText(this.$store.state.showAllBranches, true);
           break;
         case "ptn":
           text = this.game.ptn;
