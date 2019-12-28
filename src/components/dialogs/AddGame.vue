@@ -33,7 +33,11 @@
           <q-tab-panel name="load" class="q-pa-none">
             <Recess>
               <q-list separator>
-                <q-item @click="$store.dispatch('OPEN', close)" clickable>
+                <q-item
+                  @click="$store.dispatch('OPEN', close)"
+                  clickable
+                  v-ripple
+                >
                   <q-item-section avatar>
                     <q-icon name="folder_open" />
                   </q-item-section>

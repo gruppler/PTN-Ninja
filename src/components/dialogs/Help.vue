@@ -31,8 +31,6 @@
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
-
-    <q-page-scroller position="top" />
   </LargeDialog>
 </template>
 

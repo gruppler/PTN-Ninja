@@ -8,7 +8,7 @@
     <q-layout
       view="hhh lpr fff"
       class="bg-secondary"
-      :style="{ width, height }"
+      :style="{ height }"
       container
     >
       <q-header class="bg-secondary" elevated>
@@ -27,23 +27,17 @@
 </template>
 
 <script>
-const WIDTH = 500;
-const HEIGHT = 565;
+const HEIGHT = 700;
 
 export default {
   name: "LargeDialog",
-  props: ["value"],
-  data() {
-    return {
-      width: WIDTH + "px"
-    };
-  },
+  props: ["value", "min-height"],
   computed: {
     maximized() {
-      return window.innerWidth < WIDTH;
+      return this.$q.screen.lt.sm;
     },
     height() {
-      return this.maximized ? "100%" : HEIGHT + "px";
+      return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
     }
   }
 };

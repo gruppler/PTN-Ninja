@@ -3,6 +3,7 @@
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
+    min-height="588"
   >
     <template v-slot:header>
       <iframe
@@ -72,7 +73,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll">
+      <q-item>
         <q-item-section>
           {{ $t("Play Speed") }}
           <q-slider
@@ -88,7 +89,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
         </q-item-section>
@@ -97,7 +98,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
         </q-item-section>
@@ -106,7 +107,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Road Connections") }}</q-item-label>
         </q-item-section>
@@ -115,7 +116,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
@@ -124,7 +125,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
         </q-item-section>
@@ -133,7 +134,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
         </q-item-section>
@@ -142,7 +143,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Current Move") }}</q-item-label>
         </q-item-section>
@@ -151,7 +152,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Play Controls") }}</q-item-label>
         </q-item-section>
@@ -160,7 +161,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item v-show="showAll" tag="label" v-ripple>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
         </q-item-section>
@@ -173,7 +174,6 @@
     <template v-slot:footer>
       <q-separator />
       <q-card-actions class="row items-center justify-end q-gutter-sm">
-        <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
@@ -192,19 +192,16 @@
 <script>
 import LargeDialog from "../general/LargeDialog.vue";
 
-import MoreToggle from "../controls/MoreToggle.vue";
-
 import { cloneDeep } from "lodash";
 
 export default {
   name: "EmbedConfig",
-  components: { LargeDialog, MoreToggle },
+  components: { LargeDialog },
   props: ["value", "game"],
   data() {
     return {
       name: this.game.name,
       config: cloneDeep(this.$store.state.embedConfig),
-      showAll: false,
       previewError: false,
       previewLoaded: false,
       initialURL: ""

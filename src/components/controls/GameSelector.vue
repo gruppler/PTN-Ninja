@@ -9,7 +9,6 @@
       @input="select"
       @keydown.esc="$refs.select.blur"
       @keydown.delete="close($refs.select.optionIndex)"
-      @keydown.backspace="close($refs.select.optionIndex)"
       :display-value="game.label"
       behavior="menu"
       popup-content-class="bg-secondary"
@@ -86,8 +85,8 @@ export default {
     },
     close(index) {
       this.$store.getters.confirm({
-        title: this.$t("Confirm"),
-        message: this.$t("confirm.close", this.$store.state.games[index]),
+        title: this.$t("confirm.close"),
+        message: this.$store.state.games[index].name,
         ok: this.$t("OK"),
         cancel: this.$t("Cancel"),
         success: () => {

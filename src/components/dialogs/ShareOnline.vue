@@ -264,19 +264,15 @@ export default {
         player1 = "";
       }
 
-      this.game.setTags(
-        { player1, player2, rating1: "", rating2: "", ...now() },
-        false,
-        false
-      );
-      this.game.clearHistory();
-      this.$store.dispatch("UPDATE_PTN", this.game.text());
-      if (this.game.isDefaultName) {
-        this.game.name = this.game.generateName();
-      }
-
       this.$store.dispatch("online/CREATE", {
         game: this.game,
+        tags: {
+          player1,
+          player2,
+          rating1: "",
+          rating2: "",
+          ...now()
+        },
         options: {
           isOnline: true,
           isUnlisted: this.privateGame,
