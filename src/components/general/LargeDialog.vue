@@ -1,5 +1,6 @@
 <template>
   <q-dialog
+    content-class="large-dialog"
     @input="$emit('input', $event)"
     :value="value"
     :maximized="maximized"
@@ -43,3 +44,9 @@ export default {
   }
 };
 </script>
+
+<style lang="stylus">
+.large-dialog
+  .q-layout-container
+    transition height $generic-hover-transition
+</style>

@@ -3,7 +3,7 @@
     ref="table"
     class="online-games"
     card-class="bg-secondary"
-    table-class="bg-blue-grey-9"
+    table-class="dim"
     table-header-class="bg-secondary"
     :loading="loading"
     :columns="columns"
