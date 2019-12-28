@@ -63,7 +63,7 @@ export const url = state => (game, options = {}) => {
   }
 
   if (options.origin) {
-    url = location.origin + "/?#/" + url;
+    url = location.origin + "/" + url;
   }
 
   if (options.state) {
@@ -99,7 +99,7 @@ export const url = state => (game, options = {}) => {
 };
 
 export const onlineURL = () => (game, isPrivate = false) => {
-  let url = location.origin + "/?#/";
+  let url = location.origin + "/";
 
   if (isPrivate && game.config.playerKey) {
     url += "player/" + game.config.playerKey;
