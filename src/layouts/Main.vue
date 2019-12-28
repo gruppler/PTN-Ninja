@@ -552,14 +552,19 @@ export default {
         case "embedGame":
           this.dialogEmbed = this.game.isLocal;
           break;
-        case "focusGame":
-          this.$refs.gameSelector.$refs.select.showPopup();
-          break;
         case "focusText":
           this.right = true;
           this.$refs[
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
+          break;
+        case "focusGame":
+          this.$refs.gameSelector.$refs.select.showPopup();
+          break;
+        case "previousGame":
+          if (this.$store.state.games.length > 1) {
+            this.$refs.gameSelector.select(1);
+          }
           break;
         case "toggleText":
           if (this.hasChat) {
@@ -588,6 +593,19 @@ export default {
             this.dialogAddGame = true;
           } else {
             this.dialogAddGame = false;
+          }
+          break;
+        case "loadOnlineGame":
+          if (
+            !this.dialogAddGame ||
+            this.$refs.addGame.tab !== "load" ||
+            !this.$refs.addGame.showOnline
+          ) {
+            this.$refs.addGame.tab = "load";
+            this.$refs.addGame.showOnline = true;
+            this.dialogAddGame = true;
+          } else {
+            this.$refs.addGame.showOnline = false;
           }
           break;
         case "newGame":
