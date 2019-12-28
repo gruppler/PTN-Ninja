@@ -251,6 +251,7 @@ import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
+import onlineStore from "../store/online";
 import GameSelector from "../components/controls/GameSelector";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
@@ -427,7 +428,7 @@ export default {
       }
     },
     disabledOptions() {
-      if (this.game.options.disableRoads) {
+      if (this.game.config.disableRoads) {
         return ["showRoads"];
       }
       return [];
@@ -479,7 +480,7 @@ export default {
               ptn: this.ptn,
               name: game.name,
               state: game.minState,
-              options: game.options
+              config: game.config
             });
             this.$router.replace("/");
           }
@@ -497,8 +498,8 @@ export default {
             game.doTPS(this.$store.state.editingTPS);
           }
 
-          if (game.options.isOnline) {
-            if (!game.options.player && this.game.openPlayer) {
+          if (game.config.isOnline) {
+            if (!game.config.player && this.game.openPlayer) {
               this.dialogJoinGame = true;
             }
           }
@@ -673,6 +674,8 @@ export default {
     }
   },
   created() {
+    this.$store.registerModule("online", onlineStore);
+
     this.$q.dark.set(true);
 
     if (!this.games.length && !(this.gameID || this.playerKey)) {
@@ -680,7 +683,7 @@ export default {
         ptn: this.game.text(),
         name: this.game.name,
         state: this.game.minState,
-        options: this.game.options
+        config: this.game.config
       });
     }
 

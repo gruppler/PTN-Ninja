@@ -6,6 +6,8 @@ import {
   Notify
 } from "quasar";
 
+import { pick } from "lodash";
+
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
@@ -33,8 +35,8 @@ export const ADD_GAME = ({ commit, getters }, game) => {
   if (game.state) {
     LocalStorage.set("state-" + game.name, game.minState || game.state);
   }
-  if (game.options) {
-    LocalStorage.set("options-" + game.name, game.options);
+  if (game.config) {
+    LocalStorage.set("config-" + game.name, game.config);
   }
   if (game.history) {
     LocalStorage.set("history-" + game.name, game.history);
@@ -49,7 +51,7 @@ export const REMOVE_GAME = ({ commit }, index) => {
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + name);
   LocalStorage.remove("state-" + name);
-  LocalStorage.remove("options-" + name);
+  LocalStorage.remove("config-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
   commit("REMOVE_GAME", index);
@@ -70,9 +72,9 @@ export const SET_NAME = ({ state, commit, getters }, name) => {
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
   LocalStorage.set("state-" + name, state.games[0].state);
-  if (state.games[0].options) {
-    LocalStorage.remove("options-" + oldName);
-    LocalStorage.set("options-" + name, state.games[0].options);
+  if (state.games[0].config) {
+    LocalStorage.remove("config-" + oldName);
+    LocalStorage.set("config-" + name, state.games[0].config);
   }
   if (state.games[0].history) {
     LocalStorage.remove("history-" + oldName);
@@ -151,7 +153,7 @@ export const OPEN_FILES = ({ dispatch }, files) => {
         dispatch("ADD_GAME", {
           name: file.name.replace(/\.ptn$|\.txt$/, ""),
           ptn: event.target.result,
-          options: { isOnline: false }
+          config: { isOnline: false }
         });
         if (!--count) {
           Loading.hide();
@@ -165,15 +167,17 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   });
 };
 
+const ONLINE_GAME_PROPS = ["name", "config", "tags"];
+
 export const ADD_ONLINE_GAME = ({ commit }, game) => {
   let games = LocalStorage.getItem("onlineGames") || [];
-  game = {
-    id: game.options.id,
-    name: game.name,
-    player: game.options.player,
-    playerKey: game.options.playerKey
-  };
-  if (!games.find(g => g.id === game.id && g.player === game.player)) {
+  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
+  if (
+    !games.find(
+      g =>
+        g.config.id === game.config.id && g.config.player === game.config.player
+    )
+  ) {
     games.unshift(game);
     LocalStorage.set("onlineGames", games);
     commit("ADD_ONLINE_GAME", game);
@@ -183,14 +187,11 @@ export const ADD_ONLINE_GAME = ({ commit }, game) => {
 export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
   let games = LocalStorage.getItem("onlineGames") || [];
   let index = games.findIndex(
-    g => g.id === game.id && g.player === game.player
+    g =>
+      g.config.id === game.config.id && g.config.player === game.config.player
   );
-  game = {
-    id: game.options.id,
-    name: game.name,
-    player: game.options.player,
-    playerKey: game.options.playerKey
-  };
+  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
+
   if (index >= 0) {
     games[index] = game;
     LocalStorage.set("onlineGames", games);
@@ -198,9 +199,9 @@ export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
   }
 };
 
-export const SAVE_OPTIONS = ({ commit }, { game, options }) => {
-  LocalStorage.set("options-" + game.name, options);
-  commit("SAVE_OPTIONS", { game, options });
+export const SAVE_CONFIG = ({ commit }, { game, config }) => {
+  LocalStorage.set("config-" + game.name, config);
+  commit("SAVE_CONFIG", { game, config });
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

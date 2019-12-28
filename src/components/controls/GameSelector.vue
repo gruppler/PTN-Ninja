@@ -69,7 +69,7 @@ export default {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index,
-        game: game.options
+        game: game.config
       }));
     }
   },

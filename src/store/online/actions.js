@@ -60,7 +60,9 @@ export const NOTIFICATION_INIT = context => {
   });
 };
 
-export const CREATE = ({ dispatch }, { game, tags, options }) => {
+const LOCAL_CONFIG_KEYS = ["id", "player", "playerKey"];
+
+export const CREATE = ({ dispatch }, { game, tags, config }) => {
   game.setTags(tags, false);
   game.clearHistory();
   dispatch("UPDATE_PTN", game.text(), { root: true });
@@ -69,13 +71,13 @@ export const CREATE = ({ dispatch }, { game, tags, options }) => {
   }
 
   let json = game.json;
-  options = Object.assign({}, json.options, options);
-  json.options = omit(options, ["id", "player", "playerKey"]);
+  config = Object.assign({}, json.config, config);
+  json.config = omit(config, LOCAL_CONFIG_KEYS);
   db.collection("games")
     .add(omit(json, "moves"))
     .then(gameDoc => {
       // Add game to DB
-      options.id = gameDoc.id;
+      config.id = gameDoc.id;
 
       // Add moves to game in DB
       if (json.moves.length) {
@@ -90,14 +92,14 @@ export const CREATE = ({ dispatch }, { game, tags, options }) => {
       // Generate player key
       db.collection("playerKeys")
         .add({
-          game: options.id,
-          player: options.player
+          game: config.id,
+          player: config.player
         })
         .then(keyDoc => {
-          options.playerKey = keyDoc.id;
+          config.playerKey = keyDoc.id;
 
-          // Save local options
-          dispatch("SAVE_OPTIONS", { game, options }, { root: true });
+          // Save local config
+          dispatch("SAVE_CONFIG", { game, config }, { root: true });
           dispatch("ADD_ONLINE_GAME", game, { root: true });
         })
         .catch(error => {
@@ -111,12 +113,12 @@ export const CREATE = ({ dispatch }, { game, tags, options }) => {
 
 export const LOAD = ({ dispatch }, { gameID, playerKey }) => {
   const finish = (gameJSON, player = 0, key = "") => {
-    gameJSON.options.id = gameID;
-    gameJSON.options.player = player;
+    gameJSON.config.id = gameID;
+    gameJSON.config.player = player;
     if (key) {
-      gameJSON.options.playerKey = key;
+      gameJSON.config.playerKey = key;
     } else {
-      delete gameJSON.options.playerKey;
+      delete gameJSON.config.playerKey;
     }
     dispatch("ADD_ONLINE_GAME", gameJSON, { root: true });
 

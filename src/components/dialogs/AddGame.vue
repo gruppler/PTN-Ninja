@@ -67,6 +67,9 @@
                         <q-item-section>
                           {{ game.name }}
                         </q-item-section>
+                        <q-item-section side>
+                          <Result :result="game.tags.result" />
+                        </q-item-section>
                       </q-item>
                     </q-list>
                   </Recess>
@@ -99,11 +102,13 @@
 import GameInfo from "../controls/GameInfo";
 import MoreToggle from "../controls/MoreToggle.vue";
 
+import Result from "../PTN/Result";
+
 import Game from "../../PTN/Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, MoreToggle },
+  components: { GameInfo, MoreToggle, Result },
   props: ["value"],
   data() {
     return {
@@ -143,8 +148,14 @@ export default {
         this.$store.dispatch("SET_UI", ["player2", value || ""]);
       }
     },
-    onlineGames() {
+    localOnlineGames() {
       return this.$store.state.onlineGames;
+    },
+    openOnlineGames() {
+      return this.$store.state.online.openGames;
+    },
+    onlineGames() {
+      return this.localOnlineGames.concat();
     },
     openGames() {
       return this.$store.state.games.map(game => game.name);
@@ -166,7 +177,7 @@ export default {
         ptn: game.ptn,
         name: game.name,
         state: game.minState,
-        options: game.options
+        config: game.config
       });
       this.close();
     },

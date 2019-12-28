@@ -101,10 +101,10 @@ export const url = state => (game, options = {}) => {
 export const onlineURL = () => (game, isPrivate = false) => {
   let url = location.origin + "/?#/";
 
-  if (isPrivate && game.options.playerKey) {
-    url += "player/" + game.options.playerKey;
+  if (isPrivate && game.config.playerKey) {
+    url += "player/" + game.config.playerKey;
   } else {
-    url += "game/" + game.options.id;
+    url += "game/" + game.config.id;
   }
 
   return url;

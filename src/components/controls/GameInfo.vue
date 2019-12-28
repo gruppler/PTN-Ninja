@@ -256,7 +256,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            :readonly="game && !game.isLocal && game.options.player !== 1"
+            :readonly="game && !game.isLocal && game.config.player !== 1"
             @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
@@ -296,7 +296,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            :readonly="game && !game.isLocal && game.options.player !== 2"
+            :readonly="game && !game.isLocal && game.config.player !== 2"
             @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space

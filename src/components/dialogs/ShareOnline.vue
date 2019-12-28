@@ -76,7 +76,7 @@
               <q-list>
                 <q-item>
                   <q-input
-                    v-if="game && game.options.id"
+                    v-if="game && game.config.id"
                     class="col-grow"
                     :value="publicCode"
                     :label="$t('Public')"
@@ -106,7 +106,7 @@
                 </q-item>
                 <q-item>
                   <q-input
-                    v-if="game && game.options.playerKey"
+                    v-if="game && game.config.playerKey"
                     class="col-grow"
                     :value="privateCode"
                     :label="$t('Private')"
@@ -117,9 +117,7 @@
                     <template v-slot:prepend>
                       <q-icon
                         :name="
-                          game.options.player === 1
-                            ? 'person'
-                            : 'person_outline'
+                          game.config.player === 1 ? 'person' : 'person_outline'
                         "
                       />
                     </template>
@@ -247,12 +245,14 @@ export default {
       let player = this.player;
       let player1, player2;
 
+      // Remember player name
       if (this.validateName(this.playerName)) {
         this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
       } else {
         return;
       }
 
+      // Determine player
       if (player === "random") {
         player = Math.round(Math.random() + 1);
       }
@@ -264,6 +264,7 @@ export default {
         player1 = "";
       }
 
+      // Upload to DB
       this.$store.dispatch("online/CREATE", {
         game: this.game,
         tags: {
@@ -273,7 +274,7 @@ export default {
           rating2: "",
           ...now()
         },
-        options: {
+        config: {
           isOnline: true,
           isUnlisted: this.privateGame,
           disableRoads: !this.showRoads,

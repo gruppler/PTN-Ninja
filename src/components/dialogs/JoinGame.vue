@@ -64,11 +64,11 @@ export default {
       this.$emit("input", false);
     },
     spectate() {
-      if (this.game.options.player !== 0) {
-        let options = Object.assign(omit(this.game.options, "playerKey"), {
+      if (this.game.config.player !== 0) {
+        let config = Object.assign(omit(this.game.config, "playerKey"), {
           player: 0
         });
-        this.$store.dispatch("SAVE_OPTIONS", { game: this.game, options });
+        this.$store.dispatch("SAVE_CONFIG", { game: this.game, config });
       }
 
       this.close();
@@ -80,11 +80,11 @@ export default {
 
       this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
 
-      if (this.game.options.player !== this.player) {
-        let options = Object.assign(omit(this.game.options, "playerKey"), {
+      if (this.game.config.player !== this.player) {
+        let config = Object.assign(omit(this.game.config, "playerKey"), {
           player: this.player
         });
-        this.$store.dispatch("SAVE_OPTIONS", { game: this.game, options });
+        this.$store.dispatch("SAVE_CONFIG", { game: this.game, config });
       }
 
       if (this.game.tag("player" + this.player) !== this.playerName) {

@@ -9,17 +9,22 @@
     </template>
 
     <div class="help">
-      <q-tab-panels v-model="section" class="bg-secondary col-grow" animated>
+      <q-tab-panels
+        v-model="section"
+        class="bg-secondary col-grow"
+        swipeable
+        animated
+      >
         <q-tab-panel name="about">
-          <q-markdown ref="about" :src="about" />
+          <q-markdown :src="about" />
         </q-tab-panel>
 
         <q-tab-panel name="usage">
-          <q-markdown ref="usage" :src="usage" />
+          <q-markdown :src="usage" />
         </q-tab-panel>
 
         <q-tab-panel name="hotkeys">
-          <q-markdown ref="hotkeys">{{ $t("Hotkeys") + "\n===" }}</q-markdown>
+          <q-markdown>{{ $t("Hotkeys") + "\n===" }}</q-markdown>
           <hotkeys />
         </q-tab-panel>
       </q-tab-panels>
@@ -49,13 +54,6 @@ export default {
       about: "",
       usage: ""
     };
-  },
-  watch: {
-    section(section) {
-      this.$nextTick(() => {
-        this.$refs[section].$el.scrollIntoView(true);
-      });
-    }
   },
   created() {
     import(`../../i18n/${this.$i18n.locale}/about.md`)

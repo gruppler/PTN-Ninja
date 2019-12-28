@@ -94,7 +94,7 @@ export default {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
     },
     showRoads() {
-      return !this.game.options.disableRoads && this.$store.state.showRoads;
+      return !this.game.config.disableRoads && this.$store.state.showRoads;
     },
     roads() {
       return this.color &&

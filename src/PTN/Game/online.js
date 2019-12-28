@@ -18,7 +18,7 @@ export default class GameOnline {
     return {
       name: this.name,
       state: this.minState,
-      options: Object.assign({}, this.options),
+      config: Object.assign({}, this.config),
       tags: this.JSONTags,
       comments: this.JSONComments(
         (this.notes[-1] || []).concat(this.chatlog[-1] || [])

@@ -56,7 +56,7 @@ export default class GameBase {
     params = {
       name: "",
       state: null,
-      options: null,
+      config: null,
       history: [],
       historyIndex: 0
     }
@@ -77,7 +77,7 @@ export default class GameBase {
     this.state = null;
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
-    this.options = params.options ? { ...params.options } : { isOnline: false };
+    this.config = params.config ? { ...params.config } : { isOnline: false };
     this.tags = {};
     this.moves = [];
     this.boards = {};
@@ -333,7 +333,7 @@ export default class GameBase {
   }
 
   get isLocal() {
-    return !this.options.isOnline;
+    return !this.config.isOnline;
   }
 
   plySort(a, b) {

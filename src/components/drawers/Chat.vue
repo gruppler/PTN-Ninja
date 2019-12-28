@@ -98,7 +98,7 @@ export default {
     player() {
       return this.game.isLocal
         ? this.game.state.player
-        : this.game.options.player;
+        : this.game.config.player;
     },
     time() {
       return this.game.datetime;

@@ -70,9 +70,9 @@ export const UPDATE_ONLINE_GAME = (state, { game, index }) => {
   state.onlineGames[index] = game;
 };
 
-export const SAVE_OPTIONS = (state, { game, options }) => {
-  game.options = { ...options };
-  state.games[0].options = { ...options };
+export const SAVE_CONFIG = (state, { game, config }) => {
+  game.config = { ...config };
+  state.games[0].config = { ...config };
 };
 
 export const SAVE_UNDO_HISTORY = (state, game) => {
