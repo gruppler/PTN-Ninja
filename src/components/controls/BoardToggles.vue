@@ -5,7 +5,7 @@
   >
     <FullscreenToggle
       v-if="$q.fullscreen.isCapable"
-      @click="$q.fullscreen.toggle()"
+      @input="$q.fullscreen.toggle()"
       :value="$q.fullscreen.isActive"
     />
     <q-btn

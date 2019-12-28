@@ -1,7 +1,7 @@
 <template>
   <q-btn
     v-bind="$attrs"
-    v-on="$listeners"
+    @click="$emit('input', !value)"
     :icon="value ? 'fullscreen_exit' : 'fullscreen'"
     :title="$t('Fullscreen')"
     class="dimmed-btn"

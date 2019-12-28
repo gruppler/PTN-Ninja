@@ -30,10 +30,7 @@
         dense
       >
         <template v-slot:before>
-          <FullscreenToggle
-            @click="fullscreen = !fullscreen"
-            :value="fullscreen"
-          />
+          <FullscreenToggle v-model="fullscreen" />
         </template>
         <template v-slot:prepend>
           <q-icon name="search" />
