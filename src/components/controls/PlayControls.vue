@@ -259,7 +259,7 @@ export default {
     },
     branchKey({ srcKey }) {
       switch (srcKey) {
-        case "menu":
+        case "branchMenu":
           if (this.branches.length) {
             this.branchMenu = !this.branchMenu;
           }

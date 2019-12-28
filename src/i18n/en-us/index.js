@@ -55,6 +55,7 @@ export default {
   "From current ply": "Start at current position",
   Fullscreen: "Fullscreen",
   "Game Notifications": "Game Notifications",
+  "Games Selected": "1 Game Selected | {count} Games Selected",
   Height: "Height",
   Help: "Help",
   Hotkeys: "Hotkeys",
@@ -117,6 +118,7 @@ export default {
   Site: "Site",
   Size: "Size",
   Spectate: "Spectate",
+  Status: "Status",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System
@@ -211,5 +213,7 @@ export default {
     Del: "Delete",
     Shift: "Shift",
     Space: "Space"
-  }
+  },
+
+  date: import("./date")
 };

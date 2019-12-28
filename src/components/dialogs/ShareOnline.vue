@@ -141,6 +141,7 @@
               </q-list>
             </div>
           </div>
+          <QInnerLoading :showing="loading" />
         </Recess>
       </SmoothReflow>
 
@@ -186,6 +187,7 @@ export default {
       ],
       playerName: this.$store.state.playerName,
       qrText: "",
+      loading: false,
       showQR: false,
       showRoads: false,
       validateName: value => formats.player1.test(value)
@@ -265,6 +267,7 @@ export default {
       }
 
       // Upload to DB
+      this.loading = true;
       this.$store.dispatch("online/CREATE", {
         game: this.game,
         tags: {
@@ -272,6 +275,7 @@ export default {
           player2,
           rating1: "",
           rating2: "",
+          result: "",
           ...now()
         },
         config: {
@@ -298,6 +302,9 @@ export default {
       if (isVisible) {
         this.playerName = this.$store.state.playerName;
       }
+    },
+    isLocal() {
+      this.loading = false;
     }
   }
 };

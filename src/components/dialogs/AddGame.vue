@@ -1,19 +1,13 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)">
-    <q-card style="width: 500px" class="bg-secondary">
+    <q-card style="width: 560px" class="bg-secondary">
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
       <SmoothReflow>
-        <q-tab-panels
-          v-model="tab"
-          class="bg-secondary"
-          keep-alive
-          swipeable
-          animated
-        >
+        <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
             <Recess>
               <q-card-section
@@ -46,32 +40,10 @@
                 <q-expansion-item
                   icon="public"
                   :label="$t('Online')"
-                  :disable="!onlineGames.length"
                   group="type"
                 >
                   <Recess>
-                    <q-list class="online-games">
-                      <q-item
-                        v-for="game in onlineGames"
-                        :key="game.id"
-                        :class="{
-                          open: openGames.includes(game.name),
-                          selected: selectedGames.includes(game)
-                        }"
-                        @click="selectGame(game)"
-                        :clickable="!openGames.includes(game.name)"
-                      >
-                        <q-item-section side>
-                          <q-icon :name="gameIcon(game)" />
-                        </q-item-section>
-                        <q-item-section>
-                          {{ game.name }}
-                        </q-item-section>
-                        <q-item-section side>
-                          <Result :result="game.tags.result" />
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
+                    <GameTable ref="gameTable" v-model="selectedGames" />
                   </Recess>
                 </q-expansion-item>
               </q-list>
@@ -100,15 +72,14 @@
 
 <script>
 import GameInfo from "../controls/GameInfo";
+import GameTable from "../controls/GameTable";
 import MoreToggle from "../controls/MoreToggle.vue";
-
-import Result from "../PTN/Result";
 
 import Game from "../../PTN/Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, MoreToggle, Result },
+  components: { GameInfo, GameTable, MoreToggle },
   props: ["value"],
   data() {
     return {
@@ -147,18 +118,6 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["player2", value || ""]);
       }
-    },
-    localOnlineGames() {
-      return this.$store.state.onlineGames;
-    },
-    openOnlineGames() {
-      return this.$store.state.online.openGames;
-    },
-    onlineGames() {
-      return this.localOnlineGames.concat();
-    },
-    openGames() {
-      return this.$store.state.games.map(game => game.name);
     }
   },
   methods: {
@@ -180,20 +139,6 @@ export default {
         config: game.config
       });
       this.close();
-    },
-    selectGame(game) {
-      if (this.openGames.includes(game.name)) {
-        return;
-      }
-      const index = this.selectedGames.indexOf(game);
-      if (index < 0) {
-        this.selectedGames.push(game);
-      } else {
-        this.selectedGames.splice(index, 1);
-      }
-    },
-    gameIcon(game) {
-      return this.$store.getters.gameIcon(game.player);
     },
     ok() {
       if (this.tab === "new") {
@@ -218,18 +163,3 @@ export default {
   }
 };
 </script>
-
-<style lang="stylus">
-.q-field.size
-  width 8em
-
-.online-games
-  .open
-    &, .q-icon
-      cursor default
-      color $accent
-  .selected
-    background-color $highlight
-    &, .q-icon
-      color $accent
-</style>

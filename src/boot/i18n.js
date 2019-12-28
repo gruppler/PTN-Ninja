@@ -10,4 +10,7 @@ export default async ({ app, Vue }) => {
     fallbackLocale: "en-us",
     messages
   });
+
+  Vue.moment.updateLocale("en", messages["en-us"].date);
+  Vue.moment.locale(app.i18n.locale);
 };

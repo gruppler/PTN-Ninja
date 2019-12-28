@@ -9,12 +9,7 @@
     </template>
 
     <div class="help">
-      <q-tab-panels
-        v-model="section"
-        class="bg-secondary col-grow"
-        swipeable
-        animated
-      >
+      <q-tab-panels v-model="section" class="bg-secondary col-grow" animated>
         <q-tab-panel name="about">
           <q-markdown :src="about" />
         </q-tab-panel>

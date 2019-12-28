@@ -3,6 +3,7 @@
     @input="$emit('input', $event)"
     :value="value"
     :maximized="maximized"
+    v-on="$listeners"
     v-bind="$attrs"
   >
     <q-layout

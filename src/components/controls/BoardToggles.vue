@@ -3,15 +3,10 @@
     class="board-toggles q-gutter-sm"
     :class="{ row: isPortrait, column: !isPortrait }"
   >
-    <q-btn
+    <FullscreenToggle
       v-if="$q.fullscreen.isCapable"
       @click="$q.fullscreen.toggle()"
-      :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
-      :title="$t('Fullscreen')"
-      class="dimmed-btn"
-      color="white"
-      flat
-      dense
+      :value="$q.fullscreen.isActive"
     />
     <q-btn
       @click="board3D = !board3D"
@@ -26,8 +21,11 @@
 </template>
 
 <script>
+import FullscreenToggle from "./FullscreenToggle";
+
 export default {
   name: "BoardToggles",
+  components: { FullscreenToggle },
   computed: {
     board3D: {
       get() {

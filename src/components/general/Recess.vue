@@ -1,5 +1,5 @@
 <template>
-  <div class="relative-position" v-bind="$attrs" v-on="$listeners">
+  <div class="relative-position">
     <slot />
     <div class="absolute-fit inset-shadow no-pointer-events" />
   </div>
