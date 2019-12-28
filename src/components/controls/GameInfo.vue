@@ -675,6 +675,7 @@ export default {
       this.updateTags();
     },
     editTPS() {
+      this.save();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
         { color: this.game.firstPlayer, type: "F" }
