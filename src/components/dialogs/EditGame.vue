@@ -1,28 +1,19 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
-    <q-card style="width: 500px" class="bg-secondary">
+  <LargeDialog
+    :value="value"
+    @input="$emit('input', $event)"
+    no-backdrop-dismiss
+  >
+    <template v-slot:header>
       <DialogHeader>{{ $t("Edit Game") }}</DialogHeader>
+    </template>
 
+    <q-card-section class="scroll">
+      <GameInfo ref="gameInfo" :game="game" :show-all="showAll" @save="save" />
+    </q-card-section>
+
+    <template v-slot:footer>
       <q-separator />
-
-      <SmoothReflow>
-        <Recess>
-          <q-card-section
-            style="max-height: calc(100vh - 18rem)"
-            class="scroll"
-          >
-            <GameInfo
-              ref="gameInfo"
-              :game="game"
-              :show-all="showAll"
-              @save="save"
-            />
-          </q-card-section>
-        </Recess>
-      </SmoothReflow>
-
-      <q-separator />
-
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
@@ -36,11 +27,12 @@
           flat
         />
       </q-card-actions>
-    </q-card>
-  </q-dialog>
+    </template>
+  </LargeDialog>
 </template>
 
 <script>
+import LargeDialog from "../general/LargeDialog.vue";
 import DialogHeader from "../general/DialogHeader.vue";
 
 import GameInfo from "../controls/GameInfo";
@@ -48,7 +40,7 @@ import MoreToggle from "../controls/MoreToggle.vue";
 
 export default {
   name: "EditGame",
-  components: { GameInfo, DialogHeader, MoreToggle },
+  components: { LargeDialog, DialogHeader, GameInfo, MoreToggle },
   props: ["value", "game"],
   data() {
     return {

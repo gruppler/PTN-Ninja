@@ -1,16 +1,17 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
-    <q-card style="width: 500px" class="ptn-editor-dialog bg-secondary">
+  <LargeDialog
+    :value="value"
+    @input="$emit('input', $event)"
+    no-backdrop-dismiss
+    content-class="ptn-editor-dialog"
+  >
+    <template v-slot:header>
       <DialogHeader>{{ $t("Edit PTN") }}</DialogHeader>
+    </template>
 
-      <q-separator />
+    <PTN-editor ref="editor" :game="game" @save="save" />
 
-      <Recess>
-        <q-card-section style="height: calc(100vh - 18rem)" class="q-pa-none">
-          <PTN-editor ref="editor" :game="game" @save="save" />
-        </q-card-section>
-      </Recess>
-
+    <template v-slot:footer>
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <div class="col-grow error-message q-px-sm">
           {{ editor ? editor.error : "" }}
@@ -24,18 +25,19 @@
           flat
         />
       </q-card-actions>
-    </q-card>
-  </q-dialog>
+    </template>
+  </LargeDialog>
 </template>
 
 <script>
+import LargeDialog from "../general/LargeDialog.vue";
 import DialogHeader from "../general/DialogHeader.vue";
 
 import PTNEditor from "../controls/PTNEditor.vue";
 
 export default {
   name: "EditPTN",
-  components: { DialogHeader, PTNEditor },
+  components: { LargeDialog, DialogHeader, PTNEditor },
   props: ["value", "game"],
   data() {
     return {
@@ -66,6 +68,12 @@ export default {
 
 <style lang="stylus">
 .ptn-editor-dialog
+  .q-layout
+    position absolute
+    top 0
+    bottom 0
+    left 0
+    right 0
   .error-message
     color $negative
     font-weight bold
