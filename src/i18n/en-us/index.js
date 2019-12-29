@@ -74,6 +74,7 @@ export default {
   "New Game": "New Game",
   "Next Branch": "Next Branch",
   "Next Branch End": "Next Branch End",
+  "No Games": "Unable to find any games",
   None: "None",
   Note: "Note",
   "Note Notifications": "Note Notifications",
@@ -108,6 +109,7 @@ export default {
   Reset: "Reset",
   Result: "Result",
   "Road Connections": "Road Connections",
+  Role: "Role",
   Round: "Round",
   "Scrub Bar": "Scrub Bar",
   "Select Branch": "Select Branch",
@@ -120,7 +122,6 @@ export default {
   Site: "Site",
   Size: "Size",
   Spectate: "Spectate",
-  Status: "Status",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System

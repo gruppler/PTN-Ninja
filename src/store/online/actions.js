@@ -139,6 +139,25 @@ export const LOAD = ({ dispatch }, { gameID, playerKey }) => {
   }
 };
 
+export const LOAD_GAMES = ({ commit }, pagination) => {
+  let games = [];
+
+  console.log(pagination);
+
+  db.collection("games")
+    .orderBy("tags.date", "desc")
+    .where("config.isUnlisted", "==", false)
+    .get()
+    .then(gamesSnapshot => {
+      gamesSnapshot.forEach(gameDoc => {
+        let game = gameDoc.data();
+        game.config.id = gameDoc.id;
+        games.push(game);
+      });
+      commit("LOAD_GAMES", games);
+    });
+};
+
 function getPlayerKey(playerKey, id = false) {
   return new Promise((resolve, reject) => {
     db.collection("playerKeys")
@@ -175,9 +194,7 @@ function loadGame(id, playerKey = "", player = false) {
             .get()
             .then(moveDocs => {
               gameJSON.moves = [];
-              moveDocs.forEach(
-                gameDoc => (gameJSON.moves[gameDoc.id] = gameDoc.data())
-              );
+              moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
 
               if (playerKey) {
                 if (player) {

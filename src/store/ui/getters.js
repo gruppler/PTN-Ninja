@@ -2,6 +2,8 @@ import { Dialog, Notify } from "quasar";
 
 import { compressToEncodedURIComponent } from "lz-string";
 
+const ORIGIN = location.origin + (process.env.DEV ? "/?#/" : "/");
+
 export const confirm = () => ({ title, message, ok, cancel, success }) => {
   Dialog.create({
     title,
@@ -63,7 +65,7 @@ export const url = state => (game, options = {}) => {
   }
 
   if (options.origin) {
-    url = location.origin + "/" + url;
+    url = ORIGIN + url;
   }
 
   if (options.state) {
@@ -99,7 +101,7 @@ export const url = state => (game, options = {}) => {
 };
 
 export const onlineURL = () => (game, isPrivate = false) => {
-  let url = location.origin + "/";
+  let url = ORIGIN;
 
   if (isPrivate && game.config.playerKey) {
     url += "player/" + game.config.playerKey;
@@ -116,7 +118,9 @@ export const gameIcon = () => player => {
       return "person";
     case 2:
       return "person_outline";
-    default:
+    case 0:
       return "public";
+    default:
+      return "";
   }
 };

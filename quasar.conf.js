@@ -101,7 +101,7 @@ module.exports = function(ctx) {
 
     build: {
       scopeHoisting: true,
-      vueRouterMode: 'history',
+      vueRouterMode: process.env.NODE_ENV !== 'production' ? 'hash' : 'history',
       // vueCompiler: true,
       // gzip: true,
       // analyze: true,

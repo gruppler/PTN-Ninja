@@ -692,6 +692,9 @@ export default {
     }
   },
   created() {
+    if (process.env.DEV && this.$store.state.online) {
+      this.$store.unregisterModule("online");
+    }
     this.$store.registerModule("online", onlineStore);
 
     this.$q.dark.set(true);

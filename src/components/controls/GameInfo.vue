@@ -30,6 +30,7 @@
         color="accent"
         popup-content-class="bg-secondary"
         map-options
+        emit-value
         filled
       >
         <template v-slot:prepend>

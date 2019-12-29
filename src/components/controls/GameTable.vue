@@ -7,7 +7,7 @@
     table-header-class="bg-secondary"
     :loading="loading"
     :columns="columns"
-    :data="onlineGames"
+    :data="games"
     :row-key="row => row.config.id"
     :rows-per-page-options="[20]"
     :visible-columns="visibleColumns"
@@ -15,6 +15,7 @@
     :pagination.sync="pagination"
     :selected.sync="selected"
     :selected-rows-label="selectedText"
+    :no-data-label="$t('No Games')"
     selection="multiple"
     v-on="$listeners"
     v-bind="$attrs"
@@ -35,6 +36,9 @@
         <template v-slot:prepend>
           <q-icon name="search" />
         </template>
+        <template v-slot:after>
+          <q-btn @click="loadGames" icon="refresh" flat dense />
+        </template>
       </q-input>
     </template>
 
@@ -43,16 +47,16 @@
         <q-icon
           v-if="props.col.icon"
           :name="props.col.icon"
-          :title="fullscreen ? '' : props.col.label"
+          :title="isWide ? '' : props.col.label"
           size="xs"
         />
-        <span v-show="!props.col.icon || fullscreen">
+        <span v-show="!props.col.icon || isWide">
           {{ props.col.label }}
         </span>
       </q-th>
     </template>
 
-    <template v-slot:body-cell-status="props">
+    <template v-slot:body-cell-role="props">
       <q-td :props="props">
         <q-icon :name="props.value" size="sm" />
       </q-td>
@@ -79,7 +83,7 @@ import FullscreenToggle from "../controls/FullscreenToggle.vue";
 
 import Result from "../PTN/Result";
 
-import { without } from "lodash";
+import { reject, without } from "lodash";
 
 export default {
   name: "GameTable",
@@ -91,16 +95,14 @@ export default {
       fullscreen: false,
       loading: false,
       pagination: {
-        sortBy: "date",
-        descending: true,
         page: 1,
         rowsPerPage: 20,
         rowsNumber: 0
       },
       columns: [
         {
-          name: "status",
-          label: this.$t("Status"),
+          name: "role",
+          label: this.$t("Role"),
           align: "center",
           field: row => row.config.player,
           format: this.gameIcon
@@ -138,7 +140,12 @@ export default {
           label: this.$t("Date"),
           icon: "event",
           align: "center",
-          field: row => new Date(row.tags.date + " " + row.tags.time)
+          field: row =>
+            new Date(
+              row.tags.date.seconds
+                ? row.tags.date.seconds * 1e3
+                : row.tags.date
+            )
         },
         {
           name: "result",
@@ -159,30 +166,64 @@ export default {
         this.$emit("input", value);
       }
     },
-    localOnlineGames() {
+    games() {
+      return this.localGames.concat(reject(this.publicGames, this.isLocal));
+    },
+    publicGames() {
+      return this.$store.state.online.games;
+    },
+    localGames() {
       return this.$store.state.onlineGames;
     },
-    openOnlineGames() {
-      return this.$store.state.online.openGames;
-    },
-    onlineGames() {
-      return this.localOnlineGames.concat();
-    },
     openGames() {
-      return this.$store.state.games.map(game => game.name);
+      return this.$store.state.games;
+    },
+    localGameIDs() {
+      return this.localGames.map(game => game.config.id);
     },
     visibleColumns() {
       let columns = this.columns.map(col => col.name);
-      return this.fullscreen ? columns : without(columns, "title");
+      return this.isWide ? columns : without(columns, "title");
+    },
+    isWide() {
+      return this.fullscreen && this.$q.screen.gt.sm;
     }
   },
   methods: {
+    loadGames() {
+      this.loading = true;
+      this.$store.dispatch("online/LOAD_GAMES", this.pagination);
+    },
     gameIcon(player) {
       return this.$store.getters.gameIcon(player);
     },
     selectedText(count) {
       return this.$tc("Games Selected", count, { count });
+    },
+    isLocal(game) {
+      return this.localGameIDs.includes(game.config.id);
+    }
+  },
+  mounted() {
+    if (!this.publicGames.length) {
+      this.loadGames();
+    }
+  },
+  watch: {
+    publicGames() {
+      this.loading = false;
+    },
+    openGames(oldGames, newGames) {
+      oldGames;
+      newGames;
+      this.selectedGames;
     }
   }
 };
 </script>
+
+<style lang="stylus">
+.online-games
+  .q-linear-progress
+    color $accent !important
+</style>

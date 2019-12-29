@@ -32,10 +32,17 @@ export default class GameOnline {
   }
 
   get JSONTags() {
-    return zipObject(Object.keys(this.tags), map(this.tags, "valueText"));
+    let tags = zipObject(Object.keys(this.tags), map(this.tags, "valueText"));
+    tags.date = Tag.toDate(tags.date, tags.time);
+    delete tags.time;
+    return tags;
   }
 
   parseJSONTags(json) {
+    if (json.date) {
+      json.time = Tag.timeFromDate(json.date);
+      json.date = Tag.dateFromDate(json.date);
+    }
     each(json, (value, key) => {
       const tag = new Tag(false, key, value);
       this.tags[tag.key.toLowerCase()] = tag;
