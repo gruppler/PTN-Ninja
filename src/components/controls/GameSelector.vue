@@ -81,7 +81,7 @@ export default {
       }
     },
     gameIcon(game) {
-      return this.$store.getters.gameIcon(game.player);
+      return this.$store.getters["online/gameIcon"](game.player);
     },
     close(index) {
       this.$store.getters.confirm({

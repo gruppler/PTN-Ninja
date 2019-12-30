@@ -30,6 +30,16 @@ export const SET_STATE = (state, gameState) => {
   state.games[0].state = cloneDeep(gameState);
 };
 
+export const SET_CONFIG = (state, { game, config }) => {
+  game.config = { ...config };
+  game = state.games.find(g => g.name === game.name);
+  if (game) {
+    game.config = { ...config };
+  } else {
+    console.error("Game not found:", game.name);
+  }
+};
+
 export const SELECT_GAME = (state, index) => {
   state.games.unshift(state.games.splice(index, 1)[0]);
 };
@@ -60,19 +70,6 @@ export const TRIM_TO_BOARD = (state, game) => {
 
 export const TRIM_TO_PLY = (state, game) => {
   game.trimToPly();
-};
-
-export const ADD_ONLINE_GAME = (state, game) => {
-  state.onlineGames.unshift(game);
-};
-
-export const UPDATE_ONLINE_GAME = (state, { game, index }) => {
-  state.onlineGames[index] = game;
-};
-
-export const SAVE_CONFIG = (state, { game, config }) => {
-  game.config = { ...config };
-  state.games[0].config = { ...config };
 };
 
 export const SAVE_UNDO_HISTORY = (state, game) => {

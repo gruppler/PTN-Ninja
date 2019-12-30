@@ -55,7 +55,6 @@ export default {
   "From current ply": "Start at current position",
   Fullscreen: "Fullscreen",
   "Game Notifications": "Game Notifications",
-  "Games Selected": "1 Game Selected | {count} Games Selected",
   Height: "Height",
   Help: "Help",
   Hotkeys: "Hotkeys",

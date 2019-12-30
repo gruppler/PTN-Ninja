@@ -40,8 +40,11 @@ export default class GameOnline {
 
   parseJSONTags(json) {
     if (json.date) {
-      json.time = Tag.timeFromDate(json.date);
-      json.date = Tag.dateFromDate(json.date);
+      const date = new Date(
+        json.date.seconds ? json.date.seconds * 1e3 : json.date
+      );
+      json.time = Tag.timeFromDate(date);
+      json.date = Tag.dateFromDate(date);
     }
     each(json, (value, key) => {
       const tag = new Tag(false, key, value);

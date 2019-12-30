@@ -170,13 +170,6 @@ export default {
         this.close();
       }
     }
-  },
-  watch: {
-    value(isVisible) {
-      if (!isVisible) {
-        this.selectedGames = [];
-      }
-    }
   }
 };
 </script>

@@ -510,7 +510,11 @@ export default {
         if (name) {
           game.name = name;
         }
-        this.errors.push(this.$t(`error["${error.message}"]`));
+        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
+          this.errors.push(this.$t(`error["${error.message}"]`));
+        } else {
+          console.error(error);
+        }
       }
       if (!game) {
         game = this.newGame();
@@ -696,6 +700,7 @@ export default {
       this.$store.unregisterModule("online");
     }
     this.$store.registerModule("online", onlineStore);
+    this.$store.dispatch("online/LISTEN_GAMES");
 
     this.$q.dark.set(true);
 
@@ -720,6 +725,7 @@ export default {
     }
   },
   beforeDestroy() {
+    this.$store.commit("online/UNLISTEN_GAMES");
     window.removeEventListener("drop", this.openFiles);
     window.removeEventListener("dragover", this.nop);
     window.removeEventListener("dragleave", this.nop);

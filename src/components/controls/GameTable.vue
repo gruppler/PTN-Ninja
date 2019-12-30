@@ -2,9 +2,9 @@
   <q-table
     ref="table"
     class="online-games"
+    :class="{ fullscreen }"
     card-class="bg-secondary"
     table-class="dim"
-    table-header-class="bg-secondary"
     :loading="loading"
     :columns="columns"
     :data="games"
@@ -13,10 +13,10 @@
     :visible-columns="visibleColumns"
     :fullscreen.sync="fullscreen"
     :pagination.sync="pagination"
+    selection="single"
     :selected.sync="selected"
     :selected-rows-label="selectedText"
     :no-data-label="$t('No Games')"
-    selection="multiple"
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -56,24 +56,38 @@
       </q-th>
     </template>
 
-    <template v-slot:body-cell-role="props">
-      <q-td :props="props">
-        <q-icon :name="props.value" size="sm" />
-      </q-td>
-    </template>
-
-    <template v-slot:body-cell-date="props">
-      <q-td :props="props">
-        <span :title="props.value | moment('llll')">
-          {{ props.value | moment("from") }}
-        </span>
-      </q-td>
-    </template>
-
-    <template v-slot:body-cell-result="props">
-      <q-td :props="props">
-        <Result :result="props.value" />
-      </q-td>
+    <template v-slot:body="props">
+      <q-tr
+        :props="props"
+        @click="select(props.row)"
+        :class="{ 'cursor-pointer': !props.row.isOpen }"
+        :no-hover="props.row.isOpen"
+      >
+        <td></td>
+        <q-td key="role" :props="props">
+          <q-icon :name="gameIcon(props.row.config.player)" size="sm" />
+        </q-td>
+        <q-td key="title" :props="props">
+          {{ props.row.name }}
+        </q-td>
+        <q-td key="player1" :props="props">
+          {{ props.row.tags.player1 }}
+        </q-td>
+        <q-td key="player2" :props="props">
+          {{ props.row.tags.player2 }}
+        </q-td>
+        <q-td key="size" :props="props">
+          {{ props.row.tags.size + "x" + props.row.tags.size }}
+        </q-td>
+        <q-td key="date" :props="props">
+          <span :title="props.row.tags.date | moment('llll')">
+            {{ props.row.tags.date | moment("from") }}
+          </span>
+        </q-td>
+        <q-td key="result" :props="props">
+          <Result :result="props.row.tags.result" />
+        </q-td>
+      </q-tr>
     </template>
   </q-table>
 </template>
@@ -83,7 +97,7 @@ import FullscreenToggle from "../controls/FullscreenToggle.vue";
 
 import Result from "../PTN/Result";
 
-import { reject, without } from "lodash";
+import { compact, reject, without } from "lodash";
 
 export default {
   name: "GameTable",
@@ -96,63 +110,49 @@ export default {
       loading: false,
       pagination: {
         page: 1,
-        rowsPerPage: 20,
+        rowsPerPage: 10,
         rowsNumber: 0
       },
       columns: [
         {
           name: "role",
           label: this.$t("Role"),
-          align: "center",
-          field: row => row.config.player,
-          format: this.gameIcon
+          align: "center"
         },
         {
           name: "title",
           label: this.$t("Title"),
-          align: "left",
-          field: row => row.name
+          align: "left"
         },
         {
           name: "player1",
           label: this.$t("Player1"),
           icon: "person",
-          align: "center",
-          field: row => row.tags.player1
+          align: "center"
         },
         {
           name: "player2",
           label: this.$t("Player2"),
           icon: "person_outline",
-          align: "center",
-          field: row => row.tags.player2
+          align: "center"
         },
         {
           name: "size",
           label: this.$t("Size"),
           icon: "grid_on",
-          align: "center",
-          field: row => row.tags.size,
-          format: size => `${size}x${size}`
+          align: "center"
         },
         {
           name: "date",
           label: this.$t("Date"),
           icon: "event",
-          align: "center",
-          field: row =>
-            new Date(
-              row.tags.date.seconds
-                ? row.tags.date.seconds * 1e3
-                : row.tags.date
-            )
+          align: "center"
         },
         {
           name: "result",
           label: this.$t("Result"),
           icon: "gavel",
-          align: "center",
-          field: row => row.tags.result
+          align: "center"
         }
       ]
     };
@@ -173,17 +173,27 @@ export default {
       return this.$store.state.online.games;
     },
     localGames() {
-      return this.$store.state.onlineGames;
-    },
-    openGames() {
-      return this.$store.state.games;
+      return this.$store.state.online.onlineGames.map(game => ({
+        isLocal: true,
+        isOpen: this.isOpen(game),
+        ...game
+      }));
     },
     localGameIDs() {
       return this.localGames.map(game => game.config.id);
     },
+    openGameIDs() {
+      return compact(this.$store.state.games.map(game => game.config.id));
+    },
     visibleColumns() {
       let columns = this.columns.map(col => col.name);
-      return this.isWide ? columns : without(columns, "title");
+      if (this.fullscreen) {
+        return columns;
+      } else if (this.$q.screen.gt.sm) {
+        return without(columns, "title");
+      } else {
+        return without(columns, "title", "date");
+      }
     },
     isWide() {
       return this.fullscreen && this.$q.screen.gt.sm;
@@ -195,13 +205,26 @@ export default {
       this.$store.dispatch("online/LOAD_GAMES", this.pagination);
     },
     gameIcon(player) {
-      return this.$store.getters.gameIcon(player);
+      return this.$store.getters["online/gameIcon"](player);
     },
-    selectedText(count) {
-      return this.$tc("Games Selected", count, { count });
+    select(game) {
+      if (this.isOpen(game)) {
+        return;
+      }
+      if (this.selected[0] === game) {
+        this.selected.pop();
+      } else {
+        this.selected.splice(0, 1, game);
+      }
+    },
+    selectedText() {
+      return "";
     },
     isLocal(game) {
       return this.localGameIDs.includes(game.config.id);
+    },
+    isOpen(game) {
+      return this.openGameIDs.includes(game.config.id);
     }
   },
   mounted() {
@@ -212,18 +235,40 @@ export default {
   watch: {
     publicGames() {
       this.loading = false;
-    },
-    openGames(oldGames, newGames) {
-      oldGames;
-      newGames;
-      this.selectedGames;
     }
   }
 };
 </script>
 
 <style lang="stylus">
+$header = 64px
+$footer = 48px
+
 .online-games
+  tr > :first-child
+    display none
+
   .q-linear-progress
     color $accent !important
+
+  .q-table__middle
+    min-height 12rem
+    max-height 'calc(50vh - %s)' % ($header + $footer)
+  &.fullscreen .q-table__middle
+    height 'calc(100vh - %s)' % ($header + $footer)
+    max-height @height
+
+  .q-table__top,
+  .q-table__bottom,
+  thead tr:first-child th
+    background-color $secondary
+
+  thead tr th
+    position sticky
+    z-index 1
+  thead tr:first-child th
+    top 0
+
+  &.q-table--loading thead tr:last-child th
+    top 55px
 </style>

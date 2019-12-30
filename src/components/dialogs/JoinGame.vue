@@ -15,7 +15,7 @@
             clearable
           >
             <template v-slot:prepend>
-              <q-icon :name="$store.getters['gameIcon'](player)" />
+              <q-icon :name="$store.getters['online/gameIcon'](player)" />
             </template>
           </q-input>
         </SmoothReflow>
@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { formats, now } from "../../PTN/Tag";
+import { formats } from "../../PTN/Tag";
 
 import { omit } from "lodash";
 
@@ -68,7 +68,7 @@ export default {
         let config = Object.assign(omit(this.game.config, "playerKey"), {
           player: 0
         });
-        this.$store.dispatch("SAVE_CONFIG", { game: this.game, config });
+        this.$store.dispatch("SET_CONFIG", { game: this.game, config });
       }
 
       this.close();
@@ -78,26 +78,18 @@ export default {
         return;
       }
 
-      this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
-
-      if (this.game.config.player !== this.player) {
-        let config = Object.assign(omit(this.game.config, "playerKey"), {
-          player: this.player
-        });
-        this.$store.dispatch("SAVE_CONFIG", { game: this.game, config });
+      // Remember player name
+      if (this.validateName(this.playerName)) {
+        this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
+      } else {
+        return;
       }
 
-      if (this.game.tag("player" + this.player) !== this.playerName) {
-        this.game.setTags(
-          { ["player" + this.player]: this.playerName, ...now() },
-          false,
-          false
-        );
-        this.$store.dispatch("UPDATE_PTN", this.game.text());
-        if (this.game.isDefaultName) {
-          this.game.name = this.game.generateName();
-        }
-      }
+      this.$store.dispatch("JOIN_GAME", {
+        game: this.game,
+        player: this.player,
+        playerName: this.playerName
+      });
 
       this.close();
     }

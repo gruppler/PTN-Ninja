@@ -104,7 +104,10 @@ export default class GameBase {
     }
 
     if (this.tags.date) {
-      this.datetime = Tag.toDate(this.tags.date.value, this.tags.time.value);
+      this.datetime = Tag.toDate(
+        this.tags.date.value,
+        this.tags.time ? this.tags.time.value : ""
+      );
     } else {
       this.datetime = new Date();
     }

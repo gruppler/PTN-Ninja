@@ -169,7 +169,7 @@ import DialogHeader from "../general/DialogHeader";
 
 import QRCode from "./QRCode";
 
-import { formats, now } from "../../PTN/Tag";
+import { formats } from "../../PTN/Tag";
 
 export default {
   name: "ShareOnline",
@@ -231,12 +231,12 @@ export default {
     publicCode() {
       return this.game.isLocal
         ? ""
-        : this.$store.getters.onlineURL(this.game) || "";
+        : this.$store.getters["online/url"](this.game) || "";
     },
     privateCode() {
       return this.game.isLocal
         ? ""
-        : this.$store.getters.onlineURL(this.game, true) || "";
+        : this.$store.getters["online/url"](this.game, true) || "";
     }
   },
   methods: {
@@ -263,16 +263,14 @@ export default {
         player1 = "";
       }
 
-      // Upload to DB
       this.loading = true;
-      this.$store.dispatch("online/CREATE", {
+      this.$store.dispatch("online/CREATE_GAME", {
         game: this.game,
         tags: {
           player1,
           player2,
           rating1: "",
-          rating2: "",
-          ...now()
+          rating2: ""
         },
         config: {
           isOnline: true,

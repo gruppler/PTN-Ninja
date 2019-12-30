@@ -6,8 +6,6 @@ import {
   Notify
 } from "quasar";
 
-import { pick } from "lodash";
-
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
@@ -93,6 +91,11 @@ export const SET_STATE = ({ state, commit }, gameState) => {
   commit("SET_STATE", gameState);
 };
 
+export const SET_CONFIG = ({ commit }, { game, config }) => {
+  LocalStorage.set("config-" + game.name, config);
+  commit("SET_CONFIG", { game, config });
+};
+
 export const SELECT_GAME = ({ commit }, index) => {
   let games = LocalStorage.getItem("games") || [];
   games.unshift(games.splice(index, 1)[0]);
@@ -165,43 +168,6 @@ export const OPEN_FILES = ({ dispatch }, files) => {
       reader.readAsText(file);
     }
   });
-};
-
-const ONLINE_GAME_PROPS = ["name", "config", "tags"];
-
-export const ADD_ONLINE_GAME = ({ commit }, game) => {
-  let games = LocalStorage.getItem("onlineGames") || [];
-  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
-  if (
-    !games.find(
-      g =>
-        g.config.id === game.config.id && g.config.player === game.config.player
-    )
-  ) {
-    games.unshift(game);
-    LocalStorage.set("onlineGames", games);
-    commit("ADD_ONLINE_GAME", game);
-  }
-};
-
-export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
-  let games = LocalStorage.getItem("onlineGames") || [];
-  let index = games.findIndex(
-    g =>
-      g.config.id === game.config.id && g.config.player === game.config.player
-  );
-  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
-
-  if (index >= 0) {
-    games[index] = game;
-    LocalStorage.set("onlineGames", games);
-    commit("UPDATE_ONLINE_GAME", { game, index });
-  }
-};
-
-export const SAVE_CONFIG = ({ commit }, { game, config }) => {
-  LocalStorage.set("config-" + game.name, config);
-  commit("SAVE_CONFIG", { game, config });
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {

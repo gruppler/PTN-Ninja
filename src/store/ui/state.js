@@ -17,7 +17,6 @@ let defaults = {
   isPortrait: false,
   notifyGame: true,
   notifyNotes: true,
-  onlineGames: [],
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM
   player1: "",
