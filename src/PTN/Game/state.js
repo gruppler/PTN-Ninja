@@ -259,7 +259,7 @@ export default class GameState {
     if (number === null) {
       const ply = this.boardPly ? this.game.plies[this.boardPly.id] : null;
       number = ply
-        ? ply.move.number + 1 * (ply.player === 2)
+        ? ply.move.number + 1 * (ply.player === 2 && this.plyIsDone)
         : this.game.firstMoveNumber;
     }
 

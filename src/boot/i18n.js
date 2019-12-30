@@ -6,7 +6,7 @@ export default async ({ app, Vue }) => {
 
   // Set i18n instance on app
   app.i18n = new VueI18n({
-    locale: "en-us",
+    locale: navigator.language.toLowerCase(),
     fallbackLocale: "en-us",
     messages
   });

@@ -1,5 +1,5 @@
 <template>
-  <q-layout class="non-selectable" view="lHr LpR lFr">
+  <q-layout class="non-selectable" view="lHh lpR lFr">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -127,8 +127,9 @@
       </q-toolbar>
     </q-footer>
 
-    <NoteNotifications :game="game" />
+    <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
+    <NoteNotifications :game="game" />
   </q-layout>
 </template>
 
@@ -140,6 +141,7 @@ import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 
 // Notifications:
+import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
@@ -162,6 +164,7 @@ export default {
     Move,
     PTN,
     Notes,
+    ErrorNotifications,
     GameNotifications,
     NoteNotifications,
     PlayControls,
@@ -172,9 +175,22 @@ export default {
   },
   props: ["ptn", "name", "state"],
   data() {
+    let game;
+    let errors = [];
+    try {
+      game = new Game(this.ptn, { name: this.name, state: this.state });
+    } catch (error) {
+      const name = game ? game.name : "";
+      if (game && name) {
+        game.name = name;
+      }
+      console.error(error);
+      errors.push(this.$t(`error["${error.message}"]`));
+    }
     return {
       Platform,
-      game: new Game(this.ptn, { name: this.name, state: this.state }),
+      game,
+      errors,
       hotkeys: HOTKEYS,
       defaults: { ...this.$store.state.embedConfig.ui }
     };

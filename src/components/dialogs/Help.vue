@@ -46,8 +46,6 @@
 </template>
 
 <script>
-import about from "../../i18n/en-us/about.md";
-import usage from "../../i18n/en-us/usage.md";
 import hotkeys from "../../i18n/hotkeys.vue";
 
 export default {
@@ -57,8 +55,8 @@ export default {
   data() {
     return {
       section: "about",
-      about,
-      usage
+      about: "",
+      usage: ""
     };
   },
   watch: {
@@ -67,6 +65,32 @@ export default {
         this.$refs.content.scrollTop = 0;
       });
     }
+  },
+  created() {
+    import(`../../i18n/${this.$i18n.locale}/about.md`)
+      .then(about => {
+        this.about = about.default;
+      })
+      .catch(error => {
+        console.log(error);
+        import(`../../i18n/${this.$i18n.fallbackLocale}/about.md`).then(
+          about => {
+            this.about = about.default;
+          }
+        );
+      });
+    import(`../../i18n/${this.$i18n.locale}/usage.md`)
+      .then(usage => {
+        this.usage = usage.default;
+      })
+      .catch(error => {
+        console.log(error);
+        import(`../../i18n/${this.$i18n.fallbackLocale}/usage.md`).then(
+          usage => {
+            this.usage = usage.default;
+          }
+        );
+      });
   }
 };
 </script>
@@ -78,4 +102,11 @@ export default {
     margin-bottom 1em
     ~ h6
       margin-top 1.5em
+
+.body--dark .q-markdown
+  .q-markdown--link
+    color: $accent
+
+    &:hover
+      color: darken($accent, 10%)
 </style>
