@@ -16,6 +16,7 @@
     selection="single"
     :selected.sync="selected"
     :selected-rows-label="selectedText"
+    :loading-label="$t('Loading')"
     :no-data-label="$t('No Games')"
     v-on="$listeners"
     v-bind="$attrs"
@@ -60,7 +61,11 @@
       <q-tr
         :props="props"
         @click="select(props.row)"
-        :class="{ 'cursor-pointer': !props.row.isOpen }"
+        class="non-selectable"
+        :class="{
+          'text-accent': props.row.isOpen,
+          'cursor-pointer': !props.row.isOpen
+        }"
         :no-hover="props.row.isOpen"
       >
         <td></td>

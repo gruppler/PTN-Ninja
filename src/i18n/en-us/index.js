@@ -66,6 +66,7 @@ export default {
   "Load Files": "Load Files",
   "Load Game": "Load Game",
   "Load Online Game": "Load Online Game",
+  Loading: "Loading...",
   Local: "Local",
   Message: "Message",
   More: "More",

@@ -506,7 +506,7 @@ export default {
           }
 
           if (game.config.isOnline) {
-            if (!game.config.player && this.game.openPlayer) {
+            if (!game.config.player && game.openPlayer) {
               this.dialogJoinGame = true;
             }
           }
