@@ -1,5 +1,5 @@
 <template>
-  <q-layout class="non-selectable" view="lHr LpR lFr">
+  <q-layout class="non-selectable" view="lHh lpR lFr">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -181,11 +181,11 @@ export default {
       game = new Game(this.ptn, { name: this.name, state: this.state });
     } catch (error) {
       const name = game ? game.name : "";
-      game = this.newGame();
-      if (name) {
+      if (game && name) {
         game.name = name;
       }
-      this.errors.push(this.$t(`error["${error.message}"]`));
+      console.error(error);
+      errors.push(this.$t(`error["${error.message}"]`));
     }
     return {
       Platform,
