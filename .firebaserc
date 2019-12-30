@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "ptn-ninja"
+  },
+  "targets": {
+    "ptn-ninja": {
+      "hosting": {
+        "dev": [
+          "ptn-ninja-dev"
+        ],
+        "live": [
+          "ptn-ninja"
+        ]
+      }
+    }
   }
 }

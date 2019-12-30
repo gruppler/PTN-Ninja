@@ -14,8 +14,14 @@ If you want to support this project, you can...
 - [Donate USD](https://www.paypal.me/gruppler)
 - [Donate ETH](https://etherdonation.com/d?to=0xDF2a01edf2Ea8f8Cd4528CAF6C4E092996ddDBC9&amount=0.1)
 
+Previous Version
+---
+**Version 2** is available at [v2.ptn.ninja](https://v2.ptn.ninja).
+**Note:** It is no longer supported, so use at your own risk!
+
 Legal
 ---
+
 &copy; 2019 Craig Laparo
 
 ![License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png "Creative Commons License")

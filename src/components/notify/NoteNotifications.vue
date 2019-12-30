@@ -12,8 +12,9 @@ export default {
   computed: {
     show() {
       return (
-        (this.$store.state.notifyNotes && !this.$store.state.showText) ||
-        (this.$store.state.textTab !== "notes" && this.game.hasChat)
+        this.$store.state.notifyNotes &&
+        (!this.$store.state.showText ||
+          (this.$store.state.textTab !== "notes" && this.game.hasChat))
       );
     },
     notifications() {

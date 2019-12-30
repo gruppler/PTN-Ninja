@@ -1,4 +1,4 @@
-import Aggregation from "../aggregation";
+import Aggregation from "./Aggregation";
 
 import GameBase from "./Game/base";
 import GameComments from "./Game/comments";

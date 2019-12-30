@@ -4,7 +4,7 @@
       v-model="name"
       name="name"
       :label="$t('Title')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       filled
     >
@@ -29,6 +29,8 @@
         @input="$refs.tps.validate()"
         color="accent"
         popup-content-class="bg-secondary"
+        map-options
+        emit-value
         filled
       >
         <template v-slot:prepend>
@@ -48,7 +50,7 @@
         :label="$t('TPS')"
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         autocomplete="off"
         autocorrect="off"
@@ -95,7 +97,7 @@
             :max="tags.size"
             :label="$t('Caps')"
             :rules="rules('caps')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -115,7 +117,7 @@
             max="99"
             :label="$t('Flats')"
             :rules="rules('flats')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -141,7 +143,7 @@
             :max="tags.size"
             :label="$t('Caps1')"
             :rules="rules('caps1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -160,7 +162,7 @@
             max="99"
             :label="$t('Flats1')"
             :rules="rules('flats1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -182,7 +184,7 @@
             :max="tags.size"
             :label="$t('Caps2')"
             :rules="rules('caps2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -201,7 +203,7 @@
             max="99"
             :label="$t('Flats2')"
             :rules="rules('flats2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -235,7 +237,7 @@
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -255,7 +257,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -273,7 +275,7 @@
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -293,7 +295,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            @keyup.enter="save"
+            @keydown.enter.prevent="save"
             color="accent"
             hide-bottom-space
             filled
@@ -315,7 +317,7 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -374,7 +376,7 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -436,7 +438,7 @@
         name="clock"
         :label="$t('Clock')"
         :rules="rules('clock')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         autocorrect="off"
         autocapitalize="off"
@@ -459,7 +461,7 @@
         max="999"
         :label="$t('Round')"
         :rules="rules('round')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         hide-bottom-space
         color="accent"
         filled
@@ -529,7 +531,7 @@
         type="number"
         :label="$t('Points')"
         :rules="rules('points')"
-        @keyup.enter="save"
+        @keydown.enter.prevent="save"
         color="accent"
         hide-bottom-space
         filled
@@ -546,7 +548,7 @@
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       hide-bottom-space
       filled
@@ -562,7 +564,7 @@
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
-      @keyup.enter="save"
+      @keydown.enter.prevent="save"
       color="accent"
       hide-bottom-space
       filled
@@ -619,7 +621,32 @@ export default {
       separatePieceCounts: false,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
-      sizes: [3, 4, 5, 6, 7, 8],
+      sizes: [
+        {
+          label: "3x3",
+          value: 3
+        },
+        {
+          label: "4x4",
+          value: 4
+        },
+        {
+          label: "5x5",
+          value: 5
+        },
+        {
+          label: "6x6",
+          value: 6
+        },
+        {
+          label: "7x7",
+          value: 7
+        },
+        {
+          label: "8x8",
+          value: 8
+        }
+      ],
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,
@@ -662,6 +689,7 @@ export default {
       this.updateTags();
     },
     editTPS() {
+      this.save();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
         { color: this.game.firstPlayer, type: "F" }
@@ -756,3 +784,8 @@ export default {
   }
 };
 </script>
+
+<style lang="stylus">
+.q-select .result
+  margin 0 0 -4px
+</style>

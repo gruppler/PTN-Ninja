@@ -1,4 +1,37 @@
+import { Dialog, Notify } from "quasar";
+
 import { compressToEncodedURIComponent } from "lz-string";
+
+export const confirm = () => ({ title, message, ok, cancel, success }) => {
+  Dialog.create({
+    title,
+    message,
+    "no-backdrop-dismiss": true,
+    ok: {
+      label: ok,
+      flat: true,
+      color: "accent"
+    },
+    cancel: {
+      label: cancel,
+      flat: true,
+      color: "accent"
+    },
+    class: "bg-secondary"
+  }).onOk(success);
+};
+
+export const error = () => ({ message, timeout }) => {
+  Notify.create({
+    message,
+    timeout: timeout || 0,
+    icon: "error",
+    color: "negative",
+    position: "top-right",
+    actions: [{ icon: "close", color: "grey-10" }],
+    classes: "text-grey-10"
+  });
+};
 
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
@@ -16,6 +49,10 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
 };
 
 export const url = state => (game, options = {}) => {
+  if (!game) {
+    return "";
+  }
+
   let url = compressToEncodedURIComponent(game.ptn);
   let params = {};
 

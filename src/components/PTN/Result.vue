@@ -2,21 +2,30 @@
   <span class="result ptn" v-if="result">
     <span
       class="color1"
-      :class="'result-' + (result.isTie ? 'tie' : result.player1)"
-      >{{ result.player1 }}</span
+      :class="'result-' + (resultObject.isTie ? 'tie' : resultObject.player1)"
+      >{{ resultObject.player1 }}</span
     >
     <span
       class="color2"
-      :class="'result-' + (result.isTie ? 'tie' : result.player2)"
-      >{{ result.player2 }}</span
+      :class="'result-' + (resultObject.isTie ? 'tie' : resultObject.player2)"
+      >{{ resultObject.player2 }}</span
     >
   </span>
 </template>
 
 <script>
+import Result from "../../PTN/Result";
+
 export default {
   name: "Result",
-  props: ["result"]
+  props: ["result"],
+  computed: {
+    resultObject() {
+      return this.result && this.result.constructor === Result
+        ? this.result
+        : Result.parse(this.result || "");
+    }
+  }
 };
 </script>
 

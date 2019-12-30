@@ -97,15 +97,10 @@ export default class GameBase {
     }
 
     if (this.tags.date) {
-      if (this.tags.time) {
-        this.datetime = new Date(
-          this.tags.date.value + " " + this.tags.time.value
-        );
-      } else {
-        this.datetime = new Date(this.tags.date.value);
-      }
-    } else if (this.tags.time) {
-      this.datetime = new Date(this.tags.time.value);
+      this.datetime = Tag.toDate(
+        this.tags.date.value,
+        this.tags.time ? this.tags.time.value : ""
+      );
     } else {
       this.datetime = new Date();
     }
@@ -262,6 +257,14 @@ export default class GameBase {
       notation = notation.trimStart().substr(item.ptn.length);
       isDoubleBreak = startsWithDoubleBreak.test(notation);
       delete item.ptn;
+    }
+
+    if (!this.moves.length) {
+      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
+    }
+
+    if (!this.moves.length) {
+      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
     }
 
     if (!this.moves[0].linenum) {

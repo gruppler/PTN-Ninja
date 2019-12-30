@@ -10,7 +10,7 @@
           flat
         />
         <QToolbarTitle>
-          <GameSelector>
+          <GameSelector ref="gameSelector">
             <q-btn
               icon="edit"
               @click.stop="edit"
@@ -75,7 +75,7 @@
           <Menu @input="menuAction" />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
-          <BoardToggles />
+          <BoardToggles v-if="!dialogEmbed" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -89,7 +89,14 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools ref="tools" :game="game" @embed="dialogEmbed = true" />
+        <PTN-Tools ref="tools" :game="game">
+          <ShareButton
+            ref="shareButton"
+            :title="$t('Share')"
+            :game="game"
+            @embed="dialogEmbed = true"
+          />
+        </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
@@ -235,6 +242,7 @@ import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
+import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
 import GameSelector from "../components/controls/GameSelector";
@@ -269,6 +277,7 @@ export default {
     PTNTools,
     EvalButtons,
     BoardToggles,
+    ShareButton,
     Chat,
     GameSelector,
     PieceSelector,
@@ -468,7 +477,11 @@ export default {
         if (name) {
           game.name = name;
         }
-        this.errors.push(this.$t(`error["${error.message}"]`));
+        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
+          this.errors.push(this.$t(`error["${error.message}"]`));
+        } else {
+          console.error(error);
+        }
       }
       if (!game) {
         game = this.newGame();
@@ -516,24 +529,55 @@ export default {
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
+        case "focusGame":
+          this.$refs.gameSelector.$refs.select.showPopup();
+          break;
+        case "previousGame":
+          if (this.$store.state.games.length > 1) {
+            this.$refs.gameSelector.select(1);
+          }
+          break;
         case "help":
-          this.$refs.help.section = "usage";
-          this.dialogHelp = true;
+          if (!this.dialogHelp || this.$refs.help.section !== "usage") {
+            this.$refs.help.section = "usage";
+            this.dialogHelp = true;
+          } else {
+            this.dialogHelp = false;
+          }
           break;
         case "hotkeys":
-          this.$refs.help.section = "hotkeys";
-          this.dialogHelp = true;
+          if (!this.dialogHelp || this.$refs.help.section !== "hotkeys") {
+            this.$refs.help.section = "hotkeys";
+            this.dialogHelp = true;
+          } else {
+            this.dialogHelp = false;
+          }
           break;
         case "loadGame":
-          this.$refs.addGame.tab = "load";
-          this.dialogAddGame = true;
+          if (!this.dialogAddGame || this.$refs.addGame.tab !== "load") {
+            this.$refs.addGame.tab = "load";
+            this.dialogAddGame = true;
+          } else {
+            this.dialogAddGame = false;
+          }
           break;
         case "newGame":
-          this.$refs.addGame.tab = "new";
-          this.dialogAddGame = true;
+          if (!this.dialogAddGame || this.$refs.addGame.tab !== "new") {
+            this.$refs.addGame.tab = "new";
+            this.dialogAddGame = true;
+          } else {
+            this.dialogAddGame = false;
+          }
           break;
         case "preferences":
-          this.dialogUISettings = true;
+          this.dialogUISettings = !this.dialogUISettings;
+          break;
+        case "qrCode":
+          if (this.$refs.shareButton.showQR) {
+            this.$refs.shareButton.showQR = false;
+          } else {
+            this.$refs.shareButton.qrCode();
+          }
           break;
         case "share":
           this.share();
@@ -547,81 +591,7 @@ export default {
       this.textTab = value;
     },
     share() {
-      this.$q
-        .bottomSheet({
-          grid: true,
-          class: "bg-secondary",
-          message: this.$t("Share"),
-          actions: [
-            {
-              label: this.$t("Copy Link"),
-              icon: "link",
-              id: "link"
-            },
-            {
-              label: this.$t("Copy Ply"),
-              icon: "layers",
-              id: "ply"
-            },
-            {
-              label: this.$t("Copy Moves"),
-              icon: "format_list_numbered",
-              id: "moves"
-            },
-            {
-              label: this.$t("Copy PTN"),
-              icon: "file_copy",
-              id: "ptn"
-            },
-            {
-              label: this.$t("Download"),
-              icon: "save_alt",
-              id: "download"
-            },
-            {
-              label: this.$t("Embed"),
-              icon: "code",
-              id: "embed"
-            }
-          ]
-        })
-        .onOk(action => {
-          switch (action.id) {
-            case "link":
-              this.$store.dispatch("COPY", {
-                text: this.$store.getters.url(this.game, {
-                  origin: true,
-                  state: true
-                }),
-                message: this.$t("Copied")
-              });
-              break;
-            case "ply":
-              this.$store.dispatch("COPY", {
-                text: this.game.state.ply.text(),
-                message: this.$t("Copied")
-              });
-              break;
-            case "moves":
-              this.$store.dispatch("COPY", {
-                text: this.game.moveText(this.showAllBranches),
-                message: this.$t("Copied")
-              });
-              break;
-            case "ptn":
-              this.$store.dispatch("COPY", {
-                text: this.game.ptn,
-                message: this.$t("Copied")
-              });
-              break;
-            case "download":
-              this.$store.dispatch("SAVE", this.game);
-              break;
-            case "embed":
-              this.dialogEmbed = true;
-              break;
-          }
-        });
+      this.$refs.shareButton.share();
     },
     openFiles(event) {
       this.nop(event);

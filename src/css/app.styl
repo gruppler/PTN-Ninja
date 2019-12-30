@@ -24,6 +24,9 @@
   font-weight 700
   src url('./fonts/Source+Code+Pro_700_normal.woff')
 
+::selection
+    background $accent
+
 kbd
   font-family 'Source Code Pro'
   display inline-block
@@ -69,6 +72,14 @@ kbd
   align-items center
   justify-content flex-end
   flex-shrink 0
+
+.q-field--dark:not(.q-field--focused) .q-field__label,
+.q-field--dark .q-field__marginal,
+.q-field--dark .q-field__bottom,
+.q-list--dark .q-item__section--side:not(.q-item__section--avatar),
+.q-item--dark .q-item__section--side:not(.q-item__section--avatar)
+  img.q-icon
+    opacity .7
 
 .q-item.q-router-link--active, .q-item--active
   color $accent

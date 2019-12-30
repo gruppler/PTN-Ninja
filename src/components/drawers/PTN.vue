@@ -1,7 +1,7 @@
 <template>
   <Recess>
-    <div class="absolute-fit scroll non-selectable">
-      <div class="q-py-md" v-if="game">
+    <div class="full-ptn absolute-fit scroll non-selectable">
+      <div v-if="game">
         <Move
           class="q-px-md"
           v-for="move in moves"
@@ -67,3 +67,12 @@ export default {
   }
 };
 </script>
+
+<style lang="stylus">
+$padding = 16px
+.full-ptn
+  .move:first-child
+    margin-top $padding
+  .move:last-child
+    margin-bottom $padding
+</style>

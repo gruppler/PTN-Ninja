@@ -52,19 +52,33 @@ export const formats = {
 export const now = () => {
   const now = new Date();
   return {
-    date:
-      now.getFullYear() +
-      "." +
-      padStart(now.getMonth() + 1, 2, "0") +
-      "." +
-      padStart(now.getDate(), 2, "0"),
-    time:
-      padStart(now.getHours(), 2, "0") +
-      ":" +
-      padStart(now.getMinutes(), 2, "0") +
-      ":" +
-      padStart(now.getSeconds(), 2, "0")
+    date: dateFromDate(now),
+    time: timeFromDate(now)
   };
+};
+
+export const dateFromDate = date => {
+  return (
+    date.getFullYear() +
+    "." +
+    padStart(date.getMonth() + 1, 2, "0") +
+    "." +
+    padStart(date.getDate(), 2, "0")
+  );
+};
+
+export const timeFromDate = date => {
+  return (
+    padStart(date.getHours(), 2, "0") +
+    ":" +
+    padStart(date.getMinutes(), 2, "0") +
+    ":" +
+    padStart(date.getSeconds(), 2, "0")
+  );
+};
+
+export const toDate = (date, time) => {
+  return new Date(`${date} ${time}`);
 };
 
 export default class Tag {
@@ -137,6 +151,9 @@ export default class Tag {
   }
 
   static now = now;
+  static dateFromDate = dateFromDate;
+  static timeFromDate = timeFromDate;
+  static toDate = toDate;
 
   text() {
     return `[${this.key} "${this.valueText}"]`;

@@ -1,19 +1,13 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)">
-    <q-card style="width: 500px" class="bg-secondary">
+    <q-card style="width: 560px" class="bg-secondary">
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
 
       <SmoothReflow>
-        <q-tab-panels
-          v-model="tab"
-          class="bg-secondary"
-          keep-alive
-          swipeable
-          animated
-        >
+        <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
             <Recess>
               <q-card-section
@@ -33,15 +27,19 @@
           <q-tab-panel name="load" class="q-pa-none">
             <Recess>
               <q-list separator>
-                <q-item @click="$store.dispatch('OPEN', close)" clickable>
+                <q-item
+                  @click="$store.dispatch('OPEN', close)"
+                  clickable
+                  v-ripple
+                >
                   <q-item-section avatar>
                     <q-icon name="folder_open" />
                   </q-item-section>
                   <q-item-section>{{ $t("Local") }}</q-item-section>
                 </q-item>
                 <q-expansion-item
-                  icon="cloud"
-                  :label="$t('Remote')"
+                  icon="public"
+                  :label="$t('Online')"
                   group="type"
                 >
                   <Recess>
@@ -80,8 +78,7 @@
 
 <script>
 import GameInfo from "../controls/GameInfo";
-
-import MoreToggle from "../general/MoreToggle.vue";
+import MoreToggle from "../controls/MoreToggle.vue";
 
 import Game from "../../PTN/Game";
 
@@ -156,8 +153,3 @@ export default {
   }
 };
 </script>
-
-<style lang="stylus">
-.q-field.size
-  width 8em
-</style>
