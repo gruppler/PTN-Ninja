@@ -49,6 +49,7 @@ export const HOTKEYS = {
   MISC: {
     help: ["ctrl", "shift", "?"],
     hotkeys: ["ctrl", "/"],
+    fullscreen: ["shift", "f"],
     preferences: ["p"],
     newGame: ["n"],
     loadGame: ["l"],
@@ -143,6 +144,7 @@ export const HOTKEY_NAMES = {
   MISC: {
     help: "Help",
     hotkeys: "Hotkeys",
+    fullscreen: "Fullscreen",
     preferences: "Preferences",
     newGame: "New Game",
     loadGame: "Load Game",

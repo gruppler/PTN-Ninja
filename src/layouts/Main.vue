@@ -78,7 +78,7 @@
           <Menu @input="menuAction" />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
-          <BoardToggles />
+          <BoardToggles v-if="!dialogEmbed && !isGamesTableShowing" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -433,6 +433,13 @@ export default {
       }
       return [];
     },
+    isGamesTableShowing() {
+      return (
+        this.dialogAddGame &&
+        this.$refs.addGame.tab === "load" &&
+        this.$refs.addGame.showOnline
+      );
+    },
     games() {
       return this.$store.state.games.concat();
     },
@@ -600,16 +607,12 @@ export default {
           }
           break;
         case "loadOnlineGame":
-          if (
-            !this.dialogAddGame ||
-            this.$refs.addGame.tab !== "load" ||
-            !this.$refs.addGame.showOnline
-          ) {
+          if (this.isGamesTableShowing) {
+            this.$refs.addGame.showOnline = false;
+          } else {
             this.$refs.addGame.tab = "load";
             this.$refs.addGame.showOnline = true;
             this.dialogAddGame = true;
-          } else {
-            this.$refs.addGame.showOnline = false;
           }
           break;
         case "newGame":
