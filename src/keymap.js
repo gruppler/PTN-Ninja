@@ -16,8 +16,17 @@ export const HOTKEYS = {
     first: ["ctrl", "arrowleft"],
     last: ["ctrl", "arrowright"],
     deletePly: ["del"],
-    branch: ["b"],
-    selectBranch: ["0-9"]
+    backspacePly: ["backspace"],
+    branchMenu: ["b"],
+    selectBranch: ["0-9"],
+    prevBranch: ["arrowup"],
+    nextBranch: ["arrowdown"],
+    prevBranchEnd: ["shift", "arrowup"],
+    nextBranchEnd: ["shift", "arrowdown"],
+    firstBranch: ["ctrl", "arrowup"],
+    lastBranch: ["ctrl", "arrowdown"],
+    firstBranchEnd: ["ctrl", "shift", "arrowup"],
+    lastBranchEnd: ["ctrl", "shift", "arrowdown"]
   },
   UI: {
     showPTN: ["q"],
@@ -40,6 +49,7 @@ export const HOTKEYS = {
   MISC: {
     help: ["ctrl", "shift", "?"],
     hotkeys: ["ctrl", "/"],
+    fullscreen: ["shift", "f"],
     preferences: ["p"],
     newGame: ["n"],
     loadGame: ["l"],
@@ -47,8 +57,19 @@ export const HOTKEYS = {
     editPTN: ["shift", "e"],
     share: ["ctrl", "shift", "s"],
     embedGame: ["ctrl", "e"],
+    qrCode: ["shift", "q"],
     focusText: ["/"],
+    focusGame: ["\\"],
+    previousGame: ["alt", "\\"],
     more: ["shift", "space"]
+  },
+  EVAL: {
+    tak: ["'"],
+    tinue: ["shift", '"'],
+    question: ["shift", "?"],
+    questionDouble: ["alt", "shift", "?"],
+    bang: ["shift", "!"],
+    bangDouble: ["alt", "shift", "!"]
   },
   PIECE: {
     color: ["`"],
@@ -74,8 +95,16 @@ export const HOTKEY_NAMES = {
     first: "Beginning",
     last: "End",
     deletePly: "Delete Ply",
-    branch: "Show Branch Menu",
-    selectBranch: "Select Branch"
+    branchMenu: "Show Branch Menu",
+    selectBranch: "Select Branch",
+    prevBranch: "Previous Branch",
+    nextBranch: "Next Branch",
+    prevBranchEnd: "Previous Branch End",
+    nextBranchEnd: "Next Branch End",
+    firstBranch: "First Branch",
+    lastBranch: "Last Branch",
+    firstBranchEnd: "First Branch End",
+    lastBranchEnd: "Last Branch End"
   },
   UI: {
     showPTN: "Show PTN",
@@ -95,6 +124,14 @@ export const HOTKEY_NAMES = {
     showControls: "Play Controls",
     showScrubber: "Scrub Bar"
   },
+  EVAL: {
+    tak: "Tak",
+    tinue: "Tinue",
+    question: "?",
+    questionDouble: "??",
+    bang: "!",
+    bangDouble: "!!"
+  },
   PIECE: {
     color: "Switch Player",
     F: "Flats",
@@ -104,6 +141,7 @@ export const HOTKEY_NAMES = {
   MISC: {
     help: "Help",
     hotkeys: "Hotkeys",
+    fullscreen: "Fullscreen",
     preferences: "Preferences",
     newGame: "New Game",
     loadGame: "Load Game",
@@ -111,7 +149,10 @@ export const HOTKEY_NAMES = {
     editPTN: "Edit PTN",
     share: "Share",
     embedGame: "Embed",
+    qrCode: "QR Code",
     focusText: "Focus Text Input",
+    focusGame: "Focus Game Selector",
+    previousGame: "Previous Game",
     more: "Show More/Less"
   }
 };

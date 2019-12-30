@@ -1,11 +1,14 @@
 <template>
   <div class="game-selector no-wrap">
     <q-select
-      v-show="!!games.length"
+      ref="select"
+      v-if="games.length"
       class="text-subtitle1 no-wrap"
       :value="0"
       :options="games"
       @input="select"
+      @keydown.esc="$refs.select.blur"
+      @keydown.delete="close($refs.select.optionIndex)"
       :display-value="game.label"
       behavior="menu"
       popup-content-class="bg-secondary"
@@ -67,26 +70,15 @@ export default {
       }
     },
     close(index) {
-      this.$q
-        .dialog({
-          title: this.$t("Confirm"),
-          message: this.$t("confirm.close", this.$store.state.games[index]),
-          persistent: true,
-          ok: {
-            label: this.$t("OK"),
-            flat: true,
-            color: "accent"
-          },
-          cancel: {
-            label: this.$t("Cancel"),
-            flat: true,
-            color: "accent"
-          },
-          class: "bg-secondary"
-        })
-        .onOk(() => {
+      this.$store.getters.confirm({
+        title: this.$t("confirm.close"),
+        message: this.$store.state.games[index].name,
+        ok: this.$t("OK"),
+        cancel: this.$t("Cancel"),
+        success: () => {
           this.$store.dispatch("REMOVE_GAME", index);
-        });
+        }
+      });
     },
     edit() {
       this.$emit("edit");

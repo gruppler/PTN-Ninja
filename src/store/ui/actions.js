@@ -58,21 +58,23 @@ export const UPDATE_PTN = ({ state, commit }, ptn) => {
 
 export const SET_NAME = ({ state, commit, getters }, name) => {
   let oldName = state.games[0].name;
-  let games = LocalStorage.getItem("games", true);
-  name = getters.uniqueName(name);
+  let games = LocalStorage.getItem("games");
+  name = getters.uniqueName(name, true);
   games[0] = name;
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + oldName);
   LocalStorage.set("ptn-" + name, state.games[0].ptn);
   LocalStorage.remove("state-" + oldName);
   LocalStorage.set("state-" + name, state.games[0].state);
-  LocalStorage.remove("history-" + oldName);
-  LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
-  LocalStorage.remove("historyIndex-" + oldName);
-  LocalStorage.set(
-    "historyIndex-" + state.games[0].name,
-    state.games[0].historyIndex
-  );
+  if (state.games[0].history) {
+    LocalStorage.remove("history-" + oldName);
+    LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
+    LocalStorage.remove("historyIndex-" + oldName);
+    LocalStorage.set(
+      "historyIndex-" + state.games[0].name,
+      state.games[0].historyIndex
+    );
+  }
   commit("SET_NAME", name);
 };
 

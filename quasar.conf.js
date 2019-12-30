@@ -10,7 +10,8 @@ module.exports = function(ctx) {
       "i18n",
       "moment",
       "shortkey",
-      "globalComponents"
+      "globalComponents",
+      "qriously"
     ],
 
     css: ["app.styl"],
@@ -134,7 +135,7 @@ module.exports = function(ctx) {
         short_name: "PTN-Ninja",
         description: "An editor and viewer for Portable Tak Notation",
         display: "standalone",
-        orientation: "portrait",
+        orientation: "any",
         background_color: "#607d8b",
         theme_color: "#263238",
         icons: [

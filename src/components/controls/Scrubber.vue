@@ -50,6 +50,6 @@ export default {
 <style lang="stylus" scoped>
 .scrubber
   position absolute
-  top -12px
+  top -11px
   z-index 1
 </style>

@@ -4,6 +4,7 @@
     :class="{
       'current-move': isCurrentMove,
       linebreak,
+      separator,
       'current-only': currentOnly,
       standalone: standalone
     }"
@@ -131,7 +132,16 @@ export default {
     color inherit
 
   &.linebreak
-    margin-bottom 1.5em
+    margin-bottom .75em
+    + .move
+      margin-top .75em
+
+  &.linebreak.separator
+    padding-bottom .75em
+    margin-bottom 1px
+    + .move
+      padding-top .75em
+      margin-top 0
 
   .nop
     font-family 'Source Code Pro'
@@ -143,7 +153,7 @@ export default {
 
   .q-separator
     position relative
-    bottom -.75em
+    bottom calc(-.75em - 1px)
 
   &.standalone
     display inline-block

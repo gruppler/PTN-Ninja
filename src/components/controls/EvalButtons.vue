@@ -4,33 +4,54 @@
       :label="$t('Tak')"
       :class="{ active: isTak }"
       @click="toggle('tak')"
+      @shortkey="toggle('tak')"
+      v-shortkey="hotkeys.tak"
     />
     <q-btn
       :label="$t('Tinue')"
       :class="{ active: isTinue }"
       @click="toggle('tinue')"
+      @shortkey="toggle('tinue')"
+      v-shortkey="hotkeys.tinue"
     />
     <q-btn
-      label="?"
-      :class="{ active: isQ, double: isDouble('?') }"
+      :label="isDoubleQ ? '??' : '?'"
+      :class="{ active: isQ, double: isDoubleQ }"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
+      @shortkey="toggle('?', $event.srcKey === 'double')"
+      v-shortkey="{
+        single: hotkeys.question,
+        double: hotkeys.questionDouble
+      }"
       dense
     />
     <q-btn
-      label="!"
-      :class="{ active: isBang, double: isDouble('!') }"
+      :label="isDoubleBang ? '!!' : '!'"
+      :class="{ active: isBang, double: isDoubleBang }"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
+      @shortkey="toggle('!', $event.srcKey === 'double')"
+      v-shortkey="{
+        single: hotkeys.bang,
+        double: hotkeys.bangDouble
+      }"
       dense
     />
   </q-btn-group>
 </template>
 
 <script>
+import { HOTKEYS } from "../../keymap";
+
 export default {
   name: "EvalButtons",
   props: ["game"],
+  data() {
+    return {
+      hotkeys: HOTKEYS.EVAL
+    };
+  },
   computed: {
     ply() {
       return this.game ? this.game.state.ply : null;
@@ -49,6 +70,12 @@ export default {
     },
     isBang() {
       return this.eval && this.eval["!"];
+    },
+    isDoubleQ() {
+      return this.eval && this.eval.isDouble("?");
+    },
+    isDoubleBang() {
+      return this.eval && this.eval.isDouble("!");
     }
   },
   methods: {
@@ -56,9 +83,6 @@ export default {
       if (this.game) {
         this.game.toggleEvaluation(type, double);
       }
-    },
-    isDouble(type) {
-      return this.eval && this.eval.isDouble(type);
     }
   }
 };

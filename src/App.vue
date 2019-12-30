@@ -5,7 +5,19 @@
 </template>
 
 <script>
+const icons = {
+  "app:qrcode": "img:/statics/icons/qrcode.svg"
+};
+
 export default {
-  name: "App"
+  name: "App",
+  created() {
+    this.$q.iconMapFn = name => {
+      const icon = icons[name];
+      if (icon !== undefined) {
+        return { icon };
+      }
+    };
+  }
 };
 </script>
