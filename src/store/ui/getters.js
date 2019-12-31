@@ -2,6 +2,8 @@ import { Dialog, Notify } from "quasar";
 
 import { compressToEncodedURIComponent } from "lz-string";
 
+const ORIGIN = location.origin + (process.env.DEV ? "/?#/" : "/");
+
 export const confirm = () => ({ title, message, ok, cancel, success }) => {
   Dialog.create({
     title,
@@ -63,7 +65,7 @@ export const url = state => (game, options = {}) => {
   }
 
   if (options.origin) {
-    url = location.origin + "/?#/" + url;
+    url = ORIGIN + url;
   }
 
   if (options.state) {
