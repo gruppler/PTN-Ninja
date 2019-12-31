@@ -232,7 +232,10 @@ export default {
   },
   methods: {
     openLink() {
-      window.open(location.origin + "/?#/" + this.url, "_blank");
+      window.open(
+        this.$store.getters.url(this.game, { origin: true, state: true }),
+        "_blank"
+      );
     },
     uiShortkey({ srcKey }) {
       if (!(srcKey in this.state)) {
@@ -259,6 +262,15 @@ export default {
           this.$refs.shareButton.share();
           break;
       }
+    }
+  },
+  beforeCreate() {
+    // Redirect hash URLs
+    if (!process.env.DEV && location.hash.length) {
+      const url = location.hash.substr(1);
+      location.hash = "";
+      this.$router.replace(url);
+      location.reload();
     }
   },
   created() {
