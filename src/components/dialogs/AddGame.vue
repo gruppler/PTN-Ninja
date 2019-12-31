@@ -1,6 +1,13 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)">
-    <q-card style="width: 560px" class="bg-secondary">
+  <q-dialog
+    :value="value"
+    @input="$emit('input', $event)"
+    content-class="non-selectable"
+  >
+    <q-card
+      :style="{ width: (showOnline ? 700 : 560) + 'px' }"
+      class="bg-secondary"
+    >
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
@@ -164,7 +171,7 @@ export default {
         if (this.selectedGames.length) {
           // Load online game(s)
           this.selectedGames.forEach(game => {
-            this.$store.dispatch("online/LOAD", game);
+            this.$store.dispatch("online/LOAD_GAME", game.config);
           });
         }
         this.close();

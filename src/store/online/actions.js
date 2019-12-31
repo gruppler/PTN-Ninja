@@ -3,14 +3,20 @@ import { Loading, LocalStorage } from "quasar";
 import { omit, pick } from "lodash";
 
 import Game from "../../PTN/Game";
-import { now } from "../../PTN/Tag";
+import { toDate, now } from "../../PTN/Tag";
 
 const LOCAL_CONFIG_KEYS = ["id", "player", "playerKey"];
 const ONLINE_GAME_PROPS = ["name", "config", "tags"];
 
 export const ADD_ONLINE_GAME = ({ commit }, game) => {
   let games = LocalStorage.getItem("onlineGames") || [];
-  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
+  if (game instanceof Game) {
+    game = game.json;
+  } else if (game.tags && game.tags.date) {
+    game.tags.date = toDate(game.tags.date, game.tags.time);
+  }
+  game = pick(game, ONLINE_GAME_PROPS);
+
   if (!games.find(g => g.config.id === game.config.id)) {
     games.unshift(game);
     LocalStorage.set("onlineGames", games);
@@ -146,18 +152,127 @@ export const JOIN_GAME = ({ dispatch }, { game, player, playerName }) => {
   }
 };
 
-export const UPDATE = ({ commit }, game) => {
+export const UPDATE_GAME = ({ commit }, game) => {
   let json = omit(game.json, "moves");
   db.collection("games")
     .doc(json.config.id)
     .set(json)
     .then(() => {
-      commit("UPDATE", json);
+      commit("UPDATE_GAME", json);
     })
     .catch(error => {
       console.error(error);
     });
 };
+
+export const LOAD_GAME = ({ dispatch }, { id, playerKey }) => {
+  const finish = ({ gameJSON, player = 0, key = "" }) => {
+    gameJSON.config.id = id;
+    gameJSON.config.player = player;
+    if (key) {
+      gameJSON.config.playerKey = key;
+    } else {
+      delete gameJSON.config.playerKey;
+    }
+    dispatch("ADD_ONLINE_GAME", gameJSON);
+
+    gameJSON.ptn = new Game(false, gameJSON).ptn;
+    dispatch("ADD_GAME", gameJSON, { root: true });
+    Loading.hide();
+  };
+
+  if (id) {
+    Loading.show();
+    loadGame({ id, playerKey }).then(finish);
+  } else if (playerKey) {
+    Loading.show();
+    getPlayerKey(playerKey)
+      .then(key => {
+        loadGame({
+          id: key.game,
+          player: key.player,
+          playerKey
+        }).then(finish);
+      })
+      .catch(error => {
+        console.error("Error loading game:", error);
+      });
+  }
+};
+
+function getPlayerKey(playerKey, id = false) {
+  return new Promise((resolve, reject) => {
+    db.collection("playerKeys")
+      .doc(playerKey)
+      .get()
+      .then(keyDoc => {
+        const key = keyDoc.data();
+        if (keyDoc.exists && (!id || key.game === id)) {
+          resolve(key);
+        } else {
+          reject(new Error("Invalid player key"));
+        }
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
+
+function loadGame({ id, playerKey = "", player = false }) {
+  return new Promise((resolve, reject) => {
+    const gameRef = db.collection("games").doc(id);
+
+    // Load game
+    gameRef
+      .get()
+      .then(gameDoc => {
+        if (gameDoc.exists) {
+          let gameJSON = gameDoc.data();
+
+          // Load moves
+          gameRef
+            .collection("moves")
+            .get()
+            .then(moveDocs => {
+              gameJSON.moves = [];
+              moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
+
+              if (playerKey) {
+                if (player) {
+                  // Trusted key
+                  resolve({ gameJSON, player, playerKey });
+                } else {
+                  // Verify player key
+                  getPlayerKey(playerKey, gameDoc.id)
+                    .then(key => {
+                      // Success
+                      resolve({ gameJSON, player: key.player, playerKey });
+                    })
+                    .catch(error => {
+                      console.error(error);
+                      resolve({ gameJSON });
+                    });
+                }
+              } else {
+                // Spectator
+                resolve({ gameJSON });
+              }
+            })
+            .catch(error => {
+              console.error(error);
+              reject(new Error("Error getting moves"));
+            });
+        } else {
+          reject(new Error("Game does not exist"));
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        reject(new Error("Error getting game:"));
+      });
+  });
+}
 
 export const LOAD_GAMES = ({ commit }, pagination) => {
   let games = [];
@@ -193,7 +308,12 @@ export const LISTEN_GAMES = ({ dispatch, commit, state }) => {
           if (change.doc.metadata.hasPendingWrites) {
             return;
           }
-          console.log(change.type, change.doc.data());
+          console.log(
+            "CHANGE_DETECTED",
+            change.type,
+            change.doc.data(),
+            change
+          );
           switch (change.type) {
             case "added":
               dispatch("ADD_ONLINE_GAME", change.doc.data());
@@ -213,111 +333,6 @@ export const LISTEN_GAMES = ({ dispatch, commit, state }) => {
     );
   commit("LISTEN_GAMES", unsubscribe);
 };
-
-export const LOAD = ({ dispatch }, game) => {
-  const finish = (gameJSON, player = 0, key = "") => {
-    gameJSON.config.id = game.config.id;
-    gameJSON.config.player = player;
-    if (key) {
-      gameJSON.config.playerKey = key;
-    } else {
-      delete gameJSON.config.playerKey;
-    }
-    dispatch("ADD_ONLINE_GAME", gameJSON);
-
-    gameJSON.ptn = new Game(false, gameJSON).ptn;
-    dispatch("ADD_GAME", gameJSON, { root: true });
-    Loading.hide();
-  };
-
-  if (game.config.id) {
-    Loading.show();
-    loadGame(game.config.id, game.config.playerKey).then(finish);
-  } else if (game.config.playerKey) {
-    Loading.show();
-    getPlayerKey(game.config.playerKey)
-      .then(key => {
-        loadGame(key.game, game.config.playerKey, key.player).then(finish);
-      })
-      .catch(error => {
-        console.error("Error loading game:", error);
-      });
-  }
-};
-
-function getPlayerKey(playerKey, id = false) {
-  return new Promise((resolve, reject) => {
-    db.collection("playerKeys")
-      .doc(playerKey)
-      .get()
-      .then(keyDoc => {
-        const key = keyDoc.data();
-        if (keyDoc.exists && (!id || key.game === id)) {
-          resolve(key);
-        } else {
-          reject(new Error("Invalid player key"));
-        }
-      })
-      .catch(error => {
-        reject(error);
-      });
-  });
-}
-
-function loadGame(id, playerKey = "", player = false) {
-  return new Promise((resolve, reject) => {
-    const gameRef = db.collection("games").doc(id);
-
-    // Load game
-    gameRef
-      .get()
-      .then(gameDoc => {
-        if (gameDoc.exists) {
-          let gameJSON = gameDoc.data();
-
-          // Load moves
-          gameRef
-            .collection("moves")
-            .get()
-            .then(moveDocs => {
-              gameJSON.moves = [];
-              moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
-
-              if (playerKey) {
-                if (player) {
-                  // Trusted key
-                  resolve(gameJSON, player, playerKey);
-                } else {
-                  // Verify player key
-                  getPlayerKey(playerKey, gameDoc.id)
-                    .then(key => {
-                      // Success
-                      resolve(gameJSON, key.player, playerKey);
-                    })
-                    .catch(error => {
-                      console.error(error);
-                      resolve(gameJSON);
-                    });
-                }
-              } else {
-                // Spectator
-                resolve(gameJSON);
-              }
-            })
-            .catch(error => {
-              console.error(error);
-              reject(new Error("Error getting moves"));
-            });
-        } else {
-          reject(new Error("Game does not exist"));
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        reject(new Error("Error getting game:"));
-      });
-  });
-}
 
 // export const NOTIFICATION_INIT = context => {
 //   if (!messaging || !Notification) {

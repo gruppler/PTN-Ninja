@@ -39,6 +39,7 @@ export default class GameOnline {
   }
 
   parseJSONTags(json) {
+    json = { ...json };
     if (json.date) {
       const date = new Date(
         json.date.seconds ? json.date.seconds * 1e3 : json.date

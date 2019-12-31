@@ -1,6 +1,10 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)">
-    <q-card style="width: 350px" class="bg-secondary">
+  <q-dialog
+    :value="value"
+    @input="$emit('input', $event)"
+    content-class="non-selectable"
+  >
+    <q-card style="width: 400px" class="bg-secondary">
       <DialogHeader>{{ $t("Play Online") }}</DialogHeader>
       <SmoothReflow tag="Recess" class="col">
         <div class="scroll" style="max-height: calc(100vh - 18.5rem)">
@@ -15,20 +19,13 @@
                     :rules="[validateName]"
                     :autofocus="!playerName.length"
                     @keydown.enter.prevent="create"
+                    input-class="ellipsis"
                     color="accent"
                     hide-bottom-space
                     filled
                   >
                     <template v-slot:prepend>
-                      <q-icon
-                        :name="
-                          player === 1
-                            ? 'person'
-                            : player === 2
-                            ? 'person_outline'
-                            : 'help'
-                        "
-                      />
+                      <q-icon :name="playerIcon(player)" />
                     </template>
                   </q-input>
                 </q-item-section>
@@ -41,9 +38,10 @@
                     :toggle-color="playerBGColor"
                     :toggle-text-color="playerTextColor"
                     :options="players"
-                    unelevated
+                    rounded
                     spread
                     dense
+                    push
                   />
                 </q-item-section>
               </q-item>
@@ -51,9 +49,11 @@
               <q-item tag="label" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Private Game") }}</q-item-label>
-                  <q-item-label caption>{{
-                    $t("hints.privateGame")
-                  }}</q-item-label>
+                  <SmoothReflow>
+                    <q-item-label caption v-show="privateGame">
+                      {{ $t("hints.privateGame") }}
+                    </q-item-label>
+                  </SmoothReflow>
                 </q-item-section>
                 <q-item-section side>
                   <q-toggle color="accent" v-model="privateGame" />
@@ -72,13 +72,16 @@
           </div>
           <div v-else>
             <q-list>
-              <q-item>
+              <q-item v-if="game && game.config.id">
                 <q-input
-                  v-if="game && game.config.id"
                   class="col-grow"
                   :value="publicCode"
                   :label="$t('Public')"
-                  :hint="$t('hints.public')"
+                  :hint="
+                    game.config.playerKey
+                      ? $t('hints.public')
+                      : $t('hints.spectate')
+                  "
                   readonly
                   filled
                 >
@@ -102,9 +105,8 @@
                   </template>
                 </q-input>
               </q-item>
-              <q-item>
+              <q-item v-if="game && game.config.playerKey">
                 <q-input
-                  v-if="game && game.config.playerKey"
                   class="col-grow"
                   :value="privateCode"
                   :label="$t('Private')"
@@ -178,9 +180,13 @@ export default {
   data() {
     return {
       players: [
-        { label: this.$t("Player1"), value: 1 },
-        { label: this.$t("Player2"), value: 2 },
-        { label: this.$t("Random"), value: "random" }
+        { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
+        { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
+        {
+          label: this.$t("Random"),
+          icon: this.playerIcon("random"),
+          value: "random"
+        }
       ],
       playerName: this.$store.state.playerName,
       qrText: "",
@@ -240,6 +246,16 @@ export default {
     }
   },
   methods: {
+    playerIcon(player) {
+      switch (player) {
+        case 1:
+          return "person";
+        case 2:
+          return "person_outline";
+        default:
+          return "casino";
+      }
+    },
     create() {
       let player = this.player;
       let player1, player2;

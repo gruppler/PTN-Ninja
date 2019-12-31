@@ -13,7 +13,7 @@
     :visible-columns="visibleColumns"
     :fullscreen.sync="fullscreen"
     :pagination.sync="pagination"
-    selection="single"
+    :selection="selectionMode || 'multiple'"
     :selected.sync="selected"
     :selected-rows-label="selectedText"
     :loading-label="$t('Loading')"
@@ -43,6 +43,11 @@
       </q-input>
     </template>
 
+    <template v-slot:bottom-left>
+      <div class="negative" v-show="isMaxed"></div>
+      {{ $t("error.OnlineGamesLimit") }}
+    </template>
+
     <template v-slot:header-cell="props">
       <q-th :props="props">
         <q-icon
@@ -51,7 +56,16 @@
           :title="isWide ? '' : props.col.label"
           size="xs"
         />
-        <span v-show="!props.col.icon || isWide">
+        <template v-if="props.col.icons">
+          <q-icon
+            v-for="(icon, i) in props.col.icons"
+            :name="icon"
+            :title="isWide ? '' : props.col.label"
+            :key="'p' + i"
+            size="xs"
+          />
+        </template>
+        <span v-show="(!props.col.icon && !props.col.icons) || isWide">
           {{ props.col.label }}
         </span>
       </q-th>
@@ -67,10 +81,16 @@
           'cursor-pointer': !props.row.isOpen
         }"
         :no-hover="props.row.isOpen"
+        :key="props.row.id"
+        :title="isWide ? '' : props.row.name"
       >
         <td></td>
         <q-td key="role" :props="props">
-          <q-icon :name="gameIcon(props.row.config.player)" size="sm" />
+          <q-icon
+            :name="gameIcon(props.row.config.player)"
+            :title="roleText(props.row.config.player)"
+            size="md"
+          />
         </q-td>
         <q-td key="title" :props="props">
           {{ props.row.name }}
@@ -80,6 +100,16 @@
         </q-td>
         <q-td key="player2" :props="props">
           {{ props.row.tags.player2 }}
+        </q-td>
+        <q-td key="players" :props="props">
+          <div v-if="props.row.tags.player1">
+            <q-icon name="person" size="sm" />
+            {{ props.row.tags.player1 }}
+          </div>
+          <div v-if="props.row.tags.player2">
+            <q-icon name="person_outline" size="sm" />
+            {{ props.row.tags.player2 }}
+          </div>
         </q-td>
         <q-td key="size" :props="props">
           {{ props.row.tags.size + "x" + props.row.tags.size }}
@@ -93,6 +123,16 @@
           <Result :result="props.row.tags.result" />
         </q-td>
       </q-tr>
+      <q-tr v-show="props.expand && !isWide" :props="props">
+        <q-td colspan="100%" :props="props">
+          {{ props.row.name }}
+        </q-td>
+        <q-td v-show="!visibleColumns.includes('date')" :props="props">
+          <div :title="props.row.tags.date | moment('llll')">
+            {{ props.row.tags.date | moment("from") }}
+          </div>
+        </q-td>
+      </q-tr>
     </template>
   </q-table>
 </template>
@@ -104,10 +144,13 @@ import Result from "../PTN/Result";
 
 import { compact, reject, without } from "lodash";
 
+const MAX_SELECTED = 3;
+const MAX_ONLINE = 5;
+
 export default {
   name: "GameTable",
   components: { FullscreenToggle, Result },
-  props: ["value"],
+  props: ["value", "selection-mode"],
   data() {
     return {
       filter: "",
@@ -142,6 +185,12 @@ export default {
           align: "center"
         },
         {
+          name: "players",
+          label: this.$t("Players"),
+          icons: ["person", "person_outline"],
+          align: "center"
+        },
+        {
           name: "size",
           label: this.$t("Size"),
           icon: "grid_on",
@@ -163,6 +212,20 @@ export default {
     };
   },
   computed: {
+    isMaxed() {
+      return this.selected.length + this.localGames.length >= this.maxSelected;
+    },
+    maxSelected() {
+      return this.selectionMode === "single"
+        ? 1
+        : Math.min(
+            MAX_SELECTED,
+            MAX_ONLINE - this.selected.length + this.localGames.length
+          );
+    },
+    error() {
+      return this.isMaxed ? this.$t("error.OnlineGamesLimit") : "";
+    },
     selected: {
       get() {
         return this.value;
@@ -193,11 +256,11 @@ export default {
     visibleColumns() {
       let columns = this.columns.map(col => col.name);
       if (this.fullscreen) {
-        return columns;
+        return without(columns, "players");
       } else if (this.$q.screen.gt.sm) {
-        return without(columns, "title");
+        return without(columns, "title", "player1", "player2");
       } else {
-        return without(columns, "title", "date");
+        return without(columns, "title", "player1", "player2", "date");
       }
     },
     isWide() {
@@ -212,18 +275,37 @@ export default {
     gameIcon(player) {
       return this.$store.getters["online/gameIcon"](player);
     },
+    roleText(player) {
+      return player !== undefined
+        ? this.$t(
+            {
+              1: "Player1",
+              2: "Player2",
+              0: "Spectator"
+            }["" + player] || ""
+          )
+        : "";
+    },
     select(game) {
       if (this.isOpen(game)) {
         return;
       }
-      if (this.selected[0] === game) {
-        this.selected.pop();
+      const index = this.selected.indexOf(game);
+      if (index >= 0) {
+        this.selected.splice(index, 1);
       } else {
-        this.selected.splice(0, 1, game);
+        this.selected.unshift(game);
+        if (this.selected.length > this.maxSelected) {
+          this.selected.splice(this.maxSelected);
+        }
       }
     },
-    selectedText() {
-      return "";
+    selectedText(count) {
+      return count
+        ? this.$tc("count.xGamesSelected", this.selected.length, {
+            x: this.selected.length
+          })
+        : "";
     },
     isLocal(game) {
       return this.localGameIDs.includes(game.config.id);

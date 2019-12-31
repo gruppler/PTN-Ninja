@@ -19,7 +19,7 @@ export const gameIcon = () => player => {
     case 2:
       return "person_outline";
     case 0:
-      return "public";
+      return "supervised_user_circle";
     default:
       return "";
   }

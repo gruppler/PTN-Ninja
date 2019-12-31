@@ -493,8 +493,8 @@ export default {
           }
         } else if (this.gameID || this.playerKey) {
           // Add online game from URL
-          this.$store.dispatch("online/LOAD", {
-            gameID: this.gameID,
+          this.$store.dispatch("online/LOAD_GAME", {
+            id: this.gameID,
             playerKey: this.playerKey
           });
           this.$router.replace("/");
@@ -698,13 +698,15 @@ export default {
       }
     }
   },
-  created() {
+  beforeCreate() {
+    // Load online functionality
     if (process.env.DEV && this.$store.state.online) {
       this.$store.unregisterModule("online");
     }
     this.$store.registerModule("online", onlineStore);
     this.$store.dispatch("online/LISTEN_GAMES");
-
+  },
+  created() {
     this.$q.dark.set(true);
 
     if (!this.games.length && !(this.gameID || this.playerKey)) {

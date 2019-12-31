@@ -57,6 +57,13 @@ export const now = () => {
   };
 };
 
+export const fromDate = date => {
+  return {
+    date: dateFromDate(date),
+    time: timeFromDate(date)
+  };
+};
+
 export const dateFromDate = date => {
   return (
     date.getFullYear() +
@@ -77,8 +84,10 @@ export const timeFromDate = date => {
   );
 };
 
-export const toDate = (date, time) => {
-  return new Date(`${date} ${time}`);
+export const toDate = (date, time = "") => {
+  return new Date(
+    date && date.seconds ? date.seconds * 1e3 : `${date} ${time}`
+  );
 };
 
 export default class Tag {

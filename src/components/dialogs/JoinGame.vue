@@ -85,7 +85,7 @@ export default {
         return;
       }
 
-      this.$store.dispatch("JOIN_GAME", {
+      this.$store.dispatch("online/JOIN_GAME", {
         game: this.game,
         player: this.player,
         playerName: this.playerName

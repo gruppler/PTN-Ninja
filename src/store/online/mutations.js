@@ -1,7 +1,3 @@
-export const LOAD_GAMES = (state, games) => {
-  state.games = games;
-};
-
 export const ADD_ONLINE_GAME = (state, game) => {
   state.onlineGames.unshift(game);
 };
@@ -12,6 +8,10 @@ export const UPDATE_ONLINE_GAME = (state, { game, index }) => {
 
 export const REMOVE_ONLINE_GAME = (state, index) => {
   state.onlineGames.splice(index, 1);
+};
+
+export const LOAD_GAMES = (state, games) => {
+  state.games = games;
 };
 
 export const LISTEN_GAMES = (state, unsubscribe) => {

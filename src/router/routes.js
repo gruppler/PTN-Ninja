@@ -3,9 +3,14 @@ import { Platform } from "quasar";
 
 const routes = [
   {
-    name: "online",
+    name: "game",
     path: "/game/:gameID",
-    alias: "/player/:playerKey",
+    component: () => import("layouts/Main"),
+    props: true
+  },
+  {
+    name: "player",
+    path: "/player/:playerKey",
     component: () => import("layouts/Main"),
     props: true
   },

@@ -91,6 +91,7 @@ export default {
   Player1: "Player 1",
   Player2: "Player 2",
   "Player Name": "Player Name",
+  Players: "Players",
   Points: "Points",
   Preferences: "Preferences",
   "Previous Branch": "Previous Branch",
@@ -122,6 +123,7 @@ export default {
   Site: "Site",
   Size: "Size",
   Spectate: "Spectate",
+  Spectator: "Spectator",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System
@@ -153,14 +155,19 @@ export default {
   },
 
   confirm: {
-    close: "Close this game?",
+    closeGame: 'Close the game "{game}"?',
     resetEmbed:
       "Are you sure you want to reset your embed settings to default?",
     resetForm: "Are you sure you want to reset the form?"
   },
 
+  count: {
+    xGamesSelected: "No Games Selected | 1 Game Selected | {x} Games Selected"
+  },
+
   error: {
     "Branch already exists": "Branch already exists",
+    OnlineGamesLimit: "Maximum number of online games reached",
     "Invalid branch": "Invalid branch",
     "Invalid branch name": "Invalid branch name",
     "Invalid caps": "Invalid capstone count",
@@ -195,7 +202,8 @@ export default {
   hints: {
     public: "Share this with your opponent and spectators",
     private: "Share this with your other devices",
-    privateGame: "This game will not be listed"
+    privateGame: "This game will not be listed",
+    spectate: "Share this with other spectators and devices"
   },
 
   hotkeys: {

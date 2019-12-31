@@ -146,7 +146,7 @@ export default {
         this.bottomSheet = this.$q
           .bottomSheet({
             grid: true,
-            class: "bg-secondary",
+            class: "bg-secondary non-selectable",
             message: this.$t("Share"),
             actions: this.actions
           })

@@ -18,7 +18,11 @@
       dense
     >
       <template v-slot:prepend>
-        <q-icon v-if="game.game.isOnline" :name="gameIcon(game.game)" />
+        <q-icon
+          v-if="game.game.isOnline"
+          :name="gameIcon(game.game)"
+          size="md"
+        />
       </template>
 
       <template v-slot:option="scope">
@@ -84,12 +88,15 @@ export default {
       return this.$store.getters["online/gameIcon"](game.player);
     },
     close(index) {
+      const game = this.$store.state.games[index];
       this.$store.getters.confirm({
-        title: this.$t("confirm.close"),
-        message: this.$store.state.games[index].name,
+        title: this.$t("confirm.closeGame", { game: game.name }),
         ok: this.$t("OK"),
         cancel: this.$t("Cancel"),
         success: () => {
+          if (game.config.id && !game.config.playerKey) {
+            this.$store.dispatch("online/REMOVE_ONLINE_GAME", game);
+          }
           this.$store.dispatch("REMOVE_GAME", index);
         }
       });
