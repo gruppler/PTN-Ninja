@@ -43,7 +43,7 @@
 
       <q-input
         ref="tps"
-        v-show="tags.tps || (game && !game.plies.length)"
+        v-show="tags.tps || (!game || !game.plies.length)"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
@@ -580,7 +580,7 @@
 import { formats } from "../../PTN/Tag";
 import TPS from "../../PTN/TPS";
 import ResultTag from "../../PTN/Result";
-import { generateName, pieceCounts } from "../../PTN/Game/base";
+import { generateName, pieceCounts, sample } from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
 
@@ -702,26 +702,8 @@ export default {
       this.$store.dispatch("SET_UI", ["isEditingTPS", true]);
     },
     fillTPS() {
-      switch (1 * this.tags.size) {
-        case 5:
-          this.tags.tps =
-            "x2,21S,x2/x,2S,21S,1S,x/12S,12S,x,12S,12S/x,1S,21S,2S,x/x2,21S,x2 1 15";
-          break;
-        case 6:
-          this.tags.tps =
-            "21S,1S,x2,2S,12S/1S,21S,1S,2S,12S,2S/x,1S,21S,12S,2S,x/x,2S,12S,21S,1S,x/2S,12S,2S,1S,21S,1S/12S,2S,x2,1S,21S 1 27";
-          break;
-        case 7:
-          this.tags.tps =
-            "21S,1S,x3,2S,12S/1S,21S,1S,x,2S,12S,2S/x,1S,21S,21S,12S,2S,x/x2,12S,x,12S,x2/x,2S,12S,21S,21S,1S,x/2S,12S,2S,x,1S,21S,1S/12S,2S,x3,1S,21S 1 33";
-          break;
-        case 8:
-          this.tags.tps =
-            "21S,1S,x4,2S,12S/1S,21S,1S,x2,2S,12S,2S/x,1S,21S,1S,2S,12S,2S,x/x2,1S,21S,12S,2S,x2/x2,2S,12S,21S,1S,x2/x,2S,12S,2S,1S,21S,1S,x/2S,12S,2S,x2,1S,21S,1S/12S,2S,x4,1S,21S 1 37";
-          break;
-        default:
-          this.tags.tps = "";
-      }
+      this.tags = { ...this.tags, ...sample(this.tags) };
+      this.name = this.generatedName;
     },
     swapPlayers() {
       [this.tags.player1, this.tags.player2] = [
@@ -788,4 +770,5 @@ export default {
 <style lang="stylus">
 .q-select .result
   margin 0 0 -4px
+  font-size .9em
 </style>

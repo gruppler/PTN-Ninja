@@ -1,6 +1,6 @@
 <template>
   <q-dialog
-    :content-class="['large-dialog', $attrs['content-class']]"
+    :content-class="['large-dialog', 'non-selectable', $attrs['content-class']]"
     @input="$emit('input', $event)"
     :value="value"
     :maximized="maximized"

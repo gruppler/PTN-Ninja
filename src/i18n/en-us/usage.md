@@ -14,11 +14,12 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - To create a new game, **click** the "+" button in the main menu to open the New Game dialog.
 - To load an existing game, **click** the "+" button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
+- Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
 
 ### Playback
 
-- Navigate the game using the **Play Controls** or **arrow hotkeys**.
-- **Right-click** the Back or Forward button to move by a **half-step**.
+- Navigate the game using the **Play Controls** or **arrow keys**.
+- **Right-click** the Back or Forward button to move by a **half-step** or hold **shift** with the **arrow keys**.
 - **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
 
 ### Place a Stone
@@ -40,6 +41,8 @@ Branches
 
 PTN Ninja records multiple lines of play, called "branches." Branches are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
+- Click the Branch menu in the bottom toolbar, or press **B**, to see the contextual branch menu.
+- Use the **vertical arrow keys** or **0-9** to navigate between branches.
 - **Right-click** a branch title to **rename** or **delete** it.
 
 PTN
