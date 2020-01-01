@@ -693,7 +693,7 @@ export default {
       this.name = (this.name || "").trim();
       if (!this.game || this.game.name !== this.name) {
         if (!this.name) {
-          this.name = this.generatedName();
+          this.name = this.generatedName;
         }
         this.name = this.$store.getters.uniqueName(this.name, true);
       }
