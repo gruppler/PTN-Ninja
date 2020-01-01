@@ -19,7 +19,7 @@ export const confirm = () => ({ title, message, ok, cancel, success }) => {
       flat: true,
       color: "accent"
     },
-    class: "bg-secondary"
+    class: "bg-secondary non-selectable"
   }).onOk(success);
 };
 

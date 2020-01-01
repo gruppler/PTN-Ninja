@@ -1,5 +1,9 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)">
+  <q-dialog
+    :value="value"
+    @input="$emit('input', $event)"
+    content-class="non-selectable"
+  >
     <q-card style="width: 560px" class="bg-secondary">
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />

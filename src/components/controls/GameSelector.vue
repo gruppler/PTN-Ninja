@@ -70,9 +70,9 @@ export default {
       }
     },
     close(index) {
+      const game = this.$store.state.games[index];
       this.$store.getters.confirm({
-        title: this.$t("confirm.close"),
-        message: this.$store.state.games[index].name,
+        title: this.$t("confirm.closeGame", { game: game.name }),
         ok: this.$t("OK"),
         cancel: this.$t("Cancel"),
         success: () => {

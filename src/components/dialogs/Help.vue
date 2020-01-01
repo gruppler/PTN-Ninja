@@ -6,6 +6,22 @@
         <q-tab name="usage" icon="help" :label="$t('Usage')" />
         <q-tab name="hotkeys" icon="keyboard" :label="$t('Hotkeys')" />
       </q-tabs>
+      <SmoothReflow>
+        <q-input
+          v-show="section === 'hotkeys'"
+          v-model="filter"
+          class="col-grow"
+          color="accent"
+          autofocus
+          clearable
+          filled
+          dense
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </SmoothReflow>
     </template>
 
     <div class="help">
@@ -20,7 +36,7 @@
 
         <q-tab-panel name="hotkeys">
           <q-markdown>{{ $t("Hotkeys") + "\n===" }}</q-markdown>
-          <hotkeys />
+          <hotkeys ref="hotkeys" v-model="filter" />
         </q-tab-panel>
       </q-tab-panels>
     </div>
@@ -47,7 +63,8 @@ export default {
     return {
       section: "about",
       about: "",
-      usage: ""
+      usage: "",
+      filter: ""
     };
   },
   created() {
