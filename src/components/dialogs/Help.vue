@@ -15,6 +15,7 @@
           autofocus
           clearable
           filled
+          square
           dense
         >
           <template v-slot:prepend>
