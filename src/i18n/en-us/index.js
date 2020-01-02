@@ -178,7 +178,7 @@ export default {
   },
 
   hotkeys: {
-    UI: "UI Toggles", // User Interface
+    UI: "UI Preferences", // User Interface
     CONTROLS: "Play Controls",
     ACTIONS: "Global Actions",
     EVAL: "Evaluation",
