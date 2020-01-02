@@ -596,7 +596,12 @@
 import { formats } from "../../PTN/Tag";
 import TPS from "../../PTN/TPS";
 import ResultTag from "../../PTN/Result";
-import { generateName, pieceCounts, sample } from "../../PTN/Game/base";
+import {
+  generateName,
+  isDefaultName,
+  pieceCounts,
+  sample
+} from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
 
@@ -776,6 +781,13 @@ export default {
   },
   mounted() {
     this.init();
+  },
+  watch: {
+    generatedName(newName) {
+      if (isDefaultName(this.name)) {
+        this.name = newName;
+      }
+    }
   }
 };
 </script>
