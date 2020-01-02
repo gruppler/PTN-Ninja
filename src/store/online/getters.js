@@ -11,16 +11,3 @@ export const url = () => (game, isPrivate = false) => {
 
   return url;
 };
-
-export const gameIcon = () => player => {
-  switch (player) {
-    case 1:
-      return "person";
-    case 2:
-      return "person_outline";
-    case 0:
-      return "supervised_user_circle";
-    default:
-      return "";
-  }
-};

@@ -50,6 +50,22 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
   return name;
 };
 
+export const playerIcon = () => player => {
+  switch (player) {
+    case 1:
+      return "person";
+    case 2:
+      return "person_outline";
+    case 0:
+    case "spectator":
+      return "supervised_user_circle";
+    case "random":
+      return "casino";
+    default:
+      return "";
+  }
+};
+
 export const url = state => (game, options = {}) => {
   if (!game) {
     return "";

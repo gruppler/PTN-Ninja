@@ -43,7 +43,7 @@ export default {
       return alerts.map(alert => ({
         message: alert.message,
         color: alert.player === 1 ? "blue-grey-2" : "blue-grey-10",
-        icon: alert.player === 1 ? "person" : "person_outline",
+        icon: this.$store.getters.playerIcon(alert.player),
         textColor: alert.player === 1 ? "grey-10" : "grey-2"
       }));
     }

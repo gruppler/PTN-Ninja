@@ -15,7 +15,7 @@
             clearable
           >
             <template v-slot:prepend>
-              <q-icon :name="$store.getters['online/gameIcon'](player)" />
+              <q-icon :name="$store.getters.playerIcon(player)" />
             </template>
           </q-input>
         </SmoothReflow>

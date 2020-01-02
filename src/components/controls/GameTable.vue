@@ -87,7 +87,7 @@
         <td></td>
         <q-td key="role" :props="props">
           <q-icon
-            :name="gameIcon(props.row.config.player)"
+            :name="playerIcon(props.row.config.player)"
             :title="roleText(props.row.config.player)"
             size="md"
           />
@@ -103,11 +103,11 @@
         </q-td>
         <q-td key="players" :props="props">
           <div v-if="props.row.tags.player1">
-            <q-icon name="person" size="sm" />
+            <q-icon :name="playerIcon(1)" size="sm" />
             {{ props.row.tags.player1 }}
           </div>
           <div v-if="props.row.tags.player2">
-            <q-icon name="person_outline" size="sm" />
+            <q-icon :name="playerIcon(2)" size="sm" />
             {{ props.row.tags.player2 }}
           </div>
         </q-td>
@@ -175,19 +175,19 @@ export default {
         {
           name: "player1",
           label: this.$t("Player1"),
-          icon: "person",
+          icon: this.playerIcon(1),
           align: "center"
         },
         {
           name: "player2",
           label: this.$t("Player2"),
-          icon: "person_outline",
+          icon: this.playerIcon(2),
           align: "center"
         },
         {
           name: "players",
           label: this.$t("Players"),
-          icons: ["person", "person_outline"],
+          icons: [this.playerIcon(1), this.playerIcon(2)],
           align: "center"
         },
         {
@@ -272,8 +272,8 @@ export default {
       this.loading = true;
       this.$store.dispatch("online/LOAD_GAMES", this.pagination);
     },
-    gameIcon(player) {
-      return this.$store.getters["online/gameIcon"](player);
+    playerIcon(player) {
+      return this.$store.getters.playerIcon(player);
     },
     roleText(player) {
       return player !== undefined

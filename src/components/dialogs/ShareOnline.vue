@@ -115,11 +115,7 @@
                   filled
                 >
                   <template v-slot:prepend>
-                    <q-icon
-                      :name="
-                        game.config.player === 1 ? 'person' : 'person_outline'
-                      "
-                    />
+                    <q-icon :name="playerIcon(game.config.player)" />
                   </template>
                   <template v-slot:append>
                     <q-btn
@@ -247,14 +243,7 @@ export default {
   },
   methods: {
     playerIcon(player) {
-      switch (player) {
-        case 1:
-          return "person";
-        case 2:
-          return "person_outline";
-        default:
-          return "casino";
-      }
+      return this.$store.getters.playerIcon(player);
     },
     create() {
       let player = this.player;

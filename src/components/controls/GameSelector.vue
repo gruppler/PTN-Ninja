@@ -18,11 +18,7 @@
       dense
     >
       <template v-slot:prepend>
-        <q-icon
-          v-if="game.game.isOnline"
-          :name="gameIcon(game.game)"
-          size="md"
-        />
+        <q-icon v-if="game.game.isOnline" :name="icon(game.game)" size="md" />
       </template>
 
       <template v-slot:option="scope">
@@ -33,7 +29,7 @@
         >
           <q-item-section side v-if="scope.opt.game.isOnline">
             <q-icon
-              :name="gameIcon(scope.opt.game)"
+              :name="icon(scope.opt.game)"
               :class="{ 'text-accent': scope.opt.value === 0 }"
             />
           </q-item-section>
@@ -84,8 +80,8 @@ export default {
         this.$emit("input", this.$store.state.games[0]);
       }
     },
-    gameIcon(game) {
-      return this.$store.getters["online/gameIcon"](game.player);
+    icon(game) {
+      return this.$store.getters.playerIcon(game.player);
     },
     close(index) {
       const game = this.$store.state.games[index];
