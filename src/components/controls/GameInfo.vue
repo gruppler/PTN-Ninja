@@ -328,9 +328,9 @@
         <q-popup-proxy
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
-          @before-hide="blur"
           anchor="center middle"
           self="center middle"
+          no-refocus
         >
           <div>
             <q-date
@@ -387,9 +387,9 @@
         <q-popup-proxy
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
-          @before-hide="blur"
           anchor="center middle"
           self="center middle"
+          no-refocus
         >
           <div>
             <q-time
@@ -580,7 +580,12 @@
 import { formats } from "../../PTN/Tag";
 import TPS from "../../PTN/TPS";
 import ResultTag from "../../PTN/Result";
-import { generateName, pieceCounts, sample } from "../../PTN/Game/base";
+import {
+  generateName,
+  isDefaultName,
+  pieceCounts,
+  sample
+} from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
 
@@ -670,9 +675,6 @@ export default {
     validate() {
       return this.$el.getElementsByClassName("q-field--error").length === 0;
     },
-    blur() {
-      this.$nextTick(() => document.activeElement.blur());
-    },
     save() {
       if (!this.validate()) {
         return false;
@@ -692,14 +694,19 @@ export default {
       this.save();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
-        { color: this.game.firstPlayer, type: "F" }
+        { color: this.game ? this.game.firstPlayer : 1, type: "F" }
       ]);
       this.$store.dispatch("SET_UI", [
         "firstMoveNumber",
-        this.game.firstMoveNumber
+        this.game ? this.game.firstMoveNumber : 1
       ]);
-      this.$store.dispatch("SET_UI", ["editingTPS", this.game.state.tps]);
-      this.$store.dispatch("SET_UI", ["isEditingTPS", true]);
+      this.$store.dispatch("SET_UI", [
+        "editingTPS",
+        this.game ? this.game.state.tps : ""
+      ]);
+      this.$nextTick(() =>
+        this.$store.dispatch("SET_UI", ["isEditingTPS", true])
+      );
     },
     fillTPS() {
       this.tags = { ...this.tags, ...sample(this.tags) };
@@ -763,6 +770,18 @@ export default {
   },
   mounted() {
     this.init();
+  },
+  watch: {
+    value(isVisible) {
+      if (isVisible) {
+        this.init();
+      }
+    },
+    generatedName(newName) {
+      if (isDefaultName(this.name)) {
+        this.name = newName;
+      }
+    }
   }
 };
 </script>

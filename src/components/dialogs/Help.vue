@@ -15,6 +15,7 @@
           autofocus
           clearable
           filled
+          square
           dense
         >
           <template v-slot:prepend>
@@ -36,7 +37,7 @@
 
         <q-tab-panel name="hotkeys">
           <q-markdown>{{ $t("Hotkeys") + "\n===" }}</q-markdown>
-          <hotkeys ref="hotkeys" v-model="filter" />
+          <Hotkeys ref="hotkeys" v-model="filter" />
         </q-tab-panel>
       </q-tab-panels>
     </div>
@@ -53,11 +54,11 @@
 <script>
 import LargeDialog from "../general/LargeDialog.vue";
 
-import hotkeys from "../../i18n/hotkeys.vue";
+import Hotkeys from "../general/Hotkeys.vue";
 
 export default {
   name: "Help",
-  components: { LargeDialog, hotkeys },
+  components: { LargeDialog, Hotkeys },
   props: ["value"],
   data() {
     return {

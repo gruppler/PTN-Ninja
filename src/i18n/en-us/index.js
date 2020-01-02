@@ -138,7 +138,7 @@ export default {
   },
 
   confirm: {
-    close: "Close this game?",
+    closeGame: 'Close the game "{game}"?',
     resetEmbed:
       "Are you sure you want to reset your embed settings to default?",
     resetForm: "Are you sure you want to reset the form?"
@@ -178,7 +178,7 @@ export default {
   },
 
   hotkeys: {
-    UI: "UI Toggles", // User Interface
+    UI: "UI Preferences", // User Interface
     CONTROLS: "Play Controls",
     ACTIONS: "Global Actions",
     EVAL: "Evaluation",

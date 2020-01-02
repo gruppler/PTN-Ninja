@@ -88,6 +88,10 @@ export const generateName = (tags = {}, game) => {
   );
 };
 
+export const isDefaultName = name => {
+  return /^[^"]+ vs [^"]+ \dx\d/.test(name);
+};
+
 export default class GameBase {
   static t = {
     Black: "Black",
@@ -406,6 +410,10 @@ export default class GameBase {
 
   generateName(tags = {}) {
     return generateName(tags, this);
+  }
+
+  get isDefaultName() {
+    return isDefaultName(this.name);
   }
 
   tag(key, defaultValue) {

@@ -21,11 +21,12 @@
 </template>
 
 <script>
-import { HOTKEYS, HOTKEYS_FORMATTED, HOTKEY_NAMES } from "../keymap";
+import { HOTKEYS, HOTKEYS_FORMATTED, HOTKEY_NAMES } from "../../keymap";
 
 import { pick, pickBy, zipObject } from "lodash";
 
 export default {
+  name: "Hotkeys",
   props: ["value"],
   data() {
     return {
@@ -52,15 +53,18 @@ export default {
 
         const search = (category, key) => {
           return (
-            this.$t(this.names[category][key])
+            this.$t("hotkeys." + category)
               .toLowerCase()
               .includes(q) ||
-            this.keys[category][key].find(key =>
-              ("" + key).toLowerCase().includes(q)
-            ) ||
-            HOTKEYS[category][key].find(key =>
-              ("" + key).toLowerCase().includes(q)
-            )
+            (this.$t(this.names[category][key])
+              .toLowerCase()
+              .includes(q) ||
+              this.keys[category][key].find(key =>
+                ("" + key).toLowerCase().includes(q)
+              ) ||
+              HOTKEYS[category][key].find(key =>
+                ("" + key).toLowerCase().includes(q)
+              ))
           );
         };
 
