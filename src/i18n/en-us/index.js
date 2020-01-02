@@ -138,7 +138,7 @@ export default {
   },
 
   confirm: {
-    close: "Close this game?",
+    closeGame: 'Close the game "{game}"?',
     resetEmbed:
       "Are you sure you want to reset your embed settings to default?",
     resetForm: "Are you sure you want to reset the form?"
