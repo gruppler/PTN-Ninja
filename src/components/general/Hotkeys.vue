@@ -21,11 +21,12 @@
 </template>
 
 <script>
-import { HOTKEYS, HOTKEYS_FORMATTED, HOTKEY_NAMES } from "../keymap";
+import { HOTKEYS, HOTKEYS_FORMATTED, HOTKEY_NAMES } from "../../keymap";
 
 import { pick, pickBy, zipObject } from "lodash";
 
 export default {
+  name: "Hotkeys",
   props: ["value"],
   data() {
     return {
