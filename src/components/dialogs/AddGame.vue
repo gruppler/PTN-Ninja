@@ -124,6 +124,7 @@ export default {
         return this.$store.state.size;
       },
       set(value) {
+        this.tags.size = value;
         this.$store.dispatch("SET_UI", ["size", value || ""]);
       }
     },
@@ -132,6 +133,7 @@ export default {
         return this.$store.state.player1;
       },
       set(value) {
+        this.tags.player1 = value;
         this.$store.dispatch("SET_UI", ["player1", value || ""]);
       }
     },
@@ -140,6 +142,7 @@ export default {
         return this.$store.state.player2;
       },
       set(value) {
+        this.tags.player2 = value;
         this.$store.dispatch("SET_UI", ["player2", value || ""]);
       }
     }
@@ -149,7 +152,6 @@ export default {
       this.$emit("input", false);
     },
     createGame({ name, tags }) {
-      this.tags = tags;
       this.player1 = tags.player1;
       this.player2 = tags.player2;
       this.size = tags.size;

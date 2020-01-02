@@ -529,6 +529,7 @@ export default {
       this.setWindowTitle(game.name);
 
       if (process.env.DEV) {
+        window.main = this;
         window.game = game;
       }
       return game;

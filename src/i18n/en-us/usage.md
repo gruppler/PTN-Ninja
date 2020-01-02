@@ -11,15 +11,15 @@ PTN Ninja can store multiple games to allow easy switching between them via the 
 
 You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 
-- To create a new game, **click** the "+" button in the main menu to open the New Game dialog.
-- To load an existing game, **click** the "+" button in the main menu, then select the Load Game tab.
+- To create a new game, **click** the **+** button in the main menu to open the New Game dialog.
+- To load an existing game, **click** the **+** button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
 
 ### Playback
 
-- Navigate the game using the **Play Controls** or **arrow keys**.
-- **Right-click** the Back or Forward button to move by a **half-step** or hold **shift** with the **arrow keys**.
+- Navigate the game using the **Play Controls** or <kbd>arrow keys</kbd>.
+- **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
 - **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
 
 ### Place a Stone
@@ -39,16 +39,16 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 Branches
 ---
 
-PTN Ninja records multiple lines of play, called "branches." Branches are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
+PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
-- Click the Branch menu in the bottom toolbar, or press **B**, to see the contextual branch menu.
-- Use the **vertical arrow keys** or **0-9** to navigate between branches.
+- Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the contextual branch menu.
+- Use <kbd>▲/▼</kbd> **or** <kbd>0-9</kbd> to navigate between branches.
 - **Right-click** a branch title to **rename** or **delete** it.
 
 PTN
 ---
 
-The PTN is hidden by default. To show it, you can click the leftmost button in the header toolbar.
+[PTN](https://www.reddit.com/r/Tak/wiki/portable_tak_notation) is the notation that describes the moves of the game. The full PTN is hidden by default. To show it, you can click the leftmost button in the header toolbar.
 
 - **Click** an unselected ply to navigate to it.
 - **Click** a selected ply to do or undo it.

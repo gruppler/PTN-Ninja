@@ -710,14 +710,19 @@ export default {
       this.save();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
-        { color: this.game.firstPlayer, type: "F" }
+        { color: this.game ? this.game.firstPlayer : 1, type: "F" }
       ]);
       this.$store.dispatch("SET_UI", [
         "firstMoveNumber",
-        this.game.firstMoveNumber
+        this.game ? this.game.firstMoveNumber : 1
       ]);
-      this.$store.dispatch("SET_UI", ["editingTPS", this.game.state.tps]);
-      this.$store.dispatch("SET_UI", ["isEditingTPS", true]);
+      this.$store.dispatch("SET_UI", [
+        "editingTPS",
+        this.game ? this.game.state.tps : ""
+      ]);
+      this.$nextTick(() =>
+        this.$store.dispatch("SET_UI", ["isEditingTPS", true])
+      );
     },
     fillTPS() {
       this.tags = { ...this.tags, ...sample(this.tags) };
