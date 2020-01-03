@@ -571,6 +571,7 @@ export default {
     isGamesTableShowing() {
       return (
         this.dialogAddGame &&
+        this.$refs.addGame &&
         this.$refs.addGame.tab === "load" &&
         this.$refs.addGame.showOnline
       );
