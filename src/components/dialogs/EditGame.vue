@@ -4,6 +4,7 @@
     @input="$emit('input', $event)"
     no-backdrop-dismiss
     :min-height="showAll ? 750 : 495"
+    v-bind="$attrs"
   >
     <template v-slot:header>
       <DialogHeader>{{ $t("Edit Game") }}</DialogHeader>

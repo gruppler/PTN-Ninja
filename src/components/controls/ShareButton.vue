@@ -13,7 +13,7 @@
         </template>
       </q-list>
     </q-menu>
-    <QRCode v-model="showQR" :text="qrText" />
+    <QRCode v-model="qrDialog" :text="qrText" no-route-dismiss />
   </q-btn>
 </template>
 
@@ -23,12 +23,12 @@ import QRCode from "../dialogs/QRCode";
 export default {
   name: "ShareButton",
   components: { QRCode },
-  props: ["game"],
+  props: ["game", "showQR"],
   data() {
     return {
       bottomSheet: false,
-      showQR: false,
-      qrText: ""
+      qrText: "",
+      qrDialog: false
     };
   },
   computed: {
@@ -136,7 +136,7 @@ export default {
         origin: true,
         state: true
       });
-      this.showQR = true;
+      this.qrDialog = true;
     },
     share() {
       if (this.bottomSheet) {
@@ -153,6 +153,14 @@ export default {
           .onOk(({ action }) => action())
           .onDismiss(() => (this.bottomSheet = false));
       }
+    }
+  },
+  watch: {
+    qrDialog(isVisible) {
+      this.$emit("update:showQR", isVisible);
+    },
+    showQR(isVisible) {
+      this.qrDialog = isVisible;
     }
   }
 };

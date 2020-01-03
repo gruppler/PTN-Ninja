@@ -3,6 +3,7 @@
     :value="value"
     @input="$emit('input', $event)"
     content-class="non-selectable"
+    v-bind="$attrs"
   >
     <q-card
       :style="{ width: (showOnline ? 700 : 560) + 'px' }"

@@ -57,7 +57,41 @@ const routes = [
       }
 
       return { ptn, name, state };
-    }
+    },
+    children: [
+      {
+        name: "help",
+        path: "/help"
+      },
+      {
+        name: "add",
+        path: "/add"
+      },
+      {
+        name: "preferences",
+        path: "/preferences"
+      },
+      {
+        name: "meta",
+        path: "/meta"
+      },
+      {
+        name: "edit",
+        path: "/edit"
+      },
+      {
+        name: "embed",
+        path: "/embed"
+      },
+      {
+        name: "online",
+        path: "/online"
+      },
+      {
+        name: "qr",
+        path: "/qr"
+      }
+    ]
   }
 ];
 

@@ -4,6 +4,7 @@
     @input="$emit('input', $event)"
     no-backdrop-dismiss
     content-class="ptn-editor-dialog"
+    v-bind="$attrs"
   >
     <template v-slot:header>
       <DialogHeader>{{ $t("Edit PTN") }}</DialogHeader>

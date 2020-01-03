@@ -11,7 +11,7 @@
       </q-btn>
 
       <q-btn
-        @click="edit = game.isLocal"
+        @click="editDialog = game.isLocal"
         icon="edit"
         :title="$t('Edit')"
         :disabled="!game.isLocal"
@@ -52,7 +52,7 @@
       <slot />
     </q-btn-group>
 
-    <EditPTN v-model="edit" :game="game" />
+    <EditPTN v-model="editDialog" :game="game" no-route-dismiss />
   </q-toolbar>
 </template>
 
@@ -62,10 +62,10 @@ import EditPTN from "../dialogs/EditPTN";
 export default {
   name: "PTN-Tools",
   components: { EditPTN },
-  props: ["game"],
+  props: ["game", "showEditor"],
   data() {
     return {
-      edit: false
+      editDialog: false
     };
   },
   computed: {
@@ -76,6 +76,14 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
+    }
+  },
+  watch: {
+    editDialog(isVisible) {
+      this.$emit("update:showEditor", isVisible);
+    },
+    showEditor(isVisible) {
+      this.editDialog = isVisible;
     }
   }
 };
