@@ -48,12 +48,20 @@ const routes = [
     },
     children: [
       {
+        name: "help",
+        path: "/help"
+      },
+      {
         name: "add",
         path: "/add"
       },
       {
-        name: "settings",
-        path: "/settings"
+        name: "preferences",
+        path: "/preferences"
+      },
+      {
+        name: "meta",
+        path: "/meta"
       },
       {
         name: "edit",
@@ -62,6 +70,10 @@ const routes = [
       {
         name: "embed",
         path: "/embed"
+      },
+      {
+        name: "qr",
+        path: "/qr"
       }
     ]
   }
