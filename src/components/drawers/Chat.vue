@@ -47,6 +47,7 @@
     <div>
       <q-input
         ref="input"
+        v-if="player"
         @keydown.shift.enter.prevent="send"
         @keydown.esc="$refs.input.blur()"
         debounce="50"

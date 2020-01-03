@@ -70,6 +70,7 @@
               </q-item>
             </q-list>
           </div>
+
           <div v-else>
             <q-list>
               <q-item v-if="game && game.config.id">

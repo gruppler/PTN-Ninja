@@ -188,7 +188,7 @@ export default {
           name: "players",
           label: this.$t("Players"),
           icons: [this.playerIcon(1), this.playerIcon(2)],
-          align: "center"
+          align: "left"
         },
         {
           name: "size",

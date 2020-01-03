@@ -18,7 +18,7 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 
 ### Playback
 
-- Navigate the game using the **Play Controls** or <kbd>arrow keys</kbd>.
+- Navigate the game using the **Play Controls** or <kbd>◀/▶</kbd>.
 - **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
 - **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
 
