@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)">
+  <q-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <qriously
       v-if="text"
       class="qr-canvas"

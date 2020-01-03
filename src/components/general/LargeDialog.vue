@@ -13,7 +13,7 @@
       :style="{ height }"
       container
     >
-      <q-header class="bg-secondary" elevated>
+      <q-header class="bg-secondary" :reveal="maximized" elevated>
         <slot name="header" />
       </q-header>
 

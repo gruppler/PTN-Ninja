@@ -1,5 +1,5 @@
 <template>
-  <LargeDialog :value="value" @input="$emit('input', $event)">
+  <LargeDialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs v-model="section" active-color="accent" indicator-color="accent">
         <q-tab name="about" icon="info" :label="$t('About')" />

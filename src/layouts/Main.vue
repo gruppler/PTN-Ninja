@@ -89,11 +89,12 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools ref="tools" :game="game">
+        <PTN-Tools ref="tools" :game="game" :showEditor.sync="dialogEditPTN">
           <ShareButton
             ref="shareButton"
             :title="$t('Share')"
             :game="game"
+            :showQR.sync="dialogQR"
             @embed="dialogEmbed = true"
           />
         </PTN-Tools>
@@ -212,11 +213,11 @@
       </q-toolbar>
     </q-footer>
 
-    <Help ref="help" v-model="dialogHelp" />
-    <AddGame ref="addGame" v-model="dialogAddGame" />
-    <EditGame v-model="dialogEditGame" :game="game" />
-    <UISettings v-model="dialogUISettings" />
-    <EmbedConfig v-model="dialogEmbed" :game="game" />
+    <Help ref="help" v-model="dialogHelp" no-route-dismiss />
+    <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
+    <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
+    <UISettings v-model="dialogUISettings" no-route-dismiss />
+    <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -294,15 +295,129 @@ export default {
       Platform,
       game: this.getGame(),
       errors: [],
-      hotkeys: HOTKEYS,
-      dialogHelp: false,
-      dialogAddGame: false,
-      dialogUISettings: false,
-      dialogEditGame: false,
-      dialogEmbed: false
+      hotkeys: HOTKEYS
     };
   },
   computed: {
+    dialogHelp: {
+      get() {
+        return this.$route.name === "help";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "help") {
+            this.$router.push({ name: "help" });
+          }
+        } else {
+          if (this.$route.name == "help") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogAddGame: {
+      get() {
+        return this.$route.name === "add";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "add") {
+            this.$router.push({ name: "add" });
+          }
+        } else {
+          if (this.$route.name == "add") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogUISettings: {
+      get() {
+        return this.$route.name === "preferences";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "preferences") {
+            this.$router.push({ name: "preferences" });
+          }
+        } else {
+          if (this.$route.name == "preferences") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogEditGame: {
+      get() {
+        return this.$route.name === "meta";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "meta") {
+            this.$router.push({ name: "meta" });
+          }
+        } else {
+          if (this.$route.name == "meta") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogEditPTN: {
+      get() {
+        return this.$route.name === "edit";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "edit") {
+            this.$router.push({ name: "edit" });
+          }
+        } else {
+          if (this.$route.name == "edit") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogEmbed: {
+      get() {
+        return this.$route.name === "embed";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "embed") {
+            this.$router.push({ name: "embed" });
+          }
+        } else {
+          if (this.$route.name == "embed") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
+    dialogQR: {
+      get() {
+        return this.$route.name === "qr";
+      },
+      set(value) {
+        if (value) {
+          if (this.$route.name !== "qr") {
+            this.$router.push({ name: "qr" });
+          }
+        } else {
+          if (this.$route.name == "qr") {
+            this.$router.go(-1);
+            this.$router.replace({ name: "local" });
+          }
+        }
+      }
+    },
     left: {
       get() {
         return this.$store.state.showPTN;
@@ -519,7 +634,7 @@ export default {
           this.dialogEditGame = true;
           break;
         case "editPTN":
-          this.$refs.tools.edit = true;
+          this.dialogEditPTN = true;
           break;
         case "embedGame":
           this.dialogEmbed = true;
@@ -574,8 +689,8 @@ export default {
           this.dialogUISettings = !this.dialogUISettings;
           break;
         case "qrCode":
-          if (this.$refs.shareButton.showQR) {
-            this.$refs.shareButton.showQR = false;
+          if (this.dialogQR) {
+            this.dialogQR = false;
           } else {
             this.$refs.shareButton.qrCode();
           }

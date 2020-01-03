@@ -10,7 +10,11 @@
         <q-icon name="call_split" class="rotate-180" />
       </q-btn>
 
-      <q-btn @click="edit = true" icon="edit" :title="$t('Edit')" />
+      <q-btn
+        @click="editDialog = game.isLocal"
+        icon="edit"
+        :title="$t('Edit')"
+      />
 
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="flip" class="rotate-270" />
@@ -43,7 +47,7 @@
       <slot />
     </q-btn-group>
 
-    <EditPTN v-model="edit" :game="game" />
+    <EditPTN v-model="editDialog" :game="game" no-route-dismiss />
   </q-toolbar>
 </template>
 
@@ -53,10 +57,10 @@ import EditPTN from "../dialogs/EditPTN";
 export default {
   name: "PTN-Tools",
   components: { EditPTN },
-  props: ["game"],
+  props: ["game", "showEditor"],
   data() {
     return {
-      edit: false
+      editDialog: false
     };
   },
   computed: {
@@ -67,6 +71,14 @@ export default {
       set(value) {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
       }
+    }
+  },
+  watch: {
+    editDialog(isVisible) {
+      this.$emit("update:showEditor", isVisible);
+    },
+    showEditor(isVisible) {
+      this.editDialog = isVisible;
     }
   }
 };

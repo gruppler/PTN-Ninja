@@ -245,15 +245,15 @@ export default {
     miscShortkey({ srcKey }) {
       switch (srcKey) {
         case "editPTN":
-          this.$refs.tools.edit = true;
+          this.$refs.tools.editDialog = true;
           break;
         case "focusText":
           this.right = true;
           this.$refs.notes.$refs.input.focus();
           break;
         case "qrCode":
-          if (this.$refs.shareButton.showQR) {
-            this.$refs.shareButton.showQR = false;
+          if (this.$refs.shareButton.qrDialog) {
+            this.$refs.shareButton.qrDialog = false;
           } else {
             this.$refs.shareButton.qrCode();
           }
