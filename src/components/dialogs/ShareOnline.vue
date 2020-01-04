@@ -36,13 +36,12 @@
                 <q-item-section>
                   <q-btn-toggle
                     v-model="player"
+                    class="highlight"
                     :toggle-color="playerBGColor"
                     :toggle-text-color="playerTextColor"
                     :options="players"
-                    rounded
                     spread
                     dense
-                    push
                   />
                 </q-item-section>
               </q-item>
