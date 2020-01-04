@@ -9,12 +9,11 @@
       filled
     >
       <template v-slot:append>
-        <q-btn
+        <q-icon
           v-show="name !== generatedName"
           @click="name = generatedName"
-          icon="refresh"
-          dense
-          flat
+          name="refresh"
+          class="cursor-pointer"
         />
       </template>
     </q-input>
@@ -63,12 +62,11 @@
           <q-icon @click.right.prevent="fillTPS" name="apps" />
         </template>
         <template v-slot:append>
-          <q-btn
+          <q-icon
             v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
             @click="editTPS"
-            icon="edit"
-            dense
-            flat
+            name="edit"
+            class="cursor-pointer"
             v-close-popup
           />
         </template>
