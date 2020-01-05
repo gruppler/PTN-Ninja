@@ -61,7 +61,7 @@ const routes = [
     children: [
       {
         name: "help",
-        path: "/help"
+        path: "/help/:section?"
       },
       {
         name: "add",

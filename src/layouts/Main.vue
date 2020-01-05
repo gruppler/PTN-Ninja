@@ -721,16 +721,16 @@ export default {
           break;
         case "help":
           if (!this.dialogHelp || this.$refs.help.section !== "usage") {
-            this.$refs.help.section = "usage";
             this.dialogHelp = true;
+            this.$refs.help.section = "usage";
           } else {
             this.dialogHelp = false;
           }
           break;
         case "hotkeys":
           if (!this.dialogHelp || this.$refs.help.section !== "hotkeys") {
-            this.$refs.help.section = "hotkeys";
             this.dialogHelp = true;
+            this.$refs.help.section = "hotkeys";
           } else {
             this.dialogHelp = false;
           }
