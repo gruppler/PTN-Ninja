@@ -275,7 +275,18 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { isEqual } from "lodash";
+import { isEqual, zipObject } from "lodash";
+
+const HISTORY_DIALOGS = {
+  dialogHelp: "help",
+  dialogAddGame: "add",
+  dialogUISettings: "preferences",
+  dialogEditGame: "meta",
+  dialogEditPTN: "edit",
+  dialogEmbed: "embed",
+  dialogOnline: "online",
+  dialogQR: "qr"
+};
 
 export default {
   components: {
@@ -315,142 +326,26 @@ export default {
     };
   },
   computed: {
-    dialogHelp: {
-      get() {
-        return this.$route.name === "help";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "help") {
-            this.$router.push({ name: "help" });
-          }
-        } else {
-          if (this.$route.name == "help") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogAddGame: {
-      get() {
-        return this.$route.name === "add";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "add") {
-            this.$router.push({ name: "add" });
-          }
-        } else {
-          if (this.$route.name == "add") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
+    ...zipObject(
+      Object.keys(HISTORY_DIALOGS),
+      Object.values(HISTORY_DIALOGS).map(key => ({
+        get() {
+          return this.$route.name === key;
+        },
+        set(value) {
+          if (value) {
+            if (this.$route.name !== key) {
+              this.$router.push({ name: key });
+            }
+          } else {
+            if (this.$route.name === key) {
+              this.$router.go(-1);
+              this.$router.replace({ name: "local" });
+            }
           }
         }
-      }
-    },
-    dialogUISettings: {
-      get() {
-        return this.$route.name === "preferences";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "preferences") {
-            this.$router.push({ name: "preferences" });
-          }
-        } else {
-          if (this.$route.name == "preferences") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEditGame: {
-      get() {
-        return this.$route.name === "meta";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "meta") {
-            this.$router.push({ name: "meta" });
-          }
-        } else {
-          if (this.$route.name == "meta") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEditPTN: {
-      get() {
-        return this.$route.name === "edit";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          }
-        } else {
-          if (this.$route.name == "edit") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEmbed: {
-      get() {
-        return this.$route.name === "embed";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "embed") {
-            this.$router.push({ name: "embed" });
-          }
-        } else {
-          if (this.$route.name == "embed") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogOnline: {
-      get() {
-        return this.$route.name === "online";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "online") {
-            this.$router.push({ name: "online" });
-          }
-        } else {
-          if (this.$route.name == "online") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogQR: {
-      get() {
-        return this.$route.name === "qr";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
-          }
-        } else {
-          if (this.$route.name == "qr") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
+      }))
+    ),
     left: {
       get() {
         return this.$store.state.showPTN;
