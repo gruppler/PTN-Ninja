@@ -737,8 +737,8 @@ export default {
           break;
         case "loadGame":
           if (!this.dialogAddGame || this.$refs.addGame.tab !== "load") {
-            this.$refs.addGame.tab = "load";
             this.dialogAddGame = true;
+            this.$refs.addGame.tab = "load";
           } else {
             this.dialogAddGame = false;
           }
@@ -747,15 +747,15 @@ export default {
           if (this.isGamesTableShowing) {
             this.$refs.addGame.showOnline = false;
           } else {
+            this.dialogAddGame = true;
             this.$refs.addGame.tab = "load";
             this.$refs.addGame.showOnline = true;
-            this.dialogAddGame = true;
           }
           break;
         case "newGame":
           if (!this.dialogAddGame || this.$refs.addGame.tab !== "new") {
-            this.$refs.addGame.tab = "new";
             this.dialogAddGame = true;
+            this.$refs.addGame.tab = "new";
           } else {
             this.dialogAddGame = false;
           }

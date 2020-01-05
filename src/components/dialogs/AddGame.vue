@@ -102,7 +102,6 @@ export default {
   props: ["value"],
   data() {
     return {
-      tab: "new",
       tags: {
         player1: this.$store.state.player1,
         player2: this.$store.state.player2,
@@ -110,11 +109,26 @@ export default {
         site: this.$t("site_name")
       },
       selectedGames: [],
-      showAll: false,
-      showOnline: false
+      showAll: false
     };
   },
   computed: {
+    tab: {
+      get() {
+        return this.$route.params.tab || "new";
+      },
+      set(tab) {
+        this.$router.replace({ params: { tab } });
+      }
+    },
+    showOnline: {
+      get() {
+        return !!this.$route.params.online;
+      },
+      set(online) {
+        this.$router.replace({ params: { online: online ? "online" : null } });
+      }
+    },
     size: {
       get() {
         return this.$store.state.size;
