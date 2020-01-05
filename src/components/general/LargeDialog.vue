@@ -37,7 +37,9 @@ export default {
   computed: {
     maximized() {
       return (
-        this.$q.screen.lt.sm || this.$q.screen.height <= this.$q.screen.sizes.sm
+        this.$q.screen.lt.sm ||
+        (this.$q.screen.width <= this.$q.screen.sizes.md &&
+          this.$q.screen.height <= this.$q.screen.sizes.sm)
       );
     },
     height() {
