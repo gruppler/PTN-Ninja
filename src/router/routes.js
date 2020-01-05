@@ -65,7 +65,7 @@ const routes = [
       },
       {
         name: "add",
-        path: "/add"
+        path: "/add/:fullscreen?"
       },
       {
         name: "preferences",

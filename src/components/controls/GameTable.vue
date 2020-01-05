@@ -154,7 +154,6 @@ export default {
   data() {
     return {
       filter: "",
-      fullscreen: false,
       loading: false,
       pagination: {
         page: 1,
@@ -212,6 +211,23 @@ export default {
     };
   },
   computed: {
+    fullscreen: {
+      get() {
+        return !!this.$route.params.fullscreen;
+      },
+      set(value) {
+        if (value) {
+          if (!this.$route.params.fullscreen) {
+            this.$router.push({ params: { fullscreen: "online" } });
+          }
+        } else {
+          if (this.$route.params.fullscreen) {
+            this.$router.go(-1);
+            this.$router.replace({ params: { fullscreen: null } });
+          }
+        }
+      }
+    },
     isMaxed() {
       return this.selected.length + this.localGames.length >= this.maxSelected;
     },
