@@ -23,7 +23,7 @@
         </QToolbarTitle>
         <q-btn
           :icon="
-            textTab == 'notes'
+            textTab === 'notes'
               ? notifyNotes
                 ? 'speaker_notes'
                 : 'speaker_notes_off'
@@ -226,6 +226,7 @@
       no-route-dismiss
     />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
+    <LogIn v-model="dialogLogIn" no-route-dismiss />
     <ShareOnline v-model="dialogOnline" :game="game" no-route-dismiss />
     <JoinGame v-model="dialogJoinGame" :game="game" />
 
@@ -268,6 +269,7 @@ import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
+import LogIn from "../components/dialogs/LogIn";
 import ShareOnline from "../components/dialogs/ShareOnline";
 import JoinGame from "../components/dialogs/JoinGame";
 
@@ -284,6 +286,7 @@ const HISTORY_DIALOGS = {
   dialogEditGame: "meta",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
+  dialogLogIn: "login",
   dialogOnline: "online",
   dialogQR: "qr"
 };
@@ -313,6 +316,7 @@ export default {
     UISettings,
     EmbedConfig,
     ShareOnline,
+    LogIn,
     JoinGame
   },
   props: ["ptn", "state", "name", "gameID", "playerKey"],
@@ -466,9 +470,8 @@ export default {
     isGamesTableShowing() {
       return (
         this.dialogAddGame &&
-        this.$refs.addGame &&
-        this.$refs.addGame.tab === "load" &&
-        this.$refs.addGame.showOnline
+        this.$route.params.tab === "load" &&
+        this.$route.params.online
       );
     },
     games() {
@@ -631,20 +634,33 @@ export default {
           }
           break;
         case "loadGame":
-          if (!this.dialogAddGame || this.$refs.addGame.tab !== "load") {
-            this.dialogAddGame = true;
-            this.$refs.addGame.tab = "load";
+          if (!this.dialogAddGame) {
+            this.$router.push({ name: "add", params: { tab: "load" } });
+          } else if (this.$route.params.tab !== "load") {
+            this.$router.replace({ name: "add", params: { tab: "load" } });
           } else {
             this.dialogAddGame = false;
           }
           break;
         case "loadOnlineGame":
-          if (this.isGamesTableShowing) {
-            this.$refs.addGame.showOnline = false;
+          if (!this.dialogAddGame) {
+            this.$router.push({
+              name: "add",
+              params: { tab: "load", online: "online" }
+            });
+          } else if (
+            this.$route.params.tab !== "load" ||
+            !this.$route.params.online
+          ) {
+            this.$router.replace({
+              name: "add",
+              params: { tab: "load", online: "online" }
+            });
           } else {
-            this.dialogAddGame = true;
-            this.$refs.addGame.tab = "load";
-            this.$refs.addGame.showOnline = true;
+            this.$router.replace({
+              name: "add",
+              params: { tab: "load", online: null }
+            });
           }
           break;
         case "newGame":
@@ -736,7 +752,6 @@ export default {
       this.$store.unregisterModule("online");
     }
     this.$store.registerModule("online", onlineStore);
-    this.$store.dispatch("online/LISTEN_GAMES");
 
     // Redirect hash URLs
     if (!process.env.DEV && location.hash.length) {
@@ -748,14 +763,17 @@ export default {
   },
   created() {
     this.$q.dark.set(true);
+    this.$store.dispatch("online/INIT");
 
-    if (!this.games.length && !(this.gameID || this.playerKey)) {
-      this.$store.dispatch("ADD_GAME", {
-        ptn: this.game.text(),
-        name: this.game.name,
-        state: this.game.minState,
-        config: this.game.config
-      });
+    if (!this.gameID && !this.playerKey) {
+      if (!this.games.length) {
+        this.$store.dispatch("ADD_GAME", {
+          ptn: this.game.text(),
+          name: this.game.name,
+          state: this.game.minState,
+          config: this.game.config
+        });
+      }
     }
 
     // Listen for dropped files
@@ -770,7 +788,6 @@ export default {
     }
   },
   beforeDestroy() {
-    this.$store.commit("online/UNLISTEN_GAMES");
     window.removeEventListener("drop", this.openFiles);
     window.removeEventListener("dragover", this.nop);
     window.removeEventListener("dragleave", this.nop);

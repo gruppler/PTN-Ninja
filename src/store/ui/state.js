@@ -23,7 +23,6 @@ let defaults = {
   player2: "",
   player: 1,
   playerName: "",
-  privateGame: true,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,

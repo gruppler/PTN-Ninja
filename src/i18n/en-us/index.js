@@ -39,6 +39,7 @@ export default {
   Edit: "Edit",
   "Edit Game": "Edit Game",
   "Edit PTN": "Edit PTN",
+  "Email Address": "Email Address",
   Embed: "Embed",
   End: "End",
   Event: "Event",
@@ -68,6 +69,8 @@ export default {
   "Load Online Game": "Load Online Game",
   Loading: "Loading...",
   Local: "Local",
+  "Log In": "Log In",
+  "Log Out": "Log Out",
   Message: "Message",
   More: "More",
   Move: "Move",
@@ -81,6 +84,7 @@ export default {
   Notes: "Notes",
   Online: "Online",
   OK: "OK",
+  Password: "Password",
   "Piece Shadows": "Piece Shadows",
   Play: "Play",
   "Play/Pause": "Play/Pause",
@@ -105,9 +109,11 @@ export default {
   Rating1: "Rating 1",
   Rating2: "Rating 2",
   Redo: "Redo",
+  Register: "Register",
   Rename: "Rename",
   Remote: "Remote",
   Reset: "Reset",
+  "Reset Password": "Reset Password",
   Result: "Result",
   "Road Connections": "Road Connections",
   Role: "Role",
@@ -156,9 +162,15 @@ export default {
 
   confirm: {
     closeGame: 'Close the game "{game}"?',
+    logInTitle: "Are you sure you want to proceed?",
+    logInMessage:
+      "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
+    logInOK: "Proceed and Abandon Games",
     resetEmbed:
       "Are you sure you want to reset your embed settings to default?",
-    resetForm: "Are you sure you want to reset the form?"
+    resetForm: "Are you sure you want to reset the form?",
+    resetPassword: "Are you sure you want to reset the password for {email}?",
+    resetPasswordSent: "Reset password email sent."
   },
 
   count: {
@@ -184,6 +196,7 @@ export default {
     "Invalid line number": "Invalid line number",
     "Invalid player1": "Invalid player 1",
     "Invalid player2": "Invalid player 2",
+    "Invalid player name": "Invalid player name",
     "Invalid points": "Invalid points",
     "Invalid PTN format": "Invalid PTN format",
     "Invalid rating1": "Invalid rating 1",
@@ -196,10 +209,16 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
-    "Unrecognized tag": "Unrecognized tag"
+    "Player exists": "That name is already taken",
+    "Unrecognized tag": "Unrecognized tag",
+    UnvalidatedEmail: "Please validate your email address.",
+    "auth/user-not-found": "That email address is not registered to a user.",
+    "auth/wrong-password": "Incorrect password"
   },
 
   hints: {
+    playerNamePrivate: "Whatever you want to call yourself",
+    playerNamePublic: "Your unique and permanent name",
     public: "Share this with your opponent and spectators",
     private: "Share this with your other devices",
     privateGame: "This game will not be listed",

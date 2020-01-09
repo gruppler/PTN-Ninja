@@ -5,7 +5,7 @@ import ui from "./ui";
 
 Vue.use(Vuex);
 
-export default function(/* { ssrContext } */) {
+export default function() {
   const Store = new Vuex.Store({
     ...ui,
 

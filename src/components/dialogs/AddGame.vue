@@ -5,7 +5,7 @@
     content-class="non-selectable"
     v-bind="$attrs"
   >
-    <q-card :style="{ width: '560px' }" class="bg-secondary">
+    <q-card style="width: 560px" class="bg-secondary">
       <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
@@ -30,7 +30,7 @@
               class="q-pa-md"
               :values="tags"
               :show-all="showAll"
-              @save="createGame"
+              @submit="createGame"
             />
           </q-card-section>
         </q-tab-panel>
@@ -178,13 +178,14 @@ export default {
     },
     ok() {
       if (this.tab === "new") {
-        this.$refs.gameInfo.save();
+        this.$refs.gameInfo.submit();
       } else {
         if (this.selectedGames.length) {
           // Load online game(s)
           this.selectedGames.forEach(game => {
             this.$store.dispatch("online/LOAD_GAME", game.config);
           });
+          this.selectedGames = [];
         }
         this.close();
       }

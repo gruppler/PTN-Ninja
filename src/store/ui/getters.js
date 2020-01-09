@@ -60,7 +60,7 @@ export const playerIcon = () => player => {
     case "spectator":
       return "supervised_user_circle";
     case "random":
-      return "casino";
+      return "help";
     default:
       return "";
   }

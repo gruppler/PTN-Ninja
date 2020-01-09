@@ -1,13 +1,20 @@
-export const ADD_ONLINE_GAME = (state, game) => {
-  state.onlineGames.unshift(game);
-};
+import { isEmpty, pick } from "lodash";
 
-export const UPDATE_ONLINE_GAME = (state, { game, index }) => {
-  state.onlineGames.splice(index, 1, game);
-};
-
-export const REMOVE_ONLINE_GAME = (state, index) => {
-  state.onlineGames.splice(index, 1);
+export const SET_USER = (state, user) => {
+  if (!user || isEmpty(user)) {
+    state.user = null;
+    return;
+  }
+  state.user = pick(user, [
+    "uid",
+    "email",
+    "emailVerified",
+    "displayName",
+    "isAnonymous",
+    "publicGames",
+    "privateGames"
+  ]);
+  state.user.games = state.user.privateGames.concat(state.user.publicGames);
 };
 
 export const LOAD_GAMES = (state, games) => {

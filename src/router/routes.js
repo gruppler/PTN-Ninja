@@ -84,6 +84,10 @@ const routes = [
         path: "/embed"
       },
       {
+        name: "login",
+        path: "/login/:tab?"
+      },
+      {
         name: "online",
         path: "/online"
       },

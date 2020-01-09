@@ -44,8 +44,9 @@
     </template>
 
     <template v-slot:bottom-left>
-      <div class="negative" v-show="isMaxed"></div>
-      {{ $t("error.OnlineGamesLimit") }}
+      <div v-show="error" class="negative">
+        {{ error }}
+      </div>
     </template>
 
     <template v-slot:header-cell="props">
@@ -142,7 +143,7 @@ import FullscreenToggle from "../controls/FullscreenToggle.vue";
 
 import Result from "../PTN/Result";
 
-import { compact, reject, without } from "lodash";
+import { compact, differenceBy, without } from "lodash";
 
 const MAX_SELECTED = 3;
 const MAX_ONLINE = 5;
@@ -153,6 +154,7 @@ export default {
   props: ["value", "selection-mode"],
   data() {
     return {
+      error: "",
       filter: "",
       loading: false,
       pagination: {
@@ -211,6 +213,9 @@ export default {
     };
   },
   computed: {
+    user() {
+      return this.$store.state.online.user;
+    },
     fullscreen: {
       get() {
         return !!this.$route.params.fullscreen;
@@ -218,7 +223,7 @@ export default {
       set(value) {
         if (value) {
           if (!this.$route.params.fullscreen) {
-            this.$router.push({ params: { fullscreen: "online" } });
+            this.$router.push({ params: { fullscreen: "fullscreen" } });
           }
         } else {
           if (this.$route.params.fullscreen) {
@@ -228,19 +233,13 @@ export default {
         }
       }
     },
-    isMaxed() {
-      return this.selected.length + this.localGames.length >= this.maxSelected;
-    },
     maxSelected() {
       return this.selectionMode === "single"
         ? 1
         : Math.min(
             MAX_SELECTED,
-            MAX_ONLINE - this.selected.length + this.localGames.length
+            MAX_ONLINE - this.selected.length + this.openGames.length
           );
-    },
-    error() {
-      return this.isMaxed ? this.$t("error.OnlineGamesLimit") : "";
     },
     selected: {
       get() {
@@ -251,23 +250,26 @@ export default {
       }
     },
     games() {
-      return this.localGames.concat(reject(this.publicGames, this.isLocal));
+      return this.playerGames.concat(
+        differenceBy(this.publicGames, this.playerGames, game => game.config.id)
+      );
     },
     publicGames() {
-      return this.$store.state.online.games;
+      return this.$store.state.online.publicGames;
     },
-    localGames() {
-      return this.$store.state.online.onlineGames.map(game => ({
-        isLocal: true,
-        isOpen: this.isOpen(game),
-        ...game
-      }));
+    playerGames() {
+      return this.user ? this.user.games : [];
     },
-    localGameIDs() {
-      return this.localGames.map(game => game.config.id);
+    openGames() {
+      return this.$store.state.games
+        .filter(game => !!game.config.id)
+        .map(game => ({
+          isOpen: true,
+          ...game
+        }));
     },
     openGameIDs() {
-      return compact(this.$store.state.games.map(game => game.config.id));
+      return compact(this.openGames.map(game => game.config.id));
     },
     visibleColumns() {
       let columns = this.columns.map(col => col.name);
@@ -286,7 +288,11 @@ export default {
   methods: {
     loadGames() {
       this.loading = true;
-      this.$store.dispatch("online/LOAD_GAMES", this.pagination);
+      this.$store
+        .dispatch("online/LOAD_GAMES", this.pagination)
+        .catch(error => {
+          this.error = error.message;
+        });
     },
     playerIcon(player) {
       return this.$store.getters.playerIcon(player);
@@ -306,6 +312,7 @@ export default {
       if (this.isOpen(game)) {
         return;
       }
+
       const index = this.selected.indexOf(game);
       if (index >= 0) {
         this.selected.splice(index, 1);
@@ -315,6 +322,12 @@ export default {
           this.selected.splice(this.maxSelected);
         }
       }
+
+      if (this.openGames.length === this.maxSelected) {
+        this.error = this.$t("error.OnlineGamesLimit");
+      } else {
+        this.error = "";
+      }
     },
     selectedText(count) {
       return count
@@ -322,9 +335,6 @@ export default {
             x: this.selected.length
           })
         : "";
-    },
-    isLocal(game) {
-      return this.localGameIDs.includes(game.config.id);
     },
     isOpen(game) {
       return this.openGameIDs.includes(game.config.id);

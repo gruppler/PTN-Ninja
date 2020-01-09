@@ -23,7 +23,7 @@
 <script>
 const SIZE = 450;
 const PADDING = 24;
-const SCREEN = SIZE * PADDING * 2;
+const SCREEN = SIZE + PADDING * 2;
 
 export default {
   name: "QRCode",

@@ -1,3 +1,5 @@
+import { LocalStorage } from "quasar";
+
 const ORIGIN = location.origin + (process.env.DEV ? "/?#/" : "/");
 
 export const url = () => (game, isPrivate = false) => {
@@ -10,4 +12,12 @@ export const url = () => (game, isPrivate = false) => {
   }
 
   return url;
+};
+
+export const playerName = state => (isPrivate = false) => {
+  let name = "";
+  if (state.user && !state.user.isAnonymous) {
+    name = state.user.displayName;
+  }
+  return isPrivate ? LocalStorage.get("playerName") || name : name;
 };

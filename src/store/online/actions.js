@@ -1,168 +1,262 @@
-import { db /* , messaging */ } from "../../boot/firebase.js";
+import { firebase, auth, db /* , messaging */ } from "../../boot/firebase.js";
 import { Loading, LocalStorage } from "quasar";
-import { omit, pick } from "lodash";
+
+import { omit } from "lodash";
 
 import Game from "../../PTN/Game";
 import { toDate, now } from "../../PTN/Tag";
 
-const LOCAL_CONFIG_KEYS = ["id", "player", "playerKey"];
-const ONLINE_GAME_PROPS = ["name", "config", "tags"];
+export const INIT = ({ commit, dispatch }) => {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      db.collection("users")
+        .doc(user.uid)
+        .get()
+        .then(userSnapshot => {
+          let userData = userSnapshot.data() || {};
+          user.publicGames = userData.publicGames || [];
+          user.privateGames = userData.privateGames || [];
+          commit("SET_USER", user);
+          dispatch("LISTEN_GAMES");
+        });
+    } else {
+      commit("UNLISTEN_GAMES");
+      dispatch("ANONYMOUS");
+    }
+  });
+};
 
-export const ADD_ONLINE_GAME = ({ commit }, game) => {
-  let games = LocalStorage.getItem("onlineGames") || [];
+export const ANONYMOUS = () => {
+  auth.signInAnonymously().catch(error => {
+    console.error(error);
+  });
+};
+
+export const CHECK_USERNAME = (context, name) => {
+  return new Promise((resolve, reject) => {
+    db.collection("names")
+      .doc(name.toLowerCase())
+      .get()
+      .then(nameSnapshot => {
+        resolve(!nameSnapshot.exists);
+      })
+      .catch(reject);
+  });
+};
+
+export const REGISTER = (context, { email, password, name }) => {
+  return new Promise((resolve, reject) => {
+    // Check name uniqueness
+    const nameDoc = db.collection("names").doc(name.toLowerCase());
+    nameDoc
+      .get()
+      .then(nameSnapshot => {
+        if (nameSnapshot.exists) {
+          reject(new Error("Player exists"));
+        } else {
+          // Create account
+          const credential = firebase.auth.EmailAuthProvider.credential(
+            email,
+            password
+          );
+          auth.currentUser
+            .linkWithCredential(credential)
+            .then(({ user }) => {
+              // Set name
+              nameDoc.set({ uid: user.uid });
+              user
+                .updateProfile({
+                  displayName: name
+                })
+                .then(() => {
+                  resolve(user);
+                });
+            })
+            .catch(reject);
+        }
+      })
+      .catch(reject);
+  });
+};
+
+export const LOG_IN = (context, { email, password }) => {
+  return new Promise((resolve, reject) => {
+    auth
+      .signInWithEmailAndPassword(email, password)
+      .then(({ user }) => {
+        resolve(user);
+      })
+      .catch(reject);
+  });
+};
+
+export const LOG_OUT = ({ dispatch }) => {
+  auth
+    .signOut()
+    .then(() => {
+      dispatch("ANONYMOUS");
+    })
+    .catch(error => {
+      console.error(error);
+    });
+};
+
+export const RESET_PASSWORD = (context, email) => {
+  return auth.sendPasswordResetEmail(email);
+};
+
+export const ADD_GAME = ({ commit }, game) => {
+  let games = LocalStorage.getItem("games") || [];
   if (game instanceof Game) {
     game = game.json;
   } else if (game.tags && game.tags.date) {
     game.tags.date = toDate(game.tags.date, game.tags.time);
   }
-  game = pick(game, ONLINE_GAME_PROPS);
-
   if (!games.find(g => g.config.id === game.config.id)) {
-    games.unshift(game);
-    LocalStorage.set("onlineGames", games);
-    commit("ADD_ONLINE_GAME", game);
+    commit("ADD_GAME", game);
   }
 };
 
-export const UPDATE_ONLINE_GAME = ({ commit }, game) => {
-  let games = LocalStorage.getItem("onlineGames") || [];
-  let index = games.findIndex(g => g.config.id === game.config.id);
-  game = pick("json" in game ? game.json : game, ONLINE_GAME_PROPS);
-
-  if (index >= 0) {
-    games[index] = game;
-    LocalStorage.set("onlineGames", games);
-    commit("UPDATE_ONLINE_GAME", { game, index });
-  }
-};
-
-export const REMOVE_ONLINE_GAME = ({ commit }, game) => {
-  let games = LocalStorage.getItem("onlineGames") || [];
-  let index = games.findIndex(g => g.config.id === game.config.id);
-
-  if (index >= 0) {
-    games.splice(index, 1);
-    LocalStorage.set("onlineGames", games);
-    commit("REMOVE_ONLINE_GAME", index);
-  }
-};
-
-export const CREATE_GAME = ({ dispatch }, { game, tags, config }) => {
-  tags = { ...tags, ...now() };
-  game.setTags(tags, false);
-  game.clearHistory();
-  dispatch("UPDATE_PTN", game.text(), { root: true });
-
-  if (game.isDefaultName) {
-    game.name = game.generateName();
-  }
-
-  let json = game.json;
-  config = Object.assign({}, json.config, config);
-  json.config = omit(config, LOCAL_CONFIG_KEYS);
-  db.collection("games")
-    .add(omit(json, "moves"))
-    .then(gameDoc => {
-      // Add game to DB
-      config.id = gameDoc.id;
-
-      // Add moves to game in DB
-      if (json.moves.length) {
-        let batch = db.batch();
-        const moves = gameDoc.collection("moves");
-        json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
-        batch.commit().catch(error => {
-          console.error("Error adding moves: ", error);
-        });
-      }
-
-      // Generate player key
-      db.collection("playerKeys")
-        .add({
-          game: config.id,
-          player: config.player
-        })
-        .then(keyDoc => {
-          config.playerKey = keyDoc.id;
-
-          // Save local config
-          dispatch("SET_CONFIG", { game, config }, { root: true });
-          dispatch("ADD_ONLINE_GAME", game);
-        })
-        .catch(error => {
-          console.error("Error joining game: ", error);
-        });
-    })
-    .catch(error => {
-      console.error("Error adding game: ", error);
-    });
-};
-
-export const JOIN_GAME = ({ dispatch }, { game, player, playerName }) => {
-  if (!player) {
-    // Spectate
-    dispatch("ADD_ONLINE_GAME", game);
-  } else {
-    // Join as player
-    let tags = { ["player" + player]: playerName, ...now() };
-    let changes = { tags };
-
+export const CREATE_GAME = (
+  { dispatch, getters, state },
+  { game, players, isPrivate, disableRoads }
+) => {
+  return new Promise((resolve, reject) => {
+    const playerName = getters.playerName(isPrivate);
+    const player = players[1] === state.user.uid ? 1 : 2;
+    let tags = {
+      player1: "",
+      player2: "",
+      rating1: "",
+      rating2: "",
+      ...now()
+    };
+    tags["player" + player] = playerName;
     game.setTags(tags, false);
     game.clearHistory();
     dispatch("UPDATE_PTN", game.text(), { root: true });
 
     if (game.isDefaultName) {
-      changes.name = game.generateName();
-      game.name = changes.name;
+      game.name = game.generateName();
+    }
+
+    let json = game.json;
+    let config = Object.assign({}, json.config, {
+      isOnline: true,
+      player1: players[1] || null,
+      player2: players[2] || null,
+      isPrivate,
+      disableRoads
+    });
+
+    db.collection("games")
+      .add(omit(json, "moves"))
+      .then(gameDoc => {
+        // Add game to DB
+        config.id = gameDoc.id;
+
+        // Add moves to game in DB
+        if (json.moves.length) {
+          let batch = db.batch();
+          const moves = gameDoc.collection("moves");
+          json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
+          batch.commit().catch(error => {
+            console.error("Error adding moves: ", error);
+          });
+        }
+
+        // Add game to user's appropriate list
+        db.collection("users")
+          .doc(state.user.uid)
+          .collection(isPrivate ? "privateGames" : "publicGames")
+          .add({
+            game: config.id,
+            player: config.player
+          })
+          .then(keyDoc => {
+            config.playerKey = keyDoc.id;
+
+            // Save local config
+            dispatch("SET_CONFIG", { game, config }, { root: true });
+            dispatch("ADD_GAME", game);
+            resolve({ game, config });
+          })
+          .catch(reject);
+      })
+      .catch(reject);
+  });
+};
+
+export const JOIN_GAME = ({ dispatch }, { game, player, playerName }) => {
+  // Join as player if still open
+  const gameDoc = db.collection("games").doc(game.config.id);
+
+  return new Promise((resolve, reject) => {
+    if (!player) {
+      resolve();
+      return;
     }
 
     Loading.show();
-    db.collection("games")
-      .doc(game.config.id)
-      .update(changes)
-      .then(() => {
-        // Generate player key
-        db.collection("playerKeys")
-          .add({
-            game: game.config.id,
-            player
+    gameDoc
+      .get()
+      .then(gamesSnapshot => {
+        // Check that the player is still open
+        let tags = gamesSnapshot.data().tags;
+        if (tags["player" + player]) {
+          Loading.hide();
+          reject(new Error("Player position already filled"));
+          return;
+        }
+
+        // Update game tags and name
+        tags = { ["player" + player]: playerName, ...now() };
+        let changes = { tags };
+
+        game.setTags(tags, false);
+        game.clearHistory();
+        dispatch("UPDATE_PTN", game.text(), { root: true });
+
+        if (game.isDefaultName) {
+          changes.name = game.generateName();
+          game.name = changes.name;
+        }
+
+        gameDoc
+          .update(changes)
+          .then(() => {
+            // Generate player key
+            gameDoc
+              .collection("playerKeys")
+              .add({
+                game: game.config.id,
+                player
+              })
+              .then(keyDoc => {
+                // Save local config
+                dispatch(
+                  "SET_CONFIG",
+                  {
+                    game,
+                    config: { ...game.config, player, playerKey: keyDoc.id }
+                  },
+                  { root: true }
+                );
+                Loading.hide();
+                resolve();
+              })
+              .catch(error => {
+                Loading.hide();
+                reject(error);
+              });
           })
-          .then(keyDoc => {
-            // Save local config
-            dispatch(
-              "SET_CONFIG",
-              {
-                game,
-                config: { ...game.config, player, playerKey: keyDoc.id }
-              },
-              { root: true }
-            );
-            dispatch("ADD_ONLINE_GAME", game);
-            Loading.hide();
-          })
-          .catch(error => {
-            console.error("Error joining game: ", error);
-            Loading.hide();
-          });
+          .catch(reject);
       })
       .catch(error => {
-        console.error("Error updating game: ", error);
         Loading.hide();
+        reject(error);
       });
-  }
-};
-
-export const UPDATE_GAME = ({ commit }, game) => {
-  let json = omit(game.json, "moves");
-  db.collection("games")
-    .doc(json.config.id)
-    .set(json)
-    .then(() => {
-      commit("UPDATE_GAME", json);
-    })
-    .catch(error => {
-      console.error(error);
-    });
+  });
 };
 
 export const LOAD_GAME = ({ dispatch }, { id, playerKey }) => {
@@ -174,7 +268,7 @@ export const LOAD_GAME = ({ dispatch }, { id, playerKey }) => {
     } else {
       delete gameJSON.config.playerKey;
     }
-    dispatch("ADD_ONLINE_GAME", gameJSON);
+    dispatch("ADD_GAME", gameJSON);
 
     gameJSON.ptn = new Game(false, gameJSON).ptn;
     dispatch("ADD_GAME", gameJSON, { root: true });
@@ -281,7 +375,7 @@ export const LOAD_GAMES = ({ commit }, pagination) => {
 
   db.collection("games")
     .orderBy("tags.date", "desc")
-    .where("config.isUnlisted", "==", false)
+    .where("config.isPrivate", "==", false)
     .get()
     .then(gamesSnapshot => {
       gamesSnapshot.forEach(gameDoc => {
@@ -295,10 +389,10 @@ export const LOAD_GAMES = ({ commit }, pagination) => {
 };
 
 export const LISTEN_GAMES = ({ dispatch, commit, state }) => {
-  if (state.onlineGames.length === 0) {
+  const games = state.user.games.slice(0, 10);
+  if (games.length === 0) {
     return;
   }
-  let games = state.onlineGames.slice(0, 10);
   let unsubscribe = db
     .collection("games")
     .where("id", "in", games.map(game => game.config.id))
@@ -316,7 +410,7 @@ export const LISTEN_GAMES = ({ dispatch, commit, state }) => {
           );
           switch (change.type) {
             case "added":
-              dispatch("ADD_ONLINE_GAME", change.doc.data());
+              dispatch("ADD_GAME", change.doc.data());
               break;
             case "modified":
               dispatch("UPDATE_ONLINE_GAME", change.doc.data());

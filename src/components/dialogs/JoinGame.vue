@@ -45,7 +45,9 @@ export default {
   props: ["value", "game"],
   data() {
     return {
-      playerName: this.$store.state.playerName,
+      playerName: this.$store.getters["online/playerName"](
+        this.game.config.isPrivate
+      ),
       validateName: value => formats.player1.test(value)
     };
   },
@@ -80,7 +82,7 @@ export default {
 
       // Remember player name
       if (this.validateName(this.playerName)) {
-        this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
+        this.$store.dispatch("online/SET_USERNAME", this.playerName);
       } else {
         return;
       }
