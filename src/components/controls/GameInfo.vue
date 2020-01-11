@@ -4,17 +4,16 @@
       v-model="name"
       name="name"
       :label="$t('Title')"
-      @keydown.enter.prevent="save"
+      @keydown.enter.prevent="submit"
       color="accent"
       filled
     >
       <template v-slot:append>
-        <q-btn
+        <q-icon
           v-show="name !== generatedName"
           @click="name = generatedName"
-          icon="refresh"
-          dense
-          flat
+          name="refresh"
+          class="cursor-pointer"
         />
       </template>
     </q-input>
@@ -50,7 +49,7 @@
         :label="$t('TPS')"
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         color="accent"
         autocomplete="off"
         autocorrect="off"
@@ -63,12 +62,11 @@
           <q-icon @click.right.prevent="fillTPS" name="apps" />
         </template>
         <template v-slot:append>
-          <q-btn
+          <q-icon
             v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
             @click="editTPS"
-            icon="edit"
-            dense
-            flat
+            name="edit"
+            class="cursor-pointer"
             v-close-popup
           />
         </template>
@@ -97,7 +95,7 @@
             :max="tags.size"
             :label="$t('Caps')"
             :rules="rules('caps')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -117,7 +115,7 @@
             max="99"
             :label="$t('Flats')"
             :rules="rules('flats')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -143,7 +141,7 @@
             :max="tags.size"
             :label="$t('Caps1')"
             :rules="rules('caps1')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -162,7 +160,7 @@
             max="99"
             :label="$t('Flats1')"
             :rules="rules('flats1')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -184,7 +182,7 @@
             :max="tags.size"
             :label="$t('Caps2')"
             :rules="rules('caps2')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -203,7 +201,7 @@
             max="99"
             :label="$t('Flats2')"
             :rules="rules('flats2')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -237,7 +235,7 @@
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -257,7 +255,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -275,7 +273,7 @@
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -295,7 +293,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            @keydown.enter.prevent="save"
+            @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
             filled
@@ -317,7 +315,7 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         color="accent"
         hide-bottom-space
         filled
@@ -376,7 +374,7 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         color="accent"
         hide-bottom-space
         filled
@@ -438,7 +436,7 @@
         name="clock"
         :label="$t('Clock')"
         :rules="rules('clock')"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         color="accent"
         autocorrect="off"
         autocapitalize="off"
@@ -461,7 +459,7 @@
         max="999"
         :label="$t('Round')"
         :rules="rules('round')"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         hide-bottom-space
         color="accent"
         filled
@@ -531,7 +529,7 @@
         type="number"
         :label="$t('Points')"
         :rules="rules('points')"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent="submit"
         color="accent"
         hide-bottom-space
         filled
@@ -548,7 +546,7 @@
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
-      @keydown.enter.prevent="save"
+      @keydown.enter.prevent="submit"
       color="accent"
       hide-bottom-space
       filled
@@ -564,7 +562,7 @@
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
-      @keydown.enter.prevent="save"
+      @keydown.enter.prevent="submit"
       color="accent"
       hide-bottom-space
       filled
@@ -672,11 +670,11 @@ export default {
     }
   },
   methods: {
-    validate() {
-      return this.$el.getElementsByClassName("q-field--error").length === 0;
+    hasErrors() {
+      return this.$el.getElementsByClassName("q-field--error").length > 0;
     },
-    save() {
-      if (!this.validate()) {
+    submit() {
+      if (this.hasErrors()) {
         return false;
       }
       this.name = (this.name || "").trim();
@@ -687,11 +685,11 @@ export default {
         this.name = this.$store.getters.uniqueName(this.name, true);
       }
 
-      this.$emit("save", { name: this.name, tags: { ...this.tags } });
+      this.$emit("submit", { name: this.name, tags: { ...this.tags } });
       this.updateTags();
     },
     editTPS() {
-      this.save();
+      this.submit();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
         { color: this.game ? this.game.firstPlayer : 1, type: "F" }
@@ -709,8 +707,10 @@ export default {
       );
     },
     fillTPS() {
-      this.tags = { ...this.tags, ...sample(this.tags) };
-      this.name = this.generatedName;
+      if (!this.game || !this.game.plies.length) {
+        this.tags = { ...this.tags, ...sample(this.tags) };
+        this.name = this.generatedName;
+      }
     },
     swapPlayers() {
       [this.tags.player1, this.tags.player2] = [

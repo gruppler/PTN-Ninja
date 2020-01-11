@@ -5,12 +5,7 @@ import ui from "./ui";
 
 Vue.use(Vuex);
 
-/*
- * If not building with SSR mode, you can
- * directly export the Store instantiation
- */
-
-export default function(/* { ssrContext } */) {
+export default function() {
   const Store = new Vuex.Store({
     ...ui,
 

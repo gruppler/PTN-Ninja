@@ -23,7 +23,7 @@
         </QToolbarTitle>
         <q-btn
           :icon="
-            textTab == 'notes'
+            textTab === 'notes'
               ? notifyNotes
                 ? 'speaker_notes'
                 : 'speaker_notes_off'
@@ -264,7 +264,17 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { isEqual } from "lodash";
+import { isEqual, zipObject } from "lodash";
+
+const HISTORY_DIALOGS = {
+  dialogHelp: "help",
+  dialogAddGame: "add",
+  dialogUISettings: "preferences",
+  dialogEditGame: "meta",
+  dialogEditPTN: "edit",
+  dialogEmbed: "embed",
+  dialogQR: "qr"
+};
 
 export default {
   components: {
@@ -301,125 +311,26 @@ export default {
     };
   },
   computed: {
-    dialogHelp: {
-      get() {
-        return this.$route.name === "help";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "help") {
-            this.$router.push({ name: "help" });
-          }
-        } else {
-          if (this.$route.name == "help") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogAddGame: {
-      get() {
-        return this.$route.name === "add";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "add") {
-            this.$router.push({ name: "add" });
-          }
-        } else {
-          if (this.$route.name == "add") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
+    ...zipObject(
+      Object.keys(HISTORY_DIALOGS),
+      Object.values(HISTORY_DIALOGS).map(key => ({
+        get() {
+          return this.$route.name === key;
+        },
+        set(value) {
+          if (value) {
+            if (this.$route.name !== key) {
+              this.$router.push({ name: key });
+            }
+          } else {
+            if (this.$route.name === key) {
+              this.$router.go(-1);
+              this.$router.replace({ name: "local" });
+            }
           }
         }
-      }
-    },
-    dialogUISettings: {
-      get() {
-        return this.$route.name === "preferences";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "preferences") {
-            this.$router.push({ name: "preferences" });
-          }
-        } else {
-          if (this.$route.name == "preferences") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEditGame: {
-      get() {
-        return this.$route.name === "meta";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "meta") {
-            this.$router.push({ name: "meta" });
-          }
-        } else {
-          if (this.$route.name == "meta") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEditPTN: {
-      get() {
-        return this.$route.name === "edit";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          }
-        } else {
-          if (this.$route.name == "edit") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogEmbed: {
-      get() {
-        return this.$route.name === "embed";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "embed") {
-            this.$router.push({ name: "embed" });
-          }
-        } else {
-          if (this.$route.name == "embed") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
-    dialogQR: {
-      get() {
-        return this.$route.name === "qr";
-      },
-      set(value) {
-        if (value) {
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
-          }
-        } else {
-          if (this.$route.name == "qr") {
-            this.$router.go(-1);
-            this.$router.replace({ name: "local" });
-          }
-        }
-      }
-    },
+      }))
+    ),
     left: {
       get() {
         return this.$store.state.showPTN;
@@ -657,32 +568,33 @@ export default {
           break;
         case "help":
           if (!this.dialogHelp || this.$refs.help.section !== "usage") {
-            this.$refs.help.section = "usage";
             this.dialogHelp = true;
+            this.$refs.help.section = "usage";
           } else {
             this.dialogHelp = false;
           }
           break;
         case "hotkeys":
           if (!this.dialogHelp || this.$refs.help.section !== "hotkeys") {
-            this.$refs.help.section = "hotkeys";
             this.dialogHelp = true;
+            this.$refs.help.section = "hotkeys";
           } else {
             this.dialogHelp = false;
           }
           break;
         case "loadGame":
-          if (!this.dialogAddGame || this.$refs.addGame.tab !== "load") {
-            this.$refs.addGame.tab = "load";
-            this.dialogAddGame = true;
+          if (!this.dialogAddGame) {
+            this.$router.push({ name: "add", params: { tab: "load" } });
+          } else if (this.$route.params.tab !== "load") {
+            this.$router.replace({ name: "add", params: { tab: "load" } });
           } else {
             this.dialogAddGame = false;
           }
           break;
         case "newGame":
           if (!this.dialogAddGame || this.$refs.addGame.tab !== "new") {
-            this.$refs.addGame.tab = "new";
             this.dialogAddGame = true;
+            this.$refs.addGame.tab = "new";
           } else {
             this.dialogAddGame = false;
           }
@@ -760,6 +672,7 @@ export default {
     }
   },
   beforeCreate() {
+    // Redirect hash URLs
     if (!process.env.DEV && location.hash.length) {
       const url = location.hash.substr(1);
       location.hash = "";

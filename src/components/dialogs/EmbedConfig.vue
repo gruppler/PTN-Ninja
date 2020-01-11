@@ -33,11 +33,10 @@
             filled
           >
             <template v-slot:append>
-              <q-btn
+              <q-icon
                 @click="name = name === game.name ? generatedName : game.name"
-                icon="refresh"
-                dense
-                flat
+                name="refresh"
+                class="cursor-pointer"
               />
             </template>
           </q-input>

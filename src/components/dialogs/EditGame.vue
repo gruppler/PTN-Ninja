@@ -11,7 +11,12 @@
     </template>
 
     <q-card-section class="scroll">
-      <GameInfo ref="gameInfo" :game="game" :show-all="showAll" @save="save" />
+      <GameInfo
+        ref="gameInfo"
+        :game="game"
+        :show-all="showAll"
+        @submit="save"
+      />
     </q-card-section>
 
     <template v-slot:footer>
@@ -23,7 +28,7 @@
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
-          @click="$refs.gameInfo.save()"
+          @click="$refs.gameInfo.submit()"
           :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
           color="accent"
           flat

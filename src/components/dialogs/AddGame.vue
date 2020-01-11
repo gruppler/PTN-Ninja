@@ -30,7 +30,7 @@
               class="q-pa-md"
               :values="tags"
               :show-all="showAll"
-              @save="createGame"
+              @submit="createGame"
             />
           </q-card-section>
         </q-tab-panel>
@@ -88,7 +88,6 @@ export default {
   props: ["value"],
   data() {
     return {
-      tab: "new",
       tags: {
         player1: this.$store.state.player1,
         player2: this.$store.state.player2,
@@ -99,6 +98,14 @@ export default {
     };
   },
   computed: {
+    tab: {
+      get() {
+        return this.$route.params.tab || "new";
+      },
+      set(tab) {
+        this.$router.replace({ params: { tab } });
+      }
+    },
     size: {
       get() {
         return this.$store.state.size;
@@ -147,7 +154,7 @@ export default {
     },
     ok() {
       if (this.tab === "new") {
-        this.$refs.gameInfo.save();
+        this.$refs.gameInfo.submit();
       } else {
         // Load online game
       }
