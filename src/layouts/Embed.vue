@@ -71,7 +71,7 @@
     <q-drawer
       v-model="left"
       side="left"
-      :breakpoint="$q.screen.sizes.sm"
+      :breakpoint="right ? $q.screen.sizes.lg : $q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -112,7 +112,7 @@
     <q-drawer
       v-model="right"
       side="right"
-      :breakpoint="$q.screen.sizes.lg"
+      :breakpoint="left ? $q.screen.sizes.lg : $q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
