@@ -1,8 +1,7 @@
+import { i18n } from "../../boot/i18n";
 import { Dialog, Notify } from "quasar";
 
 import { compressToEncodedURIComponent } from "lz-string";
-
-const ORIGIN = location.origin + (process.env.DEV ? "/?#/" : "/");
 
 export const confirm = () => ({ title, message, ok, cancel, success }) => {
   Dialog.create({
@@ -10,12 +9,12 @@ export const confirm = () => ({ title, message, ok, cancel, success }) => {
     message,
     "no-backdrop-dismiss": true,
     ok: {
-      label: ok,
+      label: ok || i18n.t("OK"),
       flat: true,
       color: "accent"
     },
     cancel: {
-      label: cancel,
+      label: cancel || i18n.t("Cancel"),
       flat: true,
       color: "accent"
     },
@@ -55,6 +54,7 @@ export const url = state => (game, options = {}) => {
     return "";
   }
 
+  const origin = location.origin + (process.env.DEV ? "/?#/" : "/");
   let url = compressToEncodedURIComponent(game.ptn);
   let params = {};
 
@@ -65,7 +65,7 @@ export const url = state => (game, options = {}) => {
   }
 
   if (options.origin) {
-    url = ORIGIN + url;
+    url = origin + url;
   }
 
   if (options.state) {

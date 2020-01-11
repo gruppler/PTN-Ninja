@@ -10,6 +10,7 @@
       @keydown.esc="$refs.select.blur"
       @keydown.delete="close($refs.select.optionIndex)"
       :display-value="game.label"
+      :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="bg-secondary"
       color="accent"
@@ -38,17 +39,48 @@
       </template>
 
       <template v-slot:before>
-        <q-badge class="text-subtitle2" :label="games.length" />
+        <div class="row">
+          <q-separator vertical spaced inset />
+          <q-btn
+            :label="games.length"
+            @click.right.prevent="select(1)"
+            class="text-subtitle2 q-pa-sm"
+            dense
+            flat
+          >
+            <q-menu auto-close square>
+              <q-list class="bg-secondary text-white">
+                <q-item clickable @click="closeAll">
+                  <q-item-section side>
+                    <q-icon name="close" />
+                  </q-item-section>
+                  <q-item-section>{{ $t("Close All") }}</q-item-section>
+                </q-item>
+                <q-item clickable @click="downloadAll">
+                  <q-item-section side>
+                    <q-icon name="save_alt" />
+                  </q-item-section>
+                  <q-item-section>{{ $t("Download All") }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </div>
       </template>
 
       <template v-slot:after>
-        <slot />
+        <div class="row">
+          <slot />
+          <q-separator vertical spaced inset />
+        </div>
       </template>
     </q-select>
   </div>
 </template>
 
 <script>
+import { Notify } from "quasar";
+
 export default {
   name: "GameSelector",
   computed: {
@@ -71,12 +103,44 @@ export default {
     },
     close(index) {
       const game = this.$store.state.games[index];
+      this.$store.dispatch("REMOVE_GAME", index);
+      Notify.create({
+        message: this.$t("Game x closed", { game: game.name }),
+        timeout: 5000,
+        color: "secondary",
+        position: "bottom",
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "accent",
+            handler: () => {
+              this.$store.dispatch("ADD_GAME", game);
+            }
+          },
+          { label: this.$t("Dismiss"), color: "accent" }
+        ]
+      });
+    },
+    closeAll() {
       this.$store.getters.confirm({
-        title: this.$t("confirm.closeGame", { game: game.name }),
-        ok: this.$t("OK"),
-        cancel: this.$t("Cancel"),
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.closeAllGames"),
         success: () => {
-          this.$store.dispatch("REMOVE_GAME", index);
+          for (let i = this.games.length - 1; i; i--) {
+            this.$store.dispatch("REMOVE_GAME", i);
+          }
+        }
+      });
+    },
+    downloadAll() {
+      this.$store.getters.confirm({
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.downloadAllGames"),
+        success: () => {
+          const games = this.$store.state.games;
+          for (let i = 0; i < games.length; i++) {
+            this.$store.dispatch("SAVE", games[i]);
+          }
         }
       });
     },

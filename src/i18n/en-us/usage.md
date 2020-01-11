@@ -7,7 +7,7 @@ To **right-click** on a touchscreen device, try **long-pressing**.
 
 ### Games
 
-PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
+PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. You can automatically close or download all games by **clicking** the game count.
 
 You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 

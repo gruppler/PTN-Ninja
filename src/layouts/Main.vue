@@ -9,7 +9,7 @@
           stretch
           flat
         />
-        <QToolbarTitle>
+        <QToolbarTitle class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-btn
               icon="edit"
@@ -62,12 +62,12 @@
               v-if="game.state.move"
               v-show="game.state.ply && $store.state.showMove"
               class="q-mb-md q-mx-md"
-              :class="{ 'lt-md': $store.state.showPTN }"
+              :class="{ 'lt-sm': $store.state.showPTN }"
               :move="game.state.move"
               :game="game"
+              separate-branch
               current-only
               standalone
-              separate-branch
             />
           </SmoothReflow>
         </div>
@@ -84,6 +84,7 @@
       id="left-drawer"
       v-model="left"
       side="left"
+      :breakpoint="$q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -133,6 +134,7 @@
       id="right-drawer"
       v-model="right"
       side="right"
+      :breakpoint="$q.screen.sizes.lg"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent

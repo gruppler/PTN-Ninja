@@ -1,5 +1,5 @@
 <template>
-  <q-layout class="non-selectable" view="lHh lpR lFr">
+  <q-layout class="non-selectable" view="lHh LpR lFr">
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -53,7 +53,7 @@
               v-if="game.state.move"
               v-show="game.state.ply && $store.state.showMove"
               class="q-mb-md q-mx-md"
-              :class="{ 'lt-md': $store.state.showPTN }"
+              :class="{ 'lt-sm': $store.state.showPTN }"
               :move="game.state.move"
               :game="game"
               separate-branch
@@ -71,6 +71,7 @@
     <q-drawer
       v-model="left"
       side="left"
+      :breakpoint="$q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -111,6 +112,7 @@
     <q-drawer
       v-model="right"
       side="right"
+      :breakpoint="$q.screen.sizes.lg"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -238,9 +240,7 @@ export default {
       );
     },
     uiShortkey({ srcKey }) {
-      if (!(srcKey in this.state)) {
-        this.$store.dispatch("TOGGLE_UI", srcKey);
-      }
+      this.$store.dispatch("TOGGLE_UI", srcKey);
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {

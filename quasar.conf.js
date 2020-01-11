@@ -7,8 +7,8 @@ module.exports = function(ctx) {
     boot: [
       "addressbar-color",
       "axios",
-      "i18n",
       "moment",
+      "i18n",
       "shortkey",
       "globalComponents",
       "qriously"

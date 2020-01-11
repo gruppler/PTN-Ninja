@@ -54,8 +54,6 @@ export default {
       this.$store.getters.confirm({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetForm"),
-        ok: this.$t("OK"),
-        cancel: this.$t("Cancel"),
         success: () => {
           this.$refs.gameInfo.init();
         }

@@ -162,6 +162,6 @@ export default {
     background-color rgba(#fff, .15)
     transition opacity $generic-hover-transition
     opacity 1
-    &.lt-md
+    &.lt-sm
       opacity 0
 </style>
