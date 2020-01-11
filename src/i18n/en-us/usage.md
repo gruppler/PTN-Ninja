@@ -42,7 +42,7 @@ Branches
 PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
 - Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the contextual branch menu.
-- Use <kbd>▲/▼</kbd> **or** <kbd>0-9</kbd> to navigate between branches.
+- Use <kbd>▲/▼</kbd> <span>or</span> <kbd>0-9</kbd> to navigate between branches.
 - **Right-click** a branch title to **rename** or **delete** it.
 
 PTN
