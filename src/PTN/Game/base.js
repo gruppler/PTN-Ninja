@@ -72,7 +72,7 @@ export const generateName = (tags = {}, game) => {
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
   const player1 = tag("player1") || GameBase.t["White"];
   const player2 = tag("player2") || GameBase.t["Black"];
-  const result = tag("result").replace(/1\/2/g, "50");
+  const result = tag("result").replace(/1\/2-1\/2/g, "TIE");
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
@@ -89,7 +89,9 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = name => {
-  return /^[^"]+ vs [^"]+ \dx\d/.test(name);
+  return /^[^"]+ vs [^"]+ \dx\d( SMASH)?( [01R]-[01R]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+    name
+  );
 };
 
 export default class GameBase {
