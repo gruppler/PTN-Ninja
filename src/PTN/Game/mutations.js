@@ -11,6 +11,7 @@ export default class GameMutations {
     if (oldBranch === newBranch) {
       return false;
     }
+
     if (!force) {
       if (!Linenum.validateBranch(newBranch, true)) {
         throw new Error("Invalid branch name");
@@ -28,7 +29,7 @@ export default class GameMutations {
       if (move.branch === oldBranch) {
         move.branch = newBranch;
       } else if (move.branch.startsWith(oldBranch + "/")) {
-        move.branch = move.branch.replace(oldBranch + "/", newBranch);
+        move.branch = move.branch.replace(oldBranch + "/", newBranch + "/");
       }
     });
 
@@ -47,7 +48,7 @@ export default class GameMutations {
     } else if (this.state.targetBranch.startsWith(oldBranch + "/")) {
       this.state.targetBranch = this.state.targetBranch.replace(
         oldBranch + "/",
-        newBranch
+        newBranch + "/"
       );
     }
 

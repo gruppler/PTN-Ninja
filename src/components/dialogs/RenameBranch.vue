@@ -60,18 +60,22 @@ export default {
     afterEdit() {
       this.$store.dispatch("SET_UI", ["editingBranch", ""]);
     },
+    getFullBranch(value = this.newBranch) {
+      return [
+        ...this.branchParts.slice(0, this.branchParts.length - 1),
+        value
+      ].join("/");
+    },
     validateBranch(value) {
       return (
         value === this.linenum.branch ||
         (value &&
           Linenum.validateBranch(value) &&
-          !Object.keys(this.game.branches).includes(value))
+          !Object.keys(this.game.branches).includes(this.getFullBranch(value)))
       );
     },
     save() {
-      let branchParts = this.branchParts.concat();
-      branchParts[branchParts.length - 1] = this.newBranch;
-      this.game.renameBranch(this.linenum.branch, branchParts.join("/"));
+      this.game.renameBranch(this.linenum.branch, this.getFullBranch());
       this.close();
     }
   },
