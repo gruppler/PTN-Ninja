@@ -75,9 +75,11 @@ export const url = state => (game, options = {}) => {
     if (options.state.targetBranch) {
       params.targetBranch = options.state.targetBranch;
     }
-    params.ply = options.state.plyIndex;
-    if (options.state.plyIsDone) {
-      params.ply += "!";
+    if (options.state.plyIndex >= 0) {
+      params.ply = options.state.plyIndex;
+      if (options.state.plyIsDone) {
+        params.ply += "!";
+      }
     }
   }
 
