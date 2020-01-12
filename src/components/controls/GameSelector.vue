@@ -116,8 +116,7 @@ export default {
             handler: () => {
               this.$store.dispatch("ADD_GAME", game);
             }
-          },
-          { label: this.$t("Dismiss"), color: "accent" }
+          }
         ]
       });
     },
