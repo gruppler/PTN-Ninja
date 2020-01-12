@@ -10,7 +10,7 @@
         }"
         round
         flat
-        :disable="!game.state.ply || !!game.state.nextPly || plyInProgress"
+        :disable="!game.state.ply || plyInProgress"
         icon="backspace"
       />
       <q-btn
@@ -184,12 +184,8 @@ export default {
   },
   methods: {
     deletePly() {
-      if (
-        this.game.state.ply &&
-        !this.game.state.nextPly &&
-        !this.plyInProgress
-      ) {
-        this.game.deletePly(this.game.state.plyID);
+      if (this.game.state.ply && !this.plyInProgress) {
+        this.game.deletePly(this.game.state.plyID, true, true);
       }
     },
     play() {

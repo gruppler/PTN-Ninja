@@ -62,11 +62,20 @@ export default {
   props: ["value"],
   data() {
     return {
-      section: "about",
       about: "",
       usage: "",
       filter: ""
     };
+  },
+  computed: {
+    section: {
+      get() {
+        return this.$route.params.section || "about";
+      },
+      set(section) {
+        this.$router.replace({ params: { section } });
+      }
+    }
   },
   created() {
     import(`../../i18n/${this.$i18n.locale}/about.md`)

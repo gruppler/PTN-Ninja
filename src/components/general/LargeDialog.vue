@@ -36,7 +36,11 @@ export default {
   props: ["value", "min-height"],
   computed: {
     maximized() {
-      return this.$q.screen.lt.sm;
+      return (
+        this.$q.screen.lt.sm ||
+        (this.$q.screen.width <= this.$q.screen.sizes.md &&
+          this.$q.screen.height <= this.$q.screen.sizes.sm)
+      );
     },
     height() {
       return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";

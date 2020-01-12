@@ -22,6 +22,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
+  "Close All": "Close All",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   Copy: "Copy",
@@ -34,7 +35,9 @@ export default {
   Date: "Date",
   Delete: "Delete",
   "Delete Ply": "Delete Ply",
+  Dismiss: "Dismiss",
   Download: "Download",
+  "Download All": "Download All",
   Edit: "Edit",
   "Edit Game": "Edit Game",
   "Edit PTN": "Edit PTN",
@@ -54,6 +57,7 @@ export default {
   "From current ply": "Start at current position",
   Fullscreen: "Fullscreen",
   "Game Notifications": "Game Notifications",
+  "Game x closed": 'Closed the game "{game}"',
   Height: "Height",
   Help: "Help",
   Hotkeys: "Hotkeys",
@@ -68,6 +72,7 @@ export default {
   Message: "Message",
   More: "More",
   Move: "Move",
+  Name: "Name",
   "New Game": "New Game",
   "Next Branch": "Next Branch",
   "Next Branch End": "Next Branch End",
@@ -104,6 +109,7 @@ export default {
   "Show All Branches": "Show All Branches",
   "Show Branch Menu": "Show Branch Menu",
   "Show More/Less": "Show More/Less",
+  "Show Notes": "Show Notes",
   "Show Text": "Show Text",
   "Show PTN": "Show PTN",
   Site: "Site",
@@ -113,7 +119,6 @@ export default {
   Tak: "Tak",
   Time: "Time",
   Tinue: "Tinuë",
-  Title: "Title",
   Trim: "Trim",
   "Trim Branches": "Trim Branches",
   "Trim to Current Board": "Trim to Current Board",
@@ -138,10 +143,10 @@ export default {
   },
 
   confirm: {
-    closeGame: 'Close the game "{game}"?',
-    resetEmbed:
-      "Are you sure you want to reset your embed settings to default?",
-    resetForm: "Are you sure you want to reset the form?"
+    closeAllGames: "Close all games except the current one?",
+    downloadAllGames: "Download all games?",
+    resetEmbed: "Reset embed settings to default?",
+    resetForm: "Reset the form?"
   },
 
   error: {

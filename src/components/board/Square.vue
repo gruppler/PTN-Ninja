@@ -243,9 +243,12 @@ export default {
     left 0
     right 0
     opacity 0
+    transition background-color $generic-hover-transition,
+      opacity $generic-hover-transition
+    will-change background-color, opacity
 
   .hl.current
-    background $accent
+    background-color $accent
   .board-container.highlight-squares &.current .hl.current
     opacity .75;
 

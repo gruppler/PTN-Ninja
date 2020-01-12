@@ -19,25 +19,24 @@
         frameborder="0"
         allowfullscreen
       />
-      <QInnerLoading :showing="!previewLoaded && !previewError" />
+      <q-inner-loading :showing="!previewLoaded && !previewError" />
     </template>
 
-    <q-list style="max-height: 50vh">
+    <q-list>
       <q-item>
         <q-item-section>
           <q-input
             v-model="name"
             name="name"
-            :label="$t('Title')"
+            :label="$t('Name')"
             color="accent"
             filled
           >
             <template v-slot:append>
-              <q-btn
+              <q-icon
                 @click="name = name === game.name ? generatedName : game.name"
-                icon="refresh"
-                dense
-                flat
+                name="refresh"
+                class="cursor-pointer"
               />
             </template>
           </q-input>
@@ -87,6 +86,24 @@
             snap
             label
           />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Show Notes") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.ui.showText" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Show PTN") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.ui.showPTN" />
         </q-item-section>
       </q-item>
 
@@ -177,7 +194,7 @@
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
           :label="$t('Copy')"
           @click="copy"
@@ -238,8 +255,6 @@ export default {
       this.$store.getters.confirm({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
-        ok: this.$t("OK"),
-        cancel: this.$t("Cancel"),
         success: () => {
           this.config = cloneDeep(this.$store.state.defaults.embedConfig);
         }

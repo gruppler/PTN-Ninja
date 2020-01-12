@@ -49,11 +49,11 @@ const routes = [
     children: [
       {
         name: "help",
-        path: "/help"
+        path: "/help/:section?"
       },
       {
         name: "add",
-        path: "/add"
+        path: "/add/:tab?"
       },
       {
         name: "preferences",
