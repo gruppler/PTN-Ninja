@@ -309,10 +309,6 @@ export default class GameBase {
       this.moves[0] = new Move({ game: this, id: 0, index: 0 });
     }
 
-    if (!this.moves.length) {
-      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
-    }
-
     if (!this.moves[0].linenum) {
       this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ". ", this);
     } else if (
@@ -335,6 +331,9 @@ export default class GameBase {
     this.saveBoardState();
 
     if (params.state) {
+      if (!(params.state.targetBranch in this.branches)) {
+        params.state.targetBranch = "";
+      }
       this.state.targetBranch = params.state.targetBranch || "";
       ply = this.state.plies[params.state.plyIndex];
       if (ply) {

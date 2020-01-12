@@ -19,7 +19,7 @@
         frameborder="0"
         allowfullscreen
       />
-      <QInnerLoading :showing="!previewLoaded && !previewError" />
+      <q-inner-loading :showing="!previewLoaded && !previewError" />
     </template>
 
     <q-list>

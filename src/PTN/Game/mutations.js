@@ -12,7 +12,6 @@ export default class GameMutations {
       return false;
     }
 
-    // let targetBranch = this.state.targetBranch;
     const oldBranchRegExp = new RegExp(
       "^" + (oldBranch ? escapeRegExp(oldBranch) + "(\\/|$)" : "")
     );
