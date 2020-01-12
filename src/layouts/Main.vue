@@ -9,7 +9,7 @@
           stretch
           flat
         />
-        <QToolbarTitle class="q-pa-none">
+        <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-btn
               icon="edit"
@@ -20,7 +20,7 @@
               flat
             />
           </GameSelector>
-        </QToolbarTitle>
+        </q-toolbar-title>
         <q-btn
           :icon="
             textTab === 'notes'

@@ -13,49 +13,53 @@
 
       <q-separator />
 
-      <SmoothReflow
-        tag="q-tab-panels"
-        v-model="tab"
-        class="bg-secondary"
-        keep-alive
-        animated
-      >
-        <q-tab-panel name="new" class="q-pa-none">
-          <q-card-section
-            class="q-pa-none"
-            style="max-height: calc(100vh - 17rem)"
-          >
-            <GameInfo
-              ref="gameInfo"
-              class="q-pa-md"
-              :values="tags"
-              :show-all="showAll"
-              @submit="createGame"
-            />
-          </q-card-section>
-        </q-tab-panel>
+      <SmoothReflow>
+        <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
+          <q-tab-panel name="new" class="q-pa-none">
+            <q-card-section
+              class="q-pa-none"
+              style="max-height: calc(100vh - 17rem)"
+            >
+              <GameInfo
+                ref="gameInfo"
+                class="q-pa-md"
+                :values="tags"
+                :show-all="showAll"
+                @submit="createGame"
+              />
+            </q-card-section>
+          </q-tab-panel>
 
-        <q-tab-panel name="load" class="q-pa-none">
-          <q-list separator>
-            <q-item @click="$store.dispatch('OPEN', close)" clickable v-ripple>
-              <q-item-section avatar>
-                <q-icon name="folder_open" />
-              </q-item-section>
-              <q-item-section>{{ $t("Local") }}</q-item-section>
-            </q-item>
-            <q-expansion-item group="type" :label="$t('Online')" icon="public">
-              <Recess>
-                <q-list>
-                  <q-item>
-                    <q-item-section align="center">
-                      {{ $t("Coming soon") }}
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </Recess>
-            </q-expansion-item>
-          </q-list>
-        </q-tab-panel>
+          <q-tab-panel name="load" class="q-pa-none">
+            <q-list separator>
+              <q-item
+                @click="$store.dispatch('OPEN', close)"
+                clickable
+                v-ripple
+              >
+                <q-item-section avatar>
+                  <q-icon name="folder_open" />
+                </q-item-section>
+                <q-item-section>{{ $t("Local") }}</q-item-section>
+              </q-item>
+              <q-expansion-item
+                group="type"
+                :label="$t('Online')"
+                icon="public"
+              >
+                <Recess>
+                  <q-list>
+                    <q-item>
+                      <q-item-section align="center">
+                        {{ $t("Coming soon") }}
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </Recess>
+              </q-expansion-item>
+            </q-list>
+          </q-tab-panel>
+        </q-tab-panels>
       </SmoothReflow>
 
       <q-separator />
