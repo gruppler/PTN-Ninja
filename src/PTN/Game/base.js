@@ -70,17 +70,15 @@ export const isSample = tags => {
 export const generateName = (tags = {}, game) => {
   const tag = key =>
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
-  const player1 = tag("player1") || GameBase.t["White"];
-  const player2 = tag("player2") || GameBase.t["Black"];
+  const player1 = tag("player1");
+  const player2 = tag("player2");
   const result = tag("result").replace(/1\/2-1\/2/g, "TIE");
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
   return (
-    player1 +
-    " vs " +
-    player2 +
-    ` ${size}x${size}` +
+    (player1.length || player2.length ? player1 + " vs " + player2 + " " : "") +
+    `${size}x${size}` +
     (isSample(tags) ? " SMASH" : "") +
     (result ? " " + result : "") +
     (date ? " " + date : "") +
@@ -89,17 +87,12 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = name => {
-  return /^[^"]+ vs [^"]+ \dx\d( SMASH)?( [01R]-[01R]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
 };
 
 export default class GameBase {
-  static t = {
-    Black: "Black",
-    White: "White"
-  };
-
   constructor(notation, params) {
     this.init(notation, params);
   }
