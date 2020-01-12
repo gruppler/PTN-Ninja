@@ -3,7 +3,7 @@
     <q-input
       v-model="name"
       name="name"
-      :label="$t('Title')"
+      :label="$t('Name')"
       @keydown.enter.prevent="submit"
       color="accent"
       filled

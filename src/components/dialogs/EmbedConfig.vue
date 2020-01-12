@@ -28,7 +28,7 @@
           <q-input
             v-model="name"
             name="name"
-            :label="$t('Title')"
+            :label="$t('Name')"
             color="accent"
             filled
           >
