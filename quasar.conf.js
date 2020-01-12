@@ -19,70 +19,9 @@ module.exports = function(ctx) {
     extras: ["roboto-font", "material-icons"],
 
     framework: {
-      // all: true, // --- includes everything; for dev only!
+      all: "auto",
+      autoImportComponentCase: "kebab",
 
-      components: [
-        "QAvatar",
-        "QBadge",
-        "QBtn",
-        "QBtnDropdown",
-        "QBtnGroup",
-        "QBtnToggle",
-        "QCard",
-        "QCardActions",
-        "QCardSection",
-        "QChatMessage",
-        "QChip",
-        "QDate",
-        "QDialog",
-        "QDrawer",
-        "QExpansionItem",
-        "QFab",
-        "QFabAction",
-        "QFooter",
-        "QForm",
-        "QHeader",
-        "QIcon",
-        "QInnerLoading",
-        "QInput",
-        "QItem",
-        "QItemLabel",
-        "QItemSection",
-        "QLayout",
-        "QLinearProgress",
-        "QList",
-        "QMarkupTable",
-        "QMenu",
-        "QPage",
-        "QPageContainer",
-        "QPageSticky",
-        "QPopupProxy",
-        "QResizeObserver",
-        "QScrollArea",
-        "QSelect",
-        "QSeparator",
-        "QSlider",
-        "QTab",
-        "QTabPanel",
-        "QTabPanels",
-        'QTable',
-        'QTh',
-        'QTr',
-        'QTd',
-        "QTabs",
-        "QTime",
-        "QToggle",
-        "QToolbar",
-        "QToolbarTitle"
-      ],
-
-      directives: [
-        "ClosePopup",
-        "Ripple",
-        "TouchPan"
-      ],
-
-      // Quasar plugins
       plugins: [
         "AddressbarColor",
         "AppFullscreen",
@@ -93,15 +32,14 @@ module.exports = function(ctx) {
         "Notify"
       ]
 
-      // iconSet: 'ionicons-v4'
-      // lang: 'de' // Quasar language
+      // iconSet: "svg-mdi-v4"
     },
 
     supportIE: false,
 
     build: {
       scopeHoisting: true,
-      vueRouterMode: process.env.NODE_ENV !== 'production' ? 'hash' : 'history',
+      vueRouterMode: process.env.NODE_ENV !== "production" ? "hash" : "history",
       // vueCompiler: true,
       // gzip: true,
       // analyze: true,

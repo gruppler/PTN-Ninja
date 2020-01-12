@@ -88,7 +88,7 @@
           flat
         />
         <div class="col-grow" />
-        <q-btn v-close-popup :label="$t('Close')" color="accent" flat />
+        <q-btn v-close-popup :label="$t('Cancel')" color="accent" flat />
         <q-btn
           v-show="tab === 'login'"
           @click="submit"
@@ -107,7 +107,7 @@
         />
       </q-card-actions>
 
-      <QInnerLoading :showing="loading" />
+      <q-inner-loading :showing="loading" />
     </q-card>
   </q-dialog>
 </template>
@@ -274,8 +274,6 @@ export default {
         this.$store.getters.confirm({
           title: this.$t("Confirm"),
           message: this.$t("confirm.resetPassword", { email: this.email }),
-          ok: this.$t("OK"),
-          cancel: this.$t("Cancel"),
           success: () => {
             this.loading = true;
             this.$store

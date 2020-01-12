@@ -13,62 +13,62 @@
 
       <q-separator />
 
-      <SmoothReflow
-        tag="q-tab-panels"
-        v-model="tab"
-        class="bg-secondary"
-        keep-alive
-        animated
-      >
-        <q-tab-panel name="new" class="q-pa-none">
-          <q-card-section
-            class="q-pa-none"
-            style="max-height: calc(100vh - 17rem)"
-          >
-            <GameInfo
-              ref="gameInfo"
-              class="q-pa-md"
-              :values="tags"
-              :show-all="showAll"
-              @submit="createGame"
-            />
-          </q-card-section>
-        </q-tab-panel>
-
-        <q-tab-panel name="load" class="q-pa-none">
-          <q-list separator>
-            <q-item @click="$store.dispatch('OPEN', close)" clickable v-ripple>
-              <q-item-section avatar>
-                <q-icon name="folder_open" />
-              </q-item-section>
-              <q-item-section>{{ $t("Local") }}</q-item-section>
-            </q-item>
-            <q-item
-              @click="showOnline = !showOnline"
-              :class="{ 'text-accent': showOnline }"
-              clickable
+      <SmoothReflow>
+        <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
+          <q-tab-panel name="new" class="q-pa-none">
+            <q-card-section
+              class="q-pa-none"
+              style="max-height: calc(100vh - 17rem)"
             >
-              <q-item-section avatar>
-                <q-icon name="public" />
-              </q-item-section>
-              <q-item-section>{{ $t("Online") }}</q-item-section>
-              <q-item-section side>
-                <q-icon
-                  name="keyboard_arrow_down"
-                  class="q-expansion-item__toggle-icon"
-                  :class="{ 'rotate-180': showOnline }"
-                />
-              </q-item-section>
-            </q-item>
-            <Recess>
-              <GameTable
-                v-if="showOnline"
-                ref="gameTable"
-                v-model="selectedGames"
+              <GameInfo
+                ref="gameInfo"
+                class="q-pa-md"
+                :values="tags"
+                :show-all="showAll"
+                @submit="createGame"
               />
-            </Recess>
-          </q-list>
-        </q-tab-panel>
+            </q-card-section>
+          </q-tab-panel>
+
+          <q-tab-panel name="load" class="q-pa-none">
+            <q-list separator>
+              <q-item
+                @click="$store.dispatch('OPEN', close)"
+                clickable
+                v-ripple
+              >
+                <q-item-section avatar>
+                  <q-icon name="folder_open" />
+                </q-item-section>
+                <q-item-section>{{ $t("Local") }}</q-item-section>
+              </q-item>
+              <q-item
+                @click="showOnline = !showOnline"
+                :class="{ 'text-accent': showOnline }"
+                clickable
+              >
+                <q-item-section avatar>
+                  <q-icon name="public" />
+                </q-item-section>
+                <q-item-section>{{ $t("Online") }}</q-item-section>
+                <q-item-section side>
+                  <q-icon
+                    name="keyboard_arrow_down"
+                    class="q-expansion-item__toggle-icon"
+                    :class="{ 'rotate-180': showOnline }"
+                  />
+                </q-item-section>
+              </q-item>
+              <Recess>
+                <GameTable
+                  v-if="showOnline"
+                  ref="gameTable"
+                  v-model="selectedGames"
+                />
+              </Recess>
+            </q-list>
+          </q-tab-panel>
+        </q-tab-panels>
       </SmoothReflow>
 
       <q-separator />

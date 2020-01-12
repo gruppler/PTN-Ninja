@@ -3,7 +3,7 @@
     <q-input
       v-model="name"
       name="name"
-      :label="$t('Title')"
+      :label="$t('Name')"
       @keydown.enter.prevent="submit"
       color="accent"
       filled
@@ -788,6 +788,11 @@ export default {
     this.init();
   },
   watch: {
+    value(isVisible) {
+      if (isVisible) {
+        this.init();
+      }
+    },
     generatedName(newName) {
       if (isDefaultName(this.name)) {
         this.name = newName;

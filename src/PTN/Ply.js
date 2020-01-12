@@ -112,6 +112,7 @@ export default class Ply extends Ptn {
   removeBranch(ply) {
     delete this.game.branches[ply.branch];
     if (this.branches.length === 2) {
+      // Remove our last branch
       this.branches.parent.children.splice(
         this.branches.parent.children.indexOf(this),
         1

@@ -74,7 +74,11 @@ export default class Move {
       if (oldPly.branches.length) {
         ply.branches = oldPly.branches;
         ply.branches.splice(ply.branches.indexOf(oldPly), 1, ply);
-        if (ply.branches[0] === ply) {
+        if (
+          ply.branches[0] === ply &&
+          (!(ply.branch in this.game.branches) ||
+            ply.index < this.game.branches[ply.branch].index)
+        ) {
           this.game.branches[ply.branch] = ply;
         }
         delete this.game.boards[ply.id];

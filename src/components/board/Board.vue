@@ -2,7 +2,7 @@
   <div
     class="board-wrapper flex flex-center"
     :class="{ 'board-3D': board3D }"
-    v-touch-pan.prevent.mouse="rotateBoard"
+    v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     ref="wrapper"
   >

@@ -7,7 +7,7 @@ To **right-click** on a touchscreen device, try **long-pressing**.
 
 ### Games
 
-PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. Be careful when closing a game; there's no way to un-close a game!
+PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need. You can automatically close or download all games by **clicking** the game count.
 
 You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 
@@ -42,7 +42,7 @@ Branches
 PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
 - Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the contextual branch menu.
-- Use <kbd>▲/▼</kbd> **or** <kbd>0-9</kbd> to navigate between branches.
+- Use <kbd>▲/▼</kbd> <span>or</span> <kbd>0-9</kbd> to navigate between branches.
 - **Right-click** a branch title to **rename** or **delete** it.
 
 PTN

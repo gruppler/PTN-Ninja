@@ -167,13 +167,13 @@
           </div>
         </div>
 
-        <QInnerLoading :showing="loading" />
+        <q-inner-loading :showing="loading" />
       </SmoothReflow>
 
       <q-separator />
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
           v-show="isLocal"
           @click="create"

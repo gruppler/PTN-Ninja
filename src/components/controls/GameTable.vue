@@ -93,7 +93,7 @@
             size="md"
           />
         </q-td>
-        <q-td key="title" :props="props">
+        <q-td key="name" :props="props">
           {{ props.row.name }}
         </q-td>
         <q-td key="player1" :props="props">
@@ -169,8 +169,8 @@ export default {
           align: "center"
         },
         {
-          name: "title",
-          label: this.$t("Title"),
+          name: "name",
+          label: this.$t("Name"),
           align: "left"
         },
         {
@@ -276,9 +276,9 @@ export default {
       if (this.fullscreen) {
         return without(columns, "players");
       } else if (this.$q.screen.gt.sm) {
-        return without(columns, "title", "player1", "player2");
+        return without(columns, "name", "player1", "player2");
       } else {
-        return without(columns, "title", "player1", "player2", "date");
+        return without(columns, "name", "player1", "player2", "date");
       }
     },
     isWide() {

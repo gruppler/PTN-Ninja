@@ -32,7 +32,6 @@ export default {
       }
       return notes.map(note => ({
         message: note.message,
-        icon: "speaker_notes",
         classes: "note"
       }));
     }

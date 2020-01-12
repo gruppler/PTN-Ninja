@@ -7,7 +7,7 @@ let defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
-  boardRotation: [0.5790436572786892, 0.4425154402869453],
+  boardRotation: [0.6, 0.5],
   editingTPS: "",
   editingBranch: "",
   firstMoveNumber: 1,
@@ -44,8 +44,10 @@ const embedUIOptions = [
   "showAllBranches",
   "showControls",
   "showMove",
+  "showPTN",
   "showRoads",
   "showScrubber",
+  "showText",
   "unplayedPieces"
 ];
 
