@@ -2,7 +2,7 @@
   <q-dialog
     :value="value"
     @input="$emit('input', $event)"
-    content-class="non-selectable"
+    content-class="ui-settings non-selectable"
     v-bind="$attrs"
   >
     <q-card style="width: 300px" class="bg-secondary">
@@ -18,7 +18,7 @@
           default-opened
         >
           <recess>
-            <q-list style="max-height: calc(100vh - 24rem)">
+            <q-list>
               <q-item>
                 <q-item-section>
                   {{ $t("Play Speed") }}
@@ -121,7 +121,7 @@
 
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
           <recess>
-            <q-list style="max-height: calc(100vh - 24rem)">
+            <q-list>
               <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
@@ -223,3 +223,12 @@ export default {
   )
 };
 </script>
+
+<style lang="stylus">
+.ui-settings
+  .q-list .q-list
+    min-height 10rem
+    max-height 50vh
+    @media (min-width: $breakpoint-sm-min)
+      max-height calc(100vh - 264px)
+</style>
