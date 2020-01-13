@@ -14,6 +14,6 @@
 
 <script>
 export default {
-  name: "DialogHeader"
+  name: "dialog-header"
 };
 </script>

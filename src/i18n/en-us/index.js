@@ -222,7 +222,7 @@ export default {
 
   hints: {
     playerNamePrivate: "Whatever you want to call yourself",
-    playerNamePublic: "Your unique and permanent name",
+    playerNamePublic: "Your unique name",
     public: "Share this with your opponent and spectators",
     private: "Share this with your other devices",
     privateGame: "This game will not be listed",

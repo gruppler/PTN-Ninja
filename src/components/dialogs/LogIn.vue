@@ -14,7 +14,7 @@
       <q-separator />
 
       <q-card-section class="column no-wrap">
-        <SmoothReflow>
+        <smooth-reflow>
           <q-input
             v-show="tab === 'register'"
             v-model="playerName"
@@ -28,7 +28,7 @@
             color="accent"
             filled
           />
-        </SmoothReflow>
+        </smooth-reflow>
 
         <div class="q-gutter-y-md">
           <q-input
@@ -67,14 +67,14 @@
           </q-input>
         </div>
 
-        <SmoothReflow>
+        <smooth-reflow>
           <div v-show="error" class="q-mt-md text-negative">
             {{ error }}
           </div>
           <div v-show="success" class="q-mt-md text-positive">
             {{ success }}
           </div>
-        </SmoothReflow>
+        </smooth-reflow>
       </q-card-section>
 
       <q-separator />

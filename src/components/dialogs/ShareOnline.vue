@@ -6,13 +6,13 @@
     v-bind="$attrs"
   >
     <q-card style="width: 400px" class="bg-secondary">
-      <DialogHeader>{{ $t("Play Online") }}</DialogHeader>
+      <dialog-header>{{ $t("Play Online") }}</dialog-header>
 
-      <SmoothReflow tag="Recess" class="col">
+      <smooth-reflow tag="recess" class="col">
         <div class="scroll" style="max-height: calc(100vh - 18.5rem)">
           <div v-if="this.isLocal">
             <q-list>
-              <SmoothReflow class="q-gutter-y-md column no-wrap">
+              <smooth-reflow class="q-gutter-y-md column no-wrap">
                 <q-item v-if="isPrivate || isLoggedIn">
                   <q-item-section>
                     <q-input
@@ -58,7 +58,7 @@
                     {{ $t("Log In") }}
                   </q-item-section>
                 </q-item>
-              </SmoothReflow>
+              </smooth-reflow>
 
               <q-item>
                 <q-item-section>
@@ -77,11 +77,11 @@
               <q-item tag="label" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Private Game") }}</q-item-label>
-                  <SmoothReflow>
+                  <smooth-reflow>
                     <q-item-label caption v-show="isPrivate">
                       {{ $t("hints.privateGame") }}
                     </q-item-label>
-                  </SmoothReflow>
+                  </smooth-reflow>
                 </q-item-section>
                 <q-item-section side>
                   <q-toggle color="accent" v-model="isPrivate" />
@@ -168,7 +168,7 @@
         </div>
 
         <q-inner-loading :showing="loading" />
-      </SmoothReflow>
+      </smooth-reflow>
 
       <q-separator />
 
@@ -190,15 +190,13 @@
 </template>
 
 <script>
-import DialogHeader from "../general/DialogHeader";
-
 import QRCode from "./QRCode";
 
 import { formats } from "../../PTN/Tag";
 
 export default {
   name: "ShareOnline",
-  components: { DialogHeader, QRCode },
+  components: { QRCode },
   props: ["value", "game"],
   data() {
     return {

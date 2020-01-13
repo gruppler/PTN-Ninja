@@ -13,7 +13,7 @@
 
       <q-separator />
 
-      <SmoothReflow>
+      <smooth-reflow>
         <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section
@@ -59,17 +59,17 @@
                   />
                 </q-item-section>
               </q-item>
-              <Recess>
+              <recess>
                 <GameTable
                   v-if="showOnline"
                   ref="gameTable"
                   v-model="selectedGames"
                 />
-              </Recess>
+              </recess>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>
-      </SmoothReflow>
+      </smooth-reflow>
 
       <q-separator />
 

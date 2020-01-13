@@ -1,6 +1,6 @@
 <template>
   <div class="chat column no-wrap">
-    <Recess class="col-grow">
+    <recess class="col-grow">
       <div class="absolute-fit scroll">
         <div class="q-px-md">
           <template v-for="(message, i) in messages">
@@ -43,7 +43,7 @@
         </div>
       </div>
       <q-resize-observer @resize="scroll" />
-    </Recess>
+    </recess>
     <div>
       <q-input
         ref="input"

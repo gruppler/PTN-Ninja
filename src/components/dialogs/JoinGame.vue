@@ -2,7 +2,7 @@
   <q-dialog :value="value" @input="$emit('input', $event)" persistent>
     <q-card style="width: 300px" class="bg-secondary">
       <q-card-section>
-        <SmoothReflow>
+        <smooth-reflow>
           <q-input
             ref="input"
             v-model="playerName"
@@ -18,7 +18,7 @@
               <q-icon :name="$store.getters.playerIcon(player)" />
             </template>
           </q-input>
-        </SmoothReflow>
+        </smooth-reflow>
       </q-card-section>
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
