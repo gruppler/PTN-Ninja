@@ -43,7 +43,8 @@ export default {
         : null;
       if (move) {
         move.$el.scrollIntoView({
-          block: "center"
+          block: "center",
+          behavior: "smooth"
         });
       }
     },
