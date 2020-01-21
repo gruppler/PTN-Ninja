@@ -53,6 +53,7 @@
             filled
           />
         </q-item-section>
+
         <q-item-section>
           <q-input
             v-model="config.height"
@@ -61,15 +62,6 @@
             color="accent"
             filled
           />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("From current ply") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.state" />
         </q-item-section>
       </q-item>
 
@@ -86,6 +78,15 @@
             snap
             label
           />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("From current ply") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.state" />
         </q-item-section>
       </q-item>
 

@@ -1,7 +1,11 @@
 export default function() {
   return {
-    gamesListener: null,
-    publicGames: [],
+    initialized: false,
+    privateGames: {},
+    playerGames: {},
+    playerGamesListener: null,
+    publicGames: {},
+    publicGamesListener: null,
     user: null
   };
 }

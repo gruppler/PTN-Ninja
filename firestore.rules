@@ -1,19 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, update, delete: if request.auth.uid == userId;
-      allow create: if request.auth.uid != null;
+    function isSignedIn() {
+      return request.auth.uid != null;
+    }
+
+    function isUser(uid) {
+      return request.auth.uid == uid;
+    }
+
+		function isPlayer(gameID) {
+    	return get(
+        /databases/$(database)/documents/games/$(gameID)
+      ).data.config.players.hasAny([null, request.auth.uid]);
+    }
+
+    match /users/{uid} {
+      allow read, update: if isUser(uid);
+      allow create: if isSignedIn();
     }
 
     match /names/{name} {
-    	allow read: if request.auth.uid != null;
-      allow create: if request.auth.uid != null;
+      allow update, delete: if isUser(name.uid);
+    	allow read, create: if isSignedIn();
     }
 
-    match /games/{game} {
-    	allow read, create: if request.auth.uid != null;
-      allow write: if request.auth.uid == game.config.player1 || request.auth.uid == game.config.player2;
+    match /games/{gameID} {
+    	allow read, create: if isSignedIn();
+      allow write: if isPlayer(gameID);
+      match /moves/{move} {
+        allow read, create: if isSignedIn();
+        allow write: if isPlayer(gameID);
+      }
     }
 
     match /{document=**} {

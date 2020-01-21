@@ -11,7 +11,8 @@
     "dev": "quasar dev -m pwa",
     "build": "quasar build -m electron",
     "deploy": "quasar build -m pwa && firebase deploy --only hosting:live",
-    "dev-deploy": "quasar build -m pwa && firebase deploy --only hosting:dev"
+    "dev-deploy": "quasar build -m pwa && firebase deploy --only hosting:dev",
+    "rules-deploy": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@kazupon/vue-i18n-loader": "^0.4.1",

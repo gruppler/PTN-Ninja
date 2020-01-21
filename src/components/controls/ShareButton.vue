@@ -55,7 +55,7 @@ export default {
         {
           id: "ptn",
           label: this.$t("Copy PTN"),
-          icon: "file_copy",
+          icon: "content_copy",
           action: () => this.copy("ptn")
         },
         {}

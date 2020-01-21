@@ -5,19 +5,16 @@
     :class="{ fullscreen }"
     card-class="bg-secondary"
     table-class="dim"
-    :loading="loading"
     :columns="columns"
     :data="games"
     :row-key="row => row.config.id"
-    :rows-per-page-options="[20]"
     :visible-columns="visibleColumns"
     :fullscreen.sync="fullscreen"
     :pagination.sync="pagination"
     :selection="selectionMode || 'multiple'"
     :selected.sync="selected"
-    :selected-rows-label="selectedText"
-    :loading-label="$t('Loading')"
-    :no-data-label="$t('No Games')"
+    :loading="loading"
+    hide-bottom
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -37,16 +34,11 @@
         <template v-slot:prepend>
           <q-icon name="search" />
         </template>
-        <template v-slot:after>
-          <q-btn @click="loadGames" icon="refresh" flat dense />
-        </template>
       </q-input>
     </template>
 
     <template v-slot:bottom-left>
-      <div v-show="error" class="negative">
-        {{ error }}
-      </div>
+      <message-output :error="error" />
     </template>
 
     <template v-slot:header-cell="props">
@@ -78,18 +70,19 @@
         @click="select(props.row)"
         class="non-selectable"
         :class="{
-          'text-accent': props.row.isOpen,
-          'cursor-pointer': !props.row.isOpen
+          'text-accent': props.row.isActive,
+          'cursor-pointer': !props.row.isActive
         }"
-        :no-hover="props.row.isOpen"
+        :no-hover="props.row.isActive"
         :key="props.row.id"
         :title="isWide ? '' : props.row.name"
       >
         <td></td>
         <q-td key="role" :props="props">
           <q-icon
-            :name="playerIcon(props.row.config.player)"
-            :title="roleText(props.row.config.player)"
+            v-if="props.row.player || props.row.isActive"
+            :name="playerIcon(props.row.player)"
+            :title="roleText(props.row.player)"
             size="md"
           />
         </q-td>
@@ -124,29 +117,18 @@
           <Result :result="props.row.tags.result" />
         </q-td>
       </q-tr>
-      <q-tr v-show="props.expand && !isWide" :props="props">
-        <q-td colspan="100%" :props="props">
-          {{ props.row.name }}
-        </q-td>
-        <q-td v-show="!visibleColumns.includes('date')" :props="props">
-          <div :title="props.row.tags.date | moment('llll')">
-            {{ props.row.tags.date | moment("from") }}
-          </div>
-        </q-td>
-      </q-tr>
     </template>
   </q-table>
 </template>
 
 <script>
 import FullscreenToggle from "../controls/FullscreenToggle.vue";
-
 import Result from "../PTN/Result";
 
+import { getPlayer } from "../../PTN/Game/online";
 import { compact, differenceBy, without } from "lodash";
 
-const MAX_SELECTED = 3;
-const MAX_ONLINE = 5;
+const MAX_SELECTED = 5;
 
 export default {
   name: "GameTable",
@@ -158,9 +140,8 @@ export default {
       filter: "",
       loading: false,
       pagination: {
-        page: 1,
-        rowsPerPage: 10,
-        rowsNumber: 0
+        rowsPerPage: 0,
+        sortBy: "date"
       },
       columns: [
         {
@@ -234,12 +215,7 @@ export default {
       }
     },
     maxSelected() {
-      return this.selectionMode === "single"
-        ? 1
-        : Math.min(
-            MAX_SELECTED,
-            MAX_ONLINE - this.selected.length + this.openGames.length
-          );
+      return this.selectionMode === "single" ? 1 : MAX_SELECTED;
     },
     selected: {
       get() {
@@ -250,26 +226,28 @@ export default {
       }
     },
     games() {
-      return this.playerGames.concat(
-        differenceBy(this.publicGames, this.playerGames, game => game.config.id)
-      );
-    },
-    publicGames() {
-      return this.$store.state.online.publicGames;
-    },
-    playerGames() {
-      return this.user ? this.user.games : [];
-    },
-    openGames() {
-      return this.$store.state.games
-        .filter(game => !!game.config.id)
+      return this.playerGames
+        .concat(
+          differenceBy(
+            this.publicGames,
+            this.playerGames,
+            game => game.config.id
+          )
+        )
         .map(game => ({
-          isOpen: true,
-          ...game
+          ...game,
+          isActive: this.isActive(game),
+          player: getPlayer(game, this.user ? this.user.uid : "")
         }));
     },
-    openGameIDs() {
-      return compact(this.openGames.map(game => game.config.id));
+    publicGames() {
+      return Object.values(this.$store.state.online.publicGames);
+    },
+    playerGames() {
+      return Object.values(this.$store.state.online.playerGames);
+    },
+    activeGameIDs() {
+      return compact(this.$store.state.games.map(game => game.config.id));
     },
     visibleColumns() {
       let columns = this.columns.map(col => col.name);
@@ -286,14 +264,6 @@ export default {
     }
   },
   methods: {
-    loadGames() {
-      this.loading = true;
-      this.$store
-        .dispatch("online/LOAD_GAMES", this.pagination)
-        .catch(error => {
-          this.error = error.message;
-        });
-    },
     playerIcon(player) {
       return this.$store.getters.playerIcon(player);
     },
@@ -309,11 +279,13 @@ export default {
         : "";
     },
     select(game) {
-      if (this.isOpen(game)) {
+      if (game.isActive) {
         return;
       }
 
-      const index = this.selected.indexOf(game);
+      const index = this.selected.findIndex(
+        g => g.config.id === game.config.id
+      );
       if (index >= 0) {
         this.selected.splice(index, 1);
       } else {
@@ -322,33 +294,16 @@ export default {
           this.selected.splice(this.maxSelected);
         }
       }
-
-      if (this.openGames.length === this.maxSelected) {
-        this.error = this.$t("error.OnlineGamesLimit");
-      } else {
-        this.error = "";
-      }
     },
-    selectedText(count) {
-      return count
-        ? this.$tc("count.xGamesSelected", this.selected.length, {
-            x: this.selected.length
-          })
-        : "";
-    },
-    isOpen(game) {
-      return this.openGameIDs.includes(game.config.id);
+    isActive(game) {
+      return this.activeGameIDs.includes(game.config.id);
     }
   },
-  mounted() {
-    if (!this.publicGames.length) {
-      this.loadGames();
-    }
+  beforeCreate() {
+    this.$store.dispatch("online/LISTEN_PUBLIC_GAMES");
   },
-  watch: {
-    publicGames() {
-      this.loading = false;
-    }
+  beforeDestroy() {
+    this.$store.dispatch("online/UNLISTEN_PUBLIC_GAMES");
   }
 };
 </script>

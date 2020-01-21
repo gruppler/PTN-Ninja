@@ -23,11 +23,15 @@
             class="q-mb-md"
             :label="$t('Player Name')"
             :rules="[validateNameFormat, validateNameUniqueness]"
-            :hint="$t('hints.playerNamePublic')"
+            :hint="$t('hint.playerNamePublic')"
             @keydown.enter.prevent="submit"
             color="accent"
             filled
-          />
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
         </smooth-reflow>
 
         <div class="q-gutter-y-md">
@@ -42,7 +46,11 @@
             color="accent"
             hide-bottom-space
             filled
-          />
+          >
+            <template v-slot:prepend>
+              <q-icon name="mail" />
+            </template>
+          </q-input>
           <q-input
             v-model="password"
             ref="password"
@@ -57,6 +65,9 @@
             hide-bottom-space
             filled
           >
+            <template v-slot:prepend>
+              <q-icon name="lock" />
+            </template>
             <template v-slot:append>
               <q-icon
                 :name="showPassword ? 'visibility' : 'visibility_off'"
@@ -67,14 +78,11 @@
           </q-input>
         </div>
 
-        <smooth-reflow>
-          <div v-show="error" class="q-mt-md text-negative">
-            {{ error }}
-          </div>
-          <div v-show="success" class="q-mt-md text-positive">
-            {{ success }}
-          </div>
-        </smooth-reflow>
+        <message-output
+          :error="error"
+          :success="success"
+          content-class="q-mt-md"
+        />
       </q-card-section>
 
       <q-separator />
@@ -145,9 +153,6 @@ export default {
     },
     userEmail() {
       return this.user ? this.user.email : "";
-    },
-    displayName() {
-      return this.$store.getters["online/playerName"](this.isPrivate);
     }
   },
   methods: {
@@ -181,27 +186,7 @@ export default {
         .then(success => success || this.$t("error['Player exists']"));
     },
     showError(error) {
-      const errorMessages = this.$i18n.messages[this.$i18n.locale].error;
-      if (error) {
-        console.log(error);
-        if (typeof error === "string") {
-          if (error in errorMessages) {
-            this.error = this.$t(`error["${error}"]`);
-          } else {
-            this.error = error;
-          }
-        } else if ("code" in error && error.code in errorMessages) {
-          this.error = this.$t(`error["${error.code}"]`);
-        } else if ("message" in error) {
-          if (error.message in errorMessages) {
-            this.error = this.$t(`error["${error.message}"]`);
-          } else {
-            this.error = error.message;
-          }
-        }
-      } else {
-        this.error = "";
-      }
+      this.error = error;
     },
     showSuccess(message) {
       this.error = "";
@@ -236,6 +221,7 @@ export default {
       }
 
       const logIn = () => {
+        this.showError();
         this.loading = true;
         this.$store
           .dispatch("online/LOG_IN", {
@@ -254,7 +240,7 @@ export default {
           });
       };
 
-      if (this.$store.state.online.user.privateGames.length) {
+      if (Object.values(this.$store.state.online.privateGames).length) {
         this.$store.getters.confirm({
           title: this.$t("confirm.logInTitle"),
           message: this.$t("confirm.logInMessage"),
@@ -280,7 +266,7 @@ export default {
               .dispatch("online/RESET_PASSWORD", this.email)
               .then(() => {
                 this.loading = false;
-                this.showSuccess(this.$t("confirm.resetPasswordSent"));
+                this.showSuccess("resetPasswordSent");
               })
               .catch(error => {
                 this.loading = false;
@@ -296,11 +282,6 @@ export default {
       } else {
         this.logIn();
       }
-    }
-  },
-  mounted() {
-    if (this.displayName) {
-      this.playerName = this.displayName;
     }
   },
   watch: {

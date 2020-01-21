@@ -12,6 +12,7 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-btn
+              v-if="game.isLocal || player"
               icon="edit"
               @click.stop="edit"
               text-color="white"
@@ -321,7 +322,7 @@ export default {
     LogIn,
     JoinGame
   },
-  props: ["ptn", "state", "name", "gameID", "playerKey"],
+  props: ["ptn", "state", "name", "gameID"],
   data() {
     return {
       Platform,
@@ -496,6 +497,15 @@ export default {
     },
     gameName() {
       return { name: this.game.name, game: this.game };
+    },
+    user() {
+      return this.$store.state.online.user;
+    },
+    player() {
+      return this.user ? this.game.player(this.user.uid) : 0;
+    },
+    isAnonymous() {
+      return !this.user || this.user.isAnonymous;
     }
   },
   methods: {
@@ -527,13 +537,6 @@ export default {
             });
             this.$router.replace("/");
           }
-        } else if (this.gameID || this.playerKey) {
-          // Add online game from URL
-          this.$store.dispatch("online/LOAD_GAME", {
-            id: this.gameID,
-            playerKey: this.playerKey
-          });
-          this.$router.replace("/");
         } else if (this.$store.state.games && this.$store.state.games.length) {
           game = this.$store.state.games[0];
           game = new Game(game.ptn, game);
@@ -542,7 +545,10 @@ export default {
           }
 
           if (game.config.isOnline) {
-            if (!game.config.player && game.openPlayer) {
+            if (
+              !this.player &&
+              (game.openPlayer || (!game.config.isPrivate && this.isAnonymous))
+            ) {
               this.dialogJoinGame = true;
             }
           }
@@ -761,13 +767,29 @@ export default {
       location.hash = "";
       this.$router.replace(url);
       location.reload();
+      return;
     }
+
+    // Initialize
+    this.$q.dark.set(true);
+    this.$store.dispatch("online/INIT").then(() => {
+      if (this.gameID) {
+        // Add online game from URL
+        this.$store
+          .dispatch("online/LOAD_GAME", this.gameID)
+          .then(() => {
+            this.$router.replace("/");
+          })
+          .catch(error => {
+            this.$store.getters.error({
+              message: this.$t(`error["${error.message}"]`)
+            });
+          });
+      }
+    });
   },
   created() {
-    this.$q.dark.set(true);
-    this.$store.dispatch("online/INIT");
-
-    if (!this.gameID && !this.playerKey) {
+    if (!this.gameID) {
       if (!this.games.length) {
         this.$store.dispatch("ADD_GAME", {
           ptn: this.game.text(),
@@ -783,10 +805,6 @@ export default {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
-    }
-
-    if (process.env.DEV) {
-      window.main = this;
     }
   },
   beforeDestroy() {

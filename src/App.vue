@@ -18,6 +18,10 @@ export default {
         return { icon };
       }
     };
+
+    if (process.env.DEV) {
+      window.app = this;
+    }
   }
 };
 </script>

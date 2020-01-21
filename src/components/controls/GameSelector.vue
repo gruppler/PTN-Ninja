@@ -3,7 +3,7 @@
     <q-select
       ref="select"
       v-if="games.length"
-      class="text-subtitle1 no-wrap"
+      class="text-subtitle1"
       :value="0"
       :options="games"
       @input="select"
@@ -19,7 +19,11 @@
       dense
     >
       <template v-slot:prepend>
-        <q-icon v-if="game.game.isOnline" :name="icon(game.game)" size="md" />
+        <q-icon
+          v-if="game.config.isOnline"
+          :name="icon(game)"
+          :size="$q.screen.lt.sm ? 'xs' : 'sm'"
+        />
       </template>
 
       <template v-slot:option="scope">
@@ -28,9 +32,9 @@
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         >
-          <q-item-section side v-if="scope.opt.game.isOnline">
+          <q-item-section side v-if="scope.opt.config.isOnline">
             <q-icon
-              :name="icon(scope.opt.game)"
+              :name="icon(scope.opt)"
               :class="{ 'text-accent': scope.opt.value === 0 }"
             />
           </q-item-section>
@@ -90,6 +94,7 @@
 
 <script>
 import { Notify } from "quasar";
+import { getPlayer } from "../../PTN/Game/online";
 
 export default {
   name: "GameSelector",
@@ -101,7 +106,7 @@ export default {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index,
-        game: game.config
+        config: game.config
       }));
     }
   },
@@ -113,7 +118,10 @@ export default {
       }
     },
     icon(game) {
-      return this.$store.getters.playerIcon(game.player);
+      const user = this.$store.state.online.user;
+      return this.$store.getters.playerIcon(
+        user ? getPlayer(game, user.uid) : 0
+      );
     },
     close(index) {
       const game = this.$store.state.games[index];
@@ -156,9 +164,6 @@ export default {
           }
         }
       });
-    },
-    edit() {
-      this.$emit("edit");
     }
   }
 };
@@ -172,4 +177,9 @@ export default {
     text-overflow ellipsis
     white-space nowrap
     overflow hidden
+    @media (max-width: $breakpoint-xs-max)
+      font-size .8em
+
+    + .no-outline
+      position absolute
 </style>

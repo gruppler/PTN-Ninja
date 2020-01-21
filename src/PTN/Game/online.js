@@ -9,9 +9,19 @@ import Tag from "../Tag";
 
 import { each, map, zipObject } from "lodash";
 
+export const getPlayer = (game, uid) => {
+  return game && game.config && game.config.players
+    ? game.config.players.indexOf(uid) + 1
+    : 0;
+};
+
 export default class GameOnline {
+  player(uid) {
+    return getPlayer(this, uid);
+  }
+
   get openPlayer() {
-    return this.tag("player1") ? (this.tag("player2") ? 0 : 2) : 1;
+    return this.config.players ? this.config.players.indexOf(null) + 1 : 1;
   }
 
   get json() {

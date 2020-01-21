@@ -12,53 +12,17 @@
         <div class="scroll" style="max-height: calc(100vh - 18.5rem)">
           <div v-if="this.isLocal">
             <q-list>
-              <smooth-reflow class="q-gutter-y-md column no-wrap">
-                <q-item v-if="isPrivate || isLoggedIn">
-                  <q-item-section>
-                    <q-input
-                      :value="isPrivate ? playerName : username"
-                      @input="playerName = $event"
-                      :label="$t('Player Name')"
-                      :rules="[validateName]"
-                      :hint="
-                        $t(
-                          'hints.playerName' +
-                            (isPrivate ? 'Private' : 'Public')
-                        )
-                      "
-                      @keydown.enter.prevent="create"
-                      :readonly="!isPrivate"
-                      color="accent"
-                      filled
-                    >
-                      <template v-slot:prepend>
-                        <q-icon :name="$store.getters.playerIcon(player)" />
-                      </template>
-                      <template v-slot:append v-if="!isPrivate && isLoggedIn">
-                        <q-btn
-                          @click="$store.dispatch('online/LOG_OUT')"
-                          :label="$t('Log Out')"
-                          color="accent"
-                          dense
-                          flat
-                        />
-                      </template>
-                    </q-input>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  v-else
-                  class="text-accent q-btn full-width"
-                  clickable
-                  v-ripple
-                  :to="{ name: 'login' }"
-                >
-                  <q-item-section label>
-                    {{ $t("Log In") }}
-                  </q-item-section>
-                </q-item>
-              </smooth-reflow>
+              <q-item>
+                <q-item-section>
+                  <PlayerName
+                    ref="playerName"
+                    v-model="playerName"
+                    :player="player"
+                    :is-private="isPrivate"
+                    @validate="isValid = $event"
+                  />
+                </q-item-section>
+              </q-item>
 
               <q-item>
                 <q-item-section>
@@ -70,6 +34,7 @@
                     :options="players"
                     spread
                     dense
+                    stack
                   />
                 </q-item-section>
               </q-item>
@@ -79,7 +44,7 @@
                   <q-item-label>{{ $t("Private Game") }}</q-item-label>
                   <smooth-reflow>
                     <q-item-label caption v-show="isPrivate">
-                      {{ $t("hints.privateGame") }}
+                      {{ $t("hint.privateGame") }}
                     </q-item-label>
                   </smooth-reflow>
                 </q-item-section>
@@ -97,6 +62,8 @@
                 </q-item-section>
               </q-item>
             </q-list>
+
+            <message-output :error="error" content-class="q-ma-md" />
           </div>
 
           <div v-else>
@@ -104,59 +71,29 @@
               <q-item v-if="game && game.config.id">
                 <q-input
                   class="col-grow"
-                  :value="publicURL"
-                  :label="$t('Public')"
+                  :value="gameURL"
                   :hint="
-                    game.config.playerKey
-                      ? $t('hints.public')
-                      : $t('hints.spectate')
+                    user && game.player(user.uid)
+                      ? $t('hint.url')
+                      : $t('hint.spectate')
                   "
                   readonly
                   filled
                 >
                   <template v-slot:prepend>
-                    <q-icon name="public" />
+                    <q-icon name="link" />
                   </template>
                   <template v-slot:append>
                     <q-btn
-                      @click="qrCode(publicURL)"
+                      @click="qrCode(gameURL)"
                       icon="app:qrcode"
                       color="accent"
                       dense
                       flat
                     />
                     <q-btn
-                      @click="copy(publicURL)"
-                      icon="file_copy"
-                      dense
-                      flat
-                    />
-                  </template>
-                </q-input>
-              </q-item>
-              <q-item v-if="game && game.config.playerKey">
-                <q-input
-                  class="col-grow"
-                  :value="privateURL"
-                  :label="$t('Private')"
-                  :hint="$t('hints.private')"
-                  readonly
-                  filled
-                >
-                  <template v-slot:prepend>
-                    <q-icon :name="playerIcon(game.config.player)" />
-                  </template>
-                  <template v-slot:append>
-                    <q-btn
-                      @click="qrCode(privateURL)"
-                      icon="app:qrcode"
-                      color="accent"
-                      dense
-                      flat
-                    />
-                    <q-btn
-                      @click="copy(privateURL)"
-                      icon="file_copy"
+                      @click="copy(gameURL)"
+                      icon="content_copy"
                       dense
                       flat
                     />
@@ -191,15 +128,16 @@
 
 <script>
 import QRCode from "./QRCode";
-
-import { formats } from "../../PTN/Tag";
+import PlayerName from "../controls/PlayerName";
 
 export default {
   name: "ShareOnline",
-  components: { QRCode },
+  components: { QRCode, PlayerName },
   props: ["value", "game"],
   data() {
     return {
+      error: "",
+      isValid: false,
       players: [
         { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
         { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
@@ -224,18 +162,8 @@ export default {
     isLoggedIn() {
       return this.user && !this.user.isAnonymous;
     },
-    isValid() {
-      if (this.isPrivate) {
-        return this.validateName(this.playerName) === true;
-      } else {
-        return this.isLoggedIn;
-      }
-    },
     user() {
       return this.$store.state.online.user;
-    },
-    username() {
-      return this.$store.getters["online/playerName"]();
     },
     player: {
       get() {
@@ -263,28 +191,21 @@ export default {
           return "grey-10";
       }
     },
-    publicURL() {
+    gameURL() {
       return this.game.isLocal
         ? ""
         : this.$store.getters["online/url"](this.game) || "";
-    },
-    privateURL() {
-      return this.game.isLocal
-        ? ""
-        : this.$store.getters["online/url"](this.game, true) || "";
     }
   },
   methods: {
-    validateName(value) {
-      return (
-        formats.player1.test(value.trim()) ||
-        this.$t("error['Invalid player name']")
-      );
-    },
     playerIcon(player) {
       return this.$store.getters.playerIcon(player);
     },
     create() {
+      if (!this.isValid) {
+        return;
+      }
+
       let player = this.player;
       let players = {};
 
@@ -293,7 +214,9 @@ export default {
         player = Math.round(Math.random() + 1);
       }
       players[player] = this.user.uid;
+
       if (this.isPrivate) {
+        // Remember player name
         this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
       }
 
@@ -310,7 +233,7 @@ export default {
         })
         .catch(error => {
           this.loading = false;
-          this.$store.getters.error(error);
+          this.error = error;
         });
     },
     copy(text) {
@@ -328,9 +251,6 @@ export default {
     isLoggedIn(isLoggedIn) {
       if (isLoggedIn) {
         this.isPrivate = false;
-        if (!this.playerName) {
-          this.playerName = this.username;
-        }
       }
     }
   }

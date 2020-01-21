@@ -2,30 +2,20 @@
   <q-dialog :value="value" @input="$emit('input', $event)" persistent>
     <q-card style="width: 300px" class="bg-secondary">
       <q-card-section>
-        <smooth-reflow>
-          <q-input
-            ref="input"
-            v-model="playerName"
-            :label="$t('Player Name')"
-            :rules="[validateName]"
-            :autofocus="!playerName.length"
-            @keydown.enter.prevent="play"
-            color="accent"
-            hide-bottom-space
-            clearable
-          >
-            <template v-slot:prepend>
-              <q-icon :name="$store.getters.playerIcon(player)" />
-            </template>
-          </q-input>
-        </smooth-reflow>
+        <PlayerName
+          ref="playerName"
+          v-model="playerName"
+          :player="player || openPlayer"
+          :is-private="isPrivate"
+          @validate="isValid = $event"
+        />
       </q-card-section>
 
       <q-card-actions class="row items-center justify-end q-gutter-sm">
         <q-btn :label="$t('Spectate')" @click="spectate" color="accent" flat />
         <q-btn
           :label="$t('Play')"
-          :disabled="playDisabled"
+          :disabled="!validatePlay()"
           @click="play"
           color="accent"
           flat
@@ -36,29 +26,28 @@
 </template>
 
 <script>
-import { formats } from "../../PTN/Tag";
-
-import { omit } from "lodash";
+import PlayerName from "../controls/PlayerName";
 
 export default {
   name: "JoinGame",
+  components: { PlayerName },
   props: ["value", "game"],
   data() {
     return {
-      playerName: this.$store.getters["online/playerName"](
-        this.game.config.isPrivate
-      ),
-      validateName: value => formats.player1.test(value)
+      isValid: false,
+      playerName: this.$store.state.playerName
     };
   },
   computed: {
-    player() {
+    openPlayer() {
       return this.game.openPlayer;
     },
-    playDisabled() {
-      return (
-        !this.player || !this.playerName || !this.validateName(this.playerName)
-      );
+    player() {
+      const user = this.$store.state.online.user;
+      return user ? this.game.player(user.uid) : 0;
+    },
+    isPrivate() {
+      return this.game.config.isPrivate;
     }
   },
   methods: {
@@ -66,40 +55,38 @@ export default {
       this.$emit("input", false);
     },
     spectate() {
-      if (this.game.config.player !== 0) {
-        let config = Object.assign(omit(this.game.config, "playerKey"), {
-          player: 0
-        });
-        this.$store.dispatch("SET_CONFIG", { game: this.game, config });
-      }
-
       this.close();
     },
     play() {
-      if (this.playDisabled) {
+      if (!this.validatePlay()) {
         return;
       }
 
-      // Remember player name
-      if (this.validateName(this.playerName)) {
-        this.$store.dispatch("online/SET_USERNAME", this.playerName);
-      } else {
-        return;
+      if (this.isPrivate) {
+        // Remember player name
+        this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
       }
 
-      this.$store.dispatch("online/JOIN_GAME", {
-        game: this.game,
-        player: this.player,
-        playerName: this.playerName
+      // Join game
+      this.$store.dispatch("online/JOIN_GAME", this.game).catch(error => {
+        this.$store.getters.error(error.message);
       });
 
       this.close();
+    },
+    validatePlay() {
+      return !this.player && this.openPlayer && this.playerName && this.isValid;
     }
   },
   watch: {
     value(visible) {
       if (visible) {
         this.playerName = this.$store.state.playerName;
+      }
+    },
+    player(player) {
+      if (player) {
+        this.close();
       }
     }
   }

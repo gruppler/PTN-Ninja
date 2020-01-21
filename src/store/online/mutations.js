@@ -1,4 +1,8 @@
-import { isEmpty, pick } from "lodash";
+import { isEmpty, omit, pick } from "lodash";
+
+export const INIT = state => {
+  state.initialized = true;
+};
 
 export const SET_USER = (state, user) => {
   if (!user || isEmpty(user)) {
@@ -10,24 +14,47 @@ export const SET_USER = (state, user) => {
     "email",
     "emailVerified",
     "displayName",
-    "isAnonymous",
-    "publicGames",
-    "privateGames"
+    "isAnonymous"
   ]);
-  state.user.games = state.user.privateGames.concat(state.user.publicGames);
+  state.playerGames = {};
+  state.privateGames = {};
 };
 
-export const LOAD_GAMES = (state, games) => {
-  state.games = games;
+export const LISTEN_PLAYER_GAMES = (state, unsubscribe) => {
+  state.playerGamesListener = unsubscribe;
 };
 
-export const LISTEN_GAMES = (state, unsubscribe) => {
-  state.gamesListener = unsubscribe;
+export const UNLISTEN_PLAYER_GAMES = state => {
+  state.playerGamesListener = null;
 };
 
-export const UNLISTEN_GAMES = state => {
-  if (state.gamesListener) {
-    state.gamesListener();
-    state.gamesListener = null;
+export const SET_PLAYER_GAME = (state, game) => {
+  state.playerGames = { ...state.playerGames, [game.config.id]: game };
+  if (game.config.isPrivate) {
+    state.privateGames = {
+      ...state.privateGames,
+      [game.config.id]: game
+    };
   }
+};
+
+export const REMOVE_PLAYER_GAME = (state, id) => {
+  state.playerGames = omit(state.playerGames, id);
+  state.privateGames = omit(state.privateGames, id);
+};
+
+export const SET_PUBLIC_GAME = (state, game) => {
+  state.publicGames = { ...state.publicGames, [game.config.id]: game };
+};
+
+export const REMOVE_PUBLIC_GAME = (state, id) => {
+  state.publicGames = omit(state.publicGames, id);
+};
+
+export const LISTEN_PUBLIC_GAMES = (state, unsubscribe) => {
+  state.publicGamesListener = unsubscribe;
+};
+
+export const UNLISTEN_PUBLIC_GAMES = state => {
+  state.publicGamesListener = null;
 };

@@ -64,6 +64,7 @@
                   v-if="showOnline"
                   ref="gameTable"
                   v-model="selectedGames"
+                  selection-mode="single"
                 />
               </recess>
             </q-list>
@@ -183,7 +184,7 @@ export default {
         if (this.selectedGames.length) {
           // Load online game(s)
           this.selectedGames.forEach(game => {
-            this.$store.dispatch("online/LOAD_GAME", game.config);
+            this.$store.dispatch("online/LOAD_GAME", game.config.id);
           });
           this.selectedGames = [];
         }

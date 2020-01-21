@@ -9,12 +9,6 @@ const routes = [
     props: true
   },
   {
-    name: "player",
-    path: "/player/:playerKey",
-    component: () => import("layouts/Main"),
-    props: true
-  },
-  {
     name: "local",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {

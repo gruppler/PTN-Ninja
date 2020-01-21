@@ -97,9 +97,10 @@ export default {
       return this.game.chatlog;
     },
     player() {
-      return this.game.isLocal
+      const user = this.$store.state.online.user;
+      return this.game.isLocal || !user
         ? this.game.state.player
-        : this.game.config.player;
+        : this.game.player(user.uid);
     },
     time() {
       return this.game.datetime;

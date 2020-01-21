@@ -256,7 +256,7 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            :readonly="game && !game.isLocal && game.config.player !== 1"
+            :readonly="game && !game.isLocal && player !== 1"
             @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
@@ -296,7 +296,7 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            :readonly="game && !game.isLocal && game.config.player !== 2"
+            :readonly="game && !game.isLocal && player !== 2"
             @keydown.enter.prevent="submit"
             color="accent"
             hide-bottom-space
@@ -683,6 +683,10 @@ export default {
         ? this.results.find(option => option.value === this.tags.result)
         : false;
       return result ? result.label : "";
+    },
+    player() {
+      const user = this.$store.state.online.user;
+      return user ? this.game.player(user.uid) : 0;
     }
   },
   methods: {

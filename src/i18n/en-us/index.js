@@ -173,17 +173,12 @@ export default {
     logInOK: "Proceed and Abandon Games",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?",
-    resetPassword: "Reset the password for {email}?",
-    resetPasswordSent: "Reset password email sent."
-  },
-
-  count: {
-    xGamesSelected: "No Games Selected | 1 Game Selected | {x} Games Selected"
+    resetPassword: "Reset the password for {email}?"
   },
 
   error: {
-    "Branch already exists": "Branch already exists",
-    OnlineGamesLimit: "Maximum number of online games reached",
+    "Branch already exists": "That branch already exists.",
+    "Game does not exist": "That game does not exist.",
     "Invalid branch": "Invalid branch",
     "Invalid branch name": "Invalid branch name",
     "Invalid caps": "Invalid capstone count",
@@ -216,17 +211,23 @@ export default {
     "Player exists": "That name is already taken",
     "Unrecognized tag": "Unrecognized tag",
     UnvalidatedEmail: "Please validate your email address.",
+    "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
     "auth/wrong-password": "Incorrect password"
   },
 
-  hints: {
+  success: {
+    resetPasswordSent: "Reset password email sent."
+  },
+
+  warning: {},
+
+  hint: {
     playerNamePrivate: "Whatever you want to call yourself",
     playerNamePublic: "Your unique name",
-    public: "Share this with your opponent and spectators",
-    private: "Share this with your other devices",
+    url: "Share this with your opponent and spectators",
     privateGame: "This game will not be listed",
-    spectate: "Share this with other spectators and devices"
+    spectate: "Share this with other spectators"
   },
 
   hotkeys: {
