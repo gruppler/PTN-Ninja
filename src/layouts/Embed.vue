@@ -9,7 +9,9 @@
           stretch
           flat
         />
-        <q-toolbar-title>{{ title }}</q-toolbar-title>
+        <q-toolbar-title id="title" class="ellipsis-2-lines">
+          {{ title }}
+        </q-toolbar-title>
         <ShareButton ref="shareButton" :game="game" flat stretch />
         <q-btn
           icon="open_in_new"
@@ -307,4 +309,9 @@ export default {
 <style lang="stylus">
 .q-drawer
   background rgba($blue-grey-5, 0.75)
+
+#title
+  @media (max-width: $breakpoint-xs-max)
+    font-size 1.2em
+    white-space normal
 </style>
