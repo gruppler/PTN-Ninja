@@ -38,7 +38,7 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="folder_open" />
+                  <q-icon name="browse_files" />
                 </q-item-section>
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
@@ -48,12 +48,12 @@
                 clickable
               >
                 <q-item-section avatar>
-                  <q-icon name="public" />
+                  <q-icon name="online" />
                 </q-item-section>
                 <q-item-section>{{ $t("Online") }}</q-item-section>
                 <q-item-section side>
                   <q-icon
-                    name="keyboard_arrow_down"
+                    name="arrow_drop_down"
                     class="q-expansion-item__toggle-icon"
                     :class="{ 'rotate-180': showOnline }"
                   />

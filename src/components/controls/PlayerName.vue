@@ -34,7 +34,7 @@
         :label="$t('Log In')"
         color="accent"
         text-color="grey-10"
-        icon="account_circle"
+        icon="account"
         style="height: 3.5em"
         v-ripple
         rounded

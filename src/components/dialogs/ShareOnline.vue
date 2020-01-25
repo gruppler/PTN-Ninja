@@ -84,19 +84,8 @@
                     <q-icon name="link" />
                   </template>
                   <template v-slot:append>
-                    <q-btn
-                      @click="qrCode(gameURL)"
-                      icon="app:qrcode"
-                      color="accent"
-                      dense
-                      flat
-                    />
-                    <q-btn
-                      @click="copy(gameURL)"
-                      icon="content_copy"
-                      dense
-                      flat
-                    />
+                    <q-btn @click="qrCode(gameURL)" icon="qrcode" dense flat />
+                    <q-btn @click="copy(gameURL)" icon="copy" dense flat />
                   </template>
                 </q-input>
               </q-item>
@@ -143,7 +132,7 @@ export default {
         { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
         {
           label: this.$t("Random"),
-          icon: "casino",
+          icon: "random",
           value: "random"
         }
       ],

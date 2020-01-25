@@ -183,7 +183,7 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
 export const COPY = function(context, { text, message }) {
   copyToClipboard(text);
   Notify.create({
-    icon: "content_copy",
+    icon: "copy",
     type: "positive",
     color: "white",
     classes: "text-grey-10",

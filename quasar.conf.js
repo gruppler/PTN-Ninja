@@ -16,11 +16,12 @@ module.exports = function(ctx) {
 
     css: ["app.styl"],
 
-    extras: ["roboto-font", "material-icons"],
+    extras: ["roboto-font", /* "material-icons", */ "mdi-v4"],
 
     framework: {
       all: "auto",
       autoImportComponentCase: "kebab",
+      iconSet: "mdi-v4",
 
       plugins: [
         "AddressbarColor",
@@ -31,8 +32,6 @@ module.exports = function(ctx) {
         "LocalStorage",
         "Notify"
       ]
-
-      // iconSet: "svg-mdi-v4"
     },
 
     supportIE: false,

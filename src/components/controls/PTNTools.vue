@@ -7,7 +7,7 @@
         :text-color="showAllBranches ? 'accent' : ''"
         class="no-border-radius"
       >
-        <q-icon name="call_split" class="rotate-180" />
+        <q-icon name="branch" class="rotate-180" />
       </q-btn>
 
       <q-btn
@@ -22,26 +22,26 @@
         class="no-border-radius"
         :disabled="!game.isLocal"
       >
-        <q-icon name="flip" class="rotate-270" />
+        <q-icon name="trim" class="rotate-180" />
         <q-menu v-if="game.isLocal" auto-close square>
           <q-list class="bg-secondary text-white">
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
               <q-item-section side>
-                <q-icon name="call_split" class="rotate-180" />
+                <q-icon name="branch" class="rotate-180" />
               </q-item-section>
               <q-item-section>{{ $t("Trim Branches") }}</q-item-section>
             </q-item>
 
             <q-item clickable @click="$store.dispatch('TRIM_TO_PLY', game)">
               <q-item-section side>
-                <q-icon name="flip" class="rotate-270" />
+                <q-icon name="trim" class="rotate-180" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
 
             <q-item clickable @click="$store.dispatch('TRIM_TO_BOARD', game)">
               <q-item-section side>
-                <q-icon name="apps" />
+                <q-icon name="board" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Board") }}</q-item-section>
             </q-item>

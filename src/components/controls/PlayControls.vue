@@ -20,7 +20,7 @@
         round
         flat
         :disable="isFirst || plyInProgress"
-        icon="first_page"
+        icon="first"
       />
       <q-btn
         @click="prev"
@@ -33,7 +33,7 @@
         round
         flat
         :disable="isFirst || plyInProgress"
-        icon="keyboard_arrow_left"
+        icon="backward"
       />
       <q-btn
         @click="playpause"
@@ -43,7 +43,7 @@
         color="accent"
         text-color="grey-10"
         :disable="!game.state.ply || plyInProgress"
-        :icon="isPlaying ? 'pause' : 'play_arrow'"
+        :icon="isPlaying ? 'pause' : 'play'"
       />
       <q-btn
         @click="next"
@@ -56,7 +56,7 @@
         round
         flat
         :disable="isLast || plyInProgress"
-        icon="keyboard_arrow_right"
+        icon="forward"
       />
       <q-btn
         @click="last"
@@ -65,7 +65,7 @@
         round
         flat
         :disable="isLast || plyInProgress"
-        icon="last_page"
+        icon="last"
       />
       <q-btn
         v-shortkey="{ ...options, ...branchControls }"
@@ -75,7 +75,7 @@
         :disable="branches.length < 2 || plyInProgress"
         :color="hasBranches ? 'accent' : ''"
       >
-        <q-icon name="call_split" class="rotate-180" />
+        <q-icon name="branch" class="rotate-180" />
         <BranchMenu
           v-if="$store.state.showControls"
           v-model="branchMenu"

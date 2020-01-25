@@ -47,17 +47,12 @@
           v-if="props.col.icon"
           :name="props.col.icon"
           :title="isWide ? '' : props.col.label"
+          :class="{
+            'q-mr-xs': isWide && props.col.label,
+            [props.col.iconClass]: true
+          }"
           size="xs"
         />
-        <template v-if="props.col.icons">
-          <q-icon
-            v-for="(icon, i) in props.col.icons"
-            :name="icon"
-            :title="isWide ? '' : props.col.label"
-            :key="'p' + i"
-            size="xs"
-          />
-        </template>
         <span v-show="(!props.col.icon && !props.col.icons) || isWide">
           {{ props.col.label }}
         </span>
@@ -169,25 +164,26 @@ export default {
         {
           name: "players",
           label: this.$t("Players"),
-          icons: [this.playerIcon(1), this.playerIcon(2)],
+          icon: "players",
           align: "left"
         },
         {
           name: "size",
           label: this.$t("Size"),
-          icon: "grid_on",
+          icon: "size",
+          iconClass: "flip-vertical",
           align: "center"
         },
         {
           name: "date",
-          label: this.$t("Date"),
-          icon: "event",
+          label: this.$t("DateTime"),
+          icon: "date_time",
           align: "center"
         },
         {
           name: "result",
           label: this.$t("Result"),
-          icon: "gavel",
+          icon: "result",
           align: "center"
         }
       ]

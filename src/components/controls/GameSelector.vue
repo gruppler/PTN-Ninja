@@ -72,7 +72,7 @@
                 </q-item>
                 <q-item clickable @click="downloadAll">
                   <q-item-section side>
-                    <q-icon name="save_alt" />
+                    <q-icon name="download" />
                   </q-item-section>
                   <q-item-section>{{ $t("Download All") }}</q-item-section>
                 </q-item>

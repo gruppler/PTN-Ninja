@@ -3,7 +3,7 @@
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
-          icon="notes"
+          icon="moves"
           @click="left = !left"
           :color="left ? 'accent' : ''"
           stretch
@@ -24,11 +24,7 @@
         </q-toolbar-title>
         <q-btn
           :icon="
-            textTab === 'notes'
-              ? notifyNotes
-                ? 'speaker_notes'
-                : 'speaker_notes_off'
-              : 'question_answer'
+            textTab === 'notes' ? (notifyNotes ? 'notes' : 'notes_off') : 'chat'
           "
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"

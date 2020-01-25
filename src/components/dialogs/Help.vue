@@ -114,8 +114,13 @@ export default {
 
 .body--dark .q-markdown
   .q-markdown--link
-    color: $accent
+    color $accent
+    border-bottom none
+    &.q-markdown--link-external:after
+      content "\F3CC"
+      font-family "Material Design Icons"
 
     &:hover
-      color: darken($accent, 10%)
+      color: lighten($accent, 10%)
+      text-decoration underline
 </style>

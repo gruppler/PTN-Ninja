@@ -52,14 +52,14 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
 export const playerIcon = () => player => {
   switch (player) {
     case 1:
-      return "person";
+      return "player1";
     case 2:
-      return "person_outline";
+      return "player2";
     case 0:
-    case "spectator":
-      return "supervised_user_circle";
+      return "spectator";
     case "random":
-      return "help";
+    case "tie":
+      return "players";
     default:
       return "";
   }

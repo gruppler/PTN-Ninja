@@ -34,6 +34,7 @@ export default {
   "Create Online Game": "Create Online Game",
   "Current Move": "Current Move",
   Date: "Date",
+  DateTime: "Date/Time",
   Delete: "Delete",
   "Delete Ply": "Delete Ply",
   Dismiss: "Dismiss",

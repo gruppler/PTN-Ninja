@@ -29,7 +29,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="person" />
+              <q-icon name="account" />
             </template>
           </q-input>
         </smooth-reflow>
@@ -48,7 +48,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="mail" />
+              <q-icon name="email" />
             </template>
           </q-input>
           <q-input
@@ -66,7 +66,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="lock" />
+              <q-icon name="password" />
             </template>
             <template v-slot:append>
               <q-icon
