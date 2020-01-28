@@ -90,25 +90,7 @@ export default {
       }));
     },
     name() {
-      if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
-        return this.game.name;
-      } else {
-        const user = this.$store.state.online.user;
-        let otherPlayer = user ? getOtherPlayer(this.game, user.uid) : false;
-        if (!otherPlayer) {
-          return this.game.name;
-        } else {
-          otherPlayer = this.game.tag("player" + otherPlayer);
-          if (otherPlayer) {
-            return this.game.name.replace(
-              /[^"]+ vs [^"]+( \dx\d)/,
-              "vs " + otherPlayer + "$1"
-            );
-          } else {
-            return this.game.name;
-          }
-        }
-      }
+      return this.game.name;
     }
   },
   methods: {

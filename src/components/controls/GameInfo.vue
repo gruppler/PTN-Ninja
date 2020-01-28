@@ -220,8 +220,8 @@
         flat
       >
         <div v-show="separatePieceCounts" class="column">
-          <q-icon name="person" />
-          <q-icon name="person_outline" />
+          <q-icon name="player1" />
+          <q-icon name="player2" />
         </div>
         <q-icon v-show="!separatePieceCounts" name="players" />
       </q-btn>
@@ -242,7 +242,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="person" />
+              <q-icon name="player1" />
             </template>
           </q-input>
 
@@ -280,7 +280,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="person_outline" />
+              <q-icon name="player2" />
             </template>
           </q-input>
 

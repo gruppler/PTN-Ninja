@@ -11,11 +11,7 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-icon
-              name="edit"
-              @click.stop="edit"
-              class="q-mr-sm"
-            />
+            <q-icon name="edit" @click.stop="edit" class="q-mr-sm" />
           </GameSelector>
         </q-toolbar-title>
         <q-btn
