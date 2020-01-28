@@ -102,10 +102,14 @@ export default {
       let text;
       switch (type) {
         case "link":
-          text = this.$store.getters.url(this.game, {
-            origin: true,
-            state: true
-          });
+          if (this.game.isLocal) {
+            text = this.$store.getters.url(this.game, {
+              origin: true,
+              state: true
+            });
+          } else {
+            text = this.$store.getters["online/url"](this.game);
+          }
           break;
         case "ply":
           text = this.game.state.ply.text();
@@ -132,10 +136,14 @@ export default {
       this.$emit("online");
     },
     qrCode() {
-      this.qrText = this.$store.getters.url(this.game, {
-        origin: true,
-        state: true
-      });
+      if (this.game.config.id) {
+        this.qrText = this.$store.getters["online/url"](this.game);
+      } else {
+        this.qrText = this.$store.getters.url(this.game, {
+          origin: true,
+          state: true
+        });
+      }
       this.qrDialog = true;
     },
     share() {
