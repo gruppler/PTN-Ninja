@@ -84,7 +84,7 @@ export const url = state => (game, options = {}) => {
   if ("name" in options) {
     params.name = options.name;
   } else if (game.name && game.name !== game.generateName()) {
-    params.name = urlEncode(game.name);
+    params.name = game.name;
   }
 
   if (options.origin) {

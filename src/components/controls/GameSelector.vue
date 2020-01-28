@@ -90,7 +90,7 @@ export default {
       }));
     },
     name() {
-      return this.game.name;
+      return this.games[0].label;
     }
   },
   methods: {
