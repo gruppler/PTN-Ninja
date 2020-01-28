@@ -767,17 +767,25 @@ export default {
     this.$q.dark.set(true);
     this.$store.dispatch("online/INIT").then(() => {
       if (this.gameID) {
-        // Add online game from URL
-        this.$store
-          .dispatch("online/LOAD_GAME", this.gameID)
-          .then(() => {
-            this.$router.replace("/");
-          })
-          .catch(error => {
-            this.$store.getters.error({
-              message: this.$t(`error["${error.message}"]`)
+        // Check that the game is not already open
+        const index = this.$store.state.games.findIndex(
+          game => game.config.id === this.gameID
+        );
+        if (index >= 0) {
+          this.$store.dispatch("SELECT_GAME", index);
+        } else {
+          // Add online game from URL
+          this.$store
+            .dispatch("online/LOAD_GAME", this.gameID)
+            .then(() => {
+              this.$router.replace("/");
+            })
+            .catch(error => {
+              this.$store.getters.error({
+                message: this.$t(`error["${error.message}"]`)
+              });
             });
-          });
+        }
       }
     });
   },
