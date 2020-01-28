@@ -80,6 +80,7 @@
 
         <message-output
           :error="error"
+          :warning="warning"
           :success="success"
           content-class="q-mt-md"
         />
@@ -153,6 +154,17 @@ export default {
     },
     userEmail() {
       return this.user ? this.user.email : "";
+    },
+    warning() {
+      if (
+        this.tab === "login" &&
+        this.user &&
+        this.user.isAnonymous &&
+        Object.values(this.$store.state.online.privateGames).length
+      ) {
+        return this.$t("warning.logIn");
+      }
+      return "";
     }
   },
   methods: {

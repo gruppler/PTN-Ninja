@@ -221,7 +221,10 @@ export default {
     resetPasswordSent: "Reset password email sent."
   },
 
-  warning: {},
+  warning: {
+    logIn:
+      "Logging in will abandon all private games! Register an account to keep them."
+  },
 
   hint: {
     playerNamePrivate: "Whatever you want to call yourself",

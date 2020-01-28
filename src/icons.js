@@ -25,6 +25,7 @@ export default {
   download: "mdi-download",
   email: "mdi-email",
   embed: "mdi-code-tags",
+  error: "mdi-alert-circle",
   file: "mdi-file",
   first: "mdi-page-first",
   flats1: "mdi-square",
@@ -67,10 +68,12 @@ export default {
   site: "mdi-map-marker",
   size: "mdi-ruler-square",
   spectator: "mdi-account-group",
+  success: "mdi-check-circle",
   swap_vert: "mdi-swap-vertical",
   time: "mdi-clock-outline",
   trim: "mdi-flip-vertical",
   undo: "mdi-undo",
   visibility: "mdi-eye",
-  visibility_off: "mdi-eye-off"
+  visibility_off: "mdi-eye-off",
+  warning: "mdi-alert"
 };
