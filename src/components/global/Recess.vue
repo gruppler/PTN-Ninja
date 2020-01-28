@@ -12,7 +12,7 @@
 
 <script>
 export default {
-  name: "Recess",
+  name: "recess",
   props: {
     tag: {
       type: String,

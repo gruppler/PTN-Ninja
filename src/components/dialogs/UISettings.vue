@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <q-card style="width: 300px" class="bg-secondary">
-      <DialogHeader>{{ $t("Preferences") }}</DialogHeader>
+      <dialog-header>{{ $t("Preferences") }}</dialog-header>
 
       <q-separator />
 
@@ -17,7 +17,7 @@
           group="settings"
           default-opened
         >
-          <Recess>
+          <recess>
             <q-list style="max-height: calc(100vh - 24rem)">
               <q-item>
                 <q-item-section>
@@ -116,11 +116,11 @@
                 </q-item-section>
               </q-item>
             </q-list>
-          </Recess>
+          </recess>
         </q-expansion-item>
 
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
-          <Recess>
+          <recess>
             <q-list style="max-height: calc(100vh - 24rem)">
               <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
@@ -167,7 +167,7 @@
                 </q-item-section>
               </q-item>
             </q-list>
-          </Recess>
+          </recess>
         </q-expansion-item>
       </q-list>
 
@@ -181,8 +181,6 @@
 </template>
 
 <script>
-import DialogHeader from "../general/DialogHeader";
-
 import { zipObject } from "lodash";
 import { HOTKEYS_FORMATTED } from "../../keymap";
 
@@ -206,7 +204,6 @@ const props = [
 
 export default {
   name: "UISettings",
-  components: { DialogHeader },
   props: ["value"],
   data() {
     return {

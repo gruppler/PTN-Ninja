@@ -9,7 +9,7 @@ import smoothReflow from "vue-smooth-reflow";
 import { defaults } from "lodash";
 
 export default {
-  name: "SmoothReflow",
+  name: "smooth-reflow",
   mixins: [smoothReflow],
   props: {
     tag: {

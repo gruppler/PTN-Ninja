@@ -32,7 +32,7 @@
 const HEIGHT = 700;
 
 export default {
-  name: "LargeDialog",
+  name: "large-dialog",
   props: ["value", "min-height"],
   computed: {
     maximized() {

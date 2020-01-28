@@ -1,5 +1,5 @@
 <template>
-  <Recess>
+  <recess>
     <div class="full-ptn absolute-fit scroll non-selectable">
       <div v-if="game">
         <Move
@@ -14,7 +14,7 @@
       </div>
     </div>
     <q-resize-observer @resize="resize" />
-  </Recess>
+  </recess>
 </template>
 
 <script>

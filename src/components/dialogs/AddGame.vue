@@ -13,7 +13,7 @@
 
       <q-separator />
 
-      <SmoothReflow>
+      <smooth-reflow>
         <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section
@@ -47,7 +47,7 @@
                 :label="$t('Online')"
                 icon="public"
               >
-                <Recess>
+                <recess>
                   <q-list>
                     <q-item>
                       <q-item-section align="center">
@@ -55,12 +55,12 @@
                       </q-item-section>
                     </q-item>
                   </q-list>
-                </Recess>
+                </recess>
               </q-expansion-item>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>
-      </SmoothReflow>
+      </smooth-reflow>
 
       <q-separator />
 

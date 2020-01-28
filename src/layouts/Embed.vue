@@ -45,7 +45,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <SmoothReflow
+          <smooth-reflow
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -60,7 +60,7 @@
               current-only
               standalone
             />
-          </SmoothReflow>
+          </smooth-reflow>
         </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles />

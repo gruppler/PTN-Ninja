@@ -1,12 +1,12 @@
 <template>
-  <LargeDialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <large-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs v-model="section" active-color="accent" indicator-color="accent">
         <q-tab name="about" icon="info" :label="$t('About')" />
         <q-tab name="usage" icon="help" :label="$t('Usage')" />
         <q-tab name="hotkeys" icon="keyboard" :label="$t('Hotkeys')" />
       </q-tabs>
-      <SmoothReflow>
+      <smooth-reflow>
         <q-input
           v-show="section === 'hotkeys'"
           v-model="filter"
@@ -22,7 +22,7 @@
             <q-icon name="search" />
           </template>
         </q-input>
-      </SmoothReflow>
+      </smooth-reflow>
     </template>
 
     <div class="help">
@@ -48,17 +48,15 @@
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
-  </LargeDialog>
+  </large-dialog>
 </template>
 
 <script>
-import LargeDialog from "../general/LargeDialog.vue";
-
 import Hotkeys from "../general/Hotkeys.vue";
 
 export default {
   name: "Help",
-  components: { LargeDialog, Hotkeys },
+  components: { Hotkeys },
   props: ["value"],
   data() {
     return {
