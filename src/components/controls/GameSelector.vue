@@ -123,10 +123,14 @@ export default {
       this.$store.dispatch("REMOVE_GAME", index);
       Notify.create({
         message: this.$t("Game x closed", { game: game.name }),
-        timeout: 5000,
+        timeout: 0,
         color: "secondary",
         position: "bottom",
         actions: [
+          {
+            label: this.$t("Dismiss"),
+            color: "accent"
+          },
           {
             label: this.$t("Undo"),
             color: "accent",

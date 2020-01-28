@@ -18,7 +18,7 @@
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section
               class="q-pa-none"
-              style="max-height: calc(100vh - 17rem)"
+              style="max-height: calc(100vh - 13rem)"
             >
               <GameInfo
                 ref="gameInfo"
@@ -64,7 +64,7 @@
 
       <q-separator />
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />

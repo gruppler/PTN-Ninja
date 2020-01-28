@@ -625,32 +625,10 @@ export default {
       separatePieceCounts: false,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
-      sizes: [
-        {
-          label: "3x3",
-          value: 3
-        },
-        {
-          label: "4x4",
-          value: 4
-        },
-        {
-          label: "5x5",
-          value: 5
-        },
-        {
-          label: "6x6",
-          value: 6
-        },
-        {
-          label: "7x7",
-          value: 7
-        },
-        {
-          label: "8x8",
-          value: 8
-        }
-      ],
+      sizes: [3, 4, 5, 6, 7, 8].map(size => ({
+        label: `${size}x${size}`,
+        value: size
+      })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,
