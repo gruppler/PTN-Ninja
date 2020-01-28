@@ -25,6 +25,7 @@ export default {
   download: "mdi-download",
   email: "mdi-email",
   embed: "mdi-code-tags",
+  file: "mdi-file",
   first: "mdi-page-first",
   flats1: "mdi-square",
   flats2: "mdi-square-outline",

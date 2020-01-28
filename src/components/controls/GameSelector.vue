@@ -60,7 +60,7 @@
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         >
-          <q-item-section side v-if="scope.opt.config.isOnline">
+          <q-item-section side v-if="hasOnlineGames">
             <q-icon
               :name="icon(scope.opt)"
               :class="{ 'text-accent': scope.opt.value === 0 }"
@@ -104,6 +104,9 @@ export default {
         config: game.config
       }));
     },
+    hasOnlineGames() {
+      return this.games.some(game => game.config.id);
+    },
     name() {
       const name = this.games[0].label;
       if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
@@ -135,17 +138,24 @@ export default {
       }
     },
     icon(game) {
-      const user = this.$store.state.online.user;
-      return this.$store.getters.playerIcon(
-        user ? getPlayer(game, user.uid) : 0
-      );
+      if (game.config.isOnline) {
+        const user = this.$store.state.online.user;
+        return this.$store.getters.playerIcon(
+          user ? getPlayer(game, user.uid) : 0
+        );
+      } else {
+        return "file";
+      }
     },
     close(index) {
+      if (this.games.length <= 1) {
+        return;
+      }
       const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
       Notify.create({
         message: this.$t("Game x closed", { game: game.name }),
-        timeout: 0,
+        timeout: 10000,
         color: "secondary",
         position: "bottom",
         actions: [

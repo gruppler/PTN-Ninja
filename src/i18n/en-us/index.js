@@ -60,7 +60,7 @@ export default {
   "From current ply": "Start at current position",
   Fullscreen: "Fullscreen",
   "Game Notifications": "Game Notifications",
-  "Game x closed": 'Closed the game "{game}"',
+  "Game x closed": 'Closed "{game}"',
   Height: "Height",
   Help: "Help",
   Hotkeys: "Hotkeys",
