@@ -10,7 +10,7 @@
           flat
         />
         <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector" :game.sync="game">
+          <GameSelector ref="gameSelector" :game="game">
             <q-icon
               v-if="game.isLocal || player"
               name="edit"

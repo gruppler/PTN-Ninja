@@ -101,27 +101,27 @@ export default {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index,
-        config: game.config,
-        ptn: game.ptn
+        config: game.config
       }));
     },
     name() {
+      const name = this.games[0].label;
       if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
-        return this.game.name;
+        return name;
       } else {
         const user = this.$store.state.online.user;
         let otherPlayer = user ? getOtherPlayer(this.game, user.uid) : false;
         if (!otherPlayer) {
-          return this.game.name;
+          return name;
         } else {
           otherPlayer = this.game.tag("player" + otherPlayer);
           if (otherPlayer) {
-            return this.game.name.replace(
+            return name.replace(
               /[^"]+ vs [^"]+( \dx\d)/,
               "vs " + otherPlayer + "$1"
             );
           } else {
-            return this.game.name;
+            return name;
           }
         }
       }

@@ -314,4 +314,5 @@ export default {
   @media (max-width: $breakpoint-xs-max)
     font-size 1.2em
     white-space normal
+    line-height 1.25em
 </style>
