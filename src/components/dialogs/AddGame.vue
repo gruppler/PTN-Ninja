@@ -18,7 +18,7 @@
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section
               class="q-pa-none"
-              style="max-height: calc(100vh - 17rem)"
+              style="max-height: calc(100vh - 13rem)"
             >
               <GameInfo
                 ref="gameInfo"
@@ -43,9 +43,10 @@
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
               <q-item
-                @click="showOnline = !showOnline"
+                @click="toggleOnline"
                 :class="{ 'text-accent': showOnline }"
                 clickable
+                v-ripple
               >
                 <q-item-section avatar>
                   <q-icon name="online" />
@@ -64,7 +65,6 @@
                   v-if="showOnline"
                   ref="gameTable"
                   v-model="selectedGames"
-                  selection-mode="single"
                 />
               </recess>
             </q-list>
@@ -74,7 +74,7 @@
 
       <q-separator />
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
@@ -176,6 +176,9 @@ export default {
         config: game.config
       });
       this.close();
+    },
+    async toggleOnline() {
+      await this.$nextTick(() => (this.showOnline = !this.showOnline));
     },
     ok() {
       if (this.tab === "new") {

@@ -2,6 +2,8 @@
   <smooth-reflow class="column no-wrap">
     <template v-if="isPrivate || isLoggedIn">
       <q-input
+        v-bind="$attrs"
+        v-on="$listeners"
         :value="isPrivate ? playerName : username"
         @input="playerName = $event"
         :label="$t('Player Name')"

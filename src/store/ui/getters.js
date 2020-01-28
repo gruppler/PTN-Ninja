@@ -65,6 +65,13 @@ export const playerIcon = () => player => {
   }
 };
 
+const urlEncode = url => {
+  return encodeURIComponent(url).replace(
+    /([()])/g,
+    char => "%" + char.charCodeAt(0).toString(16)
+  );
+};
+
 export const url = state => (game, options = {}) => {
   if (!game) {
     return "";
@@ -77,7 +84,7 @@ export const url = state => (game, options = {}) => {
   if ("name" in options) {
     params.name = options.name;
   } else if (game.name && game.name !== game.generateName()) {
-    params.name = game.name;
+    params.name = urlEncode(game.name);
   }
 
   if (options.origin) {
@@ -112,7 +119,7 @@ export const url = state => (game, options = {}) => {
     url +=
       "&" +
       Object.keys(params)
-        .map(key => key + "=" + encodeURIComponent(params[key]))
+        .map(key => key + "=" + urlEncode(params[key]))
         .join("&");
   }
   return url;

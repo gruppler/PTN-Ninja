@@ -37,10 +37,6 @@
       </q-input>
     </template>
 
-    <template v-slot:bottom-left>
-      <message-output :error="error" />
-    </template>
-
     <template v-slot:header-cell="props">
       <q-th :props="props">
         <q-icon

@@ -230,7 +230,18 @@
     <div class="row">
       <div class="col">
         <div class="row q-gutter-md q-mb-md">
+          <PlayerName
+            v-if="game && !game.isLocal && player === 1"
+            class="col-grow"
+            v-model="tags.player1"
+            :player="player"
+            :is-private="game.config.isPrivate"
+            hide-bottom-space
+            hide-hint
+          />
+
           <q-input
+            v-else
             class="col-grow"
             v-model="tags.player1"
             name="player1"
@@ -270,7 +281,18 @@
         </div>
 
         <div class="row q-gutter-md">
+          <PlayerName
+            v-if="game && !game.isLocal && player === 2"
+            class="col-grow"
+            v-model="tags.player2"
+            :player="player"
+            :is-private="game.config.isPrivate"
+            hide-bottom-space
+            hide-hint
+          />
+
           <q-input
+            v-else
             class="col-grow"
             v-model="tags.player2"
             name="player2"
@@ -595,6 +617,8 @@
 import { formats } from "../../PTN/Tag";
 import TPS from "../../PTN/TPS";
 import ResultTag from "../../PTN/Result";
+import PlayerName from "../controls/PlayerName";
+
 import {
   generateName,
   isDefaultName,
@@ -606,7 +630,7 @@ import Result from "../PTN/Result";
 
 export default {
   name: "GameInfo",
-  components: { Result },
+  components: { Result, PlayerName },
   props: ["game", "values", "showAll"],
   data() {
     return {
@@ -641,32 +665,10 @@ export default {
       separatePieceCounts: false,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
-      sizes: [
-        {
-          label: "3x3",
-          value: 3
-        },
-        {
-          label: "4x4",
-          value: 4
-        },
-        {
-          label: "5x5",
-          value: 5
-        },
-        {
-          label: "6x6",
-          value: 6
-        },
-        {
-          label: "7x7",
-          value: 7
-        },
-        {
-          label: "8x8",
-          value: 8
-        }
-      ],
+      sizes: [3, 4, 5, 6, 7, 8].map(size => ({
+        label: `${size}x${size}`,
+        value: size
+      })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,

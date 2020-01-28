@@ -16,7 +16,7 @@ module.exports = function(ctx) {
 
     css: ["app.styl"],
 
-    extras: ["roboto-font", /* "material-icons", */ "mdi-v4"],
+    extras: ["roboto-font", "mdi-v4"],
 
     framework: {
       all: "auto",

@@ -9,7 +9,7 @@
       <dialog-header>{{ $t("Play Online") }}</dialog-header>
 
       <smooth-reflow tag="recess" class="col">
-        <div class="scroll" style="max-height: calc(100vh - 18.5rem)">
+        <div class="scroll" style="max-height: calc(100vh - 15rem)">
           <div v-if="this.isLocal">
             <q-list>
               <q-item>
@@ -32,6 +32,7 @@
                     :toggle-color="playerBGColor"
                     :toggle-text-color="playerTextColor"
                     :options="players"
+                    :ripple="false"
                     spread
                     dense
                     stack
@@ -99,15 +100,19 @@
       <q-separator />
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-        <q-btn
-          v-show="isLocal"
-          @click="create"
-          :label="$t('Create Online Game')"
-          :disabled="!isValid"
-          color="accent"
-          flat
-        />
+        <template v-if="isLocal">
+          <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+          <q-btn
+            @click="create"
+            :label="$t('Create Online Game')"
+            :disabled="!isValid"
+            color="accent"
+            flat
+          />
+        </template>
+        <template v-else>
+          <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        </template>
       </q-card-actions>
     </q-card>
 
