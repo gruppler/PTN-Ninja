@@ -88,6 +88,11 @@ export default {
       if (player) {
         this.close();
       }
+    },
+    "game.isLocal"(isLocal) {
+      if (isLocal) {
+        this.close();
+      }
     }
   }
 };
