@@ -93,7 +93,7 @@ export default {
     },
     validateName(value) {
       return (
-        formats.player1.test(value.trim()) ||
+        (value && formats.player1.test(value.trim())) ||
         this.$t("error['Invalid player name']")
       );
     },

@@ -185,16 +185,17 @@ export const JOIN_GAME = ({ dispatch, getters, state }, game) => {
           players: [...gameData.config.players]
         };
         config.players[player - 1] = state.user.uid;
-        let tags = { ["player" + player]: playerName, ...now() };
-        let changes = {
-          config: omit(config, ["id"]),
-          tags: { ...gameData.tags, ...tags }
-        };
 
+        let tags = { ["player" + player]: playerName, ...now() };
         game.setTags(tags, false);
         dispatch("SET_CONFIG", { game, config }, { root: true });
         dispatch("UPDATE_PTN", game.text(), { root: true });
         game.clearHistory();
+
+        let changes = {
+          config: omit(config, ["id"]),
+          tags: game.JSONTags
+        };
 
         // Update name
         if (game.isDefaultName) {
