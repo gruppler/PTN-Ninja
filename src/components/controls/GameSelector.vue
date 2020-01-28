@@ -51,6 +51,8 @@
           v-if="game.config.isOnline"
           :name="icon(game)"
           :size="$q.screen.lt.sm ? 'xs' : 'sm'"
+          :class="$q.screen.lt.sm ? '' : 'q-mx-sm'"
+          color="white"
         />
       </template>
 
