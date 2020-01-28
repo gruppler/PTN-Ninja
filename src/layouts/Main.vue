@@ -539,7 +539,7 @@ export default {
 
           if (game.config.isOnline) {
             if (
-              !this.player &&
+              (!this.user || !game.player(this.user.uid)) &&
               (game.openPlayer || (!game.config.isPrivate && this.isAnonymous))
             ) {
               this.dialogJoinGame = true;

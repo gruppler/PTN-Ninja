@@ -38,8 +38,6 @@
         text-color="grey-10"
         icon="account"
         style="height: 3.5em"
-        v-ripple
-        rounded
       />
     </template>
   </smooth-reflow>
