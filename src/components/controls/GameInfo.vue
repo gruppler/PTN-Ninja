@@ -35,7 +35,8 @@
         <template v-slot:prepend>
           <q-icon
             @click.right.prevent="showPieceCounts = !showPieceCounts"
-            name="grid_on"
+            name="size"
+            class="flip-vertical"
           />
         </template>
       </q-select>
@@ -59,7 +60,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon @click.right.prevent="fillTPS" name="apps" />
+          <q-icon @click.right.prevent="fillTPS" name="board" />
         </template>
         <template v-slot:append>
           <q-icon
@@ -101,7 +102,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="lens" />
+              <q-icon name="caps1" />
             </template>
           </q-input>
           <q-input
@@ -121,7 +122,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="stop" />
+              <q-icon name="flats1" />
             </template>
           </q-input>
         </div>
@@ -147,7 +148,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="lens" />
+              <q-icon name="caps1" />
             </template>
           </q-input>
           <q-input
@@ -166,7 +167,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="stop" />
+              <q-icon name="flats1" />
             </template>
           </q-input>
         </div>
@@ -188,7 +189,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="radio_button_unchecked" />
+              <q-icon name="caps2" />
             </template>
           </q-input>
           <q-input
@@ -207,7 +208,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="crop_square" />
+              <q-icon name="flats2" />
             </template>
           </q-input>
         </div>
@@ -219,10 +220,10 @@
         flat
       >
         <div v-show="separatePieceCounts" class="column">
-          <q-icon name="person" />
-          <q-icon name="person_outline" />
+          <q-icon name="player1" />
+          <q-icon name="player2" />
         </div>
-        <q-icon v-show="!separatePieceCounts" name="people" />
+        <q-icon v-show="!separatePieceCounts" name="players" />
       </q-btn>
     </div>
 
@@ -241,7 +242,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="person" />
+              <q-icon name="player1" />
             </template>
           </q-input>
 
@@ -261,7 +262,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="star" />
+              <q-icon name="rating1" />
             </template>
           </q-input>
         </div>
@@ -279,7 +280,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="person_outline" />
+              <q-icon name="player2" />
             </template>
           </q-input>
 
@@ -299,7 +300,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="star_border" />
+              <q-icon name="rating2" />
             </template>
           </q-input>
         </div>
@@ -321,7 +322,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="event" />
+          <q-icon name="date" />
         </template>
         <q-popup-proxy
           v-model="showDatePicker"
@@ -380,7 +381,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="access_time" />
+          <q-icon name="time" />
         </template>
         <q-popup-proxy
           v-model="showTimePicker"
@@ -445,7 +446,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="timer" />
+          <q-icon name="clock" />
         </template>
       </q-input>
 
@@ -465,7 +466,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="repeat" />
+          <q-icon name="round" />
         </template>
       </q-input>
     </div>
@@ -488,7 +489,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="gavel" />
+          <q-icon name="result" />
         </template>
 
         <template v-slot:selected>
@@ -535,7 +536,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="stars" />
+          <q-icon name="points" />
         </template>
       </q-input>
     </div>
@@ -552,7 +553,7 @@
       filled
     >
       <template v-slot:prepend>
-        <q-icon name="place" />
+        <q-icon name="site" />
       </template>
     </q-input>
 
@@ -568,7 +569,7 @@
       filled
     >
       <template v-slot:prepend>
-        <q-icon name="emoji_events" />
+        <q-icon name="event" />
       </template>
     </q-input>
   </div>
@@ -624,32 +625,10 @@ export default {
       separatePieceCounts: false,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
-      sizes: [
-        {
-          label: "3x3",
-          value: 3
-        },
-        {
-          label: "4x4",
-          value: 4
-        },
-        {
-          label: "5x5",
-          value: 5
-        },
-        {
-          label: "6x6",
-          value: 6
-        },
-        {
-          label: "7x7",
-          value: 7
-        },
-        {
-          label: "8x8",
-          value: 8
-        }
-      ],
+      sizes: [3, 4, 5, 6, 7, 8].map(size => ({
+        label: `${size}x${size}`,
+        value: size
+      })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         value => ({
           value,

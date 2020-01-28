@@ -33,6 +33,7 @@ export default {
   Copied: "Copied!",
   "Current Move": "Current Move",
   Date: "Date",
+  DateTime: "Date/Time",
   Delete: "Delete",
   "Delete Ply": "Delete Ply",
   Dismiss: "Dismiss",

@@ -2,23 +2,23 @@
   <q-dialog
     :value="value"
     @input="$emit('input', $event)"
-    content-class="non-selectable"
+    content-class="ui-settings non-selectable"
     v-bind="$attrs"
   >
     <q-card style="width: 300px" class="bg-secondary">
-      <DialogHeader>{{ $t("Preferences") }}</DialogHeader>
+      <dialog-header>{{ $t("Preferences") }}</dialog-header>
 
       <q-separator />
 
       <q-list separator>
         <q-expansion-item
-          icon="apps"
+          icon="board"
           :label="$t('Board')"
           group="settings"
           default-opened
         >
-          <Recess>
-            <q-list style="max-height: calc(100vh - 24rem)">
+          <recess>
+            <q-list>
               <q-item>
                 <q-item-section>
                   {{ $t("Play Speed") }}
@@ -116,12 +116,12 @@
                 </q-item-section>
               </q-item>
             </q-list>
-          </Recess>
+          </recess>
         </q-expansion-item>
 
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
-          <Recess>
-            <q-list style="max-height: calc(100vh - 24rem)">
+          <recess>
+            <q-list>
               <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
@@ -167,7 +167,7 @@
                 </q-item-section>
               </q-item>
             </q-list>
-          </Recess>
+          </recess>
         </q-expansion-item>
       </q-list>
 
@@ -181,8 +181,6 @@
 </template>
 
 <script>
-import DialogHeader from "../general/DialogHeader";
-
 import { zipObject } from "lodash";
 import { HOTKEYS_FORMATTED } from "../../keymap";
 
@@ -206,7 +204,6 @@ const props = [
 
 export default {
   name: "UISettings",
-  components: { DialogHeader },
   props: ["value"],
   data() {
     return {
@@ -226,3 +223,12 @@ export default {
   )
 };
 </script>
+
+<style lang="stylus">
+.ui-settings
+  .q-list .q-list
+    min-height 10rem
+    max-height 50vh
+    @media (min-width: $breakpoint-sm-min)
+      max-height calc(100vh - 264px)
+</style>

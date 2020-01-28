@@ -1,5 +1,5 @@
 <template>
-  <LargeDialog
+  <large-dialog
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
@@ -7,7 +7,7 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <DialogHeader>{{ $t("Edit PTN") }}</DialogHeader>
+      <dialog-header>{{ $t("Edit PTN") }}</dialog-header>
     </template>
 
     <PTN-editor ref="editor" :game="game" @save="save" />
@@ -27,18 +27,15 @@
         />
       </q-card-actions>
     </template>
-  </LargeDialog>
+  </large-dialog>
 </template>
 
 <script>
-import LargeDialog from "../general/LargeDialog.vue";
-import DialogHeader from "../general/DialogHeader.vue";
-
 import PTNEditor from "../controls/PTNEditor.vue";
 
 export default {
   name: "EditPTN",
-  components: { LargeDialog, DialogHeader, PTNEditor },
+  components: { PTNEditor },
   props: ["value", "game"],
   data() {
     return {

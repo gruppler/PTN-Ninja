@@ -10,7 +10,7 @@
     />
     <q-btn
       @click="board3D = !board3D"
-      :icon="board3D ? 'apps' : '3d_rotation'"
+      :icon="board3D ? '2d' : '3d'"
       :title="$t((board3D ? '2' : '3') + 'D Board')"
       class="dimmed-btn"
       color="white"

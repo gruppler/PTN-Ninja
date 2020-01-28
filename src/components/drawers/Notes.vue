@@ -1,6 +1,6 @@
 <template>
   <div class="notes column no-wrap">
-    <Recess class="col-grow">
+    <recess class="col-grow">
       <div class="absolute-fit scroll">
         <div class="q-px-md">
           <template v-for="(plyID, i) in plyIDs">
@@ -60,7 +60,7 @@
         </div>
       </div>
       <q-resize-observer @resize="scroll" />
-    </Recess>
+    </recess>
     <div>
       <q-input
         ref="input"
@@ -82,7 +82,7 @@
         <template v-slot:append>
           <q-btn
             @click="send"
-            :icon="editing ? 'edit' : 'add_comment'"
+            :icon="editing ? 'edit' : 'add_note'"
             :disabled="!message.length"
             flat
             dense

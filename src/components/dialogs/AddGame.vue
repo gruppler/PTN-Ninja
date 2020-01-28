@@ -13,12 +13,12 @@
 
       <q-separator />
 
-      <SmoothReflow>
+      <smooth-reflow>
         <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section
               class="q-pa-none"
-              style="max-height: calc(100vh - 17rem)"
+              style="max-height: calc(100vh - 13rem)"
             >
               <GameInfo
                 ref="gameInfo"
@@ -38,16 +38,16 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="folder_open" />
+                  <q-icon name="browse_files" />
                 </q-item-section>
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
               <q-expansion-item
                 group="type"
                 :label="$t('Online')"
-                icon="public"
+                icon="online"
               >
-                <Recess>
+                <recess>
                   <q-list>
                     <q-item>
                       <q-item-section align="center">
@@ -55,16 +55,16 @@
                       </q-item-section>
                     </q-item>
                   </q-list>
-                </Recess>
+                </recess>
               </q-expansion-item>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>
-      </SmoothReflow>
+      </smooth-reflow>
 
       <q-separator />
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />

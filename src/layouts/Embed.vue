@@ -3,13 +3,15 @@
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
-          icon="notes"
+          icon="moves"
           @click="left = !left"
           :color="left ? 'accent' : ''"
           stretch
           flat
         />
-        <q-toolbar-title>{{ title }}</q-toolbar-title>
+        <q-toolbar-title id="title" class="ellipsis-2-lines">
+          {{ title }}
+        </q-toolbar-title>
         <ShareButton ref="shareButton" :game="game" flat stretch />
         <q-btn
           icon="open_in_new"
@@ -19,7 +21,7 @@
           flat
         />
         <q-btn
-          :icon="notifyNotes ? 'speaker_notes' : 'speaker_notes_off'"
+          :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="right ? 'accent' : ''"
@@ -45,7 +47,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <SmoothReflow
+          <smooth-reflow
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -60,7 +62,7 @@
               current-only
               standalone
             />
-          </SmoothReflow>
+          </smooth-reflow>
         </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles />
@@ -306,4 +308,10 @@ export default {
 <style lang="stylus">
 .q-drawer
   background rgba($blue-grey-5, 0.75)
+
+#title
+  @media (max-width: $breakpoint-xs-max)
+    font-size 1.2em
+    white-space normal
+    line-height 1.25em
 </style>

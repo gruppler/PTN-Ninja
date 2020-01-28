@@ -1,5 +1,5 @@
 <template>
-  <LargeDialog
+  <large-dialog
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
@@ -7,7 +7,7 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <DialogHeader>{{ $t("Edit Game") }}</DialogHeader>
+      <dialog-header>{{ $t("Edit Game") }}</dialog-header>
     </template>
 
     <q-card-section class="scroll">
@@ -35,19 +35,16 @@
         />
       </q-card-actions>
     </template>
-  </LargeDialog>
+  </large-dialog>
 </template>
 
 <script>
-import LargeDialog from "../general/LargeDialog.vue";
-import DialogHeader from "../general/DialogHeader.vue";
-
 import GameInfo from "../controls/GameInfo";
 import MoreToggle from "../controls/MoreToggle.vue";
 
 export default {
   name: "EditGame",
-  components: { LargeDialog, DialogHeader, GameInfo, MoreToggle },
+  components: { GameInfo, MoreToggle },
   props: ["value", "game"],
   data() {
     return {

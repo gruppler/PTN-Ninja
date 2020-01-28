@@ -1,5 +1,5 @@
 <template>
-  <LargeDialog
+  <large-dialog
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
@@ -204,17 +204,14 @@
         />
       </q-card-actions>
     </template>
-  </LargeDialog>
+  </large-dialog>
 </template>
 
 <script>
-import LargeDialog from "../general/LargeDialog.vue";
-
 import { cloneDeep } from "lodash";
 
 export default {
   name: "EmbedConfig",
-  components: { LargeDialog },
   props: ["value", "game"],
   data() {
     return {

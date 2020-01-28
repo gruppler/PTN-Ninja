@@ -49,6 +49,29 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
   return name;
 };
 
+export const playerIcon = () => player => {
+  switch (player) {
+    case 1:
+      return "player1";
+    case 2:
+      return "player2";
+    case 0:
+      return "spectator";
+    case "random":
+    case "tie":
+      return "players";
+    default:
+      return "";
+  }
+};
+
+const urlEncode = url => {
+  return encodeURIComponent(url).replace(
+    /([()])/g,
+    char => "%" + char.charCodeAt(0).toString(16)
+  );
+};
+
 export const url = state => (game, options = {}) => {
   if (!game) {
     return "";
@@ -96,7 +119,7 @@ export const url = state => (game, options = {}) => {
     url +=
       "&" +
       Object.keys(params)
-        .map(key => key + "=" + encodeURIComponent(params[key]))
+        .map(key => key + "=" + urlEncode(params[key]))
         .join("&");
   }
   return url;

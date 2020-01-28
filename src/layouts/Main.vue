@@ -3,31 +3,20 @@
     <q-header elevated class="bg-secondary text-white">
       <q-toolbar class="q-pa-none">
         <q-btn
-          icon="notes"
+          icon="moves"
           @click="left = !left"
           :color="left ? 'accent' : ''"
           stretch
           flat
         />
         <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector">
-            <q-btn
-              icon="edit"
-              @click.stop="edit"
-              text-color="white"
-              class="q-pa-sm"
-              dense
-              flat
-            />
+          <GameSelector ref="gameSelector" :game="game">
+            <q-icon name="edit" @click.stop="edit" class="q-mr-sm" />
           </GameSelector>
         </q-toolbar-title>
         <q-btn
           :icon="
-            textTab === 'notes'
-              ? notifyNotes
-                ? 'speaker_notes'
-                : 'speaker_notes_off'
-              : 'chat_bubble'
+            textTab === 'notes' ? (notifyNotes ? 'notes' : 'notes_off') : 'chat'
           "
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
@@ -54,7 +43,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <SmoothReflow
+          <smooth-reflow
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -69,7 +58,7 @@
               current-only
               standalone
             />
-          </SmoothReflow>
+          </smooth-reflow>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" />
