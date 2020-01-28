@@ -43,19 +43,19 @@ export default {
         {
           id: "ply",
           label: this.$t("Copy Ply"),
-          icon: "layers",
+          icon: "ply",
           action: () => this.copy("ply")
         },
         {
           id: "moves",
           label: this.$t("Copy Moves"),
-          icon: "format_list_numbered",
+          icon: "moves",
           action: () => this.copy("moves")
         },
         {
           id: "ptn",
           label: this.$t("Copy PTN"),
-          icon: "file_copy",
+          icon: "copy",
           action: () => this.copy("ptn")
         },
         {}
@@ -65,7 +65,7 @@ export default {
         actions.push({
           id: "embed",
           label: this.$t("Embed"),
-          icon: "code",
+          icon: "embed",
           action: this.embed
         });
       }
@@ -74,13 +74,13 @@ export default {
         {
           id: "download",
           label: this.$t("Download"),
-          icon: "save_alt",
+          icon: "download",
           action: this.download
         },
         {
           id: "qrcode",
           label: this.$t("QR Code"),
-          icon: "app:qrcode",
+          icon: "qrcode",
           action: this.qrCode
         }
       );

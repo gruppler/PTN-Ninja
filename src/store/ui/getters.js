@@ -49,6 +49,22 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
   return name;
 };
 
+export const playerIcon = () => player => {
+  switch (player) {
+    case 1:
+      return "player1";
+    case 2:
+      return "player2";
+    case 0:
+      return "spectator";
+    case "random":
+    case "tie":
+      return "players";
+    default:
+      return "";
+  }
+};
+
 export const url = state => (game, options = {}) => {
   if (!game) {
     return "";

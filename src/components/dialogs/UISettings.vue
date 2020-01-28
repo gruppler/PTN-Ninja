@@ -12,7 +12,7 @@
 
       <q-list separator>
         <q-expansion-item
-          icon="apps"
+          icon="board"
           :label="$t('Board')"
           group="settings"
           default-opened

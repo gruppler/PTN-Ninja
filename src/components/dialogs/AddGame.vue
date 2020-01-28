@@ -38,14 +38,14 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="folder_open" />
+                  <q-icon name="browse_files" />
                 </q-item-section>
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
               <q-expansion-item
                 group="type"
                 :label="$t('Online')"
-                icon="public"
+                icon="online"
               >
                 <recess>
                   <q-list>
