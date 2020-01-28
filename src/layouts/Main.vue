@@ -10,14 +10,11 @@
           flat
         />
         <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector">
-            <q-btn
-              icon="edit"
+          <GameSelector ref="gameSelector" :game="game">
+            <q-icon
+              name="edit"
               @click.stop="edit"
-              text-color="white"
-              class="q-pa-sm"
-              dense
-              flat
+              class="q-mr-sm"
             />
           </GameSelector>
         </q-toolbar-title>

@@ -9,7 +9,7 @@
       @input="select"
       @keydown.esc="$refs.select.blur"
       @keydown.delete="close($refs.select.optionIndex)"
-      :display-value="game.label"
+      :display-value="name"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="bg-secondary"
@@ -18,6 +18,35 @@
       filled
       dense
     >
+      <template v-slot:prepend>
+        <q-btn
+          :label="games.length"
+          @click.stop
+          @click.right.prevent="select(1)"
+          class="text-subtitle2 text-white q-pa-sm"
+          dense
+          flat
+        >
+          <q-menu auto-close square>
+            <q-list class="bg-secondary text-white">
+              <q-item clickable @click="closeAll">
+                <q-item-section side>
+                  <q-icon name="close" />
+                </q-item-section>
+                <q-item-section>{{ $t("Close All") }}</q-item-section>
+              </q-item>
+              <q-item clickable @click="downloadAll">
+                <q-item-section side>
+                  <q-icon name="download" />
+                </q-item-section>
+                <q-item-section>{{ $t("Download All") }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
+        <q-separator vertical class="q-mr-sm" />
+      </template>
+
       <template v-slot:option="scope">
         <q-item
           class="non-selectable"
@@ -38,40 +67,9 @@
         </q-item>
       </template>
 
-      <template v-slot:before>
-        <div class="row">
-          <q-separator vertical spaced inset />
-          <q-btn
-            :label="games.length"
-            @click.right.prevent="select(1)"
-            class="text-subtitle2 q-pa-sm"
-            dense
-            flat
-          >
-            <q-menu auto-close square>
-              <q-list class="bg-secondary text-white">
-                <q-item clickable @click="closeAll">
-                  <q-item-section side>
-                    <q-icon name="close" />
-                  </q-item-section>
-                  <q-item-section>{{ $t("Close All") }}</q-item-section>
-                </q-item>
-                <q-item clickable @click="downloadAll">
-                  <q-item-section side>
-                    <q-icon name="download" />
-                  </q-item-section>
-                  <q-item-section>{{ $t("Download All") }}</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-        </div>
-      </template>
-
-      <template v-slot:after>
+      <template v-slot:append>
         <div class="row">
           <slot />
-          <q-separator vertical spaced inset />
         </div>
       </template>
     </q-select>
@@ -83,15 +81,34 @@ import { Notify } from "quasar";
 
 export default {
   name: "GameSelector",
+  props: ["game"],
   computed: {
-    game() {
-      return this.games[0];
-    },
     games() {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index
       }));
+    },
+    name() {
+      if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
+        return this.game.name;
+      } else {
+        const user = this.$store.state.online.user;
+        let otherPlayer = user ? getOtherPlayer(this.game, user.uid) : false;
+        if (!otherPlayer) {
+          return this.game.name;
+        } else {
+          otherPlayer = this.game.tag("player" + otherPlayer);
+          if (otherPlayer) {
+            return this.game.name.replace(
+              /[^"]+ vs [^"]+( \dx\d)/,
+              "vs " + otherPlayer + "$1"
+            );
+          } else {
+            return this.game.name;
+          }
+        }
+      }
     }
   },
   methods: {
@@ -142,9 +159,6 @@ export default {
           }
         }
       });
-    },
-    edit() {
-      this.$emit("edit");
     }
   }
 };
@@ -154,8 +168,18 @@ export default {
 .game-selector
   max-width 30em
   margin 0 auto
+  .q-field--filled .q-field__control
+    padding-left 0
+    @media (max-width: $breakpoint-xs-max)
+      padding-right 0
+
   .q-field__native span
     text-overflow ellipsis
     white-space nowrap
     overflow hidden
+    @media (max-width: $breakpoint-xs-max)
+      font-size .85em
+
+    + .no-outline
+      position absolute
 </style>
