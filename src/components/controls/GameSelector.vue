@@ -160,18 +160,16 @@ export default {
         timeout: 10000,
         color: "secondary",
         position: "bottom",
+        multiLine: false,
         actions: [
-          {
-            label: this.$t("Dismiss"),
-            color: "accent"
-          },
           {
             label: this.$t("Undo"),
             color: "accent",
             handler: () => {
               this.$store.dispatch("ADD_GAME", game);
             }
-          }
+          },
+          { icon: "close", color: "grey-2" }
         ]
       });
     },

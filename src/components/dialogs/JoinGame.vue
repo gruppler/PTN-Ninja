@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" persistent>
+  <q-dialog :value="value" @input="$emit('input', $event)">
     <q-card style="width: 300px" class="bg-secondary">
       <q-card-section>
         <PlayerName
@@ -11,7 +11,9 @@
         />
       </q-card-section>
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-separator />
+
+      <q-card-actions align="right">
         <q-btn :label="$t('Spectate')" @click="spectate" color="accent" flat />
         <q-btn
           :label="$t('Play')"

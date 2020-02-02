@@ -192,7 +192,7 @@
 
     <template v-slot:footer>
       <q-separator />
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />

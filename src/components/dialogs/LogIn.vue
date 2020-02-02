@@ -88,7 +88,7 @@
 
       <q-separator />
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <q-btn
           v-show="tab === 'login'"
           @click="resetPassword()"

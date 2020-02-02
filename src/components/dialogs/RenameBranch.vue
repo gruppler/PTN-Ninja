@@ -19,7 +19,7 @@
         </smooth-reflow>
       </q-card-section>
 
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
           :label="$t('OK')"

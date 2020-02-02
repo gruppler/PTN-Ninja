@@ -162,6 +162,7 @@ export const OPEN_FILES = ({ dispatch }, files) => {
           Loading.hide();
         }
       };
+      reader.onerror = error => console.error(error);
       if (!count++) {
         Loading.show();
       }
