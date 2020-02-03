@@ -13,6 +13,10 @@ export const INIT = ({ commit, dispatch, state }) => {
     }
     auth.onAuthStateChanged(user => {
       if (user) {
+        if (state.user && state.user.isAnonymous && !user.isAnonymous) {
+          // Delete anonymous user account
+          state.user.delete();
+        }
         commit("SET_USER", user);
         dispatch("LISTEN_PLAYER_GAMES");
         commit("INIT");

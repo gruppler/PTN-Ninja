@@ -47,12 +47,12 @@
 
         <q-separator vertical class="q-mr-sm" />
 
-        <q-icon
+        <q-btn
           v-if="game.config.isOnline"
-          :name="icon(game)"
-          :size="$q.screen.lt.sm ? 'xs' : 'sm'"
-          :class="$q.screen.lt.sm ? '' : 'q-mx-sm'"
-          color="white"
+          :icon="icon(game)"
+          @click.stop="editAccount"
+          dense
+          flat
         />
       </template>
 
@@ -133,6 +133,14 @@ export default {
     }
   },
   methods: {
+    editAccount() {
+      const user = this.$store.state.online.user;
+      if (user && !user.isAnonymous) {
+        this.$router.push({ name: "account" });
+      } else {
+        this.$router.push({ name: "login" });
+      }
+    },
     select(index) {
       if (index >= 0 && this.games.length > index) {
         this.$store.dispatch("SELECT_GAME", index);

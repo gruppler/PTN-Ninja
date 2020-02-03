@@ -11,11 +11,13 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-icon
+            <q-btn
               v-if="game.isLocal || player"
-              name="edit"
+              icon="edit"
               @click.stop="edit"
               class="q-mr-sm"
+              dense
+              flat
             />
           </GameSelector>
         </q-toolbar-title>
@@ -214,6 +216,7 @@
     </q-footer>
 
     <Help ref="help" v-model="dialogHelp" no-route-dismiss />
+    <Account ref="account" v-model="dialogAccount" no-route-dismiss />
     <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
     <UISettings
@@ -261,6 +264,7 @@ import Chat from "../components/drawers/Chat";
 
 // Dialogs:
 import Help from "../components/dialogs/Help";
+import Account from "../components/dialogs/Account";
 import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
@@ -277,6 +281,7 @@ import { isEqual, zipObject } from "lodash";
 
 const HISTORY_DIALOGS = {
   dialogHelp: "help",
+  dialogAccount: "account",
   dialogAddGame: "add",
   dialogUISettings: "preferences",
   dialogEditGame: "meta",
@@ -307,6 +312,7 @@ export default {
     PieceSelector,
     Menu,
     Help,
+    Account,
     AddGame,
     EditGame,
     UISettings,
@@ -538,10 +544,7 @@ export default {
           }
 
           if (game.config.isOnline) {
-            if (
-              (!this.user || !game.player(this.user.uid)) &&
-              (game.openPlayer || (!game.config.isPrivate && this.isAnonymous))
-            ) {
+            if (this.user && !game.player(this.user.uid) && game.openPlayer) {
               this.dialogJoinGame = true;
             }
           }
