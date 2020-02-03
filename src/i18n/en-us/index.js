@@ -65,6 +65,7 @@ export default {
   Help: "Help",
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
+  "Include Player Names": "Include Player Names",
   Key: "Key",
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",

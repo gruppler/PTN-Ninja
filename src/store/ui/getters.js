@@ -2,6 +2,7 @@ import { i18n } from "../../boot/i18n";
 import { Dialog, Notify } from "quasar";
 
 import { compressToEncodedURIComponent } from "lz-string";
+import { omit } from "lodash";
 
 export const confirm = () => ({ title, message, ok, cancel, success }) => {
   Dialog.create({
@@ -78,7 +79,10 @@ export const url = state => (game, options = {}) => {
   }
 
   const origin = location.origin + (process.env.DEV ? "/?#/" : "/");
-  let url = compressToEncodedURIComponent(game.ptn);
+  let ptn = options.names
+    ? game.ptn
+    : game.text(true, true, omit(game.tags, ["player1", "player2"]));
+  let url = compressToEncodedURIComponent(ptn);
   let params = {};
 
   if ("name" in options) {

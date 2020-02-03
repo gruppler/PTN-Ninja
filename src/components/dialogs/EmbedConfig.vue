@@ -83,6 +83,15 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Include Player Names") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.includeNames" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("From current ply") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -234,6 +243,7 @@ export default {
       return this.$store.getters.url(this.game, {
         origin: true,
         name: this.name,
+        names: this.config.includeNames,
         state: this.config.state,
         ui: this.config.ui
       });

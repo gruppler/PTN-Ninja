@@ -54,6 +54,7 @@ const embedUIOptions = [
 defaults.embedConfig = {
   width: "100%",
   height: "600px",
+  includeNames: false,
   state: true,
   ui: pick(defaults, embedUIOptions)
 };
