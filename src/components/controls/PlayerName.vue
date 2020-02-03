@@ -9,7 +9,6 @@
         :label="$t('Player Name')"
         :rules="[validateName]"
         :hint="$t('hint.playerName' + (isPrivate ? 'Private' : 'Public'))"
-        @keydown.enter.prevent="create"
         :readonly="!isPrivate"
         color="accent"
         filled

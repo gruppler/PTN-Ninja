@@ -236,6 +236,7 @@
             v-model="tags.player1"
             :player="player"
             :is-private="game.config.isPrivate"
+            @keydown.enter.prevent="submit"
             hide-bottom-space
             hide-hint
           />
@@ -287,6 +288,7 @@
             v-model="tags.player2"
             :player="player"
             :is-private="game.config.isPrivate"
+            @keydown.enter.prevent="submit"
             hide-bottom-space
             hide-hint
           />
