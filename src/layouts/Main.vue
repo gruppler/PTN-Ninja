@@ -71,7 +71,11 @@
           </smooth-reflow>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu @input="menuAction" />
+          <Menu
+            @input="menuAction"
+            @click.right.prevent="switchGame"
+            v-touch-swipe="switchGame"
+          />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles v-if="!dialogEmbed && !isGamesTableShowing" />
@@ -695,6 +699,14 @@ export default {
     },
     edit() {
       this.dialogEditGame = true;
+    },
+    switchGame({ distance }) {
+      if (distance) {
+        distance = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
+      }
+      if (!distance || distance > 15) {
+        this.$refs.gameSelector.select(1);
+      }
     },
     showTextTab(value) {
       this.textTab = value;

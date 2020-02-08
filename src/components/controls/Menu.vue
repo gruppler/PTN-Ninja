@@ -1,5 +1,12 @@
 <template>
-  <q-fab color="accent" text-color="grey-10" icon="add" direction="up">
+  <q-fab
+    color="accent"
+    text-color="grey-10"
+    icon="add"
+    direction="up"
+    v-bind="$attrs"
+    v-on="$listeners"
+  >
     <q-fab-action
       v-for="item in items"
       :key="item.icon"

@@ -22,7 +22,6 @@
         <q-btn
           :label="games.length"
           @click.stop
-          @click.right.prevent="select(1)"
           class="text-subtitle2 text-white q-pa-sm"
           dense
           flat
