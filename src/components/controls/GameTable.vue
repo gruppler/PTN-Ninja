@@ -19,22 +19,43 @@
     v-bind="$attrs"
   >
     <template v-slot:top>
-      <q-input
-        v-model="filter"
-        class="col-grow"
-        debounce="200"
-        color="accent"
-        clearable
-        filled
-        dense
-      >
-        <template v-slot:before>
-          <FullscreenToggle v-model="fullscreen" />
-        </template>
-        <template v-slot:prepend>
-          <q-icon name="search" />
-        </template>
-      </q-input>
+      <div class="full-width row no-wrap">
+        <FullscreenToggle
+          v-model="fullscreen"
+          class="q-px-xs q-mr-sm"
+          stretch
+          flat
+          dense
+        />
+
+        <q-input
+          v-model="filter"
+          debounce="200"
+          color="accent"
+          class="col col-sm-6"
+          v-if="$q.screen.gt.sm || fullscreen"
+          clearable
+          filled
+          dense
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+
+        <div class="col-grow" />
+
+        <q-btn
+          icon="account"
+          :label="user && !user.isAnonymous ? user.displayName : $t('Log In')"
+          :to="{ name: user && !user.isAnonymous ? 'account' : 'login' }"
+          color="accent"
+          :dense="$q.screen.lt.md"
+          class="q-ml-sm"
+          stretch
+          flat
+        />
+      </div>
     </template>
 
     <template v-slot:header-cell="props">

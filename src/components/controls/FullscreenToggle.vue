@@ -6,10 +6,6 @@
     v-shortkey="hotkey"
     :icon="value ? 'fullscreen_exit' : 'fullscreen'"
     :title="$t('Fullscreen')"
-    class="dimmed-btn"
-    color="white"
-    flat
-    dense
   />
 </template>
 

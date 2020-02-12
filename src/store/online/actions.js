@@ -106,6 +106,15 @@ export const LOG_OUT = ({ dispatch }) => {
   });
 };
 
+export const UPDATE_ACCOUNT = async (context, { email, password }) => {
+  if (email) {
+    await auth.currentUser.updateEmail(email);
+  }
+  if (password) {
+    await auth.currentUser.updatePassword(password);
+  }
+};
+
 export const RESET_PASSWORD = (context, email) => {
   return auth.sendPasswordResetEmail(email);
 };

@@ -220,7 +220,12 @@
     </q-footer>
 
     <Help ref="help" v-model="dialogHelp" no-route-dismiss />
-    <Account ref="account" v-model="dialogAccount" no-route-dismiss />
+    <Account
+      ref="account"
+      v-model="dialogAccount"
+      :player="player"
+      no-route-dismiss
+    />
     <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
     <UISettings
@@ -231,7 +236,7 @@
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
     <LogIn v-model="dialogLogIn" no-route-dismiss />
     <ShareOnline v-model="dialogOnline" :game="game" no-route-dismiss />
-    <JoinGame v-model="dialogJoinGame" :game="game" />
+    <JoinGame v-model="dialogJoinGame" :game="game" no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -292,6 +297,7 @@ const HISTORY_DIALOGS = {
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
   dialogLogIn: "login",
+  dialogJoinGame: "join",
   dialogOnline: "online",
   dialogQR: "qr"
 };
@@ -331,8 +337,7 @@ export default {
       Platform,
       game: this.getGame(),
       errors: [],
-      hotkeys: HOTKEYS,
-      dialogJoinGame: false
+      hotkeys: HOTKEYS
     };
   },
   computed: {
@@ -584,14 +589,21 @@ export default {
         case "help":
           this.dialogHelp = true;
           break;
-        case "add":
-          this.dialogAddGame = true;
+        case "account":
+          if (this.isAnonymous) {
+            this.dialogLogIn = true;
+          } else {
+            this.dialogAccount = true;
+          }
+          break;
+        case "settings":
+          this.dialogUISettings = true;
           break;
         case "share":
           this.share();
           break;
-        case "settings":
-          this.dialogUISettings = true;
+        case "add":
+          this.dialogAddGame = true;
           break;
       }
     },
@@ -631,6 +643,21 @@ export default {
             this.$refs.help.section = "usage";
           } else {
             this.dialogHelp = false;
+          }
+          break;
+        case "account":
+          if (this.isAnonymous) {
+            if (!this.dialogLogIn) {
+              this.dialogLogIn = true;
+            } else {
+              this.dialogLogIn = false;
+            }
+          } else {
+            if (!this.dialogAccount) {
+              this.dialogAccount = true;
+            } else {
+              this.dialogAccount = false;
+            }
           }
           break;
         case "hotkeys":
@@ -704,7 +731,7 @@ export default {
       if (distance) {
         distance = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
       }
-      if (!distance || distance > 15) {
+      if (!distance || distance > 10) {
         this.$refs.gameSelector.select(1);
       }
     },

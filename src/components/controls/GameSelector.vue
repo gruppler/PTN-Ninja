@@ -49,7 +49,7 @@
         <q-btn
           v-if="game.config.isOnline"
           :icon="icon(game)"
-          @click.stop="editAccount"
+          @click.stop="account"
           dense
           flat
         />
@@ -132,9 +132,12 @@ export default {
     }
   },
   methods: {
-    editAccount() {
+    account() {
       const user = this.$store.state.online.user;
-      if (user && !user.isAnonymous) {
+      const player = user ? getPlayer(this.games[0], user.uid) : 0;
+      if (!player) {
+        this.$router.push({ name: "join" });
+      } else if (user && !user.isAnonymous) {
         this.$router.push({ name: "account" });
       } else {
         this.$router.push({ name: "login" });

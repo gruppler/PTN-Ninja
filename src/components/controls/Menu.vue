@@ -37,6 +37,10 @@ export default {
           action: "settings"
         },
         {
+          icon: "account",
+          action: "account"
+        },
+        {
           icon: "help",
           action: "help"
         }

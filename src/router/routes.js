@@ -82,6 +82,10 @@ const routes = [
         path: "/login/:tab?"
       },
       {
+        name: "join",
+        path: "/join"
+      },
+      {
         name: "account",
         path: "/account"
       },
