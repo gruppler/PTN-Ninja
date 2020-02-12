@@ -93,7 +93,7 @@
         <q-td key="role" :props="props">
           <q-icon
             v-if="props.row.player || props.row.isActive"
-            :name="playerIcon(props.row.player)"
+            :name="playerIcon(props.row.player, props.row.config.isPrivate)"
             :title="roleText(props.row.player)"
             size="md"
           />
@@ -277,8 +277,8 @@ export default {
     }
   },
   methods: {
-    playerIcon(player) {
-      return this.$store.getters.playerIcon(player);
+    playerIcon(player, isPrivate) {
+      return this.$store.getters.playerIcon(player, isPrivate);
     },
     roleText(player) {
       return player !== undefined

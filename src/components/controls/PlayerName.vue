@@ -14,7 +14,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon :name="$store.getters.playerIcon(player)" />
+          <q-icon :name="$store.getters.playerIcon(player, isPrivate)" />
         </template>
         <template v-slot:append v-if="!isPrivate && isLoggedIn">
           <q-btn

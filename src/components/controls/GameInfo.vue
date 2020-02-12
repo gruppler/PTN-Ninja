@@ -255,7 +255,11 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon :name="$store.getters.playerIcon(1)" />
+              <q-icon
+                :name="
+                  $store.getters.playerIcon(1, game && game.config.isPrivate)
+                "
+              />
             </template>
           </q-input>
 
@@ -307,7 +311,11 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon :name="$store.getters.playerIcon(2)" />
+              <q-icon
+                :name="
+                  $store.getters.playerIcon(2, game && game.config.isPrivate)
+                "
+              />
             </template>
           </q-input>
 

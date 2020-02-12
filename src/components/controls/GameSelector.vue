@@ -153,7 +153,8 @@ export default {
       if (game.config.isOnline) {
         const user = this.$store.state.online.user;
         return this.$store.getters.playerIcon(
-          user ? getPlayer(game, user.uid) : 0
+          user ? getPlayer(game, user.uid) : 0,
+          game.config.isPrivate
         );
       } else {
         return "file";

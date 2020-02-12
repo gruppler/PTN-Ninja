@@ -50,6 +50,8 @@ export default {
   play: "mdi-play",
   player1: "mdi-account",
   player2: "mdi-account-outline",
+  player1_private: "mdi-account-cancel",
+  player2_private: "mdi-account-cancel-outline",
   players: "mdi-account-multiple-outline",
   ply: "mdi-layers",
   points: "mdi-star-circle",

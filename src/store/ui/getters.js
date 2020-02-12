@@ -50,12 +50,12 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
   return name;
 };
 
-export const playerIcon = () => player => {
+export const playerIcon = () => (player, isPrivate = false) => {
   switch (player) {
     case 1:
-      return "player1";
+      return isPrivate ? "player1_private" : "player1";
     case 2:
-      return "player2";
+      return isPrivate ? "player2_private" : "player2";
     case 0:
       return "spectator";
     case "random":
