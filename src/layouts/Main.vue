@@ -74,7 +74,7 @@
           <Menu
             @input="menuAction"
             @click.right.prevent="switchGame"
-            v-touch-swipe="switchGame"
+            v-touch-swipe.left="switchGame"
           />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
@@ -728,10 +728,7 @@ export default {
       this.dialogEditGame = true;
     },
     switchGame({ distance }) {
-      if (distance) {
-        distance = Math.sqrt(distance.x * distance.x + distance.y * distance.y);
-      }
-      if (!distance || distance > 10) {
+      if (!distance || distance.x > 10) {
         this.$refs.gameSelector.select(1);
       }
     },
