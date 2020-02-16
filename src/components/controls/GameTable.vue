@@ -23,7 +23,6 @@
         <FullscreenToggle
           v-model="fullscreen"
           class="q-px-xs q-mr-sm"
-          stretch
           flat
           dense
         />
@@ -54,7 +53,6 @@
           color="accent"
           :dense="$q.screen.lt.md"
           class="q-ml-sm"
-          stretch
           flat
         />
       </div>
@@ -167,6 +165,7 @@ export default {
         {
           name: "name",
           label: this.$t("Name"),
+          icon: "file",
           align: "left"
         },
         {
