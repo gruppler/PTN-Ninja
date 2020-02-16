@@ -57,10 +57,10 @@ export const playerIcon = () => (player, isPrivate = false) => {
     case 2:
       return isPrivate ? "player2_private" : "player2";
     case 0:
-      return "spectator";
+      return isPrivate ? "spectator_private" : "spectator";
     case "random":
     case "tie":
-      return "players";
+      return isPrivate ? "players_private" : "players";
     default:
       return "";
   }

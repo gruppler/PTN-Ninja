@@ -1,4 +1,4 @@
-import { upperFirst, zipObject } from "lodash";
+import { forEach, upperFirst } from "lodash";
 
 export const HOTKEYS = {
   ACTIONS: {
@@ -165,12 +165,12 @@ export const HOTKEY_NAMES = {
   }
 };
 
-export const HOTKEYS_FORMATTED = zipObject(
-  Object.keys(HOTKEYS),
-  Object.values(HOTKEYS).map(category =>
-    zipObject(
-      Object.keys(category),
-      Object.values(category).map(keys => keys.map(upperFirst).join(" + "))
-    )
-  )
-);
+let formatted = { ...HOTKEYS };
+forEach(formatted, (category, categoryID) => {
+  formatted[categoryID] = { ...category };
+  forEach(
+    category,
+    (keys, id) => (formatted[categoryID][id] = keys.map(upperFirst).join(" + "))
+  );
+});
+export const HOTKEYS_FORMATTED = formatted;

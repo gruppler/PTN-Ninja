@@ -8,6 +8,9 @@
       color="accent"
       filled
     >
+      <template v-slot:prepend>
+        <q-icon name="file" />
+      </template>
       <template v-slot:append>
         <q-icon
           v-show="name !== generatedName"

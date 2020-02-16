@@ -297,6 +297,13 @@ export default {
     }
   },
   watch: {
+    value(isVisible) {
+      if (isVisible) {
+        if (this.user && !this.user.isAnonymous) {
+          return this.$router.replace({ name: "account" });
+        }
+      }
+    },
     tab() {
       this.showError();
       this.showSuccess();

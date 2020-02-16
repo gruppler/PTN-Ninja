@@ -3,6 +3,7 @@ export default {
   app_title: "PTN Ninja",
 
   About: "About",
+  Account: "Account",
   Action: "Action",
   "Animate Board": "Animate Board",
   "Axis Labels": "Axis Labels",
@@ -66,6 +67,7 @@ export default {
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
   "Include Player Names": "Include Player Names",
+  "Join Game": "Join Game",
   Key: "Key",
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",

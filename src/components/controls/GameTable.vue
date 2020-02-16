@@ -29,11 +29,13 @@
         />
 
         <q-input
+          ref="search"
           v-model="filter"
           debounce="200"
           color="accent"
           class="col col-sm-6"
-          v-if="$q.screen.gt.sm || fullscreen"
+          @focus="focusSearch"
+          autocomplete="off"
           clearable
           filled
           dense
@@ -159,6 +161,7 @@ export default {
         {
           name: "role",
           label: this.$t("Role"),
+          icon: "account",
           align: "center"
         },
         {
@@ -291,6 +294,12 @@ export default {
           )
         : "";
     },
+    focusSearch() {
+      if (this.$q.screen.lt.md) {
+        this.fullscreen = true;
+        this.$nextTick(this.$refs.search.focus);
+      }
+    },
     select(game) {
       if (game.isActive) {
         return;
@@ -323,7 +332,6 @@ export default {
 
 <style lang="stylus">
 $header = 64px
-$footer = 48px
 
 .online-games
   tr > :first-child
@@ -334,9 +342,9 @@ $footer = 48px
 
   .q-table__middle
     min-height 12rem
-    max-height 'calc(50vh - %s)' % ($header + $footer)
+    max-height 'calc(50vh - %s)' % ($header + $toolbar-min-height)
   &.fullscreen .q-table__middle
-    height 'calc(100vh - %s)' % ($header + $footer)
+    height 'calc(100vh - %s)' % $header
     max-height @height
 
   .q-table__top,

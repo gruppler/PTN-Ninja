@@ -1,6 +1,10 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <q-card style="width: 300px" class="bg-secondary">
+      <dialog-header>{{ $t("Join Game") }}</dialog-header>
+
+      <q-separator />
+
       <q-card-section>
         <PlayerName
           ref="playerName"

@@ -293,7 +293,7 @@ const HISTORY_DIALOGS = {
   dialogAccount: "account",
   dialogAddGame: "add",
   dialogUISettings: "preferences",
-  dialogEditGame: "meta",
+  dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
   dialogLogIn: "login",
@@ -783,6 +783,13 @@ export default {
     editingTPS() {
       if (this.firstMoveNumber < this.minFirstMoveNumber) {
         this.firstMoveNumber = this.minFirstMoveNumber;
+      }
+    },
+    user(user) {
+      if (this.game.config.isOnline) {
+        if (user && !this.game.player(user.uid) && this.game.openPlayer) {
+          this.dialogJoinGame = true;
+        }
       }
     }
   },

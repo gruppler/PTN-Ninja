@@ -66,8 +66,8 @@ const routes = [
         path: "/preferences"
       },
       {
-        name: "meta",
-        path: "/meta"
+        name: "info",
+        path: "/info"
       },
       {
         name: "edit",
@@ -91,7 +91,7 @@ const routes = [
       },
       {
         name: "online",
-        path: "/online"
+        path: "/online/:qr?"
       },
       {
         name: "qr",

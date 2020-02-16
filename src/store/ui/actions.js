@@ -189,7 +189,7 @@ export const COPY = function(context, { text, message }) {
     color: "white",
     classes: "text-grey-10",
     timeout: 1,
-    position: "bottom",
+    position: "bottom-left",
     message
   });
 };

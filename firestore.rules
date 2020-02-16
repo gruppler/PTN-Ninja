@@ -15,22 +15,18 @@ service cloud.firestore {
       ).data.config.players.hasAny([null, request.auth.uid]);
     }
 
-    match /users/{uid} {
-      allow read, update: if isUser(uid);
-      allow create: if isSignedIn();
-    }
-
-    match /names/{name} {
-      allow update, delete: if isUser(name.uid);
+    match /names/{nameID} {
+      allow update, delete: if isUser(
+				get(/databases/$(database)/documents/names/$(nameID)).data.uid
+			);
     	allow read, create: if isSignedIn();
     }
 
     match /games/{gameID} {
     	allow read, create: if isSignedIn();
-      allow write: if isPlayer(gameID);
+      allow update: if isPlayer(gameID);
       match /moves/{move} {
-        allow read, create: if isSignedIn();
-        allow write: if isPlayer(gameID);
+        allow read, create, update: if isPlayer(gameID);
       }
     }
 

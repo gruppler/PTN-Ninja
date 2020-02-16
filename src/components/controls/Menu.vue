@@ -3,7 +3,7 @@
     color="accent"
     text-color="grey-10"
     icon="add"
-    direction="up"
+    :direction="short ? 'left' : 'up'"
     v-bind="$attrs"
     v-on="$listeners"
   >
@@ -46,6 +46,11 @@ export default {
         }
       ]
     };
+  },
+  computed: {
+    short() {
+      return this.$q.screen.height <= 440;
+    }
   }
 };
 </script>

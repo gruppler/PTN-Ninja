@@ -1,6 +1,10 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <q-card style="width: 300px" class="bg-secondary">
+      <dialog-header>{{ $t("Account") }}</dialog-header>
+
+      <q-separator />
+
       <q-card-section>
         <div class="q-gutter-y-md">
           <q-input
@@ -148,6 +152,9 @@ export default {
   watch: {
     value(isVisible) {
       if (isVisible) {
+        if (this.user && this.user.isAnonymous) {
+          return this.$router.replace({ name: "login" });
+        }
         this.email = this.user ? this.user.email : "";
         this.password = "";
         this.error = "";

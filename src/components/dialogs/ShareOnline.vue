@@ -116,7 +116,7 @@
       </q-card-actions>
     </q-card>
 
-    <QRCode v-model="showQR" :text="qrText" />
+    <QRCode v-model="showQR" :text="qrText" no-route-dismiss />
   </q-dialog>
 </template>
 
@@ -145,11 +145,27 @@ export default {
       playerName: this.$store.state.playerName,
       qrText: "",
       loading: false,
-      showQR: false,
       showRoads: false
     };
   },
   computed: {
+    showQR: {
+      get() {
+        return !!this.$route.params.qr;
+      },
+      set(value) {
+        if (value) {
+          if (!this.$route.params.qr) {
+            this.$router.push({ params: { qr: "qr" } });
+          }
+        } else {
+          if (this.$route.params.qr) {
+            this.$router.go(-1);
+            this.$router.replace({ params: { qr: null } });
+          }
+        }
+      }
+    },
     isLocal() {
       return this.game.isLocal;
     },
