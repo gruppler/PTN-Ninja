@@ -59,7 +59,24 @@
           </q-input>
         </div>
 
-        <message-output :error="error" content-class="q-mt-md" />
+        <smooth-reflow>
+          <q-btn
+            v-if="user && !user.emailVerified"
+            @click="verify"
+            :label="$t('Verify Email Address')"
+            icon="email"
+            :loading="loadingVerify"
+            color="accent"
+            class="full-width q-mt-md"
+            flat
+          />
+        </smooth-reflow>
+
+        <message-output
+          :error="error"
+          :success="success"
+          content-class="q-mt-md"
+        />
       </q-card-section>
 
       <q-separator />
@@ -93,8 +110,10 @@ export default {
   data() {
     return {
       loadingLogOut: false,
+      loadingVerify: false,
       loadingSubmit: false,
       error: "",
+      success: "",
       playerName: "",
       email: "",
       password: "",
@@ -127,6 +146,19 @@ export default {
           console.error(error);
         });
     },
+    verify() {
+      this.loadingVerify = true;
+      this.$store
+        .dispatch("online/VERIFY")
+        .then(() => {
+          this.loadingVerify = false;
+          this.success = "verifyEmailSent";
+        })
+        .catch(error => {
+          this.loadingVerify = false;
+          this.error = error;
+        });
+    },
     submit() {
       if (this.email !== this.user.email || this.password) {
         this.loadingSubmit = true;
@@ -155,10 +187,13 @@ export default {
         if (this.user && this.user.isAnonymous) {
           return this.$router.replace({ name: "login" });
         }
+        this.$store.dispatch("online/RELOAD_USER");
         this.email = this.user ? this.user.email : "";
         this.password = "";
         this.error = "";
+        this.success = "";
         this.loadingLogOut = false;
+        this.loadingVerify = false;
         this.loadingSubmit = false;
       }
     },

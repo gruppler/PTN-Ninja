@@ -102,9 +102,10 @@ export const LOG_OUT = ({ dispatch }) => {
   });
 };
 
-export const UPDATE_ACCOUNT = async (context, { email, password }) => {
+export const UPDATE_ACCOUNT = async ({ commit }, { email, password }) => {
   if (email) {
     await auth.currentUser.updateEmail(email);
+    commit("SET_USER", auth.currentUser);
   }
   if (password) {
     await auth.currentUser.updatePassword(password);
@@ -113,6 +114,16 @@ export const UPDATE_ACCOUNT = async (context, { email, password }) => {
 
 export const RESET_PASSWORD = (context, email) => {
   return auth.sendPasswordResetEmail(email);
+};
+
+export const VERIFY = () => {
+  return auth.currentUser.sendEmailVerification();
+};
+
+export const RELOAD_USER = ({ commit }) => {
+  return auth.currentUser.reload().then(() => {
+    commit("SET_USER", auth.currentUser);
+  });
 };
 
 export const CREATE_GAME = (

@@ -153,6 +153,7 @@ export default {
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",
   Usage: "Usage",
+  "Verify Email Address": "Verify Email Address",
   Walls: "Walls",
   White: "White",
   Width: "Width",
@@ -221,7 +222,8 @@ export default {
   },
 
   success: {
-    resetPasswordSent: "Reset password email sent."
+    resetPasswordSent: "Reset password email sent.",
+    verifyEmailSent: "Verification email sent."
   },
 
   warning: {
