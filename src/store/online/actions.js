@@ -34,72 +34,44 @@ export const ANONYMOUS = () => {
   return auth.signInAnonymously();
 };
 
-export const CHECK_USERNAME = (context, name) => {
-  return new Promise((resolve, reject) => {
-    db.collection("names")
-      .doc(name.toLowerCase())
-      .get()
-      .then(nameSnapshot => {
-        resolve(!nameSnapshot.exists);
-      })
-      .catch(reject);
-  });
+export const CHECK_USERNAME = async (context, name) => {
+  let nameSnapshot = await db
+    .collection("names")
+    .doc(name.toLowerCase())
+    .get();
+  return !nameSnapshot.exists;
 };
 
-export const REGISTER = (context, { email, password, name }) => {
-  return new Promise((resolve, reject) => {
-    // Check name uniqueness
-    const nameDoc = db.collection("names").doc(name.toLowerCase());
-    nameDoc
-      .get()
-      .then(nameSnapshot => {
-        if (nameSnapshot.exists) {
-          throw new Error("Player exists");
-        } else {
-          // Create account
-          const credential = firebase.auth.EmailAuthProvider.credential(
-            email,
-            password
-          );
-          return auth.currentUser.linkWithCredential(credential);
-        }
-      })
-      .then(({ user }) => {
-        // Set name
-        nameDoc.set({ uid: user.uid });
-        user
-          .updateProfile({
-            displayName: name
-          })
-          .then(() => {
-            resolve(user);
-          });
-      })
-      .catch(reject);
-  });
+export const REGISTER = async (context, { email, password, name }) => {
+  // Check name uniqueness
+  const nameDoc = db.collection("names").doc(name.toLowerCase());
+  let nameSnapshot = await nameDoc.get();
+  if (nameSnapshot.exists) {
+    throw new Error("Player exists");
+  } else {
+    // Create account
+    const credential = firebase.auth.EmailAuthProvider.credential(
+      email,
+      password
+    );
+    let { user } = await auth.currentUser.linkWithCredential(credential);
+    // Set name
+    nameDoc.set({ uid: user.uid });
+    user.updateProfile({
+      displayName: name
+    });
+  }
 };
 
-export const LOG_IN = (context, { email, password }) => {
-  return new Promise((resolve, reject) => {
-    auth
-      .signInWithEmailAndPassword(email, password)
-      .then(({ user }) => {
-        resolve(user);
-      })
-      .catch(reject);
-  });
+export const LOG_IN = async (context, { email, password }) => {
+  let { user } = await auth.signInWithEmailAndPassword(email, password);
+  return user;
 };
 
-export const LOG_OUT = ({ dispatch }) => {
+export const LOG_OUT = async ({ dispatch }) => {
   dispatch("UNLISTEN_PLAYER_GAMES");
-  return new Promise((resolve, reject) => {
-    auth
-      .signOut()
-      .then(() => {
-        dispatch("ANONYMOUS").then(resolve);
-      })
-      .catch(reject);
-  });
+  await auth.signOut();
+  dispatch("ANONYMOUS");
 };
 
 export const UPDATE_ACCOUNT = async ({ commit }, { email, password }) => {
@@ -120,166 +92,140 @@ export const VERIFY = () => {
   return auth.currentUser.sendEmailVerification();
 };
 
-export const RELOAD_USER = ({ commit }) => {
-  return auth.currentUser.reload().then(() => {
-    commit("SET_USER", auth.currentUser);
-  });
+export const RELOAD_USER = async ({ commit }) => {
+  await auth.currentUser.reload();
+  commit("SET_USER", auth.currentUser);
 };
 
-export const CREATE_GAME = (
+export const CREATE_GAME = async (
   { dispatch, getters, state },
   { game, players, isPrivate, disableRoads }
 ) => {
-  return new Promise((resolve, reject) => {
-    const playerName = getters.playerName(isPrivate);
-    const player = players[1] === state.user.uid ? 1 : 2;
-    let tags = {
-      player1: "",
-      player2: "",
-      rating1: "",
-      rating2: "",
-      ...now()
-    };
-    tags["player" + player] = playerName;
-    game.setTags(tags, false);
-    game.clearHistory();
-    dispatch("UPDATE_PTN", game.text(), { root: true });
+  const playerName = getters.playerName(isPrivate);
+  const player = players[1] === state.user.uid ? 1 : 2;
+  let tags = {
+    player1: "",
+    player2: "",
+    rating1: "",
+    rating2: "",
+    ...now()
+  };
+  tags["player" + player] = playerName;
+  game.setTags(tags, false);
+  game.clearHistory();
+  dispatch("UPDATE_PTN", game.text(), { root: true });
 
-    if (game.isDefaultName) {
-      game.name = game.generateName();
-    }
+  if (game.isDefaultName) {
+    game.name = game.generateName();
+  }
 
-    let json = game.json;
-    let config = Object.assign(json.config, {
-      isOnline: true,
-      players: [players[1] || null, players[2] || null],
-      isPrivate,
-      disableRoads
-    });
-
-    // Add game to DB
-    db.collection("games")
-      .add(omit(json, "moves"))
-      .then(gameDoc => {
-        config.id = gameDoc.id;
-        dispatch("SET_CONFIG", { game, config }, { root: true });
-
-        // Add moves to game in DB
-        if (json.moves.length) {
-          let batch = db.batch();
-          const moves = gameDoc.collection("moves");
-          json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
-          batch
-            .commit()
-            .then(resolve)
-            .catch(reject);
-        } else {
-          resolve();
-        }
-      })
-      .catch(reject);
+  let json = game.json;
+  let config = Object.assign(json.config, {
+    isOnline: true,
+    players: [players[1] || null, players[2] || null],
+    isPrivate,
+    disableRoads
   });
+
+  // Add game to DB
+  let gameDoc = await db.collection("games").add(omit(json, "moves"));
+  config.id = gameDoc.id;
+  dispatch("SET_CONFIG", { game, config }, { root: true });
+
+  // Add moves to game in DB
+  if (json.moves.length) {
+    let batch = db.batch();
+    const moves = gameDoc.collection("moves");
+    json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
+    await batch.commit();
+  }
 };
 
-export const JOIN_GAME = ({ dispatch, getters, state }, game) => {
-  return new Promise((resolve, reject) => {
-    // Join as player if still open
-    const player = game.openPlayer;
-    const playerName = getters.playerName(game.config.isPrivate);
-    const gameDoc = db.collection("games").doc(game.config.id);
-    Loading.show();
-    gameDoc
-      .get()
-      .then(gamesSnapshot => {
-        // Check that the player is still open
-        let gameData = gamesSnapshot.data();
-        if (gameData.config.players[player - 1]) {
-          Loading.hide();
-          return reject(new Error("Player position already filled"));
-        }
+export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
+  // Join as player if still open
+  const player = game.openPlayer;
+  const playerName = getters.playerName(game.config.isPrivate);
+  const gameDoc = db.collection("games").doc(game.config.id);
+  Loading.show();
+  let gamesSnapshot = await gameDoc.get();
+  // Check that the player is still open
+  let gameData = gamesSnapshot.data();
+  if (gameData.config.players[player - 1]) {
+    Loading.hide();
+    return throw new Error("Player position already filled");
+  }
 
-        // Update game config and tags
-        let config = {
-          ...game.config,
-          ...gameData.config,
-          players: [...gameData.config.players]
-        };
-        config.players[player - 1] = state.user.uid;
+  // Update game config and tags
+  let config = {
+    ...game.config,
+    ...gameData.config,
+    players: [...gameData.config.players]
+  };
+  config.players[player - 1] = state.user.uid;
 
-        let tags = { ["player" + player]: playerName, ...now() };
-        game.setTags(tags, false);
-        dispatch("SET_CONFIG", { game, config }, { root: true });
-        dispatch("UPDATE_PTN", game.text(), { root: true });
-        game.clearHistory();
+  let tags = { ["player" + player]: playerName, ...now() };
+  game.setTags(tags, false);
+  dispatch("SET_CONFIG", { game, config }, { root: true });
+  dispatch("UPDATE_PTN", game.text(), { root: true });
+  game.clearHistory();
 
-        let changes = {
-          config: omit(config, ["id"]),
-          tags: game.JSONTags
-        };
+  let changes = {
+    config: omit(config, ["id"]),
+    tags: game.JSONTags
+  };
 
-        // Update name
-        if (game.isDefaultName) {
-          changes.name = game.generateName();
-          game.name = changes.name;
-        }
+  // Update name
+  if (game.isDefaultName) {
+    changes.name = game.generateName();
+    game.name = changes.name;
+  }
 
-        return gameDoc.update(changes);
-      })
-      .then(() => {
-        Loading.hide();
-        resolve();
-      });
-  });
+  await gameDoc.update(changes);
+  Loading.hide();
 };
 
-export const LOAD_GAME = ({ dispatch, state }, id) => {
-  return new Promise((resolve, reject) => {
-    if (!id) {
-      return reject();
+export const LOAD_GAME = async ({ dispatch, state }, id) => {
+  if (!id) {
+    throw new Error("Missing game ID");
+  }
+
+  Loading.show();
+  const gameDoc = db.collection("games").doc(id);
+  let gameJSON;
+
+  // Load game
+  try {
+    let gameSnapshot = await gameDoc.get();
+    if (!gameSnapshot.exists) {
+      throw new Error("Game does not exist");
+    } else {
+      gameJSON = snapshotToGameJSON(gameSnapshot, state);
+
+      // Load moves
+      let moveDocs = await gameDoc.collection("moves").get();
+      gameJSON.moves = [];
+      moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
+
+      // Add game
+      let game = new Game(false, gameJSON);
+      dispatch(
+        "ADD_GAME",
+        {
+          ptn: game.ptn,
+          name: game.name,
+          state: game.minState,
+          config: game.config
+        },
+        { root: true }
+      );
+
+      Loading.hide();
+      return game;
     }
-
-    Loading.show();
-    const gameDoc = db.collection("games").doc(id);
-    let gameJSON;
-
-    // Load game
-    gameDoc
-      .get()
-      .then(gameSnapshot => {
-        if (!gameSnapshot.exists) {
-          reject(new Error("Game does not exist"));
-        } else {
-          gameJSON = snapshotToGame(gameSnapshot, state);
-
-          // Load moves
-          return gameDoc.collection("moves").get();
-        }
-      })
-      .then(moveDocs => {
-        gameJSON.moves = [];
-        moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
-
-        // Add game
-        let game = new Game(false, gameJSON);
-        dispatch(
-          "ADD_GAME",
-          {
-            ptn: game.ptn,
-            name: game.name,
-            state: game.minState,
-            config: game.config
-          },
-          { root: true }
-        );
-
-        Loading.hide();
-        resolve(game);
-      })
-      .catch(error => {
-        Loading.hide();
-        reject(error);
-      });
-  });
+  } catch (error) {
+    Loading.hide();
+    throw error;
+  }
 };
 
 export const LISTEN_PLAYER_GAMES = ({ commit, dispatch, state }) => {
@@ -295,7 +241,7 @@ export const LISTEN_PLAYER_GAMES = ({ commit, dispatch, state }) => {
           switch (change.type) {
             case "added":
             case "modified":
-              game = snapshotToGame(change.doc, state);
+              game = snapshotToGameJSON(change.doc, state);
               commit("SET_PLAYER_GAME", game);
               break;
             case "removed":
@@ -332,7 +278,7 @@ export const LISTEN_PUBLIC_GAMES = ({ commit, dispatch, state }) => {
           switch (change.type) {
             case "added":
             case "modified":
-              game = snapshotToGame(change.doc, state);
+              game = snapshotToGameJSON(change.doc, state);
               commit("SET_PUBLIC_GAME", game);
               break;
             case "removed":
@@ -355,7 +301,7 @@ export const UNLISTEN_PUBLIC_GAMES = ({ commit, state }) => {
   }
 };
 
-const snapshotToGame = doc => {
+const snapshotToGameJSON = doc => {
   let game = doc.data();
   game.config.id = doc.id;
   game.tags.date = toDate(game.tags.date);

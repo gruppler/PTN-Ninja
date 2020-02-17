@@ -36,7 +36,7 @@ export const SET_CONFIG = (state, { game, config }) => {
   if (game) {
     game.config = { ...config };
   } else {
-    console.error("Game not found:", game.name);
+    throw new Error("Game not found: " + game.name);
   }
 };
 

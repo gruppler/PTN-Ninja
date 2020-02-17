@@ -1,4 +1,5 @@
-import { isEmpty, omit, pick } from "lodash";
+import Vue from "vue";
+import { isEmpty, pick } from "lodash";
 
 export const INIT = state => {
   state.initialized = true;
@@ -29,26 +30,23 @@ export const UNLISTEN_PLAYER_GAMES = state => {
 };
 
 export const SET_PLAYER_GAME = (state, game) => {
-  state.playerGames = { ...state.playerGames, [game.config.id]: game };
+  Vue.set(state.playerGames, game.config.id, game);
   if (game.config.isPrivate) {
-    state.privateGames = {
-      ...state.privateGames,
-      [game.config.id]: game
-    };
+    Vue.set(state.privateGames, game.config.id, game);
   }
 };
 
 export const REMOVE_PLAYER_GAME = (state, id) => {
-  state.playerGames = omit(state.playerGames, id);
-  state.privateGames = omit(state.privateGames, id);
+  Vue.delete(state.playerGames, id);
+  Vue.delete(state.privateGames, id);
 };
 
 export const SET_PUBLIC_GAME = (state, game) => {
-  state.publicGames = { ...state.publicGames, [game.config.id]: game };
+  Vue.set(state.publicGames, game.config.id, game);
 };
 
 export const REMOVE_PUBLIC_GAME = (state, id) => {
-  state.publicGames = omit(state.publicGames, id);
+  Vue.delete(state.publicGames, id);
 };
 
 export const LISTEN_PUBLIC_GAMES = (state, unsubscribe) => {
