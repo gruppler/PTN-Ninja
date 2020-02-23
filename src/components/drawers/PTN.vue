@@ -64,7 +64,7 @@ export default {
     }
   },
   mounted() {
-    this.scroll();
+    this.$nextTick(this.scroll);
   }
 };
 </script>

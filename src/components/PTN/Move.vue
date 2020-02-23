@@ -17,21 +17,23 @@
         only-branch
       />
     </smooth-reflow>
-    <div class="move-wrapper">
-      <Linenum
-        v-if="move.linenum"
-        :linenum="move.linenum"
-        :game="game"
-        :no-branch="noBranch || separateBranch"
-      />
-      <template v-if="ply1 && (!player || player === 1)">
-        <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
-        <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
-      </template>
-      <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
-      </template>
-    </div>
+    <q-intersection class="move-wrapper">
+      <div>
+        <Linenum
+          v-if="move.linenum"
+          :linenum="move.linenum"
+          :game="game"
+          :no-branch="noBranch || separateBranch"
+        />
+        <template v-if="ply1 && (!player || player === 1)">
+          <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
+          <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
+        </template>
+        <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
+          <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
+        </template>
+      </div>
+    </q-intersection>
     <q-separator v-if="separator" class="fullwidth-padded-md" />
   </div>
 </template>
@@ -164,4 +166,7 @@ export default {
     opacity 1
     &.lt-sm
       opacity 0
+
+  .move-wrapper
+    min-height 35px
 </style>
