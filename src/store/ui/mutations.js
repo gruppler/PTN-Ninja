@@ -22,19 +22,29 @@ export const UPDATE_PTN = (state, ptn) => {
   state.games[0].ptn = ptn;
 };
 
-export const SET_NAME = (state, name) => {
-  state.games[0].name = name;
+export const SET_NAME = (state, { oldName, newName }) => {
+  let stateGame = state.games.find(g => g.name === oldName);
+  if (stateGame) {
+    stateGame.name = newName;
+  } else {
+    throw new Error("Game not found: " + oldName);
+  }
 };
 
-export const SET_STATE = (state, gameState) => {
-  state.games[0].state = cloneDeep(gameState);
+export const SET_STATE = (state, { game, gameState }) => {
+  let stateGame = state.games.find(g => g.name === game.name);
+  if (stateGame) {
+    stateGame.state = cloneDeep(gameState);
+  } else {
+    throw new Error("Game not found: " + game.name);
+  }
 };
 
 export const SET_CONFIG = (state, { game, config }) => {
   game.config = { ...config };
-  game = state.games.find(g => g.name === game.name);
-  if (game) {
-    game.config = { ...config };
+  let stateGame = state.games.find(g => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...config };
   } else {
     throw new Error("Game not found: " + game.name);
   }

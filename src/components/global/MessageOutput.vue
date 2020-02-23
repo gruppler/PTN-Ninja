@@ -24,22 +24,7 @@ export default {
   props: ["error", "success", "warning", "hint", "content-class"],
   methods: {
     formatError(error) {
-      const errorMessages = this.$i18n.messages[this.$i18n.locale].error;
-      if (typeof error === "string") {
-        if (error in errorMessages) {
-          return this.$t(`error["${error}"]`);
-        } else {
-          return error;
-        }
-      } else if ("code" in error && error.code in errorMessages) {
-        return this.$t(`error["${error.code}"]`);
-      } else if ("message" in error) {
-        if (error.message in errorMessages) {
-          return this.$t(`error["${error.message}"]`);
-        } else {
-          return error.message;
-        }
-      }
+      return this.$store.getters.errorMessage(error);
     },
     formatSuccess(success) {
       const successMessages = this.$i18n.messages[this.$i18n.locale].success;

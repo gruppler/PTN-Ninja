@@ -575,6 +575,14 @@ export default {
       }
       this.setWindowTitle(game.name);
 
+      if (game.config.unseen) {
+        debugger;
+        this.$store.dispatch("SET_CONFIG", {
+          game,
+          config: { ...game.config, unseen: false }
+        });
+      }
+
       if (process.env.DEV) {
         window.main = this;
         window.game = game;
@@ -753,10 +761,16 @@ export default {
         this.isEditingTPS = false;
         this.updateGame();
       }
+      if (newGames.length !== oldGames.length) {
+        this.$store.dispatch("online/LISTEN_ACTIVE_GAMES");
+      }
     },
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {
-        this.$store.dispatch("SET_STATE", this.game.minState);
+        this.$store.dispatch("SET_STATE", {
+          game: this.game,
+          gameState: this.game.minState
+        });
       }
     },
     gameHistory(newHistory, oldHistory) {
@@ -776,7 +790,10 @@ export default {
     },
     gameName(newName, oldName) {
       if (oldName.game === newName.game) {
-        this.$store.dispatch("SET_NAME", newName.name);
+        this.$store.dispatch("SET_NAME", {
+          oldName: oldName.name,
+          newName: newName.name
+        });
       }
       this.setWindowTitle(newName.name);
     },
@@ -785,9 +802,14 @@ export default {
         this.firstMoveNumber = this.minFirstMoveNumber;
       }
     },
-    user(user) {
+    user(user, oldUser) {
       if (this.game.config.isOnline) {
-        if (user && !this.game.player(user.uid) && this.game.openPlayer) {
+        if (
+          user &&
+          (!oldUser || user.uid !== oldUser.uid) &&
+          !this.game.player(user.uid) &&
+          this.game.openPlayer
+        ) {
           this.dialogJoinGame = true;
         }
       }
@@ -827,9 +849,7 @@ export default {
               this.$router.replace("/");
             })
             .catch(error => {
-              this.$store.getters.error({
-                message: this.$t(`error["${error.message}"]`)
-              });
+              this.$store.getters.error({ error });
             });
         }
       }

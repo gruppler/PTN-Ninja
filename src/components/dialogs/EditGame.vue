@@ -21,6 +21,9 @@
 
     <template v-slot:footer>
       <q-separator />
+
+      <message-output :error="error" />
+
       <q-card-actions align="right">
         <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
@@ -29,6 +32,7 @@
         <q-btn
           :label="$t('OK')"
           @click="$refs.gameInfo.submit()"
+          :loading="loading"
           :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
           color="accent"
           flat
@@ -48,6 +52,8 @@ export default {
   props: ["value", "game"],
   data() {
     return {
+      loading: false,
+      error: "",
       showAll: false
     };
   },
@@ -64,7 +70,7 @@ export default {
     close() {
       this.$emit("input", false);
     },
-    save({ name, tags }) {
+    async save({ name, tags }) {
       this.game.name = name;
 
       let changedTags = {};
@@ -78,8 +84,26 @@ export default {
         this.game.setTags(changedTags);
       }
 
+      if (this.game.config.id) {
+        this.loading = true;
+        try {
+          await this.$store.dispatch("online/UPDATE_GAME", this.game.json);
+          this.loading = false;
+        } catch (error) {
+          this.loading = false;
+          this.error = error;
+        }
+      }
       this.showAll = false;
       this.close();
+    }
+  },
+  watch: {
+    value(isVisible) {
+      if (isVisible) {
+        this.loading = false;
+        this.error = "";
+      }
     }
   }
 };

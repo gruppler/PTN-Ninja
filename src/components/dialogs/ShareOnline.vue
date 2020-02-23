@@ -262,6 +262,9 @@ export default {
       if (isLoggedIn) {
         this.isPrivate = false;
       }
+    },
+    "$store.state.playerName"(playerName) {
+      this.playerName = playerName;
     }
   }
 };

@@ -140,7 +140,7 @@ import Result from "../PTN/Result";
 import { getPlayer } from "../../PTN/Game/online";
 import { compact, differenceBy, without } from "lodash";
 
-const MAX_SELECTED = 5;
+const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
@@ -256,10 +256,14 @@ export default {
         }));
     },
     publicGames() {
-      return Object.values(this.$store.state.online.publicGames);
+      return Object.values(this.$store.state.online.publicGames).sort(
+        this.sortGames
+      );
     },
     playerGames() {
-      return Object.values(this.$store.state.online.playerGames);
+      return Object.values(this.$store.state.online.playerGames).sort(
+        this.sortGames
+      );
     },
     activeGameIDs() {
       return compact(this.$store.state.games.map(game => game.config.id));
@@ -279,6 +283,9 @@ export default {
     }
   },
   methods: {
+    sortGames(a, b) {
+      return b.tags.date - a.tags.date;
+    },
     playerIcon(player, isPrivate) {
       return this.$store.getters.playerIcon(player, isPrivate);
     },
@@ -320,11 +327,20 @@ export default {
       return this.activeGameIDs.includes(game.config.id);
     }
   },
-  beforeCreate() {
+  mounted() {
+    if (this.user) {
+      this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
+    }
     this.$store.dispatch("online/LISTEN_PUBLIC_GAMES");
   },
   beforeDestroy() {
+    this.$store.dispatch("online/UNLISTEN_PLAYER_GAMES");
     this.$store.dispatch("online/UNLISTEN_PUBLIC_GAMES");
+  },
+  watch: {
+    "user.uid"() {
+      this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
+    }
   }
 };
 </script>

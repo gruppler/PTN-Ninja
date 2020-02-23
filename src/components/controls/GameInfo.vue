@@ -721,6 +721,19 @@ export default {
         this.name = this.$store.getters.uniqueName(this.name, true);
       }
 
+      if (
+        this.game &&
+        !this.game.isLocal &&
+        this.game.config.isPrivate &&
+        [1, 2].includes(this.player)
+      ) {
+        this.$store.dispatch("SET_UI", [
+          "playerName",
+          this.tags["player" + this.player]
+        ]);
+        this.player;
+      }
+
       this.$emit("submit", { name: this.name, tags: { ...this.tags } });
       this.updateTags();
     },

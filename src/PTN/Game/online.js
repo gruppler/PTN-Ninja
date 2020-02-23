@@ -56,7 +56,7 @@ export default class GameOnline {
     return tags;
   }
 
-  parseJSONTags(json) {
+  parseJSONTags(json, removeMissing = false) {
     json = { ...json };
     if (json.date) {
       const date = new Date(
@@ -64,6 +64,9 @@ export default class GameOnline {
       );
       json.time = Tag.timeFromDate(date);
       json.date = Tag.dateFromDate(date);
+    }
+    if (removeMissing) {
+      this.tags = {};
     }
     each(json, (value, key) => {
       const tag = new Tag(false, key, value);

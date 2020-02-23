@@ -25,8 +25,10 @@ service cloud.firestore {
     match /games/{gameID} {
     	allow read, create: if isSignedIn();
       allow update: if isPlayer(gameID);
+
       match /moves/{move} {
         allow read, create, update: if isPlayer(gameID);
+        allow read: if isSignedIn();
       }
     }
 

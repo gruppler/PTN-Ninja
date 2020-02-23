@@ -12,7 +12,7 @@
       :display-value="name"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
-      popup-content-class="bg-secondary"
+      popup-content-class="game-selector-options"
       color="accent"
       emit-value
       filled
@@ -65,7 +65,9 @@
             <q-icon
               :name="icon(scope.opt)"
               :class="{ 'text-accent': scope.opt.value === 0 }"
-            />
+            >
+              <q-badge v-if="scope.opt.config.unseen" color="accent" floating />
+            </q-icon>
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
@@ -83,6 +85,13 @@
 
       <template v-slot:append>
         <div class="row">
+          <q-badge
+            v-if="unseenCount"
+            color="accent"
+            text-color="grey-10"
+            :label="unseenCount"
+            class="q-mr-sm"
+          />
           <slot />
         </div>
       </template>
@@ -129,6 +138,9 @@ export default {
           }
         }
       }
+    },
+    unseenCount() {
+      return this.games.filter(game => game.config.unseen).length;
     }
   },
   methods: {
@@ -220,13 +232,24 @@ export default {
     @media (max-width: $breakpoint-xs-max)
       padding-right 0
 
-  .q-field__native span
-    text-overflow ellipsis
-    white-space nowrap
-    overflow hidden
-    @media (max-width: $breakpoint-xs-max)
-      font-size .85em
+  .q-field__native
+    span
+      text-overflow ellipsis
+      white-space nowrap
+      overflow hidden
+      @media (max-width: $breakpoint-xs-max)
+        font-size .85em
 
-    + .no-outline
+    .no-outline
       position absolute
+
+  .q-badge
+    align-self center
+    padding 5px
+    font-weight bold
+
+.game-selector-options
+  background $secondary
+  .q-badge
+    padding 4px
 </style>

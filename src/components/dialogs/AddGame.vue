@@ -187,7 +187,11 @@ export default {
         if (this.selectedGames.length) {
           // Load online game(s)
           this.selectedGames.forEach(game => {
-            this.$store.dispatch("online/LOAD_GAME", game.config.id);
+            this.$store
+              .dispatch("online/LOAD_GAME", game.config.id)
+              .catch(error => {
+                this.$store.getters.error({ error });
+              });
           });
           this.selectedGames = [];
         }

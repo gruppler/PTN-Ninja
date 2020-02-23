@@ -60,38 +60,50 @@ export const UPDATE_PTN = ({ state, commit }, ptn) => {
   commit("UPDATE_PTN", ptn);
 };
 
-export const SET_NAME = ({ state, commit, getters }, name) => {
-  let oldName = state.games[0].name;
+export const SET_NAME = ({ state, commit, getters }, { oldName, newName }) => {
+  let index = state.games.findIndex(game => game.name === oldName);
+  if (index < 0) {
+    throw new Error("Game not found: " + oldName);
+  }
   let games = LocalStorage.getItem("games");
-  name = getters.uniqueName(name, true);
-  games[0] = name;
+  let name = getters.uniqueName(newName, true);
+  games[index] = name;
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + oldName);
-  LocalStorage.set("ptn-" + name, state.games[0].ptn);
+  LocalStorage.set("ptn-" + name, state.games[index].ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, state.games[0].state);
-  if (state.games[0].config) {
+  LocalStorage.set("state-" + name, state.games[index].state);
+  if (state.games[index].config) {
     LocalStorage.remove("config-" + oldName);
-    LocalStorage.set("config-" + name, state.games[0].config);
+    LocalStorage.set("config-" + name, state.games[index].config);
   }
-  if (state.games[0].history) {
+  if (state.games[index].history) {
     LocalStorage.remove("history-" + oldName);
-    LocalStorage.set("history-" + state.games[0].name, state.games[0].history);
+    LocalStorage.set(
+      "history-" + state.games[index].name,
+      state.games[index].history
+    );
     LocalStorage.remove("historyIndex-" + oldName);
     LocalStorage.set(
-      "historyIndex-" + state.games[0].name,
-      state.games[0].historyIndex
+      "historyIndex-" + state.games[index].name,
+      state.games[index].historyIndex
     );
   }
-  commit("SET_NAME", name);
+  commit("SET_NAME", { oldName, newName });
 };
 
-export const SET_STATE = ({ state, commit }, gameState) => {
-  LocalStorage.set("state-" + state.games[0].name, gameState);
-  commit("SET_STATE", gameState);
+export const SET_STATE = ({ commit, state }, { game, gameState }) => {
+  if (!state.games.some(g => g.name === game.name)) {
+    throw new Error("Game not found: " + game.name);
+  }
+  LocalStorage.set("state-" + game.name, gameState);
+  commit("SET_STATE", { game, gameState });
 };
 
-export const SET_CONFIG = ({ commit }, { game, config }) => {
+export const SET_CONFIG = ({ commit, state }, { game, config }) => {
+  if (!state.games.some(g => g.name === game.name)) {
+    throw new Error("Game not found: " + game.name);
+  }
   LocalStorage.set("config-" + game.name, config);
   commit("SET_CONFIG", { game, config });
 };

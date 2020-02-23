@@ -23,7 +23,27 @@ export const confirm = () => ({ title, message, ok, cancel, success }) => {
   }).onOk(success);
 };
 
-export const error = () => ({ message, timeout }) => {
+export const errorMessage = () => error => {
+  const errorMessages = i18n.messages[i18n.locale].error;
+  if (typeof error === "string") {
+    if (error in errorMessages) {
+      return this.$t(`error["${error}"]`);
+    } else {
+      return error;
+    }
+  } else if ("code" in error && error.code in errorMessages) {
+    return this.$t(`error["${error.code}"]`);
+  } else if ("message" in error) {
+    if (error.message in errorMessages) {
+      return this.$t(`error["${error.message}"]`);
+    } else {
+      return error.message;
+    }
+  }
+};
+
+export const error = (state, getters) => ({ error, timeout }) => {
+  const message = getters.errorMessage(error);
   Notify.create({
     message,
     timeout: timeout || 0,

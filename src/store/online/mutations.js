@@ -21,6 +21,22 @@ export const SET_USER = (state, user) => {
   state.privateGames = {};
 };
 
+export const LISTEN_ACTIVE_GAMES = (state, unsubscribe) => {
+  state.activeGamesListener = unsubscribe;
+};
+
+export const UNLISTEN_ACTIVE_GAMES = state => {
+  state.activeGamesListener = null;
+};
+
+export const SET_ACTIVE_GAME = (state, game) => {
+  Vue.set(state.activeGames, game.config.id, game);
+};
+
+export const REMOVE_ACTIVE_GAME = (state, id) => {
+  Vue.delete(state.activeGames, id);
+};
+
 export const LISTEN_PLAYER_GAMES = (state, unsubscribe) => {
   state.playerGamesListener = unsubscribe;
 };
