@@ -346,8 +346,9 @@ export default class GameState {
   get player() {
     if (this.game.isLocal) {
       return this.turn;
+    } else {
+      return this.game.config.player;
     }
-    return 1;
   }
 
   get color() {

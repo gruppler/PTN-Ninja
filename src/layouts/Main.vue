@@ -576,7 +576,6 @@ export default {
       this.setWindowTitle(game.name);
 
       if (game.config.unseen) {
-        debugger;
         this.$store.dispatch("SET_CONFIG", {
           game,
           config: { ...game.config, unseen: false }

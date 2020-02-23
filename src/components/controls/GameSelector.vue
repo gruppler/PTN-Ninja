@@ -101,7 +101,7 @@
 
 <script>
 import { Notify } from "quasar";
-import { getPlayer, getOtherPlayer } from "../../PTN/Game/online";
+import { getOtherPlayer } from "../../PTN/Game/online";
 
 export default {
   name: "GameSelector",
@@ -146,7 +146,7 @@ export default {
   methods: {
     account() {
       const user = this.$store.state.online.user;
-      const player = user ? getPlayer(this.games[0], user.uid) : 0;
+      const player = this.games[0].config.player;
       if (!player) {
         this.$router.push({ name: "join" });
       } else if (user && !user.isAnonymous) {
@@ -163,9 +163,8 @@ export default {
     },
     icon(game) {
       if (game.config.isOnline) {
-        const user = this.$store.state.online.user;
         return this.$store.getters.playerIcon(
-          user ? getPlayer(game, user.uid) : 0,
+          game.config.player,
           game.config.isPrivate
         );
       } else {

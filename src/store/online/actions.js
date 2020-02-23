@@ -7,12 +7,15 @@ import Game from "../../PTN/Game";
 import { toDate, now } from "../../PTN/Tag";
 
 const configToDB = config => {
-  return omit(config, ["id", "unseen"]);
+  return omit(config, ["id", "player", "unseen"]);
 };
 
 const snapshotToGameJSON = doc => {
   let game = doc.data();
   game.config.id = doc.id;
+  game.config.player = game.config.players
+    ? game.config.players.indexOf(auth.currentUser.uid) + 1
+    : 0;
   game.tags.date = toDate(game.tags.date);
   return game;
 };
@@ -278,6 +281,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
                 }
                 if (
                   (isChanged && !isActive) ||
+                  game.config.player !== stateGame.config.player ||
                   !isEqualWith(
                     configToDB(game.config),
                     configToDB(stateGame.config),
