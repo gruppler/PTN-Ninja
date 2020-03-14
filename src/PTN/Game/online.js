@@ -15,17 +15,9 @@ export const getPlayer = (game, uid) => {
     : 0;
 };
 
-export const getOtherPlayer = (game, uid) => {
-  const player = getPlayer(game, uid);
-  return player ? (player === 1 ? 2 : 1) : 0;
-};
-
 export default class GameOnline {
   player(uid) {
     return getPlayer(this, uid);
-  }
-  otherPlayer(uid) {
-    return getOtherPlayer(this, uid);
   }
 
   get openPlayer() {

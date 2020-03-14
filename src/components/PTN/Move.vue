@@ -17,7 +17,7 @@
         only-branch
       />
     </smooth-reflow>
-    <q-intersection class="move-wrapper">
+    <q-intersection class="move-wrapper" margin="300px">
       <div>
         <Linenum
           v-if="move.linenum"

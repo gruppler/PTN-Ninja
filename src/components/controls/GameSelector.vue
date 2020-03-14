@@ -101,7 +101,6 @@
 
 <script>
 import { Notify } from "quasar";
-import { getOtherPlayer } from "../../PTN/Game/online";
 
 export default {
   name: "GameSelector",
@@ -122,8 +121,8 @@ export default {
       if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
         return name;
       } else {
-        const user = this.$store.state.online.user;
-        let otherPlayer = user ? getOtherPlayer(this.game, user.uid) : false;
+        let player = this.game.config.player;
+        let otherPlayer = player ? (player === 1 ? 2 : 1) : 0;
         if (!otherPlayer) {
           return name;
         } else {
@@ -180,6 +179,7 @@ export default {
       Notify.create({
         message: this.$t("Game x closed", { game: game.name }),
         timeout: 10000,
+        progress: true,
         color: "secondary",
         position: "bottom-left",
         multiLine: false,

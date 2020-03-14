@@ -137,7 +137,6 @@
 import FullscreenToggle from "../controls/FullscreenToggle.vue";
 import Result from "../PTN/Result";
 
-import { getPlayer } from "../../PTN/Game/online";
 import { compact, differenceBy, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
@@ -252,7 +251,7 @@ export default {
         .map(game => ({
           ...game,
           isActive: this.isActive(game),
-          player: getPlayer(game, this.user ? this.user.uid : "")
+          player: game.config.player
         }));
     },
     publicGames() {
