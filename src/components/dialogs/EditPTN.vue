@@ -13,7 +13,7 @@
     <PTN-editor ref="editor" :game="game" @save="save" />
 
     <template v-slot:footer>
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <div class="col-grow error-message q-px-sm">
           {{ editor ? editor.error : "" }}
         </div>

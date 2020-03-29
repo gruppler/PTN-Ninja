@@ -22,7 +22,7 @@
       :key="game.name + '|' + game.tag('tps')"
       ref="container"
     >
-      <div class="flat-counter row no-wrap">
+      <div v-if="$store.state.flatCounts" class="flat-counter row no-wrap">
         <div
           class="player1 relative-position"
           :style="{ width: flatWidths[0] }"
@@ -50,7 +50,7 @@
       </div>
 
       <div class="board-row row no-wrap">
-        <div class="y-axis column">
+        <div v-if="$store.state.axisLabels" class="y-axis column">
           <div v-for="i in (1, game.size)" :key="i">
             {{ game.size - i + 1 }}
           </div>
@@ -80,7 +80,7 @@
         <div class="unplayed-bg"></div>
       </div>
 
-      <div class="x-axis row items-end">
+      <div v-if="$store.state.axisLabels" class="x-axis row items-end">
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
@@ -381,7 +381,7 @@ $radius = 5px
 
 .flat-counter, .x-axis
   width 100%
-  will-change width, height, margin-left, transform, opacity
+  will-change width
   .board-container.axis-labels &
     margin-left $axis-size
     width "calc(100% - %s)" % $axis-size
@@ -397,10 +397,6 @@ $radius = 5px
   height 2.25em
   padding-bottom $turn-indicator-height
   line-height @height - @padding-bottom
-  .board-container:not(.flat-counts) &
-    transform translateY(100%)
-    height 0
-    opacity 0
   .player1, .player2
     width 50%
     will-change width
@@ -447,11 +443,6 @@ $radius = 5px
 .y-axis
   align-items flex-start
   width $axis-size
-  will-change width, opacity, transform
-  .board-container:not(.axis-labels) &
-    width 0
-    opacity 0
-    transform translateX(100%)
 
 .board
   background darken($blue-grey-4, 2%)

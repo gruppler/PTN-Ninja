@@ -22,7 +22,6 @@
         <q-btn
           :label="games.length"
           @click.stop
-          @click.right.prevent="select(1)"
           class="text-subtitle2 text-white q-pa-sm"
           dense
           flat
@@ -101,25 +100,27 @@ export default {
       }
     },
     close(index) {
+      if (this.games.length <= 1) {
+        return;
+      }
       const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
       Notify.create({
         message: this.$t("Game x closed", { game: game.name }),
-        timeout: 0,
+        timeout: 10000,
+        progress: true,
         color: "secondary",
-        position: "bottom",
+        position: "bottom-left",
+        multiLine: false,
         actions: [
-          {
-            label: this.$t("Dismiss"),
-            color: "accent"
-          },
           {
             label: this.$t("Undo"),
             color: "accent",
             handler: () => {
               this.$store.dispatch("ADD_GAME", game);
             }
-          }
+          },
+          { icon: "close", color: "grey-2" }
         ]
       });
     },

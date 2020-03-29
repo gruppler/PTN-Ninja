@@ -60,8 +60,8 @@ const routes = [
         path: "/preferences"
       },
       {
-        name: "meta",
-        path: "/meta"
+        name: "info",
+        path: "/info"
       },
       {
         name: "edit",

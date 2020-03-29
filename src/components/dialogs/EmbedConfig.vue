@@ -64,15 +64,6 @@
         </q-item-section>
       </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("From current ply") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.state" />
-        </q-item-section>
-      </q-item>
-
       <q-item>
         <q-item-section>
           {{ $t("Play Speed") }}
@@ -86,6 +77,24 @@
             snap
             label
           />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Include Player Names") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.includeNames" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("From current ply") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.state" />
         </q-item-section>
       </q-item>
 
@@ -191,7 +200,7 @@
 
     <template v-slot:footer>
       <q-separator />
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
@@ -233,6 +242,7 @@ export default {
       return this.$store.getters.url(this.game, {
         origin: true,
         name: this.name,
+        names: this.config.includeNames,
         state: this.config.state,
         ui: this.config.ui
       });

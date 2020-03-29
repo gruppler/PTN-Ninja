@@ -148,6 +148,7 @@ export const OPEN_FILES = ({ dispatch }, files) => {
           Loading.hide();
         }
       };
+      reader.onerror = error => console.error(error);
       if (!count++) {
         Loading.show();
       }
@@ -171,10 +172,10 @@ export const COPY = function(context, { text, message }) {
   Notify.create({
     icon: "copy",
     type: "positive",
-    color: "white",
-    classes: "text-grey-10",
+    color: "secondary",
+    classes: "text-grey-2",
     timeout: 1,
-    position: "bottom",
+    position: "bottom-left",
     message
   });
 };

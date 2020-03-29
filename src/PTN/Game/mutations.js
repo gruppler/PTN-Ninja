@@ -15,7 +15,7 @@ export default class GameMutations {
     const oldBranchRegExp = new RegExp(
       "^" + (oldBranch ? escapeRegExp(oldBranch) + "(\\/|$)" : "")
     );
-    const newBranchFull = newBranch ? newBranch + "/" : "";
+    const newBranchFull = newBranch ? newBranch + "$1" : "";
 
     if (!force) {
       if (!Linenum.validateBranch(newBranch, true)) {

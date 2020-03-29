@@ -240,6 +240,10 @@ export default {
 
 <style lang="stylus">
 .notes
+  .scroll:before
+    content ""
+    display block
+    height 100%
   .q-separator
     opacity .75
   .q-message:not(:last-child)

@@ -182,22 +182,10 @@ export default {
   },
   props: ["ptn", "name", "state"],
   data() {
-    let game;
-    let errors = [];
-    try {
-      game = new Game(this.ptn, { name: this.name, state: this.state });
-    } catch (error) {
-      const name = game ? game.name : "";
-      if (game && name) {
-        game.name = name;
-      }
-      console.error(error);
-      errors.push(this.$t(`error["${error.message}"]`));
-    }
     return {
       Platform,
-      game,
-      errors,
+      game: this.getGame(),
+      errors: [],
       hotkeys: HOTKEYS,
       defaults: { ...this.$store.state.embedConfig.ui }
     };
@@ -235,6 +223,20 @@ export default {
     }
   },
   methods: {
+    getGame() {
+      let game;
+      try {
+        game = new Game(this.ptn, { name: this.name, state: this.state });
+      } catch (error) {
+        const name = game ? game.name : "";
+        if (game && name) {
+          game.name = name;
+        }
+        console.error(error);
+        this.errors.push(this.$t(`error["${error.message}"]`));
+      }
+      return game;
+    },
     openLink() {
       window.open(
         this.$store.getters.url(this.game, { origin: true, state: true }),
@@ -282,6 +284,9 @@ export default {
     });
   },
   watch: {
+    ptn() {
+      this.game = this.getGame();
+    },
     state: {
       handler(state, oldState) {
         let fullState = {};
