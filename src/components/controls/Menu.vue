@@ -2,7 +2,7 @@
   <q-fab
     color="accent"
     text-color="grey-10"
-    icon="add"
+    :icon="short ? 'menu_horizontal' : 'menu_vertical'"
     :direction="short ? 'left' : 'up'"
     v-bind="$attrs"
     v-on="$listeners"

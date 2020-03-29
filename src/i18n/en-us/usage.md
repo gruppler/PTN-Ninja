@@ -15,6 +15,7 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - To load an existing game, **click** the **+** button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
+- **Swipe left** or **right-click** the Floating Action Button to switch to the previous game.
 
 ### Playback
 

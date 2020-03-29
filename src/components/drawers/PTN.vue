@@ -8,7 +8,7 @@
           :ref="move.id"
           :move="move"
           :game="game"
-          :key="game.name + '/' + move.branch + '/' + move.linenum.text()"
+          :key="move.id"
           separate-branch
         />
       </div>

@@ -39,6 +39,8 @@ export default {
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",
   link: "mdi-link",
+  menu_horizontal: "mdi-dots-horizontal",
+  menu_vertical: "mdi-dots-vertical",
   more: "mdi-unfold-more-horizontal",
   moves: "mdi-format-list-numbered",
   notes: "mdi-message-bulleted",
