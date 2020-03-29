@@ -11,7 +11,7 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-icon name="edit" @click.stop="edit" class="q-mr-sm" />
+            <q-btn icon="edit" @click.stop="edit" class="q-mr-sm" dense flat />
           </GameSelector>
         </q-toolbar-title>
         <q-btn
@@ -61,7 +61,11 @@
           </smooth-reflow>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu @input="menuAction" />
+          <Menu
+            @input="menuAction"
+            @click.right.prevent="switchGame"
+            v-touch-swipe.left="switchGame"
+          />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles v-if="!dialogEmbed" />
@@ -259,7 +263,7 @@ const HISTORY_DIALOGS = {
   dialogHelp: "help",
   dialogAddGame: "add",
   dialogUISettings: "preferences",
-  dialogEditGame: "meta",
+  dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
   dialogQR: "qr"
@@ -605,6 +609,11 @@ export default {
     },
     edit() {
       this.dialogEditGame = true;
+    },
+    switchGame({ distance }) {
+      if (!distance || distance.x > 10) {
+        this.$refs.gameSelector.select(1);
+      }
     },
     showTextTab(value) {
       this.textTab = value;

@@ -6,7 +6,7 @@
   >
     <q-btn
       @click="select(type, color === 1 ? 2 : 1)"
-      :icon="color === 1 ? 'person' : 'person_outline'"
+      :icon="$store.getters.playerIcon(color)"
       flat
       round
     />

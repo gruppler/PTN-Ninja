@@ -8,7 +8,7 @@
           :ref="move.id"
           :move="move"
           :game="game"
-          :key="move.branch + '/' + move.linenum.text()"
+          :key="move.id"
           separate-branch
         />
       </div>
@@ -64,7 +64,7 @@ export default {
     }
   },
   mounted() {
-    this.scroll();
+    this.$nextTick(this.scroll);
   }
 };
 </script>

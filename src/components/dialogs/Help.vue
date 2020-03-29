@@ -12,7 +12,6 @@
           v-model="filter"
           class="col-grow"
           color="accent"
-          autofocus
           clearable
           filled
           square

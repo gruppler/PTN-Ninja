@@ -21,7 +21,7 @@
 
     <template v-slot:footer>
       <q-separator />
-      <q-card-actions class="row items-center justify-end q-gutter-sm">
+      <q-card-actions align="right">
         <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />

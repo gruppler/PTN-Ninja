@@ -220,4 +220,11 @@ export default {
 };
 </script>
 
-<style lang="stylus"></style>
+<style lang="stylus">
+.chat
+  .notes
+    .scroll:before
+      content ""
+      display block
+      height 100%
+</style>

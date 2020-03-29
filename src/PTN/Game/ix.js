@@ -70,7 +70,7 @@ export default class GameIX {
         this.state.ply &&
         piece &&
         piece.ply === this.state.ply &&
-        (this.isLocal || piece.ply.player === this.state.player) &&
+        piece.ply.player === this.state.player &&
         !this.state.isFirstMove
       ) {
         // Piece just placed; valid for stone cycling

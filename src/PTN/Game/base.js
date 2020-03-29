@@ -518,12 +518,12 @@ export default class GameBase {
     }
   }
 
-  text(showAllBranches = true, showComments = true) {
-    return this.headerText() + this.moveText(showAllBranches, showComments);
+  text(showAllBranches = true, showComments = true, tags) {
+    return this.headerText(tags) + this.moveText(showAllBranches, showComments);
   }
 
-  headerText() {
-    return map(this.tags, tag => tag.text()).join("\r\n") + "\r\n\r\n";
+  headerText(tags = this.tags) {
+    return map(tags, tag => tag.text()).join("\r\n") + "\r\n\r\n";
   }
 
   moveText(showAllBranches = false, showComments = false) {

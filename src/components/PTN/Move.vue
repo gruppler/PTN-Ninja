@@ -164,4 +164,7 @@ export default {
     opacity 1
     &.lt-sm
       opacity 0
+
+  .move-wrapper
+    min-height 35px
 </style>
