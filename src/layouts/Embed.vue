@@ -13,13 +13,7 @@
           {{ title }}
         </q-toolbar-title>
         <ShareButton ref="shareButton" :game="game" flat stretch />
-        <q-btn
-          icon="open_in_new"
-          :to="url"
-          @click.prevent="openLink"
-          stretch
-          flat
-        />
+        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="right = !right"
