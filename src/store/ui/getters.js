@@ -79,9 +79,10 @@ export const url = state => (game, options = {}) => {
   }
 
   const origin = location.origin + (process.env.DEV ? "/?#/" : "/");
-  let ptn = options.names
-    ? game.ptn
-    : game.text(true, true, omit(game.tags, ["player1", "player2"]));
+  let ptn =
+    "names" in options && !options.names
+      ? game.text(true, true, omit(game.tags, ["player1", "player2"]))
+      : game.ptn;
   let url = compressToEncodedURIComponent(ptn);
   let params = {};
 
