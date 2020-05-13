@@ -1,3 +1,5 @@
+import { i18n } from "../src/boot/i18n";
+import { Notify } from "quasar";
 import { register } from "register-service-worker";
 
 // The ready(), registered(), cached(), updatefound() and updated()
@@ -12,37 +14,67 @@ register(process.env.SERVICE_WORKER_FILE, {
   // registrationOptions: { scope: './' },
 
   ready() {
-    // console.log("App is being served from cache by a service worker.");
+    if (process.env.DEV) {
+      console.log("App is being served from cache by a service worker.");
+    }
   },
 
-  registered(registration) {
-    // console.log("Service worker has been registered.");
-    registration;
+  registered(/* registration */) {
+    if (process.env.DEV) {
+      console.log("Service worker has been registered.");
+    }
   },
 
-  cached(registration) {
-    // console.log("Content has been cached for offline use.");
-    registration;
+  cached(/* registration */) {
+    if (process.env.DEV) {
+      console.log("Content has been cached for offline use.");
+    }
   },
 
-  updatefound(registration) {
-    // console.log("New content is downloading.");
-    registration;
+  updatefound(/* registration */) {
+    if (process.env.DEV) {
+      console.log("New content is downloading.");
+    }
   },
 
-  updated(registration) {
-    // console.log("New content is available; please refresh.");
-    registration;
+  updated(/* registration */) {
+    if (!process.env.DEV) {
+      Notify.create({
+        message: i18n.t("success.updateAvailable"),
+        icon: "update",
+        color: "primary",
+        textColor: "grey-1",
+        position: "top",
+        timeout: 0,
+        actions: [
+          {
+            label: i18n.t("Update"),
+            color: "accent",
+            handler: () => {
+              window.location.reload();
+            }
+          },
+          {
+            label: i18n.t("Dismiss"),
+            color: "accent",
+            handler: () => {}
+          }
+        ]
+      });
+    }
   },
 
   offline() {
-    // console.log(
-    //   "No internet connection found. App is running in offline mode."
-    // );
+    if (process.env.DEV) {
+      console.log(
+        "No internet connection found. App is running in offline mode."
+      );
+    }
   },
 
   error(err) {
-    // console.error("Error during service worker registration:", err);
-    err;
+    if (process.env.DEV) {
+      console.error("Error during service worker registration:", err);
+    }
   }
 });

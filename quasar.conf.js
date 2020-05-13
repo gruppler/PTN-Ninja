@@ -6,7 +6,6 @@ module.exports = function(ctx) {
     // --> boot files are part of "main.js"
     boot: [
       "addressbar-color",
-      "axios",
       "moment",
       "i18n",
       "shortkey",
@@ -48,7 +47,10 @@ module.exports = function(ctx) {
           enforce: "pre",
           test: /\.(js|vue)$/,
           loader: "eslint-loader",
-          exclude: /node_modules/
+          exclude: /node_modules/,
+          options: {
+            formatter: require("eslint").CLIEngine.getFormatter("stylish")
+          }
         });
       }
     },
@@ -69,6 +71,7 @@ module.exports = function(ctx) {
     pwa: {
       workboxPluginMode: "GenerateSW",
       workboxOptions: {
+        cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       },

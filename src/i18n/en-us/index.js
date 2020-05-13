@@ -152,6 +152,7 @@ export default {
   UI: "UI", // User Interface
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",
+  Update: "Update",
   Usage: "Usage",
   "Verify Email Address": "Verify Email Address",
   Walls: "Walls",
@@ -223,7 +224,8 @@ export default {
 
   success: {
     resetPasswordSent: "Reset password email sent.",
-    verifyEmailSent: "Verification email sent."
+    verifyEmailSent: "Verification email sent.",
+    updateAvailable: "A new version is available"
   },
 
   warning: {

@@ -270,6 +270,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
               if (stateGame) {
                 if (!isEqual(game.name, stateGame.name)) {
                   isChanged = true;
+                  console.log("UPDATED NAME", game, game.name, stateGame.name);
                   this.dispatch("SET_NAME", {
                     oldName: stateGame.name,
                     newName: game.name
@@ -277,6 +278,12 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
                 }
                 if (!isEqual(game.state, stateGame.state)) {
                   isChanged = true;
+                  console.log(
+                    "UPDATED STATE",
+                    game,
+                    game.state,
+                    stateGame.state
+                  );
                   this.dispatch("SET_STATE", { game, gameState: game.state });
                 }
                 if (
@@ -292,6 +299,12 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
                     }
                   )
                 ) {
+                  console.log(
+                    "UPDATED CONFIG",
+                    game,
+                    game.config,
+                    stateGame.config
+                  );
                   this.dispatch("SET_CONFIG", {
                     game,
                     config: { ...game.config, unseen: !isActive }
