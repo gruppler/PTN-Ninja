@@ -1,7 +1,7 @@
 import { LocalStorage } from "quasar";
 
 export const url = () => game => {
-  let url = location.origin + (process.env.DEV ? "/?#/" : "/");
+  let url = location.origin + "/";
 
   url += "game/" + game.config.id;
 
