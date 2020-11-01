@@ -16,10 +16,10 @@ module.exports = function(ctx) {
 
     css: ["app.styl"],
 
-    extras: ["roboto-font", "mdi-v4"],
+    extras: ["roboto-font", "mdi-v5"],
 
     framework: {
-      all: "auto",
+      importStrategy: "auto",
       autoImportComponentCase: "kebab",
       iconSet: "mdi-v4",
 
@@ -34,11 +34,9 @@ module.exports = function(ctx) {
       ]
     },
 
-    supportIE: false,
-
     build: {
       scopeHoisting: true,
-      vueRouterMode: process.env.NODE_ENV !== "production" ? "hash" : "history",
+      vueRouterMode: "history",
       // vueCompiler: true,
       // gzip: true,
       // analyze: true,
@@ -82,61 +80,31 @@ module.exports = function(ctx) {
         theme_color: "#263238",
         icons: [
           {
-            src: "statics/icons/icon-128x128.png",
+            src: "icons/icon-128x128.png",
             sizes: "128x128",
             type: "image/png"
           },
           {
-            src: "statics/icons/icon-192x192.png",
+            src: "icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png"
           },
           {
-            src: "statics/icons/icon-256x256.png",
+            src: "icons/icon-256x256.png",
             sizes: "256x256",
             type: "image/png"
           },
           {
-            src: "statics/icons/icon-384x384.png",
+            src: "icons/icon-384x384.png",
             sizes: "384x384",
             type: "image/png"
           },
           {
-            src: "statics/icons/icon-512x512.png",
+            src: "icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png"
           }
         ]
-      }
-    },
-
-    cordova: {
-      // id: 'org.cordova.quasar.app'
-      // noIosLegacyBuildFlag: true // uncomment only if you know what you are doing
-    },
-
-    electron: {
-      // bundler: 'builder', // or 'packager'
-
-      extendWebpack(cfg) {
-        // do something with Electron main process Webpack cfg
-        // chainWebpack also available besides this extendWebpack
-      },
-
-      packager: {
-        // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-        // OS X / Mac App Store
-        // appBundleId: '',
-        // appCategoryType: '',
-        // osxSign: '',
-        // protocol: 'myapp://path',
-        // Window only
-        // win32metadata: { ... }
-      },
-
-      builder: {
-        // https://www.electron.build/configuration/configuration
-        // appId: 'quasar-app'
       }
     }
   };

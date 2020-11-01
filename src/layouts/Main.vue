@@ -671,7 +671,7 @@ export default {
   },
   beforeCreate() {
     // Redirect hash URLs
-    if (!process.env.DEV && location.hash.length) {
+    if (location.hash.length) {
       const url = location.hash.substr(1);
       location.hash = "";
       this.$router.replace(url);

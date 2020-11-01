@@ -1,3 +1,5 @@
+import { i18n } from "../src/boot/i18n";
+import { Notify } from "quasar";
 import { register } from "register-service-worker";
 
 // The ready(), registered(), cached(), updatefound() and updated()

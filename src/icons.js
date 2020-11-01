@@ -64,7 +64,7 @@ export default {
   round: "mdi-repeat",
   search: "mdi-magnify",
   send: "mdi-send",
-  settings: "mdi-settings",
+  settings: "mdi-cog",
   share: "mdi-share-variant",
   site: "mdi-map-marker",
   size: "mdi-ruler-square",

@@ -78,7 +78,7 @@ export const url = state => (game, options = {}) => {
     return "";
   }
 
-  const origin = location.origin + (process.env.DEV ? "/?#/" : "/");
+  const origin = location.origin + "/";
   let ptn =
     "names" in options && !options.names
       ? game.text(true, true, omit(game.tags, ["player1", "player2"]))

@@ -1,4 +1,4 @@
-import Ptn from "ptn";
+import Ptn from "./ptn";
 
 import { pick, isEqual } from "lodash";
 

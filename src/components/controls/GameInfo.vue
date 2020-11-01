@@ -46,7 +46,7 @@
 
       <q-input
         ref="tps"
-        v-show="tags.tps || (!game || !game.plies.length)"
+        v-show="tags.tps || !game || !game.plies.length"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
