@@ -162,7 +162,7 @@
       <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer reveal>
+    <q-footer>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
         v-show="isEditingTPS || $store.state.showControls"
