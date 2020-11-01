@@ -128,6 +128,7 @@ export default {
   UI: "UI", // User Interface
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",
+  Update: "Update",
   Usage: "Usage",
   Walls: "Walls",
   White: "White",
@@ -182,6 +183,10 @@ export default {
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
     "Unrecognized tag": "Unrecognized tag"
+  },
+
+  success: {
+    updateAvailable: "A new version is available"
   },
 
   hotkeys: {

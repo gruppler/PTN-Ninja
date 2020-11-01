@@ -30,9 +30,31 @@ register(process.env.SERVICE_WORKER_FILE, {
     registration;
   },
 
-  updated(registration) {
-    // console.log("New content is available; please refresh.");
-    registration;
+  updated(/* registration */) {
+    if (!process.env.DEV) {
+      Notify.create({
+        message: i18n.t("success.updateAvailable"),
+        icon: "update",
+        color: "secondary",
+        textColor: "grey-1",
+        position: "bottom",
+        timeout: 0,
+        actions: [
+          {
+            label: i18n.t("Update"),
+            color: "accent",
+            handler: () => {
+              window.location.reload();
+            }
+          },
+          {
+            label: i18n.t("Dismiss"),
+            color: "accent",
+            handler: () => {}
+          }
+        ]
+      });
+    }
   },
 
   offline() {
