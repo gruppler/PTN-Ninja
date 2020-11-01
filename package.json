@@ -9,7 +9,8 @@
     "lint": "eslint --ext .js,.vue src",
     "dev": "quasar dev -m spa",
     "deploy": "quasar build -m pwa && firebase deploy --only hosting",
-    "dev-deploy": "quasar build -m pwa && firebase deploy --only hosting:dev",
+    "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:dev",
+    "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:live",
     "rules-deploy": "firebase deploy --only firestore:rules",
     "icons": "icongenie g -i app-icon.png --quality 12 --theme-color 607d8b --skip-trim"
   },
