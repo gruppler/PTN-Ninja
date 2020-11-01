@@ -116,7 +116,7 @@
       <Notes ref="notes" class="fit" :game="game" />
     </q-drawer>
 
-    <q-footer reveal>
+    <q-footer>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
         v-show="$store.state.showControls"
