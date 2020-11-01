@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.0.0",
+  "version": "3.0.12",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "cordovaId": "org.gruppler.ptnninja.app",
