@@ -263,10 +263,7 @@ export default {
       });
     },
     copy() {
-      this.$store.dispatch("COPY", {
-        text: this.code,
-        message: this.$t("Copied")
-      });
+      this.$store.dispatch("COPY", this.code);
     },
     close() {
       this.$emit("input", false);

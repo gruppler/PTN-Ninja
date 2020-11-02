@@ -5,6 +5,7 @@ import {
   LocalStorage,
   Notify
 } from "quasar";
+import { i18n } from "../../../src/boot/i18n";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -193,15 +194,39 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const COPY = function(context, { text, message }) {
-  copyToClipboard(text);
-  Notify.create({
-    icon: "copy",
-    type: "positive",
-    color: "secondary",
-    classes: "text-grey-2",
-    timeout: 1,
-    position: "bottom",
-    message
-  });
+export const COPY = function(context, text) {
+  function copy() {
+    copyToClipboard(text)
+      .then(() => {
+        Notify.create({
+          icon: "copy",
+          type: "positive",
+          color: "secondary",
+          classes: "text-grey-2",
+          timeout: 1,
+          position: "bottom",
+          message: i18n.t("success.copied")
+        });
+      })
+      .catch(() => {
+        Notify.create({
+          icon: "copy",
+          type: "negative",
+          color: "secondary",
+          classes: "text-grey-2",
+          timeout: 3,
+          position: "bottom",
+          message: i18n.t("error.Unable to copy")
+        });
+      });
+  }
+
+  if (navigator.canShare) {
+    navigator.share({ text }).catch(error => {
+      console.error(error);
+      copy();
+    });
+  } else {
+    copy();
+  }
 };
