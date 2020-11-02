@@ -25,7 +25,7 @@ const routes = [
       }
 
       if (state.name) {
-        name = state.name;
+        name = decompressFromEncodedURIComponent(state.name) || state.name;
         delete state.name;
       }
 

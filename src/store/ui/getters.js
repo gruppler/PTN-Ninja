@@ -92,9 +92,9 @@ export const url = state => (game, options = {}) => {
   let params = {};
 
   if ("name" in options) {
-    params.name = options.name;
+    params.name = compressToEncodedURIComponent(options.name);
   } else if (game.name && game.name !== game.generateName()) {
-    params.name = game.name;
+    params.name = compressToEncodedURIComponent(game.name);
   }
 
   if (options.origin) {
