@@ -5,6 +5,7 @@ import {
   LocalStorage,
   Notify
 } from "quasar";
+import { i18n } from "../../../src/boot/i18n";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -114,8 +115,39 @@ export const TRIM_TO_PLY = ({ commit }, game) => {
   commit("TRIM_TO_PLY", game);
 };
 
-export const SAVE = (context, game) => {
-  exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8");
+export const SAVE = (context, games) => {
+  function download() {
+    const success = games.map(game =>
+      exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8")
+    );
+
+    if (success.some(s => !s)) {
+      Notify.create({
+        icon: "copy",
+        type: "negative",
+        color: "secondary",
+        classes: "text-grey-2",
+        timeout: 3,
+        position: "bottom",
+        message: i18n.t("error.Unable to download")
+      });
+    }
+  }
+
+  const files = games.map(game => new File([game.ptn], game.name + ".ptn"));
+  if (navigator.canShare && navigator.canShare({ files })) {
+    const title =
+      games.length === 1 ? games[0].name + ".ptn" : i18n.t("Multiple Games");
+
+    navigator.share({ files, title }).catch(error => {
+      console.error(error);
+      if (!/canceled|abort/i.test(error)) {
+        download();
+      }
+    });
+  } else {
+    download();
+  }
 };
 
 export const OPEN = ({ dispatch }, callback) => {
@@ -167,15 +199,41 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const COPY = function(context, { text, message }) {
-  copyToClipboard(text);
-  Notify.create({
-    icon: "copy",
-    type: "positive",
-    color: "secondary",
-    classes: "text-grey-2",
-    timeout: 1,
-    position: "bottom-left",
-    message
-  });
+export const COPY = function(context, text) {
+  function copy() {
+    copyToClipboard(text)
+      .then(() => {
+        Notify.create({
+          icon: "copy",
+          type: "positive",
+          color: "secondary",
+          classes: "text-grey-2",
+          timeout: 1,
+          position: "bottom",
+          message: i18n.t("success.copied")
+        });
+      })
+      .catch(() => {
+        Notify.create({
+          icon: "copy",
+          type: "negative",
+          color: "secondary",
+          classes: "text-grey-2",
+          timeout: 3,
+          position: "bottom",
+          message: i18n.t("error.Unable to copy")
+        });
+      });
+  }
+
+  if (navigator.canShare) {
+    navigator.share({ text }).catch(error => {
+      console.error(error);
+      if (!/canceled|abort/i.test(error)) {
+        copy();
+      }
+    });
+  } else {
+    copy();
+  }
 };

@@ -25,7 +25,7 @@ const routes = [
       }
 
       if (state.name) {
-        name = state.name;
+        name = decompressFromEncodedURIComponent(state.name) || state.name;
         delete state.name;
       }
 
@@ -80,11 +80,9 @@ const routes = [
 ];
 
 // Always leave this as last one
-if (process.env.MODE !== "ssr") {
-  routes.push({
-    path: "*",
-    component: () => import("pages/Error404")
-  });
-}
+routes.push({
+  path: "*",
+  component: () => import("pages/Error404")
+});
 
 export default routes;

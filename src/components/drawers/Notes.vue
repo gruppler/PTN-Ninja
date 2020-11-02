@@ -145,8 +145,8 @@ export default {
             ply = plyID in this.game.plies ? this.game.plies[plyID] : null;
             if (
               ply &&
-              (this.game.state.plies.includes(ply) &&
-                ply.index < this.game.state.ply.index)
+              this.game.state.plies.includes(ply) &&
+              ply.index < this.game.state.ply.index
             ) {
               return plyID;
             }

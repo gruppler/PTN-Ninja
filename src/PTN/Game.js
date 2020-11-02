@@ -1,4 +1,4 @@
-import Aggregation from "./Aggregation";
+import Aggregation from "aggregation/es6";
 
 import GameBase from "./Game/base";
 import GameComments from "./Game/comments";
@@ -8,7 +8,7 @@ import GameMutations from "./Game/mutations";
 import GameNavigation from "./Game/navigation";
 import GameUndo from "./Game/undo";
 
-export default class Game extends (new Aggregation(
+export default class Game extends Aggregation(
   GameBase,
   GameComments,
   GameEnd,
@@ -16,7 +16,7 @@ export default class Game extends (new Aggregation(
   GameMutations,
   GameNavigation,
   GameUndo
-)) {
+) {
   static validate(notation) {
     try {
       new Game(notation);

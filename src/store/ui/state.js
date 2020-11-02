@@ -7,7 +7,7 @@ let defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
-  boardRotation: [0.6, 0.5],
+  boardRotation: [0, 0.65],
   editingTPS: "",
   editingBranch: "",
   firstMoveNumber: 1,
@@ -17,6 +17,7 @@ let defaults = {
   isPortrait: false,
   notifyGame: true,
   notifyNotes: true,
+  openDuplicate: "rename",
   pieceShadows: !Platform.is.mobile,
   playSpeed: 60, //BPM
   player1: "",

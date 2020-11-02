@@ -56,15 +56,15 @@ export default {
             this.$t("hotkeys." + category)
               .toLowerCase()
               .includes(q) ||
-            (this.$t(this.names[category][key])
+            this.$t(this.names[category][key])
               .toLowerCase()
               .includes(q) ||
-              this.keys[category][key].find(key =>
-                ("" + key).toLowerCase().includes(q)
-              ) ||
-              HOTKEYS[category][key].find(key =>
-                ("" + key).toLowerCase().includes(q)
-              ))
+            this.keys[category][key].find(key =>
+              ("" + key).toLowerCase().includes(q)
+            ) ||
+            HOTKEYS[category][key].find(key =>
+              ("" + key).toLowerCase().includes(q)
+            )
           );
         };
 

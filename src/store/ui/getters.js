@@ -35,6 +35,11 @@ export const error = () => ({ message, timeout }) => {
   });
 };
 
+export const gameIndexByName = state => name => {
+  const names = state.games.map(game => game.name);
+  return names.indexOf(name);
+};
+
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
   while (names.includes(name)) {
@@ -78,7 +83,7 @@ export const url = state => (game, options = {}) => {
     return "";
   }
 
-  const origin = location.origin + (process.env.DEV ? "/?#/" : "/");
+  const origin = location.origin + "/";
   let ptn =
     "names" in options && !options.names
       ? game.text(true, true, omit(game.tags, ["player1", "player2"]))
@@ -87,9 +92,9 @@ export const url = state => (game, options = {}) => {
   let params = {};
 
   if ("name" in options) {
-    params.name = options.name;
-  } else if (game.name && game.name !== game.generateName()) {
-    params.name = game.name;
+    params.name = compressToEncodedURIComponent(options.name);
+  } else if (game.name) {
+    params.name = compressToEncodedURIComponent(game.name);
   }
 
   if (options.origin) {

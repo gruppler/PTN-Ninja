@@ -9,14 +9,12 @@
       standalone: standalone
     }"
   >
-    <smooth-reflow>
-      <Linenum
-        v-if="showSeparateBranch"
-        :linenum="move.linenum"
-        :game="game"
-        only-branch
-      />
-    </smooth-reflow>
+    <Linenum
+      v-if="showSeparateBranch"
+      :linenum="move.linenum"
+      :game="game"
+      only-branch
+    />
     <div class="move-wrapper">
       <Linenum
         v-if="move.linenum"

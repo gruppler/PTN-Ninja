@@ -116,7 +116,7 @@
       <Notes ref="notes" class="fit" :game="game" />
     </q-drawer>
 
-    <q-footer reveal>
+    <q-footer>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
         v-show="$store.state.showControls"
@@ -263,7 +263,7 @@ export default {
     }
   },
   beforeCreate() {
-    if (!process.env.DEV && location.hash.length) {
+    if (location.hash.length) {
       const url = location.hash.substr(1);
       location.hash = "";
       this.$router.replace(url);

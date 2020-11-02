@@ -64,7 +64,7 @@ export default {
   round: "mdi-repeat",
   search: "mdi-magnify",
   send: "mdi-send",
-  settings: "mdi-settings",
+  settings: "mdi-cog",
   share: "mdi-share-variant",
   site: "mdi-map-marker",
   size: "mdi-ruler-square",
@@ -73,6 +73,7 @@ export default {
   time: "mdi-clock-outline",
   trim: "mdi-flip-vertical",
   undo: "mdi-undo",
+  update: "mdi-cached",
   visibility: "mdi-eye",
   visibility_off: "mdi-eye-off"
 };

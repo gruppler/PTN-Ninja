@@ -1,29 +1,31 @@
 {
   "name": "ptn-ninja",
-  "version": "3.0.0",
+  "version": "3.0.12",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
-  "cordovaId": "org.gruppler.ptnninja.app",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
-    "dev": "quasar dev -m pwa",
-    "build": "quasar build -m electron",
-    "deploy": "quasar build -m pwa && firebase deploy --only hosting:live",
-    "dev-deploy": "quasar build -m pwa && firebase deploy --only hosting:dev"
+    "dev": "quasar dev -m spa",
+    "deploy": "quasar build -m pwa && firebase deploy --only hosting",
+    "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:dev",
+    "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:live",
+    "rules-deploy": "firebase deploy --only firestore:rules",
+    "icons": "icongenie g -i app-icon.png --quality 12 --theme-color 607d8b --skip-trim"
   },
   "dependencies": {
     "@kazupon/vue-i18n-loader": "^0.4.1",
     "@quasar/extras": "^1.4.0",
+    "aggregation": "^1.2.6",
     "axios": "^0.19.1",
+    "core-js": "^3.0.0",
     "diff-match-patch": "^1.0.4",
     "firebase-functions": "^3.3.0",
     "firebase-tools": "^7.11.0",
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
-    "ptn": "^0.2.0",
     "quasar": "^1.7.0",
     "vue": "^2.6.11",
     "vue-cli-plugin-i18n": "^0.6.0",
@@ -34,8 +36,7 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^1.4.5",
-    "@quasar/quasar-app-extension-icon-genie": "^1.1.3",
+    "@quasar/app": "^2.0.0",
     "@quasar/quasar-app-extension-qmarkdown": "^1.0.16",
     "@vue/eslint-config-prettier": "^4.0.0",
     "babel-eslint": "^10.0.3",
@@ -47,7 +48,8 @@
     "eslint": "^5.10.0",
     "eslint-loader": "^2.1.1",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-vue": "^5.0.0"
+    "eslint-plugin-vue": "^5.0.0",
+    "workbox-webpack-plugin": "^5.0.0"
   },
   "engines": {
     "node": ">= 8.9.0",
@@ -55,6 +57,14 @@
     "yarn": ">= 1.6.0"
   },
   "browserslist": [
-    "last 1 version, not dead, ie >= 11"
+    "last 10 Chrome versions",
+    "last 10 Firefox versions",
+    "last 4 Edge versions",
+    "last 7 Safari versions",
+    "last 8 Android versions",
+    "last 8 ChromeAndroid versions",
+    "last 8 FirefoxAndroid versions",
+    "last 10 iOS versions",
+    "last 5 Opera versions"
   ]
 }
