@@ -228,7 +228,7 @@ export default {
 
   success: {
     copied: "Copied!",
-    replacedExistingGame: "Replaced existing game of the same name"
+    replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
     verifyEmailSent: "Verification email sent.",
     updateAvailable: "A new version is available"
