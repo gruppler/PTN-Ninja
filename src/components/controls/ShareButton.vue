@@ -36,30 +36,36 @@ export default {
       let actions = [
         {
           id: "link",
-          label: this.$t("Copy Link"),
+          label: this.$t("Link"),
           icon: "link",
-          action: () => this.copy("link")
-        },
-        {
+          action: () => this.shareText("link")
+        }
+      ];
+
+      if (this.game.state.ply) {
+        actions.push({
           id: "ply",
-          label: this.$t("Copy Ply"),
+          label: this.$t("Ply"),
           icon: "ply",
-          action: () => this.copy("ply")
-        },
+          action: () => this.shareText("ply")
+        });
+      }
+
+      actions.push(
         {
           id: "moves",
-          label: this.$t("Copy Moves"),
+          label: this.$t("Moves"),
           icon: "moves",
-          action: () => this.copy("moves")
+          action: () => this.shareText("moves")
         },
         {
           id: "ptn",
-          label: this.$t("Copy PTN"),
-          icon: "copy",
-          action: () => this.copy("ptn")
+          label: this.$t("PTN"),
+          icon: "file",
+          action: () => this.shareText("ptn")
         },
         {}
-      ];
+      );
 
       if (!this.$store.state.embed && this.game.isLocal) {
         actions.push({
@@ -89,7 +95,7 @@ export default {
     }
   },
   methods: {
-    copy(type) {
+    shareText(type) {
       let text;
       switch (type) {
         case "link":
@@ -108,10 +114,7 @@ export default {
           text = this.game.ptn;
           break;
       }
-      this.$store.dispatch("COPY", {
-        text,
-        message: this.$t("Copied")
-      });
+      this.$store.dispatch("COPY", text);
     },
     download() {
       this.$store.dispatch("SAVE", this.game);
