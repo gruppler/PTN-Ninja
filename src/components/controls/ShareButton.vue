@@ -90,7 +90,7 @@ export default {
           id: "download",
           label: this.$t("Download"),
           icon: "download",
-          action: this.download
+          action: this.shareFile
         },
         {
           id: "qrcode",
@@ -129,8 +129,8 @@ export default {
       }
       this.$store.dispatch("COPY", text);
     },
-    download() {
-      this.$store.dispatch("SAVE", this.game);
+    shareFile() {
+      this.$store.dispatch("SAVE", [this.game]);
     },
     embed() {
       this.$emit("embed");
