@@ -93,7 +93,7 @@ export const url = state => (game, options = {}) => {
 
   if ("name" in options) {
     params.name = compressToEncodedURIComponent(options.name);
-  } else if (game.name && game.name !== game.generateName()) {
+  } else if (game.name) {
     params.name = compressToEncodedURIComponent(game.name);
   }
 
