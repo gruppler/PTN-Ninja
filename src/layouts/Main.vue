@@ -542,26 +542,28 @@ export default {
             this.$store.dispatch("SELECT_GAME", index);
             game = this.$store.state.games[0];
             game = new Game(game.ptn, game);
-            game.replace(this.ptn);
+            if (game.ptn !== this.ptn) {
+              game.replace(this.ptn);
+              this.$q.notify({
+                message: this.$t("success.replacedExistingGame"),
+                timeout: 10000,
+                progress: true,
+                color: "secondary",
+                position: "bottom",
+                multiLine: false,
+                actions: [
+                  {
+                    label: this.$t("Undo"),
+                    color: "accent",
+                    handler: () => {
+                      this.$store.dispatch("UNDO", game);
+                    }
+                  },
+                  { icon: "close", color: "grey-2" }
+                ]
+              });
+            }
             this.$router.replace("/");
-            this.$q.notify({
-              message: this.$t("success.replacedExistingGame"),
-              timeout: 10000,
-              progress: true,
-              color: "secondary",
-              position: "bottom",
-              multiLine: false,
-              actions: [
-                {
-                  label: this.$t("Undo"),
-                  color: "accent",
-                  handler: () => {
-                    this.$store.dispatch("UNDO", game);
-                  }
-                },
-                { icon: "close", color: "grey-2" }
-              ]
-            });
           } else {
             // Add game from URL
             game = new Game(this.ptn, { name: this.name, state: this.state });
