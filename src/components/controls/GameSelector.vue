@@ -180,7 +180,7 @@ export default {
         progress: true,
         progressClass: "bg-primary",
         color: "secondary",
-        position: "bottom-left",
+        position: "bottom",
         multiLine: false,
         actions: [
           {

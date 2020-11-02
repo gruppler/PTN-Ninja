@@ -41,6 +41,7 @@ export default {
   Dismiss: "Dismiss",
   Download: "Download",
   "Download All": "Download All",
+  "Duplicate Game Names": "Duplicate Game Names",
   Edit: "Edit",
   "Edit Game": "Edit Game",
   "Edit PTN": "Edit PTN",
@@ -120,6 +121,7 @@ export default {
   Redo: "Redo",
   Register: "Register",
   Rename: "Rename",
+  Replace: "Replace",
   Reset: "Reset",
   "Reset Password": "Reset Password",
   Result: "Result",
@@ -223,6 +225,7 @@ export default {
   },
 
   success: {
+    replacedExistingGame: "Replaced existing game of the same name"
     resetPasswordSent: "Reset password email sent.",
     verifyEmailSent: "Verification email sent.",
     updateAvailable: "A new version is available"

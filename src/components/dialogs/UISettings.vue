@@ -158,6 +158,18 @@
         <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
           <recess>
             <q-list>
+              <q-select
+                :label="$t('Duplicate Game Names')"
+                v-model="openDuplicate"
+                :options="openDuplicateOptions"
+                color="accent"
+                popup-content-class="bg-secondary"
+                item-aligned
+                map-options
+                emit-value
+                filled
+              />
+
               <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
@@ -248,6 +260,7 @@ const props = [
   "highlightSquares",
   "notifyGame",
   "notifyNotes",
+  "openDuplicate",
   "pieceShadows",
   "playSpeed",
   "showAllBranches",
@@ -263,7 +276,11 @@ export default {
   props: ["value", "disabled"],
   data() {
     return {
-      hotkeys: HOTKEYS_FORMATTED.UI
+      hotkeys: HOTKEYS_FORMATTED.UI,
+      openDuplicateOptions: [
+        { label: this.$t("Rename"), value: "rename" },
+        { label: this.$t("Replace"), value: "replace" }
+      ]
     };
   },
   computed: zipObject(

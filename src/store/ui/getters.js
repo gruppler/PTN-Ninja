@@ -55,6 +55,11 @@ export const error = (state, getters) => ({ error, timeout }) => {
   });
 };
 
+export const gameIndexByName = state => name => {
+  const names = state.games.map(game => game.name);
+  return names.indexOf(name);
+};
+
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
   while (names.includes(name)) {
