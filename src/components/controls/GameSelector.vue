@@ -138,10 +138,7 @@ export default {
         title: this.$t("Confirm"),
         message: this.$t("confirm.downloadAllGames"),
         success: () => {
-          const games = this.$store.state.games;
-          for (let i = 0; i < games.length; i++) {
-            this.$store.dispatch("SAVE", games[i]);
-          }
+          this.$store.dispatch("SAVE", this.$store.state.games);
         }
       });
     }

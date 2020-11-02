@@ -73,6 +73,7 @@ export default {
   time: "mdi-clock-outline",
   trim: "mdi-flip-vertical",
   undo: "mdi-undo",
+  update: "mdi-cached",
   visibility: "mdi-eye",
   visibility_off: "mdi-eye-off"
 };

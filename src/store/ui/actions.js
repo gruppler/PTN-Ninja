@@ -115,8 +115,39 @@ export const TRIM_TO_PLY = ({ commit }, game) => {
   commit("TRIM_TO_PLY", game);
 };
 
-export const SAVE = (context, game) => {
-  exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8");
+export const SAVE = (context, games) => {
+  function download() {
+    const success = games.map(game =>
+      exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8")
+    );
+
+    if (success.some(s => !s)) {
+      Notify.create({
+        icon: "copy",
+        type: "negative",
+        color: "secondary",
+        classes: "text-grey-2",
+        timeout: 3,
+        position: "bottom",
+        message: i18n.t("error.Unable to download")
+      });
+    }
+  }
+
+  const files = games.map(game => new File([game.ptn], game.name + ".ptn"));
+  if (navigator.canShare && navigator.canShare({ files })) {
+    const title =
+      games.length === 1 ? games[0].name + ".ptn" : i18n.t("Multiple Games");
+
+    navigator.share({ files, title }).catch(error => {
+      console.error(error);
+      if (!/canceled|abort/i.test(error)) {
+        download();
+      }
+    });
+  } else {
+    download();
+  }
 };
 
 export const OPEN = ({ dispatch }, callback) => {
@@ -198,7 +229,9 @@ export const COPY = function(context, text) {
   if (navigator.canShare) {
     navigator.share({ text }).catch(error => {
       console.error(error);
-      copy();
+      if (!/canceled|abort/i.test(error)) {
+        copy();
+      }
     });
   } else {
     copy();

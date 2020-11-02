@@ -72,6 +72,7 @@ export default {
   More: "More",
   Move: "Move",
   Moves: "Moves",
+  "Multiple Games": "Multiple Games",
   Name: "Name",
   "New Game": "New Game",
   "Next Branch": "Next Branch",
@@ -183,7 +184,8 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
-    "Unable to copy": "Unable to copy!",
+    "Unable to copy": "Unable to copy to clipboard",
+    "Unable to download": "Unable to download files",
     "Unrecognized tag": "Unrecognized tag"
   },
 
