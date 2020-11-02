@@ -475,15 +475,45 @@ export default {
       this.errors = [];
       try {
         if (this.ptn) {
-          // Add game from URL then redirect to /
-          game = new Game(this.ptn, { name: this.name, state: this.state });
-          if (game) {
-            this.$store.dispatch("ADD_GAME", {
-              ptn: this.ptn,
-              name: game.name,
-              state: game.minState
-            });
+          let index = this.name
+            ? this.$store.getters.gameIndexByName(this.name)
+            : -1;
+          if (index >= 0 && this.$store.state.openDuplicate === "replace") {
+            // Replace existing game with new PTN
+            this.$store.dispatch("SELECT_GAME", index);
+            game = this.$store.state.games[0];
+            game = new Game(game.ptn, game);
+            game.replace(this.ptn);
             this.$router.replace("/");
+            this.$q.notify({
+              message: this.$t("success.replacedExistingGame"),
+              timeout: 10000,
+              progress: true,
+              color: "secondary",
+              position: "bottom",
+              multiLine: false,
+              actions: [
+                {
+                  label: this.$t("Undo"),
+                  color: "accent",
+                  handler: () => {
+                    this.$store.dispatch("UNDO", game);
+                  }
+                },
+                { icon: "close", color: "grey-2" }
+              ]
+            });
+          } else {
+            // Add game from URL
+            game = new Game(this.ptn, { name: this.name, state: this.state });
+            if (game) {
+              this.$store.dispatch("ADD_GAME", {
+                ptn: this.ptn,
+                name: game.name,
+                state: game.minState
+              });
+              this.$router.replace("/");
+            }
           }
         } else if (this.$store.state.games && this.$store.state.games.length) {
           game = this.$store.state.games[0];

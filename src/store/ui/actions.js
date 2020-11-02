@@ -175,7 +175,7 @@ export const COPY = function(context, { text, message }) {
     color: "secondary",
     classes: "text-grey-2",
     timeout: 1,
-    position: "bottom-left",
+    position: "bottom",
     message
   });
 };

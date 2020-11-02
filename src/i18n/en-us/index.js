@@ -39,6 +39,7 @@ export default {
   Dismiss: "Dismiss",
   Download: "Download",
   "Download All": "Download All",
+  "Duplicate Game Names": "Duplicate Game Names",
   Edit: "Edit",
   "Edit Game": "Edit Game",
   "Edit PTN": "Edit PTN",
@@ -101,6 +102,7 @@ export default {
   Rating2: "Rating 2",
   Redo: "Redo",
   Rename: "Rename",
+  Replace: "Replace",
   Reset: "Reset",
   Result: "Result",
   "Road Connections": "Road Connections",
@@ -186,7 +188,8 @@ export default {
   },
 
   success: {
-    updateAvailable: "A new version is available"
+    updateAvailable: "A new version is available",
+    replacedExistingGame: "Replaced existing game of the same name"
   },
 
   hotkeys: {

@@ -17,6 +17,8 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
 - **Swipe left** or **right-click** the Floating Action Button to switch to the previous game.
 
+When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by means of an incrementing number at the end). If you prefer to instead replace the open game, this option ("Replace") can be found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
+
 ### Playback
 
 - Navigate the game using the **Play Controls** or <kbd>◀/▶</kbd>.

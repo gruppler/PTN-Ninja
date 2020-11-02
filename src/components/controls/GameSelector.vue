@@ -76,8 +76,6 @@
 </template>
 
 <script>
-import { Notify } from "quasar";
-
 export default {
   name: "GameSelector",
   props: ["game"],
@@ -105,12 +103,12 @@ export default {
       }
       const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
-      Notify.create({
+      this.$q.notify({
         message: this.$t("Game x closed", { game: game.name }),
         timeout: 10000,
         progress: true,
         color: "secondary",
-        position: "bottom-left",
+        position: "bottom",
         multiLine: false,
         actions: [
           {
