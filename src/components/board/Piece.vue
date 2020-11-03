@@ -56,14 +56,15 @@ export default {
       if (this.piece.square) {
         y *= this.piece.y;
         if (!this.board3D) {
+          const pieces = this.piece.square.pieces;
           y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
           if (
-            this.piece.square.length > this.game.size &&
-            this.piece.z >= this.piece.square.length - this.game.size
+            pieces.length > this.game.size &&
+            this.piece.z >= pieces.length - this.game.size
           ) {
-            y -= spacing * (this.piece.square.length - this.game.size);
+            y -= spacing * (pieces.length - this.game.size);
           }
-          if (this.piece.isStanding && this.piece.square.length > 1) {
+          if (this.piece.isStanding && pieces.length > 1) {
             y -= spacing;
           }
         }

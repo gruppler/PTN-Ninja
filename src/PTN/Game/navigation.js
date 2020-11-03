@@ -96,13 +96,13 @@ export default class GameNavigation {
         }
       } else if (action === "pop") {
         // Undo movement
-        times(count, () => stack.push(square.pop()));
-        if (flatten && square.length) {
-          last(square).isStanding = true;
+        times(count, () => stack.push(square.popPiece()));
+        if (flatten && square.pieces.length) {
+          square.piece.isStanding = true;
         }
       } else {
         // Do movement
-        if (square.length && last(square).isStanding) {
+        if (square.pieces.length && square.piece.isStanding) {
           if (stack[0].isCapstone) {
             if (ply && !flatten) {
               flatten = ply.wallSmash = "*";
@@ -113,8 +113,8 @@ export default class GameNavigation {
             return false;
           }
         }
-        if (flatten && square.length) {
-          last(square).isStanding = false;
+        if (flatten && square.pieces.length) {
+          square.piece.isStanding = false;
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();
@@ -126,8 +126,7 @@ export default class GameNavigation {
             console.error("Invalid ply");
             return false;
           }
-          piece.square = square;
-          square.push(piece);
+          square.pushPiece(piece);
         });
       }
     }

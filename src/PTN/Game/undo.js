@@ -50,14 +50,16 @@ export default class GameUndo {
     const patch = diff.patch_toText(diff.patch_make(before.ptn, this.ptn));
     if (patch) {
       this.history.length = this.historyIndex;
-      this.history.push({
-        state: before.state,
-        patch,
-        undoPatch: diff.patch_toText(diff.patch_make(this.ptn, before.ptn)),
-        afterState: isEqual(before.state, this.minState)
-          ? undefined
-          : this.minState
-      });
+      this.history.push(
+        Object.freeze({
+          state: before.state,
+          patch,
+          undoPatch: diff.patch_toText(diff.patch_make(this.ptn, before.ptn)),
+          afterState: isEqual(before.state, this.minState)
+            ? undefined
+            : this.minState
+        })
+      );
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {
         this.history.shift();

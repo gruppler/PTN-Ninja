@@ -38,8 +38,6 @@
 </template>
 
 <script>
-import { last } from "lodash";
-
 export default {
   name: "Square",
   props: ["game", "x", "y"],
@@ -68,7 +66,7 @@ export default {
       return this.game.state.squares[this.y][this.x];
     },
     piece() {
-      return last(this.square);
+      return this.square.piece;
     },
     color() {
       return this.piece ? this.piece.color : "";
@@ -80,7 +78,7 @@ export default {
       );
     },
     selected() {
-      return this.game.state.selected.squares.includes(this.square);
+      return this.square.isSelected;
     },
     placed() {
       return (
@@ -123,7 +121,7 @@ export default {
         if (this.square.edges.N) {
           return true;
         } else {
-          const neighbor = last(this.square.neighbors.N);
+          const neighbor = this.square.neighbors.N.piece;
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -136,7 +134,7 @@ export default {
         if (this.square.edges.S) {
           return true;
         } else {
-          const neighbor = last(this.square.neighbors.S);
+          const neighbor = this.square.neighbors.S.piece;
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -149,7 +147,7 @@ export default {
         if (this.square.edges.E) {
           return true;
         } else {
-          const neighbor = last(this.square.neighbors.E);
+          const neighbor = this.square.neighbors.E.piece;
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );
@@ -162,7 +160,7 @@ export default {
         if (this.square.edges.W) {
           return true;
         } else {
-          const neighbor = last(this.square.neighbors.W);
+          const neighbor = this.square.neighbors.W.piece;
           return (
             neighbor && !neighbor.isStanding && neighbor.color === this.color
           );

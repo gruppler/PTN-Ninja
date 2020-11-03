@@ -451,9 +451,9 @@ export default class GameBase {
 
   _saveBoardState(board, plyID, plyIsDone) {
     if (!(plyID in this.boards)) {
-      this.boards[plyID] = { [plyIsDone]: board };
+      this.boards[plyID] = { [plyIsDone]: Object.freeze(board) };
     } else if (!(plyIsDone in this.boards[plyID])) {
-      this.boards[plyID][plyIsDone] = board;
+      this.boards[plyID][plyIsDone] = Object.freeze(board);
     }
   }
 

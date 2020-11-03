@@ -1,6 +1,6 @@
 import Result from "../Result";
 
-import { cloneDeep, compact, isEmpty, last } from "lodash";
+import { cloneDeep, compact, isEmpty } from "lodash";
 
 export default class GameEnd {
   checkGameEnd(updatePTN = true) {
@@ -24,7 +24,7 @@ export default class GameEnd {
     } else if (
       pieces.flat.length + pieces.cap.length ===
         this.pieceCounts[player].total ||
-      !this.state.squares.find(row => row.find(square => !square.length))
+      !this.state.squares.find(row => row.find(square => !square.pieces.length))
     ) {
       // Last empty square or last piece
       if (this.state.flats[0] == this.state.flats[1]) {
@@ -79,11 +79,11 @@ export default class GameEnd {
     // Gather player-controlled squares and dead ends
     this.state.squares.forEach(row =>
       row.forEach(square => {
-        let piece = last(square);
+        let piece = square.piece;
         if (piece && !piece.isStanding) {
           let player = piece.color;
           connections[square.coord] = square.neighbors.filter(neighbor => {
-            neighbor = last(neighbor);
+            neighbor = neighbor.piece;
             return (
               neighbor && !neighbor.isStanding && neighbor.color === player
             );
@@ -182,7 +182,7 @@ function followRoad(square, possibleRoads, connections) {
   let squares = {};
   let edges = {};
   let road;
-  let player = last(square).color;
+  let player = square.piece.color;
 
   squares[square.coord] = square;
   delete possibleRoads[player][square.coord];
