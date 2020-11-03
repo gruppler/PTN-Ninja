@@ -3,7 +3,7 @@ import Marray from "marray";
 import Piece from "../Piece";
 import Square from "../Square";
 
-import { defaults, last } from "lodash";
+import { defaults } from "lodash";
 import memoize from "./memoize";
 
 export default class GameState {
@@ -168,6 +168,53 @@ export default class GameState {
     return this.move ? this.move.number : this.game.firstMoveNumber;
   }
 
+  selectPiece(piece) {
+    this.selected.pieces.push(piece);
+    piece.isSelected = true;
+  }
+
+  selectPieces(pieces) {
+    pieces.forEach(piece => this.selectPiece(piece));
+  }
+
+  reselectPiece(piece) {
+    this.selected.pieces.unshift(piece);
+    piece.isSelected = true;
+  }
+
+  deselectPiece() {
+    const piece = this.selected.pieces.shift();
+    if (piece) {
+      piece.isSelected = false;
+    }
+    return piece;
+  }
+
+  deselectAllPieces() {
+    while (this.selected.pieces.length) {
+      this.deselectPiece();
+    }
+  }
+
+  selectSquare(square) {
+    this.selected.squares.push(square);
+    square.isSelected = true;
+  }
+
+  deselectSquare() {
+    const square = this.selected.squares.shift();
+    if (square) {
+      square.isSelected = false;
+    }
+    return square;
+  }
+
+  deselectAllSquares() {
+    while (this.selected.squares.length) {
+      this.deselectSquare();
+    }
+  }
+
   playPiece(color, type, square) {
     const isStanding = /S|wall/.test(type);
     if (!(type in this.game.pieceCounts[1])) {
@@ -181,12 +228,10 @@ export default class GameState {
       this.pieces.played[color][type].push(piece);
       if ("z" in square) {
         // Set via piece state
-        piece.square = this.squares[square.y][square.x];
-        piece.square[square.z] = piece;
+        this.squares[square.y][square.x].setPiece(square.z, piece);
       } else {
         // Set via square
-        piece.square = square;
-        square.push(piece);
+        square.pushPiece(piece);
       }
       return piece;
     }
@@ -194,7 +239,7 @@ export default class GameState {
   }
 
   unplayPiece(square) {
-    const piece = square.pop();
+    const piece = square.popPiece();
     if (piece) {
       piece.isStanding = false;
       const pieces = this.pieces.played[piece.color][piece.type];
@@ -208,18 +253,13 @@ export default class GameState {
       } else {
         this.pieces.played[piece.color][piece.type].pop();
       }
-      piece.square = null;
       return piece;
     }
     return null;
   }
 
   clearBoard() {
-    this.squares.forEach(row =>
-      row.forEach(square =>
-        square.splice(0, square.length).forEach(piece => (piece.square = null))
-      )
-    );
+    this.squares.forEach(row => row.forEach(square => square.clear()));
     this.pieces.played[1].flat = [];
     this.pieces.played[1].cap = [];
     this.pieces.played[2].flat = [];
@@ -244,8 +284,10 @@ export default class GameState {
       .map(row => {
         return row
           .map(square => {
-            if (square.length) {
-              return square.map(piece => piece.color + piece.typeCode).join("");
+            if (square.pieces.length) {
+              return square.pieces
+                .map(piece => piece.color + piece.typeCode)
+                .join("");
             } else {
               return "x";
             }
@@ -373,8 +415,8 @@ export default class GameState {
     let flats = [0, 0];
     this.squares.forEach(row => {
       row.forEach(square => {
-        if (square.length) {
-          const piece = last(square);
+        if (square.pieces.length) {
+          const piece = square.piece;
           flats[piece.color - 1] += piece.isFlat;
         }
       });

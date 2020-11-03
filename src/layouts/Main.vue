@@ -427,9 +427,10 @@ export default {
           (total, row) =>
             row.reduce(
               (total, square) =>
-                square.length
+                square.pieces.length
                   ? total +
-                    square.slice(1).filter(piece => piece.color === 1).length
+                    square.pieces.slice(1).filter(piece => piece.color === 1)
+                      .length
                   : total,
               total
             ),
@@ -442,9 +443,10 @@ export default {
           (total, row) =>
             row.reduce(
               (total, square) =>
-                square.length
+                square.pieces.length
                   ? total +
-                    square.slice(1).filter(piece => piece.color === 2).length
+                    square.pieces.slice(1).filter(piece => piece.color === 2)
+                      .length
                   : total,
               total
             ),

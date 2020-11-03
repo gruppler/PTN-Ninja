@@ -1,8 +1,11 @@
 import Ply from "./Ply";
 
-export default class Square extends Array {
+export default class Square {
   constructor(x, y, size) {
-    super();
+    this.piece = null;
+    this.pieces = [];
+    this.isSelected = false;
+
     this.coord = Ply.itoa(x, y);
     this.x = x;
     this.y = y;
@@ -46,5 +49,48 @@ export default class Square extends Array {
       this.isEW = true;
     }
     this.isCorner = this.edges.length == 2;
+  }
+
+  getPiece() {
+    return this.pieces.length ? this.pieces[this.pieces.length - 1] : null;
+  }
+
+  setPiece(index, piece) {
+    piece.square = this;
+    this.pieces[index] = piece;
+    if (index === this.pieces.length - 1) {
+      this.piece = piece;
+    }
+  }
+
+  pushPiece(piece) {
+    piece.square = this;
+    this.piece = piece;
+    this.pieces.push(piece);
+  }
+
+  pushPieces(pieces) {
+    pieces.forEach(piece => this.pushPiece(piece));
+  }
+
+  popPiece() {
+    const piece = this.pieces.pop();
+    if (piece) {
+      piece.square = null;
+    }
+    this.piece = this.getPiece();
+    return piece;
+  }
+
+  popPieces(count) {
+    while (count--) {
+      this.popPiece();
+    }
+  }
+
+  clear() {
+    while (this.pieces.length) {
+      this.popPiece();
+    }
   }
 }

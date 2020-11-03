@@ -3,6 +3,7 @@ import {
   exportFile,
   Loading,
   LocalStorage,
+  Dialog,
   Notify
 } from "quasar";
 import { i18n } from "../../../src/boot/i18n";
@@ -148,11 +149,8 @@ export const SAVE = (context, games) => {
 
     if (success.some(s => !s)) {
       Notify.create({
-        icon: "copy",
         type: "negative",
-        color: "secondary",
-        classes: "text-grey-2",
-        timeout: 3,
+        timeout: 3000,
         position: "bottom",
         message: i18n.t("error.Unable to download")
       });
@@ -241,13 +239,20 @@ export const COPY = function(context, text) {
       })
       .catch(() => {
         Notify.create({
-          icon: "copy",
           type: "negative",
-          color: "secondary",
-          classes: "text-grey-2",
-          timeout: 3,
+          timeout: 3000,
           position: "bottom",
           message: i18n.t("error.Unable to copy")
+        });
+        Dialog.create({
+          class: "bg-secondary",
+          color: "accent",
+          prompt: {
+            model: text,
+            filled: true,
+            type: text.includes("\n") ? "textarea" : "text"
+          },
+          cancel: false
         });
       });
   }

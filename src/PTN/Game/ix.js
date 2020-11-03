@@ -4,7 +4,7 @@ import { last } from "lodash";
 
 export default class GameIX {
   isValidSquare(square, assumeSoloCap = false) {
-    const piece = square.length ? last(square) : null;
+    const piece = square.piece;
 
     if (this.state.selected.pieces.length) {
       // Move in progress
@@ -34,7 +34,7 @@ export default class GameIX {
 
       if (neighbors.includes(square)) {
         // Neighbor square
-        if (square.length === 0) {
+        if (square.pieces.length === 0) {
           // Empty square
           return true;
         }
@@ -85,7 +85,7 @@ export default class GameIX {
       return false;
     }
 
-    const piece = square.length ? last(square) : null;
+    const piece = square.piece;
 
     if (editMode) {
       if (altSelect) {
@@ -153,14 +153,17 @@ export default class GameIX {
       } else {
         // Select piece or stack
         if (altSelect) {
-          this.state.selected.pieces.push(piece);
+          this.state.selectPiece(piece);
           move.count = 1;
         } else {
-          this.state.selected.pieces.push(...square.slice(-this.size));
+          this.state.selectPieces(square.pieces.slice(-this.size));
           move.count = this.state.selected.pieces.length;
         }
-        this.state.selected.initialCount = Math.min(this.size, square.length);
-        this.state.selected.squares.push(square);
+        this.state.selected.initialCount = Math.min(
+          this.size,
+          square.pieces.length
+        );
+        this.state.selectSquare(square);
         move.action = "pop";
       }
     } else {
@@ -194,20 +197,22 @@ export default class GameIX {
           this.state.selected.pieces.length
         ) {
           // Undo last drop
-          this.state.selected.pieces.unshift(
-            square[square.length - this.state.selected.pieces.length - 1]
+          this.state.reselectPiece(
+            square.pieces[
+              square.pieces.length - this.state.selected.pieces.length - 1
+            ]
           );
           last(this.state.selected.moveset).count -=
             move.action === "pop" ? -1 : 1;
         } else {
           // Drop all
-          this.state.selected.pieces = [];
+          this.state.deselectAllPieces();
           last(
             this.state.selected.moveset
           ).count = this.state.selected.initialCount;
         }
       } else {
-        this.state.selected.pieces.shift();
+        this.state.deselectPiece();
         last(this.state.selected.moveset).count +=
           move.action === "pop" ? -1 : 1;
       }
@@ -223,10 +228,10 @@ export default class GameIX {
         ])
       ];
       const neighbor = square.neighbors[direction];
-      const piece = last(square);
+      const piece = square.piece;
 
       this.state.selected.initialCount = this.state.selected.pieces.length;
-      this.state.selected.squares.push(square);
+      this.state.selectSquare(square);
       move = {
         action: "push",
         x: square.x,
@@ -241,17 +246,13 @@ export default class GameIX {
       }
 
       // Move selection from currentSquare to new square
-      currentSquare.splice(
-        -this.state.selected.pieces.length,
-        this.state.selected.pieces.length
-      );
-      square.push(...this.state.selected.pieces);
-      this.state.selected.pieces.forEach(piece => (piece.square = square));
+      currentSquare.popPieces(this.state.selected.pieces.length);
+      square.pushPieces(this.state.selected.pieces);
       if (altSelect) {
         // Drop all
-        this.state.selected.pieces = [];
+        this.state.deselectAllPieces();
       } else {
-        this.state.selected.pieces.shift();
+        this.state.deselectPiece();
       }
 
       // If there's nowhere left to continue, drop the rest
@@ -260,7 +261,7 @@ export default class GameIX {
         (!neighbor || !this.isValidSquare(neighbor, true))
       ) {
         move.count += this.state.selected.pieces.length;
-        this.state.selected.pieces = [];
+        this.state.deselectAllPieces();
       }
     }
 
@@ -268,7 +269,7 @@ export default class GameIX {
       if (this.state.selected.moveset.length > 1) {
         this.insertPly(Ply.fromMoveset(this.state.selected.moveset), true);
       }
-      this.state.selected.squares = [];
+      this.state.deselectAllSquares();
       this.state.selected.moveset = [];
       this.state.selected.initialCount = 0;
     }
@@ -281,8 +282,8 @@ export default class GameIX {
       ).count = this.state.selected.initialCount;
       this._undoMoveset(this.state.selected.moveset, this.state.color);
     }
-    this.state.selected.pieces = [];
-    this.state.selected.squares = [];
+    this.state.deselectAllPieces();
+    this.state.deselectAllSquares();
     this.state.selected.moveset = [];
     this.state.selected.initialCount = 0;
   }

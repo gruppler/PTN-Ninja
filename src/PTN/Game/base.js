@@ -359,7 +359,7 @@ export default class GameBase {
           this.state.plyID = ply.id;
         }
       } else {
-        this.state.plyID = 0;
+        this.state.plyID = -1;
       }
     } else if (this.state.plies.length) {
       this.state.plyID = 0;
@@ -471,9 +471,9 @@ export default class GameBase {
 
   _saveBoardState(board, plyID, plyIsDone) {
     if (!(plyID in this.boards)) {
-      this.boards[plyID] = { [plyIsDone]: board };
+      this.boards[plyID] = { [plyIsDone]: Object.freeze(board) };
     } else if (!(plyIsDone in this.boards[plyID])) {
-      this.boards[plyID][plyIsDone] = board;
+      this.boards[plyID][plyIsDone] = Object.freeze(board);
     }
   }
 

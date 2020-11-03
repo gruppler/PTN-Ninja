@@ -42,7 +42,8 @@ const routes = [
       }
 
       if (state.branch) {
-        state.targetBranch = state.branch;
+        state.targetBranch =
+          decompressFromEncodedURIComponent(state.branch) || state.branch;
         delete state.branch;
       }
 

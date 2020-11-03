@@ -23,7 +23,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
-  "Close All": "Close All",
+  "Close Oldest Games": "Close Oldest Games",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   Copy: "Copy",
@@ -173,7 +173,7 @@ export default {
   },
 
   confirm: {
-    closeAllGames: "Close all games except the current one?",
+    closeOldestGames: "Close the {count} oldest games?",
     downloadAllGames: "Download all games?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
