@@ -98,6 +98,7 @@
 import Move from "../PTN/Move";
 
 import { pickBy } from "lodash";
+import { debounce } from "quasar";
 
 export default {
   name: "Notes",
@@ -231,6 +232,9 @@ export default {
     currentPlyID() {
       this.scroll();
     }
+  },
+  created() {
+    this.scroll = debounce(this.scroll, 100);
   },
   mounted() {
     this.$nextTick(this.scroll);

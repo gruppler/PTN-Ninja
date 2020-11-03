@@ -27,8 +27,12 @@
           flat
         >
           <q-menu auto-close square>
-            <q-list v-if="games.length > 2" class="bg-secondary text-white">
-              <q-item clickable @click="closeMultiple">
+            <q-list class="bg-secondary text-white">
+              <q-item
+                clickable
+                @click="closeMultiple"
+                :disable="games.length < 3"
+              >
                 <q-item-section side>
                   <q-icon name="close" />
                 </q-item-section>

@@ -2,31 +2,33 @@ import config from "../../.firebase/config.js";
 import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
+import "firebase/functions";
 import "firebase/messaging";
 
-let fb = firebase.initializeApp(config);
+firebase.initializeApp(config);
 
-const auth = fb.auth();
-const db = fb.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
+const functions = firebase.functions();
 let messaging = null;
+
+try {
+  messaging = firebase.messaging();
+  messaging.usePublicVapidKey(config.vapidKey);
+} catch (error) {
+  console.error(error);
+}
 
 auth.useDeviceLanguage();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
   console.error(error);
 });
 
-db.enablePersistence().catch(error => {
+db.enablePersistence({ synchronizeTabs: true }).catch(error => {
   console.error(error);
 });
 
-try {
-  messaging = fb.messaging();
-  messaging.usePublicVapidKey(config.vapidKey);
-} catch (error) {
-  console.error(error);
-}
-
-export { firebase, auth, db, messaging };
+export { firebase, auth, db, functions, messaging };
 
 if (process.env.DEV) {
   window.auth = auth;

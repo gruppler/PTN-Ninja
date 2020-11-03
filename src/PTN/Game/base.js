@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { defaults, each, flatten, map, uniq } from "lodash";
+import { defaults, each, flatten, map, sortedUniq } from "lodash";
 import memoize from "./memoize";
 
 export const pieceCounts = {
@@ -408,12 +408,14 @@ export default class GameBase {
       pushBranch(branches[0]);
     }
 
-    return uniq(sorted);
+    return sortedUniq(sorted);
   }
 
   getMovesGrouped() {
     const moves = this.getBranchesSorted().map(branch =>
-      this.moves.filter(move => move.branch === branch).sort(move => move.index)
+      this.moves
+        .filter(move => move.branch === branch)
+        .sort((a, b) => a.index - b.index)
     );
     return moves.length ? moves : [this.moves];
   }

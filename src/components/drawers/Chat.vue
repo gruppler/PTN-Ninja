@@ -82,6 +82,8 @@
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 
+import { debounce } from "quasar";
+
 export default {
   name: "Chat",
   components: { Ply, Linenum },
@@ -211,6 +213,9 @@ export default {
     currentPlyIndex() {
       this.scroll(true);
     }
+  },
+  created() {
+    this.scroll = debounce(this.scroll, 100);
   },
   mounted() {
     this.scroll();

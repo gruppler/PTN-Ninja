@@ -537,7 +537,7 @@ export default {
       try {
         if (this.ptn) {
           let index = this.name
-            ? this.$store.getters.gameIndexByName(this.name)
+            ? this.$store.state.games.findIndex(game => game.name === name)
             : -1;
           if (index >= 0 && this.$store.state.openDuplicate === "replace") {
             // Replace existing game with new PTN
@@ -545,7 +545,7 @@ export default {
             game = this.$store.state.games[0];
             game = new Game(game.ptn, game);
             if (game.ptn !== this.ptn) {
-              game.replace(this.ptn);
+              game.updatePTN(this.ptn);
               this.$q.notify({
                 message: this.$t("success.replacedExistingGame"),
                 timeout: 10000,
