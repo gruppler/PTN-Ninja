@@ -117,7 +117,7 @@ export default {
       this.$store.dispatch("COPY", text);
     },
     shareFile() {
-      this.$store.dispatch("SAVE", [this.game]);
+      this.$store.dispatch("SAVE", this.game);
     },
     embed() {
       this.$emit("embed");

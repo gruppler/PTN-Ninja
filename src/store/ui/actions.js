@@ -7,6 +7,7 @@ import {
   Notify
 } from "quasar";
 import { i18n } from "../../../src/boot/i18n";
+import { isArray } from "lodash";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -117,6 +118,9 @@ export const TRIM_TO_PLY = ({ commit }, game) => {
 };
 
 export const SAVE = (context, games) => {
+  if (!isArray(games)) {
+    games = [games];
+  }
   function download() {
     const success = games.map(game =>
       exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8")
