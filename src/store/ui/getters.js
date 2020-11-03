@@ -123,7 +123,9 @@ export const url = state => (game, options = {}) => {
       options.state = game.state;
     }
     if (options.state.targetBranch) {
-      params.targetBranch = options.state.targetBranch;
+      params.targetBranch = compressToEncodedURIComponent(
+        options.state.targetBranch
+      );
     }
     if (options.state.plyIndex >= 0) {
       params.ply = options.state.plyIndex;
