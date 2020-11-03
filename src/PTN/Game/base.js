@@ -343,7 +343,7 @@ export default class GameBase {
           this.state.plyID = ply.id;
         }
       } else {
-        this.state.plyID = 0;
+        this.state.plyID = -1;
       }
     } else if (this.state.plies.length) {
       this.state.plyID = 0;
