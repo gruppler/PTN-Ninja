@@ -20,6 +20,8 @@
 <script>
 import Move from "../PTN/Move";
 
+import { debounce } from "quasar";
+
 export default {
   name: "PTN",
   components: { Move },
@@ -62,6 +64,9 @@ export default {
     "$store.state.showAllBranches"() {
       this.$nextTick(this.scroll);
     }
+  },
+  created() {
+    this.scroll = debounce(this.scroll, 100);
   },
   mounted() {
     this.$nextTick(this.scroll);

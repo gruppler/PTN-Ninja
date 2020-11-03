@@ -3,9 +3,11 @@ import {
   exportFile,
   Loading,
   LocalStorage,
+  Dialog,
   Notify
 } from "quasar";
 import { i18n } from "../../../src/boot/i18n";
+import { isArray } from "lodash";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -116,6 +118,9 @@ export const TRIM_TO_PLY = ({ commit }, game) => {
 };
 
 export const SAVE = (context, games) => {
+  if (!isArray(games)) {
+    games = [games];
+  }
   function download() {
     const success = games.map(game =>
       exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8")
@@ -123,11 +128,8 @@ export const SAVE = (context, games) => {
 
     if (success.some(s => !s)) {
       Notify.create({
-        icon: "copy",
         type: "negative",
-        color: "secondary",
-        classes: "text-grey-2",
-        timeout: 3,
+        timeout: 3000,
         position: "bottom",
         message: i18n.t("error.Unable to download")
       });
@@ -215,13 +217,20 @@ export const COPY = function(context, text) {
       })
       .catch(() => {
         Notify.create({
-          icon: "copy",
           type: "negative",
-          color: "secondary",
-          classes: "text-grey-2",
-          timeout: 3,
+          timeout: 3000,
           position: "bottom",
           message: i18n.t("error.Unable to copy")
+        });
+        Dialog.create({
+          class: "bg-secondary",
+          color: "accent",
+          prompt: {
+            model: text,
+            filled: true,
+            type: text.includes("\n") ? "textarea" : "text"
+          },
+          cancel: false
         });
       });
   }

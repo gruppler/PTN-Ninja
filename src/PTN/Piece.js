@@ -7,6 +7,7 @@ export default class Piece {
       square: null,
       ply: null,
       color: 1,
+      isSelected: false,
       isStanding: false,
       isCapstone: false
     });
@@ -61,18 +62,16 @@ export default class Piece {
     return this.square ? this.square.y : null;
   }
   get z() {
-    return this.square ? this.square.indexOf(this) : null;
+    return this.square ? this.square.pieces.indexOf(this) : null;
   }
 
   get isImmovable() {
-    return this.square ? this.square.length - this.z > this.game.size : false;
+    return this.square
+      ? this.square.pieces.length - this.z > this.game.size
+      : false;
   }
 
   get isFlat() {
     return !(this.isCapstone || this.isStanding);
-  }
-
-  get isSelected() {
-    return this.game.state.selected.pieces.includes(this);
   }
 }

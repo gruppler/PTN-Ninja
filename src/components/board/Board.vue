@@ -94,8 +94,6 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
-import { last } from "lodash";
-
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -305,8 +303,8 @@ export default {
         });
       }
       this.squares.forEach(square => {
-        if (square.length > 1) {
-          nodes.push(this.$refs[last(square).id][0].$el);
+        if (square.pieces.length > 1) {
+          nodes.push(this.$refs[square.piece.id][0].$el);
         }
       });
       const boardBB = this.getBounds(nodes);

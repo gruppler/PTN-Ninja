@@ -4,10 +4,20 @@ import { Dialog, Notify } from "quasar";
 import { compressToEncodedURIComponent } from "lz-string";
 import { omit } from "lodash";
 
-export const confirm = () => ({ title, message, ok, cancel, success }) => {
-  Dialog.create({
+export const prompt = () => ({
+  title,
+  message,
+  prompt,
+  ok,
+  cancel,
+  success,
+  failure
+}) => {
+  let dialog = Dialog.create({
     title,
     message,
+    prompt,
+    color: "accent",
     "no-backdrop-dismiss": true,
     ok: {
       label: ok || i18n.t("OK"),
@@ -20,7 +30,14 @@ export const confirm = () => ({ title, message, ok, cancel, success }) => {
       color: "accent"
     },
     class: "bg-secondary non-selectable"
-  }).onOk(success);
+  });
+  if (success) {
+    dialog.onOk(success);
+  }
+  if (failure) {
+    dialog.onCancel(failure);
+  }
+  return dialog;
 };
 
 export const error = () => ({ message, timeout }) => {
@@ -33,11 +50,6 @@ export const error = () => ({ message, timeout }) => {
     actions: [{ icon: "close", color: "grey-10" }],
     classes: "text-grey-10"
   });
-};
-
-export const gameIndexByName = state => name => {
-  const names = state.games.map(game => game.name);
-  return names.indexOf(name);
 };
 
 export const uniqueName = state => (name, ignoreFirst = false) => {
@@ -106,7 +118,9 @@ export const url = state => (game, options = {}) => {
       options.state = game.state;
     }
     if (options.state.targetBranch) {
-      params.targetBranch = options.state.targetBranch;
+      params.targetBranch = compressToEncodedURIComponent(
+        options.state.targetBranch
+      );
     }
     if (options.state.plyIndex >= 0) {
       params.ply = options.state.plyIndex;
