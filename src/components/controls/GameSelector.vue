@@ -27,12 +27,12 @@
           flat
         >
           <q-menu auto-close square>
-            <q-list class="bg-secondary text-white">
-              <q-item clickable @click="closeAll">
+            <q-list v-if="games.length > 2" class="bg-secondary text-white">
+              <q-item clickable @click="closeMultiple">
                 <q-item-section side>
                   <q-icon name="close" />
                 </q-item-section>
-                <q-item-section>{{ $t("Close All") }}</q-item-section>
+                <q-item-section>{{ $t("Close Oldest Games") }}</q-item-section>
               </q-item>
               <q-item clickable @click="downloadAll">
                 <q-item-section side>
@@ -122,19 +122,36 @@ export default {
         ]
       });
     },
-    closeAll() {
-      this.$store.getters.confirm({
-        title: this.$t("Confirm"),
-        message: this.$t("confirm.closeAllGames"),
-        success: () => {
-          for (let i = this.games.length - 1; i; i--) {
-            this.$store.dispatch("REMOVE_GAME", i);
+    closeMultiple() {
+      const max = this.games.length - 1;
+      this.$store.getters.prompt({
+        title: this.$t("Close Oldest Games"),
+        prompt: {
+          model: max,
+          type: "number",
+          attrs: {
+            min: 2,
+            max
           }
+        },
+        success: count => {
+          this.$store.getters.prompt({
+            title: this.$t("Confirm"),
+            message: this.$tc("confirm.closeOldestGames", count),
+            success: () => {
+              for (let i = 0; i < count; i++) {
+                this.$store.dispatch(
+                  "REMOVE_GAME",
+                  this.games.length - count - 1
+                );
+              }
+            }
+          });
         }
       });
     },
     downloadAll() {
-      this.$store.getters.confirm({
+      this.$store.getters.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.downloadAllGames"),
         success: () => {
