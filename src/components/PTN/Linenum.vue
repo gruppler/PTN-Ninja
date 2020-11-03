@@ -123,6 +123,7 @@ export default {
   align-items center
   vertical-align middle
   .branch
+    word-break break-word
     font-weight bold
     font-size 0.9em
     line-height 1.3em
