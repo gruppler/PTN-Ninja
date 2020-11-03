@@ -16,9 +16,6 @@ export default class GameState {
       plyIsDone: false
     });
 
-    Object.defineProperty(this, "ply", {
-      get: memoize(this.getPly, () => this.plyID)
-    });
     Object.defineProperty(this, "plies", {
       get: memoize(this.getPlies, this.branchKey)
     });
@@ -155,7 +152,7 @@ export default class GameState {
     return moves.length ? moves : this.game.moves;
   }
 
-  getPly() {
+  get ply() {
     return this.game.plies[this.plyID] || this.game.plies[0] || null;
   }
 
