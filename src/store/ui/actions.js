@@ -162,10 +162,10 @@ export const SAVE = (context, games) => {
     }
   }
 
-  const files = games.map(game => new File([game.ptn], game.name + ".ptn"));
+  const files = games.map(game => new File([game.ptn], game.name + ".txt"));
   if (navigator.canShare && navigator.canShare({ files })) {
     const title =
-      games.length === 1 ? games[0].name + ".ptn" : i18n.t("Multiple Games");
+      games.length === 1 ? games[0].name + ".txt" : i18n.t("Multiple Games");
 
     navigator.share({ files, title }).catch(error => {
       console.error(error);
