@@ -68,7 +68,13 @@ export const REMOVE_GAME = ({ commit, dispatch }, index) => {
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
   if (index === 0) {
-    dispatch("WITHOUT_BOARD_ANIM", () => commit("REMOVE_GAME", index));
+    Loading.show();
+    setTimeout(() => {
+      dispatch("WITHOUT_BOARD_ANIM", () => {
+        commit("REMOVE_GAME", index);
+        Loading.hide();
+      });
+    }, 200);
   } else {
     commit("REMOVE_GAME", index);
   }
