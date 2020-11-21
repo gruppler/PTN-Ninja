@@ -15,8 +15,7 @@
     "icons": "icongenie g -i app-icon.png --quality 12 --theme-color 607d8b --skip-trim"
   },
   "dependencies": {
-    "@kazupon/vue-i18n-loader": "^0.4.1",
-    "@quasar/extras": "^1.4.0",
+    "@quasar/extras": "^1.9.10",
     "aggregation": "^1.2.6",
     "axios": "^0.19.1",
     "core-js": "^3.0.0",
@@ -26,7 +25,7 @@
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
-    "quasar": "^1.7.0",
+    "quasar": "^1.14.5",
     "vue": "^2.6.11",
     "vue-cli-plugin-i18n": "^0.6.0",
     "vue-i18n": "^7.3.3",
@@ -36,8 +35,8 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^2.0.0",
-    "@quasar/quasar-app-extension-qmarkdown": "^1.0.16",
+    "@quasar/app": "^2.1.8",
+    "@quasar/quasar-app-extension-qmarkdown": "^1.2.0",
     "@vue/eslint-config-prettier": "^4.0.0",
     "babel-eslint": "^10.0.3",
     "devtron": "^1.4.0",
