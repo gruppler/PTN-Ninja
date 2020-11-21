@@ -19,7 +19,6 @@
         'unplayed-pieces': $store.state.unplayedPieces
       }"
       :style="{ maxWidth, fontSize, transform }"
-      :key="game.name + '|' + game.tag('tps')"
       ref="container"
     >
       <div v-if="$store.state.flatCounts" class="flat-counter row no-wrap">

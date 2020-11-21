@@ -194,15 +194,7 @@
             color="accent"
             flat
           />
-          <q-btn
-            :label="$t('OK')"
-            @click="
-              game.setTags({ tps: editingTPS });
-              isEditingTPS = false;
-            "
-            color="accent"
-            flat
-          />
+          <q-btn :label="$t('OK')" @click="setTPS" color="accent" flat />
         </PieceSelector>
         <PlayControls v-else :game="game" />
       </q-toolbar>
@@ -551,6 +543,12 @@ export default {
     },
     updateGame() {
       this.game = this.getGame();
+    },
+    setTPS() {
+      this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
+        this.game.setTags({ tps: this.editingTPS });
+        this.isEditingTPS = false;
+      });
     },
     menuAction(action) {
       switch (action) {

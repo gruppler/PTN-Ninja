@@ -1,3 +1,4 @@
+import Vue from "vue";
 import {
   copyToClipboard,
   exportFile,
@@ -27,7 +28,21 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
   }
 };
 
-export const ADD_GAME = ({ commit, getters }, game) => {
+export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
+  if (state.animateBoard) {
+    commit("SET_UI", ["animateBoard", false]);
+    Vue.nextTick(() => {
+      action();
+      Vue.nextTick(() => {
+        commit("SET_UI", ["animateBoard", true]);
+      });
+    });
+  } else {
+    action();
+  }
+};
+
+export const ADD_GAME = ({ commit, dispatch, getters }, game) => {
   let games = LocalStorage.getItem("games") || [];
   game.name = getters.uniqueName(game.name);
   games.unshift(game.name);
@@ -40,10 +55,11 @@ export const ADD_GAME = ({ commit, getters }, game) => {
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
   }
-  commit("ADD_GAME", game);
+
+  dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAME", game));
 };
 
-export const REMOVE_GAME = ({ commit }, index) => {
+export const REMOVE_GAME = ({ commit, dispatch }, index) => {
   let games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
   LocalStorage.set("games", games);
@@ -51,7 +67,11 @@ export const REMOVE_GAME = ({ commit }, index) => {
   LocalStorage.remove("state-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
-  commit("REMOVE_GAME", index);
+  if (index === 0) {
+    dispatch("WITHOUT_BOARD_ANIM", () => commit("REMOVE_GAME", index));
+  } else {
+    commit("REMOVE_GAME", index);
+  }
 };
 
 export const UPDATE_PTN = ({ state, commit }, ptn) => {
@@ -86,11 +106,17 @@ export const SET_STATE = ({ state, commit }, gameState) => {
   commit("SET_STATE", gameState);
 };
 
-export const SELECT_GAME = ({ commit }, index) => {
+export const SELECT_GAME = ({ commit, dispatch }, index) => {
   let games = LocalStorage.getItem("games") || [];
   games.unshift(games.splice(index, 1)[0]);
   LocalStorage.set("games", games);
-  commit("SELECT_GAME", index);
+  Loading.show();
+  setTimeout(() => {
+    dispatch("WITHOUT_BOARD_ANIM", () => {
+      commit("SELECT_GAME", index);
+      Loading.hide();
+    });
+  }, 200);
 };
 
 export const CANCEL_MOVE = ({ commit }, game) => {
