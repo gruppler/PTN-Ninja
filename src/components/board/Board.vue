@@ -59,9 +59,9 @@
           <div class="squares absolute-fit row">
             <Square
               v-for="square in squares"
-              :key="square.coord"
-              :x="square.x"
-              :y="square.y"
+              :key="square.static.coord"
+              :x="square.static.x"
+              :y="square.static.y"
               :game="game"
             />
           </div>

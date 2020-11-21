@@ -2,6 +2,7 @@ import Marray from "marray";
 
 import Piece from "../Piece";
 import Square from "../Square";
+import { atoi } from "../Ply";
 
 import { defaults } from "lodash";
 import memoize from "./memoize";
@@ -41,6 +42,8 @@ export default class GameState {
     Object.defineProperty(this, "tps", {
       get: memoize(this.getTPS, () => JSON.stringify(this.boardPly))
     });
+
+    this._roads = null;
 
     this.selected = {
       pieces: [],
@@ -88,22 +91,27 @@ export default class GameState {
     );
     this.squares.forEach(row => {
       row.forEach(square => {
-        if (!square.edges.N) {
-          square.neighbors.N = this.squares[square.y + 1][square.x];
-          square.neighbors.push(square.neighbors.N);
+        if (!square.static.edges.N) {
+          square.static.neighbors.N = this.squares[square.static.y + 1][
+            square.static.x
+          ];
         }
-        if (!square.edges.S) {
-          square.neighbors.S = this.squares[square.y - 1][square.x];
-          square.neighbors.push(square.neighbors.S);
+        if (!square.static.edges.S) {
+          square.static.neighbors.S = this.squares[square.static.y - 1][
+            square.static.x
+          ];
         }
-        if (!square.edges.E) {
-          square.neighbors.E = this.squares[square.y][square.x + 1];
-          square.neighbors.push(square.neighbors.E);
+        if (!square.static.edges.E) {
+          square.static.neighbors.E = this.squares[square.static.y][
+            square.static.x + 1
+          ];
         }
-        if (!square.edges.W) {
-          square.neighbors.W = this.squares[square.y][square.x - 1];
-          square.neighbors.push(square.neighbors.W);
+        if (!square.static.edges.W) {
+          square.static.neighbors.W = this.squares[square.static.y][
+            square.static.x - 1
+          ];
         }
+        Object.freeze(square.static);
       });
     });
   }
@@ -228,7 +236,7 @@ export default class GameState {
       this.pieces.played[color][type].push(piece);
       if ("z" in square) {
         // Set via piece state
-        this.squares[square.y][square.x].setPiece(square.z, piece);
+        this.squares[square.y][square.x].setStackPiece(square.z, piece);
       } else {
         // Set via square
         square.pushPiece(piece);
@@ -357,6 +365,30 @@ export default class GameState {
 
   get isGameEnd() {
     return this.ply && this.plyIsDone && !!this.ply.result;
+  }
+
+  get roads() {
+    return this._roads;
+  }
+
+  set roads(roads) {
+    if (this._roads) {
+      this._roads.squares[1].concat(this._roads.squares[2]).forEach(coord => {
+        coord = atoi(coord);
+        this.squares[coord[1]][coord[0]].setRoad(null);
+      });
+    }
+
+    if (roads) {
+      roads[1].concat(roads[2]).forEach(road => {
+        road.squares.forEach(coord => {
+          coord = atoi(coord);
+          this.squares[coord[1]][coord[0]].setRoad(road);
+        });
+      });
+    }
+
+    this._roads = roads || null;
   }
 
   get isFirstMove() {
