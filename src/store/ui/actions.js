@@ -202,25 +202,28 @@ export const OPEN = ({ dispatch }, callback) => {
 export const OPEN_FILES = ({ dispatch }, files) => {
   let count = 0;
   files = Array.from(files);
-  files.forEach(file => {
-    if (file && /\.ptn$|\.txt$/i.test(file.name)) {
-      let reader = new FileReader();
-      reader.onload = event => {
-        dispatch("ADD_GAME", {
-          name: file.name.replace(/\.ptn$|\.txt$/, ""),
-          ptn: event.target.result
-        });
-        if (!--count) {
-          Loading.hide();
+  Loading.show();
+  setTimeout(
+    () =>
+      files.forEach(file => {
+        if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+          let reader = new FileReader();
+          reader.onload = event => {
+            dispatch("ADD_GAME", {
+              name: file.name.replace(/\.ptn$|\.txt$/, ""),
+              ptn: event.target.result
+            });
+            if (!--count) {
+              Loading.hide();
+            }
+          };
+          reader.onerror = error => console.error(error);
+          ++count;
+          reader.readAsText(file);
         }
-      };
-      reader.onerror = error => console.error(error);
-      if (!count++) {
-        Loading.show();
-      }
-      reader.readAsText(file);
-    }
-  });
+      }),
+    200
+  );
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
