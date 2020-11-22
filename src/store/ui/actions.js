@@ -112,17 +112,21 @@ export const SET_STATE = ({ state, commit }, gameState) => {
   commit("SET_STATE", gameState);
 };
 
-export const SELECT_GAME = ({ commit, dispatch }, index) => {
+export const SELECT_GAME = ({ commit, dispatch }, { index, immediate }) => {
   let games = LocalStorage.getItem("games") || [];
   games.unshift(games.splice(index, 1)[0]);
   LocalStorage.set("games", games);
-  Loading.show();
-  setTimeout(() => {
-    dispatch("WITHOUT_BOARD_ANIM", () => {
-      commit("SELECT_GAME", index);
-      Loading.hide();
-    });
-  }, 200);
+  if (immediate) {
+    commit("SELECT_GAME", index);
+  } else {
+    Loading.show();
+    setTimeout(() => {
+      dispatch("WITHOUT_BOARD_ANIM", () => {
+        commit("SELECT_GAME", index);
+        Loading.hide();
+      });
+    }, 200);
+  }
 };
 
 export const CANCEL_MOVE = ({ commit }, game) => {

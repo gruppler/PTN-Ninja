@@ -7,6 +7,12 @@ import Tag from "../Tag";
 import { escapeRegExp, isArray } from "lodash";
 
 export default class GameMutations {
+  replacePTN(ptn, state) {
+    this.recordChange(() => {
+      this.init(ptn, { ...this, state: state || this.minState });
+    });
+  }
+
   _renameBranch(oldBranch, newBranch, force = false) {
     if (oldBranch === newBranch) {
       return false;
