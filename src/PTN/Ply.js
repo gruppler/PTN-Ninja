@@ -11,6 +11,12 @@ const minProps = [
   "specialPiece"
 ];
 
+export const atoi = coord => [
+  "abcdefgh".indexOf(coord[0]),
+  parseInt(coord[1], 10) - 1
+];
+export const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
+
 export default class Ply extends Ptn {
   constructor(
     notation,
@@ -73,16 +79,9 @@ export default class Ply extends Ptn {
     return new Ply(notation, params);
   }
 
-  static atoi(row, col) {
-    return {
-      x: "abcdefgh".indexOf(col),
-      y: parseInt(row, 10) - 1
-    };
-  }
+  static atoi = atoi;
 
-  static itoa(x, y) {
-    return "abcdefgh"[x] + (y + 1);
-  }
+  static itoa = itoa;
 
   getBranch(branch = "") {
     if (this.branches.length) {

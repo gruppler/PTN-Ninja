@@ -29,6 +29,7 @@ export default class GameNavigation {
       if (ply.result.type === "R" && !ply.result.roads) {
         ply.result.roads = this.findRoads();
       }
+      this.state.roads = ply.result.roads;
     } else if (ply.index === this.state.plies.length - 1) {
       this.checkGameEnd();
     }
@@ -45,6 +46,7 @@ export default class GameNavigation {
     if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
       this._afterPly(ply);
+      this.state.roads = ply.result ? ply.result.roads : null;
       return true;
     } else {
       return false;
@@ -55,6 +57,7 @@ export default class GameNavigation {
     const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
     if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
       this._setPly(ply.id, false);
+      this.state.roads = null;
       if (ply.branches.length) {
         this.saveBoardState();
       }
@@ -99,6 +102,7 @@ export default class GameNavigation {
         times(count, () => stack.push(square.popPiece()));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
+          square._setPiece(square.piece);
         }
       } else {
         // Do movement
@@ -115,6 +119,7 @@ export default class GameNavigation {
         }
         if (flatten && square.pieces.length) {
           square.piece.isStanding = false;
+          square._setPiece(square.piece);
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();

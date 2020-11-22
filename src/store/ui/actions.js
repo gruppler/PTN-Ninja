@@ -1,3 +1,4 @@
+import Vue from "vue";
 import {
   copyToClipboard,
   exportFile,
@@ -27,7 +28,21 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
   }
 };
 
-export const ADD_GAME = ({ commit, getters }, game) => {
+export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
+  if (state.animateBoard) {
+    commit("SET_UI", ["animateBoard", false]);
+    Vue.nextTick(() => {
+      action();
+      Vue.nextTick(() => {
+        commit("SET_UI", ["animateBoard", true]);
+      });
+    });
+  } else {
+    action();
+  }
+};
+
+export const ADD_GAME = ({ commit, dispatch, getters }, game) => {
   let games = LocalStorage.getItem("games") || [];
   game.name = getters.uniqueName(game.name);
   games.unshift(game.name);
@@ -43,10 +58,11 @@ export const ADD_GAME = ({ commit, getters }, game) => {
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
   }
-  commit("ADD_GAME", game);
+
+  dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAME", game));
 };
 
-export const REMOVE_GAME = ({ commit }, index) => {
+export const REMOVE_GAME = ({ commit, dispatch }, index) => {
   let games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
   LocalStorage.set("games", games);
@@ -55,7 +71,17 @@ export const REMOVE_GAME = ({ commit }, index) => {
   LocalStorage.remove("config-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
-  commit("REMOVE_GAME", index);
+  if (index === 0) {
+    Loading.show();
+    setTimeout(() => {
+      dispatch("WITHOUT_BOARD_ANIM", () => {
+        commit("REMOVE_GAME", index);
+        Loading.hide();
+      });
+    }, 200);
+  } else {
+    commit("REMOVE_GAME", index);
+  }
 };
 
 export const UPDATE_PTN = ({ state, commit }, ptn) => {
@@ -111,11 +137,21 @@ export const SET_CONFIG = ({ commit, state }, { game, config }) => {
   commit("SET_CONFIG", { game, config });
 };
 
-export const SELECT_GAME = ({ commit }, index) => {
+export const SELECT_GAME = ({ commit, dispatch }, { index, immediate }) => {
   let games = LocalStorage.getItem("games") || [];
   games.unshift(games.splice(index, 1)[0]);
   LocalStorage.set("games", games);
-  commit("SELECT_GAME", index);
+  if (immediate) {
+    commit("SELECT_GAME", index);
+  } else {
+    Loading.show();
+    setTimeout(() => {
+      dispatch("WITHOUT_BOARD_ANIM", () => {
+        commit("SELECT_GAME", index);
+        Loading.hide();
+      });
+    }, 200);
+  }
 };
 
 export const CANCEL_MOVE = ({ commit }, game) => {
@@ -161,10 +197,17 @@ export const SAVE = (context, games) => {
     }
   }
 
-  const files = games.map(game => new File([game.ptn], game.name + ".ptn"));
+  const files = Object.freeze(
+    games.map(
+      game =>
+        new File([game.ptn], game.name + ".txt", {
+          type: "text/plain"
+        })
+    )
+  );
   if (navigator.canShare && navigator.canShare({ files })) {
     const title =
-      games.length === 1 ? games[0].name + ".ptn" : i18n.t("Multiple Games");
+      games.length === 1 ? games[0].name + ".txt" : i18n.t("Multiple Games");
 
     navigator.share({ files, title }).catch(error => {
       console.error(error);
@@ -195,26 +238,29 @@ export const OPEN = ({ dispatch }, callback) => {
 export const OPEN_FILES = ({ dispatch }, files) => {
   let count = 0;
   files = Array.from(files);
-  files.forEach(file => {
-    if (file && /\.ptn$|\.txt$/i.test(file.name)) {
-      let reader = new FileReader();
-      reader.onload = event => {
-        dispatch("ADD_GAME", {
-          name: file.name.replace(/\.ptn$|\.txt$/, ""),
-          ptn: event.target.result,
-          config: { isOnline: false }
-        });
-        if (!--count) {
-          Loading.hide();
+  Loading.show();
+  setTimeout(
+    () =>
+      files.forEach(file => {
+        if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+          let reader = new FileReader();
+          reader.onload = event => {
+            dispatch("ADD_GAME", {
+              name: file.name.replace(/\.ptn$|\.txt$/, ""),
+              ptn: event.target.result,
+              config: { isOnline: false }
+            });
+            if (!--count) {
+              Loading.hide();
+            }
+          };
+          reader.onerror = error => console.error(error);
+          ++count;
+          reader.readAsText(file);
         }
-      };
-      reader.onerror = error => console.error(error);
-      if (!count++) {
-        Loading.show();
-      }
-      reader.readAsText(file);
-    }
-  });
+      }),
+    200
+  );
 };
 
 export const SAVE_UNDO_HISTORY = ({ commit }, game) => {
@@ -227,9 +273,9 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const COPY = function(context, text) {
+export const COPY = function(context, { url, text, title }) {
   function copy() {
-    copyToClipboard(text)
+    copyToClipboard(text || url)
       .then(() => {
         Notify.create({
           icon: "copy",
@@ -252,9 +298,9 @@ export const COPY = function(context, text) {
           class: "bg-secondary",
           color: "accent",
           prompt: {
-            model: text,
+            model: text || url,
             filled: true,
-            type: text.includes("\n") ? "textarea" : "text"
+            type: text && text.includes("\n") ? "textarea" : "text"
           },
           cancel: false
         });
@@ -262,7 +308,7 @@ export const COPY = function(context, text) {
   }
 
   if (navigator.canShare) {
-    navigator.share({ text }).catch(error => {
+    navigator.share({ url, text, title }).catch(error => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
         copy();

@@ -205,15 +205,7 @@
             color="accent"
             flat
           />
-          <q-btn
-            :label="$t('OK')"
-            @click="
-              game.setTags({ tps: editingTPS });
-              isEditingTPS = false;
-            "
-            color="accent"
-            flat
-          />
+          <q-btn :label="$t('OK')" @click="setTPS" color="accent" flat />
         </PieceSelector>
         <PlayControls v-else :game="game" />
       </q-toolbar>
@@ -536,16 +528,31 @@ export default {
       this.errors = [];
       try {
         if (this.ptn) {
-          let index = this.name
-            ? this.$store.state.games.findIndex(game => game.name === name)
-            : -1;
-          if (index >= 0 && this.$store.state.openDuplicate === "replace") {
-            // Replace existing game with new PTN
-            this.$store.dispatch("SELECT_GAME", index);
+          // Add game from URL
+          const index = this.$store.state.games.findIndex(
+            g => g.name === this.name
+          );
+          if (index < 0 || this.$store.state.openDuplicate !== "replace") {
+            game = new Game(this.ptn, { name: this.name, state: this.state });
+            if (game) {
+              this.$store.dispatch("ADD_GAME", {
+                ptn: this.ptn,
+                name: game.name,
+                state: game.minState
+              });
+              this.$router.replace("/");
+            }
+          } else {
+            if (index > 0) {
+              this.$store.dispatch("SELECT_GAME", { index, immediate: true });
+            }
+
             game = this.$store.state.games[0];
             game = new Game(game.ptn, game);
+
             if (game.ptn !== this.ptn) {
-              game.updatePTN(this.ptn);
+              game.replacePTN(this.ptn, this.state);
+
               this.$q.notify({
                 message: this.$t("success.replacedExistingGame"),
                 timeout: 10000,
@@ -563,17 +570,6 @@ export default {
                   },
                   { icon: "close", color: "grey-2" }
                 ]
-              });
-            }
-            this.$router.replace("/");
-          } else {
-            // Add game from URL
-            game = new Game(this.ptn, { name: this.name, state: this.state });
-            if (game) {
-              this.$store.dispatch("ADD_GAME", {
-                ptn: this.ptn,
-                name: game.name,
-                state: game.minState
               });
               this.$router.replace("/");
             }
@@ -623,6 +619,12 @@ export default {
     },
     updateGame() {
       this.game = this.getGame();
+    },
+    setTPS() {
+      this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
+        this.game.setTags({ tps: this.editingTPS });
+        this.isEditingTPS = false;
+      });
     },
     menuAction(action) {
       switch (action) {

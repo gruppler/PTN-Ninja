@@ -82,19 +82,16 @@ export default class GameEnd {
         let piece = square.piece;
         if (piece && !piece.isStanding) {
           let player = piece.color;
-          connections[square.coord] = square.neighbors.filter(neighbor => {
-            neighbor = neighbor.piece;
-            return (
-              neighbor && !neighbor.isStanding && neighbor.color === player
-            );
-          });
+          connections[square.static.coord] = square.connected
+            .map(side => square.static.neighbors[side])
+            .filter(square => square);
 
-          let neighbors = connections[square.coord];
+          let neighbors = connections[square.static.coord];
 
           if (neighbors.length === 1) {
-            if (square.isEdge) {
+            if (square.static.isEdge) {
               // An edge with exactly one friendly neighbor
-              possibleRoads[player][square.coord] = square;
+              possibleRoads[player][square.static.coord] = square;
               possibleDeadEnds[player].push(square);
             } else {
               // A non-edge dead end
@@ -102,18 +99,18 @@ export default class GameEnd {
             }
           } else if (neighbors.length > 1) {
             // An intersection
-            possibleRoads[player][square.coord] = square;
+            possibleRoads[player][square.static.coord] = square;
             if (
-              square.isEdge &&
+              square.static.isEdge &&
               neighbors.length === 2 &&
-              neighbors.find(square => square.isEdge) &&
-              neighbors.find(square => !square.isEdge)
+              neighbors.find(square => square.static.isEdge) &&
+              neighbors.find(square => !square.static.isEdge)
             ) {
               possibleDeadEnds[player].push(square);
             }
           }
         } else {
-          connections[square.coord] = [];
+          connections[square.static.coord] = [];
         }
       })
     );
@@ -173,7 +170,7 @@ export default class GameEnd {
       roads.length += roads[player].length;
     });
 
-    return roads;
+    return Object.freeze(roads);
   }
 }
 
@@ -184,19 +181,16 @@ function followRoad(square, possibleRoads, connections) {
   let road;
   let player = square.piece.color;
 
-  squares[square.coord] = square;
-  delete possibleRoads[player][square.coord];
+  squares[square.static.coord] = square;
+  delete possibleRoads[player][square.static.coord];
 
-  if (square.isEdge) {
+  if (square.static.isEdge) {
     // Note which edge(s) the road touches
-    edges[square.edges[0]] = true;
-    if (square.edges[1]) {
-      edges[square.edges[1]] = true;
-    }
+    square.static.edges.forEach(edge => (edges[edge] = true));
   }
 
-  connections[square.coord].forEach(neighbor => {
-    if (neighbor.coord in possibleRoads[player]) {
+  connections[square.static.coord].forEach(neighbor => {
+    if (neighbor.static.coord in possibleRoads[player]) {
       // Haven't gone this way yet; find out where it goes
       road = followRoad(neighbor, possibleRoads, connections);
       // Report back squares and edges
@@ -217,10 +211,11 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
   while (deadEnds.length) {
     deadEnds.forEach((square, i) => {
       let isWinningEdge =
-        (square.isEdge && !winningEdge) || square["is" + winningEdge];
+        (square.static.isEdge && !winningEdge) ||
+        square.static["is" + winningEdge];
       let nextNeighbors = [];
-      connections[square.coord].forEach(neighbor => {
-        if (neighbor.coord in squares) {
+      connections[square.static.coord].forEach(neighbor => {
+        if (neighbor.static.coord in squares) {
           nextNeighbors.push(neighbor);
         }
       });
@@ -228,9 +223,9 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
       if (
         nextNeighbors.length < 2 &&
         (!isWinningEdge ||
-          (nextNeighbors[0] && nextNeighbors[0]["is" + winningEdge]))
+          (nextNeighbors[0] && nextNeighbors[0].static["is" + winningEdge]))
       ) {
-        delete squares[square.coord];
+        delete squares[square.static.coord];
         deadEnds[i] = nextNeighbors[0];
       } else {
         deadEnds[i] = undefined;

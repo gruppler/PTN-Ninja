@@ -9,7 +9,7 @@ export default class GameIX {
     if (this.state.selected.pieces.length) {
       // Move in progress
       const currentSquare = this.state.selected.pieces[0].square;
-      let neighbors = currentSquare.neighbors.concat();
+      let neighbors = currentSquare.static.neighbors.concat();
 
       if (square === currentSquare) {
         return true;
@@ -22,12 +22,12 @@ export default class GameIX {
         ];
         const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
           Ply.getDirection([
-            currentSquare.x - prevSquare.x,
-            currentSquare.y - prevSquare.y
+            currentSquare.static.x - prevSquare.static.x,
+            currentSquare.static.y - prevSquare.static.y
           ])
         ];
         neighbors = [
-          currentSquare.neighbors[direction],
+          currentSquare.static.neighbors[direction],
           this.state.selected.squares[0]
         ];
       }
@@ -125,8 +125,8 @@ export default class GameIX {
     if (!move) {
       move = {
         action: "push",
-        x: square.x,
-        y: square.y,
+        x: square.static.x,
+        y: square.static.y,
         count: 0,
         type: ""
       };
@@ -223,19 +223,19 @@ export default class GameIX {
       // Drop in different square
       const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
         Ply.getDirection([
-          square.x - currentSquare.x,
-          square.y - currentSquare.y
+          square.static.x - currentSquare.static.x,
+          square.static.y - currentSquare.static.y
         ])
       ];
-      const neighbor = square.neighbors[direction];
+      const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
 
       this.state.selected.initialCount = this.state.selected.pieces.length;
       this.state.selectSquare(square);
       move = {
         action: "push",
-        x: square.x,
-        y: square.y,
+        x: square.static.x,
+        y: square.static.y,
         count: altSelect ? this.state.selected.pieces.length : 1,
         flatten: piece && piece.isStanding
       };

@@ -38,7 +38,6 @@ export default {
   keyboard: "mdi-keyboard-variant",
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",
-  link: "mdi-link",
   menu_horizontal: "mdi-dots-horizontal",
   menu_vertical: "mdi-dots-vertical",
   more: "mdi-unfold-more-horizontal",
@@ -80,6 +79,7 @@ export default {
   trim: "mdi-flip-vertical",
   undo: "mdi-undo",
   update: "mdi-cached",
+  url: "mdi-link",
   visibility: "mdi-eye",
   visibility_off: "mdi-eye-off",
   warning: "mdi-alert"

@@ -41,10 +41,10 @@ const routes = [
         delete state.ply;
       }
 
-      if (state.branch) {
+      if (state.targetBranch) {
         state.targetBranch =
-          decompressFromEncodedURIComponent(state.branch) || state.branch;
-        delete state.branch;
+          decompressFromEncodedURIComponent(state.targetBranch) ||
+          state.targetBranch;
       }
 
       if (/^[A-Za-z0-9$+-]+$/.test(ptn)) {
