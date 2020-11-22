@@ -13,8 +13,8 @@
     "node": "10"
   },
   "dependencies": {
-    "es6-promise-pool": "^2.5.0",
-    "firebase-admin": "~7.0.0",
+    "tiny-async-pool": "^1.2.0",
+    "firebase-admin": "^9.4.1",
     "firebase-functions": "^3.11.0"
   },
   "devDependencies": {

@@ -71,11 +71,7 @@
           </smooth-reflow>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu
-            @input="menuAction"
-            @click.right.prevent="switchGame"
-            v-touch-swipe.left="switchGame"
-          />
+          <Menu @input="menuAction" @click.right.prevent="switchGame" />
         </q-page-sticky>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles v-if="!dialogEmbed && !isGamesTableShowing" />
@@ -151,6 +147,7 @@
           @input="showTextTab"
           active-color="accent"
           indicator-color="accent"
+          align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
           <q-tab name="chat">{{ $t("Chat") }}</q-tab>
@@ -769,10 +766,8 @@ export default {
     edit() {
       this.dialogEditGame = true;
     },
-    switchGame({ distance }) {
-      if (!distance || distance.x > 10) {
-        this.$refs.gameSelector.select(1);
-      }
+    switchGame() {
+      this.$refs.gameSelector.select(1);
     },
     showTextTab(value) {
       this.textTab = value;
@@ -883,7 +878,7 @@ export default {
               this.$router.replace("/");
             })
             .catch(error => {
-              this.$store.getters.error({ error });
+              this.$store.dispatch("NOTIFY_ERROR", error);
             });
         }
       }

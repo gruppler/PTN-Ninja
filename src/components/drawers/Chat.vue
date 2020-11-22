@@ -83,6 +83,7 @@ import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 
 import { debounce } from "quasar";
+import { format, formatDistanceToNow } from "date-fns";
 
 export default {
   name: "Chat",
@@ -176,12 +177,12 @@ export default {
     },
     relativeTime(message) {
       if (message.time) {
-        return this.$moment(new Date(message.time)).fromNow();
+        return formatDistanceToNow(message.time, { addSuffix: true });
       }
     },
     absoluteTime(message) {
       if (message.time) {
-        return this.$moment(new Date(message.time)).calendar();
+        return format(message.time, this.$t("format.date-time-full"));
       }
     },
     wasSent(message) {

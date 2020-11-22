@@ -200,7 +200,7 @@ export default {
     },
     closeMultiple() {
       const max = this.games.length - 1;
-      this.$store.getters.prompt({
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Close Oldest Games"),
         prompt: {
           model: max,
@@ -211,7 +211,7 @@ export default {
           }
         },
         success: count => {
-          this.$store.getters.prompt({
+          this.$store.dispatch("PROMPT", {
             title: this.$t("Confirm"),
             message: this.$tc("confirm.closeOldestGames", count),
             success: () => {
@@ -227,7 +227,7 @@ export default {
       });
     },
     downloadAll() {
-      this.$store.getters.prompt({
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.downloadAllGames"),
         success: () => {

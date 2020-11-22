@@ -1,5 +1,5 @@
 import config from "../../.firebase/config.js";
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
 import "firebase/functions";
@@ -24,14 +24,18 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
   console.error(error);
 });
 
-db.enablePersistence({ synchronizeTabs: true }).catch(error => {
-  console.error(error);
-});
-
-export { firebase, auth, db, functions, messaging };
-
 if (process.env.DEV) {
+  // auth.useEmulator("http://localhost:9099");
+  db.useEmulator("localhost", 8081);
+  functions.useEmulator("localhost", 5001);
   window.auth = auth;
   window.db = db;
+  window.functions = functions;
   window.messaging = messaging;
+} else {
+  db.enablePersistence({ synchronizeTabs: true }).catch(error => {
+    console.error(error);
+  });
 }
+
+export { firebase, auth, db, functions, messaging };

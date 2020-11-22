@@ -1,7 +1,12 @@
 <template>
   <large-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
     <template v-slot:header>
-      <q-tabs v-model="section" active-color="accent" indicator-color="accent">
+      <q-tabs
+        v-model="section"
+        active-color="accent"
+        indicator-color="accent"
+        align="justify"
+      >
         <q-tab name="about" icon="info" :label="$t('About')" />
         <q-tab name="usage" icon="help" :label="$t('Usage')" />
         <q-tab name="hotkeys" icon="keyboard" :label="$t('Hotkeys')" />

@@ -6,7 +6,12 @@
     v-bind="$attrs"
   >
     <q-card style="width: 560px" class="bg-secondary">
-      <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
+      <q-tabs
+        v-model="tab"
+        active-color="accent"
+        indicator-color="accent"
+        align="justify"
+      >
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
@@ -190,7 +195,7 @@ export default {
             this.$store
               .dispatch("online/LOAD_GAME", game.config.id)
               .catch(error => {
-                this.$store.getters.error({ error });
+                this.$store.dispatch("NOTIFY_ERROR", error);
               });
           });
           this.selectedGames = [];

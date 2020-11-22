@@ -1,3 +1,4 @@
+import { i18n } from "../../../src/boot/i18n";
 import Vue from "vue";
 import {
   copyToClipboard,
@@ -7,7 +8,12 @@ import {
   Dialog,
   Notify
 } from "quasar";
-import { i18n } from "../../../src/boot/i18n";
+import {
+  formatError,
+  formatSuccess,
+  formatWarning,
+  formatHint
+} from "../../utilities";
 import { isArray } from "lodash";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
@@ -28,14 +34,110 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
   }
 };
 
+export const PROMPT = (
+  context,
+  { title, message, prompt, ok, cancel, success, failure }
+) => {
+  let dialog = Dialog.create({
+    title,
+    message,
+    prompt,
+    color: "accent",
+    "no-backdrop-dismiss": true,
+    ok: {
+      label: ok || i18n.t("OK"),
+      flat: true,
+      color: "accent"
+    },
+    cancel: {
+      label: cancel || i18n.t("Cancel"),
+      flat: true,
+      color: "accent"
+    },
+    class: "bg-secondary non-selectable"
+  });
+  if (success) {
+    dialog.onOk(success);
+  }
+  if (failure) {
+    dialog.onCancel(failure);
+  }
+  return dialog;
+};
+
+export const NOTIFY = (context, options) => {
+  let fg = "grey-1";
+  let bg = "secondary";
+  if (options.invert) {
+    [bg, fg] = [fg, bg];
+  }
+  if (options.actions) {
+    options.actions.forEach(action => {
+      if (!action.color) {
+        action.color = "accent";
+      }
+    });
+  }
+  return Notify.create({
+    progressClass: "bg-" + fg,
+    color: bg,
+    textColor: fg,
+    position: "bottom",
+    timeout: 0,
+    actions: [{ icon: "close", color: fg }],
+    ...options
+  });
+};
+
+export const NOTIFY_ERROR = (context, error) => {
+  Notify.create({
+    message: formatError(error),
+    type: "negative",
+    timeout: 0,
+    position: "top-right",
+    actions: [{ icon: "close", color: "grey-10" }]
+  });
+};
+
+export const NOTIFY_SUCCESS = (context, success) => {
+  return Notify.create({
+    message: formatSuccess(success),
+    type: "positive",
+    timeout: 0,
+    position: "top-right",
+    multiLine: false,
+    actions: [{ icon: "close", color: "grey-1" }]
+  });
+};
+
+export const NOTIFY_WARNING = (context, warning) => {
+  return Notify.create({
+    message: formatWarning(warning),
+    type: "warning",
+    timeout: 0,
+    position: "top-right",
+    multiLine: false,
+    actions: [{ icon: "close", color: "dark" }]
+  });
+};
+
+export const NOTIFY_HINT = (context, hint) => {
+  return Notify.create({
+    message: formatHint(hint),
+    type: "info",
+    timeout: 0,
+    position: "top-right",
+    multiLine: false,
+    actions: [{ icon: "close", color: "grey-1" }]
+  });
+};
+
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
+    action();
     Vue.nextTick(() => {
-      action();
-      Vue.nextTick(() => {
-        commit("SET_UI", ["animateBoard", true]);
-      });
+      commit("SET_UI", ["animateBoard", true]);
     });
   } else {
     action();

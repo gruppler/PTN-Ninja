@@ -7,28 +7,31 @@
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
+    "icons": "icongenie g -i app-icon.png --quality 12 --theme-color 607d8b --skip-trim",
     "dev": "quasar dev -m spa",
+    "dev:pwa": "quasar dev -m pwa",
     "deploy": "quasar build -m pwa && firebase deploy --only hosting",
-    "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:dev",
-    "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:live",
-    "rules-deploy": "firebase deploy --only firestore:rules",
-    "functions-deploy": "firebase deploy --only functions"
+    "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja-dev",
+    "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:functions": "firebase deploy --only functions",
+    "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
     "@quasar/extras": "^1.9.10",
     "aggregation": "^1.2.6",
     "core-js": "^3.0.0",
+    "date-fns": "^2.16.1",
     "diff-match-patch": "^1.0.4",
-    "firebase": "^7.14.3",
-    "firebase-functions": "^3.6.1",
-    "firebase-tools": "^7.16.2",
+    "firebase": "^8.1.1",
+    "firebase-functions": "^3.11.0",
+    "firebase-tools": "^8.16.2",
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
     "quasar": "^1.14.5",
     "vue": "^2.6.11",
     "vue-i18n": "^8.0.0",
-    "vue-moment": "^4.1.0",
     "vue-qriously": "^1.1.1",
     "vue-shortkey": "^3.1.7",
     "vue-smooth-reflow": "^0.1.12"
@@ -42,7 +45,7 @@
     "eslint-loader": "^2.2.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-vue": "^5.0.0",
-    "firebase-admin": "^8.12.1",
+    "firebase-admin": "^9.4.1",
     "workbox-webpack-plugin": "^5.0.0"
   },
   "engines": {

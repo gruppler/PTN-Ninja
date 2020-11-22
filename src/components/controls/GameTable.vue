@@ -121,9 +121,7 @@
           {{ props.row.tags.size + "x" + props.row.tags.size }}
         </q-td>
         <q-td key="date" :props="props">
-          <span :title="props.row.tags.date | moment('llll')">
-            {{ props.row.tags.date | moment("from") }}
-          </span>
+          <relative-time :value="props.row.tags.date" :invert="fullscreen" />
         </q-td>
         <q-td key="result" :props="props">
           <Result :result="props.row.tags.result" />

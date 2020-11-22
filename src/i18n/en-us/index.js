@@ -266,5 +266,12 @@ export default {
     Space: "Space"
   },
 
-  date: import("./date")
+  format: {
+    "date-standard": "yyyy/MM/dd",
+    "date-time-standard": "yyyy/MM/dd HH:mm",
+    "date-short": "M/d/yyyy",
+    "date-time-short": "M/d/yyyy h:mma",
+    "date-full": "E, MMM d, yyyy",
+    "date-time-full": "E, MMM d, yyyy h:mma"
+  }
 };

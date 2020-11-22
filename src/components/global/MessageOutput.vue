@@ -19,43 +19,21 @@
 </template>
 
 <script>
+import {
+  formatError,
+  formatSuccess,
+  formatWarning,
+  formatHint
+} from "../../utilities";
+
 export default {
   name: "message-output",
   props: ["error", "success", "warning", "hint", "content-class"],
   methods: {
-    formatError(error) {
-      return this.$store.getters.errorMessage(error);
-    },
-    formatSuccess(success) {
-      const successMessages = this.$i18n.messages[this.$i18n.locale].success;
-      if (typeof success === "string") {
-        if (success in successMessages) {
-          return this.$t(`success["${success}"]`);
-        } else {
-          return success;
-        }
-      }
-    },
-    formatWarning(warning) {
-      const warningMessages = this.$i18n.messages[this.$i18n.locale].warning;
-      if (typeof warning === "string") {
-        if (warning in warningMessages) {
-          return this.$t(`warning["${warning}"]`);
-        } else {
-          return warning;
-        }
-      }
-    },
-    formatHint(hint) {
-      const warningMessages = this.$i18n.messages[this.$i18n.locale].hint;
-      if (typeof hint === "string") {
-        if (hint in warningMessages) {
-          return this.$t(`hint["${hint}"]`);
-        } else {
-          return hint;
-        }
-      }
-    }
+    formatError,
+    formatSuccess,
+    formatWarning,
+    formatHint
   }
 };
 </script>

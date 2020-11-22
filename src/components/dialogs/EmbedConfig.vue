@@ -3,7 +3,7 @@
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
-    min-height="588"
+    :min-height="588"
     v-bind="$attrs"
   >
     <template v-slot:header>
@@ -254,7 +254,7 @@ export default {
   },
   methods: {
     reset() {
-      this.$store.getters.prompt({
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {

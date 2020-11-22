@@ -3,32 +3,19 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
-const promisePool = require("es6-promise-pool");
-const PromisePool = promisePool.PromisePool;
-// Maximum concurrent account deletions.
-const MAX_CONCURRENT = 3;
 
-/**
- * Run once a day at midnight, to cleanup the users
- * Manually run the task here https://console.cloud.google.com/cloudscheduler
- */
+const asyncPool = require("tiny-async-pool");
+
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async context => {
+    const MAX_CONCURRENT = 5;
     // Fetch all user details.
     const inactiveUsers = await getInactiveUsers();
-    // Use a pool so that we delete maximum `MAX_CONCURRENT` users in parallel.
-    const promisePool = new PromisePool(
-      () => deleteInactiveUser(inactiveUsers),
-      MAX_CONCURRENT
-    );
-    await promisePool.start();
+    await asyncPool(MAX_CONCURRENT, inactiveUsers, deleteInactiveUser);
     console.log("User cleanup finished");
   });
 
-/**
- * Deletes one inactive user from the list.
- */
 function deleteInactiveUser(inactiveUsers) {
   if (inactiveUsers.length > 0) {
     const userToDelete = inactiveUsers.pop();
@@ -71,9 +58,6 @@ function deleteInactiveUser(inactiveUsers) {
   }
 }
 
-/**
- * Returns the list of all inactive users.
- */
 async function getInactiveUsers(users = [], nextPageToken) {
   const result = await admin.auth().listUsers(1000, nextPageToken);
   // Find users that have not signed in in the last 30 days.

@@ -6,7 +6,12 @@
     v-bind="$attrs"
   >
     <q-card style="width: 400px" class="bg-secondary">
-      <q-tabs v-model="tab" active-color="accent" indicator-color="accent">
+      <q-tabs
+        v-model="tab"
+        active-color="accent"
+        indicator-color="accent"
+        align="justify"
+      >
         <q-tab name="login" :label="$t('Log In')" />
         <q-tab name="register" :label="$t('Register')" />
       </q-tabs>
@@ -253,7 +258,7 @@ export default {
       };
 
       if (Object.values(this.$store.state.online.privateGames).length) {
-        this.$store.getters.confirm({
+        this.$store.dispatch("PROMPT", {
           title: this.$t("confirm.logInTitle"),
           message: this.$t("confirm.logInMessage"),
           ok: this.$t("confirm.logInOK"),
@@ -269,7 +274,7 @@ export default {
     },
     resetPassword() {
       if (this.email.trim().length) {
-        this.$store.getters.confirm({
+        this.$store.dispatch("PROMPT", {
           title: this.$t("Confirm"),
           message: this.$t("confirm.resetPassword", { email: this.email }),
           success: () => {
