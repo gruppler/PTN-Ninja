@@ -205,8 +205,8 @@
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
-          :label="$t('Copy')"
-          @click="copy"
+          :label="$t('Share')"
+          @click="share"
           color="accent"
           flat
           v-close-popup
@@ -261,8 +261,11 @@ export default {
         }
       });
     },
-    copy() {
-      this.$store.dispatch("COPY", this.code);
+    share() {
+      this.$store.dispatch("COPY", {
+        title: this.name,
+        text: this.code
+      });
     },
     close() {
       this.$emit("input", false);

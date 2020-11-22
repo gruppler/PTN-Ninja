@@ -172,7 +172,14 @@ export const SAVE = (context, games) => {
     }
   }
 
-  const files = games.map(game => new File([game.ptn], game.name + ".txt"));
+  const files = Object.freeze(
+    games.map(
+      game =>
+        new File([game.ptn], game.name + ".txt", {
+          type: "text/plain"
+        })
+    )
+  );
   if (navigator.canShare && navigator.canShare({ files })) {
     const title =
       games.length === 1 ? games[0].name + ".txt" : i18n.t("Multiple Games");
@@ -240,9 +247,9 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const COPY = function(context, text) {
+export const COPY = function(context, { url, text, title }) {
   function copy() {
-    copyToClipboard(text)
+    copyToClipboard(text || url)
       .then(() => {
         Notify.create({
           icon: "copy",
@@ -265,9 +272,9 @@ export const COPY = function(context, text) {
           class: "bg-secondary",
           color: "accent",
           prompt: {
-            model: text,
+            model: text || url,
             filled: true,
-            type: text.includes("\n") ? "textarea" : "text"
+            type: text && text.includes("\n") ? "textarea" : "text"
           },
           cancel: false
         });
@@ -275,7 +282,7 @@ export const COPY = function(context, text) {
   }
 
   if (navigator.canShare) {
-    navigator.share({ text }).catch(error => {
+    navigator.share({ url, text, title }).catch(error => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
         copy();

@@ -327,6 +327,8 @@ export default class GameState {
     );
     this.plyID = plyID;
     this.plyIsDone = plyIsDone;
+    const ply = this.ply;
+    this.roads = ply && ply.result ? ply.result.roads : null;
   }
 
   get boardPly() {
@@ -446,9 +448,8 @@ export default class GameState {
     let flats = [0, 0];
     this.squares.forEach(row => {
       row.forEach(square => {
-        if (square.pieces.length) {
-          const piece = square.piece;
-          flats[piece.color - 1] += piece.isFlat;
+        if (square.color && !square.isStanding) {
+          flats[square.color - 1]++;
         }
       });
     });

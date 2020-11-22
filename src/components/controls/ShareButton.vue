@@ -35,10 +35,10 @@ export default {
     actions() {
       let actions = [
         {
-          id: "link",
-          label: this.$t("Link"),
-          icon: "link",
-          action: () => this.shareText("link")
+          id: "url",
+          label: this.$t("URL"),
+          icon: "url",
+          action: () => this.shareText("url")
         }
       ];
 
@@ -96,25 +96,37 @@ export default {
   },
   methods: {
     shareText(type) {
-      let text;
+      let output;
       switch (type) {
-        case "link":
-          text = this.$store.getters.url(this.game, {
-            origin: true,
-            state: true
-          });
+        case "url":
+          output = {
+            title: this.game.name,
+            url: this.$store.getters.url(this.game, {
+              origin: true,
+              state: true
+            })
+          };
           break;
         case "ply":
-          text = this.game.state.ply.text();
+          output = {
+            title: this.game.state.ply.text(),
+            text: this.game.state.ply.text()
+          };
           break;
         case "moves":
-          text = this.game.moveText(this.$store.state.showAllBranches, true);
+          output = {
+            title: this.$t("Moves") + " – " + this.game.name,
+            text: this.game.moveText(this.$store.state.showAllBranches, true)
+          };
           break;
         case "ptn":
-          text = this.game.ptn;
+          output = {
+            title: this.$t("PTN") + " – " + this.game.name,
+            text: this.game.ptn
+          };
           break;
       }
-      this.$store.dispatch("COPY", text);
+      this.$store.dispatch("COPY", output);
     },
     shareFile() {
       this.$store.dispatch("SAVE", this.game);

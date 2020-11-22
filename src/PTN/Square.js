@@ -199,6 +199,8 @@ export class Sides {
     if (this._index[side] !== value) {
       if (value) {
         this.push(isBoolean(value) ? side : value);
+        this._index[side] = value;
+        this.length = this._array.length;
         if (this.onEnable) {
           this.onEnable(side, value);
         }
@@ -207,12 +209,12 @@ export class Sides {
           this.indexOf(isBoolean(value) ? side : this._index[side]),
           1
         );
+        this._index[side] = value;
+        this.length = this._array.length;
         if (this.onDisable) {
           this.onDisable(side, value);
         }
       }
-      this._index[side] = value;
-      this.length = this._array.length;
     }
   }
 }
