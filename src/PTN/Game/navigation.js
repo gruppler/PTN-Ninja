@@ -102,6 +102,7 @@ export default class GameNavigation {
         times(count, () => stack.push(square.popPiece()));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
+          square._setPiece(square.piece);
         }
       } else {
         // Do movement
@@ -118,6 +119,7 @@ export default class GameNavigation {
         }
         if (flatten && square.pieces.length) {
           square.piece.isStanding = false;
+          square._setPiece(square.piece);
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();
