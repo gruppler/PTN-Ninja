@@ -6,8 +6,6 @@ module.exports = function(ctx) {
     // --> boot files are part of "main.js"
     boot: [
       "addressbar-color",
-      "axios",
-      "moment",
       "i18n",
       "shortkey",
       "globalComponents",

@@ -31,11 +31,9 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
+    action();
     Vue.nextTick(() => {
-      action();
-      Vue.nextTick(() => {
-        commit("SET_UI", ["animateBoard", true]);
-      });
+      commit("SET_UI", ["animateBoard", true]);
     });
   } else {
     action();

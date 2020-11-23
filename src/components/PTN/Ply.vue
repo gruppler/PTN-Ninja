@@ -8,6 +8,7 @@
       :text-color="ply.color === 1 ? 'blue-grey-10' : 'blue-grey-2'"
       :outline="!isDone"
       :clickable="!noClick"
+      v-ripple="false"
       :key="ply.id"
       square
       dense

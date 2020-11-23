@@ -3,7 +3,7 @@
     :value="value"
     @input="$emit('input', $event)"
     no-backdrop-dismiss
-    min-height="588"
+    :min-height="588"
     v-bind="$attrs"
   >
     <template v-slot:header>
