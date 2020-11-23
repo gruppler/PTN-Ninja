@@ -56,10 +56,10 @@ export default class Piece {
   }
 
   get x() {
-    return this.square ? this.square.x : null;
+    return this.square ? this.square.static.x : null;
   }
   get y() {
-    return this.square ? this.square.y : null;
+    return this.square ? this.square.static.y : null;
   }
   get z() {
     return this.square ? this.square.pieces.indexOf(this) : null;

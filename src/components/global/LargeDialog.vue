@@ -1,8 +1,7 @@
 <template>
   <q-dialog
-    :content-class="['large-dialog', 'non-selectable', $attrs['content-class']]"
-    @input="$emit('input', $event)"
-    :value="value"
+    :content-class="classes"
+    :value.sync="value"
     :maximized="maximized"
     v-on="$listeners"
     v-bind="$attrs"
@@ -13,7 +12,7 @@
       :style="{ height }"
       container
     >
-      <q-header class="bg-secondary" elevated>
+      <q-header class="bg-secondary" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>
 
@@ -33,17 +32,32 @@ const HEIGHT = 700;
 
 export default {
   name: "large-dialog",
-  props: ["value", "min-height"],
+  props: {
+    value: Boolean,
+    fullscreen: Boolean,
+    "min-height": Number,
+    "no-maximize": Boolean,
+    "content-class": String
+  },
   computed: {
     maximized() {
       return (
-        this.$q.screen.lt.sm ||
-        (this.$q.screen.width <= this.$q.screen.sizes.md &&
-          this.$q.screen.height <= this.$q.screen.sizes.sm)
+        this.fullscreen ||
+        (!this.noMaximize &&
+          (this.$q.screen.lt.sm ||
+            (this.$q.screen.width <= this.$q.screen.sizes.md &&
+              this.$q.screen.height <= this.$q.screen.sizes.sm)))
       );
     },
     height() {
       return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
+    },
+    classes() {
+      let classes = ["large-dialog", "non-selectable", this.contentClass];
+      if (this.maximized) {
+        classes.push("maximized");
+      }
+      return classes;
     }
   }
 };

@@ -97,7 +97,7 @@ export default {
   methods: {
     select(index) {
       if (index >= 0 && this.games.length > index) {
-        this.$store.dispatch("SELECT_GAME", index);
+        this.$store.dispatch("SELECT_GAME", { index });
         this.$emit("input", this.$store.state.games[0]);
       }
     },
