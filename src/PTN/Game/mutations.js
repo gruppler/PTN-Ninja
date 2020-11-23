@@ -492,6 +492,7 @@ export default class GameMutations {
           // Record result
           this.setTags({ result: ply.result.text }, false, false);
         }
+        this.state.roads = ply.result.roads || null;
       }
 
       this._updatePTN();

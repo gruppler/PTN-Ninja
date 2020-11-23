@@ -264,7 +264,7 @@ export default {
     },
     share() {
       this.$store.dispatch("COPY", {
-        title: this.name,
+        title: this.$t("Embed") + " – " + this.name,
         text: this.code
       });
     },
