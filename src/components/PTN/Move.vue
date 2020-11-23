@@ -23,7 +23,7 @@
         :no-branch="noBranch || separateBranch"
       />
       <template v-if="ply1 && (!player || player === 1)">
-        <span v-if="isNop" class="ptn nop">{{ ply1.text() }}</span>
+        <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text() }}</span>
         <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
@@ -53,7 +53,9 @@ export default {
   },
   computed: {
     ply1() {
-      return this.move.ply1Original || this.move.ply1;
+      return !this.standalone && this.$store.state.showAllBranches
+        ? this.move.ply1
+        : this.move.ply1Original || this.move.ply1;
     },
     ply2() {
       return this.move.ply2
@@ -61,13 +63,6 @@ export default {
           ? this.move.ply2
           : this.move.ply2.getBranch(this.game.state.targetBranch)
         : null;
-    },
-    isNop() {
-      return (
-        this.move.ply1.isNop &&
-        (!this.move.ply1Original ||
-          (this.$store.state.showAllBranches && !this.currentOnly))
-      );
     },
     index() {
       return this.game.movesSorted.findIndex(move => move === this.move);
@@ -106,7 +101,7 @@ export default {
       );
     },
     showSeparateBranch() {
-      return (
+      return !!(
         !this.noBranch &&
         this.move.branch &&
         this.$store.state.showAllBranches &&
