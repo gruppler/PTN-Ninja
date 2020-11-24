@@ -9,7 +9,6 @@
   "functions": {},
   "hosting": [
     {
-      "target": "live",
       "site": "ptn-ninja",
       "public": "dist/pwa",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
@@ -21,7 +20,6 @@
       ]
     },
     {
-      "target": "dev",
       "site": "ptn-ninja-dev",
       "public": "dist/pwa",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
