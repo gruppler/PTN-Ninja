@@ -1,23 +1,20 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
     <q-card style="width: 300px" class="bg-secondary">
-      <q-card-section>
-        <smooth-reflow>
-          <q-input
-            ref="input"
-            v-model="newBranch"
-            @keydown.enter.prevent="save"
-            :rules="[validateBranch]"
-            color="accent"
-            hide-bottom-space
-            clearable
-            autofocus
-            autogrow
-            dense
-          >
-          </q-input>
-        </smooth-reflow>
-      </q-card-section>
+      <q-input
+        ref="input"
+        v-model="newBranch"
+        @keydown.enter.prevent="save"
+        :rules="[validateBranch]"
+        color="accent"
+        hide-bottom-space
+        clearable
+        autofocus
+        autogrow
+        filled
+        dense
+      >
+      </q-input>
 
       <q-card-actions align="right">
         <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />

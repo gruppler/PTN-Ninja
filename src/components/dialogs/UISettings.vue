@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <q-card style="width: 300px" class="bg-secondary">
-      <dialog-header>{{ $t("Preferences") }}</dialog-header>
+      <dialog-header icon="settings">{{ $t("Preferences") }}</dialog-header>
 
       <q-separator />
 
@@ -119,7 +119,7 @@
           </recess>
         </q-expansion-item>
 
-        <q-expansion-item icon="settings" :label="$t('UI')" group="settings">
+        <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
           <recess>
             <q-list>
               <q-select

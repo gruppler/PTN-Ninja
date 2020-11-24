@@ -11,7 +11,11 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-btn icon="edit" @click.stop="edit" class="q-mr-sm" dense flat />
+            <q-icon
+              name="edit"
+              @click.stop="edit"
+              class="q-field__focusable-action q-mr-sm"
+            />
           </GameSelector>
         </q-toolbar-title>
         <q-btn
@@ -453,13 +457,19 @@ export default {
       document.title = prefix + " — " + this.$t("app_title");
     },
     newGame() {
-      return new Game(
+      const game = new Game(
         `[Player1 "${this.$store.state.player1}"]\n` +
           `[Player2 "${this.$store.state.player2}"]\n` +
           `[Size "${this.$store.state.size}"]\n` +
           "\n" +
           "1. "
       );
+      this.$store.dispatch("ADD_GAME", {
+        ptn: game.ptn,
+        name: game.name,
+        state: game.minState
+      });
+      return game;
     },
     getGame() {
       let game;
@@ -495,6 +505,7 @@ export default {
                 message: this.$t("success.replacedExistingGame"),
                 timeout: 10000,
                 progress: true,
+                progressClass: "bg-grey-1",
                 color: "secondary",
                 position: "bottom",
                 multiLine: false,
@@ -710,7 +721,6 @@ export default {
     }
   },
   created() {
-    this.$q.dark.set(true);
     if (!this.games.length) {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),

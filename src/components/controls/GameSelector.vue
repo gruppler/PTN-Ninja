@@ -30,13 +30,15 @@
             <q-list class="bg-secondary text-white">
               <q-item
                 clickable
-                @click="closeMultiple"
-                :disable="games.length < 3"
+                @click="dialogCloseGames = true"
+                :disable="games.length < 2"
               >
                 <q-item-section side>
-                  <q-icon name="close" />
+                  <q-icon name="close_multiple" />
                 </q-item-section>
-                <q-item-section>{{ $t("Close Oldest Games") }}</q-item-section>
+                <q-item-section>{{
+                  $t("Close Multiple Games")
+                }}</q-item-section>
               </q-item>
               <q-item clickable @click="downloadAll">
                 <q-item-section side>
@@ -59,7 +61,7 @@
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
           </q-item-section>
-          <q-item-section v-if="games.length > 1" side>
+          <q-item-section side>
             <q-btn
               @click.stop="close(scope.opt.value)"
               icon="close"
@@ -76,13 +78,23 @@
         </div>
       </template>
     </q-select>
+
+    <CloseGames v-model="dialogCloseGames" />
   </div>
 </template>
 
 <script>
+import CloseGames from "../dialogs/CloseGames";
+
 export default {
   name: "GameSelector",
+  components: { CloseGames },
   props: ["game"],
+  data() {
+    return {
+      dialogCloseGames: false
+    };
+  },
   computed: {
     games() {
       return this.$store.state.games.map((game, index) => ({
@@ -102,15 +114,13 @@ export default {
       }
     },
     close(index) {
-      if (this.games.length <= 1) {
-        return;
-      }
       const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
       this.$q.notify({
         message: this.$t("Game x closed", { game: game.name }),
         timeout: 10000,
         progress: true,
+        progressClass: "bg-grey-1",
         color: "secondary",
         position: "bottom",
         multiLine: false,
@@ -124,34 +134,6 @@ export default {
           },
           { icon: "close", color: "grey-2" }
         ]
-      });
-    },
-    closeMultiple() {
-      const max = this.games.length - 1;
-      this.$store.getters.prompt({
-        title: this.$t("Close Oldest Games"),
-        prompt: {
-          model: max,
-          type: "number",
-          attrs: {
-            min: 2,
-            max
-          }
-        },
-        success: count => {
-          this.$store.getters.prompt({
-            title: this.$t("Confirm"),
-            message: this.$tc("confirm.closeOldestGames", count),
-            success: () => {
-              for (let i = 0; i < count; i++) {
-                this.$store.dispatch(
-                  "REMOVE_GAME",
-                  this.games.length - count - 1
-                );
-              }
-            }
-          });
-        }
       });
     },
     downloadAll() {
