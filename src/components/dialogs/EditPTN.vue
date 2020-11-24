@@ -7,7 +7,7 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header>{{ $t("Edit PTN") }}</dialog-header>
+      <dialog-header icon="edit">{{ $t("Edit PTN") }}</dialog-header>
     </template>
 
     <PTN-editor ref="editor" :game="game" @save="save" />

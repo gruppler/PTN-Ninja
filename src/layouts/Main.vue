@@ -11,7 +11,11 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-btn icon="edit" @click.stop="edit" class="q-mr-sm" dense flat />
+            <q-icon
+              name="edit"
+              @click.stop="edit"
+              class="q-field__focusable-action q-mr-sm"
+            />
           </GameSelector>
         </q-toolbar-title>
         <q-btn
@@ -710,7 +714,6 @@ export default {
     }
   },
   created() {
-    this.$q.dark.set(true);
     if (!this.games.length) {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),

@@ -22,7 +22,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
-  "Close Oldest Games": "Close Oldest Games",
+  "Close Multiple Games": "Close Multiple Games",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   "Current Move": "Current Move",
@@ -147,7 +147,6 @@ export default {
   },
 
   confirm: {
-    closeOldestGames: "Close the {count} oldest games?",
     downloadAllGames: "Download all games?",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?"
@@ -165,6 +164,7 @@ export default {
     "Invalid date": "Invalid date",
     "Invalid evaluation": "Invalid evaluation",
     "Invalid event": "Invalid event",
+    "Invalid first move": "Invalid first move",
     "Invalid flats": "Invalid flat stone count",
     "Invalid flats1": "Invalid flat stone 1 count",
     "Invalid flats2": "Invalid flat stone 2 count",
@@ -191,6 +191,7 @@ export default {
   success: {
     copied: "Copied!",
     updateAvailable: "A new version is available",
+    closedMultipleGames: "Closed 1 game | Closed {count} games",
     replacedExistingGame: "Replaced existing game of the same name"
   },
 

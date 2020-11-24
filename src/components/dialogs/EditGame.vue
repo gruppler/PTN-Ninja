@@ -7,7 +7,7 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header>{{ $t("Edit Game") }}</dialog-header>
+      <dialog-header icon="edit">{{ $t("Edit Game") }}</dialog-header>
     </template>
 
     <q-card-section class="scroll">

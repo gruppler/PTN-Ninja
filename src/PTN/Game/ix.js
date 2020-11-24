@@ -61,7 +61,7 @@ export default class GameIX {
           // Empty square
           return true;
         }
-        if (piece.color === this.state.turn && !this.state.isFirstMove) {
+        if (piece.color === this.state.turn && this.state.number !== 1) {
           // Player's piece
           return true;
         }
@@ -71,7 +71,7 @@ export default class GameIX {
         piece &&
         piece.ply === this.state.ply &&
         (this.isLocal || piece.ply.player === this.state.player) &&
-        !this.state.isFirstMove
+        this.state.number !== 1
       ) {
         // Piece just placed; valid for stone cycling
         return true;
@@ -140,7 +140,7 @@ export default class GameIX {
       if (
         piece.ply &&
         this.state.ply === piece.ply &&
-        !this.state.isFirstMove
+        this.state.number !== 1
       ) {
         // Cycle through F, S, C
         move.type =

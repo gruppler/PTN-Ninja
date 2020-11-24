@@ -78,6 +78,36 @@ export const REMOVE_GAME = ({ commit, dispatch }, index) => {
   }
 };
 
+export const REMOVE_MULTIPLE_GAMES = (
+  { commit, dispatch },
+  { start, count }
+) => {
+  let games = LocalStorage.getItem("games") || [];
+  const names = games.splice(start, count);
+  LocalStorage.set("games", games);
+  names.forEach(name => {
+    LocalStorage.remove("ptn-" + name);
+    LocalStorage.remove("state-" + name);
+    LocalStorage.remove("history-" + name);
+    LocalStorage.remove("historyIndex-" + name);
+  });
+  commit("REMOVE_MULTIPLE_GAMES", { start, count });
+  if (start === 0 && count > 0 && games.length) {
+    dispatch("SELECT_GAME", { index: 0 });
+  }
+  Vue.nextTick(() => {
+    Notify.create({
+      icon: "close_multiple",
+      type: "positive",
+      color: "secondary",
+      classes: "text-grey-2",
+      timeout: 5,
+      position: "bottom",
+      message: i18n.tc("success.closedMultipleGames", count)
+    });
+  });
+};
+
 export const UPDATE_PTN = ({ state, commit }, ptn) => {
   LocalStorage.set("ptn-" + state.games[0].name, ptn);
   commit("UPDATE_PTN", ptn);
@@ -131,24 +161,34 @@ export const CANCEL_MOVE = ({ commit }, game) => {
   commit("CANCEL_MOVE", game);
 };
 
-export const UNDO = ({ commit }, game) => {
-  commit("UNDO", game);
+export const UNDO = ({ commit, dispatch }, game) => {
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    commit("UNDO", game);
+  });
 };
 
-export const REDO = ({ commit }, game) => {
-  commit("REDO", game);
+export const REDO = ({ commit, dispatch }, game) => {
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    commit("REDO", game);
+  });
 };
 
-export const TRIM_BRANCHES = ({ commit }, game) => {
-  commit("TRIM_BRANCHES", game);
+export const TRIM_BRANCHES = ({ commit, dispatch }, game) => {
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    commit("TRIM_BRANCHES", game);
+  });
 };
 
-export const TRIM_TO_BOARD = ({ commit }, game) => {
-  commit("TRIM_TO_BOARD", game);
+export const TRIM_TO_BOARD = ({ commit, dispatch }, game) => {
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    commit("TRIM_TO_BOARD", game);
+  });
 };
 
-export const TRIM_TO_PLY = ({ commit }, game) => {
-  commit("TRIM_TO_PLY", game);
+export const TRIM_TO_PLY = ({ commit, dispatch }, game) => {
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    commit("TRIM_TO_PLY", game);
+  });
 };
 
 export const SAVE = (context, games) => {
