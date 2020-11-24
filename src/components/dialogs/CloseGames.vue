@@ -14,12 +14,10 @@
           :left-label-value="games[range.min]"
           :right-label-value="games[range.max]"
           color="accent"
-          left-label-color="blue-grey-6"
-          left-label-text-color="grey-1"
-          right-label-color="blue-grey-8"
-          right-label-text-color="grey-1"
+          label-text-color="grey-10"
           label-always
-          label
+          drag-range
+          vertical
           markers
           snap
         />
