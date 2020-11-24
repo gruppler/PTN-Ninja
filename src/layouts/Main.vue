@@ -510,13 +510,19 @@ export default {
       document.title = prefix + " — " + this.$t("app_title");
     },
     newGame() {
-      return new Game(
+      const game = new Game(
         `[Player1 "${this.$store.state.player1}"]\n` +
           `[Player2 "${this.$store.state.player2}"]\n` +
           `[Size "${this.$store.state.size}"]\n` +
           "\n" +
           "1. "
       );
+      this.$store.dispatch("ADD_GAME", {
+        ptn: game.ptn,
+        name: game.name,
+        state: game.minState
+      });
+      return game;
     },
     getGame() {
       let game;

@@ -78,7 +78,7 @@
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
           </q-item-section>
-          <q-item-section v-if="games.length > 1" side>
+          <q-item-section side>
             <q-btn
               @click.stop="close(scope.opt.value)"
               icon="close"
@@ -185,9 +185,6 @@ export default {
       }
     },
     close(index) {
-      if (this.games.length <= 1) {
-        return;
-      }
       const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
       this.$q.notify({
