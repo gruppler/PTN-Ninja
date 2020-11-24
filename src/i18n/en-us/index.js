@@ -23,7 +23,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
-  "Close Oldest Games": "Close Oldest Games",
+  "Close Multiple Games": "Close Multiple Games",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   "Create Online Game": "Create Online Game",
@@ -172,7 +172,6 @@ export default {
   },
 
   confirm: {
-    closeOldestGames: "Close the {count} oldest games?",
     downloadAllGames: "Download all games?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
@@ -196,6 +195,7 @@ export default {
     "Invalid date": "Invalid date",
     "Invalid evaluation": "Invalid evaluation",
     "Invalid event": "Invalid event",
+    "Invalid first move": "Invalid first move",
     "Invalid flats": "Invalid flat stone count",
     "Invalid flats1": "Invalid flat stone 1 count",
     "Invalid flats2": "Invalid flat stone 2 count",
@@ -227,6 +227,7 @@ export default {
 
   success: {
     copied: "Copied!",
+    closedMultipleGames: "Closed 1 game | Closed {count} games",
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
     verifyEmailSent: "Verification email sent.",

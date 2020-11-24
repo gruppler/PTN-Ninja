@@ -30,13 +30,15 @@
             <q-list class="bg-secondary text-white">
               <q-item
                 clickable
-                @click="closeMultiple"
-                :disable="games.length < 3"
+                @click="dialogCloseGames = true"
+                :disable="games.length < 2"
               >
                 <q-item-section side>
-                  <q-icon name="close" />
+                  <q-icon name="close_multiple" />
                 </q-item-section>
-                <q-item-section>{{ $t("Close Oldest Games") }}</q-item-section>
+                <q-item-section>{{
+                  $t("Close Multiple Games")
+                }}</q-item-section>
               </q-item>
               <q-item clickable @click="downloadAll">
                 <q-item-section side>
@@ -100,13 +102,23 @@
         </div>
       </template>
     </q-select>
+
+    <CloseGames v-model="dialogCloseGames" />
   </div>
 </template>
 
 <script>
+import CloseGames from "../dialogs/CloseGames";
+
 export default {
   name: "GameSelector",
+  components: { CloseGames },
   props: ["game"],
+  data() {
+    return {
+      dialogCloseGames: false
+    };
+  },
   computed: {
     games() {
       return this.$store.state.games.map((game, index) => ({
@@ -196,34 +208,6 @@ export default {
           },
           { icon: "close", color: "grey-2" }
         ]
-      });
-    },
-    closeMultiple() {
-      const max = this.games.length - 1;
-      this.$store.dispatch("PROMPT", {
-        title: this.$t("Close Oldest Games"),
-        prompt: {
-          model: max,
-          type: "number",
-          attrs: {
-            min: 2,
-            max
-          }
-        },
-        success: count => {
-          this.$store.dispatch("PROMPT", {
-            title: this.$t("Confirm"),
-            message: this.$tc("confirm.closeOldestGames", count),
-            success: () => {
-              for (let i = 0; i < count; i++) {
-                this.$store.dispatch(
-                  "REMOVE_GAME",
-                  this.games.length - count - 1
-                );
-              }
-            }
-          });
-        }
       });
     },
     downloadAll() {

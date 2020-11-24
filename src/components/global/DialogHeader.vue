@@ -1,30 +1,26 @@
 <template>
-  <q-card-section>
-    <q-btn
-      v-close-popup
-      :class="{
-        'float-right': !isMaximized,
-        'float-left q-mr-lg': isMaximized
-      }"
-      :icon="isMaximized ? 'arrow_back' : 'close'"
-      color="white"
-      dense
-      flat
-    />
-    <div class="text-h6 text-white"><slot /></div>
-  </q-card-section>
+  <q-item class="q-pa-md bg-secondary">
+    <q-item-section v-if="icon" class="items-center" avatar>
+      <slot name="avatar">
+        <q-icon :name="icon" size="md" />
+      </slot>
+    </q-item-section>
+    <q-item-section>
+      <q-item-label class="text-h6">
+        <slot />
+      </q-item-label>
+    </q-item-section>
+    <q-item-section side>
+      <q-btn v-close-popup icon="close" color="white" dense flat />
+    </q-item-section>
+  </q-item>
 </template>
 
 <script>
 export default {
   name: "dialog-header",
-  data() {
-    return {
-      isMaximized: false
-    };
-  },
-  mounted() {
-    this.isMaximized = !!this.$el.closest(".q-dialog__inner--maximized");
+  props: {
+    icon: String
   }
 };
 </script>

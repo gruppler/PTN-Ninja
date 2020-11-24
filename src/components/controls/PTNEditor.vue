@@ -63,6 +63,7 @@ export default {
 .ptn-editor
   font-family 'Source Code Pro'
   font-weight bold
+  background-color $highlight
 
   &.q-textarea
     .q-field__native

@@ -18,6 +18,10 @@ export const REMOVE_GAME = (state, index) => {
   state.games.splice(index, 1);
 };
 
+export const REMOVE_MULTIPLE_GAMES = (state, { start, count }) => {
+  state.games.splice(start, count);
+};
+
 export const UPDATE_PTN = (state, ptn) => {
   state.games[0].ptn = ptn;
 };

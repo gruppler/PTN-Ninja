@@ -272,7 +272,6 @@ export default {
     }
   },
   created() {
-    this.$q.dark.set(true);
     this.$store.commit("SET_EMBED_GAME");
     Object.keys(this.state).forEach(key => {
       this.$store.commit("SET_UI", [key, this.state[key]]);

@@ -276,12 +276,12 @@ export default class GameBase {
           if (!move.ply1) {
             // Player 1 ply
             ply.player = 1;
-            ply.color = move.number === 1 && !this.hasTPS ? 2 : 1;
+            ply.color = move.number === 1 ? 2 : 1;
             move.ply1 = ply;
           } else if (!move.ply2) {
             // Player 2 ply
             ply.player = 2;
-            ply.color = move.number === 1 && !this.hasTPS ? 1 : 2;
+            ply.color = move.number === 1 ? 1 : 2;
             move.ply2 = ply;
           } else {
             // New move
@@ -293,6 +293,9 @@ export default class GameBase {
             });
             this.moves.push(move);
             moveNumber += 1;
+            if (move.number === 1 && ply.specialPiece) {
+              throw new Error("Invalid first move");
+            }
           }
           this.plies.push(ply);
           if (!(ply.branch in this.branches)) {

@@ -11,13 +11,11 @@
         />
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector" :game="game">
-            <q-btn
+            <q-icon
               v-if="game.isLocal || player"
-              icon="edit"
+              name="edit"
               @click.stop="edit"
-              class="q-mr-sm"
-              dense
-              flat
+              class="q-field__focusable-action q-mr-sm"
             />
           </GameSelector>
         </q-toolbar-title>
