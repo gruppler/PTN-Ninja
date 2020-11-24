@@ -101,7 +101,7 @@ export const REMOVE_MULTIPLE_GAMES = (
       type: "positive",
       color: "secondary",
       classes: "text-grey-2",
-      timeout: 5,
+      timeout: 3000,
       position: "bottom",
       message: i18n.tc("success.closedMultipleGames", count)
     });
@@ -294,7 +294,7 @@ export const COPY = function(context, { url, text, title }) {
           type: "positive",
           color: "secondary",
           classes: "text-grey-2",
-          timeout: 1,
+          timeout: 1000,
           position: "bottom",
           message: i18n.t("success.copied")
         });
