@@ -505,6 +505,7 @@ export default {
                 message: this.$t("success.replacedExistingGame"),
                 timeout: 10000,
                 progress: true,
+                progressClass: "bg-grey-1",
                 color: "secondary",
                 position: "bottom",
                 multiLine: false,

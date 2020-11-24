@@ -120,6 +120,7 @@ export default {
         message: this.$t("Game x closed", { game: game.name }),
         timeout: 10000,
         progress: true,
+        progressClass: "bg-grey-1",
         color: "secondary",
         position: "bottom",
         multiLine: false,
