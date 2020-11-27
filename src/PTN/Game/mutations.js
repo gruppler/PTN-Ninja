@@ -391,6 +391,9 @@ export default class GameMutations {
       }
       if (equalPly) {
         if (isAlreadyDone) {
+          if (!this.state.targetBranch.startsWith(equalPly.branch + "/")) {
+            this.state.targetBranch = equalPly.branch;
+          }
           this._setPly(equalPly.id, true);
           this._afterPly(equalPly);
         } else {
