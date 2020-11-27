@@ -1,15 +1,12 @@
 <template>
-  <q-btn
+  <q-icon
     v-bind="$attrs"
     @click="toggle"
     @shortkey="toggle"
     v-shortkey="hotkey"
-    :icon="value ? 'fullscreen_exit' : 'fullscreen'"
+    :name="value ? 'fullscreen_exit' : 'fullscreen'"
     :title="$t('Fullscreen')"
-    class="dimmed-btn"
-    color="white"
-    flat
-    dense
+    class="q-field__focusable-action"
   />
 </template>
 

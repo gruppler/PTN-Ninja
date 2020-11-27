@@ -36,7 +36,7 @@
               <q-icon
                 @click="name = name === game.name ? generatedName : game.name"
                 name="refresh"
-                class="cursor-pointer"
+                class="q-field__focusable-action"
               />
             </template>
           </q-input>
