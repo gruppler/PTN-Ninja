@@ -53,7 +53,7 @@
               <q-icon
                 :name="showPassword ? 'visibility' : 'visibility_off'"
                 @click="showPassword = !showPassword"
-                class="cursor-pointer"
+                class="q-field__focusable-action"
               />
             </template>
           </q-input>

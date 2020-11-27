@@ -7,6 +7,7 @@
     :name="value ? 'fullscreen_exit' : 'fullscreen'"
     :title="$t('Fullscreen')"
     class="q-field__focusable-action"
+    size="sm"
   />
 </template>
 

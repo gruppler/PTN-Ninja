@@ -7,7 +7,6 @@
       v-if="$q.fullscreen.isCapable"
       @input="$q.fullscreen.toggle()"
       :value="$q.fullscreen.isActive"
-      size="sm"
     />
     <q-icon
       @click="board3D = !board3D"

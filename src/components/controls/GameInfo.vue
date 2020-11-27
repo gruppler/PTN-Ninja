@@ -70,7 +70,7 @@
             v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
             @click="editTPS"
             name="edit"
-            class="cursor-pointer"
+            class="q-field__focusable-action"
             v-close-popup
           />
         </template>
