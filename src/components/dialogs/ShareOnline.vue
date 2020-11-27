@@ -85,8 +85,16 @@
                     <q-icon name="link" />
                   </template>
                   <template v-slot:append>
-                    <q-btn @click="qrCode(gameURL)" icon="qrcode" dense flat />
-                    <q-btn @click="copy(gameURL)" icon="copy" dense flat />
+                    <q-icon
+                      @click="qrCode(gameURL)"
+                      name="qrcode"
+                      class="q-field__focusable-action"
+                    />
+                    <q-icon
+                      @click="copy(gameURL)"
+                      name="copy"
+                      class="q-field__focusable-action"
+                    />
                   </template>
                 </q-input>
               </q-item>

@@ -16,7 +16,7 @@
           v-show="name !== generatedName"
           @click="name = generatedName"
           name="refresh"
-          class="cursor-pointer"
+          class="q-field__focusable-action"
         />
       </template>
     </q-input>
