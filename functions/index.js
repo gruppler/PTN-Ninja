@@ -6,6 +6,15 @@ admin.initializeApp();
 
 const asyncPool = require("tiny-async-pool");
 
+const { TPStoPNG } = require("./TPStoPNG");
+
+exports.tps = functions.https.onRequest((request, response) => {
+  response.setHeader("Content-Type", "image/png");
+  TPStoPNG(request.query)
+    .pngStream()
+    .pipe(response);
+});
+
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async context => {

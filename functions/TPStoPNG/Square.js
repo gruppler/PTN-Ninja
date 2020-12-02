@@ -1,4 +1,9 @@
-import { itoa } from "./Ply";
+const atoi = coord => [
+  "abcdefgh".indexOf(coord[0]),
+  parseInt(coord[1], 10) - 1
+];
+
+const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
 
 const OPPOSITE = {
   N: "S",
@@ -14,7 +19,7 @@ const EDGE = {
   W: "EW"
 };
 
-export default class Square {
+exports.Square = class {
   constructor(x, y, size) {
     this.piece = null;
     this.color = null;
@@ -77,13 +82,13 @@ export default class Square {
     let neighbor, isConnected;
     Object.keys(EDGE).forEach(side => {
       if (this.static.edges[side]) {
-        this.connected[side] = !!(this.piece && !this.isStanding);
+        this.connected[side] = Boolean(this.piece && !this.isStanding);
       } else if ((neighbor = this.static.neighbors[side])) {
-        isConnected = !!(
+        isConnected = Boolean(
           neighbor.color === this.color &&
-          this.piece &&
-          !this.isStanding &&
-          !neighbor.isStanding
+            this.piece &&
+            !this.isStanding &&
+            !neighbor.isStanding
         );
         this.connected[side] = isConnected;
         neighbor.connected[OPPOSITE[side]] = isConnected;
@@ -93,11 +98,11 @@ export default class Square {
 
   setRoad(road) {
     this.connected.forEach(side => {
-      const isRoad = !!(
+      const isRoad = Boolean(
         road &&
-        ((this.static.edges[side] && road.edges[EDGE[side]]) ||
-          (this.static.neighbors[side] &&
-            road.squares.includes(this.static.neighbors[side].static.coord)))
+          ((this.static.edges[side] && road.edges[EDGE[side]]) ||
+            (this.static.neighbors[side] &&
+              road.squares.includes(this.static.neighbors[side].static.coord)))
       );
       if (!road || isRoad) {
         this.roads[side] = isRoad;
@@ -143,9 +148,9 @@ export default class Square {
       this.popPiece();
     }
   }
-}
+};
 
-export class Sides {
+class Sides {
   constructor(options = {}) {
     this.onEnable = options.enable || null;
     this.onDisable = options.disable || null;

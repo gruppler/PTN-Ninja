@@ -28,6 +28,7 @@ export default {
   embed: "mdi-code-tags",
   error: "mdi-alert-circle",
   file: "mdi-file",
+  file_image: "mdi-file-image",
   first: "mdi-page-first",
   flats1: "mdi-square",
   flats2: "mdi-square-outline",
