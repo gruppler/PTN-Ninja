@@ -9,7 +9,7 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
-import { defaults, each, flatten, map, uniq } from "lodash";
+import { defaults, each, flatten, isEmpty, map, uniq } from "lodash";
 import memoize from "./memoize";
 
 export const pieceCounts = {
@@ -117,7 +117,10 @@ export default class GameBase {
     this.state = null;
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
-    this.config = params.config ? { ...params.config } : { isOnline: false };
+    this.config =
+      params.config && !isEmpty(params.config)
+        ? { ...params.config }
+        : { isOnline: false };
     this.tags = {};
     this.moves = [];
     this.boards = {};

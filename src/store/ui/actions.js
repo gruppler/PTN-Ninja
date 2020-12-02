@@ -389,8 +389,7 @@ export const OPEN_FILES = ({ dispatch }, files) => {
           reader.onload = event => {
             dispatch("ADD_GAME", {
               name: file.name.replace(/\.ptn$|\.txt$/, ""),
-              ptn: event.target.result,
-              config: { isOnline: false }
+              ptn: event.target.result
             });
             if (!--count) {
               Loading.hide();

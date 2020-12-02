@@ -70,7 +70,6 @@ export default class GameIX {
         this.state.ply &&
         piece &&
         piece.ply === this.state.ply &&
-        piece.ply.player === this.state.player &&
         this.state.number !== 1
       ) {
         // Piece just placed; valid for stone cycling

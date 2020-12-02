@@ -520,7 +520,8 @@ export default {
       this.$store.dispatch("ADD_GAME", {
         ptn: game.ptn,
         name: game.name,
-        state: game.minState
+        state: game.minState,
+        config: game.config
       });
       return game;
     },
@@ -539,7 +540,8 @@ export default {
               this.$store.dispatch("ADD_GAME", {
                 ptn: this.ptn,
                 name: game.name,
-                state: game.minState
+                state: game.minState,
+                config: game.config
               });
               this.$router.replace("/");
             }
