@@ -438,6 +438,10 @@ export default class GameBase {
     return isDefaultName(this.name);
   }
 
+  setName(name) {
+    this.name = name || this.generateName();
+  }
+
   tag(key, defaultValue) {
     return key in this.tags && this.tags[key].value
       ? this.tags[key].valueText

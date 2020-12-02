@@ -71,7 +71,7 @@ export default {
       this.$emit("input", false);
     },
     async save({ name, tags }) {
-      this.game.name = name;
+      this.game.setName(name);
 
       let changedTags = {};
       Object.keys(tags).forEach(key => {

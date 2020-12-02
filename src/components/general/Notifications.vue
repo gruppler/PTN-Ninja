@@ -1,5 +1,5 @@
 <script>
-import { defaults, isEqual, omit } from "lodash";
+import { cloneDeep, defaults, isEqual, omit } from "lodash";
 
 export default {
   name: "Notifications",
@@ -16,8 +16,10 @@ export default {
   },
   data() {
     return {
+      n: null,
       closers: [],
       previous: null,
+      isFormatted: false,
       default: {
         color: this.color,
         position: "top-right",
@@ -29,12 +31,13 @@ export default {
   },
   methods: {
     format() {
-      if (this.notifications.isFormatted) {
+      if (this.isFormatted) {
         return;
       }
       this.previous = this.notifications.map(n => omit(n, "actions"));
-      this.notifications.isFormatted = true;
-      return this.notifications.reverse().map(notification => {
+      this.isFormatted = true;
+      this.n = cloneDeep(this.notifications);
+      return this.n.reverse().map(notification => {
         const color = notification.textColor || this.textColor;
         if (notification.classes) {
           notification.classes += " text-" + color;
@@ -54,7 +57,7 @@ export default {
       });
     },
     show() {
-      this.closers = this.notifications.map(notification => {
+      this.closers = this.n.map(notification => {
         return this.$q.notify(defaults(notification, this.default));
       });
     },
@@ -65,6 +68,7 @@ export default {
   },
   watch: {
     notifications(current) {
+      this.isFormatted = false;
       current = current.map(n => omit(n, "actions"));
       if (!isEqual(current, this.previous)) {
         this.format();
