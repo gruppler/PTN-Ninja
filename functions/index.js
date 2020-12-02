@@ -6,11 +6,11 @@ admin.initializeApp();
 
 const asyncPool = require("tiny-async-pool");
 
-const { TPStoPNG } = require("./TPStoPNG");
+const { TPStoCanvas } = require("./TPStoCanvas");
 
 exports.tps = functions.https.onRequest((request, response) => {
   response.setHeader("Content-Type", "image/png");
-  TPStoPNG(request.query)
+  TPStoCanvas(request.query)
     .pngStream()
     .pipe(response);
 });

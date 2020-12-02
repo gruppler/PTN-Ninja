@@ -1,7 +1,7 @@
 const { createCanvas } = require("canvas");
 const { Board } = require("./Board");
 
-exports.TPStoPNG = function(options) {
+exports.TPStoCanvas = function(options) {
   const board = new Board(options);
   if (!board || board.errors.length) {
     throw board.errors[0];

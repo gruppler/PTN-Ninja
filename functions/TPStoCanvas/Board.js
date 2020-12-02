@@ -14,6 +14,7 @@ const pieceCounts = {
 
 exports.Board = class {
   constructor(options) {
+    this.options = options;
     this.errors = [];
 
     const matchData = options.tps.match(
