@@ -449,7 +449,7 @@ export default class GameState {
     let flats = [0, 0];
     this.squares.forEach(row => {
       row.forEach(square => {
-        if (square.color && !square.isStanding) {
+        if (square.color && square.piece.isFlat) {
           flats[square.color - 1]++;
         }
       });
