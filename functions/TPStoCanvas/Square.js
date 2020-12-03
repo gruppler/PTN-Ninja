@@ -2,8 +2,10 @@ const atoi = coord => [
   "abcdefgh".indexOf(coord[0]),
   parseInt(coord[1], 10) - 1
 ];
+exports.atoi = atoi;
 
 const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
+exports.itoa = itoa;
 
 const OPPOSITE = {
   N: "S",
@@ -31,30 +33,28 @@ exports.Square = class {
       disable: side => this.roads.set(side, false)
     });
 
-    this.static = {
-      coord: itoa(x, y),
-      x: x,
-      y: y,
-      edges: new Sides({
-        enable: side => {
-          this.static.isEdge = true;
-          this.static["is" + EDGE[side]] = true;
-          this.static.isCorner = this.static.edges.length == 2;
-        }
-      }),
-      isEdge: false,
-      isCorner: false,
-      isNS: false,
-      isEW: false,
-      neighbors: new Sides()
-    };
-    this.static.edges.setSides({
+    this.coord = itoa(x, y);
+    this.x = x;
+    this.y = y;
+    this.edges = new Sides({
+      enable: side => {
+        this.isEdge = true;
+        this["is" + EDGE[side]] = true;
+        this.isCorner = this.edges.length == 2;
+      }
+    });
+    this.isLight = x % 2 !== y % 2;
+    this.isEdge = false;
+    this.isCorner = false;
+    this.isNS = false;
+    this.isEW = false;
+    this.neighbors = new Sides();
+    this.edges.setSides({
       N: y == size - 1,
       S: y == 0,
       E: x == size - 1,
       W: x == 0
     });
-    Object.freeze(this.static.edges);
   }
 
   _getPiece() {
@@ -81,9 +81,9 @@ exports.Square = class {
   _updateConnected() {
     let neighbor, isConnected;
     Object.keys(EDGE).forEach(side => {
-      if (this.static.edges[side]) {
+      if (this.edges[side]) {
         this.connected[side] = Boolean(this.piece && !this.isStanding);
-      } else if ((neighbor = this.static.neighbors[side])) {
+      } else if ((neighbor = this.neighbors[side])) {
         isConnected = Boolean(
           neighbor.color === this.color &&
             this.piece &&
@@ -100,9 +100,9 @@ exports.Square = class {
     this.connected.forEach(side => {
       const isRoad = Boolean(
         road &&
-          ((this.static.edges[side] && road.edges[EDGE[side]]) ||
-            (this.static.neighbors[side] &&
-              road.squares.includes(this.static.neighbors[side].static.coord)))
+          ((this.edges[side] && road.edges[EDGE[side]]) ||
+            (this.neighbors[side] &&
+              road.squares.includes(this.neighbors[side].coord)))
       );
       if (!road || isRoad) {
         this.roads[side] = isRoad;

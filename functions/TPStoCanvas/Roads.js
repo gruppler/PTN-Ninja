@@ -27,16 +27,16 @@ exports.findRoads = function(squares, player) {
       let piece = square.piece;
       if (piece && !piece.isStanding) {
         let player = piece.color;
-        connections[square.static.coord] = square.connected
-          .map(side => square.static.neighbors[side])
+        connections[square.coord] = square.connected
+          .map(side => square.neighbors[side])
           .filter(square => square);
 
-        let neighbors = connections[square.static.coord];
+        let neighbors = connections[square.coord];
 
         if (neighbors.length === 1) {
-          if (square.static.isEdge) {
+          if (square.isEdge) {
             // An edge with exactly one friendly neighbor
-            possibleRoads[player][square.static.coord] = square;
+            possibleRoads[player][square.coord] = square;
             possibleDeadEnds[player].push(square);
           } else {
             // A non-edge dead end
@@ -44,18 +44,18 @@ exports.findRoads = function(squares, player) {
           }
         } else if (neighbors.length > 1) {
           // An intersection
-          possibleRoads[player][square.static.coord] = square;
+          possibleRoads[player][square.coord] = square;
           if (
-            square.static.isEdge &&
+            square.isEdge &&
             neighbors.length === 2 &&
-            neighbors.find(square => square.static.isEdge) &&
-            neighbors.find(square => !square.static.isEdge)
+            neighbors.find(square => square.isEdge) &&
+            neighbors.find(square => !square.isEdge)
           ) {
             possibleDeadEnds[player].push(square);
           }
         }
       } else {
-        connections[square.static.coord] = [];
+        connections[square.coord] = [];
       }
     })
   );
@@ -115,7 +115,7 @@ exports.findRoads = function(squares, player) {
     roads.length += roads[player].length;
   });
 
-  return Object.freeze(roads);
+  return roads;
 };
 
 // Recursively follow a square and return all connected squares and edges
@@ -125,16 +125,16 @@ function followRoad(square, possibleRoads, connections) {
   let road;
   let player = square.piece.color;
 
-  squares[square.static.coord] = square;
-  delete possibleRoads[player][square.static.coord];
+  squares[square.coord] = square;
+  delete possibleRoads[player][square.coord];
 
-  if (square.static.isEdge) {
+  if (square.isEdge) {
     // Note which edge(s) the road touches
-    square.static.edges.forEach(edge => (edges[edge] = true));
+    square.edges.forEach(edge => (edges[edge] = true));
   }
 
-  connections[square.static.coord].forEach(neighbor => {
-    if (neighbor.static.coord in possibleRoads[player]) {
+  connections[square.coord].forEach(neighbor => {
+    if (neighbor.coord in possibleRoads[player]) {
       // Haven't gone this way yet; find out where it goes
       road = followRoad(neighbor, possibleRoads, connections);
       // Report back squares and edges
@@ -155,11 +155,10 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
   while (deadEnds.length) {
     deadEnds.forEach((square, i) => {
       let isWinningEdge =
-        (square.static.isEdge && !winningEdge) ||
-        square.static["is" + winningEdge];
+        (square.isEdge && !winningEdge) || square["is" + winningEdge];
       let nextNeighbors = [];
-      connections[square.static.coord].forEach(neighbor => {
-        if (neighbor.static.coord in squares) {
+      connections[square.coord].forEach(neighbor => {
+        if (neighbor.coord in squares) {
           nextNeighbors.push(neighbor);
         }
       });
@@ -167,9 +166,9 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
       if (
         nextNeighbors.length < 2 &&
         (!isWinningEdge ||
-          (nextNeighbors[0] && nextNeighbors[0].static["is" + winningEdge]))
+          (nextNeighbors[0] && nextNeighbors[0]["is" + winningEdge]))
       ) {
-        delete squares[square.static.coord];
+        delete squares[square.coord];
         deadEnds[i] = nextNeighbors[0];
       } else {
         deadEnds[i] = undefined;

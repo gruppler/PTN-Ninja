@@ -2,6 +2,7 @@ const { Square } = require("./Square");
 const { Piece } = require("./Piece");
 const { Result } = require("./Result");
 const { findRoads } = require("./Roads");
+const { atoi } = require("./Square");
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -110,27 +111,18 @@ exports.Board = class {
     // Create squares
     this.squares.forEach(row => {
       row.forEach(square => {
-        if (!square.static.edges.N) {
-          square.static.neighbors.N = this.squares[square.static.y + 1][
-            square.static.x
-          ];
+        if (!square.edges.N) {
+          square.neighbors.N = this.squares[square.y + 1][square.x];
         }
-        if (!square.static.edges.S) {
-          square.static.neighbors.S = this.squares[square.static.y - 1][
-            square.static.x
-          ];
+        if (!square.edges.S) {
+          square.neighbors.S = this.squares[square.y - 1][square.x];
         }
-        if (!square.static.edges.E) {
-          square.static.neighbors.E = this.squares[square.static.y][
-            square.static.x + 1
-          ];
+        if (!square.edges.E) {
+          square.neighbors.E = this.squares[square.y][square.x + 1];
         }
-        if (!square.static.edges.W) {
-          square.static.neighbors.W = this.squares[square.static.y][
-            square.static.x - 1
-          ];
+        if (!square.edges.W) {
+          square.neighbors.W = this.squares[square.y][square.x - 1];
         }
-        Object.freeze(square.static);
       });
     });
 
@@ -153,44 +145,25 @@ exports.Board = class {
       });
     });
 
+    // Count flats
+    this.flats = [0, 0];
+    this.squares.forEach(row => {
+      row.forEach(square => {
+        if (square.color && square.piece.isFlat()) {
+          this.flats[square.color - 1]++;
+        }
+      });
+    });
+
     // Check for game end
-    const player = this.player;
-    const pieces = this.pieces.played[player];
-    let roads = findRoads(this.squares);
-    let result;
-
-    if (roads && roads.length) {
-      // Check current player first
-      if (roads[player].length) {
-        result = player == 1 ? "R-0" : "0-R";
-      } else if (roads[player == 1 ? 2 : 1].length) {
-        // Completed opponent's road
-        result = player == 1 ? "0-R" : "R-0";
-      }
-    } else if (
-      pieces.flat.length + pieces.cap.length ===
-        this.pieceCounts[player].total ||
-      !this.state.squares.find(row => row.find(square => !square.pieces.length))
-    ) {
-      // Last empty square or last piece
-      if (this.state.flats[0] == this.state.flats[1]) {
-        // Draw
-        result = "1/2-1/2";
-      } else if (this.state.flats[0] > this.state.flats[1]) {
-        result = "F-0";
-      } else {
-        result = "0-F";
-      }
-    }
-
-    if (result) {
-      result = new Result(result);
-      if (roads && roads.length) {
-        result.roads = roads;
-      }
-      this.result = result;
-    } else {
-      this.result = null;
+    const roads = findRoads(this.squares);
+    if (roads) {
+      roads[1].concat(roads[2]).forEach(road => {
+        road.squares.forEach(coord => {
+          coord = atoi(coord);
+          this.squares[coord[1]][coord[0]].setRoad(road);
+        });
+      });
     }
   }
 

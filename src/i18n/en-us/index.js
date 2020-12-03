@@ -43,6 +43,7 @@ export default {
   Embed: "Embed",
   End: "End",
   Event: "Event",
+  "Export PNG": "Export PNG",
   "First Branch": "First Branch",
   "First Branch End": "First Branch End",
   "Flat Counts": "Flat Counts",

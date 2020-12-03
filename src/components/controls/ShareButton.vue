@@ -20,10 +20,6 @@
 <script>
 import QRCode from "../dialogs/QRCode";
 
-const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://us-central1-ptn-ninja.cloudfunctions.net/tps";
-
 export default {
   name: "ShareButton",
   components: { QRCode },
@@ -99,14 +95,9 @@ export default {
       if (this.game.isLocal) {
         actions.push({
           id: "png",
-          label: "PNG",
+          label: this.$t("Export PNG"),
           icon: "file_image",
-          action: () =>
-            window.open(
-              PNG_URL +
-                "?" +
-                ["tps=" + this.game.state.tps, "size=md"].join("&")
-            )
+          action: () => this.$store.dispatch("PNG", this.game)
         });
       }
 

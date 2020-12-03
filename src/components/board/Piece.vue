@@ -72,7 +72,7 @@ export default {
         // Unplayed piece
         y = this.game.size - 1;
         if (this.board3D) {
-          if (this.piece.type !== "cap") {
+          if (!this.piece.isCapstone) {
             y *=
               Math.floor(
                 (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
@@ -89,7 +89,7 @@ export default {
               );
           }
         } else {
-          if (this.piece.type === "cap") {
+          if (this.piece.isCapstone) {
             y *= this.pieceCounts.total - this.piece.index - 1;
           } else {
             y *=

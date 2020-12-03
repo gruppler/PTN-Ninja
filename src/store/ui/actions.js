@@ -320,6 +320,28 @@ export const TRIM_TO_PLY = ({ commit, dispatch }, game) => {
   });
 };
 
+const PNG_URL = process.env.DEV
+  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
+  : "https://us-central1-ptn-ninja.cloudfunctions.net/tps";
+export const PNG = ({ state }, game) => {
+  window.open(
+    PNG_URL +
+      "?" +
+      [
+        "tps=" + game.state.tps,
+        ...[
+          "axisLabels",
+          "flatCounts",
+          "pieceShadows",
+          "showRoads",
+          "unplayedPieces"
+        ]
+          .filter(option => !state[option])
+          .map(key => key + "=false")
+      ].join("&")
+  );
+};
+
 export const SAVE = (context, games) => {
   if (!isArray(games)) {
     games = [games];

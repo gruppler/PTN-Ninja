@@ -6,6 +6,7 @@ exports.Piece = class {
     this.square = null;
     this.isStanding = false;
     this.isCapstone = false;
+    this.setType(this.type);
   }
 
   typeCode() {
@@ -22,19 +23,13 @@ exports.Piece = class {
   }
 
   x() {
-    return this.square ? this.square.static.x : null;
+    return this.square ? this.square.x : null;
   }
   y() {
-    return this.square ? this.square.static.y : null;
+    return this.square ? this.square.y : null;
   }
   z() {
     return this.square ? this.square.pieces.indexOf(this) : null;
-  }
-
-  isImmovable() {
-    return this.square
-      ? this.square.pieces.length - this.z > this.game.size
-      : false;
   }
 
   isFlat() {
