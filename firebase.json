@@ -45,11 +45,14 @@
     "auth": {
       "port": 9099
     },
-    "functions": {
-      "port": 5001
+    "database": {
+      "port": 4998
     },
     "firestore": {
-      "port": 8081
+      "port": 4999
+    },
+    "functions": {
+      "port": 5001
     },
     "pubsub": {
       "port": 5002
