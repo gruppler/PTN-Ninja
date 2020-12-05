@@ -1,7 +1,4 @@
-const { createCanvas } = require("canvas");
-const { Board } = require("./Board");
-const { Ply } = require("./Ply");
-const { itoa } = require("./Square");
+const { itoa } = require("../Ply");
 
 const squareSizes = {
   xs: 25,
@@ -15,6 +12,7 @@ const defaults = {
   size: "md",
   axisLabels: true,
   flatCounts: true,
+  highlightSquares: true,
   pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
@@ -54,7 +52,7 @@ const colors = {
   }
 };
 
-exports.TPStoCanvas = function(options = {}) {
+export default function render(game, options = {}) {
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (typeof defaults[key] === "boolean") {
@@ -67,14 +65,10 @@ exports.TPStoCanvas = function(options = {}) {
     }
   }
 
-  const board = new Board(options);
-  if (!board || board.errors.length) {
-    throw board.errors[0];
-  }
-
   let hlSquares = [];
-  if (options.ply) {
-    hlSquares = new Ply(options.ply).squares;
+  const ply = game.state.ply;
+  if (options.highlightSquares && ply) {
+    hlSquares = ply.squares;
   }
 
   // Dimensions
@@ -108,7 +102,7 @@ exports.TPStoCanvas = function(options = {}) {
   const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
 
   const boardRadius = Math.round(squareSize / 10);
-  const boardSize = squareSize * board.size;
+  const boardSize = squareSize * game.size;
   const unplayedWidth = options.unplayedPieces
     ? Math.round(squareSize * 1.75)
     : 0;
@@ -117,21 +111,25 @@ exports.TPStoCanvas = function(options = {}) {
   const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
 
   // Start Drawing
-  const canvas = createCanvas(canvasWidth, canvasHeight);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
   const ctx = canvas.getContext("2d");
-  ctx.font = fontSize + "px sans";
+  ctx.font = fontSize + "px Roboto";
   ctx.fillStyle = colors.bg;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
+  const flats = game.state.flats;
   if (options.flatCounts) {
-    const totalFlats = board.flats[0] + board.flats[1];
+    const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
       Math.min(
         boardSize - squareSize,
         Math.max(
           squareSize,
-          (totalFlats ? board.flats[0] / totalFlats : 0.5) * boardSize
+          (totalFlats ? flats[0] / totalFlats : 0.5) * boardSize
         )
       )
     );
@@ -164,7 +162,7 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.textBaseline = "middle";
     // Player 1 Name
     if (options.player1) {
-      const flatCount1Width = ctx.measureText(board.flats[0]).width;
+      const flatCount1Width = ctx.measureText(flats[0]).width;
       options.player1 = limitText(
         ctx,
         options.player1,
@@ -180,7 +178,7 @@ exports.TPStoCanvas = function(options = {}) {
     // Player 1 Flat Count
     ctx.textAlign = "end";
     ctx.fillText(
-      board.flats[0],
+      flats[0],
       padding + axisSize + flats1Width - fontSize / 2,
       padding + flatCounterHeight / 2
     );
@@ -188,7 +186,7 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.fillStyle = colors.player[1].header;
     // Player 2 Name
     if (options.player2) {
-      const flatCount2Width = ctx.measureText(board.flats[1]).width;
+      const flatCount2Width = ctx.measureText(flats[1]).width;
       options.player2 = limitText(
         ctx,
         options.player2,
@@ -204,17 +202,18 @@ exports.TPStoCanvas = function(options = {}) {
     // Player 2 Flat Count
     ctx.textAlign = "start";
     ctx.fillText(
-      board.flats[1],
+      flats[1],
       padding + axisSize + flats1Width + fontSize / 2,
       padding + flatCounterHeight / 2
     );
 
     // Turn Indicator
+    const turn = game.state.turn;
     ctx.fillStyle = colors.turnIndicator;
     ctx.fillRect(
-      padding + axisSize + (board.player === 1 ? 0 : flats1Width),
+      padding + axisSize + (turn === 1 ? 0 : flats1Width),
       padding + flatCounterHeight,
-      board.player === 1 ? flats1Width : flats2Width,
+      turn === 1 ? flats1Width : flats2Width,
       turnIndicatorHeight
     );
   }
@@ -224,7 +223,7 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.fillStyle = colors.player[1].header;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    for (let i = 0; i < board.size; i++) {
+    for (let i = 0; i < game.size; i++) {
       const coord = itoa(i, i);
       ctx.fillText(
         coord[0],
@@ -236,7 +235,7 @@ exports.TPStoCanvas = function(options = {}) {
         (axisSize + padding) / 2,
         padding +
           headerHeight +
-          squareSize * (board.size - i - 1) +
+          squareSize * (game.size - i - 1) +
           squareSize / 2
       );
     }
@@ -255,17 +254,17 @@ exports.TPStoCanvas = function(options = {}) {
   const drawSquare = square => {
     ctx.save();
     ctx.translate(
-      padding + axisSize + square.x * squareSize,
-      padding + headerHeight + (board.size - square.y - 1) * squareSize
+      padding + axisSize + square.static.x * squareSize,
+      padding + headerHeight + (game.size - square.static.y - 1) * squareSize
     );
 
-    if (square.isLight) {
+    if (square.static.isLight) {
       ctx.fillStyle = colors.squareLight;
       ctx.fillRect(0, 0, squareSize, squareSize);
     }
 
-    if (hlSquares.includes(square.coord)) {
-      if (hlSquares[0] === square.coord) {
+    if (hlSquares.includes(square.static.coord)) {
+      if (hlSquares[0] === square.static.coord) {
         ctx.fillStyle = colors.primarySquare;
       } else {
         ctx.fillStyle = colors.currentSquare;
@@ -304,24 +303,24 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.translate(offset, offset);
 
     let y = 0;
-    const z = piece.z();
-    const isOverLimit = pieces && pieces.length > board.size;
-    const isImmovable = isOverLimit && z < pieces.length - board.size;
+    const z = piece.z;
+    const isOverLimit = pieces && pieces.length > game.size;
+    const isImmovable = isOverLimit && z < pieces.length - game.size;
 
     if (piece.square) {
       // Played
       y -= pieceSpacing * z;
       if (isOverLimit && !isImmovable) {
-        y += pieceSpacing * (pieces.length - board.size);
+        y += pieceSpacing * (pieces.length - game.size);
       }
       if (piece.isStanding && pieces.length > 1) {
         y += pieceSpacing;
       }
     } else {
       // Unplayed
-      const caps = board.pieceCounts[piece.color].cap;
-      const total = board.pieceCounts[piece.color].total;
-      y = board.size - 1;
+      const caps = game.pieceCounts[piece.color].cap;
+      const total = game.pieceCounts[piece.color].total;
+      y = game.size - 1;
       if (piece.isCapstone) {
         y *= total - piece.index - 1;
       } else {
@@ -384,7 +383,10 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.restore();
   };
 
-  board.squares.reverse().forEach(row => row.forEach(drawSquare));
+  game.state.squares
+    .concat()
+    .reverse()
+    .forEach(row => row.forEach(drawSquare));
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
@@ -409,11 +411,12 @@ exports.TPStoCanvas = function(options = {}) {
         padding + headerHeight + boardSize - squareSize
       );
       ["flat", "cap"].forEach(type => {
-        const total = board.pieceCounts[color][type];
-        const played = board.pieces.played[color][type].length;
+        const total = game.pieceCounts[color][type];
+        const played = game.state.pieces.played[color][type].length;
         const remaining = total - played;
-        board.pieces.all[color][type]
+        game.state.pieces.all[color][type]
           .slice(total - remaining)
+          .concat()
           .reverse()
           .forEach(drawPiece);
       });
@@ -422,7 +425,7 @@ exports.TPStoCanvas = function(options = {}) {
   }
 
   return canvas;
-};
+}
 
 function limitText(ctx, text, width) {
   const originalLength = text.length;

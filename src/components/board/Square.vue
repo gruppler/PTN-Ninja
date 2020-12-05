@@ -2,7 +2,7 @@
   <div
     class="square"
     :class="{
-      light: x % 2 !== y % 2,
+      light: square.isLight,
       ['p' + color]: !!color,
       'no-roads': !showRoads,
       eog,

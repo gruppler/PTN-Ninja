@@ -323,7 +323,7 @@ export const TRIM_TO_PLY = ({ commit, dispatch }, game) => {
 const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
   : "https://us-central1-ptn-ninja.cloudfunctions.net/tps";
-export const PNG = ({ state }, game) => {
+export const PNG_SSR = ({ state }, game) => {
   const options = ["tps=" + game.state.tps];
 
   // UI toggles
@@ -367,7 +367,74 @@ export const PNG = ({ state }, game) => {
   window.open(PNG_URL + "?" + options.join("&"));
 };
 
-export const SAVE = (context, games) => {
+export const SAVE_PNG = ({ state }, game) => {
+  const options = { tps: game.state.tps };
+
+  // UI toggles
+  [
+    "axisLabels",
+    "flatCounts",
+    "highlightSquares",
+    "pieceShadows",
+    "showRoads",
+    "unplayedPieces"
+  ].forEach(toggle => {
+    options[toggle] = state[toggle];
+  });
+
+  // Game Tags
+  [
+    "caps",
+    "flats",
+    "caps1",
+    "flats1",
+    "caps2",
+    "flats2",
+    "player1",
+    "player2"
+  ].forEach(tagName => {
+    const tag = game.tags[tagName];
+    if (tag && tag.value) {
+      options[tagName] = tag.value;
+    }
+  });
+
+  game.render(options).toBlob(blob => {
+    const filename =
+      game.name +
+      " - " +
+      (game.state.plyID + (game.state.plyIsDone ? "" : "-")) +
+      ".png";
+    function download() {
+      if (!exportFile(filename, blob, "image/png")) {
+        Notify.create({
+          type: "negative",
+          timeout: 3000,
+          position: "bottom",
+          message: i18n.t("error.Unable to download")
+        });
+      }
+    }
+
+    const files = Object.freeze(
+      new File([blob], filename, {
+        type: "image/png"
+      })
+    );
+    if (navigator.canShare && navigator.canShare({ files })) {
+      navigator.share({ files, title: filename }).catch(error => {
+        console.error(error);
+        if (!/canceled|abort/i.test(error)) {
+          download();
+        }
+      });
+    } else {
+      download();
+    }
+  });
+};
+
+export const SAVE_PTN = (context, games) => {
   if (!isArray(games)) {
     games = [games];
   }

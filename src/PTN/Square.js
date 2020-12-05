@@ -37,6 +37,7 @@ export default class Square {
           this.static.isCorner = this.static.edges.length == 2;
         }
       }),
+      isLight: x % 2 !== y % 2,
       isEdge: false,
       isCorner: false,
       isNS: false,

@@ -90,7 +90,7 @@ export default {
           id: "png",
           label: this.$t("PNG Image"),
           icon: "file_image",
-          action: () => this.$store.dispatch("PNG", this.game)
+          action: () => this.$store.dispatch("SAVE_PNG", this.game)
         });
       }
 
@@ -149,7 +149,7 @@ export default {
       this.$store.dispatch("COPY", output);
     },
     shareFile() {
-      this.$store.dispatch("SAVE", this.game);
+      this.$store.dispatch("SAVE_PTN", this.game);
     },
     embed() {
       this.$emit("embed");

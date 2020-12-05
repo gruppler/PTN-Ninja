@@ -212,7 +212,7 @@ export default {
         title: this.$t("Confirm"),
         message: this.$t("confirm.downloadAllGames"),
         success: () => {
-          this.$store.dispatch("SAVE", this.$store.state.games);
+          this.$store.dispatch("SAVE_PTN", this.$store.state.games);
         }
       });
     }

@@ -4,8 +4,8 @@ export const HOTKEYS = {
   ACTIONS: {
     UNDO: ["ctrl", "z"],
     REDO: ["ctrl", "shift", "z"],
-    PNG: ["shift", "p"],
-    SAVE: ["ctrl", "s"],
+    SAVE_PNG: ["shift", "p"],
+    SAVE_PTN: ["ctrl", "s"],
     OPEN: ["ctrl", "o"]
   },
   CONTROLS: {
@@ -88,8 +88,8 @@ export const HOTKEY_NAMES = {
   ACTIONS: {
     UNDO: "Undo",
     REDO: "Redo",
-    PNG: "Export PNG",
-    SAVE: "Download",
+    SAVE_PNG: "Export PNG Image",
+    SAVE_PTN: "Export PTN File",
     OPEN: "Load Files"
   },
   CONTROLS: {
