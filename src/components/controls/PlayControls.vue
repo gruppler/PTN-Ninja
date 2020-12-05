@@ -10,6 +10,7 @@
         }"
         round
         flat
+        :ripple="false"
         :disable="!game.state.ply || plyInProgress"
         icon="backspace"
       />
@@ -19,6 +20,7 @@
         v-shortkey="hotkeys.first"
         round
         flat
+        :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
       />
@@ -32,6 +34,7 @@
         }"
         round
         flat
+        :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
       />
@@ -40,6 +43,7 @@
         @shortkey="playpause"
         v-shortkey="hotkeys.playpause"
         round
+        :ripple="false"
         color="accent"
         text-color="grey-10"
         :disable="!game.state.ply || plyInProgress"
@@ -55,6 +59,7 @@
         }"
         round
         flat
+        :ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
       />
@@ -64,6 +69,7 @@
         v-shortkey="hotkeys.last"
         round
         flat
+        :ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
       />
@@ -72,6 +78,7 @@
         @shortkey="branchKey"
         round
         flat
+        :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
         :color="hasBranches ? 'accent' : ''"
       >

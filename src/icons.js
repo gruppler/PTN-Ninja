@@ -77,6 +77,7 @@ export default {
   spectator_private: "mdi-lock",
   success: "mdi-check-circle",
   swap_vert: "mdi-swap-vertical",
+  text: "mdi-text",
   time: "mdi-clock-outline",
   trim: "mdi-flip-vertical",
   ui: "mdi-view-quilt",
