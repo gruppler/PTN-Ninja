@@ -23,7 +23,6 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
-  "Close Multiple Games": "Close Multiple Games",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   "Create Online Game": "Create Online Game",
@@ -34,7 +33,6 @@ export default {
   "Delete Ply": "Delete Ply",
   Dismiss: "Dismiss",
   Download: "Download",
-  "Download All": "Download All",
   "Duplicate Game Names": "Duplicate Game Names",
   Edit: "Edit",
   "Edit Game": "Edit Game",
@@ -177,7 +175,7 @@ export default {
   },
 
   confirm: {
-    downloadAllGames: "Download all games?",
+    downloadMultipleGames: "Download 1 game? | Download {count} games?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",

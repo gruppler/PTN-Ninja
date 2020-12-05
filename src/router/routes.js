@@ -63,6 +63,14 @@ const routes = [
         path: "/add/:tab?/:online?/:fullscreen?"
       },
       {
+        name: "close",
+        path: "/close"
+      },
+      {
+        name: "download",
+        path: "/download"
+      },
+      {
         name: "preferences",
         path: "/preferences"
       },
