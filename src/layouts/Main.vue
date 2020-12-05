@@ -624,6 +624,9 @@ export default {
     },
     setTPS() {
       this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
+        this.game.moves[0].linenum.number = Number(
+          this.editingTPS.split(/\s/)[2]
+        );
         this.game.setTags({ tps: this.editingTPS });
         this.isEditingTPS = false;
       });
