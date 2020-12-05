@@ -324,22 +324,47 @@ const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
   : "https://us-central1-ptn-ninja.cloudfunctions.net/tps";
 export const PNG = ({ state }, game) => {
-  window.open(
-    PNG_URL +
-      "?" +
-      [
-        "tps=" + game.state.tps,
-        ...[
-          "axisLabels",
-          "flatCounts",
-          "pieceShadows",
-          "showRoads",
-          "unplayedPieces"
-        ]
-          .filter(option => !state[option])
-          .map(key => key + "=false")
-      ].join("&")
-  );
+  const options = ["tps=" + game.state.tps];
+
+  // UI toggles
+  [
+    "axisLabels",
+    "flatCounts",
+    "pieceShadows",
+    "showRoads",
+    "unplayedPieces"
+  ].forEach(toggle => {
+    if (!state[toggle]) {
+      options.push(toggle + "=false");
+    }
+  });
+
+  // Game Tags
+  [
+    "caps",
+    "flats",
+    "caps1",
+    "flats1",
+    "caps2",
+    "flats2",
+    "player1",
+    "player2"
+  ].forEach(tagName => {
+    const tag = game.tags[tagName];
+    if (tag && tag.value) {
+      options.push(tagName + "=" + encodeURIComponent(tag.value));
+    }
+  });
+
+  // Square Highlights
+  if (state.highlightSquares) {
+    const ply = game.state.ply;
+    if (ply) {
+      options.push("ply=" + encodeURIComponent(ply.text(true)));
+    }
+  }
+
+  window.open(PNG_URL + "?" + options.join("&"));
 };
 
 export const SAVE = (context, games) => {

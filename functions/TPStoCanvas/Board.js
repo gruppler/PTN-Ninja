@@ -1,6 +1,5 @@
 const { Square } = require("./Square");
 const { Piece } = require("./Piece");
-const { Result } = require("./Result");
 const { findRoads } = require("./Roads");
 const { atoi } = require("./Square");
 

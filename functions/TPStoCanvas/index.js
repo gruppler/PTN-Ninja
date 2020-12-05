@@ -1,5 +1,6 @@
 const { createCanvas } = require("canvas");
 const { Board } = require("./Board");
+const { Ply } = require("./Ply");
 const { itoa } = require("./Square");
 
 const { roundRect } = require("./roundRect");
@@ -29,6 +30,8 @@ const colors = {
   squareLight: "#90a4ae",
   turnIndicator: "#8bc34a",
   pieceShadow: "rgba(0, 0, 0, 0.15)",
+  currentSquare: "rgba(139, 195, 74, 0.4)",
+  primarySquare: "rgba(139, 195, 74, 0.75)",
   player: {
     1: {
       header: "#cfd8dc",
@@ -37,7 +40,7 @@ const colors = {
       square: "rgba(207, 216, 220, 0.35)",
       connection: "rgba(207, 216, 220, 0.2)",
       road: "rgba(207, 216, 220, 0.8)",
-      stroke: "rgba(84, 110, 122, 0.25)",
+      stroke: "rgba(84, 110, 122, 0.5)",
       border: "#546e7a"
     },
     2: {
@@ -47,11 +50,23 @@ const colors = {
       square: "rgba(69, 90, 100, 0.35)",
       connection: "rgba(69, 90, 100, 0.2)",
       road: "rgba(69, 90, 100, 0.8)",
-      stroke: "rgba(38, 50, 56, 0.25)",
+      stroke: "rgba(38, 50, 56, 0.5)",
       border: "#263238"
     }
   }
 };
+
+function limitText(ctx, text, width) {
+  const originalLength = text.length;
+  const suffix = "...";
+  if (width <= 0) {
+    return "";
+  }
+  while (text.length && ctx.measureText(text + suffix).width >= width) {
+    text = text.substring(0, text.length - 1);
+  }
+  return text + (text.length < originalLength ? suffix : "");
+}
 
 exports.TPStoCanvas = function(options) {
   for (let key in defaults) {
@@ -69,6 +84,11 @@ exports.TPStoCanvas = function(options) {
   const board = new Board(options);
   if (!board || board.errors.length) {
     throw board.errors[0];
+  }
+
+  let hlSquares = [];
+  if (options.ply) {
+    hlSquares = new Ply(options.ply).squares;
   }
 
   // Dimensions
@@ -122,9 +142,9 @@ exports.TPStoCanvas = function(options) {
     const totalFlats = board.flats[0] + board.flats[1];
     const flats1Width = Math.round(
       Math.min(
-        boardSize - flatCounterHeight,
+        boardSize - squareSize,
         Math.max(
-          flatCounterHeight,
+          squareSize,
           (totalFlats ? board.flats[0] / totalFlats : 0.5) * boardSize
         )
       )
@@ -154,15 +174,48 @@ exports.TPStoCanvas = function(options) {
     ctx.fill();
 
     // Flat Counts
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "end";
     ctx.fillStyle = colors.player[2].header;
+    ctx.textBaseline = "middle";
+    // Player 1 Name
+    if (options.player1) {
+      const flatCount1Width = ctx.measureText(board.flats[0]).width;
+      options.player1 = limitText(
+        ctx,
+        options.player1,
+        flats1Width - flatCount1Width - fontSize * 1.2
+      );
+      ctx.textAlign = "start";
+      ctx.fillText(
+        options.player1,
+        padding + axisSize + fontSize / 2,
+        padding + flatCounterHeight / 2
+      );
+    }
+    // Player 1 Flat Count
+    ctx.textAlign = "end";
     ctx.fillText(
       board.flats[0],
       padding + axisSize + flats1Width - fontSize / 2,
       padding + flatCounterHeight / 2
     );
+
     ctx.fillStyle = colors.player[1].header;
+    // Player 2 Name
+    if (options.player2) {
+      const flatCount2Width = ctx.measureText(board.flats[1]).width;
+      options.player2 = limitText(
+        ctx,
+        options.player2,
+        flats2Width - flatCount2Width - fontSize * 1.2
+      );
+      ctx.textAlign = "end";
+      ctx.fillText(
+        options.player2,
+        padding + axisSize + boardSize - fontSize / 2,
+        padding + flatCounterHeight / 2
+      );
+    }
+    // Player 2 Flat Count
     ctx.textAlign = "start";
     ctx.fillText(
       board.flats[1],
@@ -222,6 +275,15 @@ exports.TPStoCanvas = function(options) {
 
     if (square.isLight) {
       ctx.fillStyle = colors.squareLight;
+      ctx.fillRect(0, 0, squareSize, squareSize);
+    }
+
+    if (hlSquares.includes(square.coord)) {
+      if (hlSquares[0] === square.coord) {
+        ctx.fillStyle = colors.primarySquare
+      } else {
+        ctx.fillStyle = colors.currentSquare
+      }
       ctx.fillRect(0, 0, squareSize, squareSize);
     }
 
