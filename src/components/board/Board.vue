@@ -355,7 +355,7 @@ export default {
 <style lang="stylus">
 $turn-indicator-height = 0.5em
 $axis-size = 1.5em
-$radius = 5px
+$radius = 1.2vmin
 
 .board-wrapper
   &.board-3D

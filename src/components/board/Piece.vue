@@ -151,7 +151,7 @@ export default {
     height 50%
     margin 25%
     box-sizing border-box
-    border 1px solid rgba(#000, .8)
+    border 1px solid transparent
     border-radius 10%
     will-change opacity, transform, width, height, left, border-radius, background-color, box-shadow
     transition opacity $generic-hover-transition,
@@ -164,8 +164,11 @@ export default {
       box-shadow $generic-hover-transition
 
     .board-container.piece-shadows &
-      border-color transparent
-      box-shadow $shadow-1
+      box-shadow 0 0.2vmin 0.4vmin rgba(#000, 0.2)
+      &.p1
+        border-color rgba($blue-grey-7, 0.5)
+      &.p2
+        border-color rgba($blue-grey-10, 0.5)
       &.firstSelected
         box-shadow @box-shadow, 0 2.8vmin 1.5vmin $elevation-umbra
 

@@ -7,6 +7,7 @@
       'no-roads': !showRoads,
       eog,
       current,
+      primary,
       selected,
       placed,
       valid,
@@ -74,6 +75,12 @@ export default {
       return (
         this.game.state.ply &&
         this.game.state.ply.squares.includes(this.square.static.coord)
+      );
+    },
+    primary() {
+      return (
+        this.current &&
+        this.game.state.ply.squares[0] === this.square.static.coord
       );
     },
     selected() {
@@ -170,8 +177,11 @@ export default {
 
   .hl.current
     background-color $accent
-  .board-container.highlight-squares &.current .hl.current
-    opacity .75;
+  .board-container.highlight-squares &.current
+    .hl.current
+      opacity .4;
+    &.primary .hl.current
+      opacity .75;
 
   .board-container.turn-1 &
     .hl.player
