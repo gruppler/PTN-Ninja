@@ -14,6 +14,10 @@ export const ADD_GAME = (state, game) => {
   state.games.unshift(game);
 };
 
+export const ADD_GAMES = (state, { games, index }) => {
+  state.games.splice(index, 0, ...games);
+};
+
 export const REMOVE_GAME = (state, index) => {
   state.games.splice(index, 1);
 };
