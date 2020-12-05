@@ -1,8 +1,8 @@
 <template>
   <span class="ptn ply" v-if="ply">
     <q-chip
-      @click.left="select(ply)"
-      @click.right.prevent.native="select(ply, true)"
+      @click.left="select(ply, isSelected ? !isDone : true)"
+      @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
       :class="{ selected: isSelected }"
       :color="ply.color === 1 ? 'blue-grey-2' : 'blue-grey-10'"
       :text-color="ply.color === 1 ? 'blue-grey-10' : 'blue-grey-2'"
@@ -47,7 +47,13 @@
         />
       </q-btn>
     </q-chip>
-    <Result :result="ply.result" />
+    <Result
+      :result="ply.result"
+      :done="isDone"
+      @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
+      @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
+      clickable
+    />
   </span>
 </template>
 
@@ -86,13 +92,9 @@ export default {
     }
   },
   methods: {
-    select(ply, invert) {
+    select(ply, isDone = this.game.state.plyIsDone) {
       if (this.noClick) {
         return;
-      }
-      let isDone = this.game.state.plyIsDone;
-      if (invert || ply.id === this.game.state.ply.id) {
-        isDone = !isDone;
       }
       this.game.goToPly(ply.id, isDone);
     },
