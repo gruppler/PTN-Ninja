@@ -7,8 +7,7 @@
       color="accent"
       class="ptn-editor fit"
       :rules="rules"
-      @paste.native.prevent="unescape"
-      @keydown.shift.enter.prevent="save"
+      @keydown.ctrl.enter.prevent="save"
       hide-bottom-space
       no-error-icon
     />
@@ -48,9 +47,6 @@ export default {
     },
     init() {
       this.ptn = this.game ? this.game.moveText(true, true) : "";
-    },
-    unescape(event) {
-      this.ptn = unescape(event.clipboardData.getData("Text"));
     }
   },
   mounted() {

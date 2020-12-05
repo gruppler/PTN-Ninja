@@ -241,6 +241,9 @@ export default class GameBase {
           item = Linenum.parse(notation, this, branch);
           if (!move.linenum) {
             move.linenum = item;
+            if (move.index === 0 && item.number !== this.firstMoveNumber) {
+              throw new Error("Invalid first line number");
+            }
           } else {
             move = new Move({
               game: this,

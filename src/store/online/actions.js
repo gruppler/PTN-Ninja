@@ -168,7 +168,7 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   let gameData = gamesSnapshot.data();
   if (gameData.config.players[player - 1]) {
     Loading.hide();
-    return throw new Error("Player position already filled");
+    throw new Error("Player position already filled");
   }
 
   // Update game config and tags
