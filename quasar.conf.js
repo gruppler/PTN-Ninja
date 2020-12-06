@@ -19,7 +19,7 @@ module.exports = function(ctx) {
     framework: {
       importStrategy: "auto",
       autoImportComponentCase: "kebab",
-      iconSet: "mdi-v4",
+      iconSet: "mdi-v5",
 
       plugins: [
         "AddressbarColor",
