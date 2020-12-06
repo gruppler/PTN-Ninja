@@ -183,7 +183,8 @@ export default {
     logInOK: "Proceed and Abandon Games",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?",
-    resetPassword: "Reset the password for {email}?"
+    resetPassword: "Reset the password for {email}?",
+    resetPNG: "Reset PNG settings to default?"
   },
 
   error: {

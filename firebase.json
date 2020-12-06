@@ -22,10 +22,6 @@
         {
           "source": "**",
           "destination": "/index.html"
-        },
-        {
-          "source": "/tps",
-          "function": "tps"
         }
       ]
     },
@@ -41,10 +37,6 @@
         {
           "source": "**",
           "destination": "/index.html"
-        },
-        {
-          "source": "/tps",
-          "function": "tps"
         }
       ]
     }
