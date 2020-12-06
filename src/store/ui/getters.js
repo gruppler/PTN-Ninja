@@ -92,7 +92,7 @@ const urlEncode = url => {
 
 const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://ptn.ninja/tps";
+  : "https://tps.ptn.ninja/";
 export const png_url = state => game => {
   const params = ["tps=" + game.state.tps];
 
