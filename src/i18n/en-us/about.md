@@ -10,6 +10,7 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddi
 
 If you want to support this project, you can...
 
+- [View the source code](https://github.com/gruppler/PTN-Ninja/)
 - [Report an issue or feature request](https://github.com/gruppler/PTN-Ninja/issues/)
 - [Become a Patron](https://www.patreon.com/gruppler)
 - [Donate USD](https://www.paypal.me/gruppler)
@@ -25,5 +26,4 @@ Legal
 
 &copy; 2020 Craig Laparo
 
-![License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png "Creative Commons License")
-This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International [License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+This work is licensed under a GNU AGPLv3 [License](https://www.gnu.org/licenses/agpl-3.0.en.html).
