@@ -1,20 +1,25 @@
 <template>
   <div
-    class="board-toggles q-gutter-md"
+    class="board-toggles q-gutter-sm"
     :class="{ row: isPortrait, column: !isPortrait }"
   >
     <FullscreenToggle
       v-if="$q.fullscreen.isCapable"
       @input="$q.fullscreen.toggle()"
       :value="$q.fullscreen.isActive"
-      size="sm"
+      class="dimmed-btn"
+      color="white"
+      dense
+      flat
     />
-    <q-icon
+    <q-btn
       @click="board3D = !board3D"
-      :name="board3D ? '2d' : '3d'"
+      :icon="board3D ? '2d' : '3d'"
       :title="$t((board3D ? '2' : '3') + 'D Board')"
-      class="q-field__focusable-action"
-      size="sm"
+      class="dimmed-btn"
+      color="white"
+      dense
+      flat
     />
   </div>
 </template>
