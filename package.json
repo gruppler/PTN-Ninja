@@ -4,6 +4,7 @@
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
