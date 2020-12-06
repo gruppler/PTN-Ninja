@@ -132,6 +132,7 @@ export default {
   "Scrub Bar": "Scrub Bar",
   "Select Branch": "Select Branch",
   Share: "Share",
+  "Share PNG": "Share PNG",
   "Show All Branches": "Show All Branches",
   "Show Branch Menu": "Show Branch Menu",
   "Show More/Less": "Show More/Less",

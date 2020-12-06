@@ -94,6 +94,7 @@
             :game="game"
             :showQR.sync="dialogQR"
             @embed="dialogEmbed = true"
+            @png="dialogPNG = true"
             @online="dialogOnline = true"
           />
         </PTN-Tools>
@@ -221,6 +222,7 @@
       no-route-dismiss
     />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
+    <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
     <LogIn v-model="dialogLogIn" no-route-dismiss />
     <ShareOnline v-model="dialogOnline" :game="game" no-route-dismiss />
     <JoinGame v-model="dialogJoinGame" :game="game" no-route-dismiss />
@@ -265,6 +267,7 @@ import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
+import PNGConfig from "../components/dialogs/PNGConfig";
 import LogIn from "../components/dialogs/LogIn";
 import ShareOnline from "../components/dialogs/ShareOnline";
 import JoinGame from "../components/dialogs/JoinGame";
@@ -283,6 +286,7 @@ const HISTORY_DIALOGS = {
   dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
+  dialogPNG: "png",
   dialogLogIn: "login",
   dialogJoinGame: "join",
   dialogOnline: "online",
@@ -314,6 +318,7 @@ export default {
     EditGame,
     UISettings,
     EmbedConfig,
+    PNGConfig,
     ShareOnline,
     LogIn,
     JoinGame
@@ -664,6 +669,9 @@ export default {
           break;
         case "embedGame":
           this.dialogEmbed = this.game.isLocal;
+          break;
+        case "sharePNG":
+          this.dialogPNG = this.game.isLocal;
           break;
         case "focusText":
           this.right = true;

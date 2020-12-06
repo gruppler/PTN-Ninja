@@ -6,7 +6,7 @@
     :min-height="588"
     v-bind="$attrs"
   >
-    <template v-slot:header>
+    <div class="relative-position">
       <iframe
         ref="preview"
         class="block"
@@ -20,7 +20,9 @@
         allowfullscreen
       />
       <q-inner-loading :showing="!previewLoaded && !previewError" />
-    </template>
+    </div>
+
+    <q-separator />
 
     <q-list>
       <q-item>

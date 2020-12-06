@@ -72,7 +72,7 @@ export default {
   watch: {
     value(show) {
       if (show) {
-        this.range.min = 1;
+        this.range.min = 0;
         this.range.max = this.max;
       }
     }

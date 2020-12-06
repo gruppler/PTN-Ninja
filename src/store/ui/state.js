@@ -37,7 +37,7 @@ let defaults = {
   unplayedPieces: true
 };
 
-const embedUIOptions = [
+export const embedUIOptions = [
   "axisLabels",
   "flatCounts",
   "highlightSquares",
@@ -52,12 +52,27 @@ const embedUIOptions = [
   "unplayedPieces"
 ];
 
+export const pngUIOptions = [
+  "axisLabels",
+  "flatCounts",
+  "highlightSquares",
+  "showRoads",
+  "unplayedPieces"
+];
+
 defaults.embedConfig = {
   width: "100%",
   height: "600px",
   includeNames: false,
   state: true,
   ui: pick(defaults, embedUIOptions)
+};
+
+defaults.pngConfig = {
+  size: "md",
+  includeNames: true,
+  pieceShadows: true,
+  ...pick(defaults, pngUIOptions)
 };
 
 let state = {
