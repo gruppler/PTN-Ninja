@@ -39,6 +39,21 @@
           "destination": "/index.html"
         }
       ]
+    },
+    {
+      "site": "tps-ninja",
+      "public": "functions/TPS-Ninja",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "function": "tps"
+        }
+      ]
     }
   ],
   "emulators": {
