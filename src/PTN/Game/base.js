@@ -9,6 +9,8 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
+import render from "./render";
+
 import { defaults, each, flatten, map, uniq } from "lodash";
 import memoize from "./memoize";
 
@@ -228,6 +230,9 @@ export default class GameBase {
         item = Linenum.parse(notation, this, branch);
         if (!move.linenum) {
           move.linenum = item;
+          if (move.index === 0 && item.number !== this.firstMoveNumber) {
+            throw new Error("Invalid first line number");
+          }
         } else {
           move = new Move({
             game: this,
@@ -353,6 +358,10 @@ export default class GameBase {
     }
   }
 
+  render(options) {
+    return render(this, options);
+  }
+
   get minState() {
     return this.state.min;
   }
@@ -413,6 +422,10 @@ export default class GameBase {
 
   get isDefaultName() {
     return isDefaultName(this.name);
+  }
+
+  setName(name) {
+    this.name = name || this.generateName();
   }
 
   tag(key, defaultValue) {

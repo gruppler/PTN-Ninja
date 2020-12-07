@@ -1,9 +1,7 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" seamless>
     <q-card style="width: 400px; overflow: visible" class="bg-secondary">
-      <dialog-header icon="close_multiple">
-        {{ $t("Close") }}...
-      </dialog-header>
+      <dialog-header icon="download"> {{ $t("Download") }}... </dialog-header>
 
       <q-card-section>
         <q-range
@@ -38,7 +36,7 @@ export default {
   data() {
     return {
       range: {
-        min: 1,
+        min: 0,
         max: this.$store.state.games.length - 1
       },
       min: 0
@@ -57,17 +55,24 @@ export default {
       this.$emit("input", false);
     },
     submit() {
-      this.$store.dispatch("REMOVE_MULTIPLE_GAMES", {
-        start: this.range.min,
-        count: this.range.max - this.range.min + 1
+      const count = this.range.max - this.range.min + 1;
+      this.$store.dispatch("PROMPT", {
+        title: this.$t("Confirm"),
+        message: this.$tc("confirm.downloadMultipleGames", count),
+        success: () => {
+          this.$store.dispatch(
+            "SAVE_PTN",
+            this.$store.state.games.slice(this.range.min, this.range.max + 1)
+          );
+          this.close();
+        }
       });
-      this.close();
     }
   },
   watch: {
     value(show) {
       if (show) {
-        this.range.min = 1;
+        this.range.min = 0;
         this.range.max = this.max;
       }
     }

@@ -36,15 +36,13 @@
                 <q-item-section side>
                   <q-icon name="close_multiple" />
                 </q-item-section>
-                <q-item-section>{{
-                  $t("Close Multiple Games")
-                }}</q-item-section>
+                <q-item-section>{{ $t("Close") }}...</q-item-section>
               </q-item>
-              <q-item clickable @click="downloadAll">
+              <q-item clickable @click="dialogDownloadGames = true">
                 <q-item-section side>
                   <q-icon name="download" />
                 </q-item-section>
-                <q-item-section>{{ $t("Download All") }}</q-item-section>
+                <q-item-section>{{ $t("Download") }}...</q-item-section>
               </q-item>
             </q-list>
           </q-menu>
@@ -80,22 +78,47 @@
     </q-select>
 
     <CloseGames v-model="dialogCloseGames" />
+    <DownloadGames v-model="dialogDownloadGames" />
   </div>
 </template>
 
 <script>
 import CloseGames from "../dialogs/CloseGames";
+import DownloadGames from "../dialogs/DownloadGames";
+
+import { zipObject } from "lodash";
+
+const HISTORY_DIALOGS = {
+  dialogCloseGames: "close",
+  dialogDownloadGames: "download"
+};
 
 export default {
   name: "GameSelector",
-  components: { CloseGames },
+  components: { CloseGames, DownloadGames },
   props: ["game"],
-  data() {
-    return {
-      dialogCloseGames: false
-    };
-  },
   computed: {
+    ...zipObject(
+      Object.keys(HISTORY_DIALOGS),
+      Object.values(HISTORY_DIALOGS).map(key => ({
+        get() {
+          return this.$route.name === key;
+        },
+        set(value) {
+          if (value) {
+            if (this.$route.name !== key) {
+              this.$router.push({ name: key });
+            }
+          } else {
+            if (this.$route.name === key) {
+              this.$router.go(-1);
+              this.$router.replace({ name: "local" });
+            }
+          }
+        }
+      }))
+    ),
+
     games() {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
@@ -114,36 +137,7 @@ export default {
       }
     },
     close(index) {
-      const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
-      this.$q.notify({
-        message: this.$t("Game x closed", { game: game.name }),
-        timeout: 10000,
-        progress: true,
-        progressClass: "bg-grey-1",
-        color: "secondary",
-        position: "bottom",
-        multiLine: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "accent",
-            handler: () => {
-              this.$store.dispatch("ADD_GAME", game);
-            }
-          },
-          { icon: "close", color: "grey-2" }
-        ]
-      });
-    },
-    downloadAll() {
-      this.$store.getters.prompt({
-        title: this.$t("Confirm"),
-        message: this.$t("confirm.downloadAllGames"),
-        success: () => {
-          this.$store.dispatch("SAVE", this.$store.state.games);
-        }
-      });
     }
   }
 };

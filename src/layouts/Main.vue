@@ -47,7 +47,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <smooth-reflow
+          <div
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -62,7 +62,7 @@
               current-only
               standalone
             />
-          </smooth-reflow>
+          </div>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
@@ -90,6 +90,7 @@
             :game="game"
             :showQR.sync="dialogQR"
             @embed="dialogEmbed = true"
+            @png="dialogPNG = true"
           />
         </PTN-Tools>
         <div class="col-grow relative-position">
@@ -206,6 +207,7 @@
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
     <UISettings v-model="dialogUISettings" no-route-dismiss />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
+    <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -245,6 +247,7 @@ import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
+import PNGConfig from "../components/dialogs/PNGConfig";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -259,6 +262,7 @@ const HISTORY_DIALOGS = {
   dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
+  dialogPNG: "png",
   dialogQR: "qr"
 };
 
@@ -285,14 +289,17 @@ export default {
     AddGame,
     EditGame,
     UISettings,
-    EmbedConfig
+    EmbedConfig,
+    PNGConfig
   },
   props: ["ptn", "state", "name"],
   data() {
+    const game = this.getGame();
+    const errors = this.errors;
     return {
       Platform,
-      game: this.getGame(),
-      errors: [],
+      errors,
+      game,
       hotkeys: HOTKEYS
     };
   },
@@ -454,7 +461,9 @@ export default {
   },
   methods: {
     setWindowTitle(prefix = this.game.name) {
-      document.title = prefix + " — " + this.$t("app_title");
+      setTimeout(() => {
+        document.title = prefix + " — " + this.$t("app_title");
+      }, 100);
     },
     newGame() {
       const game = new Game(
@@ -464,11 +473,6 @@ export default {
           "\n" +
           "1. "
       );
-      this.$store.dispatch("ADD_GAME", {
-        ptn: game.ptn,
-        name: game.name,
-        state: game.minState
-      });
       return game;
     },
     getGame() {
@@ -520,8 +524,8 @@ export default {
                   { icon: "close", color: "grey-2" }
                 ]
               });
-              this.$router.replace("/");
             }
+            this.$router.replace("/");
           }
         } else if (this.$store.state.games && this.$store.state.games.length) {
           game = this.$store.state.games[0];
@@ -558,6 +562,9 @@ export default {
     },
     setTPS() {
       this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
+        this.game.moves[0].linenum.number = Number(
+          this.editingTPS.split(/\s/)[2]
+        );
         this.game.setTags({ tps: this.editingTPS });
         this.isEditingTPS = false;
       });
@@ -588,6 +595,9 @@ export default {
           break;
         case "embedGame":
           this.dialogEmbed = true;
+          break;
+        case "sharePNG":
+          this.dialogPNG = this.game.isLocal;
           break;
         case "focusText":
           this.right = true;

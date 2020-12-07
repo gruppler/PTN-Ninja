@@ -19,7 +19,7 @@ module.exports = function(ctx) {
     framework: {
       importStrategy: "auto",
       autoImportComponentCase: "kebab",
-      iconSet: "mdi-v4",
+      iconSet: "mdi-v5",
 
       plugins: [
         "AddressbarColor",
@@ -52,7 +52,7 @@ module.exports = function(ctx) {
     devServer: {
       // https: true,
       // port: 8080,
-      open: false // opens browser window automatically
+      open: true // opens browser window automatically
     },
 
     // animations: 'all', // --- includes all animations

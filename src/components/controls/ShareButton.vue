@@ -60,8 +60,8 @@ export default {
         },
         {
           id: "ptn",
-          label: this.$t("PTN"),
-          icon: "file",
+          label: this.$t("PTN Text"),
+          icon: "text",
           action: () => this.shareText("ptn")
         },
         {}
@@ -76,11 +76,20 @@ export default {
         });
       }
 
+      if (this.game.isLocal) {
+        actions.push({
+          id: "png",
+          label: this.$t("PNG Image"),
+          icon: "file_image",
+          action: this.png
+        });
+      }
+
       actions.push(
         {
           id: "download",
-          label: this.$t("Download"),
-          icon: "download",
+          label: this.$t("PTN File"),
+          icon: "file",
           action: this.shareFile
         },
         {
@@ -129,10 +138,13 @@ export default {
       this.$store.dispatch("COPY", output);
     },
     shareFile() {
-      this.$store.dispatch("SAVE", this.game);
+      this.$store.dispatch("SAVE_PTN", this.game);
     },
     embed() {
       this.$emit("embed");
+    },
+    png() {
+      this.$emit("png");
     },
     qrCode() {
       this.qrText = this.$store.getters.url(this.game, {
