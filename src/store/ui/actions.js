@@ -1,4 +1,3 @@
-import { i18n } from "../../../src/boot/i18n";
 import Vue from "vue";
 import {
   copyToClipboard,
@@ -14,6 +13,7 @@ import {
   formatWarning,
   formatHint
 } from "../../utilities";
+import { i18n } from "../../../src/boot/i18n";
 import { isArray } from "lodash";
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
@@ -95,7 +95,7 @@ export const NOTIFY_ERROR = (context, error) => {
     type: "negative",
     timeout: 0,
     position: "top-right",
-    actions: [{ icon: "close", color: "grey-10" }]
+    actions: [{ icon: "close", color: "grey-1" }]
   });
 };
 
@@ -194,7 +194,7 @@ export const ADD_GAMES = ({ commit, dispatch, getters }, { games, index }) => {
   dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAMES", { games, index }));
 };
 
-export const REMOVE_GAME = ({ commit, dispatch, getters, state }, index) => {
+export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
   const game = state.games[index];
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
@@ -419,20 +419,8 @@ export const TRIM_TO_PLY = ({ commit, dispatch }, game) => {
   });
 };
 
-export const SAVE_PNG = ({ state }, game) => {
-  const options = { tps: game.state.tps };
-
-  // UI toggles
-  [
-    "axisLabels",
-    "flatCounts",
-    "highlightSquares",
-    "pieceShadows",
-    "showRoads",
-    "unplayedPieces"
-  ].forEach(toggle => {
-    options[toggle] = state.pngConfig[toggle];
-  });
+export const SAVE_PNG = ({ dispatch, getters, state }, game) => {
+  const options = { tps: game.state.tps, ...state.pngConfig };
 
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach(tagName => {
@@ -443,80 +431,29 @@ export const SAVE_PNG = ({ state }, game) => {
   });
 
   game.render(options).toBlob(blob => {
-    const filename =
-      game.name +
-      " - " +
-      (game.state.plyID + (game.state.plyIsDone ? "" : "-")) +
-      ".png";
-    function download() {
-      if (!exportFile(filename, blob, "image/png")) {
-        Notify.create({
-          type: "negative",
-          timeout: 3000,
-          position: "bottom",
-          message: i18n.t("error.Unable to download")
-        });
-      }
-    }
-
-    const files = Object.freeze([
-      new File([blob], filename, {
+    dispatch(
+      "DOWNLOAD_FILES",
+      new File([blob], getters.png_filename(game), {
         type: "image/png"
       })
-    ]);
-    if (navigator.canShare && navigator.canShare({ files })) {
-      navigator.share({ files, title: filename }).catch(error => {
-        console.error(error);
-        if (!/canceled|abort/i.test(error)) {
-          download();
-        }
-      });
-    } else {
-      download();
-    }
+    );
   });
 };
 
-export const SAVE_PTN = (context, games) => {
+export const SAVE_PTN = ({ dispatch }, games) => {
   if (!isArray(games)) {
     games = [games];
   }
-  function download() {
-    const success = games.map(game =>
-      exportFile(game.name + ".ptn", game.ptn, "text/plain;charset=utf-8")
-    );
 
-    if (success.some(s => !s)) {
-      Notify.create({
-        type: "negative",
-        timeout: 3000,
-        position: "bottom",
-        message: i18n.t("error.Unable to download")
-      });
-    }
-  }
-
-  const files = Object.freeze(
+  return dispatch(
+    "DOWNLOAD_FILES",
     games.map(
       game =>
-        new File([game.ptn], game.name + ".txt", {
+        new File([game.ptn], game.name + ".ptn", {
           type: "text/plain"
         })
     )
   );
-  if (navigator.canShare && navigator.canShare({ files })) {
-    const title =
-      games.length === 1 ? games[0].name + ".txt" : i18n.t("Multiple Games");
-
-    navigator.share({ files, title }).catch(error => {
-      console.error(error);
-      if (!/canceled|abort/i.test(error)) {
-        download();
-      }
-    });
-  } else {
-    download();
-  }
 };
 
 export const OPEN = ({ dispatch }, callback) => {
@@ -573,27 +510,33 @@ export const SAVE_UNDO_INDEX = ({ commit }, game) => {
   commit("SAVE_UNDO_INDEX", game);
 };
 
-export const COPY = function(context, { url, text, title }) {
+export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
+  if (!isArray(files)) {
+    files = [files];
+  }
+
+  let success = true;
+  files.forEach(file => {
+    success &= exportFile(file.name, file);
+  });
+
+  if (!success) {
+    dispatch("NOTIFY_ERROR", "Unable to download");
+  }
+};
+
+export const COPY = function({ dispatch }, { url, text, title }) {
   function copy() {
     copyToClipboard(text || url)
       .then(() => {
-        Notify.create({
+        dispatch("NOTIFY", {
           icon: "copy",
-          type: "positive",
-          color: "secondary",
-          classes: "text-grey-2",
-          timeout: 1000,
-          position: "bottom",
-          message: i18n.t("success.copied")
+          message: i18n.t("success.copied"),
+          timeout: 1000
         });
       })
       .catch(() => {
-        Notify.create({
-          type: "negative",
-          timeout: 3000,
-          position: "bottom",
-          message: i18n.t("error.Unable to copy")
-        });
+        dispatch("NOTIFY_ERROR", "Unable to copy");
         Dialog.create({
           class: "bg-secondary",
           color: "accent",

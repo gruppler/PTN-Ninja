@@ -1,6 +1,10 @@
 import { compressToEncodedURIComponent } from "lz-string";
 import { omit } from "lodash";
 
+const PNG_URL = process.env.DEV
+  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
+  : "https://tps.ptn.ninja/";
+
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
   while (names.includes(name)) {
@@ -39,9 +43,16 @@ const urlEncode = url => {
   );
 };
 
-const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://tps.ptn.ninja/";
+export const png_filename = state => game => {
+  return (
+    game.name +
+    " - " +
+    game.state.plyID +
+    (game.state.plyIsDone ? "" : "-") +
+    ".png"
+  );
+};
+
 export const png_url = state => game => {
   const params = ["tps=" + game.state.tps];
 
@@ -79,14 +90,7 @@ export const png_url = state => game => {
   }
 
   // Filename
-  params.push(
-    "name=" +
-      encodeURIComponent(
-        game.name +
-          " - " +
-          (game.state.plyID + (game.state.plyIsDone ? "" : "-"))
-      )
-  );
+  params.push("name=" + encodeURIComponent(png_filename(state)(game)));
 
   return PNG_URL + "?" + params.join("&");
 };
@@ -148,4 +152,11 @@ export const url = state => (game, options = {}) => {
         .join("&");
   }
   return url;
+};
+
+export const sharableFiles = state => files => {
+  if (!isArray(files)) {
+    files = [files];
+  }
+  return Object.freeze(files);
 };
