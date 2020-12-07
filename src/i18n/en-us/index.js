@@ -22,7 +22,6 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
-  "Close Multiple Games": "Close Multiple Games",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   "Current Move": "Current Move",
@@ -32,7 +31,6 @@ export default {
   "Delete Ply": "Delete Ply",
   Dismiss: "Dismiss",
   Download: "Download",
-  "Download All": "Download All",
   "Duplicate Game Names": "Duplicate Game Names",
   Edit: "Edit",
   "Edit Game": "Edit Game",
@@ -152,7 +150,7 @@ export default {
   },
 
   confirm: {
-    downloadAllGames: "Download all games?",
+    downloadMultipleGames: "Download 1 game? | Download {count} games?",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?"
   },

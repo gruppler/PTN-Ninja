@@ -57,6 +57,14 @@ const routes = [
         path: "/add/:tab?"
       },
       {
+        name: "close",
+        path: "/close"
+      },
+      {
+        name: "download",
+        path: "/download"
+      },
+      {
         name: "preferences",
         path: "/preferences"
       },
