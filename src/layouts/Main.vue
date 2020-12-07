@@ -289,10 +289,12 @@ export default {
   },
   props: ["ptn", "state", "name"],
   data() {
+    const game = this.getGame();
+    const errors = this.errors;
     return {
       Platform,
-      game: this.getGame(),
-      errors: [],
+      errors,
+      game,
       hotkeys: HOTKEYS
     };
   },
@@ -454,7 +456,9 @@ export default {
   },
   methods: {
     setWindowTitle(prefix = this.game.name) {
-      document.title = prefix + " — " + this.$t("app_title");
+      setTimeout(() => {
+        document.title = prefix + " — " + this.$t("app_title");
+      }, 100);
     },
     newGame() {
       const game = new Game(
@@ -464,11 +468,6 @@ export default {
           "\n" +
           "1. "
       );
-      this.$store.dispatch("ADD_GAME", {
-        ptn: game.ptn,
-        name: game.name,
-        state: game.minState
-      });
       return game;
     },
     getGame() {
@@ -520,8 +519,8 @@ export default {
                   { icon: "close", color: "grey-2" }
                 ]
               });
-              this.$router.replace("/");
             }
+            this.$router.replace("/");
           }
         } else if (this.$store.state.games && this.$store.state.games.length) {
           game = this.$store.state.games[0];

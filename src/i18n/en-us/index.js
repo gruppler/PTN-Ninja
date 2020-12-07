@@ -165,6 +165,7 @@ export default {
     "Invalid evaluation": "Invalid evaluation",
     "Invalid event": "Invalid event",
     "Invalid first move": "Invalid first move",
+    "Invalid first line number": "Invalid first line number",
     "Invalid flats": "Invalid flat stone count",
     "Invalid flats1": "Invalid flat stone 1 count",
     "Invalid flats2": "Invalid flat stone 2 count",
