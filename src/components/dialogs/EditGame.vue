@@ -53,7 +53,7 @@ export default {
   },
   methods: {
     reset() {
-      this.$store.getters.prompt({
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetForm"),
         success: () => {

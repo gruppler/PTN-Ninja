@@ -205,14 +205,14 @@
       <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
         <q-btn
-          :label="$t('Share')"
+          :label="$t(canShare ? 'Share' : 'Copy')"
           @click="share"
           color="accent"
           flat
           v-close-popup
         />
+        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
   </large-dialog>
@@ -251,11 +251,14 @@ export default {
     },
     code() {
       return `<iframe src="${this.url}" width="${this.config.width}" height="${this.config.height}" style="width:${this.config.width}; max-width:calc(100vw - 30px); height:${this.config.height}; max-height:100vh;" frameborder="0" allowfullscreen />`;
+    },
+    canShare() {
+      return navigator.canShare;
     }
   },
   methods: {
     reset() {
-      this.$store.getters.prompt({
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {

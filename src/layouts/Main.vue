@@ -505,24 +505,23 @@ export default {
             if (game.ptn !== this.ptn) {
               game.replacePTN(this.ptn, this.state);
 
-              this.$q.notify({
-                message: this.$t("success.replacedExistingGame"),
-                timeout: 10000,
-                progress: true,
-                progressClass: "bg-grey-1",
-                color: "secondary",
-                position: "bottom",
-                multiLine: false,
-                actions: [
-                  {
-                    label: this.$t("Undo"),
-                    color: "accent",
-                    handler: () => {
-                      this.$store.dispatch("UNDO", game);
-                    }
-                  },
-                  { icon: "close", color: "grey-2" }
-                ]
+              this.$nextTick(() => {
+                this.$store.dispatch("NOTIFY", {
+                  message: this.$t("success.replacedExistingGame"),
+                  timeout: 5000,
+                  progress: true,
+                  multiLine: false,
+                  actions: [
+                    {
+                      label: this.$t("Undo"),
+                      color: "accent",
+                      handler: () => {
+                        this.$store.dispatch("UNDO", game);
+                      }
+                    },
+                    { icon: "close", color: "grey-2" }
+                  ]
+                });
               });
             }
             this.$router.replace("/");
@@ -664,8 +663,10 @@ export default {
     edit() {
       this.dialogEditGame = true;
     },
-    switchGame() {
-      this.$refs.gameSelector.select(1);
+    switchGame(event) {
+      if (!event.currentTarget.classList.contains("q-fab--opened")) {
+        this.$refs.gameSelector.select(1);
+      }
     },
     showTextTab(value) {
       this.textTab = value;

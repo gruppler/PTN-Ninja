@@ -21,6 +21,7 @@
         <q-item-section>
           <q-item-label>
             <span class="float-right" v-html="dimensions" />
+            <span class="float-right q-mr-md" v-html="fileSize" />
             {{ $t("Size") }}
           </q-item-label>
           <q-slider
@@ -106,7 +107,7 @@
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Download')" @click="download" flat />
-        <q-btn :label="$t('Share')" @click="share" flat />
+        <q-btn :label="$t(canShare ? 'Share' : 'Copy')" @click="share" flat />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
@@ -115,7 +116,11 @@
 
 <script>
 import { pngUIOptions } from "../../store/ui/state";
+
 import { cloneDeep } from "lodash";
+
+import { format } from "quasar";
+const { humanStorageSize } = format;
 
 export default {
   name: "PNGConfig",
@@ -126,6 +131,8 @@ export default {
       config: cloneDeep(this.$store.state.pngConfig),
       preview: "",
       dimensions: "",
+      file: null,
+      fileSize: 0,
       size: sizes.indexOf(this.$store.state.pngConfig.size),
       sizes
     };
@@ -136,6 +143,9 @@ export default {
     },
     tps() {
       return this.game.state.tps;
+    },
+    canShare() {
+      return navigator.canShare;
     }
   },
   methods: {
@@ -143,7 +153,15 @@ export default {
       this.config = cloneDeep(this.$store.state.pngConfig);
     },
     updatePreview() {
-      this.preview = this.game.render(this.config).toDataURL();
+      const filename = this.$store.getters.png_filename(this.game);
+      const canvas = this.game.render(this.config);
+      this.preview = canvas.toDataURL();
+      canvas.toBlob(blob => {
+        this.file = new File([blob], filename, {
+          type: "image/png"
+        });
+        this.fileSize = humanStorageSize(this.file.size);
+      });
     },
     loadPreview() {
       const img = this.$refs.preview;
@@ -167,13 +185,12 @@ export default {
       });
     },
     download() {
-      this.$store.dispatch("SAVE_PNG", this.game);
+      this.$store.dispatch("DOWNLOAD_FILES", this.file);
     },
     share() {
       this.$store.dispatch("COPY", {
-        title: this.url,
-        url: this.url,
-        text: this.url
+        title: this.$t("Share PNG"),
+        url: this.url
       });
     },
     close() {
