@@ -153,7 +153,7 @@ export default {
     reset() {
       this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
-        message: this.$t("confirm.resetEmbed"),
+        message: this.$t("confirm.resetPNG"),
         success: () => {
           const config = cloneDeep(this.$store.state.defaults.pngConfig);
           Object.keys(config).forEach(key => {

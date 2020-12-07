@@ -153,7 +153,8 @@ export default {
   confirm: {
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
     resetEmbed: "Reset embed settings to default?",
-    resetForm: "Reset the form?"
+    resetForm: "Reset the form?",
+    resetPNG: "Reset PNG settings to default?"
   },
 
   error: {
