@@ -31,9 +31,11 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
-    action();
     Vue.nextTick(() => {
-      commit("SET_UI", ["animateBoard", true]);
+      action();
+      Vue.nextTick(() => {
+        commit("SET_UI", ["animateBoard", true]);
+      });
     });
   } else {
     action();
@@ -41,10 +43,11 @@ export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
 };
 
 export const ADD_GAME = ({ commit, dispatch, getters }, game) => {
-  let games = LocalStorage.getItem("games") || [];
+  const gameNames = LocalStorage.getItem("games") || [];
+
   game.name = getters.uniqueName(game.name);
-  games.unshift(game.name);
-  LocalStorage.set("games", games);
+  gameNames.unshift(game.name);
+  LocalStorage.set("games", gameNames);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.state) {
     LocalStorage.set("state-" + game.name, game.state);
@@ -57,55 +60,139 @@ export const ADD_GAME = ({ commit, dispatch, getters }, game) => {
   dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAME", game));
 };
 
-export const REMOVE_GAME = ({ commit, dispatch }, index) => {
-  let games = LocalStorage.getItem("games") || [];
+export const ADD_GAMES = ({ commit, dispatch, getters }, { games, index }) => {
+  const gameNames = LocalStorage.getItem("games") || [];
+
+  games.forEach((game, i) => {
+    game.name = getters.uniqueName(game.name);
+    gameNames.splice(index + i, 0, game.name);
+    LocalStorage.set("games", gameNames);
+    LocalStorage.set("ptn-" + game.name, game.ptn);
+    if (game.state) {
+      LocalStorage.set("state-" + game.name, game.minState || game.state);
+    }
+    if (game.history) {
+      LocalStorage.set("history-" + game.name, game.history);
+      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    }
+  });
+
+  dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAMES", { games, index }));
+};
+
+export const REMOVE_GAME = ({ commit, dispatch, getters, state }, index) => {
+  const game = state.games[index];
+  const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + name);
   LocalStorage.remove("state-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
+
+  const finish = () => {
+    commit("REMOVE_GAME", index);
+    Vue.nextTick(() => {
+      dispatch("NOTIFY", {
+        message: i18n.t("Game x closed", { game: game.name }),
+        timeout: 5000,
+        progress: true,
+        multiLine: false,
+        actions: [
+          {
+            label: i18n.t("Undo"),
+            color: "accent",
+            handler: () => {
+              if (index === 0) {
+                Loading.show();
+                setTimeout(() => {
+                  dispatch("WITHOUT_BOARD_ANIM", () => {
+                    dispatch("ADD_GAMES", { games: [game], index });
+                    Loading.hide();
+                  });
+                }, 200);
+              } else {
+                dispatch("ADD_GAMES", { games: [game], index });
+              }
+            }
+          },
+          { icon: "close", color: "grey-2" }
+        ]
+      });
+    });
+  };
+
   if (index === 0) {
     Loading.show();
     setTimeout(() => {
       dispatch("WITHOUT_BOARD_ANIM", () => {
-        commit("REMOVE_GAME", index);
+        finish();
         Loading.hide();
       });
     }, 200);
   } else {
-    commit("REMOVE_GAME", index);
+    finish();
   }
 };
 
 export const REMOVE_MULTIPLE_GAMES = (
-  { commit, dispatch },
+  { commit, dispatch, state },
   { start, count }
 ) => {
-  let games = LocalStorage.getItem("games") || [];
-  const names = games.splice(start, count);
-  LocalStorage.set("games", games);
+  const games = state.games.slice(start, start + count);
+  const gameNames = LocalStorage.getItem("games") || [];
+  const names = gameNames.splice(start, count);
+  LocalStorage.set("games", gameNames);
   names.forEach(name => {
     LocalStorage.remove("ptn-" + name);
     LocalStorage.remove("state-" + name);
     LocalStorage.remove("history-" + name);
     LocalStorage.remove("historyIndex-" + name);
   });
-  commit("REMOVE_MULTIPLE_GAMES", { start, count });
-  if (start === 0 && count > 0 && games.length) {
-    dispatch("SELECT_GAME", { index: 0 });
-  }
-  Vue.nextTick(() => {
-    Notify.create({
-      icon: "close_multiple",
-      type: "positive",
-      color: "secondary",
-      classes: "text-grey-2",
-      timeout: 3000,
-      position: "bottom",
-      message: i18n.tc("success.closedMultipleGames", count)
+
+  const finish = () => {
+    commit("REMOVE_MULTIPLE_GAMES", { start, count });
+    Vue.nextTick(() => {
+      dispatch("NOTIFY", {
+        icon: "close_multiple",
+        message: i18n.tc("success.closedMultipleGames", count),
+        timeout: 5000,
+        progress: true,
+        actions: [
+          {
+            label: i18n.t("Undo"),
+            color: "accent",
+            handler: () => {
+              if (start === 0) {
+                Loading.show();
+                setTimeout(() => {
+                  dispatch("WITHOUT_BOARD_ANIM", () => {
+                    dispatch("ADD_GAMES", { games, index: start });
+                    Loading.hide();
+                  });
+                }, 200);
+              } else {
+                dispatch("ADD_GAMES", { games, index: start });
+              }
+            }
+          },
+          { icon: "close", color: "grey-2" }
+        ]
+      });
     });
-  });
+  };
+
+  if (start === 0) {
+    Loading.show();
+    setTimeout(() => {
+      dispatch("WITHOUT_BOARD_ANIM", () => {
+        finish();
+        Loading.hide();
+      });
+    }, 200);
+  } else {
+    finish();
+  }
 };
 
 export const UPDATE_PTN = ({ state, commit }, ptn) => {
@@ -363,6 +450,7 @@ export const OPEN = ({ dispatch }, callback) => {
 };
 
 export const OPEN_FILES = ({ dispatch }, files) => {
+  const games = [];
   let count = 0;
   files = Array.from(files);
   Loading.show();
@@ -372,12 +460,13 @@ export const OPEN_FILES = ({ dispatch }, files) => {
         if (file && /\.ptn$|\.txt$/i.test(file.name)) {
           let reader = new FileReader();
           reader.onload = event => {
-            dispatch("ADD_GAME", {
+            games.push({
               name: file.name.replace(/\.ptn$|\.txt$/, ""),
               ptn: event.target.result
             });
             if (!--count) {
               Loading.hide();
+              dispatch("ADD_GAMES", { games, index: 0 });
             }
           };
           reader.onerror = error => console.error(error);

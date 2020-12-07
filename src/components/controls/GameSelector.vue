@@ -114,27 +114,7 @@ export default {
       }
     },
     close(index) {
-      const game = this.$store.state.games[index];
       this.$store.dispatch("REMOVE_GAME", index);
-      this.$q.notify({
-        message: this.$t("Game x closed", { game: game.name }),
-        timeout: 10000,
-        progress: true,
-        progressClass: "bg-grey-1",
-        color: "secondary",
-        position: "bottom",
-        multiLine: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "accent",
-            handler: () => {
-              this.$store.dispatch("ADD_GAME", game);
-            }
-          },
-          { icon: "close", color: "grey-2" }
-        ]
-      });
     },
     downloadAll() {
       this.$store.getters.prompt({
