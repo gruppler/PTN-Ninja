@@ -84,6 +84,7 @@ const routes = [
         name: "png",
         path: "/png"
       },
+      {
         name: "qr",
         path: "/qr"
       }
