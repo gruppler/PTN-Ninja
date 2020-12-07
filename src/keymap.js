@@ -4,7 +4,7 @@ export const HOTKEYS = {
   ACTIONS: {
     UNDO: ["ctrl", "z"],
     REDO: ["ctrl", "shift", "z"],
-    SAVE_PNG: ["shift", "p"],
+    SAVE_PNG: ["ctrl", "shift", "p"],
     SAVE_PTN: ["ctrl", "s"],
     OPEN: ["ctrl", "o"]
   },
@@ -58,6 +58,7 @@ export const HOTKEYS = {
     editPTN: ["shift", "e"],
     share: ["ctrl", "shift", "s"],
     embedGame: ["ctrl", "e"],
+    sharePNG: ["shift", "p"],
     qrCode: ["shift", "q"],
     focusText: ["/"],
     focusGame: ["\\"],
@@ -151,6 +152,7 @@ export const HOTKEY_NAMES = {
     editPTN: "Edit PTN",
     share: "Share",
     embedGame: "Embed",
+    sharePNG: "Share PNG",
     qrCode: "QR Code",
     focusText: "Focus Text Input",
     focusGame: "Focus Game Selector",

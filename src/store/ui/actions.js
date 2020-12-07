@@ -278,53 +278,6 @@ export const TRIM_TO_PLY = ({ commit, dispatch }, game) => {
   });
 };
 
-const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://us-central1-ptn-ninja.cloudfunctions.net/tps";
-export const PNG_SSR = ({ state }, game) => {
-  const options = ["tps=" + game.state.tps];
-
-  // UI toggles
-  [
-    "axisLabels",
-    "flatCounts",
-    "pieceShadows",
-    "showRoads",
-    "unplayedPieces"
-  ].forEach(toggle => {
-    if (!state[toggle]) {
-      options.push(toggle + "=false");
-    }
-  });
-
-  // Game Tags
-  [
-    "caps",
-    "flats",
-    "caps1",
-    "flats1",
-    "caps2",
-    "flats2",
-    "player1",
-    "player2"
-  ].forEach(tagName => {
-    const tag = game.tags[tagName];
-    if (tag && tag.value) {
-      options.push(tagName + "=" + encodeURIComponent(tag.value));
-    }
-  });
-
-  // Square Highlights
-  if (state.highlightSquares) {
-    const ply = game.state.ply;
-    if (ply) {
-      options.push("ply=" + encodeURIComponent(ply.text(true)));
-    }
-  }
-
-  window.open(PNG_URL + "?" + options.join("&"));
-};
-
 export const SAVE_PNG = ({ state }, game) => {
   const options = { tps: game.state.tps };
 
@@ -337,20 +290,11 @@ export const SAVE_PNG = ({ state }, game) => {
     "showRoads",
     "unplayedPieces"
   ].forEach(toggle => {
-    options[toggle] = state[toggle];
+    options[toggle] = state.pngConfig[toggle];
   });
 
   // Game Tags
-  [
-    "caps",
-    "flats",
-    "caps1",
-    "flats1",
-    "caps2",
-    "flats2",
-    "player1",
-    "player2"
-  ].forEach(tagName => {
+  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach(tagName => {
     const tag = game.tags[tagName];
     if (tag && tag.value) {
       options[tagName] = tag.value;
@@ -374,11 +318,11 @@ export const SAVE_PNG = ({ state }, game) => {
       }
     }
 
-    const files = Object.freeze(
+    const files = Object.freeze([
       new File([blob], filename, {
         type: "image/png"
       })
-    );
+    ]);
     if (navigator.canShare && navigator.canShare({ files })) {
       navigator.share({ files, title: filename }).catch(error => {
         console.error(error);

@@ -90,6 +90,7 @@
             :game="game"
             :showQR.sync="dialogQR"
             @embed="dialogEmbed = true"
+            @png="dialogPNG = true"
           />
         </PTN-Tools>
         <div class="col-grow relative-position">
@@ -206,6 +207,7 @@
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
     <UISettings v-model="dialogUISettings" no-route-dismiss />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
+    <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications :game="game" />
@@ -245,6 +247,7 @@ import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
+import PNGConfig from "../components/dialogs/PNGConfig";
 
 import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
@@ -259,6 +262,7 @@ const HISTORY_DIALOGS = {
   dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
+  dialogPNG: "png",
   dialogQR: "qr"
 };
 
@@ -285,7 +289,8 @@ export default {
     AddGame,
     EditGame,
     UISettings,
-    EmbedConfig
+    EmbedConfig,
+    PNGConfig
   },
   props: ["ptn", "state", "name"],
   data() {
@@ -590,6 +595,9 @@ export default {
           break;
         case "embedGame":
           this.dialogEmbed = true;
+          break;
+        case "sharePNG":
+          this.dialogPNG = this.game.isLocal;
           break;
         case "focusText":
           this.right = true;

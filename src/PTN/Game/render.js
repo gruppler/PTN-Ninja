@@ -1,4 +1,5 @@
-const { itoa } = require("../Ply");
+import { cloneDeep } from "lodash";
+import { itoa } from "../Ply";
 
 const squareSizes = {
   xs: 25,
@@ -16,6 +17,7 @@ const defaults = {
   pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
+  includeNames: true,
   padding: true
 };
 
@@ -53,14 +55,10 @@ const colors = {
 };
 
 export default function render(game, options = {}) {
+  options = cloneDeep(options);
+
   for (let key in defaults) {
-    if (options.hasOwnProperty(key)) {
-      if (typeof defaults[key] === "boolean") {
-        options[key] = options[key] !== "false";
-      } else if (typeof defaults[key] === "number") {
-        options[key] = Number(options[key]);
-      }
-    } else {
+    if (!options.hasOwnProperty(key)) {
       options[key] = defaults[key];
     }
   }
@@ -160,19 +158,21 @@ export default function render(game, options = {}) {
     // Flat Counts
     ctx.fillStyle = colors.player[2].header;
     ctx.textBaseline = "middle";
+    const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
-    if (options.player1) {
+    let name1 = options.player1 || game.tags.player1.value;
+    if (options.includeNames && name1) {
       const flatCount1Width = ctx.measureText(flats[0]).width;
-      options.player1 = limitText(
+      name1 = limitText(
         ctx,
-        options.player1,
+        name1,
         flats1Width - flatCount1Width - fontSize * 1.2
       );
       ctx.textAlign = "start";
       ctx.fillText(
-        options.player1,
+        name1,
         padding + axisSize + fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
     }
     // Player 1 Flat Count
@@ -180,23 +180,24 @@ export default function render(game, options = {}) {
     ctx.fillText(
       flats[0],
       padding + axisSize + flats1Width - fontSize / 2,
-      padding + flatCounterHeight / 2
+      padding + flatCounterHeight / 2 + offset
     );
 
     ctx.fillStyle = colors.player[1].header;
     // Player 2 Name
-    if (options.player2) {
+    let name2 = options.player2 || game.tags.player2.value;
+    if (options.includeNames && name2) {
       const flatCount2Width = ctx.measureText(flats[1]).width;
-      options.player2 = limitText(
+      name2 = limitText(
         ctx,
-        options.player2,
+        name2,
         flats2Width - flatCount2Width - fontSize * 1.2
       );
       ctx.textAlign = "end";
       ctx.fillText(
-        options.player2,
+        name2,
         padding + axisSize + boardSize - fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
     }
     // Player 2 Flat Count
@@ -204,7 +205,7 @@ export default function render(game, options = {}) {
     ctx.fillText(
       flats[1],
       padding + axisSize + flats1Width + fontSize / 2,
-      padding + flatCounterHeight / 2
+      padding + flatCounterHeight / 2 + offset
     );
 
     // Turn Indicator

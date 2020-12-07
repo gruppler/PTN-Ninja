@@ -81,7 +81,7 @@ export default {
           id: "png",
           label: this.$t("PNG Image"),
           icon: "file_image",
-          action: () => this.$store.dispatch("SAVE_PNG", this.game)
+          action: this.png
         });
       }
 
@@ -142,6 +142,9 @@ export default {
     },
     embed() {
       this.$emit("embed");
+    },
+    png() {
+      this.$emit("png");
     },
     qrCode() {
       this.qrText = this.$store.getters.url(this.game, {

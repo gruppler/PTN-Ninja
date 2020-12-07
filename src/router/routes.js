@@ -81,6 +81,9 @@ const routes = [
         path: "/embed"
       },
       {
+        name: "png",
+        path: "/png"
+      },
         name: "qr",
         path: "/qr"
       }

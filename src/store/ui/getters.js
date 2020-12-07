@@ -90,6 +90,58 @@ const urlEncode = url => {
   );
 };
 
+const PNG_URL = process.env.DEV
+  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
+  : "https://ptn.ninja/tps";
+export const png_url = state => game => {
+  const params = ["tps=" + game.state.tps];
+
+  // UI toggles
+  [
+    "axisLabels",
+    "flatCounts",
+    "pieceShadows",
+    "showRoads",
+    "unplayedPieces"
+  ].forEach(toggle => {
+    if (!state.pngConfig[toggle]) {
+      params.push(toggle + "=false");
+    }
+  });
+
+  // Game Tags
+  const tags = ["caps", "flats", "caps1", "flats1", "caps2", "flats2"];
+  if (state.pngConfig.includeNames) {
+    tags.push("player1", "player2");
+  }
+  tags.forEach(tagName => {
+    const tag = game.tags[tagName];
+    if (tag && tag.value) {
+      params.push(tagName + "=" + encodeURIComponent(tag.value));
+    }
+  });
+
+  // Square Highlights
+  if (state.pngConfig.highlightSquares) {
+    const ply = game.state.ply;
+    if (ply) {
+      params.push("ply=" + encodeURIComponent(ply.text(true)));
+    }
+  }
+
+  // Filename
+  params.push(
+    "name=" +
+      encodeURIComponent(
+        game.name +
+          " - " +
+          (game.state.plyID + (game.state.plyIsDone ? "" : "-"))
+      )
+  );
+
+  return PNG_URL + "?" + params.join("&");
+};
+
 export const url = state => (game, options = {}) => {
   if (!game) {
     return "";
