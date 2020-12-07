@@ -344,7 +344,7 @@ export default function render(game, options = {}) {
       ctx.fillStyle = colors.player[piece.color].special;
       ctx.beginPath();
       ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
-    } else if (piece.isStanding) {
+    } else if (piece.square && piece.isStanding) {
       ctx.fillStyle = colors.player[piece.color].special;
       ctx.translate(0, y);
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
