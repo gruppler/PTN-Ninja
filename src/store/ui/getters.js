@@ -1,56 +1,11 @@
 import { i18n } from "../../boot/i18n";
-import { Dialog, Notify } from "quasar";
 
 import { compressToEncodedURIComponent } from "lz-string";
-import { omit } from "lodash";
+import { isArray, omit } from "lodash";
 
-export const prompt = () => ({
-  title,
-  message,
-  prompt,
-  ok,
-  cancel,
-  success,
-  failure
-}) => {
-  let dialog = Dialog.create({
-    title,
-    message,
-    prompt,
-    color: "accent",
-    "no-backdrop-dismiss": true,
-    ok: {
-      label: ok || i18n.t("OK"),
-      flat: true,
-      color: "accent"
-    },
-    cancel: {
-      label: cancel || i18n.t("Cancel"),
-      flat: true,
-      color: "accent"
-    },
-    class: "bg-secondary non-selectable"
-  });
-  if (success) {
-    dialog.onOk(success);
-  }
-  if (failure) {
-    dialog.onCancel(failure);
-  }
-  return dialog;
-};
-
-export const error = () => ({ message, timeout }) => {
-  Notify.create({
-    message,
-    timeout: timeout || 0,
-    icon: "error",
-    color: "negative",
-    position: "top-right",
-    actions: [{ icon: "close", color: "grey-10" }],
-    classes: "text-grey-10"
-  });
-};
+const PNG_URL = process.env.DEV
+  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
+  : "https://tps.ptn.ninja/";
 
 export const uniqueName = state => (name, ignoreFirst = false) => {
   const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
@@ -90,9 +45,16 @@ const urlEncode = url => {
   );
 };
 
-const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://tps.ptn.ninja/";
+export const png_filename = state => game => {
+  return (
+    game.name +
+    " - " +
+    game.state.plyID +
+    (game.state.plyIsDone ? "" : "-") +
+    ".png"
+  );
+};
+
 export const png_url = state => game => {
   const params = ["tps=" + game.state.tps];
 
@@ -130,14 +92,7 @@ export const png_url = state => game => {
   }
 
   // Filename
-  params.push(
-    "name=" +
-      encodeURIComponent(
-        game.name +
-          " - " +
-          (game.state.plyID + (game.state.plyIsDone ? "" : "-"))
-      )
-  );
+  params.push("name=" + encodeURIComponent(png_filename(state)(game)));
 
   return PNG_URL + "?" + params.join("&");
 };
@@ -199,4 +154,11 @@ export const url = state => (game, options = {}) => {
         .join("&");
   }
   return url;
+};
+
+export const sharableFiles = state => files => {
+  if (!isArray(files)) {
+    files = [files];
+  }
+  return Object.freeze(files);
 };

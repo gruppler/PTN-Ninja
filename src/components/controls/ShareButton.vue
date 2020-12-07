@@ -68,21 +68,20 @@ export default {
       );
 
       if (!this.$store.state.embed && this.game.isLocal) {
-        actions.push({
-          id: "embed",
-          label: this.$t("Embed"),
-          icon: "embed",
-          action: this.embed
-        });
-      }
-
-      if (this.game.isLocal) {
-        actions.push({
-          id: "png",
-          label: this.$t("PNG Image"),
-          icon: "file_image",
-          action: this.png
-        });
+        actions.push(
+          {
+            id: "embed",
+            label: this.$t("Embed"),
+            icon: "embed",
+            action: this.embed
+          },
+          {
+            id: "png",
+            label: this.$t("PNG Image"),
+            icon: "file_image",
+            action: this.png
+          }
+        );
       }
 
       actions.push(

@@ -2,7 +2,7 @@
   <div
     class="square"
     :class="{
-      light: square.isLight,
+      light: square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !$store.state.showRoads,
       eog,
