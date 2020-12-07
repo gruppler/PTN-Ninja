@@ -9,6 +9,8 @@ import Tag from "../Tag";
 
 import GameState from "./state";
 
+import render from "./render";
+
 import { defaults, each, flatten, map, uniq } from "lodash";
 import memoize from "./memoize";
 
@@ -354,6 +356,10 @@ export default class GameBase {
     } else if (this.state.plies.length) {
       this.state.plyID = 0;
     }
+  }
+
+  render(options) {
+    return render(this, options);
   }
 
   get minState() {
