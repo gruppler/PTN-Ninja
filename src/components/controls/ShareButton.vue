@@ -51,6 +51,13 @@ export default {
         });
       }
 
+      actions.push({
+        id: "tps",
+        label: this.$t("TPS"),
+        icon: "board",
+        action: () => this.shareText("tps"),
+      });
+
       actions.push(
         {
           id: "moves",
@@ -119,6 +126,12 @@ export default {
           output = {
             title: this.game.state.ply.text(),
             text: this.game.state.ply.text(),
+          };
+          break;
+        case "tps":
+          output = {
+            title: this.game.state.tps,
+            text: this.game.state.tps,
           };
           break;
         case "moves":
