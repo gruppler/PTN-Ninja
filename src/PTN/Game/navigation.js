@@ -71,7 +71,7 @@ export default class GameNavigation {
     let stack = [];
 
     if (moveset[0].errors) {
-      console.error(moveset[0].errors);
+      throw new Error(...moveset[0].errors);
       return false;
     }
 
@@ -113,7 +113,7 @@ export default class GameNavigation {
               this._updatePTN();
             }
           } else {
-            console.error("Invalid ply");
+            throw new Error("Invalid ply");
             return false;
           }
         }
@@ -128,7 +128,7 @@ export default class GameNavigation {
         times(count, () => {
           let piece = stack.pop();
           if (!piece) {
-            console.error("Invalid ply");
+            throw new Error("Invalid ply");
             return false;
           }
           square.pushPiece(piece);
