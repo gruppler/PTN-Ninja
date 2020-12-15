@@ -1,7 +1,7 @@
 import { i18n } from "./boot/i18n";
 import { toDate } from "date-fns";
 
-export const formatError = error => {
+export const formatError = (error) => {
   const errorMessages = i18n.messages[i18n.locale].error;
   if (typeof error === "string") {
     if (error in errorMessages) {
@@ -23,7 +23,7 @@ export const formatError = error => {
   }
 };
 
-export const formatSuccess = success => {
+export const formatSuccess = (success) => {
   const successMessages = i18n.messages[i18n.locale].success;
   if (typeof success === "string") {
     if (success in successMessages) {
@@ -34,7 +34,7 @@ export const formatSuccess = success => {
   }
 };
 
-export const formatWarning = warning => {
+export const formatWarning = (warning) => {
   const warningMessages = i18n.messages[i18n.locale].warning;
   if (typeof warning === "string") {
     if (warning in warningMessages) {
@@ -45,7 +45,7 @@ export const formatWarning = warning => {
   }
 };
 
-export const formatHint = hint => {
+export const formatHint = (hint) => {
   const warningMessages = i18n.messages[i18n.locale].hint;
   if (typeof hint === "string") {
     if (hint in warningMessages) {
@@ -56,7 +56,7 @@ export const formatHint = hint => {
   }
 };
 
-export const timestampToDate = date => {
+export const timestampToDate = (date) => {
   if (date && date.constructor !== Date) {
     if (date.toDate) {
       date = date.toDate(date);

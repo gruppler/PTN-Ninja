@@ -39,18 +39,18 @@ export default {
     return {
       range: {
         min: 1,
-        max: this.$store.state.games.length - 1
+        max: this.$store.state.games.length - 1,
       },
-      min: 0
+      min: 0,
     };
   },
   computed: {
     games() {
-      return this.$store.state.games.map(game => game.name);
+      return this.$store.state.games.map((game) => game.name);
     },
     max() {
       return this.games.length - 1;
-    }
+    },
   },
   methods: {
     close() {
@@ -59,10 +59,10 @@ export default {
     submit() {
       this.$store.dispatch("REMOVE_MULTIPLE_GAMES", {
         start: this.range.min,
-        count: this.range.max - this.range.min + 1
+        count: this.range.max - this.range.min + 1,
       });
       this.close();
-    }
+    },
   },
   watch: {
     value(show) {
@@ -70,7 +70,7 @@ export default {
         this.range.min = 1;
         this.range.max = this.max;
       }
-    }
-  }
+    },
+  },
 };
 </script>

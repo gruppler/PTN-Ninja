@@ -54,7 +54,7 @@ export default {
     return {
       loading: false,
       error: "",
-      showAll: false
+      showAll: false,
     };
   },
   methods: {
@@ -64,7 +64,7 @@ export default {
         message: this.$t("confirm.resetForm"),
         success: () => {
           this.$refs.gameInfo.init();
-        }
+        },
       });
     },
     close() {
@@ -74,7 +74,7 @@ export default {
       this.game.setName(name);
 
       let changedTags = {};
-      Object.keys(tags).forEach(key => {
+      Object.keys(tags).forEach((key) => {
         const value = tags[key];
         if (value !== this.game.tag(key)) {
           changedTags[key] = value;
@@ -96,7 +96,7 @@ export default {
       }
       this.showAll = false;
       this.close();
-    }
+    },
   },
   watch: {
     value(isVisible) {
@@ -104,7 +104,7 @@ export default {
         this.loading = false;
         this.error = "";
       }
-    }
-  }
+    },
+  },
 };
 </script>

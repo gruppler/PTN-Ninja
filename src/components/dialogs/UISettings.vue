@@ -268,7 +268,7 @@ const props = [
   "showMove",
   "showRoads",
   "showScrubber",
-  "unplayedPieces"
+  "unplayedPieces",
 ];
 
 export default {
@@ -279,26 +279,26 @@ export default {
       hotkeys: HOTKEYS_FORMATTED.UI,
       openDuplicateOptions: [
         { label: this.$t("Rename"), value: "rename" },
-        { label: this.$t("Replace"), value: "replace" }
-      ]
+        { label: this.$t("Replace"), value: "replace" },
+      ],
     };
   },
   computed: zipObject(
     props,
-    props.map(key => ({
+    props.map((key) => ({
       get() {
         return this.isDisabled(key) ? false : this.$store.state[key];
       },
       set(value) {
         this.$store.dispatch("SET_UI", [key, value]);
-      }
+      },
     }))
   ),
   methods: {
     isDisabled(key) {
       return this.disabled && this.disabled.includes(key);
-    }
-  }
+    },
+  },
 };
 </script>
 

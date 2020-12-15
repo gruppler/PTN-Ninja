@@ -34,8 +34,8 @@ export default {
   computed: {
     maximized() {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;
-    }
-  }
+    },
+  },
 };
 </script>
 

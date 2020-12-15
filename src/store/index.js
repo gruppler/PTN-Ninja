@@ -5,13 +5,13 @@ import ui from "./ui";
 
 Vue.use(Vuex);
 
-export default function() {
+export default function () {
   const Store = new Vuex.Store({
     ...ui,
 
     // enable strict mode (adds overhead!)
     // for dev mode only
-    strict: process.env.DEV
+    strict: process.env.DEV,
   });
 
   return Store;

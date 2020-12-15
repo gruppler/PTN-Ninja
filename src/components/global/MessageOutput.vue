@@ -23,7 +23,7 @@ import {
   formatError,
   formatSuccess,
   formatWarning,
-  formatHint
+  formatHint,
 } from "../../utilities";
 
 export default {
@@ -33,7 +33,7 @@ export default {
     formatError,
     formatSuccess,
     formatWarning,
-    formatHint
-  }
+    formatHint,
+  },
 };
 </script>

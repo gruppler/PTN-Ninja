@@ -86,5 +86,5 @@ export default {
   url: "mdi-link",
   visibility: "mdi-eye",
   visibility_off: "mdi-eye-off",
-  warning: "mdi-alert"
+  warning: "mdi-alert",
 };

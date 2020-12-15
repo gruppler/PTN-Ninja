@@ -171,10 +171,10 @@ export default {
   "!!": "!!",
 
   result: {
-    "1": "{player} wins by default",
+    1: "{player} wins by default",
     F: "{player} wins by flats",
     R: "{player} wins by road",
-    tie: "It's a tie"
+    tie: "It's a tie",
   },
 
   confirm: {
@@ -186,7 +186,7 @@ export default {
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?",
     resetPassword: "Reset the password for {email}?",
-    resetPNG: "Reset PNG settings to default?"
+    resetPNG: "Reset PNG settings to default?",
   },
 
   error: {
@@ -230,7 +230,7 @@ export default {
     UnvalidatedEmail: "Please validate your email address.",
     "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
-    "auth/wrong-password": "Incorrect password"
+    "auth/wrong-password": "Incorrect password",
   },
 
   success: {
@@ -239,12 +239,12 @@ export default {
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
     verifyEmailSent: "Verification email sent.",
-    updateAvailable: "A new version is available"
+    updateAvailable: "A new version is available",
   },
 
   warning: {
     logIn:
-      "Logging in will abandon all private games! Register an account to keep them."
+      "Logging in will abandon all private games! Register an account to keep them.",
   },
 
   hint: {
@@ -252,7 +252,7 @@ export default {
     playerNamePublic: "Your unique name",
     url: "Share this with your opponent and spectators",
     privateGame: "This game will not be listed",
-    spectate: "Share this with other spectators"
+    spectate: "Share this with other spectators",
   },
 
   hotkeys: {
@@ -272,7 +272,7 @@ export default {
     Ctrl: "Ctrl",
     Del: "Delete",
     Shift: "Shift",
-    Space: "Space"
+    Space: "Space",
   },
 
   format: {
@@ -281,6 +281,6 @@ export default {
     "date-short": "M/d/yyyy",
     "date-time-short": "M/d/yyyy h:mma",
     "date-full": "E, MMM d, yyyy",
-    "date-time-full": "E, MMM d, yyyy h:mma"
-  }
+    "date-time-full": "E, MMM d, yyyy h:mma",
+  },
 };

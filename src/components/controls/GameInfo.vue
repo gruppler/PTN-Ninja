@@ -558,7 +558,9 @@
                   $t("result." + scope.opt.label.type, {
                     player:
                       tags["player" + scope.opt.label.winner] ||
-                      (scope.opt.label.winner === 1 ? $t("White") : $t("Black"))
+                      (scope.opt.label.winner === 1
+                        ? $t("White")
+                        : $t("Black")),
                   })
                 }}</q-item-label>
               </q-item-section>
@@ -636,7 +638,7 @@ import {
   generateName,
   isDefaultName,
   pieceCounts,
-  sample
+  sample,
 } from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
@@ -668,7 +670,7 @@ export default {
         site: null,
         size: null,
         time: null,
-        tps: null
+        tps: null,
       },
       proxyDate: null,
       proxyTime: null,
@@ -678,16 +680,16 @@ export default {
       separatePieceCounts: false,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
-      sizes: [3, 4, 5, 6, 7, 8].map(size => ({
+      sizes: [3, 4, 5, 6, 7, 8].map((size) => ({
         label: `${size}x${size}`,
-        value: size
+        value: size,
       })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
-        value => ({
+        (value) => ({
           value,
-          label: value ? ResultTag.parse(value) : ""
+          label: value ? ResultTag.parse(value) : "",
         })
-      )
+      ),
     };
   },
   computed: {
@@ -696,14 +698,14 @@ export default {
     },
     result() {
       const result = this.tags.result
-        ? this.results.find(option => option.value === this.tags.result)
+        ? this.results.find((option) => option.value === this.tags.result)
         : false;
       return result ? result.label : "";
     },
     player() {
       const user = this.$store.state.online.user;
       return user ? this.game.player(user.uid) : 0;
-    }
+    },
   },
   methods: {
     hasErrors() {
@@ -729,7 +731,7 @@ export default {
       ) {
         this.$store.dispatch("SET_UI", [
           "playerName",
-          this.tags["player" + this.player]
+          this.tags["player" + this.player],
         ]);
         this.player;
       }
@@ -741,15 +743,15 @@ export default {
       this.submit();
       this.$store.dispatch("SET_UI", [
         "selectedPiece",
-        { color: this.game ? this.game.firstPlayer : 1, type: "F" }
+        { color: this.game ? this.game.firstPlayer : 1, type: "F" },
       ]);
       this.$store.dispatch("SET_UI", [
         "firstMoveNumber",
-        this.game ? this.game.firstMoveNumber : 1
+        this.game ? this.game.firstMoveNumber : 1,
       ]);
       this.$store.dispatch("SET_UI", [
         "editingTPS",
-        this.game ? this.game.state.tps : ""
+        this.game ? this.game.state.tps : "",
       ]);
       this.$nextTick(() =>
         this.$store.dispatch("SET_UI", ["isEditingTPS", true])
@@ -764,15 +766,15 @@ export default {
     swapPlayers() {
       [this.tags.player1, this.tags.player2] = [
         this.tags.player2,
-        this.tags.player1
+        this.tags.player1,
       ];
       [this.tags.rating1, this.tags.rating2] = [
         this.tags.rating2,
-        this.tags.rating1
+        this.tags.rating1,
       ];
     },
     updateTags() {
-      Object.keys(this.tags).forEach(key => {
+      Object.keys(this.tags).forEach((key) => {
         this.tags[key] =
           (this.values
             ? this.values[key]
@@ -780,7 +782,9 @@ export default {
             ? this.game.tag(key)
             : null) || null;
       });
-      this.showPieceCounts = this.pieceCountTags.find(tag => !!this.tags[tag]);
+      this.showPieceCounts = this.pieceCountTags.find(
+        (tag) => !!this.tags[tag]
+      );
       this.separatePieceCounts =
         this.tags.caps1 !== this.tags.caps2 ||
         this.tags.flats1 !== this.tags.flats2;
@@ -789,15 +793,15 @@ export default {
       let rules = [];
       if (tag === "tps") {
         const tags = this.tags;
-        rules[0] = tps =>
+        rules[0] = (tps) =>
           !tps ||
           ((tps = TPS.parse(tps)) &&
             !!(tps && tps.isValid && tps.size === 1 * tags.size));
       } else if (tag.startsWith("caps")) {
         const tags = this.tags;
-        rules[0] = caps => !caps || 1 * caps <= 1 * tags.size;
+        rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
       } else {
-        rules[0] = value => !value || formats[tag].test(value);
+        rules[0] = (value) => !value || formats[tag].test(value);
       }
       return rules;
     },
@@ -806,7 +810,7 @@ export default {
       return (
         this.showAll ||
         tags.find(
-          tag =>
+          (tag) =>
             !!this.tags[tag] ||
             (document.activeElement && document.activeElement.name === tag)
         )
@@ -815,7 +819,7 @@ export default {
     init() {
       this.updateTags();
       this.name = this.game ? this.game.name : this.generatedName;
-    }
+    },
   },
   mounted() {
     this.init();
@@ -830,8 +834,8 @@ export default {
       if (isDefaultName(this.name)) {
         this.name = newName;
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

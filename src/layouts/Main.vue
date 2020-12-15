@@ -290,7 +290,7 @@ const HISTORY_DIALOGS = {
   dialogLogIn: "login",
   dialogJoinGame: "join",
   dialogOnline: "online",
-  dialogQR: "qr"
+  dialogQR: "qr",
 };
 
 export default {
@@ -321,7 +321,7 @@ export default {
     PNGConfig,
     ShareOnline,
     LogIn,
-    JoinGame
+    JoinGame,
   },
   props: ["ptn", "state", "name", "gameID"],
   data() {
@@ -331,13 +331,13 @@ export default {
       Platform,
       errors,
       game,
-      hotkeys: HOTKEYS
+      hotkeys: HOTKEYS,
     };
   },
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map(key => ({
+      Object.values(HISTORY_DIALOGS).map((key) => ({
         get() {
           return this.$route.name === key;
         },
@@ -352,7 +352,7 @@ export default {
               this.$router.replace({ name: "local" });
             }
           }
-        }
+        },
       }))
     ),
     left: {
@@ -361,7 +361,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showPTN", value]);
-      }
+      },
     },
     right: {
       get() {
@@ -369,7 +369,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showText", value]);
-      }
+      },
     },
     hasChat() {
       return this.game.hasChat;
@@ -380,7 +380,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
-      }
+      },
     },
     notifyNotes: {
       get() {
@@ -388,7 +388,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["notifyNotes", value]);
-      }
+      },
     },
     isEditingTPS: {
       get() {
@@ -399,7 +399,7 @@ export default {
         if (!value) {
           this.editingTPS = "";
         }
-      }
+      },
     },
     selectedPiece: {
       get() {
@@ -411,7 +411,7 @@ export default {
           this.selectedPiece.color,
           this.firstMoveNumber
         );
-      }
+      },
     },
     minFirstMoveNumber() {
       const min1 =
@@ -423,7 +423,7 @@ export default {
               (total, square) =>
                 square.pieces.length
                   ? total +
-                    square.pieces.slice(1).filter(piece => piece.color === 1)
+                    square.pieces.slice(1).filter((piece) => piece.color === 1)
                       .length
                   : total,
               total
@@ -439,7 +439,7 @@ export default {
               (total, square) =>
                 square.pieces.length
                   ? total +
-                    square.pieces.slice(1).filter(piece => piece.color === 2)
+                    square.pieces.slice(1).filter((piece) => piece.color === 2)
                       .length
                   : total,
               total
@@ -458,7 +458,7 @@ export default {
           this.selectedPiece.color,
           this.firstMoveNumber
         );
-      }
+      },
     },
     editingTPS: {
       get() {
@@ -466,7 +466,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
-      }
+      },
     },
     disabledOptions() {
       if (this.game.config.disableRoads) {
@@ -493,7 +493,7 @@ export default {
       return {
         history: this.game.history.concat(),
         index: this.game.historyIndex,
-        name: this.game.name
+        name: this.game.name,
       };
     },
     gameText() {
@@ -510,7 +510,7 @@ export default {
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
-    }
+    },
   },
   methods: {
     setWindowTitle(prefix = this.game.name) {
@@ -535,7 +535,7 @@ export default {
         if (this.ptn) {
           // Add game from URL
           const index = this.$store.state.games.findIndex(
-            g => g.name === this.name
+            (g) => g.name === this.name
           );
           if (index < 0 || this.$store.state.openDuplicate !== "replace") {
             game = new Game(this.ptn, { name: this.name, state: this.state });
@@ -544,7 +544,7 @@ export default {
                 ptn: this.ptn,
                 name: game.name,
                 state: game.minState,
-                config: game.config
+                config: game.config,
               });
               this.$router.replace("/");
             }
@@ -571,10 +571,10 @@ export default {
                       color: "accent",
                       handler: () => {
                         this.$store.dispatch("UNDO", game);
-                      }
+                      },
                     },
-                    { icon: "close", color: "grey-2" }
-                  ]
+                    { icon: "close", color: "grey-2" },
+                  ],
                 });
               });
             }
@@ -613,7 +613,7 @@ export default {
       if (game.config.unseen) {
         this.$store.dispatch("SET_CONFIG", {
           game,
-          config: { ...game.config, unseen: false }
+          config: { ...game.config, unseen: false },
         });
       }
 
@@ -735,7 +735,7 @@ export default {
           if (!this.dialogAddGame) {
             this.$router.push({
               name: "add",
-              params: { tab: "load", online: "online" }
+              params: { tab: "load", online: "online" },
             });
           } else if (
             this.$route.params.tab !== "load" ||
@@ -743,12 +743,12 @@ export default {
           ) {
             this.$router.replace({
               name: "add",
-              params: { tab: "load", online: "online" }
+              params: { tab: "load", online: "online" },
             });
           } else {
             this.$router.replace({
               name: "add",
-              params: { tab: "load", online: null }
+              params: { tab: "load", online: null },
             });
           }
           break;
@@ -799,7 +799,7 @@ export default {
     nop(event) {
       event.stopPropagation();
       event.preventDefault();
-    }
+    },
   },
   watch: {
     games(newGames, oldGames) {
@@ -815,7 +815,7 @@ export default {
       if (oldState.name === newState.name) {
         this.$store.dispatch("SET_STATE", {
           game: this.game,
-          gameState: this.game.minState
+          gameState: this.game.minState,
         });
       }
     },
@@ -838,7 +838,7 @@ export default {
       if (oldName.game === newName.game) {
         this.$store.dispatch("SET_NAME", {
           oldName: oldName.name,
-          newName: newName.name
+          newName: newName.name,
         });
       }
       this.setWindowTitle(newName.name);
@@ -859,7 +859,7 @@ export default {
           this.dialogJoinGame = true;
         }
       }
-    }
+    },
   },
   beforeCreate() {
     // Load online functionality
@@ -883,7 +883,7 @@ export default {
       if (this.gameID) {
         // Check that the game is not already open
         const index = this.$store.state.games.findIndex(
-          game => game.config.id === this.gameID
+          (game) => game.config.id === this.gameID
         );
         if (index >= 0) {
           this.$store.dispatch("SELECT_GAME", index);
@@ -894,7 +894,7 @@ export default {
             .then(() => {
               this.$router.replace("/");
             })
-            .catch(error => {
+            .catch((error) => {
               this.$store.dispatch("NOTIFY_ERROR", error);
             });
         }
@@ -908,7 +908,7 @@ export default {
           ptn: this.game.text(),
           name: this.game.name,
           state: this.game.minState,
-          config: this.game.config
+          config: this.game.config,
         });
       }
     }
@@ -924,7 +924,7 @@ export default {
     window.removeEventListener("drop", this.openFiles);
     window.removeEventListener("dragover", this.nop);
     window.removeEventListener("dragleave", this.nop);
-  }
+  },
 };
 </script>
 

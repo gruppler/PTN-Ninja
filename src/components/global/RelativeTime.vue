@@ -24,12 +24,12 @@ export default {
     value: [Date, Number, String],
     "text-only": Boolean,
     invert: Boolean,
-    dark: Boolean
+    dark: Boolean,
   },
   data() {
     return {
       label: "",
-      timer: null
+      timer: null,
     };
   },
   computed: {
@@ -38,17 +38,17 @@ export default {
     },
     tooltip() {
       return format(this.date, this.$t("format.date-time-full"));
-    }
+    },
   },
   methods: {
     updateLabel() {
       this.label = formatDistanceToNow(this.date, { addSuffix: true });
-    }
+    },
   },
   watch: {
     value() {
       this.updateLabel();
-    }
+    },
   },
   created() {
     this.updateLabel();
@@ -56,6 +56,6 @@ export default {
   },
   destroyed() {
     clearInterval(this.timer);
-  }
+  },
 };
 </script>

@@ -33,7 +33,7 @@ export default class GameOnline {
       comments: this.JSONComments(
         (this.notes[-1] || []).concat(this.chatlog[-1] || [])
       ),
-      moves: this.JSONMoves
+      moves: this.JSONMoves,
     };
   }
 
@@ -67,7 +67,7 @@ export default class GameOnline {
   }
 
   get JSONMoves() {
-    return this.moves.map(move => {
+    return this.moves.map((move) => {
       const comments = this.getMoveComments(move);
       return {
         branch: move.branch,
@@ -75,13 +75,13 @@ export default class GameOnline {
         ply1: this.JSONPly(move.ply1),
         ply2: this.JSONPly(move.ply2),
         comments1: this.JSONComments(comments[0]),
-        comments2: this.JSONComments(comments[1])
+        comments2: this.JSONComments(comments[1]),
       };
     });
   }
 
   parseJSONMoves(json) {
-    json.forEach(moveParams => {
+    json.forEach((moveParams) => {
       const move = new Move({
         game: this,
         id: this.moves.length,
@@ -101,7 +101,7 @@ export default class GameOnline {
           2,
           moveParams.number === 1 && !this.hasTPS ? 1 : 2,
           moveParams.branch
-        )
+        ),
       });
 
       if (moveParams.comments1.length && move.ply1) {
@@ -120,11 +120,11 @@ export default class GameOnline {
       return null;
     } else if (ply.isNop) {
       return {
-        isNop: true
+        isNop: true,
       };
     } else {
       let json = {
-        text: ply.text(true)
+        text: ply.text(true),
       };
       if (ply.evaluation) {
         json.evaluation = ply.evaluation.text;
@@ -149,7 +149,7 @@ export default class GameOnline {
         evaluation: ply.evaluation
           ? Evaluation.parse(ply.evaluation)
           : undefined,
-        result: ply.result ? Result.parse(ply.result) : undefined
+        result: ply.result ? Result.parse(ply.result) : undefined,
       });
       this.plies.push(ply);
       if (!(branch in this.branches)) {
@@ -162,11 +162,11 @@ export default class GameOnline {
   }
 
   JSONComments(comments) {
-    return comments ? comments.map(comment => comment.contents) : [];
+    return comments ? comments.map((comment) => comment.contents) : [];
   }
 
   parseJSONComments(comments, plyID) {
-    comments.forEach(comment => {
+    comments.forEach((comment) => {
       comment = Comment.parse(`{${comment}}`);
       const log = comment.player === null ? "notes" : "chatlog";
       if (!this[log][plyID]) {

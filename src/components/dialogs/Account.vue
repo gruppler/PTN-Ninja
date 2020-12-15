@@ -117,7 +117,7 @@ export default {
       playerName: "",
       email: "",
       password: "",
-      showPassword: false
+      showPassword: false,
     };
   },
   computed: {
@@ -126,7 +126,7 @@ export default {
     },
     username() {
       return this.user ? this.user.displayName : "";
-    }
+    },
   },
   methods: {
     close() {
@@ -140,7 +140,7 @@ export default {
           this.loadingLogOut = false;
           this.close();
         })
-        .catch(error => {
+        .catch((error) => {
           this.loadingLogOut = false;
           this.error = error;
           console.error(error);
@@ -154,7 +154,7 @@ export default {
           this.loadingVerify = false;
           this.success = "verifyEmailSent";
         })
-        .catch(error => {
+        .catch((error) => {
           this.loadingVerify = false;
           this.error = error;
         });
@@ -165,13 +165,13 @@ export default {
         this.$store
           .dispatch("online/UPDATE_ACCOUNT", {
             email: this.email,
-            password: this.password
+            password: this.password,
           })
           .then(() => {
             this.loadingSubmit = false;
             this.close();
           })
-          .catch(error => {
+          .catch((error) => {
             this.loadingSubmit = false;
             this.error = error;
             console.error(error);
@@ -179,7 +179,7 @@ export default {
       } else {
         this.close();
       }
-    }
+    },
   },
   watch: {
     value(isVisible) {
@@ -199,7 +199,7 @@ export default {
     },
     user(user) {
       this.email = user ? user.email : "";
-    }
-  }
+    },
+  },
 };
 </script>

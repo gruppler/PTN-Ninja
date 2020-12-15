@@ -6,11 +6,11 @@ import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
 import Game from "../../PTN/Game";
 import { toDate, now } from "../../PTN/Tag";
 
-const configToDB = config => {
+const configToDB = (config) => {
   return omit(config, ["id", "player", "unseen"]);
 };
 
-const snapshotToGameJSON = doc => {
+const snapshotToGameJSON = (doc) => {
   let game = doc.data();
   game.config.id = doc.id;
   game.config.player = game.config.players
@@ -25,7 +25,7 @@ export const INIT = ({ commit, dispatch, state }) => {
     if (state.initialized) {
       resolve();
     }
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
         dispatch("LISTEN_ACTIVE_GAMES");
@@ -49,10 +49,7 @@ export const ANONYMOUS = () => {
 };
 
 export const CHECK_USERNAME = async (context, name) => {
-  let nameSnapshot = await db
-    .collection("names")
-    .doc(name.toLowerCase())
-    .get();
+  let nameSnapshot = await db.collection("names").doc(name.toLowerCase()).get();
   return !nameSnapshot.exists;
 };
 
@@ -72,7 +69,7 @@ export const REGISTER = async (context, { email, password, name }) => {
     // Set name
     nameDoc.set({ uid: user.uid });
     user.updateProfile({
-      displayName: name
+      displayName: name,
     });
   }
 };
@@ -122,7 +119,7 @@ export const CREATE_GAME = async (
     player2: "",
     rating1: "",
     rating2: "",
-    ...now()
+    ...now(),
   };
   tags["player" + player] = playerName;
   game.setTags(tags, false);
@@ -138,7 +135,7 @@ export const CREATE_GAME = async (
     isOnline: true,
     players: [players[1] || null, players[2] || null],
     isPrivate,
-    disableRoads
+    disableRoads,
   });
 
   // Add game to DB
@@ -175,7 +172,7 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   let config = {
     ...game.config,
     ...gameData.config,
-    players: [...gameData.config.players]
+    players: [...gameData.config.players],
   };
   config.players[player - 1] = state.user.uid;
 
@@ -187,7 +184,7 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
 
   let changes = {
     config: configToDB(config),
-    tags: game.JSONTags
+    tags: game.JSONTags,
   };
 
   // Update name
@@ -220,7 +217,7 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
       // Load moves
       let moveDocs = await gameDoc.collection("moves").get();
       gameJSON.moves = [];
-      moveDocs.forEach(move => (gameJSON.moves[move.id] = move.data()));
+      moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
 
       // Add game
       let game = new Game(false, gameJSON);
@@ -230,7 +227,7 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
           ptn: game.ptn,
           name: game.name,
           state: game.minState,
-          config: game.config
+          config: game.config,
         },
         { root: true }
       );
@@ -244,9 +241,9 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
   }
 };
 
-export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
+export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
   dispatch("UNLISTEN_ACTIVE_GAMES");
-  const gameIDs = compact(this.state.games.map(game => game.config.id));
+  const gameIDs = compact(this.state.games.map((game) => game.config.id));
   if (!gameIDs.length) {
     return;
   }
@@ -254,8 +251,8 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
     .collection("games")
     .where(firebase.firestore.FieldPath.documentId(), "in", gameIDs)
     .onSnapshot(
-      snapshot => {
-        snapshot.docChanges().forEach(change => {
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
           const activeGame = this.state.games[0];
           let game, stateGame, isActive;
           let isChanged = false;
@@ -264,7 +261,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
             case "modified":
               game = snapshotToGameJSON(change.doc, state);
               stateGame = this.state.games.find(
-                g => g.config.id === game.config.id
+                (g) => g.config.id === game.config.id
               );
               isActive = activeGame && game.config.id === activeGame.config.id;
               if (stateGame) {
@@ -273,7 +270,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
                   console.log("UPDATED NAME", game, game.name, stateGame.name);
                   this.dispatch("SET_NAME", {
                     oldName: stateGame.name,
-                    newName: game.name
+                    newName: game.name,
                   });
                 }
                 if (!isEqual(game.state, stateGame.state)) {
@@ -307,7 +304,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
                   );
                   this.dispatch("SET_CONFIG", {
                     game,
-                    config: { ...game.config, unseen: !isActive }
+                    config: { ...game.config, unseen: !isActive },
                   });
                 }
               }
@@ -319,7 +316,7 @@ export const LISTEN_ACTIVE_GAMES = function({ commit, dispatch, state }) {
           }
         });
       },
-      error => {
+      (error) => {
         console.error(error);
       }
     );
@@ -341,8 +338,8 @@ export const LISTEN_PLAYER_GAMES = ({ commit, dispatch, state }) => {
     .orderBy("tags.date", "desc")
     .limit(100)
     .onSnapshot(
-      snapshot => {
-        snapshot.docChanges().forEach(change => {
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
           let game;
           switch (change.type) {
             case "added":
@@ -356,7 +353,7 @@ export const LISTEN_PLAYER_GAMES = ({ commit, dispatch, state }) => {
           }
         });
       },
-      error => {
+      (error) => {
         console.error(error);
       }
     );
@@ -378,8 +375,8 @@ export const LISTEN_PUBLIC_GAMES = ({ commit, dispatch, state }) => {
     .orderBy("tags.date", "desc")
     .limit(100)
     .onSnapshot(
-      snapshot => {
-        snapshot.docChanges().forEach(change => {
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
           let game;
           switch (change.type) {
             case "added":
@@ -393,7 +390,7 @@ export const LISTEN_PUBLIC_GAMES = ({ commit, dispatch, state }) => {
           }
         });
       },
-      error => {
+      (error) => {
         console.error(error);
       }
     );

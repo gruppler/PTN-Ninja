@@ -4,14 +4,14 @@ const OPPOSITE = {
   N: "S",
   S: "N",
   E: "W",
-  W: "E"
+  W: "E",
 };
 
 const EDGE = {
   N: "NS",
   S: "NS",
   E: "EW",
-  W: "EW"
+  W: "EW",
 };
 
 export default class Square {
@@ -23,7 +23,7 @@ export default class Square {
     this.isStanding = false;
     this.roads = new Sides();
     this.connected = new Sides({
-      disable: side => this.roads.set(side, false)
+      disable: (side) => this.roads.set(side, false),
     });
 
     this.static = {
@@ -31,24 +31,24 @@ export default class Square {
       x: x,
       y: y,
       edges: new Sides({
-        enable: side => {
+        enable: (side) => {
           this.static.isEdge = true;
           this.static["is" + EDGE[side]] = true;
           this.static.isCorner = this.static.edges.length == 2;
-        }
+        },
       }),
       isLight: x % 2 !== y % 2,
       isEdge: false,
       isCorner: false,
       isNS: false,
       isEW: false,
-      neighbors: new Sides()
+      neighbors: new Sides(),
     };
     this.static.edges.setSides({
       N: y == size - 1,
       S: y == 0,
       E: x == size - 1,
-      W: x == 0
+      W: x == 0,
     });
     Object.freeze(this.static.edges);
   }
@@ -76,7 +76,7 @@ export default class Square {
 
   _updateConnected() {
     let neighbor, isConnected;
-    Object.keys(EDGE).forEach(side => {
+    Object.keys(EDGE).forEach((side) => {
       if (this.static.edges[side]) {
         this.connected[side] = !!(this.piece && !this.isStanding);
       } else if ((neighbor = this.static.neighbors[side])) {
@@ -93,7 +93,7 @@ export default class Square {
   }
 
   setRoad(road) {
-    this.connected.forEach(side => {
+    this.connected.forEach((side) => {
       const isRoad = !!(
         road &&
         ((this.static.edges[side] && road.edges[EDGE[side]]) ||
@@ -121,7 +121,7 @@ export default class Square {
   }
 
   pushPieces(pieces) {
-    pieces.forEach(piece => this.pushPiece(piece));
+    pieces.forEach((piece) => this.pushPiece(piece));
   }
 
   popPiece() {
@@ -155,12 +155,12 @@ export class Sides {
       N: false,
       S: false,
       E: false,
-      W: false
+      W: false,
     };
-    Object.keys(this._index).forEach(side => {
+    Object.keys(this._index).forEach((side) => {
       Object.defineProperty(this, side, {
         get: () => this.get(side),
-        set: value => this.set(side, value)
+        set: (value) => this.set(side, value),
       });
     });
 
@@ -178,8 +178,8 @@ export class Sides {
       "push",
       "shift",
       "splice",
-      "unshift"
-    ].forEach(fn => (this[fn] = this._array[fn].bind(this._array)));
+      "unshift",
+    ].forEach((fn) => (this[fn] = this._array[fn].bind(this._array)));
   }
 
   setSides(values) {

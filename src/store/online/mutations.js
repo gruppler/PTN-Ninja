@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { isEmpty, pick } from "lodash";
 
-export const INIT = state => {
+export const INIT = (state) => {
   state.initialized = true;
 };
 
@@ -15,7 +15,7 @@ export const SET_USER = (state, user) => {
     "email",
     "emailVerified",
     "displayName",
-    "isAnonymous"
+    "isAnonymous",
   ]);
   state.playerGames = {};
   state.privateGames = {};
@@ -25,7 +25,7 @@ export const LISTEN_ACTIVE_GAMES = (state, unsubscribe) => {
   state.activeGamesListener = unsubscribe;
 };
 
-export const UNLISTEN_ACTIVE_GAMES = state => {
+export const UNLISTEN_ACTIVE_GAMES = (state) => {
   state.activeGamesListener = null;
 };
 
@@ -41,7 +41,7 @@ export const LISTEN_PLAYER_GAMES = (state, unsubscribe) => {
   state.playerGamesListener = unsubscribe;
 };
 
-export const UNLISTEN_PLAYER_GAMES = state => {
+export const UNLISTEN_PLAYER_GAMES = (state) => {
   state.playerGamesListener = null;
 };
 
@@ -69,6 +69,6 @@ export const LISTEN_PUBLIC_GAMES = (state, unsubscribe) => {
   state.publicGamesListener = unsubscribe;
 };
 
-export const UNLISTEN_PUBLIC_GAMES = state => {
+export const UNLISTEN_PUBLIC_GAMES = (state) => {
   state.publicGamesListener = null;
 };

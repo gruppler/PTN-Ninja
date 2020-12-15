@@ -21,7 +21,7 @@ import {
   formatDistance,
   parse,
   startOfDay,
-  startOfToday
+  startOfToday,
 } from "date-fns";
 
 export default {
@@ -30,12 +30,12 @@ export default {
     value: [Date, Number, String],
     "text-only": Boolean,
     invert: Boolean,
-    dark: Boolean
+    dark: Boolean,
   },
   data() {
     return {
       label: "",
-      timer: null
+      timer: null,
     };
   },
   computed: {
@@ -49,7 +49,7 @@ export default {
     },
     tooltip() {
       return format(this.date, this.$t("format.date-full"));
-    }
+    },
   },
   methods: {
     updateLabel() {
@@ -60,15 +60,15 @@ export default {
         );
       } else {
         this.label = formatDistance(startOfDay(this.date), this.today, {
-          addSuffix: true
+          addSuffix: true,
         });
       }
-    }
+    },
   },
   watch: {
     value() {
       this.updateLabel();
-    }
+    },
   },
   created() {
     this.updateLabel();
@@ -76,6 +76,6 @@ export default {
   },
   destroyed() {
     clearInterval(this.timer);
-  }
+  },
 };
 </script>

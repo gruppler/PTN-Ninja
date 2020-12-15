@@ -20,7 +20,7 @@
 export default {
   name: "dialog-header",
   props: {
-    icon: String
-  }
+    icon: String,
+  },
 };
 </script>

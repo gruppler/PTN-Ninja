@@ -29,7 +29,7 @@ export default {
       return this.game.state.plies && this.game.state.plies.length
         ? this.game.state.plies.length - 0.5
         : 0;
-    }
+    },
   },
   methods: {
     scrub(position) {
@@ -39,11 +39,11 @@ export default {
           this.game.goToPly(ply.id, position > ply.index);
         }
       });
-    }
+    },
   },
   created() {
     this.scrub = throttle(this.scrub, 10);
-  }
+  },
 };
 </script>
 

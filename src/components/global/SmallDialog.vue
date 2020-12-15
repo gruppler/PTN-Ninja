@@ -26,15 +26,15 @@ export default {
   name: "small-dialog",
   props: {
     value: Boolean,
-    "go-back": Boolean
+    "go-back": Boolean,
   },
   methods: {
     hide() {
       if (this.goBack) {
         this.$router.back();
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

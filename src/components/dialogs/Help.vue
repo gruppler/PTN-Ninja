@@ -66,7 +66,7 @@ export default {
     return {
       about: "",
       usage: "",
-      filter: ""
+      filter: "",
     };
   },
   computed: {
@@ -76,35 +76,35 @@ export default {
       },
       set(section) {
         this.$router.replace({ params: { section } });
-      }
-    }
+      },
+    },
   },
   created() {
     import(`../../i18n/${this.$i18n.locale}/about.md`)
-      .then(about => {
+      .then((about) => {
         this.about = about.default;
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         import(`../../i18n/${this.$i18n.fallbackLocale}/about.md`).then(
-          about => {
+          (about) => {
             this.about = about.default;
           }
         );
       });
     import(`../../i18n/${this.$i18n.locale}/usage.md`)
-      .then(usage => {
+      .then((usage) => {
         this.usage = usage.default;
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
         import(`../../i18n/${this.$i18n.fallbackLocale}/usage.md`).then(
-          usage => {
+          (usage) => {
             this.usage = usage.default;
           }
         );
       });
-  }
+  },
 };
 </script>
 

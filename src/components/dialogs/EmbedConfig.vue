@@ -231,7 +231,7 @@ export default {
       config: cloneDeep(this.$store.state.embedConfig),
       previewError: false,
       previewLoaded: false,
-      initialURL: ""
+      initialURL: "",
     };
   },
   computed: {
@@ -247,7 +247,7 @@ export default {
         name: this.name,
         names: this.config.includeNames,
         state: this.config.state,
-        ui: this.config.ui
+        ui: this.config.ui,
       });
     },
     code() {
@@ -255,7 +255,7 @@ export default {
     },
     canShare() {
       return navigator.canShare;
-    }
+    },
   },
   methods: {
     reset() {
@@ -264,18 +264,18 @@ export default {
         message: this.$t("confirm.resetEmbed"),
         success: () => {
           this.config = cloneDeep(this.$store.state.defaults.embedConfig);
-        }
+        },
       });
     },
     share() {
       this.$store.dispatch("COPY", {
         title: this.$t("Embed") + " – " + this.name,
-        text: this.code
+        text: this.code,
       });
     },
     close() {
       this.$emit("input", false);
-    }
+    },
   },
   watch: {
     value(isVisible) {
@@ -296,8 +296,8 @@ export default {
       handler(value) {
         this.$store.dispatch("SET_UI", ["embedConfig", cloneDeep(value)]);
       },
-      deep: true
-    }
-  }
+      deep: true,
+    },
+  },
 };
 </script>

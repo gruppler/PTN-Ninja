@@ -142,7 +142,7 @@ export default {
       password: "",
       playerName: "",
       loading: false,
-      showPassword: false
+      showPassword: false,
     };
   },
   computed: {
@@ -152,7 +152,7 @@ export default {
       },
       set(tab) {
         this.$router.replace({ params: { tab } });
-      }
+      },
     },
     user() {
       return this.$store.state.online.user;
@@ -170,7 +170,7 @@ export default {
         return this.$t("warning.logIn");
       }
       return "";
-    }
+    },
   },
   methods: {
     close() {
@@ -200,7 +200,7 @@ export default {
     validateNameUniqueness(value) {
       return this.$store
         .dispatch("online/CHECK_USERNAME", value.trim())
-        .then(success => success || this.$t("error['Player exists']"));
+        .then((success) => success || this.$t("error['Player exists']"));
     },
     showError(error) {
       this.error = error;
@@ -218,7 +218,7 @@ export default {
         .dispatch("online/REGISTER", {
           email: this.email,
           password: this.password,
-          name: this.playerName.trim()
+          name: this.playerName.trim(),
         })
         .then(() => {
           this.loading = false;
@@ -227,7 +227,7 @@ export default {
           this.password = "";
           this.close();
         })
-        .catch(error => {
+        .catch((error) => {
           this.loading = false;
           this.showError(error);
         });
@@ -243,7 +243,7 @@ export default {
         this.$store
           .dispatch("online/LOG_IN", {
             email: this.email,
-            password: this.password
+            password: this.password,
           })
           .then(() => {
             this.close();
@@ -251,7 +251,7 @@ export default {
             this.email = "";
             this.password = "";
           })
-          .catch(error => {
+          .catch((error) => {
             this.loading = false;
             this.showError(error);
           });
@@ -263,7 +263,7 @@ export default {
           message: this.$t("confirm.logInMessage"),
           ok: this.$t("confirm.logInOK"),
           cancel: this.$t("Cancel"),
-          success: logIn
+          success: logIn,
         });
       } else {
         logIn();
@@ -285,11 +285,11 @@ export default {
                 this.loading = false;
                 this.showSuccess("resetPasswordSent");
               })
-              .catch(error => {
+              .catch((error) => {
                 this.loading = false;
                 this.showError(error);
               });
-          }
+          },
         });
       }
     },
@@ -299,7 +299,7 @@ export default {
       } else {
         this.logIn();
       }
-    }
+    },
   },
   watch: {
     value(isVisible) {
@@ -312,7 +312,7 @@ export default {
     tab() {
       this.showError();
       this.showSuccess();
-    }
-  }
+    },
+  },
 };
 </script>

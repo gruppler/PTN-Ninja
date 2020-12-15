@@ -7,12 +7,12 @@ export default {
     notifications: Array,
     color: {
       type: String,
-      default: "primary"
+      default: "primary",
     },
     "text-color": {
       type: String,
-      default: "grey-10"
-    }
+      default: "grey-10",
+    },
   },
   data() {
     return {
@@ -25,8 +25,8 @@ export default {
         position: "top-right",
         actions: [{ icon: "close" }],
         classes: "text-" + this.textColor,
-        timeout: 0
-      }
+        timeout: 0,
+      },
     };
   },
   methods: {
@@ -34,10 +34,10 @@ export default {
       if (this.isFormatted) {
         return;
       }
-      this.previous = this.notifications.map(n => omit(n, "actions"));
+      this.previous = this.notifications.map((n) => omit(n, "actions"));
       this.isFormatted = true;
       this.n = cloneDeep(this.notifications);
-      return this.n.reverse().map(notification => {
+      return this.n.reverse().map((notification) => {
         const color = notification.textColor || this.textColor;
         if (notification.classes) {
           notification.classes += " text-" + color;
@@ -45,37 +45,37 @@ export default {
           notification.classes = "text-" + color;
         }
         if (notification.actions) {
-          notification.actions = notification.actions.map(action =>
+          notification.actions = notification.actions.map((action) =>
             defaults(action, { color })
           );
         }
-        this.default.actions = this.default.actions.map(action => ({
+        this.default.actions = this.default.actions.map((action) => ({
           ...action,
-          color
+          color,
         }));
         return this;
       });
     },
     show() {
-      this.closers = this.n.map(notification => {
+      this.closers = this.n.map((notification) => {
         return this.$q.notify(defaults(notification, this.default));
       });
     },
     hide() {
-      this.closers.forEach(close => close());
+      this.closers.forEach((close) => close());
       this.closers = [];
-    }
+    },
   },
   watch: {
     notifications(current) {
       this.isFormatted = false;
-      current = current.map(n => omit(n, "actions"));
+      current = current.map((n) => omit(n, "actions"));
       if (!isEqual(current, this.previous)) {
         this.format();
         this.hide();
         this.show();
       }
-    }
+    },
   },
   created() {
     this.format();
@@ -86,6 +86,6 @@ export default {
   },
   render() {
     return null;
-  }
+  },
 };
 </script>

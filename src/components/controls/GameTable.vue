@@ -7,7 +7,7 @@
     table-class="dim"
     :columns="columns"
     :data="games"
-    :row-key="row => row.config.id"
+    :row-key="(row) => row.config.id"
     :visible-columns="visibleColumns"
     :fullscreen.sync="fullscreen"
     :pagination.sync="pagination"
@@ -66,7 +66,7 @@
           :title="isWide ? '' : props.col.label"
           :class="{
             'q-mr-xs': isWide && props.col.label,
-            [props.col.iconClass]: true
+            [props.col.iconClass]: true,
           }"
           size="xs"
         />
@@ -83,7 +83,7 @@
         class="non-selectable"
         :class="{
           'text-accent': props.row.isActive,
-          'cursor-pointer': !props.row.isActive
+          'cursor-pointer': !props.row.isActive,
         }"
         :no-hover="props.row.isActive"
         :key="props.row.id"
@@ -150,59 +150,59 @@ export default {
       loading: false,
       pagination: {
         rowsPerPage: 0,
-        sortBy: "date"
+        sortBy: "date",
       },
       columns: [
         {
           name: "role",
           label: this.$t("Role"),
           icon: "account",
-          align: "center"
+          align: "center",
         },
         {
           name: "name",
           label: this.$t("Name"),
           icon: "file",
-          align: "left"
+          align: "left",
         },
         {
           name: "player1",
           label: this.$t("Player1"),
           icon: this.playerIcon(1),
-          align: "center"
+          align: "center",
         },
         {
           name: "player2",
           label: this.$t("Player2"),
           icon: this.playerIcon(2),
-          align: "center"
+          align: "center",
         },
         {
           name: "players",
           label: this.$t("Players"),
           icon: "players",
-          align: "left"
+          align: "left",
         },
         {
           name: "size",
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
-          align: "center"
+          align: "center",
         },
         {
           name: "date",
           label: this.$t("DateTime"),
           icon: "date_time",
-          align: "center"
+          align: "center",
         },
         {
           name: "result",
           label: this.$t("Result"),
           icon: "result",
-          align: "center"
-        }
-      ]
+          align: "center",
+        },
+      ],
     };
   },
   computed: {
@@ -224,7 +224,7 @@ export default {
             this.$router.replace({ params: { fullscreen: null } });
           }
         }
-      }
+      },
     },
     maxSelected() {
       return this.selectionMode === "single" ? 1 : MAX_SELECTED;
@@ -235,7 +235,7 @@ export default {
       },
       set(value) {
         this.$emit("input", value);
-      }
+      },
     },
     games() {
       return this.playerGames
@@ -243,13 +243,13 @@ export default {
           differenceBy(
             this.publicGames,
             this.playerGames,
-            game => game.config.id
+            (game) => game.config.id
           )
         )
-        .map(game => ({
+        .map((game) => ({
           ...game,
           isActive: this.isActive(game),
-          player: game.config.player
+          player: game.config.player,
         }));
     },
     publicGames() {
@@ -263,10 +263,10 @@ export default {
       );
     },
     activeGameIDs() {
-      return compact(this.$store.state.games.map(game => game.config.id));
+      return compact(this.$store.state.games.map((game) => game.config.id));
     },
     visibleColumns() {
-      let columns = this.columns.map(col => col.name);
+      let columns = this.columns.map((col) => col.name);
       if (this.fullscreen) {
         return without(columns, "players");
       } else if (this.$q.screen.gt.sm) {
@@ -277,7 +277,7 @@ export default {
     },
     isWide() {
       return this.fullscreen && this.$q.screen.gt.sm;
-    }
+    },
   },
   methods: {
     sortGames(a, b) {
@@ -292,7 +292,7 @@ export default {
             {
               1: "Player1",
               2: "Player2",
-              0: "Spectator"
+              0: "Spectator",
             }["" + player] || ""
           )
         : "";
@@ -309,7 +309,7 @@ export default {
       }
 
       const index = this.selected.findIndex(
-        g => g.config.id === game.config.id
+        (g) => g.config.id === game.config.id
       );
       if (index >= 0) {
         this.selected.splice(index, 1);
@@ -322,7 +322,7 @@ export default {
     },
     isActive(game) {
       return this.activeGameIDs.includes(game.config.id);
-    }
+    },
   },
   mounted() {
     if (this.user) {
@@ -337,8 +337,8 @@ export default {
   watch: {
     "user.uid"() {
       this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -6,7 +6,7 @@ const routes = [
     name: "game",
     path: "/game/:gameID",
     component: () => import("layouts/Main"),
-    props: true
+    props: true,
   },
   {
     name: "local",
@@ -56,68 +56,68 @@ const routes = [
     children: [
       {
         name: "help",
-        path: "/help/:section?"
+        path: "/help/:section?",
       },
       {
         name: "add",
-        path: "/add/:tab?/:online?/:fullscreen?"
+        path: "/add/:tab?/:online?/:fullscreen?",
       },
       {
         name: "close",
-        path: "/close"
+        path: "/close",
       },
       {
         name: "download",
-        path: "/download"
+        path: "/download",
       },
       {
         name: "preferences",
-        path: "/preferences"
+        path: "/preferences",
       },
       {
         name: "info",
-        path: "/info"
+        path: "/info",
       },
       {
         name: "edit",
-        path: "/edit"
+        path: "/edit",
       },
       {
         name: "embed",
-        path: "/embed"
+        path: "/embed",
       },
       {
         name: "png",
-        path: "/png"
+        path: "/png",
       },
       {
         name: "login",
-        path: "/login/:tab?"
+        path: "/login/:tab?",
       },
       {
         name: "join",
-        path: "/join"
+        path: "/join",
       },
       {
         name: "account",
-        path: "/account"
+        path: "/account",
       },
       {
         name: "online",
-        path: "/online/:qr?"
+        path: "/online/:qr?",
       },
       {
         name: "qr",
-        path: "/qr"
-      }
-    ]
-  }
+        path: "/qr",
+      },
+    ],
+  },
 ];
 
 // Always leave this as last one
 routes.push({
   path: "*",
-  component: () => import("pages/Error404")
+  component: () => import("pages/Error404"),
 });
 
 export default routes;

@@ -23,7 +23,7 @@ const capitalized = {
   site: "Site",
   size: "Size",
   time: "Time",
-  tps: "TPS"
+  tps: "TPS",
 };
 
 export const formats = {
@@ -46,25 +46,25 @@ export const formats = {
   site: /^[^"]+$/,
   size: /^[3-8]$/,
   time: /^\d\d(:\d\d){1,2}$/,
-  tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/
+  tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/,
 };
 
 export const now = () => {
   const now = new Date();
   return {
     date: dateFromDate(now),
-    time: timeFromDate(now)
+    time: timeFromDate(now),
   };
 };
 
-export const fromDate = date => {
+export const fromDate = (date) => {
   return {
     date: dateFromDate(date),
-    time: timeFromDate(date)
+    time: timeFromDate(date),
   };
 };
 
-export const dateFromDate = date => {
+export const dateFromDate = (date) => {
   return (
     date.getFullYear() +
     "." +
@@ -74,7 +74,7 @@ export const dateFromDate = date => {
   );
 };
 
-export const timeFromDate = date => {
+export const timeFromDate = (date) => {
   return (
     padStart(date.getHours(), 2, "0") +
     ":" +

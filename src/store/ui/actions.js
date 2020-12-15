@@ -5,13 +5,13 @@ import {
   Loading,
   LocalStorage,
   Dialog,
-  Notify
+  Notify,
 } from "quasar";
 import {
   formatError,
   formatSuccess,
   formatWarning,
-  formatHint
+  formatHint,
 } from "../../utilities";
 import { i18n } from "../../../src/boot/i18n";
 import { isArray } from "lodash";
@@ -47,14 +47,14 @@ export const PROMPT = (
     ok: {
       label: ok || i18n.t("OK"),
       flat: true,
-      color: "accent"
+      color: "accent",
     },
     cancel: {
       label: cancel || i18n.t("Cancel"),
       flat: true,
-      color: "accent"
+      color: "accent",
     },
-    class: "bg-secondary non-selectable"
+    class: "bg-secondary non-selectable",
   });
   if (success) {
     dialog.onOk(success);
@@ -72,7 +72,7 @@ export const NOTIFY = (context, options) => {
     [bg, fg] = [fg, bg];
   }
   if (options.actions) {
-    options.actions.forEach(action => {
+    options.actions.forEach((action) => {
       if (!action.color) {
         action.color = "accent";
       }
@@ -85,7 +85,7 @@ export const NOTIFY = (context, options) => {
     position: "bottom",
     timeout: 0,
     actions: [{ icon: "close", color: fg }],
-    ...options
+    ...options,
   });
 };
 
@@ -95,7 +95,7 @@ export const NOTIFY_ERROR = (context, error) => {
     type: "negative",
     timeout: 0,
     position: "top-right",
-    actions: [{ icon: "close", color: "grey-1" }]
+    actions: [{ icon: "close", color: "grey-1" }],
   });
 };
 
@@ -106,7 +106,7 @@ export const NOTIFY_SUCCESS = (context, success) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }]
+    actions: [{ icon: "close", color: "grey-1" }],
   });
 };
 
@@ -117,7 +117,7 @@ export const NOTIFY_WARNING = (context, warning) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "dark" }]
+    actions: [{ icon: "close", color: "dark" }],
   });
 };
 
@@ -128,7 +128,7 @@ export const NOTIFY_HINT = (context, hint) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }]
+    actions: [{ icon: "close", color: "grey-1" }],
   });
 };
 
@@ -233,10 +233,10 @@ export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
               } else {
                 dispatch("ADD_GAMES", { games: [game], index });
               }
-            }
+            },
           },
-          { icon: "close", color: "grey-2" }
-        ]
+          { icon: "close", color: "grey-2" },
+        ],
       });
     });
   };
@@ -262,7 +262,7 @@ export const REMOVE_MULTIPLE_GAMES = (
   const gameNames = LocalStorage.getItem("games") || [];
   const names = gameNames.splice(start, count);
   LocalStorage.set("games", gameNames);
-  names.forEach(name => {
+  names.forEach((name) => {
     LocalStorage.remove("ptn-" + name);
     LocalStorage.remove("state-" + name);
     LocalStorage.remove("config-" + name);
@@ -294,10 +294,10 @@ export const REMOVE_MULTIPLE_GAMES = (
               } else {
                 dispatch("ADD_GAMES", { games, index: start });
               }
-            }
+            },
           },
-          { icon: "close", color: "grey-2" }
-        ]
+          { icon: "close", color: "grey-2" },
+        ],
       });
     });
   };
@@ -321,7 +321,7 @@ export const UPDATE_PTN = ({ state, commit }, ptn) => {
 };
 
 export const SET_NAME = ({ state, commit, getters }, { oldName, newName }) => {
-  let index = state.games.findIndex(game => game.name === oldName);
+  let index = state.games.findIndex((game) => game.name === oldName);
   if (index < 0) {
     throw new Error("Game not found: " + oldName);
   }
@@ -353,7 +353,7 @@ export const SET_NAME = ({ state, commit, getters }, { oldName, newName }) => {
 };
 
 export const SET_STATE = ({ commit, state }, { game, gameState }) => {
-  if (!state.games.some(g => g.name === game.name)) {
+  if (!state.games.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
   LocalStorage.set("state-" + game.name, gameState);
@@ -361,7 +361,7 @@ export const SET_STATE = ({ commit, state }, { game, gameState }) => {
 };
 
 export const SET_CONFIG = ({ commit, state }, { game, config }) => {
-  if (!state.games.some(g => g.name === game.name)) {
+  if (!state.games.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
   LocalStorage.set("config-" + game.name, config);
@@ -423,18 +423,18 @@ export const SAVE_PNG = ({ dispatch, getters, state }, game) => {
   const options = { tps: game.state.tps, ...state.pngConfig };
 
   // Game Tags
-  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach(tagName => {
+  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
     const tag = game.tags[tagName];
     if (tag && tag.value) {
       options[tagName] = tag.value;
     }
   });
 
-  game.render(options).toBlob(blob => {
+  game.render(options).toBlob((blob) => {
     dispatch(
       "DOWNLOAD_FILES",
       new File([blob], getters.png_filename(game), {
-        type: "image/png"
+        type: "image/png",
       })
     );
   });
@@ -448,9 +448,9 @@ export const SAVE_PTN = ({ dispatch }, games) => {
   return dispatch(
     "DOWNLOAD_FILES",
     games.map(
-      game =>
+      (game) =>
         new File([game.ptn], game.name + ".ptn", {
-          type: "text/plain"
+          type: "text/plain",
         })
     )
   );
@@ -462,7 +462,7 @@ export const OPEN = ({ dispatch }, callback) => {
   input.accept = ".ptn,.txt";
   input.multiple = true;
   input.hidden = true;
-  input.addEventListener("input", event => {
+  input.addEventListener("input", (event) => {
     dispatch("OPEN_FILES", event.target.files);
     if (callback && typeof callback === "function") {
       callback();
@@ -478,20 +478,20 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   Loading.show();
   setTimeout(
     () =>
-      files.forEach(file => {
+      files.forEach((file) => {
         if (file && /\.ptn$|\.txt$/i.test(file.name)) {
           let reader = new FileReader();
-          reader.onload = event => {
+          reader.onload = (event) => {
             games.push({
               name: file.name.replace(/\.ptn$|\.txt$/, ""),
-              ptn: event.target.result
+              ptn: event.target.result,
             });
             if (!--count) {
               Loading.hide();
               dispatch("ADD_GAMES", { games, index: 0 });
             }
           };
-          reader.onerror = error => console.error(error);
+          reader.onerror = (error) => console.error(error);
           ++count;
           reader.readAsText(file);
         }
@@ -516,7 +516,7 @@ export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
   }
 
   let success = true;
-  files.forEach(file => {
+  files.forEach((file) => {
     success &= exportFile(file.name, file);
   });
 
@@ -525,14 +525,14 @@ export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function({ dispatch }, { url, text, title }) {
+export const COPY = function ({ dispatch }, { url, text, title }) {
   function copy() {
     copyToClipboard(text || url)
       .then(() => {
         dispatch("NOTIFY", {
           icon: "copy",
           message: i18n.t("success.copied"),
-          timeout: 1000
+          timeout: 1000,
         });
       })
       .catch(() => {
@@ -543,15 +543,15 @@ export const COPY = function({ dispatch }, { url, text, title }) {
           prompt: {
             model: text || url,
             filled: true,
-            type: text && text.includes("\n") ? "textarea" : "text"
+            type: text && text.includes("\n") ? "textarea" : "text",
           },
-          cancel: false
+          cancel: false,
         });
       });
   }
 
   if (navigator.canShare) {
-    navigator.share({ url, text, title }).catch(error => {
+    navigator.share({ url, text, title }).catch((error) => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
         copy();

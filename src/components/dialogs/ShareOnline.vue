@@ -146,14 +146,14 @@ export default {
         {
           label: this.$t("Random"),
           icon: "random",
-          value: "random"
-        }
+          value: "random",
+        },
       ],
       isPrivate: true,
       playerName: this.$store.state.playerName,
       qrText: "",
       loading: false,
-      showRoads: false
+      showRoads: false,
     };
   },
   computed: {
@@ -172,7 +172,7 @@ export default {
             this.$router.replace({ params: { qr: null } });
           }
         }
-      }
+      },
     },
     isLocal() {
       return this.game.isLocal;
@@ -189,7 +189,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["player", value]);
-      }
+      },
     },
     playerBGColor() {
       switch (this.player) {
@@ -213,7 +213,7 @@ export default {
       return this.game.isLocal
         ? ""
         : this.$store.getters["online/url"](this.game) || "";
-    }
+    },
   },
   methods: {
     playerIcon(player) {
@@ -244,12 +244,12 @@ export default {
           game: this.game,
           players,
           isPrivate: this.isPrivate,
-          disableRoads: !this.showRoads
+          disableRoads: !this.showRoads,
         })
         .then(() => {
           this.loading = false;
         })
-        .catch(error => {
+        .catch((error) => {
           this.loading = false;
           this.error = error;
         });
@@ -257,13 +257,13 @@ export default {
     copy(text) {
       this.$store.dispatch("COPY", {
         text,
-        message: this.$t("Copied")
+        message: this.$t("Copied"),
       });
     },
     qrCode(text) {
       this.qrText = text;
       this.showQR = true;
-    }
+    },
   },
   watch: {
     isLoggedIn(isLoggedIn) {
@@ -273,7 +273,7 @@ export default {
     },
     "$store.state.playerName"(playerName) {
       this.playerName = playerName;
-    }
-  }
+    },
+  },
 };
 </script>

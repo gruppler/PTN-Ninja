@@ -11,7 +11,7 @@ export default {
   name: "App",
   created() {
     this.$q.dark.set(true);
-    this.$q.iconMapFn = name => {
+    this.$q.iconMapFn = (name) => {
       const icon = ICONS[name];
       if (icon !== undefined) {
         return { icon };
@@ -21,6 +21,6 @@ export default {
     if (process.env.DEV) {
       window.app = this;
     }
-  }
+  },
 };
 </script>

@@ -9,9 +9,9 @@ export default class Piece {
       color: 1,
       isSelected: false,
       isStanding: false,
-      isCapstone: false
+      isCapstone: false,
     });
-    Object.keys(params).forEach(key => (this[key] = params[key]));
+    Object.keys(params).forEach((key) => (this[key] = params[key]));
   }
 
   get state() {
@@ -21,7 +21,7 @@ export default class Piece {
       index: this.index,
       x: this.x,
       y: this.y,
-      z: this.z
+      z: this.z,
     };
   }
 

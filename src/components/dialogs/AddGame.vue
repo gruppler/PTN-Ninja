@@ -112,10 +112,10 @@ export default {
         player1: this.$store.state.player1,
         player2: this.$store.state.player2,
         size: this.$store.state.size,
-        site: this.$t("site_name")
+        site: this.$t("site_name"),
       },
       selectedGames: [],
-      showAll: false
+      showAll: false,
     };
   },
   computed: {
@@ -125,7 +125,7 @@ export default {
       },
       set(tab) {
         this.$router.replace({ params: { tab } });
-      }
+      },
     },
     showOnline: {
       get() {
@@ -133,7 +133,7 @@ export default {
       },
       set(online) {
         this.$router.replace({ params: { online: online ? "online" : null } });
-      }
+      },
     },
     size: {
       get() {
@@ -142,7 +142,7 @@ export default {
       set(value) {
         this.tags.size = value;
         this.$store.dispatch("SET_UI", ["size", value || ""]);
-      }
+      },
     },
     player1: {
       get() {
@@ -151,7 +151,7 @@ export default {
       set(value) {
         this.tags.player1 = value;
         this.$store.dispatch("SET_UI", ["player1", value || ""]);
-      }
+      },
     },
     player2: {
       get() {
@@ -160,8 +160,8 @@ export default {
       set(value) {
         this.tags.player2 = value;
         this.$store.dispatch("SET_UI", ["player2", value || ""]);
-      }
-    }
+      },
+    },
   },
   methods: {
     close() {
@@ -178,7 +178,7 @@ export default {
         ptn: game.ptn,
         name: game.name,
         state: game.minState,
-        config: game.config
+        config: game.config,
       });
       this.close();
     },
@@ -191,10 +191,10 @@ export default {
       } else {
         if (this.selectedGames.length) {
           // Load online game(s)
-          this.selectedGames.forEach(game => {
+          this.selectedGames.forEach((game) => {
             this.$store
               .dispatch("online/LOAD_GAME", game.config.id)
-              .catch(error => {
+              .catch((error) => {
                 this.$store.dispatch("NOTIFY_ERROR", error);
               });
           });
@@ -202,7 +202,7 @@ export default {
         }
         this.close();
       }
-    }
-  }
+    },
+  },
 };
 </script>

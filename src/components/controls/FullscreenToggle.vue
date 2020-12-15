@@ -17,13 +17,13 @@ export default {
   props: ["value"],
   data() {
     return {
-      hotkey: HOTKEYS.MISC.fullscreen
+      hotkey: HOTKEYS.MISC.fullscreen,
     };
   },
   methods: {
     toggle() {
       this.$emit("input", !this.value);
-    }
-  }
+    },
+  },
 };
 </script>

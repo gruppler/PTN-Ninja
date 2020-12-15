@@ -37,7 +37,7 @@ export default {
     fullscreen: Boolean,
     "min-height": Number,
     "no-maximize": Boolean,
-    "content-class": String
+    "content-class": String,
   },
   computed: {
     maximized() {
@@ -58,8 +58,8 @@ export default {
         classes.push("maximized");
       }
       return classes;
-    }
-  }
+    },
+  },
 };
 </script>
 

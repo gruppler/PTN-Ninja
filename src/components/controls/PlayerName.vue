@@ -50,12 +50,12 @@ export default {
   props: {
     value: String,
     "is-private": Boolean,
-    player: [Number, String]
+    player: [Number, String],
   },
   data() {
     return {
       isValid: false,
-      loading: false
+      loading: false,
     };
   },
   computed: {
@@ -65,7 +65,7 @@ export default {
       },
       set(value) {
         this.$emit("input", value);
-      }
+      },
     },
     user() {
       return this.$store.state.online.user;
@@ -75,7 +75,7 @@ export default {
     },
     username() {
       return this.$store.getters["online/playerName"]();
-    }
+    },
   },
   methods: {
     logOut() {
@@ -85,7 +85,7 @@ export default {
         .then(() => {
           this.loading = false;
         })
-        .catch(error => {
+        .catch((error) => {
           this.loading = false;
           console.error(error);
         });
@@ -102,7 +102,7 @@ export default {
       } else {
         this.isValid = this.isLoggedIn;
       }
-    }
+    },
   },
   watch: {
     isLoggedIn(isLoggedIn) {
@@ -121,10 +121,10 @@ export default {
     },
     isValid(isValid) {
       this.$emit("validate", isValid);
-    }
+    },
   },
   mounted() {
     this.validate();
-  }
+  },
 };
 </script>

@@ -6,7 +6,7 @@ export const SET_UI = (state, [key, value]) => {
   }
 };
 
-export const SET_EMBED_GAME = state => {
+export const SET_EMBED_GAME = (state) => {
   state.embed = true;
 };
 
@@ -31,7 +31,7 @@ export const UPDATE_PTN = (state, ptn) => {
 };
 
 export const SET_NAME = (state, { oldName, newName }) => {
-  let stateGame = state.games.find(g => g.name === oldName);
+  let stateGame = state.games.find((g) => g.name === oldName);
   if (stateGame) {
     stateGame.name = newName;
   } else {
@@ -40,7 +40,7 @@ export const SET_NAME = (state, { oldName, newName }) => {
 };
 
 export const SET_STATE = (state, { game, gameState }) => {
-  let stateGame = state.games.find(g => g.name === game.name);
+  let stateGame = state.games.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.state = cloneDeep(gameState);
   } else {
@@ -50,7 +50,7 @@ export const SET_STATE = (state, { game, gameState }) => {
 
 export const SET_CONFIG = (state, { game, config }) => {
   game.config = { ...config };
-  let stateGame = state.games.find(g => g.name === game.name);
+  let stateGame = state.games.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.config = { ...config };
   } else {

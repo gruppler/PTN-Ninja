@@ -41,7 +41,7 @@ export default {
   data() {
     return {
       isValid: false,
-      playerName: this.$store.state.playerName
+      playerName: this.$store.state.playerName,
     };
   },
   computed: {
@@ -54,7 +54,7 @@ export default {
     },
     isPrivate() {
       return this.game.config.isPrivate;
-    }
+    },
   },
   methods: {
     close() {
@@ -74,7 +74,7 @@ export default {
       }
 
       // Join game
-      this.$store.dispatch("online/JOIN_GAME", this.game).catch(error => {
+      this.$store.dispatch("online/JOIN_GAME", this.game).catch((error) => {
         this.$store.dispatch("NOTIFY_ERROR", error);
       });
 
@@ -82,7 +82,7 @@ export default {
     },
     validatePlay() {
       return !this.player && this.openPlayer && this.playerName && this.isValid;
-    }
+    },
   },
   watch: {
     value(visible) {
@@ -99,7 +99,7 @@ export default {
       if (isLocal) {
         this.close();
       }
-    }
-  }
+    },
+  },
 };
 </script>

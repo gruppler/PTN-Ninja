@@ -114,7 +114,7 @@ import { zipObject } from "lodash";
 
 const HISTORY_DIALOGS = {
   dialogCloseGames: "close",
-  dialogDownloadGames: "download"
+  dialogDownloadGames: "download",
 };
 
 export default {
@@ -124,7 +124,7 @@ export default {
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map(key => ({
+      Object.values(HISTORY_DIALOGS).map((key) => ({
         get() {
           return this.$route.name === key;
         },
@@ -139,7 +139,7 @@ export default {
               this.$router.replace({ name: "local" });
             }
           }
-        }
+        },
       }))
     ),
 
@@ -147,11 +147,11 @@ export default {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
         value: index,
-        config: game.config
+        config: game.config,
       }));
     },
     hasOnlineGames() {
-      return this.games.some(game => game.config.id);
+      return this.games.some((game) => game.config.id);
     },
     name() {
       const name = this.games[0].label;
@@ -176,8 +176,8 @@ export default {
       }
     },
     unseenCount() {
-      return this.games.filter(game => game.config.unseen).length;
-    }
+      return this.games.filter((game) => game.config.unseen).length;
+    },
   },
   methods: {
     account() {
@@ -209,8 +209,8 @@ export default {
     },
     close(index) {
       this.$store.dispatch("REMOVE_GAME", index);
-    }
-  }
+    },
+  },
 };
 </script>
 

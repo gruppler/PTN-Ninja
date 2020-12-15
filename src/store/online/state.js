@@ -1,4 +1,4 @@
-export default function() {
+export default function () {
   return {
     initialized: false,
     privateGames: {},
@@ -8,6 +8,6 @@ export default function() {
     playerGamesListener: null,
     publicGames: {},
     publicGamesListener: null,
-    user: null
+    user: null,
   };
 }

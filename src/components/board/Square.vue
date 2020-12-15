@@ -20,7 +20,7 @@
       rn,
       re,
       rs,
-      rw
+      rw,
     }"
     @click.left="select()"
     @click.right.prevent="select(true)"
@@ -57,7 +57,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
-      }
+      },
     },
     firstMoveNumber() {
       return this.$store.state.firstMoveNumber;
@@ -129,7 +129,7 @@ export default {
     },
     road() {
       return this.square.roads.length > 0;
-    }
+    },
   },
   methods: {
     select(alt = false) {
@@ -137,7 +137,7 @@ export default {
         if (alt && this.isEditingTPS && this.piece) {
           this.$store.dispatch("SET_UI", [
             "selectedPiece",
-            { color: this.piece.color, type: this.piece.typeCode }
+            { color: this.piece.color, type: this.piece.typeCode },
           ]);
         }
         this.game.selectSquare(
@@ -153,8 +153,8 @@ export default {
           );
         }
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

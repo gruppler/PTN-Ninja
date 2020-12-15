@@ -20,7 +20,7 @@ try {
 }
 
 auth.useDeviceLanguage();
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error => {
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
   console.error(error);
 });
 
@@ -33,7 +33,7 @@ if (process.env.DEV) {
   window.functions = functions;
   window.messaging = messaging;
 } else {
-  db.enablePersistence({ synchronizeTabs: true }).catch(error => {
+  db.enablePersistence({ synchronizeTabs: true }).catch((error) => {
     console.error(error);
   });
 }

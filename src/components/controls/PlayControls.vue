@@ -6,7 +6,7 @@
         @shortkey="deletePly"
         v-shortkey="{
           delete: hotkeys.deletePly,
-          backspace: hotkeys.backspacePly
+          backspace: hotkeys.backspacePly,
         }"
         round
         flat
@@ -30,7 +30,7 @@
         @shortkey="prev"
         v-shortkey="{
           whole: hotkeys.prev,
-          half: hotkeys.prevHalf
+          half: hotkeys.prevHalf,
         }"
         round
         flat
@@ -55,7 +55,7 @@
         @shortkey="next"
         v-shortkey="{
           whole: hotkeys.next,
-          half: hotkeys.nextHalf
+          half: hotkeys.nextHalf,
         }"
         round
         flat
@@ -111,7 +111,7 @@ const BRANCH_KEYS = [
   "firstBranch",
   "lastBranch",
   "firstBranchEnd",
-  "lastBranchEnd"
+  "lastBranchEnd",
 ];
 
 export default {
@@ -127,7 +127,7 @@ export default {
       prev: null,
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
-      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS)
+      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
@@ -157,7 +157,7 @@ export default {
           .concat()
           .reverse()
           .find(
-            ply => index > ply.index && Object.keys(ply.branches).length > 1
+            (ply) => index > ply.index && Object.keys(ply.branches).length > 1
           );
         if (
           !ply &&
@@ -171,13 +171,13 @@ export default {
           ? ply.branches
           : this.game
               .getBranchesSorted()
-              .map(branch => this.game.branches[branch]);
+              .map((branch) => this.game.branches[branch]);
       }
       return [];
     },
     branchIndex() {
       return this.branches.length
-        ? this.branches.findIndex(branch =>
+        ? this.branches.findIndex((branch) =>
             this.game.state.plies.includes(branch)
           )
         : -1;
@@ -185,9 +185,9 @@ export default {
     options() {
       return zipObject(
         Object.keys(this.branches),
-        Object.keys(this.branches).map(key => [key])
+        Object.keys(this.branches).map((key) => [key])
       );
-    }
+    },
   },
   methods: {
     deletePly() {
@@ -316,7 +316,7 @@ export default {
     lastBranchEnd() {
       this.lastBranch();
       this.last();
-    }
+    },
   },
   watch: {
     // Make playback speed respond immediately to speed changes
@@ -332,12 +332,12 @@ export default {
           setTimeout(this.next, nextFrame - now);
         }
       }
-    }
+    },
   },
   created() {
     this.next = throttle(this._next, 250);
     this.prev = throttle(this._prev, 250);
-  }
+  },
 };
 </script>
 

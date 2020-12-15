@@ -26,31 +26,31 @@ export default {
       items: [
         {
           icon: "add",
-          action: "add"
+          action: "add",
         },
         {
           icon: "share",
-          action: "share"
+          action: "share",
         },
         {
           icon: "settings",
-          action: "settings"
+          action: "settings",
         },
         {
           icon: "account",
-          action: "account"
+          action: "account",
         },
         {
           icon: "help",
-          action: "help"
-        }
-      ]
+          action: "help",
+        },
+      ],
     };
   },
   computed: {
     short() {
       return this.$q.screen.height <= 440;
-    }
-  }
+    },
+  },
 };
 </script>
