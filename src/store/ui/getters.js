@@ -85,7 +85,7 @@ export const png_url = (state) => (game) => {
   if (state.pngConfig.highlightSquares) {
     const ply = game.state.ply;
     if (ply) {
-      params.push("ply=" + encodeURIComponent(ply.text(true)));
+      params.push("hl=" + encodeURIComponent(ply.text(true)));
     }
   }
 

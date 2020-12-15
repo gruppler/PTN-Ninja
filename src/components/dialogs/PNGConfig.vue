@@ -6,6 +6,10 @@
     :min-height="588"
     v-bind="$attrs"
   >
+    <template v-slot:header>
+      <dialog-header icon="file_image">{{ $t("PNG Image") }}</dialog-header>
+    </template>
+
     <img
       ref="preview"
       class="block"
@@ -116,6 +120,11 @@
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Download')" @click="download" flat />
+        <q-btn
+          :label="$t(canShare ? 'Share URL' : 'Copy URL')"
+          @click="share"
+          flat
+        />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
@@ -151,6 +160,9 @@ export default {
     },
     tps() {
       return this.game.state.tps;
+    },
+    canShare() {
+      return navigator.canShare;
     },
   },
   methods: {
@@ -191,6 +203,12 @@ export default {
     },
     download() {
       this.$store.dispatch("DOWNLOAD_FILES", this.file);
+    },
+    share() {
+      this.$store.dispatch("COPY", {
+        title: this.$t("Share PNG"),
+        url: this.url,
+      });
     },
     close() {
       this.$emit("input", false);
