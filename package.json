@@ -19,7 +19,7 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
-    "@quasar/extras": "^1.9.10",
+    "@quasar/extras": "^1.9.11",
     "aggregation": "^1.2.6",
     "core-js": "^3.0.0",
     "date-fns": "^2.16.1",
@@ -30,7 +30,7 @@
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
-    "quasar": "^1.14.5",
+    "quasar": "^1.14.7",
     "vue": "^2.6.11",
     "vue-i18n": "^8.0.0",
     "vue-qriously": "^1.1.1",
@@ -38,8 +38,8 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^2.1.8",
-    "@quasar/quasar-app-extension-qmarkdown": "^1.2.0",
+    "@quasar/app": "^2.1.11",
+    "@quasar/quasar-app-extension-qmarkdown": "^1.4.0",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^7.14.0",
@@ -48,8 +48,9 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-vue": "^7.1.0",
     "firebase-admin": "^9.4.1",
+    "prettier": "^2.2.1",
     "webpack": "^5.6.0",
-    "workbox-webpack-plugin": "^5.0.0"
+    "workbox-webpack-plugin": "^6.0.2"
   },
   "engines": {
     "node": ">= 8.9.0",
