@@ -52,14 +52,14 @@ register(process.env.SERVICE_WORKER_FILE, {
             color: "accent",
             handler: () => {
               window.location.reload();
-            }
+            },
           },
           {
             label: i18n.t("Dismiss"),
             color: "accent",
-            handler: () => {}
-          }
-        ]
+            handler: () => {},
+          },
+        ],
       });
     }
   },
@@ -76,5 +76,5 @@ register(process.env.SERVICE_WORKER_FILE, {
     if (process.env.DEV) {
       console.error("Error during service worker registration:", err);
     }
-  }
+  },
 });
