@@ -32,15 +32,17 @@
     <div class="help">
       <q-tab-panels v-model="section" class="bg-secondary col-grow" animated>
         <q-tab-panel name="about">
-          <q-markdown :src="about" />
+          <q-markdown :src="about" no-heading-anchor-links />
         </q-tab-panel>
 
         <q-tab-panel name="usage">
-          <q-markdown :src="usage" />
+          <q-markdown :src="usage" no-heading-anchor-links />
         </q-tab-panel>
 
         <q-tab-panel name="hotkeys">
-          <q-markdown>{{ $t("Hotkeys") + "\n===" }}</q-markdown>
+          <q-markdown no-heading-anchor-links>{{
+            $t("Hotkeys") + "\n==="
+          }}</q-markdown>
           <Hotkeys ref="hotkeys" v-model="filter" />
         </q-tab-panel>
       </q-tab-panels>
