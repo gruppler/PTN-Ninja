@@ -91,6 +91,7 @@ export default {
   Notes: "Notes",
   Online: "Online",
   OK: "OK",
+  Padding: "Padding",
   Password: "Password",
   "Piece Shadows": "Piece Shadows",
   Play: "Play",

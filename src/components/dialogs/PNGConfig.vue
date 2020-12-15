@@ -99,6 +99,15 @@
           <q-toggle color="accent" v-model="config.unplayedPieces" />
         </q-item-section>
       </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Padding") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.padding" />
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>
@@ -107,7 +116,6 @@
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Download')" @click="download" flat />
-        <q-btn :label="$t(canShare ? 'Share' : 'Copy')" @click="share" flat />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
@@ -144,9 +152,6 @@ export default {
     tps() {
       return this.game.state.tps;
     },
-    canShare() {
-      return navigator.canShare;
-    }
   },
   methods: {
     updateConfig() {
@@ -186,12 +191,6 @@ export default {
     },
     download() {
       this.$store.dispatch("DOWNLOAD_FILES", this.file);
-    },
-    share() {
-      this.$store.dispatch("COPY", {
-        title: this.$t("Share PNG"),
-        url: this.url
-      });
     },
     close() {
       this.$emit("input", false);
