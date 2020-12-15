@@ -216,7 +216,9 @@ export default {
   },
   watch: {
     tps() {
-      this.updatePreview();
+      if (this.value) {
+        this.updatePreview();
+      }
     },
     config: {
       handler(config) {

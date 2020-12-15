@@ -160,7 +160,8 @@ export default function render(game, options = {}) {
     ctx.textBaseline = "middle";
     const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
-    let name1 = options.player1 || game.tags.player1.value;
+    let name1 =
+      options.player1 || (game.tags.player1 ? game.tags.player1.value : "");
     if (options.includeNames && name1) {
       const flatCount1Width = ctx.measureText(flats[0]).width;
       name1 = limitText(
@@ -185,7 +186,8 @@ export default function render(game, options = {}) {
 
     ctx.fillStyle = colors.player[1].header;
     // Player 2 Name
-    let name2 = options.player2 || game.tags.player2.value;
+    let name2 =
+      options.player2 || (game.tags.player2 ? game.tags.player2.value : "");
     if (options.includeNames && name2) {
       const flatCount2Width = ctx.measureText(flats[1]).width;
       name2 = limitText(
