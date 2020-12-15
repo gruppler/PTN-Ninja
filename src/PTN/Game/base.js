@@ -20,23 +20,23 @@ export const pieceCounts = {
   5: { flat: 21, cap: 1 },
   6: { flat: 30, cap: 1 },
   7: { flat: 40, cap: 2 },
-  8: { flat: 50, cap: 2 }
+  8: { flat: 50, cap: 2 },
 };
 
-export const sample = tags => {
+export const sample = (tags) => {
   return defaults(
     {
       5: {
         tps:
           "x2,21S,x2/x,2S,21S,1S,x/12S,12S,x,12S,12S/x,1S,21S,2S,x/x2,21S,x2 1 15",
         caps: 2,
-        flats: 10
+        flats: 10,
       },
       6: {
         tps:
           "21S,1S,x2,2S,12S/1S,21S,1S,2S,12S,2S/x,1S,21S,12S,2S,x/x,2S,12S,21S,1S,x/2S,12S,2S,1S,21S,1S/12S,2S,x2,1S,21S 1 27",
         caps: 2,
-        flats: 20
+        flats: 20,
       },
       7: {
         tps:
@@ -44,14 +44,14 @@ export const sample = tags => {
         caps1: 2,
         caps2: 3,
         flats1: 25,
-        flats2: 24
+        flats2: 24,
       },
       8: {
         tps:
           "21S,1S,x4,2S,12S/1S,21S,1S,x2,2S,12S,2S/x,1S,21S,1S,2S,12S,2S,x/x2,1S,21S,12S,2S,x2/x2,2S,12S,21S,1S,x2/x,2S,12S,2S,1S,21S,1S,x/2S,12S,2S,x2,1S,21S,1S/12S,2S,x4,1S,21S 1 37",
         caps: 4,
-        flats: 28
-      }
+        flats: 28,
+      },
     }[tags.size] || {},
     {
       caps: "",
@@ -60,17 +60,17 @@ export const sample = tags => {
       caps2: "",
       flats1: "",
       flats2: "",
-      tps: ""
+      tps: "",
     }
   );
 };
 
-export const isSample = tags => {
+export const isSample = (tags) => {
   return tags.tps && tags.tps === sample(tags).tps;
 };
 
 export const generateName = (tags = {}, game) => {
-  const tag = key =>
+  const tag = (key) =>
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
   const player1 = tag("player1");
   const player2 = tag("player2");
@@ -88,7 +88,7 @@ export const generateName = (tags = {}, game) => {
   );
 };
 
-export const isDefaultName = name => {
+export const isDefaultName = (name) => {
   return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
@@ -105,11 +105,11 @@ export default class GameBase {
   ) {
     Object.defineProperty(this, "movesGrouped", {
       get: memoize(this.getMovesGrouped, () => this.moves.length),
-      configurable: true
+      configurable: true,
     });
     Object.defineProperty(this, "movesSorted", {
       get: memoize(this.getMovesSorted, () => this.moves.length),
-      configurable: true
+      configurable: true,
     });
 
     let item, key, ply;
@@ -176,7 +176,7 @@ export default class GameBase {
     // Initialize game state
     this.pieceCounts = {
       1: { ...pieceCounts[this.size] },
-      2: { ...pieceCounts[this.size] }
+      2: { ...pieceCounts[this.size] },
     };
     if (this.tags.flats) {
       this.pieceCounts[1].flat = this.tags.flats.value;
@@ -237,7 +237,7 @@ export default class GameBase {
           move = new Move({
             game: this,
             id: this.moves.length,
-            linenum: item
+            linenum: item,
           });
           this.moves[move.id] = move;
         }
@@ -284,7 +284,7 @@ export default class GameBase {
             game: this,
             id: this.moves.length,
             linenum: Linenum.parse(moveNumber + ". ", this, branch),
-            ply1: ply
+            ply1: ply,
           });
           this.moves.push(move);
           moveNumber += 1;
@@ -382,14 +382,14 @@ export default class GameBase {
     let branches = Object.values(this.branches).sort(this.plySort);
     let sorted = [];
 
-    const pushBranch = ply => {
+    const pushBranch = (ply) => {
       // Self
       sorted.push(ply.branch);
       // Children
       ply.children.forEach(pushChild);
     };
 
-    const pushChild = ply => {
+    const pushChild = (ply) => {
       // Self
       sorted.push(ply.branch);
       // Siblings
@@ -404,9 +404,9 @@ export default class GameBase {
   }
 
   getMovesGrouped() {
-    const moves = this.getBranchesSorted().map(branch =>
+    const moves = this.getBranchesSorted().map((branch) =>
       this.moves
-        .filter(move => move.branch === branch)
+        .filter((move) => move.branch === branch)
         .sort((a, b) => a.index - b.index)
     );
     return moves.length ? moves : [this.moves];
@@ -459,8 +459,8 @@ export default class GameBase {
           "caps1",
           "flats1",
           "caps2",
-          "flats2"
-        ].find(tag => tags[tag] !== this.tag(tag))
+          "flats2",
+        ].find((tag) => tags[tag] !== this.tag(tag))
       ) {
         this.init(this.ptn, { ...this, state: null });
       }
@@ -497,7 +497,9 @@ export default class GameBase {
     if (!this.state.plyIsDone) {
       if (ply.branches.length) {
         // Siblings
-        ply.branches.forEach(ply => this._saveBoardState(board, ply.id, false));
+        ply.branches.forEach((ply) =>
+          this._saveBoardState(board, ply.id, false)
+        );
       }
       // Previous ply
       ply = this.state.prevPly;
@@ -509,7 +511,7 @@ export default class GameBase {
       ply = this.state.nextPly;
       if (ply) {
         if (ply.branches.length) {
-          ply.branches.forEach(ply => {
+          ply.branches.forEach((ply) => {
             this._saveBoardState(board, ply.id, false);
           });
         } else {
@@ -541,11 +543,11 @@ export default class GameBase {
   }
 
   headerText(tags = this.tags) {
-    return map(tags, tag => tag.text()).join("\r\n") + "\r\n\r\n";
+    return map(tags, (tag) => tag.text()).join("\r\n") + "\r\n\r\n";
   }
 
   moveText(showAllBranches = false, showComments = false) {
-    const printMove = move =>
+    const printMove = (move) =>
       move.text(
         showComments ? this.getMoveComments(move) : null,
         showAllBranches
@@ -555,12 +557,12 @@ export default class GameBase {
     if (showComments) {
       if (this.notes[-1]) {
         prefix +=
-          this.notes[-1].map(comment => comment.text()).join("\r\n") +
+          this.notes[-1].map((comment) => comment.text()).join("\r\n") +
           "\r\n\r\n";
       }
       if (this.chatlog[-1]) {
         prefix +=
-          this.chatlog[-1].map(comment => comment.text()).join("\r\n") +
+          this.chatlog[-1].map((comment) => comment.text()).join("\r\n") +
           "\r\n\r\n";
       }
     }
@@ -569,7 +571,7 @@ export default class GameBase {
       return (
         prefix +
         this.movesGrouped
-          .map(moves => moves.map(printMove).join("\r\n"))
+          .map((moves) => moves.map(printMove).join("\r\n"))
           .join("\r\n\r\n")
       );
     } else {

@@ -90,7 +90,7 @@ import { zipObject } from "lodash";
 
 const HISTORY_DIALOGS = {
   dialogCloseGames: "close",
-  dialogDownloadGames: "download"
+  dialogDownloadGames: "download",
 };
 
 export default {
@@ -100,7 +100,7 @@ export default {
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map(key => ({
+      Object.values(HISTORY_DIALOGS).map((key) => ({
         get() {
           return this.$route.name === key;
         },
@@ -115,19 +115,19 @@ export default {
               this.$router.replace({ name: "local" });
             }
           }
-        }
+        },
       }))
     ),
 
     games() {
       return this.$store.state.games.map((game, index) => ({
         label: game.name,
-        value: index
+        value: index,
       }));
     },
     name() {
       return this.games[0].label;
-    }
+    },
   },
   methods: {
     select(index) {
@@ -138,8 +138,8 @@ export default {
     },
     close(index) {
       this.$store.dispatch("REMOVE_GAME", index);
-    }
-  }
+    },
+  },
 };
 </script>
 

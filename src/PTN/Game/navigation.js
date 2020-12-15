@@ -142,9 +142,9 @@ export default class GameNavigation {
   _undoMoveset(moveset, color = 1, ply = null) {
     return this._doMoveset(
       moveset
-        .map(move => ({
+        .map((move) => ({
           ...move,
-          action: move.action === "pop" ? "push" : "pop"
+          action: move.action === "pop" ? "push" : "pop",
         }))
         .reverse(),
       color,
@@ -188,7 +188,7 @@ export default class GameNavigation {
       plyIsDone: isDone,
       move: targetPly.move,
       branch: targetPly.branch,
-      number: targetPly.move.number
+      number: targetPly.move.number,
     };
 
     // Load a board state?

@@ -27,26 +27,26 @@ export default {
               player: this.game.tag(
                 "player" + result.winner,
                 this.$t(result.winner === 1 ? "White" : "Black")
-              )
+              ),
             }),
-            player: result.winner
+            player: result.winner,
           });
         }
         if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
           // Tak or Tinue
           alerts.push({
             message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
-            player: ply.player
+            player: ply.player,
           });
         }
       }
-      return alerts.map(alert => ({
+      return alerts.map((alert) => ({
         message: alert.message,
         color: alert.player === 1 ? "blue-grey-2" : "blue-grey-10",
         icon: this.$store.getters.playerIcon(alert.player || "tie"),
-        textColor: alert.player === 1 ? "grey-10" : "grey-2"
+        textColor: alert.player === 1 ? "grey-10" : "grey-2",
       }));
-    }
-  }
+    },
+  },
 };
 </script>

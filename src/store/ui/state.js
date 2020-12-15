@@ -32,7 +32,7 @@ let defaults = {
   showText: false,
   size: 5,
   textTab: "notes",
-  unplayedPieces: true
+  unplayedPieces: true,
 };
 
 export const embedUIOptions = [
@@ -47,7 +47,7 @@ export const embedUIOptions = [
   "showRoads",
   "showScrubber",
   "showText",
-  "unplayedPieces"
+  "unplayedPieces",
 ];
 
 export const pngUIOptions = [
@@ -55,7 +55,7 @@ export const pngUIOptions = [
   "flatCounts",
   "highlightSquares",
   "showRoads",
-  "unplayedPieces"
+  "unplayedPieces",
 ];
 
 defaults.embedConfig = {
@@ -63,21 +63,21 @@ defaults.embedConfig = {
   height: "600px",
   includeNames: false,
   state: true,
-  ui: pick(defaults, embedUIOptions)
+  ui: pick(defaults, embedUIOptions),
 };
 
 defaults.pngConfig = {
   size: "md",
   includeNames: true,
   pieceShadows: true,
-  ...pick(defaults, pngUIOptions)
+  ...pick(defaults, pngUIOptions),
 };
 
 let state = {
   embed: Platform.within.iframe,
   games: [],
   defaults,
-  ...defaults
+  ...defaults,
 };
 
 const load = (key, initial) =>
@@ -89,12 +89,12 @@ if (!state.embed) {
       state[key] = load(key, state[key]);
     }
   }
-  state.games = load("games", []).map(name => ({
+  state.games = load("games", []).map((name) => ({
     name,
     ptn: load("ptn-" + name),
     state: load("state-" + name),
     history: load("history-" + name),
-    historyIndex: load("historyIndex-" + name)
+    historyIndex: load("historyIndex-" + name),
   }));
 }
 

@@ -263,7 +263,7 @@ const HISTORY_DIALOGS = {
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
   dialogPNG: "png",
-  dialogQR: "qr"
+  dialogQR: "qr",
 };
 
 export default {
@@ -290,7 +290,7 @@ export default {
     EditGame,
     UISettings,
     EmbedConfig,
-    PNGConfig
+    PNGConfig,
   },
   props: ["ptn", "state", "name"],
   data() {
@@ -300,13 +300,13 @@ export default {
       Platform,
       errors,
       game,
-      hotkeys: HOTKEYS
+      hotkeys: HOTKEYS,
     };
   },
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map(key => ({
+      Object.values(HISTORY_DIALOGS).map((key) => ({
         get() {
           return this.$route.name === key;
         },
@@ -321,7 +321,7 @@ export default {
               this.$router.replace({ name: "local" });
             }
           }
-        }
+        },
       }))
     ),
     left: {
@@ -330,7 +330,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showPTN", value]);
-      }
+      },
     },
     right: {
       get() {
@@ -338,7 +338,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showText", value]);
-      }
+      },
     },
     hasChat() {
       return this.game.hasChat;
@@ -349,7 +349,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
-      }
+      },
     },
     notifyNotes: {
       get() {
@@ -357,7 +357,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["notifyNotes", value]);
-      }
+      },
     },
     isEditingTPS: {
       get() {
@@ -368,7 +368,7 @@ export default {
         if (!value) {
           this.editingTPS = "";
         }
-      }
+      },
     },
     selectedPiece: {
       get() {
@@ -380,7 +380,7 @@ export default {
           this.selectedPiece.color,
           this.firstMoveNumber
         );
-      }
+      },
     },
     minFirstMoveNumber() {
       const min1 =
@@ -392,7 +392,7 @@ export default {
               (total, square) =>
                 square.pieces.length
                   ? total +
-                    square.pieces.slice(1).filter(piece => piece.color === 1)
+                    square.pieces.slice(1).filter((piece) => piece.color === 1)
                       .length
                   : total,
               total
@@ -408,7 +408,7 @@ export default {
               (total, square) =>
                 square.pieces.length
                   ? total +
-                    square.pieces.slice(1).filter(piece => piece.color === 2)
+                    square.pieces.slice(1).filter((piece) => piece.color === 2)
                       .length
                   : total,
               total
@@ -427,7 +427,7 @@ export default {
           this.selectedPiece.color,
           this.firstMoveNumber
         );
-      }
+      },
     },
     editingTPS: {
       get() {
@@ -435,7 +435,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["editingTPS", value]);
-      }
+      },
     },
     games() {
       return this.$store.state.games.concat();
@@ -449,7 +449,7 @@ export default {
       return {
         history: this.game.history.concat(),
         index: this.game.historyIndex,
-        name: this.game.name
+        name: this.game.name,
       };
     },
     gameText() {
@@ -457,7 +457,7 @@ export default {
     },
     gameName() {
       return { name: this.game.name, game: this.game };
-    }
+    },
   },
   methods: {
     setWindowTitle(prefix = this.game.name) {
@@ -482,7 +482,7 @@ export default {
         if (this.ptn) {
           // Add game from URL
           const index = this.$store.state.games.findIndex(
-            g => g.name === this.name
+            (g) => g.name === this.name
           );
           if (index < 0 || this.$store.state.openDuplicate !== "replace") {
             game = new Game(this.ptn, { name: this.name, state: this.state });
@@ -490,7 +490,7 @@ export default {
               this.$store.dispatch("ADD_GAME", {
                 ptn: this.ptn,
                 name: game.name,
-                state: game.minState
+                state: game.minState,
               });
               this.$router.replace("/");
             }
@@ -517,10 +517,10 @@ export default {
                       color: "accent",
                       handler: () => {
                         this.$store.dispatch("UNDO", game);
-                      }
+                      },
                     },
-                    { icon: "close", color: "grey-2" }
-                  ]
+                    { icon: "close", color: "grey-2" },
+                  ],
                 });
               });
             }
@@ -681,7 +681,7 @@ export default {
     nop(event) {
       event.stopPropagation();
       event.preventDefault();
-    }
+    },
   },
   watch: {
     games(newGames, oldGames) {
@@ -720,7 +720,7 @@ export default {
       if (this.firstMoveNumber < this.minFirstMoveNumber) {
         this.firstMoveNumber = this.minFirstMoveNumber;
       }
-    }
+    },
   },
   beforeCreate() {
     // Redirect hash URLs
@@ -736,7 +736,7 @@ export default {
       this.$store.dispatch("ADD_GAME", {
         ptn: this.game.text(),
         name: this.game.name,
-        state: this.game.minState
+        state: this.game.minState,
       });
     }
 
@@ -751,7 +751,7 @@ export default {
     window.removeEventListener("drop", this.openFiles);
     window.removeEventListener("dragover", this.nop);
     window.removeEventListener("dragleave", this.nop);
-  }
+  },
 };
 </script>
 

@@ -145,17 +145,17 @@ export default {
   "!!": "!!",
 
   result: {
-    "1": "{player} wins by default",
+    1: "{player} wins by default",
     F: "{player} wins by flats",
     R: "{player} wins by road",
-    tie: "It's a tie"
+    tie: "It's a tie",
   },
 
   confirm: {
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?",
-    resetPNG: "Reset PNG settings to default?"
+    resetPNG: "Reset PNG settings to default?",
   },
 
   error: {
@@ -192,14 +192,14 @@ export default {
     "Missing board size": "Missing board size",
     "Unable to copy": "Unable to copy to clipboard",
     "Unable to download": "Unable to download files",
-    "Unrecognized tag": "Unrecognized tag"
+    "Unrecognized tag": "Unrecognized tag",
   },
 
   success: {
     copied: "Copied!",
     updateAvailable: "A new version is available",
     closedMultipleGames: "Closed 1 game | Closed {count} games",
-    replacedExistingGame: "Replaced existing game of the same name"
+    replacedExistingGame: "Replaced existing game of the same name",
   },
 
   hotkeys: {
@@ -219,6 +219,6 @@ export default {
     Ctrl: "Ctrl",
     Del: "Delete",
     Shift: "Shift",
-    Space: "Space"
-  }
+    Space: "Space",
+  },
 };

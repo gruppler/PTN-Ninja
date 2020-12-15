@@ -60,7 +60,7 @@ export default {
   props: ["game", "showEditor"],
   data() {
     return {
-      editDialog: false
+      editDialog: false,
     };
   },
   computed: {
@@ -70,8 +70,8 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showAllBranches", value]);
-      }
-    }
+      },
+    },
   },
   watch: {
     editDialog(isVisible) {
@@ -79,7 +79,7 @@ export default {
     },
     showEditor(isVisible) {
       this.editDialog = isVisible;
-    }
-  }
+    },
+  },
 };
 </script>

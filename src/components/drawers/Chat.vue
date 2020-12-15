@@ -22,7 +22,7 @@
                 class="fullwidth-padded-md q-py-xs q-mb-md"
                 :class="{
                   'q-mt-md': i > 0,
-                  highlight: game.state.plyID === message.ply.id
+                  highlight: game.state.plyID === message.ply.id,
                 }"
                 :key="i"
               >
@@ -92,7 +92,7 @@ export default {
   data() {
     return {
       message: "",
-      timer: null
+      timer: null,
     };
   },
   computed: {
@@ -134,7 +134,7 @@ export default {
         return 0;
       } else if (this.game.state.ply) {
         let ids = Object.keys(this.log)
-          .map(id => 1 * id)
+          .map((id) => 1 * id)
           .sort();
         for (let i = 0; i < ids.length; i++) {
           if (ids[i] === this.game.state.plyID) {
@@ -145,7 +145,7 @@ export default {
         }
       }
       return 0;
-    }
+    },
   },
   methods: {
     updateTimer() {
@@ -160,7 +160,7 @@ export default {
       return {
         time: time ? new Date(time * 1e3 + this.time) : null,
         player: player ? 1 * player : null,
-        text: [message]
+        text: [message],
       };
     },
     getTime() {
@@ -202,15 +202,15 @@ export default {
       if (message) {
         message.scrollIntoView({
           behavior: smooth ? "smooth" : "auto",
-          block: "start"
+          block: "start",
         });
       }
-    }
+    },
   },
   watch: {
     currentPlyIndex() {
       this.scroll(true);
-    }
+    },
   },
   created() {
     this.scroll = debounce(this.scroll, 100);
@@ -221,7 +221,7 @@ export default {
   },
   beforeDestroy() {
     window.clearTimeout(this.timer);
-  }
+  },
 };
 </script>
 

@@ -30,11 +30,11 @@ export default {
       if (ply && ply.id >= 0 && ply.id in this.game.notes) {
         notes = notes.concat(this.game.notes[ply.id]);
       }
-      return notes.map(note => ({
+      return notes.map((note) => ({
         message: note.message,
-        classes: "note"
+        classes: "note",
       }));
-    }
-  }
+    },
+  },
 };
 </script>

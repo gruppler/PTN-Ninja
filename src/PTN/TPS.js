@@ -14,7 +14,7 @@ export default class TPS {
     [this.text, this.grid, , , this.player, this.linenum] = matchData;
 
     this.grid = this.grid
-      .replace(/x(\d)/g, function(x, count) {
+      .replace(/x(\d)/g, function (x, count) {
         let spaces = ["x"];
         while (spaces.length < count) {
           spaces.push("x");
@@ -23,12 +23,12 @@ export default class TPS {
       })
       .split("/")
       .reverse()
-      .map(row => row.split(","));
+      .map((row) => row.split(","));
     this.size = this.grid.length;
     this.player *= 1;
     this.linenum *= 1;
 
-    if (this.grid.find(row => row.length !== this.size)) {
+    if (this.grid.find((row) => row.length !== this.size)) {
       this.errors.push(new Error("Invalid TPS grid"));
     }
   }

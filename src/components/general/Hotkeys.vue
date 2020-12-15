@@ -33,17 +33,19 @@ export default {
       names: HOTKEY_NAMES,
       keys: zipObject(
         Object.keys(HOTKEYS_FORMATTED),
-        Object.values(HOTKEYS_FORMATTED).map(values => {
+        Object.values(HOTKEYS_FORMATTED).map((values) => {
           return zipObject(
             Object.keys(values),
-            Object.values(values).map(value =>
+            Object.values(values).map((value) =>
               value
                 .split(/ \+ /g)
-                .map(key => (key.length > 1 ? this.$t("hotkeys." + key) : key))
+                .map((key) =>
+                  key.length > 1 ? this.$t("hotkeys." + key) : key
+                )
             )
           );
         })
-      )
+      ),
     };
   },
   computed: {
@@ -56,13 +58,11 @@ export default {
             this.$t("hotkeys." + category)
               .toLowerCase()
               .includes(q) ||
-            this.$t(this.names[category][key])
-              .toLowerCase()
-              .includes(q) ||
-            this.keys[category][key].find(key =>
+            this.$t(this.names[category][key]).toLowerCase().includes(q) ||
+            this.keys[category][key].find((key) =>
               ("" + key).toLowerCase().includes(q)
             ) ||
-            HOTKEYS[category][key].find(key =>
+            HOTKEYS[category][key].find((key) =>
               ("" + key).toLowerCase().includes(q)
             )
           );
@@ -71,33 +71,33 @@ export default {
         const filteredKeys = pickBy(
           zipObject(
             Object.keys(this.names),
-            Object.keys(this.names).map(category => {
-              return Object.keys(this.names[category]).filter(key => {
+            Object.keys(this.names).map((category) => {
+              return Object.keys(this.names[category]).filter((key) => {
                 return search(category, key);
               });
             })
           ),
-          values => values.length
+          (values) => values.length
         );
 
         return {
           names: zipObject(
             Object.keys(filteredKeys),
-            Object.keys(filteredKeys).map(category =>
+            Object.keys(filteredKeys).map((category) =>
               pick(this.names[category], filteredKeys[category])
             )
           ),
           keys: zipObject(
             Object.keys(filteredKeys),
-            Object.keys(filteredKeys).map(category =>
+            Object.keys(filteredKeys).map((category) =>
               pick(this.keys[category], filteredKeys[category])
             )
-          )
+          ),
         };
       } else {
         return { names: this.names, keys: this.keys };
       }
-    }
-  }
+    },
+  },
 };
 </script>

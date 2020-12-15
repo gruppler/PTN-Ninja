@@ -17,13 +17,13 @@ export default {
   props: ["value"],
   data() {
     return {
-      hotkey: HOTKEYS.MISC.more
+      hotkey: HOTKEYS.MISC.more,
     };
   },
   methods: {
     toggle() {
       this.$emit("input", !this.value);
-    }
-  }
+    },
+  },
 };
 </script>

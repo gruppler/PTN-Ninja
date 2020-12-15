@@ -107,7 +107,7 @@ export default {
   data() {
     return {
       message: "",
-      editing: null
+      editing: null,
     };
   },
   computed: {
@@ -122,7 +122,7 @@ export default {
     },
     plyIDs() {
       return Object.keys(this.log)
-        .map(id => 1 * id)
+        .map((id) => 1 * id)
         .sort((a, b) => a - b);
     },
     currentPlyID() {
@@ -156,7 +156,7 @@ export default {
         }
       }
       return null;
-    }
+    },
   },
   methods: {
     send() {
@@ -220,10 +220,10 @@ export default {
       }
       if (message) {
         message.scrollIntoView({
-          block: "end"
+          block: "end",
         });
       }
-    }
+    },
   },
   watch: {
     log() {
@@ -231,14 +231,14 @@ export default {
     },
     currentPlyID() {
       this.scroll();
-    }
+    },
   },
   created() {
     this.scroll = debounce(this.scroll, 100);
   },
   mounted() {
     this.$nextTick(this.scroll);
-  }
+  },
 };
 </script>
 

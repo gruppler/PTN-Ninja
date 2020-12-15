@@ -24,7 +24,9 @@ export default class GameEnd {
     } else if (
       pieces.flat.length + pieces.cap.length ===
         this.pieceCounts[player].total ||
-      !this.state.squares.find(row => row.find(square => !square.pieces.length))
+      !this.state.squares.find((row) =>
+        row.find((square) => !square.pieces.length)
+      )
     ) {
       // Last empty square or last piece
       if (this.state.flats[0] == this.state.flats[1]) {
@@ -66,25 +68,25 @@ export default class GameEnd {
       2: [],
       squares: {
         1: [],
-        2: []
+        2: [],
       },
       edges: {
         1: { NS: false, EW: false },
-        2: { NS: false, EW: false }
+        2: { NS: false, EW: false },
       },
-      length: 0
+      length: 0,
     };
     let road;
 
     // Gather player-controlled squares and dead ends
-    this.state.squares.forEach(row =>
-      row.forEach(square => {
+    this.state.squares.forEach((row) =>
+      row.forEach((square) => {
         let piece = square.piece;
         if (piece && !piece.isStanding) {
           let player = piece.color;
           connections[square.static.coord] = square.connected
-            .map(side => square.static.neighbors[side])
-            .filter(square => square);
+            .map((side) => square.static.neighbors[side])
+            .filter((square) => square);
 
           let neighbors = connections[square.static.coord];
 
@@ -103,8 +105,8 @@ export default class GameEnd {
             if (
               square.static.isEdge &&
               neighbors.length === 2 &&
-              neighbors.find(square => square.static.isEdge) &&
-              neighbors.find(square => !square.static.isEdge)
+              neighbors.find((square) => square.static.isEdge) &&
+              neighbors.find((square) => !square.static.isEdge)
             ) {
               possibleDeadEnds[player].push(square);
             }
@@ -116,12 +118,12 @@ export default class GameEnd {
     );
 
     // Remove dead ends not connected to edges
-    players.forEach(player =>
+    players.forEach((player) =>
       removeDeadEnds(deadEnds, possibleRoads[player], connections)
     );
 
     // Find roads that actually bridge opposite edges
-    players.forEach(player => {
+    players.forEach((player) => {
       while (!isEmpty(possibleRoads[player])) {
         // Follow any square to get all connected squares
         road = followRoad(
@@ -186,10 +188,10 @@ function followRoad(square, possibleRoads, connections) {
 
   if (square.static.isEdge) {
     // Note which edge(s) the road touches
-    square.static.edges.forEach(edge => (edges[edge] = true));
+    square.static.edges.forEach((edge) => (edges[edge] = true));
   }
 
-  connections[square.static.coord].forEach(neighbor => {
+  connections[square.static.coord].forEach((neighbor) => {
     if (neighbor.static.coord in possibleRoads[player]) {
       // Haven't gone this way yet; find out where it goes
       road = followRoad(neighbor, possibleRoads, connections);
@@ -201,7 +203,7 @@ function followRoad(square, possibleRoads, connections) {
 
   return {
     squares: squares,
-    edges: edges
+    edges: edges,
   };
 }
 
@@ -214,7 +216,7 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
         (square.static.isEdge && !winningEdge) ||
         square.static["is" + winningEdge];
       let nextNeighbors = [];
-      connections[square.static.coord].forEach(neighbor => {
+      connections[square.static.coord].forEach((neighbor) => {
         if (neighbor.static.coord in squares) {
           nextNeighbors.push(neighbor);
         }
@@ -239,7 +241,7 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
 function addRoad(roads, road, player) {
   roads[player].push({
     edges: road.edges,
-    squares: Object.keys(road.squares)
+    squares: Object.keys(road.squares),
   });
   Object.assign(roads.squares[player], road.squares);
   if (road.edges.NS) roads.edges[player].NS = true;

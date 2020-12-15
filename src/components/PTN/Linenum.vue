@@ -61,13 +61,13 @@ export default {
     game: Object,
     noEdit: Boolean,
     noBranch: Boolean,
-    onlyBranch: Boolean
+    onlyBranch: Boolean,
   },
   data() {
     return {
       menu: false,
       dialogRename: false,
-      newBranch: ""
+      newBranch: "",
     };
   },
   computed: {
@@ -100,7 +100,7 @@ export default {
             ply2.branches[0] !== ply2 &&
             this.game.state.plyIDs.includes(ply2.id)))
       );
-    }
+    },
   },
   methods: {
     selectBranch(ply) {
@@ -111,8 +111,8 @@ export default {
     },
     deleteBranch() {
       this.game.deleteBranch(this.linenum.branch);
-    }
-  }
+    },
+  },
 };
 </script>
 

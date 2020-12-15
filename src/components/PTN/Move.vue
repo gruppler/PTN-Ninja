@@ -6,7 +6,7 @@
       linebreak,
       separator,
       'current-only': currentOnly,
-      standalone: standalone
+      standalone: standalone,
     }"
   >
     <Linenum
@@ -49,7 +49,7 @@ export default {
     standalone: Boolean,
     noDecoration: Boolean,
     separateBranch: Boolean,
-    noBranch: Boolean
+    noBranch: Boolean,
   },
   computed: {
     ply1() {
@@ -65,7 +65,7 @@ export default {
         : null;
     },
     index() {
-      return this.game.movesSorted.findIndex(move => move === this.move);
+      return this.game.movesSorted.findIndex((move) => move === this.move);
     },
     prevMove() {
       const moves = this.game.movesSorted;
@@ -110,8 +110,8 @@ export default {
           this.player ||
           (this.prevMove && this.prevMove.branch != this.move.branch))
       );
-    }
-  }
+    },
+  },
 };
 </script>
 

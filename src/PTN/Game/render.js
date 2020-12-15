@@ -6,7 +6,7 @@ const squareSizes = {
   sm: 50,
   md: 100,
   lg: 200,
-  xl: 400
+  xl: 400,
 };
 
 const defaults = {
@@ -18,7 +18,7 @@ const defaults = {
   showRoads: true,
   unplayedPieces: true,
   includeNames: true,
-  padding: true
+  padding: true,
 };
 
 const colors = {
@@ -39,7 +39,7 @@ const colors = {
       connection: "rgba(207, 216, 220, 0.2)",
       road: "rgba(207, 216, 220, 0.8)",
       stroke: "rgba(84, 110, 122, 0.5)",
-      border: "#546e7a"
+      border: "#546e7a",
     },
     2: {
       header: "#263238",
@@ -49,9 +49,9 @@ const colors = {
       connection: "rgba(69, 90, 100, 0.2)",
       road: "rgba(69, 90, 100, 0.8)",
       stroke: "rgba(38, 50, 56, 0.5)",
-      border: "#263238"
-    }
-  }
+      border: "#263238",
+    },
+  },
 };
 
 export default function render(game, options = {}) {
@@ -81,7 +81,7 @@ export default function render(game, options = {}) {
     N: [(squareSize - roadSize) / 2, 0],
     S: [(squareSize - roadSize) / 2, squareSize - roadSize],
     E: [squareSize - roadSize, (squareSize - roadSize) / 2],
-    W: [0, (squareSize - roadSize) / 2]
+    W: [0, (squareSize - roadSize) / 2],
   };
 
   const shadowBlur = Math.round(squareSize * 0.03);
@@ -252,7 +252,7 @@ export default function render(game, options = {}) {
   );
 
   // Square
-  const drawSquare = square => {
+  const drawSquare = (square) => {
     ctx.save();
     ctx.translate(
       padding + axisSize + square.static.x * squareSize,
@@ -274,7 +274,7 @@ export default function render(game, options = {}) {
     }
 
     if (options.showRoads && square.connected.length) {
-      square.connected.forEach(side => {
+      square.connected.forEach((side) => {
         const coords = sideCoords[side];
         ctx.fillStyle =
           colors.player[square.color][
@@ -296,7 +296,7 @@ export default function render(game, options = {}) {
   };
 
   // Piece
-  const drawPiece = piece => {
+  const drawPiece = (piece) => {
     ctx.save();
 
     const pieces = piece.square ? piece.square.pieces : null;
@@ -387,7 +387,7 @@ export default function render(game, options = {}) {
   game.state.squares
     .concat()
     .reverse()
-    .forEach(row => row.forEach(drawSquare));
+    .forEach((row) => row.forEach(drawSquare));
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
@@ -402,7 +402,7 @@ export default function render(game, options = {}) {
     );
     ctx.fill();
 
-    [1, 2].forEach(color => {
+    [1, 2].forEach((color) => {
       ctx.save();
       ctx.translate(
         padding +
@@ -411,7 +411,7 @@ export default function render(game, options = {}) {
           (color === 2) * (pieceSize + (squareSize - pieceSize) / 2),
         padding + headerHeight + boardSize - squareSize
       );
-      ["flat", "cap"].forEach(type => {
+      ["flat", "cap"].forEach((type) => {
         const total = game.pieceCounts[color][type];
         const played = game.state.pieces.played[color][type].length;
         const remaining = total - played;
@@ -445,7 +445,7 @@ function roundRect(ctx, x, y, width, height, radius) {
     tl: 0,
     tr: 0,
     bl: 0,
-    br: 0
+    br: 0,
   };
   if (typeof radius === "object") {
     for (let side in radius) {

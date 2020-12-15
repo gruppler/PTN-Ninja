@@ -28,7 +28,7 @@ export default {
     return {
       bottomSheet: false,
       qrText: "",
-      qrDialog: false
+      qrDialog: false,
     };
   },
   computed: {
@@ -38,8 +38,8 @@ export default {
           id: "url",
           label: this.$t("URL"),
           icon: "url",
-          action: () => this.shareText("url")
-        }
+          action: () => this.shareText("url"),
+        },
       ];
 
       if (this.game.state.ply) {
@@ -47,7 +47,7 @@ export default {
           id: "ply",
           label: this.$t("Ply"),
           icon: "ply",
-          action: () => this.shareText("ply")
+          action: () => this.shareText("ply"),
         });
       }
 
@@ -56,13 +56,13 @@ export default {
           id: "moves",
           label: this.$t("Moves"),
           icon: "moves",
-          action: () => this.shareText("moves")
+          action: () => this.shareText("moves"),
         },
         {
           id: "ptn",
           label: this.$t("PTN Text"),
           icon: "text",
-          action: () => this.shareText("ptn")
+          action: () => this.shareText("ptn"),
         },
         {}
       );
@@ -73,13 +73,13 @@ export default {
             id: "embed",
             label: this.$t("Embed"),
             icon: "embed",
-            action: this.embed
+            action: this.embed,
           },
           {
             id: "png",
             label: this.$t("PNG Image"),
             icon: "file_image",
-            action: this.png
+            action: this.png,
           }
         );
       }
@@ -89,18 +89,18 @@ export default {
           id: "download",
           label: this.$t("PTN File"),
           icon: "file",
-          action: this.shareFile
+          action: this.shareFile,
         },
         {
           id: "qrcode",
           label: this.$t("QR Code"),
           icon: "qrcode",
-          action: this.qrCode
+          action: this.qrCode,
         }
       );
 
       return actions;
-    }
+    },
   },
   methods: {
     shareText(type) {
@@ -111,26 +111,26 @@ export default {
             title: this.game.name,
             url: this.$store.getters.url(this.game, {
               origin: true,
-              state: true
-            })
+              state: true,
+            }),
           };
           break;
         case "ply":
           output = {
             title: this.game.state.ply.text(),
-            text: this.game.state.ply.text()
+            text: this.game.state.ply.text(),
           };
           break;
         case "moves":
           output = {
             title: this.$t("Moves") + " – " + this.game.name,
-            text: this.game.moveText(this.$store.state.showAllBranches, true)
+            text: this.game.moveText(this.$store.state.showAllBranches, true),
           };
           break;
         case "ptn":
           output = {
             title: this.$t("PTN") + " – " + this.game.name,
-            text: this.game.ptn
+            text: this.game.ptn,
           };
           break;
       }
@@ -148,7 +148,7 @@ export default {
     qrCode() {
       this.qrText = this.$store.getters.url(this.game, {
         origin: true,
-        state: true
+        state: true,
       });
       this.qrDialog = true;
     },
@@ -162,12 +162,12 @@ export default {
             grid: true,
             class: "bg-secondary non-selectable",
             message: this.$t("Share"),
-            actions: this.actions
+            actions: this.actions,
           })
           .onOk(({ action }) => action())
           .onDismiss(() => (this.bottomSheet = false));
       }
-    }
+    },
   },
   watch: {
     qrDialog(isVisible) {
@@ -175,7 +175,7 @@ export default {
     },
     showQR(isVisible) {
       this.qrDialog = isVisible;
-    }
-  }
+    },
+  },
 };
 </script>

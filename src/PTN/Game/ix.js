@@ -23,12 +23,12 @@ export default class GameIX {
         const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
           Ply.getDirection([
             currentSquare.static.x - prevSquare.static.x,
-            currentSquare.static.y - prevSquare.static.y
+            currentSquare.static.y - prevSquare.static.y,
           ])
         ];
         neighbors = [
           currentSquare.static.neighbors[direction],
-          this.state.selected.squares[0]
+          this.state.selected.squares[0],
         ];
       }
 
@@ -128,7 +128,7 @@ export default class GameIX {
         x: square.static.x,
         y: square.static.y,
         count: 0,
-        type: ""
+        type: "",
       };
       this.state.selected.moveset.push(move);
     }
@@ -224,7 +224,7 @@ export default class GameIX {
       const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
         Ply.getDirection([
           square.static.x - currentSquare.static.x,
-          square.static.y - currentSquare.static.y
+          square.static.y - currentSquare.static.y,
         ])
       ];
       const neighbor = square.static.neighbors[direction];
@@ -237,7 +237,7 @@ export default class GameIX {
         x: square.static.x,
         y: square.static.y,
         count: altSelect ? this.state.selected.pieces.length : 1,
-        flatten: piece && piece.isStanding
+        flatten: piece && piece.isStanding,
       };
       this.state.selected.moveset.push(move);
 

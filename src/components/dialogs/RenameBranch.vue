@@ -38,13 +38,13 @@ export default {
   props: ["value", "game", "linenum"],
   data() {
     return {
-      newBranch: ""
+      newBranch: "",
     };
   },
   computed: {
     branchParts() {
       return this.linenum.splitBranch;
-    }
+    },
   },
   methods: {
     close() {
@@ -60,7 +60,7 @@ export default {
     getFullBranch(value = this.newBranch) {
       return [
         ...this.branchParts.slice(0, this.branchParts.length - 1),
-        value
+        value,
       ].join("/");
     },
     validateBranch(value) {
@@ -74,7 +74,7 @@ export default {
     save() {
       this.game.renameBranch(this.linenum.branch, this.getFullBranch());
       this.close();
-    }
+    },
   },
   watch: {
     value(visible) {
@@ -83,7 +83,7 @@ export default {
       } else {
         this.afterEdit();
       }
-    }
-  }
+    },
+  },
 };
 </script>

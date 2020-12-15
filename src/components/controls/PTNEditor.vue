@@ -26,11 +26,11 @@ export default {
     return {
       ptn: "",
       rules: [
-        moves => {
+        (moves) => {
           const result = Game.validate(this.header + moves);
           return result === true ? true : this.$t(`error["${result}"]`);
-        }
-      ]
+        },
+      ],
     };
   },
   computed: {
@@ -39,7 +39,7 @@ export default {
     },
     error() {
       return this.$refs.input.computedErrorMessage;
-    }
+    },
   },
   methods: {
     save() {
@@ -47,11 +47,11 @@ export default {
     },
     init() {
       this.ptn = this.game ? this.game.moveText(true, true) : "";
-    }
+    },
   },
   mounted() {
     this.init();
-  }
+  },
 };
 </script>
 

@@ -37,11 +37,11 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["board3D", value]);
-      }
+      },
     },
     isPortrait() {
       return this.$store.state.isPortrait;
-    }
-  }
+    },
+  },
 };
 </script>

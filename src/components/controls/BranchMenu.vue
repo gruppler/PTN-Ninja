@@ -35,24 +35,24 @@ export default {
   name: "BranchMenu",
   data() {
     return {
-      isClosing: false
+      isClosing: false,
     };
   },
   components: {
     Linenum: () => import("../PTN/Linenum"),
-    Ply: () => import("../PTN/Ply")
+    Ply: () => import("../PTN/Ply"),
   },
   props: {
     value: Boolean,
     game: Object,
     branches: Array,
-    linenum: Boolean
+    linenum: Boolean,
   },
   methods: {
     select(ply) {
       this.isClosing = true;
       this.$emit("select", ply);
-    }
+    },
   },
   watch: {
     branches() {
@@ -64,8 +64,8 @@ export default {
       if (isVisible) {
         this.isClosing = false;
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

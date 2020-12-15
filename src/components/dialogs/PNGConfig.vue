@@ -134,7 +134,7 @@ export default {
       file: null,
       fileSize: 0,
       size: sizes.indexOf(this.$store.state.pngConfig.size),
-      sizes
+      sizes,
     };
   },
   computed: {
@@ -146,7 +146,7 @@ export default {
     },
     canShare() {
       return navigator.canShare;
-    }
+    },
   },
   methods: {
     updateConfig() {
@@ -156,9 +156,9 @@ export default {
       const filename = this.$store.getters.png_filename(this.game);
       const canvas = this.game.render(this.config);
       this.preview = canvas.toDataURL();
-      canvas.toBlob(blob => {
+      canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
-          type: "image/png"
+          type: "image/png",
         });
         this.fileSize = humanStorageSize(this.file.size);
       });
@@ -174,14 +174,14 @@ export default {
         message: this.$t("confirm.resetPNG"),
         success: () => {
           const config = cloneDeep(this.$store.state.defaults.pngConfig);
-          Object.keys(config).forEach(key => {
+          Object.keys(config).forEach((key) => {
             if (pngUIOptions.includes(key)) {
               config[key] = this.$store.state[key];
             }
           });
           this.config = config;
           this.size = this.sizes.indexOf(config.size);
-        }
+        },
       });
     },
     download() {
@@ -190,12 +190,12 @@ export default {
     share() {
       this.$store.dispatch("COPY", {
         title: this.$t("Share PNG"),
-        url: this.url
+        url: this.url,
       });
     },
     close() {
       this.$emit("input", false);
-    }
+    },
   },
   watch: {
     tps() {
@@ -206,7 +206,7 @@ export default {
         this.$store.dispatch("SET_UI", ["pngConfig", cloneDeep(config)]);
         this.updatePreview();
       },
-      deep: true
+      deep: true,
     },
     size(i) {
       this.config.size = this.sizes[i];
@@ -215,10 +215,10 @@ export default {
       if (show) {
         this.updatePreview();
       }
-    }
+    },
   },
   created() {
     this.updatePreview();
-  }
+  },
 };
 </script>

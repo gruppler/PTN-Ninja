@@ -37,18 +37,18 @@ export default {
     return {
       range: {
         min: 0,
-        max: this.$store.state.games.length - 1
+        max: this.$store.state.games.length - 1,
       },
-      min: 0
+      min: 0,
     };
   },
   computed: {
     games() {
-      return this.$store.state.games.map(game => game.name);
+      return this.$store.state.games.map((game) => game.name);
     },
     max() {
       return this.games.length - 1;
-    }
+    },
   },
   methods: {
     close() {
@@ -65,9 +65,9 @@ export default {
             this.$store.state.games.slice(this.range.min, this.range.max + 1)
           );
           this.close();
-        }
+        },
       });
-    }
+    },
   },
   watch: {
     value(show) {
@@ -75,7 +75,7 @@ export default {
         this.range.min = 0;
         this.range.max = this.max;
       }
-    }
-  }
+    },
+  },
 };
 </script>

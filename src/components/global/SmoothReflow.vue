@@ -14,16 +14,16 @@ export default {
   props: {
     tag: {
       type: String,
-      default: "div"
+      default: "div",
     },
-    options: Object
+    options: Object,
   },
   mounted() {
     this.$smoothReflow(
       defaults(this.options, {
-        transition: ".3s cubic-bezier(.25, .8, .5, 1)"
+        transition: ".3s cubic-bezier(.25, .8, .5, 1)",
       })
     );
-  }
+  },
 };
 </script>
