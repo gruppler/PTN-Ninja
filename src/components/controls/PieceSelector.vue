@@ -39,12 +39,12 @@ export default {
     return {
       color: this.value.color || 1,
       type: this.value.type || "F",
-      hotkeys: HOTKEYS.PIECE
+      hotkeys: HOTKEYS.PIECE,
     };
   },
   computed: {
     available() {
-      return (this.types ? this.types : ["F", "S", "C"]).filter(type => {
+      return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
         type = type === "C" ? "cap" : "flat";
         return (
           this.game.state.pieces.played[this.color][type].length <
@@ -54,7 +54,7 @@ export default {
     },
     shadows() {
       return this.$store.state.pieceShadows;
-    }
+    },
   },
   methods: {
     select(type = this.type, color = this.color) {
@@ -73,7 +73,7 @@ export default {
       } else {
         this.select(key);
       }
-    }
+    },
   },
   watch: {
     available(available) {
@@ -85,8 +85,8 @@ export default {
     value(value) {
       this.color = value.color;
       this.type = value.type || "F";
-    }
-  }
+    },
+  },
 };
 </script>
 

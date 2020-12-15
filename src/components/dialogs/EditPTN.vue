@@ -40,7 +40,7 @@ export default {
   data() {
     return {
       showAll: false,
-      editor: null
+      editor: null,
     };
   },
   methods: {
@@ -50,7 +50,7 @@ export default {
     save(notation) {
       this.game.updatePTN(notation);
       this.close();
-    }
+    },
   },
   watch: {
     value(isVisible) {
@@ -59,8 +59,8 @@ export default {
           this.editor = this.$refs.editor;
         });
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -28,7 +28,7 @@ export default class Move {
   }
   set branch(branch) {
     this.linenum.branch = branch;
-    this.plies.forEach(ply => {
+    this.plies.forEach((ply) => {
       if (ply && !ply.isNop) {
         ply.branch = branch;
       }
@@ -50,7 +50,7 @@ export default class Move {
   }
 
   get firstPly() {
-    return this.plies.find(ply => ply && !ply.isNop) || null;
+    return this.plies.find((ply) => ply && !ply.isNop) || null;
   }
 
   setPly(ply, index = 0) {
@@ -92,7 +92,7 @@ export default class Move {
     ) {
       // Looks like we're adding a new branch
       const original = this.game.moves.find(
-        move =>
+        (move) =>
           move.branch === this.linenum.parentBranch &&
           move.number === this.linenum.parentNumber
       );
@@ -125,15 +125,15 @@ export default class Move {
 
     if (comments) {
       if (comments[0] && comments[0].length) {
-        comments1 = comments[0].map(comment => comment.text()).join(" ");
+        comments1 = comments[0].map((comment) => comment.text()).join(" ");
       }
       if (comments[1] && comments[1].length) {
-        comments2 = comments[1].map(comment => comment.text()).join(" ");
+        comments2 = comments[1].map((comment) => comment.text()).join(" ");
       }
     }
 
     return [this.linenum.text(showBranch), ply1, comments1, ply2, comments2]
-      .filter(item => item)
+      .filter((item) => item)
       .join(" ");
   }
 }

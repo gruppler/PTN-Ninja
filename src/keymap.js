@@ -6,7 +6,7 @@ export const HOTKEYS = {
     REDO: ["ctrl", "shift", "z"],
     SAVE_PNG: ["ctrl", "shift", "p"],
     SAVE_PTN: ["ctrl", "s"],
-    OPEN: ["ctrl", "o"]
+    OPEN: ["ctrl", "o"],
   },
   CONTROLS: {
     playpause: ["space"],
@@ -27,7 +27,7 @@ export const HOTKEYS = {
     firstBranch: ["ctrl", "arrowup"],
     lastBranch: ["ctrl", "arrowdown"],
     firstBranchEnd: ["ctrl", "shift", "arrowup"],
-    lastBranchEnd: ["ctrl", "shift", "arrowdown"]
+    lastBranchEnd: ["ctrl", "shift", "arrowdown"],
   },
   UI: {
     showPTN: ["q"],
@@ -45,7 +45,7 @@ export const HOTKEYS = {
     unplayedPieces: ["u"],
     showMove: ["m"],
     showControls: ["c"],
-    showScrubber: ["shift", "s"]
+    showScrubber: ["shift", "s"],
   },
   MISC: {
     help: ["ctrl", "shift", "?"],
@@ -63,7 +63,7 @@ export const HOTKEYS = {
     focusText: ["/"],
     focusGame: ["\\"],
     previousGame: ["alt", "\\"],
-    more: ["shift", "space"]
+    more: ["shift", "space"],
   },
   EVAL: {
     tak: ["'"],
@@ -71,14 +71,14 @@ export const HOTKEYS = {
     question: ["shift", "?"],
     questionDouble: ["alt", "shift", "?"],
     bang: ["shift", "!"],
-    bangDouble: ["alt", "shift", "!"]
+    bangDouble: ["alt", "shift", "!"],
   },
   PIECE: {
     color: ["`"],
     F: ["1"],
     S: ["2"],
-    C: ["3"]
-  }
+    C: ["3"],
+  },
 };
 
 export const HOTKEY_NAMES = {
@@ -87,7 +87,7 @@ export const HOTKEY_NAMES = {
     REDO: "Redo",
     SAVE_PNG: "Export PNG Image",
     SAVE_PTN: "Export PTN File",
-    OPEN: "Load Files"
+    OPEN: "Load Files",
   },
   CONTROLS: {
     playpause: "Play/Pause",
@@ -107,7 +107,7 @@ export const HOTKEY_NAMES = {
     firstBranch: "First Branch",
     lastBranch: "Last Branch",
     firstBranchEnd: "First Branch End",
-    lastBranchEnd: "Last Branch End"
+    lastBranchEnd: "Last Branch End",
   },
   UI: {
     showPTN: "Show PTN",
@@ -125,7 +125,7 @@ export const HOTKEY_NAMES = {
     unplayedPieces: "Unplayed Pieces",
     showMove: "Current Move",
     showControls: "Play Controls",
-    showScrubber: "Scrub Bar"
+    showScrubber: "Scrub Bar",
   },
   EVAL: {
     tak: "Tak",
@@ -133,13 +133,13 @@ export const HOTKEY_NAMES = {
     question: "?",
     questionDouble: "??",
     bang: "!",
-    bangDouble: "!!"
+    bangDouble: "!!",
   },
   PIECE: {
     color: "Switch Player",
     F: "Flats",
     S: "Walls",
-    C: "Caps"
+    C: "Caps",
   },
   MISC: {
     help: "Help",
@@ -157,8 +157,8 @@ export const HOTKEY_NAMES = {
     focusText: "Focus Text Input",
     focusGame: "Focus Game Selector",
     previousGame: "Previous Game",
-    more: "Show More/Less"
-  }
+    more: "Show More/Less",
+  },
 };
 
 let formatted = { ...HOTKEYS };

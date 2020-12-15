@@ -44,7 +44,7 @@ export default class GameUndo {
   recordChange(mutate) {
     const before = {
       state: this.minState,
-      ptn: this.ptn
+      ptn: this.ptn,
     };
     mutate.call(this);
     const patch = diff.patch_toText(diff.patch_make(before.ptn, this.ptn));
@@ -57,7 +57,7 @@ export default class GameUndo {
           undoPatch: diff.patch_toText(diff.patch_make(this.ptn, before.ptn)),
           afterState: isEqual(before.state, this.minState)
             ? undefined
-            : this.minState
+            : this.minState,
         })
       );
       this.historyIndex++;

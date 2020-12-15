@@ -71,7 +71,7 @@ export default class GameNavigation {
     let stack = [];
 
     if (moveset[0].errors) {
-      console.error(moveset[0].errors);
+      throw new Error(...moveset[0].errors);
       return false;
     }
 
@@ -113,7 +113,7 @@ export default class GameNavigation {
               this._updatePTN();
             }
           } else {
-            console.error("Invalid ply");
+            throw new Error("Invalid ply");
             return false;
           }
         }
@@ -128,7 +128,7 @@ export default class GameNavigation {
         times(count, () => {
           let piece = stack.pop();
           if (!piece) {
-            console.error("Invalid ply");
+            throw new Error("Invalid ply");
             return false;
           }
           square.pushPiece(piece);
@@ -142,9 +142,9 @@ export default class GameNavigation {
   _undoMoveset(moveset, color = 1, ply = null) {
     return this._doMoveset(
       moveset
-        .map(move => ({
+        .map((move) => ({
           ...move,
-          action: move.action === "pop" ? "push" : "pop"
+          action: move.action === "pop" ? "push" : "pop",
         }))
         .reverse(),
       color,
@@ -188,7 +188,7 @@ export default class GameNavigation {
       plyIsDone: isDone,
       move: targetPly.move,
       branch: targetPly.branch,
-      number: targetPly.move.number
+      number: targetPly.move.number,
     };
 
     // Load a board state?

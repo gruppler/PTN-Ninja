@@ -17,7 +17,7 @@ export default class Ptn {
       this.movement,
       this.direction,
       this.distribution,
-      this.wallSmash
+      this.wallSmash,
     ] = matchData;
 
     this.pieceType = this.specialPiece === "C" ? "cap" : "flat";
@@ -63,15 +63,15 @@ export default class Ptn {
           action: reverse ? "pop" : "push",
           x: this.x,
           y: this.y,
-          type: types[this.specialPiece] || "flat"
-        }
+          type: types[this.specialPiece] || "flat",
+        },
       ];
 
     const firstMove = {
       action: reverse ? "push" : "pop",
       count: parseInt(this.pieceCount, 10),
       x: this.x,
-      y: this.y
+      y: this.y,
     };
 
     const [xOffset, yOffset] = this.directionModifier();
@@ -81,7 +81,7 @@ export default class Ptn {
         action: reverse ? "pop" : "push",
         count: n,
         x: this.x + xOffset * (i + 1),
-        y: this.y + yOffset * (i + 1)
+        y: this.y + yOffset * (i + 1),
       };
     });
 
@@ -170,7 +170,7 @@ export default class Ptn {
    * @return {Array} Move distribution counts
    */
   stackDistribution() {
-    return this.distribution.split("").map(s => parseInt(s, 10));
+    return this.distribution.split("").map((s) => parseInt(s, 10));
   }
 
   /**

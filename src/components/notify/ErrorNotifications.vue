@@ -14,13 +14,13 @@ export default {
       return this.errors && this.errors.length;
     },
     notifications() {
-      return this.errors.map(message => ({
+      return this.errors.map((message) => ({
         message,
         color: "negative",
         icon: "error",
-        textColor: "grey-10"
+        textColor: "grey-10",
       }));
-    }
-  }
+    },
+  },
 };
 </script>

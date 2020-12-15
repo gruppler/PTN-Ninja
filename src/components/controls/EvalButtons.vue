@@ -22,7 +22,7 @@
       @shortkey="toggle('?', $event.srcKey === 'double')"
       v-shortkey="{
         single: hotkeys.question,
-        double: hotkeys.questionDouble
+        double: hotkeys.questionDouble,
       }"
       dense
     />
@@ -34,7 +34,7 @@
       @shortkey="toggle('!', $event.srcKey === 'double')"
       v-shortkey="{
         single: hotkeys.bang,
-        double: hotkeys.bangDouble
+        double: hotkeys.bangDouble,
       }"
       dense
     />
@@ -49,7 +49,7 @@ export default {
   props: ["game"],
   data() {
     return {
-      hotkeys: HOTKEYS.EVAL
+      hotkeys: HOTKEYS.EVAL,
     };
   },
   computed: {
@@ -76,15 +76,15 @@ export default {
     },
     isDoubleBang() {
       return this.eval && this.eval.isDouble("!");
-    }
+    },
   },
   methods: {
     toggle(type, double = false) {
       if (this.game) {
         this.game.toggleEvaluation(type, double);
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

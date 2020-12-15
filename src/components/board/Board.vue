@@ -16,7 +16,7 @@
         'flat-counts': $store.state.flatCounts,
         'highlight-squares': $store.state.highlightSquares,
         'piece-shadows': $store.state.pieceShadows,
-        'unplayed-pieces': $store.state.unplayedPieces
+        'unplayed-pieces': $store.state.unplayedPieces,
       }"
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
@@ -101,7 +101,7 @@ export default {
   name: "Board",
   components: {
     Square,
-    Piece
+    Piece,
   },
   props: ["game"],
   data() {
@@ -112,7 +112,7 @@ export default {
       x: 0,
       y: 0,
       prevBoardRotation: null,
-      boardRotation: this.$store.state.boardRotation
+      boardRotation: this.$store.state.boardRotation,
     };
   },
   computed: {
@@ -140,7 +140,7 @@ export default {
         total
           ? Math.max(15, Math.min(85, (this.flats[1] / total).toPrecision(4))) +
             "%"
-          : ""
+          : "",
       ];
     },
     board3D() {
@@ -208,7 +208,7 @@ export default {
         }
       }
       return squares;
-    }
+    },
   },
   methods: {
     isInputFocused() {
@@ -276,9 +276,9 @@ export default {
           width: 0,
           height: 0,
           x: 0,
-          y: 0
+          y: 0,
         };
-        nodes.forEach(node => {
+        nodes.forEach((node) => {
           const bb = node.getBoundingClientRect();
           bbAll.top = Math.min(bbAll.top, bb.top);
           bbAll.bottom = Math.max(bbAll.bottom, bb.bottom);
@@ -295,13 +295,13 @@ export default {
     zoomFit() {
       let nodes = [this.$refs.container];
       if (this.$store.state.unplayedPieces) {
-        Object.values(this.game.state.pieces.all.byID).forEach(piece => {
+        Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
             nodes.push(this.$refs[piece.id][0].$el);
           }
         });
       }
-      this.squares.forEach(square => {
+      this.squares.forEach((square) => {
         if (square.pieces.length > 1) {
           nodes.push(this.$refs[square.piece.id][0].$el);
         }
@@ -325,7 +325,7 @@ export default {
         ((spaceBB.height - boardBB.height) / 2) * scale;
       scale *= this.scale;
       this.scale = scale;
-    }
+    },
   },
   watch: {
     isPortrait(isPortrait) {
@@ -347,8 +347,8 @@ export default {
       if (board3D) {
         this.$nextTick(this.zoomFit);
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

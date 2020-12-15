@@ -6,6 +6,10 @@
     :min-height="588"
     v-bind="$attrs"
   >
+    <template v-slot:header>
+      <dialog-header icon="file_image">{{ $t("PNG Image") }}</dialog-header>
+    </template>
+
     <img
       ref="preview"
       class="block"
@@ -99,6 +103,15 @@
           <q-toggle color="accent" v-model="config.unplayedPieces" />
         </q-item-section>
       </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Padding") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.padding" />
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>
@@ -107,7 +120,11 @@
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Download')" @click="download" flat />
-        <q-btn :label="$t(canShare ? 'Share' : 'Copy')" @click="share" flat />
+        <q-btn
+          :label="$t(canShare ? 'Share URL' : 'Copy URL')"
+          @click="share"
+          flat
+        />
         <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
       </q-card-actions>
     </template>
@@ -134,7 +151,7 @@ export default {
       file: null,
       fileSize: 0,
       size: sizes.indexOf(this.$store.state.pngConfig.size),
-      sizes
+      sizes,
     };
   },
   computed: {
@@ -146,7 +163,7 @@ export default {
     },
     canShare() {
       return navigator.canShare;
-    }
+    },
   },
   methods: {
     updateConfig() {
@@ -156,9 +173,9 @@ export default {
       const filename = this.$store.getters.png_filename(this.game);
       const canvas = this.game.render(this.config);
       this.preview = canvas.toDataURL();
-      canvas.toBlob(blob => {
+      canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
-          type: "image/png"
+          type: "image/png",
         });
         this.fileSize = humanStorageSize(this.file.size);
       });
@@ -174,14 +191,14 @@ export default {
         message: this.$t("confirm.resetPNG"),
         success: () => {
           const config = cloneDeep(this.$store.state.defaults.pngConfig);
-          Object.keys(config).forEach(key => {
+          Object.keys(config).forEach((key) => {
             if (pngUIOptions.includes(key)) {
               config[key] = this.$store.state[key];
             }
           });
           this.config = config;
           this.size = this.sizes.indexOf(config.size);
-        }
+        },
       });
     },
     download() {
@@ -190,23 +207,25 @@ export default {
     share() {
       this.$store.dispatch("COPY", {
         title: this.$t("Share PNG"),
-        url: this.url
+        url: this.url,
       });
     },
     close() {
       this.$emit("input", false);
-    }
+    },
   },
   watch: {
     tps() {
-      this.updatePreview();
+      if (this.value) {
+        this.updatePreview();
+      }
     },
     config: {
       handler(config) {
         this.$store.dispatch("SET_UI", ["pngConfig", cloneDeep(config)]);
         this.updatePreview();
       },
-      deep: true
+      deep: true,
     },
     size(i) {
       this.config.size = this.sizes[i];
@@ -215,10 +234,10 @@ export default {
       if (show) {
         this.updatePreview();
       }
-    }
+    },
   },
   created() {
     this.updatePreview();
-  }
+  },
 };
 </script>

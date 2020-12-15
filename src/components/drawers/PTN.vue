@@ -31,7 +31,7 @@ export default {
       return this.$store.state.showAllBranches
         ? this.game.movesSorted
         : this.game.state.moves;
-    }
+    },
   },
   methods: {
     scroll() {
@@ -46,13 +46,13 @@ export default {
       if (move) {
         move.$el.scrollIntoView({
           block: "center",
-          behavior: "smooth"
+          behavior: "smooth",
         });
       }
     },
     resize() {
       this.scroll();
-    }
+    },
   },
   watch: {
     game() {
@@ -63,14 +63,14 @@ export default {
     },
     "$store.state.showAllBranches"() {
       this.$nextTick(this.scroll);
-    }
+    },
   },
   created() {
     this.scroll = debounce(this.scroll, 100);
   },
   mounted() {
     this.$nextTick(this.scroll);
-  }
+  },
 };
 </script>
 

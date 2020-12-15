@@ -68,11 +68,11 @@ export default {
     game: Object,
     plyID: Number,
     noBranches: Boolean,
-    noClick: Boolean
+    noClick: Boolean,
   },
   data() {
     return {
-      menu: false
+      menu: false,
     };
   },
   computed: {
@@ -89,7 +89,7 @@ export default {
           : this.game.state.plyIDs.includes(this.ply.id) &&
             this.game.state.ply.index > this.ply.index
         : true;
-    }
+    },
   },
   methods: {
     select(ply, isDone = this.game.state.plyIsDone) {
@@ -100,8 +100,8 @@ export default {
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
-    }
-  }
+    },
+  },
 };
 </script>
 

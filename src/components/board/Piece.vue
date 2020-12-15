@@ -2,7 +2,7 @@
   <div
     class="piece"
     :style="{
-      transform: `translate3d(${x}%, -${y}%, ${z}em)`
+      transform: `translate3d(${x}%, -${y}%, ${z}em)`,
     }"
   >
     <div
@@ -13,7 +13,7 @@
         S: piece.square && piece.isStanding,
         unplayed: !piece.square,
         firstSelected,
-        immovable
+        immovable,
       }"
     />
   </div>
@@ -129,8 +129,8 @@ export default {
         }
       }
       return z;
-    }
-  }
+    },
+  },
 };
 </script>
 

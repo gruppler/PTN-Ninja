@@ -6,7 +6,7 @@ export const SET_UI = (state, [key, value]) => {
   }
 };
 
-export const SET_EMBED_GAME = state => {
+export const SET_EMBED_GAME = (state) => {
   state.embed = true;
 };
 

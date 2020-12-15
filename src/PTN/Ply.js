@@ -8,12 +8,12 @@ const minProps = [
   "distribution",
   "pieceCount",
   "row",
-  "specialPiece"
+  "specialPiece",
 ];
 
-export const atoi = coord => [
+export const atoi = (coord) => [
   "abcdefgh".indexOf(coord[0]),
-  parseInt(coord[1], 10) - 1
+  parseInt(coord[1], 10) - 1,
 ];
 export const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
 
@@ -27,7 +27,7 @@ export default class Ply extends Ptn {
       evaluation = null,
       result = null,
       branches = [],
-      children = []
+      children = [],
     }
   ) {
     super(notation);
@@ -85,7 +85,7 @@ export default class Ply extends Ptn {
 
   getBranch(branch = "") {
     if (this.branches.length) {
-      return this.branches.find(ply => ply.isInBranch(branch)) || this;
+      return this.branches.find((ply) => ply.isInBranch(branch)) || this;
     } else {
       return this;
     }
@@ -93,7 +93,8 @@ export default class Ply extends Ptn {
 
   hasBranch(branch) {
     return (
-      this.branches.length && this.branches.find(ply => ply.isInBranch(branch))
+      this.branches.length &&
+      this.branches.find((ply) => ply.isInBranch(branch))
     );
   }
 

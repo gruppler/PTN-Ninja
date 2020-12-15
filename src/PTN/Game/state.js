@@ -14,33 +14,33 @@ export default class GameState {
     defaults(this, state, {
       targetBranch: "",
       plyID: -1,
-      plyIsDone: false
+      plyIsDone: false,
     });
 
     Object.defineProperty(this, "plies", {
-      get: memoize(this.getPlies, this.branchKey)
+      get: memoize(this.getPlies, this.branchKey),
     });
     Object.defineProperty(this, "plyIDs", {
-      get: memoize(this.getPlyIDs, this.branchKey)
+      get: memoize(this.getPlyIDs, this.branchKey),
     });
     Object.defineProperty(this, "moves", {
-      get: memoize(this.getMoves, this.branchKey)
+      get: memoize(this.getMoves, this.branchKey),
     });
     Object.defineProperty(this, "move", {
-      get: memoize(this.getMove, () => this.plyID)
+      get: memoize(this.getMove, () => this.plyID),
     });
     Object.defineProperty(this, "branch", {
-      get: memoize(this.getBranch, () => this.plyID)
+      get: memoize(this.getBranch, () => this.plyID),
     });
     Object.defineProperty(this, "number", {
-      get: memoize(this.getNumber, () => this.plyID)
+      get: memoize(this.getNumber, () => this.plyID),
     });
     Object.defineProperty(this, "board", {
       get: memoize(this.getBoard, () => JSON.stringify(this.boardPly)),
-      set: this.setBoard
+      set: this.setBoard,
     });
     Object.defineProperty(this, "tps", {
-      get: memoize(this.getTPS, () => JSON.stringify(this.boardPly))
+      get: memoize(this.getTPS, () => JSON.stringify(this.boardPly)),
     });
 
     this._roads = null;
@@ -49,22 +49,22 @@ export default class GameState {
       pieces: [],
       squares: [],
       moveset: [],
-      initialCount: 0
+      initialCount: 0,
     };
 
     this.pieces = {
       all: {
         1: { flat: [], cap: [] },
         2: { flat: [], cap: [] },
-        byID: {}
+        byID: {},
       },
       played: {
         1: { flat: [], cap: [] },
-        2: { flat: [], cap: [] }
-      }
+        2: { flat: [], cap: [] },
+      },
     };
-    [1, 2].forEach(color => {
-      ["flat", "cap"].forEach(type => {
+    [1, 2].forEach((color) => {
+      ["flat", "cap"].forEach((type) => {
         for (
           let index = 0;
           index < this.game.pieceCounts[color][type];
@@ -76,7 +76,7 @@ export default class GameState {
             id,
             index,
             color,
-            type
+            type,
           });
           this.pieces.all[color][type][index] = piece;
           this.pieces.all.byID[id] = piece;
@@ -89,8 +89,8 @@ export default class GameState {
       this.game.size,
       (y, x) => new Square(x, y, this.game.size)
     );
-    this.squares.forEach(row => {
-      row.forEach(square => {
+    this.squares.forEach((row) => {
+      row.forEach((square) => {
         if (!square.static.edges.N) {
           square.static.neighbors.N = this.squares[square.static.y + 1][
             square.static.x
@@ -137,21 +137,23 @@ export default class GameState {
       this.ply.isInBranch(this.targetBranch)
     ) {
       return this.game.plies.filter(
-        ply => ply && ply.isInBranch(this.targetBranch)
+        (ply) => ply && ply.isInBranch(this.targetBranch)
       );
     } else {
-      return this.game.plies.filter(ply => ply && ply.isInBranch(this.branch));
+      return this.game.plies.filter(
+        (ply) => ply && ply.isInBranch(this.branch)
+      );
     }
   }
 
   getPlyIDs() {
-    return this.plies.map(ply => ply.id);
+    return this.plies.map((ply) => ply.id);
   }
 
   getMoves() {
     let moves = [];
     if (this.plies) {
-      this.plies.forEach(ply => {
+      this.plies.forEach((ply) => {
         if (ply.player === 2 || !ply.move.ply2) {
           moves.push(ply.move);
         }
@@ -182,7 +184,7 @@ export default class GameState {
   }
 
   selectPieces(pieces) {
-    pieces.forEach(piece => this.selectPiece(piece));
+    pieces.forEach((piece) => this.selectPiece(piece));
   }
 
   reselectPiece(piece) {
@@ -267,7 +269,7 @@ export default class GameState {
   }
 
   clearBoard() {
-    this.squares.forEach(row => row.forEach(square => square.clear()));
+    this.squares.forEach((row) => row.forEach((square) => square.clear()));
     this.pieces.played[1].flat = [];
     this.pieces.played[1].cap = [];
     this.pieces.played[2].flat = [];
@@ -277,24 +279,24 @@ export default class GameState {
   getBoard() {
     return {
       1: {
-        flat: this.pieces.played[1].flat.map(piece => piece.state),
-        cap: this.pieces.played[1].cap.map(piece => piece.state)
+        flat: this.pieces.played[1].flat.map((piece) => piece.state),
+        cap: this.pieces.played[1].cap.map((piece) => piece.state),
       },
       2: {
-        flat: this.pieces.played[2].flat.map(piece => piece.state),
-        cap: this.pieces.played[2].cap.map(piece => piece.state)
-      }
+        flat: this.pieces.played[2].flat.map((piece) => piece.state),
+        cap: this.pieces.played[2].cap.map((piece) => piece.state),
+      },
     };
   }
 
   getTPS(player = this.turn, number = null) {
     const grid = this.squares
-      .map(row => {
+      .map((row) => {
         return row
-          .map(square => {
+          .map((square) => {
             if (square.pieces.length) {
               return square.pieces
-                .map(piece => piece.color + piece.typeCode)
+                .map((piece) => piece.color + piece.typeCode)
                 .join("");
             } else {
               return "x";
@@ -304,7 +306,7 @@ export default class GameState {
       })
       .reverse()
       .join("/")
-      .replace(/x((,x)+)/g, spaces => "x" + (1 + spaces.length) / 2);
+      .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2);
 
     if (number === null) {
       const ply = this.boardPly ? this.game.plies[this.boardPly.id] : null;
@@ -318,9 +320,9 @@ export default class GameState {
 
   setBoard(pieces, plyID, plyIsDone) {
     this.clearBoard();
-    [1, 2].forEach(color =>
-      ["flat", "cap"].forEach(type => {
-        pieces[color][type].forEach(state => {
+    [1, 2].forEach((color) =>
+      ["flat", "cap"].forEach((type) => {
+        pieces[color][type].forEach((state) => {
           this.playPiece(color, state.type, state);
         });
       })
@@ -351,7 +353,7 @@ export default class GameState {
     return {
       targetBranch: this.targetBranch,
       plyIndex: this.ply ? this.ply.index : 0,
-      plyIsDone: this.plyIsDone
+      plyIsDone: this.plyIsDone,
     };
   }
 
@@ -375,15 +377,15 @@ export default class GameState {
 
   set roads(roads) {
     if (this._roads) {
-      this._roads.squares[1].concat(this._roads.squares[2]).forEach(coord => {
+      this._roads.squares[1].concat(this._roads.squares[2]).forEach((coord) => {
         coord = atoi(coord);
         this.squares[coord[1]][coord[0]].setRoad(null);
       });
     }
 
     if (roads) {
-      roads[1].concat(roads[2]).forEach(road => {
-        road.squares.forEach(coord => {
+      roads[1].concat(roads[2]).forEach((road) => {
+        road.squares.forEach((coord) => {
           coord = atoi(coord);
           this.squares[coord[1]][coord[0]].setRoad(road);
         });
@@ -446,8 +448,8 @@ export default class GameState {
 
   get flats() {
     let flats = [0, 0];
-    this.squares.forEach(row => {
-      row.forEach(square => {
+    this.squares.forEach((row) => {
+      row.forEach((square) => {
         if (square.color && square.piece.isFlat) {
           flats[square.color - 1]++;
         }

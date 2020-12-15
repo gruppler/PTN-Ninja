@@ -79,5 +79,5 @@ export default {
   update: "mdi-cached",
   url: "mdi-link",
   visibility: "mdi-eye",
-  visibility_off: "mdi-eye-off"
+  visibility_off: "mdi-eye-off",
 };

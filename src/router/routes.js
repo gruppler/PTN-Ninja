@@ -50,52 +50,52 @@ const routes = [
     children: [
       {
         name: "help",
-        path: "/help/:section?"
+        path: "/help/:section?",
       },
       {
         name: "add",
-        path: "/add/:tab?"
+        path: "/add/:tab?",
       },
       {
         name: "close",
-        path: "/close"
+        path: "/close",
       },
       {
         name: "download",
-        path: "/download"
+        path: "/download",
       },
       {
         name: "preferences",
-        path: "/preferences"
+        path: "/preferences",
       },
       {
         name: "info",
-        path: "/info"
+        path: "/info",
       },
       {
         name: "edit",
-        path: "/edit"
+        path: "/edit",
       },
       {
         name: "embed",
-        path: "/embed"
+        path: "/embed",
       },
       {
         name: "png",
-        path: "/png"
+        path: "/png",
       },
       {
         name: "qr",
-        path: "/qr"
-      }
-    ]
-  }
+        path: "/qr",
+      },
+    ],
+  },
 ];
 
 // Always leave this as last one
 routes.push({
   path: "*",
-  component: () => import("pages/Error404")
+  component: () => import("pages/Error404"),
 });
 
 export default routes;

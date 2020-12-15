@@ -7,8 +7,8 @@ const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
   : "https://tps.ptn.ninja/";
 
-export const uniqueName = state => (name, ignoreFirst = false) => {
-  const names = state.games.slice(1 * ignoreFirst).map(game => game.name);
+export const uniqueName = (state) => (name, ignoreFirst = false) => {
+  const names = state.games.slice(1 * ignoreFirst).map((game) => game.name);
   while (names.includes(name)) {
     if (/\(\d+\)$/.test(name)) {
       name = name.replace(/\((\d+)\)$/, (match, number) => {
@@ -22,7 +22,7 @@ export const uniqueName = state => (name, ignoreFirst = false) => {
   return name;
 };
 
-export const playerIcon = () => player => {
+export const playerIcon = () => (player) => {
   switch (player) {
     case 1:
       return "player1";
@@ -38,14 +38,14 @@ export const playerIcon = () => player => {
   }
 };
 
-const urlEncode = url => {
+const urlEncode = (url) => {
   return encodeURIComponent(url).replace(
     /([()])/g,
-    char => "%" + char.charCodeAt(0).toString(16)
+    (char) => "%" + char.charCodeAt(0).toString(16)
   );
 };
 
-export const png_filename = state => game => {
+export const png_filename = (state) => (game) => {
   return (
     game.name +
     " - " +
@@ -55,7 +55,7 @@ export const png_filename = state => game => {
   );
 };
 
-export const png_url = state => game => {
+export const png_url = (state) => (game) => {
   const params = ["tps=" + game.state.tps];
 
   // UI toggles
@@ -64,8 +64,8 @@ export const png_url = state => game => {
     "flatCounts",
     "pieceShadows",
     "showRoads",
-    "unplayedPieces"
-  ].forEach(toggle => {
+    "unplayedPieces",
+  ].forEach((toggle) => {
     if (!state.pngConfig[toggle]) {
       params.push(toggle + "=false");
     }
@@ -76,7 +76,7 @@ export const png_url = state => game => {
   if (state.pngConfig.includeNames) {
     tags.push("player1", "player2");
   }
-  tags.forEach(tagName => {
+  tags.forEach((tagName) => {
     const tag = game.tags[tagName];
     if (tag && tag.value) {
       params.push(tagName + "=" + encodeURIComponent(tag.value));
@@ -87,7 +87,7 @@ export const png_url = state => game => {
   if (state.pngConfig.highlightSquares) {
     const ply = game.state.ply;
     if (ply) {
-      params.push("ply=" + encodeURIComponent(ply.text(true)));
+      params.push("hl=" + encodeURIComponent(ply.text(true)));
     }
   }
 
@@ -97,7 +97,7 @@ export const png_url = state => game => {
   return PNG_URL + "?" + params.join("&");
 };
 
-export const url = state => (game, options = {}) => {
+export const url = (state) => (game, options = {}) => {
   if (!game) {
     return "";
   }
@@ -138,7 +138,7 @@ export const url = state => (game, options = {}) => {
   }
 
   if (options.ui) {
-    Object.keys(options.ui).forEach(key => {
+    Object.keys(options.ui).forEach((key) => {
       const value = options.ui[key];
       if (key in state.defaults && value !== state.defaults[key]) {
         params[key] = value;
@@ -150,13 +150,13 @@ export const url = state => (game, options = {}) => {
     url +=
       "&" +
       Object.keys(params)
-        .map(key => key + "=" + urlEncode(params[key]))
+        .map((key) => key + "=" + urlEncode(params[key]))
         .join("&");
   }
   return url;
 };
 
-export const sharableFiles = state => files => {
+export const sharableFiles = (state) => (files) => {
   if (!isArray(files)) {
     files = [files];
   }

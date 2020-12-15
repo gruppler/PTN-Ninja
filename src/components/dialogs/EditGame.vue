@@ -48,7 +48,7 @@ export default {
   props: ["value", "game"],
   data() {
     return {
-      showAll: false
+      showAll: false,
     };
   },
   methods: {
@@ -58,7 +58,7 @@ export default {
         message: this.$t("confirm.resetForm"),
         success: () => {
           this.$refs.gameInfo.init();
-        }
+        },
       });
     },
     close() {
@@ -68,7 +68,7 @@ export default {
       this.game.setName(name);
 
       let changedTags = {};
-      Object.keys(tags).forEach(key => {
+      Object.keys(tags).forEach((key) => {
         const value = tags[key];
         if (value !== this.game.tag(key)) {
           changedTags[key] = value;
@@ -80,7 +80,7 @@ export default {
 
       this.showAll = false;
       this.close();
-    }
-  }
+    },
+  },
 };
 </script>

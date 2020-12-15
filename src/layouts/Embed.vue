@@ -172,7 +172,7 @@ export default {
     PTNTools,
     EvalButtons,
     BoardToggles,
-    ShareButton
+    ShareButton,
   },
   props: ["ptn", "name", "state"],
   data() {
@@ -181,7 +181,7 @@ export default {
       game: this.getGame(),
       errors: [],
       hotkeys: HOTKEYS,
-      defaults: { ...this.$store.state.embedConfig.ui }
+      defaults: { ...this.$store.state.embedConfig.ui },
     };
   },
   computed: {
@@ -191,7 +191,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showPTN", value]);
-      }
+      },
     },
     right: {
       get() {
@@ -199,7 +199,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["showText", value]);
-      }
+      },
     },
     notifyNotes: {
       get() {
@@ -207,14 +207,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["notifyNotes", value]);
-      }
+      },
     },
     title() {
       return this.name || this.game.generateName();
     },
     url() {
       return this.$store.getters.url(this.game, { state: true });
-    }
+    },
   },
   methods: {
     getGame() {
@@ -260,7 +260,7 @@ export default {
           this.$refs.shareButton.share();
           break;
       }
-    }
+    },
   },
   beforeCreate() {
     if (location.hash.length) {
@@ -272,7 +272,7 @@ export default {
   },
   created() {
     this.$store.commit("SET_EMBED_GAME");
-    Object.keys(this.state).forEach(key => {
+    Object.keys(this.state).forEach((key) => {
       this.$store.commit("SET_UI", [key, this.state[key]]);
     });
   },
@@ -283,9 +283,11 @@ export default {
     state: {
       handler(state, oldState) {
         let fullState = {};
-        Object.keys(defaults(fullState, state, this.defaults)).forEach(key => {
-          this.$store.commit("SET_UI", [key, fullState[key]]);
-        });
+        Object.keys(defaults(fullState, state, this.defaults)).forEach(
+          (key) => {
+            this.$store.commit("SET_UI", [key, fullState[key]]);
+          }
+        );
         this.game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
@@ -297,9 +299,9 @@ export default {
           this.game.goToPly(0, false);
         }
       },
-      deep: true
-    }
-  }
+      deep: true,
+    },
+  },
 };
 </script>
 

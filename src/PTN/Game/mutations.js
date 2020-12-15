@@ -36,13 +36,13 @@ export default class GameMutations {
     }
 
     // Update moves/linenums
-    this.moves.forEach(move => {
+    this.moves.forEach((move) => {
       move.branch = move.branch.replace(oldBranchRegExp, newBranchFull);
     });
 
     // Update branches
     let branches = {};
-    Object.values(this.branches).forEach(ply => {
+    Object.values(this.branches).forEach((ply) => {
       if (ply) {
         if (
           !(ply.branch in branches) ||
@@ -92,16 +92,16 @@ export default class GameMutations {
     if (newPly.branch) {
       // Remove preceeding and non-descendent plies
       newPly.children = this.branches[newPly.branch].children.filter(
-        ply => ply.index >= newPly.index
+        (ply) => ply.index >= newPly.index
       );
       this._deletePlies(
         this.plies
           .filter(
-            ply =>
+            (ply) =>
               ply.index < newPly.index ||
               (!newPly.isInBranch(ply.branch) && !newPly.hasBranch(ply.branch))
           )
-          .map(ply => ply.id)
+          .map((ply) => ply.id)
       );
 
       // Remove original descendents
@@ -109,9 +109,9 @@ export default class GameMutations {
         this._deletePlies(
           this.plies
             .filter(
-              ply => ply && ply.index >= newPly.index && ply.branch === ""
+              (ply) => ply && ply.index >= newPly.index && ply.branch === ""
             )
-            .map(ply => ply.id)
+            .map((ply) => ply.id)
         );
       }
 
@@ -122,7 +122,7 @@ export default class GameMutations {
     } else {
       // Remove preceeding plies
       this._deletePlies(
-        this.state.plies.slice(0, newPly.index).map(ply => ply.id),
+        this.state.plies.slice(0, newPly.index).map((ply) => ply.id),
         false,
         true
       );
@@ -166,7 +166,7 @@ export default class GameMutations {
     this.recordChange(() => {
       this.init(this.text(false), {
         ...this,
-        state: { ...this.minState, targetBranch: "" }
+        state: { ...this.minState, targetBranch: "" },
       });
     });
   }
@@ -204,7 +204,7 @@ export default class GameMutations {
     // Remove descendents
     if (removeDescendents) {
       const nextPly = this.plies.find(
-        nextPly =>
+        (nextPly) =>
           nextPly &&
           nextPly.branch === ply.branch &&
           nextPly.index === ply.index + 1
@@ -223,7 +223,7 @@ export default class GameMutations {
           // Remove all branches
           ply.branches
             .slice(1)
-            .forEach(ply => this._deletePly(ply.id, true, removeOrphans));
+            .forEach((ply) => this._deletePly(ply.id, true, removeOrphans));
         } else {
           // Replace with next branch
           const nextBranchPly = ply.branches[1];
@@ -328,7 +328,7 @@ export default class GameMutations {
         id:
           replaceCurrent && !this.state.nextPly
             ? this.state.plyID
-            : this.plies.length
+            : this.plies.length,
       });
     }
     if (replaceCurrent && !this.state.plyIsDone && this.state.prevPly) {
@@ -369,7 +369,7 @@ export default class GameMutations {
           game: this,
           id: this.moves.length,
           linenum: new Linenum(number + ". ", this, this.state.branch),
-          ply1: ply
+          ply1: ply,
         });
         this.moves.push(move);
       }
@@ -384,7 +384,7 @@ export default class GameMutations {
         if (this.state.ply.isEqual(ply)) {
           equalPly = this.state.ply;
         } else if (this.state.ply.branches.length) {
-          equalPly = this.state.ply.branches.find(branch =>
+          equalPly = this.state.ply.branches.find((branch) =>
             branch.isEqual(ply)
           );
         }
@@ -440,7 +440,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(this.state.number + ". ", this, ply.branch)
+          linenum: new Linenum(this.state.number + ". ", this, ply.branch),
         });
 
         if (ply.player === 2) {

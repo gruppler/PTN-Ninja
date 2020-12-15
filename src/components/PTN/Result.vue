@@ -22,17 +22,17 @@ export default {
     result: [String, Object],
     done: {
       type: Boolean,
-      default: true
+      default: true,
     },
-    clickable: Boolean
+    clickable: Boolean,
   },
   computed: {
     resultObject() {
       return this.result && this.result.constructor === Result
         ? this.result
         : Result.parse(this.result || "");
-    }
-  }
+    },
+  },
 };
 </script>
 
