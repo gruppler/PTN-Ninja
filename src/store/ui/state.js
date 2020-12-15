@@ -70,6 +70,7 @@ defaults.pngConfig = {
   size: "md",
   includeNames: true,
   pieceShadows: true,
+  padding: true,
   ...pick(defaults, pngUIOptions),
 };
 

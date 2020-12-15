@@ -99,6 +99,15 @@
           <q-toggle color="accent" v-model="config.unplayedPieces" />
         </q-item-section>
       </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Padding") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.padding" />
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>

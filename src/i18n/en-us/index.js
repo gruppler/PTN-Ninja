@@ -82,6 +82,7 @@ export default {
   Notes: "Notes",
   OK: "OK",
   Online: "Online",
+  Padding: "Padding",
   "Piece Shadows": "Piece Shadows",
   "Play/Pause": "Play/Pause",
   "Play Controls": "Play Controls",
