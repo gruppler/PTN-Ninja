@@ -9,19 +9,24 @@ const asyncPool = require("tiny-async-pool");
 const { TPStoCanvas } = require("./TPS-Ninja/src");
 
 exports.tps = functions.https.onRequest((request, response) => {
-  response.setHeader("Content-Type", "image/png");
-  response.setHeader(
-    "Content-Disposition",
-    `attachment; filename="${request.query.name || "tps"}.png"`
-  );
-  TPStoCanvas(request.query)
-    .pngStream()
-    .pipe(response);
+  try {
+    const canvas = TPStoCanvas(request.query);
+    let name = request.query.name || canvas.id.replace(/\//g, "-");
+    if (!name.endsWith(".png")) {
+      name += ".png";
+    }
+    response.setHeader("Content-Type", "image/png");
+    response.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+    canvas.pngStream().pipe(response);
+  } catch (error) {
+    response.status(400).send({ message: error.message });
+    console.error(error);
+  }
 });
 
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:00")
-  .onRun(async context => {
+  .onRun(async (context) => {
     const MAX_CONCURRENT = 5;
     // Fetch all user details.
     const inactiveUsers = await getInactiveUsers();
@@ -37,7 +42,7 @@ function deleteInactiveUser(inactiveUsers) {
       .collection("games")
       .where("config.players", "array-contains", userToDelete.uid)
       .get()
-      .then(games => {
+      .then((games) => {
         if (games.size === 0) {
           // Delete the inactive user.
           return admin
@@ -50,7 +55,7 @@ function deleteInactiveUser(inactiveUsers) {
                 "because of inactivity"
               );
             })
-            .catch(error => {
+            .catch((error) => {
               return console.error(
                 "Deletion of inactive user account",
                 userToDelete.uid,
@@ -60,7 +65,7 @@ function deleteInactiveUser(inactiveUsers) {
             });
         }
       })
-      .catch(error => {
+      .catch((error) => {
         return console.error(
           `Checking games for user ${userToDelete.uid} failed:`,
           error
@@ -74,7 +79,7 @@ function deleteInactiveUser(inactiveUsers) {
 async function getInactiveUsers(users = [], nextPageToken) {
   const result = await admin.auth().listUsers(1000, nextPageToken);
   // Find users that have not signed in in the last 30 days.
-  const inactiveUsers = result.users.filter(user => {
+  const inactiveUsers = result.users.filter((user) => {
     return (
       !user.emailVerified &&
       Date.parse(user.metadata.lastSignInTime) <
