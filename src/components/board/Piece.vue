@@ -215,6 +215,6 @@ export default {
     .board-wrapper.board-3D &.immovable
       opacity 0.35
 
-    .board-container:not(.unplayed-pieces) &.unplayed
+    .board-container:not(.show-unplayed-pieces) &.unplayed
       opacity 0
 </style>
