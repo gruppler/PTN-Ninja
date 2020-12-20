@@ -10,15 +10,17 @@
       <dialog-header icon="file_image">{{ $t("PNG Image") }}</dialog-header>
     </template>
 
-    <img
-      ref="preview"
-      class="block"
-      :src="preview"
-      @load="loadPreview"
-      width="100%"
-      frameborder="0"
-      allowfullscreen
-    />
+    <smooth-reflow>
+      <img
+        ref="preview"
+        class="block"
+        :src="preview"
+        @load="loadPreview"
+        width="100%"
+        frameborder="0"
+        allowfullscreen
+      />
+    </smooth-reflow>
 
     <q-list>
       <q-item>
@@ -43,15 +45,6 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Include Player Names") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.includeNames" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
           <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -70,6 +63,37 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.turnIndicator" />
+        </q-item-section>
+      </q-item>
+
+      <smooth-reflow>
+        <div v-show="config.turnIndicator">
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Player Names") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle color="accent" v-model="config.includeNames" />
+            </q-item-section>
+          </q-item>
+
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle color="accent" v-model="config.flatCounts" />
+            </q-item-section>
+          </q-item>
+        </div>
+      </smooth-reflow>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -83,15 +107,6 @@
         </q-item-section>
         <q-item-section side>
           <q-toggle color="accent" v-model="config.pieceShadows" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.flatCounts" />
         </q-item-section>
       </q-item>
 

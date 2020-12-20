@@ -60,7 +60,7 @@ export default {
   Help: "Help",
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
-  "Include Player Names": "Include Player Names",
+  "Player Names": "Player Names",
   Key: "Key",
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",
@@ -133,6 +133,7 @@ export default {
   "Trim Branches": "Trim Branches",
   "Trim to Current Board": "Trim to Current Board",
   "Trim to Current Ply": "Trim to Current Ply",
+  "Turn Indicator": "Turn Indicator",
   UI: "UI", // User Interface
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",

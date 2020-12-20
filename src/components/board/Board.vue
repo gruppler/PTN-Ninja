@@ -13,33 +13,41 @@
         ['turn-' + turn]: true,
         'no-animations': !$store.state.animateBoard,
         'axis-labels': $store.state.axisLabels,
-        'flat-counts': $store.state.flatCounts,
+        'show-turn-indicator': $store.state.turnIndicator,
         'highlight-squares': $store.state.highlightSquares,
         'piece-shadows': $store.state.pieceShadows,
-        'unplayed-pieces': $store.state.unplayedPieces,
+        'show-unplayed-pieces': $store.state.unplayedPieces,
       }"
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
     >
-      <div v-if="$store.state.flatCounts" class="flat-counter row no-wrap">
+      <div
+        v-if="$store.state.turnIndicator"
+        class="player-names row no-wrap"
+        @click.right.prevent
+      >
         <div
           class="player1 relative-position"
-          :style="{ width: flatWidths[0] }"
+          :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
         >
           <div class="row absolute-fit no-wrap q-px-sm">
             <div class="name ellipsis col-shrink">
               {{ player1 }}
             </div>
-            <div class="flats ellipsis q-pl-sm">{{ flats[0] }}</div>
+            <div class="flats ellipsis q-pl-sm">
+              {{ $store.state.flatCounts ? flats[0] : "" }}
+            </div>
           </div>
           <div class="turn-indicator"></div>
         </div>
         <div
           class="player2 relative-position"
-          :style="{ width: flatWidths[1] }"
+          :style="{ width: $store.state.flatCounts ? flatWidths[1] : '50%' }"
         >
           <div class="row absolute-fit no-wrap q-px-sm">
-            <div class="flats ellipsis q-pr-sm">{{ flats[1] }}</div>
+            <div class="flats ellipsis q-pr-sm">
+              {{ $store.state.flatCounts ? flats[1] : "" }}
+            </div>
             <div class="name ellipsis col-shrink">
               {{ player2 }}
             </div>
@@ -76,10 +84,14 @@
           </div>
         </div>
 
-        <div class="unplayed-bg"></div>
+        <div class="unplayed-bg" @click.right.prevent></div>
       </div>
 
-      <div v-if="$store.state.axisLabels" class="x-axis row items-end">
+      <div
+        v-if="$store.state.axisLabels"
+        class="x-axis row items-end"
+        @click.right.prevent
+      >
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
@@ -373,10 +385,10 @@ $radius = 1.2vmin
   z-index 0
 
   &.no-animations
-    .piece, .stone, .road > div, .flat-counter > div, .turn-indicator
+    .piece, .stone, .road > div, .player-names > div, .turn-indicator
       transition none !important
 
-.flat-counter, .x-axis
+.player-names, .x-axis
   width 100%
   will-change width
   .board-container.axis-labels &
@@ -384,12 +396,12 @@ $radius = 1.2vmin
     width "calc(100% - %s)" % $axis-size
   for i in (1..8)
     $size = 100 * i / (i + 1.75)%
-    .board-container.unplayed-pieces.size-{i} &
+    .board-container.show-unplayed-pieces.size-{i} &
       width $size
-    .board-container.axis-labels.unplayed-pieces.size-{i} &
+    .board-container.axis-labels.show-unplayed-pieces.size-{i} &
       width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
 
-.flat-counter
+.player-names
   text-align left
   height 2.25em
   padding-bottom $turn-indicator-height
@@ -452,10 +464,10 @@ $radius = 1.2vmin
     padding-bottom "calc(100% - %s)" % $axis-size
   for i in (1..8)
     $size = 100 * i / (i + 1.75)%
-    .board-container.unplayed-pieces.size-{i} &
+    .board-container.show-unplayed-pieces.size-{i} &
       width $size
       padding-bottom $size
-    .board-container.axis-labels.unplayed-pieces.size-{i} &
+    .board-container.axis-labels.show-unplayed-pieces.size-{i} &
       width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
       padding-bottom "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
 
@@ -471,7 +483,7 @@ $radius = 1.2vmin
   border-radius 0 $radius $radius 0
   background-color $blue-grey-5
   will-change width
-  .board-container:not(.unplayed-pieces) &
+  .board-container:not(.show-unplayed-pieces) &
     width 0 !important
   for i in (1..8)
     $size = 175% / (i + 1.75)

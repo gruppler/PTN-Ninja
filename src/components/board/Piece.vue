@@ -6,14 +6,17 @@
     }"
   >
     <div
+      @click.left="select()"
+      @click.right.prevent="select(true)"
       class="stone"
       :class="{
         ['p' + piece.color]: true,
-        C: piece.type === 'cap',
-        S: piece.square && piece.isStanding,
+        C: piece.isCapstone,
+        S: piece.isStanding,
         unplayed: !piece.square,
         firstSelected,
         immovable,
+        selectable,
       }"
     />
   </div>
@@ -34,6 +37,13 @@ export default {
     },
     immovable() {
       return this.piece.square ? this.piece.isImmovable : false;
+    },
+    selectable() {
+      return (
+        !this.piece.square &&
+        (this.$store.state.editingTPS ||
+          this.piece.color === this.game.state.color)
+      );
     },
     firstSelected() {
       return this.piece === this.game.state.selected.pieces[0];
@@ -99,6 +109,9 @@ export default {
               1;
           }
           y /= this.pieceCounts.total - 1;
+          if (this.piece.isSelected) {
+            y += (spacing * SELECTED_GAP) / 100;
+          }
         }
         y *= 100;
       }
@@ -127,8 +140,30 @@ export default {
             z += this.game.size - 1;
           }
         }
+        if (this.piece.isSelected) {
+          z += SELECTED_GAP;
+        }
       }
       return z;
+    },
+  },
+  methods: {
+    select(alt = false) {
+      if (this.$store.state.editingTPS) {
+        let type = this.piece.typeCode;
+        if (alt && !this.piece.isCapstone) {
+          type = "S";
+        }
+        this.$store.dispatch("SET_UI", [
+          "selectedPiece",
+          { color: this.piece.color, type },
+        ]);
+      } else {
+        this.game.selectUnplayedPiece(
+          this.piece.type,
+          alt || this.piece.isSelected
+        );
+      }
     },
   },
 };
@@ -215,6 +250,11 @@ export default {
     .board-wrapper.board-3D &.immovable
       opacity 0.35
 
-    .board-container:not(.unplayed-pieces) &.unplayed
-      opacity 0
+    &.selectable
+      pointer-events all
+      cursor pointer
+
+    &.unplayed
+      .board-container:not(.show-unplayed-pieces) &
+        opacity 0
 </style>
