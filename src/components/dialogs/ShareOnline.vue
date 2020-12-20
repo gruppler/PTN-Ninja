@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <q-card style="width: 400px" class="bg-secondary">
-      <dialog-header>{{ $t("Play Online") }}</dialog-header>
+      <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
 
       <smooth-reflow tag="recess" class="col">
         <div class="scroll" style="max-height: calc(100vh - 15rem)">
