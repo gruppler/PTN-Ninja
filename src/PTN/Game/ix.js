@@ -88,6 +88,9 @@ export default class GameIX {
   }
 
   selectUnplayedPiece(type, toggleWall = false) {
+    if (this.state.isGameEnd) {
+      return false;
+    }
     if (this.state.isFirstMove) {
       type = "flat";
     }

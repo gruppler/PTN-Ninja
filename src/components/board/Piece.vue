@@ -16,6 +16,7 @@
         unplayed: !piece.square,
         firstSelected,
         immovable,
+        selectable,
       }"
     />
   </div>
@@ -36,6 +37,13 @@ export default {
     },
     immovable() {
       return this.piece.square ? this.piece.isImmovable : false;
+    },
+    selectable() {
+      return (
+        !this.piece.square &&
+        (this.$store.state.editingTPS ||
+          this.piece.color === this.game.state.color)
+      );
     },
     firstSelected() {
       return this.piece === this.game.state.selected.pieces[0];
@@ -151,7 +159,10 @@ export default {
           { color: this.piece.color, type },
         ]);
       } else {
-        this.game.selectUnplayedPiece(this.piece.type, alt);
+        this.game.selectUnplayedPiece(
+          this.piece.type,
+          alt || this.piece.isSelected
+        );
       }
     },
   },
@@ -239,8 +250,11 @@ export default {
     .board-wrapper.board-3D &.immovable
       opacity 0.35
 
-    &.unplayed
+    &.selectable
       pointer-events all
+      cursor pointer
+
+    &.unplayed
       .board-container:not(.show-unplayed-pieces) &
         opacity 0
 </style>
