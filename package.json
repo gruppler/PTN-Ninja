@@ -38,7 +38,7 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^2.1.12",
+    "@quasar/app": "^2.1.13",
     "@quasar/quasar-app-extension-qmarkdown": "^1.4.0",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",
