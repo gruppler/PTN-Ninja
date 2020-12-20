@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" seamless>
+  <q-dialog :value="value" @input="$emit('input', $event)">
     <q-card style="width: 400px; overflow: visible" class="bg-secondary">
       <dialog-header icon="download"> {{ $t("Download") }}... </dialog-header>
 
