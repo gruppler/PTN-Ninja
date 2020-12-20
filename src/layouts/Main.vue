@@ -469,10 +469,14 @@ export default {
       },
     },
     disabledOptions() {
-      if (this.game.config.disableRoads) {
-        return ["showRoads"];
+      const disabled = [];
+      if (this.game.config.disableFlatCounts) {
+        disabled.push("flatCounts");
       }
-      return [];
+      if (this.game.config.disableShowRoads) {
+        disabled.push("showRoads");
+      }
+      return disabled;
     },
     isGamesTableShowing() {
       return (
