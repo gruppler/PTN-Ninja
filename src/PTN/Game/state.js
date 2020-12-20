@@ -192,17 +192,20 @@ export default class GameState {
     piece.isSelected = true;
   }
 
-  deselectPiece() {
+  deselectPiece(flatten = false) {
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
+      if (flatten) {
+        piece.isStanding = false;
+      }
     }
     return piece;
   }
 
-  deselectAllPieces() {
+  deselectAllPieces(flatten = false) {
     while (this.selected.pieces.length) {
-      this.deselectPiece();
+      this.deselectPiece(flatten);
     }
   }
 

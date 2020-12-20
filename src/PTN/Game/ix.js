@@ -7,51 +7,59 @@ export default class GameIX {
     const piece = square.piece;
 
     if (this.state.selected.pieces.length) {
-      // Move in progress
-      const currentSquare = this.state.selected.pieces[0].square;
-      let neighbors = currentSquare.static.neighbors.concat();
+      if (
+        this.state.selected.pieces.length === 1 &&
+        !this.state.selected.pieces[0].square
+      ) {
+        // Unplayed piece selected
+        return !piece;
+      } else {
+        // Move in progress
+        const currentSquare = this.state.selected.pieces[0].square;
+        let neighbors = currentSquare.static.neighbors.concat();
 
-      if (square === currentSquare) {
-        return true;
-      }
-
-      if (this.state.selected.moveset.length > 1) {
-        // Direction is defined
-        const prevSquare = this.state.selected.squares[
-          this.state.selected.squares.length - 2
-        ];
-        const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
-          Ply.getDirection([
-            currentSquare.static.x - prevSquare.static.x,
-            currentSquare.static.y - prevSquare.static.y,
-          ])
-        ];
-        neighbors = [
-          currentSquare.static.neighbors[direction],
-          this.state.selected.squares[0],
-        ];
-      }
-
-      if (neighbors.includes(square)) {
-        // Neighbor square
-        if (square.pieces.length === 0) {
-          // Empty square
+        if (square === currentSquare) {
           return true;
         }
-        if (piece.isCapstone) {
-          // Occupied by a capstone
-          return false;
+
+        if (this.state.selected.moveset.length > 1) {
+          // Direction is defined
+          const prevSquare = this.state.selected.squares[
+            this.state.selected.squares.length - 2
+          ];
+          const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
+            Ply.getDirection([
+              currentSquare.static.x - prevSquare.static.x,
+              currentSquare.static.y - prevSquare.static.y,
+            ])
+          ];
+          neighbors = [
+            currentSquare.static.neighbors[direction],
+            this.state.selected.squares[0],
+          ];
         }
-        if (!piece.isStanding) {
-          // Occupied by a flat
-          return true;
-        }
-        if (
-          last(this.state.selected.pieces).isCapstone &&
-          (this.state.selected.pieces.length === 1 || assumeSoloCap)
-        ) {
-          // Potential wall smash
-          return true;
+
+        if (neighbors.includes(square)) {
+          // Neighbor square
+          if (square.pieces.length === 0) {
+            // Empty square
+            return true;
+          }
+          if (piece.isCapstone) {
+            // Occupied by a capstone
+            return false;
+          }
+          if (!piece.isStanding) {
+            // Occupied by a flat
+            return true;
+          }
+          if (
+            last(this.state.selected.pieces).isCapstone &&
+            (this.state.selected.pieces.length === 1 || assumeSoloCap)
+          ) {
+            // Potential wall smash
+            return true;
+          }
         }
       }
     } else if (!this.state.isGameEnd) {
@@ -78,6 +86,35 @@ export default class GameIX {
       }
     }
     return false;
+  }
+
+  selectUnplayedPiece(type, toggleWall = false) {
+    if (this.state.isFirstMove) {
+      type = "flat";
+    }
+    const color = this.state.color;
+    const piece = this.state.pieces.all[color][type][
+      this.state.pieces.played[color][type].length
+    ];
+    if (!piece) {
+      return false;
+    }
+    if (piece.isSelected) {
+      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+        piece.isStanding = !piece.isStanding;
+      } else {
+        this.state.deselectPiece();
+        piece.isStanding = false;
+      }
+    } else {
+      if (this.state.selected.pieces.length) {
+        this.cancelMove(true);
+      }
+      this.state.selectPiece(piece);
+      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+        piece.isStanding = true;
+      }
+    }
   }
 
   selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
@@ -189,6 +226,21 @@ export default class GameIX {
       return false;
     }
 
+    if (!currentSquare) {
+      // Unplayed piece
+      const piece = this.state.selected.pieces[0];
+      move = {
+        action: "push",
+        x: square.static.x,
+        y: square.static.y,
+        count: 0,
+        type: piece.isStanding ? "wall" : piece.type,
+      };
+      this.cancelMove();
+      this.insertPly(Ply.fromMoveset([move]));
+      return;
+    }
+
     if (square === currentSquare) {
       // Drop in current square
       if (altSelect) {
@@ -275,14 +327,14 @@ export default class GameIX {
     }
   }
 
-  cancelMove() {
+  cancelMove(flatten = false) {
     if (this.state.selected.moveset.length > 1) {
       last(
         this.state.selected.moveset
       ).count = this.state.selected.initialCount;
       this._undoMoveset(this.state.selected.moveset, this.state.color);
     }
-    this.state.deselectAllPieces();
+    this.state.deselectAllPieces(flatten);
     this.state.deselectAllSquares();
     this.state.selected.moveset = [];
     this.state.selected.initialCount = 0;
