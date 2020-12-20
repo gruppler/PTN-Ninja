@@ -34,12 +34,14 @@ let defaults = {
   showText: false,
   size: 5,
   textTab: "chat",
+  turnIndicator: true,
   unplayedPieces: true,
 };
 
 export const embedUIOptions = [
   "axisLabels",
   "flatCounts",
+  "turnIndicator",
   "highlightSquares",
   "playSpeed",
   "showAllBranches",
@@ -55,6 +57,7 @@ export const embedUIOptions = [
 export const pngUIOptions = [
   "axisLabels",
   "flatCounts",
+  "turnIndicator",
   "highlightSquares",
   "showRoads",
   "unplayedPieces",

@@ -87,6 +87,39 @@
                 </q-item-section>
               </q-item>
 
+              <q-item tag="label" :title="hotkeys.turnIndicator" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    color="accent"
+                    v-model="turnIndicator"
+                    :disabled="isDisabled('turnIndicator')"
+                  />
+                </q-item-section>
+              </q-item>
+
+              <smooth-reflow>
+                <q-item
+                  v-show="turnIndicator"
+                  tag="label"
+                  :title="hotkeys.flatCounts"
+                  v-ripple
+                >
+                  <q-item-section>
+                    <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle
+                      color="accent"
+                      v-model="flatCounts"
+                      :disabled="isDisabled('flatCounts')"
+                    />
+                  </q-item-section>
+                </q-item>
+              </smooth-reflow>
+
               <q-item tag="label" :title="hotkeys.highlightSquares" v-ripple>
                 <q-item-section>
                   <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -109,19 +142,6 @@
                     color="accent"
                     v-model="pieceShadows"
                     :disabled="isDisabled('pieceShadows')"
-                  />
-                </q-item-section>
-              </q-item>
-
-              <q-item tag="label" :title="hotkeys.flatCounts" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    color="accent"
-                    v-model="flatCounts"
-                    :disabled="isDisabled('flatCounts')"
                   />
                 </q-item-section>
               </q-item>
@@ -268,6 +288,7 @@ const props = [
   "showMove",
   "showRoads",
   "showScrubber",
+  "turnIndicator",
   "unplayedPieces",
 ];
 

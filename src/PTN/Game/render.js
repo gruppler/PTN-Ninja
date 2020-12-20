@@ -12,6 +12,7 @@ const squareSizes = {
 const defaults = {
   size: "md",
   axisLabels: true,
+  turnIndicator: true,
   flatCounts: true,
   highlightSquares: true,
   pieceShadows: true,
@@ -91,8 +92,10 @@ export default function render(game, options = {}) {
   const fontSize = squareSize * 0.22;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
-  const flatCounterHeight = options.flatCounts ? Math.round(fontSize * 2) : 0;
-  const turnIndicatorHeight = options.flatCounts
+  const flatCounterHeight = options.turnIndicator
+    ? Math.round(fontSize * 2)
+    : 0;
+  const turnIndicatorHeight = options.turnIndicator
     ? Math.round(fontSize * 0.5)
     : 0;
   const headerHeight = turnIndicatorHeight + flatCounterHeight;
@@ -120,14 +123,15 @@ export default function render(game, options = {}) {
 
   // Header
   const flats = game.state.flats;
-  if (options.flatCounts) {
+  if (options.turnIndicator) {
     const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
       Math.min(
         boardSize - squareSize,
         Math.max(
           squareSize,
-          (totalFlats ? flats[0] / totalFlats : 0.5) * boardSize
+          (options.flatCounts && totalFlats ? flats[0] / totalFlats : 0.5) *
+            boardSize
         )
       )
     );
@@ -177,12 +181,14 @@ export default function render(game, options = {}) {
       );
     }
     // Player 1 Flat Count
-    ctx.textAlign = "end";
-    ctx.fillText(
-      flats[0],
-      padding + axisSize + flats1Width - fontSize / 2,
-      padding + flatCounterHeight / 2 + offset
-    );
+    if (options.flatCounts) {
+      ctx.textAlign = "end";
+      ctx.fillText(
+        flats[0],
+        padding + axisSize + flats1Width - fontSize / 2,
+        padding + flatCounterHeight / 2 + offset
+      );
+    }
 
     ctx.fillStyle = colors.player[1].header;
     // Player 2 Name
@@ -203,12 +209,14 @@ export default function render(game, options = {}) {
       );
     }
     // Player 2 Flat Count
-    ctx.textAlign = "start";
-    ctx.fillText(
-      flats[1],
-      padding + axisSize + flats1Width + fontSize / 2,
-      padding + flatCounterHeight / 2 + offset
-    );
+    if (options.flatCounts) {
+      ctx.textAlign = "start";
+      ctx.fillText(
+        flats[1],
+        padding + axisSize + flats1Width + fontSize / 2,
+        padding + flatCounterHeight / 2 + offset
+      );
+    }
 
     // Turn Indicator
     const turn = game.state.turn;

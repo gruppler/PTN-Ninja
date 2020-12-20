@@ -89,15 +89,6 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Include Player Names") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.includeNames" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
           <q-item-label>{{ $t("From current ply") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -152,19 +143,41 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle color="accent" v-model="config.ui.turnIndicator" />
+        </q-item-section>
+      </q-item>
+
+      <smooth-reflow>
+        <div v-show="config.turnIndicator">
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Player Names") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle color="accent" v-model="config.includeNames" />
+            </q-item-section>
+          </q-item>
+
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle color="accent" v-model="config.ui.flatCounts" />
+            </q-item-section>
+          </q-item>
+        </div>
+      </smooth-reflow>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle color="accent" v-model="config.ui.highlightSquares" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="accent" v-model="config.ui.flatCounts" />
         </q-item-section>
       </q-item>
 
