@@ -13,7 +13,7 @@ If you want to support this project, you can...
 - [Report an issue or feature request](https://github.com/gruppler/PTN-Ninja/issues/)
 - [Become a Patron](https://www.patreon.com/gruppler)
 - [Donate USD](https://www.paypal.me/gruppler)
-- [Donate ETH](https://etherdonation.com/d?to=0xDF2a01edf2Ea8f8Cd4528CAF6C4E092996ddDBC9&amount=0.1)
+- [Donate ETH](https://etherdonation.com/d?to=0xC222dBFb4c59928b4A25e0dcc7ad8f0f9C263079)
 
 Previous Version
 ---
