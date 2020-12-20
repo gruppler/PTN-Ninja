@@ -21,7 +21,11 @@
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
     >
-      <div v-if="$store.state.turnIndicator" class="player-names row no-wrap">
+      <div
+        v-if="$store.state.turnIndicator"
+        class="player-names row no-wrap"
+        @click.right.prevent
+      >
         <div
           class="player1 relative-position"
           :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
@@ -80,10 +84,14 @@
           </div>
         </div>
 
-        <div class="unplayed-bg"></div>
+        <div class="unplayed-bg" @click.right.prevent></div>
       </div>
 
-      <div v-if="$store.state.axisLabels" class="x-axis row items-end">
+      <div
+        v-if="$store.state.axisLabels"
+        class="x-axis row items-end"
+        @click.right.prevent
+      >
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 

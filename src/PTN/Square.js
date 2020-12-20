@@ -141,7 +141,7 @@ export default class Square {
 
   clear() {
     while (this.pieces.length) {
-      this.popPiece();
+      this.popPiece().isStanding = false;
     }
   }
 }
