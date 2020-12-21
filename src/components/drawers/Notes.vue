@@ -242,21 +242,28 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.notes
-  .scroll:before
-    content ""
-    display block
-    height 100%
-  .q-separator
-    opacity .75
-  .q-message:not(:last-child)
-    margin-bottom 3px
-    .q-message-text
-      border-radius $generic-border-radius
-      min-height 2em
-      &:before
-        display none
-  .ply-container
-    padding-bottom .5em
+<style lang="scss">
+.notes {
+  .scroll:before {
+    content: "";
+    display: block;
+    height: 100%;
+  }
+  .q-separator {
+    opacity: 0.75;
+  }
+  .q-message:not(:last-child) {
+    margin-bottom: 3px;
+    .q-message-text {
+      border-radius: $generic-border-radius;
+      min-height: 2em;
+      &:before {
+        display: none;
+      }
+    }
+  }
+  .ply-container {
+    padding-bottom: 0.5em;
+  }
+}
 </style>

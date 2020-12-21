@@ -158,118 +158,150 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.square
-  position relative
-  &.light
-    background $blue-grey-4
+<style lang="scss">
+.square {
+  position: relative;
+  &.light {
+    background: $blue-grey-4;
+  }
 
-  .hl
-    position absolute
-    top 0
-    bottom 0
-    left 0
-    right 0
-    opacity 0
-    transition background-color $generic-hover-transition,
-      opacity $generic-hover-transition
-    will-change background-color, opacity
+  .hl {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    transition: background-color $generic-hover-transition,
+      opacity $generic-hover-transition;
+    will-change: background-color, opacity;
+  }
 
-  .hl.current
-    background-color $accent
-  .board-container.highlight-squares &.current
-    .hl.current
-      opacity .4;
-    &.primary .hl.current
-      opacity .75;
+  .hl.current {
+    background-color: $accent;
+  }
+  .board-container.highlight-squares &.current {
+    .hl.current {
+      opacity: 0.4;
+    }
+    &.primary .hl.current {
+      opacity: 0.75;
+    }
+  }
 
-  .board-container.turn-1 &
-    .hl.player
-      background-color $blue-grey-2
-    &.placed:not(.eog) .hl.player
-      background-color $blue-grey-8
-  .board-container.turn-2 &
-    .hl.player
-      background-color $blue-grey-8
-    &.placed:not(.eog) .hl.player
-      background-color $blue-grey-2
-  &.selected .hl.player
-    opacity .5
-  &.no-roads.road .hl.player
-    opacity .25
-  @media (pointer: fine)
-    &.valid:hover .hl.player
-      opacity .35
-      cursor pointer
+  .board-container.turn-1 & {
+    .hl.player {
+      background-color: $blue-grey-2;
+    }
+    &.placed:not(.eog) .hl.player {
+      background-color: $blue-grey-8;
+    }
+  }
+  .board-container.turn-2 & {
+    .hl.player {
+      background-color: $blue-grey-8;
+    }
+    &.placed:not(.eog) .hl.player {
+      background-color: $blue-grey-2;
+    }
+  }
+  &.selected .hl.player {
+    opacity: 0.5;
+  }
+  &.no-roads.road .hl.player {
+    opacity: 0.25;
+  }
+  @media (pointer: fine) {
+    &.valid:hover .hl.player {
+      opacity: 0.35;
+      cursor: pointer;
+    }
+  }
 
-  .road
-    position absolute
-    top 0
-    bottom 0
-    left 0
-    right 0
-    pointer-events none
-    > div
-      opacity 0
-      position absolute
-      will-change opacity, top, bottom, left, right
-      transition opacity $two-thirds-time $easing-reverse,
+  .road {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    > div {
+      opacity: 0;
+      position: absolute;
+      will-change: opacity, top, bottom, left, right;
+      transition: opacity $two-thirds-time $easing-reverse,
         background-color $two-thirds-time $easing-reverse,
-        top $half-time $easing-reverse,
-        bottom $half-time $easing-reverse,
-        left $half-time $easing-reverse,
-        right $half-time $easing-reverse
-      &.center
-        top 35%
-        bottom 35%
-        left 35%
-        right 35%
-      &.n, &.s
-        left 35%
-        right 35%
-      &.e, &.w
-        top 35%
-        bottom 35%
-      &.n
-        top 35%
-        bottom 65%
-      &.s
-        top 65%
-        bottom 35%
-      &.e
-        left 65%
-        right 35%
-      &.w
-        left 35%
-        right 65%
-  &.n .road .n
-    top 0
-  &.s .road .s
-    bottom 0
-  &.e .road .e
-    right 0
-  &.w .road .w
-    left 0
+        top $half-time $easing-reverse, bottom $half-time $easing-reverse,
+        left $half-time $easing-reverse, right $half-time $easing-reverse;
+      &.center {
+        top: 35%;
+        bottom: 35%;
+        left: 35%;
+        right: 35%;
+      }
+      &.n,
+      &.s {
+        left: 35%;
+        right: 35%;
+      }
+      &.e,
+      &.w {
+        top: 35%;
+        bottom: 35%;
+      }
+      &.n {
+        top: 35%;
+        bottom: 65%;
+      }
+      &.s {
+        top: 65%;
+        bottom: 35%;
+      }
+      &.e {
+        left: 65%;
+        right: 35%;
+      }
+      &.w {
+        left: 35%;
+        right: 65%;
+      }
+    }
+  }
+  &.n .road .n {
+    top: 0;
+  }
+  &.s .road .s {
+    bottom: 0;
+  }
+  &.e .road .e {
+    right: 0;
+  }
+  &.w .road .w {
+    left: 0;
+  }
   &.connected .road .center,
   &.n .road .n,
   &.e .road .e,
   &.s .road .s,
-  &.w .road .w
-    opacity .2
-    transition opacity $two-thirds-time $easing $one-third-time,
+  &.w .road .w {
+    opacity: 0.2;
+    transition: opacity $two-thirds-time $easing $one-third-time,
       background-color $two-thirds-time $easing $one-third-time,
-      top $half-time $easing $half-time,
-      bottom $half-time $easing $half-time,
-      left $half-time $easing $half-time,
-      right $half-time $easing $half-time
+      top $half-time $easing $half-time, bottom $half-time $easing $half-time,
+      left $half-time $easing $half-time, right $half-time $easing $half-time;
+  }
   &.road .road .center,
   &.rn .road .n,
   &.re .road .e,
   &.rs .road .s,
-  &.rw .road .w
-    opacity 0.8
-  &.p1 .road > div
-    background-color $blue-grey-2
-  &.p2 .road > div
-    background-color $blue-grey-8
+  &.rw .road .w {
+    opacity: 0.8;
+  }
+  &.p1 .road > div {
+    background-color: $blue-grey-2;
+  }
+  &.p2 .road > div {
+    background-color: $blue-grey-8;
+  }
+}
 </style>

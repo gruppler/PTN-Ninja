@@ -839,8 +839,9 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.q-select .result
-  margin 0 0 -4px
-  font-size .9em
+<style lang="scss">
+.q-select .result {
+  margin: 0 0 -4px;
+  font-size: 0.9em;
+}
 </style>

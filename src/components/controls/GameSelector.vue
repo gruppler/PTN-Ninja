@@ -214,33 +214,42 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.game-selector
-  max-width 30em
-  margin 0 auto
-  .q-field--filled .q-field__control
-    padding-left 0
-    @media (max-width: $breakpoint-xs-max)
-      padding-right 0
+<style lang="scss">
+.game-selector {
+  max-width: 30em;
+  margin: 0 auto;
+  .q-field--filled .q-field__control {
+    padding-left: 0;
+    @media (max-width: $breakpoint-xs-max) {
+      padding-right: 0;
+    }
+  }
 
-  .q-field__native
-    span
-      text-overflow ellipsis
-      white-space nowrap
-      overflow hidden
-      @media (max-width: $breakpoint-xs-max)
-        font-size .85em
+  .q-field__native {
+    span {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      @media (max-width: $breakpoint-xs-max) {
+        font-size: 0.85em;
+      }
+    }
 
-    .no-outline
-      position absolute
+    .no-outline {
+      position: absolute;
+    }
+  }
+  .q-badge {
+    align-self: center;
+    padding: 5px;
+    font-weight: bold;
+  }
+}
 
-  .q-badge
-    align-self center
-    padding 5px
-    font-weight bold
-
-.game-selector-options
-  background $secondary
-  .q-badge
-    padding 4px
+.game-selector-options {
+  background: $secondary;
+  .q-badge {
+    padding: 4px;
+  }
+}
 </style>

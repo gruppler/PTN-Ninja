@@ -342,34 +342,43 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-$header = 64px
+<style lang="scss">
+$header: 64px;
 
-.online-games
-  tr > :first-child
-    display none
+.online-games {
+  tr > :first-child {
+    display: none;
+  }
 
-  .q-linear-progress
-    color $accent !important
+  .q-linear-progress {
+    color: $accent !important;
+  }
 
-  .q-table__middle
-    min-height 12rem
-    max-height 'calc(50vh - %s)' % ($header + $toolbar-min-height)
-  &.fullscreen .q-table__middle
-    height 'calc(100vh - %s)' % $header
-    max-height @height
+  .q-table__middle {
+    min-height: 12rem;
+    max-height: calc(50vh - #{$header + $toolbar-min-height});
+  }
+  &.fullscreen .q-table__middle {
+    height: calc(100vh - #{$header});
+    max-height: calc(100vh - #{$header});
+  }
 
   .q-table__top,
   .q-table__bottom,
-  thead tr:first-child th
-    background-color $secondary
+  thead tr:first-child th {
+    background-color: $secondary;
+  }
 
-  thead tr th
-    position sticky
-    z-index 1
-  thead tr:first-child th
-    top 0
+  thead tr th {
+    position: sticky;
+    z-index: 1;
+  }
+  thead tr:first-child th {
+    top: 0;
+  }
 
-  &.q-table--loading thead tr:last-child th
-    top 55px
+  &.q-table--loading thead tr:last-child th {
+    top: 55px;
+  }
+}
 </style>

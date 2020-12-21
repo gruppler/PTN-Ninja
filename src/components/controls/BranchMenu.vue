@@ -69,13 +69,15 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.branch-menu .option-number
-  line-height 1em
-  border-radius $generic-border-radius
-  background-color $blue-grey-8
-  color #fff
-  &.selected
-    background-color $accent
-    color $grey-10
+<style lang="scss">
+.branch-menu .option-number {
+  line-height: 1em;
+  border-radius: $generic-border-radius;
+  background-color: $blue-grey-8;
+  color: #fff;
+  &.selected {
+    background-color: $accent;
+    color: $grey-10;
+  }
+}
 </style>

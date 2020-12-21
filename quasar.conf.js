@@ -12,7 +12,7 @@ module.exports = function(ctx) {
       "qriously"
     ],
 
-    css: ["app.styl"],
+    css: ["app.scss"],
 
     extras: ["roboto-font", "mdi-v5"],
 

@@ -116,34 +116,41 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.linenum
-  display inline-flex
-  flex-direction row
-  align-items center
-  vertical-align middle
-  .branch
-    word-break break-word
-    font-weight bold
-    font-size 0.9em
-    line-height 1.3em
-    padding 4px
-    margin 0
-    max-width 270px
-    border-radius $generic-border-radius
-    cursor pointer
-    background-color $highlight
-    &.selected
-      background-color $accent
-    &.only
-      margin-top 0.25em
-      margin-bottom 0.25em
-    .q-btn
-      margin -0.5em -0.25em
+<style lang="scss">
+.linenum {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  vertical-align: middle;
+  .branch {
+    word-break: break-word;
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 1.3em;
+    padding: 4px;
+    margin: 0;
+    max-width: 270px;
+    border-radius: $generic-border-radius;
+    cursor: pointer;
+    background-color: $highlight;
+    &.selected {
+      background-color: $accent;
+    }
+    &.only {
+      margin-top: 0.25em;
+      margin-bottom: 0.25em;
+    }
+    .q-btn {
+      margin: -0.5em -0.25em;
+    }
 
-    + .number
-      margin-left .5em
-  .number
-    font-size 0.9em
-    line-height 2.2em
+    + .number {
+      margin-left: 0.5em;
+    }
+  }
+  .number {
+    font-size: 0.9em;
+    line-height: 2.2em;
+  }
+}
 </style>
