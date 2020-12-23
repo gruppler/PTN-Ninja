@@ -18,6 +18,7 @@ If you want to support this project, you can...
 Previous Version
 ---
 **Version 2** is available at [v2.ptn.ninja](https://v2.ptn.ninja).
+
 **Note:** It is no longer supported, so use at your own risk!
 
 Legal
