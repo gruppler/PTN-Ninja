@@ -507,7 +507,7 @@ export default class GameMutations {
     player = player ? (player === 2 ? "b" : "a") : "";
     let i = 1;
     do {
-      branch = prefix + number + player + "-" + i++;
+      branch = prefix + number + player + i++;
     } while (branch in this.branches);
     return branch;
   }
