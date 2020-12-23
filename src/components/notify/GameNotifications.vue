@@ -35,7 +35,9 @@ export default {
         if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
           // Tak or Tinue
           alerts.push({
-            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
+            message:
+              this.$t(ply.evaluation.tinue ? "Tinue" : "Tak") +
+              ply.evaluation.text.replace(/[^?!]/g, ""),
             player: ply.player,
           });
         }
