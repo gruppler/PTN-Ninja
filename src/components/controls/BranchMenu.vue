@@ -5,7 +5,6 @@
     @input="$emit('input', $event)"
     content-class="bg-primary"
     auto-close
-    cover
   >
     <q-list class="branch-menu" dense>
       <q-item
