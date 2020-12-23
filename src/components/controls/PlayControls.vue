@@ -44,7 +44,7 @@
         v-shortkey="hotkeys.playpause"
         round
         :ripple="false"
-        color="accent"
+        color="primary"
         text-color="grey-10"
         :disable="!game.state.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
@@ -80,7 +80,7 @@
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
-        :color="hasBranches ? 'accent' : ''"
+        :color="hasBranches ? 'primary' : ''"
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu

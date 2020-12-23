@@ -1,140 +1,142 @@
 <template>
-  <q-dialog
+  <small-dialog
     :value="value"
     @input="$emit('input', $event)"
     content-class="non-selectable"
     v-bind="$attrs"
   >
-    <q-card style="width: 400px" class="bg-secondary">
+    <template v-slot:header>
       <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
+    </template>
 
+    <q-card>
       <smooth-reflow tag="recess" class="col">
-        <div class="scroll" style="max-height: calc(100vh - 15rem)">
-          <div v-if="this.isLocal">
-            <q-list>
-              <q-item>
-                <q-item-section>
-                  <PlayerName
-                    ref="playerName"
-                    v-model="playerName"
-                    :player="player"
-                    :is-private="isPrivate"
-                    @validate="isValid = $event"
+        <div v-if="this.isLocal">
+          <q-list>
+            <q-item>
+              <q-item-section>
+                <PlayerName
+                  ref="playerName"
+                  v-model="playerName"
+                  :player="player"
+                  :is-private="isPrivate"
+                  @validate="isValid = $event"
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item>
+              <q-item-section>
+                <q-btn-toggle
+                  v-model="player"
+                  class="highlight"
+                  :toggle-color="playerBGColor"
+                  :toggle-text-color="playerTextColor"
+                  :options="players"
+                  :ripple="false"
+                  spread
+                  dense
+                  stack
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Private Game") }}</q-item-label>
+                <smooth-reflow>
+                  <q-item-label caption v-show="isPrivate">
+                    {{ $t("hint.privateGame") }}
+                  </q-item-label>
+                </smooth-reflow>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="isPrivate" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="flatCounts" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="showRoads" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+
+          <message-output :error="error" content-class="q-ma-md" />
+        </div>
+
+        <div v-else>
+          <q-list>
+            <q-item v-if="game && game.config.id">
+              <q-input
+                class="col-grow"
+                :value="gameURL"
+                :hint="
+                  user && game.player(user.uid)
+                    ? $t('hint.url')
+                    : $t('hint.spectate')
+                "
+                readonly
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="link" />
+                </template>
+                <template v-slot:append>
+                  <q-icon
+                    @click="qrCode(gameURL)"
+                    name="qrcode"
+                    class="q-field__focusable-action"
                   />
-                </q-item-section>
-              </q-item>
-
-              <q-item>
-                <q-item-section>
-                  <q-btn-toggle
-                    v-model="player"
-                    class="highlight"
-                    :toggle-color="playerBGColor"
-                    :toggle-text-color="playerTextColor"
-                    :options="players"
-                    :ripple="false"
-                    spread
-                    dense
-                    stack
+                  <q-icon
+                    @click="copy(gameURL)"
+                    name="copy"
+                    class="q-field__focusable-action"
                   />
-                </q-item-section>
-              </q-item>
-
-              <q-item tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Private Game") }}</q-item-label>
-                  <smooth-reflow>
-                    <q-item-label caption v-show="isPrivate">
-                      {{ $t("hint.privateGame") }}
-                    </q-item-label>
-                  </smooth-reflow>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="isPrivate" />
-                </q-item-section>
-              </q-item>
-
-              <q-item tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="flatCounts" />
-                </q-item-section>
-              </q-item>
-
-              <q-item tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle color="accent" v-model="showRoads" />
-                </q-item-section>
-              </q-item>
-            </q-list>
-
-            <message-output :error="error" content-class="q-ma-md" />
-          </div>
-
-          <div v-else>
-            <q-list>
-              <q-item v-if="game && game.config.id">
-                <q-input
-                  class="col-grow"
-                  :value="gameURL"
-                  :hint="
-                    user && game.player(user.uid)
-                      ? $t('hint.url')
-                      : $t('hint.spectate')
-                  "
-                  readonly
-                  filled
-                >
-                  <template v-slot:prepend>
-                    <q-icon name="link" />
-                  </template>
-                  <template v-slot:append>
-                    <q-icon
-                      @click="qrCode(gameURL)"
-                      name="qrcode"
-                      class="q-field__focusable-action"
-                    />
-                    <q-icon
-                      @click="copy(gameURL)"
-                      name="copy"
-                      class="q-field__focusable-action"
-                    />
-                  </template>
-                </q-input>
-              </q-item>
-            </q-list>
-          </div>
+                </template>
+              </q-input>
+            </q-item>
+          </q-list>
         </div>
 
         <q-inner-loading :showing="loading" />
       </smooth-reflow>
+    </q-card>
 
+    <template v-slot:footer>
       <q-separator />
 
       <q-card-actions align="right">
         <template v-if="isLocal">
-          <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+          <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
           <q-btn
             @click="create"
             :label="$t('Create Online Game')"
             :disabled="!isValid"
-            color="accent"
+            color="primary"
             flat
           />
         </template>
         <template v-else>
-          <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+          <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
         </template>
       </q-card-actions>
-    </q-card>
+    </template>
 
     <QRCode v-model="showQR" :text="qrText" no-route-dismiss />
-  </q-dialog>
+  </small-dialog>
 </template>
 
 <script>
@@ -204,17 +206,19 @@ export default {
     playerBGColor() {
       switch (this.player) {
         case 1:
-          return "grey-1";
+          return "player1";
         case 2:
-          return "grey-10";
+          return "player2";
         default:
-          return "accent";
+          return "primary";
       }
     },
     playerTextColor() {
       switch (this.player) {
+        case 1:
+          return "player2";
         case 2:
-          return "grey-1";
+          return "player1";
         default:
           return "grey-10";
       }

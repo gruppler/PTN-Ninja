@@ -1,5 +1,5 @@
 <template>
-  <Notifications v-if="show" :notifications="notifications" color="accent" />
+  <Notifications v-if="show" :notifications="notifications" color="primary" />
 </template>
 
 <script>

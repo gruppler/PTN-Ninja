@@ -3,7 +3,6 @@
     ref="table"
     class="online-games"
     :class="{ fullscreen }"
-    card-class="bg-secondary"
     table-class="dim"
     :columns="columns"
     :data="games"
@@ -31,7 +30,6 @@
           ref="search"
           v-model="filter"
           debounce="200"
-          color="accent"
           class="col col-sm-6"
           @focus="focusSearch"
           autocomplete="off"
@@ -50,7 +48,7 @@
           icon="account"
           :label="user && !user.isAnonymous ? user.displayName : $t('Log In')"
           :to="{ name: user && !user.isAnonymous ? 'account' : 'login' }"
-          color="accent"
+          color="primary"
           :dense="$q.screen.lt.md"
           class="q-ml-sm"
           flat
@@ -366,7 +364,7 @@ $header: 64px;
   .q-table__top,
   .q-table__bottom,
   thead tr:first-child th {
-    background-color: $secondary;
+    background-color: $ui;
   }
 
   thead tr th {

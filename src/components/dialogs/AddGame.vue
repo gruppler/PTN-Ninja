@@ -1,30 +1,27 @@
 <template>
-  <q-dialog
+  <small-dialog
     :value="value"
     @input="$emit('input', $event)"
     content-class="non-selectable"
     v-bind="$attrs"
   >
-    <q-card style="width: 560px" class="bg-secondary">
+    <template v-slot:header>
       <q-tabs
         v-model="tab"
-        active-color="accent"
-        indicator-color="accent"
+        active-color="primary"
+        indicator-color="primary"
         align="justify"
       >
         <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
       </q-tabs>
+    </template>
 
-      <q-separator />
-
+    <q-card>
       <smooth-reflow>
-        <q-tab-panels v-model="tab" class="bg-secondary" keep-alive animated>
+        <q-tab-panels v-model="tab" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
-            <q-card-section
-              class="q-pa-none"
-              style="max-height: calc(100vh - 13rem)"
-            >
+            <q-card-section class="q-pa-none">
               <GameInfo
                 ref="gameInfo"
                 class="q-pa-md"
@@ -49,7 +46,7 @@
               </q-item>
               <q-item
                 @click="toggleOnline"
-                :class="{ 'text-accent': showOnline }"
+                :class="{ 'text-primary': showOnline }"
                 clickable
                 v-ripple
               >
@@ -76,23 +73,24 @@
           </q-tab-panel>
         </q-tab-panels>
       </smooth-reflow>
+    </q-card>
 
+    <template v-slot:footer>
       <q-separator />
-
       <q-card-actions align="right">
         <MoreToggle v-show="tab === 'new'" v-model="showAll" />
         <div class="col-grow" />
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
           @click="ok"
           :disabled="tab === 'load' && !selectedGames.length"
-          color="accent"
+          color="primary"
           flat
         />
       </q-card-actions>
-    </q-card>
-  </q-dialog>
+    </template>
+  </small-dialog>
 </template>
 
 <script>

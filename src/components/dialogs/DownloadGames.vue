@@ -1,8 +1,10 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)">
-    <q-card style="width: 400px; overflow: visible" class="bg-secondary">
-      <dialog-header icon="download"> {{ $t("Download") }}... </dialog-header>
+  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+    <template v-slot:header>
+      <dialog-header icon="download">{{ $t("Download") }}...</dialog-header>
+    </template>
 
+    <q-card style="width: 400px; overflow-x: hidden">
       <q-card-section>
         <q-range
           v-model="range"
@@ -12,7 +14,6 @@
           :left-label-value="games[range.min]"
           :right-label-value="games[range.max]"
           style="max-height: calc(100vh - 196px)"
-          color="accent"
           label-text-color="grey-10"
           label-always
           vertical
@@ -20,13 +21,15 @@
           snap
         />
       </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
-        <q-btn :label="$t('OK')" @click="submit" color="accent" flat />
-      </q-card-actions>
     </q-card>
-  </q-dialog>
+
+    <template v-slot:footer>
+      <q-card-actions align="right">
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
+        <q-btn :label="$t('OK')" @click="submit" color="primary" flat />
+      </q-card-actions>
+    </template>
+  </small-dialog>
 </template>
 
 <script>

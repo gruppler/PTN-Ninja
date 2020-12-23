@@ -5,7 +5,6 @@
       name="name"
       :label="$t('Name')"
       @keydown.enter.prevent="submit"
-      color="accent"
       filled
     >
       <template v-slot:prepend>
@@ -29,8 +28,6 @@
         :options="sizes"
         :readonly="game && game.plies.length > 0"
         @input="$refs.tps.validate()"
-        color="accent"
-        popup-content-class="bg-secondary"
         map-options
         emit-value
         filled
@@ -54,7 +51,6 @@
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
         @keydown.enter.prevent="submit"
-        color="accent"
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -100,7 +96,6 @@
             :label="$t('Caps')"
             :rules="rules('caps')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -120,7 +115,6 @@
             :label="$t('Flats')"
             :rules="rules('flats')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -146,7 +140,6 @@
             :label="$t('Caps1')"
             :rules="rules('caps1')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -165,7 +158,6 @@
             :label="$t('Flats1')"
             :rules="rules('flats1')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -187,7 +179,6 @@
             :label="$t('Caps2')"
             :rules="rules('caps2')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -206,7 +197,6 @@
             :label="$t('Flats2')"
             :rules="rules('flats2')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -253,7 +243,6 @@
             :rules="rules('player1')"
             :readonly="game && !game.isLocal"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -278,7 +267,6 @@
             :rules="rules('rating1')"
             :readonly="game && !game.isLocal && player !== 1"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -309,7 +297,6 @@
             :rules="rules('player2')"
             :readonly="game && !game.isLocal"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -334,7 +321,6 @@
             :rules="rules('rating2')"
             :readonly="game && !game.isLocal && player !== 2"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -364,7 +350,6 @@
         :rules="rules('date')"
         :readonly="game && !game.isLocal"
         @keydown.enter.prevent="submit"
-        color="accent"
         hide-bottom-space
         filled
       >
@@ -384,7 +369,6 @@
               v-model="proxyDate"
               name="date"
               mask="YYYY.MM.DD"
-              color="accent"
               text-color="grey-10"
               today-btn
             >
@@ -392,21 +376,14 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="tags.date = null"
-                  color="accent"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn
-                  :label="$t('Cancel')"
-                  color="accent"
-                  flat
-                  v-close-popup
-                />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
                 <q-btn
                   :label="$t('OK')"
                   @click="tags.date = proxyDate"
-                  color="accent"
                   flat
                   v-close-popup
                 />
@@ -425,7 +402,6 @@
         :rules="rules('time')"
         :readonly="game && !game.isLocal"
         @keydown.enter.prevent="submit"
-        color="accent"
         hide-bottom-space
         filled
       >
@@ -444,7 +420,6 @@
             <q-time
               v-model="proxyTime"
               name="time"
-              color="accent"
               text-color="grey-10"
               format24h
               with-seconds
@@ -454,21 +429,14 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="tags.time = null"
-                  color="accent"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn
-                  :label="$t('Cancel')"
-                  color="accent"
-                  flat
-                  v-close-popup
-                />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
                 <q-btn
                   :label="$t('OK')"
                   @click="tags.time = proxyTime"
-                  color="accent"
                   flat
                   v-close-popup
                 />
@@ -488,7 +456,6 @@
         :label="$t('Clock')"
         :rules="rules('clock')"
         @keydown.enter.prevent="submit"
-        color="accent"
         autocorrect="off"
         autocapitalize="off"
         spellcheck="false"
@@ -512,7 +479,6 @@
         :rules="rules('round')"
         @keydown.enter.prevent="submit"
         hide-bottom-space
-        color="accent"
         filled
       >
         <template v-slot:prepend>
@@ -531,8 +497,7 @@
         :options="results"
         :label="$t('Result')"
         :readonly="game && !game.isLocal"
-        color="accent"
-        popup-content-class="bg-blue-grey-9"
+        popup-content-class="bg-accent"
         autocorrect="off"
         spellcheck="false"
         hide-bottom-space
@@ -584,7 +549,6 @@
         :label="$t('Points')"
         :rules="rules('points')"
         @keydown.enter.prevent="submit"
-        color="accent"
         hide-bottom-space
         filled
       >
@@ -601,7 +565,6 @@
       :label="$t('Site')"
       :rules="rules('site')"
       @keydown.enter.prevent="submit"
-      color="accent"
       hide-bottom-space
       filled
     >
@@ -617,7 +580,6 @@
       :label="$t('Event')"
       :rules="rules('event')"
       @keydown.enter.prevent="submit"
-      color="accent"
       hide-bottom-space
       filled
     >

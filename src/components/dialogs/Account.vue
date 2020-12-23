@@ -1,63 +1,53 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
-    <q-card style="width: 300px" class="bg-secondary">
-      <dialog-header>{{ $t("Account") }}</dialog-header>
+  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+    <template v-slot:header>
+      <dialog-header icon="account">{{ $t("Account") }}</dialog-header>
+    </template>
 
-      <q-separator />
-
-      <q-card-section>
-        <div class="q-gutter-y-md">
-          <q-input
-            v-model="username"
-            :label="$t('Player Name')"
-            color="accent"
-            readonly
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="account" />
-            </template>
-          </q-input>
-          <q-input
-            v-model="email"
-            ref="email"
-            key="email"
-            type="email"
-            autocomplete="email"
-            :label="$t('Email Address')"
-            @keydown.enter.prevent="submit"
-            color="accent"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="email" />
-            </template>
-          </q-input>
-          <q-input
-            v-model="password"
-            ref="password"
-            key="password"
-            :type="showPassword ? 'text' : 'password'"
-            autocomplete="new-password"
-            :label="$t('Password')"
-            @keydown.enter.prevent="submit"
-            color="accent"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="password" />
-            </template>
-            <template v-slot:append>
-              <q-icon
-                :name="showPassword ? 'visibility' : 'visibility_off'"
-                @click="showPassword = !showPassword"
-                class="q-field__focusable-action"
-              />
-            </template>
-          </q-input>
-        </div>
+    <q-card>
+      <q-card-section class="q-gutter-md q-pb-none">
+        <q-input v-model="username" :label="$t('Player Name')" readonly filled>
+          <template v-slot:prepend>
+            <q-icon name="account" />
+          </template>
+        </q-input>
+        <q-input
+          v-model="email"
+          ref="email"
+          key="email"
+          type="email"
+          autocomplete="email"
+          :label="$t('Email Address')"
+          @keydown.enter.prevent="submit"
+          hide-bottom-space
+          filled
+        >
+          <template v-slot:prepend>
+            <q-icon name="email" />
+          </template>
+        </q-input>
+        <q-input
+          v-model="password"
+          ref="password"
+          key="password"
+          :type="showPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          :label="$t('Password')"
+          @keydown.enter.prevent="submit"
+          hide-bottom-space
+          filled
+        >
+          <template v-slot:prepend>
+            <q-icon name="password" />
+          </template>
+          <template v-slot:append>
+            <q-icon
+              :name="showPassword ? 'visibility' : 'visibility_off'"
+              @click="showPassword = !showPassword"
+              class="q-field__focusable-action"
+            />
+          </template>
+        </q-input>
 
         <smooth-reflow>
           <q-btn
@@ -66,41 +56,41 @@
             :label="$t('Verify Email Address')"
             icon="email"
             :loading="loadingVerify"
-            color="accent"
-            class="full-width q-mt-md"
-            flat
+            color="primary"
+            class="full-width q-mb-md text-grey-10"
           />
         </smooth-reflow>
-
-        <message-output
-          :error="error"
-          :success="success"
-          content-class="q-mt-md"
-        />
       </q-card-section>
+    </q-card>
 
+    <template v-slot:footer>
       <q-separator />
+
+      <message-output
+        :error="error"
+        :success="success"
+        content-class="q-mt-md q-mx-md"
+      />
 
       <q-card-actions align="right">
         <q-btn
           @click="logOut"
           :label="$t('Log Out')"
           :loading="loadingLogOut"
-          color="accent"
           flat
         />
         <div class="col-grow" />
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           @click="submit"
           :label="$t('OK')"
           :loading="loadingSubmit"
-          color="accent"
+          color="primary"
           flat
         />
       </q-card-actions>
-    </q-card>
-  </q-dialog>
+    </template>
+  </small-dialog>
 </template>
 
 <script>
@@ -132,19 +122,19 @@ export default {
     close() {
       this.$emit("input", false);
     },
-    logOut() {
+    async logOut() {
       this.loadingLogOut = true;
-      this.$store
-        .dispatch("online/LOG_OUT")
-        .then(() => {
-          this.loadingLogOut = false;
-          this.close();
-        })
-        .catch((error) => {
-          this.loadingLogOut = false;
-          this.error = error;
-          console.error(error);
+      try {
+        await this.$store.dispatch("online/LOG_OUT");
+        this.loadingLogOut = false;
+        this.$nextTick(() => {
+          this.$router.replace({ name: "login" });
         });
+      } catch (error) {
+        this.error = error;
+        console.error(error);
+      }
+      this.loadingLogOut = false;
     },
     verify() {
       this.loadingVerify = true;

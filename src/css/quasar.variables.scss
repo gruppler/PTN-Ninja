@@ -1,6 +1,11 @@
-$primary: #607d8b;
-$secondary: #263238;
-$accent: #8bc34a;
+$primary: #8bc34a;
+$secondary: #607d8b;
+$accent: #37474f;
+$ui: #263238;
+$player1: #cfd8dc;
+$player2: #263238;
+$board1: #8a9faa;
+$board2: #90a4ae;
 
 $positive: #8bc34a;
 $negative: #f44336;
@@ -21,8 +26,6 @@ $blue-dark: #1b87c9;
 $blue-med: saturate(lighten($blue-light, 20%), 20%);
 $text-light: #cfd8dc;
 $text-dark: #263238;
-$player1: #cfd8dc;
-$player2: #263238;
 $highlight: rgba(#fff, 0.1);
 $dim: rgba(#000, 0.1);
 

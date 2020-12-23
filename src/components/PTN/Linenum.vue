@@ -8,7 +8,7 @@
     >
       {{ this.branch }}
       <q-menu v-if="!noEdit" context-menu auto-close>
-        <q-list class="bg-secondary text-white">
+        <q-list class="bg-ui text-white">
           <q-item @click="renameBranch" clickable>
             <q-item-section side>
               <q-icon name="edit" />
@@ -134,7 +134,7 @@ export default {
     cursor: pointer;
     background-color: $highlight;
     &.selected {
-      background-color: $accent;
+      background-color: $primary;
     }
     &.only {
       margin-top: 0.25em;

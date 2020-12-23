@@ -10,7 +10,6 @@
         :rules="[validateName]"
         :hint="$t('hint.playerName' + (isPrivate ? 'Private' : 'Public'))"
         :readonly="!isPrivate"
-        color="accent"
         filled
       >
         <template v-slot:prepend>
@@ -21,7 +20,7 @@
             @click="logOut"
             :label="$t('Log Out')"
             :loading="loading"
-            color="accent"
+            color="primary"
             dense
             flat
           />
@@ -33,7 +32,7 @@
       <q-btn
         :to="{ name: 'login' }"
         :label="$t('Log In')"
-        color="accent"
+        color="primary"
         text-color="grey-10"
         icon="account"
         style="height: 3.5em"

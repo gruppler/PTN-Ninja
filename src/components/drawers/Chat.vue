@@ -51,7 +51,7 @@
         @keydown.shift.enter.prevent="send"
         @keydown.esc="$refs.input.blur()"
         debounce="50"
-        class="footer-toolbar bg-secondary col-grow q-pa-sm items-end"
+        class="footer-toolbar bg-ui col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Message')"
         :dark="player === 2"
@@ -59,14 +59,13 @@
         rounded
         autogrow
         outlined
-        color="accent"
-        :bg-color="player === 1 ? 'white' : 'secondary'"
+        :bg-color="player === 1 ? 'player1' : 'player2'"
       >
         <template v-slot:append>
           <q-btn
             @click="send"
             icon="send"
-            :color="player === 1 ? 'grey-8' : 'white'"
+            :color="player === 1 ? 'player2' : 'player1'"
             :disabled="!message.length"
             flat
             dense

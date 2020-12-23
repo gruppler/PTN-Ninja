@@ -36,7 +36,6 @@
             :max="4"
             :label-value="sizes[size]"
             :step="1"
-            color="accent"
             snap
             label
           />
@@ -48,7 +47,7 @@
           <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.axisLabels" />
+          <q-toggle v-model="config.axisLabels" />
         </q-item-section>
       </q-item>
 
@@ -57,7 +56,7 @@
           <q-item-label>{{ $t("Road Connections") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.showRoads" />
+          <q-toggle v-model="config.showRoads" />
         </q-item-section>
       </q-item>
 
@@ -66,7 +65,7 @@
           <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.turnIndicator" />
+          <q-toggle v-model="config.turnIndicator" />
         </q-item-section>
       </q-item>
 
@@ -77,7 +76,7 @@
               <q-item-label>{{ $t("Player Names") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle color="accent" v-model="config.includeNames" />
+              <q-toggle v-model="config.includeNames" />
             </q-item-section>
           </q-item>
 
@@ -86,7 +85,7 @@
               <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle color="accent" v-model="config.flatCounts" />
+              <q-toggle v-model="config.flatCounts" />
             </q-item-section>
           </q-item>
         </div>
@@ -97,7 +96,7 @@
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.highlightSquares" />
+          <q-toggle v-model="config.highlightSquares" />
         </q-item-section>
       </q-item>
 
@@ -106,7 +105,7 @@
           <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.pieceShadows" />
+          <q-toggle v-model="config.pieceShadows" />
         </q-item-section>
       </q-item>
 
@@ -115,7 +114,7 @@
           <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.unplayedPieces" />
+          <q-toggle v-model="config.unplayedPieces" />
         </q-item-section>
       </q-item>
 
@@ -124,7 +123,7 @@
           <q-item-label>{{ $t("Padding") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle color="accent" v-model="config.padding" />
+          <q-toggle v-model="config.padding" />
         </q-item-section>
       </q-item>
     </q-list>
@@ -140,7 +139,7 @@
           @click="share"
           flat
         />
-        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
     </template>
   </large-dialog>

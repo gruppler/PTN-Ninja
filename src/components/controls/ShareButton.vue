@@ -1,7 +1,7 @@
 <template>
   <q-btn icon="share" v-bind="$attrs" @click.right.prevent="share">
     <q-menu auto-close square>
-      <q-list class="bg-secondary text-white">
+      <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
           <q-item v-else clickable @click="item.action" :key="item.id">
@@ -191,7 +191,7 @@ export default {
         this.bottomSheet = this.$q
           .bottomSheet({
             grid: true,
-            class: "bg-secondary non-selectable",
+            class: "non-selectable",
             message: this.$t("Share"),
             actions: this.actions,
           })

@@ -7,7 +7,6 @@
     :max="maxPosition"
     :value="position"
     @input="scrub"
-    color="accent"
     :dark="false"
     dense
   />

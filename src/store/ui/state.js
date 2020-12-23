@@ -3,6 +3,8 @@ import { Platform } from "quasar";
 
 import { pick } from "lodash";
 
+import { THEMES } from "../../themes";
+
 let defaults = {
   animateBoard: true,
   axisLabels: true,
@@ -34,6 +36,8 @@ let defaults = {
   showText: false,
   size: 5,
   textTab: "chat",
+  theme: "classic",
+  themes: [],
   turnIndicator: true,
   unplayedPieces: true,
 };
@@ -51,6 +55,7 @@ export const embedUIOptions = [
   "showRoads",
   "showScrubber",
   "showText",
+  "theme",
   "unplayedPieces",
 ];
 
@@ -60,6 +65,7 @@ export const pngUIOptions = [
   "turnIndicator",
   "highlightSquares",
   "showRoads",
+  "theme",
   "unplayedPieces",
 ];
 

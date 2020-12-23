@@ -1,5 +1,17 @@
 import { compressToEncodedURIComponent } from "lz-string";
-import { omit } from "lodash";
+import { cloneDeep, omit } from "lodash";
+import { THEMES } from "../../themes";
+
+export const themes = (state) => {
+  return [...THEMES, ...state.themes];
+};
+
+export const theme = (state, getters) => (id) => {
+  if (!id) {
+    id = state.theme;
+  }
+  return getters.themes.find((theme) => theme.id === id);
+};
 
 const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"

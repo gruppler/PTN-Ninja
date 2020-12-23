@@ -3,18 +3,17 @@
     ref="dialog"
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
     :value.sync="value"
-    @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
     <div class="dialog-content column no-wrap">
-      <header>
+      <header class="bg-accent">
         <slot name="header" />
       </header>
 
       <slot />
 
-      <footer>
+      <footer class="bg-accent">
         <slot name="footer" />
       </footer>
     </div>
@@ -26,14 +25,6 @@ export default {
   name: "small-dialog",
   props: {
     value: Boolean,
-    "go-back": Boolean,
-  },
-  methods: {
-    hide() {
-      if (this.goBack) {
-        this.$router.back();
-      }
-    },
   },
 };
 </script>

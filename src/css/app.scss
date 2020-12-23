@@ -25,21 +25,45 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+.text-ui {
+  color: $ui;
+  color: var(--q-color-ui) !important;
+}
+.bg-ui {
+  background: $ui;
+  background: var(--q-color-ui) !important;
+}
 .text-player1 {
   color: $player1;
+  color: var(--q-color-player1) !important;
 }
 .bg-player1 {
   background: $player1;
+  background: var(--q-color-player1) !important;
 }
 .text-player2 {
   color: $player2;
+  color: var(--q-color-player2) !important;
 }
 .bg-player2 {
   background: $player2;
+  background: var(--q-color-player2) !important;
+}
+
+.q-dark {
+  background: $accent;
+  background: var(--q-color-accent);
+}
+
+.q-card, .q-card--dark,
+.q-list, .q-list--dark,
+.q-tab-panels, .q-tab-panels--dark {
+  background: $ui;
+  background: var(--q-color-ui);
 }
 
 ::selection {
-  background: $accent;
+  background: $primary;
 }
 
 kbd {
@@ -102,10 +126,6 @@ kbd {
   flex-shrink: 0;
 }
 
-.q-item.q-router-link--active, .q-item--active {
-  color: $accent;
-}
-
 .q-dialog {
   .q-expansion-item .q-list {
     overflow-x: hidden;
@@ -131,7 +151,7 @@ kbd {
 }
 
 .q-date--dark, .q-time--dark {
-  background: $secondary;
+  background: $ui;
 }
 
 .q-notification {
@@ -152,11 +172,11 @@ kbd {
 }
 
 .q-slider__pin-value-marker-text {
-  color: $secondary;
+  color: $ui;
 }
 
 .q-expansion-item--expanded > .q-expansion-item__container > .q-item {
-  color: $accent;
+  color: $primary;
 }
 
 .footer-toolbar {

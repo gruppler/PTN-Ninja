@@ -125,9 +125,9 @@ export default {
     }
   }
   &.selected {
-    box-shadow: 0 0 0 2px $accent;
+    box-shadow: 0 0 0 2px $primary;
     body.desktop &.q-chip--clickable:focus {
-      box-shadow: $shadow-1, 0 0 0 2px $accent;
+      box-shadow: $shadow-1, 0 0 0 2px $primary;
     }
   }
   .q-btn {

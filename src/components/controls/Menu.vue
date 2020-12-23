@@ -1,7 +1,7 @@
 <template>
   <q-fab
-    color="accent"
-    text-color="grey-10"
+    color="primary"
+    text-color="ui"
     :icon="short ? 'menu_horizontal' : 'menu_vertical'"
     :direction="short ? 'left' : 'up'"
     v-bind="$attrs"
@@ -12,8 +12,8 @@
       :key="item.icon"
       :icon="item.icon"
       @click="$emit('input', item.action)"
-      color="accent"
-      text-color="grey-10"
+      color="primary"
+      text-color="ui"
     />
   </q-fab>
 </template>

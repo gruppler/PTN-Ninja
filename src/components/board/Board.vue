@@ -458,7 +458,7 @@ $radius: 1.2vmin;
   height: $turn-indicator-height;
   position: absolute;
   bottom: -$turn-indicator-height;
-  background: $accent;
+  background: $primary;
   will-change: opacity;
   transition: opacity $generic-hover-transition;
   .board-container.turn-1 .player1 &,
@@ -489,7 +489,7 @@ $radius: 1.2vmin;
 }
 
 .board {
-  background: darken($blue-grey-4, 2%);
+  background: $board1;
   z-index: 1;
   width: 100%;
   padding-bottom: 100%;

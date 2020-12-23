@@ -75,6 +75,10 @@ const routes = [
         path: "/preferences",
       },
       {
+        name: "theme",
+        path: "/theme",
+      },
+      {
         name: "info",
         path: "/info",
       },

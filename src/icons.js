@@ -19,6 +19,7 @@ export default {
   close: "mdi-close",
   close_multiple: "mdi-close-box-multiple",
   chat: "mdi-forum-outline",
+  color: "mdi-palette",
   copy: "mdi-content-copy",
   date: "mdi-calendar",
   date_time: "mdi-calendar-clock",

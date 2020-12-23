@@ -162,7 +162,7 @@ export default {
 .square {
   position: relative;
   &.light {
-    background: $blue-grey-4;
+    background: $board2;
   }
 
   .hl {
@@ -178,7 +178,7 @@ export default {
   }
 
   .hl.current {
-    background-color: $accent;
+    background-color: $primary;
   }
   .board-container.highlight-squares &.current {
     .hl.current {

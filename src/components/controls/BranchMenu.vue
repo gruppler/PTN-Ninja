@@ -3,10 +3,10 @@
     ref="menu"
     :value="value"
     @input="$emit('input', $event)"
-    content-class="bg-primary"
+    content-class="bg-secondary"
     auto-close
   >
-    <q-list class="branch-menu" dense>
+    <q-list class="branch-menu bg-secondary" dense>
       <q-item
         v-for="(ply, i) in branches"
         :key="i"
@@ -72,10 +72,10 @@ export default {
 .branch-menu .option-number {
   line-height: 1em;
   border-radius: $generic-border-radius;
-  background-color: $blue-grey-8;
+  background-color: $highlight;
   color: #fff;
   &.selected {
-    background-color: $accent;
+    background-color: $primary;
     color: $grey-10;
   }
 }

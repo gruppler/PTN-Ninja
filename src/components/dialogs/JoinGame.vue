@@ -1,10 +1,10 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
-    <q-card style="width: 300px" class="bg-secondary">
+  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+    <template v-slot:header>
       <dialog-header>{{ $t("Join Game") }}</dialog-header>
+    </template>
 
-      <q-separator />
-
+    <q-card style="width: 300px">
       <q-card-section>
         <PlayerName
           ref="playerName"
@@ -14,21 +14,23 @@
           @validate="isValid = $event"
         />
       </q-card-section>
+    </q-card>
 
+    <template v-slot:footer>
       <q-separator />
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Spectate')" @click="spectate" color="accent" flat />
+        <q-btn :label="$t('Spectate')" @click="spectate" color="primary" flat />
         <q-btn
           :label="$t('Play')"
           :disabled="!validatePlay()"
           @click="play"
-          color="accent"
+          color="primary"
           flat
         />
       </q-card-actions>
-    </q-card>
-  </q-dialog>
+    </template>
+  </small-dialog>
 </template>
 
 <script>

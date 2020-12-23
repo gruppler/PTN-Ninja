@@ -13,7 +13,6 @@
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="game-selector-options"
-      color="accent"
       emit-value
       filled
       dense
@@ -22,12 +21,12 @@
         <q-btn
           :label="games.length"
           @click.stop
-          class="text-subtitle2 text-white q-pa-sm"
+          class="text-subtitle2 q-pa-sm"
           dense
           flat
         >
           <q-menu auto-close square>
-            <q-list class="bg-secondary text-white">
+            <q-list>
               <q-item
                 clickable
                 @click="dialogCloseGames = true"
@@ -68,9 +67,9 @@
           <q-item-section side v-if="hasOnlineGames">
             <q-icon
               :name="icon(scope.opt)"
-              :class="{ 'text-accent': scope.opt.value === 0 }"
+              :class="{ 'text-primary': scope.opt.value === 0 }"
             >
-              <q-badge v-if="scope.opt.config.unseen" color="accent" floating />
+              <q-badge v-if="scope.opt.config.unseen" floating />
             </q-icon>
           </q-item-section>
           <q-item-section>
@@ -91,8 +90,7 @@
         <div class="row">
           <q-badge
             v-if="unseenCount"
-            color="accent"
-            text-color="grey-10"
+            text-color="ui"
             :label="unseenCount"
             class="q-mr-sm"
           />
@@ -101,8 +99,8 @@
       </template>
     </q-select>
 
-    <CloseGames v-model="dialogCloseGames" />
-    <DownloadGames v-model="dialogDownloadGames" />
+    <CloseGames v-model="dialogCloseGames" no-route-dismiss />
+    <DownloadGames v-model="dialogDownloadGames" no-route-dismiss />
   </div>
 </template>
 
@@ -124,17 +122,17 @@ export default {
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map((key) => ({
+      Object.values(HISTORY_DIALOGS).map((name) => ({
         get() {
-          return this.$route.name === key;
+          return this.$route.name === name;
         },
         set(value) {
           if (value) {
-            if (this.$route.name !== key) {
-              this.$router.push({ name: key });
+            if (this.$route.name !== name) {
+              this.$router.push({ name });
             }
           } else {
-            if (this.$route.name === key) {
+            if (this.$route.name === name) {
               this.$router.go(-1);
               this.$router.replace({ name: "local" });
             }
@@ -247,7 +245,7 @@ export default {
 }
 
 .game-selector-options {
-  background: $secondary;
+  background: $ui;
   .q-badge {
     padding: 4px;
   }

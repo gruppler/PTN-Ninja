@@ -1,9 +1,11 @@
 import Vue from "vue";
 import {
+  colors,
   copyToClipboard,
   exportFile,
   Loading,
   LocalStorage,
+  Dark,
   Dialog,
   Notify,
 } from "quasar";
@@ -14,7 +16,20 @@ import {
   formatHint,
 } from "../../utilities";
 import { i18n } from "../../../src/boot/i18n";
-import { isArray } from "lodash";
+import { forEach, isArray, isEqual, isString } from "lodash";
+
+export const SET_THEME = ({ state, getters, dispatch, commit }, theme) => {
+  if (isString(theme)) {
+    theme = getters.theme(theme);
+  }
+  if (!theme) {
+    theme = getters.theme("classic");
+  } else if (state.theme !== theme.id) {
+    dispatch("SET_UI", ["theme", theme.id]);
+  }
+  forEach(theme.colors, (color, name) => colors.setBrand(name, color));
+  Dark.set(theme.isDark);
+};
 
 export const SET_UI = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -42,19 +57,19 @@ export const PROMPT = (
     title,
     message,
     prompt,
-    color: "accent",
+    color: "primary",
     "no-backdrop-dismiss": true,
     ok: {
       label: ok || i18n.t("OK"),
       flat: true,
-      color: "accent",
+      color: "primary",
     },
     cancel: {
       label: cancel || i18n.t("Cancel"),
       flat: true,
-      color: "accent",
+      color: "primary",
     },
-    class: "bg-secondary non-selectable",
+    class: "bg-ui non-selectable",
   });
   if (success) {
     dialog.onOk(success);
@@ -67,14 +82,14 @@ export const PROMPT = (
 
 export const NOTIFY = (context, options) => {
   let fg = "grey-1";
-  let bg = "secondary";
+  let bg = "ui";
   if (options.invert) {
     [bg, fg] = [fg, bg];
   }
   if (options.actions) {
     options.actions.forEach((action) => {
       if (!action.color) {
-        action.color = "accent";
+        action.color = "primary";
       }
     });
   }
@@ -220,7 +235,7 @@ export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
         actions: [
           {
             label: i18n.t("Undo"),
-            color: "accent",
+            color: "primary",
             handler: () => {
               if (index === 0) {
                 Loading.show();
@@ -281,7 +296,7 @@ export const REMOVE_MULTIPLE_GAMES = (
         actions: [
           {
             label: i18n.t("Undo"),
-            color: "accent",
+            color: "primary",
             handler: () => {
               if (start === 0) {
                 Loading.show();
@@ -538,8 +553,8 @@ export const COPY = function ({ dispatch }, { url, text, title }) {
       .catch(() => {
         dispatch("NOTIFY_ERROR", "Unable to copy");
         Dialog.create({
-          class: "bg-secondary",
-          color: "accent",
+          class: "bg-ui",
+          color: "primary",
           prompt: {
             model: text || url,
             filled: true,

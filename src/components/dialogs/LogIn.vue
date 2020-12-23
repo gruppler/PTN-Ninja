@@ -1,23 +1,23 @@
 <template>
-  <q-dialog
+  <small-dialog
     :value="value"
     @input="$emit('input', $event)"
     content-class="non-selectable"
     v-bind="$attrs"
   >
-    <q-card style="width: 400px" class="bg-secondary">
+    <template v-slot:header>
       <q-tabs
         v-model="tab"
-        active-color="accent"
-        indicator-color="accent"
+        active-color="primary"
+        indicator-color="primary"
         align="justify"
       >
         <q-tab name="login" :label="$t('Log In')" />
         <q-tab name="register" :label="$t('Register')" />
       </q-tabs>
+    </template>
 
-      <q-separator />
-
+    <q-card style="width: 400px">
       <q-card-section class="column no-wrap">
         <smooth-reflow>
           <q-input
@@ -30,7 +30,6 @@
             :rules="[validateNameFormat, validateNameUniqueness]"
             :hint="$t('hint.playerNamePublic')"
             @keydown.enter.prevent="submit"
-            color="accent"
             filled
           >
             <template v-slot:prepend>
@@ -48,7 +47,6 @@
             autocomplete="email"
             :label="$t('Email Address')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -66,7 +64,6 @@
             "
             :label="$t('Password')"
             @keydown.enter.prevent="submit"
-            color="accent"
             hide-bottom-space
             filled
           >
@@ -90,7 +87,10 @@
           content-class="q-mt-md"
         />
       </q-card-section>
+      <q-inner-loading :showing="loading" />
+    </q-card>
 
+    <template v-slot:footer>
       <q-separator />
 
       <q-card-actions align="right">
@@ -102,28 +102,26 @@
           flat
         />
         <div class="col-grow" />
-        <q-btn v-close-popup :label="$t('Cancel')" color="accent" flat />
+        <q-btn v-close-popup :label="$t('Cancel')" color="primary" flat />
         <q-btn
           v-show="tab === 'login'"
           @click="submit"
           :label="$t('Log In')"
-          :disable="!validateLogIn()"
-          color="accent"
+          :disable="!validateLogIn() || loading"
+          color="primary"
           flat
         />
         <q-btn
           v-show="tab === 'register'"
           @click="submit"
           :label="$t('Register')"
-          :disable="!validateRegister()"
-          color="accent"
+          :disable="!validateRegister() || loading"
+          color="primary"
           flat
         />
       </q-card-actions>
-
-      <q-inner-loading :showing="loading" />
-    </q-card>
-  </q-dialog>
+    </template>
+  </small-dialog>
 </template>
 
 <script>
@@ -151,7 +149,9 @@ export default {
         return this.$route.params.tab || "login";
       },
       set(tab) {
-        this.$router.replace({ params: { tab } });
+        this.$router.replace({
+          params: { tab: tab === "login" ? undefined : tab },
+        });
       },
     },
     user() {
@@ -209,52 +209,46 @@ export default {
       this.error = "";
       this.success = message || "";
     },
-    register() {
+    async register() {
       if (!this.validateRegister()) {
         return;
       }
       this.loading = true;
-      this.$store
-        .dispatch("online/REGISTER", {
+      try {
+        await this.$store.dispatch("online/REGISTER", {
           email: this.email,
           password: this.password,
           name: this.playerName.trim(),
-        })
-        .then(() => {
-          this.loading = false;
-          this.playerName = "";
-          this.email = "";
-          this.password = "";
-          this.close();
-        })
-        .catch((error) => {
-          this.loading = false;
-          this.showError(error);
         });
+        this.playerName = "";
+        this.email = "";
+        this.password = "";
+        this.$router.replace({ name: "account" });
+      } catch (error) {
+        this.showError(error);
+      }
+      this.loading = false;
     },
     logIn() {
       if (!this.validateLogIn()) {
         return;
       }
 
-      const logIn = () => {
+      const logIn = async () => {
         this.showError();
         this.loading = true;
-        this.$store
-          .dispatch("online/LOG_IN", {
+        try {
+          await this.$store.dispatch("online/LOG_IN", {
             email: this.email,
             password: this.password,
-          })
-          .then(() => {
-            this.close();
-            this.loading = false;
-            this.email = "";
-            this.password = "";
-          })
-          .catch((error) => {
-            this.loading = false;
-            this.showError(error);
           });
+          this.email = "";
+          this.password = "";
+          this.$router.replace({ name: "account" });
+        } catch (error) {
+          this.showError(error);
+        }
+        this.loading = false;
       };
 
       if (Object.values(this.$store.state.online.privateGames).length) {

@@ -4,7 +4,6 @@
       ref="input"
       type="textarea"
       v-model="ptn"
-      color="accent"
       class="ptn-editor fit"
       :rules="rules"
       @keydown.ctrl.enter.prevent="save"
@@ -59,7 +58,6 @@ export default {
 .ptn-editor {
   font-family: "Source Code Pro";
   font-weight: bold;
-  background-color: $highlight;
 
   &.q-textarea {
     .q-field__native {

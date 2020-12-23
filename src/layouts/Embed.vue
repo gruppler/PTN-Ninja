@@ -1,6 +1,6 @@
 <template>
   <q-layout class="non-selectable" view="lHh LpR lFr">
-    <q-header elevated class="bg-secondary text-white">
+    <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
@@ -26,7 +26,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-primary"
+      class="bg-secondary"
       v-shortkey="hotkeys.UI"
       @shortkey="uiShortkey"
     >
@@ -77,7 +77,7 @@
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
-        <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
+        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
               @click="$store.dispatch('UNDO', game)"
@@ -118,10 +118,7 @@
 
     <q-footer>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
-      <q-toolbar
-        v-show="$store.state.showControls"
-        class="q-pa-sm bg-secondary text-white"
-      >
+      <q-toolbar v-show="$store.state.showControls" class="q-pa-sm bg-ui">
         <PlayControls :game="game" />
       </q-toolbar>
     </q-footer>

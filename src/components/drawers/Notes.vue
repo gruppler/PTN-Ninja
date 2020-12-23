@@ -28,7 +28,7 @@
                 v-for="(comment, index) in log[plyID]"
                 :key="`message-${plyID}-${index}`"
                 :id="`message-${plyID}-${index}`"
-                bg-color="accent"
+                bg-color="primary"
                 text-color="grey-10"
                 text-sanitize
                 sent
@@ -39,7 +39,7 @@
                   auto-close
                   :target="`#message-${plyID}-${index} > div > div`"
                 >
-                  <q-list class="bg-secondary text-white">
+                  <q-list>
                     <q-item @click="edit(plyID, index)" clickable>
                       <q-item-section side>
                         <q-icon name="edit" />
@@ -68,15 +68,15 @@
         @keydown.esc="cancelEdit"
         @blur="cancelEdit"
         debounce="50"
-        class="footer-toolbar bg-secondary text-accent col-grow q-pa-sm items-end"
+        class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Note')"
         dense
         rounded
         autogrow
         outlined
-        color="accent"
-        bg-color="accent"
+        color="primary"
+        bg-color="primary"
         :dark="false"
       >
         <template v-slot:append>
