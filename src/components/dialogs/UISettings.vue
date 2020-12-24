@@ -166,6 +166,7 @@
               item-aligned
               option-value="id"
               option-label="name"
+              behavior="menu"
               map-options
               emit-value
               filled
@@ -184,6 +185,7 @@
               v-model="openDuplicate"
               :options="openDuplicateOptions"
               popup-content-class="bg-accent"
+              behavior="menu"
               item-aligned
               map-options
               emit-value

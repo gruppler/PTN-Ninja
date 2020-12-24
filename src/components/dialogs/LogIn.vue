@@ -17,7 +17,7 @@
       </q-tabs>
     </template>
 
-    <q-card style="width: 400px">
+    <q-card>
       <q-card-section class="column no-wrap">
         <smooth-reflow>
           <q-input

@@ -28,6 +28,7 @@
         :options="sizes"
         :readonly="game && game.plies.length > 0"
         @input="$refs.tps.validate()"
+        behavior="menu"
         map-options
         emit-value
         filled
