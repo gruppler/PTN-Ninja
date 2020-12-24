@@ -434,14 +434,18 @@ $radius: 1.2vmin;
   }
   .player1 .row {
     color: $player2;
+    color: var(--q-color-player2);
     border-top-left-radius: $radius;
     overflow: hidden;
     background: $player1;
+    background: var(--q-color-player1);
   }
   .player2 .row {
     color: $player1;
+    color: var(--q-color-player1);
     border-top-right-radius: $radius;
     background: $player2;
+    background: var(--q-color-player2);
   }
   .player1 .name,
   .player2 .flats {
@@ -459,6 +463,7 @@ $radius: 1.2vmin;
   position: absolute;
   bottom: -$turn-indicator-height;
   background: $primary;
+  background: var(--q-color-primary);
   will-change: opacity;
   transition: opacity $generic-hover-transition;
   .board-container.turn-1 .player1 &,
@@ -470,6 +475,7 @@ $radius: 1.2vmin;
 .x-axis,
 .y-axis {
   color: $player1;
+  color: var(--q-color-player1);
   justify-content: space-around;
   line-height: 1em;
 }
@@ -490,6 +496,7 @@ $radius: 1.2vmin;
 
 .board {
   background: $board1;
+  background: var(--q-color-board1);
   z-index: 1;
   width: 100%;
   padding-bottom: 100%;
@@ -525,7 +532,8 @@ $radius: 1.2vmin;
 
 .unplayed-bg {
   border-radius: 0 $radius $radius 0;
-  background-color: $blue-grey-5;
+  background-color: $board3;
+  background-color: var(--q-color-board3);
   will-change: width;
   .board-container:not(.show-unplayed-pieces) & {
     width: 0 !important;

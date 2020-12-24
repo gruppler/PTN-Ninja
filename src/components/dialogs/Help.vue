@@ -118,20 +118,21 @@ export default {
       margin-top: 1.5em;
     }
   }
-}
 
-.body--dark .q-markdown {
-  .q-markdown--link {
-    color: $primary;
-    border-bottom: none;
-    text-decoration: underline;
-    &.q-markdown--link-external:after {
-      content: "\F03CC";
-      font-family: "Material Design Icons";
-    }
+  .q-markdown {
+    .q-markdown--link {
+      color: $primary;
+      color: var(--q-color-primary);
+      border-bottom: none;
+      text-decoration: underline;
+      &.q-markdown--link-external:after {
+        content: "\F03CC";
+        font-family: "Material Design Icons";
+      }
 
-    &:hover {
-      color: lighten($primary, 10%);
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

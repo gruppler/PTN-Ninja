@@ -38,6 +38,7 @@ export default {
   fullscreen_exit: "mdi-fullscreen-exit",
   help: "mdi-help-circle",
   info: "mdi-information",
+  json: "mdi-code-json",
   keyboard: "mdi-keyboard-variant",
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",

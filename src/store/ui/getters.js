@@ -1,6 +1,7 @@
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, omit } from "lodash";
 import { THEMES } from "../../themes";
+THEMES.forEach((theme) => (theme.isBuiltIn = true));
 
 export const themes = (state) => {
   return [...THEMES, ...state.themes];

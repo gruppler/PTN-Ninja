@@ -119,15 +119,19 @@ export default {
     border: 1px solid;
     &.bg-player2 {
       border-color: $player2;
+      border-color: var(--q-color-$player2);
     }
     &.bg-player1 {
       border-color: $player1;
+      border-color: var(--q-color-$player1);
     }
   }
   &.selected {
     box-shadow: 0 0 0 2px $primary;
+    box-shadow: 0 0 0 2px var(--q-color-primary);
     body.desktop &.q-chip--clickable:focus {
       box-shadow: $shadow-1, 0 0 0 2px $primary;
+      box-shadow: $shadow-1, 0 0 0 2px var(--q-color-primary);
     }
   }
   .q-btn {

@@ -11,7 +11,7 @@
       </q-item-label>
     </q-item-section>
     <q-item-section side>
-      <q-btn v-close-popup icon="close" color="white" dense flat />
+      <q-btn v-close-popup icon="close" dense flat />
     </q-item-section>
   </q-item>
 </template>

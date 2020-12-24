@@ -158,33 +158,12 @@
       <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
         <recess>
           <q-list>
-            <q-select
-              :label="$t('Theme')"
-              v-model="theme"
-              :options="themes"
-              popup-content-class="bg-accent"
-              item-aligned
-              option-value="id"
-              option-label="name"
-              behavior="menu"
-              map-options
-              emit-value
-              filled
-            >
-              <template v-slot:append>
-                <q-icon
-                  @click="$router.push({ name: 'theme' })"
-                  name="edit"
-                  class="q-field__focusable-action"
-                />
-              </template>
-            </q-select>
+            <ThemeSelector v-model="theme" edit-button />
 
             <q-select
               :label="$t('Duplicate Game Names')"
               v-model="openDuplicate"
               :options="openDuplicateOptions"
-              popup-content-class="bg-accent"
               behavior="menu"
               item-aligned
               map-options
@@ -266,6 +245,8 @@
 </template>
 
 <script>
+import ThemeSelector from "../controls/ThemeSelector";
+
 import { zipObject } from "lodash";
 import { HOTKEYS_FORMATTED } from "../../keymap";
 
@@ -292,6 +273,7 @@ const props = [
 
 export default {
   name: "UISettings",
+  components: { ThemeSelector },
   props: ["value", "disabled"],
   data() {
     return {
@@ -302,25 +284,25 @@ export default {
       ],
     };
   },
-  computed: {
-    themes() {
-      return this.$store.getters.themes;
-    },
-    ...zipObject(
-      props,
-      props.map((key) => ({
-        get() {
-          return this.isDisabled(key) ? false : this.$store.state[key];
-        },
-        set(value) {
-          this.$store.dispatch("SET_UI", [key, value]);
-        },
-      }))
-    ),
-  },
+  computed: zipObject(
+    props,
+    props.map((key) => ({
+      get() {
+        return this.isDisabled(key) ? false : this.$store.state[key];
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", [key, value]);
+      },
+    }))
+  ),
   methods: {
     isDisabled(key) {
       return this.disabled && this.disabled.includes(key);
+    },
+  },
+  watch: {
+    theme(theme) {
+      this.$store.dispatch("SET_THEME", theme);
     },
   },
 };

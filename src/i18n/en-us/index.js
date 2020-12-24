@@ -12,6 +12,7 @@ export default {
   Beginning: "Beginning",
   Black: "Black",
   Board: "Board",
+  "Board Style": "Board Style",
   "2D Board": "2D Board",
   "3D Board": "3D Board",
   BPM: "BPM", // Beats Per Minute
@@ -25,6 +26,7 @@ export default {
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
+  Colors: "Colors",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   Copy: "Copy",
@@ -69,6 +71,7 @@ export default {
   Help: "Help",
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
+  Import: "Import",
   "Player Names": "Player Names",
   "Join Game": "Join Game",
   Key: "Key",
@@ -117,7 +120,6 @@ export default {
   "Previous Branch": "Previous Branch",
   "Previous Branch End": "Previous Branch End",
   "Previous Game": "Previous Game",
-  Print: "Print",
   Private: "Private",
   "Private Game": "Private Game",
   "PNG Image": "PNG Image",
@@ -139,6 +141,7 @@ export default {
   "Road Connections": "Road Connections",
   Role: "Role",
   Round: "Round",
+  Save: "Save",
   "Scrub Bar": "Scrub Bar",
   "Select Branch": "Select Branch",
   Share: "Share",
@@ -176,6 +179,7 @@ export default {
   Walls: "Walls",
   White: "White",
   Width: "Width",
+  Zen: "Zen",
   "?": "?",
   "??": "??",
   "!": "!",
@@ -189,6 +193,7 @@ export default {
   },
 
   confirm: {
+    abandonChanges: "Abandon unsaved changes?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
@@ -250,8 +255,9 @@ export default {
     closedMultipleGames: "Closed 1 game | Closed {count} games",
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
-    verifyEmailSent: "Verification email sent.",
+    themeRemoved: 'Removed theme "{name}"',
     updateAvailable: "A new version is available",
+    verifyEmailSent: "Verification email sent.",
   },
 
   warning: {
@@ -260,11 +266,12 @@ export default {
   },
 
   hint: {
+    pasteThemeCode: "Paste theme code here...",
     playerNamePrivate: "Whatever you want to call yourself",
     playerNamePublic: "Your unique name",
-    url: "Share this with your opponent and spectators",
     privateGame: "This game will not be listed",
     spectate: "Share this with other spectators",
+    url: "Share this with your opponent and spectators",
   },
 
   hotkeys: {

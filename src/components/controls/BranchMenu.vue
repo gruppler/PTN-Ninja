@@ -76,6 +76,7 @@ export default {
   color: #fff;
   &.selected {
     background-color: $primary;
+    background-color: var(--q-color-primary);
     color: $grey-10;
   }
 }

@@ -1,9 +1,5 @@
 import { cloneDeep } from "lodash";
 
-export const SET_THEME = ({ state, commit }, theme) => {
-  state.theme = cloneDeep(theme);
-};
-
 export const SET_UI = (state, [key, value]) => {
   if (key in state.defaults) {
     state[key] = value;

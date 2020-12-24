@@ -163,6 +163,7 @@ export default {
   position: relative;
   &.light {
     background: $board2;
+    background: var(--q-color-board2);
   }
 
   .hl {
@@ -179,6 +180,7 @@ export default {
 
   .hl.current {
     background-color: $primary;
+    background-color: var(--q-color-primary);
   }
   .board-container.highlight-squares &.current {
     .hl.current {
@@ -191,18 +193,22 @@ export default {
 
   .board-container.turn-1 & {
     .hl.player {
-      background-color: $blue-grey-2;
+      background-color: $player1road;
+      background-color: var(--q-color-player1road);
     }
     &.placed:not(.eog) .hl.player {
-      background-color: $blue-grey-8;
+      background-color: $player2road;
+      background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2 & {
     .hl.player {
-      background-color: $blue-grey-8;
+      background-color: $player2road;
+      background-color: var(--q-color-player2road);
     }
     &.placed:not(.eog) .hl.player {
-      background-color: $blue-grey-2;
+      background-color: $player1road;
+      background-color: var(--q-color-player1road);
     }
   }
   &.selected .hl.player {
@@ -298,10 +304,12 @@ export default {
     opacity: 0.8;
   }
   &.p1 .road > div {
-    background-color: $blue-grey-2;
+    background-color: $player1road;
+    background-color: var(--q-color-player1road);
   }
   &.p2 .road > div {
-    background-color: $blue-grey-8;
+    background-color: $player2road;
+    background-color: var(--q-color-player2road);
   }
 }
 </style>

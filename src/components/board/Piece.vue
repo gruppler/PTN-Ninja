@@ -199,12 +199,6 @@ export default {
 
     .board-container.piece-shadows & {
       box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2);
-      &.p1 {
-        border-color: rgba($blue-grey-7, 0.5);
-      }
-      &.p2 {
-        border-color: rgba($blue-grey-10, 0.5);
-      }
       &.firstSelected {
         box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2),
           0 2.8vmin 1.5vmin $elevation-umbra;
@@ -212,12 +206,16 @@ export default {
     }
 
     &.p1 {
-      background-color: $blue-grey-2;
-      border-color: $blue-grey-7;
+      background-color: $player1flat;
+      background-color: var(--q-color-player1flat);
+      border-color: $player1border;
+      border-color: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: $blue-grey-7;
-      border-color: $blue-grey-10;
+      background-color: $player2flat;
+      background-color: var(--q-color-player2flat);
+      border-color: $player2border;
+      border-color: var(--q-color-player2border);
     }
 
     &.S {
@@ -226,7 +224,8 @@ export default {
       border-radius: 27%/10%;
 
       &.p1 {
-        background-color: $blue-grey-1;
+        background-color: $player1special;
+        background-color: var(--q-color-$player1special);
         transform: rotate(-45deg);
         .board-container.piece-shadows & {
           box-shadow: -1px 1px 2px rgba(#000, 0.3);
@@ -237,7 +236,8 @@ export default {
         }
       }
       &.p2 {
-        background-color: $blue-grey-8;
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
         transform: rotate(45deg);
         .board-container.piece-shadows & {
           box-shadow: 1px 1px 2px rgba(#000, 0.3);
@@ -251,16 +251,18 @@ export default {
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: $blue-grey-1;
+        background-color: $player1special;
+        background-color: var(--q-color-$player1special);
       }
       &.p2 {
-        background-color: $blue-grey-8;
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
       }
     }
 
     .board-wrapper:not(.board-3D) &.immovable {
       bottom: 0;
-      left: 51%;
+      left: 50%;
       width: 15%;
       height: 8%;
       border-radius: 15%/30%;

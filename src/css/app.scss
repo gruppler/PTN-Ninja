@@ -64,6 +64,7 @@
 
 ::selection {
   background: $primary;
+  background: var(--q-color-primary);
 }
 
 kbd {
@@ -152,6 +153,7 @@ kbd {
 
 .q-date--dark, .q-time--dark {
   background: $ui;
+  background: var(--q-color-ui);
 }
 
 .q-notification {
@@ -177,6 +179,7 @@ kbd {
 
 .q-expansion-item--expanded > .q-expansion-item__container > .q-item {
   color: $primary;
+  color: var(--q-color-primary);
 }
 
 .footer-toolbar {

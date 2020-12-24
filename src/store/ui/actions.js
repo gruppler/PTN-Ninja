@@ -23,12 +23,12 @@ export const SET_THEME = ({ state, getters, dispatch, commit }, theme) => {
     theme = getters.theme(theme);
   }
   if (!theme) {
-    theme = getters.theme("classic");
-  } else if (state.theme !== theme.id) {
-    dispatch("SET_UI", ["theme", theme.id]);
+    theme = getters.theme();
   }
-  forEach(theme.colors, (color, name) => colors.setBrand(name, color));
-  Dark.set(theme.isDark);
+  dispatch("WITHOUT_BOARD_ANIM", () => {
+    forEach(theme.colors, (color, name) => colors.setBrand(name, color));
+    Dark.set(!!theme.isDark);
+  });
 };
 
 export const SET_UI = ({ state, commit }, [key, value]) => {

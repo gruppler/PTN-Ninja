@@ -1,6 +1,6 @@
 <template>
   <q-layout class="non-selectable" view="lHr LpR lFr">
-    <q-header elevated class="bg-ui text-white">
+    <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
@@ -101,7 +101,7 @@
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
-        <q-toolbar class="footer-toolbar bg-ui text-white q-pa-none">
+        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
               @click="$store.dispatch('UNDO', game)"
@@ -141,7 +141,7 @@
       <div class="absolute-fit column">
         <q-tabs
           v-if="hasChat"
-          class="bg-ui text-white text-weight-medium"
+          class="bg-ui text-weight-medium"
           :value="textTab"
           @input="showTextTab"
           active-color="primary"
@@ -153,7 +153,7 @@
         </q-tabs>
         <q-toolbar
           v-else
-          class="bg-ui text-white text-weight-medium justify-center text-uppercase"
+          class="bg-ui text-weight-medium justify-center text-uppercase"
         >
           {{ $t("Notes") }}
         </q-toolbar>
@@ -169,11 +169,11 @@
       <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer>
+    <q-footer class="bg-ui">
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
         v-show="isEditingTPS || $store.state.showControls"
-        class="footer-toolbar q-pa-sm bg-ui text-white"
+        class="footer-toolbar q-pa-sm"
       >
         <PieceSelector
           v-if="isEditingTPS"
@@ -888,7 +888,6 @@ export default {
     }
 
     // Initialize
-    this.$q.dark.set(true);
     this.$store.dispatch("online/INIT").then(() => {
       if (this.gameID) {
         // Check that the game is not already open
@@ -942,7 +941,8 @@ export default {
 #left-drawer,
 #right-drawer {
   .q-drawer {
-    background: rgba($blue-grey-5, 0.75);
+    background: $panel;
+    background: var(--q-color-panel);
     .q-drawer__content {
       overflow: hidden;
     }

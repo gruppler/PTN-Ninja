@@ -245,7 +245,6 @@ export default {
 }
 
 .game-selector-options {
-  background: $ui;
   .q-badge {
     padding: 4px;
   }
