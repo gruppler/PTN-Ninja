@@ -10,12 +10,19 @@
       <dialog-header icon="edit">{{ $t("Theme") }}</dialog-header>
     </template>
 
-    <q-list separator>
-      <ThemeSelector v-model="initialThemeID" @input="selectTheme" />
+    <q-list>
+      <ThemeSelector
+        :value="initialThemeID"
+        @input="selectTheme"
+        item-aligned
+        filled
+      />
+
+      <q-separator />
 
       <q-input
         :label="$t('Name')"
-        :rules="[isValidName, isUniqueID]"
+        :error="!isValid"
         v-model="theme.name"
         :maxlength="maxNameLength"
         hide-bottom-space
@@ -31,6 +38,7 @@
       <q-select
         :label="$t('Board Style')"
         v-model="theme.boardStyle"
+        @input="preview"
         :options="boardStyles"
         behavior="menu"
         item-aligned
@@ -43,11 +51,21 @@
         </template>
       </q-select>
 
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Checker") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="theme.boardChecker" @input="preview" />
+        </q-item-section>
+      </q-item>
+
       <q-item>
         <q-item-section>
           {{ $t("Stone Border Width") }}
           <q-slider
             v-model="theme.vars['piece-border-width']"
+            @input="preview"
             :min="0"
             :max="4"
             :step="1"
@@ -106,6 +124,8 @@
         </q-list>
       </q-expansion-item>
 
+      <q-separator />
+
       <q-expansion-item
         group="theme"
         v-model="showImport"
@@ -135,6 +155,9 @@
           @click="save"
           :label="$t('Save')"
           color="primary"
+          :text-color="
+            isSaved ? 'primary' : theme.primaryDark ? 'fg-light' : 'fg-dark'
+          "
           :disable="!isValid || isSaved"
           :flat="isSaved"
           v-close-popup
@@ -191,7 +214,9 @@ export default {
         : pick(this.theme.colors, PRIMARY_COLOR_IDS);
     },
     isValid() {
-      return this.isValidName() && this.isUniqueID();
+      return (
+        this.isValidName(this.theme.name) && this.isUniqueID(this.theme.name)
+      );
     },
     isSaved() {
       return isEqual(this.theme, this.initialTheme);
@@ -231,14 +256,15 @@ export default {
     getID(name) {
       return kebabCase((name || "").trim());
     },
-    isValidName(name = this.theme.name) {
+    isValidName(name) {
       name = (name || "").trim();
       return name.length > 0 && name.length <= MAX_NAME_LENGTH;
     },
-    isUniqueID(name = this.theme.name) {
+    isUniqueID(name) {
       const id = this.getID(name);
       return (
-        id === this.theme.id || !this.themes.find((theme) => theme.id === id)
+        (id === this.theme.id && (this.isSaved || !this.theme.isBuiltIn)) ||
+        !this.themes.find((theme) => theme.id === id)
       );
     },
     setColor(key, value) {
@@ -299,29 +325,13 @@ export default {
         this.init();
       }
     },
-    "theme.boardStyle"() {
-      if (this.value) {
-        this.preview();
-      }
-    },
-    "theme.vars": {
-      handler() {
-        if (this.value) {
-          this.preview();
-        }
-      },
-      deep: true,
-    },
     json(json) {
       this.error = "";
       if (!json) {
         return;
       }
       try {
-        json = JSON.parse(json);
-        const theme = {};
-        defaultsDeep(theme, json, this.theme);
-        delete theme.isBuiltIn;
+        const theme = JSON.parse(json);
         this.theme = theme;
         this.preview();
         this.json = "";

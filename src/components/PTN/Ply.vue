@@ -120,13 +120,13 @@ export default {
   font-size: inherit;
   &:not(.q-chip--outline) {
     border: 1px solid;
-    &.bg-player2 {
-      border-color: $player2;
-      border-color: var(--q-color-player2);
-    }
     &.bg-player1 {
       border-color: $player1;
       border-color: var(--q-color-player1);
+    }
+    &.bg-player2 {
+      border-color: $player2;
+      border-color: var(--q-color-player2);
     }
   }
   &.selected {

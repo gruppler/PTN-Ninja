@@ -123,6 +123,7 @@ export default {
     border-radius: 4px 0 0 4px;
     border: 1px solid $player1;
     border: 1px solid var(--q-color-player1);
+    border-right-width: 0;
     &.result-tie,
     &.result-1 {
       color: $player1;
@@ -133,6 +134,7 @@ export default {
     border-radius: 0 4px 4px 0;
     border: 1px solid $player2;
     border: 1px solid var(--q-color-player2);
+    border-left-width: 0;
     &.result-tie,
     &.result-1 {
       color: $player2;

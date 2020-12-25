@@ -20,7 +20,7 @@ let defaults = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
-  pieceShadows: !Platform.is.mobile,
+  pieceShadows: true,
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
@@ -48,6 +48,7 @@ export const embedUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "pieceShadows",
   "playSpeed",
   "showAllBranches",
   "showControls",
@@ -56,6 +57,7 @@ export const embedUIOptions = [
   "showRoads",
   "showScrubber",
   "showText",
+  "themeID",
   "theme",
   "unplayedPieces",
 ];
@@ -65,7 +67,9 @@ export const pngUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "pieceShadows",
   "showRoads",
+  "themeID",
   "theme",
   "unplayedPieces",
 ];
@@ -81,7 +85,6 @@ defaults.embedConfig = {
 defaults.pngConfig = {
   size: "md",
   includeNames: true,
-  pieceShadows: true,
   padding: true,
   ...pick(defaults, pngUIOptions),
 };

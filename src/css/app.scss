@@ -26,48 +26,48 @@
 }
 
 .text-fg-light {
-  color: $fg-light;
+  color: $fg-light !important;
 }
 .bg-fg-light {
-  background: $fg-light;
+  background: $fg-light !important;
 }
 .text-fg-dark {
-  color: $fg-dark;
+  color: $fg-dark !important;
 }
 .bg-fg-dark {
-  background: $fg-dark;
+  background: $fg-dark !important;
 }
 .text-ui {
-  color: $ui;
-  color: var(--q-color-ui);
+  color: $ui !important;
+  color: var(--q-color-ui) !important;
 }
 .bg-ui {
-  background: $ui;
-  background: var(--q-color-ui);
-  color: $fg-dark;
+  background: $ui !important;
+  background: var(--q-color-ui) !important;
+  color: $fg-dark !important;
   body.isDark & {
-    color: $fg-light;
+    color: $fg-light !important;
   }
 }
 .bg-primary {
-  color: $fg-dark;
+  color: $fg-dark !important;
   body.primaryDark & {
-    color: $fg-light;
+    color: $fg-light !important;
   }
 }
 .bg-accent {
-  color: $fg-dark;
+  color: $fg-dark !important;
   body.accentDark & {
-    color: $fg-light;
+    color: $fg-light !important;
   }
 }
 .text-panel {
-  color: $panel;
+  color: $panel !important;
   color: var(--q-color-panel) !important;
   color: $fg-dark;
 }
 .bg-panel {
-  background: $panel;
+  background: $panel !important;
   background: var(--q-color-panel) !important;
   color: $fg-dark;
   body.panelDark & {
@@ -75,7 +75,7 @@
   }
 }
 .text-player1 {
-  color: $player1;
+  color: $player1 !important;
   color: var(--q-color-player1) !important;
 }
 .bg-player1 {
@@ -250,7 +250,7 @@ kbd {
   }
 }
 
-@media (min-width: $breakpoint-md-min) {
+@media (pointer: fine) {
   ::-webkit-scrollbar-corner {
     background: $ui;
     background: var(--q-color-ui);

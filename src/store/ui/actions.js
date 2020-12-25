@@ -13,6 +13,7 @@ import {
   formatWarning,
   formatHint,
 } from "../../utilities";
+import { THEMES } from "../../themes";
 import { i18n } from "../../../src/boot/i18n";
 import { isArray, isString } from "lodash";
 
@@ -21,7 +22,7 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     theme = getters.theme(theme);
   }
   if (!theme) {
-    theme = getters.theme();
+    theme = getters.theme() || THEMES[0];
   }
   if (!state.embed) {
     LocalStorage.set("theme", theme);
@@ -82,7 +83,7 @@ export const PROMPT = (
 };
 
 export const NOTIFY = ({ state }, options) => {
-  let fg = options.isDark ? "fg-light" : "fg-dark";
+  let fg = state.theme.isDark ? "fg-light" : "fg-dark";
   let bg = "ui";
   if (options.invert) {
     [bg, fg] = [fg, bg];
@@ -90,12 +91,12 @@ export const NOTIFY = ({ state }, options) => {
   if (options.actions) {
     options.actions.forEach((action) => {
       if (!action.color) {
-        action.color = "primary";
+        action.color = fg;
       }
     });
   }
   return Notify.create({
-    progressClass: "bg-" + fg,
+    progressClass: "bg-primary",
     color: bg,
     textColor: fg,
     position: "bottom",
@@ -210,7 +211,7 @@ export const ADD_GAMES = ({ commit, dispatch, getters }, { games, index }) => {
   dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAMES", { games, index }));
 };
 
-export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
+export const REMOVE_GAME = ({ commit, dispatch, state, getters }, index) => {
   const game = state.games[index];
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
@@ -251,7 +252,7 @@ export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
               }
             },
           },
-          { icon: "close", color: "grey-2" },
+          { icon: "close" },
         ],
       });
     });
@@ -312,7 +313,7 @@ export const REMOVE_MULTIPLE_GAMES = (
               }
             },
           },
-          { icon: "close", color: "grey-2" },
+          { icon: "close" },
         ],
       });
     });

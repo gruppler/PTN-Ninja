@@ -4,13 +4,11 @@
     v-model="theme"
     :options="themes"
     popup-content-class="bg-accent"
-    item-aligned
     option-value="id"
     option-label="name"
-    behavior="menu"
     map-options
     emit-value
-    filled
+    v-bind="$attrs"
   >
     <template v-slot:append>
       <q-icon
@@ -32,7 +30,7 @@
         </q-item-section>
         <q-item-section side>
           <q-btn
-            v-if="!scope.opt.isBuiltIn"
+            v-if="!scope.opt.isBuiltIn && scope.opt.id !== theme"
             @click.stop="remove(scope.opt.id)"
             icon="delete"
             flat
@@ -69,8 +67,12 @@ export default {
   },
   methods: {
     remove(id) {
+      if (id === this.theme) {
+        return false;
+      }
       const themes = cloneDeep(this.$store.state.themes);
-      const index = themes.findIndex((theme) => theme.id === id);
+      const builtInThemeCount = this.themes.length - themes.length;
+      let index = themes.findIndex((theme) => theme.id === id);
       if (index < 0) {
         return false;
       }

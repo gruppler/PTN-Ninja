@@ -5,7 +5,7 @@
         <q-btn
           icon="moves"
           @click="left = !left"
-          :color="left ? 'accent' : ''"
+          :color="left ? 'primary' : ''"
           stretch
           flat
         />
@@ -18,7 +18,7 @@
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'accent' : ''"
+          :color="right ? 'primary' : ''"
           stretch
           flat
         />

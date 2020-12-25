@@ -580,7 +580,7 @@ export default {
                         this.$store.dispatch("UNDO", game);
                       },
                     },
-                    { icon: "close", color: "grey-2" },
+                    { icon: "close" },
                   ],
                 });
               });

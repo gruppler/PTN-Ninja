@@ -2,6 +2,7 @@
   <div
     class="square"
     :class="{
+      light: square.static.isLight,
       dark: !square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !showRoads,
@@ -162,36 +163,74 @@ export default {
 .square {
   position: relative;
 
-  .board-container.checker &.dark {
-    background: $board1;
-    background: var(--q-color-board1);
-  }
   .board-container.diamonds1 &,
-  .board-container.diamonds2 & {
-    background: $board1;
-    background: var(--q-color-board1);
+  .board-container.diamonds2 &,
+  .board-container.diamonds3 &,
+  .board-container.grid1 &,
+  .board-container.grid2 &,
+  .board-container.grid3 & {
     &:before {
+      background: $board1;
+      background: var(--q-color-board1);
       content: "";
       position: absolute;
       top: 0;
       bottom: 0;
       left: 0;
       right: 0;
-      border-radius: 10%;
-      background: $board2;
-      background: var(--q-color-board2);
+    }
+    body.boardChecker &.dark {
+      background: $board1;
+      background: var(--q-color-board1);
+      &:before {
+        background: $board2;
+        background: var(--q-color-board2);
+      }
     }
   }
-  .board-container.diamonds2 &:before {
-    border-radius: 35%;
+  .board-container.diamonds1 & {
+    &:before,
+    .hl {
+      border-radius: 10%;
+    }
+  }
+  .board-container.diamonds2 & {
+    &:before,
+    .hl {
+      border-radius: 30%;
+    }
+  }
+  .board-container.diamonds3 & {
+    &:before,
+    .hl {
+      border-radius: 50%;
+    }
   }
   .board-container.grid1 & {
-    box-shadow: inset 0 0 0 1px $board1;
-    box-shadow: inset 0 0 0 1px var(--q-color-board1);
+    &:before,
+    .hl {
+      margin: 1px;
+    }
   }
   .board-container.grid2 & {
-    box-shadow: inset 0 0 0 3px $board1;
-    box-shadow: inset 0 0 0 3px var(--q-color-board1);
+    &:before,
+    .hl {
+      border-radius: 5%;
+      margin: 3px;
+    }
+  }
+  .board-container.grid3 & {
+    &:before,
+    .hl {
+      border-radius: 15%;
+      margin: 6px;
+    }
+  }
+  body.boardChecker .board-container.blank & {
+    &.light {
+      background: $board1;
+      background: var(--q-color-board1);
+    }
   }
 
   .hl {
@@ -246,9 +285,11 @@ export default {
     opacity: 0.25;
   }
   @media (pointer: fine) {
-    &.valid:hover .hl.player {
-      opacity: 0.35;
+    &.valid:hover {
       cursor: pointer;
+      .hl.player {
+        opacity: 0.35;
+      }
     }
   }
 

@@ -29,7 +29,7 @@
                 :key="`message-${plyID}-${index}`"
                 :id="`message-${plyID}-${index}`"
                 bg-color="primary"
-                text-color="fg-dark"
+                :text-color="primaryDark ? 'fg-light' : 'fg-dark'"
                 text-sanitize
                 sent
               >
@@ -77,7 +77,7 @@
         outlined
         color="primary"
         bg-color="primary"
-        :dark="false"
+        :dark="primaryDark"
       >
         <template v-slot:append>
           <q-btn
@@ -111,6 +111,9 @@ export default {
     };
   },
   computed: {
+    primaryDark() {
+      return this.$store.state.theme.primaryDark;
+    },
     log() {
       return this.$store.state.showAllBranches
         ? this.game.notes

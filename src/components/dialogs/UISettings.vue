@@ -158,7 +158,7 @@
       <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
         <recess>
           <q-list>
-            <ThemeSelector v-model="themeID" edit-button />
+            <ThemeSelector v-model="themeID" edit-button item-aligned filled />
 
             <q-select
               :label="$t('Duplicate Game Names')"
