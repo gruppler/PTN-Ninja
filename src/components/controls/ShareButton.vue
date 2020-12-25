@@ -1,6 +1,11 @@
 <template>
-  <q-btn icon="share" v-bind="$attrs" @click.right.prevent="share">
-    <q-menu auto-close square>
+  <q-btn
+    icon="share"
+    v-bind="$attrs"
+    @click="noMenu ? share() : null"
+    @click.right.prevent="share"
+  >
+    <q-menu v-if="!noMenu" auto-close square>
       <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
@@ -23,7 +28,11 @@ import QRCode from "../dialogs/QRCode";
 export default {
   name: "ShareButton",
   components: { QRCode },
-  props: ["game", "showQR"],
+  props: {
+    game: Object,
+    showQR: Boolean,
+    "no-menu": Boolean,
+  },
   data() {
     return {
       bottomSheet: false,

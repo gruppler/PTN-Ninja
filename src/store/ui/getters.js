@@ -1,5 +1,5 @@
 import { compressToEncodedURIComponent } from "lz-string";
-import { cloneDeep, omit } from "lodash";
+import { cloneDeep, isString, omit } from "lodash";
 import { THEMES } from "../../themes";
 THEMES.forEach((theme) => (theme.isBuiltIn = true));
 
@@ -116,10 +116,11 @@ export const png_url = (state) => (game) => {
   return PNG_URL + "?" + params.join("&");
 };
 
-export const url = (state) => (game, options = {}) => {
+export const url = (state, getters) => (game, options = {}) => {
   if (!game) {
     return "";
   }
+  options = cloneDeep(options);
 
   const origin = location.origin + "/";
   let ptn =
@@ -157,6 +158,20 @@ export const url = (state) => (game, options = {}) => {
   }
 
   if (options.ui) {
+    if (options.ui.theme) {
+      let theme = options.ui.theme;
+      if (isString(theme)) {
+        theme = getters.theme(theme);
+      }
+      if (theme) {
+        if (theme.isBuiltIn) {
+          options.ui.theme = theme.id;
+        } else {
+          options.ui.theme = JSON.stringify(theme);
+        }
+        options.ui.theme = compressToEncodedURIComponent(options.ui.theme);
+      }
+    }
     Object.keys(options.ui).forEach((key) => {
       const value = options.ui[key];
       if (key in state.defaults && value !== state.defaults[key]) {

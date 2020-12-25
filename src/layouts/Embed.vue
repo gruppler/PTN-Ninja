@@ -12,7 +12,7 @@
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <ShareButton ref="shareButton" :game="game" flat stretch />
+        <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
@@ -153,7 +153,7 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults } from "lodash";
+import { defaults, forEach } from "lodash";
 
 export default {
   components: {
@@ -270,9 +270,10 @@ export default {
   },
   created() {
     this.$store.commit("SET_EMBED_GAME");
-    Object.keys(this.state).forEach((key) => {
-      this.$store.commit("SET_UI", [key, this.state[key]]);
+    forEach(this.state, (value, key) => {
+      this.$store.commit("SET_UI", [key, value]);
     });
+    this.$store.dispatch("SET_THEME", this.$store.state.theme);
   },
   watch: {
     ptn() {
@@ -281,11 +282,9 @@ export default {
     state: {
       handler(state, oldState) {
         let fullState = {};
-        Object.keys(defaults(fullState, state, this.defaults)).forEach(
-          (key) => {
-            this.$store.commit("SET_UI", [key, fullState[key]]);
-          }
-        );
+        forEach(defaults(fullState, state, this.defaults), (value, key) => {
+          this.$store.commit("SET_UI", [key, value]);
+        });
         this.game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
@@ -305,7 +304,8 @@ export default {
 
 <style lang="scss">
 .q-drawer {
-  background: rgba($blue-grey-5, 0.75);
+  background: $panel;
+  background: var(--q-color-panel);
 }
 
 @media (max-width: $breakpoint-xs-max) {

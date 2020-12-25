@@ -57,7 +57,6 @@ export const embedUIOptions = [
   "showRoads",
   "showScrubber",
   "showText",
-  "themeID",
   "theme",
   "unplayedPieces",
 ];
@@ -69,7 +68,6 @@ export const pngUIOptions = [
   "highlightSquares",
   "pieceShadows",
   "showRoads",
-  "themeID",
   "theme",
   "unplayedPieces",
 ];

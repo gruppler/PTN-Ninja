@@ -1,5 +1,6 @@
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { Platform } from "quasar";
+import store from "../store";
 
 const routes = [
   {
@@ -45,6 +46,18 @@ const routes = [
         state.targetBranch =
           decompressFromEncodedURIComponent(state.targetBranch) ||
           state.targetBranch;
+      }
+
+      if (state.theme && !(state.theme in store.getters.themes)) {
+        try {
+          state.theme =
+            decompressFromEncodedURIComponent(state.theme) || state.theme;
+          if (state.theme.startsWith("{")) {
+            state.theme = JSON.parse(state.theme);
+          }
+        } catch (error) {
+          console.error("Failed to read theme", state.theme, error);
+        }
       }
 
       if (/^[A-Za-z0-9$+-]+$/.test(ptn)) {

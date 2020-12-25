@@ -63,6 +63,8 @@
         </q-item-section>
       </q-item>
 
+      <ThemeSelector v-model="config.ui.theme" item-aligned filled />
+
       <q-item>
         <q-item-section>
           {{ $t("Play Speed") }}
@@ -142,7 +144,7 @@
       </q-item>
 
       <smooth-reflow>
-        <div v-show="config.turnIndicator">
+        <div v-show="config.ui.turnIndicator">
           <q-item tag="label" v-ripple>
             <q-item-section>
               <q-item-label>{{ $t("Player Names") }}</q-item-label>
@@ -169,6 +171,15 @@
         </q-item-section>
         <q-item-section side>
           <q-toggle v-model="config.ui.highlightSquares" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.pieceShadows" />
         </q-item-section>
       </q-item>
 
@@ -222,10 +233,12 @@
 </template>
 
 <script>
+import ThemeSelector from "../controls/ThemeSelector";
 import { cloneDeep } from "lodash";
 
 export default {
   name: "EmbedConfig",
+  components: { ThemeSelector },
   props: ["value", "game"],
   data() {
     return {
