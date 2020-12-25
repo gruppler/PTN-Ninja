@@ -23,7 +23,7 @@ export default {
     };
 
     // Load theme
-    this.$store.dispatch("SET_THEME");
+    this.$store.commit("SET_THEME", this.$store.state.theme);
   },
 };
 </script>

@@ -2,7 +2,7 @@
   <div
     class="square"
     :class="{
-      light: square.static.isLight,
+      dark: !square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !showRoads,
       eog,
@@ -161,9 +161,37 @@ export default {
 <style lang="scss">
 .square {
   position: relative;
-  &.light {
-    background: $board2;
-    background: var(--q-color-board2);
+
+  .board-container.checker &.dark {
+    background: $board1;
+    background: var(--q-color-board1);
+  }
+  .board-container.diamonds1 &,
+  .board-container.diamonds2 & {
+    background: $board1;
+    background: var(--q-color-board1);
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-radius: 10%;
+      background: $board2;
+      background: var(--q-color-board2);
+    }
+  }
+  .board-container.diamonds2 &:before {
+    border-radius: 35%;
+  }
+  .board-container.grid1 & {
+    box-shadow: inset 0 0 0 1px $board1;
+    box-shadow: inset 0 0 0 1px var(--q-color-board1);
+  }
+  .board-container.grid2 & {
+    box-shadow: inset 0 0 0 3px $board1;
+    box-shadow: inset 0 0 0 3px var(--q-color-board1);
   }
 
   .hl {

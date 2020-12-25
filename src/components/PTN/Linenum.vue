@@ -50,7 +50,6 @@
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
-
 import RenameBranch from "../dialogs/RenameBranch";
 
 export default {
@@ -122,6 +121,10 @@ export default {
   flex-direction: row;
   align-items: center;
   vertical-align: middle;
+  color: $fg-dark;
+  body.panelDark:not(.panelMedium) & {
+    color: $fg-light;
+  }
   .branch {
     word-break: break-word;
     font-weight: bold;

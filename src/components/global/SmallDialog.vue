@@ -6,7 +6,7 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <div class="dialog-content column no-wrap">
+    <div class="dialog-content column no-wrap bg-ui">
       <header class="bg-accent">
         <slot name="header" />
       </header>

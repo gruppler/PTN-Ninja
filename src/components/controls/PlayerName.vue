@@ -33,7 +33,7 @@
         :to="{ name: 'login' }"
         :label="$t('Log In')"
         color="primary"
-        text-color="grey-10"
+        text-color="fg-dark"
         icon="account"
         style="height: 3.5em"
       />

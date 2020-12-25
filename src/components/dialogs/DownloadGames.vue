@@ -14,7 +14,7 @@
           :left-label-value="games[range.min]"
           :right-label-value="games[range.max]"
           style="max-height: calc(100vh - 196px)"
-          label-text-color="grey-10"
+          label-text-color="fg-dark"
           label-always
           vertical
           markers

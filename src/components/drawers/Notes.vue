@@ -11,7 +11,7 @@
             />
             <div
               class="fullwidth-padded-md q-py-xs"
-              :class="{ highlight: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
+              :class="{ current: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
               :key="plyID"
               :ref="plyID"
             >
@@ -29,7 +29,7 @@
                 :key="`message-${plyID}-${index}`"
                 :id="`message-${plyID}-${index}`"
                 bg-color="primary"
-                text-color="grey-10"
+                text-color="fg-dark"
                 text-sanitize
                 sent
               >
@@ -251,6 +251,12 @@ export default {
   }
   .q-separator {
     opacity: 0.75;
+  }
+  .current {
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
   }
   .q-message:not(:last-child) {
     margin-bottom: 3px;

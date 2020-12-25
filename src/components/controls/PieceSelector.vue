@@ -95,11 +95,13 @@ export default {
   .square {
     width: 2.25em;
     height: 2.25em;
-    background: $blue-grey-5;
+    background: $board1;
+    background: var(--q-color-board1);
     position: relative;
     border-radius: 3px;
     &.selected {
-      background: mix($accent, $blue-grey-5, 75%);
+      background: $primary;
+      background: var(--q-color-primary);
     }
   }
 
@@ -111,21 +113,26 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border: 1px solid rgba(#000, 0.8);
+    border-width: $piece-border-width;
+    border-width: var(--piece-border-width);
+    border-style: solid;
     border-radius: 10%;
 
     &.shadows {
-      border-color: transparent !important;
       box-shadow: $shadow-1;
     }
 
     &.p1 {
-      background-color: $blue-grey-2;
-      border-color: $blue-grey-7;
+      background-color: $player1flat;
+      background-color: var(--q-color-player1flat);
+      border-color: $player1border;
+      border-color: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: $blue-grey-7;
-      border-color: $blue-grey-10;
+      background-color: $player2flat;
+      background-color: var(--q-color-player2flat);
+      border-color: $player2border;
+      border-color: var(--q-color-player2border);
     }
 
     &.S {
@@ -134,14 +141,16 @@ export default {
       border-radius: 27%/10%;
 
       &.p1 {
-        background-color: $blue-grey-1;
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
         &.shadows {
           box-shadow: -1px 1px 2px rgba(#000, 0.3);
         }
       }
       &.p2 {
-        background-color: $blue-grey-8;
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
         transform: rotate(45deg);
         &.shadows {
           box-shadow: 1px 1px 2px rgba(#000, 0.3);
@@ -151,10 +160,12 @@ export default {
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: $blue-grey-1;
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
       }
       &.p2 {
-        background-color: $blue-grey-8;
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
       }
     }
   }

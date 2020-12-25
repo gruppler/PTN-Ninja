@@ -3,10 +3,10 @@
     ref="menu"
     :value="value"
     @input="$emit('input', $event)"
-    content-class="bg-secondary"
+    content-class="bg-panel"
     auto-close
   >
-    <q-list class="branch-menu bg-secondary" dense>
+    <q-list class="branch-menu bg-panel" dense>
       <q-item
         v-for="(ply, i) in branches"
         :key="i"
@@ -32,11 +32,6 @@
 <script>
 export default {
   name: "BranchMenu",
-  data() {
-    return {
-      isClosing: false,
-    };
-  },
   components: {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply"),
@@ -46,6 +41,11 @@ export default {
     game: Object,
     branches: Array,
     linenum: Boolean,
+  },
+  data() {
+    return {
+      isClosing: false,
+    };
   },
   methods: {
     select(ply) {
@@ -73,11 +73,17 @@ export default {
   line-height: 1em;
   border-radius: $generic-border-radius;
   background-color: $highlight;
-  color: #fff;
+  color: $fg-dark;
+  body.panelDark:not(.panelMedium) & {
+    color: $fg-light;
+  }
   &.selected {
     background-color: $primary;
     background-color: var(--q-color-primary);
-    color: $grey-10;
+    color: $fg-dark;
+    body.primaryDark & {
+      color: $fg-light;
+    }
   }
 }
 </style>

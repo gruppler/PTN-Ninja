@@ -1,7 +1,7 @@
 <template>
   <q-fab
     color="primary"
-    text-color="ui"
+    :text-color="fg"
     :icon="short ? 'menu_horizontal' : 'menu_vertical'"
     :direction="short ? 'left' : 'up'"
     v-bind="$attrs"
@@ -13,7 +13,7 @@
       :icon="item.icon"
       @click="$emit('input', item.action)"
       color="primary"
-      text-color="ui"
+      :text-color="fg"
     />
   </q-fab>
 </template>
@@ -50,6 +50,9 @@ export default {
   computed: {
     short() {
       return this.$q.screen.height <= 440;
+    },
+    fg() {
+      return this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark";
     },
   },
 };

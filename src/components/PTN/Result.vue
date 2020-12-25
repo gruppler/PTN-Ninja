@@ -2,12 +2,18 @@
   <span class="result ptn" :class="{ done, clickable }" v-if="result">
     <span
       class="player1"
-      :class="'result-' + (resultObject.isTie ? 'tie' : resultObject.player1)"
+      :class="{
+        ['result-' + (resultObject.isTie ? 'tie' : resultObject.player1)]: true,
+        dark: theme.player1Dark,
+      }"
       >{{ resultObject.player1 }}</span
     >
     <span
       class="player2"
-      :class="'result-' + (resultObject.isTie ? 'tie' : resultObject.player2)"
+      :class="{
+        ['result-' + (resultObject.isTie ? 'tie' : resultObject.player2)]: true,
+        dark: theme.player2Dark,
+      }"
       >{{ resultObject.player2 }}</span
     >
   </span>
@@ -27,6 +33,9 @@ export default {
     clickable: Boolean,
   },
   computed: {
+    theme() {
+      return this.$store.state.theme;
+    },
     resultObject() {
       return this.result && this.result.constructor === Result
         ? this.result
@@ -46,28 +55,29 @@ export default {
   display: inline-block;
   vertical-align: middle;
 
-  body.desktop &.clickable {
-    cursor: pointer;
-    &:hover {
-      .player1:after {
-        background-color: rgba($player1, 0.1);
-      }
-      .player2:after {
-        background-color: rgba($player2, 0.1);
-      }
-      &.done {
-        .player1:after {
-          background-color: rgba($player2, 0.1);
-        }
+  @media (hover) {
+    &.clickable {
+      cursor: pointer;
+      &:hover {
+        .player1:after,
         .player2:after {
-          background-color: rgba($player1, 0.1);
+          background-color: $highlight;
+        }
+        &.done {
+          .player1:after,
+          .player2:after {
+            background-color: $highlight;
+            &.dark {
+              background-color: $dim;
+            }
+          }
         }
       }
-    }
-    &:active {
-      .player1,
-      .player2 {
-        box-shadow: $shadow-1;
+      &:active {
+        .player1,
+        .player2 {
+          box-shadow: $shadow-1;
+        }
       }
     }
   }
@@ -88,45 +98,52 @@ export default {
       transition: background-color $generic-hover-transition;
     }
   }
+  .result-R {
+    color: $green-dark;
+  }
+  .result-F {
+    color: $blue-dark;
+  }
+  .result-0 {
+    color: $red-dark;
+  }
+  body.panelDark &:not(.done) {
+    .result-R {
+      color: $green-light;
+    }
+    .result-F {
+      color: $blue-light;
+    }
+    .result-0 {
+      color: $red-light;
+    }
+  }
 
   .player1 {
     border-radius: 4px 0 0 4px;
     border: 1px solid $player1;
-    &.result-R {
-      color: $green-med;
-    }
-    &.result-F {
-      color: $blue-med;
-    }
-    &.result-0 {
-      color: $red-med;
-    }
+    border: 1px solid var(--q-color-player1);
     &.result-tie,
     &.result-1 {
       color: $player1;
+      color: var(--q-color-player1);
     }
   }
   .player2 {
     border-radius: 0 4px 4px 0;
     border: 1px solid $player2;
-    &.result-R {
-      color: $green-med;
-    }
-    &.result-F {
-      color: $blue-med;
-    }
-    &.result-0 {
-      color: $red-med;
-    }
+    border: 1px solid var(--q-color-player2);
     &.result-tie,
     &.result-1 {
       color: $player2;
+      color: var(--q-color-player2);
     }
   }
 
   &.done {
     .player1 {
       background-color: $player1;
+      background-color: var(--q-color-player1);
       &.result-R {
         color: $green-dark;
       }
@@ -138,11 +155,15 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $player2;
+        color: $fg-dark;
+        body.player1Dark & {
+          color: $fg-light;
+        }
       }
     }
     .player2 {
       background-color: $player2;
+      background-color: var(--q-color-player2);
       &.result-R {
         color: $green-light;
       }
@@ -154,7 +175,10 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $player1;
+        color: $fg-dark;
+        body.player2Dark & {
+          color: $fg-light;
+        }
       }
     }
   }

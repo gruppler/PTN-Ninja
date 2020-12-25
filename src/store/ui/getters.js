@@ -33,20 +33,28 @@ export const uniqueName = (state) => (name, ignoreFirst = false) => {
   return name;
 };
 
-export const playerIcon = () => (player, isPrivate = false) => {
+export const playerIcon = (state) => (player, isPrivate = false) => {
+  let result = "";
   switch (player) {
     case 1:
-      return isPrivate ? "player1_private" : "player1";
+      result = isPrivate ? "player1_private" : "player1";
+      break;
     case 2:
-      return isPrivate ? "player2_private" : "player2";
+      result = isPrivate ? "player2_private" : "player2";
+      break;
     case 0:
-      return isPrivate ? "spectator_private" : "spectator";
+      result = isPrivate ? "spectator_private" : "spectator";
+      break;
     case "random":
     case "tie":
-      return isPrivate ? "players_private" : "players";
-    default:
-      return "";
+      result = isPrivate ? "players_private" : "players";
   }
+  if (!state.theme.isDark) {
+    result = result.startsWith("player1")
+      ? result.replace("1", "2")
+      : result.replace("2", "1");
+  }
+  return result;
 };
 
 const urlEncode = (url) => {

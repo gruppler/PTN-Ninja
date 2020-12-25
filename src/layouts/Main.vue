@@ -804,6 +804,7 @@ export default {
     },
     openFiles(event) {
       this.nop(event);
+      console.log(event, event.dataTransfer.files);
       this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
     },
     nop(event) {

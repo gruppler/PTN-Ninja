@@ -17,6 +17,8 @@ $player2flat: #546e7a;
 $player2special: #455a64;
 $player2border: #263238;
 
+$piece-border-width: 1px;
+
 $positive: #8bc34a;
 $negative: #f44336;
 $info: #2196f3;
@@ -24,18 +26,14 @@ $warning: #ffc107;
 
 $red-light: #ef5451;
 $red-dark: #e53a35;
-$red-med: desaturate(darken($red-light, 20%), 50%);
 $orange-light: #faa629;
-$orange-dark: #f47c20;
-$orange-med: lighten($orange-light, 15%);
+$orange-dark: #be7a1f;
 $green-light: #9ccc65;
 $green-dark: #378e43;
-$green-med: saturate(lighten($green-light, 15%), 20%);
-$blue-light: #36c2d6;
+$blue-light: #68c1cd;
 $blue-dark: #1b87c9;
-$blue-med: saturate(lighten($blue-light, 20%), 20%);
-$text-light: #cfd8dc;
-$text-dark: #263238;
+$fg-light: #fafafa;
+$fg-dark: #212121;
 $highlight: rgba(#fff, 0.1);
 $dim: rgba(#000, 0.1);
 

@@ -25,13 +25,54 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+.text-fg-light {
+  color: $fg-light;
+}
+.bg-fg-light {
+  background: $fg-light;
+}
+.text-fg-dark {
+  color: $fg-dark;
+}
+.bg-fg-dark {
+  background: $fg-dark;
+}
 .text-ui {
   color: $ui;
-  color: var(--q-color-ui) !important;
+  color: var(--q-color-ui);
 }
 .bg-ui {
   background: $ui;
-  background: var(--q-color-ui) !important;
+  background: var(--q-color-ui);
+  color: $fg-dark;
+  body.isDark & {
+    color: $fg-light;
+  }
+}
+.bg-primary {
+  color: $fg-dark;
+  body.primaryDark & {
+    color: $fg-light;
+  }
+}
+.bg-accent {
+  color: $fg-dark;
+  body.accentDark & {
+    color: $fg-light;
+  }
+}
+.text-panel {
+  color: $panel;
+  color: var(--q-color-panel) !important;
+  color: $fg-dark;
+}
+.bg-panel {
+  background: $panel;
+  background: var(--q-color-panel) !important;
+  color: $fg-dark;
+  body.panelDark & {
+    color: $fg-light;
+  }
 }
 .text-player1 {
   color: $player1;
@@ -40,6 +81,10 @@
 .bg-player1 {
   background: $player1;
   background: var(--q-color-player1) !important;
+  color: $fg-dark;
+  body.player1Dark & {
+    color: $fg-light;
+  }
 }
 .text-player2 {
   color: $player2;
@@ -48,6 +93,10 @@
 .bg-player2 {
   background: $player2;
   background: var(--q-color-player2) !important;
+  color: $fg-dark;
+  body.player2Dark & {
+    color: $fg-light;
+  }
 }
 
 .q-dark {
@@ -65,6 +114,10 @@
 ::selection {
   background: $primary;
   background: var(--q-color-primary);
+  color: $fg-dark;
+  body.primaryDark & {
+    color: $fg-light;
+  }
 }
 
 kbd {
@@ -116,7 +169,6 @@ kbd {
 .ptn {
   font-size: 18px;
   line-height: 1.5em;
-  color: $text-dark;
 }
 
 .board-move-container {
@@ -198,17 +250,39 @@ kbd {
   }
 }
 
-::-webkit-scrollbar-corner {
-  background: $separator-dark-color;
-}
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  border: 0;
-  box-shadow: none;
-  background: $separator-dark-color;
-  min-height: 40px;
+@media (min-width: $breakpoint-md-min) {
+  ::-webkit-scrollbar-corner {
+    background: $ui;
+    background: var(--q-color-ui);
+  }
+
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 0;
+    box-shadow: none;
+    min-height: 40px;
+    background: $accent;
+    background: var(--q-color-accent);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .q-drawer__content .scroll {
+    &::-webkit-scrollbar-thumb {
+      border: 0;
+      box-shadow: none;
+      min-height: 40px;
+      background: $separator-color;
+      .body--dark & {
+        background: $separator-dark-color;
+      }
+    }
+  }
 }

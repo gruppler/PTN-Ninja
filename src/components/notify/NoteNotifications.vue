@@ -33,6 +33,8 @@ export default {
       return notes.map((note) => ({
         message: note.message,
         classes: "note",
+        color: "primary",
+        textColor: this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark",
       }));
     },
   },

@@ -151,15 +151,6 @@ export default {
     return {
       error: "",
       isValid: false,
-      players: [
-        { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
-        { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
-        {
-          label: this.$t("Random"),
-          icon: "random",
-          value: "random",
-        },
-      ],
       isPrivate: true,
       playerName: this.$store.state.playerName,
       qrText: "",
@@ -169,6 +160,17 @@ export default {
     };
   },
   computed: {
+    players() {
+      return [
+        { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
+        { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
+        {
+          label: this.$t("Random"),
+          icon: "random",
+          value: "random",
+        },
+      ];
+    },
     showQR: {
       get() {
         return !!this.$route.params.qr;
@@ -220,7 +222,7 @@ export default {
         case 2:
           return "player1";
         default:
-          return "grey-10";
+          return "fg-dark";
       }
     },
     gameURL() {

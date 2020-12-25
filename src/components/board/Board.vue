@@ -9,6 +9,7 @@
     <div
       class="board-container q-pa-md"
       :class="{
+        [style]: true,
         ['size-' + game.size]: true,
         ['turn-' + turn]: true,
         'no-animations': !$store.state.animateBoard,
@@ -128,6 +129,9 @@ export default {
     };
   },
   computed: {
+    style() {
+      return this.$store.state.theme.boardStyle;
+    },
     turn() {
       return this.$store.state.isEditingTPS
         ? this.$store.state.selectedPiece.color
@@ -431,21 +435,29 @@ $radius: 1.2vmin;
     width: 50%;
     will-change: width;
     transition: width $generic-hover-transition;
+    .name,
+    .flats {
+      opacity: 0.8;
+    }
   }
   .player1 .row {
-    color: $player2;
-    color: var(--q-color-player2);
+    color: $fg-dark;
     border-top-left-radius: $radius;
     overflow: hidden;
     background: $player1;
     background: var(--q-color-player1);
+    body.player1Dark & {
+      color: $fg-light;
+    }
   }
   .player2 .row {
-    color: $player1;
-    color: var(--q-color-player1);
+    color: $fg-dark;
     border-top-right-radius: $radius;
     background: $player2;
     background: var(--q-color-player2);
+    body.player2Dark & {
+      color: $fg-light;
+    }
   }
   .player1 .name,
   .player2 .flats {
@@ -474,10 +486,13 @@ $radius: 1.2vmin;
 
 .x-axis,
 .y-axis {
-  color: $player1;
-  color: var(--q-color-player1);
+  color: $fg-dark;
   justify-content: space-around;
   line-height: 1em;
+  opacity: 0.8;
+  body.secondaryDark & {
+    color: $fg-light;
+  }
 }
 .x-axis {
   align-items: flex-end;
@@ -495,8 +510,8 @@ $radius: 1.2vmin;
 }
 
 .board {
-  background: $board1;
-  background: var(--q-color-board1);
+  background: $board2;
+  background: var(--q-color-board2);
   z-index: 1;
   width: 100%;
   padding-bottom: 100%;

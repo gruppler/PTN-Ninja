@@ -57,7 +57,7 @@
             icon="email"
             :loading="loadingVerify"
             color="primary"
-            class="full-width q-mb-md text-grey-10"
+            class="full-width q-mb-md text-fg-dark"
           />
         </smooth-reflow>
       </q-card-section>

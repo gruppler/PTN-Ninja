@@ -43,41 +43,66 @@
         </template>
       </q-select>
 
+      <q-item>
+        <q-item-section>
+          {{ $t("Stone Border Width") }}
+          <q-slider
+            v-model="theme.vars['piece-border-width']"
+            :min="0"
+            :max="4"
+            :step="1"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
       <q-expansion-item group="theme" icon="color" :label="$t('Colors')">
         <q-list>
-          <q-input
-            v-for="(color, name) in theme.colors"
-            :key="name"
-            :label="name"
-            v-model="theme.colors[name]"
-            :rules="['anyColor']"
-            hide-bottom-space
-            item-aligned
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="color" />
-            </template>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Advanced") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="advanced" />
+            </q-item-section>
+          </q-item>
 
-            <template v-slot:append>
-              <q-btn :style="{ background: color }" round>
-                <q-popup-proxy
-                  transition-show="scale"
-                  transition-hide="scale"
-                  breakpoint="200"
-                  @hide="updatePalette"
-                >
-                  <div>
-                    <q-color
-                      :value="color"
-                      @change="theme.colors[name] = $event"
-                      :palette="palette"
-                    />
-                  </div>
-                </q-popup-proxy>
-              </q-btn>
-            </template>
-          </q-input>
+          <smooth-reflow>
+            <q-input
+              ref="colorInputs"
+              v-for="(color, key) in colors"
+              :key="key"
+              :label="$t('theme.' + key)"
+              :value="theme.colors[key]"
+              :rules="['anyColor']"
+              @input="setColor(key, $event)"
+              hide-bottom-space
+              item-aligned
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="color" />
+              </template>
+
+              <template v-slot:append>
+                <q-btn :style="{ background: color }" round>
+                  <q-popup-proxy
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <div>
+                      <q-color
+                        :value="color"
+                        @change="setColor(key, $event)"
+                        :palette="palette"
+                      />
+                    </div>
+                  </q-popup-proxy>
+                </q-btn>
+              </template>
+            </q-input>
+          </smooth-reflow>
         </q-list>
       </q-expansion-item>
 
@@ -102,7 +127,7 @@
     <template v-slot:footer>
       <q-separator />
       <q-card-actions align="right">
-        <q-btn @click="reset" :label="$t('Reset')" flat />
+        <q-btn @click="reset" :label="$t('Reset')" :disable="isSaved" flat />
         <q-btn @click="share" :label="$t(canShare ? 'Share' : 'Copy')" flat />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
@@ -111,7 +136,7 @@
           :label="$t('Save')"
           color="primary"
           :disable="!isValid || isSaved"
-          flat
+          :flat="isSaved"
           v-close-popup
         />
       </q-card-actions>
@@ -122,8 +147,15 @@
 <script>
 import ThemeSelector from "../controls/ThemeSelector";
 
-import { cloneDeep, defaultsDeep, isEqual, kebabCase } from "lodash";
-import { BOARD_STYLES } from "../../themes";
+import {
+  cloneDeep,
+  debounce,
+  defaultsDeep,
+  isEqual,
+  kebabCase,
+  pick,
+} from "lodash";
+import { BOARD_STYLES, PRIMARY_COLOR_IDS, computeFrom } from "../../themes";
 
 const MAX_NAME_LENGTH = 16;
 
@@ -132,7 +164,7 @@ export default {
   components: { ThemeSelector },
   props: ["value"],
   data() {
-    const theme = cloneDeep(this.$store.getters.theme());
+    const theme = cloneDeep(this.$store.state.theme);
     return {
       maxNameLength: MAX_NAME_LENGTH,
       boardStyles: BOARD_STYLES,
@@ -140,6 +172,7 @@ export default {
       initialThemeID: theme.id,
       initialTheme: cloneDeep(theme),
       palette: [],
+      advanced: false,
       showImport: false,
       json: "",
       error: "",
@@ -151,6 +184,11 @@ export default {
     },
     id() {
       return this.getID(this.theme.name || "");
+    },
+    colors() {
+      return this.advanced
+        ? this.theme.colors
+        : pick(this.theme.colors, PRIMARY_COLOR_IDS);
     },
     isValid() {
       return this.isValidName() && this.isUniqueID();
@@ -164,7 +202,7 @@ export default {
   },
   methods: {
     init() {
-      this.theme = cloneDeep(this.$store.getters.theme());
+      this.theme = cloneDeep(this.$store.state.theme);
       this.initialTheme = cloneDeep(this.theme);
       this.initialThemeID = this.initialTheme.id;
       this.updatePalette();
@@ -175,8 +213,7 @@ export default {
         this.initialTheme = cloneDeep(this.theme);
         this.initialThemeID = this.initialTheme.id;
         this.updatePalette();
-        this.preview();
-        this.$store.dispatch("SET_UI", ["theme", this.initialThemeID]);
+        this.$store.dispatch("SET_UI", ["themeID", this.initialThemeID]);
       };
       if (!this.isSaved) {
         this.$store.dispatch("PROMPT", {
@@ -192,17 +229,23 @@ export default {
       }
     },
     getID(name) {
-      return kebabCase(name);
+      return kebabCase((name || "").trim());
     },
     isValidName(name = this.theme.name) {
-      name = name || "";
+      name = (name || "").trim();
       return name.length > 0 && name.length <= MAX_NAME_LENGTH;
     },
     isUniqueID(name = this.theme.name) {
-      const id = this.getID(name || "");
+      const id = this.getID(name);
       return (
         id === this.theme.id || !this.themes.find((theme) => theme.id === id)
       );
+    },
+    setColor(key, value) {
+      this.theme.colors[key] = value;
+      computeFrom(this.theme, key, this.advanced);
+      this.updatePalette();
+      this.preview();
     },
     updatePalette() {
       this.palette = Object.values(this.theme.colors);
@@ -237,17 +280,18 @@ export default {
       this.initialTheme = cloneDeep(this.theme);
       this.initialThemeID = this.id;
       this.$store.dispatch("SET_UI", ["themes", themes]);
-      this.$store.dispatch("SET_UI", ["theme", this.id]);
+      this.$store.dispatch("SET_UI", ["themeID", this.id]);
     },
     preview() {
-      this.$store.dispatch("SET_THEME", this.theme);
+      this.$store.commit("SET_THEME", this.theme);
     },
     restore() {
-      this.$store.dispatch("SET_THEME", this.initialTheme);
+      this.$store.commit("SET_THEME", this.initialTheme);
     },
   },
   created() {
     this.init();
+    this.preview = debounce(this.preview, 50);
   },
   watch: {
     value(isVisible) {
@@ -255,8 +299,13 @@ export default {
         this.init();
       }
     },
-    "theme.colors": {
-      handler(colors) {
+    "theme.boardStyle"() {
+      if (this.value) {
+        this.preview();
+      }
+    },
+    "theme.vars": {
+      handler() {
         if (this.value) {
           this.preview();
         }

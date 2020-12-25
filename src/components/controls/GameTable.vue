@@ -348,10 +348,6 @@ $header: 64px;
     display: none;
   }
 
-  .q-linear-progress {
-    color: $accent !important;
-  }
-
   .q-table__middle {
     min-height: 12rem;
     max-height: calc(50vh - #{$header + $toolbar-min-height});
@@ -365,6 +361,7 @@ $header: 64px;
   .q-table__bottom,
   thead tr:first-child th {
     background-color: $ui;
+    background-color: var(--q-color-ui);
   }
 
   thead tr th {

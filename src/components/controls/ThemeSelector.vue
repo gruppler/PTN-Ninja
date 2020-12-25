@@ -74,7 +74,7 @@ export default {
       if (index < 0) {
         return false;
       }
-      const theme = themes.splice(index, 1);
+      const theme = cloneDeep(themes.splice(index, 1)[0]);
       this.$store.dispatch("SET_UI", ["themes", themes]);
       this.$store.dispatch("NOTIFY", {
         icon: "color",
@@ -91,7 +91,7 @@ export default {
               this.$store.dispatch("SET_UI", ["themes", themes]);
             },
           },
-          { icon: "close", color: "grey-2" },
+          { icon: "close" },
         ],
       });
     },

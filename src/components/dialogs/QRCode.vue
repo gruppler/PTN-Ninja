@@ -38,10 +38,10 @@ export default {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;
     },
     fg() {
-      return colors.getBrand("player1");
+      return this.$store.state.theme.isDark ? "white" : "black";
     },
     bg() {
-      return colors.getBrand("player2");
+      return this.$store.state.theme.isDark ? "black" : "white";
     },
   },
 };

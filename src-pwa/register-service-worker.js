@@ -42,8 +42,8 @@ register(process.env.SERVICE_WORKER_FILE, {
       Notify.create({
         message: i18n.t("success.updateAvailable"),
         icon: "update",
-        color: "secondary",
-        textColor: "grey-1",
+        color: "bg-dark",
+        textColor: "fg-light",
         position: "bottom",
         timeout: 0,
         actions: [

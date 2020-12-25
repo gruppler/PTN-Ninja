@@ -10,6 +10,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="!game.state.ply || plyInProgress"
         icon="backspace"
@@ -20,6 +21,7 @@
         v-shortkey="hotkeys.first"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
@@ -34,6 +36,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
@@ -45,7 +48,7 @@
         round
         :ripple="false"
         color="primary"
-        text-color="grey-10"
+        :text-color="primaryFG"
         :disable="!game.state.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
       />
@@ -59,6 +62,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
@@ -69,6 +73,7 @@
         v-shortkey="hotkeys.last"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
@@ -80,7 +85,7 @@
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
-        :color="hasBranches ? 'primary' : ''"
+        :color="hasBranches ? 'primary' : fg"
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
@@ -131,6 +136,12 @@ export default {
     };
   },
   computed: {
+    fg() {
+      return this.$store.state.theme.isDark ? "fg-light" : "fg-dark";
+    },
+    primaryFG() {
+      return this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark";
+    },
     isFirst() {
       return !this.game.state.prevPly && !this.game.state.plyIsDone;
     },

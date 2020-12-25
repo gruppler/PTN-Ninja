@@ -1,11 +1,9 @@
 import Vue from "vue";
 import {
-  colors,
   copyToClipboard,
   exportFile,
   Loading,
   LocalStorage,
-  Dark,
   Dialog,
   Notify,
 } from "quasar";
@@ -16,27 +14,30 @@ import {
   formatHint,
 } from "../../utilities";
 import { i18n } from "../../../src/boot/i18n";
-import { forEach, isArray, isEqual, isString } from "lodash";
+import { isArray, isString } from "lodash";
 
-export const SET_THEME = ({ state, getters, dispatch, commit }, theme) => {
+export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
     theme = getters.theme(theme);
   }
   if (!theme) {
     theme = getters.theme();
   }
-  dispatch("WITHOUT_BOARD_ANIM", () => {
-    forEach(theme.colors, (color, name) => colors.setBrand(name, color));
-    Dark.set(!!theme.isDark);
-  });
+  if (!state.embed) {
+    LocalStorage.set("theme", theme);
+  }
+  commit("SET_THEME", theme);
 };
 
-export const SET_UI = ({ state, commit }, [key, value]) => {
+export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
       LocalStorage.set(key, value);
     }
     commit("SET_UI", [key, value]);
+    if (key === "themeID") {
+      dispatch("SET_THEME", value);
+    }
   }
 };
 
@@ -80,8 +81,8 @@ export const PROMPT = (
   return dialog;
 };
 
-export const NOTIFY = (context, options) => {
-  let fg = "grey-1";
+export const NOTIFY = ({ state }, options) => {
+  let fg = options.isDark ? "fg-light" : "fg-dark";
   let bg = "ui";
   if (options.invert) {
     [bg, fg] = [fg, bg];
@@ -110,7 +111,7 @@ export const NOTIFY_ERROR = (context, error) => {
     type: "negative",
     timeout: 0,
     position: "top-right",
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "fg-light" }],
   });
 };
 
@@ -121,7 +122,7 @@ export const NOTIFY_SUCCESS = (context, success) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "fg-light" }],
   });
 };
 
@@ -132,7 +133,7 @@ export const NOTIFY_WARNING = (context, warning) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "dark" }],
+    actions: [{ icon: "close", color: "fg-dark" }],
   });
 };
 
@@ -143,7 +144,7 @@ export const NOTIFY_HINT = (context, hint) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "fg-light" }],
   });
 };
 

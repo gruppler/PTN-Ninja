@@ -158,7 +158,7 @@
       <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
         <recess>
           <q-list>
-            <ThemeSelector v-model="theme" edit-button />
+            <ThemeSelector v-model="themeID" edit-button />
 
             <q-select
               :label="$t('Duplicate Game Names')"
@@ -266,7 +266,7 @@ const props = [
   "showMove",
   "showRoads",
   "showScrubber",
-  "theme",
+  "themeID",
   "turnIndicator",
   "unplayedPieces",
 ];

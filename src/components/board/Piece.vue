@@ -29,6 +29,9 @@ export default {
   name: "Piece",
   props: ["game", "id"],
   computed: {
+    theme() {
+      return this.$store.getters.theme();
+    },
     pieceCounts() {
       return this.game.pieceCounts[this.piece.color];
     },
@@ -186,7 +189,9 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border: 1px solid transparent;
+    border-width: $piece-border-width;
+    border-width: var(--piece-border-width);
+    border-style: solid;
     border-radius: 10%;
     will-change: opacity, transform, width, height, left, border-radius,
       background-color, box-shadow;
@@ -225,7 +230,7 @@ export default {
 
       &.p1 {
         background-color: $player1special;
-        background-color: var(--q-color-$player1special);
+        background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
         .board-container.piece-shadows & {
           box-shadow: -1px 1px 2px rgba(#000, 0.3);
@@ -252,7 +257,7 @@ export default {
       border-radius: 50%;
       &.p1 {
         background-color: $player1special;
-        background-color: var(--q-color-$player1special);
+        background-color: var(--q-color-player1special);
       }
       &.p2 {
         background-color: $player2special;

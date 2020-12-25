@@ -370,7 +370,7 @@
               v-model="proxyDate"
               name="date"
               mask="YYYY.MM.DD"
-              text-color="grey-10"
+              :text-color="primaryFG"
               today-btn
             >
               <div class="row items-center justify-end q-gutter-sm">
@@ -421,7 +421,7 @@
             <q-time
               v-model="proxyTime"
               name="time"
-              text-color="grey-10"
+              :text-color="primaryFG"
               format24h
               with-seconds
               now-btn
@@ -656,6 +656,9 @@ export default {
     };
   },
   computed: {
+    primaryFG() {
+      return this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark";
+    },
     generatedName() {
       return generateName(this.tags, this.game);
     },
