@@ -15,6 +15,7 @@ export const SET_THEME = (state, theme) => {
 
   state.theme = cloneDeep(theme);
   Dark.set(theme.isDark);
+  window.themeColor.content = theme.colors.accent;
   forEach(theme.colors, (color, key) => {
     document.body.style.setProperty("--q-color-" + key, color);
   });
