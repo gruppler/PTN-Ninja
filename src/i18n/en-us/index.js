@@ -189,10 +189,11 @@ export default {
   theme: {
     // Names
     classic: "Classic",
+    festive: "Festive",
+    fresh: "Fresh",
     retro: "Retro",
     stealth: "Stealth",
     zen: "Zen",
-    festive: "Festive",
 
     // Board Styles
     blank: "Blank",
