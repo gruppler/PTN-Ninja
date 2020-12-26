@@ -4,10 +4,12 @@
     @input="$emit('input', $event)"
     @before-hide="restore"
     content-class="theme-config non-selectable"
+    no-backdrop-dismiss
+    v-on="$listeners"
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="edit">{{ $t("Theme") }}</dialog-header>
+      <dialog-header icon="color">{{ $t("Theme") }}</dialog-header>
     </template>
 
     <q-list>
@@ -348,4 +350,10 @@ export default {
 };
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.theme-config {
+  .q-dialog__backdrop {
+    background: transparent;
+  }
+}
+</style>
