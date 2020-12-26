@@ -264,14 +264,21 @@ export default function render(game, options = {}) {
 
   // Square
   const drawSquareHighlight = () => {
-    roundRect(
-      ctx,
-      squareMargin,
-      squareMargin,
-      squareSize - squareMargin * 2,
-      squareSize - squareMargin * 2,
-      squareRadius
-    );
+    const half = squareSize / 2;
+    if (squareRadius >= half) {
+      ctx.beginPath();
+      ctx.arc(half, half, half, 0, 2 * Math.PI);
+      ctx.closePath();
+    } else {
+      roundRect(
+        ctx,
+        squareMargin,
+        squareMargin,
+        squareSize - squareMargin * 2,
+        squareSize - squareMargin * 2,
+        squareRadius
+      );
+    }
     ctx.fill();
   };
 
