@@ -1,6 +1,6 @@
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit } from "lodash";
-import { THEMES } from "../../themes";
+import { THEMES, boardOnly } from "../../themes";
 import { i18n } from "../../boot/i18n";
 
 THEMES.forEach((theme) => {
@@ -78,7 +78,7 @@ export const png_filename = (state) => (game) => {
   );
 };
 
-export const png_url = (state) => (game) => {
+export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.state.tps];
 
   // UI toggles
@@ -116,6 +116,22 @@ export const png_url = (state) => (game) => {
 
   // Filename
   params.push("name=" + encodeURIComponent(png_filename(state)(game)));
+
+  // Theme
+  if (state.pngConfig.theme) {
+    let theme = state.pngConfig.theme;
+    if (isString(theme)) {
+      theme = getters.theme(theme);
+    }
+    if (theme) {
+      if (theme.isBuiltIn) {
+        theme = theme.id;
+      } else {
+        theme = JSON.stringify(boardOnly(theme));
+      }
+      params.push("theme=" + compressToEncodedURIComponent(theme));
+    }
+  }
 
   return PNG_URL + "?" + params.join("&");
 };

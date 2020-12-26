@@ -1,5 +1,6 @@
-import { cloneDeep } from "lodash";
+import { cloneDeep, isString } from "lodash";
 import { itoa } from "../Ply";
+import { THEMES, computeMissing } from "../../themes";
 
 const squareSizes = {
   xs: 25,
@@ -23,39 +24,13 @@ const defaults = {
 };
 
 const colors = {
-  bg: "#607d8b",
-  unplayedBg: "#78909c",
-  squareDark: "#8ca1ab",
-  squareLight: "#90a4ae",
-  turnIndicator: "#8bc34a",
+  fgLight: "#fafafacd",
+  fgDark: "#212121cd",
   pieceShadow: "rgba(0, 0, 0, 0.15)",
-  currentSquare: "rgba(139, 195, 74, 0.4)",
-  primarySquare: "rgba(139, 195, 74, 0.75)",
-  player: {
-    1: {
-      header: "#cfd8dc",
-      flat: "#cfd8dc",
-      special: "#eceff1",
-      square: "rgba(207, 216, 220, 0.35)",
-      connection: "rgba(207, 216, 220, 0.2)",
-      road: "rgba(207, 216, 220, 0.8)",
-      stroke: "rgba(84, 110, 122, 0.5)",
-      border: "#546e7a",
-    },
-    2: {
-      header: "#263238",
-      flat: "#546e7a",
-      special: "#455a64",
-      square: "rgba(69, 90, 100, 0.35)",
-      connection: "rgba(69, 90, 100, 0.2)",
-      road: "rgba(69, 90, 100, 0.8)",
-      stroke: "rgba(38, 50, 56, 0.5)",
-      border: "#263238",
-    },
-  },
 };
 
 export default function render(game, options = {}) {
+  let theme;
   options = cloneDeep(options);
 
   for (let key in defaults) {
@@ -63,6 +38,14 @@ export default function render(game, options = {}) {
       options[key] = defaults[key];
     }
   }
+  if (options.theme && isString(options.theme)) {
+    theme = THEMES.find((theme) => theme.id === options.theme);
+    if (!theme) {
+      console.error("Invalid theme:", options.theme);
+    }
+    options.theme = theme;
+  }
+  theme = computeMissing(cloneDeep(options.theme || THEMES[0]));
 
   let hlSquares = [];
   const ply = game.state.ply;
@@ -87,7 +70,9 @@ export default function render(game, options = {}) {
 
   const shadowBlur = Math.round(squareSize * 0.03);
   const shadowOffset = Math.round(squareSize * 0.02);
-  const strokeWidth = Math.round(squareSize * 0.02);
+  const strokeWidth = Math.round(
+    theme.vars["piece-border-width"] * squareSize * 0.02
+  );
 
   const fontSize = squareSize * 0.22;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
@@ -118,7 +103,7 @@ export default function render(game, options = {}) {
 
   const ctx = canvas.getContext("2d");
   ctx.font = fontSize + "px Roboto";
-  ctx.fillStyle = colors.bg;
+  ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
@@ -138,7 +123,7 @@ export default function render(game, options = {}) {
     const flats2Width = boardSize - flats1Width;
 
     // Flat Bars
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.colors.player1;
     roundRect(
       ctx,
       padding + axisSize,
@@ -148,7 +133,7 @@ export default function render(game, options = {}) {
       { tl: boardRadius }
     );
     ctx.fill();
-    ctx.fillStyle = colors.player[2].header;
+    ctx.fillStyle = theme.colors.player2;
     roundRect(
       ctx,
       padding + axisSize + flats1Width,
@@ -160,7 +145,7 @@ export default function render(game, options = {}) {
     ctx.fill();
 
     // Flat Counts
-    ctx.fillStyle = colors.player[2].header;
+    ctx.fillStyle = theme.player1Dark ? colors.fgLight : colors.fgDark;
     ctx.textBaseline = "middle";
     const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
@@ -190,7 +175,7 @@ export default function render(game, options = {}) {
       );
     }
 
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.player2Dark ? colors.fgLight : colors.fgDark;
     // Player 2 Name
     let name2 =
       options.player2 || (game.tags.player2 ? game.tags.player2.value : "");
@@ -220,7 +205,7 @@ export default function render(game, options = {}) {
 
     // Turn Indicator
     const turn = game.state.turn;
-    ctx.fillStyle = colors.turnIndicator;
+    ctx.fillStyle = theme.colors.primary;
     ctx.fillRect(
       padding + axisSize + (turn === 1 ? 0 : flats1Width),
       padding + flatCounterHeight,
@@ -231,7 +216,7 @@ export default function render(game, options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.secondaryDark ? colors.fgLight : colors.fgDark;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < game.size; i++) {
@@ -253,48 +238,79 @@ export default function render(game, options = {}) {
   }
 
   // Board
-  ctx.fillStyle = colors.squareDark;
-  ctx.fillRect(
-    axisSize + padding,
-    headerHeight + padding,
-    boardSize,
-    boardSize
-  );
+  let squareRadius = 0;
+  let squareMargin = 0;
+  switch (theme.boardStyle) {
+    case "diamonds1":
+      squareRadius = squareSize * 0.1;
+      break;
+    case "diamonds2":
+      squareRadius = squareSize * 0.3;
+      break;
+    case "diamonds3":
+      squareRadius = squareSize * 0.5;
+      break;
+    case "grid1":
+      squareMargin = squareSize * 0.01;
+      break;
+    case "grid2":
+      squareMargin = squareSize * 0.03;
+      squareRadius = squareSize * 0.05;
+      break;
+    case "grid3":
+      squareMargin = squareSize * 0.06;
+      squareRadius = squareSize * 0.15;
+  }
 
   // Square
+  const drawSquareHighlight = () => {
+    roundRect(
+      ctx,
+      squareMargin,
+      squareMargin,
+      squareSize - squareMargin * 2,
+      squareSize - squareMargin * 2,
+      squareRadius
+    );
+    ctx.fill();
+  };
+
   const drawSquare = (square) => {
+    const isDark = theme.boardChecker && !square.static.isLight;
     ctx.save();
     ctx.translate(
       padding + axisSize + square.static.x * squareSize,
       padding + headerHeight + (game.size - square.static.y - 1) * squareSize
     );
 
-    if (square.static.isLight) {
-      ctx.fillStyle = colors.squareLight;
+    if (!theme.boardStyle || theme.boardStyle === "blank") {
+      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
       ctx.fillRect(0, 0, squareSize, squareSize);
+    } else {
+      ctx.fillStyle = theme.colors["board" + (isDark ? 1 : 2)];
+      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
+      drawSquareHighlight();
     }
 
     if (hlSquares.includes(square.static.coord)) {
-      if (hlSquares[0] === square.static.coord) {
-        ctx.fillStyle = colors.primarySquare;
-      } else {
-        ctx.fillStyle = colors.currentSquare;
-      }
-      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle =
+        theme.colors.primary +
+        [square.static.coord === hlSquares[0] ? "C0" : "66"];
+      drawSquareHighlight();
     }
 
     if (options.showRoads && square.connected.length) {
       square.connected.forEach((side) => {
         const coords = sideCoords[side];
         ctx.fillStyle =
-          colors.player[square.color][
-            square.roads[side] ? "road" : "connection"
-          ];
+          theme.colors[`player${square.color}road`] +
+          (square.roads[side] ? "CD" : "33");
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
     } else if (square.roads.length) {
-      ctx.fillStyle = colors.player[square.color].square;
-      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle = theme.colors[`player${square.color}road`] + "5A";
+      drawSquareHighlight();
     }
 
     if (square.piece) {
@@ -344,18 +360,16 @@ export default function render(game, options = {}) {
       ctx.shadowBlur = shadowBlur;
       ctx.shadowOffsetY = shadowOffset;
       ctx.shadowColor = colors.pieceShadow;
-      ctx.strokeStyle = colors.player[piece.color].stroke;
-    } else {
-      ctx.strokeStyle = colors.player[piece.color].border;
     }
+    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
     ctx.lineWidth = strokeWidth;
 
     if (piece.isCapstone) {
-      ctx.fillStyle = colors.player[piece.color].special;
+      ctx.fillStyle = theme.colors[`player${piece.color}special`];
       ctx.beginPath();
       ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
     } else if (piece.square && piece.isStanding) {
-      ctx.fillStyle = colors.player[piece.color].special;
+      ctx.fillStyle = theme.colors[`player${piece.color}special`];
       ctx.translate(0, y);
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
       roundRect(
@@ -367,7 +381,7 @@ export default function render(game, options = {}) {
         pieceRadius
       );
     } else {
-      ctx.fillStyle = colors.player[piece.color].flat;
+      ctx.fillStyle = theme.colors[`player${piece.color}flat`];
       if (isImmovable) {
         roundRect(
           ctx,
@@ -401,7 +415,7 @@ export default function render(game, options = {}) {
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
-    ctx.fillStyle = colors.unplayedBg;
+    ctx.fillStyle = theme.colors.board3;
     roundRect(
       ctx,
       axisSize + padding + boardSize,

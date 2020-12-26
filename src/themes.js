@@ -1,5 +1,5 @@
 import { colors } from "quasar";
-import { forEach, isObject, isFunction } from "lodash";
+import { forEach, isObject, isFunction, pick } from "lodash";
 
 export const PRIMARY_COLOR_IDS = [
   "primary",
@@ -110,6 +110,39 @@ export const computeMissing = (theme) => {
   Object.keys(COMPUTED).forEach((fromKey) => {
     computeFrom(theme, fromKey, true);
   });
+  return theme;
+};
+
+export const boardOnly = (theme) => {
+  theme = pick(theme, [
+    "id",
+    "isBuiltIn",
+    "boardStyle",
+    "boardChecker",
+    "vars",
+    "colors",
+    "player1Dark",
+    "player2Dark",
+    "secondaryDark",
+  ]);
+  theme.vars = pick(theme.vars, ["piece-border-width"]);
+  theme.colors = pick(theme.colors, [
+    "primary",
+    "secondary",
+    "board1",
+    "board2",
+    "board3",
+    "player1",
+    "player1road",
+    "player1flat",
+    "player1special",
+    "player1border",
+    "player2",
+    "player2road",
+    "player2flat",
+    "player2special",
+    "player2border",
+  ]);
   return theme;
 };
 

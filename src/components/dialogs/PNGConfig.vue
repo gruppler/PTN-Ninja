@@ -42,6 +42,13 @@
         </q-item-section>
       </q-item>
 
+      <ThemeSelector
+        v-model="config.theme"
+        @input="updatePreview"
+        item-aligned
+        filled
+      />
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -146,6 +153,7 @@
 </template>
 
 <script>
+import ThemeSelector from "../controls/ThemeSelector";
 import { pngUIOptions } from "../../store/ui/state";
 
 import { cloneDeep } from "lodash";
@@ -155,6 +163,7 @@ const { humanStorageSize } = format;
 
 export default {
   name: "PNGConfig",
+  components: { ThemeSelector },
   props: ["value", "game"],
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
@@ -184,8 +193,13 @@ export default {
       this.config = cloneDeep(this.$store.state.pngConfig);
     },
     updatePreview() {
+      const config = cloneDeep(this.config);
+      let theme = this.$store.getters.theme(config.theme);
+      if (!theme.isBuiltIn) {
+        config.theme = theme;
+      }
+      const canvas = this.game.render(config);
       const filename = this.$store.getters.png_filename(this.game);
-      const canvas = this.game.render(this.config);
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
@@ -212,6 +226,7 @@ export default {
           });
           this.config = config;
           this.size = this.sizes.indexOf(config.size);
+          this.config.theme = this.$store.state.theme.id;
         },
       });
     },
