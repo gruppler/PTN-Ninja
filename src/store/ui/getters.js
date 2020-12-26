@@ -6,6 +6,7 @@ import { i18n } from "../../boot/i18n";
 THEMES.forEach((theme) => {
   theme.name = i18n.t("theme." + theme.id);
 });
+Object.freeze(THEMES);
 
 export const themes = (state) => {
   return [...THEMES, ...state.themes];
@@ -129,7 +130,7 @@ export const png_url = (state, getters) => (game) => {
       } else {
         theme = JSON.stringify(boardOnly(theme));
       }
-      params.push("theme=" + compressToEncodedURIComponent(theme));
+      params.push("theme=" + encodeURIComponent(theme));
     }
   }
 

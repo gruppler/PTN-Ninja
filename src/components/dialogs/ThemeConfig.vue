@@ -17,8 +17,8 @@
         :value="initialThemeID"
         @input="selectTheme"
         :game="game"
-        item-aligned
         filled
+        square
       />
 
       <q-separator />

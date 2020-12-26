@@ -274,10 +274,14 @@ kbd {
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: $ui;
+    background: var(--q-color-ui);
   }
 
   .q-drawer__content .scroll {
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
     &::-webkit-scrollbar-thumb {
       border: 0;
       box-shadow: none;
@@ -286,6 +290,17 @@ kbd {
       .body--dark & {
         background: $separator-dark-color;
       }
+    }
+  }
+
+  .q-menu.scroll {
+    &::-webkit-scrollbar-track {
+      background: $accent;
+      background: var(--q-color-accent);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $ui;
+      background: var(--q-color-ui);
     }
   }
 }

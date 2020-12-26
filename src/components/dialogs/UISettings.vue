@@ -10,6 +10,8 @@
     </template>
 
     <q-list separator>
+      <ThemeSelector v-model="themeID" :game="game" edit-button filled square />
+
       <q-expansion-item icon="board" :label="$t('Board')" group="settings">
         <recess>
           <q-list>
@@ -158,14 +160,6 @@
       <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
         <recess>
           <q-list>
-            <ThemeSelector
-              v-model="themeID"
-              :game="game"
-              edit-button
-              item-aligned
-              filled
-            />
-
             <q-select
               :label="$t('Duplicate Game Names')"
               v-model="openDuplicate"
