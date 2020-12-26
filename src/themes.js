@@ -1,4 +1,3 @@
-import { i18n } from "./boot/i18n";
 import { colors } from "quasar";
 import { forEach, isObject, isFunction } from "lodash";
 
@@ -115,19 +114,18 @@ export const computeMissing = (theme) => {
 };
 
 export const BOARD_STYLES = [
-  { label: i18n.t("Blank"), value: "blank" },
-  { label: i18n.t("Diamonds 1"), value: "diamonds1" },
-  { label: i18n.t("Diamonds 2"), value: "diamonds2" },
-  { label: i18n.t("Diamonds 3"), value: "diamonds3" },
-  { label: i18n.t("Grid 1"), value: "grid1" },
-  { label: i18n.t("Grid 2"), value: "grid2" },
-  { label: i18n.t("Grid 3"), value: "grid3" },
+  "blank",
+  "diamonds1",
+  "diamonds2",
+  "diamonds3",
+  "grid1",
+  "grid2",
+  "grid3",
 ];
 
 export const THEMES = [
   {
     id: "classic",
-    name: i18n.t("Classic"),
     boardStyle: "blank",
     boardChecker: true,
     vars: {
@@ -156,7 +154,6 @@ export const THEMES = [
   },
   {
     id: "retro",
-    name: "Retro",
     boardStyle: "grid1",
     boardChecker: false,
     vars: { "piece-border-width": 1 },
@@ -183,7 +180,6 @@ export const THEMES = [
   },
   {
     id: "stealth",
-    name: "Stealth",
     boardStyle: "diamonds3",
     boardChecker: false,
     vars: { "piece-border-width": 1 },
@@ -210,7 +206,6 @@ export const THEMES = [
   },
   {
     id: "zen",
-    name: "Zen",
     boardStyle: "grid2",
     boardChecker: false,
     vars: { "piece-border-width": 0 },
@@ -237,7 +232,6 @@ export const THEMES = [
   },
   {
     id: "festive",
-    name: "Festive",
     boardStyle: "diamonds1",
     boardChecker: false,
     vars: { "piece-border-width": 2 },

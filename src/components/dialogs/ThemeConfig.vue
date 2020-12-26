@@ -41,9 +41,8 @@
         @input="preview"
         :options="boardStyles"
         behavior="menu"
+        :option-label="getText"
         item-aligned
-        map-options
-        emit-value
         filled
       >
         <template v-slot:prepend>
@@ -206,7 +205,9 @@ export default {
       return this.$store.getters.themes;
     },
     id() {
-      return this.getID(this.theme.name || "");
+      return this.theme.isBuiltIn
+        ? this.theme.id
+        : this.getID(this.theme.name || "");
     },
     colors() {
       return this.advanced
@@ -226,6 +227,9 @@ export default {
     },
   },
   methods: {
+    getText(key) {
+      return this.$t("theme." + key);
+    },
     init() {
       this.theme = cloneDeep(this.$store.state.theme);
       this.initialTheme = cloneDeep(this.theme);

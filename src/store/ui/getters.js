@@ -1,6 +1,11 @@
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit } from "lodash";
 import { THEMES } from "../../themes";
+import { i18n } from "../../boot/i18n";
+
+THEMES.forEach((theme) => {
+  theme.name = i18n.t("theme." + theme.id);
+});
 
 export const themes = (state) => {
   return [...THEMES, ...state.themes];

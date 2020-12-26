@@ -14,7 +14,7 @@ import {
   formatHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
-import { i18n } from "../../../src/boot/i18n";
+import { i18n } from "../../boot/i18n";
 import { isArray, isString } from "lodash";
 
 export const SET_THEME = ({ state, getters, commit }, theme) => {
