@@ -191,6 +191,7 @@ export default {
     classic: "Classic",
     festive: "Festive",
     fresh: "Fresh",
+    neon: "Neon",
     retro: "Retro",
     stealth: "Stealth",
     zen: "Zen",
