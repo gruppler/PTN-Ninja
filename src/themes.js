@@ -2,6 +2,118 @@ import { i18n } from "./boot/i18n";
 import { colors } from "quasar";
 import { forEach, isObject, isFunction } from "lodash";
 
+export const PRIMARY_COLOR_IDS = [
+  "primary",
+  "secondary",
+  "ui",
+  "player1",
+  "player2",
+];
+
+const LIGHT = 0.6;
+const MED = 0.4;
+const DARK = 0.06;
+
+const isLightLight = function (c) {
+  return colors.luminosity(c) > LIGHT;
+};
+
+const isLight = function (c) {
+  return colors.luminosity(c) > MED;
+};
+
+const isMedium = function (c) {
+  const luminosity = colors.luminosity(c);
+  return luminosity > DARK && luminosity <= MED;
+};
+
+const isDark = function (c) {
+  return colors.luminosity(c) <= MED;
+};
+
+const isDarkDark = function (c) {
+  return colors.luminosity(c) <= DARK;
+};
+
+const computeRoad = (c) => colors.lighten(c, isDarkDark(c) ? 15 : 0);
+const computeFlat = (c) => colors.lighten(c, isLight(c) ? -5 : 15);
+const computeSpecial = (c) =>
+  colors.lighten(c, isLightLight(c) ? -10 : isDarkDark(c) ? 10 : 10);
+const computeBorder = (c) => colors.lighten(c, isDarkDark(c) ? 30 : -30);
+
+export const COMPUTED = {
+  primary: {
+    primaryDark: isDark,
+  },
+  secondary: {
+    secondaryDark: isDark,
+    colors: {
+      panel: (c) =>
+        colors.changeAlpha(colors.lighten(c, isDark(c) ? 15 : -15), 0.8),
+      board1: (c) => colors.lighten(c, isDark(c) ? 30 : -27),
+      board2: (c) => colors.lighten(c, isDark(c) ? 27 : -30),
+      board3: (c) => colors.lighten(c, isDark(c) ? 15 : -15),
+    },
+  },
+  ui: {
+    isDark,
+    colors: {
+      accent: (c) => colors.lighten(c, isDarkDark(c) ? 5 : -15),
+    },
+  },
+  accent: {
+    accentDark: isDark,
+  },
+  panel: {
+    panelDark: isDark,
+    panelMedium: isMedium,
+  },
+  player1: {
+    player1Dark: isDark,
+    colors: {
+      player1road: computeRoad,
+      player1flat: computeFlat,
+      player1special: computeSpecial,
+      player1border: computeBorder,
+    },
+  },
+  player2: {
+    player2Dark: isDark,
+    colors: {
+      player2road: computeRoad,
+      player2flat: computeFlat,
+      player2special: computeSpecial,
+      player2border: computeBorder,
+    },
+  },
+};
+
+export const computeFrom = (theme, fromKey, missingOnly = false) => {
+  forEach(COMPUTED[fromKey], (compute, toKey) => {
+    if (isFunction(compute)) {
+      if (fromKey in theme.colors && (!missingOnly || !(toKey in theme))) {
+        theme[toKey] = compute(theme.colors[fromKey], theme);
+      }
+    } else if (isObject(compute)) {
+      forEach(compute, (computeVar, toVar) => {
+        if (
+          fromKey in theme.colors &&
+          (!missingOnly || !(toVar in theme[toKey]))
+        ) {
+          theme[toKey][toVar] = computeVar(theme.colors[fromKey], theme);
+        }
+      });
+    }
+  });
+};
+
+export const computeMissing = (theme) => {
+  Object.keys(COMPUTED).forEach((fromKey) => {
+    computeFrom(theme, fromKey, true);
+  });
+  return theme;
+};
+
 export const BOARD_STYLES = [
   { label: i18n.t("Blank"), value: "blank" },
   { label: i18n.t("Diamonds 1"), value: "diamonds1" },
@@ -150,115 +262,4 @@ export const THEMES = [
       player2border: "#15341d",
     },
   },
-];
-
-export const PRIMARY_COLOR_IDS = [
-  "primary",
-  "secondary",
-  "ui",
-  "player1",
-  "player2",
-];
-
-const LIGHT = 0.6;
-const MED = 0.4;
-const DARK = 0.06;
-
-const isLightLight = function (c) {
-  return colors.luminosity(c) > LIGHT;
-};
-
-const isLight = function (c) {
-  return colors.luminosity(c) > MED;
-};
-
-const isMedium = function (c) {
-  const luminosity = colors.luminosity(c);
-  return luminosity > DARK && luminosity <= MED;
-};
-
-const isDark = function (c) {
-  return colors.luminosity(c) <= MED;
-};
-
-const isDarkDark = function (c) {
-  return colors.luminosity(c) <= DARK;
-};
-
-const computeRoad = (c) => colors.lighten(c, isDarkDark(c) ? 15 : 0);
-const computeFlat = (c) => colors.lighten(c, isLight(c) ? -5 : 15);
-const computeSpecial = (c) =>
-  colors.lighten(c, isLightLight(c) ? -10 : isDarkDark(c) ? 10 : 10);
-const computeBorder = (c) => colors.lighten(c, isDarkDark(c) ? 30 : -30);
-
-export const COMPUTED = {
-  primary: {
-    primaryDark: isDark,
-  },
-  secondary: {
-    secondaryDark: isDark,
-    colors: {
-      panel: (c) =>
-        colors.changeAlpha(colors.lighten(c, isDark(c) ? 15 : -15), 0.8),
-      board1: (c) => colors.lighten(c, isDark(c) ? 30 : -27),
-      board2: (c) => colors.lighten(c, isDark(c) ? 27 : -30),
-      board3: (c) => colors.lighten(c, isDark(c) ? 15 : -15),
-    },
-  },
-  ui: {
-    isDark,
-    colors: {
-      accent: (c) => colors.lighten(c, isDarkDark(c) ? 5 : -15),
-    },
-  },
-  accent: {
-    accentDark: isDark,
-  },
-  panel: {
-    panelDark: isDark,
-    panelMedium: isMedium,
-  },
-  player1: {
-    player1Dark: isDark,
-    colors: {
-      player1road: computeRoad,
-      player1flat: computeFlat,
-      player1special: computeSpecial,
-      player1border: computeBorder,
-    },
-  },
-  player2: {
-    player2Dark: isDark,
-    colors: {
-      player2road: computeRoad,
-      player2flat: computeFlat,
-      player2special: computeSpecial,
-      player2border: computeBorder,
-    },
-  },
-};
-
-export const computeFrom = (theme, fromKey, missingOnly = false) => {
-  forEach(COMPUTED[fromKey], (compute, toKey) => {
-    if (isFunction(compute)) {
-      if (fromKey in theme.colors && (!missingOnly || !(toKey in theme))) {
-        theme[toKey] = compute(theme.colors[fromKey], theme);
-      }
-    } else if (isObject(compute)) {
-      forEach(compute, (computeVar, toVar) => {
-        if (
-          fromKey in theme.colors &&
-          (!missingOnly || !(toVar in theme[toKey]))
-        ) {
-          theme[toKey][toVar] = computeVar(theme.colors[fromKey], theme);
-        }
-      });
-    }
-  });
-};
-
-export const computeMissing = (theme) => {
-  Object.keys(COMPUTED).forEach((fromKey) => {
-    computeFrom(theme, fromKey, true);
-  });
-};
+].map((theme) => computeMissing({ ...theme, isBuiltIn: true }));

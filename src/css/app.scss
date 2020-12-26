@@ -226,7 +226,10 @@ kbd {
 }
 
 .q-slider__pin-value-marker-text {
-  color: $ui;
+  color: $fg-dark;
+  body.primaryDark & {
+    color: $fg-light;
+  }
 }
 
 .q-expansion-item--expanded > .q-expansion-item__container > .q-item {

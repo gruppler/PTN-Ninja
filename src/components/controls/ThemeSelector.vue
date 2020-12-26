@@ -30,7 +30,11 @@
         </q-item-section>
         <q-item-section side>
           <q-btn
-            v-if="!scope.opt.isBuiltIn && scope.opt.id !== theme"
+            v-if="
+              !scope.opt.isBuiltIn &&
+              scope.opt.id !== theme &&
+              scope.opt.id !== $store.state.themeID
+            "
             @click.stop="remove(scope.opt.id)"
             icon="delete"
             flat

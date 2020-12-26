@@ -279,6 +279,7 @@ export default {
         message: this.$t("confirm.resetEmbed"),
         success: () => {
           this.config = cloneDeep(this.$store.state.defaults.embedConfig);
+          this.config.ui.theme = this.$store.state.theme.id;
         },
       });
     },

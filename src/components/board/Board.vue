@@ -435,10 +435,6 @@ $radius: 1.2vmin;
     width: 50%;
     will-change: width;
     transition: width $generic-hover-transition;
-    .name,
-    .flats {
-      opacity: 0.8;
-    }
   }
   .player1 .row {
     color: $fg-dark;
@@ -489,7 +485,6 @@ $radius: 1.2vmin;
   color: $fg-dark;
   justify-content: space-around;
   line-height: 1em;
-  opacity: 0.8;
   body.secondaryDark & {
     color: $fg-light;
   }
@@ -510,8 +505,8 @@ $radius: 1.2vmin;
 }
 
 .board {
-  background: $board2;
-  background: var(--q-color-board2);
+  background: $board1;
+  background: var(--q-color-board1);
   z-index: 1;
   width: 100%;
   padding-bottom: 100%;

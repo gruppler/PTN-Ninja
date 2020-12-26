@@ -169,6 +169,8 @@ export default {
   .board-container.grid1 &,
   .board-container.grid2 &,
   .board-container.grid3 & {
+    background: $board2;
+    background: var(--q-color-board2);
     &:before {
       background: $board1;
       background: var(--q-color-board1);
@@ -180,8 +182,7 @@ export default {
       right: 0;
     }
     body.boardChecker &.dark {
-      background: $board1;
-      background: var(--q-color-board1);
+      background: transparent;
       &:before {
         background: $board2;
         background: var(--q-color-board2);
@@ -227,9 +228,9 @@ export default {
     }
   }
   body.boardChecker .board-container.blank & {
-    &.light {
-      background: $board1;
-      background: var(--q-color-board1);
+    &.dark {
+      background: $board2;
+      background: var(--q-color-board2);
     }
   }
 

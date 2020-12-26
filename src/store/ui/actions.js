@@ -492,6 +492,9 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   const games = [];
   let count = 0;
   files = Array.from(files);
+  if (!files.length) {
+    return false;
+  }
   Loading.show();
   setTimeout(
     () =>

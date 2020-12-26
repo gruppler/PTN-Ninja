@@ -1,7 +1,6 @@
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit } from "lodash";
 import { THEMES } from "../../themes";
-THEMES.forEach((theme) => (theme.isBuiltIn = true));
 
 export const themes = (state) => {
   return [...THEMES, ...state.themes];
@@ -165,11 +164,11 @@ export const url = (state, getters) => (game, options = {}) => {
       }
       if (theme) {
         if (theme.isBuiltIn) {
-          options.ui.theme = theme.id;
+          theme = theme.id;
         } else {
-          options.ui.theme = JSON.stringify(theme);
+          theme = JSON.stringify(theme);
         }
-        options.ui.theme = compressToEncodedURIComponent(options.ui.theme);
+        options.ui.theme = compressToEncodedURIComponent(theme);
       }
     }
     Object.keys(options.ui).forEach((key) => {
