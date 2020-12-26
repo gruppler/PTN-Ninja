@@ -195,7 +195,7 @@ export default {
     updatePreview() {
       const config = cloneDeep(this.config);
       let theme = this.$store.getters.theme(config.theme);
-      if (!theme.isBuiltIn) {
+      if (theme && !theme.isBuiltIn) {
         config.theme = theme;
       }
       const canvas = this.game.render(config);

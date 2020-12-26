@@ -207,7 +207,7 @@ export default {
       return this.$store.getters.themes;
     },
     id() {
-      return this.theme.isBuiltIn
+      return this.theme.isBuiltIn && this.isSaved
         ? this.theme.id
         : this.getID(this.theme.name || "");
     },
