@@ -63,7 +63,12 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector v-model="config.ui.theme" item-aligned filled />
+      <ThemeSelector
+        v-model="config.ui.theme"
+        :game="game"
+        item-aligned
+        filled
+      />
 
       <q-item>
         <q-item-section>

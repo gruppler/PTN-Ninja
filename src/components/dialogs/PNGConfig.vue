@@ -45,6 +45,7 @@
       <ThemeSelector
         v-model="config.theme"
         @input="updatePreview"
+        :game="game"
         item-aligned
         filled
       />

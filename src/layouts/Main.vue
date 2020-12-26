@@ -217,10 +217,11 @@
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
     <UISettings
       v-model="dialogUISettings"
+      :game="game"
       :disabled="disabledOptions"
       no-route-dismiss
     />
-    <ThemeConfig v-model="dialogThemeConfig" no-route-dismiss />
+    <ThemeConfig v-model="dialogThemeConfig" :game="game" no-route-dismiss />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
     <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
     <LogIn v-model="dialogLogIn" no-route-dismiss />

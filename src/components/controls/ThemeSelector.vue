@@ -10,6 +10,12 @@
     emit-value
     v-bind="$attrs"
   >
+    <template v-slot:prepend v-if="preview">
+      <q-avatar rounded>
+        <img :src="preview" />
+      </q-avatar>
+    </template>
+
     <template v-slot:append>
       <q-icon
         v-if="editButton"
@@ -25,6 +31,11 @@
         v-bind="scope.itemProps"
         v-on="scope.itemEvents"
       >
+        <q-item-section v-if="scope.opt.preview" side>
+          <q-avatar rounded>
+            <img :src="scope.opt.preview" />
+          </q-avatar>
+        </q-item-section>
         <q-item-section>
           <q-item-label>{{ scope.opt.name }}</q-item-label>
         </q-item-section>
@@ -47,17 +58,30 @@
 </template>
 
 <script>
-import { cloneDeep } from "lodash";
+import { cloneDeep, pick } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "ThemeSelector",
   props: {
     value: String,
+    game: Object,
     "edit-button": Boolean,
   },
   computed: {
     themes() {
+      if (this.game) {
+        const config = cloneDeep(
+          pick(this.$store.state, Object.keys(this.$store.state.pngConfig))
+        );
+        config.size = "xs";
+        return this.$store.getters.themes.map((theme) => {
+          theme = cloneDeep(theme);
+          const canvas = this.game.render({ ...config, theme });
+          theme.preview = canvas.toDataURL();
+          return theme;
+        });
+      }
       return this.$store.getters.themes;
     },
     theme: {
@@ -67,6 +91,10 @@ export default {
       set(value) {
         this.$emit("input", value);
       },
+    },
+    preview() {
+      const theme = this.themes.find((theme) => theme.id === this.value);
+      return theme ? theme.preview : null;
     },
   },
   methods: {

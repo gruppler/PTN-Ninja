@@ -16,6 +16,7 @@
       <ThemeSelector
         :value="initialThemeID"
         @input="selectTheme"
+        :game="game"
         item-aligned
         filled
       />
@@ -186,7 +187,7 @@ const MAX_NAME_LENGTH = 16;
 export default {
   name: "ThemeConfig",
   components: { ThemeSelector },
-  props: ["value"],
+  props: ["value", "game"],
   data() {
     const theme = cloneDeep(this.$store.state.theme);
     return {

@@ -158,7 +158,13 @@
       <q-expansion-item icon="ui" :label="$t('UI')" group="settings">
         <recess>
           <q-list>
-            <ThemeSelector v-model="themeID" edit-button item-aligned filled />
+            <ThemeSelector
+              v-model="themeID"
+              :game="game"
+              edit-button
+              item-aligned
+              filled
+            />
 
             <q-select
               :label="$t('Duplicate Game Names')"
@@ -274,7 +280,7 @@ const props = [
 export default {
   name: "UISettings",
   components: { ThemeSelector },
-  props: ["value", "disabled"],
+  props: ["value", "game", "disabled"],
   data() {
     return {
       hotkeys: HOTKEYS_FORMATTED.UI,
