@@ -29,6 +29,9 @@ export default {
   name: "Piece",
   props: ["game", "id"],
   computed: {
+    theme() {
+      return this.$store.getters.theme();
+    },
     pieceCounts() {
       return this.game.pieceCounts[this.piece.color];
     },
@@ -169,92 +172,127 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.piece
-  position absolute
-  bottom 0
-  left 0
-  will-change transform, opacity
-  transition transform $generic-hover-transition,
-    opacity $generic-hover-transition
+<style lang="scss">
+.piece {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  will-change: transform, opacity;
+  transition: transform $generic-hover-transition,
+    opacity $generic-hover-transition;
 
-  .stone
-    position absolute
-    bottom 0
-    left 0
-    width 50%
-    height 50%
-    margin 25%
-    box-sizing border-box
-    border 1px solid transparent
-    border-radius 10%
-    will-change opacity, transform, width, height, left, border-radius, background-color, box-shadow
-    transition opacity $generic-hover-transition,
-      transform $generic-hover-transition,
-      width $generic-hover-transition,
-      height $generic-hover-transition,
-      left $generic-hover-transition,
+  .stone {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    height: 50%;
+    margin: 25%;
+    box-sizing: border-box;
+    border-width: $piece-border-width;
+    border-width: var(--piece-border-width);
+    border-style: solid;
+    border-radius: 10%;
+    will-change: opacity, transform, width, height, left, border-radius,
+      background-color, box-shadow;
+    transition: opacity $generic-hover-transition,
+      transform $generic-hover-transition, width $generic-hover-transition,
+      height $generic-hover-transition, left $generic-hover-transition,
       border-radius $generic-hover-transition,
       background-color $generic-hover-transition,
-      box-shadow $generic-hover-transition
+      box-shadow $generic-hover-transition;
 
-    .board-container.piece-shadows &
-      box-shadow 0 0.2vmin 0.4vmin rgba(#000, 0.2)
-      &.p1
-        border-color rgba($blue-grey-7, 0.5)
-      &.p2
-        border-color rgba($blue-grey-10, 0.5)
-      &.firstSelected
-        box-shadow @box-shadow, 0 2.8vmin 1.5vmin $elevation-umbra
+    .board-container.piece-shadows & {
+      box-shadow: 0 0.2vmin 0.4vmin $umbra;
+      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
+      &.firstSelected {
+        box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
+        box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
+          0 2.8vmin 1.5vmin var(--q-color-umbra);
+      }
+    }
 
-    &.p1
-      background-color $blue-grey-2
-      border-color $blue-grey-7
-    &.p2
-      background-color $blue-grey-7
-      border-color $blue-grey-10
+    &.p1 {
+      background-color: $player1flat;
+      background-color: var(--q-color-player1flat);
+      border-color: $player1border;
+      border-color: var(--q-color-player1border);
+    }
+    &.p2 {
+      background-color: $player2flat;
+      background-color: var(--q-color-player2flat);
+      border-color: $player2border;
+      border-color: var(--q-color-player2border);
+    }
 
-    &.S
-      width 18.75%
-      left 15%
-      border-radius 27%/10%
+    &.S {
+      width: 18.75%;
+      left: 15%;
+      border-radius: 27%/10%;
 
-      &.p1
-        background-color $blue-grey-1
-        transform rotate(-45deg)
-        .board-container.piece-shadows &
-          box-shadow -1px 1px 2px rgba(#000, .3)
-          &.firstSelected
-            box-shadow @box-shadow, -1.8vmin 1.8vmin 1.5vmin $elevation-umbra
-      &.p2
-        background-color $blue-grey-8
-        transform rotate(45deg)
-        .board-container.piece-shadows &
-          box-shadow 1px 1px 2px rgba(#000, .3)
-          &.firstSelected
-            box-shadow @box-shadow, 1.8vmin 1.8vmin 1.5vmin $elevation-umbra
-    &.C
-      border-radius 50%
-      &.p1
-        background-color $blue-grey-1
-      &.p2
-        background-color $blue-grey-8
+      &.p1 {
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
+        transform: rotate(-45deg);
+        .board-container.piece-shadows & {
+          box-shadow: -1px 1px 2px $umbra;
+          box-shadow: -1px 1px 2px var(--q-color-umbra);
+          &.firstSelected {
+            box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
+            box-shadow: -1px 1px 2px var(--q-color-umbra),
+              -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          }
+        }
+      }
+      &.p2 {
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
+        transform: rotate(45deg);
+        .board-container.piece-shadows & {
+          box-shadow: 1px 1px 2px $umbra;
+          box-shadow: 1px 1px 2px var(--q-color-umbra);
+          &.firstSelected {
+            box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
+            box-shadow: 1px 1px 2px var(--q-color-umbra),
+              1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          }
+        }
+      }
+    }
+    &.C {
+      border-radius: 50%;
+      &.p1 {
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
+      }
+      &.p2 {
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
+      }
+    }
 
-    .board-wrapper:not(.board-3D) &.immovable
-      bottom 0
-      left 51%
-      width 15%
-      height 8%
-      border-radius 15%/30%
+    .board-wrapper:not(.board-3D) &.immovable {
+      bottom: 0;
+      left: 50%;
+      width: 15%;
+      height: 8%;
+      border-radius: 15%/30%;
+    }
 
-    .board-wrapper.board-3D &.immovable
-      opacity 0.35
+    .board-wrapper.board-3D &.immovable {
+      opacity: 0.35;
+    }
 
-    &.selectable
-      pointer-events all
-      cursor pointer
+    &.selectable {
+      pointer-events: all;
+      cursor: pointer;
+    }
 
-    &.unplayed
-      .board-container:not(.show-unplayed-pieces) &
-        opacity 0
+    &.unplayed {
+      .board-container:not(.show-unplayed-pieces) & {
+        opacity: 0;
+      }
+    }
+  }
+}
 </style>

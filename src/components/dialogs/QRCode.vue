@@ -12,8 +12,8 @@
       class="qr-canvas flex flex-center"
       :value="text"
       :size="size"
-      foreground="#eceff1"
-      background="#263238"
+      :foreground="fg"
+      :background="bg"
       :backgroundAlpha="1"
       v-close-popup
     />
@@ -21,6 +21,8 @@
 </template>
 
 <script>
+import { colors } from "quasar";
+
 const SIZE = 450;
 const PADDING = 24;
 const SCREEN = SIZE + PADDING * 2;
@@ -35,13 +37,21 @@ export default {
     maximized() {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;
     },
+    fg() {
+      return this.$store.state.theme.isDark ? "white" : "black";
+    },
+    bg() {
+      return this.$store.state.theme.isDark ? "black" : "white";
+    },
   },
 };
 </script>
 
-<style lang="stylus">
-.qr-canvas
-  canvas
-    display block
-    max-width 100vmin
+<style lang="scss">
+.qr-canvas {
+  canvas {
+    display: block;
+    max-width: 100vmin;
+  }
+}
 </style>

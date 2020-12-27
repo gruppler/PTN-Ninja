@@ -10,7 +10,7 @@
       <dialog-header icon="edit">{{ $t("Edit Game") }}</dialog-header>
     </template>
 
-    <q-card-section class="scroll">
+    <q-card-section>
       <GameInfo
         ref="gameInfo"
         :game="game"
@@ -25,12 +25,12 @@
         <MoreToggle v-model="showAll" />
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
           @click="$refs.gameInfo.submit()"
           :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
-          color="accent"
+          color="primary"
           flat
         />
       </q-card-actions>

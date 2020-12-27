@@ -90,58 +90,84 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.piece-selector
-  .square
-    width 2.25em
-    height 2.25em
-    background $blue-grey-5
-    position relative
-    border-radius 3px
-    &.selected
-      background mix($accent, @background, 75%)
+<style lang="scss">
+.piece-selector {
+  .square {
+    width: 2.25em;
+    height: 2.25em;
+    background: $board1;
+    background: var(--q-color-board1);
+    position: relative;
+    border-radius: 3px;
+    &.selected {
+      background: $primary;
+      background: var(--q-color-primary);
+    }
+  }
 
-    .stone
-      position absolute
-      bottom 0
-      left 0
-      width 50%
-      height 50%
-      margin 25%
-      box-sizing border-box
-      border 1px solid rgba(#000, .8)
-      border-radius 10%
+  .stone {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    height: 50%;
+    margin: 25%;
+    box-sizing: border-box;
+    border-width: $piece-border-width;
+    border-width: var(--piece-border-width);
+    border-style: solid;
+    border-radius: 10%;
 
-      &.shadows
-        border-color transparent !important
-        box-shadow $shadow-1
+    &.shadows {
+      box-shadow: $shadow-1;
+    }
 
-      &.p1
-        background-color $blue-grey-2
-        border-color $blue-grey-7
-      &.p2
-        background-color $blue-grey-7
-        border-color $blue-grey-10
+    &.p1 {
+      background-color: $player1flat;
+      background-color: var(--q-color-player1flat);
+      border-color: $player1border;
+      border-color: var(--q-color-player1border);
+    }
+    &.p2 {
+      background-color: $player2flat;
+      background-color: var(--q-color-player2flat);
+      border-color: $player2border;
+      border-color: var(--q-color-player2border);
+    }
 
-      &.S
-        width 18.75%
-        left 15%
-        border-radius 27%/10%
+    &.S {
+      width: 18.75%;
+      left: 15%;
+      border-radius: 27%/10%;
 
-        &.p1
-          background-color $blue-grey-1
-          transform rotate(-45deg)
-          &.shadows
-            box-shadow -1px 1px 2px rgba(#000, .3)
-        &.p2
-          background-color $blue-grey-8
-          transform rotate(45deg)
-          &.shadows
-            box-shadow 1px 1px 2px rgba(#000, .3)
-      &.C
-        border-radius 50%
-        &.p1
-          background-color $blue-grey-1
-        &.p2
-          background-color $blue-grey-8
+      &.p1 {
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
+        transform: rotate(-45deg);
+        &.shadows {
+          box-shadow: -1px 1px 2px rgba(#000, 0.3);
+        }
+      }
+      &.p2 {
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
+        transform: rotate(45deg);
+        &.shadows {
+          box-shadow: 1px 1px 2px rgba(#000, 0.3);
+        }
+      }
+    }
+    &.C {
+      border-radius: 50%;
+      &.p1 {
+        background-color: $player1special;
+        background-color: var(--q-color-player1special);
+      }
+      &.p2 {
+        background-color: $player2special;
+        background-color: var(--q-color-player2special);
+      }
+    }
+  }
+}
 </style>

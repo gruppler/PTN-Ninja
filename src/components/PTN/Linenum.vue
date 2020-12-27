@@ -8,7 +8,7 @@
     >
       {{ this.branch }}
       <q-menu v-if="!noEdit" context-menu auto-close>
-        <q-list class="bg-secondary text-white">
+        <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
             <q-item-section side>
               <q-icon name="edit" />
@@ -50,7 +50,6 @@
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
-
 import RenameBranch from "../dialogs/RenameBranch";
 
 export default {
@@ -116,34 +115,48 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.linenum
-  display inline-flex
-  flex-direction row
-  align-items center
-  vertical-align middle
-  .branch
-    word-break break-word
-    font-weight bold
-    font-size 0.9em
-    line-height 1.3em
-    padding 4px
-    margin 0
-    max-width 270px
-    border-radius $generic-border-radius
-    cursor pointer
-    background-color $highlight
-    &.selected
-      background-color $accent
-    &.only
-      margin-top 0.25em
-      margin-bottom 0.25em
-    .q-btn
-      margin -0.5em -0.25em
+<style lang="scss">
+.linenum {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  vertical-align: middle;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.panelDark:not(.panelMedium) & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+  .branch {
+    word-break: break-word;
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 1.3em;
+    padding: 4px;
+    margin: 0;
+    max-width: 270px;
+    border-radius: $generic-border-radius;
+    cursor: pointer;
+    background-color: $highlight;
+    &.selected {
+      background-color: $primary;
+      background-color: var(--q-color-primary);
+    }
+    &.only {
+      margin-top: 0.25em;
+      margin-bottom: 0.25em;
+    }
+    .q-btn {
+      margin: -0.5em -0.25em;
+    }
 
-    + .number
-      margin-left .5em
-  .number
-    font-size 0.9em
-    line-height 2.2em
+    + .number {
+      margin-left: 0.5em;
+    }
+  }
+  .number {
+    font-size: 0.9em;
+    line-height: 2.2em;
+  }
+}
 </style>

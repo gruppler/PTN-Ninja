@@ -115,49 +115,66 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.move
-  &.current-move
-    background-color $highlight
+<style lang="scss">
+.move {
+  &.current-move {
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
+  }
 
-  &.current-only .linenum .branch
-    background-color transparent
-    color inherit
+  &.current-only .linenum .branch {
+    background-color: transparent;
+    color: inherit;
+  }
 
-  &.linebreak
-    margin-bottom .75em
-    + .move
-      margin-top .75em
+  &.linebreak {
+    margin-bottom: 0.75em;
+    + .move {
+      margin-top: 0.75em;
+    }
+  }
 
-  &.linebreak.separator
-    padding-bottom .75em
-    margin-bottom 1px
-    + .move
-      padding-top .75em
-      margin-top 0
+  &.linebreak.separator {
+    padding-bottom: 0.75em;
+    margin-bottom: 1px;
+    + .move {
+      padding-top: 0.75em;
+      margin-top: 0;
+    }
+  }
 
-  .nop
-    font-family 'Source Code Pro'
-    padding 4px 8px
-    color $gray-light
-    white-space nowrap
-    display inline-block
-    vertical-align middle
+  .nop {
+    font-family: "Source Code Pro";
+    padding: 4px 8px;
+    color: $player1;
+    color: var(--q-color-player1);
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+  }
 
-  .q-separator
-    position relative
-    bottom calc(-.75em - 1px)
+  .q-separator {
+    position: relative;
+    bottom: calc(-0.75em - 1px);
+  }
 
-  &.standalone
-    display inline-block
-    border-radius 5px
-    padding 0 .5em
-    background-color rgba(#fff, .15)
-    transition opacity $generic-hover-transition
-    opacity 1
-    &.lt-sm
-      opacity 0
+  &.standalone {
+    display: inline-block;
+    border-radius: 5px;
+    padding: 0 0.5em;
+    background-color: $panel;
+    background-color: var(--q-color-panel);
+    transition: opacity $generic-hover-transition;
+    opacity: 1;
+    &.lt-sm {
+      opacity: 0;
+    }
+  }
 
-  .move-wrapper
-    min-height 35px
+  .move-wrapper {
+    min-height: 35px;
+  }
+}
 </style>

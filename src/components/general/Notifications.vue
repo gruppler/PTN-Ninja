@@ -11,7 +11,7 @@ export default {
     },
     "text-color": {
       type: String,
-      default: "grey-10",
+      default: "textDark",
     },
   },
   data() {

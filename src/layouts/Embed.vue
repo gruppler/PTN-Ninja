@@ -1,24 +1,24 @@
 <template>
   <q-layout class="non-selectable" view="lHh LpR lFr">
-    <q-header elevated class="bg-secondary text-white">
+    <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
           @click="left = !left"
-          :color="left ? 'accent' : ''"
+          :color="left ? 'primary' : ''"
           stretch
           flat
         />
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <ShareButton ref="shareButton" :game="game" flat stretch />
+        <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'accent' : ''"
+          :color="right ? 'primary' : ''"
           stretch
           flat
         />
@@ -26,7 +26,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-primary"
+      class="bg-secondary"
       v-shortkey="hotkeys.UI"
       @shortkey="uiShortkey"
     >
@@ -77,7 +77,7 @@
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
-        <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
+        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
               @click="$store.dispatch('UNDO', game)"
@@ -118,10 +118,7 @@
 
     <q-footer>
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
-      <q-toolbar
-        v-show="$store.state.showControls"
-        class="q-pa-sm bg-secondary text-white"
-      >
+      <q-toolbar v-show="$store.state.showControls" class="q-pa-sm bg-ui">
         <PlayControls :game="game" />
       </q-toolbar>
     </q-footer>
@@ -156,7 +153,7 @@ import Game from "../PTN/Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults } from "lodash";
+import { defaults, forEach } from "lodash";
 
 export default {
   components: {
@@ -272,9 +269,10 @@ export default {
   },
   created() {
     this.$store.commit("SET_EMBED_GAME");
-    Object.keys(this.state).forEach((key) => {
-      this.$store.commit("SET_UI", [key, this.state[key]]);
+    forEach(this.state, (value, key) => {
+      this.$store.commit("SET_UI", [key, value]);
     });
+    this.$store.dispatch("SET_THEME", this.$store.state.theme);
   },
   watch: {
     ptn() {
@@ -283,11 +281,9 @@ export default {
     state: {
       handler(state, oldState) {
         let fullState = {};
-        Object.keys(defaults(fullState, state, this.defaults)).forEach(
-          (key) => {
-            this.$store.commit("SET_UI", [key, fullState[key]]);
-          }
-        );
+        forEach(defaults(fullState, state, this.defaults), (value, key) => {
+          this.$store.commit("SET_UI", [key, value]);
+        });
         this.game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
@@ -305,13 +301,17 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.q-drawer
-  background rgba($blue-grey-5, 0.75)
+<style lang="scss">
+.q-drawer {
+  background: $panel;
+  background: var(--q-color-panel);
+}
 
-#title
-  @media (max-width: $breakpoint-xs-max)
-    font-size 1.2em
-    white-space normal
-    line-height 1.25em
+@media (max-width: $breakpoint-xs-max) {
+  #title {
+    font-size: 1.2em;
+    white-space: normal;
+    line-height: 1.25em;
+  }
+}
 </style>

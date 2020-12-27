@@ -10,13 +10,20 @@ import ICONS from "./icons";
 export default {
   name: "App",
   created() {
-    this.$q.dark.set(true);
+    if (process.env.DEV) {
+      window.app = this;
+    }
+
+    // Map icons
     this.$q.iconMapFn = (name) => {
       const icon = ICONS[name];
       if (icon !== undefined) {
         return { icon };
       }
     };
+
+    // Load theme
+    this.$store.commit("SET_THEME", this.$store.state.theme);
   },
 };
 </script>

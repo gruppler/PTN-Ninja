@@ -11,7 +11,7 @@
             />
             <div
               class="fullwidth-padded-md q-py-xs"
-              :class="{ highlight: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
+              :class="{ current: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
               :key="plyID"
               :ref="plyID"
             >
@@ -28,8 +28,8 @@
                 v-for="(comment, index) in log[plyID]"
                 :key="`message-${plyID}-${index}`"
                 :id="`message-${plyID}-${index}`"
-                bg-color="accent"
-                text-color="grey-10"
+                bg-color="primary"
+                :text-color="primaryDark ? 'textLight' : 'textDark'"
                 text-sanitize
                 sent
               >
@@ -39,7 +39,7 @@
                   auto-close
                   :target="`#message-${plyID}-${index} > div > div`"
                 >
-                  <q-list class="bg-secondary text-white">
+                  <q-list>
                     <q-item @click="edit(plyID, index)" clickable>
                       <q-item-section side>
                         <q-icon name="edit" />
@@ -68,16 +68,16 @@
         @keydown.esc="cancelEdit"
         @blur="cancelEdit"
         debounce="50"
-        class="footer-toolbar bg-secondary text-accent col-grow q-pa-sm items-end"
+        class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
         v-model="message"
         :placeholder="$t('Note')"
         dense
         rounded
         autogrow
         outlined
-        color="accent"
-        bg-color="accent"
-        :dark="false"
+        color="primary"
+        bg-color="primary"
+        :dark="primaryDark"
       >
         <template v-slot:append>
           <q-btn
@@ -111,6 +111,9 @@ export default {
     };
   },
   computed: {
+    primaryDark() {
+      return this.$store.state.theme.primaryDark;
+    },
     log() {
       return this.$store.state.showAllBranches
         ? this.game.notes
@@ -242,21 +245,34 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.notes
-  .scroll:before
-    content ""
-    display block
-    height 100%
-  .q-separator
-    opacity .75
-  .q-message:not(:last-child)
-    margin-bottom 3px
-    .q-message-text
-      border-radius $generic-border-radius
-      min-height 2em
-      &:before
-        display none
-  .ply-container
-    padding-bottom .5em
+<style lang="scss">
+.notes {
+  .scroll:before {
+    content: "";
+    display: block;
+    height: 100%;
+  }
+  .q-separator {
+    opacity: 0.75;
+  }
+  .current {
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
+  }
+  .q-message:not(:last-child) {
+    margin-bottom: 3px;
+    .q-message-text {
+      border-radius: $generic-border-radius;
+      min-height: 2em;
+      &:before {
+        display: none;
+      }
+    }
+  }
+  .ply-container {
+    padding-bottom: 0.5em;
+  }
+}
 </style>

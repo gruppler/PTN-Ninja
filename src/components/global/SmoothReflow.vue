@@ -17,10 +17,12 @@ export default {
       default: "div",
     },
     options: Object,
+    "height-only": Boolean,
   },
   mounted() {
     this.$smoothReflow(
       defaults(this.options, {
+        property: this.heightOnly ? "height" : ["width", "height"],
         transition: ".3s cubic-bezier(.25, .8, .5, 1)",
       })
     );

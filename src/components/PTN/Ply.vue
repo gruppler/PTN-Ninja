@@ -4,8 +4,8 @@
       @click.left="select(ply, isSelected ? !isDone : true)"
       @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
       :class="{ selected: isSelected }"
-      :color="ply.color === 1 ? 'blue-grey-2' : 'blue-grey-10'"
-      :text-color="ply.color === 1 ? 'blue-grey-10' : 'blue-grey-2'"
+      :color="ply.color === 1 ? 'player1' : 'player2'"
+      :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
       :clickable="!noClick"
       v-ripple="false"
@@ -76,6 +76,9 @@ export default {
     };
   },
   computed: {
+    theme() {
+      return this.$store.state.theme;
+    },
     ply() {
       return this.game.plies[this.plyID];
     },
@@ -105,72 +108,124 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ptn.ply
-  display inline-flex
-  vertical-align middle
-  flex-direction row
-  align-items center
+<style lang="scss">
+.ptn.ply {
+  display: inline-flex;
+  vertical-align: middle;
+  flex-direction: row;
+  align-items: center;
+}
 
-.q-chip
-  font-size inherit
-  &:not(.q-chip--outline)
-    border 1px solid
-    &.bg-blue-grey-10
-      border-color $blue-grey-10
-    &.bg-blue-grey-2
-      border-color $blue-grey-2
-  &.selected
-    box-shadow 0 0 0 2px $accent
-    body.desktop &.q-chip--clickable:focus
-      box-shadow $shadow-1, 0 0 0 2px $accent
-  .q-btn
-    margin-right -0.7em
+.q-chip {
+  font-size: inherit;
+  &:not(.q-chip--outline) {
+    border: 1px solid;
+    &.bg-player1 {
+      border-color: $player1;
+      border-color: var(--q-color-player1);
+    }
+    &.bg-player2 {
+      border-color: $player2;
+      border-color: var(--q-color-player2);
+    }
+  }
+  &.selected {
+    box-shadow: 0 0 0 2px $primary;
+    box-shadow: 0 0 0 2px var(--q-color-primary);
+    body.desktop &.q-chip--clickable:focus {
+      box-shadow: $shadow-1, 0 0 0 2px $primary;
+      box-shadow: $shadow-1, 0 0 0 2px var(--q-color-primary);
+    }
+  }
+  .q-btn {
+    margin-right: -0.7em;
+  }
+}
 
-.ply
-  font-family 'Source Code Pro'
-  font-weight bold
+.ply {
+  font-family: "Source Code Pro";
+  font-weight: bold;
 
-  &.color1
-    .pieceCount
-      color $blue-dark
-    .specialPiece
-      color $orange-dark
-    .direction
-      color $blue-dark
-    .distribution
-      color $green-dark
-    .wallSmash
-      color $orange-dark
-    .evaluation
-      color $orange-dark
+  .q-chip {
+    .pieceCount {
+      color: $blue-dark;
+    }
+    .specialPiece {
+      color: $orange-dark;
+    }
+    .direction {
+      color: $blue-dark;
+    }
+    .distribution {
+      color: $green-dark;
+    }
+    .wallSmash {
+      color: $orange-dark;
+    }
+    .evaluation {
+      color: $orange-dark;
+    }
+    &.q-dark {
+      .pieceCount {
+        color: $blue-light;
+      }
+      .specialPiece {
+        color: $orange-light;
+      }
+      .direction {
+        color: $blue-light;
+      }
+      .distribution {
+        color: $green-light;
+      }
+      .wallSmash {
+        color: $orange-light;
+      }
+      .evaluation {
+        color: $orange-light;
+      }
+    }
 
-  &.color2
-    .pieceCount
-      color $blue-light
-    .specialPiece
-      color $orange-light
-    .direction
-      color $blue-light
-    .distribution
-      color $green-light
-    .wallSmash
-      color $orange-light
-    .evaluation
-      color $orange-light
-
-  .q-chip--outline &
-    &.color1, &.color2
-      .pieceCount
-        color $blue-med
-      .specialPiece
-        color $orange-med
-      .direction
-        color $blue-med
-      .distribution
-        color $green-med
-      .wallSmash
-        color $orange-med
-      .evaluation
-        color $orange-med
+    &.q-chip--outline {
+      .pieceCount {
+        color: $blue-dark;
+      }
+      .specialPiece {
+        color: $orange-dark;
+      }
+      .direction {
+        color: $blue-dark;
+      }
+      .distribution {
+        color: $green-dark;
+      }
+      .wallSmash {
+        color: $orange-dark;
+      }
+      .evaluation {
+        color: $orange-dark;
+      }
+      body.panelDark & {
+        .pieceCount {
+          color: $blue-light;
+        }
+        .specialPiece {
+          color: $orange-light;
+        }
+        .direction {
+          color: $blue-light;
+        }
+        .distribution {
+          color: $green-light;
+        }
+        .wallSmash {
+          color: $orange-light;
+        }
+        .evaluation {
+          color: $orange-light;
+        }
+      }
+    }
+  }
+}
 </style>

@@ -6,17 +6,12 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout
-      view="hhh lpr fff"
-      class="bg-secondary"
-      :style="{ height }"
-      container
-    >
-      <q-header class="bg-secondary" :reveal="$q.screen.height <= 400" elevated>
+    <q-layout view="hhh lpr fff" class="bg-ui" :style="{ height }" container>
+      <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>
 
-      <q-footer class="bg-secondary" elevated>
+      <q-footer class="bg-accent" elevated>
         <slot name="footer" />
       </q-footer>
 
@@ -63,8 +58,10 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.large-dialog
-  .q-layout-container
-    transition height $generic-hover-transition
+<style lang="scss">
+.large-dialog {
+  .q-layout-container {
+    transition: height $generic-hover-transition;
+  }
+}
 </style>

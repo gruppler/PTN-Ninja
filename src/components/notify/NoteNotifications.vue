@@ -1,5 +1,5 @@
 <template>
-  <Notifications v-if="show" :notifications="notifications" color="accent" />
+  <Notifications v-if="show" :notifications="notifications" color="primary" />
 </template>
 
 <script>
@@ -33,6 +33,10 @@ export default {
       return notes.map((note) => ({
         message: note.message,
         classes: "note",
+        color: "primary",
+        textColor: this.$store.state.theme.primaryDark
+          ? "textLight"
+          : "textDark",
       }));
     },
   },

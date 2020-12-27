@@ -7,7 +7,6 @@
     :max="maxPosition"
     :value="position"
     @input="scrub"
-    color="accent"
     :dark="false"
     dense
   />
@@ -47,9 +46,10 @@ export default {
 };
 </script>
 
-<style lang="stylus" scoped>
-.scrubber
-  position absolute
-  top -11px
-  z-index 1
+<style lang="scss" scoped>
+.scrubber {
+  position: absolute;
+  top: -11px;
+  z-index: 1;
+}
 </style>

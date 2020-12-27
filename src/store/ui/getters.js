@@ -1,7 +1,23 @@
+import { compressToEncodedURIComponent } from "lz-string";
+import { cloneDeep, isString, omit } from "lodash";
+import { THEMES, boardOnly } from "../../themes";
 import { i18n } from "../../boot/i18n";
 
-import { compressToEncodedURIComponent } from "lz-string";
-import { isArray, omit } from "lodash";
+THEMES.forEach((theme) => {
+  theme.name = i18n.t("theme." + theme.id);
+});
+Object.freeze(THEMES);
+
+export const themes = (state) => {
+  return [...THEMES, ...state.themes];
+};
+
+export const theme = (state, getters) => (id) => {
+  if (!id) {
+    id = state.theme;
+  }
+  return getters.themes.find((theme) => theme.id === id);
+};
 
 const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
@@ -22,20 +38,28 @@ export const uniqueName = (state) => (name, ignoreFirst = false) => {
   return name;
 };
 
-export const playerIcon = () => (player) => {
+export const playerIcon = (state) => (player, isPrivate = false) => {
+  let result = "";
   switch (player) {
     case 1:
-      return "player1";
+      result = isPrivate ? "player1_private" : "player1";
+      break;
     case 2:
-      return "player2";
+      result = isPrivate ? "player2_private" : "player2";
+      break;
     case 0:
-      return "spectator";
+      result = isPrivate ? "spectator_private" : "spectator";
+      break;
     case "random":
     case "tie":
-      return "players";
-    default:
-      return "";
+      result = isPrivate ? "players_private" : "players";
   }
+  if (!state.theme.isDark) {
+    result = result.startsWith("player1")
+      ? result.replace("1", "2")
+      : result.replace("2", "1");
+  }
+  return result;
 };
 
 const urlEncode = (url) => {
@@ -55,7 +79,7 @@ export const png_filename = (state) => (game) => {
   );
 };
 
-export const png_url = (state) => (game) => {
+export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.state.tps];
 
   // UI toggles
@@ -94,13 +118,30 @@ export const png_url = (state) => (game) => {
   // Filename
   params.push("name=" + encodeURIComponent(png_filename(state)(game)));
 
+  // Theme
+  if (state.pngConfig.theme) {
+    let theme = state.pngConfig.theme;
+    if (isString(theme)) {
+      theme = getters.theme(theme);
+    }
+    if (theme) {
+      if (theme.isBuiltIn) {
+        theme = theme.id;
+      } else {
+        theme = JSON.stringify(boardOnly(theme));
+      }
+      params.push("theme=" + encodeURIComponent(theme));
+    }
+  }
+
   return PNG_URL + "?" + params.join("&");
 };
 
-export const url = (state) => (game, options = {}) => {
+export const url = (state, getters) => (game, options = {}) => {
   if (!game) {
     return "";
   }
+  options = cloneDeep(options);
 
   const origin = location.origin + "/";
   let ptn =
@@ -138,6 +179,20 @@ export const url = (state) => (game, options = {}) => {
   }
 
   if (options.ui) {
+    if (options.ui.theme) {
+      let theme = options.ui.theme;
+      if (isString(theme)) {
+        theme = getters.theme(theme);
+      }
+      if (theme) {
+        if (theme.isBuiltIn) {
+          theme = theme.id;
+        } else {
+          theme = JSON.stringify(theme);
+        }
+        options.ui.theme = compressToEncodedURIComponent(theme);
+      }
+    }
     Object.keys(options.ui).forEach((key) => {
       const value = options.ui[key];
       if (key in state.defaults && value !== state.defaults[key]) {
@@ -154,11 +209,4 @@ export const url = (state) => (game, options = {}) => {
         .join("&");
   }
   return url;
-};
-
-export const sharableFiles = (state) => (files) => {
-  if (!isArray(files)) {
-    files = [files];
-  }
-  return Object.freeze(files);
 };

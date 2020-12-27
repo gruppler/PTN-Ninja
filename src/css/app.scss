@@ -1,0 +1,327 @@
+// app global css
+
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 300;
+  src: url('./fonts/Source+Code+Pro_300_normal.woff');
+}
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./fonts/Source+Code+Pro_400_normal.woff');
+}
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 600;
+  src: url('./fonts/Source+Code+Pro_600_normal.woff');
+}
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./fonts/Source+Code+Pro_700_normal.woff');
+}
+
+.text-textLight {
+  color: $textLight !important;
+  color: var(--q-color-textLight) !important;
+}
+.bg-textLight {
+  background: $textLight !important;
+  background: var(--q-color-textLight) !important;
+}
+.text-textDark {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+}
+.bg-textDark {
+  background: $textDark !important;
+  background: var(--q-color-textDark) !important;
+}
+.text-ui {
+  color: $ui !important;
+  color: var(--q-color-ui) !important;
+}
+.bg-ui {
+  background: $ui !important;
+  background: var(--q-color-ui) !important;
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.isDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.bg-primary {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.primaryDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.bg-accent {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.accentDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.text-panel {
+  color: $panel !important;
+  color: var(--q-color-panel) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+}
+.bg-panel {
+  background: $panel !important;
+  background: var(--q-color-panel) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.panelDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+.text-player1 {
+  color: $player1 !important;
+  color: var(--q-color-player1) !important;
+}
+.bg-player1 {
+  background: $player1;
+  background: var(--q-color-player1) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.player1Dark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+.text-player2 {
+  color: $player2;
+  color: var(--q-color-player2) !important;
+}
+.bg-player2 {
+  background: $player2;
+  background: var(--q-color-player2) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.player2Dark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+
+.q-dark {
+  background: $accent;
+  background: var(--q-color-accent);
+}
+
+.q-card, .q-card--dark,
+.q-list, .q-list--dark,
+.q-tab-panels, .q-tab-panels--dark {
+  background: $ui;
+  background: var(--q-color-ui);
+}
+
+::selection {
+  background: $primary;
+  background: var(--q-color-primary);
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.primaryDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+
+kbd {
+  font-family: 'Source Code Pro';
+  display: inline-block;
+  padding: .17em .5em;
+  margin: .1em 0;
+  text-decoration: none;
+  cursor: default;
+  border-radius: .3em;
+  background: $highlight;
+  position: relative;
+  + kbd {
+    margin-left: .5em;
+  }
+}
+
+.absolute-fit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.highlight {
+  background-color: $highlight;
+}
+
+.dim {
+  background-color: $dim;
+}
+
+.hover-info{
+  $pad: 5px;
+  padding: $pad;
+  margin: -$pad;
+  border-radius: 1em;
+  background-color: rgba($highlight, .09);
+}
+
+.fullwidth-padded-md{
+  padding-left: $space-base;
+  padding-right: $space-base;
+  margin-left: -$space-base;
+  margin-right: -$space-base;
+}
+
+.ptn {
+  font-size: 18px;
+  line-height: 1.5em;
+}
+
+.board-move-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.q-dialog {
+  .q-expansion-item .q-list {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+.q-field__append {
+  align-self: flex-end;
+}
+.q-message-text-content {
+  white-space: pre-wrap;
+}
+.q-menu {
+  user-select: none;
+}
+.q-notifications__list--top {
+  top: $toolbar-min-height;
+  z-index: 5000;
+}
+
+.q-notifications__list--bottom {
+  bottom: 58px;
+}
+
+.q-date--dark, .q-time--dark {
+  background: $ui;
+  background: var(--q-color-ui);
+}
+
+.q-notification {
+  transition: transform $generic-hover-transition,
+    opacity $generic-hover-transition;
+  @media (min-width: $breakpoint-sm-min) {
+    & {
+      max-width: 45vw;
+    }
+  }
+  &.note {
+    white-space: pre-line;
+    .q-notification__message {
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+  }
+}
+
+.q-slider__pin-value-marker-text {
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.primaryDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+
+.q-expansion-item--expanded > .q-expansion-item__container > .q-item {
+  color: $primary;
+  color: var(--q-color-primary);
+}
+
+.footer-toolbar {
+  min-height: 58px;
+  .q-btn:not(.q-btn--round) {
+    border-radius: 0;
+  }
+}
+
+.dimmed-btn {
+  opacity: .15;
+  @media (hover) {
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+@media (pointer: fine) {
+  ::-webkit-scrollbar-corner {
+    background: $ui;
+    background: var(--q-color-ui);
+  }
+
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 0;
+    box-shadow: none;
+    min-height: 40px;
+    background: $accent;
+    background: var(--q-color-accent);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: $ui;
+    background: var(--q-color-ui);
+  }
+
+  .q-drawer__content .scroll {
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      border: 0;
+      box-shadow: none;
+      min-height: 40px;
+      background: $separator-color;
+      .body--dark & {
+        background: $separator-dark-color;
+      }
+    }
+  }
+
+  .q-menu.scroll {
+    &::-webkit-scrollbar-track {
+      background: $accent;
+      background: var(--q-color-accent);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $ui;
+      background: var(--q-color-ui);
+    }
+  }
+}

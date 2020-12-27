@@ -3,8 +3,8 @@
     <template v-slot:header>
       <q-tabs
         v-model="section"
-        active-color="accent"
-        indicator-color="accent"
+        active-color="primary"
+        indicator-color="primary"
         align="justify"
       >
         <q-tab name="about" icon="info" :label="$t('About')" />
@@ -16,7 +16,6 @@
           v-show="section === 'hotkeys'"
           v-model="filter"
           class="col-grow"
-          color="accent"
           clearable
           filled
           square
@@ -30,7 +29,7 @@
     </template>
 
     <div class="help">
-      <q-tab-panels v-model="section" class="bg-secondary col-grow" animated>
+      <q-tab-panels v-model="section" animated>
         <q-tab-panel name="about">
           <q-markdown :src="about" no-heading-anchor-links />
         </q-tab-panel>
@@ -51,7 +50,7 @@
     <template v-slot:footer>
       <q-separator />
       <q-card-actions align="right">
-        <q-btn :label="$t('Close')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
     </template>
   </large-dialog>
@@ -110,23 +109,31 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.help
-  h6
-    margin-top 0
-    margin-bottom 1em
-    ~ h6
-      margin-top 1.5em
+<style lang="scss">
+.help {
+  h6 {
+    margin-top: 0;
+    margin-bottom: 1em;
+    ~ h6 {
+      margin-top: 1.5em;
+    }
+  }
 
-.body--dark .q-markdown
-  .q-markdown--link
-    color $accent
-    border-bottom none
-    text-decoration underline
-    &.q-markdown--link-external:after
-      content "\F3CC"
-      font-family "Material Design Icons"
+  .q-markdown {
+    .q-markdown--link {
+      color: $primary;
+      color: var(--q-color-primary);
+      border-bottom: none;
+      text-decoration: underline;
+      &.q-markdown--link-external:after {
+        content: "\F03CC";
+        font-family: "Material Design Icons";
+      }
 
-    &:hover
-      color: lighten($accent, 10%)
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
 </style>

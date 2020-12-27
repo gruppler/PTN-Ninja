@@ -35,16 +35,20 @@ export default {
         if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
           // Tak or Tinue
           alerts.push({
-            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak"),
+            message:
+              this.$t(ply.evaluation.tinue ? "Tinue" : "Tak") +
+              ply.evaluation.text.replace(/[^?!]/g, ""),
             player: ply.player,
           });
         }
       }
       return alerts.map((alert) => ({
         message: alert.message,
-        color: alert.player === 1 ? "blue-grey-2" : "blue-grey-10",
+        color: "player" + alert.player,
         icon: this.$store.getters.playerIcon(alert.player || "tie"),
-        textColor: alert.player === 1 ? "grey-10" : "grey-2",
+        textColor: this.$store.state.theme[`player${alert.player}Dark`]
+          ? "textLight"
+          : "textDark",
       }));
     },
   },

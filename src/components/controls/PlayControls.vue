@@ -1,5 +1,5 @@
 <template>
-  <div class="full-width justify-center">
+  <div class="play-controls full-width justify-center">
     <div class="row no-wrap justify-around items-center">
       <q-btn
         @click="deletePly"
@@ -10,6 +10,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="!game.state.ply || plyInProgress"
         icon="backspace"
@@ -20,6 +21,7 @@
         v-shortkey="hotkeys.first"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
@@ -34,6 +36,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
@@ -44,8 +47,8 @@
         v-shortkey="hotkeys.playpause"
         round
         :ripple="false"
-        color="accent"
-        text-color="grey-10"
+        color="primary"
+        :text-color="primaryFG"
         :disable="!game.state.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
       />
@@ -59,6 +62,7 @@
         }"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
@@ -69,6 +73,7 @@
         v-shortkey="hotkeys.last"
         round
         flat
+        :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
@@ -80,7 +85,7 @@
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
-        :color="hasBranches ? 'accent' : ''"
+        :color="hasBranches ? 'primary' : fg"
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
@@ -131,6 +136,12 @@ export default {
     };
   },
   computed: {
+    fg() {
+      return this.$store.state.theme.isDark ? "textLight" : "textDark";
+    },
+    primaryFG() {
+      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
+    },
     isFirst() {
       return !this.game.state.prevPly && !this.game.state.plyIsDone;
     },
@@ -341,12 +352,15 @@ export default {
 };
 </script>
 
-<style lang="stylus" scoped>
-.q-btn.disabled {
-  opacity: 0.3 !important;
-}
+<style lang="scss">
+.play-controls {
+  .q-btn.disabled {
+    opacity: 0.3 !important;
+  }
 
-.row
-  max-width 500px
-  margin 0 auto
+  .row {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
 </style>

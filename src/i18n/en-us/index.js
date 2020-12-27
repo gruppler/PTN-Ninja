@@ -4,6 +4,7 @@ export default {
 
   About: "About",
   Action: "Action",
+  Advanced: "Advanced",
   "Animate Board": "Animate Board",
   "Axis Labels": "Axis Labels",
   Backward: "Backward",
@@ -11,6 +12,7 @@ export default {
   Beginning: "Beginning",
   Black: "Black",
   Board: "Board",
+  "Board Style": "Board Style",
   "2D Board": "2D Board",
   "3D Board": "3D Board",
   BPM: "BPM", // Beats Per Minute
@@ -18,10 +20,13 @@ export default {
   Caps: "Caps",
   Caps1: "Caps 1",
   Caps2: "Caps 2",
+  Changelog: "Changelog",
   Chat: "Chat",
+  Checker: "Checker",
   Clear: "Clear",
   Clock: "Clock",
   Close: "Close",
+  Colors: "Colors",
   "Coming soon": "Coming soon!",
   Confirm: "Confirm",
   Copy: "Copy",
@@ -60,6 +65,7 @@ export default {
   Help: "Help",
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
+  Import: "Import",
   "Player Names": "Player Names",
   Key: "Key",
   "Last Branch": "Last Branch",
@@ -98,6 +104,9 @@ export default {
   "Previous Branch": "Previous Branch",
   "Previous Branch End": "Previous Branch End",
   "Previous Game": "Previous Game",
+  Private: "Private",
+  "Private Game": "Private Game",
+  "PNG Image": "PNG Image",
   PTN: "PTN",
   "PTN File": "PTN File",
   "PTN Text": "PTN Text",
@@ -111,6 +120,7 @@ export default {
   Result: "Result",
   "Road Connections": "Road Connections",
   Round: "Round",
+  Save: "Save",
   "Scrub Bar": "Scrub Bar",
   "Select Branch": "Select Branch",
   Share: "Share",
@@ -124,9 +134,13 @@ export default {
   "Show PTN": "Show PTN",
   Site: "Site",
   Size: "Size",
+  Spectate: "Spectate",
+  Spectator: "Spectator",
+  "Stone Border Width": "Stone Border Width",
   "Switch Player": "Switch Player",
   TPS: "TPS", // Tak Positional System
   Tak: "Tak",
+  Theme: "Theme",
   Time: "Time",
   Tinue: "Tinuë",
   Trim: "Trim",
@@ -155,11 +169,56 @@ export default {
     tie: "It's a tie",
   },
 
+  theme: {
+    // Names
+    classic: "Classic",
+    festive: "Festive",
+    fresh: "Fresh",
+    neon: "Neon",
+    retro: "Retro",
+    stealth: "Stealth",
+    zen: "Zen",
+
+    // Board Styles
+    blank: "Blank",
+    diamonds1: "Diamonds Small",
+    diamonds2: "Diamonds Medium",
+    diamonds3: "Diamonds Large",
+    grid1: "Grid Small",
+    grid2: "Grid Medium",
+    grid3: "Grid Large",
+
+    // Colors
+    primary: "Primary",
+    secondary: "Background",
+    ui: "UI",
+    accent: "UI Accent",
+    panel: "Panel Background",
+    board1: "Board Light",
+    board2: "Board Dark",
+    board3: "Board Unplayed",
+    player1: "Player 1",
+    player1road: "Player 1 Road",
+    player1flat: "Player 1 Flat Stone",
+    player1special: "Player 1 Special Stone",
+    player1border: "Player 1 Stone Border",
+    player2: "Player 2",
+    player2road: "Player 2 Road",
+    player2flat: "Player 2 Flat Stone",
+    player2special: "Player 2 Special Stone",
+    player2border: "Player 2 Stone Border",
+    textLight: "Light Text",
+    textDark: "Dark Text",
+    umbra: "Shadow",
+  },
+
   confirm: {
+    abandonChanges: "Abandon unsaved changes?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
     resetEmbed: "Reset embed settings to default?",
     resetForm: "Reset the form?",
     resetPNG: "Reset PNG settings to default?",
+    resetTheme: "Reset the theme?",
   },
 
   error: {
@@ -201,9 +260,14 @@ export default {
 
   success: {
     copied: "Copied!",
-    updateAvailable: "A new version is available",
     closedMultipleGames: "Closed 1 game | Closed {count} games",
     replacedExistingGame: "Replaced existing game of the same name",
+    themeRemoved: 'Removed theme "{name}"',
+    updateAvailable: "A new version is available",
+  },
+
+  hint: {
+    pasteThemeCode: "Paste theme code here...",
   },
 
   hotkeys: {

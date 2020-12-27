@@ -17,11 +17,11 @@
         <div class="col-grow error-message q-px-sm">
           {{ editor ? editor.error : "" }}
         </div>
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
           @click="editor.save()"
-          color="accent"
+          color="primary"
           :disabled="editor && !!editor.error"
           flat
         />
@@ -64,19 +64,25 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ptn-editor-dialog
-  .q-layout
-    > .absolute-full > .scroll
-      height 100%
-    &, .q-page-container
-      position absolute
-      top 0
-      bottom 0
-      left 0
-      right 0
+<style lang="scss">
+.ptn-editor-dialog {
+  .q-layout {
+    > .absolute-full > .scroll {
+      height: 100%;
+    }
+    &,
+    .q-page-container {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+  }
 
-  .error-message
-    color $negative
-    font-weight bold
+  .error-message {
+    color: $negative;
+    font-weight: bold;
+  }
+}
 </style>
