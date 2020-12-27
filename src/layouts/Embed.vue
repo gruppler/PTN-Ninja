@@ -305,13 +305,16 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.q-drawer
-  background rgba($blue-grey-5, 0.75)
+<style lang="scss">
+.q-drawer {
+  background: rgba($blue-grey-5, 0.75);
+}
 
-#title
-  @media (max-width: $breakpoint-xs-max)
-    font-size 1.2em
-    white-space normal
-    line-height 1.25em
+@media (max-width: $breakpoint-xs-max) {
+  #title {
+    font-size: 1.2em;
+    white-space: normal;
+    line-height: 1.25em;
+  }
+}
 </style>

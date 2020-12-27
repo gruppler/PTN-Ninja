@@ -1,5 +1,5 @@
 <template>
-  <div class="full-width justify-center">
+  <div class="play-controls full-width justify-center">
     <div class="row no-wrap justify-around items-center">
       <q-btn
         @click="deletePly"
@@ -341,12 +341,15 @@ export default {
 };
 </script>
 
-<style lang="stylus" scoped>
-.q-btn.disabled {
-  opacity: 0.3 !important;
-}
+<style lang="scss">
+.play-controls {
+  .q-btn.disabled {
+    opacity: 0.3 !important;
+  }
 
-.row
-  max-width 500px
-  margin 0 auto
+  .row {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
 </style>

@@ -88,11 +88,14 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.eval-buttons
-  .q-btn.active
-    background-color $orange-light
-    color $gray-dark
-    &.double
-      background-color $red-light
+<style lang="scss">
+.eval-buttons {
+  .q-btn.active {
+    background-color: $orange-light;
+    color: $grey-10;
+    &.double {
+      background-color: $red-light;
+    }
+  }
+}
 </style>

@@ -63,8 +63,10 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.large-dialog
-  .q-layout-container
-    transition height $generic-hover-transition
+<style lang="scss">
+.large-dialog {
+  .q-layout-container {
+    transition: height $generic-hover-transition;
+  }
+}
 </style>

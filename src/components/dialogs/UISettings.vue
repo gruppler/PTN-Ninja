@@ -274,11 +274,14 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ui-settings
-  .q-list .q-list
-    min-height 10rem
-    max-height 50vh
-    @media (min-width: $breakpoint-sm-min)
-      max-height calc(100vh - 264px)
+<style lang="scss">
+.ui-settings {
+  .q-list .q-list {
+    min-height: 10rem;
+    max-height: 50vh;
+    @media (min-width: $breakpoint-sm-min) {
+      max-height: calc(100vh - 264px);
+    }
+  }
+}
 </style>

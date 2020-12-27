@@ -64,19 +64,25 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ptn-editor-dialog
-  .q-layout
-    > .absolute-full > .scroll
-      height 100%
-    &, .q-page-container
-      position absolute
-      top 0
-      bottom 0
-      left 0
-      right 0
+<style lang="scss">
+.ptn-editor-dialog {
+  .q-layout {
+    > .absolute-full > .scroll {
+      height: 100%;
+    }
+    &,
+    .q-page-container {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+  }
 
-  .error-message
-    color $negative
-    font-weight bold
+  .error-message {
+    color: $negative;
+    font-weight: bold;
+  }
+}
 </style>

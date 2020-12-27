@@ -1,0 +1,34 @@
+$primary: #607d8b;
+$secondary: #263238;
+$accent: #8bc34a;
+
+$positive: #8bc34a;
+$negative: #f44336;
+$info: #2196f3;
+$warning: #ffc107;
+
+$red-light: #ef5451;
+$red-dark: #e53a35;
+$red-med: desaturate(darken($red-light, 20%), 50%);
+$orange-light: #faa629;
+$orange-dark: #f47c20;
+$orange-med: lighten($orange-light, 15%);
+$green-light: #9ccc65;
+$green-dark: #378e43;
+$green-med: saturate(lighten($green-light, 15%), 20%);
+$blue-light: #36c2d6;
+$blue-dark: #1b87c9;
+$blue-med: saturate(lighten($blue-light, 20%), 20%);
+$text-light: #cfd8dc;
+$text-dark: #263238;
+$player1: #cfd8dc;
+$player2: #263238;
+$highlight: rgba(#fff, 0.1);
+$dim: rgba(#000, 0.1);
+
+$time: 0.3s;
+$half-time: $time / 2;
+$one-third-time: $time / 3;
+$two-thirds-time: $time * 2 / 3;
+$easing: cubic-bezier(0.25, 0.8, 0.5, 1);
+$easing-reverse: cubic-bezier(0.5, 0, 0.75, 0.2);

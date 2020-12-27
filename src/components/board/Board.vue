@@ -364,131 +364,180 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-$turn-indicator-height = 0.5em
-$axis-size = 1.5em
-$radius = 1.2vmin
+<style lang="scss">
+$turn-indicator-height: 0.5em;
+$axis-size: 1.5em;
+$radius: 1.2vmin;
 
-.board-wrapper
-  &.board-3D
-    perspective 150vmin
-    perspective-origin center
-    .board-container
-      transform-style preserve-3d
-    .board, .board-row, .squares, .squares > div
-      transform-style preserve-3d
+.board-wrapper {
+  &.board-3D {
+    perspective: 150vmin;
+    perspective-origin: center;
+    .board-container {
+      transform-style: preserve-3d;
+    }
+    .board,
+    .board-row,
+    .squares,
+    .squares > div {
+      transform-style: preserve-3d;
+    }
+  }
+}
 
-.board-container
-  width 100%
-  will-change width, font-size
-  text-align center
-  z-index 0
+.board-container {
+  width: 100%;
+  will-change: width, font-size;
+  text-align: center;
+  z-index: 0;
 
-  &.no-animations
-    .piece, .stone, .road > div, .player-names > div, .turn-indicator
-      transition none !important
+  &.no-animations {
+    .piece,
+    .stone,
+    .road > div,
+    .player-names > div,
+    .turn-indicator {
+      transition: none !important;
+    }
+  }
+}
 
-.player-names, .x-axis
-  width 100%
-  will-change width
-  .board-container.axis-labels &
-    margin-left $axis-size
-    width "calc(100% - %s)" % $axis-size
-  for i in (1..8)
-    $size = 100 * i / (i + 1.75)%
-    .board-container.show-unplayed-pieces.size-{i} &
-      width $size
-    .board-container.axis-labels.show-unplayed-pieces.size-{i} &
-      width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
+.player-names,
+.x-axis {
+  width: 100%;
+  will-change: width;
+  .board-container.axis-labels & {
+    margin-left: $axis-size;
+    width: calc(100% - #{$axis-size});
+  }
+  @for $i from 1 through 8 {
+    $size: 100% * $i / ($i + 1.75);
+    .board-container.show-unplayed-pieces.size-#{$i} & {
+      width: $size;
+    }
+    .board-container.axis-labels.show-unplayed-pieces.size-#{$i} & {
+      width: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
+    }
+  }
+}
 
-.player-names
-  text-align left
-  height 2.25em
-  padding-bottom $turn-indicator-height
-  line-height @height - @padding-bottom
-  .player1, .player2
-    width 50%
-    will-change width
-    transition width $generic-hover-transition
-  .player1 .row
-    color $gray-dark
-    border-top-left-radius $radius
-    overflow hidden
-    background $gray-light
-  .player2 .row
-    color $gray-light
-    border-top-right-radius $radius
-    background $gray-dark
-  .player1 .name, .player2 .flats
-    flex-grow 1
-  .flats
-    flex-shrink 0
+.player-names {
+  text-align: left;
+  height: 2.25em;
+  padding-bottom: $turn-indicator-height;
+  line-height: 2.25em - $turn-indicator-height;
+  .player1,
+  .player2 {
+    width: 50%;
+    will-change: width;
+    transition: width $generic-hover-transition;
+  }
+  .player1 .row {
+    color: $player2;
+    border-top-left-radius: $radius;
+    overflow: hidden;
+    background: $player1;
+  }
+  .player2 .row {
+    color: $player1;
+    border-top-right-radius: $radius;
+    background: $player2;
+  }
+  .player1 .name,
+  .player2 .flats {
+    flex-grow: 1;
+  }
+  .flats {
+    flex-shrink: 0;
+  }
+}
 
-.turn-indicator
-  opacity 0
-  width 100%
-  height $turn-indicator-height
-  position absolute
-  bottom - $turn-indicator-height
-  background $accent
-  will-change opacity
-  transition opacity $generic-hover-transition
+.turn-indicator {
+  opacity: 0;
+  width: 100%;
+  height: $turn-indicator-height;
+  position: absolute;
+  bottom: -$turn-indicator-height;
+  background: $accent;
+  will-change: opacity;
+  transition: opacity $generic-hover-transition;
   .board-container.turn-1 .player1 &,
-  .board-container.turn-2 .player2 &
-    opacity 1
+  .board-container.turn-2 .player2 & {
+    opacity: 1;
+  }
+}
 
-.x-axis, .y-axis
-  color $gray-light
-  justify-content space-around
-  line-height 1em
-.x-axis
-  align-items flex-end
-  height $axis-size
-  .board-container:not(.axis-labels) &
-    height 0
-    opacity 0
-    transform translateY(-100%)
+.x-axis,
+.y-axis {
+  color: $player1;
+  justify-content: space-around;
+  line-height: 1em;
+}
+.x-axis {
+  align-items: flex-end;
+  height: $axis-size;
+  .board-container:not(.axis-labels) & {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
 
-.y-axis
-  align-items flex-start
-  width $axis-size
+.y-axis {
+  align-items: flex-start;
+  width: $axis-size;
+}
 
-.board
-  background darken($blue-grey-4, 2%)
-  z-index 1
-  width 100%
-  padding-bottom 100%
-  will-change width, padding-bottom
-  .board-container.axis-labels &
-    width "calc(100% - %s)" % $axis-size
-    padding-bottom "calc(100% - %s)" % $axis-size
-  for i in (1..8)
-    $size = 100 * i / (i + 1.75)%
-    .board-container.show-unplayed-pieces.size-{i} &
-      width $size
-      padding-bottom $size
-    .board-container.axis-labels.show-unplayed-pieces.size-{i} &
-      width "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
-      padding-bottom "calc(%s - %s)" % ($size $axis-size * i / (i + 1.75))
+.board {
+  background: darken($blue-grey-4, 2%);
+  z-index: 1;
+  width: 100%;
+  padding-bottom: 100%;
+  will-change: width, padding-bottom;
+  .board-container.axis-labels & {
+    width: calc(100% - #{$axis-size});
+    padding-bottom: calc(100% - #{$axis-size});
+  }
+  @for $i from 1 through 8 {
+    $size: 100% * $i / ($i + 1.75);
+    .board-container.show-unplayed-pieces.size-#{$i} & {
+      width: $size;
+      padding-bottom: $size;
+    }
+    .board-container.axis-labels.show-unplayed-pieces.size-#{$i} & {
+      width: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
+      padding-bottom: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
+    }
 
-    .board-container.size-{i} &
-      .square, .piece
-        $size = 100% / i
-        width $size
-        height $size
-  .pieces
-    transform-style preserve-3d
+    .board-container.size-#{$i} & {
+      .square,
+      .piece {
+        $size: 100% / $i;
+        width: $size;
+        height: $size;
+      }
+    }
+  }
+  .pieces {
+    transform-style: preserve-3d;
+  }
+}
 
-.unplayed-bg
-  border-radius 0 $radius $radius 0
-  background-color $blue-grey-5
-  will-change width
-  .board-container:not(.show-unplayed-pieces) &
-    width 0 !important
-  for i in (1..8)
-    $size = 175% / (i + 1.75)
-    .board-container.size-{i} &
-      width $size
-    .board-container.axis-labels.size-{i} &
-      width 'calc(%s - %s)' % ($size $axis-size * 1.75 / (i + 1.75))
+.unplayed-bg {
+  border-radius: 0 $radius $radius 0;
+  background-color: $blue-grey-5;
+  will-change: width;
+  .board-container:not(.show-unplayed-pieces) & {
+    width: 0 !important;
+  }
+  @for $i from 1 through 8 {
+    $size: 175% / ($i + 1.75);
+    .board-container.size-#{$i} & {
+      width: $size;
+    }
+    .board-container.axis-labels.size-#{$i} & {
+      width: calc(#{$size} - #{$axis-size * 1.75 / ($i + 1.75)});
+    }
+  }
+}
 </style>

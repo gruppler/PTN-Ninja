@@ -755,21 +755,30 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-#left-drawer, #right-drawer
-  .q-drawer
-    background rgba($blue-grey-5, 0.75)
-    .q-drawer__content
-      overflow hidden
+<style lang="scss">
+#left-drawer,
+#right-drawer {
+  .q-drawer {
+    background: rgba($blue-grey-5, 0.75);
+    .q-drawer__content {
+      overflow: hidden;
+    }
+  }
+}
 
-#right-drawer
-  .q-tabs
-    height $toolbar-min-height
-  .q-tab-panel
-    padding 0
+#right-drawer {
+  .q-tabs {
+    height: $toolbar-min-height;
+  }
+  .q-tab-panel {
+    padding: 0;
+  }
+}
 
-.board-move-container
-  @media (max-width: $breakpoint-sm-max)
-    align-items flex-start
-    margin-right 84px
+.board-move-container {
+  @media (max-width: $breakpoint-sm-max) {
+    align-items: flex-start;
+    margin-right: 84px;
+  }
+}
 </style>

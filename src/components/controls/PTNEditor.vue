@@ -55,20 +55,25 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.ptn-editor
-  font-family 'Source Code Pro'
-  font-weight bold
-  background-color $highlight
+<style lang="scss">
+.ptn-editor {
+  font-family: "Source Code Pro";
+  font-weight: bold;
+  background-color: $highlight;
 
-  &.q-textarea
-    .q-field__native
-      resize none
-      padding 16px
-    .q-field__control
-      height 100%
-      padding 0
+  &.q-textarea {
+    .q-field__native {
+      resize: none;
+      padding: 16px;
+    }
+    .q-field__control {
+      height: 100%;
+      padding: 0;
+    }
+  }
 
-  .q-field__bottom
-    display none
+  .q-field__bottom {
+    display: none;
+  }
+}
 </style>

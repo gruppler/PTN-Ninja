@@ -39,9 +39,11 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.qr-canvas
-  canvas
-    display block
-    max-width 100vmin
+<style lang="scss">
+.qr-canvas {
+  canvas {
+    display: block;
+    max-width: 100vmin;
+  }
+}
 </style>

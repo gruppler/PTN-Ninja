@@ -110,23 +110,30 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.help
-  h6
-    margin-top 0
-    margin-bottom 1em
-    ~ h6
-      margin-top 1.5em
+<style lang="scss">
+.help {
+  h6 {
+    margin-top: 0;
+    margin-bottom: 1em;
+    ~ h6 {
+      margin-top: 1.5em;
+    }
+  }
+}
 
-.body--dark .q-markdown
-  .q-markdown--link
-    color $accent
-    border-bottom none
-    text-decoration underline
-    &.q-markdown--link-external:after
-      content "\F3CC"
-      font-family "Material Design Icons"
+.body--dark .q-markdown {
+  .q-markdown--link {
+    color: $accent;
+    border-bottom: none;
+    text-decoration: underline;
+    &.q-markdown--link-external:after {
+      content: "\F03CC";
+      font-family: "Material Design Icons";
+    }
 
-    &:hover
-      color: lighten($accent, 10%)
+    &:hover {
+      color: lighten($accent, 10%);
+    }
+  }
+}
 </style>

@@ -225,11 +225,14 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.chat
-  .notes
-    .scroll:before
-      content ""
-      display block
-      height 100%
+<style lang="scss">
+.chat {
+  .notes {
+    .scroll:before {
+      content: "";
+      display: block;
+      height: 100%;
+    }
+  }
+}
 </style>

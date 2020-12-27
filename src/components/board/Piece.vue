@@ -169,92 +169,117 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-.piece
-  position absolute
-  bottom 0
-  left 0
-  will-change transform, opacity
-  transition transform $generic-hover-transition,
-    opacity $generic-hover-transition
+<style lang="scss">
+.piece {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  will-change: transform, opacity;
+  transition: transform $generic-hover-transition,
+    opacity $generic-hover-transition;
 
-  .stone
-    position absolute
-    bottom 0
-    left 0
-    width 50%
-    height 50%
-    margin 25%
-    box-sizing border-box
-    border 1px solid transparent
-    border-radius 10%
-    will-change opacity, transform, width, height, left, border-radius, background-color, box-shadow
-    transition opacity $generic-hover-transition,
-      transform $generic-hover-transition,
-      width $generic-hover-transition,
-      height $generic-hover-transition,
-      left $generic-hover-transition,
+  .stone {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    height: 50%;
+    margin: 25%;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: 10%;
+    will-change: opacity, transform, width, height, left, border-radius,
+      background-color, box-shadow;
+    transition: opacity $generic-hover-transition,
+      transform $generic-hover-transition, width $generic-hover-transition,
+      height $generic-hover-transition, left $generic-hover-transition,
       border-radius $generic-hover-transition,
       background-color $generic-hover-transition,
-      box-shadow $generic-hover-transition
+      box-shadow $generic-hover-transition;
 
-    .board-container.piece-shadows &
-      box-shadow 0 0.2vmin 0.4vmin rgba(#000, 0.2)
-      &.p1
-        border-color rgba($blue-grey-7, 0.5)
-      &.p2
-        border-color rgba($blue-grey-10, 0.5)
-      &.firstSelected
-        box-shadow @box-shadow, 0 2.8vmin 1.5vmin $elevation-umbra
+    .board-container.piece-shadows & {
+      box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2);
+      &.p1 {
+        border-color: rgba($blue-grey-7, 0.5);
+      }
+      &.p2 {
+        border-color: rgba($blue-grey-10, 0.5);
+      }
+      &.firstSelected {
+        box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2),
+          0 2.8vmin 1.5vmin $elevation-umbra;
+      }
+    }
 
-    &.p1
-      background-color $blue-grey-2
-      border-color $blue-grey-7
-    &.p2
-      background-color $blue-grey-7
-      border-color $blue-grey-10
+    &.p1 {
+      background-color: $blue-grey-2;
+      border-color: $blue-grey-7;
+    }
+    &.p2 {
+      background-color: $blue-grey-7;
+      border-color: $blue-grey-10;
+    }
 
-    &.S
-      width 18.75%
-      left 15%
-      border-radius 27%/10%
+    &.S {
+      width: 18.75%;
+      left: 15%;
+      border-radius: 27%/10%;
 
-      &.p1
-        background-color $blue-grey-1
-        transform rotate(-45deg)
-        .board-container.piece-shadows &
-          box-shadow -1px 1px 2px rgba(#000, .3)
-          &.firstSelected
-            box-shadow @box-shadow, -1.8vmin 1.8vmin 1.5vmin $elevation-umbra
-      &.p2
-        background-color $blue-grey-8
-        transform rotate(45deg)
-        .board-container.piece-shadows &
-          box-shadow 1px 1px 2px rgba(#000, .3)
-          &.firstSelected
-            box-shadow @box-shadow, 1.8vmin 1.8vmin 1.5vmin $elevation-umbra
-    &.C
-      border-radius 50%
-      &.p1
-        background-color $blue-grey-1
-      &.p2
-        background-color $blue-grey-8
+      &.p1 {
+        background-color: $blue-grey-1;
+        transform: rotate(-45deg);
+        .board-container.piece-shadows & {
+          box-shadow: -1px 1px 2px rgba(#000, 0.3);
+          &.firstSelected {
+            box-shadow: -1px 1px 2px rgba(#000, 0.3),
+              -1.8vmin 1.8vmin 1.5vmin $elevation-umbra;
+          }
+        }
+      }
+      &.p2 {
+        background-color: $blue-grey-8;
+        transform: rotate(45deg);
+        .board-container.piece-shadows & {
+          box-shadow: 1px 1px 2px rgba(#000, 0.3);
+          &.firstSelected {
+            box-shadow: 1px 1px 2px rgba(#000, 0.3),
+              1.8vmin 1.8vmin 1.5vmin $elevation-umbra;
+          }
+        }
+      }
+    }
+    &.C {
+      border-radius: 50%;
+      &.p1 {
+        background-color: $blue-grey-1;
+      }
+      &.p2 {
+        background-color: $blue-grey-8;
+      }
+    }
 
-    .board-wrapper:not(.board-3D) &.immovable
-      bottom 0
-      left 51%
-      width 15%
-      height 8%
-      border-radius 15%/30%
+    .board-wrapper:not(.board-3D) &.immovable {
+      bottom: 0;
+      left: 51%;
+      width: 15%;
+      height: 8%;
+      border-radius: 15%/30%;
+    }
 
-    .board-wrapper.board-3D &.immovable
-      opacity 0.35
+    .board-wrapper.board-3D &.immovable {
+      opacity: 0.35;
+    }
 
-    &.selectable
-      pointer-events all
-      cursor pointer
+    &.selectable {
+      pointer-events: all;
+      cursor: pointer;
+    }
 
-    &.unplayed
-      .board-container:not(.show-unplayed-pieces) &
-        opacity 0
+    &.unplayed {
+      .board-container:not(.show-unplayed-pieces) & {
+        opacity: 0;
+      }
+    }
+  }
+}
 </style>

@@ -9,7 +9,7 @@ $warning   = #ffc107
 
 $red-light = #ef5451
 $red-dark = #e53a35
-$red-med = saturate(lighten($red-light, 10%), 10%)
+$red-med = desaturate(darken($red-light, 20%), 50%)
 $orange-light = #faa629
 $orange-dark = #f47c20
 $orange-med = lighten($orange-light, 15%)
@@ -19,9 +19,10 @@ $green-med = saturate(lighten($green-light, 15%), 20%)
 $blue-light = #36c2d6
 $blue-dark = #1b87c9
 $blue-med = saturate(lighten($blue-light, 20%), 20%)
-$gray-light = $blue-grey-2
-$gray-dark = $blue-grey-10
-$gray-med = $blue-grey-8
+$text-light = $blue-grey-2
+$text-dark = $blue-grey-10
+$player1 = $blue-grey-2
+$player2 = $blue-grey-10
 $highlight = rgba(#fff, .1)
 
 $time = .3s
