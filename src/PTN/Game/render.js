@@ -263,6 +263,25 @@ export default function render(game, options = {}) {
   }
 
   // Square
+  const drawSquareHighlight = () => {
+    const half = squareSize / 2;
+    if (squareRadius >= half) {
+      ctx.beginPath();
+      ctx.arc(half, half, half, 0, 2 * Math.PI);
+      ctx.closePath();
+    } else {
+      roundRect(
+        ctx,
+        squareMargin,
+        squareMargin,
+        squareSize - squareMargin * 2,
+        squareSize - squareMargin * 2,
+        squareRadius
+      );
+    }
+    ctx.fill();
+  };
+
   const drawSquare = (square) => {
     const isDark = theme.boardChecker && !square.static.isLight;
     ctx.save();
@@ -277,24 +296,8 @@ export default function render(game, options = {}) {
     } else {
       ctx.fillStyle = theme.colors["board" + (isDark ? 1 : 2)];
       ctx.fillRect(0, 0, squareSize, squareSize);
-
       ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
-      const half = squareSize / 2;
-      if (squareRadius >= half) {
-        ctx.beginPath();
-        ctx.arc(half, half, half, 0, 2 * Math.PI);
-        ctx.closePath();
-      } else {
-        roundRect(
-          ctx,
-          squareMargin,
-          squareMargin,
-          squareSize - squareMargin * 2,
-          squareSize - squareMargin * 2,
-          squareRadius
-        );
-      }
-      ctx.fill();
+      drawSquareHighlight();
     }
 
     if (hlSquares.includes(square.static.coord)) {
@@ -302,7 +305,7 @@ export default function render(game, options = {}) {
         theme.colors.primary,
         square.static.coord === hlSquares[0] ? 0.75 : 0.4
       );
-      ctx.fill();
+      drawSquareHighlight();
     }
 
     if (options.showRoads && square.connected.length) {
@@ -319,7 +322,7 @@ export default function render(game, options = {}) {
         theme.colors[`player${square.color}road`],
         0.35
       );
-      ctx.fill();
+      drawSquareHighlight();
     }
 
     if (square.piece) {
