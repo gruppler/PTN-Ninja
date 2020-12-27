@@ -16,6 +16,9 @@ $player2road: #455a64;
 $player2flat: #546e7a;
 $player2special: #455a64;
 $player2border: #263238;
+$textLight: rgba(#fafafa, 0.8);
+$textDark: rgba(#212121, 0.8);
+$umbra: rgba(0, 0, 0, 0.2);
 
 $piece-border-width: 1px;
 
@@ -32,8 +35,6 @@ $green-light: #9ccc65;
 $green-dark: #378e43;
 $blue-light: #68c1cd;
 $blue-dark: #1b87c9;
-$fg-light: rgba(#fafafa, 0.8);
-$fg-dark: rgba(#212121, 0.8);
 $highlight: rgba(#fff, 0.1);
 $dim: rgba(#000, 0.1);
 

@@ -657,7 +657,7 @@ export default {
   },
   computed: {
     primaryFG() {
-      return this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark";
+      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
     },
     generatedName() {
       return generateName(this.tags, this.game);

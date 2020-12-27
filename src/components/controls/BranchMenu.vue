@@ -72,17 +72,23 @@ export default {
 .branch-menu .option-number {
   line-height: 1em;
   border-radius: $generic-border-radius;
-  background-color: $highlight;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  background-color: $dim;
+  body.panelDark & {
+    background-color: $highlight;
+  }
   body.panelDark:not(.panelMedium) & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
   &.selected {
     background-color: $primary;
     background-color: var(--q-color-primary);
-    color: $fg-dark;
+    color: var(--q-color-textDark);
     body.primaryDark & {
-      color: $fg-light;
+      color: $textLight;
+      color: var(--q-color-textLight);
     }
   }
 }

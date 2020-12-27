@@ -32,7 +32,7 @@ export default {
   components: { FullscreenToggle },
   computed: {
     fg() {
-      return this.$store.state.theme.secondaryDark ? "fg-light" : "fg-dark";
+      return this.$store.state.theme.secondaryDark ? "textLight" : "textDark";
     },
     board3D: {
       get() {

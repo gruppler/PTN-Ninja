@@ -147,6 +147,9 @@ export const boardOnly = (theme) => {
     "player2flat",
     "player2special",
     "player2border",
+    "textLight",
+    "textDark",
+    "umbra",
   ]);
   return theme;
 };
@@ -188,6 +191,9 @@ export const THEMES = [
       player2flat: "#546e7a",
       player2special: "#455a64",
       player2border: "#263238",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -214,6 +220,9 @@ export const THEMES = [
       player2flat: "#40654a",
       player2special: "#355c3f",
       player2border: "#15341d",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -240,6 +249,9 @@ export const THEMES = [
       player2flat: "#525252",
       player2special: "#474747",
       player2border: "#242424",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -266,6 +278,9 @@ export const THEMES = [
       player2flat: "#353336",
       player2special: "#29272a",
       player2border: "#9b3edeff",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -292,6 +307,9 @@ export const THEMES = [
       player2flat: "#424242",
       player2special: "#373737",
       player2border: "#646464",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -318,6 +336,9 @@ export const THEMES = [
       player2flat: "#262626",
       player2special: "#1a1a1a",
       player2border: "#4d4d4d",
+      textLight: "#fafafaaa",
+      textDark: "#212121cd",
+      umbra: "#00000033",
     },
   },
   {
@@ -344,6 +365,9 @@ export const THEMES = [
       player2flat: "#525252",
       player2special: "#474747",
       player2border: "#242424",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000055",
     },
   },
 ].map((theme) => computeMissing({ ...theme, isBuiltIn: true }));

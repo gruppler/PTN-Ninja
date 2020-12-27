@@ -34,7 +34,9 @@ export default {
         message: note.message,
         classes: "note",
         color: "primary",
-        textColor: this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark",
+        textColor: this.$store.state.theme.primaryDark
+          ? "textLight"
+          : "textDark",
       }));
     },
   },

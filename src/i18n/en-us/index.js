@@ -21,6 +21,7 @@ export default {
   Caps: "Caps",
   Caps1: "Caps 1",
   Caps2: "Caps 2",
+  Changelog: "Changelog",
   Chat: "Chat",
   Checker: "Checker",
   Clear: "Clear",
@@ -226,6 +227,9 @@ export default {
     player2flat: "Player 2 Flat Stone",
     player2special: "Player 2 Special Stone",
     player2border: "Player 2 Stone Border",
+    textLight: "Light Text",
+    textDark: "Dark Text",
+    umbra: "Shadow",
   },
 
   confirm: {

@@ -23,12 +23,6 @@ const defaults = {
   padding: true,
 };
 
-const colors = {
-  fgLight: "#fafafacd",
-  fgDark: "#212121cd",
-  pieceShadow: "rgba(0, 0, 0, 0.15)",
-};
-
 export default function render(game, options = {}) {
   let theme;
   options = cloneDeep(options);
@@ -145,7 +139,9 @@ export default function render(game, options = {}) {
     ctx.fill();
 
     // Flat Counts
-    ctx.fillStyle = theme.player1Dark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.player1Dark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     ctx.textBaseline = "middle";
     const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
@@ -175,7 +171,9 @@ export default function render(game, options = {}) {
       );
     }
 
-    ctx.fillStyle = theme.player2Dark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.player2Dark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     // Player 2 Name
     let name2 =
       options.player2 || (game.tags.player2 ? game.tags.player2.value : "");
@@ -216,7 +214,9 @@ export default function render(game, options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    ctx.fillStyle = theme.secondaryDark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.secondaryDark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < game.size; i++) {
@@ -371,7 +371,7 @@ export default function render(game, options = {}) {
     if (options.pieceShadows) {
       ctx.shadowBlur = shadowBlur;
       ctx.shadowOffsetY = shadowOffset;
-      ctx.shadowColor = colors.pieceShadow;
+      ctx.shadowColor = theme.colors.umbra;
     }
     ctx.strokeStyle = theme.colors[`player${piece.color}border`];
     ctx.lineWidth = strokeWidth;

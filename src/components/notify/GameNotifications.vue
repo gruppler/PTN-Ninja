@@ -47,8 +47,8 @@ export default {
         color: "player" + alert.player,
         icon: this.$store.getters.playerIcon(alert.player || "tie"),
         textColor: this.$store.state.theme[`player${alert.player}Dark`]
-          ? "fg-light"
-          : "fg-dark",
+          ? "textLight"
+          : "textDark",
       }));
     },
   },

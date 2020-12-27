@@ -157,9 +157,11 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $fg-dark;
+        color: $textDark;
+        color: var(--q-color-textDark);
         body.player1Dark & {
-          color: $fg-light;
+          color: $textLight;
+          color: var(--q-color-textLight);
         }
       }
     }
@@ -177,9 +179,11 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $fg-dark;
+        color: $textDark;
+        color: var(--q-color-textDark);
         body.player2Dark & {
-          color: $fg-light;
+          color: $textLight;
+          color: var(--q-color-textLight);
         }
       }
     }

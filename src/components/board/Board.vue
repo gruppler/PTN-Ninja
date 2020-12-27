@@ -437,22 +437,26 @@ $radius: 1.2vmin;
     transition: width $generic-hover-transition;
   }
   .player1 .row {
-    color: $fg-dark;
+    color: $textDark;
+    color: var(--q-color-textDark);
     border-top-left-radius: $radius;
     overflow: hidden;
     background: $player1;
     background: var(--q-color-player1);
     body.player1Dark & {
-      color: $fg-light;
+      color: $textLight;
+      color: var(--q-color-textLight);
     }
   }
   .player2 .row {
-    color: $fg-dark;
+    color: $textDark;
+    color: var(--q-color-textDark);
     border-top-right-radius: $radius;
     background: $player2;
     background: var(--q-color-player2);
     body.player2Dark & {
-      color: $fg-light;
+      color: $textLight;
+      color: var(--q-color-textLight);
     }
   }
   .player1 .name,
@@ -482,11 +486,13 @@ $radius: 1.2vmin;
 
 .x-axis,
 .y-axis {
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 .x-axis {

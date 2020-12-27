@@ -222,7 +222,7 @@ export default {
         case 2:
           return "player1";
         default:
-          return "fg-dark";
+          return "textDark";
       }
     },
     gameURL() {

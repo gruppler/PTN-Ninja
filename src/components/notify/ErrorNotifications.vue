@@ -18,7 +18,7 @@ export default {
         message,
         color: "negative",
         icon: "error",
-        textColor: "fg-dark",
+        textColor: "textDark",
       }));
     },
   },

@@ -137,10 +137,10 @@ export default {
   },
   computed: {
     fg() {
-      return this.$store.state.theme.isDark ? "fg-light" : "fg-dark";
+      return this.$store.state.theme.isDark ? "textLight" : "textDark";
     },
     primaryFG() {
-      return this.$store.state.theme.primaryDark ? "fg-light" : "fg-dark";
+      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
     },
     isFirst() {
       return !this.game.state.prevPly && !this.game.state.plyIsDone;

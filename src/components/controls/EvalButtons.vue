@@ -92,7 +92,8 @@ export default {
 .eval-buttons {
   .q-btn.active {
     background-color: $orange-light;
-    color: $fg-dark;
+    color: $textDark;
+    color: var(--q-color-textDark);
     &.double {
       background-color: $red-light;
     }

@@ -121,9 +121,11 @@ export default {
   flex-direction: row;
   align-items: center;
   vertical-align: middle;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.panelDark:not(.panelMedium) & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
   .branch {
     word-break: break-word;

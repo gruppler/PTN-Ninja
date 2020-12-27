@@ -11,7 +11,7 @@ export default {
     },
     "text-color": {
       type: String,
-      default: "fg-dark",
+      default: "textDark",
     },
   },
   data() {

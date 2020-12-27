@@ -25,17 +25,21 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
-.text-fg-light {
-  color: $fg-light !important;
+.text-textLight {
+  color: $textLight !important;
+  color: var(--q-color-textLight) !important;
 }
-.bg-fg-light {
-  background: $fg-light !important;
+.bg-textLight {
+  background: $textLight !important;
+  background: var(--q-color-textLight) !important;
 }
-.text-fg-dark {
-  color: $fg-dark !important;
+.text-textDark {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
 }
-.bg-fg-dark {
-  background: $fg-dark !important;
+.bg-textDark {
+  background: $textDark !important;
+  background: var(--q-color-textDark) !important;
 }
 .text-ui {
   color: $ui !important;
@@ -44,34 +48,43 @@
 .bg-ui {
   background: $ui !important;
   background: var(--q-color-ui) !important;
-  color: $fg-dark !important;
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
   body.isDark & {
-    color: $fg-light !important;
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
   }
 }
 .bg-primary {
-  color: $fg-dark !important;
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
   body.primaryDark & {
-    color: $fg-light !important;
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
   }
 }
 .bg-accent {
-  color: $fg-dark !important;
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
   body.accentDark & {
-    color: $fg-light !important;
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
   }
 }
 .text-panel {
   color: $panel !important;
   color: var(--q-color-panel) !important;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
 }
 .bg-panel {
   background: $panel !important;
   background: var(--q-color-panel) !important;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.panelDark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 .text-player1 {
@@ -81,9 +94,11 @@
 .bg-player1 {
   background: $player1;
   background: var(--q-color-player1) !important;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.player1Dark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 .text-player2 {
@@ -93,9 +108,11 @@
 .bg-player2 {
   background: $player2;
   background: var(--q-color-player2) !important;
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.player2Dark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 
@@ -114,9 +131,11 @@
 ::selection {
   background: $primary;
   background: var(--q-color-primary);
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.primaryDark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 
@@ -226,9 +245,11 @@ kbd {
 }
 
 .q-slider__pin-value-marker-text {
-  color: $fg-dark;
+  color: $textDark;
+  color: var(--q-color-textDark);
   body.primaryDark & {
-    color: $fg-light;
+    color: $textLight;
+    color: var(--q-color-textLight);
   }
 }
 

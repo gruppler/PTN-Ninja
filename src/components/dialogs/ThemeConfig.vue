@@ -158,7 +158,7 @@
           :label="$t('Save')"
           color="primary"
           :text-color="
-            isSaved ? 'primary' : theme.primaryDark ? 'fg-light' : 'fg-dark'
+            isSaved ? 'primary' : theme.primaryDark ? 'textLight' : 'textDark'
           "
           :disable="!isValid || isSaved"
           :flat="isSaved"

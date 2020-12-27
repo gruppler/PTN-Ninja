@@ -203,10 +203,12 @@ export default {
       box-shadow $generic-hover-transition;
 
     .board-container.piece-shadows & {
-      box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2);
+      box-shadow: 0 0.2vmin 0.4vmin $umbra;
+      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
       &.firstSelected {
-        box-shadow: 0 0.2vmin 0.4vmin rgba(#000, 0.2),
-          0 2.8vmin 1.5vmin $elevation-umbra;
+        box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
+        box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
+          0 2.8vmin 1.5vmin var(--q-color-umbra);
       }
     }
 
@@ -233,10 +235,12 @@ export default {
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
         .board-container.piece-shadows & {
-          box-shadow: -1px 1px 2px rgba(#000, 0.3);
+          box-shadow: -1px 1px 2px $umbra;
+          box-shadow: -1px 1px 2px var(--q-color-umbra);
           &.firstSelected {
-            box-shadow: -1px 1px 2px rgba(#000, 0.3),
-              -1.8vmin 1.8vmin 1.5vmin $elevation-umbra;
+            box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
+            box-shadow: -1px 1px 2px var(--q-color-umbra),
+              -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
           }
         }
       }
@@ -245,10 +249,12 @@ export default {
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
         .board-container.piece-shadows & {
-          box-shadow: 1px 1px 2px rgba(#000, 0.3);
+          box-shadow: 1px 1px 2px $umbra;
+          box-shadow: 1px 1px 2px var(--q-color-umbra);
           &.firstSelected {
-            box-shadow: 1px 1px 2px rgba(#000, 0.3),
-              1.8vmin 1.8vmin 1.5vmin $elevation-umbra;
+            box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
+            box-shadow: 1px 1px 2px var(--q-color-umbra),
+              1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
           }
         }
       }

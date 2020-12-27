@@ -29,7 +29,7 @@
                 :key="`message-${plyID}-${index}`"
                 :id="`message-${plyID}-${index}`"
                 bg-color="primary"
-                :text-color="primaryDark ? 'fg-light' : 'fg-dark'"
+                :text-color="primaryDark ? 'textLight' : 'textDark'"
                 text-sanitize
                 sent
               >

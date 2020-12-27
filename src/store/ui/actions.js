@@ -83,7 +83,7 @@ export const PROMPT = (
 };
 
 export const NOTIFY = ({ state }, options) => {
-  let fg = state.theme.isDark ? "fg-light" : "fg-dark";
+  let fg = state.theme.isDark ? "textLight" : "textDark";
   let bg = "ui";
   if (options.invert) {
     [bg, fg] = [fg, bg];
@@ -112,7 +112,7 @@ export const NOTIFY_ERROR = (context, error) => {
     type: "negative",
     timeout: 0,
     position: "top-right",
-    actions: [{ icon: "close", color: "fg-light" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
@@ -123,7 +123,7 @@ export const NOTIFY_SUCCESS = (context, success) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "fg-light" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
@@ -134,7 +134,7 @@ export const NOTIFY_WARNING = (context, warning) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "fg-dark" }],
+    actions: [{ icon: "close", color: "textDark" }],
   });
 };
 
@@ -145,7 +145,7 @@ export const NOTIFY_HINT = (context, hint) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "fg-light" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
