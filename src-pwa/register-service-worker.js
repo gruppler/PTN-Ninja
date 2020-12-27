@@ -1,7 +1,7 @@
 import { i18n } from "../src/boot/i18n";
 import { Notify, openURL } from "quasar";
 import { register } from "register-service-worker";
-import store from "../store";
+import store from "../src/store";
 
 // The ready(), registered(), cached(), updatefound() and updated()
 // events passes a ServiceWorkerRegistration instance in their arguments.
