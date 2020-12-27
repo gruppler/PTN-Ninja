@@ -38,6 +38,30 @@ export const uniqueName = (state) => (name, ignoreFirst = false) => {
   return name;
 };
 
+export const playerIcon = (state) => (player, isPrivate = false) => {
+  let result = "";
+  switch (player) {
+    case 1:
+      result = isPrivate ? "player1_private" : "player1";
+      break;
+    case 2:
+      result = isPrivate ? "player2_private" : "player2";
+      break;
+    case 0:
+      result = isPrivate ? "spectator_private" : "spectator";
+      break;
+    case "random":
+    case "tie":
+      result = isPrivate ? "players_private" : "players";
+  }
+  if (!state.theme.isDark) {
+    result = result.startsWith("player1")
+      ? result.replace("1", "2")
+      : result.replace("2", "1");
+  }
+  return result;
+};
+
 const urlEncode = (url) => {
   return encodeURIComponent(url).replace(
     /([()])/g,
