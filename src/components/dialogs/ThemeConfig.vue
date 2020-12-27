@@ -276,7 +276,7 @@ export default {
     },
     setColor(key, value) {
       this.theme.colors[key] = value;
-      computeFrom(this.theme, key, this.advanced);
+      computeFrom(this.theme, key, false, this.advanced);
       this.updatePalette();
       this.preview();
     },

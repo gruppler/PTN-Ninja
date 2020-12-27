@@ -87,13 +87,18 @@ export const COMPUTED = {
   },
 };
 
-export const computeFrom = (theme, fromKey, missingOnly = false) => {
+export const computeFrom = (
+  theme,
+  fromKey,
+  missingOnly = false,
+  topLevelOnly = false
+) => {
   forEach(COMPUTED[fromKey], (compute, toKey) => {
     if (isFunction(compute)) {
       if (fromKey in theme.colors && (!missingOnly || !(toKey in theme))) {
         theme[toKey] = compute(theme.colors[fromKey], theme);
       }
-    } else if (isObject(compute)) {
+    } else if (!topLevelOnly && isObject(compute)) {
       forEach(compute, (computeVar, toVar) => {
         if (
           fromKey in theme.colors &&
@@ -192,10 +197,10 @@ export const THEMES = [
     vars: { "piece-border-width": 2 },
     colors: {
       primary: "#ccba41",
-      secondary: "#d9c8a7",
+      secondary: "#e8e8e8",
       ui: "#383632",
       accent: "#302e2b",
-      panel: "#b8aa8ecc",
+      panel: "#d6d1b2ba",
       board1: "#9e927a",
       board2: "#ccba41",
       board3: "#b8aa8e",
