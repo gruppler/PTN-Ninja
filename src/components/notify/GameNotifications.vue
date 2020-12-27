@@ -44,9 +44,11 @@ export default {
       }
       return alerts.map((alert) => ({
         message: alert.message,
-        color: alert.player === 1 ? "player1" : "player2",
+        color: "player" + alert.player,
         icon: this.$store.getters.playerIcon(alert.player || "tie"),
-        textColor: alert.player === 1 ? "player2" : "player1",
+        textColor: this.$store.state.theme[`player${alert.player}Dark`]
+          ? "textLight"
+          : "textDark",
       }));
     },
   },

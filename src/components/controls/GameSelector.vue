@@ -12,8 +12,7 @@
       :display-value="name"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
-      popup-content-class="bg-secondary"
-      color="accent"
+      popup-content-class="game-selector-options"
       emit-value
       filled
       dense
@@ -22,12 +21,12 @@
         <q-btn
           :label="games.length"
           @click.stop
-          class="text-subtitle2 text-white q-pa-sm"
+          class="text-subtitle2 q-pa-sm"
           dense
           flat
         >
           <q-menu auto-close square>
-            <q-list class="bg-secondary text-white">
+            <q-list>
               <q-item
                 clickable
                 @click="dialogCloseGames = true"
@@ -77,8 +76,8 @@
       </template>
     </q-select>
 
-    <CloseGames v-model="dialogCloseGames" />
-    <DownloadGames v-model="dialogDownloadGames" />
+    <CloseGames v-model="dialogCloseGames" no-route-dismiss />
+    <DownloadGames v-model="dialogDownloadGames" no-route-dismiss />
   </div>
 </template>
 
@@ -100,17 +99,17 @@ export default {
   computed: {
     ...zipObject(
       Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map((key) => ({
+      Object.values(HISTORY_DIALOGS).map((name) => ({
         get() {
-          return this.$route.name === key;
+          return this.$route.name === name;
         },
         set(value) {
           if (value) {
-            if (this.$route.name !== key) {
-              this.$router.push({ name: key });
+            if (this.$route.name !== name) {
+              this.$router.push({ name });
             }
           } else {
-            if (this.$route.name === key) {
+            if (this.$route.name === name) {
               this.$router.go(-1);
               this.$router.replace({ name: "local" });
             }
@@ -176,7 +175,6 @@ export default {
 }
 
 .game-selector-options {
-  background: $secondary;
   .q-badge {
     padding: 4px;
   }

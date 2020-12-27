@@ -25,21 +25,118 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+.text-textLight {
+  color: $textLight !important;
+  color: var(--q-color-textLight) !important;
+}
+.bg-textLight {
+  background: $textLight !important;
+  background: var(--q-color-textLight) !important;
+}
+.text-textDark {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+}
+.bg-textDark {
+  background: $textDark !important;
+  background: var(--q-color-textDark) !important;
+}
+.text-ui {
+  color: $ui !important;
+  color: var(--q-color-ui) !important;
+}
+.bg-ui {
+  background: $ui !important;
+  background: var(--q-color-ui) !important;
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.isDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.bg-primary {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.primaryDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.bg-accent {
+  color: $textDark !important;
+  color: var(--q-color-textDark) !important;
+  body.accentDark & {
+    color: $textLight !important;
+    color: var(--q-color-textLight) !important;
+  }
+}
+.text-panel {
+  color: $panel !important;
+  color: var(--q-color-panel) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+}
+.bg-panel {
+  background: $panel !important;
+  background: var(--q-color-panel) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.panelDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
 .text-player1 {
-  color: $player1;
+  color: $player1 !important;
+  color: var(--q-color-player1) !important;
 }
 .bg-player1 {
   background: $player1;
+  background: var(--q-color-player1) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.player1Dark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
 }
 .text-player2 {
   color: $player2;
+  color: var(--q-color-player2) !important;
 }
 .bg-player2 {
   background: $player2;
+  background: var(--q-color-player2) !important;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.player2Dark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
+}
+
+.q-dark {
+  background: $accent;
+  background: var(--q-color-accent);
+}
+
+.q-card, .q-card--dark,
+.q-list, .q-list--dark,
+.q-tab-panels, .q-tab-panels--dark {
+  background: $ui;
+  background: var(--q-color-ui);
 }
 
 ::selection {
-  background: $accent;
+  background: $primary;
+  background: var(--q-color-primary);
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.primaryDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
 }
 
 kbd {
@@ -91,7 +188,6 @@ kbd {
 .ptn {
   font-size: 18px;
   line-height: 1.5em;
-  color: $text-dark;
 }
 
 .board-move-container {
@@ -100,10 +196,6 @@ kbd {
   align-items: center;
   justify-content: flex-end;
   flex-shrink: 0;
-}
-
-.q-item.q-router-link--active, .q-item--active {
-  color: $accent;
 }
 
 .q-dialog {
@@ -131,7 +223,8 @@ kbd {
 }
 
 .q-date--dark, .q-time--dark {
-  background: $secondary;
+  background: $ui;
+  background: var(--q-color-ui);
 }
 
 .q-notification {
@@ -152,11 +245,17 @@ kbd {
 }
 
 .q-slider__pin-value-marker-text {
-  color: $secondary;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.primaryDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
 }
 
 .q-expansion-item--expanded > .q-expansion-item__container > .q-item {
-  color: $accent;
+  color: $primary;
+  color: var(--q-color-primary);
 }
 
 .footer-toolbar {
@@ -175,17 +274,54 @@ kbd {
   }
 }
 
-::-webkit-scrollbar-corner {
-  background: $separator-dark-color;
-}
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  border: 0;
-  box-shadow: none;
-  background: $separator-dark-color;
-  min-height: 40px;
+@media (pointer: fine) {
+  ::-webkit-scrollbar-corner {
+    background: $ui;
+    background: var(--q-color-ui);
+  }
+
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 0;
+    box-shadow: none;
+    min-height: 40px;
+    background: $accent;
+    background: var(--q-color-accent);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: $ui;
+    background: var(--q-color-ui);
+  }
+
+  .q-drawer__content .scroll {
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      border: 0;
+      box-shadow: none;
+      min-height: 40px;
+      background: $separator-color;
+      .body--dark & {
+        background: $separator-dark-color;
+      }
+    }
+  }
+
+  .q-menu.scroll {
+    &::-webkit-scrollbar-track {
+      background: $accent;
+      background: var(--q-color-accent);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $ui;
+      background: var(--q-color-ui);
+    }
+  }
 }

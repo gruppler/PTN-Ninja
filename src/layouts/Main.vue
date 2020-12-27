@@ -1,11 +1,11 @@
 <template>
   <q-layout class="non-selectable" view="lHr LpR lFr">
-    <q-header elevated class="bg-secondary text-white">
+    <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
           @click="left = !left"
-          :color="left ? 'accent' : ''"
+          :color="left ? 'primary' : ''"
           stretch
           flat
         />
@@ -24,7 +24,7 @@
           "
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'accent' : ''"
+          :color="right ? 'primary' : ''"
           stretch
           flat
         />
@@ -32,7 +32,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-primary"
+      class="bg-secondary"
       v-shortkey="hotkeys.UI"
       @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
     >
@@ -96,7 +96,7 @@
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
-        <q-toolbar class="footer-toolbar bg-secondary text-white q-pa-none">
+        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
               @click="$store.dispatch('UNDO', game)"
@@ -136,11 +136,11 @@
       <div class="absolute-fit column">
         <q-tabs
           v-if="hasChat"
-          class="bg-secondary text-white text-weight-medium"
+          class="bg-ui text-weight-medium"
           :value="textTab"
           @input="showTextTab"
-          active-color="accent"
-          indicator-color="accent"
+          active-color="primary"
+          indicator-color="primary"
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
@@ -148,7 +148,7 @@
         </q-tabs>
         <q-toolbar
           v-else
-          class="bg-secondary text-white text-weight-medium justify-center text-uppercase"
+          class="bg-ui text-weight-medium justify-center text-uppercase"
         >
           {{ $t("Notes") }}
         </q-toolbar>
@@ -164,11 +164,11 @@
       <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer>
+    <q-footer class="bg-ui">
       <Scrubber :game="game" v-if="$store.state.showScrubber" />
       <q-toolbar
         v-show="isEditingTPS || $store.state.showControls"
-        class="footer-toolbar q-pa-sm bg-secondary text-white"
+        class="footer-toolbar q-pa-sm"
       >
         <PieceSelector
           v-if="isEditingTPS"
@@ -183,7 +183,6 @@
             :label="$t('Move')"
             :min="minFirstMoveNumber"
             :max="999"
-            color="accent"
             filled
             dense
           />
@@ -193,10 +192,10 @@
               isEditingTPS = false;
               game.state.board = game.boards[0].false;
             "
-            color="accent"
+            color="primary"
             flat
           />
-          <q-btn :label="$t('OK')" @click="setTPS" color="accent" flat />
+          <q-btn :label="$t('OK')" @click="setTPS" color="primary" flat />
         </PieceSelector>
         <PlayControls v-else :game="game" />
       </q-toolbar>
@@ -205,7 +204,8 @@
     <Help ref="help" v-model="dialogHelp" no-route-dismiss />
     <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
-    <UISettings v-model="dialogUISettings" no-route-dismiss />
+    <UISettings v-model="dialogUISettings" :game="game" no-route-dismiss />
+    <ThemeConfig v-model="dialogThemeConfig" :game="game" no-route-dismiss />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
     <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
 
@@ -246,6 +246,7 @@ import Help from "../components/dialogs/Help";
 import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
 import UISettings from "../components/dialogs/UISettings";
+import ThemeConfig from "../components/dialogs/ThemeConfig";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
 import PNGConfig from "../components/dialogs/PNGConfig";
 
@@ -259,6 +260,7 @@ const HISTORY_DIALOGS = {
   dialogHelp: "help",
   dialogAddGame: "add",
   dialogUISettings: "preferences",
+  dialogThemeConfig: "theme",
   dialogEditGame: "info",
   dialogEditPTN: "edit",
   dialogEmbed: "embed",
@@ -289,6 +291,7 @@ export default {
     AddGame,
     EditGame,
     UISettings,
+    ThemeConfig,
     EmbedConfig,
     PNGConfig,
   },
@@ -514,12 +517,12 @@ export default {
                   actions: [
                     {
                       label: this.$t("Undo"),
-                      color: "accent",
+                      color: "primary",
                       handler: () => {
                         this.$store.dispatch("UNDO", game);
                       },
                     },
-                    { icon: "close", color: "grey-2" },
+                    { icon: "close" },
                   ],
                 });
               });
@@ -648,6 +651,9 @@ export default {
         case "preferences":
           this.dialogUISettings = !this.dialogUISettings;
           break;
+        case "theme":
+          this.dialogThemeConfig = !this.dialogThemeConfig;
+          break;
         case "qrCode":
           if (this.dialogQR) {
             this.dialogQR = false;
@@ -759,7 +765,8 @@ export default {
 #left-drawer,
 #right-drawer {
   .q-drawer {
-    background: rgba($blue-grey-5, 0.75);
+    background: $panel;
+    background: var(--q-color-panel);
     .q-drawer__content {
       overflow: hidden;
     }

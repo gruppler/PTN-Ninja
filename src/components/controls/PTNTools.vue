@@ -1,10 +1,10 @@
 <template>
-  <q-toolbar class="bg-secondary text-white q-pa-none">
+  <q-toolbar class="bg-ui q-pa-none">
     <q-btn-group class="full-width" spread stretch flat unelevated>
       <q-btn
         @click="showAllBranches = !showAllBranches"
         :title="$t('Show All Branches')"
-        :text-color="showAllBranches ? 'accent' : ''"
+        :text-color="showAllBranches ? 'primary' : ''"
         class="no-border-radius"
       >
         <q-icon name="branch" class="rotate-180" />
@@ -18,8 +18,8 @@
 
       <q-btn :title="$t('Trim')" class="no-border-radius">
         <q-icon name="trim" class="rotate-180" />
-        <q-menu auto-close square>
-          <q-list class="bg-secondary text-white">
+        <q-menu v-if="game.isLocal" auto-close square>
+          <q-list>
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
               <q-item-section side>
                 <q-icon name="branch" class="rotate-180" />

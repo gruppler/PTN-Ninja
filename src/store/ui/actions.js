@@ -13,15 +13,32 @@ import {
   formatWarning,
   formatHint,
 } from "../../utilities";
-import { i18n } from "../../../src/boot/i18n";
-import { isArray } from "lodash";
+import { THEMES } from "../../themes";
+import { i18n } from "../../boot/i18n";
+import { isArray, isString } from "lodash";
 
-export const SET_UI = ({ state, commit }, [key, value]) => {
+export const SET_THEME = ({ state, getters, commit }, theme) => {
+  if (isString(theme)) {
+    theme = getters.theme(theme);
+  }
+  if (!theme) {
+    theme = getters.theme() || THEMES[0];
+  }
+  if (!state.embed) {
+    LocalStorage.set("theme", theme);
+  }
+  commit("SET_THEME", theme);
+};
+
+export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
       LocalStorage.set(key, value);
     }
     commit("SET_UI", [key, value]);
+    if (key === "themeID") {
+      dispatch("SET_THEME", value);
+    }
   }
 };
 
@@ -42,19 +59,19 @@ export const PROMPT = (
     title,
     message,
     prompt,
-    color: "accent",
+    color: "primary",
     "no-backdrop-dismiss": true,
     ok: {
       label: ok || i18n.t("OK"),
       flat: true,
-      color: "accent",
+      color: "primary",
     },
     cancel: {
       label: cancel || i18n.t("Cancel"),
       flat: true,
-      color: "accent",
+      color: "primary",
     },
-    class: "bg-secondary non-selectable",
+    class: "bg-ui non-selectable",
   });
   if (success) {
     dialog.onOk(success);
@@ -65,21 +82,21 @@ export const PROMPT = (
   return dialog;
 };
 
-export const NOTIFY = (context, options) => {
-  let fg = "grey-1";
-  let bg = "secondary";
+export const NOTIFY = ({ state }, options) => {
+  let fg = state.theme.isDark ? "textLight" : "textDark";
+  let bg = "ui";
   if (options.invert) {
     [bg, fg] = [fg, bg];
   }
   if (options.actions) {
     options.actions.forEach((action) => {
       if (!action.color) {
-        action.color = "accent";
+        action.color = fg;
       }
     });
   }
   return Notify.create({
-    progressClass: "bg-" + fg,
+    progressClass: "bg-primary",
     color: bg,
     textColor: fg,
     position: "bottom",
@@ -95,7 +112,7 @@ export const NOTIFY_ERROR = (context, error) => {
     type: "negative",
     timeout: 0,
     position: "top-right",
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
@@ -106,7 +123,7 @@ export const NOTIFY_SUCCESS = (context, success) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
@@ -117,7 +134,7 @@ export const NOTIFY_WARNING = (context, warning) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "dark" }],
+    actions: [{ icon: "close", color: "textDark" }],
   });
 };
 
@@ -128,7 +145,7 @@ export const NOTIFY_HINT = (context, hint) => {
     timeout: 0,
     position: "top-right",
     multiLine: false,
-    actions: [{ icon: "close", color: "grey-1" }],
+    actions: [{ icon: "close", color: "textLight" }],
   });
 };
 
@@ -184,7 +201,7 @@ export const ADD_GAMES = ({ commit, dispatch, getters }, { games, index }) => {
   dispatch("WITHOUT_BOARD_ANIM", () => commit("ADD_GAMES", { games, index }));
 };
 
-export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
+export const REMOVE_GAME = ({ commit, dispatch, state, getters }, index) => {
   const game = state.games[index];
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
@@ -205,7 +222,7 @@ export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
         actions: [
           {
             label: i18n.t("Undo"),
-            color: "accent",
+            color: "primary",
             handler: () => {
               if (index === 0) {
                 Loading.show();
@@ -220,7 +237,7 @@ export const REMOVE_GAME = ({ commit, dispatch, state }, index) => {
               }
             },
           },
-          { icon: "close", color: "grey-2" },
+          { icon: "close" },
         ],
       });
     });
@@ -265,7 +282,7 @@ export const REMOVE_MULTIPLE_GAMES = (
         actions: [
           {
             label: i18n.t("Undo"),
-            color: "accent",
+            color: "primary",
             handler: () => {
               if (start === 0) {
                 Loading.show();
@@ -280,7 +297,7 @@ export const REMOVE_MULTIPLE_GAMES = (
               }
             },
           },
-          { icon: "close", color: "grey-2" },
+          { icon: "close" },
         ],
       });
     });
@@ -438,6 +455,9 @@ export const OPEN_FILES = ({ dispatch }, files) => {
   const games = [];
   let count = 0;
   files = Array.from(files);
+  if (!files.length) {
+    return false;
+  }
   Loading.show();
   setTimeout(
     () =>
@@ -501,8 +521,8 @@ export const COPY = function ({ dispatch }, { url, text, title }) {
       .catch(() => {
         dispatch("NOTIFY_ERROR", "Unable to copy");
         Dialog.create({
-          class: "bg-secondary",
-          color: "accent",
+          class: "bg-ui",
+          color: "primary",
           prompt: {
             model: text || url,
             filled: true,

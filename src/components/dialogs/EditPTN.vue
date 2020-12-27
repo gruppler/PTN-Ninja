@@ -17,11 +17,11 @@
         <div class="col-grow error-message q-px-sm">
           {{ editor ? editor.error : "" }}
         </div>
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
           @click="editor.save()"
-          color="accent"
+          color="primary"
           :disabled="editor && !!editor.error"
           flat
         />

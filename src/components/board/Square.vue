@@ -3,6 +3,7 @@
     class="square"
     :class="{
       light: square.static.isLight,
+      dark: !square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !$store.state.showRoads,
       eog,
@@ -158,8 +159,76 @@ export default {
 <style lang="scss">
 .square {
   position: relative;
-  &.light {
-    background: $blue-grey-4;
+
+  .board-container.diamonds1 &,
+  .board-container.diamonds2 &,
+  .board-container.diamonds3 &,
+  .board-container.grid1 &,
+  .board-container.grid2 &,
+  .board-container.grid3 & {
+    background: $board2;
+    background: var(--q-color-board2);
+    &:before {
+      background: $board1;
+      background: var(--q-color-board1);
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+    body.boardChecker &.dark {
+      background: transparent;
+      &:before {
+        background: $board2;
+        background: var(--q-color-board2);
+      }
+    }
+  }
+  .board-container.diamonds1 & {
+    &:before,
+    .hl {
+      border-radius: 10%;
+    }
+  }
+  .board-container.diamonds2 & {
+    &:before,
+    .hl {
+      border-radius: 30%;
+    }
+  }
+  .board-container.diamonds3 & {
+    &:before,
+    .hl {
+      border-radius: 50%;
+    }
+  }
+  .board-container.grid1 & {
+    &:before,
+    .hl {
+      margin: 1px;
+    }
+  }
+  .board-container.grid2 & {
+    &:before,
+    .hl {
+      border-radius: 5%;
+      margin: 3px;
+    }
+  }
+  .board-container.grid3 & {
+    &:before,
+    .hl {
+      border-radius: 15%;
+      margin: 6px;
+    }
+  }
+  body.boardChecker .board-container.blank & {
+    &.dark {
+      background: $board2;
+      background: var(--q-color-board2);
+    }
   }
 
   .hl {
@@ -175,7 +244,8 @@ export default {
   }
 
   .hl.current {
-    background-color: $accent;
+    background-color: $primary;
+    background-color: var(--q-color-primary);
   }
   .board-container.highlight-squares &.current {
     .hl.current {
@@ -188,18 +258,22 @@ export default {
 
   .board-container.turn-1 & {
     .hl.player {
-      background-color: $blue-grey-2;
+      background-color: $player1road;
+      background-color: var(--q-color-player1road);
     }
     &.placed:not(.eog) .hl.player {
-      background-color: $blue-grey-8;
+      background-color: $player2road;
+      background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2 & {
     .hl.player {
-      background-color: $blue-grey-8;
+      background-color: $player2road;
+      background-color: var(--q-color-player2road);
     }
     &.placed:not(.eog) .hl.player {
-      background-color: $blue-grey-2;
+      background-color: $player1road;
+      background-color: var(--q-color-player1road);
     }
   }
   &.selected .hl.player {
@@ -209,9 +283,11 @@ export default {
     opacity: 0.25;
   }
   @media (pointer: fine) {
-    &.valid:hover .hl.player {
-      opacity: 0.35;
+    &.valid:hover {
       cursor: pointer;
+      .hl.player {
+        opacity: 0.35;
+      }
     }
   }
 
@@ -295,10 +371,12 @@ export default {
     opacity: 0.8;
   }
   &.p1 .road > div {
-    background-color: $blue-grey-2;
+    background-color: $player1road;
+    background-color: var(--q-color-player1road);
   }
   &.p2 .road > div {
-    background-color: $blue-grey-8;
+    background-color: $player2road;
+    background-color: var(--q-color-player2road);
   }
 }
 </style>

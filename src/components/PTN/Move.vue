@@ -118,7 +118,10 @@ export default {
 <style lang="scss">
 .move {
   &.current-move {
-    background-color: $highlight;
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
   }
 
   &.current-only .linenum .branch {
@@ -146,6 +149,7 @@ export default {
     font-family: "Source Code Pro";
     padding: 4px 8px;
     color: $player1;
+    color: var(--q-color-player1);
     white-space: nowrap;
     display: inline-block;
     vertical-align: middle;
@@ -160,7 +164,8 @@ export default {
     display: inline-block;
     border-radius: 5px;
     padding: 0 0.5em;
-    background-color: rgba(#fff, 0.15);
+    background-color: $panel;
+    background-color: var(--q-color-panel);
     transition: opacity $generic-hover-transition;
     opacity: 1;
     &.lt-sm {

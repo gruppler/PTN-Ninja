@@ -3,6 +3,8 @@ import { Platform } from "quasar";
 
 import { pick } from "lodash";
 
+import { THEMES } from "../../themes";
+
 let defaults = {
   animateBoard: true,
   axisLabels: true,
@@ -18,7 +20,7 @@ let defaults = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
-  pieceShadows: !Platform.is.mobile,
+  pieceShadows: true,
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
@@ -32,6 +34,9 @@ let defaults = {
   showText: false,
   size: 5,
   textTab: "notes",
+  themeID: "classic",
+  theme: THEMES[0],
+  themes: [],
   turnIndicator: true,
   unplayedPieces: true,
 };
@@ -41,6 +46,7 @@ export const embedUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "pieceShadows",
   "playSpeed",
   "showAllBranches",
   "showControls",
@@ -57,6 +63,7 @@ export const pngUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "pieceShadows",
   "showRoads",
   "unplayedPieces",
 ];
@@ -72,7 +79,6 @@ defaults.embedConfig = {
 defaults.pngConfig = {
   size: "md",
   includeNames: true,
-  pieceShadows: true,
   padding: true,
   ...pick(defaults, pngUIOptions),
 };

@@ -8,7 +8,7 @@
     >
       {{ this.branch }}
       <q-menu v-if="!noEdit" context-menu auto-close>
-        <q-list class="bg-secondary text-white">
+        <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
             <q-item-section side>
               <q-icon name="edit" />
@@ -50,7 +50,6 @@
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
-
 import RenameBranch from "../dialogs/RenameBranch";
 
 export default {
@@ -122,6 +121,12 @@ export default {
   flex-direction: row;
   align-items: center;
   vertical-align: middle;
+  color: $textDark;
+  color: var(--q-color-textDark);
+  body.panelDark:not(.panelMedium) & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
   .branch {
     word-break: break-word;
     font-weight: bold;
@@ -134,7 +139,8 @@ export default {
     cursor: pointer;
     background-color: $highlight;
     &.selected {
-      background-color: $accent;
+      background-color: $primary;
+      background-color: var(--q-color-primary);
     }
     &.only {
       margin-top: 0.25em;

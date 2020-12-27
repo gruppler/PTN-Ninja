@@ -9,6 +9,7 @@
     <div
       class="board-container q-pa-md"
       :class="{
+        [style]: true,
         ['size-' + game.size]: true,
         ['turn-' + turn]: true,
         'no-animations': !$store.state.animateBoard,
@@ -128,6 +129,9 @@ export default {
     };
   },
   computed: {
+    style() {
+      return this.$store.state.theme.boardStyle;
+    },
     turn() {
       return this.$store.state.isEditingTPS
         ? this.$store.state.selectedPiece.color
@@ -433,15 +437,27 @@ $radius: 1.2vmin;
     transition: width $generic-hover-transition;
   }
   .player1 .row {
-    color: $player2;
+    color: $textDark;
+    color: var(--q-color-textDark);
     border-top-left-radius: $radius;
     overflow: hidden;
     background: $player1;
+    background: var(--q-color-player1);
+    body.player1Dark & {
+      color: $textLight;
+      color: var(--q-color-textLight);
+    }
   }
   .player2 .row {
-    color: $player1;
+    color: $textDark;
+    color: var(--q-color-textDark);
     border-top-right-radius: $radius;
     background: $player2;
+    background: var(--q-color-player2);
+    body.player2Dark & {
+      color: $textLight;
+      color: var(--q-color-textLight);
+    }
   }
   .player1 .name,
   .player2 .flats {
@@ -458,7 +474,8 @@ $radius: 1.2vmin;
   height: $turn-indicator-height;
   position: absolute;
   bottom: -$turn-indicator-height;
-  background: $accent;
+  background: $primary;
+  background: var(--q-color-primary);
   will-change: opacity;
   transition: opacity $generic-hover-transition;
   .board-container.turn-1 .player1 &,
@@ -469,9 +486,14 @@ $radius: 1.2vmin;
 
 .x-axis,
 .y-axis {
-  color: $player1;
+  color: $textDark;
+  color: var(--q-color-textDark);
   justify-content: space-around;
   line-height: 1em;
+  body.secondaryDark & {
+    color: $textLight;
+    color: var(--q-color-textLight);
+  }
 }
 .x-axis {
   align-items: flex-end;
@@ -489,7 +511,8 @@ $radius: 1.2vmin;
 }
 
 .board {
-  background: darken($blue-grey-4, 2%);
+  background: $board1;
+  background: var(--q-color-board1);
   z-index: 1;
   width: 100%;
   padding-bottom: 100%;
@@ -525,7 +548,8 @@ $radius: 1.2vmin;
 
 .unplayed-bg {
   border-radius: 0 $radius $radius 0;
-  background-color: $blue-grey-5;
+  background-color: $board3;
+  background-color: var(--q-color-board3);
   will-change: width;
   .board-container:not(.show-unplayed-pieces) & {
     width: 0 !important;

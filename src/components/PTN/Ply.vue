@@ -5,7 +5,7 @@
       @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
       :class="{ selected: isSelected }"
       :color="ply.color === 1 ? 'player1' : 'player2'"
-      :text-color="ply.color === 1 ? 'player2' : 'player1'"
+      :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
       :clickable="!noClick"
       v-ripple="false"
@@ -76,6 +76,9 @@ export default {
     };
   },
   computed: {
+    theme() {
+      return this.$store.state.theme;
+    },
     ply() {
       return this.game.plies[this.plyID];
     },
@@ -117,17 +120,21 @@ export default {
   font-size: inherit;
   &:not(.q-chip--outline) {
     border: 1px solid;
-    &.bg-player2 {
-      border-color: $player2;
-    }
     &.bg-player1 {
       border-color: $player1;
+      border-color: var(--q-color-player1);
+    }
+    &.bg-player2 {
+      border-color: $player2;
+      border-color: var(--q-color-player2);
     }
   }
   &.selected {
-    box-shadow: 0 0 0 2px $accent;
+    box-shadow: 0 0 0 2px $primary;
+    box-shadow: 0 0 0 2px var(--q-color-primary);
     body.desktop &.q-chip--clickable:focus {
-      box-shadow: $shadow-1, 0 0 0 2px $accent;
+      box-shadow: $shadow-1, 0 0 0 2px $primary;
+      box-shadow: $shadow-1, 0 0 0 2px var(--q-color-primary);
     }
   }
   .q-btn {
@@ -139,7 +146,7 @@ export default {
   font-family: "Source Code Pro";
   font-weight: bold;
 
-  &.color1 {
+  .q-chip {
     .pieceCount {
       color: $blue-dark;
     }
@@ -158,49 +165,65 @@ export default {
     .evaluation {
       color: $orange-dark;
     }
-  }
-
-  &.color2 {
-    .pieceCount {
-      color: $blue-light;
-    }
-    .specialPiece {
-      color: $orange-light;
-    }
-    .direction {
-      color: $blue-light;
-    }
-    .distribution {
-      color: $green-light;
-    }
-    .wallSmash {
-      color: $orange-light;
-    }
-    .evaluation {
-      color: $orange-light;
-    }
-  }
-
-  .q-chip--outline & {
-    &.color1,
-    &.color2 {
+    &.q-dark {
       .pieceCount {
-        color: $blue-med;
+        color: $blue-light;
       }
       .specialPiece {
-        color: $orange-med;
+        color: $orange-light;
       }
       .direction {
-        color: $blue-med;
+        color: $blue-light;
       }
       .distribution {
-        color: $green-med;
+        color: $green-light;
       }
       .wallSmash {
-        color: $orange-med;
+        color: $orange-light;
       }
       .evaluation {
-        color: $orange-med;
+        color: $orange-light;
+      }
+    }
+
+    &.q-chip--outline {
+      .pieceCount {
+        color: $blue-dark;
+      }
+      .specialPiece {
+        color: $orange-dark;
+      }
+      .direction {
+        color: $blue-dark;
+      }
+      .distribution {
+        color: $green-dark;
+      }
+      .wallSmash {
+        color: $orange-dark;
+      }
+      .evaluation {
+        color: $orange-dark;
+      }
+      body.panelDark & {
+        .pieceCount {
+          color: $blue-light;
+        }
+        .specialPiece {
+          color: $orange-light;
+        }
+        .direction {
+          color: $blue-light;
+        }
+        .distribution {
+          color: $green-light;
+        }
+        .wallSmash {
+          color: $orange-light;
+        }
+        .evaluation {
+          color: $orange-light;
+        }
       }
     }
   }

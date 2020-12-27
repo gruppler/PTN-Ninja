@@ -1,12 +1,11 @@
 <template>
   <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
-    <q-card style="width: 300px" class="bg-secondary">
+    <q-card style="width: 300px">
       <q-input
         ref="input"
         v-model="newBranch"
         @keydown.enter.prevent="save"
         :rules="[validateBranch]"
-        color="accent"
         hide-bottom-space
         clearable
         autofocus
@@ -17,12 +16,12 @@
       </q-input>
 
       <q-card-actions align="right">
-        <q-btn :label="$t('Cancel')" color="accent" flat v-close-popup />
+        <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
           :disabled="$refs.input && $refs.input.hasError"
           @click="save"
-          color="accent"
+          color="primary"
           flat
         />
       </q-card-actions>
