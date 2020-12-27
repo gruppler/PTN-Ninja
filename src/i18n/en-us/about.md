@@ -1,6 +1,6 @@
 PTN Ninja
 ===
-**Version [3.0.20](https://github.com/gruppler/PTN-Ninja/releases)**
+**Version [3.1.0](https://github.com/gruppler/PTN-Ninja/releases)**
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...
 
