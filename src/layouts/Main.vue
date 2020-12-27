@@ -507,6 +507,9 @@ export default {
 
             if (game.ptn !== this.ptn) {
               game.replacePTN(this.ptn, this.state);
+              this.$store.dispatch("SAVE_UNDO_INDEX", game);
+              this.$store.dispatch("SAVE_UNDO_HISTORY", game);
+              this.$store.dispatch("UPDATE_PTN", this.ptn);
 
               this.$nextTick(() => {
                 this.$store.dispatch("NOTIFY", {
