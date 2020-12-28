@@ -2,11 +2,11 @@ import { forEach, upperFirst } from "lodash";
 
 export const HOTKEYS = {
   ACTIONS: {
-    UNDO: ["ctrl", "z"],
-    REDO: ["ctrl", "shift", "z"],
-    SAVE_PNG: ["ctrl", "shift", "p"],
-    SAVE_PTN: ["ctrl", "s"],
-    OPEN: ["ctrl", "o"],
+    "game/UNDO": ["ctrl", "z"],
+    "game/REDO": ["ctrl", "shift", "z"],
+    "ui/SAVE_PNG": ["ctrl", "shift", "p"],
+    "ui/SAVE_PTN": ["ctrl", "s"],
+    "ui/OPEN": ["ctrl", "o"],
   },
   CONTROLS: {
     playpause: ["space"],
@@ -89,11 +89,11 @@ export const HOTKEYS = {
 
 export const HOTKEY_NAMES = {
   ACTIONS: {
-    UNDO: "Undo",
-    REDO: "Redo",
-    SAVE_PNG: "Export PNG Image",
-    SAVE_PTN: "Export PTN File",
-    OPEN: "Load Files",
+    "game/UNDO": "Undo",
+    "game/REDO": "Redo",
+    "ui/SAVE_PNG": "Export PNG Image",
+    "ui/SAVE_PTN": "Export PTN File",
+    "ui/OPEN": "Load Files",
   },
   CONTROLS: {
     playpause: "Play/Pause",

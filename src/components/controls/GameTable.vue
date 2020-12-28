@@ -261,7 +261,7 @@ export default {
       );
     },
     activeGameIDs() {
-      return compact(this.$store.state.games.map((game) => game.config.id));
+      return compact(this.$store.state.game.list.map((game) => game.config.id));
     },
     visibleColumns() {
       let columns = this.columns.map((col) => col.name);
@@ -282,7 +282,7 @@ export default {
       return b.tags.date - a.tags.date;
     },
     playerIcon(player, isPrivate) {
-      return this.$store.getters.playerIcon(player, isPrivate);
+      return this.$store.getters["ui/playerIcon"](player, isPrivate);
     },
     roleText(player) {
       return player !== undefined

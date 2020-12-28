@@ -12,9 +12,9 @@ export default {
   computed: {
     show() {
       return (
-        this.$store.state.notifyNotes &&
-        (!this.$store.state.showText ||
-          (this.$store.state.textTab !== "notes" && this.game.hasChat))
+        this.$store.state.ui.notifyNotes &&
+        (!this.$store.state.ui.showText ||
+          (this.$store.state.ui.textTab !== "notes" && this.game.hasChat))
       );
     },
     notifications() {
@@ -34,7 +34,7 @@ export default {
         message: note.message,
         classes: "note",
         color: "primary",
-        textColor: this.$store.state.theme.primaryDark
+        textColor: this.$store.state.ui.theme.primaryDark
           ? "textLight"
           : "textDark",
       }));

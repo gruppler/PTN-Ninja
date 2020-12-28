@@ -35,7 +35,7 @@
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
               <q-item
-                @click="$store.dispatch('OPEN', close)"
+                @click="$store.dispatch('ui/OPEN', close)"
                 clickable
                 v-ripple
               >
@@ -107,9 +107,9 @@ export default {
   data() {
     return {
       tags: {
-        player1: this.$store.state.player1,
-        player2: this.$store.state.player2,
-        size: this.$store.state.size,
+        player1: this.$store.state.ui.player1,
+        player2: this.$store.state.ui.player2,
+        size: this.$store.state.ui.size,
         site: this.$t("site_name"),
       },
       selectedGames: [],
@@ -135,29 +135,29 @@ export default {
     },
     size: {
       get() {
-        return this.$store.state.size;
+        return this.$store.state.ui.size;
       },
       set(value) {
         this.tags.size = value;
-        this.$store.dispatch("SET_UI", ["size", value || ""]);
+        this.$store.dispatch("ui/SET_UI", ["size", value || ""]);
       },
     },
     player1: {
       get() {
-        return this.$store.state.player1;
+        return this.$store.state.ui.player1;
       },
       set(value) {
         this.tags.player1 = value;
-        this.$store.dispatch("SET_UI", ["player1", value || ""]);
+        this.$store.dispatch("ui/SET_UI", ["player1", value || ""]);
       },
     },
     player2: {
       get() {
-        return this.$store.state.player2;
+        return this.$store.state.ui.player2;
       },
       set(value) {
         this.tags.player2 = value;
-        this.$store.dispatch("SET_UI", ["player2", value || ""]);
+        this.$store.dispatch("ui/SET_UI", ["player2", value || ""]);
       },
     },
   },
@@ -172,7 +172,7 @@ export default {
 
       let game = new Game(`[Size "${this.size}"]\n\n1. `, { name });
       game.setTags(tags, false);
-      this.$store.dispatch("ADD_GAME", {
+      this.$store.dispatch("game/ADD_GAME", {
         ptn: game.ptn,
         name: game.name,
         state: game.minState,
@@ -193,7 +193,7 @@ export default {
             this.$store
               .dispatch("online/LOAD_GAME", game.config.id)
               .catch((error) => {
-                this.$store.dispatch("NOTIFY_ERROR", error);
+                this.$store.dispatch("ui/NOTIFY_ERROR", error);
               });
           });
           this.selectedGames = [];

@@ -47,9 +47,9 @@
           >
             <Move
               v-if="game.state.move"
-              v-show="game.state.ply && $store.state.showMove"
+              v-show="game.state.ply && $store.state.ui.showMove"
               class="q-mb-md q-mx-md"
-              :class="{ 'lt-sm': $store.state.showPTN }"
+              :class="{ 'lt-sm': $store.state.ui.showPTN }"
               :move="game.state.move"
               :game="game"
               separate-branch
@@ -80,13 +80,13 @@
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('UNDO', game)"
+              @click="$store.dispatch('game/UNDO', game)"
               icon="undo"
               :title="$t('Undo')"
               :disabled="!game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('REDO', game)"
+              @click="$store.dispatch('game/REDO', game)"
               icon="redo"
               :title="$t('Redo')"
               :disabled="!game.canRedo"
@@ -117,8 +117,8 @@
     </q-drawer>
 
     <q-footer>
-      <Scrubber :game="game" v-if="$store.state.showScrubber" />
-      <q-toolbar v-show="$store.state.showControls" class="q-pa-sm bg-ui">
+      <Scrubber :game="game" v-if="$store.state.ui.showScrubber" />
+      <q-toolbar v-show="$store.state.ui.showControls" class="q-pa-sm bg-ui">
         <PlayControls :game="game" />
       </q-toolbar>
     </q-footer>
@@ -178,32 +178,32 @@ export default {
       game: this.getGame(),
       errors: [],
       hotkeys: HOTKEYS,
-      defaults: { ...this.$store.state.embedConfig.ui },
+      defaults: { ...this.$store.state.ui.embedConfig.ui },
     };
   },
   computed: {
     left: {
       get() {
-        return this.$store.state.showPTN;
+        return this.$store.state.ui.showPTN;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showPTN", value]);
+        this.$store.dispatch("ui/SET_UI", ["showPTN", value]);
       },
     },
     right: {
       get() {
-        return this.$store.state.showText;
+        return this.$store.state.ui.showText;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showText", value]);
+        this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
     },
     notifyNotes: {
       get() {
-        return this.$store.state.notifyNotes;
+        return this.$store.state.ui.notifyNotes;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
+        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
     title() {
@@ -235,7 +235,7 @@ export default {
       );
     },
     uiShortkey({ srcKey }) {
-      this.$store.dispatch("TOGGLE_UI", srcKey);
+      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
@@ -269,11 +269,11 @@ export default {
     }
   },
   created() {
-    this.$store.commit("SET_EMBED_GAME");
+    this.$store.commit("ui/SET_EMBED_GAME");
     forEach(this.state, (value, key) => {
-      this.$store.commit("SET_UI", [key, value]);
+      this.$store.commit("ui/SET_UI", [key, value]);
     });
-    this.$store.dispatch("SET_THEME", this.$store.state.theme);
+    this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
   },
   watch: {
     ptn() {
@@ -283,7 +283,7 @@ export default {
       handler(state, oldState) {
         let fullState = {};
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
-          this.$store.commit("SET_UI", [key, value]);
+          this.$store.commit("ui/SET_UI", [key, value]);
         });
         this.game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";

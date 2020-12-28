@@ -11,7 +11,7 @@ export default {
   props: ["game"],
   computed: {
     show() {
-      return this.$store.state.notifyGame;
+      return this.$store.state.ui.notifyGame;
     },
     notifications() {
       const ply = this.game.state.plyIsDone
@@ -45,8 +45,8 @@ export default {
       return alerts.map((alert) => ({
         message: alert.message,
         color: "player" + alert.player,
-        icon: this.$store.getters.playerIcon(alert.player || "tie"),
-        textColor: this.$store.state.theme[`player${alert.player}Dark`]
+        icon: this.$store.getters["ui/playerIcon"](alert.player || "tie"),
+        textColor: this.$store.state.ui.theme[`player${alert.player}Dark`]
           ? "textLight"
           : "textDark",
       }));

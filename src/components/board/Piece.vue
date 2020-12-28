@@ -30,7 +30,7 @@ export default {
   props: ["game", "id"],
   computed: {
     theme() {
-      return this.$store.getters.theme();
+      return this.$store.getters["ui/theme"]();
     },
     pieceCounts() {
       return this.game.pieceCounts[this.piece.color];
@@ -44,7 +44,7 @@ export default {
     selectable() {
       return (
         !this.piece.square &&
-        (this.$store.state.editingTPS ||
+        (this.$store.state.ui.editingTPS ||
           this.piece.color === this.game.state.color)
       );
     },
@@ -52,7 +52,7 @@ export default {
       return this.piece === this.game.state.selected.pieces[0];
     },
     board3D() {
-      return this.$store.state.board3D;
+      return this.$store.state.ui.board3D;
     },
     x() {
       let x = 100;
@@ -152,7 +152,7 @@ export default {
   },
   methods: {
     select(alt = false) {
-      if (this.$store.state.editingTPS) {
+      if (this.$store.state.ui.editingTPS) {
         let type = this.piece.typeCode;
         if (alt && !this.piece.isCapstone) {
           type = "S";

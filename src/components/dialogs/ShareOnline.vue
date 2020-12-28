@@ -152,7 +152,7 @@ export default {
       error: "",
       isValid: false,
       isPrivate: true,
-      playerName: this.$store.state.playerName,
+      playerName: this.$store.state.ui.playerName,
       qrText: "",
       loading: false,
       flatCounts: false,
@@ -199,7 +199,7 @@ export default {
     },
     player: {
       get() {
-        return this.$store.state.player;
+        return this.$store.state.ui.player;
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["player", value]);
@@ -233,7 +233,7 @@ export default {
   },
   methods: {
     playerIcon(player) {
-      return this.$store.getters.playerIcon(player);
+      return this.$store.getters["ui/playerIcon"](player);
     },
     create() {
       if (!this.isValid) {
@@ -288,7 +288,7 @@ export default {
         this.isPrivate = false;
       }
     },
-    "$store.state.playerName"(playerName) {
+    "$store.state.ui.playerName"(playerName) {
       this.playerName = playerName;
     },
   },

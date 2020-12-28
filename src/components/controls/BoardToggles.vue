@@ -32,18 +32,20 @@ export default {
   components: { FullscreenToggle },
   computed: {
     fg() {
-      return this.$store.state.theme.secondaryDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.secondaryDark
+        ? "textLight"
+        : "textDark";
     },
     board3D: {
       get() {
-        return this.$store.state.board3D;
+        return this.$store.state.ui.board3D;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["board3D", value]);
+        this.$store.dispatch("ui/SET_UI", ["board3D", value]);
       },
     },
     isPortrait() {
-      return this.$store.state.isPortrait;
+      return this.$store.state.ui.isPortrait;
     },
   },
 };

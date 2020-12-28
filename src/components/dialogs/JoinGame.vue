@@ -43,7 +43,7 @@ export default {
   data() {
     return {
       isValid: false,
-      playerName: this.$store.state.playerName,
+      playerName: this.$store.state.ui.playerName,
     };
   },
   computed: {
@@ -89,7 +89,7 @@ export default {
   watch: {
     value(visible) {
       if (visible) {
-        this.playerName = this.$store.state.playerName;
+        this.playerName = this.$store.state.ui.playerName;
       }
     },
     player(player) {

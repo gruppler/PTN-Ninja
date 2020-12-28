@@ -288,10 +288,10 @@ export default {
     props,
     props.map((key) => ({
       get() {
-        return this.isDisabled(key) ? false : this.$store.state[key];
+        return this.isDisabled(key) ? false : this.$store.state.ui[key];
       },
       set(value) {
-        this.$store.dispatch("SET_UI", [key, value]);
+        this.$store.dispatch("ui/SET_UI", [key, value]);
       },
     }))
   ),
@@ -302,7 +302,7 @@ export default {
   },
   watch: {
     theme(theme) {
-      this.$store.dispatch("SET_THEME", theme);
+      this.$store.dispatch("ui/SET_THEME", theme);
     },
   },
 };

@@ -1,4 +1,4 @@
-import { firebase, auth, db /* , messaging */ } from "../../boot/firebase.js";
+import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
 
 import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
@@ -6,9 +6,7 @@ import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
 import Game from "../../PTN/Game";
 import { toDate, now } from "../../PTN/Tag";
 
-const configToDB = (config) => {
-  return omit(config, ["id", "player", "unseen"]);
-};
+const configToDB = (config) => omit(config, ["id", "player", "unseen"]);
 
 const snapshotToGameJSON = (doc) => {
   let game = doc.data();
@@ -243,7 +241,7 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
 
 export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
   dispatch("UNLISTEN_ACTIVE_GAMES");
-  const gameIDs = compact(this.state.games.map((game) => game.config.id));
+  const gameIDs = compact(this.state.game.list.map((game) => game.config.id));
   if (!gameIDs.length) {
     return;
   }
@@ -253,14 +251,14 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
     .onSnapshot(
       (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-          const activeGame = this.state.games[0];
+          const activeGame = this.state.game.list[0];
           let game, stateGame, isActive;
           let isChanged = false;
           switch (change.type) {
             case "added":
             case "modified":
               game = snapshotToGameJSON(change.doc, state);
-              stateGame = this.state.games.find(
+              stateGame = this.state.game.list.find(
                 (g) => g.config.id === game.config.id
               );
               isActive = activeGame && game.config.id === activeGame.config.id;
@@ -268,7 +266,7 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
                 if (!isEqual(game.name, stateGame.name)) {
                   isChanged = true;
                   console.log("UPDATED NAME", game, game.name, stateGame.name);
-                  this.dispatch("SET_NAME", {
+                  this.dispatch("game/SET_NAME", {
                     oldName: stateGame.name,
                     newName: game.name,
                   });
@@ -281,7 +279,10 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
                     game.state,
                     stateGame.state
                   );
-                  this.dispatch("SET_STATE", { game, gameState: game.state });
+                  this.dispatch("game/SET_STATE", {
+                    game,
+                    gameState: game.state,
+                  });
                 }
                 if (
                   (isChanged && !isActive) ||
@@ -302,7 +303,7 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
                     game.config,
                     stateGame.config
                   );
-                  this.dispatch("SET_CONFIG", {
+                  this.dispatch("game/SET_CONFIG", {
                     game,
                     config: { ...game.config, unseen: !isActive },
                   });
@@ -411,60 +412,3 @@ export const UPDATE_GAME = (context, gameJSON) => {
     .doc(gameJSON.config.id)
     .update({ ...gameJSON, config });
 };
-
-// export const NOTIFICATION_INIT = context => {
-//   if (!messaging || !Notification) {
-//     console.error("Messaging not supported");
-//   }
-//
-//   context;
-//
-//   Notification.requestPermission().then(permission => {
-//     if (permission === "granted") {
-//       // Get Instance ID token. Initially this makes a network call, once retrieved
-//       // subsequent calls to getToken will return from cache.
-//       messaging
-//         .getToken()
-//         .then(currentToken => {
-//           if (currentToken) {
-//             // sendTokenToServer(currentToken);
-//             // updateUIForPushEnabled(currentToken);
-//           } else {
-//             // Show permission request.
-//             console.log(
-//               "No Instance ID token available. Request permission to generate one."
-//             );
-//             // Show permission UI.
-//             // updateUIForPushPermissionRequired();
-//             // setTokenSentToServer(false);
-//           }
-//         })
-//         .catch(err => {
-//           console.error("An error occurred while retrieving token. ", err);
-//           // showToken("Error retrieving Instance ID token. ", err);
-//           // setTokenSentToServer(false);
-//         });
-//
-//       // Callback fired if Instance ID token is updated.
-//       messaging.onTokenRefresh(() => {
-//         messaging
-//           .getToken()
-//           .then(refreshedToken => {
-//             console.log("Token refreshed.");
-//             // Indicate that the new Instance ID token has not yet been sent to the
-//             // app server.
-//             // setTokenSentToServer(false);
-//             // Send Instance ID token to app server.
-//             // sendTokenToServer(refreshedToken);
-//             refreshedToken;
-//           })
-//           .catch(err => {
-//             console.error("Unable to retrieve refreshed token ", err);
-//             // showToken("Unable to retrieve refreshed token ", err);
-//           });
-//       });
-//     } else {
-//       console.error("Unable to get permission to notify.");
-//     }
-//   });
-// };

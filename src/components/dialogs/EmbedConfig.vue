@@ -248,7 +248,7 @@ export default {
   data() {
     return {
       name: this.game.name,
-      config: cloneDeep(this.$store.state.embedConfig),
+      config: cloneDeep(this.$store.state.ui.embedConfig),
       previewError: false,
       previewLoaded: false,
       initialURL: "",
@@ -262,7 +262,7 @@ export default {
       return this.game.generateName();
     },
     url() {
-      return this.$store.getters.url(this.game, {
+      return this.$store.getters["ui/url"](this.game, {
         origin: true,
         name: this.name,
         names: this.config.includeNames,
@@ -283,8 +283,8 @@ export default {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {
-          this.config = cloneDeep(this.$store.state.defaults.embedConfig);
-          this.config.ui.theme = this.$store.state.theme.id;
+          this.config = cloneDeep(this.$store.state.ui.defaults.embedConfig);
+          this.config.ui.theme = this.$store.state.ui.theme.id;
         },
       });
     },

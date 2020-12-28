@@ -112,15 +112,15 @@ export default {
   computed: {
     isShowing() {
       return (
-        (this.$store.state.showText && !this.hasChat) ||
-        this.$store.state.textTab === "notes"
+        (this.$store.state.ui.showText && !this.hasChat) ||
+        this.$store.state.ui.textTab === "notes"
       );
     },
     primaryDark() {
-      return this.$store.state.theme.primaryDark;
+      return this.$store.state.ui.theme.primaryDark;
     },
     log() {
-      return this.$store.state.showAllBranches
+      return this.$store.state.ui.showAllBranches
         ? this.game.notes
         : pickBy(
             this.game.notes,

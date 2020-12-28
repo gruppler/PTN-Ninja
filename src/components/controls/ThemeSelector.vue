@@ -3,7 +3,6 @@
     :label="$t('Theme')"
     v-model="theme"
     :options="themes"
-    popup-content-class="bg-accent"
     option-value="id"
     option-label="name"
     map-options
@@ -44,7 +43,7 @@
             v-if="
               !scope.opt.isBuiltIn &&
               scope.opt.id !== theme &&
-              scope.opt.id !== $store.state.themeID
+              scope.opt.id !== $store.state.ui.themeID
             "
             @click.stop="remove(scope.opt.id)"
             icon="delete"
@@ -72,17 +71,20 @@ export default {
     themes() {
       if (this.game) {
         const config = cloneDeep(
-          pick(this.$store.state, Object.keys(this.$store.state.pngConfig))
+          pick(
+            this.$store.state.ui,
+            Object.keys(this.$store.state.ui.pngConfig)
+          )
         );
         config.size = "xs";
-        return this.$store.getters.themes.map((theme) => {
+        return this.$store.getters["ui/themes"].map((theme) => {
           theme = cloneDeep(theme);
           const canvas = this.game.render({ ...config, theme });
           theme.preview = canvas.toDataURL();
           return theme;
         });
       }
-      return this.$store.getters.themes;
+      return this.$store.getters["ui/themes"];
     },
     theme: {
       get() {
@@ -102,15 +104,15 @@ export default {
       if (id === this.theme) {
         return false;
       }
-      const themes = cloneDeep(this.$store.state.themes);
+      const themes = cloneDeep(this.$store.state.ui.themes);
       const builtInThemeCount = this.themes.length - themes.length;
       let index = themes.findIndex((theme) => theme.id === id);
       if (index < 0) {
         return false;
       }
       const theme = cloneDeep(themes.splice(index, 1)[0]);
-      this.$store.dispatch("SET_UI", ["themes", themes]);
-      this.$store.dispatch("NOTIFY", {
+      this.$store.dispatch("ui/SET_UI", ["themes", themes]);
+      this.$store.dispatch("ui/NOTIFY", {
         icon: "color",
         message: this.$t("success.themeRemoved", theme),
         timeout: 5000,
@@ -122,7 +124,7 @@ export default {
             color: "primary",
             handler: () => {
               themes.splice(index, 0, theme);
-              this.$store.dispatch("SET_UI", ["themes", themes]);
+              this.$store.dispatch("ui/SET_UI", ["themes", themes]);
             },
           },
           { icon: "close" },

@@ -89,7 +89,7 @@
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
-          v-if="$store.state.showControls"
+          v-if="$store.state.ui.showControls"
           v-model="branchMenu"
           @select="selectBranch"
           :game="game"
@@ -137,10 +137,10 @@ export default {
   },
   computed: {
     fg() {
-      return this.$store.state.theme.isDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
     primaryFG() {
-      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     isFirst() {
       return !this.game.state.prevPly && !this.game.state.plyIsDone;
@@ -234,7 +234,10 @@ export default {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
-          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timer = setTimeout(
+            this.next,
+            6e4 / this.$store.state.ui.playSpeed
+          );
           this.timestamp = new Date().getTime();
         }
         if (!this.isFirst) {
@@ -246,7 +249,10 @@ export default {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
-          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timer = setTimeout(
+            this.next,
+            6e4 / this.$store.state.ui.playSpeed
+          );
           this.timestamp = new Date().getTime();
         }
         if (!this.isLast) {
@@ -331,7 +337,7 @@ export default {
   },
   watch: {
     // Make playback speed respond immediately to speed changes
-    "$store.state.playSpeed"(speed) {
+    "$store.state.ui.playSpeed"(speed) {
       let now = new Date().getTime();
       let nextFrame = this.timestamp + 6e4 / speed;
 

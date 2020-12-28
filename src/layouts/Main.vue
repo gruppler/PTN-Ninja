@@ -37,7 +37,7 @@
       v-shortkey="hotkeys.UI"
       @shortkey="
         if (!disabledOptions.includes($event.srcKey))
-          $store.dispatch('TOGGLE_UI', $event.srcKey);
+          $store.dispatch('ui/TOGGLE_UI', $event.srcKey);
       "
     >
       <q-page
@@ -57,9 +57,9 @@
           >
             <Move
               v-if="game.state.move"
-              v-show="game.state.ply && $store.state.showMove"
+              v-show="game.state.ply && $store.state.ui.showMove"
               class="q-mb-md q-mx-md"
-              :class="{ 'lt-sm': $store.state.showPTN }"
+              :class="{ 'lt-sm': $store.state.ui.showPTN }"
               :move="game.state.move"
               :game="game"
               separate-branch
@@ -104,13 +104,13 @@
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('UNDO', game)"
+              @click="$store.dispatch('game/UNDO', game)"
               icon="undo"
               :title="$t('Undo')"
               :disabled="isEditingTPS || !game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('REDO', game)"
+              @click="$store.dispatch('game/REDO', game)"
               icon="redo"
               :title="$t('Redo')"
               :disabled="isEditingTPS || !game.canRedo"
@@ -170,9 +170,9 @@
     </q-drawer>
 
     <q-footer class="bg-ui">
-      <Scrubber :game="game" v-if="$store.state.showScrubber" />
+      <Scrubber :game="game" v-if="$store.state.ui.showScrubber" />
       <q-toolbar
-        v-show="isEditingTPS || $store.state.showControls"
+        v-show="isEditingTPS || $store.state.ui.showControls"
         class="footer-toolbar q-pa-sm"
       >
         <PieceSelector
@@ -361,18 +361,18 @@ export default {
     ),
     left: {
       get() {
-        return this.$store.state.showPTN;
+        return this.$store.state.ui.showPTN;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showPTN", value]);
+        this.$store.dispatch("ui/SET_UI", ["showPTN", value]);
       },
     },
     right: {
       get() {
-        return this.$store.state.showText;
+        return this.$store.state.ui.showText;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showText", value]);
+        this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
     },
     hasChat() {
@@ -380,26 +380,26 @@ export default {
     },
     textTab: {
       get() {
-        return this.hasChat ? this.$store.state.textTab : "notes";
+        return this.hasChat ? this.$store.state.ui.textTab : "notes";
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["textTab", value]);
+        this.$store.dispatch("ui/SET_UI", ["textTab", value]);
       },
     },
     notifyNotes: {
       get() {
-        return this.$store.state.notifyNotes;
+        return this.$store.state.ui.notifyNotes;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
+        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
     isEditingTPS: {
       get() {
-        return this.$store.state.isEditingTPS;
+        return this.$store.state.ui.isEditingTPS;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+        this.$store.dispatch("ui/SET_UI", ["isEditingTPS", value]);
         if (!value) {
           this.editingTPS = "";
         }
@@ -407,10 +407,10 @@ export default {
     },
     selectedPiece: {
       get() {
-        return this.$store.state.selectedPiece;
+        return this.$store.state.ui.selectedPiece;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["selectedPiece", value]);
+        this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
         this.editingTPS = this.game.state.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
@@ -454,10 +454,10 @@ export default {
     },
     firstMoveNumber: {
       get() {
-        return this.$store.state.firstMoveNumber;
+        return this.$store.state.ui.firstMoveNumber;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["firstMoveNumber", 1 * value]);
+        this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
         this.editingTPS = this.game.state.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
@@ -466,10 +466,10 @@ export default {
     },
     editingTPS: {
       get() {
-        return this.$store.state.editingTPS;
+        return this.$store.state.ui.editingTPS;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
       },
     },
     disabledOptions() {
@@ -490,7 +490,7 @@ export default {
       );
     },
     games() {
-      return this.$store.state.games.concat();
+      return this.$store.state.game.list.concat();
     },
     gameState() {
       let state = this.game.minState;
@@ -528,9 +528,9 @@ export default {
     },
     newGame() {
       const game = new Game(
-        `[Player1 "${this.$store.state.player1}"]\n` +
-          `[Player2 "${this.$store.state.player2}"]\n` +
-          `[Size "${this.$store.state.size}"]\n` +
+        `[Player1 "${this.$store.state.ui.player1}"]\n` +
+          `[Player2 "${this.$store.state.ui.player2}"]\n` +
+          `[Size "${this.$store.state.ui.size}"]\n` +
           "\n" +
           "1. "
       );
@@ -542,13 +542,13 @@ export default {
       try {
         if (this.ptn) {
           // Add game from URL
-          const index = this.$store.state.games.findIndex(
+          const index = this.$store.state.game.list.findIndex(
             (g) => g.name === this.name
           );
-          if (index < 0 || this.$store.state.openDuplicate !== "replace") {
+          if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
             game = new Game(this.ptn, { name: this.name, state: this.state });
             if (game) {
-              this.$store.dispatch("ADD_GAME", {
+              this.$store.dispatch("game/ADD_GAME", {
                 ptn: this.ptn,
                 name: game.name,
                 state: game.minState,
@@ -558,24 +558,27 @@ export default {
             }
           } else {
             if (index > 0) {
-              this.$store.dispatch("SELECT_GAME", { index, immediate: true });
+              this.$store.dispatch("game/SELECT_GAME", {
+                index,
+                immediate: true,
+              });
             }
 
-            game = this.$store.state.games[0];
+            game = this.$store.state.game.list[0];
             game = new Game(game.ptn, game);
 
             if (game.ptn !== this.ptn) {
               game.replacePTN(this.ptn, this.state);
-              this.$store.dispatch("SAVE_UNDO_INDEX", game);
-              this.$store.dispatch("SAVE_UNDO_HISTORY", game);
-              this.$store.dispatch("UPDATE_PTN", this.ptn);
-              this.$store.dispatch("SET_STATE", {
+              this.$store.dispatch("game/SAVE_UNDO_INDEX", game);
+              this.$store.dispatch("game/SAVE_UNDO_HISTORY", game);
+              this.$store.dispatch("game/UPDATE_PTN", this.ptn);
+              this.$store.dispatch("game/SET_STATE", {
                 game,
                 gameState: game.minState,
               });
 
               this.$nextTick(() => {
-                this.$store.dispatch("NOTIFY", {
+                this.$store.dispatch("ui/NOTIFY", {
                   message: this.$t("success.replacedExistingGame"),
                   timeout: 5000,
                   progress: true,
@@ -585,7 +588,7 @@ export default {
                       label: this.$t("Undo"),
                       color: "primary",
                       handler: () => {
-                        this.$store.dispatch("UNDO", game);
+                        this.$store.dispatch("game/UNDO", game);
                       },
                     },
                     { icon: "close" },
@@ -595,11 +598,17 @@ export default {
             }
             this.$router.replace("/");
           }
-        } else if (this.$store.state.games && this.$store.state.games.length) {
-          game = this.$store.state.games[0];
+        } else if (
+          this.$store.state.game.list &&
+          this.$store.state.game.list.length
+        ) {
+          game = this.$store.state.game.list[0];
           game = new Game(game.ptn, game);
-          if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
-            game.doTPS(this.$store.state.editingTPS);
+          if (
+            this.$store.state.ui.isEditingTPS &&
+            this.$store.state.ui.editingTPS
+          ) {
+            game.doTPS(this.$store.state.ui.editingTPS);
           }
 
           if (game.config.isOnline) {
@@ -626,7 +635,7 @@ export default {
       this.setWindowTitle(game.name);
 
       if (game.config.unseen) {
-        this.$store.dispatch("SET_CONFIG", {
+        this.$store.dispatch("game/SET_CONFIG", {
           game,
           config: { ...game.config, unseen: false },
         });
@@ -642,7 +651,7 @@ export default {
       this.game = this.getGame();
     },
     setTPS() {
-      this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
+      this.$store.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
         this.game.moves[0].linenum.number = Number(
           this.editingTPS.split(/\s/)[2]
         );
@@ -697,7 +706,7 @@ export default {
           this.$refs.gameSelector.$refs.select.showPopup();
           break;
         case "previousGame":
-          if (this.$store.state.games.length > 1) {
+          if (this.$store.state.game.list.length > 1) {
             this.$refs.gameSelector.select(1);
           }
           break;
@@ -812,7 +821,7 @@ export default {
     },
     openFiles(event) {
       this.nop(event);
-      this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
+      this.$store.dispatch("ui/OPEN_FILES", event.dataTransfer.files);
     },
     nop(event) {
       event.stopPropagation();
@@ -831,7 +840,7 @@ export default {
     },
     gameState(newState, oldState) {
       if (oldState.name === newState.name) {
-        this.$store.dispatch("SET_STATE", {
+        this.$store.dispatch("game/SET_STATE", {
           game: this.game,
           gameState: this.game.minState,
         });
@@ -840,21 +849,21 @@ export default {
     gameHistory(newHistory, oldHistory) {
       if (oldHistory.name === newHistory.name) {
         if (oldHistory.index !== newHistory.index) {
-          this.$store.dispatch("SAVE_UNDO_INDEX", this.game);
+          this.$store.dispatch("game/SAVE_UNDO_INDEX", this.game);
         }
         if (!isEqual(oldHistory.history, newHistory.history)) {
-          this.$store.dispatch("SAVE_UNDO_HISTORY", this.game);
+          this.$store.dispatch("game/SAVE_UNDO_HISTORY", this.game);
         }
       }
     },
     gameText(newText, oldText) {
       if (oldText.name === newText.name) {
-        this.$store.dispatch("UPDATE_PTN", newText.ptn);
+        this.$store.dispatch("game/UPDATE_PTN", newText.ptn);
       }
     },
     gameName(newName, oldName) {
       if (oldName.game === newName.game) {
-        this.$store.dispatch("SET_NAME", {
+        this.$store.dispatch("game/SET_NAME", {
           oldName: oldName.name,
           newName: newName.name,
         });
@@ -899,11 +908,11 @@ export default {
     this.$store.dispatch("online/INIT").then(() => {
       if (this.gameID) {
         // Check that the game is not already open
-        const index = this.$store.state.games.findIndex(
+        const index = this.$store.state.game.list.findIndex(
           (game) => game.config.id === this.gameID
         );
         if (index >= 0) {
-          this.$store.dispatch("SELECT_GAME", index);
+          this.$store.dispatch("game/SELECT_GAME", index);
         } else {
           // Add online game from URL
           this.$store
@@ -912,7 +921,7 @@ export default {
               this.$router.replace("/");
             })
             .catch((error) => {
-              this.$store.dispatch("NOTIFY_ERROR", error);
+              this.$store.dispatch("ui/NOTIFY_ERROR", error);
             });
         }
       }
@@ -921,7 +930,7 @@ export default {
   created() {
     if (!this.gameID) {
       if (!this.games.length) {
-        this.$store.dispatch("ADD_GAME", {
+        this.$store.dispatch("game/ADD_GAME", {
           ptn: this.game.text(),
           name: this.game.name,
           state: this.game.minState,

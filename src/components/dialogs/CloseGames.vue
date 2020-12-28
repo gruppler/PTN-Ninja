@@ -40,14 +40,14 @@ export default {
     return {
       range: {
         min: 1,
-        max: this.$store.state.games.length - 1,
+        max: this.$store.state.game.list.length - 1,
       },
       min: 0,
     };
   },
   computed: {
     games() {
-      return this.$store.state.games.map((game) => game.name);
+      return this.$store.state.game.list.map((game) => game.name);
     },
     max() {
       return this.games.length - 1;
@@ -58,7 +58,7 @@ export default {
       this.$emit("input", false);
     },
     submit() {
-      this.$store.dispatch("REMOVE_MULTIPLE_GAMES", {
+      this.$store.dispatch("game/REMOVE_MULTIPLE_GAMES", {
         start: this.range.min,
         count: this.range.max - this.range.min + 1,
       });

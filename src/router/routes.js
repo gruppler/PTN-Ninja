@@ -48,7 +48,7 @@ const routes = [
           state.targetBranch;
       }
 
-      if (state.theme && !(state.theme in store.getters.themes)) {
+      if (state.theme && !(state.theme in store.getters["ui/themes"])) {
         try {
           state.theme =
             decompressFromEncodedURIComponent(state.theme) || state.theme;

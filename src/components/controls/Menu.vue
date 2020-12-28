@@ -52,7 +52,7 @@ export default {
       return this.$q.screen.height <= 440;
     },
     fg() {
-      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
   },
 };

@@ -40,14 +40,14 @@ export default {
     return {
       range: {
         min: 0,
-        max: this.$store.state.games.length - 1,
+        max: this.$store.state.game.list.length - 1,
       },
       min: 0,
     };
   },
   computed: {
     games() {
-      return this.$store.state.games.map((game) => game.name);
+      return this.$store.state.game.list.map((game) => game.name);
     },
     max() {
       return this.games.length - 1;
@@ -59,13 +59,16 @@ export default {
     },
     submit() {
       const count = this.range.max - this.range.min + 1;
-      this.$store.dispatch("PROMPT", {
+      this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
         message: this.$tc("confirm.downloadMultipleGames", count),
         success: () => {
           this.$store.dispatch(
-            "SAVE_PTN",
-            this.$store.state.games.slice(this.range.min, this.range.max + 1)
+            "ui/SAVE_PTN",
+            this.$store.state.game.list.slice(
+              this.range.min,
+              this.range.max + 1
+            )
           );
           this.close();
         },

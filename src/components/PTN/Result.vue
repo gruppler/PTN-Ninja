@@ -34,7 +34,7 @@ export default {
   },
   computed: {
     theme() {
-      return this.$store.state.theme;
+      return this.$store.state.ui.theme;
     },
     resultObject() {
       return this.result && this.result.constructor === Result

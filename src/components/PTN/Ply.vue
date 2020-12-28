@@ -77,7 +77,7 @@ export default {
   },
   computed: {
     theme() {
-      return this.$store.state.theme;
+      return this.$store.state.ui.theme;
     },
     ply() {
       return this.game.plies[this.plyID];

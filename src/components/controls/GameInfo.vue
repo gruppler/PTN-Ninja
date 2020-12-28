@@ -214,8 +214,8 @@
         flat
       >
         <div v-show="separatePieceCounts" class="column">
-          <q-icon :name="$store.getters.playerIcon(1)" />
-          <q-icon :name="$store.getters.playerIcon(2)" />
+          <q-icon :name="$store.getters['ui/playerIcon'](1)" />
+          <q-icon :name="$store.getters['ui/playerIcon'](2)" />
         </div>
         <q-icon v-show="!separatePieceCounts" name="players" />
       </q-btn>
@@ -250,7 +250,10 @@
             <template v-slot:prepend>
               <q-icon
                 :name="
-                  $store.getters.playerIcon(1, game && game.config.isPrivate)
+                  $store.getters['ui/playerIcon'](
+                    1,
+                    game && game.config.isPrivate
+                  )
                 "
               />
             </template>
@@ -304,7 +307,10 @@
             <template v-slot:prepend>
               <q-icon
                 :name="
-                  $store.getters.playerIcon(2, game && game.config.isPrivate)
+                  $store.getters['ui/playerIcon'](
+                    2,
+                    game && game.config.isPrivate
+                  )
                 "
               />
             </template>
@@ -498,7 +504,6 @@
         :options="results"
         :label="$t('Result')"
         :readonly="game && !game.isLocal"
-        popup-content-class="bg-accent"
         autocorrect="off"
         spellcheck="false"
         hide-bottom-space
@@ -657,7 +662,7 @@ export default {
   },
   computed: {
     primaryFG() {
-      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     generatedName() {
       return generateName(this.tags, this.game);
@@ -686,7 +691,7 @@ export default {
         if (!this.name) {
           this.name = this.generatedName;
         }
-        this.name = this.$store.getters.uniqueName(this.name, true);
+        this.name = this.$store.getters["game/uniqueName"](this.name, true);
       }
 
       if (

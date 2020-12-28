@@ -23,21 +23,6 @@ const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
   : "https://tps.ptn.ninja/";
 
-export const uniqueName = (state) => (name, ignoreFirst = false) => {
-  const names = state.games.slice(1 * ignoreFirst).map((game) => game.name);
-  while (names.includes(name)) {
-    if (/\(\d+\)$/.test(name)) {
-      name = name.replace(/\((\d+)\)$/, (match, number) => {
-        number = parseInt(number, 10) + 1;
-        return `(${number})`;
-      });
-    } else {
-      name += " (1)";
-    }
-  }
-  return name;
-};
-
 export const playerIcon = (state) => (player, isPrivate = false) => {
   let result = "";
   switch (player) {
@@ -209,11 +194,4 @@ export const url = (state, getters) => (game, options = {}) => {
         .join("&");
   }
   return url;
-};
-
-export const sharableFiles = (state) => (files) => {
-  if (!isArray(files)) {
-    files = [files];
-  }
-  return Object.freeze(files);
 };

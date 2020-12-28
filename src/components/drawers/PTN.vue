@@ -26,15 +26,15 @@ export default {
   props: ["game"],
   computed: {
     moves() {
-      return this.$store.state.showAllBranches
+      return this.$store.state.ui.showAllBranches
         ? this.game.movesSorted
         : this.game.state.moves;
     },
   },
   methods: {
     scroll(animate = false) {
-      const editingBranch = this.$store.state.editingBranch
-        ? this.game.branches[this.$store.state.editingBranch] || null
+      const editingBranch = this.$store.state.ui.editingBranch
+        ? this.game.branches[this.$store.state.ui.editingBranch] || null
         : null;
       const move = editingBranch
         ? this.$refs[editingBranch.move.id][0]
@@ -45,7 +45,7 @@ export default {
         this.$refs.scroll.setScrollPosition(
           move.$el.offsetTop -
             (this.$refs.scroll.$el.offsetHeight - move.$el.offsetHeight) / 2,
-          animate && this.$store.state.showPTN ? 200 : 0
+          animate && this.$store.state.ui.showPTN ? 200 : 0
         );
       }
     },
@@ -57,7 +57,7 @@ export default {
     "game.state.plyID"() {
       this.scroll(true);
     },
-    "$store.state.showAllBranches"() {
+    "$store.state.ui.showAllBranches"() {
       this.scroll(true);
     },
   },

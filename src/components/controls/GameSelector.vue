@@ -142,7 +142,7 @@ export default {
     ),
 
     games() {
-      return this.$store.state.games.map((game, index) => ({
+      return this.$store.state.game.list.map((game, index) => ({
         label: game.name,
         value: index,
         config: game.config,
@@ -191,13 +191,13 @@ export default {
     },
     select(index) {
       if (index >= 0 && this.games.length > index) {
-        this.$store.dispatch("SELECT_GAME", { index });
-        this.$emit("input", this.$store.state.games[0]);
+        this.$store.dispatch("game/SELECT_GAME", { index });
+        this.$emit("input", this.$store.state.game.list[0]);
       }
     },
     icon(game) {
       if (game.config.isOnline) {
-        return this.$store.getters.playerIcon(
+        return this.$store.getters["ui/playerIcon"](
           game.config.player,
           game.config.isPrivate
         );
@@ -206,7 +206,7 @@ export default {
       }
     },
     close(index) {
-      this.$store.dispatch("REMOVE_GAME", index);
+      this.$store.dispatch("game/REMOVE_GAME", index);
     },
   },
 };

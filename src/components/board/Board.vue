@@ -12,42 +12,42 @@
         [style]: true,
         ['size-' + game.size]: true,
         ['turn-' + turn]: true,
-        'no-animations': !$store.state.animateBoard,
-        'axis-labels': $store.state.axisLabels,
-        'show-turn-indicator': $store.state.turnIndicator,
-        'highlight-squares': $store.state.highlightSquares,
-        'piece-shadows': $store.state.pieceShadows,
-        'show-unplayed-pieces': $store.state.unplayedPieces,
+        'no-animations': !$store.state.ui.animateBoard,
+        'axis-labels': $store.state.ui.axisLabels,
+        'show-turn-indicator': $store.state.ui.turnIndicator,
+        'highlight-squares': $store.state.ui.highlightSquares,
+        'piece-shadows': $store.state.ui.pieceShadows,
+        'show-unplayed-pieces': $store.state.ui.unplayedPieces,
       }"
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
     >
       <div
-        v-if="$store.state.turnIndicator"
+        v-if="$store.state.ui.turnIndicator"
         class="player-names row no-wrap"
         @click.right.prevent
       >
         <div
           class="player1 relative-position"
-          :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
+          :style="{ width: $store.state.ui.flatCounts ? flatWidths[0] : '50%' }"
         >
           <div class="row absolute-fit no-wrap q-px-sm">
             <div class="name ellipsis col-shrink">
               {{ player1 }}
             </div>
             <div class="flats ellipsis q-pl-sm">
-              {{ $store.state.flatCounts ? flats[0] : "" }}
+              {{ $store.state.ui.flatCounts ? flats[0] : "" }}
             </div>
           </div>
           <div class="turn-indicator"></div>
         </div>
         <div
           class="player2 relative-position"
-          :style="{ width: $store.state.flatCounts ? flatWidths[1] : '50%' }"
+          :style="{ width: $store.state.ui.flatCounts ? flatWidths[1] : '50%' }"
         >
           <div class="row absolute-fit no-wrap q-px-sm">
             <div class="flats ellipsis q-pr-sm">
-              {{ $store.state.flatCounts ? flats[1] : "" }}
+              {{ $store.state.ui.flatCounts ? flats[1] : "" }}
             </div>
             <div class="name ellipsis col-shrink">
               {{ player2 }}
@@ -58,7 +58,7 @@
       </div>
 
       <div class="board-row row no-wrap">
-        <div v-if="$store.state.axisLabels" class="y-axis column">
+        <div v-if="$store.state.ui.axisLabels" class="y-axis column">
           <div v-for="i in (1, game.size)" :key="i">
             {{ game.size - i + 1 }}
           </div>
@@ -89,7 +89,7 @@
       </div>
 
       <div
-        v-if="$store.state.axisLabels"
+        v-if="$store.state.ui.axisLabels"
         class="x-axis row items-end"
         @click.right.prevent
       >
@@ -125,16 +125,16 @@ export default {
       x: 0,
       y: 0,
       prevBoardRotation: null,
-      boardRotation: this.$store.state.boardRotation,
+      boardRotation: this.$store.state.ui.boardRotation,
     };
   },
   computed: {
     style() {
-      return this.$store.state.theme.boardStyle;
+      return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
-      return this.$store.state.isEditingTPS
-        ? this.$store.state.selectedPiece.color
+      return this.$store.state.ui.isEditingTPS
+        ? this.$store.state.ui.selectedPiece.color
         : this.game.state.turn;
     },
     player1() {
@@ -160,7 +160,7 @@ export default {
       ];
     },
     board3D() {
-      return this.$store.state.board3D;
+      return this.$store.state.ui.board3D;
     },
     isPortrait() {
       return this.size && this.space && this.size.width === this.space.width;
@@ -239,8 +239,11 @@ export default {
     },
     resetBoardRotation() {
       if (this.board3D) {
-        this.boardRotation = this.$store.state.defaults.boardRotation;
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.boardRotation = this.$store.state.ui.defaults.boardRotation;
+        this.$store.dispatch("ui/SET_UI", [
+          "boardRotation",
+          this.boardRotation,
+        ]);
         this.zoomFit();
       }
     },
@@ -277,7 +280,10 @@ export default {
 
       this.boardRotation = [x, y];
       if (event.isFinal) {
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.$store.dispatch("ui/SET_UI", [
+          "boardRotation",
+          this.boardRotation,
+        ]);
       }
     },
     getBounds(nodes) {
@@ -310,7 +316,7 @@ export default {
     },
     zoomFit() {
       let nodes = [this.$refs.container];
-      if (this.$store.state.unplayedPieces) {
+      if (this.$store.state.ui.unplayedPieces) {
         Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
             nodes.push(this.$refs[piece.id][0].$el);
@@ -345,8 +351,8 @@ export default {
   },
   watch: {
     isPortrait(isPortrait) {
-      if (isPortrait !== this.$store.state.isPortrait) {
-        this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
+      if (isPortrait !== this.$store.state.ui.isPortrait) {
+        this.$store.commit("ui/SET_UI", ["isPortrait", isPortrait]);
       }
     },
     maxWidth() {

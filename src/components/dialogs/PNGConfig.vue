@@ -169,18 +169,18 @@ export default {
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
-      config: cloneDeep(this.$store.state.pngConfig),
+      config: cloneDeep(this.$store.state.ui.pngConfig),
       preview: "",
       dimensions: "",
       file: null,
       fileSize: 0,
-      size: sizes.indexOf(this.$store.state.pngConfig.size),
+      size: sizes.indexOf(this.$store.state.ui.pngConfig.size),
       sizes,
     };
   },
   computed: {
     url() {
-      return this.$store.getters.png_url(this.game);
+      return this.$store.getters["ui/png_url"](this.game);
     },
     tps() {
       return this.game.state.tps;
@@ -191,16 +191,16 @@ export default {
   },
   methods: {
     updateConfig() {
-      this.config = cloneDeep(this.$store.state.pngConfig);
+      this.config = cloneDeep(this.$store.state.ui.pngConfig);
     },
     updatePreview() {
       const config = cloneDeep(this.config);
-      let theme = this.$store.getters.theme(config.theme);
+      let theme = this.$store.getters["ui/theme"](config.theme);
       if (theme && !theme.isBuiltIn) {
         config.theme = theme;
       }
       const canvas = this.game.render(config);
-      const filename = this.$store.getters.png_filename(this.game);
+      const filename = this.$store.getters["ui/png_filename"](this.game);
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
@@ -219,7 +219,7 @@ export default {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetPNG"),
         success: () => {
-          const config = cloneDeep(this.$store.state.defaults.pngConfig);
+          const config = cloneDeep(this.$store.state.ui.defaults.pngConfig);
           Object.keys(config).forEach((key) => {
             if (pngUIOptions.includes(key)) {
               config[key] = this.$store.state[key];
@@ -227,7 +227,7 @@ export default {
           });
           this.config = config;
           this.size = this.sizes.indexOf(config.size);
-          this.config.theme = this.$store.state.theme.id;
+          this.config.theme = this.$store.state.ui.theme.id;
         },
       });
     },

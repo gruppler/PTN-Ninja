@@ -189,7 +189,7 @@ export default {
   components: { ThemeSelector },
   props: ["value", "game"],
   data() {
-    const theme = cloneDeep(this.$store.state.theme);
+    const theme = cloneDeep(this.$store.state.ui.theme);
     return {
       maxNameLength: MAX_NAME_LENGTH,
       boardStyles: BOARD_STYLES,
@@ -234,7 +234,7 @@ export default {
       return this.$t("theme." + key);
     },
     init() {
-      this.theme = cloneDeep(this.$store.state.theme);
+      this.theme = cloneDeep(this.$store.state.ui.theme);
       this.initialTheme = cloneDeep(this.theme);
       this.initialThemeID = this.initialTheme.id;
       this.updatePalette();
@@ -304,7 +304,7 @@ export default {
       }
       delete this.theme.isBuiltIn;
       this.theme.id = this.id;
-      const themes = cloneDeep(this.$store.state.themes);
+      const themes = cloneDeep(this.$store.state.ui.themes);
       const index = themes.findIndex((theme) => theme.id === this.id);
       if (index >= 0) {
         themes.splice(index, 1);
@@ -316,10 +316,10 @@ export default {
       this.$store.dispatch("SET_UI", ["themeID", this.id]);
     },
     preview() {
-      this.$store.commit("SET_THEME", this.theme);
+      this.$store.commit("ui/SET_THEME", this.theme);
     },
     restore() {
-      this.$store.commit("SET_THEME", this.initialTheme);
+      this.$store.commit("ui/SET_THEME", this.initialTheme);
     },
   },
   created() {

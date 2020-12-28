@@ -1,11 +1,8 @@
-import { LocalStorage } from "quasar";
-import { Platform } from "quasar";
-
+import { LocalStorage, Platform } from "quasar";
 import { pick } from "lodash";
-
 import { THEMES } from "../../themes";
 
-let defaults = {
+const defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
@@ -85,9 +82,8 @@ defaults.pngConfig = {
   ...pick(defaults, pngUIOptions),
 };
 
-let state = {
+const state = {
   embed: Platform.within.iframe,
-  games: [],
   defaults,
   ...defaults,
 };
@@ -95,20 +91,10 @@ let state = {
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
-if (!state.embed) {
-  if (!LocalStorage.isEmpty()) {
-    for (let key in state) {
-      state[key] = load(key, state[key]);
-    }
+if (!state.embed && !LocalStorage.isEmpty()) {
+  for (let key in defaults) {
+    state[key] = load(key, state[key]);
   }
-  state.games = load("games", []).map((name) => ({
-    name,
-    ptn: load("ptn-" + name),
-    state: load("state-" + name),
-    config: load("config-" + name) || {},
-    history: load("history-" + name),
-    historyIndex: load("historyIndex-" + name),
-  }));
 }
 
 export default state;

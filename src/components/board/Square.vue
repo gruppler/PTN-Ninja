@@ -47,21 +47,21 @@ export default {
       return this.game.state.isGameEnd;
     },
     isEditingTPS() {
-      return this.$store.state.isEditingTPS;
+      return this.$store.state.ui.isEditingTPS;
     },
     selectedPiece() {
-      return this.$store.state.selectedPiece;
+      return this.$store.state.ui.selectedPiece;
     },
     editingTPS: {
       get() {
-        return this.$store.state.editingTPS;
+        return this.$store.state.ui.editingTPS;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
       },
     },
     firstMoveNumber() {
-      return this.$store.state.firstMoveNumber;
+      return this.$store.state.ui.firstMoveNumber;
     },
     square() {
       return this.game.state.squares[this.y][this.x];
@@ -99,7 +99,7 @@ export default {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
     },
     showRoads() {
-      return !this.game.config.disableRoads && this.$store.state.showRoads;
+      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     n() {
       return this.square.connected.N;
@@ -136,7 +136,7 @@ export default {
     select(alt = false) {
       if (this.valid) {
         if (alt && this.isEditingTPS && this.piece) {
-          this.$store.dispatch("SET_UI", [
+          this.$store.dispatch("ui/SET_UI", [
             "selectedPiece",
             { color: this.piece.color, type: this.piece.typeCode },
           ]);

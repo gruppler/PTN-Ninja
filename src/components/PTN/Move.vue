@@ -52,14 +52,17 @@ export default {
     noBranch: Boolean,
   },
   computed: {
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
+    },
     ply1() {
-      return !this.standalone && this.$store.state.showAllBranches
+      return !this.standalone && this.showAllBranches
         ? this.move.ply1
         : this.move.ply1Original || this.move.ply1;
     },
     ply2() {
       return this.move.ply2
-        ? this.$store.state.showAllBranches && !this.currentOnly
+        ? this.showAllBranches && !this.currentOnly
           ? this.move.ply2
           : this.move.ply2.getBranch(this.game.state.targetBranch)
         : null;
@@ -80,14 +83,14 @@ export default {
         !this.noDecoration &&
         !this.currentOnly &&
         this.game.state.move &&
-        (this.$store.state.showAllBranches
+        (this.showAllBranches
           ? this.game.state.move.id === this.move.id
           : this.game.state.move.index === this.move.index)
       );
     },
     linebreak() {
       return (
-        this.$store.state.showAllBranches &&
+        this.showAllBranches &&
         !this.noDecoration &&
         !this.currentOnly &&
         this.nextMove &&
@@ -104,7 +107,7 @@ export default {
       return !!(
         !this.noBranch &&
         this.move.branch &&
-        this.$store.state.showAllBranches &&
+        this.showAllBranches &&
         this.separateBranch &&
         (this.standalone ||
           this.player ||
