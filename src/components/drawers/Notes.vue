@@ -1,8 +1,8 @@
 <template>
   <div class="notes column no-wrap">
     <recess class="col-grow">
-      <div class="absolute-fit scroll">
-        <div class="q-px-md">
+      <q-scroll-area ref="scroll" class="absolute-fit">
+        <div class="content q-px-md">
           <template v-for="(plyID, i) in plyIDs">
             <q-separator
               v-if="i && !areSequential(plyIDs[i - 1], plyID)"
@@ -58,7 +58,7 @@
             </div>
           </template>
         </div>
-      </div>
+      </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </recess>
     <div>
@@ -98,7 +98,6 @@
 import Move from "../PTN/Move";
 
 import { pickBy } from "lodash";
-import { debounce } from "quasar";
 
 export default {
   name: "Notes",
@@ -111,6 +110,12 @@ export default {
     };
   },
   computed: {
+    isShowing() {
+      return (
+        (this.$store.state.showText && !this.hasChat) ||
+        this.$store.state.textTab === "notes"
+      );
+    },
     primaryDark() {
       return this.$store.state.theme.primaryDark;
     },
@@ -216,41 +221,39 @@ export default {
         ply2.move.number - ply1.move.number <= 1
       );
     },
-    scroll() {
+    scroll(animate = false) {
       let message = this.$refs[this.currentPlyID];
       if (message) {
         message = message[0];
       }
       if (message) {
-        message.scrollIntoView({
-          block: "end",
-        });
+        this.$refs.scroll.setScrollPosition(
+          message.offsetTop -
+            this.$refs.scroll.$el.offsetHeight +
+            message.offsetHeight,
+          animate && this.isShowing ? 200 : 0
+        );
       }
     },
   },
   watch: {
     log() {
-      this.$nextTick(this.scroll);
+      this.scroll(true);
     },
     currentPlyID() {
-      this.scroll();
+      this.scroll(true);
     },
   },
-  created() {
-    this.scroll = debounce(this.scroll, 100);
-  },
   mounted() {
-    this.$nextTick(this.scroll);
+    this.scroll();
   },
 };
 </script>
 
 <style lang="scss">
 .notes {
-  .scroll:before {
-    content: "";
-    display: block;
-    height: 100%;
+  .content {
+    padding-top: calc(100vh - #{$toolbar-min-height * 2});
   }
   .q-separator {
     opacity: 0.75;
