@@ -76,7 +76,7 @@ PTN Ninja records multiple lines of play, called "branches." Branches outside th
 PTN
 ---
 
-[PTN](https://www.reddit.com/r/Tak/wiki/portable_tak_notation) is the notation that describes the moves of the game. PTN Ninja reads and writes information using this notation.
+[PTN](https://ustak.org/portable-tak-notation/) is the notation that describes the moves of the game. PTN Ninja reads and writes information using this notation.
 
 :::
 - To toggle display of the full PTN, use the leftmost button in the header toolbar, or press <kbd>Q</kbd>.
