@@ -54,7 +54,7 @@ module.exports = function(ctx) {
     devServer: {
       // https: true,
       // port: 8080,
-      open: true
+      open: true // opens browser window automatically
     },
 
     // animations: 'all', // --- includes all animations
@@ -106,36 +106,6 @@ module.exports = function(ctx) {
             type: "image/png"
           }
         ]
-      }
-    },
-
-    cordova: {
-      // id: 'org.cordova.quasar.app'
-      // noIosLegacyBuildFlag: true // uncomment only if you know what you are doing
-    },
-
-    electron: {
-      // bundler: 'builder', // or 'packager'
-
-      extendWebpack(cfg) {
-        // do something with Electron main process Webpack cfg
-        // chainWebpack also available besides this extendWebpack
-      },
-
-      packager: {
-        // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-        // OS X / Mac App Store
-        // appBundleId: '',
-        // appCategoryType: '',
-        // osxSign: '',
-        // protocol: 'myapp://path',
-        // Window only
-        // win32metadata: { ... }
-      },
-
-      builder: {
-        // https://www.electron.build/configuration/configuration
-        // appId: 'quasar-app'
       }
     }
   };
