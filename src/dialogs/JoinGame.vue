@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <small-dialog :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header>{{ $t("Join Game") }}</dialog-header>
     </template>
@@ -34,12 +34,11 @@
 </template>
 
 <script>
-import PlayerName from "../controls/PlayerName";
+import PlayerName from "../components/controls/PlayerName";
 
 export default {
   name: "JoinGame",
   components: { PlayerName },
-  props: ["value", "game"],
   data() {
     return {
       isValid: false,
@@ -47,6 +46,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     openPlayer() {
       return this.game.openPlayer;
     },
@@ -60,7 +62,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     spectate() {
       this.close();
@@ -72,12 +74,12 @@ export default {
 
       if (this.isPrivate) {
         // Remember player name
-        this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
+        this.$store.dispatch("ui/SET_UI", ["playerName", this.playerName]);
       }
 
       // Join game
       this.$store.dispatch("online/JOIN_GAME", this.game).catch((error) => {
-        this.$store.dispatch("NOTIFY_ERROR", error);
+        this.$store.dispatch("ui/NOTIFY_ERROR", error);
       });
 
       this.close();
@@ -87,11 +89,6 @@ export default {
     },
   },
   watch: {
-    value(visible) {
-      if (visible) {
-        this.playerName = this.$store.state.ui.playerName;
-      }
-    },
     player(player) {
       if (player) {
         this.close();

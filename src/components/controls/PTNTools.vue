@@ -11,7 +11,7 @@
       </q-btn>
 
       <q-btn
-        @click="editDialog = game.isLocal"
+        @click="$router.push({ name: 'edit' })"
         icon="edit"
         :title="$t('Edit')"
         :disabled="!game.isLocal"
@@ -25,30 +25,21 @@
         <q-icon name="trim" class="rotate-180" />
         <q-menu v-if="game.isLocal" auto-close square>
           <q-list>
-            <q-item
-              clickable
-              @click="$store.dispatch('game/TRIM_BRANCHES', game)"
-            >
+            <q-item clickable @click="$store.dispatch('game/TRIM_BRANCHES')">
               <q-item-section side>
                 <q-icon name="branch" class="rotate-180" />
               </q-item-section>
               <q-item-section>{{ $t("Trim Branches") }}</q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              @click="$store.dispatch('game/TRIM_TO_PLY', game)"
-            >
+            <q-item clickable @click="$store.dispatch('game/TRIM_TO_PLY')">
               <q-item-section side>
                 <q-icon name="trim" class="rotate-180" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              @click="$store.dispatch('game/TRIM_TO_BOARD', game)"
-            >
+            <q-item clickable @click="$store.dispatch('game/TRIM_TO_BOARD')">
               <q-item-section side>
                 <q-icon name="board" />
               </q-item-section>
@@ -60,24 +51,21 @@
 
       <slot />
     </q-btn-group>
-
-    <EditPTN v-model="editDialog" :game="game" no-route-dismiss />
   </q-toolbar>
 </template>
 
 <script>
-import EditPTN from "../dialogs/EditPTN";
-
 export default {
   name: "PTN-Tools",
-  components: { EditPTN },
-  props: ["game", "showEditor"],
   data() {
     return {
       editDialog: false,
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     showAllBranches: {
       get() {
         return this.$store.state.ui.showAllBranches;
@@ -85,14 +73,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showAllBranches", value]);
       },
-    },
-  },
-  watch: {
-    editDialog(isVisible) {
-      this.$emit("update:showEditor", isVisible);
-    },
-    showEditor(isVisible) {
-      this.editDialog = isVisible;
     },
   },
 };

@@ -1,7 +1,6 @@
 <template>
   <large-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     no-backdrop-dismiss
     :min-height="588"
     v-bind="$attrs"
@@ -63,12 +62,7 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector
-        v-model="config.ui.theme"
-        :game="game"
-        item-aligned
-        filled
-      />
+      <ThemeSelector v-model="config.ui.theme" item-aligned filled />
 
       <q-item>
         <q-item-section>
@@ -87,7 +81,7 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("From current ply") }}</q-item-label>
+          <q-item-label>{{ $t("Start at Current Position") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle v-model="config.state" />
@@ -238,16 +232,15 @@
 </template>
 
 <script>
-import ThemeSelector from "../controls/ThemeSelector";
+import ThemeSelector from "../components/controls/ThemeSelector";
 import { cloneDeep } from "lodash";
 
 export default {
   name: "EmbedConfig",
   components: { ThemeSelector },
-  props: ["value", "game"],
   data() {
     return {
-      name: this.game.name,
+      name: "",
       config: cloneDeep(this.$store.state.ui.embedConfig),
       previewError: false,
       previewLoaded: false,
@@ -255,6 +248,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     previewHeight() {
       return this.previewError ? "0" : "333px";
     },
@@ -279,7 +275,7 @@ export default {
   },
   methods: {
     reset() {
-      this.$store.dispatch("PROMPT", {
+      this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {
@@ -289,25 +285,16 @@ export default {
       });
     },
     share() {
-      this.$store.dispatch("COPY", {
+      this.$store.dispatch("ui/COPY", {
         title: this.$t("Embed") + " – " + this.name,
         text: this.code,
       });
     },
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
   },
   watch: {
-    value(isVisible) {
-      if (isVisible) {
-        this.name = this.game.name;
-        this.initialURL = this.url;
-      } else {
-        this.previewError = false;
-        this.previewLoaded = false;
-      }
-    },
     url(url) {
       if (this.$refs.preview) {
         this.$refs.preview.contentWindow.location.replace(url);
@@ -315,10 +302,14 @@ export default {
     },
     config: {
       handler(value) {
-        this.$store.dispatch("SET_UI", ["embedConfig", cloneDeep(value)]);
+        this.$store.dispatch("ui/SET_UI", ["embedConfig", cloneDeep(value)]);
       },
       deep: true,
     },
+  },
+  mounted() {
+    this.name = this.game.name;
+    this.initialURL = this.url;
   },
 };
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <small-dialog :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="close_multiple">{{ $t("Close") }}...</dialog-header>
     </template>
@@ -35,7 +35,6 @@
 <script>
 export default {
   name: "CloseGames",
-  props: ["value"],
   data() {
     return {
       range: {
@@ -55,7 +54,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     submit() {
       this.$store.dispatch("game/REMOVE_MULTIPLE_GAMES", {
@@ -63,14 +62,6 @@ export default {
         count: this.range.max - this.range.min + 1,
       });
       this.close();
-    },
-  },
-  watch: {
-    value(show) {
-      if (show) {
-        this.range.min = 1;
-        this.range.max = this.max;
-      }
     },
   },
 };

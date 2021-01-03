@@ -20,7 +20,6 @@ import { unescape } from "lodash";
 
 export default {
   name: "PTNEditor",
-  props: ["game"],
   data() {
     return {
       ptn: "",
@@ -33,6 +32,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     header() {
       return this.game.headerText();
     },

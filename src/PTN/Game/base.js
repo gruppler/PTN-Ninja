@@ -206,6 +206,7 @@ export default class GameBase {
       this.pieceCounts[1].flat + this.pieceCounts[1].cap;
     this.pieceCounts[2].total =
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
+    Object.freeze(this.pieceCounts);
     this.state = new GameState(this);
 
     // Parse BODY

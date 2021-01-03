@@ -9,25 +9,19 @@
       standalone: standalone,
     }"
   >
-    <Linenum
-      v-if="showSeparateBranch"
-      :linenum="move.linenum"
-      :game="game"
-      only-branch
-    />
+    <Linenum v-if="showSeparateBranch" :linenum="move.linenum" only-branch />
     <div class="move-wrapper">
       <Linenum
         v-if="move.linenum"
         :linenum="move.linenum"
-        :game="game"
         :no-branch="noBranch || separateBranch"
       />
       <template v-if="ply1 && (!player || player === 1)">
         <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text() }}</span>
-        <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
+        <Ply v-else :key="ply1.id" :plyID="ply1.id" />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
+        <Ply :key="ply2.id" :plyID="ply2.id" />
       </template>
     </div>
     <q-separator v-if="separator" class="fullwidth-padded-md" />
@@ -43,7 +37,6 @@ export default {
   components: { Linenum, Ply },
   props: {
     move: Object,
-    game: Object,
     player: Number,
     currentOnly: Boolean,
     standalone: Boolean,
@@ -52,6 +45,9 @@ export default {
     noBranch: Boolean,
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
     },

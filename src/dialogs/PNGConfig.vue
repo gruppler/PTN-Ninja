@@ -1,7 +1,6 @@
 <template>
   <large-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     no-backdrop-dismiss
     :min-height="588"
     v-bind="$attrs"
@@ -45,7 +44,6 @@
       <ThemeSelector
         v-model="config.theme"
         @input="updatePreview"
-        :game="game"
         item-aligned
         filled
       />
@@ -154,8 +152,8 @@
 </template>
 
 <script>
-import ThemeSelector from "../controls/ThemeSelector";
-import { pngUIOptions } from "../../store/ui/state";
+import ThemeSelector from "../components/controls/ThemeSelector";
+import { pngUIOptions } from "../store/ui/state";
 
 import { cloneDeep } from "lodash";
 
@@ -165,7 +163,6 @@ const { humanStorageSize } = format;
 export default {
   name: "PNGConfig",
   components: { ThemeSelector },
-  props: ["value", "game"],
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
@@ -179,6 +176,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     url() {
       return this.$store.getters["ui/png_url"](this.game);
     },
@@ -215,7 +215,7 @@ export default {
         img.naturalWidth + " &times; " + img.naturalHeight + " px";
     },
     reset() {
-      this.$store.dispatch("PROMPT", {
+      this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetPNG"),
         success: () => {
@@ -232,16 +232,16 @@ export default {
       });
     },
     download() {
-      this.$store.dispatch("DOWNLOAD_FILES", this.file);
+      this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
     },
     share() {
-      this.$store.dispatch("COPY", {
+      this.$store.dispatch("ui/COPY", {
         title: this.$t("Share PNG"),
         url: this.url,
       });
     },
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
   },
   watch: {
@@ -252,7 +252,7 @@ export default {
     },
     config: {
       handler(config) {
-        this.$store.dispatch("SET_UI", ["pngConfig", cloneDeep(config)]);
+        this.$store.dispatch("ui/SET_UI", ["pngConfig", cloneDeep(config)]);
         this.updatePreview();
       },
       deep: true,
@@ -260,13 +260,11 @@ export default {
     size(i) {
       this.config.size = this.sizes[i];
     },
-    value(show) {
-      if (show) {
-        this.updatePreview();
-      }
-    },
   },
   created() {
+    this.updatePreview();
+  },
+  mounted() {
     this.updatePreview();
   },
 };

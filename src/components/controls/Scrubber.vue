@@ -17,8 +17,10 @@ import { throttle } from "lodash";
 
 export default {
   name: "Scrubber",
-  props: ["game"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     position() {
       return this.game.state.ply && this.game.state.plies.length
         ? this.game.state.ply.index + 0.5 * this.game.state.plyIsDone
@@ -35,7 +37,10 @@ export default {
       requestAnimationFrame(() => {
         if (this.game && this.game.state.plies) {
           const ply = this.game.state.plies[Math.floor(position)];
-          this.game.goToPly(ply.id, position > ply.index);
+          this.$store.dispatch("game/GO_TO_PLY", {
+            ply: ply.id,
+            isDone: position > ply.index,
+          });
         }
       });
     },

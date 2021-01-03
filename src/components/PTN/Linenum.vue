@@ -33,7 +33,6 @@
       >
         <BranchMenu
           @select="selectBranch"
-          :game="game"
           :branches="branches"
           linenum
           v-model="menu"
@@ -43,21 +42,17 @@
     <span class="number" v-if="!onlyBranch"
       >{{ this.linenum.number }}.&nbsp;</span
     >
-
-    <RenameBranch v-model="dialogRename" :game="game" :linenum="linenum" />
   </span>
 </template>
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
-import RenameBranch from "../dialogs/RenameBranch";
 
 export default {
   name: "Linenum",
-  components: { BranchMenu, RenameBranch },
+  components: { BranchMenu },
   props: {
     linenum: Object,
-    game: Object,
     noEdit: Boolean,
     noBranch: Boolean,
     onlyBranch: Boolean,
@@ -70,6 +65,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     branch() {
       return this.linenum.branch.replace(/_/g, " ").replace(/-/g, "‑");
     },
@@ -103,10 +101,13 @@ export default {
   },
   methods: {
     selectBranch(ply) {
-      this.game.setTarget(ply);
+      this.$store.dispatch("game/SET_TARGET", ply);
     },
     renameBranch() {
-      this.dialogRename = true;
+      this.$router.push({
+        name: "rename-branch",
+        params: { branch: this.linenum.branch },
+      });
     },
     deleteBranch() {
       this.game.deleteBranch(this.linenum.branch);

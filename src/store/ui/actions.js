@@ -163,7 +163,7 @@ export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   }
 };
 
-export const SAVE_PNG = ({ dispatch, getters, state }, game) => {
+export const EXPORT_PNG = ({ dispatch, getters, state }, game) => {
   const options = { tps: game.state.tps, ...state.pngConfig };
 
   // Game Tags
@@ -184,7 +184,7 @@ export const SAVE_PNG = ({ dispatch, getters, state }, game) => {
   });
 };
 
-export const SAVE_PTN = ({ dispatch }, games) => {
+export const EXPORT_PTN = ({ dispatch }, games) => {
   if (!isArray(games)) {
     games = [games];
   }
@@ -215,7 +215,7 @@ export const OPEN = ({ dispatch }, callback) => {
   input.click();
 };
 
-export const OPEN_FILES = ({ dispatch }, files) => {
+export const OPEN_FILES = function ({ dispatch }, files) {
   const games = [];
   let count = 0;
   files = Array.from(files);
@@ -235,7 +235,7 @@ export const OPEN_FILES = ({ dispatch }, files) => {
             });
             if (!--count) {
               Loading.hide();
-              dispatch("ADD_GAMES", { games, index: 0 });
+              this.dispatch("game/ADD_GAMES", { games, index: 0 });
             }
           };
           reader.onerror = (error) => console.error(error);

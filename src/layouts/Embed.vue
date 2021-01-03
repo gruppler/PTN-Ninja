@@ -1,24 +1,24 @@
 <template>
-  <q-layout class="non-selectable" view="lHh LpR lFr">
+  <q-layout v-if="game" class="non-selectable" view="lHh LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
-          @click="left = !left"
-          :color="left ? 'primary' : ''"
+          @click="showPTN = !showPTN"
+          :color="showPTN ? 'primary' : ''"
           stretch
           flat
         />
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
+        <ShareButton ref="shareButton" flat stretch no-menu />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
-          @click.left="right = !right"
+          @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'primary' : ''"
+          :color="showText ? 'primary' : ''"
           stretch
           flat
         />
@@ -40,7 +40,7 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" :game="game" />
+          <Board ref="board" class="col-grow" />
           <smooth-reflow
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
@@ -51,7 +51,6 @@
               class="q-mb-md q-mx-md"
               :class="{ 'lt-sm': $store.state.ui.showPTN }"
               :move="game.state.move"
-              :game="game"
               separate-branch
               current-only
               standalone
@@ -65,17 +64,17 @@
     </q-page-container>
 
     <q-drawer
-      v-model="left"
+      v-model="showPTN"
       side="left"
-      :breakpoint="right ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showText ? $q.screen.sizes.lg : $q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools" :game="game" />
+        <PTNTools ref="tools" />
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" :game="game" />
+          <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
@@ -92,41 +91,37 @@
               :disabled="!game.canRedo"
             />
           </q-btn-group>
-          <EvalButtons
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-            :game="game"
-          />
+          <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
       <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
-      v-model="right"
+      v-model="showText"
       side="right"
-      :breakpoint="left ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showPTN ? $q.screen.sizes.lg : $q.screen.sizes.sm"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
-      <Notes ref="notes" class="fit" :game="game" />
+      <Notes ref="notes" class="fit" />
     </q-drawer>
 
     <q-footer>
-      <Scrubber :game="game" v-if="$store.state.ui.showScrubber" />
+      <Scrubber v-if="$store.state.ui.showScrubber" />
       <q-toolbar v-show="$store.state.ui.showControls" class="q-pa-sm bg-ui">
-        <PlayControls :game="game" />
+        <PlayControls />
       </q-toolbar>
     </q-footer>
 
+    <router-view />
+
     <ErrorNotifications :errors="errors" />
-    <GameNotifications :game="game" />
-    <NoteNotifications :game="game" />
+    <GameNotifications />
+    <NoteNotifications />
   </q-layout>
+  <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
 
 <script>
@@ -175,14 +170,16 @@ export default {
   data() {
     return {
       Platform,
-      game: this.getGame(),
       errors: [],
       hotkeys: HOTKEYS,
       defaults: { ...this.$store.state.ui.embedConfig.ui },
     };
   },
   computed: {
-    left: {
+    game() {
+      return this.$store.state.game.current;
+    },
+    showPTN: {
       get() {
         return this.$store.state.ui.showPTN;
       },
@@ -190,7 +187,7 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["showPTN", value]);
       },
     },
-    right: {
+    showText: {
       get() {
         return this.$store.state.ui.showText;
       },
@@ -210,7 +207,7 @@ export default {
       return this.name || this.game.generateName();
     },
     url() {
-      return this.$store.getters.url(this.game, { state: true });
+      return this.$store.getters["ui/url"](this.game, { state: true });
     },
   },
   methods: {
@@ -226,11 +223,11 @@ export default {
         console.error(error);
         this.errors.push(this.$t(`error["${error.message}"]`));
       }
-      return game;
+      this.$store.dispatch("game/SET_GAME", game);
     },
     openLink() {
       window.open(
-        this.$store.getters.url(this.game, { origin: true, state: true }),
+        this.$store.getters["ui/url"](this.game, { origin: true, state: true }),
         "_blank"
       );
     },
@@ -243,7 +240,7 @@ export default {
           this.$refs.tools.editDialog = true;
           break;
         case "focusText":
-          this.right = true;
+          this.showText = true;
           this.$refs.notes.$refs.input.focus();
           break;
         case "qrCode":
@@ -274,11 +271,9 @@ export default {
       this.$store.commit("ui/SET_UI", [key, value]);
     });
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
+    this.getGame();
   },
   watch: {
-    ptn() {
-      this.game = this.getGame();
-    },
     state: {
       handler(state, oldState) {
         let fullState = {};
@@ -290,10 +285,13 @@ export default {
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
           const ply = this.game.state.plies[state.plyIndex];
           if (ply) {
-            this.game.goToPly(ply.id, state.plyIsDone);
+            this.$store.dispatch("game/GO_TO_PLY", {
+              ply: ply.id,
+              isDone: state.plyIsDone,
+            });
           }
         } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.game.goToPly(0, false);
+          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
         }
       },
       deep: true,

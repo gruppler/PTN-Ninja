@@ -3,6 +3,7 @@
     ref="dialog"
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
     :value.sync="value"
+    @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -25,6 +26,11 @@ export default {
   name: "small-dialog",
   props: {
     value: Boolean,
+  },
+  methods: {
+    hide() {
+      this.$router.back();
+    },
   },
 };
 </script>

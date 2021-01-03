@@ -1,7 +1,6 @@
 <template>
   <small-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     content-class="ui-settings non-selectable"
     v-bind="$attrs"
   >
@@ -10,7 +9,7 @@
     </template>
 
     <q-list separator>
-      <ThemeSelector v-model="themeID" :game="game" edit-button filled square />
+      <ThemeSelector v-model="themeID" edit-button filled square />
 
       <q-expansion-item icon="board" :label="$t('Board')" group="settings">
         <recess>
@@ -245,10 +244,10 @@
 </template>
 
 <script>
-import ThemeSelector from "../controls/ThemeSelector";
+import ThemeSelector from "../components/controls/ThemeSelector";
 
 import { zipObject } from "lodash";
-import { HOTKEYS_FORMATTED } from "../../keymap";
+import { HOTKEYS_FORMATTED } from "../keymap";
 
 const props = [
   "animateBoard",
@@ -274,7 +273,6 @@ const props = [
 export default {
   name: "UISettings",
   components: { ThemeSelector },
-  props: ["value", "game", "disabled"],
   data() {
     return {
       hotkeys: HOTKEYS_FORMATTED.UI,
@@ -284,17 +282,25 @@ export default {
       ],
     };
   },
-  computed: zipObject(
-    props,
-    props.map((key) => ({
-      get() {
-        return this.isDisabled(key) ? false : this.$store.state.ui[key];
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", [key, value]);
-      },
-    }))
-  ),
+  computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
+    disabledOptions() {
+      return this.$store.getters["online/disabledOptions"](this.game);
+    },
+    ...zipObject(
+      props,
+      props.map((key) => ({
+        get() {
+          return this.isDisabled(key) ? false : this.$store.state.ui[key];
+        },
+        set(value) {
+          this.$store.dispatch("ui/SET_UI", [key, value]);
+        },
+      }))
+    ),
+  },
   methods: {
     isDisabled(key) {
       return this.disabled && this.disabled.includes(key);

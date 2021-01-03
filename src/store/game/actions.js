@@ -2,6 +2,11 @@ import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 
+export const SET_GAME = function ({ commit }, game) {
+  document.title = game.name + " — " + i18n.t("app_title");
+  commit("SET_GAME", game);
+};
+
 export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   const gameNames = LocalStorage.getItem("games") || [];
 
@@ -22,11 +27,18 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
   }
 
-  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => commit("ADD_GAME", game));
+  Loading.show();
+  setTimeout(() => {
+    dispatch("SET_GAME", game);
+    this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+      commit("ADD_GAME", game);
+      Loading.hide();
+    });
+  }, 200);
 };
 
 export const ADD_GAMES = function (
-  { commit, dispatch, getters },
+  { commit, dispatch, getters, state },
   { games, index }
 ) {
   const gameNames = LocalStorage.getItem("games") || [];
@@ -50,9 +62,12 @@ export const ADD_GAMES = function (
     }
   });
 
-  this.dispatch("ui/WITHOUT_BOARD_ANIM", () =>
-    commit("ADD_GAMES", { games, index })
-  );
+  commit("ADD_GAMES", { games, index });
+  if (!index) {
+    this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+      dispatch("SET_GAME", state.list[0]);
+    });
+  }
 };
 
 export const REMOVE_GAME = function (
@@ -72,6 +87,9 @@ export const REMOVE_GAME = function (
   const finish = () => {
     commit("REMOVE_GAME", index);
     Vue.nextTick(() => {
+      if (index === 0) {
+        dispatch("SET_GAME", state.list[0]);
+      }
       const icon = game.config.isOnline
         ? getters.playerIcon(game.config.player, game.config.isPrivate)
         : "file";
@@ -137,6 +155,9 @@ export const REMOVE_MULTIPLE_GAMES = function (
   const finish = () => {
     commit("REMOVE_MULTIPLE_GAMES", { start, count });
     Vue.nextTick(() => {
+      if (start === 0) {
+        dispatch("SET_GAME", state.list[0]);
+      }
       this.dispatch("ui/NOTIFY", {
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
@@ -179,64 +200,116 @@ export const REMOVE_MULTIPLE_GAMES = function (
   }
 };
 
-export const UPDATE_PTN = function ({ state, commit }, ptn) {
+export const RENAME_CURRENT_GAME = function (
+  { commit, dispatch, state },
+  newName
+) {
+  const oldName = state.current.name;
+  commit("RENAME_CURRENT_GAME", newName);
+  dispatch("SET_NAME", { oldName, newName });
+  setTimeout(() => {
+    document.title = newName + " — " + i18n.t("app_title");
+  }, 200);
+};
+
+export const SET_CURRENT_PTN = function ({ commit, dispatch }, ptn) {
+  commit("SET_CURRENT_PTN", ptn);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const SAVE_CURRENT_GAME = function ({ dispatch, state }) {
+  const game = state.current;
+  if (game && !state.embed) {
+    dispatch("SAVE_UNDO_INDEX", game);
+    dispatch("SAVE_UNDO_HISTORY", game);
+    dispatch("SAVE_PTN", game.ptn);
+    dispatch("SAVE_STATE", { game, gameState: game.minState });
+  }
+};
+
+export const SAVE_CURRENT_GAME_STATE = function ({ dispatch, state }) {
+  const game = state.current;
+  if (game && !state.embed) {
+    dispatch("SAVE_UNDO_INDEX", game);
+    dispatch("SAVE_UNDO_HISTORY", game);
+    dispatch("SAVE_STATE", { game, gameState: game.minState });
+  }
+};
+
+export const SAVE_UNDO_HISTORY = function ({ commit, state }) {
+  if (game && !state.embed) {
+    LocalStorage.set("history-" + game.name, game.history);
+    commit("SAVE_UNDO_HISTORY");
+  }
+};
+
+export const SAVE_UNDO_INDEX = function ({ commit, state }) {
+  if (game && !state.embed) {
+    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    commit("SAVE_UNDO_INDEX");
+  }
+};
+
+export const SAVE_PTN = function ({ state, commit }, ptn) {
   LocalStorage.set("ptn-" + state.list[0].name, ptn);
-  commit("UPDATE_PTN", ptn);
+  commit("SAVE_PTN", ptn);
 };
 
 export const SET_NAME = function (
   { state, commit, getters },
   { oldName, newName }
 ) {
-  let index = state.list.findIndex((game) => game.name === oldName);
+  const index = state.list.findIndex((game) => game.name === oldName);
   if (index < 0) {
     throw new Error("Game not found: " + oldName);
   }
-  let games = LocalStorage.getItem("games");
-  let name = getters.uniqueName(newName, true);
+  const game = state.list[index];
+  const games = LocalStorage.getItem("games");
+  const name = getters.uniqueName(newName, true);
   games[index] = name;
   LocalStorage.set("games", games);
   LocalStorage.remove("ptn-" + oldName);
-  LocalStorage.set("ptn-" + name, state.list[index].ptn);
+  LocalStorage.set("ptn-" + name, game.ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, state.list[index].state);
-  if (state.list[index].config) {
+  LocalStorage.set("state-" + name, game.state);
+  if (game.config) {
     LocalStorage.remove("config-" + oldName);
-    LocalStorage.set("config-" + name, state.list[index].config);
+    LocalStorage.set("config-" + name, game.config);
   }
-  if (state.list[index].history) {
+  if (game.history) {
     LocalStorage.remove("history-" + oldName);
-    LocalStorage.set(
-      "history-" + state.list[index].name,
-      state.list[index].history
-    );
+    LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.remove("historyIndex-" + oldName);
-    LocalStorage.set(
-      "historyIndex-" + state.list[index].name,
-      state.list[index].historyIndex
-    );
+    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
   }
   commit("SET_NAME", { oldName, newName });
 };
 
-export const SET_STATE = function ({ commit, state }, { game, gameState }) {
+export const SAVE_STATE = function ({ commit, state }, { game, gameState }) {
   if (!state.list.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
   LocalStorage.set("state-" + game.name, gameState);
-  commit("SET_STATE", { game, gameState });
+  commit("SAVE_STATE", { game, gameState });
 };
 
-export const SET_CONFIG = function ({ commit, state }, { game, config }) {
+export const SAVE_CONFIG = function ({ commit, state }, { game, config }) {
   if (!state.list.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
   LocalStorage.set("config-" + game.name, config);
-  commit("SET_CONFIG", { game, config });
+  commit("SAVE_CONFIG", { game, config });
+};
+
+export const SET_TAGS = function ({ commit, dispatch }, tags) {
+  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+    commit("SET_TAGS", tags);
+    dispatch("SAVE_CURRENT_GAME");
+  });
 };
 
 export const SELECT_GAME = function (
-  { commit, dispatch },
+  { commit, dispatch, state },
   { index, immediate }
 ) {
   let games = LocalStorage.getItem("games") || [];
@@ -249,52 +322,113 @@ export const SELECT_GAME = function (
     setTimeout(() => {
       this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
         commit("SELECT_GAME", index);
+        dispatch("SET_GAME", state.list[0]);
         Loading.hide();
       });
     }, 200);
   }
 };
 
-export const CANCEL_MOVE = function ({ commit }, game) {
-  commit("CANCEL_MOVE", game);
+export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
+  commit("SELECT_SQUARE", args);
+  dispatch("SAVE_CURRENT_GAME");
 };
 
-export const UNDO = function ({ commit, dispatch }, game) {
+export const SELECT_PIECE = function ({ commit }, args) {
+  commit("SELECT_PIECE", args);
+};
+
+export const CANCEL_MOVE = function ({ commit }) {
+  commit("CANCEL_MOVE");
+};
+
+export const UNDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("UNDO", game);
+    commit("UNDO");
+    dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const REDO = function ({ commit, dispatch }, game) {
+export const REDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("REDO", game);
+    commit("REDO");
+    dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const TRIM_BRANCHES = function ({ commit, dispatch }, game) {
+export const TRIM_BRANCHES = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("TRIM_BRANCHES", game);
+    commit("TRIM_BRANCHES");
+    dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const TRIM_TO_BOARD = function ({ commit, dispatch }, game) {
+export const TRIM_TO_BOARD = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("TRIM_TO_BOARD", game);
+    commit("TRIM_TO_BOARD");
+    dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const TRIM_TO_PLY = function ({ commit, dispatch }, game) {
+export const TRIM_TO_PLY = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("TRIM_TO_PLY", game);
+    commit("TRIM_TO_PLY");
+    dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const SAVE_UNDO_HISTORY = function ({ commit }, game) {
-  LocalStorage.set("history-" + game.name, game.history);
-  commit("SAVE_UNDO_HISTORY", game);
+export const FIRST = function ({ commit }) {
+  return commit("FIRST");
+  dispatch("SAVE_CURRENT_GAME_STATE");
 };
 
-export const SAVE_UNDO_INDEX = function ({ commit }, game) {
-  LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-  commit("SAVE_UNDO_INDEX", game);
+export const LAST = function ({ commit }) {
+  return commit("LAST");
+  dispatch("SAVE_CURRENT_GAME_STATE");
+};
+
+export const PREV = function ({ commit }, half) {
+  return commit("PREV", half);
+  dispatch("SAVE_CURRENT_GAME_STATE");
+};
+
+export const NEXT = function ({ commit }, half) {
+  return commit("NEXT", half);
+  dispatch("SAVE_CURRENT_GAME_STATE");
+};
+
+export const SET_TARGET = function ({ commit }, ply) {
+  return commit("SET_TARGET", ply);
+  dispatch("SAVE_CURRENT_GAME_STATE");
+};
+
+export const GO_TO_PLY = function ({ commit }, { ply, isDone }) {
+  return commit("GO_TO_PLY", { ply, isDone });
+  dispatch("SAVE_CURRENT_GAME_STATE");
+};
+
+export const DO_TPS = function ({ commit }, tps) {
+  return commit("DO_TPS", tps);
+};
+
+export const SAVE_TPS = function ({ commit, dispatch }, tps) {
+  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+    commit("SAVE_TPS", tps);
+    this.dispatch("ui/SET_UI", ["isEditingTPS", false]);
+    this.dispatch("ui/SET_UI", ["editingTPS", ""]);
+    dispatch("SAVE_CURRENT_GAME");
+  });
+};
+
+export const RESET_TPS = function ({ commit }) {
+  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+    commit("RESET_TPS");
+    this.dispatch("ui/SET_UI", ["isEditingTPS", false]);
+    this.dispatch("ui/SET_UI", ["editingTPS", ""]);
+  });
+};
+
+export const RENAME_BRANCH = function ({ commit, dispatch }, args) {
+  commit("RENAME_BRANCH", args);
+  dispatch("SAVE_CURRENT_GAME");
 };

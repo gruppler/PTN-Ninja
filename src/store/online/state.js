@@ -2,8 +2,7 @@ export default function () {
   return {
     initialized: false,
     privateGames: {},
-    activeGames: {},
-    activeGamesListener: null,
+    currentGameListener: null,
     playerGames: {},
     playerGamesListener: null,
     publicGames: {},

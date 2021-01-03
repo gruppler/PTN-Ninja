@@ -17,7 +17,6 @@
             >
               <div v-if="plyID >= 0 && game.plies[plyID]" class="ply-container">
                 <Move
-                  :game="game"
                   :move="game.plies[plyID].move"
                   :player="game.plies[plyID].player"
                   separate-branch
@@ -102,7 +101,6 @@ import { pickBy } from "lodash";
 export default {
   name: "Notes",
   components: { Move },
-  props: ["game"],
   data() {
     return {
       message: "",
@@ -110,6 +108,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     isShowing() {
       return (
         (this.$store.state.ui.showText && !this.hasChat) ||

@@ -46,13 +46,15 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "EvalButtons",
-  props: ["game"],
   data() {
     return {
       hotkeys: HOTKEYS.EVAL,
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     ply() {
       return this.game ? this.game.state.ply : null;
     },

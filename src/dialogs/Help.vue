@@ -1,5 +1,5 @@
 <template>
-  <large-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <large-dialog :value="true" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs
         v-model="section"
@@ -57,12 +57,11 @@
 </template>
 
 <script>
-import Hotkeys from "../general/Hotkeys.vue";
+import Hotkeys from "../components/general/Hotkeys.vue";
 
 export default {
   name: "Help",
   components: { Hotkeys },
-  props: ["value"],
   data() {
     return {
       about: "",
@@ -81,25 +80,25 @@ export default {
     },
   },
   created() {
-    import(`../../i18n/${this.$i18n.locale}/about.md`)
+    import(`../i18n/${this.$i18n.locale}/about.md`)
       .then((about) => {
         this.about = about.default;
       })
       .catch((error) => {
         console.log(error);
-        import(`../../i18n/${this.$i18n.fallbackLocale}/about.md`).then(
+        import(`../i18n/${this.$i18n.fallbackLocale}/about.md`).then(
           (about) => {
             this.about = about.default;
           }
         );
       });
-    import(`../../i18n/${this.$i18n.locale}/usage.md`)
+    import(`../i18n/${this.$i18n.locale}/usage.md`)
       .then((usage) => {
         this.usage = usage.default;
       })
       .catch((error) => {
         console.log(error);
-        import(`../../i18n/${this.$i18n.fallbackLocale}/usage.md`).then(
+        import(`../i18n/${this.$i18n.fallbackLocale}/usage.md`).then(
           (usage) => {
             this.usage = usage.default;
           }

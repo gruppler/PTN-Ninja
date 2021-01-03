@@ -8,8 +8,10 @@ import Notifications from "../general/Notifications";
 export default {
   name: "GameNotifications",
   components: { Notifications },
-  props: ["game"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     show() {
       return this.$store.state.ui.notifyGame;
     },

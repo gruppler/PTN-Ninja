@@ -3,6 +3,7 @@
     :content-class="classes"
     :value.sync="value"
     :maximized="maximized"
+    @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -53,6 +54,11 @@ export default {
         classes.push("maximized");
       }
       return classes;
+    },
+  },
+  methods: {
+    hide() {
+      this.$router.back();
     },
   },
 };

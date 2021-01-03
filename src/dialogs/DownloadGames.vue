@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <small-dialog :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="download">{{ $t("Download") }}...</dialog-header>
     </template>
@@ -35,7 +35,6 @@
 <script>
 export default {
   name: "CloseGames",
-  props: ["value"],
   data() {
     return {
       range: {
@@ -55,7 +54,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     submit() {
       const count = this.range.max - this.range.min + 1;
@@ -64,7 +63,7 @@ export default {
         message: this.$tc("confirm.downloadMultipleGames", count),
         success: () => {
           this.$store.dispatch(
-            "ui/SAVE_PTN",
+            "ui/EXPORT_PTN",
             this.$store.state.game.list.slice(
               this.range.min,
               this.range.max + 1
@@ -73,14 +72,6 @@ export default {
           this.close();
         },
       });
-    },
-  },
-  watch: {
-    value(show) {
-      if (show) {
-        this.range.min = 0;
-        this.range.max = this.max;
-      }
     },
   },
 };

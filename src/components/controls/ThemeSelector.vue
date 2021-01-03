@@ -64,10 +64,12 @@ export default {
   name: "ThemeSelector",
   props: {
     value: String,
-    game: Object,
     "edit-button": Boolean,
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     themes() {
       if (this.game) {
         const config = cloneDeep(

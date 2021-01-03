@@ -1,10 +1,5 @@
 <template>
-  <small-dialog
-    :value="value"
-    @input="$emit('input', $event)"
-    content-class="non-selectable"
-    v-bind="$attrs"
-  >
+  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
     </template>
@@ -134,19 +129,15 @@
         </template>
       </q-card-actions>
     </template>
-
-    <QRCode v-model="showQR" :text="qrText" no-route-dismiss />
   </small-dialog>
 </template>
 
 <script>
-import QRCode from "./QRCode";
-import PlayerName from "../controls/PlayerName";
+import PlayerName from "../components/controls/PlayerName";
 
 export default {
   name: "ShareOnline",
-  components: { QRCode, PlayerName },
-  props: ["value", "game"],
+  components: { PlayerName },
   data() {
     return {
       error: "",
@@ -160,6 +151,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     players() {
       return [
         { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
@@ -202,7 +196,7 @@ export default {
         return this.$store.state.ui.player;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["player", value]);
+        this.$store.dispatch("ui/SET_UI", ["player", value]);
       },
     },
     playerBGColor() {
@@ -251,7 +245,7 @@ export default {
 
       if (this.isPrivate) {
         // Remember player name
-        this.$store.dispatch("SET_UI", ["playerName", this.playerName]);
+        this.$store.dispatch("ui/SET_UI", ["playerName", this.playerName]);
       }
 
       this.loading = true;
@@ -272,14 +266,13 @@ export default {
         });
     },
     copy(text) {
-      this.$store.dispatch("COPY", {
+      this.$store.dispatch("ui/COPY", {
         text,
         message: this.$t("Copied"),
       });
     },
     qrCode(text) {
-      this.qrText = text;
-      this.showQR = true;
+      this.$router.push({ name: "qr", params: { text } });
     },
   },
   watch: {

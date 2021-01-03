@@ -6,7 +6,7 @@
   >
     <q-btn
       @click="select(type, color === 1 ? 2 : 1)"
-      :icon="$store.getters.playerIcon(color)"
+      :icon="$store.getters['ui/playerIcon'](color)"
       flat
       round
     />
@@ -34,7 +34,7 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "PieceSelector",
-  props: ["value", "game", "types"],
+  props: ["value", "types"],
   data() {
     return {
       color: this.value.color || 1,
@@ -43,6 +43,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     available() {
       return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
         type = type === "C" ? "cap" : "flat";

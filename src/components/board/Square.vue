@@ -41,8 +41,11 @@
 <script>
 export default {
   name: "Square",
-  props: ["game", "x", "y"],
+  props: ["x", "y"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     eog() {
       return this.game.state.isGameEnd;
     },
@@ -141,12 +144,12 @@ export default {
             { color: this.piece.color, type: this.piece.typeCode },
           ]);
         }
-        this.game.selectSquare(
-          this.square,
+        this.$store.dispatch("game/SELECT_SQUARE", {
+          square: this.square,
           alt,
-          this.isEditingTPS,
-          this.selectedPiece
-        );
+          isEditingTPS: this.isEditingTPS,
+          selectedPiece: this.selectedPiece,
+        });
         if (this.isEditingTPS) {
           this.editingTPS = this.game.state.getTPS(
             this.selectedPiece.color,

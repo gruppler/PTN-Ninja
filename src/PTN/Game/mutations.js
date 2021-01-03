@@ -396,6 +396,7 @@ export default class GameMutations {
           }
           this._setPly(equalPly.id, true);
           this._afterPly(equalPly);
+          this.state.setRoads(equalPly.result ? equalPly.result.roads : null);
         } else {
           if (replaceCurrent && !this.state.nextPly) {
             // Delete newly formed branch
@@ -495,7 +496,7 @@ export default class GameMutations {
           // Record result
           this.setTags({ result: ply.result.text }, false, false);
         }
-        this.state.roads = ply.result.roads || null;
+        this.state.setRoads(ply.result.roads || null);
       }
 
       this._updatePTN();

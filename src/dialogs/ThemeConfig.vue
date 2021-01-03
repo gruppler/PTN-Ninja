@@ -1,7 +1,6 @@
 <template>
   <small-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     @before-hide="restore"
     content-class="theme-config non-selectable"
     no-backdrop-dismiss
@@ -16,7 +15,6 @@
       <ThemeSelector
         :value="initialThemeID"
         @input="selectTheme"
-        :game="game"
         filled
         square
       />
@@ -170,7 +168,7 @@
 </template>
 
 <script>
-import ThemeSelector from "../controls/ThemeSelector";
+import ThemeSelector from "../components/controls/ThemeSelector";
 
 import {
   cloneDeep,
@@ -180,14 +178,13 @@ import {
   kebabCase,
   pick,
 } from "lodash";
-import { BOARD_STYLES, PRIMARY_COLOR_IDS, computeFrom } from "../../themes";
+import { BOARD_STYLES, PRIMARY_COLOR_IDS, computeFrom } from "../themes";
 
 const MAX_NAME_LENGTH = 16;
 
 export default {
   name: "ThemeConfig",
   components: { ThemeSelector },
-  props: ["value", "game"],
   data() {
     const theme = cloneDeep(this.$store.state.ui.theme);
     return {
@@ -204,8 +201,11 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     themes() {
-      return this.$store.getters.themes;
+      return this.$store.getters["ui/themes"];
     },
     id() {
       return this.theme.isBuiltIn && this.isSaved
@@ -241,14 +241,14 @@ export default {
     },
     selectTheme(themeID) {
       const success = () => {
-        this.theme = cloneDeep(this.$store.getters.theme(themeID));
+        this.theme = cloneDeep(this.$store.getters["ui/theme"](themeID));
         this.initialTheme = cloneDeep(this.theme);
         this.initialThemeID = this.initialTheme.id;
         this.updatePalette();
-        this.$store.dispatch("SET_UI", ["themeID", this.initialThemeID]);
+        this.$store.dispatch("ui/SET_UI", ["themeID", this.initialThemeID]);
       };
       if (!this.isSaved) {
-        this.$store.dispatch("PROMPT", {
+        this.$store.dispatch("ui/PROMPT", {
           title: this.$t("Confirm"),
           message: this.$t("confirm.abandonChanges"),
           success,
@@ -284,7 +284,7 @@ export default {
       this.palette = Object.values(this.theme.colors);
     },
     reset() {
-      this.$store.dispatch("PROMPT", {
+      this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetTheme"),
         success: () => {
@@ -293,7 +293,7 @@ export default {
       });
     },
     share() {
-      this.$store.dispatch("COPY", {
+      this.$store.dispatch("ui/COPY", {
         title: this.$t("Theme") + " – " + this.theme.name,
         text: JSON.stringify({ ...this.theme, id: this.id }),
       });
@@ -312,8 +312,8 @@ export default {
       themes.unshift(this.theme);
       this.initialTheme = cloneDeep(this.theme);
       this.initialThemeID = this.id;
-      this.$store.dispatch("SET_UI", ["themes", themes]);
-      this.$store.dispatch("SET_UI", ["themeID", this.id]);
+      this.$store.dispatch("ui/SET_UI", ["themes", themes]);
+      this.$store.dispatch("ui/SET_UI", ["themeID", this.id]);
     },
     preview() {
       this.$store.commit("ui/SET_THEME", this.theme);
@@ -327,11 +327,6 @@ export default {
     this.preview = debounce(this.preview, 50);
   },
   watch: {
-    value(isVisible) {
-      if (isVisible) {
-        this.init();
-      }
-    },
     json(json) {
       this.error = "";
       if (!json) {
@@ -347,6 +342,9 @@ export default {
         this.error = error;
       }
     },
+  },
+  mounted() {
+    this.init();
   },
 };
 </script>

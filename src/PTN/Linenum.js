@@ -34,12 +34,12 @@ export default class Linenum {
     return (isWholeBranch ? /^[^}\r\n]+$/ : /^[^}\r\n/]+$/).test(notation);
   }
 
-  get splitBranch() {
-    return compact(this.branch.split(/[./](?=[^./]+|$)/));
+  static splitBranch(branch) {
+    return compact(branch.split(/[./](?=[^./]+|$)/));
   }
 
   parseBranch(game) {
-    const ancestors = this.splitBranch;
+    const ancestors = Linenum.splitBranch(this.branch);
     this.ancestors = ancestors.map((ancestor, i) => {
       return ancestors.slice(0, i + 1).join("/");
     });

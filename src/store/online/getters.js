@@ -15,3 +15,14 @@ export const playerName = (state) => (isPrivate = false) => {
   }
   return isPrivate ? LocalStorage.getItem("playerName") || name : name;
 };
+
+export const disabledOptions = (state) => (game) => {
+  const disabled = [];
+  if (game.config.disableFlatCounts) {
+    disabled.push("flatCounts");
+  }
+  if (game.config.disableShowRoads) {
+    disabled.push("showRoads");
+  }
+  return disabled;
+};

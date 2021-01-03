@@ -27,8 +27,11 @@ const SELECTED_GAP = 3;
 
 export default {
   name: "Piece",
-  props: ["game", "id"],
+  props: ["id"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     theme() {
       return this.$store.getters["ui/theme"]();
     },
@@ -157,15 +160,15 @@ export default {
         if (alt && !this.piece.isCapstone) {
           type = "S";
         }
-        this.$store.dispatch("SET_UI", [
+        this.$store.dispatch("ui/SET_UI", [
           "selectedPiece",
           { color: this.piece.color, type },
         ]);
       } else {
-        this.game.selectUnplayedPiece(
-          this.piece.type,
-          alt || this.piece.isSelected
-        );
+        this.$store.dispatch("game/SELECT_PIECE", {
+          type: this.piece.type,
+          alt: alt || this.piece.isSelected,
+        });
       }
     },
   },

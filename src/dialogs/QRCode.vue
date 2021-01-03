@@ -1,11 +1,12 @@
 <template>
   <q-dialog
+    :value="true"
     v-show="text"
-    :value="value"
-    @input="$emit('input', $event)"
+    @hide="$router.back()"
     content-class="flex-center"
     v-bind="$attrs"
     :maximized="maximized"
+    no-route-dismiss
   >
     <qriously
       v-if="text"
@@ -21,8 +22,6 @@
 </template>
 
 <script>
-import { colors } from "quasar";
-
 const SIZE = 450;
 const PADDING = 24;
 const SCREEN = SIZE + PADDING * 2;
@@ -32,8 +31,20 @@ export default {
   data() {
     return { size: SIZE };
   },
-  props: ["value", "text"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
+    text() {
+      if (this.game.config.id) {
+        return this.$store.getters["online/url"](this.game);
+      } else {
+        return this.$store.getters["ui/url"](this.game, {
+          origin: true,
+          state: true,
+        });
+      }
+    },
     maximized() {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;
     },

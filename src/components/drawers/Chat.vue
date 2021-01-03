@@ -87,7 +87,6 @@ import { format, formatDistanceToNow } from "date-fns";
 export default {
   name: "Chat",
   components: { Ply, Linenum },
-  props: ["game"],
   data() {
     return {
       message: "",
@@ -95,6 +94,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     log() {
       return this.game.chatlog;
     },

@@ -92,7 +92,6 @@
           v-if="$store.state.ui.showControls"
           v-model="branchMenu"
           @select="selectBranch"
-          :game="game"
           :branches="branches"
           linenum
         />
@@ -122,7 +121,6 @@ const BRANCH_KEYS = [
 export default {
   name: "PlayControls",
   components: { BranchMenu },
-  props: ["game"],
   data() {
     return {
       isPlaying: false,
@@ -136,6 +134,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     fg() {
       return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
@@ -227,7 +228,7 @@ export default {
     },
     first() {
       if (!this.isFirst) {
-        this.game.first();
+        this.$store.dispatch("game/FIRST");
       }
     },
     _prev(event) {
@@ -241,7 +242,10 @@ export default {
           this.timestamp = new Date().getTime();
         }
         if (!this.isFirst) {
-          this.game.prev(event === true || event.srcKey === "half");
+          this.$store.dispatch(
+            "game/PREV",
+            event === true || event.srcKey === "half"
+          );
         }
       });
     },
@@ -257,7 +261,8 @@ export default {
         }
         if (!this.isLast) {
           this.isPlaying =
-            this.game.next(
+            this.$store.dispatch(
+              "game/NEXT",
               this.isPlaying || event === true || event.srcKey === "half"
             ) && this.isPlaying;
           if (this.isLast && this.isPlaying) {
@@ -268,14 +273,14 @@ export default {
     },
     last() {
       if (!this.isLast) {
-        this.game.last();
+        this.$store.dispatch("game/LAST");
         if (this.isPlaying) {
           this.pause();
         }
       }
     },
     selectBranch(ply) {
-      this.game.setTarget(ply);
+      this.$store.dispatch("game/SET_TARGET", ply);
     },
     branchKey({ srcKey }) {
       switch (srcKey) {
@@ -300,12 +305,18 @@ export default {
     },
     prevBranch() {
       if (this.branches.length && this.branchIndex > 0) {
-        this.game.setTarget(this.branches[this.branchIndex - 1]);
+        this.$store.dispatch(
+          "game/SET_TARGET",
+          this.branches[this.branchIndex - 1]
+        );
       }
     },
     nextBranch() {
       if (this.branches.length && this.branchIndex < this.branches.length - 1) {
-        this.game.setTarget(this.branches[this.branchIndex + 1]);
+        this.$store.dispatch(
+          "game/SET_TARGET",
+          this.branches[this.branchIndex + 1]
+        );
       }
     },
     prevBranchEnd() {
@@ -318,12 +329,15 @@ export default {
     },
     firstBranch() {
       if (this.branches.length) {
-        this.game.setTarget(this.branches[0]);
+        this.$store.dispatch("game/SET_TARGET", this.branches[0]);
       }
     },
     lastBranch() {
       if (this.branches.length) {
-        this.game.setTarget(this.branches[this.branches.length - 1]);
+        this.$store.dispatch(
+          "game/SET_TARGET",
+          this.branches[this.branches.length - 1]
+        );
       }
     },
     firstBranchEnd() {

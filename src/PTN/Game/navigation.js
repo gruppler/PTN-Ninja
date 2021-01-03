@@ -29,7 +29,6 @@ export default class GameNavigation {
       if (ply.result.type === "R" && !ply.result.roads) {
         ply.result.roads = this.findRoads();
       }
-      this.state.roads = ply.result.roads;
     } else if (ply.index === this.state.plies.length - 1) {
       this.checkGameEnd();
     }
@@ -46,7 +45,7 @@ export default class GameNavigation {
     if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
       this._afterPly(ply);
-      this.state.roads = ply.result ? ply.result.roads : null;
+      this.state.setRoads(ply.result ? ply.result.roads : null);
       return true;
     } else {
       return false;
@@ -57,7 +56,7 @@ export default class GameNavigation {
     const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
     if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
       this._setPly(ply.id, false);
-      this.state.roads = null;
+      this.state.setRoads(null);
       if (ply.branches.length) {
         this.saveBoardState();
       }
@@ -152,7 +151,15 @@ export default class GameNavigation {
     );
   }
 
-  doTPS(tps = this.tags.tps.value) {
+  doTPS(tps) {
+    if (!tps) {
+      if (this.tags.tps) {
+        tps = this.tags.tps.value;
+      } else {
+        this.state.clearBoard();
+        return;
+      }
+    }
     if (tps.constructor === String) {
       tps = TPS.parse(tps);
     }

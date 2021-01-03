@@ -7,7 +7,6 @@
           v-for="move in moves"
           :ref="move.id"
           :move="move"
-          :game="game"
           :key="move.id"
           separate-branch
         />
@@ -23,8 +22,10 @@ import Move from "../PTN/Move";
 export default {
   name: "PTN",
   components: { Move },
-  props: ["game"],
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     moves() {
       return this.$store.state.ui.showAllBranches
         ? this.game.movesSorted

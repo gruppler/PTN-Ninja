@@ -41,7 +41,6 @@
         <BranchMenu
           @select="selectBranch"
           v-if="ply.branches.length"
-          :game="game"
           :branches="ply.branches"
           v-model="menu"
         />
@@ -65,7 +64,6 @@ export default {
   name: "Ply",
   components: { BranchMenu, Result },
   props: {
-    game: Object,
     plyID: Number,
     noBranches: Boolean,
     noClick: Boolean,
@@ -76,6 +74,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     theme() {
       return this.$store.state.ui.theme;
     },
@@ -99,10 +100,10 @@ export default {
       if (this.noClick) {
         return;
       }
-      this.game.goToPly(ply.id, isDone);
+      this.$store.dispatch("game/GO_TO_PLY", { ply: ply.id, isDone });
     },
     selectBranch(ply) {
-      this.game.setTarget(ply);
+      this.$store.dispatch("game/SET_TARGET", ply);
     },
   },
 };

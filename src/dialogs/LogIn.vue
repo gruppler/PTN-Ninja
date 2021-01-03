@@ -1,10 +1,5 @@
 <template>
-  <small-dialog
-    :value="value"
-    @input="$emit('input', $event)"
-    content-class="non-selectable"
-    v-bind="$attrs"
-  >
+  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs
         v-model="tab"
@@ -125,13 +120,12 @@
 </template>
 
 <script>
-import { formats } from "../../PTN/Tag";
+import { formats } from "../PTN/Tag";
 
 const MIN_NAME_LENGTH = 3;
 
 export default {
   name: "LogIn",
-  props: ["value"],
   data() {
     return {
       error: "",
@@ -174,7 +168,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     hasErrors() {
       return this.$refs.playerName && this.$refs.playerName.innerError;
@@ -252,7 +246,7 @@ export default {
       };
 
       if (Object.values(this.$store.state.online.privateGames).length) {
-        this.$store.dispatch("PROMPT", {
+        this.$store.dispatch("ui/PROMPT", {
           title: this.$t("confirm.logInTitle"),
           message: this.$t("confirm.logInMessage"),
           ok: this.$t("confirm.logInOK"),
@@ -268,7 +262,7 @@ export default {
     },
     resetPassword() {
       if (this.email.trim().length) {
-        this.$store.dispatch("PROMPT", {
+        this.$store.dispatch("ui/PROMPT", {
           title: this.$t("Confirm"),
           message: this.$t("confirm.resetPassword", { email: this.email }),
           success: () => {
@@ -296,17 +290,15 @@ export default {
     },
   },
   watch: {
-    value(isVisible) {
-      if (isVisible) {
-        if (this.user && !this.user.isAnonymous) {
-          return this.$router.replace({ name: "account" });
-        }
-      }
-    },
     tab() {
       this.showError();
       this.showSuccess();
     },
+  },
+  mounted() {
+    if (this.user && !this.user.isAnonymous) {
+      return this.$router.replace({ name: "account" });
+    }
   },
 };
 </script>

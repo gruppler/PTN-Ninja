@@ -700,7 +700,7 @@ export default {
         this.game.config.isPrivate &&
         [1, 2].includes(this.player)
       ) {
-        this.$store.dispatch("SET_UI", [
+        this.$store.dispatch("ui/SET_UI", [
           "playerName",
           this.tags["player" + this.player],
         ]);
@@ -712,20 +712,20 @@ export default {
     },
     editTPS() {
       this.submit();
-      this.$store.dispatch("SET_UI", [
+      this.$store.dispatch("ui/SET_UI", [
         "selectedPiece",
         { color: this.game ? this.game.firstPlayer : 1, type: "F" },
       ]);
-      this.$store.dispatch("SET_UI", [
+      this.$store.dispatch("ui/SET_UI", [
         "firstMoveNumber",
         this.game ? this.game.firstMoveNumber : 1,
       ]);
-      this.$store.dispatch("SET_UI", [
+      this.$store.dispatch("ui/SET_UI", [
         "editingTPS",
         this.game ? this.game.state.tps : "",
       ]);
       this.$nextTick(() =>
-        this.$store.dispatch("SET_UI", ["isEditingTPS", true])
+        this.$store.dispatch("ui/SET_UI", ["isEditingTPS", true])
       );
     },
     fillTPS() {

@@ -1,10 +1,5 @@
 <template>
-  <small-dialog
-    :value="value"
-    @input="$emit('input', $event)"
-    content-class="non-selectable"
-    v-bind="$attrs"
-  >
+  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs
         v-model="tab"
@@ -94,16 +89,15 @@
 </template>
 
 <script>
-import GameInfo from "../controls/GameInfo";
-import GameTable from "../controls/GameTable";
-import MoreToggle from "../controls/MoreToggle.vue";
+import GameInfo from "../components/controls/GameInfo";
+import GameTable from "../components/controls/GameTable";
+import MoreToggle from "../components/controls/MoreToggle.vue";
 
-import Game from "../../PTN/Game";
+import Game from "../PTN/Game";
 
 export default {
   name: "AddGame",
   components: { GameInfo, GameTable, MoreToggle },
-  props: ["value"],
   data() {
     return {
       tags: {
@@ -163,7 +157,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     createGame({ name, tags }) {
       this.player1 = tags.player1;

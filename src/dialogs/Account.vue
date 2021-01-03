@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="value" @input="$emit('input', $event)" v-bind="$attrs">
+  <small-dialog :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="account">{{ $t("Account") }}</dialog-header>
     </template>
@@ -96,7 +96,6 @@
 <script>
 export default {
   name: "Account",
-  props: ["value", "player"],
   data() {
     return {
       loadingLogOut: false,
@@ -120,7 +119,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     async logOut() {
       this.loadingLogOut = true;
@@ -172,24 +171,22 @@ export default {
     },
   },
   watch: {
-    value(isVisible) {
-      if (isVisible) {
-        if (this.user && this.user.isAnonymous) {
-          return this.$router.replace({ name: "login" });
-        }
-        this.$store.dispatch("online/RELOAD_USER");
-        this.email = this.user ? this.user.email : "";
-        this.password = "";
-        this.error = "";
-        this.success = "";
-        this.loadingLogOut = false;
-        this.loadingVerify = false;
-        this.loadingSubmit = false;
-      }
-    },
     user(user) {
       this.email = user ? user.email : "";
     },
+  },
+  mounted() {
+    if (this.user && this.user.isAnonymous) {
+      return this.$router.replace({ name: "login" });
+    }
+    this.$store.dispatch("online/RELOAD_USER");
+    this.email = this.user ? this.user.email : "";
+    this.password = "";
+    this.error = "";
+    this.success = "";
+    this.loadingLogOut = false;
+    this.loadingVerify = false;
+    this.loadingSubmit = false;
   },
 };
 </script>

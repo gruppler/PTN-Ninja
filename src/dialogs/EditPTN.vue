@@ -1,7 +1,6 @@
 <template>
   <large-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     no-backdrop-dismiss
     content-class="ptn-editor-dialog"
     v-bind="$attrs"
@@ -10,7 +9,7 @@
       <dialog-header icon="edit">{{ $t("Edit PTN") }}</dialog-header>
     </template>
 
-    <PTN-editor ref="editor" :game="game" @save="save" />
+    <PTN-editor ref="editor" @save="save" />
 
     <template v-slot:footer>
       <q-card-actions align="right">
@@ -31,35 +30,35 @@
 </template>
 
 <script>
-import PTNEditor from "../controls/PTNEditor.vue";
+import PTNEditor from "../components/controls/PTNEditor.vue";
 
 export default {
   name: "EditPTN",
   components: { PTNEditor },
-  props: ["value", "game"],
   data() {
     return {
       showAll: false,
       editor: null,
     };
   },
+  computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
+  },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     save(notation) {
-      this.game.updatePTN(notation);
+      this.$store.dispatch("game/SET_CURRENT_PTN", notation);
       this.close();
     },
   },
-  watch: {
-    value(isVisible) {
-      if (isVisible) {
-        this.$nextTick(() => {
-          this.editor = this.$refs.editor;
-        });
-      }
-    },
+  mounted() {
+    this.$nextTick(() => {
+      this.editor = this.$refs.editor;
+    });
   },
 };
 </script>

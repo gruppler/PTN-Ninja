@@ -71,7 +71,6 @@
               :key="square.static.coord"
               :x="square.static.x"
               :y="square.static.y"
-              :game="game"
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
@@ -80,7 +79,6 @@
               :key="piece.id"
               :ref="piece.id"
               :id="piece.id"
-              :game="game"
             />
           </div>
         </div>
@@ -116,7 +114,6 @@ export default {
     Square,
     Piece,
   },
-  props: ["game"],
   data() {
     return {
       size: null,
@@ -129,6 +126,9 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     style() {
       return this.$store.state.ui.theme.boardStyle;
     },

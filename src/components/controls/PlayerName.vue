@@ -13,7 +13,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon :name="$store.getters.playerIcon(player, isPrivate)" />
+          <q-icon :name="$store.getters['ui/playerIcon'](player, isPrivate)" />
         </template>
         <template v-slot:append v-if="!isPrivate && isLoggedIn">
           <q-btn

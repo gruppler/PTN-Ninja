@@ -1,4 +1,7 @@
-import { decompressFromEncodedURIComponent } from "lz-string";
+import {
+  decompressFromBase64,
+  decompressFromEncodedURIComponent,
+} from "lz-string";
 import { Platform } from "quasar";
 import store from "../store";
 
@@ -68,64 +71,95 @@ const routes = [
     },
     children: [
       {
-        name: "help",
-        path: "/help/:section?",
+        name: "account",
+        path: "/account",
+        component: () => import("../dialogs/Account"),
       },
       {
         name: "add",
         path: "/add/:tab?/:online?/:fullscreen?",
+        component: () => import("../dialogs/AddGame"),
       },
       {
         name: "close",
         path: "/close",
+        component: () => import("../dialogs/CloseGames"),
       },
       {
         name: "download",
         path: "/download",
-      },
-      {
-        name: "preferences",
-        path: "/preferences",
-      },
-      {
-        name: "theme",
-        path: "/theme",
-      },
-      {
-        name: "info",
-        path: "/info",
+        component: () => import("../dialogs/DownloadGames"),
       },
       {
         name: "edit",
         path: "/edit",
+        component: () => import("../dialogs/EditPTN"),
+        beforeEnter: (to, from, next) => {
+          if (store.state.game.current && store.state.game.current.isLocal) {
+            next();
+          }
+        },
       },
       {
         name: "embed",
         path: "/embed",
+        component: () => import("../dialogs/EmbedConfig"),
+      },
+      // {
+      //   name: "info-view",
+      //   path: "/info",
+      //   component: () => import("../dialogs/")
+      // },
+      {
+        name: "help",
+        path: "/help/:section?",
+        component: () => import("../dialogs/Help"),
       },
       {
-        name: "png",
-        path: "/png",
-      },
-      {
-        name: "login",
-        path: "/login/:tab?",
+        name: "info-edit",
+        path: "/info/edit",
+        component: () => import("../dialogs/EditGame"),
       },
       {
         name: "join",
         path: "/join",
+        component: () => import("../dialogs/JoinGame"),
       },
       {
-        name: "account",
-        path: "/account",
+        name: "login",
+        path: "/login/:tab?",
+        component: () => import("../dialogs/LogIn"),
       },
       {
         name: "online",
         path: "/online/:qr?",
+        component: () => import("../dialogs/ShareOnline"),
+      },
+      {
+        name: "png",
+        path: "/png",
+        component: () => import("../dialogs/PNGConfig"),
+      },
+      {
+        name: "preferences",
+        path: "/preferences",
+        component: () => import("../dialogs/UISettings"),
       },
       {
         name: "qr",
         path: "/qr",
+        component: () => import("../dialogs/QRCode"),
+      },
+      {
+        name: "rename-branch",
+        path: "/rename/:branch",
+        props: true,
+        component: () => import("../dialogs/RenameBranch"),
+      },
+      {
+        name: "theme",
+        path: "/theme",
+        component: () => import("../dialogs/ThemeConfig"),
       },
     ],
   },

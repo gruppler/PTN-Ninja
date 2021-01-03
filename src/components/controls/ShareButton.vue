@@ -18,29 +18,24 @@
         </template>
       </q-list>
     </q-menu>
-    <QRCode v-model="qrDialog" :text="qrText" no-route-dismiss />
   </q-btn>
 </template>
 
 <script>
-import QRCode from "../dialogs/QRCode";
-
 export default {
   name: "ShareButton",
-  components: { QRCode },
   props: {
-    game: Object,
-    showQR: Boolean,
     "no-menu": Boolean,
   },
   data() {
     return {
       bottomSheet: false,
-      qrText: "",
-      qrDialog: false,
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     actions() {
       let actions = [
         {
@@ -135,7 +130,7 @@ export default {
           output = {
             title: this.game.name,
             url: this.game.isLocal
-              ? this.$store.getters.url(this.game, {
+              ? this.$store.getters["ui/url"](this.game, {
                   origin: true,
                   state: true,
                 })
@@ -167,30 +162,22 @@ export default {
           };
           break;
       }
-      this.$store.dispatch("COPY", output);
+      this.$store.dispatch("ui/COPY", output);
     },
     shareFile() {
-      this.$store.dispatch("SAVE_PTN", this.game);
+      this.$store.dispatch("ui/EXPORT_PTN", this.game);
     },
     embed() {
-      this.$emit("embed");
+      this.$router.push({ name: "embed" });
     },
     png() {
-      this.$emit("png");
+      this.$router.push({ name: "png" });
     },
     online() {
-      this.$emit("online");
+      this.$router.push({ name: "online" });
     },
     qrCode() {
-      if (this.game.config.id) {
-        this.qrText = this.$store.getters["online/url"](this.game);
-      } else {
-        this.qrText = this.$store.getters.url(this.game, {
-          origin: true,
-          state: true,
-        });
-      }
-      this.qrDialog = true;
+      this.$router.push({ name: "qr" });
     },
     share() {
       if (this.bottomSheet) {
@@ -207,14 +194,6 @@ export default {
           .onOk(({ action }) => action())
           .onDismiss(() => (this.bottomSheet = false));
       }
-    },
-  },
-  watch: {
-    qrDialog(isVisible) {
-      this.$emit("update:showQR", isVisible);
-    },
-    showQR(isVisible) {
-      this.qrDialog = isVisible;
     },
   },
 };

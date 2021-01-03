@@ -21,8 +21,8 @@
           />
         </q-item-section>
         <q-item-label class="row no-wrap">
-          <Linenum v-if="linenum" :linenum="ply.linenum" :game="game" no-edit />
-          <Ply :plyID="ply.id" :game="game" no-branches no-click />
+          <Linenum v-if="linenum" :linenum="ply.linenum" no-edit />
+          <Ply :plyID="ply.id" no-branches no-click />
         </q-item-label>
       </q-item>
     </q-list>
@@ -38,7 +38,6 @@ export default {
   },
   props: {
     value: Boolean,
-    game: Object,
     branches: Array,
     linenum: Boolean,
   },
@@ -46,6 +45,11 @@ export default {
     return {
       isClosing: false,
     };
+  },
+  computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
   },
   methods: {
     select(ply) {

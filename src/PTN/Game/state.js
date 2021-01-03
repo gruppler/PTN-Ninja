@@ -43,7 +43,7 @@ export default class GameState {
       get: memoize(this.getTPS, () => JSON.stringify(this.boardPly)),
     });
 
-    this._roads = null;
+    this.roads = null;
 
     this.selected = {
       pieces: [],
@@ -333,7 +333,7 @@ export default class GameState {
     this.plyID = plyID;
     this.plyIsDone = plyIsDone;
     const ply = this.ply;
-    this.roads = ply && ply.result ? ply.result.roads : null;
+    this.setRoads(ply && ply.result ? ply.result.roads : null);
   }
 
   get boardPly() {
@@ -374,13 +374,9 @@ export default class GameState {
     return this.ply && this.plyIsDone && !!this.ply.result;
   }
 
-  get roads() {
-    return this._roads;
-  }
-
-  set roads(roads) {
-    if (this._roads) {
-      this._roads.squares[1].concat(this._roads.squares[2]).forEach((coord) => {
+  setRoads(roads) {
+    if (this.roads) {
+      this.roads.squares[1].concat(this.roads.squares[2]).forEach((coord) => {
         coord = atoi(coord);
         this.squares[coord[1]][coord[0]].setRoad(null);
       });
@@ -395,7 +391,7 @@ export default class GameState {
       });
     }
 
-    this._roads = roads || null;
+    this.roads = roads || null;
   }
 
   get isFirstMove() {

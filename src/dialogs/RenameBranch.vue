@@ -1,5 +1,10 @@
 <template>
-  <q-dialog :value="value" @input="$emit('input', $event)" no-backdrop-dismiss>
+  <q-dialog
+    :value="true"
+    @hide="$router.back()"
+    no-backdrop-dismiss
+    no-route-dismiss
+  >
     <q-card style="width: 300px">
       <q-input
         ref="input"
@@ -30,31 +35,34 @@
 </template>
 
 <script>
-import Linenum from "../../PTN/Linenum";
+import Linenum from "../PTN/Linenum";
 
 export default {
   name: "RenameBranch",
-  props: ["value", "game", "linenum"],
+  props: ["branch"],
   data() {
     return {
       newBranch: "",
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
     branchParts() {
-      return this.linenum.splitBranch;
+      return Linenum.splitBranch(this.branch);
     },
   },
   methods: {
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     beforeEdit() {
       this.newBranch = this.branchParts[this.branchParts.length - 1];
-      this.$store.dispatch("SET_UI", ["editingBranch", this.linenum.branch]);
+      this.$store.dispatch("ui/SET_UI", ["editingBranch", this.branch]);
     },
     afterEdit() {
-      this.$store.dispatch("SET_UI", ["editingBranch", ""]);
+      this.$store.dispatch("ui/SET_UI", ["editingBranch", ""]);
     },
     getFullBranch(value = this.newBranch) {
       return [
@@ -64,25 +72,25 @@ export default {
     },
     validateBranch(value) {
       return (
-        value === this.linenum.branch ||
+        value === this.branch ||
         (value &&
           Linenum.validateBranch(value) &&
           !Object.keys(this.game.branches).includes(this.getFullBranch(value)))
       );
     },
     save() {
-      this.game.renameBranch(this.linenum.branch, this.getFullBranch());
+      this.$store.dispatch("game/RENAME_BRANCH", {
+        oldName: this.branch,
+        newName: this.getFullBranch(),
+      });
       this.close();
     },
   },
-  watch: {
-    value(visible) {
-      if (visible) {
-        this.beforeEdit();
-      } else {
-        this.afterEdit();
-      }
-    },
+  mounted() {
+    this.beforeEdit();
+  },
+  beforeDestroy() {
+    this.afterEdit();
   },
 };
 </script>

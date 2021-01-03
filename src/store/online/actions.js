@@ -26,11 +26,11 @@ export const INIT = ({ commit, dispatch, state }) => {
     auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
-        dispatch("LISTEN_ACTIVE_GAMES");
+        dispatch("LISTEN_CURRENT_GAME");
         commit("INIT");
         resolve();
       } else {
-        commit("UNLISTEN_ACTIVE_GAMES");
+        commit("UNLISTEN_CURRENT_GAME");
         dispatch("ANONYMOUS")
           .then(() => {
             commit("INIT");
@@ -78,7 +78,7 @@ export const LOG_IN = async (context, { email, password }) => {
 };
 
 export const LOG_OUT = async ({ dispatch }) => {
-  dispatch("UNLISTEN_ACTIVE_GAMES");
+  dispatch("UNLISTEN_CURRENT_GAME");
   await auth.signOut();
   dispatch("ANONYMOUS");
 };
@@ -122,7 +122,7 @@ export const CREATE_GAME = async (
   tags["player" + player] = playerName;
   game.setTags(tags, false);
   game.clearHistory();
-  dispatch("UPDATE_PTN", game.text(), { root: true });
+  dispatch("SAVE_PTN", game.text(), { root: true });
 
   if (game.isDefaultName) {
     game.name = game.generateName();
@@ -139,7 +139,7 @@ export const CREATE_GAME = async (
   // Add game to DB
   let gameDoc = await db.collection("games").add(omit(json, "moves"));
   config.id = gameDoc.id;
-  dispatch("SET_CONFIG", { game, config }, { root: true });
+  dispatch("SAVE_CONFIG", { game, config }, { root: true });
 
   // Add moves to game in DB
   if (json.moves.length) {
@@ -149,7 +149,7 @@ export const CREATE_GAME = async (
     await batch.commit();
   }
 
-  dispatch("LISTEN_ACTIVE_GAMES");
+  dispatch("LISTEN_CURRENT_GAME");
 };
 
 export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
@@ -176,8 +176,8 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
 
   let tags = { ["player" + player]: playerName, ...now() };
   game.setTags(tags, false);
-  dispatch("SET_CONFIG", { game, config }, { root: true });
-  dispatch("UPDATE_PTN", game.text(), { root: true });
+  dispatch("SAVE_CONFIG", { game, config }, { root: true });
+  dispatch("SAVE_PTN", game.text(), { root: true });
   game.clearHistory();
 
   let changes = {
@@ -239,8 +239,8 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
   }
 };
 
-export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
-  dispatch("UNLISTEN_ACTIVE_GAMES");
+export const LISTEN_CURRENT_GAME = function ({ commit, dispatch, state }) {
+  dispatch("UNLISTEN_CURRENT_GAME");
   const gameIDs = compact(this.state.game.list.map((game) => game.config.id));
   if (!gameIDs.length) {
     return;
@@ -251,7 +251,7 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
     .onSnapshot(
       (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-          const activeGame = this.state.game.list[0];
+          const currentGame = this.state.game.list[0];
           let game, stateGame, isActive;
           let isChanged = false;
           switch (change.type) {
@@ -261,7 +261,8 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
               stateGame = this.state.game.list.find(
                 (g) => g.config.id === game.config.id
               );
-              isActive = activeGame && game.config.id === activeGame.config.id;
+              isActive =
+                currentGame && game.config.id === currentGame.config.id;
               if (stateGame) {
                 if (!isEqual(game.name, stateGame.name)) {
                   isChanged = true;
@@ -279,7 +280,7 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
                     game.state,
                     stateGame.state
                   );
-                  this.dispatch("game/SET_STATE", {
+                  this.dispatch("game/SAVE_STATE", {
                     game,
                     gameState: game.state,
                   });
@@ -303,16 +304,12 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
                     game.config,
                     stateGame.config
                   );
-                  this.dispatch("game/SET_CONFIG", {
+                  this.dispatch("game/SAVE_CONFIG", {
                     game,
                     config: { ...game.config, unseen: !isActive },
                   });
                 }
               }
-              commit("SET_ACTIVE_GAME", game);
-              break;
-            case "removed":
-              commit("REMOVE_ACTIVE_GAME", change.doc.id);
               break;
           }
         });
@@ -321,13 +318,13 @@ export const LISTEN_ACTIVE_GAMES = function ({ commit, dispatch, state }) {
         console.error(error);
       }
     );
-  commit("LISTEN_ACTIVE_GAMES", unsubscribe);
+  commit("LISTEN_CURRENT_GAME", unsubscribe);
 };
 
-export const UNLISTEN_ACTIVE_GAMES = ({ commit, state }) => {
-  if (state.activeGamesListener) {
-    state.activeGamesListener();
-    commit("UNLISTEN_ACTIVE_GAMES");
+export const UNLISTEN_CURRENT_GAME = ({ commit, state }) => {
+  if (state.currentGameListener) {
+    state.currentGameListener();
+    commit("UNLISTEN_CURRENT_GAME");
   }
 };
 

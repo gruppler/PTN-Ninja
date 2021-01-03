@@ -29,7 +29,7 @@
             <q-list>
               <q-item
                 clickable
-                @click="dialogCloseGames = true"
+                @click="$router.push({ name: 'close' })"
                 :disable="games.length < 2"
               >
                 <q-item-section side>
@@ -37,7 +37,7 @@
                 </q-item-section>
                 <q-item-section>{{ $t("Close") }}...</q-item-section>
               </q-item>
-              <q-item clickable @click="dialogDownloadGames = true">
+              <q-item clickable @click="$router.push({ name: 'download' })">
                 <q-item-section side>
                   <q-icon name="download" />
                 </q-item-section>
@@ -98,49 +98,18 @@
         </div>
       </template>
     </q-select>
-
-    <CloseGames v-model="dialogCloseGames" no-route-dismiss />
-    <DownloadGames v-model="dialogDownloadGames" no-route-dismiss />
   </div>
 </template>
 
 <script>
-import CloseGames from "../dialogs/CloseGames";
-import DownloadGames from "../dialogs/DownloadGames";
-
 import { zipObject } from "lodash";
-
-const HISTORY_DIALOGS = {
-  dialogCloseGames: "close",
-  dialogDownloadGames: "download",
-};
 
 export default {
   name: "GameSelector",
-  components: { CloseGames, DownloadGames },
-  props: ["game"],
   computed: {
-    ...zipObject(
-      Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map((name) => ({
-        get() {
-          return this.$route.name === name;
-        },
-        set(value) {
-          if (value) {
-            if (this.$route.name !== name) {
-              this.$router.push({ name });
-            }
-          } else {
-            if (this.$route.name === name) {
-              this.$router.go(-1);
-              this.$router.replace({ name: "local" });
-            }
-          }
-        },
-      }))
-    ),
-
+    game() {
+      return this.$store.state.game.current;
+    },
     games() {
       return this.$store.state.game.list.map((game, index) => ({
         label: game.name,

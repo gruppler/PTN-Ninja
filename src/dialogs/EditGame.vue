@@ -1,7 +1,6 @@
 <template>
   <large-dialog
-    :value="value"
-    @input="$emit('input', $event)"
+    :value="true"
     no-backdrop-dismiss
     :min-height="showAll ? 750 : 495"
     v-bind="$attrs"
@@ -43,13 +42,12 @@
 </template>
 
 <script>
-import GameInfo from "../controls/GameInfo";
-import MoreToggle from "../controls/MoreToggle.vue";
+import GameInfo from "../components/controls/GameInfo";
+import MoreToggle from "../components/controls/MoreToggle.vue";
 
 export default {
   name: "EditGame",
   components: { GameInfo, MoreToggle },
-  props: ["value", "game"],
   data() {
     return {
       loading: false,
@@ -57,9 +55,14 @@ export default {
       showAll: false,
     };
   },
+  computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
+  },
   methods: {
     reset() {
-      this.$store.dispatch("PROMPT", {
+      this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetForm"),
         success: () => {
@@ -68,10 +71,10 @@ export default {
       });
     },
     close() {
-      this.$emit("input", false);
+      this.$router.back();
     },
     async save({ name, tags }) {
-      this.game.setName(name);
+      this.$store.dispatch("game/RENAME_CURRENT_GAME", name);
 
       let changedTags = {};
       Object.keys(tags).forEach((key) => {
@@ -81,7 +84,7 @@ export default {
         }
       });
       if (Object.keys(changedTags).length) {
-        this.game.setTags(changedTags);
+        this.$store.dispatch("game/SET_TAGS", changedTags);
       }
 
       if (this.game.config.id) {
@@ -96,14 +99,6 @@ export default {
       }
       this.showAll = false;
       this.close();
-    },
-  },
-  watch: {
-    value(isVisible) {
-      if (isVisible) {
-        this.loading = false;
-        this.error = "";
-      }
     },
   },
 };
