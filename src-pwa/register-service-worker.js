@@ -55,6 +55,7 @@ register(process.env.SERVICE_WORKER_FILE, {
             color: "primary",
             handler: () => {
               openURL("https://github.com/gruppler/PTN-Ninja/releases");
+              window.location.reload();
             },
           },
         ],

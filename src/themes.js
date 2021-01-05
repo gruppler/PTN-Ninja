@@ -79,7 +79,7 @@ export const COMPUTED = {
   player2: {
     player2Dark: isDark,
     colors: {
-      player1clear: (c) => colors.changeAlpha(c, -1),
+      player2clear: (c) => colors.changeAlpha(c, -1),
       player2road: computeRoad,
       player2flat: computeFlat,
       player2special: computeSpecial,

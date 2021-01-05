@@ -445,7 +445,7 @@ $radius: 1.2vmin;
     background: $player1;
     background: var(--q-color-player1);
     .flats {
-      padding-left: 1.5em;
+      text-align: right;
       background: linear-gradient(to left, $player1 1em, $player1clear);
       background: linear-gradient(
         to left,
@@ -465,7 +465,7 @@ $radius: 1.2vmin;
     background: $player2;
     background: var(--q-color-player2);
     .flats {
-      padding-right: 1.5em;
+      text-align: left;
       background: linear-gradient(to right, $player2 1em, $player2clear);
       background: linear-gradient(
         to right,
@@ -483,7 +483,9 @@ $radius: 1.2vmin;
     flex-grow: 1;
   }
   .flats {
+    width: 3em;
     flex-shrink: 0;
+    z-index: 1;
   }
 }
 
