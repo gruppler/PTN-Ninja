@@ -470,7 +470,7 @@ function withAlpha(color, alpha) {
 
 function limitText(ctx, text, width) {
   const originalLength = text.length;
-  const suffix = "...";
+  const suffix = "…";
   if (width <= 0) {
     return "";
   }
