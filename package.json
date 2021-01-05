@@ -20,6 +20,7 @@
     "@quasar/extras": "^1.9.12",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
+    "date-fns": "^2.16.1",
     "diff-match-patch": "^1.0.4",
     "firebase": "^8.2.0",
     "firebase-functions": "^3.13.0",
