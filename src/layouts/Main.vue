@@ -484,11 +484,18 @@ export default {
       try {
         if (this.ptn) {
           // Add game from URL
+          let name = this.name;
+          if (!this.name) {
+            game = new Game(this.ptn, { state: this.state });
+            name = game.name;
+          }
           const index = this.$store.state.games.findIndex(
-            (g) => g.name === this.name
+            (g) => g.name === name
           );
           if (index < 0 || this.$store.state.openDuplicate !== "replace") {
-            game = new Game(this.ptn, { name: this.name, state: this.state });
+            if (!game) {
+              game = new Game(this.ptn, { name, state: this.state });
+            }
             if (game) {
               this.$store.dispatch("ADD_GAME", {
                 ptn: this.ptn,
@@ -510,10 +517,7 @@ export default {
               this.$store.dispatch("SAVE_UNDO_INDEX", game);
               this.$store.dispatch("SAVE_UNDO_HISTORY", game);
               this.$store.dispatch("UPDATE_PTN", this.ptn);
-              this.$store.dispatch("SET_STATE", {
-                game,
-                gameState: game.minState,
-              });
+              this.$store.dispatch("SET_STATE", game.minState);
 
               this.$nextTick(() => {
                 this.$store.dispatch("NOTIFY", {

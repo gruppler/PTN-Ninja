@@ -18,6 +18,7 @@
         'highlight-squares': $store.state.highlightSquares,
         'piece-shadows': $store.state.pieceShadows,
         'show-unplayed-pieces': $store.state.unplayedPieces,
+        'is-game-end': game.state.isGameEnd,
       }"
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
@@ -31,11 +32,11 @@
           class="player1 relative-position"
           :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
         >
-          <div class="row absolute-fit no-wrap q-px-sm">
-            <div class="name ellipsis col-shrink">
+          <div class="row absolute-fit no-wrap">
+            <div class="name absolute-left q-px-sm">
               {{ player1 }}
             </div>
-            <div class="flats ellipsis q-pl-sm">
+            <div class="flats absolute-right q-px-sm">
               {{ $store.state.flatCounts ? flats[0] : "" }}
             </div>
           </div>
@@ -45,15 +46,15 @@
           class="player2 relative-position"
           :style="{ width: $store.state.flatCounts ? flatWidths[1] : '50%' }"
         >
-          <div class="row absolute-fit no-wrap q-px-sm">
-            <div class="flats ellipsis q-pr-sm">
+          <div class="row absolute-fit no-wrap">
+            <div class="flats absolute-left q-px-sm">
               {{ $store.state.flatCounts ? flats[1] : "" }}
             </div>
-            <div class="name ellipsis col-shrink">
+            <div class="name absolute-right q-px-sm">
               {{ player2 }}
             </div>
           </div>
-          <div class="turn-indicator"></div>
+          <div class="turn-indicator" />
         </div>
       </div>
 
@@ -443,6 +444,15 @@ $radius: 1.2vmin;
     overflow: hidden;
     background: $player1;
     background: var(--q-color-player1);
+    .flats {
+      padding-left: 1.5em;
+      background: linear-gradient(to left, $player1 1em, $player1clear);
+      background: linear-gradient(
+        to left,
+        var(--q-color-player1) 1em,
+        var(--q-color-player1clear)
+      );
+    }
     body.player1Dark & {
       color: $textLight;
       color: var(--q-color-textLight);
@@ -454,6 +464,15 @@ $radius: 1.2vmin;
     border-top-right-radius: $radius;
     background: $player2;
     background: var(--q-color-player2);
+    .flats {
+      padding-right: 1.5em;
+      background: linear-gradient(to right, $player2 1em, $player2clear);
+      background: linear-gradient(
+        to right,
+        var(--q-color-player2) 1em,
+        var(--q-color-player2clear)
+      );
+    }
     body.player2Dark & {
       color: $textLight;
       color: var(--q-color-textLight);
@@ -481,6 +500,9 @@ $radius: 1.2vmin;
   .board-container.turn-1 .player1 &,
   .board-container.turn-2 .player2 & {
     opacity: 1;
+  }
+  .board-container.is-game-end & {
+    opacity: 0 !important;
   }
 }
 
