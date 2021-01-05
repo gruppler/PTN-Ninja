@@ -8,6 +8,7 @@ export const PRIMARY_COLOR_IDS = [
   "player1",
   "player2",
 ];
+export const HIDDEN_COLOR_IDS = ["player1clear", "player2clear"];
 
 const LIGHT = 0.6;
 const MED = 0.4;
