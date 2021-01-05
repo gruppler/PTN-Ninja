@@ -38,7 +38,6 @@ const computeRoad = (c) => colors.lighten(c, isDarkDark(c) ? 15 : 0);
 const computeFlat = (c) => colors.lighten(c, isLight(c) ? -5 : 15);
 const computeSpecial = (c) =>
   colors.lighten(c, isLightLight(c) ? -10 : isDarkDark(c) ? 10 : 10);
-const computeBorder = (c) => colors.lighten(c, isDarkDark(c) ? 30 : -30);
 
 export const COMPUTED = {
   primary: {
@@ -73,7 +72,7 @@ export const COMPUTED = {
       player1road: computeRoad,
       player1flat: computeFlat,
       player1special: computeSpecial,
-      player1border: computeBorder,
+      player2border: computeFlat,
     },
   },
   player2: {
@@ -82,7 +81,7 @@ export const COMPUTED = {
       player2road: computeRoad,
       player2flat: computeFlat,
       player2special: computeSpecial,
-      player2border: computeBorder,
+      player1border: computeFlat,
     },
   },
 };
