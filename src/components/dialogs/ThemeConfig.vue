@@ -289,6 +289,7 @@ export default {
         message: this.$t("confirm.resetTheme"),
         success: () => {
           this.theme = cloneDeep(this.initialTheme);
+          this.preview();
         },
       });
     },
