@@ -18,6 +18,7 @@
         'highlight-squares': $store.state.highlightSquares,
         'piece-shadows': $store.state.pieceShadows,
         'show-unplayed-pieces': $store.state.unplayedPieces,
+        'is-game-end': game.state.isGameEnd,
       }"
       :style="{ maxWidth, fontSize, transform }"
       ref="container"
@@ -53,7 +54,7 @@
               {{ player2 }}
             </div>
           </div>
-          <div class="turn-indicator"></div>
+          <div class="turn-indicator" />
         </div>
       </div>
 
@@ -481,6 +482,9 @@ $radius: 1.2vmin;
   .board-container.turn-1 .player1 &,
   .board-container.turn-2 .player2 & {
     opacity: 1;
+  }
+  .board-container.is-game-end & {
+    opacity: 0 !important;
   }
 }
 
