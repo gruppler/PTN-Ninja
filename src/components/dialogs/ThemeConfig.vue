@@ -294,9 +294,13 @@ export default {
       });
     },
     share() {
+      const theme = { ...this.theme, id: this.id };
+      if (!this.isSaved) {
+        delete theme.isBuiltIn;
+      }
       this.$store.dispatch("COPY", {
         title: this.$t("Theme") + " – " + this.theme.name,
-        text: JSON.stringify({ ...this.theme, id: this.id }),
+        text: JSON.stringify(theme),
       });
     },
     save() {
