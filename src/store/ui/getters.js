@@ -1,5 +1,5 @@
 import { compressToEncodedURIComponent } from "lz-string";
-import { cloneDeep, isString, omit } from "lodash";
+import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
 import { i18n } from "../../boot/i18n";
 
@@ -9,7 +9,7 @@ THEMES.forEach((theme) => {
 Object.freeze(THEMES);
 
 export const themes = (state) => {
-  return [...THEMES, ...state.themes];
+  return sortBy([...THEMES, ...state.themes], "name");
 };
 
 export const theme = (state, getters) => (id) => {
