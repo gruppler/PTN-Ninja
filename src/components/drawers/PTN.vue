@@ -1,6 +1,6 @@
 <template>
   <recess>
-    <div class="full-ptn absolute-fit scroll non-selectable">
+    <q-scroll-area ref="scroll" class="full-ptn absolute-fit non-selectable">
       <div v-if="game">
         <Move
           class="q-px-md"
@@ -12,15 +12,13 @@
           separate-branch
         />
       </div>
-    </div>
-    <q-resize-observer @resize="resize" />
+    </q-scroll-area>
+    <q-resize-observer @resize="scroll" />
   </recess>
 </template>
 
 <script>
 import Move from "../PTN/Move";
-
-import { debounce } from "quasar";
 
 export default {
   name: "PTN",
@@ -34,7 +32,7 @@ export default {
     },
   },
   methods: {
-    scroll() {
+    scroll(animate = false) {
       const editingBranch = this.$store.state.editingBranch
         ? this.game.branches[this.$store.state.editingBranch] || null
         : null;
@@ -44,32 +42,27 @@ export default {
         ? this.$refs[this.game.state.move.id][0]
         : null;
       if (move) {
-        move.$el.scrollIntoView({
-          block: "center",
-          behavior: "smooth",
-        });
+        this.$refs.scroll.setScrollPosition(
+          move.$el.offsetTop -
+            (this.$refs.scroll.$el.offsetHeight - move.$el.offsetHeight) / 2,
+          animate && this.$store.state.showPTN ? 200 : 0
+        );
       }
-    },
-    resize() {
-      this.scroll();
     },
   },
   watch: {
     game() {
-      this.$nextTick(this.scroll);
+      this.scroll(true);
     },
     "game.state.plyID"() {
-      this.$nextTick(this.scroll);
+      this.scroll(true);
     },
     "$store.state.showAllBranches"() {
-      this.$nextTick(this.scroll);
+      this.scroll(true);
     },
   },
-  created() {
-    this.scroll = debounce(this.scroll, 100);
-  },
   mounted() {
-    this.$nextTick(this.scroll);
+    this.scroll();
   },
 };
 </script>

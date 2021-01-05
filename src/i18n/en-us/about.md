@@ -2,7 +2,7 @@ PTN Ninja
 ===
 **Version [3.1.0](https://github.com/gruppler/PTN-Ninja/releases)**
 
-This is an editor and viewer for [Portable Tak Notation (PTN)](https://www.reddit.com/r/Tak/wiki/portable_tak_notation). It aims to be...
+This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org/portable-tak-notation/). It aims to be...
 
 - Useful for transcription of live games, even on a phone.
 - Intuitive, with a minimal UI that is enjoyable to use.
@@ -12,7 +12,6 @@ If you want to support this project, you can...
 
 - [View the source code](https://github.com/gruppler/PTN-Ninja/)
 - [Report an issue or feature request](https://github.com/gruppler/PTN-Ninja/issues/)
-- [Become a Patron](https://www.patreon.com/gruppler)
 - [Donate USD](https://www.paypal.me/gruppler)
 - [Donate ETH](https://etherdonation.com/d?to=0xC222dBFb4c59928b4A25e0dcc7ad8f0f9C263079)
 

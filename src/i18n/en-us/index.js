@@ -172,6 +172,7 @@ export default {
   theme: {
     // Names
     classic: "Classic",
+    discord: "Discord",
     festive: "Festive",
     fresh: "Fresh",
     neon: "Neon",

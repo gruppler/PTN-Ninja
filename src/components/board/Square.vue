@@ -302,10 +302,8 @@ export default {
       opacity: 0;
       position: absolute;
       will-change: opacity, top, bottom, left, right;
-      transition: opacity $two-thirds-time $easing-reverse,
-        background-color $two-thirds-time $easing-reverse,
-        top $half-time $easing-reverse, bottom $half-time $easing-reverse,
-        left $half-time $easing-reverse, right $half-time $easing-reverse;
+      transition: opacity $one-third-time $easing-reverse,
+        background-color $half-time $easing-reverse;
       &.center {
         top: 35%;
         bottom: 35%;
@@ -323,34 +321,22 @@ export default {
         bottom: 35%;
       }
       &.n {
-        top: 35%;
+        top: 0;
         bottom: 65%;
       }
       &.s {
         top: 65%;
-        bottom: 35%;
+        bottom: 0;
       }
       &.e {
         left: 65%;
-        right: 35%;
+        right: 0;
       }
       &.w {
-        left: 35%;
+        left: 0;
         right: 65%;
       }
     }
-  }
-  &.n .road .n {
-    top: 0;
-  }
-  &.s .road .s {
-    bottom: 0;
-  }
-  &.e .road .e {
-    right: 0;
-  }
-  &.w .road .w {
-    left: 0;
   }
   &.connected .road .center,
   &.n .road .n,
@@ -358,10 +344,8 @@ export default {
   &.s .road .s,
   &.w .road .w {
     opacity: 0.2;
-    transition: opacity $two-thirds-time $easing $one-third-time,
-      background-color $two-thirds-time $easing $one-third-time,
-      top $half-time $easing $half-time, bottom $half-time $easing $half-time,
-      left $half-time $easing $half-time, right $half-time $easing $half-time;
+    transition: opacity $one-third-time $easing $two-thirds-time,
+      background-color $half-time $easing $half-time;
   }
   &.road .road .center,
   &.rn .road .n,

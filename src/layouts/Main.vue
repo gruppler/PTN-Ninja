@@ -510,6 +510,10 @@ export default {
               this.$store.dispatch("SAVE_UNDO_INDEX", game);
               this.$store.dispatch("SAVE_UNDO_HISTORY", game);
               this.$store.dispatch("UPDATE_PTN", this.ptn);
+              this.$store.dispatch("SET_STATE", {
+                game,
+                gameState: game.minState,
+              });
 
               this.$nextTick(() => {
                 this.$store.dispatch("NOTIFY", {
