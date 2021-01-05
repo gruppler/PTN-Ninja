@@ -219,18 +219,23 @@ export default function render(game, options = {}) {
     ctx.fillStyle = theme.secondaryDark
       ? theme.colors.textLight
       : theme.colors.textDark;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
     for (let i = 0; i < game.size; i++) {
       const coord = itoa(i, i);
+      ctx.textBaseline = padding ? "middle" : "bottom";
+      ctx.textAlign = "center";
       ctx.fillText(
         coord[0],
         padding + axisSize + squareSize * i + squareSize / 2,
-        padding + headerHeight + boardSize + (axisSize + padding) / 2
+        padding +
+          headerHeight +
+          boardSize +
+          (padding ? (axisSize + padding) / 2 : axisSize)
       );
+      ctx.textBaseline = "middle";
+      ctx.textAlign = padding ? "center" : "left";
       ctx.fillText(
         coord[1],
-        (axisSize + padding) / 2,
+        padding ? (axisSize + padding) / 2 : 0,
         padding +
           headerHeight +
           squareSize * (game.size - i - 1) +
