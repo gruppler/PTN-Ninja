@@ -164,6 +164,8 @@
               v-model="openDuplicate"
               :options="openDuplicateOptions"
               behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               item-aligned
               map-options
               emit-value

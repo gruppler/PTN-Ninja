@@ -5,6 +5,8 @@
     :options="themes"
     option-value="id"
     option-label="name"
+    transition-show="none"
+    transition-hide="none"
     map-options
     emit-value
     v-bind="$attrs"

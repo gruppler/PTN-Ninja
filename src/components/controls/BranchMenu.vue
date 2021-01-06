@@ -4,6 +4,8 @@
     :value="value"
     @input="$emit('input', $event)"
     content-class="bg-panel"
+    transition-show="none"
+    transition-hide="none"
     auto-close
   >
     <q-list class="branch-menu bg-panel" dense>

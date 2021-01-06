@@ -13,6 +13,8 @@
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="game-selector-options"
+      transition-show="none"
+      transition-hide="none"
       emit-value
       filled
       dense
@@ -25,7 +27,12 @@
           dense
           flat
         >
-          <q-menu auto-close square>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
             <q-list>
               <q-item
                 clickable

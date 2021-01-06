@@ -29,6 +29,8 @@
         :readonly="game && game.plies.length > 0"
         @input="$refs.tps.validate()"
         behavior="menu"
+        transition-show="none"
+        transition-hide="none"
         map-options
         emit-value
         filled
@@ -367,8 +369,8 @@
           v-if="!game || game.isLocal"
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
-          anchor="center middle"
-          self="center middle"
+          transition-show="none"
+          transition-hide="none"
           no-refocus
         >
           <div>
@@ -419,8 +421,8 @@
           v-if="!game || game.isLocal"
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
-          anchor="center middle"
-          self="center middle"
+          transition-show="none"
+          transition-hide="none"
           no-refocus
         >
           <div>
@@ -506,6 +508,8 @@
         :readonly="game && !game.isLocal"
         autocorrect="off"
         spellcheck="false"
+        transition-show="none"
+        transition-hide="none"
         hide-bottom-space
         emit-value
         filled

@@ -36,6 +36,8 @@
                 <q-menu
                   context-menu
                   auto-close
+                  transition-show="none"
+                  transition-hide="none"
                   :target="`#message-${plyID}-${index} > div > div`"
                 >
                   <q-list>

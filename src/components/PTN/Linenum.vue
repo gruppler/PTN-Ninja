@@ -7,7 +7,13 @@
       @click.left="selectBranch(ply)"
     >
       {{ this.branch }}
-      <q-menu v-if="!noEdit" context-menu auto-close>
+      <q-menu
+        v-if="!noEdit"
+        transition-show="none"
+        transition-hide="none"
+        context-menu
+        auto-close
+      >
         <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
             <q-item-section side>

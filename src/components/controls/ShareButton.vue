@@ -5,7 +5,13 @@
     @click="noMenu ? share() : null"
     @click.right.prevent="share"
   >
-    <q-menu v-if="!noMenu" auto-close square>
+    <q-menu
+      v-if="!noMenu"
+      transition-show="none"
+      transition-hide="none"
+      auto-close
+      square
+    >
       <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />

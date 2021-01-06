@@ -43,6 +43,8 @@
         :options="boardStyles"
         behavior="menu"
         :option-label="getText"
+        transition-show="none"
+        transition-hide="none"
         item-aligned
         filled
       >
@@ -105,10 +107,7 @@
 
               <template v-slot:append>
                 <q-btn :style="{ background: color }" round>
-                  <q-popup-proxy
-                    transition-show="scale"
-                    transition-hide="scale"
-                  >
+                  <q-popup-proxy transition-show="none" transition-hide="none">
                     <div>
                       <q-color
                         :value="color"

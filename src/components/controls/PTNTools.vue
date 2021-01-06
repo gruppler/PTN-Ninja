@@ -23,7 +23,13 @@
         :disabled="!game.isLocal"
       >
         <q-icon name="trim" class="rotate-180" />
-        <q-menu v-if="game.isLocal" auto-close square>
+        <q-menu
+          v-if="game.isLocal"
+          transition-show="none"
+          transition-hide="none"
+          auto-close
+          square
+        >
           <q-list>
             <q-item clickable @click="$store.dispatch('game/TRIM_BRANCHES')">
               <q-item-section side>
