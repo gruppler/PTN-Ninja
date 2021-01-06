@@ -202,14 +202,16 @@ export default function render(game, options = {}) {
     }
 
     // Turn Indicator
-    const turn = game.state.turn;
-    ctx.fillStyle = theme.colors.primary;
-    ctx.fillRect(
-      padding + axisSize + (turn === 1 ? 0 : flats1Width),
-      padding + flatCounterHeight,
-      turn === 1 ? flats1Width : flats2Width,
-      turnIndicatorHeight
-    );
+    if (!game.state.isGameEnd) {
+      const turn = game.state.turn;
+      ctx.fillStyle = theme.colors.primary;
+      ctx.fillRect(
+        padding + axisSize + (turn === 1 ? 0 : flats1Width),
+        padding + flatCounterHeight,
+        turn === 1 ? flats1Width : flats2Width,
+        turnIndicatorHeight
+      );
+    }
   }
 
   // Axis Labels
@@ -217,18 +219,23 @@ export default function render(game, options = {}) {
     ctx.fillStyle = theme.secondaryDark
       ? theme.colors.textLight
       : theme.colors.textDark;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
     for (let i = 0; i < game.size; i++) {
       const coord = itoa(i, i);
+      ctx.textBaseline = padding ? "middle" : "bottom";
+      ctx.textAlign = "center";
       ctx.fillText(
         coord[0],
         padding + axisSize + squareSize * i + squareSize / 2,
-        padding + headerHeight + boardSize + (axisSize + padding) / 2
+        padding +
+          headerHeight +
+          boardSize +
+          (padding ? (axisSize + padding) / 2 : axisSize)
       );
+      ctx.textBaseline = "middle";
+      ctx.textAlign = padding ? "center" : "left";
       ctx.fillText(
         coord[1],
-        (axisSize + padding) / 2,
+        padding ? (axisSize + padding) / 2 : 0,
         padding +
           headerHeight +
           squareSize * (game.size - i - 1) +
@@ -470,7 +477,7 @@ function withAlpha(color, alpha) {
 
 function limitText(ctx, text, width) {
   const originalLength = text.length;
-  const suffix = "...";
+  const suffix = "…";
   if (width <= 0) {
     return "";
   }

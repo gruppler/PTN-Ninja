@@ -162,6 +162,7 @@ export default class GameBase {
     } else {
       if (this.tags.tps) {
         this.size = this.tags.tps.value.size;
+        this.tags.size = Tag.parse(`[Size "${this.size}"]`);
       } else {
         throw new Error("Missing board size");
       }

@@ -175,9 +175,15 @@ import {
   defaultsDeep,
   isEqual,
   kebabCase,
+  omit,
   pick,
 } from "lodash";
-import { BOARD_STYLES, PRIMARY_COLOR_IDS, computeFrom } from "../themes";
+import {
+  BOARD_STYLES,
+  PRIMARY_COLOR_IDS,
+  HIDDEN_COLOR_IDS,
+  computeFrom,
+} from "../../themes";
 
 const MAX_NAME_LENGTH = 16;
 
@@ -212,9 +218,12 @@ export default {
         : this.getID(this.theme.name || "");
     },
     colors() {
-      return this.advanced
-        ? this.theme.colors
-        : pick(this.theme.colors, PRIMARY_COLOR_IDS);
+      return omit(
+        this.advanced
+          ? this.theme.colors
+          : pick(this.theme.colors, PRIMARY_COLOR_IDS),
+        HIDDEN_COLOR_IDS
+      );
     },
     isValid() {
       return (
@@ -288,13 +297,18 @@ export default {
         message: this.$t("confirm.resetTheme"),
         success: () => {
           this.theme = cloneDeep(this.initialTheme);
+          this.preview();
         },
       });
     },
     share() {
+      const theme = { ...this.theme, id: this.id };
+      if (!this.isSaved) {
+        delete theme.isBuiltIn;
+      }
       this.$store.dispatch("ui/COPY", {
         title: this.$t("Theme") + " – " + this.theme.name,
-        text: JSON.stringify({ ...this.theme, id: this.id }),
+        text: JSON.stringify(theme),
       });
     },
     save() {

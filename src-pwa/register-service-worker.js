@@ -43,7 +43,7 @@ register(process.env.SERVICE_WORKER_FILE, {
       Notify.create({
         message: i18n.t("success.updateAvailable"),
         icon: "update",
-        color: "bg-accent",
+        color: "accent",
         textColor: store.state.theme.accentDark ? "textLight" : "textDark",
         position: "bottom",
         timeout: 0,
@@ -60,6 +60,7 @@ register(process.env.SERVICE_WORKER_FILE, {
             color: "primary",
             handler: () => {
               openURL("https://github.com/gruppler/PTN-Ninja/releases");
+              window.location.reload();
             },
           },
         ],
