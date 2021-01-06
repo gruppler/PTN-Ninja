@@ -202,14 +202,16 @@ export default function render(game, options = {}) {
     }
 
     // Turn Indicator
-    const turn = game.state.turn;
-    ctx.fillStyle = theme.colors.primary;
-    ctx.fillRect(
-      padding + axisSize + (turn === 1 ? 0 : flats1Width),
-      padding + flatCounterHeight,
-      turn === 1 ? flats1Width : flats2Width,
-      turnIndicatorHeight
-    );
+    if (!game.state.isGameEnd) {
+      const turn = game.state.turn;
+      ctx.fillStyle = theme.colors.primary;
+      ctx.fillRect(
+        padding + axisSize + (turn === 1 ? 0 : flats1Width),
+        padding + flatCounterHeight,
+        turn === 1 ? flats1Width : flats2Width,
+        turnIndicatorHeight
+      );
+    }
   }
 
   // Axis Labels
