@@ -272,10 +272,10 @@ export default class GameNavigation {
     if (this.state.selected.pieces.length) {
       return false;
     }
-    if (this.state.plyIsDone) {
+    if ((half || !this.state.prevPly) && this.state.plyIsDone) {
       return this._undoPly();
     } else if (this.state.prevPly) {
-      return this.goToPly(this.state.prevPly.id, half);
+      return this.goToPly(this.state.prevPly.id, true);
     }
     return false;
   }

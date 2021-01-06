@@ -178,9 +178,15 @@ import {
   defaultsDeep,
   isEqual,
   kebabCase,
+  omit,
   pick,
 } from "lodash";
-import { BOARD_STYLES, PRIMARY_COLOR_IDS, computeFrom } from "../../themes";
+import {
+  BOARD_STYLES,
+  PRIMARY_COLOR_IDS,
+  HIDDEN_COLOR_IDS,
+  computeFrom,
+} from "../../themes";
 
 const MAX_NAME_LENGTH = 16;
 
@@ -213,9 +219,12 @@ export default {
         : this.getID(this.theme.name || "");
     },
     colors() {
-      return this.advanced
-        ? this.theme.colors
-        : pick(this.theme.colors, PRIMARY_COLOR_IDS);
+      return omit(
+        this.advanced
+          ? this.theme.colors
+          : pick(this.theme.colors, PRIMARY_COLOR_IDS),
+        HIDDEN_COLOR_IDS
+      );
     },
     isValid() {
       return (
