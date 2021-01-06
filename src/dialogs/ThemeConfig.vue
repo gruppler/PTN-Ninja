@@ -183,7 +183,7 @@ import {
   PRIMARY_COLOR_IDS,
   HIDDEN_COLOR_IDS,
   computeFrom,
-} from "../../themes";
+} from "../themes";
 
 const MAX_NAME_LENGTH = 16;
 

@@ -369,6 +369,8 @@
           v-if="!game || game.isLocal"
           v-model="showDatePicker"
           @before-show="proxyDate = tags.date"
+          anchor="center middle"
+          self="center middle"
           transition-show="none"
           transition-hide="none"
           no-refocus
@@ -421,6 +423,8 @@
           v-if="!game || game.isLocal"
           v-model="showTimePicker"
           @before-show="proxyTime = tags.time"
+          anchor="center middle"
+          self="center middle"
           transition-show="none"
           transition-hide="none"
           no-refocus

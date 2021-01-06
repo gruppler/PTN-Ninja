@@ -183,7 +183,7 @@
       </q-toolbar>
     </q-footer>
 
-    <router-view ref="dialog" />
+    <router-view ref="dialog" no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />
@@ -409,18 +409,11 @@ export default {
       try {
         if (this.ptn) {
           // Add game from URL
-          let name = this.name;
-          if (!this.name) {
-            game = new Game(this.ptn, { state: this.state });
-            name = game.name;
-          }
           const index = this.$store.state.game.list.findIndex(
-            (g) => g.name === name
+            (g) => g.name === this.name
           );
           if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
-            if (!game) {
-              game = new Game(this.ptn, { name, state: this.state });
-            }
+            game = new Game(this.ptn, { name: this.name, state: this.state });
             if (game) {
               this.$store.dispatch("game/ADD_GAME", {
                 ptn: this.ptn,

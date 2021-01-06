@@ -115,7 +115,7 @@
       </q-toolbar>
     </q-footer>
 
-    <router-view />
+    <router-view no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />

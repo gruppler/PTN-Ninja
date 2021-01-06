@@ -299,21 +299,6 @@ kbd {
     background: var(--q-color-ui);
   }
 
-  .q-drawer__content .scroll {
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-      border: 0;
-      box-shadow: none;
-      min-height: 40px;
-      background: $separator-color;
-      .body--dark & {
-        background: $separator-dark-color;
-      }
-    }
-  }
-
   .q-menu.scroll {
     &::-webkit-scrollbar-track {
       background: $accent;
@@ -322,6 +307,18 @@ kbd {
     &::-webkit-scrollbar-thumb {
       background: $ui;
       background: var(--q-color-ui);
+    }
+    &.bg-panel {
+      &::-webkit-scrollbar-track {
+        background: $panel;
+        background: var(--q-color-panel);
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: $dim;
+        body.panelDark & {
+          background-color: $highlight;
+        }
+      }
     }
   }
 }
