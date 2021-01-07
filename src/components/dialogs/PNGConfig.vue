@@ -42,7 +42,13 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector v-model="theme" :game="game" item-aligned filled />
+      <ThemeSelector
+        v-model="theme"
+        :game="game"
+        item-aligned
+        edit-button
+        filled
+      />
 
       <q-item tag="label" v-ripple>
         <q-item-section>

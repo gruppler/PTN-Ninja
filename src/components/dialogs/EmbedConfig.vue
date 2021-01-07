@@ -66,6 +66,7 @@
         v-model="config.ui.theme"
         :game="game"
         item-aligned
+        edit-button
         filled
       />
 
