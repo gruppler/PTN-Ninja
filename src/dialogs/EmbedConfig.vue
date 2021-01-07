@@ -62,7 +62,12 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector v-model="config.ui.theme" item-aligned filled />
+      <ThemeSelector
+        v-model="config.ui.theme"
+        item-aligned
+        edit-button
+        filled
+      />
 
       <q-item>
         <q-item-section>

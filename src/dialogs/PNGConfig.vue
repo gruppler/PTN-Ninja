@@ -41,7 +41,7 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector v-model="theme" item-aligned filled />
+      <ThemeSelector v-model="theme" item-aligned edit-button filled />
 
       <q-item tag="label" v-ripple>
         <q-item-section>
