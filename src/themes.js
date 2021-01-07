@@ -205,7 +205,7 @@ export const THEMES = [
     vars: { "piece-border-width": 1 },
     colors: {
       primary: "#43b581",
-      secondary: "#36393f",
+      secondary: "#36393f00",
       ui: "#292b2f",
       accent: "#202225",
       panel: "#40444bcc",
