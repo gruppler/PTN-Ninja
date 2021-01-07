@@ -82,10 +82,13 @@ export default {
       );
     },
     primary() {
-      return (
-        this.current &&
-        this.game.state.ply.squares[0] === this.square.static.coord
-      );
+      if (!this.current) {
+        return false;
+      }
+      const isDestination =
+        this.game.state.ply.squares.length === 1 ||
+        this.game.state.ply.squares[0] !== this.square.static.coord;
+      return this.game.state.plyIsDone ? isDestination : !isDestination;
     },
     selected() {
       return this.square.isSelected;
@@ -309,7 +312,7 @@ export default {
       position: absolute;
       will-change: opacity, top, bottom, left, right;
       transition: opacity $one-third-time $easing-reverse,
-        background-color $half-time $easing-reverse;
+        background-color $half-time $easing;
       &.center {
         top: 35%;
         bottom: 35%;
@@ -351,7 +354,7 @@ export default {
   &.w .road .w {
     opacity: 0.2;
     transition: opacity $one-third-time $easing $two-thirds-time,
-      background-color $half-time $easing $half-time;
+      background-color $half-time $easing;
   }
   &.road .road .center,
   &.rn .road .n,

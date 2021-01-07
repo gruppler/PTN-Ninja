@@ -1,5 +1,5 @@
 import { compressToEncodedURIComponent } from "lz-string";
-import { cloneDeep, isString, omit, sortBy } from "lodash";
+import { cloneDeep, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
 import { i18n } from "../../boot/i18n";
 
@@ -20,27 +20,17 @@ export const theme = (state, getters) => (id) => {
 };
 
 export const playerIcon = (state) => (player, isPrivate = false) => {
-  let result = "";
   switch (player) {
     case 1:
-      result = isPrivate ? "player1_private" : "player1";
-      break;
+      return isPrivate ? "player1_private" : "player1";
     case 2:
-      result = isPrivate ? "player2_private" : "player2";
-      break;
+      return isPrivate ? "player2_private" : "player2";
     case 0:
-      result = isPrivate ? "spectator_private" : "spectator";
-      break;
+      return isPrivate ? "spectator_private" : "spectator";
     case "random":
     case "tie":
-      result = isPrivate ? "players_private" : "players";
+      return isPrivate ? "players_private" : "players";
   }
-  if (!state.theme.isDark) {
-    result = result.startsWith("player1")
-      ? result.replace("1", "2")
-      : result.replace("2", "1");
-  }
-  return result;
 };
 
 const PNG_URL = process.env.DEV
@@ -87,11 +77,8 @@ export const png_url = (state, getters) => (game) => {
   params.push("name=" + encodeURIComponent(game.pngFilename));
 
   // Theme
-  if (state.pngConfig.theme) {
-    let theme = state.pngConfig.theme;
-    if (isString(theme)) {
-      theme = getters.theme(theme);
-    }
+  if (state.pngConfig.themeID) {
+    let theme = getters.theme(state.pngConfig.themeID);
     if (theme) {
       if (theme.isBuiltIn) {
         theme = theme.id;
@@ -157,19 +144,15 @@ export const url = (state, getters) => (game, options = {}) => {
   }
 
   if (options.ui) {
-    if (options.ui.theme) {
-      let theme = options.ui.theme;
-      if (isString(theme)) {
-        theme = getters.theme(theme);
+    if (options.ui.themeID) {
+      let theme = getters.theme(options.ui.themeID) || state.theme;
+      if (theme.isBuiltIn) {
+        theme = theme.id;
+      } else {
+        theme = JSON.stringify(theme);
       }
-      if (theme) {
-        if (theme.isBuiltIn) {
-          theme = theme.id;
-        } else {
-          theme = JSON.stringify(theme);
-        }
-        options.ui.theme = compressToEncodedURIComponent(theme);
-      }
+      delete options.ui.themeID;
+      options.ui.theme = compressToEncodedURIComponent(theme);
     }
     Object.keys(options.ui).forEach((key) => {
       const value = options.ui[key];

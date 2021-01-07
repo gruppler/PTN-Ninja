@@ -41,7 +41,7 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector v-model="theme" item-aligned filled />
+      <ThemeSelector v-model="config.themeID" item-aligned edit-button filled />
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -150,7 +150,7 @@
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { pngUIOptions } from "../store/ui/state";
 
-import { cloneDeep, isString } from "lodash";
+import { cloneDeep } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -206,7 +206,9 @@ export default {
       this.config = cloneDeep(this.$store.state.ui.pngConfig);
     },
     updatePreview() {
-      const canvas = this.game.render(this.config);
+      const config = cloneDeep(this.config);
+      this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      let canvas = this.game.render(config);
       const filename = this.game.pngFilename;
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
@@ -232,8 +234,9 @@ export default {
               config[key] = this.$store.state.ui[key];
             }
           });
+          config.themeID = this.$store.state.ui.themeID;
+          config.theme = this.$store.state.ui.theme;
           this.config = config;
-          this.theme = this.$store.state.ui.theme.id;
           this.size = this.sizes.indexOf(config.size);
         },
       });
