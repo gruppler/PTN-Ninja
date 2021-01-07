@@ -36,14 +36,10 @@ export default {
       return this.$store.state.game.current;
     },
     text() {
-      if (this.game.config.id) {
-        return this.$store.getters["online/url"](this.game);
-      } else {
-        return this.$store.getters["ui/url"](this.game, {
-          origin: true,
-          state: true,
-        });
-      }
+      return this.$store.getters["ui/url"](this.game, {
+        origin: true,
+        state: true,
+      });
     },
     maximized() {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;

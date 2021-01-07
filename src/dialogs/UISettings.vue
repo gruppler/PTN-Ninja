@@ -289,7 +289,7 @@ export default {
       return this.$store.state.game.current;
     },
     disabledOptions() {
-      return this.$store.getters["online/disabledOptions"](this.game);
+      return this.$store.getters["game/disabledOptions"];
     },
     ...zipObject(
       props,

@@ -4,7 +4,7 @@ export const HOTKEYS = {
   ACTIONS: {
     "game/UNDO": ["ctrl", "z"],
     "game/REDO": ["ctrl", "shift", "z"],
-    "ui/EXPORT_PNG": ["ctrl", "shift", "p"],
+    "game/EXPORT_PNG": ["ctrl", "shift", "p"],
     "ui/EXPORT_PTN": ["ctrl", "s"],
     "ui/OPEN": ["ctrl", "o"],
   },
@@ -91,7 +91,7 @@ export const HOTKEY_NAMES = {
   ACTIONS: {
     "game/UNDO": "Undo",
     "game/REDO": "Redo",
-    "ui/EXPORT_PNG": "Export PNG Image",
+    "game/EXPORT_PNG": "Export PNG Image",
     "ui/EXPORT_PTN": "Export PTN File",
     "ui/OPEN": "Load Files",
   },

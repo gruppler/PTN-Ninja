@@ -2,6 +2,11 @@ import { LocalStorage, Platform } from "quasar";
 
 const state = {
   current: null,
+  ptn: "",
+  state: null,
+  config: null,
+  history: null,
+  historyIndex: 0,
   list: [],
 };
 

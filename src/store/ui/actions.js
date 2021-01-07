@@ -163,27 +163,6 @@ export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   }
 };
 
-export const EXPORT_PNG = ({ dispatch, getters, state }, game) => {
-  const options = { tps: game.state.tps, ...state.pngConfig };
-
-  // Game Tags
-  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
-    const tag = game.tags[tagName];
-    if (tag && tag.value) {
-      options[tagName] = tag.value;
-    }
-  });
-
-  game.render(options).toBlob((blob) => {
-    dispatch(
-      "DOWNLOAD_FILES",
-      new File([blob], getters.png_filename(game), {
-        type: "image/png",
-      })
-    );
-  });
-};
-
 export const EXPORT_PTN = ({ dispatch }, games) => {
   if (!isArray(games)) {
     games = [games];
@@ -200,51 +179,19 @@ export const EXPORT_PTN = ({ dispatch }, games) => {
   );
 };
 
-export const OPEN = ({ dispatch }, callback) => {
+export const OPEN = function (context, callback) {
   let input = document.createElement("INPUT");
   input.type = "file";
   input.accept = ".ptn,.txt";
   input.multiple = true;
   input.hidden = true;
   input.addEventListener("input", (event) => {
-    dispatch("OPEN_FILES", event.target.files);
+    this.dispatch("game/OPEN_FILES", event.target.files);
     if (callback && typeof callback === "function") {
       callback();
     }
   });
   input.click();
-};
-
-export const OPEN_FILES = function ({ dispatch }, files) {
-  const games = [];
-  let count = 0;
-  files = Array.from(files);
-  if (!files.length) {
-    return false;
-  }
-  Loading.show();
-  setTimeout(
-    () =>
-      files.forEach((file) => {
-        if (file && /\.ptn$|\.txt$/i.test(file.name)) {
-          let reader = new FileReader();
-          reader.onload = (event) => {
-            games.push({
-              name: file.name.replace(/\.ptn$|\.txt$/, ""),
-              ptn: event.target.result,
-            });
-            if (!--count) {
-              Loading.hide();
-              this.dispatch("game/ADD_GAMES", { games, index: 0 });
-            }
-          };
-          reader.onerror = (error) => console.error(error);
-          ++count;
-          reader.readAsText(file);
-        }
-      }),
-    200
-  );
 };
 
 export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {

@@ -12,3 +12,15 @@ export const uniqueName = (state) => (name, ignoreFirst = false) => {
   }
   return name;
 };
+
+export const disabledOptions = (state) => {
+  const game = state.current;
+  const disabled = [];
+  if (game.config.disableFlatCounts) {
+    disabled.push("flatCounts");
+  }
+  if (game.config.disableShowRoads) {
+    disabled.push("showRoads");
+  }
+  return disabled;
+};

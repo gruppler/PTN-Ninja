@@ -370,7 +370,7 @@ export default {
       },
     },
     disabledOptions() {
-      return this.$store.getters["online/disabledOptions"](this.game);
+      return this.$store.getters["game/disabledOptions"];
     },
     isGamesTableShowing() {
       return (

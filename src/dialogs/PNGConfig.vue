@@ -41,12 +41,7 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector
-        v-model="config.theme"
-        @input="updatePreview"
-        item-aligned
-        filled
-      />
+      <ThemeSelector v-model="theme" item-aligned filled />
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -155,7 +150,7 @@
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { pngUIOptions } from "../store/ui/state";
 
-import { cloneDeep } from "lodash";
+import { cloneDeep, isString } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -182,6 +177,23 @@ export default {
     url() {
       return this.$store.getters["ui/png_url"](this.game);
     },
+    theme: {
+      get() {
+        return isString(this.config.theme)
+          ? this.config.theme
+          : this.config.theme.id;
+      },
+      set(id) {
+        const theme = this.$store.getters["ui/theme"](id);
+        if (theme) {
+          if (!theme.isBuiltIn) {
+            this.config.theme = theme;
+          } else {
+            this.config.theme = id;
+          }
+        }
+      },
+    },
     tps() {
       return this.game.state.tps;
     },
@@ -194,13 +206,8 @@ export default {
       this.config = cloneDeep(this.$store.state.ui.pngConfig);
     },
     updatePreview() {
-      const config = cloneDeep(this.config);
-      let theme = this.$store.getters["ui/theme"](config.theme);
-      if (theme && !theme.isBuiltIn) {
-        config.theme = theme;
-      }
-      const canvas = this.game.render(config);
-      const filename = this.$store.getters["ui/png_filename"](this.game);
+      const canvas = this.game.render(this.config);
+      const filename = this.game.pngFilename;
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
@@ -222,12 +229,12 @@ export default {
           const config = cloneDeep(this.$store.state.ui.defaults.pngConfig);
           Object.keys(config).forEach((key) => {
             if (pngUIOptions.includes(key)) {
-              config[key] = this.$store.state[key];
+              config[key] = this.$store.state.ui[key];
             }
           });
           this.config = config;
+          this.theme = this.$store.state.ui.theme.id;
           this.size = this.sizes.indexOf(config.size);
-          this.config.theme = this.$store.state.ui.theme.id;
         },
       });
     },
@@ -260,9 +267,6 @@ export default {
     size(i) {
       this.config.size = this.sizes[i];
     },
-  },
-  created() {
-    this.updatePreview();
   },
   mounted() {
     this.updatePreview();

@@ -383,6 +383,12 @@ export default class GameBase {
     return render(this, options);
   }
 
+  get pngFilename() {
+    return `${this.name} - ${this.state.plyID}${
+      this.state.plyIsDone ? "" : "-"
+    }.png`;
+  }
+
   get minState() {
     return this.state.min;
   }

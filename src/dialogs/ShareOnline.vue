@@ -6,7 +6,7 @@
 
     <q-card>
       <smooth-reflow tag="recess" class="col">
-        <div v-if="this.isLocal">
+        <div v-if="isLocal">
           <q-list>
             <q-item>
               <q-item-section>
@@ -222,7 +222,7 @@ export default {
     gameURL() {
       return this.game.isLocal
         ? ""
-        : this.$store.getters["online/url"](this.game) || "";
+        : this.$store.getters["ui/url"](this.game) || "";
     },
   },
   methods: {

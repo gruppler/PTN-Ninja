@@ -19,10 +19,6 @@ export const theme = (state, getters) => (id) => {
   return getters.themes.find((theme) => theme.id === id);
 };
 
-const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://tps.ptn.ninja/";
-
 export const playerIcon = (state) => (player, isPrivate = false) => {
   let result = "";
   switch (player) {
@@ -47,22 +43,9 @@ export const playerIcon = (state) => (player, isPrivate = false) => {
   return result;
 };
 
-const urlEncode = (url) => {
-  return encodeURIComponent(url).replace(
-    /([()])/g,
-    (char) => "%" + char.charCodeAt(0).toString(16)
-  );
-};
-
-export const png_filename = (state) => (game) => {
-  return (
-    game.name +
-    " - " +
-    game.state.plyID +
-    (game.state.plyIsDone ? "" : "-") +
-    ".png"
-  );
-};
+const PNG_URL = process.env.DEV
+  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
+  : "https://tps.ptn.ninja/";
 
 export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.state.tps];
@@ -101,7 +84,7 @@ export const png_url = (state, getters) => (game) => {
   }
 
   // Filename
-  params.push("name=" + encodeURIComponent(png_filename(state)(game)));
+  params.push("name=" + encodeURIComponent(game.pngFilename));
 
   // Theme
   if (state.pngConfig.theme) {
@@ -122,9 +105,19 @@ export const png_url = (state, getters) => (game) => {
   return PNG_URL + "?" + params.join("&");
 };
 
+const urlEncode = (url) => {
+  return encodeURIComponent(url).replace(
+    /([()])/g,
+    (char) => "%" + char.charCodeAt(0).toString(16)
+  );
+};
+
 export const url = (state, getters) => (game, options = {}) => {
   if (!game) {
     return "";
+  }
+  if (game.config.isOnline) {
+    return location.origin + "/game/" + game.config.id;
   }
   options = cloneDeep(options);
 

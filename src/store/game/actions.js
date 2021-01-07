@@ -200,6 +200,60 @@ export const REMOVE_MULTIPLE_GAMES = function (
   }
 };
 
+export const EXPORT_PNG = function ({ state }) {
+  const game = state.current;
+  const options = { tps: game.state.tps, ...this.state.ui.pngConfig };
+
+  // Game Tags
+  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
+    const tag = game.tags[tagName];
+    if (tag && tag.value) {
+      options[tagName] = tag.value;
+    }
+  });
+
+  game.render(options).toBlob((blob) => {
+    this.dispatch(
+      "ui/DOWNLOAD_FILES",
+      new File([blob], game.pngFilename, {
+        type: "image/png",
+      })
+    );
+  });
+};
+
+export const OPEN_FILES = function ({ dispatch }, files) {
+  const games = [];
+  let count = 0;
+  files = Array.from(files);
+  if (!files.length) {
+    return false;
+  }
+  Loading.show();
+  setTimeout(
+    () =>
+      files.forEach((file) => {
+        if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+          let reader = new FileReader();
+          reader.onload = (event) => {
+            games.push({
+              name: file.name.replace(/\.ptn$|\.txt$/, ""),
+              ptn: event.target.result,
+            });
+            if (!--count) {
+              Loading.hide();
+              dispatch("ADD_GAMES", { games, index: 0 });
+            }
+          };
+          reader.onerror = (error) => console.error(error);
+          ++count;
+          reader.readAsText(file);
+        }
+      }),
+    200
+  );
+};
+
 export const RENAME_CURRENT_GAME = function (
   { commit, dispatch, state },
   newName

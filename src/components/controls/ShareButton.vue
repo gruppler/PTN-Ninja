@@ -135,12 +135,10 @@ export default {
         case "url":
           output = {
             title: this.game.name,
-            url: this.game.isLocal
-              ? this.$store.getters["ui/url"](this.game, {
-                  origin: true,
-                  state: true,
-                })
-              : this.$store.getters["online/url"](this.game),
+            url: this.$store.getters["ui/url"](this.game, {
+              origin: true,
+              state: true,
+            }),
           };
           break;
         case "ply":
