@@ -42,7 +42,7 @@ export default function render(game, options = {}) {
   theme = options.theme ? computeMissing(cloneDeep(options.theme)) : THEMES[0];
 
   let hlSquares = [];
-  const ply = game.state.ply;
+  const ply = game.state.plies[game.state.boardPly.id];
   if (options.highlightSquares && ply) {
     hlSquares = ply.squares;
   }
@@ -310,7 +310,9 @@ export default function render(game, options = {}) {
     if (hlSquares.includes(square.static.coord)) {
       ctx.fillStyle = withAlpha(
         theme.colors.primary,
-        square.static.coord === hlSquares[0] ? 0.75 : 0.4
+        hlSquares.length > 1 && square.static.coord === hlSquares[0]
+          ? 0.4
+          : 0.75
       );
       drawSquareHighlight();
     }
