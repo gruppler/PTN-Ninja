@@ -79,9 +79,12 @@ export default {
       );
     },
     primary() {
+      const isDestination =
+        this.game.state.ply.squares.length === 1 ||
+        this.game.state.ply.squares[0] !== this.square.static.coord;
       return (
         this.current &&
-        this.game.state.ply.squares[0] === this.square.static.coord
+        (this.game.state.plyIsDone ? isDestination : !isDestination)
       );
     },
     selected() {
