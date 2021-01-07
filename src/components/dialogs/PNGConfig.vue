@@ -42,13 +42,7 @@
         </q-item-section>
       </q-item>
 
-      <ThemeSelector
-        v-model="config.theme"
-        @input="updatePreview"
-        :game="game"
-        item-aligned
-        filled
-      />
+      <ThemeSelector v-model="theme" :game="game" item-aligned filled />
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -157,7 +151,7 @@
 import ThemeSelector from "../controls/ThemeSelector";
 import { pngUIOptions } from "../../store/ui/state";
 
-import { cloneDeep } from "lodash";
+import { cloneDeep, isString } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -181,6 +175,23 @@ export default {
   computed: {
     url() {
       return this.$store.getters.png_url(this.game);
+    },
+    theme: {
+      get() {
+        return isString(this.config.theme)
+          ? this.config.theme
+          : this.config.theme.id;
+      },
+      set(id) {
+        const theme = this.$store.getters.theme(id);
+        if (theme) {
+          if (!theme.isBuiltIn) {
+            this.config.theme = theme;
+          } else {
+            this.config.theme = id;
+          }
+        }
+      },
     },
     tps() {
       return this.game.state.tps;
@@ -226,8 +237,8 @@ export default {
             }
           });
           this.config = config;
+          this.theme = this.$store.state.theme.id;
           this.size = this.sizes.indexOf(config.size);
-          this.config.theme = this.$store.state.theme.id;
         },
       });
     },
