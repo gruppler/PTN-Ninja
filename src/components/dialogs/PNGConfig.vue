@@ -43,7 +43,7 @@
       </q-item>
 
       <ThemeSelector
-        v-model="theme"
+        v-model="config.themeID"
         :game="game"
         item-aligned
         edit-button
@@ -157,7 +157,7 @@
 import ThemeSelector from "../controls/ThemeSelector";
 import { pngUIOptions } from "../../store/ui/state";
 
-import { cloneDeep, isString } from "lodash";
+import { cloneDeep } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -182,23 +182,6 @@ export default {
     url() {
       return this.$store.getters.png_url(this.game);
     },
-    theme: {
-      get() {
-        return isString(this.config.theme)
-          ? this.config.theme
-          : this.config.theme.id;
-      },
-      set(id) {
-        const theme = this.$store.getters.theme(id);
-        if (theme) {
-          if (!theme.isBuiltIn) {
-            this.config.theme = theme;
-          } else {
-            this.config.theme = id;
-          }
-        }
-      },
-    },
     tps() {
       return this.game.state.tps;
     },
@@ -212,11 +195,8 @@ export default {
     },
     updatePreview() {
       const config = cloneDeep(this.config);
-      let theme = this.$store.getters.theme(config.theme);
-      if (theme && !theme.isBuiltIn) {
-        config.theme = theme;
-      }
-      const canvas = this.game.render(config);
+      this.config.theme = this.$store.getters.theme(this.config.themeID);
+      let canvas = this.game.render(config);
       const filename = this.$store.getters.png_filename(this.game);
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
@@ -242,8 +222,9 @@ export default {
               config[key] = this.$store.state[key];
             }
           });
+          config.themeID = this.$store.state.themeID;
+          config.theme = this.$store.state.theme;
           this.config = config;
-          this.theme = this.$store.state.theme.id;
           this.size = this.sizes.indexOf(config.size);
         },
       });

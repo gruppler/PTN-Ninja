@@ -63,7 +63,7 @@
       </q-item>
 
       <ThemeSelector
-        v-model="config.ui.theme"
+        v-model="config.ui.themeID"
         :game="game"
         item-aligned
         edit-button
@@ -283,8 +283,10 @@ export default {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {
-          this.config = cloneDeep(this.$store.state.defaults.embedConfig);
-          this.config.ui.theme = this.$store.state.theme.id;
+          const config = cloneDeep(this.$store.state.defaults.embedConfig);
+          config.ui.themeID = this.$store.state.themeID;
+          config.ui.theme = this.$store.state.theme;
+          this.config = config;
         },
       });
     },
