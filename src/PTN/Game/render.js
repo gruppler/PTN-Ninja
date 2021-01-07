@@ -42,9 +42,11 @@ export default function render(game, options = {}) {
   theme = options.theme ? computeMissing(cloneDeep(options.theme)) : THEMES[0];
 
   let hlSquares = [];
-  const ply = game.state.plies[game.state.boardPly.id];
-  if (options.highlightSquares && ply) {
-    hlSquares = ply.squares;
+  if (game.state.plies.length) {
+    const ply = game.state.plies[game.state.boardPly.id];
+    if (options.highlightSquares && ply) {
+      hlSquares = ply.squares;
+    }
   }
 
   // Dimensions

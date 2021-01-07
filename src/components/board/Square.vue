@@ -82,13 +82,13 @@ export default {
       );
     },
     primary() {
+      if (!this.current) {
+        return false;
+      }
       const isDestination =
         this.game.state.ply.squares.length === 1 ||
         this.game.state.ply.squares[0] !== this.square.static.coord;
-      return (
-        this.current &&
-        (this.game.state.plyIsDone ? isDestination : !isDestination)
-      );
+      return this.game.state.plyIsDone ? isDestination : !isDestination;
     },
     selected() {
       return this.square.isSelected;
