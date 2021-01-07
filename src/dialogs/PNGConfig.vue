@@ -194,6 +194,23 @@ export default {
         }
       },
     },
+    theme: {
+      get() {
+        return isString(this.config.theme)
+          ? this.config.theme
+          : this.config.theme.id;
+      },
+      set(id) {
+        const theme = this.$store.getters.theme(id);
+        if (theme) {
+          if (!theme.isBuiltIn) {
+            this.config.theme = theme;
+          } else {
+            this.config.theme = id;
+          }
+        }
+      },
+    },
     tps() {
       return this.game.state.tps;
     },
