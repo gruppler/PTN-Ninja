@@ -210,21 +210,21 @@ export default {
   .board-container.grid1 & {
     &:before,
     .hl {
-      margin: 1px;
+      margin: 1%;
     }
   }
   .board-container.grid2 & {
     &:before,
     .hl {
       border-radius: 5%;
-      margin: 3px;
+      margin: 3%;
     }
   }
   .board-container.grid3 & {
     &:before,
     .hl {
       border-radius: 15%;
-      margin: 6px;
+      margin: 6%;
     }
   }
   body.boardChecker .board-container.blank & {
