@@ -512,11 +512,15 @@ $radius: 1.2vmin;
 .y-axis {
   color: $textDark;
   color: var(--q-color-textDark);
+  text-shadow: 0 1px 2px $textLight;
+  text-shadow: 0 1px 2px var(--q-color-textLight);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
     color: $textLight;
     color: var(--q-color-textLight);
+    text-shadow: 0 1px 2px $textDark;
+    text-shadow: 0 1px 2px var(--q-color-textDark);
   }
 }
 .x-axis {
