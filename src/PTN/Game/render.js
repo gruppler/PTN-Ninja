@@ -50,7 +50,7 @@ export default function render(game, options = {}) {
   }
 
   // Dimensions
-  const squareSize = squareSizes[options.size];
+  const squareSize = Math.round((squareSizes[options.size] * 5) / game.size);
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
   const pieceSize = Math.round(squareSize * 0.5);
@@ -70,7 +70,7 @@ export default function render(game, options = {}) {
     theme.vars["piece-border-width"] * squareSize * 0.02
   );
 
-  const fontSize = squareSize * 0.22;
+  const fontSize = (squareSize * 0.25 * game.size) / 5;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -220,8 +220,8 @@ export default function render(game, options = {}) {
   if (options.axisLabels) {
     ctx.save();
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = squareSize * 0.01;
-    ctx.shadowBlur = squareSize * 0.02;
+    ctx.shadowOffsetY = fontSize * 0.05;
+    ctx.shadowBlur = fontSize * 0.1;
     ctx.shadowColor = theme.secondaryDark
       ? theme.colors.textDark
       : theme.colors.textLight;
