@@ -254,7 +254,6 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
-    "Unable to copy": "Unable to copy to clipboard",
     "Unable to download": "Unable to download files",
     "Unrecognized tag": "Unrecognized tag",
   },
