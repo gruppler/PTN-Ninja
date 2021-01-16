@@ -12,7 +12,6 @@
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
@@ -73,7 +72,9 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools" :game="game" />
+        <PTNTools ref="tools" :game="game">
+          <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
+        </PTNTools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" :game="game" />
         </div>
