@@ -43,7 +43,7 @@ export default function render(game, options = {}) {
 
   let hlSquares = [];
   if (game.state.plies.length) {
-    const ply = game.state.plies[game.state.boardPly.id];
+    const ply = game.plies[game.state.boardPly.id];
     if (options.highlightSquares && ply) {
       hlSquares = ply.squares;
     }
