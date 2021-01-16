@@ -74,7 +74,7 @@ export default {
         const config = cloneDeep(
           pick(this.$store.state, Object.keys(this.$store.state.pngConfig))
         );
-        config.size = "xs";
+        config.imageSize = "xs";
         return this.$store.getters.themes.map((theme) => {
           theme = cloneDeep(theme);
           const canvas = this.game.render({ ...config, theme });

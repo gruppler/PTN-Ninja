@@ -10,8 +10,17 @@ const squareSizes = {
   xl: 400,
 };
 
+const textSizes = {
+  xs: 0.1875,
+  sm: 0.21875,
+  md: 0.25,
+  lg: 0.3,
+  xl: 0.4,
+};
+
 const defaults = {
-  size: "md",
+  imageSize: "md",
+  textSize: "md",
   axisLabels: true,
   turnIndicator: true,
   flatCounts: true,
@@ -50,7 +59,9 @@ export default function render(game, options = {}) {
   }
 
   // Dimensions
-  const squareSize = Math.round((squareSizes[options.size] * 5) / game.size);
+  const squareSize = Math.round(
+    (squareSizes[options.imageSize] * 5) / game.size
+  );
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
   const pieceSize = Math.round(squareSize * 0.5);
@@ -70,7 +81,7 @@ export default function render(game, options = {}) {
     theme.vars["piece-border-width"] * squareSize * 0.02
   );
 
-  const fontSize = (squareSize * 0.25 * game.size) / 5;
+  const fontSize = (squareSize * textSizes[options.textSize] * game.size) / 5;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
