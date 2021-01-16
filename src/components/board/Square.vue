@@ -79,13 +79,18 @@ export default {
       );
     },
     primary() {
-      if (!this.current) {
-        return false;
+      if (this.selected) {
+        return (
+          this.game.state.selected.squares.length > 1 &&
+          this.game.state.selected.squares[0] === this.square
+        );
+      } else if (this.current) {
+        const isDestination =
+          this.game.state.ply.squares.length === 1 ||
+          this.game.state.ply.squares[0] !== this.square.static.coord;
+        return this.game.state.plyIsDone ? isDestination : !isDestination;
       }
-      const isDestination =
-        this.game.state.ply.squares.length === 1 ||
-        this.game.state.ply.squares[0] !== this.square.static.coord;
-      return this.game.state.plyIsDone ? isDestination : !isDestination;
+      return false;
     },
     selected() {
       return this.square.isSelected;
@@ -281,6 +286,9 @@ export default {
   }
   &.selected .hl.player {
     opacity: 0.5;
+  }
+  &.selected.primary .hl.player {
+    opacity: 0.25;
   }
   &.no-roads.road .hl.player {
     opacity: 0.25;
