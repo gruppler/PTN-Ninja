@@ -25,7 +25,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-secondary"
+      class="bg-bg"
       v-shortkey="hotkeys.UI"
       @shortkey="uiShortkey"
     >
