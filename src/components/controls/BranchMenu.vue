@@ -69,27 +69,33 @@ export default {
 </script>
 
 <style lang="scss">
-.branch-menu .option-number {
-  line-height: 1em;
-  border-radius: $generic-border-radius;
-  color: $textDark;
-  color: var(--q-color-textDark);
-  background-color: $dim;
-  body.panelDark & {
-    background-color: $highlight;
-  }
-  body.panelDark:not(.panelMedium) & {
-    color: $textLight;
-    color: var(--q-color-textLight);
-  }
-  &.selected {
-    background-color: $primary;
-    background-color: var(--q-color-primary);
+.branch-menu {
+  .option-number {
+    line-height: 1em;
+    border-radius: $generic-border-radius;
+    color: $textDark;
     color: var(--q-color-textDark);
-    body.primaryDark & {
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
+    body.panelDark:not(.panelMedium) & {
       color: $textLight;
       color: var(--q-color-textLight);
     }
+    &.selected {
+      background-color: $primary;
+      background-color: var(--q-color-primary);
+      color: var(--q-color-textDark);
+      body.primaryDark & {
+        color: $textLight;
+        color: var(--q-color-textLight);
+      }
+    }
+  }
+
+  .branch {
+    flex-shrink: 1;
   }
 }
 </style>

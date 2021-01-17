@@ -2,11 +2,11 @@
   <span class="ptn linenum">
     <span
       v-if="showBranch"
-      class="branch"
+      class="branch ellipsis-2-lines"
       :class="{ selected: isSelected, only: onlyBranch }"
       @click.left="selectBranch(ply)"
     >
-      {{ this.branch }}
+      <span v-html="branch" />
       <q-menu v-if="!noEdit" context-menu auto-close>
         <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
@@ -71,7 +71,10 @@ export default {
   },
   computed: {
     branch() {
-      return this.linenum.branch.replace(/_/g, " ").replace(/-/g, "‑");
+      const text = document.createElement("textarea");
+      text.innerHTML = this.linenum.branch;
+      const branch = text.value;
+      return branch.split("/").join('/<span class="space"> </span>');
     },
     ply() {
       return this.game.branches[this.linenum.branch];
@@ -128,13 +131,11 @@ export default {
     color: var(--q-color-textLight);
   }
   .branch {
-    word-break: break-word;
     font-weight: bold;
     font-size: 0.9em;
     line-height: 1.3em;
     padding: 4px;
     margin: 0;
-    max-width: 270px;
     border-radius: $generic-border-radius;
     cursor: pointer;
     background-color: $highlight;
@@ -145,6 +146,10 @@ export default {
     &.only {
       margin-top: 0.25em;
       margin-bottom: 0.25em;
+    }
+    .space {
+      width: 0;
+      display: inline-block;
     }
     .q-btn {
       margin: -0.5em -0.25em;
