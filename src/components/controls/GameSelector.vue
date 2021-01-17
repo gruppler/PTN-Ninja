@@ -127,12 +127,44 @@ export default {
     name() {
       return this.games[0].label;
     },
+    isEditingTPS: {
+      get() {
+        return this.$store.state.isEditingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+        if (!value) {
+          this.editingTPS = "";
+        }
+      },
+    },
+    editingTPS: {
+      get() {
+        return this.$store.state.editingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+      },
+    },
   },
   methods: {
     select(index) {
-      if (index >= 0 && this.games.length > index) {
+      const _select = () => {
         this.$store.dispatch("SELECT_GAME", { index });
         this.$emit("input", this.$store.state.games[0]);
+        this.editingTPS = "";
+        this.isEditingTPS = false;
+      };
+      if (index >= 0 && this.games.length > index) {
+        if (this.isEditingTPS && this.editingTPS !== main.game.state.tps) {
+          this.$store.dispatch("PROMPT", {
+            title: this.$t("Confirm"),
+            message: this.$t("confirm.abandonChanges"),
+            success: _select,
+          });
+        } else {
+          _select();
+        }
       }
     },
     close(index) {

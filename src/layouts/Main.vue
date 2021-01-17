@@ -703,7 +703,6 @@ export default {
   watch: {
     games(newGames, oldGames) {
       if (!newGames[0] || !oldGames[0] || newGames[0] !== oldGames[0]) {
-        this.isEditingTPS = false;
         this.updateGame();
       }
     },
