@@ -23,25 +23,6 @@
     </smooth-reflow>
 
     <q-list>
-      <q-item>
-        <q-item-section>
-          <q-item-label>
-            <span class="float-right" v-html="dimensions" />
-            <span class="float-right q-mr-md" v-html="fileSize" />
-            {{ $t("Size") }}
-          </q-item-label>
-          <q-slider
-            v-model="size"
-            :min="0"
-            :max="4"
-            :label-value="sizes[size]"
-            :step="1"
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
-
       <ThemeSelector
         v-model="config.themeID"
         :game="game"
@@ -49,6 +30,42 @@
         edit-button
         filled
       />
+
+      <q-item>
+        <q-item-section>
+          <q-item-label>
+            <span class="float-right" v-html="dimensions" />
+            <span class="float-right q-mr-md" v-html="fileSize" />
+            {{ $t("Image Size") }}
+          </q-item-label>
+          <q-slider
+            v-model="imageSize"
+            :min="0"
+            :max="4"
+            :label-value="sizes[imageSize]"
+            :step="1"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item>
+        <q-item-section>
+          <q-item-label>
+            {{ $t("Text Size") }}
+          </q-item-label>
+          <q-slider
+            v-model="textSize"
+            :min="0"
+            :max="4"
+            :label-value="sizes[textSize]"
+            :step="1"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -174,7 +191,8 @@ export default {
       dimensions: "",
       file: null,
       fileSize: 0,
-      size: sizes.indexOf(this.$store.state.pngConfig.size),
+      imageSize: sizes.indexOf(this.$store.state.pngConfig.imageSize),
+      textSize: sizes.indexOf(this.$store.state.pngConfig.textSize),
       sizes,
     };
   },
@@ -225,7 +243,8 @@ export default {
           config.themeID = this.$store.state.themeID;
           config.theme = this.$store.state.theme;
           this.config = config;
-          this.size = this.sizes.indexOf(config.size);
+          this.imageSize = this.sizes.indexOf(config.imageSize);
+          this.textSize = this.sizes.indexOf(config.textSize);
         },
       });
     },
@@ -255,8 +274,11 @@ export default {
       },
       deep: true,
     },
-    size(i) {
-      this.config.size = this.sizes[i];
+    imageSize(i) {
+      this.config.imageSize = this.sizes[i];
+    },
+    textSize(i) {
+      this.config.textSize = this.sizes[i];
     },
     value(show) {
       if (show) {

@@ -232,7 +232,11 @@ export default class GameBase {
         if (!move.linenum) {
           move.linenum = item;
           if (move.index === 0 && item.number !== this.firstMoveNumber) {
-            throw new Error("Invalid first line number");
+            if (item.ptn.trim() === notation.trim()) {
+              Linenum.parse(this.firstMoveNumber + ".", this, branch);
+            } else {
+              throw new Error("Invalid first line number");
+            }
           }
         } else {
           move = new Move({

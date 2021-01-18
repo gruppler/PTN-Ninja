@@ -25,6 +25,10 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+.bg-bg {
+  background: $bg !important;
+  background: var(--q-color-bg) !important;
+}
 .text-textLight {
   color: $textLight !important;
   color: var(--q-color-textLight) !important;

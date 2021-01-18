@@ -26,7 +26,7 @@ export default class Ptn {
     this.x = "abcdefgh".indexOf(this.column);
 
     if (this.movement && !this.pieceCount) {
-      this.pieceCount = "" + (this.distribution || 1);
+      this.pieceCount = "" + 1;
     }
 
     if (this.movement && !this.distribution) {

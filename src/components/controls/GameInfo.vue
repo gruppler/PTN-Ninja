@@ -1,12 +1,6 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
-    <q-input
-      v-model="name"
-      name="name"
-      :label="$t('Name')"
-      @keydown.enter.prevent="submit"
-      filled
-    >
+    <q-input v-model="name" name="name" :label="$t('Name')" filled>
       <template v-slot:prepend>
         <q-icon name="file" />
       </template>
@@ -51,7 +45,6 @@
         :label="$t('TPS')"
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
-        @keydown.enter.prevent="submit"
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -96,7 +89,6 @@
             :max="tags.size"
             :label="$t('Caps')"
             :rules="rules('caps')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -115,7 +107,6 @@
             max="99"
             :label="$t('Flats')"
             :rules="rules('flats')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -140,7 +131,6 @@
             :max="tags.size"
             :label="$t('Caps1')"
             :rules="rules('caps1')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -158,7 +148,6 @@
             max="99"
             :label="$t('Flats1')"
             :rules="rules('flats1')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -179,7 +168,6 @@
             :max="tags.size"
             :label="$t('Caps2')"
             :rules="rules('caps2')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -197,7 +185,6 @@
             max="99"
             :label="$t('Flats2')"
             :rules="rules('flats2')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -230,7 +217,6 @@
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -249,7 +235,6 @@
             max="3000"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -266,7 +251,6 @@
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -285,7 +269,6 @@
             max="3000"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -306,7 +289,6 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
-        @keydown.enter.prevent="submit"
         hide-bottom-space
         filled
       >
@@ -356,7 +338,6 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
-        @keydown.enter.prevent="submit"
         hide-bottom-space
         filled
       >
@@ -409,7 +390,6 @@
         name="clock"
         :label="$t('Clock')"
         :rules="rules('clock')"
-        @keydown.enter.prevent="submit"
         autocorrect="off"
         autocapitalize="off"
         spellcheck="false"
@@ -431,7 +411,6 @@
         max="999"
         :label="$t('Round')"
         :rules="rules('round')"
-        @keydown.enter.prevent="submit"
         hide-bottom-space
         filled
       >
@@ -501,7 +480,6 @@
         type="number"
         :label="$t('Points')"
         :rules="rules('points')"
-        @keydown.enter.prevent="submit"
         hide-bottom-space
         filled
       >
@@ -517,7 +495,6 @@
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
-      @keydown.enter.prevent="submit"
       hide-bottom-space
       filled
     >
@@ -532,7 +509,6 @@
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
-      @keydown.enter.prevent="submit"
       hide-bottom-space
       filled
     >
@@ -652,9 +628,7 @@ export default {
         "editingTPS",
         this.game ? this.game.state.tps : "",
       ]);
-      this.$nextTick(() =>
-        this.$store.dispatch("SET_UI", ["isEditingTPS", true])
-      );
+      this.$store.dispatch("SET_UI", ["isEditingTPS", true]);
     },
     fillTPS() {
       if (!this.game || !this.game.plies.length) {

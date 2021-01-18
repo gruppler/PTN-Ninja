@@ -79,7 +79,8 @@ defaults.embedConfig = {
 };
 
 defaults.pngConfig = {
-  size: "md",
+  imageSize: "md",
+  textSize: "md",
   includeNames: true,
   padding: true,
   ...pick(defaults, pngUIOptions),

@@ -2,11 +2,11 @@
   <span class="ptn linenum">
     <span
       v-if="showBranch"
-      class="branch"
+      class="branch ellipsis-2-lines"
       :class="{ selected: isSelected, only: onlyBranch }"
       @click.left="selectBranch(ply)"
     >
-      {{ this.branch }}
+      <span v-html="branch" />
       <q-menu v-if="!noEdit" context-menu auto-close>
         <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
@@ -61,6 +61,7 @@ export default {
     noEdit: Boolean,
     noBranch: Boolean,
     onlyBranch: Boolean,
+    activePly: Object,
   },
   data() {
     return {
@@ -71,10 +72,13 @@ export default {
   },
   computed: {
     branch() {
-      return this.linenum.branch.replace(/_/g, " ").replace(/-/g, "‑");
+      const text = document.createElement("textarea");
+      text.innerHTML = this.linenum.branch;
+      const branch = text.value;
+      return branch.split("/").join('/<span class="space"> </span>');
     },
     ply() {
-      return this.game.branches[this.linenum.branch];
+      return this.activePly || this.game.branches[this.linenum.branch];
     },
     branches() {
       return this.ply.branches;
@@ -83,22 +87,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      const ply1 = this.linenum.move.ply1;
-      const ply2 = this.linenum.move.ply2;
-      return (
-        this.showBranch &&
-        this.game.state.targetBranch &&
-        ((ply1 &&
-          ply1.branches &&
-          ply1.branches.length &&
-          ply1.branches[0] !== ply1 &&
-          this.game.state.plyIDs.includes(ply1.id)) ||
-          (ply2 &&
-            ply2.branches &&
-            ply2.branches.length &&
-            ply2.branches[0] !== ply2 &&
-            this.game.state.plyIDs.includes(ply2.id)))
-      );
+      return !this.onlyBranch && this.game.state.plies.includes(this.ply);
     },
   },
   methods: {
@@ -123,31 +112,46 @@ export default {
   vertical-align: middle;
   color: $textDark;
   color: var(--q-color-textDark);
-  body.panelDark:not(.panelMedium) & {
+  body.panelDark & {
     color: $textLight;
     color: var(--q-color-textLight);
   }
   .branch {
-    word-break: break-word;
     font-weight: bold;
     font-size: 0.9em;
     line-height: 1.3em;
     padding: 4px;
     margin: 0;
-    max-width: 270px;
-    border-radius: $generic-border-radius;
     cursor: pointer;
-    background-color: $highlight;
+    border-radius: $generic-border-radius;
+    background-color: $bg;
+    background-color: var(--q-color-bg);
+    color: $textDark;
+    color: var(--q-color-textDark);
+    body.secondaryDark & {
+      color: $textLight;
+      color: var(--q-color-textLight);
+    }
     &.selected {
       background-color: $primary;
       background-color: var(--q-color-primary);
+      color: $textDark !important;
+      color: var(--q-color-textDark) !important;
+      body.primaryDark & {
+        color: $textLight !important;
+        color: var(--q-color-textLight) !important;
+      }
     }
     &.only {
       margin-top: 0.25em;
       margin-bottom: 0.25em;
     }
+    .space {
+      width: 0;
+      display: inline-block;
+    }
     .q-btn {
-      margin: -0.5em -0.25em;
+      margin: -0.5em -0.26em;
     }
 
     + .number {

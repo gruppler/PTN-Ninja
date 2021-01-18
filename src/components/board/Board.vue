@@ -32,7 +32,7 @@
           class="player1 relative-position"
           :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
         >
-          <div class="row absolute-fit no-wrap">
+          <div class="content absolute-fit">
             <div class="name absolute-left q-px-sm">
               {{ player1 }}
             </div>
@@ -46,11 +46,11 @@
           class="player2 relative-position"
           :style="{ width: $store.state.flatCounts ? flatWidths[1] : '50%' }"
         >
-          <div class="row absolute-fit no-wrap">
-            <div class="flats absolute-left q-px-sm">
+          <div class="content absolute-fit row no-wrap">
+            <div class="flats q-px-sm">
               {{ $store.state.flatCounts ? flats[1] : "" }}
             </div>
-            <div class="name absolute-right q-px-sm">
+            <div class="name q-mx-sm relative-position">
               {{ player2 }}
             </div>
           </div>
@@ -86,7 +86,11 @@
           </div>
         </div>
 
-        <div class="unplayed-bg" @click.right.prevent></div>
+        <div
+          class="unplayed-bg"
+          @click.self="dropPiece"
+          @click.right.prevent
+        ></div>
       </div>
 
       <div
@@ -147,16 +151,29 @@ export default {
     flats() {
       return this.game.state.flats;
     },
+    minNameWidth() {
+      return 100 / this.game.size;
+    },
     flatWidths() {
       let total = (this.flats[0] + this.flats[1]) / 100;
       return [
         total
-          ? Math.max(15, Math.min(85, (this.flats[0] / total).toPrecision(4))) +
-            "%"
+          ? Math.max(
+              this.minNameWidth,
+              Math.min(
+                100 - this.minNameWidth,
+                (this.flats[0] / total).toPrecision(4)
+              )
+            ) + "%"
           : "",
         total
-          ? Math.max(15, Math.min(85, (this.flats[1] / total).toPrecision(4))) +
-            "%"
+          ? Math.max(
+              this.minNameWidth,
+              Math.min(
+                100 - this.minNameWidth,
+                (this.flats[1] / total).toPrecision(4)
+              )
+            ) + "%"
           : "",
       ];
     },
@@ -228,6 +245,14 @@ export default {
     },
   },
   methods: {
+    dropPiece() {
+      if (
+        this.game.state.selected.pieces.length === 1 &&
+        !this.game.state.selected.moveset.length
+      ) {
+        this.game.selectUnplayedPiece(this.game.state.selected.pieces[0].type);
+      }
+    },
     isInputFocused() {
       const active = document.activeElement;
       return active && /TEXT|INPUT/.test(active.tagName);
@@ -427,6 +452,7 @@ $radius: 1.2vmin;
 }
 
 .player-names {
+  $fadeWidth: 10px;
   text-align: left;
   height: 2.25em;
   padding-bottom: $turn-indicator-height;
@@ -436,20 +462,28 @@ $radius: 1.2vmin;
     width: 50%;
     will-change: width;
     transition: width $generic-hover-transition;
+    .content {
+      overflow: hidden;
+    }
   }
-  .player1 .row {
+  .player1 .content {
     color: $textDark;
     color: var(--q-color-textDark);
     border-top-left-radius: $radius;
-    overflow: hidden;
     background: $player1;
     background: var(--q-color-player1);
     .flats {
       text-align: right;
-      background: linear-gradient(to left, $player1 1em, $player1clear);
+      background: $player1;
+      background: var(--q-color-player1);
       background: linear-gradient(
         to left,
-        var(--q-color-player1) 1em,
+        $player1 calc(100% - #{$fadeWidth}),
+        $player1clear
+      );
+      background: linear-gradient(
+        to left,
+        var(--q-color-player1) calc(100% - #{$fadeWidth}),
         var(--q-color-player1clear)
       );
     }
@@ -458,18 +492,24 @@ $radius: 1.2vmin;
       color: var(--q-color-textLight);
     }
   }
-  .player2 .row {
+  .player2 .content {
     color: $textDark;
     color: var(--q-color-textDark);
     border-top-right-radius: $radius;
     background: $player2;
     background: var(--q-color-player2);
-    .flats {
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: $fadeWidth;
       text-align: left;
-      background: linear-gradient(to right, $player2 1em, $player2clear);
+      background: linear-gradient(to left, $player2 0, $player2clear);
       background: linear-gradient(
-        to right,
-        var(--q-color-player2) 1em,
+        to left,
+        var(--q-color-player2) 0,
         var(--q-color-player2clear)
       );
     }
@@ -478,14 +518,14 @@ $radius: 1.2vmin;
       color: var(--q-color-textLight);
     }
   }
-  .player1 .name,
-  .player2 .flats {
-    flex-grow: 1;
-  }
   .flats {
-    width: 3em;
+    width: 2em;
+    flex-grow: 1;
     flex-shrink: 0;
     z-index: 1;
+  }
+  .name {
+    flex-shrink: 1;
   }
 }
 
@@ -512,11 +552,15 @@ $radius: 1.2vmin;
 .y-axis {
   color: $textDark;
   color: var(--q-color-textDark);
+  text-shadow: 0 1px 2px $textLight;
+  text-shadow: 0 1px 2px var(--q-color-textLight);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
     color: $textLight;
     color: var(--q-color-textLight);
+    text-shadow: 0 1px 2px $textDark;
+    text-shadow: 0 1px 2px var(--q-color-textDark);
   }
 }
 .x-axis {

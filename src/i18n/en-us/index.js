@@ -65,6 +65,7 @@ export default {
   Help: "Help",
   Hotkeys: "Hotkeys",
   "Highlight Squares": "Highlight Squares",
+  "Image Size": "Image Size",
   Import: "Import",
   "Player Names": "Player Names",
   Key: "Key",
@@ -140,6 +141,7 @@ export default {
   "Switch Player": "Switch Player",
   TPS: "TPS", // Tak Positional System
   Tak: "Tak",
+  "Text Size": "Text Size",
   Theme: "Theme",
   Time: "Time",
   Tinue: "Tinuë",
@@ -254,7 +256,6 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
-    "Unable to copy": "Unable to copy to clipboard",
     "Unable to download": "Unable to download files",
     "Unrecognized tag": "Unrecognized tag",
   },

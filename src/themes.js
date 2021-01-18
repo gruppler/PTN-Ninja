@@ -8,7 +8,7 @@ export const PRIMARY_COLOR_IDS = [
   "player1",
   "player2",
 ];
-export const HIDDEN_COLOR_IDS = ["player1clear", "player2clear"];
+export const HIDDEN_COLOR_IDS = ["bg", "player1clear", "player2clear"];
 
 const LIGHT = 0.6;
 const MED = 0.4;
@@ -47,6 +47,7 @@ export const COMPUTED = {
   secondary: {
     secondaryDark: isDark,
     colors: {
+      bg: (c) => colors.changeAlpha(c, 1),
       panel: (c) =>
         colors.changeAlpha(colors.lighten(c, isDark(c) ? 15 : -15), 0.8),
       board1: (c) => colors.lighten(c, isDark(c) ? 30 : -27),
@@ -65,7 +66,6 @@ export const COMPUTED = {
   },
   panel: {
     panelDark: isDark,
-    panelMedium: isMedium,
   },
   player1: {
     player1Dark: isDark,

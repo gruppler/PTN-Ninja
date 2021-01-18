@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.1.3",
+  "version": "3.1.4",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -17,7 +17,7 @@
     "rules-deploy": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
-    "@quasar/extras": "^1.9.12",
+    "@quasar/extras": "^1.9.13",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@quasar/app": "^2.1.14",
-    "@quasar/quasar-app-extension-qmarkdown": "^1.4.0",
+    "@quasar/quasar-app-extension-qmarkdown": "^1.4.1",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^7.15.0",
