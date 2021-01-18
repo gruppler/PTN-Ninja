@@ -61,6 +61,7 @@ export default {
     noEdit: Boolean,
     noBranch: Boolean,
     onlyBranch: Boolean,
+    activePly: Object,
   },
   data() {
     return {
@@ -77,7 +78,7 @@ export default {
       return branch.split("/").join('/<span class="space"> </span>');
     },
     ply() {
-      return this.game.branches[this.linenum.branch];
+      return this.activePly || this.game.branches[this.linenum.branch];
     },
     branches() {
       return this.ply.branches;
@@ -86,22 +87,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      const ply1 = this.linenum.move.ply1;
-      const ply2 = this.linenum.move.ply2;
-      return (
-        this.showBranch &&
-        this.game.state.targetBranch &&
-        ((ply1 &&
-          ply1.branches &&
-          ply1.branches.length &&
-          ply1.branches[0] !== ply1 &&
-          this.game.state.plyIDs.includes(ply1.id)) ||
-          (ply2 &&
-            ply2.branches &&
-            ply2.branches.length &&
-            ply2.branches[0] !== ply2 &&
-            this.game.state.plyIDs.includes(ply2.id)))
-      );
+      return this.game.state.plies.includes(this.ply);
     },
   },
   methods: {

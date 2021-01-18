@@ -16,12 +16,18 @@
         <q-item-section side>
           <q-badge
             class="option-number text-subtitle2 q-pa-sm"
-            :class="{ selected: game.state.plies.includes(ply) }"
+            :class="{ selected: selected === i }"
             :label="i"
           />
         </q-item-section>
         <q-item-label class="row no-wrap">
-          <Linenum v-if="linenum" :linenum="ply.linenum" :game="game" no-edit />
+          <Linenum
+            v-if="linenum"
+            :linenum="ply.linenum"
+            :game="game"
+            no-edit
+            :active-ply="ply"
+          />
           <Ply :plyID="ply.id" :game="game" no-branches no-click />
         </q-item-label>
       </q-item>
@@ -30,6 +36,8 @@
 </template>
 
 <script>
+import { findLastIndex } from "lodash";
+
 export default {
   name: "BranchMenu",
   components: {
@@ -46,6 +54,16 @@ export default {
     return {
       isClosing: false,
     };
+  },
+  computed: {
+    selected() {
+      const index = findLastIndex(
+        this.branches,
+        (ply) =>
+          this.game.state.plies.includes(ply) && ply.id <= this.game.state.plyID
+      );
+      return index >= 0 ? index : 0;
+    },
   },
   methods: {
     select(ply) {

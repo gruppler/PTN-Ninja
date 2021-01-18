@@ -90,6 +90,7 @@
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
           v-if="$store.state.showControls"
+          ref="branchMenu"
           v-model="branchMenu"
           @select="selectBranch"
           :game="game"
@@ -104,7 +105,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { omit, pick, throttle, zipObject } from "lodash";
+import { flatten, omit, pick, throttle, uniq, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -158,40 +159,12 @@ export default {
       return !!(this.game.state.ply && this.game.state.ply.branches.length > 1);
     },
     branches() {
-      if (this.hasBranches) {
-        // Current ply's branches
-        return this.game.state.ply.branches;
-      } else if (this.game.state.plies) {
-        // Most recent branch
-        let index = this.game.state.ply ? this.game.state.ply.index : 0;
-        let ply = this.game.state.plies
-          .concat()
-          .reverse()
-          .find(
-            (ply) => index > ply.index && Object.keys(ply.branches).length > 1
-          );
-        if (
-          !ply &&
-          this.game.state.targetBranch &&
-          this.game.state.targetBranch in this.game.branches
-        ) {
-          // Selected branch siblings
-          ply = this.game.branches[this.game.state.targetBranch];
-        }
-        return ply
-          ? ply.branches
-          : this.game
-              .getBranchesSorted()
-              .map((branch) => this.game.branches[branch]);
-      }
-      return [];
+      return uniq(
+        flatten(Object.values(this.game.branches).map((ply) => ply.branches))
+      );
     },
     branchIndex() {
-      return this.branches.length
-        ? this.branches.findIndex((branch) =>
-            this.game.state.plies.includes(branch)
-          )
-        : -1;
+      return this.$refs.branchMenu.selected;
     },
     options() {
       return zipObject(
@@ -270,6 +243,7 @@ export default {
     },
     selectBranch(ply) {
       this.game.setTarget(ply);
+      this.game.goToPly(ply.id, true);
     },
     branchKey({ srcKey }) {
       switch (srcKey) {
@@ -294,12 +268,12 @@ export default {
     },
     prevBranch() {
       if (this.branches.length && this.branchIndex > 0) {
-        this.game.setTarget(this.branches[this.branchIndex - 1]);
+        this.selectBranch(this.branches[this.branchIndex - 1]);
       }
     },
     nextBranch() {
       if (this.branches.length && this.branchIndex < this.branches.length - 1) {
-        this.game.setTarget(this.branches[this.branchIndex + 1]);
+        this.selectBranch(this.branches[this.branchIndex + 1]);
       }
     },
     prevBranchEnd() {
@@ -312,12 +286,12 @@ export default {
     },
     firstBranch() {
       if (this.branches.length) {
-        this.game.setTarget(this.branches[0]);
+        this.selectBranch(this.branches[0]);
       }
     },
     lastBranch() {
       if (this.branches.length) {
-        this.game.setTarget(this.branches[this.branches.length - 1]);
+        this.selectBranch(this.branches[this.branches.length - 1]);
       }
     },
     firstBranchEnd() {
