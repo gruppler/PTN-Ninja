@@ -87,7 +87,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return !this.onlyBranch && this.game.state.plies.includes(this.ply);
+      return this.game.state.plies.includes(this.ply);
     },
   },
   methods: {
