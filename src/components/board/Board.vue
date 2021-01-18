@@ -246,7 +246,12 @@ export default {
   },
   methods: {
     dropPiece() {
-      this.game.selectUnplayedPiece();
+      if (
+        this.game.state.selected.pieces.length === 1 &&
+        !this.game.state.selected.moveset.length
+      ) {
+        this.game.selectUnplayedPiece(this.game.state.selected.pieces[0].type);
+      }
     },
     isInputFocused() {
       const active = document.activeElement;

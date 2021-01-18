@@ -87,7 +87,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return this.game.state.plies.includes(this.ply);
+      return !this.onlyBranch && this.game.state.plies.includes(this.ply);
     },
   },
   methods: {
@@ -151,7 +151,7 @@ export default {
       display: inline-block;
     }
     .q-btn {
-      margin: -0.5em -0.25em;
+      margin: -0.5em -0.26em;
     }
 
     + .number {

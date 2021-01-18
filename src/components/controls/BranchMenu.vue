@@ -10,6 +10,7 @@
       <q-item
         v-for="(ply, i) in branches"
         :key="i"
+        ref="items"
         @click="select(ply)"
         clickable
       >
@@ -70,8 +71,19 @@ export default {
       this.isClosing = true;
       this.$emit("select", ply);
     },
+    scroll() {
+      if (this.$refs.items) {
+        const item = this.$refs.items[this.selected];
+        if (item) {
+          item.$el.scrollIntoView({ block: "nearest" });
+        }
+      }
+    },
   },
   watch: {
+    selected(index) {
+      this.scroll();
+    },
     branches() {
       if (!this.isClosing) {
         this.$nextTick(this.$refs.menu.updatePosition);
@@ -80,6 +92,7 @@ export default {
     value(isVisible) {
       if (isVisible) {
         this.isClosing = false;
+        this.$nextTick(this.scroll);
       }
     },
   },

@@ -92,12 +92,6 @@ export default class GameIX {
     if (this.state.isGameEnd) {
       return false;
     }
-    if (!type) {
-      if (!this.state.selected.moveset.length) {
-        this.state.deselectPiece();
-      }
-      return;
-    }
     if (this.state.isFirstMove) {
       type = "flat";
     }
