@@ -313,8 +313,8 @@ export default {
       opacity: 0;
       position: absolute;
       will-change: opacity, top, bottom, left, right;
-      transition: opacity $one-third-time $easing-reverse,
-        background-color $half-time $easing;
+      transition: opacity $half-time $easing-reverse,
+        background-color $half-time $easing-reverse;
       &.center {
         top: 35%;
         bottom: 35%;
@@ -355,8 +355,8 @@ export default {
   &.s .road .s,
   &.w .road .w {
     opacity: 0.2;
-    transition: opacity $one-third-time $easing $two-thirds-time,
-      background-color $half-time $easing;
+    transition: opacity $half-time $easing $half-time,
+      background-color $half-time $easing $half-time;
   }
   &.road .road .center,
   &.rn .road .n,
