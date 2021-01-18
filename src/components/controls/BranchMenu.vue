@@ -73,23 +73,21 @@ export default {
   .option-number {
     line-height: 1em;
     border-radius: $generic-border-radius;
+    background-color: $bg;
+    background-color: var(--q-color-bg);
     color: $textDark;
     color: var(--q-color-textDark);
-    background-color: $dim;
-    body.panelDark & {
-      background-color: $highlight;
-    }
-    body.panelDark:not(.panelMedium) & {
+    body.secondaryDark & {
       color: $textLight;
       color: var(--q-color-textLight);
     }
     &.selected {
-      background-color: $primary;
-      background-color: var(--q-color-primary);
-      color: var(--q-color-textDark);
+      background-color: $primary !important;
+      background-color: var(--q-color-primary) !important;
+      color: var(--q-color-textDark) !important;
       body.primaryDark & {
-        color: $textLight;
-        color: var(--q-color-textLight);
+        color: $textLight !important;
+        color: var(--q-color-textLight) !important;
       }
     }
   }

@@ -66,7 +66,6 @@ export const COMPUTED = {
   },
   panel: {
     panelDark: isDark,
-    panelMedium: isMedium,
   },
   player1: {
     player1Dark: isDark,

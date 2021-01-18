@@ -126,7 +126,7 @@ export default {
   vertical-align: middle;
   color: $textDark;
   color: var(--q-color-textDark);
-  body.panelDark:not(.panelMedium) & {
+  body.panelDark & {
     color: $textLight;
     color: var(--q-color-textLight);
   }
@@ -136,12 +136,25 @@ export default {
     line-height: 1.3em;
     padding: 4px;
     margin: 0;
-    border-radius: $generic-border-radius;
     cursor: pointer;
-    background-color: $highlight;
+    border-radius: $generic-border-radius;
+    background-color: $bg;
+    background-color: var(--q-color-bg);
+    color: $textDark;
+    color: var(--q-color-textDark);
+    body.secondaryDark & {
+      color: $textLight;
+      color: var(--q-color-textLight);
+    }
     &.selected {
       background-color: $primary;
       background-color: var(--q-color-primary);
+      color: $textDark !important;
+      color: var(--q-color-textDark) !important;
+      body.primaryDark & {
+        color: $textLight !important;
+        color: var(--q-color-textLight) !important;
+      }
     }
     &.only {
       margin-top: 0.25em;
