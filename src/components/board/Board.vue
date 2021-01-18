@@ -86,7 +86,11 @@
           </div>
         </div>
 
-        <div class="unplayed-bg" @click.right.prevent></div>
+        <div
+          class="unplayed-bg"
+          @click.self="dropPiece"
+          @click.right.prevent
+        ></div>
       </div>
 
       <div
@@ -241,6 +245,9 @@ export default {
     },
   },
   methods: {
+    dropPiece() {
+      this.game.selectUnplayedPiece();
+    },
     isInputFocused() {
       const active = document.activeElement;
       return active && /TEXT|INPUT/.test(active.tagName);
