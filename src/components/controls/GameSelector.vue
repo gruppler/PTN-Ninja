@@ -156,7 +156,7 @@ export default {
         this.isEditingTPS = false;
       };
       if (index >= 0 && this.games.length > index) {
-        if (this.isEditingTPS && this.editingTPS !== main.game.state.tps) {
+        if (this.isEditingTPS && this.editingTPS !== this.game.state.tps) {
           this.$store.dispatch("PROMPT", {
             title: this.$t("Confirm"),
             message: this.$t("confirm.abandonChanges"),
