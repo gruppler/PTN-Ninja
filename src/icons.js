@@ -27,6 +27,7 @@ export default {
   download: "mdi-download",
   email: "mdi-email",
   embed: "mdi-code-tags",
+  error: "mdi-alert-circle",
   file: "mdi-file",
   file_image: "mdi-file-image",
   first: "mdi-page-first",
