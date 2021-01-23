@@ -526,6 +526,7 @@ $radius: 1.2vmin;
   }
   .name {
     flex-shrink: 1;
+    transform: translateZ(0);
   }
 }
 
