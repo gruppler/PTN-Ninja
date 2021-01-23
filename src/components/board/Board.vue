@@ -397,7 +397,7 @@ export default {
 <style lang="scss">
 $turn-indicator-height: 0.5em;
 $axis-size: 1.5em;
-$radius: 1.2vmin;
+$radius: 0.35em;
 
 .board-wrapper {
   &.board-3D {

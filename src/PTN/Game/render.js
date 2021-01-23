@@ -92,6 +92,7 @@ export default function render(game, options = {}) {
 
   const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
 
+  const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * game.size;
   const unplayedWidth = options.unplayedPieces
@@ -135,7 +136,7 @@ export default function render(game, options = {}) {
       padding,
       flats1Width,
       flatCounterHeight,
-      { tl: boardRadius }
+      { tl: counterRadius }
     );
     ctx.fill();
     ctx.fillStyle = theme.colors.player2;
@@ -145,7 +146,7 @@ export default function render(game, options = {}) {
       padding,
       flats2Width,
       flatCounterHeight,
-      { tr: boardRadius }
+      { tr: counterRadius }
     );
     ctx.fill();
 
