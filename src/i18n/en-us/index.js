@@ -178,6 +178,7 @@ export default {
     festive: "Festive",
     fresh: "Fresh",
     neon: "Neon",
+    print: "Print",
     retro: "Retro",
     stealth: "Stealth",
     zen: "Zen",
