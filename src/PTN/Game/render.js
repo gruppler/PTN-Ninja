@@ -2,12 +2,12 @@ import { cloneDeep, isString } from "lodash";
 import { itoa } from "../Ply";
 import { THEMES, computeMissing } from "../../themes";
 
-const squareSizes = {
-  xs: 25,
-  sm: 50,
-  md: 100,
-  lg: 200,
-  xl: 400,
+const pieceSizes = {
+  xs: 12,
+  sm: 24,
+  md: 48,
+  lg: 96,
+  xl: 192,
 };
 
 const textSizes = {
@@ -59,12 +59,10 @@ export default function render(game, options = {}) {
   }
 
   // Dimensions
-  const squareSize = Math.round(
-    (squareSizes[options.imageSize] * 5) / game.size
-  );
+  const pieceSize = Math.round((pieceSizes[options.imageSize] * 5) / game.size);
+  const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
-  const pieceSize = Math.round(squareSize * 0.5);
   const pieceSpacing = Math.round(squareSize * 0.07);
   const immovableSize = Math.round(squareSize * 0.15);
   const wallSize = Math.round(squareSize * 0.1875);
