@@ -481,8 +481,39 @@ export default {
     getGame() {
       let game;
       this.errors = [];
-      try {
-        if (this.ptn) {
+
+      const _handleError = (error) => {
+        const name = game ? game.name : "";
+        game = this.newGame();
+        if (name) {
+          game.name = name;
+        }
+        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
+          this.errors.push(this.$t(`error["${error.message}"]`));
+        } else {
+          console.error(error);
+        }
+      };
+
+      const _loadPrevious = () => {
+        if (this.$store.state.games && this.$store.state.games.length) {
+          try {
+            game = this.$store.state.games[0];
+            game = new Game(game.ptn, game);
+            if (
+              this.$store.state.isEditingTPS &&
+              this.$store.state.editingTPS
+            ) {
+              game.doTPS(this.$store.state.editingTPS);
+            }
+          } catch (error) {
+            _handleError(error);
+          }
+        }
+      };
+
+      if (this.ptn) {
+        try {
           // Add game from URL
           let name = this.name;
           if (!this.name) {
@@ -540,24 +571,12 @@ export default {
             }
             this.$router.replace("/");
           }
-        } else if (this.$store.state.games && this.$store.state.games.length) {
-          game = this.$store.state.games[0];
-          game = new Game(game.ptn, game);
-          if (this.$store.state.isEditingTPS && this.$store.state.editingTPS) {
-            game.doTPS(this.$store.state.editingTPS);
-          }
+        } catch (error) {
+          _handleError(error);
+          _loadPrevious();
         }
-      } catch (error) {
-        const name = game ? game.name : "";
-        game = this.newGame();
-        if (name) {
-          game.name = name;
-        }
-        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
-          this.errors.push(this.$t(`error["${error.message}"]`));
-        } else {
-          console.error(error);
-        }
+      } else {
+        _loadPrevious();
       }
       if (!game) {
         game = this.newGame();

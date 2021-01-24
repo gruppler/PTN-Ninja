@@ -458,6 +458,10 @@ export default class GameState {
         }
       });
     });
+    const komi = this.game.tag("komi");
+    if (komi) {
+      flats[1] += komi;
+    }
     return flats;
   }
 }

@@ -109,9 +109,11 @@ export const NOTIFY = ({ state }, options) => {
 export const NOTIFY_ERROR = (context, error) => {
   Notify.create({
     message: formatError(error),
-    type: "negative",
+    color: "negative",
+    icon: "error",
     timeout: 0,
     position: "top-right",
+    classes: "text-textLight",
     actions: [{ icon: "close", color: "textLight" }],
   });
 };

@@ -1,6 +1,6 @@
 export default class Result {
   constructor(notation) {
-    const matchData = notation.match(/(1\/2|[01RF])-(1\/2|[01RF])/);
+    const matchData = notation.match(/(1\/2|[01RF])\s*-\s*(1\/2|[01RF])/);
 
     if (!matchData || !Result.validate(notation)) {
       throw new Error("Invalid result");
@@ -23,11 +23,13 @@ export default class Result {
   }
 
   static test(notation) {
-    return /^\s*([01RF]|1\/2)-([01RF]|1\/2)/.test(notation);
+    return /^\s*([01RF]|1\/2)\s*-\s*([01RF]|1\/2)/.test(notation);
   }
 
   static validate(notation) {
-    return /^\s*(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2)/.test(notation);
+    return /^R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2/.test(
+      notation.replace(/\s/g, "")
+    );
   }
 
   static parse(notation) {

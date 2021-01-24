@@ -231,7 +231,7 @@ export default {
           message.offsetTop -
             this.$refs.scroll.$el.offsetHeight +
             message.offsetHeight,
-          animate && this.isShowing ? 200 : 0
+          animate && this.isShowing ? 300 : 0
         );
       }
     },

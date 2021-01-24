@@ -48,7 +48,11 @@
         >
           <div class="content absolute-fit row no-wrap">
             <div class="flats q-px-sm">
-              {{ $store.state.flatCounts ? flats[1] : "" }}
+              {{
+                $store.state.flatCounts
+                  ? flats[1].toString().replace(".5", " ½")
+                  : ""
+              }}
             </div>
             <div class="name q-mx-sm relative-position">
               {{ player2 }}
@@ -111,6 +115,8 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
+import { throttle } from "lodash";
+
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -131,6 +137,7 @@ export default {
       y: 0,
       prevBoardRotation: null,
       boardRotation: this.$store.state.boardRotation,
+      zoomFitTimer: null,
     };
   },
   computed: {
@@ -141,6 +148,9 @@ export default {
       return this.$store.state.isEditingTPS
         ? this.$store.state.selectedPiece.color
         : this.game.state.turn;
+    },
+    boardPly() {
+      return this.game.state.boardPly;
     },
     player1() {
       return this.game.tag("player1");
@@ -267,7 +277,7 @@ export default {
       if (this.board3D) {
         this.boardRotation = this.$store.state.defaults.boardRotation;
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
-        this.zoomFit();
+        this.zoomFitAfterTransition();
       }
     },
     rotateBoard(event) {
@@ -344,7 +354,7 @@ export default {
         });
       }
       this.squares.forEach((square) => {
-        if (square.pieces.length > 1) {
+        if (square.piece) {
           nodes.push(this.$refs[square.piece.id][0].$el);
         }
       });
@@ -368,6 +378,45 @@ export default {
       scale *= this.scale;
       this.scale = scale;
     },
+    zoomFitNextTick() {
+      if (this.board3D) {
+        this.$nextTick(this.zoomFit);
+      }
+    },
+    zoomFitAfterDelay() {
+      if (this.board3D) {
+        if (this.zoomFitTimer) {
+          clearTimeout(this.zoomFitTimer);
+        }
+        this.zoomFitTimer = setTimeout(() => {
+          this.zoomFitNextTick();
+          this.zoomFitTimer = null;
+        }, 300);
+      }
+    },
+    zoomFitAfterTransition() {
+      if (this.board3D) {
+        if (this.$store.state.animateBoard) {
+          if (this.zoomFitTimer) {
+            clearTimeout(this.zoomFitTimer);
+          }
+          this.zoomFitTimer = setTimeout(() => {
+            if (this.$refs.container) {
+              this.$refs.container.ontransitionend = () => {
+                this.zoomFitNextTick();
+                this.$refs.container.ontransitionend = null;
+              };
+            }
+            this.zoomFitTimer = null;
+          }, 300);
+        } else {
+          this.zoomFitNextTick();
+        }
+      }
+    },
+  },
+  created() {
+    this.zoomFit = throttle(this.zoomFit, 10);
   },
   watch: {
     isPortrait(isPortrait) {
@@ -375,21 +424,10 @@ export default {
         this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
       }
     },
-    maxWidth() {
-      if (this.board3D) {
-        this.$nextTick(this.zoomFit);
-      }
-    },
-    boardRotation() {
-      if (this.board3D) {
-        this.$nextTick(this.zoomFit);
-      }
-    },
-    board3D(board3D) {
-      if (board3D) {
-        this.$nextTick(this.zoomFit);
-      }
-    },
+    boardPly: "zoomFitAfterTransition",
+    size: "zoomFitAfterDelay",
+    boardRotation: "zoomFitNextTick",
+    board3D: "zoomFitAfterTransition",
   },
 };
 </script>
@@ -397,7 +435,7 @@ export default {
 <style lang="scss">
 $turn-indicator-height: 0.5em;
 $axis-size: 1.5em;
-$radius: 1.2vmin;
+$radius: 0.35em;
 
 .board-wrapper {
   &.board-3D {
@@ -420,8 +458,13 @@ $radius: 1.2vmin;
   will-change: width, font-size;
   text-align: center;
   z-index: 0;
+  transition: transform $generic-hover-transition;
 
+  body.non-selectable & {
+    transition: none !important;
+  }
   &.no-animations {
+    &,
     .piece,
     .stone,
     .road > div,
@@ -519,6 +562,7 @@ $radius: 1.2vmin;
     }
   }
   .flats {
+    white-space: nowrap;
     width: 2em;
     flex-grow: 1;
     flex-shrink: 0;
@@ -526,6 +570,7 @@ $radius: 1.2vmin;
   }
   .name {
     flex-shrink: 1;
+    transform: translateZ(0);
   }
 }
 

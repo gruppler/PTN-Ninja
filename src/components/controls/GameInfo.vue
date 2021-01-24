@@ -281,6 +281,24 @@
       <q-btn @click="swapPlayers" icon="swap_vert" stretch dense flat />
     </div>
 
+    <q-input
+      class="col-grow"
+      v-show="isVisible('komi')"
+      v-model="tags.komi"
+      name="komi"
+      type="number"
+      min="0"
+      step="0.5"
+      :label="$t('Komi')"
+      :rules="rules('komi')"
+      hide-bottom-space
+      filled
+    >
+      <template v-slot:prepend>
+        <q-icon name="komi" />
+      </template>
+    </q-input>
+
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
       <q-input
         class="col-grow"
@@ -549,6 +567,7 @@ export default {
         clock: null,
         date: null,
         event: null,
+        komi: null,
         player1: null,
         player2: null,
         points: null,
