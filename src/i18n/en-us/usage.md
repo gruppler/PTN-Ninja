@@ -16,18 +16,18 @@ You can automatically close or download multiple games by **clicking** the game 
 You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
 
 :::
-- To create a new game, **click** the **+** button in the main menu to open the New Game dialog.
-- To load an existing game, **click** the **+** button in the main menu, then select the Load Game tab.
+- To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, to open the New Game dialog.
+- To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
 - **Swipe left** or **right-click** the Floating Action Button to switch to the previous game.
 :::
 
-When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by means of an incrementing number at the end). If you prefer to instead replace the open game, this option ("Replace") can be found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
+When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number). If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
 
 ### Playback
 
-PTN Ninja enables you to navigate the timeline of a game freely by these means:
+PTN Ninja enables you to navigate the timeline of a game freely.
 
 :::
 - Use the Play/Pause button to automatically progress through the game.
@@ -68,7 +68,7 @@ Branches
 PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
 :::
-- Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the contextual branch menu.
+- Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
 - Use <kbd>▲/▼</kbd> <span>or</span> <kbd>0-9</kbd> to navigate between branches.
 - **Right-click** a branch title to **rename** or **delete** it.
 :::
@@ -82,7 +82,7 @@ PTN
 - To toggle display of the full PTN, use the leftmost button in the header toolbar, or press <kbd>Q</kbd>.
 - **Click** an unselected ply to navigate to it.
 - **Click** a selected ply to do or undo it.
-- **Right-click** an unselected ply to navigate to it, toggling the done/undone state.
+- **Right-click** a ply to navigate to it but leave it undone.
 :::
 
 ### Trimming
@@ -111,17 +111,17 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 TPS Mode
 ---
 
-TPS Mode enables you to create any board state directly. Enter TPS Mode by **clicking** the Edit button in the TPS field of the Edit Game dialog. TPS edit mode is available only for games with no plies.
+TPS Mode enables you to create any board state directly. To enter TPS Mode, **click** the Edit icon in the TPS field of the New Game or Edit Game dialogs. TPS edit mode is available only for games with no plies.
 
 :::
-- Select a piece type and color from the piece selector, then **click** a square to place a piece.
+- Select a piece type and color from the piece selector or unplayed pieces, then **click** a square to place a piece.
 - **Right-click** a square to remove a piece. The color and type of that piece will be selected.
 :::
 
 3D Mode
 ---
 
-3D mode may not work in all browsers, so it's disabled by default. You can toggle it by **clicking** the 3D button in the corner of the board area.
+3D mode may not work in all browsers, so it's disabled by default. You can toggle it by **clicking** the "3D" button in the corner of the board area.
 
 :::
 - Rotate the board by dragging it.
