@@ -40,6 +40,7 @@ export default {
   info: "mdi-information",
   json: "mdi-code-json",
   keyboard: "mdi-keyboard-variant",
+  komi: "mdi-scale-balance",
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",
   menu_horizontal: "mdi-dots-horizontal",

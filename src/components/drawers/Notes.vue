@@ -234,7 +234,7 @@ export default {
           message.offsetTop -
             this.$refs.scroll.$el.offsetHeight +
             message.offsetHeight,
-          animate && this.isShowing ? 200 : 0
+          animate && this.isShowing ? 300 : 0
         );
       }
     },
@@ -256,7 +256,7 @@ export default {
 <style lang="scss">
 .notes {
   .content {
-    padding-top: calc(100vh - #{$toolbar-min-height * 2});
+    padding-top: calc(100vh - #{$toolbar-min-height + $footer-toolbar-height});
   }
   .q-separator {
     opacity: 0.75;

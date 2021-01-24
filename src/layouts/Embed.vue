@@ -12,7 +12,6 @@
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <ShareButton ref="shareButton" flat stretch no-menu />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
@@ -26,7 +25,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-secondary"
+      class="bg-bg"
       v-shortkey="hotkeys.UI"
       @shortkey="uiShortkey"
     >
@@ -41,7 +40,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" />
-          <smooth-reflow
+          <div
             @click.right.self.prevent="$refs.board.resetBoardRotation"
             class="board-move-container"
           >
@@ -55,7 +54,7 @@
               current-only
               standalone
             />
-          </smooth-reflow>
+          </div>
         </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles />
@@ -72,7 +71,9 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools" />
+        <PTNTools ref="tools" :game="game">
+          <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
+        </PTNTools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
         </div>
@@ -109,7 +110,7 @@
     </q-drawer>
 
     <q-footer>
-      <Scrubber v-if="$store.state.ui.showScrubber" />
+      <Scrubber />
       <q-toolbar v-show="$store.state.ui.showControls" class="q-pa-sm bg-ui">
         <PlayControls />
       </q-toolbar>
@@ -257,7 +258,6 @@ export default {
     },
   },
   beforeCreate() {
-    // Redirect hash URLs
     if (location.hash.length) {
       const url = location.hash.substr(1);
       location.hash = "";
@@ -274,6 +274,9 @@ export default {
     this.getGame();
   },
   watch: {
+    ptn() {
+      this.game = this.getGame();
+    },
     state: {
       handler(state, oldState) {
         let fullState = {};

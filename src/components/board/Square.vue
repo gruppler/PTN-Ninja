@@ -82,13 +82,18 @@ export default {
       );
     },
     primary() {
-      if (!this.current) {
-        return false;
+      if (this.selected) {
+        return (
+          this.game.state.selected.squares.length > 1 &&
+          this.game.state.selected.squares[0] === this.square
+        );
+      } else if (this.current) {
+        const isDestination =
+          this.game.state.ply.squares.length === 1 ||
+          this.game.state.ply.squares[0] !== this.square.static.coord;
+        return this.game.state.plyIsDone ? isDestination : !isDestination;
       }
-      const isDestination =
-        this.game.state.ply.squares.length === 1 ||
-        this.game.state.ply.squares[0] !== this.square.static.coord;
-      return this.game.state.plyIsDone ? isDestination : !isDestination;
+      return false;
     },
     selected() {
       return this.square.isSelected;
@@ -103,9 +108,6 @@ export default {
     },
     valid() {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
-    },
-    showRoads() {
-      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     n() {
       return this.square.connected.N;
@@ -216,21 +218,21 @@ export default {
   .board-container.grid1 & {
     &:before,
     .hl {
-      margin: 1px;
+      margin: 1%;
     }
   }
   .board-container.grid2 & {
     &:before,
     .hl {
       border-radius: 5%;
-      margin: 3px;
+      margin: 3%;
     }
   }
   .board-container.grid3 & {
     &:before,
     .hl {
       border-radius: 15%;
-      margin: 6px;
+      margin: 6%;
     }
   }
   body.boardChecker .board-container.blank & {
@@ -288,6 +290,9 @@ export default {
   &.selected .hl.player {
     opacity: 0.5;
   }
+  &.selected.primary .hl.player {
+    opacity: 0.25;
+  }
   &.no-roads.road .hl.player {
     opacity: 0.25;
   }
@@ -311,8 +316,8 @@ export default {
       opacity: 0;
       position: absolute;
       will-change: opacity, top, bottom, left, right;
-      transition: opacity $one-third-time $easing-reverse,
-        background-color $half-time $easing;
+      transition: opacity $half-time $easing-reverse,
+        background-color $half-time $easing-reverse;
       &.center {
         top: 35%;
         bottom: 35%;
@@ -353,8 +358,8 @@ export default {
   &.s .road .s,
   &.w .road .w {
     opacity: 0.2;
-    transition: opacity $one-third-time $easing $two-thirds-time,
-      background-color $half-time $easing;
+    transition: opacity $half-time $easing $half-time,
+      background-color $half-time $easing $half-time;
   }
   &.road .road .center,
   &.rn .road .n,

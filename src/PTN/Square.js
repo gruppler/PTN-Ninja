@@ -1,5 +1,7 @@
 import { itoa } from "./Ply";
 
+import { isBoolean } from "lodash";
+
 const OPPOSITE = {
   N: "S",
   S: "N",
@@ -197,7 +199,7 @@ export class Sides {
   set(side, value) {
     if (this._index[side] !== value) {
       if (value) {
-        this.push(typeof value === "boolean" ? side : value);
+        this.push(isBoolean(value) ? side : value);
         this._index[side] = value;
         this.length = this._array.length;
         if (this.onEnable) {
@@ -205,7 +207,7 @@ export class Sides {
         }
       } else {
         this.splice(
-          this.indexOf(typeof value === "boolean" ? side : this._index[side]),
+          this.indexOf(isBoolean(value) ? side : this._index[side]),
           1
         );
         this._index[side] = value;

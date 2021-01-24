@@ -33,7 +33,7 @@
     </q-header>
 
     <q-page-container
-      class="bg-secondary"
+      class="bg-bg"
       v-shortkey="hotkeys.UI"
       @shortkey="
         if (!disabledOptions.includes($event.srcKey))
@@ -156,7 +156,7 @@
     </q-drawer>
 
     <q-footer class="bg-ui">
-      <Scrubber v-if="$store.state.ui.showScrubber" />
+      <Scrubber />
       <q-toolbar
         v-show="isEditingTPS || $store.state.ui.showControls"
         class="footer-toolbar q-pa-sm"
@@ -406,14 +406,52 @@ export default {
     getGame() {
       let game;
       this.errors = [];
-      try {
-        if (this.ptn) {
+
+      const _handleError = (error) => {
+        const name = game ? game.name : "";
+        game = this.newGame();
+        if (name) {
+          game.name = name;
+        }
+        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
+          this.errors.push(this.$t(`error["${error.message}"]`));
+        } else {
+          console.error(error);
+        }
+      };
+
+      const _loadPrevious = () => {
+        if (this.$store.state.game.list && this.$store.state.game.list.length) {
+          try {
+            game = this.$store.state.game.list[0];
+            game = new Game(game.ptn, game);
+            if (
+              this.$store.state.isEditingTPS &&
+              this.$store.state.editingTPS
+            ) {
+              game.doTPS(this.$store.state.editingTPS);
+            }
+          } catch (error) {
+            _handleError(error);
+          }
+        }
+      };
+
+      if (this.ptn) {
+        try {
           // Add game from URL
+          let name = this.name;
+          if (!this.name) {
+            game = new Game(this.ptn, { state: this.state });
+            name = game.name;
+          }
           const index = this.$store.state.game.list.findIndex(
-            (g) => g.name === this.name
+            (g) => g.name === name
           );
           if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
-            game = new Game(this.ptn, { name: this.name, state: this.state });
+            if (!game) {
+              game = new Game(this.ptn, { name, state: this.state });
+            }
             if (game) {
               this.$store.dispatch("game/ADD_GAME", {
                 ptn: this.ptn,
@@ -465,30 +503,12 @@ export default {
             }
             this.$router.replace("/");
           }
-        } else if (
-          this.$store.state.game.list &&
-          this.$store.state.game.list.length
-        ) {
-          game = this.$store.state.game.list[0];
-          game = new Game(game.ptn, game);
-
-          if (game.config.isOnline) {
-            if (this.user && !game.player(this.user.uid) && game.openPlayer) {
-              this.$router.push({ name: "join" });
-            }
-          }
+        } catch (error) {
+          _handleError(error);
+          _loadPrevious();
         }
-      } catch (error) {
-        const name = game ? game.name : "";
-        game = this.newGame();
-        if (name) {
-          game.name = name;
-        }
-        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
-          this.errors.push(this.$t(`error["${error.message}"]`));
-        } else {
-          console.error(error);
-        }
+      } else {
+        _loadPrevious();
       }
       if (!game) {
         game = this.newGame();

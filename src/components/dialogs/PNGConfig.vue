@@ -1,6 +1,7 @@
 <template>
   <large-dialog
-    :value="true"
+    :value="value"
+    @input="$emit('input', $event)"
     no-backdrop-dismiss
     :min-height="588"
     v-bind="$attrs"
@@ -22,14 +23,20 @@
     </smooth-reflow>
 
     <q-list>
-      <ThemeSelector v-model="config.themeID" item-aligned edit-button filled />
+      <ThemeSelector
+        v-model="config.themeID"
+        :game="game"
+        item-aligned
+        edit-button
+        filled
+      />
 
       <q-item>
         <q-item-section>
           <q-item-label>
             <span class="float-right" v-html="dimensions" />
             <span class="float-right q-mr-md" v-html="fileSize" />
-            {{ $t("Size") }}
+            {{ $t("Image Size") }}
           </q-item-label>
           <q-slider
             v-model="imageSize"
@@ -164,8 +171,8 @@
 </template>
 
 <script>
-import ThemeSelector from "../components/controls/ThemeSelector";
-import { pngUIOptions } from "../store/ui/state";
+import ThemeSelector from "../controls/ThemeSelector";
+import { pngUIOptions } from "../../store/ui/state";
 
 import { cloneDeep } from "lodash";
 
@@ -175,42 +182,23 @@ const { humanStorageSize } = format;
 export default {
   name: "PNGConfig",
   components: { ThemeSelector },
+  props: ["value", "game"],
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
-      config: cloneDeep(this.$store.state.ui.pngConfig),
+      config: cloneDeep(this.$store.state.pngConfig),
       preview: "",
       dimensions: "",
       file: null,
       fileSize: 0,
-      imageSize: sizes.indexOf(this.$store.state.ui.pngConfig.imageSize),
-      textSize: sizes.indexOf(this.$store.state.ui.pngConfig.textSize),
+      imageSize: sizes.indexOf(this.$store.state.pngConfig.imageSize),
+      textSize: sizes.indexOf(this.$store.state.pngConfig.textSize),
       sizes,
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     url() {
-      return this.$store.getters["ui/png_url"](this.game);
-    },
-    theme: {
-      get() {
-        return isString(this.config.theme)
-          ? this.config.theme
-          : this.config.theme.id;
-      },
-      set(id) {
-        const theme = this.$store.getters["ui/theme"](id);
-        if (theme) {
-          if (!theme.isBuiltIn) {
-            this.config.theme = theme;
-          } else {
-            this.config.theme = id;
-          }
-        }
-      },
+      return this.$store.getters.png_url(this.game);
     },
     tps() {
       return this.game.state.tps;
@@ -221,13 +209,13 @@ export default {
   },
   methods: {
     updateConfig() {
-      this.config = cloneDeep(this.$store.state.ui.pngConfig);
+      this.config = cloneDeep(this.$store.state.pngConfig);
     },
     updatePreview() {
       const config = cloneDeep(this.config);
-      this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      this.config.theme = this.$store.getters.theme(this.config.themeID);
       let canvas = this.game.render(config);
-      const filename = this.game.pngFilename;
+      const filename = this.$store.getters.png_filename(this.game);
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
@@ -242,18 +230,18 @@ export default {
         img.naturalWidth + " &times; " + img.naturalHeight + " px";
     },
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.$store.dispatch("PROMPT", {
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetPNG"),
         success: () => {
-          const config = cloneDeep(this.$store.state.ui.defaults.pngConfig);
+          const config = cloneDeep(this.$store.state.defaults.pngConfig);
           Object.keys(config).forEach((key) => {
             if (pngUIOptions.includes(key)) {
-              config[key] = this.$store.state.ui[key];
+              config[key] = this.$store.state[key];
             }
           });
-          config.themeID = this.$store.state.ui.themeID;
-          config.theme = this.$store.state.ui.theme;
+          config.themeID = this.$store.state.themeID;
+          config.theme = this.$store.state.theme;
           this.config = config;
           this.imageSize = this.sizes.indexOf(config.imageSize);
           this.textSize = this.sizes.indexOf(config.textSize);
@@ -261,16 +249,16 @@ export default {
       });
     },
     download() {
-      this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
+      this.$store.dispatch("DOWNLOAD_FILES", this.file);
     },
     share() {
-      this.$store.dispatch("ui/COPY", {
+      this.$store.dispatch("COPY", {
         title: this.$t("Share PNG"),
         url: this.url,
       });
     },
     close() {
-      this.$router.back();
+      this.$emit("input", false);
     },
   },
   watch: {
@@ -281,7 +269,7 @@ export default {
     },
     config: {
       handler(config) {
-        this.$store.dispatch("ui/SET_UI", ["pngConfig", cloneDeep(config)]);
+        this.$store.dispatch("SET_UI", ["pngConfig", cloneDeep(config)]);
         this.updatePreview();
       },
       deep: true,
@@ -292,8 +280,13 @@ export default {
     textSize(i) {
       this.config.textSize = this.sizes[i];
     },
+    value(show) {
+      if (show) {
+        this.updatePreview();
+      }
+    },
   },
-  mounted() {
+  created() {
     this.updatePreview();
   },
 };

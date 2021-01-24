@@ -40,12 +40,22 @@ const PNG_URL = process.env.DEV
 export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.state.tps];
 
+  // Sizes
+  if (state.pngConfig.imageSize !== "md") {
+    params.push("imageSize=" + state.pngConfig.imageSize);
+  }
+  if (state.pngConfig.textSize !== "md") {
+    params.push("textSize=" + state.pngConfig.textSize);
+  }
+
   // UI toggles
   [
     "axisLabels",
     "flatCounts",
+    "padding",
     "pieceShadows",
     "showRoads",
+    "turnIndicator",
     "unplayedPieces",
   ].forEach((toggle) => {
     if (!state.pngConfig[toggle]) {
@@ -54,7 +64,7 @@ export const png_url = (state, getters) => (game) => {
   });
 
   // Game Tags
-  const tags = ["caps", "flats", "caps1", "flats1", "caps2", "flats2"];
+  const tags = ["caps", "flats", "caps1", "flats1", "caps2", "flats2", "komi"];
   if (state.pngConfig.includeNames) {
     tags.push("player1", "player2");
   }

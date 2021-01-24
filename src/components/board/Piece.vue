@@ -8,6 +8,7 @@
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
+      ref="stone"
       class="stone"
       :class="{
         ['p' + piece.color]: true,

@@ -8,7 +8,7 @@ export const PRIMARY_COLOR_IDS = [
   "player1",
   "player2",
 ];
-export const HIDDEN_COLOR_IDS = ["player1clear", "player2clear"];
+export const HIDDEN_COLOR_IDS = ["bg", "player1clear", "player2clear"];
 
 const LIGHT = 0.6;
 const MED = 0.4;
@@ -47,6 +47,7 @@ export const COMPUTED = {
   secondary: {
     secondaryDark: isDark,
     colors: {
+      bg: (c) => colors.changeAlpha(c, 1),
       panel: (c) =>
         colors.changeAlpha(colors.lighten(c, isDark(c) ? 15 : -15), 0.8),
       board1: (c) => colors.lighten(c, isDark(c) ? 30 : -27),
@@ -65,7 +66,6 @@ export const COMPUTED = {
   },
   panel: {
     panelDark: isDark,
-    panelMedium: isMedium,
   },
   player1: {
     player1Dark: isDark,
@@ -312,6 +312,35 @@ export const THEMES = [
       textLight: "#fafafacd",
       textDark: "#212121cd",
       umbra: "#00000033",
+    },
+  },
+  {
+    id: "print",
+    boardStyle: "grid1",
+    boardChecker: false,
+    vars: { "piece-border-width": 1 },
+    colors: {
+      primary: "#6683d1",
+      secondary: "#ffffff",
+      ui: "#eeeeee",
+      accent: "#cacaca",
+      panel: "#b8b8b8cc",
+      board1: "#c8c8c8",
+      board2: "#b8b8b8",
+      board3: "#b8b8b8",
+      player1: "#eeeeee",
+      player1road: "#ffffff",
+      player1flat: "#e8e8e8",
+      player1special: "#ffffff",
+      player1border: "#606060",
+      player2: "#444444",
+      player2road: "#606060",
+      player2flat: "#606060",
+      player2special: "#575757",
+      player2border: "#e8e8e8",
+      textLight: "#fafafacd",
+      textDark: "#212121cd",
+      umbra: "#00000022",
     },
   },
   {

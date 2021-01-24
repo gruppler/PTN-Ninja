@@ -246,7 +246,11 @@ export default class GameBase {
           if (!move.linenum) {
             move.linenum = item;
             if (move.index === 0 && item.number !== this.firstMoveNumber) {
-              throw new Error("Invalid first line number");
+              if (item.ptn.trim() === notation.trim()) {
+                Linenum.parse(this.firstMoveNumber + ".", this, branch);
+              } else {
+                throw new Error("Invalid first line number");
+              }
             }
           } else {
             move = new Move({
@@ -298,7 +302,7 @@ export default class GameBase {
             move = new Move({
               game: this,
               id: this.moves.length,
-              linenum: Linenum.parse(moveNumber + ".", this, branch),
+              linenum: Linenum.parse(moveNumber + ". ", this, branch),
               ply1: ply,
             });
             this.moves.push(move);
@@ -332,6 +336,10 @@ export default class GameBase {
         this.parseJSONComments(params.comments, -1);
       }
       this.parseJSONMoves(params.moves);
+    }
+
+    if (!this.moves.length) {
+      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
     }
 
     if (!this.moves.length) {

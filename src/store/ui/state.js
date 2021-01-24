@@ -2,7 +2,7 @@ import { LocalStorage, Platform } from "quasar";
 import { pick } from "lodash";
 import { THEMES } from "../../themes";
 
-const defaults = {
+let defaults = {
   animateBoard: true,
   axisLabels: true,
   board3D: false,
@@ -78,13 +78,14 @@ defaults.embedConfig = {
 };
 
 defaults.pngConfig = {
-  size: "md",
+  imageSize: "md",
+  textSize: "md",
   includeNames: true,
   padding: true,
   ...pick(defaults, pngUIOptions),
 };
 
-const state = {
+let state = {
   embed: Platform.within.iframe,
   defaults,
   ...defaults,

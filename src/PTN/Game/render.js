@@ -2,16 +2,25 @@ import { cloneDeep, isString } from "lodash";
 import { itoa } from "../Ply";
 import { THEMES, computeMissing } from "../../themes";
 
-const squareSizes = {
-  xs: 25,
-  sm: 50,
-  md: 100,
-  lg: 200,
-  xl: 400,
+const pieceSizes = {
+  xs: 12,
+  sm: 24,
+  md: 48,
+  lg: 96,
+  xl: 192,
+};
+
+const textSizes = {
+  xs: 0.1875,
+  sm: 0.21875,
+  md: 0.25,
+  lg: 0.3,
+  xl: 0.4,
 };
 
 const defaults = {
-  size: "md",
+  imageSize: "md",
+  textSize: "md",
   axisLabels: true,
   turnIndicator: true,
   flatCounts: true,
@@ -43,17 +52,17 @@ export default function render(game, options = {}) {
 
   let hlSquares = [];
   if (game.state.plies.length) {
-    const ply = game.state.plies[game.state.boardPly.id];
+    const ply = game.plies[game.state.boardPly.id];
     if (options.highlightSquares && ply) {
       hlSquares = ply.squares;
     }
   }
 
   // Dimensions
-  const squareSize = squareSizes[options.size];
+  const pieceSize = Math.round((pieceSizes[options.imageSize] * 5) / game.size);
+  const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
-  const pieceSize = Math.round(squareSize * 0.5);
   const pieceSpacing = Math.round(squareSize * 0.07);
   const immovableSize = Math.round(squareSize * 0.15);
   const wallSize = Math.round(squareSize * 0.1875);
@@ -70,7 +79,7 @@ export default function render(game, options = {}) {
     theme.vars["piece-border-width"] * squareSize * 0.02
   );
 
-  const fontSize = squareSize * 0.22;
+  const fontSize = (squareSize * textSizes[options.textSize] * game.size) / 5;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -83,6 +92,7 @@ export default function render(game, options = {}) {
 
   const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
 
+  const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * game.size;
   const unplayedWidth = options.unplayedPieces
@@ -126,7 +136,7 @@ export default function render(game, options = {}) {
       padding,
       flats1Width,
       flatCounterHeight,
-      { tl: boardRadius }
+      { tl: counterRadius }
     );
     ctx.fill();
     ctx.fillStyle = theme.colors.player2;
@@ -136,7 +146,7 @@ export default function render(game, options = {}) {
       padding,
       flats2Width,
       flatCounterHeight,
-      { tr: boardRadius }
+      { tr: counterRadius }
     );
     ctx.fill();
 
@@ -173,6 +183,7 @@ export default function render(game, options = {}) {
       );
     }
 
+    flats[1] = flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
@@ -218,6 +229,13 @@ export default function render(game, options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
+    ctx.save();
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = fontSize * 0.05;
+    ctx.shadowBlur = fontSize * 0.1;
+    ctx.shadowColor = theme.secondaryDark
+      ? theme.colors.textDark
+      : theme.colors.textLight;
     ctx.fillStyle = theme.secondaryDark
       ? theme.colors.textLight
       : theme.colors.textDark;
@@ -244,6 +262,7 @@ export default function render(game, options = {}) {
           squareSize / 2
       );
     }
+    ctx.restore();
   }
 
   // Board

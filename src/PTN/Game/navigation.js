@@ -29,6 +29,7 @@ export default class GameNavigation {
       if (ply.result.type === "R" && !ply.result.roads) {
         ply.result.roads = this.findRoads();
       }
+      this.state.roads = ply.result.roads;
     } else if (ply.index === this.state.plies.length - 1) {
       this.checkGameEnd();
     }

@@ -3,7 +3,7 @@
     <q-select
       ref="select"
       v-if="games.length"
-      class="text-subtitle1"
+      class="text-subtitle1 no-wrap"
       :value="0"
       :options="games"
       @input="select"
@@ -152,6 +152,25 @@ export default {
     unseenCount() {
       return this.games.filter((game) => game.config.unseen).length;
     },
+    isEditingTPS: {
+      get() {
+        return this.$store.state.isEditingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+        if (!value) {
+          this.editingTPS = "";
+        }
+      },
+    },
+    editingTPS: {
+      get() {
+        return this.$store.state.editingTPS;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+      },
+    },
   },
   methods: {
     account() {
@@ -166,9 +185,22 @@ export default {
       }
     },
     select(index) {
-      if (index >= 0 && this.games.length > index) {
+      const _select = () => {
         this.$store.dispatch("game/SELECT_GAME", { index });
-        this.$emit("input", this.$store.state.game.list[0]);
+        this.$emit("input", this.$store.state.games.list[0]);
+        this.editingTPS = "";
+        this.isEditingTPS = false;
+      };
+      if (index >= 0 && this.games.length > index) {
+        if (this.isEditingTPS && this.editingTPS !== this.game.state.tps) {
+          this.$store.dispatch("ui/PROMPT", {
+            title: this.$t("Confirm"),
+            message: this.$t("confirm.abandonChanges"),
+            success: _select,
+          });
+        } else {
+          _select();
+        }
       }
     },
     icon(game) {

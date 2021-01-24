@@ -220,7 +220,6 @@ export const COPY = function ({ dispatch }, { url, text, title }) {
         });
       })
       .catch(() => {
-        dispatch("NOTIFY_ERROR", "Unable to copy");
         Dialog.create({
           class: "bg-ui",
           color: "primary",

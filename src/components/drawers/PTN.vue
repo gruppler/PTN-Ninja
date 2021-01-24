@@ -46,7 +46,7 @@ export default {
         this.$refs.scroll.setScrollPosition(
           move.$el.offsetTop -
             (this.$refs.scroll.$el.offsetHeight - move.$el.offsetHeight) / 2,
-          animate && this.$store.state.ui.showPTN ? 200 : 0
+          animate && this.$store.state.ui.showPTN ? 300 : 0
         );
       }
     },

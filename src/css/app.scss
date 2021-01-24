@@ -25,6 +25,10 @@
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+.bg-bg {
+  background: $bg !important;
+  background: var(--q-color-bg) !important;
+}
 .text-textLight {
   color: $textLight !important;
   color: var(--q-color-textLight) !important;
@@ -219,7 +223,7 @@ kbd {
 }
 
 .q-notifications__list--bottom {
-  bottom: 58px;
+  bottom: $footer-toolbar-height;
 }
 
 .q-date--dark, .q-time--dark {
@@ -259,7 +263,7 @@ kbd {
 }
 
 .footer-toolbar {
-  min-height: 58px;
+  min-height: $footer-toolbar-height;
   .q-btn:not(.q-btn--round) {
     border-radius: 0;
   }
@@ -299,6 +303,21 @@ kbd {
     background: var(--q-color-ui);
   }
 
+  .q-drawer__content .scroll {
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      border: 0;
+      box-shadow: none;
+      min-height: 40px;
+      background: $separator-color;
+      .body--dark & {
+        background: $separator-dark-color;
+      }
+    }
+  }
+
   .q-menu.scroll {
     &::-webkit-scrollbar-track {
       background: $accent;
@@ -307,18 +326,6 @@ kbd {
     &::-webkit-scrollbar-thumb {
       background: $ui;
       background: var(--q-color-ui);
-    }
-    &.bg-panel {
-      &::-webkit-scrollbar-track {
-        background: $panel;
-        background: var(--q-color-panel);
-      }
-      &::-webkit-scrollbar-thumb {
-        background-color: $dim;
-        body.panelDark & {
-          background-color: $highlight;
-        }
-      }
     }
   }
 }
