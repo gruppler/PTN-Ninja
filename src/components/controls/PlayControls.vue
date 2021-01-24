@@ -177,7 +177,7 @@ export default {
   methods: {
     deletePly() {
       if (this.game.state.ply && !this.plyInProgress) {
-        this.game.deletePly(this.game.state.plyID, true, true);
+        this.$store.dispatch("game/DELETE_PLY", this.game.state.plyID);
       }
     },
     play() {

@@ -396,6 +396,10 @@ export const CANCEL_MOVE = function ({ commit }) {
   commit("CANCEL_MOVE");
 };
 
+export const DELETE_PLY = function ({ commit }, plyID) {
+  commit("DELETE_PLY", plyID);
+};
+
 export const UNDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");

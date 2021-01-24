@@ -97,6 +97,13 @@ export const CANCEL_MOVE = (state) => {
   }
 };
 
+export const DELETE_PLY = (state, plyID) => {
+  const game = state.current;
+  if (game) {
+    game.deletePly(plyID, true, true);
+  }
+};
+
 export const UNDO = (state) => {
   const game = state.current;
   if (game && !state.isEditingTPS) {
