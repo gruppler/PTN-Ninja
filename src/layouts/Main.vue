@@ -165,7 +165,7 @@
     </q-drawer>
 
     <q-footer class="bg-ui">
-      <Scrubber :game="game" v-if="$store.state.showScrubber" />
+      <Scrubber :game="game" />
       <q-toolbar
         v-show="isEditingTPS || $store.state.showControls"
         class="footer-toolbar q-pa-sm"

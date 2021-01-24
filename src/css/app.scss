@@ -223,7 +223,7 @@ kbd {
 }
 
 .q-notifications__list--bottom {
-  bottom: 58px;
+  bottom: $footer-toolbar-height;
 }
 
 .q-date--dark, .q-time--dark {
@@ -263,7 +263,7 @@ kbd {
 }
 
 .footer-toolbar {
-  min-height: 58px;
+  min-height: $footer-toolbar-height;
   .q-btn:not(.q-btn--round) {
     border-radius: 0;
   }
