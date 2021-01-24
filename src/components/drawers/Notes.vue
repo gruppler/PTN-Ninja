@@ -253,7 +253,7 @@ export default {
 <style lang="scss">
 .notes {
   .content {
-    padding-top: calc(100vh - #{$toolbar-min-height * 2});
+    padding-top: calc(100vh - #{$toolbar-min-height + $footer-toolbar-height});
   }
   .q-separator {
     opacity: 0.75;
