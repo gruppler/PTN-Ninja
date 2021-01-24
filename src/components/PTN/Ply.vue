@@ -2,7 +2,7 @@
   <span class="ptn ply" v-if="ply">
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
-      @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
+      @click.right.prevent.native="select(ply, false)"
       :class="{ selected: isSelected }"
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
@@ -51,7 +51,7 @@
       :result="ply.result"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
-      @click.right.prevent.native="select(ply, !game.state.plyIsDone)"
+      @click.right.prevent.native="select(ply, false)"
       clickable
     />
   </span>
