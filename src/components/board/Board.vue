@@ -273,7 +273,7 @@ export default {
       if (this.board3D) {
         this.boardRotation = this.$store.state.defaults.boardRotation;
         this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
-        this.zoomFit();
+        this.zoomFitAfterTransition();
       }
     },
     rotateBoard(event) {
@@ -379,6 +379,18 @@ export default {
         this.$nextTick(this.zoomFit);
       }
     },
+    zoomFitAfterTransition() {
+      if (this.board3D) {
+        if (this.$store.state.animateBoard) {
+          if (this.zoomFitTimer) {
+            clearTimeout(this.zoomFitTimer);
+          }
+          this.zoomFitTimer = setTimeout(this.zoomFitNextTick, 300);
+        } else {
+          this.zoomFitNextTick();
+        }
+      }
+    },
   },
   created() {
     this.zoomFit = throttle(this.zoomFit, 10);
@@ -389,19 +401,10 @@ export default {
         this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
       }
     },
-    boardPly() {
-      if (this.$store.state.animateBoard) {
-        if (this.zoomFitTimer) {
-          clearTimeout(this.zoomFitTimer);
-        }
-        this.zoomFitTimer = setTimeout(this.zoomFitNextTick, 300);
-      } else {
-        this.zoomFitNextTick();
-      }
-    },
-    maxWidth: "zoomFitNextTick",
+    boardPly: "zoomFitAfterTransition",
+    maxWidth: "zoomFitAfterTransition",
     boardRotation: "zoomFitNextTick",
-    board3D: "zoomFitNextTick",
+    board3D: "zoomFitAfterTransition",
   },
 };
 </script>
@@ -432,8 +435,13 @@ $radius: 0.35em;
   will-change: width, font-size;
   text-align: center;
   z-index: 0;
+  transition: transform $generic-hover-transition;
 
+  body.no-pointer-events--children & {
+    transition: none !important;
+  }
   &.no-animations {
+    &,
     .piece,
     .stone,
     .road > div,
