@@ -118,7 +118,7 @@
     </q-drawer>
 
     <q-footer>
-      <Scrubber :game="game" v-if="$store.state.showScrubber" />
+      <Scrubber :game="game" />
       <q-toolbar v-show="$store.state.showControls" class="q-pa-sm bg-ui">
         <PlayControls :game="game" />
       </q-toolbar>

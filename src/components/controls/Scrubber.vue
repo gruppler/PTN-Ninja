@@ -1,6 +1,6 @@
 <template>
   <q-slider
-    v-if="!!game.plies.length"
+    v-if="$store.state.showScrubber"
     class="scrubber"
     :step="0.5"
     :min="0"
@@ -9,6 +9,12 @@
     @input="scrub"
     :dark="false"
     dense
+  />
+  <q-linear-progress
+    v-else
+    class="scrubber"
+    :value="position / maxPosition"
+    :dark="false"
   />
 </template>
 
@@ -51,5 +57,10 @@ export default {
   position: absolute;
   top: -11px;
   z-index: 1;
+
+  &.q-linear-progress {
+    height: 2px;
+    top: -2px;
+  }
 }
 </style>
