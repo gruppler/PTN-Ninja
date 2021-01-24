@@ -13,7 +13,7 @@
   <q-linear-progress
     v-else
     class="scrubber"
-    :value="position / maxPosition"
+    :value="maxPosition ? position / maxPosition : 0"
     :dark="false"
   />
 </template>
