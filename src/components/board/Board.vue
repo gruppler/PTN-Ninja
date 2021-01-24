@@ -48,7 +48,11 @@
         >
           <div class="content absolute-fit row no-wrap">
             <div class="flats q-px-sm">
-              {{ $store.state.flatCounts ? flats[1] : "" }}
+              {{
+                $store.state.flatCounts
+                  ? flats[1].toString().replace(".5", " ½")
+                  : ""
+              }}
             </div>
             <div class="name q-mx-sm relative-position">
               {{ player2 }}
@@ -558,6 +562,7 @@ $radius: 0.35em;
     }
   }
   .flats {
+    white-space: nowrap;
     width: 2em;
     flex-grow: 1;
     flex-shrink: 0;

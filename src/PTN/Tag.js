@@ -13,6 +13,7 @@ const capitalized = {
   clock: "Clock",
   date: "Date",
   event: "Event",
+  komi: "Komi",
   player1: "Player1",
   player2: "Player2",
   points: "Points",
@@ -36,6 +37,7 @@ export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
+  komi: /^\d+(\.5)?$/,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
   points: /^\d+$/,
@@ -109,6 +111,7 @@ export default class Tag {
       case "flats":
       case "flats1":
       case "flats2":
+      case "komi":
         this.value = 1 * this.value;
         break;
       case "date":

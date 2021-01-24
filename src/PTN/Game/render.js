@@ -183,6 +183,7 @@ export default function render(game, options = {}) {
       );
     }
 
+    flats[1] = flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;

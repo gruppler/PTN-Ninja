@@ -69,6 +69,7 @@ export default {
   Import: "Import",
   "Player Names": "Player Names",
   Key: "Key",
+  Komi: "Komi",
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",
   Less: "Less",
