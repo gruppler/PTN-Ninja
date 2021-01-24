@@ -111,6 +111,8 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
+import { throttle } from "lodash";
+
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -131,6 +133,7 @@ export default {
       y: 0,
       prevBoardRotation: null,
       boardRotation: this.$store.state.boardRotation,
+      zoomFitTimer: null,
     };
   },
   computed: {
@@ -141,6 +144,9 @@ export default {
       return this.$store.state.isEditingTPS
         ? this.$store.state.selectedPiece.color
         : this.game.state.turn;
+    },
+    boardPly() {
+      return this.game.state.boardPly;
     },
     player1() {
       return this.game.tag("player1");
@@ -368,6 +374,14 @@ export default {
       scale *= this.scale;
       this.scale = scale;
     },
+    zoomFitNextTick() {
+      if (this.board3D) {
+        this.$nextTick(this.zoomFit);
+      }
+    },
+  },
+  created() {
+    this.zoomFit = throttle(this.zoomFit, 10);
   },
   watch: {
     isPortrait(isPortrait) {
@@ -375,21 +389,19 @@ export default {
         this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
       }
     },
-    maxWidth() {
-      if (this.board3D) {
-        this.$nextTick(this.zoomFit);
+    boardPly() {
+      if (this.$store.state.animateBoard) {
+        if (this.zoomFitTimer) {
+          clearTimeout(this.zoomFitTimer);
+        }
+        this.zoomFitTimer = setTimeout(this.zoomFitNextTick, 300);
+      } else {
+        this.zoomFitNextTick();
       }
     },
-    boardRotation() {
-      if (this.board3D) {
-        this.$nextTick(this.zoomFit);
-      }
-    },
-    board3D(board3D) {
-      if (board3D) {
-        this.$nextTick(this.zoomFit);
-      }
-    },
+    maxWidth: "zoomFitNextTick",
+    boardRotation: "zoomFitNextTick",
+    board3D: "zoomFitNextTick",
   },
 };
 </script>
