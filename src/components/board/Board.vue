@@ -392,7 +392,7 @@ export default {
     },
     zoomFitAfterTransition() {
       if (this.board3D) {
-        if (this.$store.state.animateBoard) {
+        if (this.$store.state.ui.animateBoard) {
           if (this.zoomFitTimer) {
             clearTimeout(this.zoomFitTimer);
           }
