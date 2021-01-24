@@ -426,10 +426,13 @@ export default {
             game = this.$store.state.game.list[0];
             game = new Game(game.ptn, game);
             if (
-              this.$store.state.isEditingTPS &&
-              this.$store.state.editingTPS
+              this.$store.state.ui.isEditingTPS &&
+              this.$store.state.ui.editingTPS
             ) {
-              game.doTPS(this.$store.state.editingTPS);
+              this.$store.dispatch(
+                "game/DO_TPS",
+                this.$store.state.ui.editingTPS
+              );
             }
           } catch (error) {
             _handleError(error);

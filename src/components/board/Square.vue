@@ -109,6 +109,9 @@ export default {
     valid() {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
     },
+    showRoads() {
+      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
+    },
     n() {
       return this.square.connected.N;
     },

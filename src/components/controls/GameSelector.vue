@@ -154,10 +154,10 @@ export default {
     },
     isEditingTPS: {
       get() {
-        return this.$store.state.isEditingTPS;
+        return this.$store.state.ui.isEditingTPS;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
+        this.$store.dispatch("ui/SET_UI", ["isEditingTPS", value]);
         if (!value) {
           this.editingTPS = "";
         }
@@ -165,10 +165,10 @@ export default {
     },
     editingTPS: {
       get() {
-        return this.$store.state.editingTPS;
+        return this.$store.state.ui.editingTPS;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
       },
     },
   },
@@ -187,7 +187,7 @@ export default {
     select(index) {
       const _select = () => {
         this.$store.dispatch("game/SELECT_GAME", { index });
-        this.$emit("input", this.$store.state.games.list[0]);
+        this.$emit("input", this.$store.state.game.list[0]);
         this.editingTPS = "";
         this.isEditingTPS = false;
       };

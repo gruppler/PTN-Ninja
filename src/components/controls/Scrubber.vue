@@ -1,6 +1,6 @@
 <template>
   <q-slider
-    v-if="$store.state.showScrubber"
+    v-if="$store.state.ui.showScrubber"
     class="scrubber"
     :step="0.5"
     :min="0"
