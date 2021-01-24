@@ -22,14 +22,15 @@ export default {
         if (ply.result) {
           // Game end
           const result = ply.result;
+          const winner = result.winner || ply.player;
           alerts.push({
             message: this.$t("result." + result.type, {
               player: this.game.tag(
-                "player" + result.winner,
-                this.$t(result.winner === 1 ? "White" : "Black")
+                "player" + winner,
+                this.$t(winner === 1 ? "White" : "Black")
               ),
             }),
-            player: result.winner,
+            player: winner,
           });
         }
         if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
