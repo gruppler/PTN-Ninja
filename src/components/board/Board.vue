@@ -165,27 +165,17 @@ export default {
       return 100 / this.game.size;
     },
     flatWidths() {
-      let total = (this.flats[0] + this.flats[1]) / 100;
-      return [
-        total
-          ? Math.max(
-              this.minNameWidth,
-              Math.min(
-                100 - this.minNameWidth,
-                (this.flats[0] / total).toPrecision(4)
-              )
-            ) + "%"
-          : "",
-        total
-          ? Math.max(
-              this.minNameWidth,
-              Math.min(
-                100 - this.minNameWidth,
-                (this.flats[1] / total).toPrecision(4)
-              )
-            ) + "%"
-          : "",
-      ];
+      const total = (this.flats[0] + this.flats[1]) / 100;
+      const player1width = total
+        ? Math.max(
+            this.minNameWidth,
+            Math.min(
+              100 - this.minNameWidth,
+              (this.flats[0] / total).toPrecision(4)
+            )
+          )
+        : 50;
+      return [player1width + "%", 100 - player1width + "%"];
     },
     board3D() {
       return this.$store.state.ui.board3D;
