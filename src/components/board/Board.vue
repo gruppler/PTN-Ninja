@@ -349,7 +349,7 @@ export default {
       if (this.$store.state.unplayedPieces) {
         Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$refs.stone);
+            nodes.push(this.$refs[piece.id][0].$el);
           }
         });
       }
@@ -460,7 +460,7 @@ $radius: 0.35em;
   z-index: 0;
   transition: transform $generic-hover-transition;
 
-  body.no-pointer-events--children & {
+  body.non-selectable & {
     transition: none !important;
   }
   &.no-animations {
