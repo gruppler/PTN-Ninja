@@ -225,6 +225,16 @@ export default {
           color: $orange-light;
         }
       }
+      body.player1Dark & .ply.color1 .square,
+      body.player2Dark & .ply.color2 .square {
+        text-shadow: 0 0 4px $textLight;
+        text-shadow: 0 0 4px var(--q-color-textLight);
+      }
+      body:not(.player1Dark) & .ply.color1 .square,
+      body:not(.player2Dark) & .ply.color2 .square {
+        text-shadow: 0 0 4px $textDark;
+        text-shadow: 0 0 4px var(--q-color-textDark);
+      }
     }
   }
 }
