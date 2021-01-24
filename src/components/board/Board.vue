@@ -345,12 +345,12 @@ export default {
       if (this.$store.state.unplayedPieces) {
         Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$el);
+            nodes.push(this.$refs[piece.id][0].$refs.stone);
           }
         });
       }
       this.squares.forEach((square) => {
-        if (square.pieces.length > 1) {
+        if (square.piece) {
           nodes.push(this.$refs[square.piece.id][0].$el);
         }
       });
@@ -379,13 +379,32 @@ export default {
         this.$nextTick(this.zoomFit);
       }
     },
+    zoomFitAfterDelay() {
+      if (this.board3D) {
+        if (this.zoomFitTimer) {
+          clearTimeout(this.zoomFitTimer);
+        }
+        this.zoomFitTimer = setTimeout(() => {
+          this.zoomFitNextTick();
+          this.zoomFitTimer = null;
+        }, 300);
+      }
+    },
     zoomFitAfterTransition() {
       if (this.board3D) {
         if (this.$store.state.animateBoard) {
           if (this.zoomFitTimer) {
             clearTimeout(this.zoomFitTimer);
           }
-          this.zoomFitTimer = setTimeout(this.zoomFitNextTick, 300);
+          this.zoomFitTimer = setTimeout(() => {
+            if (this.$refs.container) {
+              this.$refs.container.ontransitionend = () => {
+                this.zoomFitNextTick();
+                this.$refs.container.ontransitionend = null;
+              };
+            }
+            this.zoomFitTimer = null;
+          }, 300);
         } else {
           this.zoomFitNextTick();
         }
@@ -402,7 +421,7 @@ export default {
       }
     },
     boardPly: "zoomFitAfterTransition",
-    maxWidth: "zoomFitAfterTransition",
+    size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
     board3D: "zoomFitAfterTransition",
   },
