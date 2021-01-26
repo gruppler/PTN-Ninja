@@ -327,6 +327,7 @@ export default {
   created() {
     this.next = throttle(this._next, 250);
     this.prev = throttle(this._prev, 250);
+    this.getBranches();
   },
 };
 </script>
