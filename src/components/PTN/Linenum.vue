@@ -62,6 +62,7 @@ export default {
     noBranch: Boolean,
     onlyBranch: Boolean,
     activePly: Object,
+    unselected: Boolean,
   },
   data() {
     return {
@@ -87,7 +88,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return this.game.state.plies.includes(this.ply);
+      return !this.unselected && this.game.state.plies.includes(this.ply);
     },
   },
   methods: {
