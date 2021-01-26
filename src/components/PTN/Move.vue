@@ -13,6 +13,7 @@
       v-if="showSeparateBranch"
       :linenum="move.linenum"
       :game="game"
+      :unselected="currentOnly"
       only-branch
     />
     <div class="move-wrapper">
@@ -122,11 +123,6 @@ export default {
     body.panelDark & {
       background-color: $highlight;
     }
-  }
-
-  &.current-only .linenum .branch {
-    background-color: transparent;
-    color: inherit;
   }
 
   &.linebreak {
