@@ -129,6 +129,7 @@ export default {
       timestamp: null,
       next: null,
       prev: null,
+      branches: [],
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
@@ -159,11 +160,6 @@ export default {
     hasBranches() {
       return !!(this.game.state.ply && this.game.state.ply.branches.length > 1);
     },
-    branches() {
-      return uniq(
-        flatten(Object.values(this.game.branches).map((ply) => ply.branches))
-      );
-    },
     branchIndex() {
       return this.$refs.branchMenu.selected;
     },
@@ -175,6 +171,11 @@ export default {
     },
   },
   methods: {
+    getBranches() {
+      this.branches = uniq(
+        flatten(Object.values(this.game.branches).map((ply) => ply.branches))
+      );
+    },
     deletePly() {
       if (this.game.state.ply && !this.plyInProgress) {
         this.$store.dispatch("game/DELETE_PLY", this.game.state.plyID);
@@ -329,10 +330,15 @@ export default {
         }
       }
     },
+    "game.branches": {
+      handler: "getBranches",
+      deep: true,
+    },
   },
   created() {
     this.next = throttle(this._next, 250);
     this.prev = throttle(this._prev, 250);
+    this.getBranches();
   },
 };
 </script>

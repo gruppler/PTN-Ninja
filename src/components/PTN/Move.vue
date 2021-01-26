@@ -9,7 +9,12 @@
       standalone: standalone,
     }"
   >
-    <Linenum v-if="showSeparateBranch" :linenum="move.linenum" only-branch />
+    <Linenum
+      v-if="showSeparateBranch"
+      :linenum="move.linenum"
+      :unselected="currentOnly"
+      only-branch
+    />
     <div class="move-wrapper">
       <Linenum
         v-if="move.linenum"
@@ -121,11 +126,6 @@ export default {
     body.panelDark & {
       background-color: $highlight;
     }
-  }
-
-  &.current-only .linenum .branch {
-    background-color: transparent;
-    color: inherit;
   }
 
   &.linebreak {
