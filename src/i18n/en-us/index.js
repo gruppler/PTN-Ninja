@@ -271,7 +271,7 @@ export default {
   },
 
   hint: {
-    pasteThemeCode: "Paste theme code here...",
+    pasteThemeCode: "Paste theme code here",
   },
 
   hotkeys: {

@@ -288,6 +288,7 @@
       name="komi"
       type="number"
       min="0"
+      :max="tags.size"
       step="0.5"
       :label="$t('Komi')"
       :rules="rules('komi')"
@@ -682,16 +683,18 @@ export default {
         this.tags.flats1 !== this.tags.flats2;
     },
     rules(tag) {
-      let rules = [];
+      const tags = this.tags;
+      const rules = [];
       if (tag === "tps") {
-        const tags = this.tags;
         rules[0] = (tps) =>
           !tps ||
           ((tps = TPS.parse(tps)) &&
             !!(tps && tps.isValid && tps.size === 1 * tags.size));
       } else if (tag.startsWith("caps")) {
-        const tags = this.tags;
         rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
+      } else if (tag === "komi") {
+        rules[0] = (value) => value <= tags.size;
+        rules[1] = (value) => !value || formats[tag].test(value);
       } else {
         rules[0] = (value) => !value || formats[tag].test(value);
       }
