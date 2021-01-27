@@ -37,7 +37,7 @@ export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
-  komi: /^\d+(\.5)?$/,
+  komi: /^[0-8](\.5)?$/,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
   points: /^\d+$/,
@@ -111,8 +111,13 @@ export default class Tag {
       case "flats":
       case "flats1":
       case "flats2":
+        this.value = Number(this.value);
+        break;
       case "komi":
-        this.value = 1 * this.value;
+        this.value = Math.min(this.size, Math.max(0, Number(this.value)));
+        if (this.value % 1) {
+          this.value = Math.floor(this.value) + 0.5;
+        }
         break;
       case "date":
         this.value = this.value.split(".");
@@ -121,22 +126,22 @@ export default class Tag {
         this.value = this.value.join(".");
         break;
       case "points":
-        this.value = 1 * this.value;
+        this.value = Number(this.value);
         break;
       case "rating1":
-        this.value = 1 * this.value;
+        this.value = Number(this.value);
         break;
       case "rating2":
-        this.value = 1 * this.value;
+        this.value = Number(this.value);
         break;
       case "result":
         this.value = this.value ? Result.parse(this.value) : "";
         break;
       case "round":
-        this.value = 1 * this.value;
+        this.value = Number(this.value);
         break;
       case "size":
-        this.value = 1 * this.value;
+        this.value = Number(this.value);
         break;
       case "tps":
         this.value = TPS.parse(this.value);
