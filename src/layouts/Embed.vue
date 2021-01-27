@@ -40,22 +40,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <div
-            @click.right.self.prevent="$refs.board.resetBoardRotation"
-            class="board-move-container"
-          >
-            <Move
-              v-if="game.state.move"
-              v-show="game.state.ply && $store.state.showMove"
-              class="q-mb-md q-mx-md"
-              :class="{ 'lt-sm': $store.state.showPTN }"
-              :move="game.state.move"
-              :game="game"
-              separate-branch
-              current-only
-              standalone
-            />
-          </div>
+          <CurrentMove :game="game" />
         </div>
         <q-page-sticky position="top-left" :offset="[18, 18]">
           <BoardToggles />
@@ -133,7 +118,7 @@
 <script>
 // Essentials:
 import Board from "../components/board/Board";
-import Move from "../components/PTN/Move";
+import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 
@@ -159,7 +144,7 @@ import { defaults, forEach } from "lodash";
 export default {
   components: {
     Board,
-    Move,
+    CurrentMove,
     PTN,
     Notes,
     ErrorNotifications,

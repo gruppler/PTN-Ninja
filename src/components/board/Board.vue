@@ -7,7 +7,7 @@
     ref="wrapper"
   >
     <div
-      class="board-container q-pa-md"
+      class="board-container"
       :class="{
         [style]: true,
         ['size-' + game.size]: true,
@@ -20,7 +20,8 @@
         'show-unplayed-pieces': $store.state.unplayedPieces,
         'is-game-end': game.state.isGameEnd,
       }"
-      :style="{ maxWidth, fontSize, transform }"
+      :style="{ maxWidth, fontSize, transform, padding: padding / 2 + 'px' }"
+      @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
       <div
@@ -62,14 +63,17 @@
         </div>
       </div>
 
-      <div class="board-row row no-wrap">
-        <div v-if="$store.state.axisLabels" class="y-axis column">
+      <div class="board-row row no-wrap no-pointer-events">
+        <div
+          v-if="$store.state.axisLabels"
+          class="y-axis column no-pointer-events"
+        >
           <div v-for="i in (1, game.size)" :key="i">
             {{ game.size - i + 1 }}
           </div>
         </div>
 
-        <div class="board relative-position">
+        <div class="board relative-position all-pointer-events">
           <div class="squares absolute-fit row">
             <Square
               v-for="square in squares"
@@ -99,7 +103,7 @@
 
       <div
         v-if="$store.state.axisLabels"
-        class="x-axis row items-end"
+        class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
@@ -180,6 +184,17 @@ export default {
     board3D() {
       return this.$store.state.board3D;
     },
+    padding() {
+      if (!this.space) {
+        return 0;
+      }
+      const min = this.isPortrait ? this.space.width : this.space.height;
+      if (min <= 400) {
+        return min * 0.1;
+      } else {
+        return min * 0.1 + (min - 400) * 0.2;
+      }
+    },
     isPortrait() {
       return this.size && this.space && this.size.width === this.space.width;
     },
@@ -191,12 +206,8 @@ export default {
         return "50%";
       } else {
         return (
-          Math.max(
-            Math.round(
-              (this.size.width * this.space.height) / this.size.height
-            ),
-            200
-          ) + "px"
+          Math.round((this.size.width * this.space.height) / this.size.height) +
+          "px"
         );
       }
     },
