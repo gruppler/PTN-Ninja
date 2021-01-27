@@ -311,7 +311,7 @@ export default {
   },
 
   hint: {
-    pasteThemeCode: "Paste theme code here...",
+    pasteThemeCode: "Paste theme code here",
     playerNamePrivate: "Whatever you want to call yourself",
     playerNamePublic: "Your unique name",
     privateGame: "This game will not be listed",
