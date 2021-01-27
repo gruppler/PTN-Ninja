@@ -11,7 +11,6 @@
           'all-pointer-events': !collapsed,
         }"
         :move="game.state.move"
-        :game="game"
         separate-branch
         current-only
         standalone
@@ -33,11 +32,15 @@ import Move from "../PTN/Move";
 export default {
   name: "CurrentMove",
   components: { Move },
-  props: ["game"],
   data() {
     return {
       collapsed: false,
     };
+  },
+  computed: {
+    game() {
+      return this.$store.state.game.current;
+    },
   },
 };
 </script>
