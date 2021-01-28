@@ -109,9 +109,9 @@
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
-      <q-resize-observer @resize="resizeBoard" debounce="10" />
+      <q-resize-observer @resize="resizeBoard" :debounce="10" />
     </div>
-    <q-resize-observer @resize="resizeSpace" debounce="10" />
+    <q-resize-observer @resize="resizeSpace" :debounce="10" />
   </div>
 </template>
 
@@ -188,22 +188,27 @@ export default {
       if (!this.space) {
         return 0;
       }
-      const min = this.isPortrait ? this.space.width : this.space.height;
+      const min = Math.min(this.space.width, this.space.height);
       if (min <= 400) {
-        return Math.round(min * 0.1);
+        return min * 0.1;
       } else {
-        return Math.round(min * 0.1 + (min - 400) * 0.2);
+        return min * 0.1 + (min - 400) * 0.2;
       }
     },
     isPortrait() {
-      return this.size && this.space && this.size.width === this.space.width;
+      return (
+        this.size &&
+        this.space &&
+        Math.abs(this.size.width - this.space.width) <
+          Math.abs(this.size.height - this.space.height)
+      );
     },
     maxWidth() {
       if (this.$el && this.$el.style.maxWidth && this.isInputFocused()) {
         return this.$el.style.maxWidth;
       }
       if (!this.space || !this.size) {
-        return "50%";
+        return "80%";
       } else {
         return (
           Math.round((this.size.width * this.space.height) / this.size.height) +
@@ -223,8 +228,8 @@ export default {
             8,
             Math.min(
               22,
-              Math.round(this.space.width * FONT_RATIO),
-              Math.round(this.space.height * FONT_RATIO)
+              this.space.width * FONT_RATIO,
+              this.space.height * FONT_RATIO
             )
           ) + "px"
         );
