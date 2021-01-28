@@ -4,8 +4,9 @@
     class="scrubber"
     :step="0.5"
     :min="0"
-    :max="maxPosition"
+    :max="maxPosition || 1"
     :value="position"
+    :disable="!maxPosition"
     @input="scrub"
     :dark="false"
     dense
