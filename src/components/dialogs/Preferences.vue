@@ -30,30 +30,6 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="animateBoard"
-                  :disabled="isDisabled('animateBoard')"
-                />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="axisLabels"
-                  :disabled="isDisabled('axisLabels')"
-                />
-              </q-item-section>
-            </q-item>
-
             <q-item tag="label" :title="hotkeys.board3D" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("3D Board") }}</q-item-label>
@@ -96,6 +72,30 @@
               </q-item>
             </smooth-reflow>
 
+            <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="animateBoard"
+                  :disabled="isDisabled('animateBoard')"
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="axisLabels"
+                  :disabled="isDisabled('axisLabels')"
+                />
+              </q-item-section>
+            </q-item>
+
             <q-item tag="label" :title="hotkeys.showRoads" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -122,7 +122,7 @@
 
             <smooth-reflow>
               <q-item
-                v-show="turnIndicator"
+                v-if="turnIndicator"
                 tag="label"
                 :title="hotkeys.flatCounts"
                 v-ripple
