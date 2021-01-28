@@ -46,27 +46,21 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
+  align-items: flex-start;
+
   .board-move {
     transition: transform $generic-hover-transition;
     .move {
       transition: opacity $generic-hover-transition;
     }
   }
-  .collapse {
-    display: none;
-  }
-  @media (max-width: $breakpoint-sm-max) {
-    align-items: flex-start;
-    .board-move.collapsed {
-      .move {
-        opacity: 0;
-        pointer-events: none;
-      }
-      transform: translateX(calc(16px - 100%));
+
+  .board-move.collapsed {
+    .move {
+      opacity: 0;
+      pointer-events: none;
     }
-    .collapse {
-      display: block;
-    }
+    transform: translateX(calc(16px - 100%));
   }
 }
 </style>
