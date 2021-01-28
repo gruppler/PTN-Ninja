@@ -171,11 +171,6 @@ export default {
     }
     background-color: $panel;
     background-color: var(--q-color-panel);
-    transition: opacity $generic-hover-transition;
-    opacity: 1;
-    &.lt-sm {
-      opacity: 0;
-    }
   }
 
   .move-wrapper {

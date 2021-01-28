@@ -1,15 +1,12 @@
 <template>
   <div
-    v-show="game.state.ply && $store.state.showMove"
+    v-show="game.state.ply && $store.state.showMove && !$store.state.showPTN"
     class="board-move-container no-pointer-events"
   >
     <div class="board-move row no-wrap q-mb-md q-mx-md" :class="{ collapsed }">
       <Move
         v-if="game.state.move"
-        :class="{
-          'lt-sm': $store.state.showPTN,
-          'all-pointer-events': !collapsed,
-        }"
+        :class="{ 'all-pointer-events': !collapsed }"
         :move="game.state.move"
         :game="game"
         separate-branch
@@ -59,13 +56,12 @@ export default {
   }
   @media (max-width: $breakpoint-sm-max) {
     align-items: flex-start;
-    margin-right: 84px;
     .board-move.collapsed {
       .move {
         opacity: 0;
         pointer-events: none;
       }
-      transform: translateX(calc(2em - 100%));
+      transform: translateX(calc(16px - 100%));
     }
     .collapse {
       display: block;
