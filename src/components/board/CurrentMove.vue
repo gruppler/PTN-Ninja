@@ -17,6 +17,7 @@
         @click="collapsed = !collapsed"
         :icon="collapsed ? 'forward' : 'backward'"
         class="collapse dimmed-btn all-pointer-events"
+        :ripple="false"
         dense
         flat
       />
