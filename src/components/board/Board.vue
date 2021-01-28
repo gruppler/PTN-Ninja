@@ -212,7 +212,7 @@ export default {
       );
     },
     ratio() {
-      return Math.round(100 * (this.size.width / this.size.height)) / 100;
+      return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
     width() {
       if (this.$el && this.$el.style.width && this.isInputFocused()) {
