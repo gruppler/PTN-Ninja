@@ -322,5 +322,8 @@ export default {
       deep: true,
     },
   },
+  created() {
+    this.initialURL = this.url;
+  },
 };
 </script>
