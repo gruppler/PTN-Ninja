@@ -190,9 +190,9 @@ export default {
       }
       const min = this.isPortrait ? this.space.width : this.space.height;
       if (min <= 400) {
-        return min * 0.1;
+        return Math.round(min * 0.1);
       } else {
-        return min * 0.1 + (min - 400) * 0.2;
+        return Math.round(min * 0.1 + (min - 400) * 0.2);
       }
     },
     isPortrait() {
