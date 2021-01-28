@@ -1,7 +1,8 @@
 <template>
   <div
     class="board-wrapper flex flex-center"
-    :class="{ 'board-3D': board3D }"
+    :class="{ 'board-3D': board3D, orthogonal }"
+    :style="{ perspective }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     ref="wrapper"
@@ -183,6 +184,13 @@ export default {
     },
     board3D() {
       return this.$store.state.board3D;
+    },
+    orthogonal() {
+      return this.$store.state.orthogonal;
+    },
+    perspective() {
+      const factor = 1 - this.$store.state.perspective / 10;
+      return 800 * Math.pow(4, factor) + "px";
     },
     padding() {
       if (!this.space) {
@@ -434,6 +442,7 @@ export default {
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
     board3D: "zoomFitAfterTransition",
+    orthogonal: "zoomFitNextTick",
   },
 };
 </script>
@@ -444,8 +453,11 @@ $axis-size: 1.5em;
 $radius: 0.35em;
 
 .board-wrapper {
+  &:not(.board-3D),
+  &.orthogonal {
+    perspective: none !important;
+  }
   &.board-3D {
-    perspective: 150vmin;
     perspective-origin: center;
     .board-container {
       transform-style: preserve-3d;

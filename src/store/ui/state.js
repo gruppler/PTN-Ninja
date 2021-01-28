@@ -20,6 +20,8 @@ let defaults = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
+  orthogonal: false,
+  perspective: 5,
   pieceShadows: true,
   playSpeed: 60, //BPM
   player1: "",
