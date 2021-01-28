@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="game.state.ply && $store.state.showMove && !$store.state.showPTN"
+    v-show="game.state.ply && !$store.state.showPTN"
     class="board-move-container no-pointer-events"
   >
     <div class="board-move" :class="{ collapsed }">
@@ -32,10 +32,15 @@ export default {
   name: "CurrentMove",
   components: { Move },
   props: ["game"],
-  data() {
-    return {
-      collapsed: false,
-    };
+  computed: {
+    collapsed: {
+      get() {
+        return !this.$store.state.showMove;
+      },
+      set(value) {
+        this.$store.dispatch("SET_UI", ["showMove", !value]);
+      },
+    },
   },
 };
 </script>
