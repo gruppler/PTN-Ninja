@@ -21,7 +21,7 @@
         'show-unplayed-pieces': $store.state.unplayedPieces,
         'is-game-end': game.state.isGameEnd,
       }"
-      :style="{ maxWidth, fontSize, transform, padding: padding / 2 + 'px' }"
+      :style="{ width, fontSize, transform }"
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
@@ -211,15 +211,19 @@ export default {
           Math.abs(this.size.height - this.space.height)
       );
     },
-    maxWidth() {
-      if (this.$el && this.$el.style.maxWidth && this.isInputFocused()) {
-        return this.$el.style.maxWidth;
+    ratio() {
+      return Math.round(100 * (this.size.width / this.size.height)) / 100;
+    },
+    width() {
+      if (this.$el && this.$el.style.width && this.isInputFocused()) {
+        return this.$el.style.width;
       }
       if (!this.space || !this.size) {
         return "80%";
       } else {
         return (
-          Math.round((this.size.width * this.space.height) / this.size.height) +
+          Math.min(this.space.width, this.space.height * this.ratio) -
+          this.padding +
           "px"
         );
       }
@@ -363,17 +367,23 @@ export default {
       if (this.$store.state.unplayedPieces) {
         Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$el);
+            nodes.push(this.$refs[piece.id][0].$refs.stone);
           }
         });
       }
       this.squares.forEach((square) => {
         if (square.piece) {
-          nodes.push(this.$refs[square.piece.id][0].$el);
+          nodes.push(this.$refs[square.piece.id][0].$refs.stone);
         }
       });
       const boardBB = this.getBounds(nodes);
       const spaceBB = this.$refs.wrapper.getBoundingClientRect();
+
+      const halfPad = this.padding / 2;
+      spaceBB.width -= this.padding;
+      spaceBB.height -= this.padding;
+      spaceBB.x += halfPad;
+      spaceBB.y += halfPad;
 
       let scale;
       if (boardBB.width / spaceBB.width > boardBB.height / spaceBB.height) {
