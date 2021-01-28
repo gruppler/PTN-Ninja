@@ -307,7 +307,7 @@ const props = [
 ];
 
 export default {
-  name: "UISettings",
+  name: "Preferences",
   components: { ThemeSelector },
   props: ["value", "game", "disabled"],
   data() {

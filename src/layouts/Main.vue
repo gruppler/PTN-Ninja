@@ -189,7 +189,7 @@
     <Help ref="help" v-model="dialogHelp" no-route-dismiss />
     <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
     <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
-    <UISettings v-model="dialogUISettings" :game="game" no-route-dismiss />
+    <Preferences v-model="dialogPreferences" :game="game" no-route-dismiss />
     <ThemeConfig v-model="dialogThemeConfig" :game="game" no-route-dismiss />
     <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
     <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
@@ -230,7 +230,7 @@ import Chat from "../components/drawers/Chat";
 import Help from "../components/dialogs/Help";
 import AddGame from "../components/dialogs/AddGame";
 import EditGame from "../components/dialogs/EditGame";
-import UISettings from "../components/dialogs/UISettings";
+import Preferences from "../components/dialogs/Preferences";
 import ThemeConfig from "../components/dialogs/ThemeConfig";
 import EmbedConfig from "../components/dialogs/EmbedConfig";
 import PNGConfig from "../components/dialogs/PNGConfig";
@@ -244,7 +244,7 @@ import { isEqual, zipObject } from "lodash";
 const HISTORY_DIALOGS = {
   dialogHelp: "help",
   dialogAddGame: "add",
-  dialogUISettings: "preferences",
+  dialogPreferences: "preferences",
   dialogThemeConfig: "theme",
   dialogEditGame: "info",
   dialogEditPTN: "edit",
@@ -275,7 +275,7 @@ export default {
     Help,
     AddGame,
     EditGame,
-    UISettings,
+    Preferences,
     ThemeConfig,
     EmbedConfig,
     PNGConfig,
@@ -598,7 +598,7 @@ export default {
           this.share();
           break;
         case "settings":
-          this.dialogUISettings = true;
+          this.dialogPreferences = true;
           break;
       }
     },
@@ -664,7 +664,7 @@ export default {
           }
           break;
         case "preferences":
-          this.dialogUISettings = !this.dialogUISettings;
+          this.dialogPreferences = !this.dialogPreferences;
           break;
         case "theme":
           this.dialogThemeConfig = !this.dialogThemeConfig;
