@@ -190,7 +190,7 @@ export default {
     },
     perspective() {
       const factor = 1 - this.$store.state.perspective / 10;
-      return 800 * Math.pow(4, factor) + "px";
+      return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
     padding() {
       if (!this.space) {
