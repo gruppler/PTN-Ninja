@@ -186,10 +186,10 @@ export default {
       return this.$store.state.ui.board3D;
     },
     orthogonal() {
-      return this.$store.state.orthogonal;
+      return this.$store.state.ui.orthogonal;
     },
     perspective() {
-      const factor = 1 - this.$store.state.perspective / 10;
+      const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
     padding() {

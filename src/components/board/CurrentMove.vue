@@ -5,8 +5,8 @@
   >
     <div class="board-move" :class="{ collapsed }">
       <q-btn
-        @click="collapsed = !collapsed"
-        :icon="collapsed ? 'up' : 'down'"
+        @click="toggle"
+        :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
         :ripple="false"
         dense
@@ -39,10 +39,16 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["showMove", !value]);
       },
     },
-  },
-  computed: {
     game() {
       return this.$store.state.game.current;
+    },
+    icon() {
+      return this.collapsed ? "up" : "down";
+    },
+  },
+  methods: {
+    toggle() {
+      this.collapsed = !this.collapsed;
     },
   },
 };
