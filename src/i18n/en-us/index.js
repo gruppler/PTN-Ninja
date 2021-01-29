@@ -100,7 +100,6 @@ export default {
   Online: "Online",
   OK: "OK",
   Online: "Online",
-  Orthogonal: "Orthogonal",
   "Orthogonal Board": "Orthogonal Board",
   Padding: "Padding",
   Password: "Password",
