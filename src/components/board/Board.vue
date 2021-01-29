@@ -1,7 +1,8 @@
 <template>
   <div
     class="board-wrapper flex flex-center"
-    :class="{ 'board-3D': board3D }"
+    :class="{ 'board-3D': board3D, orthogonal }"
+    :style="{ perspective }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     ref="wrapper"
@@ -20,7 +21,7 @@
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         'is-game-end': game.state.isGameEnd,
       }"
-      :style="{ maxWidth, fontSize, transform, padding: padding / 2 + 'px' }"
+      :style="{ width, fontSize, transform }"
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
@@ -107,9 +108,9 @@
         <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
-      <q-resize-observer @resize="resizeBoard" debounce="10" />
+      <q-resize-observer @resize="resizeBoard" :debounce="10" />
     </div>
-    <q-resize-observer @resize="resizeSpace" debounce="10" />
+    <q-resize-observer @resize="resizeSpace" :debounce="10" />
   </div>
 </template>
 
@@ -184,11 +185,18 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
+    orthogonal() {
+      return this.$store.state.orthogonal;
+    },
+    perspective() {
+      const factor = 1 - this.$store.state.perspective / 10;
+      return this.$q.screen.height * Math.pow(3, factor) + "px";
+    },
     padding() {
       if (!this.space) {
         return 0;
       }
-      const min = this.isPortrait ? this.space.width : this.space.height;
+      const min = Math.min(this.space.width, this.space.height);
       if (min <= 400) {
         return min * 0.1;
       } else {
@@ -196,17 +204,26 @@ export default {
       }
     },
     isPortrait() {
-      return this.size && this.space && this.size.width === this.space.width;
+      return (
+        this.size &&
+        this.space &&
+        Math.abs(this.size.width - this.space.width) <
+          Math.abs(this.size.height - this.space.height)
+      );
     },
-    maxWidth() {
-      if (this.$el && this.$el.style.maxWidth && this.isInputFocused()) {
-        return this.$el.style.maxWidth;
+    ratio() {
+      return Math.round(10 * (this.size.width / this.size.height)) / 10;
+    },
+    width() {
+      if (this.$el && this.$el.style.width && this.isInputFocused()) {
+        return this.$el.style.width;
       }
       if (!this.space || !this.size) {
-        return "50%";
+        return "80%";
       } else {
         return (
-          Math.round((this.size.width * this.space.height) / this.size.height) +
+          Math.min(this.space.width, this.space.height * this.ratio) -
+          this.padding +
           "px"
         );
       }
@@ -223,8 +240,8 @@ export default {
             8,
             Math.min(
               22,
-              Math.round(this.space.width * FONT_RATIO),
-              Math.round(this.space.height * FONT_RATIO)
+              this.space.width * FONT_RATIO,
+              this.space.height * FONT_RATIO
             )
           ) + "px"
         );
@@ -356,17 +373,23 @@ export default {
       if (this.$store.state.ui.unplayedPieces) {
         Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$el);
+            nodes.push(this.$refs[piece.id][0].$refs.stone);
           }
         });
       }
       this.squares.forEach((square) => {
         if (square.piece) {
-          nodes.push(this.$refs[square.piece.id][0].$el);
+          nodes.push(this.$refs[square.piece.id][0].$refs.stone);
         }
       });
       const boardBB = this.getBounds(nodes);
       const spaceBB = this.$refs.wrapper.getBoundingClientRect();
+
+      const halfPad = this.padding / 2;
+      spaceBB.width -= this.padding;
+      spaceBB.height -= this.padding;
+      spaceBB.x += halfPad;
+      spaceBB.y += halfPad;
 
       let scale;
       if (boardBB.width / spaceBB.width > boardBB.height / spaceBB.height) {
@@ -435,6 +458,7 @@ export default {
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
     board3D: "zoomFitAfterTransition",
+    orthogonal: "zoomFitNextTick",
   },
 };
 </script>
@@ -445,8 +469,11 @@ $axis-size: 1.5em;
 $radius: 0.35em;
 
 .board-wrapper {
+  &:not(.board-3D),
+  &.orthogonal {
+    perspective: none !important;
+  }
   &.board-3D {
-    perspective: 150vmin;
     perspective-origin: center;
     .board-container {
       transform-style: preserve-3d;

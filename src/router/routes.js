@@ -143,7 +143,7 @@ const routes = [
       {
         name: "preferences",
         path: "/preferences",
-        component: () => import("../dialogs/UISettings"),
+        component: () => import("../dialogs/Preferences"),
       },
       {
         name: "qr",

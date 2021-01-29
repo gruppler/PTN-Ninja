@@ -51,7 +51,7 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" />
-          <CurrentMove />
+          <CurrentMove style="margin-right: 65px" />
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />

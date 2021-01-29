@@ -29,6 +29,48 @@
               </q-item-section>
             </q-item>
 
+            <q-item tag="label" :title="hotkeys.board3D" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("3D Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="board3D" :disabled="isDisabled('board3D')" />
+              </q-item-section>
+            </q-item>
+
+            <smooth-reflow>
+              <q-item
+                v-if="board3D"
+                tag="label"
+                :title="hotkeys.orthogonal"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t("Orthogonal Board") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="orthogonal"
+                    :disabled="isDisabled('orthogonal')"
+                  />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-if="board3D && !orthogonal">
+                <q-item-section>
+                  {{ $t("Perspective") }}
+                  <q-slider
+                    v-model="perspective"
+                    :min="1"
+                    :max="10"
+                    :label-value="perspective"
+                    snap
+                    label
+                  />
+                </q-item-section>
+              </q-item>
+            </smooth-reflow>
+
             <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Animate Board") }}</q-item-label>
@@ -50,15 +92,6 @@
                   v-model="axisLabels"
                   :disabled="isDisabled('axisLabels')"
                 />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" :title="hotkeys.board3D" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("3D Board") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="board3D" :disabled="isDisabled('board3D')" />
               </q-item-section>
             </q-item>
 
@@ -88,7 +121,7 @@
 
             <smooth-reflow>
               <q-item
-                v-show="turnIndicator"
+                v-if="turnIndicator"
                 tag="label"
                 :title="hotkeys.flatCounts"
                 v-ripple
@@ -260,6 +293,8 @@ const props = [
   "notifyGame",
   "notifyNotes",
   "openDuplicate",
+  "orthogonal",
+  "perspective",
   "pieceShadows",
   "playSpeed",
   "showAllBranches",
@@ -273,7 +308,7 @@ const props = [
 ];
 
 export default {
-  name: "UISettings",
+  name: "Preferences",
   components: { ThemeSelector },
   data() {
     return {
@@ -288,7 +323,7 @@ export default {
     game() {
       return this.$store.state.game.current;
     },
-    disabledOptions() {
+    disabled() {
       return this.$store.getters["game/disabledOptions"];
     },
     ...zipObject(

@@ -194,14 +194,6 @@ kbd {
   line-height: 1.5em;
 }
 
-.board-move-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
-
 .q-dialog {
   .q-expansion-item .q-list {
     overflow-x: hidden;

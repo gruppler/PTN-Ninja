@@ -8,6 +8,7 @@
       @input="$q.fullscreen.toggle()"
       :value="$q.fullscreen.isActive"
       class="dimmed-btn"
+      :ripple="false"
       :color="fg"
       dense
       flat
@@ -17,6 +18,7 @@
       :icon="board3D ? '2d' : '3d'"
       :title="$t((board3D ? '2' : '3') + 'D Board')"
       class="dimmed-btn"
+      :ripple="false"
       :color="fg"
       dense
       flat
