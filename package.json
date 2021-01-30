@@ -19,7 +19,7 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
-    "@quasar/extras": "^1.9.14",
+    "@quasar/extras": "^1.9.15",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",

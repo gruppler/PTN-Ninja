@@ -222,7 +222,10 @@ export default {
         return "80%";
       } else {
         return (
-          Math.min(this.space.width, this.space.height * this.ratio) -
+          Math.max(
+            100,
+            Math.min(this.space.width, this.space.height * this.ratio)
+          ) -
           this.padding +
           "px"
         );
@@ -597,7 +600,7 @@ $radius: 0.35em;
   }
   .flats {
     white-space: nowrap;
-    width: 2em;
+    min-width: 2em;
     flex-grow: 1;
     flex-shrink: 0;
     z-index: 1;

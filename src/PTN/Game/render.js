@@ -398,6 +398,8 @@ export default function render(game, options = {}) {
       y *= -squareSize / (total - 1);
     }
 
+    y = Math.round(y);
+
     if (options.pieceShadows) {
       ctx.shadowBlur = shadowBlur;
       ctx.shadowOffsetY = shadowOffset;
@@ -416,8 +418,8 @@ export default function render(game, options = {}) {
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
       roundRect(
         ctx,
-        -wallSize / 2,
-        -pieceSize / 2,
+        Math.round(-wallSize / 2),
+        Math.round(-pieceSize / 2),
         wallSize,
         pieceSize,
         pieceRadius
@@ -427,8 +429,8 @@ export default function render(game, options = {}) {
       if (isImmovable) {
         roundRect(
           ctx,
-          pieceSize / 2,
-          y + pieceSize / 2 - pieceSpacing,
+          Math.round(pieceSize / 2),
+          Math.round(y + pieceSize / 2 - pieceSpacing),
           immovableSize,
           pieceSpacing,
           pieceRadius / 2
@@ -436,8 +438,8 @@ export default function render(game, options = {}) {
       } else {
         roundRect(
           ctx,
-          -pieceSize / 2,
-          y - pieceSize / 2,
+          Math.round(-pieceSize / 2),
+          Math.round(y - pieceSize / 2),
           pieceSize,
           pieceSize,
           pieceRadius
