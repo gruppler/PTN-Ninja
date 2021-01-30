@@ -591,7 +591,7 @@ $radius: 0.35em;
   }
   .flats {
     white-space: nowrap;
-    width: 2em;
+    min-width: 2em;
     flex-grow: 1;
     flex-shrink: 0;
     z-index: 1;
