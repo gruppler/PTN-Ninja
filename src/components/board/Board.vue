@@ -222,7 +222,10 @@ export default {
         return "80%";
       } else {
         return (
-          Math.min(this.space.width, this.space.height * this.ratio) -
+          Math.max(
+            100,
+            Math.min(this.space.width, this.space.height * this.ratio)
+          ) -
           this.padding +
           "px"
         );
