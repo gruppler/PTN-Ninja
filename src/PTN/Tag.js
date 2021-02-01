@@ -109,6 +109,10 @@ export default class Tag {
       this.value = value;
     }
 
+    if (this.value === "?") {
+      this.value = "";
+    }
+
     if (key in formats) {
       if (this.value && !formats[key].test(this.value)) {
         throw new Error("Invalid " + key);
