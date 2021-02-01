@@ -25,7 +25,7 @@ export default class GameNavigation {
   }
 
   _afterPly(ply) {
-    if (ply.result) {
+    if (ply.result && ply.result.type !== "1") {
       if (ply.result.type === "R" && !ply.result.roads) {
         ply.result.roads = this.findRoads();
       }

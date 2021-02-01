@@ -96,6 +96,10 @@ export default class Tag {
     const key = this.key.toLowerCase();
     this.key = capitalized[key];
 
+    if (this.value === "?") {
+      this.value = "";
+    }
+
     if (key in formats) {
       if (this.value && !formats[key].test(this.value)) {
         throw new Error("Invalid " + key);
