@@ -538,6 +538,7 @@ $radius: 0.35em;
     transition: width $generic-hover-transition;
     .content {
       overflow: hidden;
+      white-space: nowrap;
     }
   }
   .player1 .content {
