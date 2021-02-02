@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="game.state.ply && !$store.state.showPTN"
+    v-show="game.state.ply && !$store.state.ui.showPTN"
     class="board-move-container no-pointer-events"
   >
     <div class="board-move" :class="{ collapsed }">
