@@ -435,34 +435,40 @@ export const TRIM_TO_PLY = function ({ commit, dispatch }) {
   });
 };
 
-export const FIRST = function ({ commit }) {
-  return commit("FIRST");
+export const FIRST = function ({ commit, dispatch }) {
+  const result = commit("FIRST");
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
-export const LAST = function ({ commit }) {
-  return commit("LAST");
+export const LAST = function ({ commit, dispatch }) {
+  const result = commit("LAST");
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
-export const PREV = function ({ commit }, half) {
-  return commit("PREV", half);
+export const PREV = function ({ commit, dispatch }, half) {
+  const result = commit("PREV", half);
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
-export const NEXT = function ({ commit }, half) {
-  return commit("NEXT", half);
+export const NEXT = function ({ commit, dispatch }, half) {
+  const result = commit("NEXT", half);
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
-export const SET_TARGET = function ({ commit }, ply) {
-  return commit("SET_TARGET", ply);
+export const SET_TARGET = function ({ commit, dispatch }, ply) {
+  const result = commit("SET_TARGET", ply);
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
-export const GO_TO_PLY = function ({ commit }, { ply, isDone }) {
-  return commit("GO_TO_PLY", { ply, isDone });
+export const GO_TO_PLY = function ({ commit, dispatch }, { ply, isDone }) {
+  const result = commit("GO_TO_PLY", { ply, isDone });
   dispatch("SAVE_CURRENT_GAME_STATE");
+  return result;
 };
 
 export const DO_TPS = function ({ commit }, tps) {
