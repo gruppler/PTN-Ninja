@@ -52,6 +52,7 @@ export default class Square {
       E: x == size - 1,
       W: x == 0,
     });
+    this.static.edges.onEnable = null;
     Object.freeze(this.static.edges);
   }
 
@@ -59,7 +60,7 @@ export default class Square {
     return this.pieces.length ? this.pieces[this.pieces.length - 1] : null;
   }
 
-  _setPiece(piece) {
+  _setPiece(piece, deferUpdate = false) {
     const prevColor = this.color;
     const wasStanding = this.piece && this.isStanding;
 
@@ -72,21 +73,37 @@ export default class Square {
       this.isStanding = false;
     }
     if (this.color !== prevColor || this.isStanding !== wasStanding) {
-      this._updateConnected();
+      if (!deferUpdate) {
+        this.updateConnected();
+      }
     }
   }
 
-  _updateConnected() {
+  clear() {
+    this.pieces.forEach((piece) => {
+      piece.isStanding = false;
+      piece.square = null;
+    });
+    this.pieces.length = 0;
+    this.color = null;
+    this.clearConnected();
+  };
+
+  clearConnected() {
+    this.connected.clear();
+  }
+
+  updateConnected() {
     let neighbor, isConnected;
     Object.keys(EDGE).forEach((side) => {
       if (this.static.edges[side]) {
         this.connected[side] = !!(this.piece && !this.isStanding);
       } else if ((neighbor = this.static.neighbors[side])) {
         isConnected = !!(
-          neighbor.color === this.color &&
           this.piece &&
           !this.isStanding &&
-          !neighbor.isStanding
+          !neighbor.isStanding &&
+          neighbor.color === this.color
         );
         this.connected[side] = isConnected;
         neighbor.connected[OPPOSITE[side]] = isConnected;
@@ -108,42 +125,36 @@ export default class Square {
     });
   }
 
-  setStackPiece(index, piece) {
+  setStackPiece(index, piece, deferUpdate = false) {
     piece.square = this;
     this.pieces[index] = piece;
     if (index === this.pieces.length - 1) {
-      this._setPiece(piece);
+      this._setPiece(piece, deferUpdate);
     }
   }
 
-  pushPiece(piece) {
+  pushPiece(piece, deferUpdate = false) {
     piece.square = this;
-    this._setPiece(piece);
+    this._setPiece(piece, deferUpdate);
     this.pieces.push(piece);
   }
 
-  pushPieces(pieces) {
-    pieces.forEach((piece) => this.pushPiece(piece));
+  pushPieces(pieces, deferUpdate = false) {
+    pieces.forEach((piece) => this.pushPiece(piece, deferUpdate));
   }
 
-  popPiece() {
+  popPiece(deferUpdate = false) {
     const piece = this.pieces.pop();
     if (piece) {
       piece.square = null;
     }
-    this._setPiece(this._getPiece());
+    this._setPiece(this._getPiece(), deferUpdate);
     return piece;
   }
 
-  popPieces(count) {
+  popPieces(count, deferUpdate = false) {
     while (count--) {
-      this.popPiece();
-    }
-  }
-
-  clear() {
-    while (this.pieces.length) {
-      this.popPiece().isStanding = false;
+      this.popPiece(deferUpdate);
     }
   }
 }
@@ -217,5 +228,19 @@ export class Sides {
         }
       }
     }
+  }
+
+  clear() {
+    if (this.onDisable) {
+      this.forEach((side) => {
+        this.onDisable(side, false);
+      });
+    }
+    this._index.N = false;
+    this._index.S = false;
+    this._index.E = false;
+    this._index.W = false;
+    this._array.length = 0;
+    this.length = 0;
   }
 }

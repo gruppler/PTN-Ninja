@@ -41,9 +41,9 @@ export default class GameNavigation {
     }
   }
 
-  _doPly() {
+  _doPly(deferUpdate = false) {
     const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
-    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
+    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply, deferUpdate)) {
       this._setPly(ply.id, true);
       this._afterPly(ply);
       this.state.setRoads(ply.result ? ply.result.roads : null);
@@ -53,9 +53,12 @@ export default class GameNavigation {
     }
   }
 
-  _undoPly() {
+  _undoPly(deferUpdate = false) {
     const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
-    if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
+    if (
+      ply &&
+      this._doMoveset(ply.toUndoMoveset(), ply.color, ply, deferUpdate)
+    ) {
       this._setPly(ply.id, false);
       this.state.setRoads(null);
       if (ply.branches.length) {
@@ -67,7 +70,7 @@ export default class GameNavigation {
     }
   }
 
-  _doMoveset(moveset, color = 1, ply = null) {
+  _doMoveset(moveset, color = 1, ply = null, deferUpdate = false) {
     let stack = [];
 
     if (moveset[0].errors) {
@@ -88,10 +91,10 @@ export default class GameNavigation {
       if (type) {
         if (action === "pop") {
           // Undo placement
-          this.state.unplayPiece(square);
+          this.state.unplayPiece(square, deferUpdate);
         } else {
           // Do placement
-          const piece = this.state.playPiece(color, type, square);
+          const piece = this.state.playPiece(color, type, square, deferUpdate);
           if (!piece) {
             return false;
           }
@@ -99,10 +102,10 @@ export default class GameNavigation {
         }
       } else if (action === "pop") {
         // Undo movement
-        times(count, () => stack.push(square.popPiece()));
+        times(count, () => stack.push(square.popPiece(deferUpdate)));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
-          square._setPiece(square.piece);
+          square._setPiece(square.piece, deferUpdate);
         }
       } else {
         // Do movement
@@ -119,7 +122,7 @@ export default class GameNavigation {
         }
         if (flatten && square.pieces.length) {
           square.piece.isStanding = false;
-          square._setPiece(square.piece);
+          square._setPiece(square.piece, deferUpdate);
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();
@@ -131,7 +134,7 @@ export default class GameNavigation {
             throw new Error("Invalid ply");
             return false;
           }
-          square.pushPiece(piece);
+          square.pushPiece(piece, deferUpdate);
         });
       }
     }
@@ -139,7 +142,7 @@ export default class GameNavigation {
     return true;
   }
 
-  _undoMoveset(moveset, color = 1, ply = null) {
+  _undoMoveset(moveset, color = 1, ply = null, deferUpdate = false) {
     return this._doMoveset(
       moveset
         .map((move) => ({
@@ -148,7 +151,8 @@ export default class GameNavigation {
         }))
         .reverse(),
       color,
-      ply
+      ply,
+      deferUpdate
     );
   }
 
@@ -165,24 +169,30 @@ export default class GameNavigation {
       tps = TPS.parse(tps);
     }
     const grid = tps.grid;
-    let stack, square, piece, type;
+    let stack,
+      square,
+      piece,
+      type,
+      squares = [];
     this.state.clearBoard();
     grid.forEach((row, y) => {
       row.forEach((col, x) => {
         if (col[0] !== "x") {
           stack = col.split("");
           square = this.state.squares[y][x];
+          squares.push(square);
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();
             } else {
               type = "flat";
             }
-            this.state.playPiece(piece, type, square);
+            this.state.playPiece(piece, type, square, true);
           }
         }
       });
     });
+    squares.forEach((square) => square.updateConnected());
   }
 
   goToPly(plyID, isDone) {
@@ -238,32 +248,40 @@ export default class GameNavigation {
       this.state.targetBranch = target.branch;
     }
 
+    let squares = {};
+
     if (this.state.ply.branches.includes(targetPly)) {
       // Switch to the target branch if we're on a sibling
       if (this.state.plyIsDone) {
-        this._undoPly();
+        this._undoPly(true);
+        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
       }
       this._setPly(targetPly.id, false);
     }
 
     if (this.state.ply.index < targetPly.index) {
-      while (this.state.ply.index < targetPly.index && this._doPly()) {
+      while (this.state.ply.index < targetPly.index && this._doPly(true)) {
         // Go forward until we reach the target ply
+        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
       }
     } else if (this.state.ply.index > targetPly.index) {
-      while (this.state.ply.index > targetPly.index && this._undoPly()) {
+      while (this.state.ply.index > targetPly.index && this._undoPly(true)) {
         // Go backward until we reach the target ply
+        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
       }
     }
 
     // Do or undo the target ply
     if (target.plyIsDone !== this.state.plyIsDone) {
       if (target.plyIsDone) {
-        this._doPly();
+        this._doPly(true);
       } else {
-        this._undoPly();
+        this._undoPly(true);
       }
+      this.state.ply.squares.forEach((coord) => (squares[coord] = true));
     }
+
+    this.state.updateSquares(squares);
 
     return true;
   }

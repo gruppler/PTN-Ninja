@@ -79,43 +79,41 @@ export default class GameEnd {
     let road;
 
     // Gather player-controlled squares and dead ends
-    this.state.squares.forEach((row) =>
-      row.forEach((square) => {
-        let piece = square.piece;
-        if (piece && !piece.isStanding) {
-          let player = piece.color;
-          connections[square.static.coord] = square.connected
-            .map((side) => square.static.neighbors[side])
-            .filter((square) => square);
+    this.state.forEachSquare((square) => {
+      let piece = square.piece;
+      if (piece && !piece.isStanding) {
+        let player = piece.color;
+        connections[square.static.coord] = square.connected
+          .map((side) => square.static.neighbors[side])
+          .filter((square) => square);
 
-          let neighbors = connections[square.static.coord];
+        let neighbors = connections[square.static.coord];
 
-          if (neighbors.length === 1) {
-            if (square.static.isEdge) {
-              // An edge with exactly one friendly neighbor
-              possibleRoads[player][square.static.coord] = square;
-              possibleDeadEnds[player].push(square);
-            } else {
-              // A non-edge dead end
-              deadEnds.push(square);
-            }
-          } else if (neighbors.length > 1) {
-            // An intersection
+        if (neighbors.length === 1) {
+          if (square.static.isEdge) {
+            // An edge with exactly one friendly neighbor
             possibleRoads[player][square.static.coord] = square;
-            if (
-              square.static.isEdge &&
-              neighbors.length === 2 &&
-              neighbors.find((square) => square.static.isEdge) &&
-              neighbors.find((square) => !square.static.isEdge)
-            ) {
-              possibleDeadEnds[player].push(square);
-            }
+            possibleDeadEnds[player].push(square);
+          } else {
+            // A non-edge dead end
+            deadEnds.push(square);
           }
-        } else {
-          connections[square.static.coord] = [];
+        } else if (neighbors.length > 1) {
+          // An intersection
+          possibleRoads[player][square.static.coord] = square;
+          if (
+            square.static.isEdge &&
+            neighbors.length === 2 &&
+            neighbors.find((square) => square.static.isEdge) &&
+            neighbors.find((square) => !square.static.isEdge)
+          ) {
+            possibleDeadEnds[player].push(square);
+          }
         }
-      })
-    );
+      } else {
+        connections[square.static.coord] = [];
+      }
+    });
 
     // Remove dead ends not connected to edges
     players.forEach((player) =>
