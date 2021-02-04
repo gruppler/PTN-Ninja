@@ -1,7 +1,7 @@
 import { LocalStorage, Platform } from "quasar";
 
 const state = {
-  current: null,
+  board: null,
   ptn: "",
   state: null,
   config: null,

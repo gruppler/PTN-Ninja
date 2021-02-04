@@ -22,19 +22,17 @@
                 class="fullwidth-padded-md q-py-xs q-mb-md"
                 :class="{
                   'q-mt-md': i > 0,
-                  highlight: game.state.plyID === message.ply.id,
+                  highlight: $game.state.plyID === message.ply.id,
                 }"
                 :key="i"
               >
                 <Linenum
                   v-if="message.ply.linenum"
                   :linenum="message.ply.linenum"
-                  :game="game"
                 />
                 <Ply
                   class="text-no-wrap"
                   :plyID="message.ply.id"
-                  :game="game"
                   :delay="6e4 / $store.state.playSpeed"
                 />
               </div>
@@ -94,27 +92,24 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     log() {
-      return this.game.chatlog;
+      return this.$game.chatlog;
     },
     player() {
       const user = this.$store.state.online.user;
-      return this.game.isLocal || !user
-        ? this.game.state.player
-        : this.game.player(user.uid);
+      return this.$game.isLocal || !user
+        ? this.$game.state.player
+        : this.$game.player(user.uid);
     },
     time() {
-      return this.game.datetime;
+      return this.$game.datetime;
     },
     messages() {
       let messages = [];
       let previous;
       for (let plyID in this.log) {
         if (plyID >= 0) {
-          messages.push({ ply: this.game.plies[plyID] });
+          messages.push({ ply: this.$game.plies[plyID] });
         }
         for (let i = 0; i < this.log[plyID].length; i++) {
           let message = this.parseMessage(this.log[plyID][i]);
@@ -134,16 +129,16 @@ export default {
       return messages;
     },
     currentPlyIndex() {
-      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+      if (!this.$game.state.plyID && !this.$game.state.plyIsDone) {
         return 0;
-      } else if (this.game.state.ply) {
+      } else if (this.$game.state.ply) {
         let ids = Object.keys(this.log)
           .map((id) => 1 * id)
           .sort();
         for (let i = 0; i < ids.length; i++) {
-          if (ids[i] === this.game.state.plyID) {
+          if (ids[i] === this.$game.state.plyID) {
             return i;
-          } else if (ids[i] > this.game.state.plyID) {
+          } else if (ids[i] > this.$game.state.plyID) {
             return i - !!i;
           }
         }
@@ -191,7 +186,7 @@ export default {
     },
     send() {
       if (this.message) {
-        this.game.addChatMessage(
+        this.$game.addChatMessage(
           `+${this.getTime()}:${this.player}: ${this.message}`
         );
         this.message = "";

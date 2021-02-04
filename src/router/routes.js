@@ -95,7 +95,8 @@ const routes = [
         path: "/edit",
         component: () => import("../dialogs/EditPTN"),
         beforeEnter: (to, from, next) => {
-          if (store.state.game.current && store.state.game.current.isLocal) {
+          const game = store.getters["game/current"];
+          if (game && game.isLocal) {
             next();
           }
         },

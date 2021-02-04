@@ -46,18 +46,15 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     openPlayer() {
-      return this.game.openPlayer;
+      return this.$game.openPlayer;
     },
     player() {
       const user = this.$store.state.online.user;
-      return user ? this.game.player(user.uid) : 0;
+      return user ? this.$game.player(user.uid) : 0;
     },
     isPrivate() {
-      return this.game.config.isPrivate;
+      return this.$game.config.isPrivate;
     },
   },
   methods: {
@@ -78,7 +75,7 @@ export default {
       }
 
       // Join game
-      this.$store.dispatch("online/JOIN_GAME", this.game).catch((error) => {
+      this.$store.dispatch("online/JOIN_GAME", this.$game).catch((error) => {
         this.$store.dispatch("ui/NOTIFY_ERROR", error);
       });
 

@@ -1,5 +1,5 @@
 <template>
-  <q-layout v-if="game" class="non-selectable" view="lHh LpR lFr">
+  <q-layout v-if="$game" class="non-selectable" view="lHh LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -31,7 +31,7 @@
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
-        @shortkey="$store.dispatch($event.srcKey, game)"
+        @shortkey="$store.dispatch($event.srcKey, $game)"
         class="overflow-hidden"
       >
         <div
@@ -57,8 +57,8 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools" :game="game">
-          <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
+        <PTNTools ref="tools">
+          <ShareButton ref="shareButton" flat stretch no-menu />
         </PTNTools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
@@ -66,16 +66,16 @@
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('game/UNDO', game)"
+              @click="$store.dispatch('game/UNDO')"
               icon="undo"
               :title="$t('Undo')"
-              :disabled="!game.canUndo"
+              :disabled="!$game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('game/REDO', game)"
+              @click="$store.dispatch('game/REDO')"
               icon="redo"
               :title="$t('Redo')"
-              :disabled="!game.canRedo"
+              :disabled="!$game.canRedo"
             />
           </q-btn-group>
           <EvalButtons class="full-width" spread stretch flat unelevated />
@@ -163,9 +163,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     showPTN: {
       get() {
         return this.$store.state.ui.showPTN;
@@ -191,10 +188,10 @@ export default {
       },
     },
     title() {
-      return this.name || this.game.generateName();
+      return this.name || this.$game.generateName();
     },
     url() {
-      return this.$store.getters["ui/url"](this.game, { state: true });
+      return this.$store.getters["ui/url"](this.$game, { state: true });
     },
   },
   methods: {
@@ -214,7 +211,10 @@ export default {
     },
     openLink() {
       window.open(
-        this.$store.getters["ui/url"](this.game, { origin: true, state: true }),
+        this.$store.getters["ui/url"](this.$game, {
+          origin: true,
+          state: true,
+        }),
         "_blank"
       );
     },
@@ -261,7 +261,7 @@ export default {
   },
   watch: {
     ptn() {
-      this.game = this.getGame();
+      this.$game = this.getGame();
     },
     state: {
       handler(state, oldState) {
@@ -269,10 +269,10 @@ export default {
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
           this.$store.commit("ui/SET_UI", [key, value]);
         });
-        this.game.state.targetBranch =
+        this.$game.state.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
-          const ply = this.game.state.plies[state.plyIndex];
+          const ply = this.$game.state.plies[state.plyIndex];
           if (ply) {
             this.$store.dispatch("game/GO_TO_PLY", {
               ply: ply.id,

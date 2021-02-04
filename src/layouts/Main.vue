@@ -1,5 +1,5 @@
 <template>
-  <q-layout v-if="game" class="non-selectable" view="lHr LpR lFr">
+  <q-layout v-if="$game" class="non-selectable" view="lHr LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -12,7 +12,7 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              v-if="game.isLocal || player"
+              v-if="$game.isLocal || player"
               name="edit"
               @click.stop="edit"
               class="q-field__focusable-action q-mr-sm"
@@ -42,7 +42,7 @@
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
-        @shortkey="$store.dispatch($event.srcKey, game)"
+        @shortkey="$store.dispatch($event.srcKey, $game)"
         class="overflow-hidden"
       >
         <div
@@ -83,16 +83,16 @@
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <q-btn-group spread stretch flat unelevated>
             <q-btn
-              @click="$store.dispatch('game/UNDO', game)"
+              @click="$store.dispatch('game/UNDO', $game)"
               icon="undo"
               :title="$t('Undo')"
-              :disabled="isEditingTPS || !game.canUndo"
+              :disabled="isEditingTPS || !$game.canUndo"
             />
             <q-btn
-              @click="$store.dispatch('game/REDO', game)"
+              @click="$store.dispatch('game/REDO', $game)"
               icon="redo"
               :title="$t('Redo')"
-              :disabled="isEditingTPS || !game.canRedo"
+              :disabled="isEditingTPS || !$game.canRedo"
             />
           </q-btn-group>
           <EvalButtons class="full-width" spread stretch flat unelevated />
@@ -175,7 +175,7 @@
     <GameNotifications />
     <NoteNotifications />
   </q-layout>
-  <q-dialog v-else :value="true"> No Game </q-dialog>
+  <q-dialog v-else :value="true" persistent>No Game</q-dialog>
 </template>
 
 <script>
@@ -239,9 +239,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     showPTN: {
       get() {
         return this.$store.state.ui.showPTN;
@@ -259,7 +256,7 @@ export default {
       },
     },
     hasChat() {
-      return this.game.hasChat;
+      return this.$game.hasChat;
     },
     textTab: {
       get() {
@@ -294,7 +291,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.game.state.getTPS(
+        this.editingTPS = this.$game.state.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -302,9 +299,9 @@ export default {
     },
     minFirstMoveNumber() {
       const min1 =
-        this.game.state.pieces.played[1].cap.length +
-        this.game.state.pieces.played[1].flat.length +
-        this.game.state.squares.reduce(
+        this.$game.state.pieces.played[1].cap.length +
+        this.$game.state.pieces.played[1].flat.length +
+        this.$game.state.squares.reduce(
           (total, row) =>
             row.reduce(
               (total, square) =>
@@ -318,9 +315,9 @@ export default {
           0
         );
       const min2 =
-        this.game.state.pieces.played[2].cap.length +
-        this.game.state.pieces.played[2].flat.length +
-        this.game.state.squares.reduce(
+        this.$game.state.pieces.played[2].cap.length +
+        this.$game.state.pieces.played[2].flat.length +
+        this.$game.state.squares.reduce(
           (total, row) =>
             row.reduce(
               (total, square) =>
@@ -341,7 +338,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.game.state.getTPS(
+        this.editingTPS = this.$game.state.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -372,7 +369,7 @@ export default {
       return this.$store.state.online.user;
     },
     player() {
-      return this.user ? this.game.player(this.user.uid) : 0;
+      return this.user ? this.$game.player(this.user.uid) : 0;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -760,12 +757,12 @@ export default {
       }
     },
     user(user, oldUser) {
-      if (this.game && this.game.config.isOnline) {
+      if (this.$game && this.$game.config.isOnline) {
         if (
           user &&
           (!oldUser || user.uid !== oldUser.uid) &&
-          !this.game.player(user.uid) &&
-          this.game.openPlayer
+          !this.$game.player(user.uid) &&
+          this.$game.openPlayer
         ) {
           this.$router.push({ name: "join" });
         }
@@ -817,10 +814,10 @@ export default {
     if (!this.gameID) {
       if (!this.games.length) {
         this.$store.dispatch("game/ADD_GAME", {
-          ptn: this.game.text(),
-          name: this.game.name,
-          state: this.game.minState,
-          config: this.game.config,
+          ptn: this.$game.text(),
+          name: this.$game.name,
+          state: this.$game.minState,
+          config: this.$game.config,
         });
       }
     }

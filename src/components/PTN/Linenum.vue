@@ -73,9 +73,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     branch() {
       const text = document.createElement("textarea");
       text.innerHTML = this.linenum.branch;
@@ -83,7 +80,7 @@ export default {
       return branch.split("/").join('/<span class="space"> </span>');
     },
     ply() {
-      return this.activePly || this.game.branches[this.linenum.branch];
+      return this.activePly || this.$game.branches[this.linenum.branch];
     },
     branches() {
       return this.ply.branches;
@@ -92,7 +89,7 @@ export default {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return !this.unselected && this.game.state.plies.includes(this.ply);
+      return !this.unselected && this.$game.state.plies.includes(this.ply);
     },
   },
   methods: {
@@ -106,7 +103,7 @@ export default {
       });
     },
     deleteBranch() {
-      this.game.deleteBranch(this.linenum.branch);
+      this.$game.deleteBranch(this.linenum.branch);
     },
   },
 };

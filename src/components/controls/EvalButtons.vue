@@ -52,11 +52,8 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     ply() {
-      return this.game ? this.game.state.ply : null;
+      return this.$game ? this.$game.state.ply : null;
     },
     eval() {
       return this.ply ? this.ply.evaluation : null;
@@ -82,8 +79,8 @@ export default {
   },
   methods: {
     toggle(type, double = false) {
-      if (this.game) {
-        this.game.toggleEvaluation(type, double);
+      if (this.$game) {
+        this.$game.toggleEvaluation(type, double);
       }
     },
   },

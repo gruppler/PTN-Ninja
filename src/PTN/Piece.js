@@ -1,4 +1,4 @@
-import { defaults } from "lodash";
+import { defaults, pick } from "lodash";
 
 export default class Piece {
   constructor(params) {
@@ -12,6 +12,15 @@ export default class Piece {
       isCapstone: false,
     });
     Object.keys(params).forEach((key) => (this[key] = params[key]));
+  }
+
+  get snapshot() {
+    return {
+      ...pick(this, ["color", "isSelected", "isStanding", "isCapstone"]),
+      ...this.state,
+      type: this.type,
+      square: this.square ? this.square.static.coord : null,
+    };
   }
 
   get state() {

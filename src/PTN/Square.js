@@ -1,6 +1,6 @@
 import { itoa } from "./Ply";
 
-import { isBoolean } from "lodash";
+import { isBoolean, pick } from "lodash";
 
 const OPPOSITE = {
   N: "S",
@@ -56,6 +56,15 @@ export default class Square {
     Object.freeze(this.static.edges);
   }
 
+  get snapshot() {
+    return {
+      static: this.static,
+      ...pick(this, ["connected", "roads", "isSelected"]),
+      piece: this.piece ? this.piece.id : null,
+      pieces: this.pieces ? this.pieces.map((piece) => piece.id) : null,
+    };
+  }
+
   _getPiece() {
     return this.pieces.length ? this.pieces[this.pieces.length - 1] : null;
   }
@@ -87,7 +96,7 @@ export default class Square {
     this.pieces.length = 0;
     this.color = null;
     this.clearConnected();
-  };
+  }
 
   clearConnected() {
     this.connected.clear();

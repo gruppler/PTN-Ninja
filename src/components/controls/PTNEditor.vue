@@ -32,11 +32,8 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     header() {
-      return this.game.headerText();
+      return this.$game.headerText();
     },
     error() {
       return this.$refs.input.computedErrorMessage;
@@ -47,7 +44,7 @@ export default {
       this.$emit("save", this.header + this.ptn);
     },
     init() {
-      this.ptn = this.game ? this.game.moveText(true, true) : "";
+      this.ptn = this.$game ? this.$game.moveText(true, true) : "";
     },
   },
   mounted() {

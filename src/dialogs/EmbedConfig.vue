@@ -33,7 +33,7 @@
           <q-input v-model="name" name="name" :label="$t('Name')" filled>
             <template v-slot:append>
               <q-icon
-                @click="name = name === game.name ? generatedName : game.name"
+                @click="name = name === $game.name ? generatedName : $game.name"
                 name="refresh"
                 class="q-field__focusable-action"
               />
@@ -253,17 +253,14 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     previewHeight() {
       return this.previewError ? "0" : "333px";
     },
     generatedName() {
-      return this.game.generateName();
+      return this.$game.generateName();
     },
     url() {
-      return this.$store.getters["ui/url"](this.game, {
+      return this.$store.getters["ui/url"](this.$game, {
         origin: true,
         name: this.name,
         names: this.config.includeNames,
@@ -315,7 +312,7 @@ export default {
     },
   },
   mounted() {
-    this.name = this.game.name;
+    this.name = this.$game.name;
     this.initialURL = this.url;
   },
 };

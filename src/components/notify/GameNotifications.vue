@@ -9,16 +9,13 @@ export default {
   name: "GameNotifications",
   components: { Notifications },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     show() {
       return this.$store.state.ui.notifyGame;
     },
     notifications() {
-      const ply = this.game.state.plyIsDone
-        ? this.game.state.ply
-        : this.game.state.prevPly;
+      const ply = this.$game.state.plyIsDone
+        ? this.$game.state.ply
+        : this.$game.state.prevPly;
       let alerts = [];
       if (ply) {
         if (ply.result) {
@@ -27,7 +24,7 @@ export default {
           const winner = result.winner || ply.player;
           alerts.push({
             message: this.$t("result." + result.type, {
-              player: this.game.tag(
+              player: this.$game.tag(
                 "player" + winner,
                 this.$t(winner === 1 ? "White" : "Black")
               ),

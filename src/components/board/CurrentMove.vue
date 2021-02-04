@@ -40,7 +40,7 @@ export default {
       },
     },
     game() {
-      return this.$store.state.game.current;
+      return this.$game;
     },
     icon() {
       return this.collapsed ? "up" : "down";

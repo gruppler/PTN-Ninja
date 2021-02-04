@@ -41,13 +41,10 @@
 <script>
 export default {
   name: "Square",
-  props: ["x", "y"],
+  props: ["coord"],
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     eog() {
-      return this.game.state.isGameEnd;
+      return this.$game.state.isGameEnd;
     },
     isEditingTPS() {
       return this.$store.state.ui.isEditingTPS;
@@ -66,32 +63,35 @@ export default {
     firstMoveNumber() {
       return this.$store.state.ui.firstMoveNumber;
     },
+    board() {
+      return this.$store.state.game.board;
+    },
     square() {
-      return this.game.state.squares[this.y][this.x];
+      return this.board.squares[this.coord];
     },
     piece() {
-      return this.square.piece;
+      return this.square.piece ? this.board.pieces[this.square.piece] : null;
     },
     color() {
       return this.piece ? this.piece.color : "";
     },
     current() {
       return (
-        this.game.state.ply &&
-        this.game.state.ply.squares.includes(this.square.static.coord)
+        this.$game.state.ply &&
+        this.$game.state.ply.squares.includes(this.square.static.coord)
       );
     },
     primary() {
       if (this.selected) {
         return (
-          this.game.state.selected.squares.length > 1 &&
-          this.game.state.selected.squares[0] === this.square
+          this.$game.state.selected.squares.length > 1 &&
+          this.$game.state.selected.squares[0] === this.square
         );
       } else if (this.current) {
         const isDestination =
-          this.game.state.ply.squares.length === 1 ||
-          this.game.state.ply.squares[0] !== this.square.static.coord;
-        return this.game.state.plyIsDone ? isDestination : !isDestination;
+          this.$game.state.ply.squares.length === 1 ||
+          this.$game.state.ply.squares[0] !== this.square.static.coord;
+        return this.$game.state.plyIsDone ? isDestination : !isDestination;
       }
       return false;
     },
@@ -102,15 +102,15 @@ export default {
       return (
         this.piece &&
         this.piece.ply &&
-        this.piece.ply === this.game.state.ply &&
-        !this.game.state.isFirstMove
+        this.piece.ply === this.$game.state.ply &&
+        !this.$game.state.isFirstMove
       );
     },
     valid() {
-      return this.isEditingTPS || this.game.isValidSquare(this.square);
+      return this.isEditingTPS || this.$game.isValidSquare(this.square);
     },
     showRoads() {
-      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
+      return !this.$game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     n() {
       return this.square.connected.N;
@@ -159,7 +159,7 @@ export default {
           selectedPiece: this.selectedPiece,
         });
         if (this.isEditingTPS) {
-          this.editingTPS = this.game.state.getTPS(
+          this.editingTPS = this.$game.state.getTPS(
             this.selectedPiece.color,
             this.firstMoveNumber
           );

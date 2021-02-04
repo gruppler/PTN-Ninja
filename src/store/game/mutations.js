@@ -1,12 +1,18 @@
+import Vue from "vue";
 import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
 import Game from "../../PTN/Game";
+
+export const UPDATE_BOARD = (state) => {
+  state.board = Vue.prototype.$game.state.boardSnapshot();
+};
 
 export const SET_GAME = (state, game) => {
   if (!(game instanceof Game)) {
     game = new Game(game.ptn, game);
   }
-  state.current = game;
+  Vue.prototype.$game = game;
+  UPDATE_BOARD(state);
 };
 
 export const ADD_GAME = (state, game) => {
@@ -26,11 +32,12 @@ export const REMOVE_MULTIPLE_GAMES = (state, { start, count }) => {
 };
 
 export const RENAME_CURRENT_GAME = (state, name) => {
-  state.current.setName(name);
+  Vue.prototype.$game.setName(name);
 };
 
 export const SET_CURRENT_PTN = (state, ptn) => {
-  state.current.updatePTN(ptn);
+  Vue.prototype.$game.updatePTN(ptn);
+  UPDATE_BOARD(state);
 };
 
 export const SAVE_PTN = (state, ptn) => {
@@ -66,7 +73,8 @@ export const SAVE_CONFIG = (state, { game, config }) => {
 };
 
 export const SET_TAGS = (state, tags) => {
-  return state.current.setTags(tags);
+  Vue.prototype.$game.setTags(tags);
+  UPDATE_BOARD(state);
 };
 
 export const SELECT_GAME = (state, index) => {
@@ -77,119 +85,133 @@ export const SELECT_SQUARE = (
   state,
   { square, alt, isEditingTPS, selectedPiece }
 ) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.selectSquare(square, alt, isEditingTPS, selectedPiece);
+    // UPDATE_BOARD(state);
   }
 };
 
 export const SELECT_PIECE = (state, { type, alt }) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.selectUnplayedPiece(type, alt);
+    // UPDATE_BOARD(state);
   }
 };
 
 export const CANCEL_MOVE = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.cancelMove();
+    // UPDATE_BOARD(state);
   }
 };
 
 export const DELETE_PLY = (state, plyID) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.deletePly(plyID, true, true);
+    UPDATE_BOARD(state);
   }
 };
 
 export const UNDO = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game && !state.isEditingTPS) {
     game.undo();
+    UPDATE_BOARD(state);
   }
 };
 
 export const REDO = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game && !state.isEditingTPS) {
     game.redo();
+    UPDATE_BOARD(state);
   }
 };
 
 export const TRIM_BRANCHES = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.trimBranches();
   }
 };
 
 export const TRIM_TO_BOARD = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.trimToBoard();
   }
 };
 
 export const TRIM_TO_PLY = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     game.trimToPly();
   }
 };
 
 export const SAVE_UNDO_HISTORY = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     state.list[0].history = game.history.concat();
   }
 };
 
 export const SAVE_UNDO_INDEX = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   if (game) {
     state.list[0].historyIndex = game.historyIndex;
   }
 };
 
 export const FIRST = function (state) {
-  return state.current.first();
+  Vue.prototype.$game.first();
+  UPDATE_BOARD(state);
 };
 
 export const LAST = function (state) {
-  return state.current.last();
+  Vue.prototype.$game.last();
+  UPDATE_BOARD(state);
 };
 
 export const PREV = function (state, half) {
-  return state.current.prev(half);
+  Vue.prototype.$game.prev(half);
+  UPDATE_BOARD(state);
 };
 
 export const NEXT = function (state, half) {
-  return state.current.next(half);
+  Vue.prototype.$game.next(half);
+  UPDATE_BOARD(state);
 };
 
 export const SET_TARGET = function (state, ply) {
-  return state.current.setTarget(ply);
+  return Vue.prototype.$game.setTarget(ply);
 };
 
 export const GO_TO_PLY = function (state, { ply, isDone }) {
-  return state.current.goToPly(ply, isDone);
+  Vue.prototype.$game.goToPly(ply, isDone);
+  UPDATE_BOARD(state);
 };
 
 export const DO_TPS = function (state, tps) {
-  return state.current.doTPS(tps);
+  Vue.prototype.$game.doTPS(tps);
+  UPDATE_BOARD(state);
 };
 
 export const SAVE_TPS = function (state, tps) {
-  state.current.moves[0].linenum.number = Number(tps.split(/\s/)[2]);
-  state.current.setTags({ tps });
+  Vue.prototype.$game.moves[0].linenum.number = Number(tps.split(/\s/)[2]);
+  Vue.prototype.$game.setTags({ tps });
+  UPDATE_BOARD(state);
 };
 
 export const RESET_TPS = function (state) {
-  state.current.doTPS();
+  Vue.prototype.$game.doTPS();
+  UPDATE_BOARD(state);
 };
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
-  state.current.renameBranch(oldName, newName);
+  Vue.prototype.$game.renameBranch(oldName, newName);
 };

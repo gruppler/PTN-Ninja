@@ -1,3 +1,5 @@
+import Vue from "vue";
+
 export const uniqueName = (state) => (name, ignoreFirst = false) => {
   const names = state.list.slice(1 * ignoreFirst).map((game) => game.name);
   while (names.includes(name)) {
@@ -14,7 +16,7 @@ export const uniqueName = (state) => (name, ignoreFirst = false) => {
 };
 
 export const disabledOptions = (state) => {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   const disabled = [];
   if (game.config.disableFlatCounts) {
     disabled.push("flatCounts");

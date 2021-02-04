@@ -4,6 +4,9 @@ import { last } from "lodash";
 
 export default class GameIX {
   isValidSquare(square, assumeSoloCap = false) {
+    if (typeof square === "string") {
+      square = this.state.getSquare(square);
+    }
     const piece = square.piece;
 
     if (this.state.selected.pieces.length) {
@@ -120,6 +123,9 @@ export default class GameIX {
   }
 
   selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
+    if (typeof square === "string") {
+      square = this.state.getSquare(square);
+    }
     if (!editMode && !this.isValidSquare(square)) {
       return false;
     }

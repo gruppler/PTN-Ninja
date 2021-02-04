@@ -189,11 +189,8 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     url() {
-      return this.$store.getters["ui/png_url"](this.game);
+      return this.$store.getters["ui/png_url"](this.$game);
     },
     theme: {
       get() {
@@ -213,7 +210,7 @@ export default {
       },
     },
     tps() {
-      return this.game.state.tps;
+      return this.$game.state.tps;
     },
     canShare() {
       return navigator.canShare;
@@ -226,8 +223,8 @@ export default {
     updatePreview() {
       const config = cloneDeep(this.config);
       this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      let canvas = this.game.render(config);
-      const filename = this.game.pngFilename;
+      let canvas = this.$game.render(config);
+      const filename = this.$game.pngFilename;
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {

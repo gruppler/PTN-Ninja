@@ -46,9 +46,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     branchParts() {
       return Linenum.splitBranch(this.branch);
     },
@@ -75,7 +72,7 @@ export default {
         value === this.branch ||
         (value &&
           Linenum.validateBranch(value) &&
-          !Object.keys(this.game.branches).includes(this.getFullBranch(value)))
+          !Object.keys(this.$game.branches).includes(this.getFullBranch(value)))
       );
     },
     save() {

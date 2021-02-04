@@ -15,10 +15,13 @@
               :key="plyID"
               :ref="plyID"
             >
-              <div v-if="plyID >= 0 && game.plies[plyID]" class="ply-container">
+              <div
+                v-if="plyID >= 0 && $game.plies[plyID]"
+                class="ply-container"
+              >
                 <Move
-                  :move="game.plies[plyID].move"
-                  :player="game.plies[plyID].player"
+                  :move="$game.plies[plyID].move"
+                  :player="$game.plies[plyID].player"
                   separate-branch
                   no-decoration
                 />
@@ -110,9 +113,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     isShowing() {
       return (
         (this.$store.state.ui.showText && !this.hasChat) ||
@@ -124,11 +124,11 @@ export default {
     },
     log() {
       return this.$store.state.ui.showAllBranches
-        ? this.game.notes
+        ? this.$game.notes
         : pickBy(
-            this.game.notes,
+            this.$game.notes,
             (notes, id) =>
-              id < 0 || this.game.state.plies.includes(this.game.plies[id])
+              id < 0 || this.$game.state.plies.includes(this.$game.plies[id])
           );
     },
     plyIDs() {
@@ -144,21 +144,21 @@ export default {
         return this.editing.plyID;
       }
       let plyID, ply;
-      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+      if (!this.$game.state.plyID && !this.$game.state.plyIsDone) {
         return this.plyIDs[0];
-      } else if (this.game.state.ply) {
-        if (this.game.state.plyID in this.log) {
-          return this.game.state.plyID;
+      } else if (this.$game.state.ply) {
+        if (this.$game.state.plyID in this.log) {
+          return this.$game.state.plyID;
         } else if (this.isCurrent(-1)) {
           return -1;
         } else {
           for (let i = this.plyIDs.length - 1; i >= 0; i--) {
             plyID = this.plyIDs[i];
-            ply = plyID in this.game.plies ? this.game.plies[plyID] : null;
+            ply = plyID in this.$game.plies ? this.$game.plies[plyID] : null;
             if (
               ply &&
-              this.game.state.plies.includes(ply) &&
-              ply.index < this.game.state.ply.index
+              this.$game.state.plies.includes(ply) &&
+              ply.index < this.$game.state.ply.index
             ) {
               return plyID;
             }
@@ -174,14 +174,14 @@ export default {
       if (this.message.trim()) {
         this.message = this.message.trim();
         if (this.editing) {
-          this.game.editNote(
+          this.$game.editNote(
             this.editing.plyID,
             this.editing.index,
             this.message
           );
           this.editing = null;
         } else {
-          this.game.addNote(this.message);
+          this.$game.addNote(this.message);
         }
         this.message = "";
         this.$refs.input.focus();
@@ -204,19 +204,19 @@ export default {
       }
     },
     remove(plyID, index) {
-      this.game.removeNote(plyID, index);
+      this.$game.removeNote(plyID, index);
     },
     isCurrent(plyID) {
       return (
-        this.game.state.plyID === plyID ||
+        this.$game.state.plyID === plyID ||
         (plyID < 0 &&
-          (!this.game.state.ply ||
-            (!this.game.state.ply.index && !this.game.state.plyIsDone)))
+          (!this.$game.state.ply ||
+            (!this.$game.state.ply.index && !this.$game.state.plyIsDone)))
       );
     },
     areSequential(plyID1, plyID2) {
-      const ply1 = plyID1 < 0 ? null : this.game.plies[plyID1];
-      const ply2 = this.game.plies[plyID2];
+      const ply1 = plyID1 < 0 ? null : this.$game.plies[plyID1];
+      const ply2 = this.$game.plies[plyID2];
       return (
         ply1 &&
         ply2 &&

@@ -207,7 +207,7 @@ export default {
   },
   computed: {
     game() {
-      return this.$store.state.game.current;
+      return this.$game;
     },
     themes() {
       return this.$store.getters["ui/themes"];

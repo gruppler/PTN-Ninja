@@ -12,7 +12,7 @@
         flat
         :color="fg"
         :ripple="false"
-        :disable="!game.state.ply || plyInProgress"
+        :disable="!$game.state.ply || plyInProgress"
         icon="backspace"
       />
       <q-btn
@@ -49,7 +49,7 @@
         :ripple="false"
         color="primary"
         :text-color="primaryFG"
-        :disable="!game.state.ply || plyInProgress"
+        :disable="!$game.state.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
       />
       <q-btn
@@ -136,9 +136,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     fg() {
       return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
@@ -146,19 +143,21 @@ export default {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     isFirst() {
-      return !this.game.state.prevPly && !this.game.state.plyIsDone;
+      return !this.$game.state.prevPly && !this.$game.state.plyIsDone;
     },
     isLast() {
       return (
-        (!this.game.state.nextPly && this.game.state.plyIsDone) ||
-        !this.game.state.ply
+        (!this.$game.state.nextPly && this.$game.state.plyIsDone) ||
+        !this.$game.state.ply
       );
     },
     plyInProgress() {
-      return this.game.state.selected.pieces.length !== 0;
+      return this.$game.state.selected.pieces.length !== 0;
     },
     hasBranches() {
-      return !!(this.game.state.ply && this.game.state.ply.branches.length > 1);
+      return !!(
+        this.$game.state.ply && this.$game.state.ply.branches.length > 1
+      );
     },
     branchIndex() {
       return this.$refs.branchMenu.selected;
@@ -173,12 +172,12 @@ export default {
   methods: {
     getBranches() {
       this.branches = uniq(
-        flatten(Object.values(this.game.branches).map((ply) => ply.branches))
+        flatten(Object.values(this.$game.branches).map((ply) => ply.branches))
       );
     },
     deletePly() {
-      if (this.game.state.ply && !this.plyInProgress) {
-        this.$store.dispatch("game/DELETE_PLY", this.game.state.plyID);
+      if (this.$game.state.ply && !this.plyInProgress) {
+        this.$store.dispatch("game/DELETE_PLY", this.$game.state.plyID);
       }
     },
     play() {

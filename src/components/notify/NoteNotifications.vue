@@ -9,28 +9,25 @@ export default {
   name: "NoteNotifications",
   components: { Notifications },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     show() {
       return (
         this.$store.state.ui.notifyNotes &&
         (!this.$store.state.ui.showText ||
-          (this.$store.state.ui.textTab !== "notes" && this.game.hasChat))
+          (this.$store.state.ui.textTab !== "notes" && this.$game.hasChat))
       );
     },
     notifications() {
-      const ply = this.game.state.ply;
+      const ply = this.$game.state.ply;
       let notes = [];
       if (
         (!ply || !ply.index) &&
-        !this.game.state.plyIsDone &&
-        "-1" in this.game.notes
+        !this.$game.state.plyIsDone &&
+        "-1" in this.$game.notes
       ) {
-        notes = notes.concat(this.game.notes["-1"]);
+        notes = notes.concat(this.$game.notes["-1"]);
       }
-      if (ply && ply.id >= 0 && ply.id in this.game.notes) {
-        notes = notes.concat(this.game.notes[ply.id]);
+      if (ply && ply.id >= 0 && ply.id in this.$game.notes) {
+        notes = notes.concat(this.$game.notes[ply.id]);
       }
       return notes.map((note) => ({
         message: note.message,

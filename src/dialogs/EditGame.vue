@@ -12,7 +12,7 @@
     <q-card-section>
       <GameInfo
         ref="gameInfo"
-        :game="game"
+        :game="$game"
         :show-all="showAll"
         @submit="save"
       />
@@ -55,11 +55,6 @@ export default {
       showAll: false,
     };
   },
-  computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
-  },
   methods: {
     reset() {
       this.$store.dispatch("ui/PROMPT", {
@@ -79,7 +74,7 @@ export default {
       let changedTags = {};
       Object.keys(tags).forEach((key) => {
         const value = tags[key];
-        if (value !== this.game.tag(key)) {
+        if (value !== this.$game.tag(key)) {
           changedTags[key] = value;
         }
       });
@@ -87,10 +82,10 @@ export default {
         this.$store.dispatch("game/SET_TAGS", changedTags);
       }
 
-      if (this.game.config.id) {
+      if (this.$game.config.id) {
         this.loading = true;
         try {
-          await this.$store.dispatch("online/UPDATE_GAME", this.game.json);
+          await this.$store.dispatch("online/UPDATE_GAME", this.$game.json);
           this.loading = false;
         } catch (error) {
           this.loading = false;

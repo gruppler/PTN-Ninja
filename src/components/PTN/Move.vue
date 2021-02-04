@@ -50,9 +50,6 @@ export default {
     noBranch: Boolean,
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
     },
@@ -65,28 +62,28 @@ export default {
       return this.move.ply2
         ? this.showAllBranches && !this.currentOnly
           ? this.move.ply2
-          : this.move.ply2.getBranch(this.game.state.targetBranch)
+          : this.move.ply2.getBranch(this.$game.state.targetBranch)
         : null;
     },
     index() {
-      return this.game.movesSorted.findIndex((move) => move === this.move);
+      return this.$game.movesSorted.findIndex((move) => move === this.move);
     },
     prevMove() {
-      const moves = this.game.movesSorted;
+      const moves = this.$game.movesSorted;
       return this.index > 0 ? moves[this.index - 1] : null;
     },
     nextMove() {
-      const moves = this.game.movesSorted;
+      const moves = this.$game.movesSorted;
       return this.index < moves.length - 1 ? moves[this.index + 1] : null;
     },
     isCurrentMove() {
       return (
         !this.noDecoration &&
         !this.currentOnly &&
-        this.game.state.move &&
+        this.$game.state.move &&
         (this.showAllBranches
-          ? this.game.state.move.id === this.move.id
-          : this.game.state.move.index === this.move.index)
+          ? this.$game.state.move.id === this.move.id
+          : this.$game.state.move.index === this.move.index)
       );
     },
     linebreak() {

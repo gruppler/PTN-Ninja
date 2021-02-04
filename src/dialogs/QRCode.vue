@@ -32,11 +32,8 @@ export default {
     return { size: SIZE };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     text() {
-      return this.$store.getters["ui/url"](this.game, {
+      return this.$store.getters["ui/url"](this.$game, {
         origin: true,
         state: true,
       });

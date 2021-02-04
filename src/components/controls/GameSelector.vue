@@ -57,8 +57,8 @@
         <q-separator vertical class="q-mr-sm" />
 
         <q-btn
-          v-if="game.config.isOnline"
-          :icon="icon(game)"
+          v-if="$game.config.isOnline"
+          :icon="icon($game)"
           @click.stop="account"
           dense
           flat
@@ -114,9 +114,6 @@ import { zipObject } from "lodash";
 export default {
   name: "GameSelector",
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     games() {
       return this.$store.state.game.list.map((game, index) => ({
         label: game.name,
@@ -129,15 +126,15 @@ export default {
     },
     name() {
       const name = this.games[0].label;
-      if (!this.game.config.isOnline || this.$q.screen.gt.sm) {
+      if (!this.$game.config.isOnline || this.$q.screen.gt.sm) {
         return name;
       } else {
-        let player = this.game.config.player;
+        let player = this.$game.config.player;
         let otherPlayer = player ? (player === 1 ? 2 : 1) : 0;
         if (!otherPlayer) {
           return name;
         } else {
-          otherPlayer = this.game.tag("player" + otherPlayer);
+          otherPlayer = this.$game.tag("player" + otherPlayer);
           if (otherPlayer) {
             return name.replace(
               /[^"]+ vs [^"]+( \dx\d)/,
@@ -192,7 +189,7 @@ export default {
         this.isEditingTPS = false;
       };
       if (index >= 0 && this.games.length > index) {
-        if (this.isEditingTPS && this.editingTPS !== this.game.state.tps) {
+        if (this.isEditingTPS && this.editingTPS !== this.$game.state.tps) {
           this.$store.dispatch("ui/PROMPT", {
             title: this.$t("Confirm"),
             message: this.$t("confirm.abandonChanges"),

@@ -74,29 +74,26 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     theme() {
       return this.$store.state.ui.theme;
     },
     ply() {
-      return this.game.plies[this.plyID];
+      return this.$game.plies[this.plyID];
     },
     isSelected() {
-      return this.game ? this.game.state.plyID === this.ply.id : false;
+      return this.$game ? this.$game.state.plyID === this.ply.id : false;
     },
     isDone() {
-      return this.game && this.ply
-        ? this.game.state.plyID === this.ply.id
-          ? this.game.state.plyIsDone
-          : this.game.state.plyIDs.includes(this.ply.id) &&
-            this.game.state.ply.index > this.ply.index
+      return this.$game && this.ply
+        ? this.$game.state.plyID === this.ply.id
+          ? this.$game.state.plyIsDone
+          : this.$game.state.plyIDs.includes(this.ply.id) &&
+            this.$game.state.ply.index > this.ply.index
         : true;
     },
   },
   methods: {
-    select(ply, isDone = this.game.state.plyIsDone) {
+    select(ply, isDone = this.$game.state.plyIsDone) {
       if (this.noClick) {
         return;
       }

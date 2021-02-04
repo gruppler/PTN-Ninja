@@ -321,7 +321,7 @@ export default {
   },
   computed: {
     game() {
-      return this.$store.state.game.current;
+      return this.$game;
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];

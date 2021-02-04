@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
+import $ from "./state";
 
 export const SET_GAME = function ({ commit }, game) {
   document.title = game.name + " — " + i18n.t("app_title");
@@ -201,7 +202,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
 };
 
 export const EXPORT_PNG = function ({ state }) {
-  const game = state.current;
+  const game = Vue.prototype.$game;
   const options = { tps: game.state.tps, ...this.state.ui.pngConfig };
 
   // Game Tags
@@ -258,7 +259,7 @@ export const RENAME_CURRENT_GAME = function (
   { commit, dispatch, state },
   newName
 ) {
-  const oldName = state.current.name;
+  const oldName = Vue.prototype.$game.name;
   commit("RENAME_CURRENT_GAME", newName);
   dispatch("SET_NAME", { oldName, newName });
   setTimeout(() => {
@@ -272,8 +273,8 @@ export const SET_CURRENT_PTN = function ({ commit, dispatch }, ptn) {
 };
 
 export const SAVE_CURRENT_GAME = function ({ dispatch, state }) {
-  const game = state.current;
-  if (game && !state.embed) {
+  const game = Vue.prototype.$game;
+  if (game && !this.state.ui.embed) {
     dispatch("SAVE_UNDO_INDEX", game);
     dispatch("SAVE_UNDO_HISTORY", game);
     dispatch("SAVE_PTN", game.ptn);
@@ -282,8 +283,8 @@ export const SAVE_CURRENT_GAME = function ({ dispatch, state }) {
 };
 
 export const SAVE_CURRENT_GAME_STATE = function ({ dispatch, state }) {
-  const game = state.current;
-  if (game && !state.embed) {
+  const game = Vue.prototype.$game;
+  if (game && !this.state.ui.embed) {
     dispatch("SAVE_UNDO_INDEX", game);
     dispatch("SAVE_UNDO_HISTORY", game);
     dispatch("SAVE_STATE", { game, gameState: game.minState });
@@ -291,14 +292,16 @@ export const SAVE_CURRENT_GAME_STATE = function ({ dispatch, state }) {
 };
 
 export const SAVE_UNDO_HISTORY = function ({ commit, state }) {
-  if (game && !state.embed) {
+  const game = Vue.prototype.$game;
+  if (game && !this.state.ui.embed) {
     LocalStorage.set("history-" + game.name, game.history);
     commit("SAVE_UNDO_HISTORY");
   }
 };
 
 export const SAVE_UNDO_INDEX = function ({ commit, state }) {
-  if (game && !state.embed) {
+  const game = Vue.prototype.$game;
+  if (game && !this.state.ui.embed) {
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
     commit("SAVE_UNDO_INDEX");
   }

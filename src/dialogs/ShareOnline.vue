@@ -74,12 +74,12 @@
 
         <div v-else>
           <q-list>
-            <q-item v-if="game && game.config.id">
+            <q-item v-if="$game && $game.config.id">
               <q-input
                 class="col-grow"
                 :value="gameURL"
                 :hint="
-                  user && game.player(user.uid)
+                  user && $game.player(user.uid)
                     ? $t('hint.url')
                     : $t('hint.spectate')
                 "
@@ -151,9 +151,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     players() {
       return [
         { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
@@ -183,7 +180,7 @@ export default {
       },
     },
     isLocal() {
-      return this.game.isLocal;
+      return this.$game.isLocal;
     },
     isLoggedIn() {
       return this.user && !this.user.isAnonymous;
@@ -220,9 +217,9 @@ export default {
       }
     },
     gameURL() {
-      return this.game.isLocal
+      return this.$game.isLocal
         ? ""
-        : this.$store.getters["ui/url"](this.game) || "";
+        : this.$store.getters["ui/url"](this.$game) || "";
     },
   },
   methods: {
@@ -251,7 +248,7 @@ export default {
       this.loading = true;
       this.$store
         .dispatch("online/CREATE_GAME", {
-          game: this.game,
+          game: this.$game,
           players,
           isPrivate: this.isPrivate,
           disableFlatCounts: !this.flatCounts,

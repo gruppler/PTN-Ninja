@@ -1,7 +1,7 @@
 <template>
   <recess>
     <q-scroll-area ref="scroll" class="full-ptn absolute-fit non-selectable">
-      <div v-if="game">
+      <div v-if="$game">
         <Move
           class="q-px-md"
           v-for="move in moves"
@@ -23,24 +23,21 @@ export default {
   name: "PTN",
   components: { Move },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     moves() {
       return this.$store.state.ui.showAllBranches
-        ? this.game.movesSorted
-        : this.game.state.moves;
+        ? this.$game.movesSorted
+        : this.$game.state.moves;
     },
   },
   methods: {
     scroll(animate = false) {
       const editingBranch = this.$store.state.ui.editingBranch
-        ? this.game.branches[this.$store.state.ui.editingBranch] || null
+        ? this.$game.branches[this.$store.state.ui.editingBranch] || null
         : null;
       const move = editingBranch
         ? this.$refs[editingBranch.move.id][0]
-        : this.game.state.ply && this.game.state.move.id in this.$refs
-        ? this.$refs[this.game.state.move.id][0]
+        : this.$game.state.ply && this.$game.state.move.id in this.$refs
+        ? this.$refs[this.$game.state.move.id][0]
         : null;
       if (move) {
         this.$refs.scroll.setScrollPosition(

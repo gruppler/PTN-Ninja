@@ -69,11 +69,8 @@ export default {
     "edit-button": Boolean,
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     themes() {
-      if (this.game) {
+      if (this.$game) {
         const config = cloneDeep(
           pick(
             this.$store.state.ui,
@@ -83,7 +80,7 @@ export default {
         config.size = "xs";
         return this.$store.getters["ui/themes"].map((theme) => {
           theme = cloneDeep(theme);
-          const canvas = this.game.render({ ...config, theme });
+          const canvas = this.$game.render({ ...config, theme });
           theme.preview = canvas.toDataURL();
           return theme;
         });

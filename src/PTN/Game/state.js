@@ -4,7 +4,7 @@ import Piece from "../Piece";
 import Square from "../Square";
 import { atoi, itoa } from "../Ply";
 
-import { defaults, isArray } from "lodash";
+import { defaults, isArray, map, pick } from "lodash";
 import memoize from "./memoize";
 
 export default class GameState {
@@ -115,12 +115,19 @@ export default class GameState {
   }
 
   forEachSquare(f) {
-    this.squares.forEach((row) => row.forEach(f));
+    this.squares.forEach((row, y) =>
+      row.forEach((square, x) => f(square, x, y))
+    );
     return this;
   }
 
   mapSquares(f) {
     this.squares.map((row) => row.map(f));
+  }
+
+  getSquare(coord) {
+    coord = atoi(coord);
+    return this.squares[coord[1]][coord[0]];
   }
 
   branchKey() {
@@ -132,6 +139,19 @@ export default class GameState {
     } else {
       return this.plyID;
     }
+  }
+
+  boardSnapshot() {
+    const squares = [];
+    const pieces = {};
+    map(this.pieces.all.byID, (piece, id) => {
+      pieces[id] = piece.snapshot;
+    });
+    this.forEachSquare((square) => {
+      squares[square.static.coord] = square.snapshot;
+    });
+
+    return { squares, pieces };
   }
 
   getPlies() {
@@ -355,8 +375,7 @@ export default class GameState {
       squares = Object.keys(squares);
     }
     squares.forEach((coord) => {
-      coord = atoi(coord);
-      this.squares[coord[1]][coord[0]].updateConnected();
+      this.getSquare(coord).updateConnected();
     });
   }
 

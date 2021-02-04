@@ -14,7 +14,7 @@
         ['p' + piece.color]: true,
         C: piece.isCapstone,
         S: piece.isStanding,
-        unplayed: !piece.square,
+        unplayed: !square,
         firstSelected,
         immovable,
         selectable,
@@ -30,56 +30,59 @@ export default {
   name: "Piece",
   props: ["id"],
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     theme() {
       return this.$store.getters["ui/theme"]();
     },
     pieceCounts() {
-      return this.game.pieceCounts[this.piece.color];
+      return this.$game.pieceCounts[this.piece.color];
+    },
+    board() {
+      return this.$store.state.game.board;
     },
     piece() {
-      return this.game.state.pieces.all.byID[this.id];
+      return this.board.pieces[this.id];
+    },
+    square() {
+      return this.piece.square ? this.board.squares[this.piece.square] : null;
     },
     immovable() {
-      return this.piece.square ? this.piece.isImmovable : false;
+      return this.square ? this.piece.isImmovable : false;
     },
     selectable() {
       return (
-        !this.piece.square &&
+        !this.square &&
         (this.$store.state.ui.editingTPS ||
-          this.piece.color === this.game.state.color)
+          this.piece.color === this.$game.state.color)
       );
     },
     firstSelected() {
-      return this.piece === this.game.state.selected.pieces[0];
+      return this.piece === this.$game.state.selected.pieces[0];
     },
     board3D() {
       return this.$store.state.ui.board3D;
     },
     x() {
       let x = 100;
-      if (this.piece.square) {
+      if (this.square) {
         x *= this.piece.x;
       } else {
-        x *= this.game.size + 0.75 * (this.piece.color === 2);
+        x *= this.$game.size + 0.75 * (this.piece.color === 2);
       }
       return x;
     },
     y() {
       let y = 100;
       let spacing = 7;
-      if (this.piece.square) {
+      if (this.square) {
         y *= this.piece.y;
         if (!this.board3D) {
-          const pieces = this.piece.square.pieces;
+          const pieces = this.square.pieces;
           y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
           if (
-            pieces.length > this.game.size &&
-            this.piece.z >= pieces.length - this.game.size
+            pieces.length > this.$game.size &&
+            this.piece.z >= pieces.length - this.$game.size
           ) {
-            y -= spacing * (pieces.length - this.game.size);
+            y -= spacing * (pieces.length - this.$game.size);
           }
           if (this.piece.isStanding && pieces.length > 1) {
             y -= spacing;
@@ -87,21 +90,21 @@ export default {
         }
       } else {
         // Unplayed piece
-        y = this.game.size - 1;
+        y = this.$game.size - 1;
         if (this.board3D) {
           if (!this.piece.isCapstone) {
             y *=
               Math.floor(
                 (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
-                  this.game.size
+                  this.$game.size
               ) /
               Math.floor(
                 this.pieceCounts.flat /
-                  (this.game.size -
+                  (this.$game.size -
                     1 *
                       !!(
                         this.pieceCounts.cap &&
-                        this.pieceCounts.flat % this.game.size
+                        this.pieceCounts.flat % this.$game.size
                       ))
               );
           }
@@ -126,14 +129,14 @@ export default {
     },
     z() {
       let z;
-      if (this.piece.square) {
+      if (this.square) {
         z = this.piece.z + this.piece.isSelected * SELECTED_GAP;
       } else {
         // Unplayed piece
         if (this.board3D) {
           z =
             (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
-            this.game.size;
+            this.$game.size;
         } else {
           z =
             (this.pieceCounts.total - this.piece.index) /
@@ -144,7 +147,7 @@ export default {
           if (this.piece.color === 1) {
             z += 1;
           } else {
-            z += this.game.size - 1;
+            z += this.$game.size - 1;
           }
         }
         if (this.piece.isSelected) {

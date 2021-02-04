@@ -39,9 +39,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     actions() {
       let actions = [
         {
@@ -52,7 +49,7 @@ export default {
         },
       ];
 
-      if (this.game.state.ply) {
+      if (this.$game.state.ply) {
         actions.push({
           id: "ply",
           label: this.$t("Ply"),
@@ -93,7 +90,7 @@ export default {
         });
       }
 
-      if (!this.$store.state.embed && this.game.isLocal) {
+      if (!this.$store.state.embed && this.$game.isLocal) {
         actions.push(
           {
             id: "embed",
@@ -134,8 +131,8 @@ export default {
       switch (type) {
         case "url":
           output = {
-            title: this.game.name,
-            url: this.$store.getters["ui/url"](this.game, {
+            title: this.$game.name,
+            url: this.$store.getters["ui/url"](this.$game, {
               origin: true,
               state: true,
             }),
@@ -143,33 +140,33 @@ export default {
           break;
         case "ply":
           output = {
-            title: this.game.state.ply.text(),
-            text: this.game.state.ply.text(),
+            title: this.$game.state.ply.text(),
+            text: this.$game.state.ply.text(),
           };
           break;
         case "tps":
           output = {
-            title: this.game.state.tps,
-            text: this.game.state.tps,
+            title: this.$game.state.tps,
+            text: this.$game.state.tps,
           };
           break;
         case "moves":
           output = {
-            title: this.$t("Moves") + " – " + this.game.name,
-            text: this.game.moveText(this.$store.state.showAllBranches, true),
+            title: this.$t("Moves") + " – " + this.$game.name,
+            text: this.$game.moveText(this.$store.state.showAllBranches, true),
           };
           break;
         case "ptn":
           output = {
-            title: this.$t("PTN") + " – " + this.game.name,
-            text: this.game.ptn,
+            title: this.$t("PTN") + " – " + this.$game.name,
+            text: this.$game.ptn,
           };
           break;
       }
       this.$store.dispatch("ui/COPY", output);
     },
     shareFile() {
-      this.$store.dispatch("ui/EXPORT_PTN", this.game);
+      this.$store.dispatch("ui/EXPORT_PTN", this.$game);
     },
     embed() {
       this.$router.push({ name: "embed" });

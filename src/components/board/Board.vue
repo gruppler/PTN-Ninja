@@ -11,7 +11,7 @@
       class="board-container"
       :class="{
         [style]: true,
-        ['size-' + game.size]: true,
+        ['size-' + $game.size]: true,
         ['turn-' + turn]: true,
         'no-animations': !$store.state.ui.animateBoard,
         'axis-labels': $store.state.ui.axisLabels,
@@ -19,7 +19,7 @@
         'highlight-squares': $store.state.ui.highlightSquares,
         'piece-shadows': $store.state.ui.pieceShadows,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
-        'is-game-end': game.state.isGameEnd,
+        'is-game-end': $game.state.isGameEnd,
       }"
       :style="{ width, fontSize, transform }"
       @click.right.self.prevent="resetBoardRotation"
@@ -69,8 +69,8 @@
           v-if="$store.state.ui.axisLabels"
           class="y-axis column no-pointer-events"
         >
-          <div v-for="i in (1, game.size)" :key="i">
-            {{ game.size - i + 1 }}
+          <div v-for="i in (1, $game.size)" :key="i">
+            {{ $game.size - i + 1 }}
           </div>
         </div>
 
@@ -79,13 +79,12 @@
             <Square
               v-for="square in squares"
               :key="square.static.coord"
-              :x="square.static.x"
-              :y="square.static.y"
+              :coord="square.static.coord"
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
             <Piece
-              v-for="piece in game.state.pieces.all.byID"
+              v-for="piece in $game.state.pieces.all.byID"
               :key="piece.id"
               :ref="piece.id"
               :id="piece.id"
@@ -105,7 +104,7 @@
         class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
-        <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
+        <div v-for="i in (1, $game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
       </div>
 
       <q-resize-observer @resize="resizeBoard" :debounce="10" />
@@ -143,31 +142,28 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$store.state.game.current;
-    },
     style() {
       return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
       return this.$store.state.ui.isEditingTPS
         ? this.$store.state.ui.selectedPiece.color
-        : this.game.state.turn;
+        : this.$game.state.turn;
     },
     boardPly() {
-      return this.game.state.boardPly;
+      return this.$game.state.boardPly;
     },
     player1() {
-      return this.game.tag("player1");
+      return this.$game.tag("player1");
     },
     player2() {
-      return this.game.tag("player2");
+      return this.$game.tag("player2");
     },
     flats() {
-      return this.game.state.flats;
+      return this.$game.state.flats;
     },
     minNameWidth() {
-      return 100 / this.game.size;
+      return 100 / this.$game.size;
     },
     flatWidths() {
       const total = (this.flats[0] + this.flats[1]) / 100;
@@ -267,9 +263,9 @@ export default {
     },
     squares() {
       let squares = [];
-      for (let y = this.game.size - 1; y >= 0; y--) {
-        for (let x = 0; x < this.game.size; x++) {
-          squares.push(this.game.state.squares[y][x]);
+      for (let y = this.$game.size - 1; y >= 0; y--) {
+        for (let x = 0; x < this.$game.size; x++) {
+          squares.push(this.$game.state.squares[y][x]);
         }
       }
       return squares;
@@ -278,10 +274,12 @@ export default {
   methods: {
     dropPiece() {
       if (
-        this.game.state.selected.pieces.length === 1 &&
-        !this.game.state.selected.moveset.length
+        this.$game.state.selected.pieces.length === 1 &&
+        !this.$game.state.selected.moveset.length
       ) {
-        this.game.selectUnplayedPiece(this.game.state.selected.pieces[0].type);
+        this.$game.selectUnplayedPiece(
+          this.$game.state.selected.pieces[0].type
+        );
       }
     },
     isInputFocused() {
@@ -374,7 +372,7 @@ export default {
     zoomFit() {
       let nodes = [this.$refs.container];
       if (this.$store.state.ui.unplayedPieces) {
-        Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
+        Object.values(this.$game.state.pieces.all.byID).forEach((piece) => {
           if (!piece.square) {
             nodes.push(this.$refs[piece.id][0].$refs.stone);
           }

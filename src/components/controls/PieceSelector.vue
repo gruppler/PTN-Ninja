@@ -44,14 +44,14 @@ export default {
   },
   computed: {
     game() {
-      return this.$store.state.game.current;
+      return this.$game;
     },
     available() {
       return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
         type = type === "C" ? "cap" : "flat";
         return (
-          this.game.state.pieces.played[this.color][type].length <
-          this.game.pieceCounts[this.color][type]
+          this.$game.state.pieces.played[this.color][type].length <
+          this.$game.pieceCounts[this.color][type]
         );
       });
     },
