@@ -460,7 +460,7 @@ export default class GameState {
     });
     const komi = this.game.tag("komi");
     if (komi) {
-      flats[1] += komi;
+      flats[1 * (komi > 0)] += Math.abs(komi);
     }
     return flats;
   }

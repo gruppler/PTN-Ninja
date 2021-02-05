@@ -37,7 +37,7 @@ export const formats = {
   clock: /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
-  komi: /^[0-8](\.5)?$/,
+  komi: /^-?\d*(\.5)?$/,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
   points: /^\d+$/,
@@ -118,9 +118,13 @@ export default class Tag {
         this.value = Number(this.value);
         break;
       case "komi":
-        this.value = Math.min(this.size, Math.max(0, Number(this.value)));
+        this.value = Number(this.value);
         if (this.value % 1) {
-          this.value = Math.floor(this.value) + 0.5;
+          this.value =
+            this.value < 0
+              ? Math.ceil(this.value) - 0.5
+              : Math.floor(this.value) + 0.5;
+          this.value = Math.max(-20.5, Math.min(20.5, this.value));
         }
         break;
       case "date":

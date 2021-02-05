@@ -267,7 +267,7 @@ export default class GameBase {
         // Ply
         item = ply = Ply.parse(notation, { id: this.plies.length });
         if (
-          move.number === this.firstMoveNumber &&
+          (!move.number || move.number === this.firstMoveNumber) &&
           this.firstPlayer === 2 &&
           !move.ply1
         ) {
@@ -283,6 +283,7 @@ export default class GameBase {
           ply.player = 2;
           ply.color = move.number === 1 ? 1 : 2;
           move.ply2 = ply;
+          moveNumber += 1;
         } else {
           // New move
           move = new Move({
@@ -292,7 +293,6 @@ export default class GameBase {
             ply1: ply,
           });
           this.moves.push(move);
-          moveNumber += 1;
         }
         if (move.number === 1 && ply.specialPiece) {
           throw new Error("Invalid first move");
