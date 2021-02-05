@@ -20,6 +20,11 @@ export default class Ptn {
       this.wallSmash,
     ] = matchData;
 
+    if (this.specialPiece) {
+      this.specialPiece = this.specialPiece.toUpperCase();
+    }
+    this.column = this.column.toLowerCase();
+
     this.pieceType = this.specialPiece === "C" ? "cap" : "flat";
 
     this.y = parseInt(this.row, 10) - 1;
