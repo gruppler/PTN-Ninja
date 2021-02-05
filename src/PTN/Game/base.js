@@ -271,17 +271,20 @@ export default class GameBase {
           this.firstPlayer === 2 &&
           !move.ply1
         ) {
+          // Insert placeholder if necessary
           move.ply1 = Nop.parse("--");
         }
+        const isFirstTurn =
+          move.number === 1 || (!move.number && this.firstMoveNumber === 1);
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
-          ply.color = move.number === 1 ? 2 : 1;
+          ply.color = isFirstTurn ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
-          ply.color = move.number === 1 ? 1 : 2;
+          ply.color = isFirstTurn ? 1 : 2;
           move.ply2 = ply;
           moveNumber += 1;
         } else {
