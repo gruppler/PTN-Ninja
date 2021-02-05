@@ -288,7 +288,7 @@
       name="komi"
       type="number"
       min="0"
-      :max="tags.size"
+      max="3.5"
       step="0.5"
       :label="$t('Komi')"
       :rules="rules('komi')"
