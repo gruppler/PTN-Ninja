@@ -2,6 +2,7 @@ import {
   decompressFromBase64,
   decompressFromEncodedURIComponent,
 } from "lz-string";
+import Vue from "vue";
 import { Platform } from "quasar";
 import store from "../store";
 
@@ -95,7 +96,7 @@ const routes = [
         path: "/edit",
         component: () => import("../dialogs/EditPTN"),
         beforeEnter: (to, from, next) => {
-          const game = store.getters["game/current"];
+          const game = Vue.prototype.$game;
           if (game && game.isLocal) {
             next();
           }
@@ -105,6 +106,12 @@ const routes = [
         name: "embed",
         path: "/embed",
         component: () => import("../dialogs/EmbedConfig"),
+        beforeEnter: (to, from, next) => {
+          const game = Vue.prototype.$game;
+          if (game && game.isLocal) {
+            next();
+          }
+        },
       },
       // {
       //   name: "info-view",
