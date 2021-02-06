@@ -281,7 +281,7 @@ export default class GameNavigation {
       this.state.ply.squares.forEach((coord) => (squares[coord] = true));
     }
 
-    this.state.updateSquares(squares);
+    this.state.updateSquareConnections(squares);
 
     return true;
   }

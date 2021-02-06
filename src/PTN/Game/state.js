@@ -363,14 +363,14 @@ export default class GameState {
         });
       })
     );
-    this.updateSquares(squares);
+    this.updateSquareConnections(squares);
     this.plyID = plyID;
     this.plyIsDone = plyIsDone;
     const ply = this.ply;
     this.setRoads(ply && ply.result ? ply.result.roads : null);
   }
 
-  updateSquares(squares) {
+  updateSquareConnections(squares) {
     if (!isArray(squares)) {
       squares = Object.keys(squares);
     }
