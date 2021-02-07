@@ -22,7 +22,13 @@
     </smooth-reflow>
 
     <q-list>
-      <ThemeSelector v-model="config.themeID" item-aligned edit-button filled />
+      <ThemeSelector
+        v-model="config.themeID"
+        :config="$store.state.ui.pngConfig"
+        item-aligned
+        edit-button
+        filled
+      />
 
       <q-item>
         <q-item-section>
