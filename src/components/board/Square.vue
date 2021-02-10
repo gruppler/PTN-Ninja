@@ -43,8 +43,11 @@ export default {
   name: "Square",
   props: ["coord"],
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
     eog() {
-      return this.$game.state.isGameEnd;
+      return this.game.position.isGameEnd;
     },
     isEditingTPS() {
       return this.$store.state.ui.isEditingTPS;
@@ -77,21 +80,21 @@ export default {
     },
     current() {
       return (
-        this.$game.state.ply &&
-        this.$game.state.ply.squares.includes(this.square.static.coord)
+        this.game.position.ply &&
+        this.game.position.ply.squares.includes(this.square.static.coord)
       );
     },
     primary() {
       if (this.selected) {
         return (
-          this.$game.state.selected.squares.length > 1 &&
-          this.$game.state.selected.squares[0] === this.square
+          this.game.selected.squares.length > 1 &&
+          this.game.selected.squares[0] === this.square
         );
       } else if (this.current) {
         const isDestination =
-          this.$game.state.ply.squares.length === 1 ||
-          this.$game.state.ply.squares[0] !== this.square.static.coord;
-        return this.$game.state.plyIsDone ? isDestination : !isDestination;
+          this.game.position.ply.squares.length === 1 ||
+          this.game.position.ply.squares[0] !== this.square.static.coord;
+        return this.game.position.plyIsDone ? isDestination : !isDestination;
       }
       return false;
     },
@@ -102,15 +105,15 @@ export default {
       return (
         this.piece &&
         this.piece.ply &&
-        this.piece.ply === this.$game.state.ply &&
-        !this.$game.state.isFirstMove
+        this.piece.ply === this.game.position.ply &&
+        !this.game.position.isFirstMove
       );
     },
     valid() {
       return this.isEditingTPS || this.$game.isValidSquare(this.square);
     },
     showRoads() {
-      return !this.$game.config.disableRoads && this.$store.state.ui.showRoads;
+      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     n() {
       return this.square.connected.N;

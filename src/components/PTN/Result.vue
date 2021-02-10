@@ -25,7 +25,7 @@ import Result from "../../PTN/Result";
 export default {
   name: "Result",
   props: {
-    result: [String, Object],
+    result: String,
     done: {
       type: Boolean,
       default: true,
@@ -37,9 +37,7 @@ export default {
       return this.$store.state.ui.theme;
     },
     resultObject() {
-      return this.result && this.result.constructor === Result
-        ? this.result
-        : Result.parse(this.result || "");
+      return Result.parse(this.result || "");
     },
   },
 };

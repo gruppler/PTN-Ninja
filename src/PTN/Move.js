@@ -1,3 +1,7 @@
+import { pick } from "lodash";
+
+const outputProps = ["id", "index", "branch"];
+
 export default class Move {
   constructor(parts = {}) {
     this.game = parts.game;
@@ -17,6 +21,19 @@ export default class Move {
     if (parts.ply2) {
       this.ply2 = parts.ply2;
     }
+  }
+
+  output(plies) {
+    const output = pick(this, outputProps);
+    output.linenum = this.linenum.output;
+    output.plies = this.plies.map((ply) => (ply.isNop ? null : plies[ply.id]));
+    output.ply1Original = this.ply1Original
+      ? plies[this.ply1Original.id]
+      : null;
+    output.ply1 = output.plies[0];
+    output.ply2 = output.plies[1];
+    output.firstPly = plies[this.firstPly.id];
+    return Object.freeze(output);
   }
 
   get number() {

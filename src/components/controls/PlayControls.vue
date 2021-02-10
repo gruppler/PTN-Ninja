@@ -12,7 +12,7 @@
         flat
         :color="fg"
         :ripple="false"
-        :disable="!$game.state.ply || plyInProgress"
+        :disable="!position.ply || plyInProgress"
         icon="backspace"
       />
       <q-btn
@@ -49,7 +49,7 @@
         :ripple="false"
         color="primary"
         :text-color="primaryFG"
-        :disable="!$game.state.ply || plyInProgress"
+        :disable="!position.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
       />
       <q-btn
@@ -104,7 +104,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { flatten, omit, pick, throttle, uniq, zipObject } from "lodash";
+import { omit, pick, throttle, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -129,13 +129,18 @@ export default {
       timestamp: null,
       next: null,
       prev: null,
-      branches: [],
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
+    position() {
+      return this.$store.state.game.position;
+    },
+    branches() {
+      return this.$store.state.game.ptn.branchMenu;
+    },
     fg() {
       return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
@@ -143,41 +148,35 @@ export default {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     isFirst() {
-      return !this.$game.state.prevPly && !this.$game.state.plyIsDone;
+      return !this.position.prevPly && !this.position.plyIsDone;
     },
     isLast() {
       return (
-        (!this.$game.state.nextPly && this.$game.state.plyIsDone) ||
-        !this.$game.state.ply
+        (!this.position.nextPly && this.position.plyIsDone) ||
+        !this.position.ply
       );
     },
     plyInProgress() {
       return this.$game.state.selected.pieces.length !== 0;
     },
     hasBranches() {
-      return !!(
-        this.$game.state.ply && this.$game.state.ply.branches.length > 1
-      );
+      return !!(this.position.ply && this.position.ply.branches.length > 1);
     },
     branchIndex() {
       return this.$refs.branchMenu.selected;
     },
     options() {
+      const keys = Object.keys(this.branches);
       return zipObject(
-        Object.keys(this.branches),
-        Object.keys(this.branches).map((key) => [key])
+        keys,
+        keys.map((key) => [key])
       );
     },
   },
   methods: {
-    getBranches() {
-      this.branches = uniq(
-        flatten(Object.values(this.$game.branches).map((ply) => ply.branches))
-      );
-    },
     deletePly() {
-      if (this.$game.state.ply && !this.plyInProgress) {
-        this.$store.dispatch("game/DELETE_PLY", this.$game.state.plyID);
+      if (this.position.ply && !this.plyInProgress) {
+        this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
       }
     },
     play() {
@@ -329,15 +328,10 @@ export default {
         }
       }
     },
-    "game.branches": {
-      handler: "getBranches",
-      deep: true,
-    },
   },
   created() {
     this.next = throttle(this._next, 250);
     this.prev = throttle(this._prev, 250);
-    this.getBranches();
   },
 };
 </script>

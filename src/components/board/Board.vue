@@ -19,7 +19,7 @@
         'highlight-squares': $store.state.ui.highlightSquares,
         'piece-shadows': $store.state.ui.pieceShadows,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
-        'is-game-end': $game.state.isGameEnd,
+        'is-game-end': position.isGameEnd,
       }"
       :style="{ width, fontSize, transform }"
       @click.right.self.prevent="resetBoardRotation"
@@ -75,19 +75,19 @@
         </div>
 
         <div class="board relative-position all-pointer-events">
-          <div class="squares absolute-fit row">
+          <div class="squares absolute-fit row reverse-wrap">
             <Square
-              v-for="square in squares"
-              :key="square.static.coord"
-              :coord="square.static.coord"
+              v-for="(square, coord) in board.squares"
+              :key="coord"
+              :coord="coord"
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
             <Piece
-              v-for="piece in $game.state.pieces.all.byID"
-              :key="piece.id"
-              :ref="piece.id"
-              :id="piece.id"
+              v-for="(piece, id) in board.pieces"
+              :key="id"
+              :ref="id"
+              :id="id"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@
 import Piece from "./Piece";
 import Square from "./Square";
 
-import { throttle } from "lodash";
+import { forEach, throttle } from "lodash";
 
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
@@ -142,16 +142,28 @@ export default {
     };
   },
   computed: {
+    board() {
+      return this.$store.state.game.board;
+    },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
+    selected() {
+      return this.$store.state.game.selected;
+    },
     style() {
       return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
       return this.$store.state.ui.isEditingTPS
         ? this.$store.state.ui.selectedPiece.color
-        : this.$game.state.turn;
+        : this.position.turn;
     },
     boardPly() {
-      return this.$game.state.boardPly;
+      return this.board.ply;
     },
     player1() {
       return this.$game.tag("player1");
@@ -160,7 +172,7 @@ export default {
       return this.$game.tag("player2");
     },
     flats() {
-      return this.$game.state.flats;
+      return this.board.flats;
     },
     minNameWidth() {
       return 100 / this.$game.size;
@@ -261,25 +273,13 @@ export default {
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
-    squares() {
-      let squares = [];
-      for (let y = this.$game.size - 1; y >= 0; y--) {
-        for (let x = 0; x < this.$game.size; x++) {
-          squares.push(this.$game.state.squares[y][x]);
-        }
-      }
-      return squares;
-    },
   },
   methods: {
     dropPiece() {
-      if (
-        this.$game.state.selected.pieces.length === 1 &&
-        !this.$game.state.selected.moveset.length
-      ) {
-        this.$game.selectUnplayedPiece(
-          this.$game.state.selected.pieces[0].type
-        );
+      if (this.selected.pieces.length === 1 && !this.selected.moveset.length) {
+        this.$store.dispatch("game/SELECT_PIECE", {
+          type: this.selected.pieces[0].type,
+        });
       }
     },
     isInputFocused() {
@@ -372,15 +372,15 @@ export default {
     zoomFit() {
       let nodes = [this.$refs.container];
       if (this.$store.state.ui.unplayedPieces) {
-        Object.values(this.$game.state.pieces.all.byID).forEach((piece) => {
+        forEach(this.board.pieces, (piece, id) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$refs.stone);
+            nodes.push(this.$refs[id][0].$refs.stone);
           }
         });
       }
-      this.squares.forEach((square) => {
+      forEach(this.board.squares, (square) => {
         if (square.piece) {
-          nodes.push(this.$refs[square.piece.id][0].$refs.stone);
+          nodes.push(this.$refs[square.piece][0].$refs.stone);
         }
       });
       const boardBB = this.getBounds(nodes);

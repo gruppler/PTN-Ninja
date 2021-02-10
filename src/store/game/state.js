@@ -2,12 +2,13 @@ import { LocalStorage, Platform } from "quasar";
 
 const state = {
   board: null,
-  ptn: "",
-  state: null,
   config: null,
   history: null,
   historyIndex: 0,
   list: [],
+  position: null,
+  ptn: null,
+  selected: null,
 };
 
 const load = (key, initial) =>

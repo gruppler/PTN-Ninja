@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="game.state.ply && !$store.state.ui.showPTN"
+    v-show="position.ply && !$store.state.ui.showPTN"
     class="board-move-container no-pointer-events"
   >
     <div class="board-move" :class="{ collapsed }">
@@ -13,9 +13,9 @@
         flat
       />
       <Move
-        v-if="game.state.move"
+        v-if="position.move"
         :class="{ 'all-pointer-events': !collapsed }"
-        :move="game.state.move"
+        :move="position.move"
         separate-branch
         current-only
         standalone
@@ -39,8 +39,8 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["showMove", !value]);
       },
     },
-    game() {
-      return this.$game;
+    position() {
+      return this.$store.state.game.position;
     },
     icon() {
       return this.collapsed ? "up" : "down";

@@ -29,7 +29,8 @@ export default class GameNavigation {
       if (ply.result.type === "R" && !ply.result.roads) {
         ply.result.roads = this.findRoads();
       }
-      this.state.roads = ply.result.roads;
+      // this.state.roads = ply.result.roads;
+      this.state.setRoads(ply.result.roads);
     } else if (ply.index === this.state.plies.length - 1) {
       this.checkGameEnd();
     }
@@ -282,6 +283,9 @@ export default class GameNavigation {
     }
 
     this.state.updateSquareConnections(squares);
+    this.state.updateBoard();
+    this.state.updatePosition();
+    this.state.updatePTNBranch();
 
     return true;
   }
@@ -299,7 +303,10 @@ export default class GameNavigation {
       return false;
     }
     if ((half || !this.state.prevPly) && this.state.plyIsDone) {
-      return this._undoPly();
+      const result = this._undoPly();
+      this.state.updateBoard();
+      this.state.updatePosition();
+      return result;
     } else if (this.state.prevPly) {
       return this.goToPly(this.state.prevPly.id, true);
     }
@@ -311,7 +318,10 @@ export default class GameNavigation {
       return false;
     }
     if (!this.state.plyIsDone) {
-      return this._doPly();
+      const result = this._doPly();
+      this.state.updateBoard();
+      this.state.updatePosition();
+      return result;
     } else if (this.state.nextPly) {
       return this.goToPly(this.state.nextPly.id, !half);
     }

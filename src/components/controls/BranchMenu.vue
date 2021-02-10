@@ -61,8 +61,8 @@ export default {
       const index = findLastIndex(
         this.branches,
         (ply) =>
-          this.$game.state.plies.includes(ply) &&
-          ply.id <= this.$game.state.plyID
+          this.$store.state.game.ptn.branchPlies.find((p) => p.id === ply.id) &&
+          ply.id <= this.$store.state.game.position.plyID
       );
       return index >= 0 ? index : 0;
     },

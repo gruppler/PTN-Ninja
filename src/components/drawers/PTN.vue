@@ -19,25 +19,33 @@
 <script>
 import Move from "../PTN/Move";
 
+import { debounce } from "lodash";
+
 export default {
   name: "PTN",
   components: { Move },
   computed: {
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
     moves() {
       return this.$store.state.ui.showAllBranches
-        ? this.$game.movesSorted
-        : this.$game.state.moves;
+        ? this.ptn.allMoves
+        : this.ptn.branchMoves;
     },
   },
   methods: {
-    scroll(animate = false) {
+    scroll: debounce(function (animate = false) {
       const editingBranch = this.$store.state.ui.editingBranch
-        ? this.$game.branches[this.$store.state.ui.editingBranch] || null
+        ? this.ptn.branches[this.$store.state.ui.editingBranch] || null
         : null;
       const move = editingBranch
-        ? this.$refs[editingBranch.move.id][0]
-        : this.$game.state.ply && this.$game.state.move.id in this.$refs
-        ? this.$refs[this.$game.state.move.id][0]
+        ? this.$refs[editingBranch.move][0]
+        : this.position.ply && this.position.move.id in this.$refs
+        ? this.$refs[this.position.move.id][0]
         : null;
       if (move) {
         this.$refs.scroll.setScrollPosition(
@@ -46,13 +54,10 @@ export default {
           animate && this.$store.state.ui.showPTN ? 300 : 0
         );
       }
-    },
+    }, 100),
   },
   watch: {
-    game() {
-      this.scroll(true);
-    },
-    "game.state.plyID"() {
+    "position.plyID"() {
       this.scroll(true);
     },
     "$store.state.ui.showAllBranches"() {

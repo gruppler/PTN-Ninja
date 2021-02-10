@@ -15,12 +15,19 @@ export default class Piece {
   }
 
   get snapshot() {
-    return {
-      ...pick(this, ["color", "isSelected", "isStanding", "isCapstone"]),
+    return Object.freeze({
+      ...pick(this, [
+        "id",
+        "index",
+        "color",
+        "isSelected",
+        "isStanding",
+        "isCapstone",
+      ]),
       ...this.state,
       type: this.type,
       square: this.square ? this.square.static.coord : null,
-    };
+    });
   }
 
   get state() {

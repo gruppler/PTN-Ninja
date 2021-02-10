@@ -1,3 +1,7 @@
+import { pick } from "lodash";
+
+const outputProps = ["text", "tinue", "tak", "?", "!"];
+
 export default class Evaluation {
   constructor(notation) {
     const matchData = notation.match(/([?!'"]+)/);
@@ -16,6 +20,10 @@ export default class Evaluation {
     this.tak = !this.tinue && this.ptn.includes("'");
     this["?"] = this.ptn.includes("?");
     this["!"] = this.ptn.includes("!");
+  }
+
+  get output() {
+    return Object.freeze(pick(this, outputProps));
   }
 
   isDouble(type) {

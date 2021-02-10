@@ -19,6 +19,10 @@ export default class Nop {
     return new Nop(notation);
   }
 
+  get output() {
+    return Object.freeze({ isNop: true, text: this.text() });
+  }
+
   text() {
     return this.raw || "--";
   }

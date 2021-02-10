@@ -4,7 +4,7 @@ import Piece from "../Piece";
 import Square from "../Square";
 import { atoi, itoa } from "../Ply";
 
-import { defaults, isArray, map, pick } from "lodash";
+import { defaults, flatten, isArray, map, pick, uniq, zipObject } from "lodash";
 import memoize from "./memoize";
 
 export default class GameState {
@@ -12,10 +12,46 @@ export default class GameState {
     this.game = game;
 
     defaults(this, state, {
-      targetBranch: "",
       plyID: -1,
       plyIsDone: false,
+      targetBranch: "",
     });
+
+    this.output = {
+      board: {
+        ply: null,
+        squares: null,
+        pieces: null,
+        flats: null,
+      },
+      position: {
+        isGameEnd: false,
+        isFirstMove: true,
+        move: null,
+        nextPly: false,
+        ply: null,
+        plyID: -1,
+        plyIndex: -1,
+        plyIsDone: false,
+        prevPly: false,
+        targetBranch: "",
+        turn: 1,
+        color: 1,
+      },
+      ptn: {
+        allMoves: null,
+        allPlies: null,
+        branchMenu: null,
+        branchMoves: null,
+        branchPlies: null,
+        branches: null,
+      },
+      selected: {
+        squares: null,
+        pieces: null,
+        moveset: null,
+      },
+    };
 
     Object.defineProperty(this, "plies", {
       get: memoize(this.getPlies, this.branchKey),
@@ -112,6 +148,8 @@ export default class GameState {
       }
       Object.freeze(square.static);
     });
+
+    this.updateOutput();
   }
 
   forEachSquare(f) {
@@ -141,8 +179,15 @@ export default class GameState {
     }
   }
 
-  boardSnapshot() {
-    const squares = [];
+  updateOutput() {
+    this.updateBoard();
+    this.updatePTN();
+    this.updatePosition();
+    this.updateSelected();
+  }
+
+  updateBoard() {
+    const squares = {};
     const pieces = {};
     map(this.pieces.all.byID, (piece, id) => {
       pieces[id] = piece.snapshot;
@@ -151,7 +196,62 @@ export default class GameState {
       squares[square.static.coord] = square.snapshot;
     });
 
-    return { squares, pieces };
+    return Object.assign(this.output.board, {
+      ply: { ...this.boardPly },
+      squares,
+      pieces,
+      flats: this.flats.concat(),
+    });
+  }
+
+  updatePTN() {
+    const allPlies = this.game.plies.map((ply) => ply.output);
+    const allMoves = this.game.movesSorted.map((move) => move.output(allPlies));
+    const branches = zipObject(
+      Object.keys(this.game.branches),
+      Object.values(this.game.branches).map((ply) => allPlies[ply.id])
+    );
+    return Object.assign(this.output.ptn, {
+      allMoves,
+      allPlies,
+      branches,
+      branchMoves: this.moves.map((move) => allMoves[move.id]),
+      branchPlies: this.plies.map((ply) => allPlies[ply.id]),
+      branchMenu: uniq(
+        flatten(Object.values(branches).map((ply) => ply.branches))
+      ).map((id) => allPlies[id]),
+    });
+  }
+
+  updatePTNBranch() {
+    return Object.assign(this.output.ptn, {
+      branchMoves: this.moves.map((move) => this.output.ptn.allMoves[move.id]),
+      branchPlies: this.plies.map((ply) => this.output.ptn.allPlies[ply.id]),
+    });
+  }
+
+  updatePosition() {
+    return Object.assign(
+      this.output.position,
+      pick(this, Object.keys(this.output.position)),
+      {
+        ply: this.ply ? this.output.ptn.allPlies[this.ply.id] : null,
+        move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
+        prevPly: Boolean(this.prevPly),
+        nextPly: Boolean(this.nextPly),
+      }
+    );
+  }
+
+  updateSelected() {
+    return Object.assign(this.output.selected, {
+      pieces: this.selected.pieces.map(
+        (piece) => this.output.board.pieces[piece.id]
+      ),
+      squares: this.selected.squares.map(
+        (square) => this.output.board.squares[square.static.coord]
+      ),
+    });
   }
 
   getPlies() {
@@ -368,6 +468,8 @@ export default class GameState {
     this.plyIsDone = plyIsDone;
     const ply = this.ply;
     this.setRoads(ply && ply.result ? ply.result.roads : null);
+    this.updateBoard();
+    this.updatePosition();
   }
 
   updateSquareConnections(squares) {

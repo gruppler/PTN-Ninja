@@ -1,4 +1,6 @@
-import { compact, last } from "lodash";
+import { compact, last, pick } from "lodash";
+
+const outputProps = ["branch", "number"];
 
 export default class Linenum {
   constructor(notation, game, branch = "") {
@@ -36,6 +38,10 @@ export default class Linenum {
 
   static splitBranch(branch) {
     return compact(branch.split(/[./](?=[^./]+|$)/));
+  }
+
+  get output() {
+    return Object.freeze(pick(this, outputProps));
   }
 
   parseBranch(game) {

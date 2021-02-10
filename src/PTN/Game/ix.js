@@ -120,6 +120,7 @@ export default class GameIX {
         piece.isStanding = true;
       }
     }
+    this.state.updateSelected();
   }
 
   selectSquare(square, altSelect = false, editMode = false, selectedPiece) {

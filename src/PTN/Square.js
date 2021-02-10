@@ -30,8 +30,8 @@ export default class Square {
 
     this.static = {
       coord: itoa(x, y),
-      x: x,
-      y: y,
+      x,
+      y,
       edges: new Sides({
         enable: (side) => {
           this.static.isEdge = true;
@@ -59,7 +59,9 @@ export default class Square {
   get snapshot() {
     return {
       static: this.static,
-      ...pick(this, ["connected", "roads", "isSelected"]),
+      connected: this.connected.output,
+      roads: this.roads.output,
+      isSelected: this.isSelected,
       piece: this.piece ? this.piece.id : null,
       pieces: this.pieces ? this.pieces.map((piece) => piece.id) : null,
     };
@@ -202,6 +204,10 @@ export class Sides {
       "splice",
       "unshift",
     ].forEach((fn) => (this[fn] = this._array[fn].bind(this._array)));
+  }
+
+  get output() {
+    return { ...this._index, ...this._array, length: this.length };
   }
 
   setSides(values) {

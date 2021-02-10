@@ -22,7 +22,7 @@
         :no-branch="noBranch || separateBranch"
       />
       <template v-if="ply1 && (!player || player === 1)">
-        <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text() }}</span>
+        <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
         <Ply v-else :key="ply1.id" :plyID="ply1.id" />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
@@ -53,6 +53,12 @@ export default {
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
     },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
     ply1() {
       return !this.standalone && this.showAllBranches
         ? this.move.ply1
@@ -62,28 +68,28 @@ export default {
       return this.move.ply2
         ? this.showAllBranches && !this.currentOnly
           ? this.move.ply2
-          : this.move.ply2.getBranch(this.$game.state.targetBranch)
+          : this.ptn.branchPlies[this.move.ply2.index]
         : null;
     },
     index() {
-      return this.$game.movesSorted.findIndex((move) => move === this.move);
+      return this.ptn.allMoves.findIndex((move) => move === this.move);
     },
     prevMove() {
-      const moves = this.$game.movesSorted;
+      const moves = this.ptn.allMoves;
       return this.index > 0 ? moves[this.index - 1] : null;
     },
     nextMove() {
-      const moves = this.$game.movesSorted;
+      const moves = this.ptn.allMoves;
       return this.index < moves.length - 1 ? moves[this.index + 1] : null;
     },
     isCurrentMove() {
       return (
         !this.noDecoration &&
         !this.currentOnly &&
-        this.$game.state.move &&
+        this.position.move &&
         (this.showAllBranches
-          ? this.$game.state.move.id === this.move.id
-          : this.$game.state.move.index === this.move.index)
+          ? this.position.move.id === this.move.id
+          : this.position.move.index === this.move.index)
       );
     },
     linebreak() {
@@ -98,7 +104,8 @@ export default {
     separator() {
       return (
         this.linebreak &&
-        (!this.move.branch || !this.nextMove.firstPly.branches[0].branch)
+        (!this.move.branch ||
+          !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
     },
     showSeparateBranch() {

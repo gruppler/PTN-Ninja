@@ -52,11 +52,11 @@ export default {
       return (
         !this.square &&
         (this.$store.state.ui.editingTPS ||
-          this.piece.color === this.$game.state.color)
+          this.piece.color === this.$store.state.game.position.color)
       );
     },
     firstSelected() {
-      return this.piece === this.$game.state.selected.pieces[0];
+      return this.piece === this.$store.state.game.selected.pieces[0];
     },
     board3D() {
       return this.$store.state.ui.board3D;

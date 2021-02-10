@@ -1,3 +1,15 @@
+import { pick } from "lodash";
+
+const outputProps = [
+  "text",
+  "player1",
+  "player2",
+  "isTie",
+  "winner",
+  "type",
+  "roads",
+];
+
 export default class Result {
   constructor(notation) {
     const matchData = notation.match(/(1\/2|[01RF])\s*-\s*(1\/2|[01RF])/);
@@ -20,6 +32,10 @@ export default class Result {
       this.type = this["player" + this.winner];
     }
     this.roads = null;
+  }
+
+  get output() {
+    return Object.freeze(pick(this, outputProps));
   }
 
   static test(notation) {

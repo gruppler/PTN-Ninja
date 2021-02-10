@@ -1,6 +1,6 @@
 import Ptn from "./ptn";
 
-import { pick, isEqual } from "lodash";
+import { cloneDeep, pick, isEqual } from "lodash";
 
 const minProps = [
   "column",
@@ -9,6 +9,24 @@ const minProps = [
   "pieceCount",
   "row",
   "specialPiece",
+];
+
+const outputProps = [
+  "branch",
+  "color",
+  "column",
+  "direction",
+  "distribution",
+  "id",
+  "index",
+  "minDistribution",
+  "minPieceCount",
+  "pieceCount",
+  "player",
+  "row",
+  "specialPiece",
+  "squares",
+  "wallSmash",
 ];
 
 export const atoi = (coord) => [
@@ -83,6 +101,20 @@ export default class Ply extends Ptn {
 
   static itoa = itoa;
 
+  get output() {
+    const output = pick(this, outputProps);
+    output.branches = this.branches.map((ply) => ply.id);
+    output.evaluation = this.evaluation ? this.evaluation.output : null;
+    output.result = this.result ? this.result.output : null;
+    output.linenum = this.linenum.output;
+    output.move = this.move.id;
+    return Object.freeze(output);
+  }
+
+  get min() {
+    return pick(this, minProps);
+  }
+
   getBranch(branch = "") {
     if (this.branches.length) {
       return this.branches.find((ply) => ply.isInBranch(branch)) || this;
@@ -146,10 +178,6 @@ export default class Ply extends Ptn {
       }
     }
     return false;
-  }
-
-  get min() {
-    return pick(this, minProps);
   }
 
   isEqual(ply) {
