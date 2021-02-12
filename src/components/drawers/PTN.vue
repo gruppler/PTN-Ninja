@@ -48,11 +48,22 @@ export default {
         ? this.$refs[this.position.move.id][0]
         : null;
       if (move) {
-        this.$refs.scroll.setScrollPosition(
-          move.$el.offsetTop -
-            (this.$refs.scroll.$el.offsetHeight - move.$el.offsetHeight) / 2,
-          animate && this.$store.state.ui.showPTN ? 300 : 0
+        const $scroll = this.$refs.scroll;
+        const movesHeight = $scroll.$el.firstChild.scrollHeight;
+        const scrollHeight = $scroll.$el.offsetHeight;
+        const scrollTop = Math.max(
+          0,
+          Math.min(
+            movesHeight - scrollHeight,
+            move.$el.offsetTop - (scrollHeight - move.$el.offsetHeight) / 2
+          )
         );
+        if (scrollTop !== $scroll.scrollPosition) {
+          $scroll.setScrollPosition(
+            scrollTop,
+            animate && this.$store.state.ui.showPTN ? 300 : 0
+          );
+        }
       }
     }, 100),
   },
