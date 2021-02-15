@@ -33,7 +33,7 @@
           <q-input v-model="name" name="name" :label="$t('Name')" filled>
             <template v-slot:append>
               <q-icon
-                @click="name = name === $game.name ? generatedName : $game.name"
+                @click="name = name === gameName ? generatedName : gameName"
                 name="refresh"
                 class="q-field__focusable-action"
               />
@@ -257,6 +257,9 @@ export default {
     previewHeight() {
       return this.previewError ? "0" : "333px";
     },
+    gameName() {
+      return this.$game.name;
+    },
     generatedName() {
       return this.$game.generateName();
     },
@@ -313,7 +316,7 @@ export default {
     },
   },
   mounted() {
-    this.name = this.$game.name;
+    this.name = this.gameName;
     this.initialURL = this.url;
   },
 };

@@ -206,9 +206,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$game;
-    },
     themes() {
       return this.$store.getters["ui/themes"];
     },

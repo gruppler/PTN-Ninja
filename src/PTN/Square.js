@@ -57,21 +57,21 @@ export default class Square {
   }
 
   get snapshot() {
-    return {
+    return Object.freeze({
       static: this.static,
       connected: this.connected.output,
       roads: this.roads.output,
       isSelected: this.isSelected,
       piece: this.piece ? this.piece.id : null,
       pieces: this.pieces ? this.pieces.map((piece) => piece.id) : null,
-    };
+    });
   }
 
   _getPiece() {
     return this.pieces.length ? this.pieces[this.pieces.length - 1] : null;
   }
 
-  _setPiece(piece, deferUpdate = false) {
+  setPiece(piece, deferUpdate = false) {
     const prevColor = this.color;
     const wasStanding = this.piece && this.isStanding;
 
@@ -105,9 +105,11 @@ export default class Square {
   }
 
   updateConnected() {
-    let neighbor, isConnected;
-    Object.keys(EDGE).forEach((side) => {
-      if (this.static.edges[side]) {
+    let neighbor,
+      isConnected,
+      changed = {};
+    this.static.edges.forEach((isEdge, side) => {
+      if (isEdge) {
         this.connected[side] = !!(this.piece && !this.isStanding);
       } else if ((neighbor = this.static.neighbors[side])) {
         isConnected = !!(
@@ -116,10 +118,17 @@ export default class Square {
           !neighbor.isStanding &&
           neighbor.color === this.color
         );
-        this.connected[side] = isConnected;
-        neighbor.connected[OPPOSITE[side]] = isConnected;
+        if (this.connected[side] !== isConnected) {
+          this.connected[side] = isConnected;
+          changed[itoa(square.x, square.y)] = true;
+        }
+        if (neighbor.connected[OPPOSITE[side]] !== isConnected) {
+          neighbor.connected[OPPOSITE[side]] = isConnected;
+          changed[itoa(neighbor.x, neighbor.y)] = true;
+        }
       }
     });
+    return changed;
   }
 
   setRoad(road) {
@@ -140,13 +149,13 @@ export default class Square {
     piece.square = this;
     this.pieces[index] = piece;
     if (index === this.pieces.length - 1) {
-      this._setPiece(piece, deferUpdate);
+      this.setPiece(piece, deferUpdate);
     }
   }
 
   pushPiece(piece, deferUpdate = false) {
     piece.square = this;
-    this._setPiece(piece, deferUpdate);
+    this.setPiece(piece, deferUpdate);
     this.pieces.push(piece);
   }
 
@@ -159,7 +168,7 @@ export default class Square {
     if (piece) {
       piece.square = null;
     }
-    this._setPiece(this._getPiece(), deferUpdate);
+    this.setPiece(this._getPiece(), deferUpdate);
     return piece;
   }
 

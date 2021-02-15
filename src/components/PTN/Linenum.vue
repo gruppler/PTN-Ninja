@@ -54,6 +54,8 @@
 <script>
 import BranchMenu from "../controls/BranchMenu";
 
+import { isNumber } from "lodash";
+
 export default {
   name: "Linenum",
   components: { BranchMenu },
@@ -79,17 +81,28 @@ export default {
       const branch = text.value;
       return branch.split("/").join('/<span class="space"> </span>');
     },
+    plies() {
+      return this.$store.state.game.ptn.allPlies;
+    },
     ply() {
-      return this.activePly || this.$game.branches[this.linenum.branch];
+      return (
+        this.activePly ||
+        this.$store.state.game.ptn.branches[this.linenum.branch]
+      );
     },
     branches() {
-      return this.ply.branches;
+      return this.ply.branches.map((ply) =>
+        isNumber(ply) ? this.plies[ply] : ply
+      );
     },
     showBranch() {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return !this.unselected && this.$game.state.plies.includes(this.ply);
+      return (
+        !this.unselected &&
+        this.$store.state.game.ptn.branchPlies.includes(this.ply)
+      );
     },
   },
   methods: {

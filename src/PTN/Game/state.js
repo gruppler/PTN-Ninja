@@ -4,7 +4,16 @@ import Piece from "../Piece";
 import Square from "../Square";
 import { atoi, itoa } from "../Ply";
 
-import { defaults, flatten, isArray, map, pick, uniq, zipObject } from "lodash";
+import {
+  defaults,
+  flatten,
+  isArray,
+  map,
+  pick,
+  uniq,
+  without,
+  zipObject,
+} from "lodash";
 import memoize from "./memoize";
 
 export default class GameState {
@@ -20,8 +29,8 @@ export default class GameState {
     this.output = {
       board: {
         ply: null,
-        squares: null,
-        pieces: null,
+        squares: {},
+        pieces: {},
         flats: null,
       },
       position: {
@@ -88,6 +97,12 @@ export default class GameState {
       initialCount: 0,
     };
 
+    this.dirty = {
+      pieces: {},
+      squares: {},
+      squareConnections: {},
+    };
+
     this.pieces = {
       all: {
         1: { flat: [], cap: [] },
@@ -116,6 +131,7 @@ export default class GameState {
           });
           this.pieces.all[color][type][index] = piece;
           this.pieces.all.byID[id] = piece;
+          this.dirty.pieces[id] = true;
         }
       });
     });
@@ -147,9 +163,8 @@ export default class GameState {
         ];
       }
       Object.freeze(square.static);
+      this.dirty.squares[square.static.coord] = true;
     });
-
-    this.updateOutput();
   }
 
   forEachSquare(f) {
@@ -160,12 +175,28 @@ export default class GameState {
   }
 
   mapSquares(f) {
-    this.squares.map((row) => row.map(f));
+    return this.squares.map((row) => row.map(f));
   }
 
-  getSquare(coord) {
-    coord = atoi(coord);
-    return this.squares[coord[1]][coord[0]];
+  getSquare(square) {
+    if (square instanceof Square) {
+      return square;
+    } else if (typeof square === "string") {
+      const coord = atoi(square);
+      return this.squares[coord[1]][coord[0]];
+    } else if (square.static.coord) {
+      return this.squares[square.static.y][square.static.x];
+    }
+  }
+
+  getPiece(piece) {
+    if (piece instanceof Piece) {
+      return piece;
+    } else if (typeof piece === "string") {
+      return this.pieces.all.byID[piece];
+    } else if (piece.id) {
+      return this.pieces.all.byID[piece.id];
+    }
   }
 
   branchKey() {
@@ -179,34 +210,86 @@ export default class GameState {
     }
   }
 
-  updateOutput() {
-    this.updateBoard();
-    this.updatePTN();
-    this.updatePosition();
-    this.updateSelected();
+  dirtySquare(coord, connections = false) {
+    this.dirty.squares[coord] = true;
+    if (connections) {
+      this.dirty.squareConnections[coord] = true;
+    }
   }
 
-  updateBoard() {
-    const squares = {};
-    const pieces = {};
-    map(this.pieces.all.byID, (piece, id) => {
-      pieces[id] = piece.snapshot;
+  dirtyPiece(id) {
+    this.dirty.pieces[id] = true;
+  }
+
+  updateSquareConnections() {
+    const changed = {};
+    map(this.dirty.squareConnections, (isDirty, coord) => {
+      if (isDirty) {
+        Object.assign(changed, this.getSquare(coord).updateConnected());
+        this.dirty.squareConnections[coord] = false;
+      }
     });
-    this.forEachSquare((square) => {
-      squares[square.static.coord] = square.snapshot;
+    Object.keys(changed).forEach((coord) => dirtySquare(coord));
+  }
+
+  updateOutput() {
+    this.updateBoardOutput();
+    this.updatePTNOutput();
+    this.updatePositionOutput();
+    this.updateSelectedOutput();
+  }
+
+  updateBoardOutput() {
+    this.updateSquareConnections();
+    this.updatePiecesOutput();
+    this.updateSquaresOutput();
+
+    map(this.dirty.pieces, (isDirty, id) => {
+      if (isDirty) {
+        pieces[id] = this.getPiece(id).snapshot;
+        this.dirty.pieces[id] = false;
+      }
+    });
+
+    map(this.dirty.squares, (isDirty, coord) => {
+      if (isDirty) {
+        const square = this.getSquare(coord);
+        squares[coord] = square.snapshot;
+        this.dirty.squares[coord] = false;
+      }
     });
 
     return Object.assign(this.output.board, {
       ply: { ...this.boardPly },
-      squares,
-      pieces,
       flats: this.flats.concat(),
     });
   }
 
-  updatePTN() {
-    const allPlies = this.game.plies.map((ply) => ply.output);
-    const allMoves = this.game.movesSorted.map((move) => move.output(allPlies));
+  updatePiecesOutput() {
+    map(this.dirty.pieces, (isDirty, id) => {
+      if (isDirty) {
+        this.output.board.pieces[id] = this.getPiece(id).snapshot;
+        this.dirty.pieces[id] = false;
+      }
+    });
+  }
+
+  updateSquaresOutput() {
+    map(this.dirty.squares, (isDirty, coord) => {
+      if (isDirty) {
+        const square = this.getSquare(coord);
+        this.output.board.squares[coord] = square.snapshot;
+        this.dirty.squares[coord] = false;
+      }
+    });
+  }
+
+  updatePTNOutput() {
+    const allPlies =
+      this.output.ptn.allPlies || this.game.plies.map((ply) => ply.output);
+    const allMoves =
+      this.output.ptn.allMoves ||
+      this.game.movesSorted.map((move) => move.output(allPlies));
     const branches = zipObject(
       Object.keys(this.game.branches),
       Object.values(this.game.branches).map((ply) => allPlies[ply.id])
@@ -223,19 +306,28 @@ export default class GameState {
     });
   }
 
-  updatePTNBranch() {
+  updatePTNBranchOutput() {
     return Object.assign(this.output.ptn, {
       branchMoves: this.moves.map((move) => this.output.ptn.allMoves[move.id]),
       branchPlies: this.plies.map((ply) => this.output.ptn.allPlies[ply.id]),
     });
   }
 
-  updatePosition() {
+  updatePositionOutput() {
     return Object.assign(
       this.output.position,
-      pick(this, Object.keys(this.output.position)),
+      pick(
+        this,
+        without(
+          Object.keys(this.output.position),
+          "ply",
+          "move",
+          "prevPly",
+          "nextPly"
+        )
+      ),
       {
-        ply: this.ply ? this.output.ptn.allPlies[this.ply.id] : null,
+        ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: Boolean(this.prevPly),
         nextPly: Boolean(this.nextPly),
@@ -243,7 +335,7 @@ export default class GameState {
     );
   }
 
-  updateSelected() {
+  updateSelectedOutput() {
     return Object.assign(this.output.selected, {
       pieces: this.selected.pieces.map(
         (piece) => this.output.board.pieces[piece.id]
@@ -306,8 +398,12 @@ export default class GameState {
   }
 
   selectPiece(piece) {
+    if (typeof piece === "string") {
+      piece = this.getPiece(piece);
+    }
     this.selected.pieces.push(piece);
     piece.isSelected = true;
+    this.dirtyPiece(piece.id);
   }
 
   selectPieces(pieces) {
@@ -317,6 +413,7 @@ export default class GameState {
   reselectPiece(piece) {
     this.selected.pieces.unshift(piece);
     piece.isSelected = true;
+    this.dirtyPiece(piece.id);
   }
 
   deselectPiece(flatten = false) {
@@ -326,6 +423,7 @@ export default class GameState {
       if (flatten) {
         piece.isStanding = false;
       }
+      this.dirtyPiece(piece.id);
     }
     return piece;
   }
@@ -336,15 +434,18 @@ export default class GameState {
     }
   }
 
-  selectSquare(square) {
+  selectSquare(coord) {
+    let square = this.getSquare(coord);
     this.selected.squares.push(square);
     square.isSelected = true;
+    this.dirtySquare(square.static.coord);
   }
 
   deselectSquare() {
     const square = this.selected.squares.shift();
     if (square) {
       square.isSelected = false;
+      this.dirtySquare(square.static.coord);
     }
     return square;
   }
@@ -373,10 +474,13 @@ export default class GameState {
           piece,
           deferUpdate
         );
+        this.dirtySquare(itoa(square.x, square.y), true);
       } else {
         // Set via square
         square.pushPiece(piece, deferUpdate);
+        this.dirtySquare(square.static.coord, true);
       }
+      this.dirtyPiece(piece.id);
       return piece;
     }
     return null;
@@ -397,13 +501,19 @@ export default class GameState {
       } else {
         this.pieces.played[piece.color][piece.type].pop();
       }
+      this.dirtyPiece(piece.id);
+      this.dirtySquare(square.static.coord, true);
       return piece;
     }
     return null;
   }
 
   clearBoard() {
-    this.forEachSquare((square) => square.clear());
+    this.forEachSquare((square) => {
+      square.pieces.forEach((piece) => this.dirtyPiece(piece.id));
+      square.clear();
+      this.dirtySquare(square.static.coord, true);
+    });
     this.pieces.played[1].flat.length = 0;
     this.pieces.played[1].cap.length = 0;
     this.pieces.played[2].flat.length = 0;
@@ -468,17 +578,8 @@ export default class GameState {
     this.plyIsDone = plyIsDone;
     const ply = this.ply;
     this.setRoads(ply && ply.result ? ply.result.roads : null);
-    this.updateBoard();
-    this.updatePosition();
-  }
-
-  updateSquareConnections(squares) {
-    if (!isArray(squares)) {
-      squares = Object.keys(squares);
-    }
-    squares.forEach((coord) => {
-      this.getSquare(coord).updateConnected();
-    });
+    this.updateBoardOutput();
+    this.updatePositionOutput();
   }
 
   get boardPly() {

@@ -365,6 +365,7 @@ export default class GameBase {
       this.doTPS();
     }
 
+    this.state.updateOutput();
     this.saveBoardState();
 
     if (params.state) {

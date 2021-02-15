@@ -1,5 +1,5 @@
 <template>
-  <q-layout v-if="$game" class="non-selectable" view="lHh LpR lFr">
+  <q-layout v-if="gameExists" class="non-selectable" view="lHh LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -31,7 +31,7 @@
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
-        @shortkey="$store.dispatch($event.srcKey, $game)"
+        @shortkey="shortkeyAction"
         class="overflow-hidden"
       >
         <div
@@ -69,13 +69,13 @@
               @click="$store.dispatch('game/UNDO')"
               icon="undo"
               :title="$t('Undo')"
-              :disabled="!$game.canUndo"
+              :disabled="!canUndo"
             />
             <q-btn
               @click="$store.dispatch('game/REDO')"
               icon="redo"
               :title="$t('Redo')"
-              :disabled="!$game.canRedo"
+              :disabled="!canRedo"
             />
           </q-btn-group>
           <EvalButtons class="full-width" spread stretch flat unelevated />
@@ -163,6 +163,15 @@ export default {
     };
   },
   computed: {
+    gameExists() {
+      return Boolean(this.$game);
+    },
+    canUndo() {
+      return this.$game ? this.$game.canUndo : false;
+    },
+    canRedo() {
+      return this.$game ? this.$game.canRedo : false;
+    },
     showPTN: {
       get() {
         return this.$store.state.ui.showPTN;
@@ -217,6 +226,15 @@ export default {
         }),
         "_blank"
       );
+    },
+    undo() {
+      return $store.dispatch("game/UNDO");
+    },
+    redo() {
+      return $store.dispatch("game/REDO");
+    },
+    shortkeyAction(event) {
+      this.$store.dispatch(event.srcKey);
     },
     uiShortkey({ srcKey }) {
       this.$store.dispatch("ui/TOGGLE_UI", srcKey);

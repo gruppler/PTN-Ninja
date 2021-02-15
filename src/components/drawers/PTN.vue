@@ -1,7 +1,7 @@
 <template>
   <recess>
     <q-scroll-area ref="scroll" class="full-ptn absolute-fit non-selectable">
-      <div v-if="$game">
+      <div v-if="gameExists">
         <Move
           class="q-px-md"
           v-for="move in moves"
@@ -25,6 +25,9 @@ export default {
   name: "PTN",
   components: { Move },
   computed: {
+    gameExists() {
+      return Boolean(this.$game);
+    },
     position() {
       return this.$store.state.game.position;
     },

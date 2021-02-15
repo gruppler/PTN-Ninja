@@ -16,7 +16,7 @@ export const getPlayer = (game, uid) => {
 };
 
 export default class GameOnline {
-  player(uid) {
+  getPlayerFromUID(uid) {
     return getPlayer(this, uid);
   }
 

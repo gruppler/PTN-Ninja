@@ -15,13 +15,10 @@
               :key="plyID"
               :ref="plyID"
             >
-              <div
-                v-if="plyID >= 0 && $game.plies[plyID]"
-                class="ply-container"
-              >
+              <div v-if="plyID >= 0 && plies[plyID]" class="ply-container">
                 <Move
-                  :move="$game.plies[plyID].move"
-                  :player="$game.plies[plyID].player"
+                  :move="plies[plyID].move"
+                  :player="plies[plyID].player"
                   separate-branch
                   no-decoration
                 />
@@ -113,6 +110,15 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
+    plies() {
+      return this.game.ptn.allPlies;
+    },
+    branchPlies() {
+      return this.game.ptn.branchPlies;
+    },
     isShowing() {
       return (
         (this.$store.state.ui.showText && !this.hasChat) ||
@@ -127,8 +133,7 @@ export default {
         ? this.$game.notes
         : pickBy(
             this.$game.notes,
-            (notes, id) =>
-              id < 0 || this.$game.state.plies.includes(this.$game.plies[id])
+            (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
           );
     },
     plyIDs() {
@@ -144,21 +149,21 @@ export default {
         return this.editing.plyID;
       }
       let plyID, ply;
-      if (!this.$game.state.plyID && !this.$game.state.plyIsDone) {
+      if (!this.game.position.plyID && !this.game.position.plyIsDone) {
         return this.plyIDs[0];
-      } else if (this.$game.state.ply) {
-        if (this.$game.state.plyID in this.log) {
-          return this.$game.state.plyID;
+      } else if (this.game.position.ply) {
+        if (this.game.position.plyID in this.log) {
+          return this.game.position.plyID;
         } else if (this.isCurrent(-1)) {
           return -1;
         } else {
           for (let i = this.plyIDs.length - 1; i >= 0; i--) {
             plyID = this.plyIDs[i];
-            ply = plyID in this.$game.plies ? this.$game.plies[plyID] : null;
+            ply = plyID in this.plies ? this.plies[plyID] : null;
             if (
               ply &&
-              this.$game.state.plies.includes(ply) &&
-              ply.index < this.$game.state.ply.index
+              this.branchPlies.includes(ply) &&
+              ply.index < this.game.position.ply.index
             ) {
               return plyID;
             }
@@ -208,15 +213,15 @@ export default {
     },
     isCurrent(plyID) {
       return (
-        this.$game.state.plyID === plyID ||
+        this.game.position.plyID === plyID ||
         (plyID < 0 &&
-          (!this.$game.state.ply ||
-            (!this.$game.state.ply.index && !this.$game.state.plyIsDone)))
+          (!this.game.position.ply ||
+            (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
     areSequential(plyID1, plyID2) {
-      const ply1 = plyID1 < 0 ? null : this.$game.plies[plyID1];
-      const ply2 = this.$game.plies[plyID2];
+      const ply1 = plyID1 < 0 ? null : this.plies[plyID1];
+      const ply2 = this.plies[plyID2];
       return (
         ply1 &&
         ply2 &&

@@ -1,6 +1,7 @@
 <template>
   <div
     class="square"
+    @mouseover="checkValid"
     :class="{
       light: square.static.isLight,
       dark: !square.static.isLight,
@@ -42,6 +43,11 @@
 export default {
   name: "Square",
   props: ["coord"],
+  data() {
+    return {
+      valid: false,
+    };
+  },
   computed: {
     game() {
       return this.$store.state.game;
@@ -109,9 +115,6 @@ export default {
         !this.game.position.isFirstMove
       );
     },
-    valid() {
-      return this.isEditingTPS || this.$game.isValidSquare(this.square);
-    },
     showRoads() {
       return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
@@ -147,7 +150,11 @@ export default {
     },
   },
   methods: {
+    checkValid() {
+      this.valid = this.isEditingTPS || this.$game.isValidSquare(this.square);
+    },
     select(alt = false) {
+      this.checkValid();
       if (this.valid) {
         if (alt && this.isEditingTPS && this.piece) {
           this.$store.dispatch("ui/SET_UI", [

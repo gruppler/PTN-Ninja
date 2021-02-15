@@ -43,9 +43,6 @@ export default {
     };
   },
   computed: {
-    game() {
-      return this.$game;
-    },
     available() {
       return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
         type = type === "C" ? "cap" : "flat";

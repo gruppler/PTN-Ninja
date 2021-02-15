@@ -14,17 +14,13 @@
         @click="$router.push({ name: 'edit' })"
         icon="edit"
         :title="$t('Edit')"
-        :disabled="!$game.isLocal"
+        :disabled="!isLocal"
       />
 
-      <q-btn
-        :title="$t('Trim')"
-        class="no-border-radius"
-        :disabled="!$game.isLocal"
-      >
+      <q-btn :title="$t('Trim')" class="no-border-radius" :disabled="!isLocal">
         <q-icon name="trim" class="rotate-180" />
         <q-menu
-          v-if="$game.isLocal"
+          v-if="isLocal"
           transition-show="none"
           transition-hide="none"
           auto-close
@@ -69,6 +65,9 @@ export default {
     };
   },
   computed: {
+    isLocal() {
+      return this.$game.isLocal;
+    },
     showAllBranches: {
       get() {
         return this.$store.state.ui.showAllBranches;

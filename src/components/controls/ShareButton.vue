@@ -166,7 +166,7 @@ export default {
       this.$store.dispatch("ui/COPY", output);
     },
     shareFile() {
-      this.$store.dispatch("ui/EXPORT_PTN", this.$game);
+      this.$store.dispatch("ui/EXPORT_PTN");
     },
     embed() {
       this.$router.push({ name: "embed" });

@@ -27,6 +27,7 @@ export default class GameNavigation {
   _afterPly(ply) {
     if (ply.result && ply.result.type !== "1") {
       if (ply.result.type === "R" && !ply.result.roads) {
+        this.state.updateSquareConnections();
         ply.result.roads = this.findRoads();
       }
       // this.state.roads = ply.result.roads;
@@ -106,7 +107,9 @@ export default class GameNavigation {
         times(count, () => stack.push(square.popPiece(deferUpdate)));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
-          square._setPiece(square.piece, deferUpdate);
+          square.setPiece(square.piece, deferUpdate);
+          this.state.dirtyPiece(piece.id);
+          this.state.dirtySquare(square.static.coord, true);
         }
       } else {
         // Do movement
@@ -123,7 +126,7 @@ export default class GameNavigation {
         }
         if (flatten && square.pieces.length) {
           square.piece.isStanding = false;
-          square._setPiece(square.piece, deferUpdate);
+          square.setPiece(square.piece, deferUpdate);
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();
@@ -136,6 +139,8 @@ export default class GameNavigation {
             return false;
           }
           square.pushPiece(piece, deferUpdate);
+          this.state.dirtyPiece(piece.id);
+          this.state.dirtySquare(square.static.coord, true);
         });
       }
     }
@@ -170,18 +175,14 @@ export default class GameNavigation {
       tps = TPS.parse(tps);
     }
     const grid = tps.grid;
-    let stack,
-      square,
-      piece,
-      type,
-      squares = [];
+    let stack, square, piece, type;
     this.state.clearBoard();
     grid.forEach((row, y) => {
       row.forEach((col, x) => {
         if (col[0] !== "x") {
           stack = col.split("");
           square = this.state.squares[y][x];
-          squares.push(square);
+          this.state.dirty.squareConnections[square.static.coord] = true;
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();
@@ -193,7 +194,7 @@ export default class GameNavigation {
         }
       });
     });
-    squares.forEach((square) => square.updateConnected());
+    this.state.updateSquareConnections();
   }
 
   goToPly(plyID, isDone) {
@@ -249,13 +250,13 @@ export default class GameNavigation {
       this.state.targetBranch = target.branch;
     }
 
-    let squares = {};
-
     if (this.state.ply.branches.includes(targetPly)) {
       // Switch to the target branch if we're on a sibling
       if (this.state.plyIsDone) {
         this._undoPly(true);
-        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
+        this.state.ply.squares.forEach((coord) =>
+          this.state.dirtySquare(coord, true)
+        );
       }
       this._setPly(targetPly.id, false);
     }
@@ -263,12 +264,16 @@ export default class GameNavigation {
     if (this.state.ply.index < targetPly.index) {
       while (this.state.ply.index < targetPly.index && this._doPly(true)) {
         // Go forward until we reach the target ply
-        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
+        this.state.ply.squares.forEach((coord) =>
+          this.state.dirtySquare(coord, true)
+        );
       }
     } else if (this.state.ply.index > targetPly.index) {
       while (this.state.ply.index > targetPly.index && this._undoPly(true)) {
         // Go backward until we reach the target ply
-        this.state.ply.squares.forEach((coord) => (squares[coord] = true));
+        this.state.ply.squares.forEach((coord) =>
+          this.state.dirtySquare(coord, true)
+        );
       }
     }
 
@@ -279,13 +284,14 @@ export default class GameNavigation {
       } else {
         this._undoPly(true);
       }
-      this.state.ply.squares.forEach((coord) => (squares[coord] = true));
+      this.state.ply.squares.forEach((coord) =>
+        this.state.dirtySquare(coord, true)
+      );
     }
 
-    this.state.updateSquareConnections(squares);
-    this.state.updateBoard();
-    this.state.updatePosition();
-    this.state.updatePTNBranch();
+    this.state.updateBoardOutput();
+    this.state.updatePositionOutput();
+    this.state.updatePTNBranchOutput();
 
     return true;
   }
@@ -304,8 +310,8 @@ export default class GameNavigation {
     }
     if ((half || !this.state.prevPly) && this.state.plyIsDone) {
       const result = this._undoPly();
-      this.state.updateBoard();
-      this.state.updatePosition();
+      this.state.updateBoardOutput();
+      this.state.updatePositionOutput();
       return result;
     } else if (this.state.prevPly) {
       return this.goToPly(this.state.prevPly.id, true);
@@ -319,8 +325,8 @@ export default class GameNavigation {
     }
     if (!this.state.plyIsDone) {
       const result = this._doPly();
-      this.state.updateBoard();
-      this.state.updatePosition();
+      this.state.updateBoardOutput();
+      this.state.updatePositionOutput();
       return result;
     } else if (this.state.nextPly) {
       return this.goToPly(this.state.nextPly.id, !half);

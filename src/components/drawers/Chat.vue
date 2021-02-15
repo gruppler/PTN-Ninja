@@ -99,7 +99,7 @@ export default {
       const user = this.$store.state.online.user;
       return this.$game.isLocal || !user
         ? this.$game.state.player
-        : this.$game.player(user.uid);
+        : this.$game.getPlayerFromUID(user.uid);
     },
     time() {
       return this.$game.datetime;

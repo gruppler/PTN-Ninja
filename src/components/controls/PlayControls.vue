@@ -157,7 +157,7 @@ export default {
       );
     },
     plyInProgress() {
-      return this.$game.state.selected.pieces.length !== 0;
+      return this.$store.state.game.selected.pieces.length !== 0;
     },
     hasBranches() {
       return !!(this.position.ply && this.position.ply.branches.length > 1);

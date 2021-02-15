@@ -1,10 +1,5 @@
 <template>
-  <div
-    class="piece"
-    :style="{
-      transform: `translate3d(${x}%, -${y}%, ${z}em)`,
-    }"
-  >
+  <div class="piece" :style="{ transform }">
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
@@ -55,8 +50,14 @@ export default {
           this.piece.color === this.$store.state.game.position.color)
       );
     },
+    isSelected() {
+      return this.piece.isSelected;
+    },
     firstSelected() {
-      return this.piece === this.$store.state.game.selected.pieces[0];
+      return (
+        this.isSelected &&
+        this.piece.id === this.$store.state.game.selected.pieces[0].id
+      );
     },
     board3D() {
       return this.$store.state.ui.board3D;
@@ -77,7 +78,7 @@ export default {
         y *= this.piece.y;
         if (!this.board3D) {
           const pieces = this.square.pieces;
-          y += spacing * (this.piece.z + this.piece.isSelected * SELECTED_GAP);
+          y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
           if (
             pieces.length > this.$game.size &&
             this.piece.z >= pieces.length - this.$game.size
@@ -119,7 +120,7 @@ export default {
               1;
           }
           y /= this.pieceCounts.total - 1;
-          if (this.piece.isSelected) {
+          if (this.isSelected) {
             y += (spacing * SELECTED_GAP) / 100;
           }
         }
@@ -130,7 +131,7 @@ export default {
     z() {
       let z;
       if (this.square) {
-        z = this.piece.z + this.piece.isSelected * SELECTED_GAP;
+        z = this.piece.z + this.isSelected * SELECTED_GAP;
       } else {
         // Unplayed piece
         if (this.board3D) {
@@ -150,11 +151,14 @@ export default {
             z += this.$game.size - 1;
           }
         }
-        if (this.piece.isSelected) {
+        if (this.isSelected) {
           z += SELECTED_GAP;
         }
       }
       return z;
+    },
+    transform() {
+      return `translate3d(${this.x}%, -${this.y}%, ${this.z}em)`;
     },
   },
   methods: {
@@ -171,7 +175,7 @@ export default {
       } else {
         this.$store.dispatch("game/SELECT_PIECE", {
           type: this.piece.type,
-          alt: alt || this.piece.isSelected,
+          alt: alt || this.isSelected,
         });
       }
     },

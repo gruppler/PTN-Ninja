@@ -32,7 +32,7 @@ export default class Move {
       : null;
     output.ply1 = output.plies[0];
     output.ply2 = output.plies[1];
-    output.firstPly = plies[this.firstPly.id];
+    output.firstPly = this.firstPly ? plies[this.firstPly.id] : null;
     return Object.freeze(output);
   }
 

@@ -93,7 +93,7 @@
         </div>
 
         <div
-          class="unplayed-bg"
+          class="unplayed-bg all-pointer-events"
           @click.self="dropPiece"
           @click.right.prevent
         ></div>
@@ -276,7 +276,10 @@ export default {
   },
   methods: {
     dropPiece() {
-      if (this.selected.pieces.length === 1 && !this.selected.moveset.length) {
+      if (
+        this.selected.pieces.length === 1 &&
+        (!this.selected.moveset || !this.selected.moveset.length)
+      ) {
         this.$store.dispatch("game/SELECT_PIECE", {
           type: this.selected.pieces[0].type,
         });

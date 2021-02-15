@@ -164,7 +164,9 @@ export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
 };
 
 export const EXPORT_PTN = ({ dispatch }, games) => {
-  if (!isArray(games)) {
+  if (!games) {
+    games = [Vue.prototype.$game];
+  } else if (!isArray(games)) {
     games = [games];
   }
 

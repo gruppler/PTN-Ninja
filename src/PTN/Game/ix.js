@@ -4,9 +4,7 @@ import { last } from "lodash";
 
 export default class GameIX {
   isValidSquare(square, assumeSoloCap = false) {
-    if (typeof square === "string") {
-      square = this.state.getSquare(square);
-    }
+    square = this.state.getSquare(square);
     const piece = square.piece;
 
     if (this.state.selected.pieces.length) {
@@ -107,9 +105,10 @@ export default class GameIX {
     if (piece.isSelected) {
       if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
         piece.isStanding = !piece.isStanding;
+        this.state.dirtyPiece(piece.id);
       } else {
-        this.state.deselectPiece();
         piece.isStanding = false;
+        this.state.deselectPiece();
       }
     } else {
       if (this.state.selected.pieces.length) {
@@ -118,39 +117,42 @@ export default class GameIX {
       this.state.selectPiece(piece);
       if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
         piece.isStanding = true;
+        this.state.dirtyPiece(piece.id);
       }
     }
-    this.state.updateSelected();
+    this.state.updatePiecesOutput();
+    this.state.updateSelectedOutput();
   }
 
   selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
-    if (typeof square === "string") {
-      square = this.state.getSquare(square);
-    }
+    square = this.state.getSquare(square);
     if (!editMode && !this.isValidSquare(square)) {
       return false;
     }
 
-    const piece = square.piece;
+    let piece = square.piece;
+    if (typeof piece === "string") {
+      piece = this.state.getPiece(piece);
+    }
 
+    // Place or remove a piece in TPS mode
     if (editMode) {
       if (altSelect) {
         if (!piece) {
           return false;
         }
-        return this.state.unplayPiece(square);
+        this.state.unplayPiece(square);
+        return this.state.updateBoardOutput();
       } else if (piece && (piece.isCapstone || piece.isStanding)) {
         return false;
       }
-      return this.state.playPiece(
-        selectedPiece.color,
-        selectedPiece.type,
-        square
-      );
+      this.state.playPiece(selectedPiece.color, selectedPiece.type, square);
+      return this.state.updateBoardOutput();
     }
 
     let move = last(this.state.selected.moveset);
 
+    // Get available stone types for cycling
     let types = [];
     let color = piece ? piece.color : this.state.turn;
     if (
@@ -168,6 +170,7 @@ export default class GameIX {
       types.reverse();
     }
 
+    // Start or continue a move
     if (!move) {
       move = {
         action: "push",
@@ -223,7 +226,8 @@ export default class GameIX {
       this.cancelMove();
     }
 
-    return true;
+    this.state.updateSelectedOutput();
+    return this.state.updateBoardOutput();
   }
 
   dropSelection(square, altSelect = false) {
@@ -309,6 +313,9 @@ export default class GameIX {
       // Move selection from currentSquare to new square
       currentSquare.popPieces(this.state.selected.pieces.length);
       square.pushPieces(this.state.selected.pieces);
+      this.state.selected.pieces.forEach((piece) =>
+        this.state.dirtyPiece(piece.id)
+      );
       if (altSelect) {
         // Drop all
         this.state.deselectAllPieces();
@@ -334,6 +341,8 @@ export default class GameIX {
       this.state.selected.moveset = [];
       this.state.selected.initialCount = 0;
     }
+
+    this.state.updateSelectedOutput();
   }
 
   cancelMove(flatten = false) {
@@ -347,5 +356,6 @@ export default class GameIX {
     this.state.deselectAllSquares();
     this.state.selected.moveset = [];
     this.state.selected.initialCount = 0;
+    this.state.updateSelectedOutput();
   }
 }

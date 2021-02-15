@@ -51,7 +51,7 @@ export default {
     },
     player() {
       const user = this.$store.state.online.user;
-      return user ? this.$game.player(user.uid) : 0;
+      return user ? this.$game.getPlayerFromUID(user.uid) : 0;
     },
     isPrivate() {
       return this.$game.config.isPrivate;

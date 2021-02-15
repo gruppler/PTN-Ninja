@@ -4,7 +4,7 @@
       <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
     </template>
 
-    <q-card>
+    <q-card style="width: 330px">
       <smooth-reflow tag="recess" class="col">
         <div v-if="isLocal">
           <q-list>
@@ -74,15 +74,11 @@
 
         <div v-else>
           <q-list>
-            <q-item v-if="$game && $game.config.id">
+            <q-item v-if="config.id">
               <q-input
                 class="col-grow"
                 :value="gameURL"
-                :hint="
-                  user && $game.player(user.uid)
-                    ? $t('hint.url')
-                    : $t('hint.spectate')
-                "
+                :hint="isSpectator ? $t('hint.spectate') : $t('hint.url')"
                 readonly
                 filled
               >
@@ -187,6 +183,9 @@ export default {
     },
     user() {
       return this.$store.state.online.user;
+    },
+    isSpectator() {
+      return !this.user || !this.$game.getPlayerFromUID(this.user.id);
     },
     player: {
       get() {
