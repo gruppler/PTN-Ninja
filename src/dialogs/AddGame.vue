@@ -93,7 +93,7 @@ import GameInfo from "../components/controls/GameInfo";
 import GameTable from "../components/controls/GameTable";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
-import Game from "../PTN/Game";
+import Game from "../Game";
 
 export default {
   name: "AddGame",

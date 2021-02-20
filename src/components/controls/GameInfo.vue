@@ -598,19 +598,18 @@
 </template>
 
 <script>
-import { formats } from "../../PTN/Tag";
-import TPS from "../../PTN/TPS";
-import ResultTag from "../../PTN/Result";
 import PlayerName from "../controls/PlayerName";
+import Result from "../PTN/Result";
 
+import { formats } from "../../Game/PTN/Tag";
+import TPS from "../../Game/PTN/TPS";
+import ResultTag from "../../Game/PTN/Result";
 import {
   generateName,
   isDefaultName,
   pieceCounts,
   sample,
-} from "../../PTN/Game/base";
-
-import Result from "../PTN/Result";
+} from "../../Game/base";
 
 export default {
   name: "GameInfo",
@@ -724,7 +723,7 @@ export default {
       ]);
       this.$store.dispatch("ui/SET_UI", [
         "editingTPS",
-        this.game ? this.game.state.tps : "",
+        this.game ? this.game.board.tps : "",
       ]);
       this.$store.dispatch("ui/SET_UI", ["isEditingTPS", true]);
     },

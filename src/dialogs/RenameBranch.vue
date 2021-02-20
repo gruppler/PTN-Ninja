@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import Linenum from "../PTN/Linenum";
+import Linenum from "../Game/PTN/Linenum";
 
 export default {
   name: "RenameBranch",

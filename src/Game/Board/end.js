@@ -1,15 +1,15 @@
-import Result from "../Result";
+import Result from "../PTN/Result";
 
 import { cloneDeep, compact, isEmpty } from "lodash";
 
-export default class GameEnd {
+export default class BoardGameEnd {
   checkGameEnd(updatePTN = true) {
-    if (!this.state.ply) {
+    if (!this.ply) {
       return false;
     }
 
-    let player = this.state.ply.player;
-    let pieces = this.state.pieces.played[player];
+    let player = this.ply.player;
+    let pieces = this.pieces.played[player];
     let roads = this.findRoads();
     let result;
 
@@ -23,23 +23,21 @@ export default class GameEnd {
       }
     } else if (
       pieces.flat.length + pieces.cap.length ===
-        this.pieceCounts[player].total ||
-      !this.state.squares.find((row) =>
-        row.find((square) => !square.pieces.length)
-      )
+        this.game.pieceCounts[player].total ||
+      !this.squares.find((row) => row.find((square) => !square.pieces.length))
     ) {
       // Last empty square or last piece
-      if (this.state.flats[0] == this.state.flats[1]) {
+      if (this.flats[0] == this.flats[1]) {
         // Draw
         result = "1/2-1/2";
-      } else if (this.state.flats[0] > this.state.flats[1]) {
+      } else if (this.flats[0] > this.flats[1]) {
         result = "F-0";
       } else {
         result = "0-F";
       }
-    } else if (this.state.ply.result && this.state.ply.result.type != "1") {
-      this.state.ply.result = null;
-      this._updatePTN();
+    } else if (this.ply.result && this.ply.result.type != "1") {
+      this.ply.result = null;
+      this.game._updatePTN();
       return false;
     } else {
       return false;
@@ -49,9 +47,9 @@ export default class GameEnd {
     if (roads && roads.length) {
       result.roads = roads;
     }
-    this.state.ply.result = result;
+    this.ply.result = result;
     if (updatePTN) {
-      this._updatePTN();
+      this.game._updatePTN();
     }
 
     return true;
@@ -79,7 +77,7 @@ export default class GameEnd {
     let road;
 
     // Gather player-controlled squares and dead ends
-    this.state.forEachSquare((square) => {
+    this.forEachSquare((square) => {
       let piece = square.piece;
       if (piece && !piece.isStanding) {
         let player = piece.color;

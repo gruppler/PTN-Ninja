@@ -1,8 +1,15 @@
+import Aggregation from "aggregation/es6";
 import Marray from "marray";
 
-import Piece from "../Piece";
-import Square from "../Square";
-import { atoi, itoa } from "../Ply";
+import BoardGameEnd from "./End";
+import BoardIX from "./IX";
+import BoardNavigation from "./Navigation";
+
+import Piece from "./Piece";
+import Square from "./Square";
+
+import render from "./render";
+import { atoi, itoa } from "../PTN/Ply";
 
 import {
   defaults,
@@ -15,11 +22,17 @@ import {
   without,
   zipObject,
 } from "lodash";
-import memoize from "./memoize";
+import memoize from "../memoize";
 
-export default class GameState {
+export default class Board extends Aggregation(
+  BoardGameEnd,
+  BoardIX,
+  BoardNavigation
+) {
   constructor(game, state = null) {
+    super();
     this.game = game;
+    this.size = game.size;
 
     defaults(this, state, {
       plyID: -1,
@@ -63,29 +76,29 @@ export default class GameState {
     };
 
     Object.defineProperty(this, "plies", {
-      get: memoize(this.getPlies, this.branchKey),
+      get: memoize(this._getPlies, this.branchKey),
     });
     Object.defineProperty(this, "plyIDs", {
-      get: memoize(this.getPlyIDs, this.branchKey),
+      get: memoize(this._getPlyIDs, this.branchKey),
     });
     Object.defineProperty(this, "moves", {
-      get: memoize(this.getMoves, this.branchKey),
+      get: memoize(this._getMoves, this.branchKey),
     });
     Object.defineProperty(this, "move", {
-      get: memoize(this.getMove, () => this.plyID),
+      get: memoize(this._getMove, () => this.plyID),
     });
     Object.defineProperty(this, "branch", {
-      get: memoize(this.getBranch, () => this.plyID),
+      get: memoize(this._getBranch, () => this.plyID),
     });
     Object.defineProperty(this, "number", {
-      get: memoize(this.getNumber, () => this.plyID),
+      get: memoize(this._getNumber, () => this.plyID),
     });
-    Object.defineProperty(this, "board", {
-      get: memoize(this.getBoard, () => JSON.stringify(this.boardPly)),
+    Object.defineProperty(this, "snapshot", {
+      get: memoize(this._getSnapshot, () => JSON.stringify(this.boardPly)),
       set: this.setBoard,
     });
     Object.defineProperty(this, "tps", {
-      get: memoize(this.getTPS, () => JSON.stringify(this.boardPly)),
+      get: memoize(this._getTPS, () => JSON.stringify(this.boardPly)),
     });
 
     this.roads = null;
@@ -123,7 +136,7 @@ export default class GameState {
         ) {
           const id = color + type[0] + (index + 1);
           const piece = new Piece({
-            game: this.game,
+            board: this,
             id,
             index,
             color,
@@ -137,9 +150,9 @@ export default class GameState {
     });
 
     this.squares = new Marray.two(
-      this.game.size,
-      this.game.size,
-      (y, x) => new Square(x, y, this.game)
+      this.size,
+      this.size,
+      (y, x) => new Square(x, y, this)
     );
     this.forEachSquare((square) => {
       if (!square.static.edges.N) {
@@ -167,6 +180,10 @@ export default class GameState {
     });
   }
 
+  render(options) {
+    return render(this, options);
+  }
+
   forEachSquare(f) {
     this.squares.forEach((row, y) =>
       row.forEach((square, x) => f(square, x, y))
@@ -184,7 +201,7 @@ export default class GameState {
     } else if (isString(square)) {
       const coord = atoi(square);
       return this.squares[coord[1]][coord[0]];
-    } else if (square.static.coord) {
+    } else if (square.static) {
       return this.squares[square.static.y][square.static.x];
     }
   }
@@ -348,7 +365,7 @@ export default class GameState {
     });
   }
 
-  getPlies() {
+  _getPlies() {
     if (!this.game.plies.length) {
       return [];
     } else if (!this.ply) {
@@ -367,11 +384,11 @@ export default class GameState {
     }
   }
 
-  getPlyIDs() {
+  _getPlyIDs() {
     return this.plies.map((ply) => ply.id);
   }
 
-  getMoves() {
+  _getMoves() {
     let moves = [];
     if (this.plies) {
       this.plies.forEach((ply) => {
@@ -387,19 +404,19 @@ export default class GameState {
     return this.game.plies[this.plyID] || this.game.plies[0] || null;
   }
 
-  getMove() {
+  _getMove() {
     return this.ply ? this.ply.move : this.moves[0];
   }
 
-  getBranch() {
+  _getBranch() {
     return this.move ? this.move.branch : "";
   }
 
-  getNumber() {
+  _getNumber() {
     return this.move ? this.move.number : this.game.firstMoveNumber;
   }
 
-  selectPiece(piece) {
+  _selectPiece(piece) {
     if (isString(piece)) {
       piece = this.getPiece(piece);
     }
@@ -407,16 +424,16 @@ export default class GameState {
     piece.isSelected = true;
   }
 
-  selectPieces(pieces) {
-    pieces.forEach((piece) => this.selectPiece(piece));
+  _selectPieces(pieces) {
+    pieces.forEach((piece) => this._selectPiece(piece));
   }
 
-  reselectPiece(piece) {
+  _reselectPiece(piece) {
     this.selected.pieces.unshift(piece);
     piece.isSelected = true;
   }
 
-  deselectPiece(flatten = false) {
+  _deselectPiece(flatten = false) {
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
@@ -427,20 +444,20 @@ export default class GameState {
     return piece;
   }
 
-  deselectAllPieces(flatten = false) {
+  _deselectAllPieces(flatten = false) {
     while (this.selected.pieces.length) {
-      this.deselectPiece(flatten);
+      this._deselectPiece(flatten);
     }
   }
 
-  selectSquare(coord) {
-    let square = this.getSquare(coord);
+  _selectSquare(square) {
+    square = this.getSquare(square);
     this.selected.squares.push(square);
     square.isSelected = true;
     this.dirtySquare(square.static.coord);
   }
 
-  deselectSquare() {
+  _deselectSquare() {
     const square = this.selected.squares.shift();
     if (square) {
       square.isSelected = false;
@@ -449,9 +466,9 @@ export default class GameState {
     return square;
   }
 
-  deselectAllSquares() {
+  _deselectAllSquares() {
     while (this.selected.squares.length) {
-      this.deselectSquare();
+      this._deselectSquare();
     }
   }
 
@@ -508,7 +525,7 @@ export default class GameState {
     this.pieces.played[2].cap.length = 0;
   }
 
-  getBoard() {
+  _getSnapshot() {
     return {
       1: {
         flat: this.pieces.played[1].flat.map((piece) => piece.state),
@@ -521,7 +538,7 @@ export default class GameState {
     };
   }
 
-  getTPS(player = this.turn, number = null) {
+  _getTPS(player = this.turn, number = null) {
     const grid = this.squares
       .map((row) => {
         return row
@@ -584,7 +601,7 @@ export default class GameState {
     return { id: ply.id, isDone };
   }
 
-  get min() {
+  get minState() {
     return {
       targetBranch: this.targetBranch,
       plyIndex: this.ply ? this.ply.index : 0,

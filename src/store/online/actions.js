@@ -3,8 +3,8 @@ import { Loading } from "quasar";
 
 import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
 
-import Game from "../../PTN/Game";
-import { toDate, now } from "../../PTN/Tag";
+import Game from "../../Game";
+import { toDate, now } from "../../Game/PTN/Tag";
 
 const configToDB = (config) => omit(config, ["id", "player", "unseen"]);
 
@@ -272,17 +272,17 @@ export const LISTEN_CURRENT_GAME = function ({ commit, dispatch, state }) {
                     newName: game.name,
                   });
                 }
-                if (!isEqual(game.state, stateGame.state)) {
+                if (!isEqual(game.board, stateGame.state)) {
                   isChanged = true;
                   console.log(
                     "UPDATED STATE",
                     game,
-                    game.state,
+                    game.board,
                     stateGame.state
                   );
                   this.dispatch("game/SAVE_STATE", {
                     game,
-                    gameState: game.state,
+                    gameState: game.board,
                   });
                 }
                 if (

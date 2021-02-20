@@ -1,24 +1,23 @@
-import TPS from "../TPS";
+import TPS from "../PTN/TPS";
 
 import { last, times } from "lodash";
 
-export default class GameNavigation {
+export default class BoardNavigation {
   _setPly(plyID, isDone = false) {
-    this.state.plyID = plyID;
-    this.state.plyIsDone = isDone;
+    this.plyID = plyID;
+    this.plyIsDone = isDone;
   }
 
   setTarget(ply) {
-    if (this.state.selected.pieces.length) {
+    if (this.selected.pieces.length) {
       return false;
     }
-    this.state.targetBranch = ply.branch;
+    this.targetBranch = ply.branch;
     if (
-      this.state.ply &&
-      (ply.branches.includes(this.state.ply) ||
-        !this.state.ply.isInBranch(ply.branch))
+      this.ply &&
+      (ply.branches.includes(this.ply) || !this.ply.isInBranch(ply.branch))
     ) {
-      return this.goToPly(ply.id, this.state.plyIsDone);
+      return this.goToPly(ply.id, this.plyIsDone);
     } else {
       return true;
     }
@@ -28,29 +27,26 @@ export default class GameNavigation {
     if (isDone) {
       if (ply.result && ply.result.type !== "1") {
         if (ply.result.type === "R" && !ply.result.roads) {
-          this.state.updateSquareConnections();
+          this.updateSquareConnections();
           ply.result.roads = this.findRoads();
         }
-        this.state.setRoads(ply.result.roads);
-      } else if (ply.index === this.state.plies.length - 1) {
+        this.setRoads(ply.result.roads);
+      } else if (ply.index === this.plies.length - 1) {
         this.checkGameEnd();
       }
-      if (
-        this.state.isGameEnd ||
-        (this.state.nextPly && this.state.nextPly.branches.length)
-      ) {
-        this.saveBoardState();
+      if (this.isGameEnd || (this.nextPly && this.nextPly.branches.length)) {
+        this.game.saveBoardState();
       }
     } else {
-      this.state.setRoads(null);
+      this.setRoads(null);
       if (ply.branches.length) {
-        this.saveBoardState();
+        this.game.saveBoardState();
       }
     }
   }
 
   _doPly() {
-    const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
+    const ply = this.plyIsDone ? this.nextPly : this.ply;
     if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
       this._afterPly(ply, true);
@@ -61,7 +57,7 @@ export default class GameNavigation {
   }
 
   _undoPly() {
-    const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
+    const ply = this.plyIsDone ? this.ply : this.prevPly;
     if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
       this._setPly(ply.id, false);
       this._afterPly(ply, false);
@@ -87,15 +83,15 @@ export default class GameNavigation {
       const count = move.count || 1;
       let flatten = move.flatten;
       const type = move.type;
-      const square = this.state.squares[y][x];
+      const square = this.squares[y][x];
 
       if (type) {
         if (action === "pop") {
           // Undo placement
-          this.state.unplayPiece(square);
+          this.unplayPiece(square);
         } else {
           // Do placement
-          const piece = this.state.playPiece(color, type, square);
+          const piece = this.playPiece(color, type, square);
           if (!piece) {
             return false;
           }
@@ -114,7 +110,7 @@ export default class GameNavigation {
           if (stack[0].isCapstone) {
             if (ply && !flatten) {
               flatten = ply.wallSmash = "*";
-              this._updatePTN();
+              this.game._updatePTN();
             }
           } else {
             throw new Error("Invalid ply");
@@ -126,7 +122,7 @@ export default class GameNavigation {
           square.setPiece(square.piece);
         } else if (flatten) {
           ply.wallSmash = "";
-          this._updatePTN();
+          this.game._updatePTN();
         }
 
         times(count, () => {
@@ -158,10 +154,10 @@ export default class GameNavigation {
 
   doTPS(tps) {
     if (!tps) {
-      if (this.tags.tps) {
-        tps = this.tags.tps.value;
+      if (this.game.tags.tps) {
+        tps = this.game.tags.tps.value;
       } else {
-        this.state.clearBoard();
+        this.clearBoard();
         return;
       }
     }
@@ -170,31 +166,31 @@ export default class GameNavigation {
     }
     const grid = tps.grid;
     let stack, square, piece, type;
-    this.state.clearBoard();
+    this.clearBoard();
     grid.forEach((row, y) => {
       row.forEach((col, x) => {
         if (col[0] !== "x") {
           stack = col.split("");
-          square = this.state.squares[y][x];
-          this.state.dirty.squareConnections[square.static.coord] = true;
+          square = this.squares[y][x];
+          this.dirty.squareConnections[square.static.coord] = true;
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();
             } else {
               type = "flat";
             }
-            this.state.playPiece(piece, type, square, true);
+            this.playPiece(piece, type, square, true);
           }
         }
       });
     });
-    this.state.updateSquareConnections();
+    this.updateSquareConnections();
   }
 
   goToPly(plyID, isDone) {
-    const targetPly = this.plies[plyID];
+    const targetPly = this.game.plies[plyID];
 
-    if (!targetPly || !this.state.ply || this.state.selected.pieces.length) {
+    if (!targetPly || !this.ply || this.selected.pieces.length) {
       return false;
     }
 
@@ -206,64 +202,64 @@ export default class GameNavigation {
     };
 
     // Load a board state?
-    if (!this.state.ply.isInBranch(target.branch)) {
-      let parentPly = this.branches[target.branch];
-      while (parentPly && !(parentPly.id in this.boards)) {
+    if (!this.ply.isInBranch(target.branch)) {
+      let parentPly = this.game.branches[target.branch];
+      while (parentPly && !(parentPly.id in this.game.boardStates)) {
         // Find the closest branch that has a saved board state
-        parentPly = this.branches[parentPly.branches[0].branch];
+        parentPly = this.game.branches[parentPly.branches[0].branch];
       }
       if (
         parentPly &&
-        parentPly.id in this.boards &&
-        "false" in this.boards[parentPly.id]
+        parentPly.id in this.game.boardStates &&
+        "false" in this.game.boardStates[parentPly.id]
       ) {
         // Load the board state
-        this.state.setBoard(
-          this.boards[parentPly.id].false,
+        this.setBoard(
+          this.game.boardStates[parentPly.id].false,
           parentPly.id,
           false
         );
       } else {
         // Failed to find a close board state, so go to the beginning
         // (This should theoretically never happen)
-        this.state.setBoard(this.boards[0].false, 0, false);
+        this.setBoard(this.game.boardStates[0].false, 0, false);
       }
     } else if (
-      plyID in this.boards &&
-      Math.abs(targetPly.index - this.state.ply.index) > this.size * this.size
+      plyID in this.game.boardStates &&
+      Math.abs(targetPly.index - this.ply.index) > this.size * this.size
     ) {
       // Load board state if it exists and is far enough away
-      if (!(isDone in this.boards[plyID])) {
+      if (!(isDone in this.game.boardStates[plyID])) {
         isDone = !isDone;
       }
-      this.state.setBoard(this.boards[plyID][isDone], plyID, isDone);
+      this.setBoard(this.game.boardStates[plyID][isDone], plyID, isDone);
     }
 
     // Set targetBranch if target is outside of it
-    if (!targetPly.isInBranch(this.state.targetBranch)) {
-      this.state.targetBranch = target.branch;
+    if (!targetPly.isInBranch(this.targetBranch)) {
+      this.targetBranch = target.branch;
     }
 
-    if (this.state.ply.branches.includes(targetPly)) {
+    if (this.ply.branches.includes(targetPly)) {
       // Switch to the target branch if we're on a sibling
-      if (this.state.plyIsDone) {
+      if (this.plyIsDone) {
         this._undoPly(true);
       }
       this._setPly(targetPly.id, false);
     }
 
-    if (this.state.ply.index < targetPly.index) {
-      while (this.state.ply.index < targetPly.index && this._doPly(true)) {
+    if (this.ply.index < targetPly.index) {
+      while (this.ply.index < targetPly.index && this._doPly(true)) {
         // Go forward until we reach the target ply
       }
-    } else if (this.state.ply.index > targetPly.index) {
-      while (this.state.ply.index > targetPly.index && this._undoPly(true)) {
+    } else if (this.ply.index > targetPly.index) {
+      while (this.ply.index > targetPly.index && this._undoPly(true)) {
         // Go backward until we reach the target ply
       }
     }
 
     // Do or undo the target ply
-    if (target.plyIsDone !== this.state.plyIsDone) {
+    if (target.plyIsDone !== this.plyIsDone) {
       if (target.plyIsDone) {
         this._doPly(true);
       } else {
@@ -271,47 +267,47 @@ export default class GameNavigation {
       }
     }
 
-    this.state.updateBoardOutput();
-    this.state.updatePositionOutput();
-    this.state.updatePTNBranchOutput();
+    this.updateBoardOutput();
+    this.updatePositionOutput();
+    this.updatePTNBranchOutput();
 
     return true;
   }
 
   first() {
-    return this.goToPly(this.state.plies[0].id, false);
+    return this.goToPly(this.plies[0].id, false);
   }
 
   last() {
-    return this.goToPly(last(this.state.plies).id, true);
+    return this.goToPly(last(this.plies).id, true);
   }
 
   prev(half = false) {
-    if (this.state.selected.pieces.length) {
+    if (this.selected.pieces.length) {
       return false;
     }
-    if ((half || !this.state.prevPly) && this.state.plyIsDone) {
+    if ((half || !this.prevPly) && this.plyIsDone) {
       const result = this._undoPly();
-      this.state.updateBoardOutput();
-      this.state.updatePositionOutput();
+      this.updateBoardOutput();
+      this.updatePositionOutput();
       return result;
-    } else if (this.state.prevPly) {
-      return this.goToPly(this.state.prevPly.id, true);
+    } else if (this.prevPly) {
+      return this.goToPly(this.prevPly.id, true);
     }
     return false;
   }
 
   next(half = false) {
-    if (this.state.selected.pieces.length) {
+    if (this.selected.pieces.length) {
       return false;
     }
-    if (!this.state.plyIsDone) {
+    if (!this.plyIsDone) {
       const result = this._doPly();
-      this.state.updateBoardOutput();
-      this.state.updatePositionOutput();
+      this.updateBoardOutput();
+      this.updatePositionOutput();
       return result;
-    } else if (this.state.nextPly) {
-      return this.goToPly(this.state.nextPly.id, !half);
+    } else if (this.nextPly) {
+      return this.goToPly(this.nextPly.id, !half);
     }
     return false;
   }

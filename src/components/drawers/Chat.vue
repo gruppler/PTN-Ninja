@@ -22,7 +22,7 @@
                 class="fullwidth-padded-md q-py-xs q-mb-md"
                 :class="{
                   'q-mt-md': i > 0,
-                  highlight: $game.state.plyID === message.ply.id,
+                  highlight: $game.board.plyID === message.ply.id,
                 }"
                 :key="i"
               >
@@ -98,7 +98,7 @@ export default {
     player() {
       const user = this.$store.state.online.user;
       return this.$game.isLocal || !user
-        ? this.$game.state.player
+        ? this.$game.board.player
         : this.$game.getPlayerFromUID(user.uid);
     },
     time() {
@@ -129,16 +129,16 @@ export default {
       return messages;
     },
     currentPlyIndex() {
-      if (!this.$game.state.plyID && !this.$game.state.plyIsDone) {
+      if (!this.$game.board.plyID && !this.$game.board.plyIsDone) {
         return 0;
-      } else if (this.$game.state.ply) {
+      } else if (this.$game.board.ply) {
         let ids = Object.keys(this.log)
           .map((id) => 1 * id)
           .sort();
         for (let i = 0; i < ids.length; i++) {
-          if (ids[i] === this.$game.state.plyID) {
+          if (ids[i] === this.$game.board.plyID) {
             return i;
-          } else if (ids[i] > this.$game.state.plyID) {
+          } else if (ids[i] > this.$game.board.plyID) {
             return i - !!i;
           }
         }

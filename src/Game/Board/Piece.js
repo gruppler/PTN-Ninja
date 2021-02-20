@@ -3,7 +3,7 @@ import { defaults, pick } from "lodash";
 export default class Piece {
   constructor(params) {
     defaults(this, {
-      game: null,
+      board: null,
       ply: null,
       color: 1,
       isCapstone: false,
@@ -21,8 +21,8 @@ export default class Piece {
   }
   set square(square) {
     this.reactive.square = square;
-    if (this.game.state) {
-      this.game.state.dirtyPiece(this.id);
+    if (this.board) {
+      this.board.dirtyPiece(this.id);
     }
   }
 
@@ -31,8 +31,8 @@ export default class Piece {
   }
   set isStanding(isStanding) {
     this.reactive.isStanding = isStanding;
-    if (this.game.state) {
-      this.game.state.dirtyPiece(this.id);
+    if (this.board) {
+      this.board.dirtyPiece(this.id);
     }
   }
 
@@ -41,8 +41,8 @@ export default class Piece {
   }
   set isSelected(isSelected) {
     this.reactive.isSelected = isSelected;
-    if (this.game.state) {
-      this.game.state.dirtyPiece(this.id);
+    if (this.board) {
+      this.board.dirtyPiece(this.id);
     }
   }
 
@@ -76,14 +76,14 @@ export default class Piece {
 
   set state(state) {
     this.index = state.index;
-    if (state.ply && state.ply in this.game) {
-      this.ply = this.game.plies[state.ply];
+    if (state.ply && state.ply in this.board.game.plies) {
+      this.ply = this.board.game.plies[state.ply];
     }
     if (state.type) {
       this.type = state.type;
     }
     if ("x" in state && "y" in state && "z" in state) {
-      const square = this.game.state.squares[state.y][state.x];
+      const square = this.board.squares[state.y][state.x];
       if (square) {
         this.square = square;
         square[state.z] = this;
@@ -116,7 +116,7 @@ export default class Piece {
 
   get isImmovable() {
     return this.square
-      ? this.square.pieces.length - this.z > this.game.size
+      ? this.square.pieces.length - this.z > this.board.game.size
       : false;
   }
 

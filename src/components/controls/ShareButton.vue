@@ -49,7 +49,7 @@ export default {
         },
       ];
 
-      if (this.$game.state.ply) {
+      if (this.$game.board.ply) {
         actions.push({
           id: "ply",
           label: this.$t("Ply"),
@@ -140,14 +140,14 @@ export default {
           break;
         case "ply":
           output = {
-            title: this.$game.state.ply.text(),
-            text: this.$game.state.ply.text(),
+            title: this.$game.board.ply.text(),
+            text: this.$game.board.ply.text(),
           };
           break;
         case "tps":
           output = {
-            title: this.$game.state.tps,
-            text: this.$game.state.tps,
+            title: this.$game.board.tps,
+            text: this.$game.board.tps,
           };
           break;
         case "moves":

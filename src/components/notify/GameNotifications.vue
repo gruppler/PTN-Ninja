@@ -13,9 +13,9 @@ export default {
       return this.$store.state.ui.notifyGame;
     },
     notifications() {
-      const ply = this.$game.state.plyIsDone
-        ? this.$game.state.ply
-        : this.$game.state.prevPly;
+      const ply = this.$game.board.plyIsDone
+        ? this.$game.board.ply
+        : this.$game.board.prevPly;
       let alerts = [];
       if (ply) {
         if (ply.result) {

@@ -1,7 +1,6 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
-import $ from "./state";
 
 export const SET_GAME = function ({ commit }, game) {
   document.title = game.name + " — " + i18n.t("app_title");
@@ -15,8 +14,11 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   gameNames.unshift(game.name);
   LocalStorage.set("games", gameNames);
   LocalStorage.set("ptn-" + game.name, game.ptn);
-  if (game.state) {
-    LocalStorage.set("state-" + game.name, game.minState || game.state);
+  if (game.board) {
+    LocalStorage.set(
+      "state-" + game.name,
+      game.minState || game.board || game.state
+    );
   }
   if (game.config) {
     LocalStorage.set("config-" + game.name, game.config);
@@ -49,8 +51,11 @@ export const ADD_GAMES = function (
     gameNames.splice(index + i, 0, game.name);
     LocalStorage.set("games", gameNames);
     LocalStorage.set("ptn-" + game.name, game.ptn);
-    if (game.state) {
-      LocalStorage.set("state-" + game.name, game.minState || game.state);
+    if (game.board) {
+      LocalStorage.set(
+        "state-" + game.name,
+        game.minState || game.board || game.state
+      );
     }
     if (game.config) {
       LocalStorage.set("config-" + game.name, game.config);
@@ -203,7 +208,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
 
 export const EXPORT_PNG = function ({ state }) {
   const game = Vue.prototype.$game;
-  const options = { tps: game.state.tps, ...this.state.ui.pngConfig };
+  const options = { tps: game.board.tps, ...this.state.ui.pngConfig };
 
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
@@ -213,7 +218,7 @@ export const EXPORT_PNG = function ({ state }) {
     }
   });
 
-  game.render(options).toBlob((blob) => {
+  game.board.render(options).toBlob((blob) => {
     this.dispatch(
       "ui/DOWNLOAD_FILES",
       new File([blob], game.pngFilename, {
@@ -327,7 +332,7 @@ export const SET_NAME = function (
   LocalStorage.remove("ptn-" + oldName);
   LocalStorage.set("ptn-" + name, game.ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, game.state);
+  LocalStorage.set("state-" + name, game.board);
   if (game.config) {
     LocalStorage.remove("config-" + oldName);
     LocalStorage.set("config-" + name, game.config);

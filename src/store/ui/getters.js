@@ -38,7 +38,7 @@ const PNG_URL = process.env.DEV
   : "https://tps.ptn.ninja/";
 
 export const png_url = (state, getters) => (game) => {
-  const params = ["tps=" + game.state.tps];
+  const params = ["tps=" + game.board.tps];
 
   // Sizes
   if (state.pngConfig.imageSize !== "md") {
@@ -77,7 +77,7 @@ export const png_url = (state, getters) => (game) => {
 
   // Square Highlights
   if (state.pngConfig.highlightSquares) {
-    const ply = game.state.ply;
+    const ply = game.board.ply;
     if (ply) {
       params.push("hl=" + encodeURIComponent(ply.text(true)));
     }
@@ -138,7 +138,7 @@ export const url = (state, getters) => (game, options = {}) => {
 
   if (options.state) {
     if (options.state === true) {
-      options.state = game.state;
+      options.state = game.board;
     }
     if (options.state.targetBranch) {
       params.targetBranch = compressToEncodedURIComponent(

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import Result from "../../PTN/Result";
+import Result from "../../Game/PTN/Result";
 
 export default {
   name: "Result",

@@ -1,32 +1,32 @@
-import Ply from "../Ply";
+import Ply from "../PTN/Ply";
 
 import { isString, last } from "lodash";
 
-export default class GameIX {
+export default class BoardIX {
   isValidSquare(square, assumeSoloCap = false) {
-    square = this.state.getSquare(square);
+    square = this.getSquare(square);
     const piece = square.piece;
 
-    if (this.state.selected.pieces.length) {
+    if (this.selected.pieces.length) {
       if (
-        this.state.selected.pieces.length === 1 &&
-        !this.state.selected.pieces[0].square
+        this.selected.pieces.length === 1 &&
+        !this.selected.pieces[0].square
       ) {
         // Unplayed piece selected
         return !piece;
       } else {
         // Move in progress
-        const currentSquare = this.state.selected.pieces[0].square;
+        const currentSquare = this.selected.pieces[0].square;
         let neighbors = currentSquare.static.neighbors.concat();
 
         if (square === currentSquare) {
           return true;
         }
 
-        if (this.state.selected.moveset.length > 1) {
+        if (this.selected.moveset.length > 1) {
           // Direction is defined
-          const prevSquare = this.state.selected.squares[
-            this.state.selected.squares.length - 2
+          const prevSquare = this.selected.squares[
+            this.selected.squares.length - 2
           ];
           const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
             Ply.getDirection([
@@ -36,7 +36,7 @@ export default class GameIX {
           ];
           neighbors = [
             currentSquare.static.neighbors[direction],
-            this.state.selected.squares[0],
+            this.selected.squares[0],
           ];
         }
 
@@ -55,32 +55,27 @@ export default class GameIX {
             return true;
           }
           if (
-            last(this.state.selected.pieces).isCapstone &&
-            (this.state.selected.pieces.length === 1 || assumeSoloCap)
+            last(this.selected.pieces).isCapstone &&
+            (this.selected.pieces.length === 1 || assumeSoloCap)
           ) {
             // Potential wall smash
             return true;
           }
         }
       }
-    } else if (!this.state.isGameEnd) {
-      if (this.state.turn === this.state.player) {
+    } else if (!this.isGameEnd) {
+      if (this.turn === this.player) {
         // Placement
         if (!piece) {
           // Empty square
           return true;
         }
-        if (piece.color === this.state.turn && this.state.number !== 1) {
+        if (piece.color === this.turn && this.number !== 1) {
           // Player's piece
           return true;
         }
       }
-      if (
-        this.state.ply &&
-        piece &&
-        piece.ply === this.state.ply &&
-        this.state.number !== 1
-      ) {
+      if (this.ply && piece && piece.ply === this.ply && this.number !== 1) {
         // Piece just placed; valid for stone cycling
         return true;
       }
@@ -89,48 +84,48 @@ export default class GameIX {
   }
 
   selectUnplayedPiece(type, toggleWall = false) {
-    if (this.state.isGameEnd) {
+    if (this.isGameEnd) {
       return false;
     }
-    if (this.state.isFirstMove) {
+    if (this.isFirstMove) {
       type = "flat";
     }
-    const color = this.state.color;
-    const piece = this.state.pieces.all[color][type][
-      this.state.pieces.played[color][type].length
+    const color = this.color;
+    const piece = this.pieces.all[color][type][
+      this.pieces.played[color][type].length
     ];
     if (!piece) {
       return false;
     }
     if (piece.isSelected) {
-      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+      if (!piece.isCapstone && toggleWall && !this.isFirstMove) {
         piece.isStanding = !piece.isStanding;
       } else {
         piece.isStanding = false;
-        this.state.deselectPiece();
+        this._deselectPiece();
       }
     } else {
-      if (this.state.selected.pieces.length) {
+      if (this.selected.pieces.length) {
         this.cancelMove(true);
       }
-      this.state.selectPiece(piece);
-      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+      this._selectPiece(piece);
+      if (!piece.isCapstone && toggleWall && !this.isFirstMove) {
         piece.isStanding = true;
       }
     }
-    this.state.updatePiecesOutput();
-    this.state.updateSelectedOutput();
+    this.updatePiecesOutput();
+    this.updateSelectedOutput();
   }
 
   selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
-    square = this.state.getSquare(square);
+    square = this.getSquare(square);
     if (!editMode && !this.isValidSquare(square)) {
       return false;
     }
 
     let piece = square.piece;
     if (isString(piece)) {
-      piece = this.state.getPiece(piece);
+      piece = this.getPiece(piece);
     }
 
     // Place or remove a piece in TPS mode
@@ -139,28 +134,28 @@ export default class GameIX {
         if (!piece) {
           return false;
         }
-        this.state.unplayPiece(square);
-        return this.state.updateBoardOutput();
+        this.unplayPiece(square);
+        return this.updateBoardOutput();
       } else if (piece && (piece.isCapstone || piece.isStanding)) {
         return false;
       }
-      this.state.playPiece(selectedPiece.color, selectedPiece.type, square);
-      return this.state.updateBoardOutput();
+      this.playPiece(selectedPiece.color, selectedPiece.type, square);
+      return this.updateBoardOutput();
     }
 
-    let move = last(this.state.selected.moveset);
+    let move = last(this.selected.moveset);
 
     // Get available stone types for cycling
     let types = [];
-    let color = piece ? piece.color : this.state.turn;
+    let color = piece ? piece.color : this.turn;
     if (
       (piece && piece.type === "flat") ||
-      this.state.pieces.played[color].flat.length < this.pieceCounts[color].flat
+      this.pieces.played[color].flat.length < this.game.pieceCounts[color].flat
     ) {
       types.push("flat", "wall");
     }
     if (
-      this.state.pieces.played[color].cap.length < this.pieceCounts[color].cap
+      this.pieces.played[color].cap.length < this.game.pieceCounts[color].cap
     ) {
       types.push("cap");
     }
@@ -177,61 +172,54 @@ export default class GameIX {
         count: 0,
         type: "",
       };
-      this.state.selected.moveset.push(move);
+      this.selected.moveset.push(move);
     }
 
-    if (this.state.selected.pieces.length) {
+    if (this.selected.pieces.length) {
       this.dropSelection(square, altSelect);
     } else if (piece) {
       // Nothing selected yet, but this square has a piece
-      if (
-        piece.ply &&
-        this.state.ply === piece.ply &&
-        this.state.number !== 1
-      ) {
+      if (piece.ply && this.ply === piece.ply && this.number !== 1) {
         // Cycle through F, S, C
         move.type =
           types[
             (types.indexOf(piece.isStanding ? "wall" : piece.type) + 1) %
               types.length
           ];
-        this.insertPly(Ply.fromMoveset([move]), false, true);
+        this.game.insertPly(Ply.fromMoveset([move]), false, true);
         this.cancelMove();
       } else {
         // Select piece or stack
         if (altSelect) {
-          this.state.selectPiece(piece);
+          this._selectPiece(piece);
           move.count = 1;
         } else {
-          this.state.selectPieces(square.pieces.slice(-this.size));
-          move.count = this.state.selected.pieces.length;
+          this._selectPieces(square.pieces.slice(-this.size));
+          move.count = this.selected.pieces.length;
         }
-        this.state.selected.initialCount = Math.min(
-          this.size,
-          square.pieces.length
-        );
-        this.state.selectSquare(square);
+        this.selected.initialCount = Math.min(this.size, square.pieces.length);
+        this._selectSquare(square);
         move.action = "pop";
       }
     } else {
       // Place piece as new ply
-      if (this.state.isFirstMove) {
+      if (this.isFirstMove) {
         move.type = "flat";
       } else {
         move.type = types[0];
       }
-      this.insertPly(Ply.fromMoveset([move]));
+      this.game.insertPly(Ply.fromMoveset([move]));
       this.cancelMove();
     }
 
-    this.state.updateSelectedOutput();
-    return this.state.updateBoardOutput();
+    this.updateSelectedOutput();
+    return this.updateBoardOutput();
   }
 
   dropSelection(square, altSelect = false) {
-    const currentSquare = this.state.selected.pieces[0].square;
-    const isFirstMove = this.state.selected.moveset.length === 1;
-    let move = last(this.state.selected.moveset);
+    const currentSquare = this.selected.pieces[0].square;
+    const isFirstMove = this.selected.moveset.length === 1;
+    let move = last(this.selected.moveset);
 
     if (!this.isValidSquare(square)) {
       return false;
@@ -239,7 +227,7 @@ export default class GameIX {
 
     if (!currentSquare) {
       // Unplayed piece
-      const piece = this.state.selected.pieces[0];
+      const piece = this.selected.pieces[0];
       move = {
         action: "push",
         x: square.static.x,
@@ -248,7 +236,7 @@ export default class GameIX {
         type: piece.isStanding ? "wall" : piece.type,
       };
       this.cancelMove();
-      this.insertPly(Ply.fromMoveset([move]));
+      this.game.insertPly(Ply.fromMoveset([move]));
       return;
     }
 
@@ -256,30 +244,26 @@ export default class GameIX {
       // Drop in current square
       if (altSelect) {
         if (
-          this.state.selected.initialCount - 1 * !isFirstMove >
-          this.state.selected.pieces.length
+          this.selected.initialCount - 1 * !isFirstMove >
+          this.selected.pieces.length
         ) {
           // Undo last drop
-          this.state.reselectPiece(
+          this._reselectPiece(
             square.pieces[
-              square.pieces.length - this.state.selected.pieces.length - 1
+              square.pieces.length - this.selected.pieces.length - 1
             ]
           );
-          last(this.state.selected.moveset).count -=
-            move.action === "pop" ? -1 : 1;
+          last(this.selected.moveset).count -= move.action === "pop" ? -1 : 1;
         } else {
           // Drop all
-          this.state.deselectAllPieces();
-          last(
-            this.state.selected.moveset
-          ).count = this.state.selected.initialCount;
+          this._deselectAllPieces();
+          last(this.selected.moveset).count = this.selected.initialCount;
         }
       } else {
-        this.state.deselectPiece();
-        last(this.state.selected.moveset).count +=
-          move.action === "pop" ? -1 : 1;
+        this._deselectPiece();
+        last(this.selected.moveset).count += move.action === "pop" ? -1 : 1;
       }
-    } else if (!isFirstMove && square === this.state.selected.squares[0]) {
+    } else if (!isFirstMove && square === this.selected.squares[0]) {
       // Selected initial square to cancel move
       this.cancelMove();
     } else {
@@ -293,65 +277,63 @@ export default class GameIX {
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
 
-      this.state.selected.initialCount = this.state.selected.pieces.length;
-      this.state.selectSquare(square);
+      this.selected.initialCount = this.selected.pieces.length;
+      this._selectSquare(square);
       move = {
         action: "push",
         x: square.static.x,
         y: square.static.y,
-        count: altSelect ? this.state.selected.pieces.length : 1,
+        count: altSelect ? this.selected.pieces.length : 1,
         flatten: piece && piece.isStanding,
       };
-      this.state.selected.moveset.push(move);
+      this.selected.moveset.push(move);
 
       if (move.flatten) {
         piece.isStanding = false;
       }
 
       // Move selection from currentSquare to new square
-      currentSquare.popPieces(this.state.selected.pieces.length);
-      square.pushPieces(this.state.selected.pieces);
+      currentSquare.popPieces(this.selected.pieces.length);
+      square.pushPieces(this.selected.pieces);
 
       if (altSelect) {
         // Drop all
-        this.state.deselectAllPieces();
+        this._deselectAllPieces();
       } else {
-        this.state.deselectPiece();
+        this._deselectPiece();
       }
 
       // If there's nowhere left to continue, drop the rest
       if (
-        this.state.selected.pieces.length > 0 &&
+        this.selected.pieces.length > 0 &&
         (!neighbor || !this.isValidSquare(neighbor, true))
       ) {
-        move.count += this.state.selected.pieces.length;
-        this.state.deselectAllPieces();
+        move.count += this.selected.pieces.length;
+        this._deselectAllPieces();
       }
     }
 
-    if (this.state.selected.pieces.length === 0) {
-      if (this.state.selected.moveset.length > 1) {
-        this.insertPly(Ply.fromMoveset(this.state.selected.moveset), true);
+    if (this.selected.pieces.length === 0) {
+      if (this.selected.moveset.length > 1) {
+        this.game.insertPly(Ply.fromMoveset(this.selected.moveset), true);
       }
-      this.state.deselectAllSquares();
-      this.state.selected.moveset = [];
-      this.state.selected.initialCount = 0;
+      this._deselectAllSquares();
+      this.selected.moveset = [];
+      this.selected.initialCount = 0;
     }
 
-    this.state.updateSelectedOutput();
+    this.updateSelectedOutput();
   }
 
   cancelMove(flatten = false) {
-    if (this.state.selected.moveset.length > 1) {
-      last(
-        this.state.selected.moveset
-      ).count = this.state.selected.initialCount;
-      this._undoMoveset(this.state.selected.moveset, this.state.color);
+    if (this.selected.moveset.length > 1) {
+      last(this.selected.moveset).count = this.selected.initialCount;
+      this._undoMoveset(this.selected.moveset, this.color);
     }
-    this.state.deselectAllPieces(flatten);
-    this.state.deselectAllSquares();
-    this.state.selected.moveset = [];
-    this.state.selected.initialCount = 0;
-    this.state.updateSelectedOutput();
+    this._deselectAllPieces(flatten);
+    this._deselectAllSquares();
+    this.selected.moveset = [];
+    this.selected.initialCount = 0;
+    this.updateSelectedOutput();
   }
 }

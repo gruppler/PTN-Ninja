@@ -1,8 +1,8 @@
-import Linenum from "../Linenum";
-import Move from "../Move";
-import Nop from "../Nop";
-import Ply from "../Ply";
-import Tag from "../Tag";
+import Linenum from "./PTN/Linenum";
+import Move from "./PTN/Move";
+import Nop from "./PTN/Nop";
+import Ply from "./PTN/Ply";
+import Tag from "./PTN/Tag";
 
 import { escapeRegExp, isArray } from "lodash";
 
@@ -55,7 +55,7 @@ export default class GameMutations {
     this.branches = branches;
 
     // Update targetBranch
-    this.state.targetBranch = this.state.targetBranch.replace(
+    this.board.targetBranch = this.board.targetBranch.replace(
       oldBranchRegExp,
       newBranchFull
     );
@@ -72,17 +72,17 @@ export default class GameMutations {
   }
 
   _trimToPly() {
-    if (this.state.plyIsDone && !this.state.nextPly) {
+    if (this.board.plyIsDone && !this.board.nextPly) {
       this._trimToBoard();
       return true;
     }
 
-    this.tags.tps = new Tag(false, "tps", this.state.tps);
+    this.tags.tps = new Tag(false, "tps", this.board.tps);
 
-    const boardPlyInfo = this.state.boardPly;
+    const boardPlyInfo = this.board.boardPly;
     const boardPly = this.plies[boardPlyInfo.id];
     const newPly = boardPlyInfo.isDone
-      ? this.state.plies[boardPly.index + 1]
+      ? this.board.plies[boardPly.index + 1]
       : boardPly;
 
     if (!newPly) {
@@ -122,13 +122,13 @@ export default class GameMutations {
     } else {
       // Remove preceeding plies
       this._deletePlies(
-        this.state.plies.slice(0, newPly.index).map((ply) => ply.id),
+        this.board.plies.slice(0, newPly.index).map((ply) => ply.id),
         false,
         true
       );
     }
 
-    this._setPly(newPly.id, false);
+    this.board._setPly(newPly.id, false);
 
     this._updatePTN();
     this.init(this.ptn, { ...this, state: null });
@@ -136,14 +136,14 @@ export default class GameMutations {
   }
 
   trimToPly() {
-    if (!this.state.ply || (!this.state.plyID && !this.state.plyIsDone)) {
+    if (!this.board.ply || (!this.board.plyID && !this.board.plyIsDone)) {
       return;
     }
     this.recordChange(this._trimToPly);
   }
 
   _trimToBoard() {
-    this.tags.tps = new Tag(false, "tps", this.state.tps);
+    this.tags.tps = new Tag(false, "tps", this.board.tps);
     this.branches = {};
     this.moves = [];
     this.plies = [];
@@ -153,7 +153,7 @@ export default class GameMutations {
   }
 
   trimToBoard() {
-    if (!this.state.ply) {
+    if (!this.board.ply) {
       return;
     }
     this.recordChange(this._trimToBoard);
@@ -177,26 +177,26 @@ export default class GameMutations {
       return false;
     }
     const move = ply.move;
-    const plyWasDone = this.state.plyIsDone;
+    const plyWasDone = this.board.plyIsDone;
 
     // Go backward if deleting current ply
-    if (this.state.plyID === plyID) {
+    if (this.board.plyID === plyID) {
       if (plyWasDone) {
-        this._undoPly();
+        this.board._undoPly();
       }
       if (!removeOrphans && ply.branches && ply.branches.length > 1) {
         if (ply.branches[0] === ply) {
-          this._setPly(ply.branches[1].id, plyWasDone);
+          this.board._setPly(ply.branches[1].id, plyWasDone);
         } else {
-          this._setPly(ply.branches[0].id, plyWasDone);
+          this.board._setPly(ply.branches[0].id, plyWasDone);
         }
       } else {
-        const prevPly = this.state.prevPly;
+        const prevPly = this.board.prevPly;
         if (prevPly) {
           if (ply.branch !== prevPly.branch) {
-            this.state.targetBranch = prevPly.branch;
+            this.board.targetBranch = prevPly.branch;
           }
-          this._setPly(prevPly.id, true);
+          this.board._setPly(prevPly.id, true);
         }
       }
     }
@@ -263,8 +263,8 @@ export default class GameMutations {
     }
 
     // Make sure target branch exists
-    if (!(this.state.targetBranch in this.branches)) {
-      this.state.targetBranch = this.state.ply.branch;
+    if (!(this.board.targetBranch in this.branches)) {
+      this.board.targetBranch = this.board.ply.branch;
     }
 
     return true;
@@ -326,21 +326,21 @@ export default class GameMutations {
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
         id:
-          replaceCurrent && !this.state.nextPly
-            ? this.state.plyID
+          replaceCurrent && !this.board.nextPly
+            ? this.board.plyID
             : this.plies.length,
       });
     }
-    if (replaceCurrent && !this.state.plyIsDone && this.state.prevPly) {
-      this._setPly(this.state.prevPly.id, true);
-    } else if (!replaceCurrent && this.state.plyIsDone && this.state.nextPly) {
-      this._setPly(this.state.nextPly.id, false);
+    if (replaceCurrent && !this.board.plyIsDone && this.board.prevPly) {
+      this.board._setPly(this.board.prevPly.id, true);
+    } else if (!replaceCurrent && this.board.plyIsDone && this.board.nextPly) {
+      this.board._setPly(this.board.nextPly.id, false);
     }
 
-    let move = this.state.move;
+    let move = this.board.move;
 
-    ply.color = replaceCurrent ? this.state.ply.color : this.state.color;
-    ply.player = replaceCurrent ? this.state.ply.player : this.state.turn;
+    ply.color = replaceCurrent ? this.board.ply.color : this.board.color;
+    ply.player = replaceCurrent ? this.board.ply.player : this.board.turn;
 
     if (!move.plies[ply.player - 1]) {
       // Next ply in the move
@@ -352,14 +352,14 @@ export default class GameMutations {
       !move ||
       (!replaceCurrent &&
         ply.player === 1 &&
-        !this.state.nextPly &&
-        this.state.plyIsDone)
+        !this.board.nextPly &&
+        this.board.plyIsDone)
     ) {
       // Next move in the branch
-      const number = this.state.number + 1;
+      const number = this.board.number + 1;
       move = this.moves.find(
         ({ linenum }) =>
-          linenum.branch === this.state.branch && linenum.number === number
+          linenum.branch === this.board.branch && linenum.number === number
       );
       if (move) {
         move.ply1 = ply;
@@ -368,7 +368,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(number + ". ", this, this.state.branch),
+          linenum: new Linenum(number + ". ", this, this.board.branch),
           ply1: ply,
         });
         this.moves.push(move);
@@ -376,64 +376,64 @@ export default class GameMutations {
     } else {
       // Check to see if ply already exists
       let equalPly = null;
-      if (this.state.plyIsDone && !replaceCurrent) {
-        if (this.state.nextPly && this.state.nextPly.isEqual(ply)) {
-          equalPly = this.state.nextPly;
+      if (this.board.plyIsDone && !replaceCurrent) {
+        if (this.board.nextPly && this.board.nextPly.isEqual(ply)) {
+          equalPly = this.board.nextPly;
         }
-      } else if (this.state.ply) {
-        if (this.state.ply.isEqual(ply)) {
-          equalPly = this.state.ply;
-        } else if (this.state.ply.branches.length) {
-          equalPly = this.state.ply.branches.find((branch) =>
+      } else if (this.board.ply) {
+        if (this.board.ply.isEqual(ply)) {
+          equalPly = this.board.ply;
+        } else if (this.board.ply.branches.length) {
+          equalPly = this.board.ply.branches.find((branch) =>
             branch.isEqual(ply)
           );
         }
       }
       if (equalPly) {
         if (isAlreadyDone) {
-          if (!this.state.targetBranch.startsWith(equalPly.branch + "/")) {
-            this.state.targetBranch = equalPly.branch;
+          if (!this.board.targetBranch.startsWith(equalPly.branch + "/")) {
+            this.board.targetBranch = equalPly.branch;
           }
-          this._setPly(equalPly.id, true);
-          this._afterPly(equalPly);
-          this.state.setRoads(equalPly.result ? equalPly.result.roads : null);
+          this.board._setPly(equalPly.id, true);
+          this.board._afterPly(equalPly);
+          this.board.setRoads(equalPly.result ? equalPly.result.roads : null);
         } else {
-          if (replaceCurrent && !this.state.nextPly) {
+          if (replaceCurrent && !this.board.nextPly) {
             // Delete newly formed branch
             this.recordChange(() => {
-              if (this.state.plyIsDone) {
-                this._undoPly();
+              if (this.board.plyIsDone) {
+                this.board._undoPly();
               }
-              let plyID = this.state.plyID;
-              this.goToPly(equalPly.id, true);
+              let plyID = this.board.plyID;
+              this.board.goToPly(equalPly.id, true);
               this.deletePly(plyID, false);
             });
           } else {
-            this.goToPly(equalPly.id, true);
+            this.board.goToPly(equalPly.id, true);
           }
         }
-        return;
+        return this.board.updatePositionOutput();
       }
 
-      if (replaceCurrent && !this.state.nextPly) {
+      if (replaceCurrent && !this.board.nextPly) {
         // Replace ply
         move.setPly(ply, ply.player - 1);
       } else {
         // New branch
         if (
-          (replaceCurrent || !this.state.plyIsDone) &&
-          this.state.ply &&
-          this.state.ply.branches.length
+          (replaceCurrent || !this.board.plyIsDone) &&
+          this.board.ply &&
+          this.board.ply.branches.length
         ) {
           ply.branch = this.newBranchID(
-            this.state.ply ? this.state.ply.branches[0].branch : "",
-            this.state.number,
+            this.board.ply ? this.board.ply.branches[0].branch : "",
+            this.board.number,
             ply.player
           );
         } else {
           ply.branch = this.newBranchID(
-            this.state.branch,
-            this.state.number,
+            this.board.branch,
+            this.board.number,
             ply.player
           );
         }
@@ -441,7 +441,7 @@ export default class GameMutations {
         move = new Move({
           game: this,
           id: this.moves.length,
-          linenum: new Linenum(this.state.number + ". ", this, ply.branch),
+          linenum: new Linenum(this.board.number + ". ", this, ply.branch),
         });
 
         if (ply.player === 2) {
@@ -461,29 +461,29 @@ export default class GameMutations {
       move.ply1 = Nop.parse("--");
     }
 
-    if (ply.id === this.state.plyID) {
+    if (ply.id === this.board.plyID) {
       this.plies.splice(ply.id, 1, ply);
-      this.state.plies.splice(ply.index, 1, ply);
+      this.board.plies.splice(ply.index, 1, ply);
     } else {
       this.plies.push(ply);
     }
 
     this.recordChange(() => {
-      this.state.targetBranch = ply.branch;
+      this.board.targetBranch = ply.branch;
 
       if (!isAlreadyDone) {
         // do ply;
-        if (!this.state.ply && ply.id === 0) {
-          this._setPly(ply.id, false);
-          this._doPly();
-        } else if (replaceCurrent && ply.id === this.state.plyID) {
-          this._undoPly();
-          this._doPly();
+        if (!this.board.ply && ply.id === 0) {
+          this.board._setPly(ply.id, false);
+          this.board._doPly();
+        } else if (replaceCurrent && ply.id === this.board.plyID) {
+          this.board._undoPly();
+          this.board._doPly();
         } else {
-          this.goToPly(ply.id, true);
+          this.board.goToPly(ply.id, true);
         }
       } else {
-        this._setPly(ply.id, true);
+        this.board._setPly(ply.id, true);
       }
 
       if (ply.id === 0 && !this.tag("date")) {
@@ -491,12 +491,12 @@ export default class GameMutations {
         this.setTags(Tag.now(), false, false);
       }
 
-      if (this.checkGameEnd(false)) {
+      if (this.board.checkGameEnd(false)) {
         if (ply.branch === "" || !this.tag("result")) {
           // Record result
           this.setTags({ result: ply.result.text }, false, false);
         }
-        this.state.setRoads(ply.result.roads || null);
+        this.board.setRoads(ply.result.roads || null);
       }
 
       this._updatePTN();

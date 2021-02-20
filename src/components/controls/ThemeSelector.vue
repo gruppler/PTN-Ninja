@@ -111,7 +111,10 @@ export default {
         return;
       }
       this.$store.getters["ui/themes"].forEach((theme, i) => {
-        const canvas = this.$game.render({ ...this.previewConfig, theme });
+        const canvas = this.$game.board.render({
+          ...this.previewConfig,
+          theme,
+        });
         this.previews[theme.id] = canvas.toDataURL();
 
         if (!i) {

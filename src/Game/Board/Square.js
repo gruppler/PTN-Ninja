@@ -1,4 +1,4 @@
-import { itoa } from "./Ply";
+import { itoa } from "../PTN/Ply";
 
 import { isBoolean, pick } from "lodash";
 
@@ -17,21 +17,21 @@ const EDGE = {
 };
 
 export default class Square {
-  constructor(x, y, game) {
-    this.game = game;
+  constructor(x, y, board) {
+    this.board = board;
     this.piece = null;
     this.color = null;
     this.pieces = [];
     this.isSelected = false;
     this.isStanding = false;
     this.roads = new Sides({
-      change: () => this.game.state.dirtySquare(this.static.coord),
+      change: () => this.board.dirtySquare(this.static.coord),
     });
     this.connected = new Sides({
       disable: (side) => {
-        this.roads.set(side, false)
+        this.roads.set(side, false);
       },
-      change: () => this.game.state.dirtySquare(this.static.coord),
+      change: () => this.board.dirtySquare(this.static.coord),
     });
 
     this.static = {
@@ -53,9 +53,9 @@ export default class Square {
       neighbors: new Sides(),
     };
     this.static.edges.setSides({
-      N: y == this.game.size - 1,
+      N: y == this.board.game.size - 1,
       S: y == 0,
-      E: x == this.game.size - 1,
+      E: x == this.board.game.size - 1,
       W: x == 0,
     });
     this.static.edges.onEnable = null;
@@ -91,7 +91,7 @@ export default class Square {
       this.isStanding = false;
     }
     if (piece !== prevPiece) {
-      this.game.state.dirtySquare(
+      this.board.dirtySquare(
         this.static.coord,
         this.color !== prevColor || this.isStanding !== wasStanding
       );
@@ -111,12 +111,12 @@ export default class Square {
     this.color = null;
     this.isStanding = false;
     this.clearConnected();
-    this.game.state.dirtySquare(
+    this.board.dirtySquare(
       this.static.coord,
       this.color !== prevColor || this.isStanding !== wasStanding
     );
     if (prevPiece) {
-      this.game.state.dirtySquare(
+      this.board.dirtySquare(
         this.static.coord,
         this.color !== prevColor || this.isStanding !== wasStanding
       );
@@ -174,10 +174,10 @@ export default class Square {
   pushPiece(piece) {
     piece.square = this;
     this.pieces.push(piece);
-    if (this.pieces.length >= this.game.size) {
+    if (this.pieces.length >= this.board.game.size) {
       this.pieces
-        .slice(-1 - this.game.size)
-        .forEach((piece) => this.game.state.dirtyPiece(piece.id));
+        .slice(-1 - this.board.game.size)
+        .forEach((piece) => this.board.dirtyPiece(piece.id));
     }
     return this.setPiece(piece);
   }
@@ -192,10 +192,10 @@ export default class Square {
       piece.square = null;
     }
     this.setPiece(this._getPiece());
-    if (this.pieces.length >= this.game.size) {
+    if (this.pieces.length >= this.board.game.size) {
       this.pieces
-        .slice(0 - this.game.size)
-        .forEach((piece) => this.game.state.dirtyPiece(piece.id));
+        .slice(0 - this.board.game.size)
+        .forEach((piece) => this.board.dirtyPiece(piece.id));
     }
     return piece;
   }

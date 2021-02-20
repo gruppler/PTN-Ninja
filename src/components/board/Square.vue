@@ -151,7 +151,8 @@ export default {
   },
   methods: {
     checkValid() {
-      this.valid = this.isEditingTPS || this.$game.isValidSquare(this.square);
+      this.valid =
+        this.isEditingTPS || this.$game.board.isValidSquare(this.square);
     },
     select(alt = false) {
       this.checkValid();
@@ -169,7 +170,7 @@ export default {
           selectedPiece: this.selectedPiece,
         });
         if (this.isEditingTPS) {
-          this.editingTPS = this.$game.state.getTPS(
+          this.editingTPS = this.$game.board.getTPS(
             this.selectedPiece.color,
             this.firstMoveNumber
           );

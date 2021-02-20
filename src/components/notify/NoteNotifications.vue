@@ -17,11 +17,11 @@ export default {
       );
     },
     notifications() {
-      const ply = this.$game.state.ply;
+      const ply = this.$game.board.ply;
       let notes = [];
       if (
         (!ply || !ply.index) &&
-        !this.$game.state.plyIsDone &&
+        !this.$game.board.plyIsDone &&
         "-1" in this.$game.notes
       ) {
         notes = notes.concat(this.$game.notes["-1"]);

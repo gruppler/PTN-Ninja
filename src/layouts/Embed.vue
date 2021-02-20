@@ -131,7 +131,7 @@ import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
-import Game from "../PTN/Game";
+import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
@@ -207,7 +207,7 @@ export default {
     getGame() {
       let game;
       try {
-        game = new Game(this.ptn, { name: this.name, state: this.state });
+        game = new Game(this.ptn, { name: this.name, board: this.board });
       } catch (error) {
         const name = game ? game.name : "";
         if (game && name) {
@@ -287,10 +287,10 @@ export default {
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
           this.$store.commit("ui/SET_UI", [key, value]);
         });
-        this.$game.state.targetBranch =
+        this.$game.board.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
-          const ply = this.$game.state.plies[state.plyIndex];
+          const ply = this.$game.board.plies[state.plyIndex];
           if (ply) {
             this.$store.dispatch("game/GO_TO_PLY", {
               ply: ply.id,

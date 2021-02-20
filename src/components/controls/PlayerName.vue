@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { formats } from "../../PTN/Tag";
+import { formats } from "../../Game/PTN/Tag";
 
 export default {
   name: "PlayerName",

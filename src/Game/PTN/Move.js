@@ -98,7 +98,7 @@ export default class Move {
         ) {
           this.game.branches[ply.branch] = ply;
         }
-        delete this.game.boards[ply.id];
+        delete this.game.boardStates[ply.id];
       }
     } else if (
       !ply.isNop &&

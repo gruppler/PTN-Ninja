@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import Game from "../../PTN/Game";
+import Game from "../../Game";
 
 import { unescape } from "lodash";
 

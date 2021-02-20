@@ -53,7 +53,7 @@ export default {
   },
   computed: {
     ply() {
-      return this.$game ? this.$game.state.ply : null;
+      return this.$game ? this.$game.board.ply : null;
     },
     eval() {
       return this.ply ? this.ply.evaluation : null;

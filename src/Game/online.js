@@ -1,11 +1,11 @@
-import Comment from "../Comment";
-import Evaluation from "../Evaluation";
-import Linenum from "../Linenum";
-import Move from "../Move";
-import Nop from "../Nop";
-import Ply from "../Ply";
-import Result from "../Result";
-import Tag from "../Tag";
+import Comment from "./PTN/Comment";
+import Evaluation from "./PTN/Evaluation";
+import Linenum from "./PTN/Linenum";
+import Move from "./PTN/Move";
+import Nop from "./PTN/Nop";
+import Ply from "./PTN/Ply";
+import Result from "./PTN/Result";
+import Tag from "./PTN/Tag";
 
 import { each, map, zipObject } from "lodash";
 

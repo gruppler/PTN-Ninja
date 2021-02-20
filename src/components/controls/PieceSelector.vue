@@ -47,7 +47,7 @@ export default {
       return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
         type = type === "C" ? "cap" : "flat";
         return (
-          this.$game.state.pieces.played[this.color][type].length <
+          this.$game.board.pieces.played[this.color][type].length <
           this.$game.pieceCounts[this.color][type]
         );
       });

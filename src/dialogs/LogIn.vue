@@ -120,7 +120,7 @@
 </template>
 
 <script>
-import { formats } from "../PTN/Tag";
+import { formats } from "../Game/PTN/Tag";
 
 const MIN_NAME_LENGTH = 3;
 

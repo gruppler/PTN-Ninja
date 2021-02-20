@@ -205,7 +205,7 @@ import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
 import Chat from "../components/drawers/Chat";
 
-import Game from "../PTN/Game";
+import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
@@ -303,7 +303,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.$game.state.getTPS(
+        this.editingTPS = this.$game.board.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -311,9 +311,9 @@ export default {
     },
     minFirstMoveNumber() {
       const min1 =
-        this.$game.state.pieces.played[1].cap.length +
-        this.$game.state.pieces.played[1].flat.length +
-        this.$game.state.squares.reduce(
+        this.$game.board.pieces.played[1].cap.length +
+        this.$game.board.pieces.played[1].flat.length +
+        this.$game.board.squares.reduce(
           (total, row) =>
             row.reduce(
               (total, square) =>
@@ -327,9 +327,9 @@ export default {
           0
         );
       const min2 =
-        this.$game.state.pieces.played[2].cap.length +
-        this.$game.state.pieces.played[2].flat.length +
-        this.$game.state.squares.reduce(
+        this.$game.board.pieces.played[2].cap.length +
+        this.$game.board.pieces.played[2].flat.length +
+        this.$game.board.squares.reduce(
           (total, row) =>
             row.reduce(
               (total, square) =>
@@ -350,7 +350,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.$game.state.getTPS(
+        this.editingTPS = this.$game.board.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -440,7 +440,7 @@ export default {
           // Add game from URL
           let name = this.name;
           if (!this.name) {
-            game = new Game(this.ptn, { state: this.state });
+            game = new Game(this.ptn, { board: this.board });
             name = game.name;
           }
           const index = this.$store.state.game.list.findIndex(
@@ -448,7 +448,7 @@ export default {
           );
           if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
             if (!game) {
-              game = new Game(this.ptn, { name, state: this.state });
+              game = new Game(this.ptn, { name, board: this.board });
             }
             if (game) {
               this.$store.dispatch("game/ADD_GAME", {
@@ -533,10 +533,10 @@ export default {
       }
     },
     undo() {
-      return $store.dispatch("game/UNDO");
+      return this.$store.dispatch("game/UNDO");
     },
     redo() {
-      return $store.dispatch("game/REDO");
+      return this.$store.dispatch("game/REDO");
     },
     resetTPS() {
       this.$store.dispatch("game/RESET_TPS");

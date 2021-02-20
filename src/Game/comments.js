@@ -1,5 +1,5 @@
-import Comment from "../Comment";
-import Evaluation from "../Evaluation";
+import Comment from "./PTN/Comment";
+import Evaluation from "./PTN/Evaluation";
 
 import { omit } from "lodash";
 

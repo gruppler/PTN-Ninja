@@ -216,7 +216,7 @@ export default {
       },
     },
     tps() {
-      return this.$game.state.tps;
+      return this.$game.board.tps;
     },
     canShare() {
       return navigator.canShare;
@@ -229,7 +229,7 @@ export default {
     updatePreview() {
       const config = cloneDeep(this.config);
       this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      let canvas = this.$game.render(config);
+      let canvas = this.$game.board.render(config);
       const filename = this.$game.pngFilename;
       this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {

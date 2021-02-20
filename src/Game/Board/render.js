@@ -1,5 +1,5 @@
 import { cloneDeep, isObject, isString } from "lodash";
-import { itoa } from "../Ply";
+import { itoa } from "../PTN/Ply";
 import { THEMES, computeMissing } from "../../themes";
 
 const pieceSizes = {
@@ -32,7 +32,7 @@ const defaults = {
   padding: true,
 };
 
-export default function render(game, options = {}) {
+export default function render(board, options = {}) {
   let theme;
   options = cloneDeep(options);
 
@@ -51,15 +51,17 @@ export default function render(game, options = {}) {
   theme = options.theme ? computeMissing(cloneDeep(options.theme)) : THEMES[0];
 
   let hlSquares = [];
-  if (game.state.plies.length) {
-    const ply = game.plies[game.state.boardPly.id];
+  if (board.plies.length) {
+    const ply = board.game.plies[board.boardPly.id];
     if (options.highlightSquares && ply) {
       hlSquares = ply.squares;
     }
   }
 
   // Dimensions
-  const pieceSize = Math.round((pieceSizes[options.imageSize] * 5) / game.size);
+  const pieceSize = Math.round(
+    (pieceSizes[options.imageSize] * 5) / board.game.size
+  );
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
@@ -79,7 +81,8 @@ export default function render(game, options = {}) {
     theme.vars["piece-border-width"] * squareSize * 0.02
   );
 
-  const fontSize = (squareSize * textSizes[options.textSize] * game.size) / 5;
+  const fontSize =
+    (squareSize * textSizes[options.textSize] * board.game.size) / 5;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -94,7 +97,7 @@ export default function render(game, options = {}) {
 
   const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
-  const boardSize = squareSize * game.size;
+  const boardSize = squareSize * board.game.size;
   const unplayedWidth = options.unplayedPieces
     ? Math.round(squareSize * 1.75)
     : 0;
@@ -113,7 +116,7 @@ export default function render(game, options = {}) {
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
-  const flats = game.state.flats;
+  const flats = board.flats;
   if (options.turnIndicator) {
     const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
@@ -158,7 +161,8 @@ export default function render(game, options = {}) {
     const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
     let name1 =
-      options.player1 || (game.tags.player1 ? game.tags.player1.value : "");
+      options.player1 ||
+      (board.game.tags.player1 ? board.game.tags.player1.value : "");
     if (options.includeNames && name1) {
       const flatCount1Width = ctx.measureText(flats[0]).width;
       name1 = limitText(
@@ -189,7 +193,8 @@ export default function render(game, options = {}) {
       : theme.colors.textDark;
     // Player 2 Name
     let name2 =
-      options.player2 || (game.tags.player2 ? game.tags.player2.value : "");
+      options.player2 ||
+      (board.game.tags.player2 ? board.game.tags.player2.value : "");
     if (options.includeNames && name2) {
       const flatCount2Width = ctx.measureText(flats[1]).width;
       name2 = limitText(
@@ -215,8 +220,8 @@ export default function render(game, options = {}) {
     }
 
     // Turn Indicator
-    if (!game.state.isGameEnd) {
-      const turn = game.state.turn;
+    if (!board.isGameEnd) {
+      const turn = board.turn;
       ctx.fillStyle = theme.colors.primary;
       ctx.fillRect(
         padding + axisSize + (turn === 1 ? 0 : flats1Width),
@@ -239,7 +244,7 @@ export default function render(game, options = {}) {
     ctx.fillStyle = theme.secondaryDark
       ? theme.colors.textLight
       : theme.colors.textDark;
-    for (let i = 0; i < game.size; i++) {
+    for (let i = 0; i < board.game.size; i++) {
       const coord = itoa(i, i);
       ctx.textBaseline = padding ? "middle" : "bottom";
       ctx.textAlign = "center";
@@ -258,7 +263,7 @@ export default function render(game, options = {}) {
         padding ? (axisSize + padding) / 2 : 0,
         padding +
           headerHeight +
-          squareSize * (game.size - i - 1) +
+          squareSize * (board.game.size - i - 1) +
           squareSize / 2
       );
     }
@@ -315,7 +320,9 @@ export default function render(game, options = {}) {
     ctx.save();
     ctx.translate(
       padding + axisSize + square.static.x * squareSize,
-      padding + headerHeight + (game.size - square.static.y - 1) * squareSize
+      padding +
+        headerHeight +
+        (board.game.size - square.static.y - 1) * squareSize
     );
 
     if (!theme.boardStyle || theme.boardStyle === "blank") {
@@ -373,23 +380,23 @@ export default function render(game, options = {}) {
 
     let y = 0;
     const z = piece.z;
-    const isOverLimit = pieces && pieces.length > game.size;
-    const isImmovable = isOverLimit && z < pieces.length - game.size;
+    const isOverLimit = pieces && pieces.length > board.game.size;
+    const isImmovable = isOverLimit && z < pieces.length - board.game.size;
 
     if (piece.square) {
       // Played
       y -= pieceSpacing * z;
       if (isOverLimit && !isImmovable) {
-        y += pieceSpacing * (pieces.length - game.size);
+        y += pieceSpacing * (pieces.length - board.game.size);
       }
       if (piece.isStanding && pieces.length > 1) {
         y += pieceSpacing;
       }
     } else {
       // Unplayed
-      const caps = game.pieceCounts[piece.color].cap;
-      const total = game.pieceCounts[piece.color].total;
-      y = game.size - 1;
+      const caps = board.game.pieceCounts[piece.color].cap;
+      const total = board.game.pieceCounts[piece.color].total;
+      y = board.game.size - 1;
       if (piece.isCapstone) {
         y *= total - piece.index - 1;
       } else {
@@ -452,7 +459,7 @@ export default function render(game, options = {}) {
     ctx.restore();
   };
 
-  game.state.squares
+  board.squares
     .concat()
     .reverse()
     .forEach((row) => row.forEach(drawSquare));
@@ -480,10 +487,10 @@ export default function render(game, options = {}) {
         padding + headerHeight + boardSize - squareSize
       );
       ["flat", "cap"].forEach((type) => {
-        const total = game.pieceCounts[color][type];
-        const played = game.state.pieces.played[color][type].length;
+        const total = board.game.pieceCounts[color][type];
+        const played = board.pieces.played[color][type].length;
         const remaining = total - played;
-        game.state.pieces.all[color][type]
+        board.pieces.all[color][type]
           .slice(total - remaining)
           .concat()
           .reverse()
