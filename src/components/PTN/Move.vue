@@ -21,9 +21,15 @@
         :linenum="move.linenum"
         :no-branch="noBranch || separateBranch"
       />
-      <template v-if="ply1 && (!player || player === 1)">
-        <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else :key="ply1.id" :plyID="ply1.id" />
+      <template v-if="!player || player === 1">
+        <span v-if="!ply1 || ply1.isNop" class="ptn nop">{{
+          ply1 ? ply1.text : "--"
+        }}</span>
+        <Ply
+          v-else
+          :key="ply1 ? ply1.id : 'nop' + move.id"
+          :plyID="ply1 ? ply1.id : 'nop' + move.id"
+        />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
         <Ply :key="ply2.id" :plyID="ply2.id" />

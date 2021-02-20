@@ -8,6 +8,7 @@ import {
   defaults,
   flatten,
   isArray,
+  isString,
   map,
   pick,
   uniq,
@@ -58,7 +59,6 @@ export default class GameState {
       selected: {
         squares: null,
         pieces: null,
-        moveset: null,
       },
     };
 
@@ -139,7 +139,7 @@ export default class GameState {
     this.squares = new Marray.two(
       this.game.size,
       this.game.size,
-      (y, x) => new Square(x, y, this.game.size)
+      (y, x) => new Square(x, y, this.game)
     );
     this.forEachSquare((square) => {
       if (!square.static.edges.N) {
@@ -181,7 +181,7 @@ export default class GameState {
   getSquare(square) {
     if (square instanceof Square) {
       return square;
-    } else if (typeof square === "string") {
+    } else if (isString(square)) {
       const coord = atoi(square);
       return this.squares[coord[1]][coord[0]];
     } else if (square.static.coord) {
@@ -192,7 +192,7 @@ export default class GameState {
   getPiece(piece) {
     if (piece instanceof Piece) {
       return piece;
-    } else if (typeof piece === "string") {
+    } else if (isString(piece)) {
       return this.pieces.all.byID[piece];
     } else if (piece.id) {
       return this.pieces.all.byID[piece.id];
@@ -217,19 +217,21 @@ export default class GameState {
     }
   }
 
+  dirtySquares(coords, connections = false) {
+    coords.forEach((coord) => this.dirtySquare(coord, connections));
+  }
+
   dirtyPiece(id) {
     this.dirty.pieces[id] = true;
   }
 
   updateSquareConnections() {
-    const changed = {};
     map(this.dirty.squareConnections, (isDirty, coord) => {
       if (isDirty) {
-        Object.assign(changed, this.getSquare(coord).updateConnected());
+        this.getSquare(coord).updateConnected();
         this.dirty.squareConnections[coord] = false;
       }
     });
-    Object.keys(changed).forEach((coord) => dirtySquare(coord));
   }
 
   updateOutput() {
@@ -398,12 +400,11 @@ export default class GameState {
   }
 
   selectPiece(piece) {
-    if (typeof piece === "string") {
+    if (isString(piece)) {
       piece = this.getPiece(piece);
     }
     this.selected.pieces.push(piece);
     piece.isSelected = true;
-    this.dirtyPiece(piece.id);
   }
 
   selectPieces(pieces) {
@@ -413,7 +414,6 @@ export default class GameState {
   reselectPiece(piece) {
     this.selected.pieces.unshift(piece);
     piece.isSelected = true;
-    this.dirtyPiece(piece.id);
   }
 
   deselectPiece(flatten = false) {
@@ -423,7 +423,6 @@ export default class GameState {
       if (flatten) {
         piece.isStanding = false;
       }
-      this.dirtyPiece(piece.id);
     }
     return piece;
   }
@@ -456,7 +455,7 @@ export default class GameState {
     }
   }
 
-  playPiece(color, type, square, deferUpdate = false) {
+  playPiece(color, type, square) {
     const isStanding = /S|wall/.test(type);
     if (!(type in this.game.pieceCounts[1])) {
       type = type === "C" ? "cap" : "flat";
@@ -469,25 +468,18 @@ export default class GameState {
       this.pieces.played[color][type].push(piece);
       if ("z" in square) {
         // Set via piece state
-        this.squares[square.y][square.x].setStackPiece(
-          square.z,
-          piece,
-          deferUpdate
-        );
-        this.dirtySquare(itoa(square.x, square.y), true);
+        this.squares[square.y][square.x].setStackPiece(square.z, piece);
       } else {
         // Set via square
-        square.pushPiece(piece, deferUpdate);
-        this.dirtySquare(square.static.coord, true);
+        square.pushPiece(piece);
       }
-      this.dirtyPiece(piece.id);
       return piece;
     }
     return null;
   }
 
-  unplayPiece(square, deferUpdate = false) {
-    const piece = square.popPiece(deferUpdate);
+  unplayPiece(square) {
+    const piece = square.popPiece(true);
     if (piece) {
       piece.isStanding = false;
       const pieces = this.pieces.played[piece.color][piece.type];
@@ -501,8 +493,6 @@ export default class GameState {
       } else {
         this.pieces.played[piece.color][piece.type].pop();
       }
-      this.dirtyPiece(piece.id);
-      this.dirtySquare(square.static.coord, true);
       return piece;
     }
     return null;
@@ -510,9 +500,7 @@ export default class GameState {
 
   clearBoard() {
     this.forEachSquare((square) => {
-      square.pieces.forEach((piece) => this.dirtyPiece(piece.id));
       square.clear();
-      this.dirtySquare(square.static.coord, true);
     });
     this.pieces.played[1].flat.length = 0;
     this.pieces.played[1].cap.length = 0;
@@ -563,20 +551,18 @@ export default class GameState {
   }
 
   setBoard(pieces, plyID, plyIsDone) {
-    let squares = {};
     this.clearBoard();
     [1, 2].forEach((color) =>
       ["flat", "cap"].forEach((type) => {
         pieces[color][type].forEach((state) => {
           this.playPiece(color, state.type, state, true);
-          squares[itoa(state.x, state.y)] = true;
         });
       })
     );
-    this.updateSquareConnections(squares);
     this.plyID = plyID;
     this.plyIsDone = plyIsDone;
     const ply = this.ply;
+    this.updateSquareConnections();
     this.setRoads(ply && ply.result ? ply.result.roads : null);
     this.updateBoardOutput();
     this.updatePositionOutput();
@@ -629,6 +615,7 @@ export default class GameState {
     }
 
     if (roads) {
+      this.updateSquareConnections();
       roads[1].concat(roads[2]).forEach((road) => {
         road.squares.forEach((coord) => {
           coord = atoi(coord);

@@ -17,15 +17,21 @@ const EDGE = {
 };
 
 export default class Square {
-  constructor(x, y, size) {
+  constructor(x, y, game) {
+    this.game = game;
     this.piece = null;
     this.color = null;
     this.pieces = [];
     this.isSelected = false;
     this.isStanding = false;
-    this.roads = new Sides();
+    this.roads = new Sides({
+      change: () => this.game.state.dirtySquare(this.static.coord),
+    });
     this.connected = new Sides({
-      disable: (side) => this.roads.set(side, false),
+      disable: (side) => {
+        this.roads.set(side, false)
+      },
+      change: () => this.game.state.dirtySquare(this.static.coord),
     });
 
     this.static = {
@@ -47,9 +53,9 @@ export default class Square {
       neighbors: new Sides(),
     };
     this.static.edges.setSides({
-      N: y == size - 1,
+      N: y == this.game.size - 1,
       S: y == 0,
-      E: x == size - 1,
+      E: x == this.game.size - 1,
       W: x == 0,
     });
     this.static.edges.onEnable = null;
@@ -71,7 +77,8 @@ export default class Square {
     return this.pieces.length ? this.pieces[this.pieces.length - 1] : null;
   }
 
-  setPiece(piece, deferUpdate = false) {
+  setPiece(piece) {
+    const prevPiece = this.piece;
     const prevColor = this.color;
     const wasStanding = this.piece && this.isStanding;
 
@@ -83,21 +90,37 @@ export default class Square {
       this.color = null;
       this.isStanding = false;
     }
-    if (this.color !== prevColor || this.isStanding !== wasStanding) {
-      if (!deferUpdate) {
-        this.updateConnected();
-      }
+    if (piece !== prevPiece) {
+      this.game.state.dirtySquare(
+        this.static.coord,
+        this.color !== prevColor || this.isStanding !== wasStanding
+      );
     }
   }
 
   clear() {
+    const prevPiece = this.piece;
+    const prevColor = this.color;
+    const wasStanding = this.piece && this.isStanding;
     this.pieces.forEach((piece) => {
       piece.isStanding = false;
       piece.square = null;
     });
     this.pieces.length = 0;
+    this.piece = null;
     this.color = null;
+    this.isStanding = false;
     this.clearConnected();
+    this.game.state.dirtySquare(
+      this.static.coord,
+      this.color !== prevColor || this.isStanding !== wasStanding
+    );
+    if (prevPiece) {
+      this.game.state.dirtySquare(
+        this.static.coord,
+        this.color !== prevColor || this.isStanding !== wasStanding
+      );
+    }
   }
 
   clearConnected() {
@@ -105,39 +128,34 @@ export default class Square {
   }
 
   updateConnected() {
-    let neighbor,
-      isConnected,
-      changed = {};
-    this.static.edges.forEach((isEdge, side) => {
+    let neighbor, isConnected;
+    this.static.edges.forEachSide((isEdge, side) => {
       if (isEdge) {
-        this.connected[side] = !!(this.piece && !this.isStanding);
+        this.connected[side] = Boolean(this.piece && !this.isStanding);
       } else if ((neighbor = this.static.neighbors[side])) {
-        isConnected = !!(
+        isConnected = Boolean(
           this.piece &&
-          !this.isStanding &&
-          !neighbor.isStanding &&
-          neighbor.color === this.color
+            !this.isStanding &&
+            !neighbor.isStanding &&
+            neighbor.color === this.color
         );
         if (this.connected[side] !== isConnected) {
           this.connected[side] = isConnected;
-          changed[itoa(square.x, square.y)] = true;
         }
         if (neighbor.connected[OPPOSITE[side]] !== isConnected) {
           neighbor.connected[OPPOSITE[side]] = isConnected;
-          changed[itoa(neighbor.x, neighbor.y)] = true;
         }
       }
     });
-    return changed;
   }
 
   setRoad(road) {
     this.connected.forEach((side) => {
-      const isRoad = !!(
+      const isRoad = Boolean(
         road &&
-        ((this.static.edges[side] && road.edges[EDGE[side]]) ||
-          (this.static.neighbors[side] &&
-            road.squares.includes(this.static.neighbors[side].static.coord)))
+          ((this.static.edges[side] && road.edges[EDGE[side]]) ||
+            (this.static.neighbors[side] &&
+              road.squares.includes(this.static.neighbors[side].static.coord)))
       );
       if (!road || isRoad) {
         this.roads[side] = isRoad;
@@ -145,36 +163,46 @@ export default class Square {
     });
   }
 
-  setStackPiece(index, piece, deferUpdate = false) {
+  setStackPiece(index, piece) {
     piece.square = this;
     this.pieces[index] = piece;
     if (index === this.pieces.length - 1) {
-      this.setPiece(piece, deferUpdate);
+      return this.setPiece(piece);
     }
   }
 
-  pushPiece(piece, deferUpdate = false) {
+  pushPiece(piece) {
     piece.square = this;
-    this.setPiece(piece, deferUpdate);
     this.pieces.push(piece);
+    if (this.pieces.length >= this.game.size) {
+      this.pieces
+        .slice(-1 - this.game.size)
+        .forEach((piece) => this.game.state.dirtyPiece(piece.id));
+    }
+    return this.setPiece(piece);
   }
 
-  pushPieces(pieces, deferUpdate = false) {
-    pieces.forEach((piece) => this.pushPiece(piece, deferUpdate));
+  pushPieces(pieces) {
+    pieces.forEach((piece) => this.pushPiece(piece));
   }
 
-  popPiece(deferUpdate = false) {
+  popPiece() {
     const piece = this.pieces.pop();
     if (piece) {
       piece.square = null;
     }
-    this.setPiece(this._getPiece(), deferUpdate);
+    this.setPiece(this._getPiece());
+    if (this.pieces.length >= this.game.size) {
+      this.pieces
+        .slice(0 - this.game.size)
+        .forEach((piece) => this.game.state.dirtyPiece(piece.id));
+    }
     return piece;
   }
 
-  popPieces(count, deferUpdate = false) {
+  popPieces(count) {
     while (count--) {
-      this.popPiece(deferUpdate);
+      this.popPiece();
     }
   }
 }
@@ -183,6 +211,7 @@ export class Sides {
   constructor(options = {}) {
     this.onEnable = options.enable || null;
     this.onDisable = options.disable || null;
+    this.onChange = options.change || null;
 
     this._index = {
       N: false,
@@ -213,6 +242,10 @@ export class Sides {
       "splice",
       "unshift",
     ].forEach((fn) => (this[fn] = this._array[fn].bind(this._array)));
+  }
+
+  forEachSide(fn) {
+    Object.keys(this._index).forEach((side) => fn(this._index[side], side));
   }
 
   get output() {
@@ -250,6 +283,9 @@ export class Sides {
         if (this.onDisable) {
           this.onDisable(side, value);
         }
+      }
+      if (this.onChange) {
+        this.onChange(side, value);
       }
     }
   }

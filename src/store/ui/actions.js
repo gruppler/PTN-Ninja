@@ -15,7 +15,7 @@ import {
 } from "../../utilities";
 import { THEMES } from "../../themes";
 import { i18n } from "../../boot/i18n";
-import { isArray, isString } from "lodash";
+import { isArray, isFunction, isString } from "lodash";
 
 export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
@@ -189,7 +189,7 @@ export const OPEN = function (context, callback) {
   input.hidden = true;
   input.addEventListener("input", (event) => {
     this.dispatch("game/OPEN_FILES", event.target.files);
-    if (callback && typeof callback === "function") {
+    if (callback && isFunction(callback)) {
       callback();
     }
   });

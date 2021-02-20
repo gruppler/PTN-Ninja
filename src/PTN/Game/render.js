@@ -1,4 +1,4 @@
-import { cloneDeep, isString } from "lodash";
+import { cloneDeep, isObject, isString } from "lodash";
 import { itoa } from "../Ply";
 import { THEMES, computeMissing } from "../../themes";
 
@@ -519,7 +519,7 @@ function roundRect(ctx, x, y, width, height, radius) {
     bl: 0,
     br: 0,
   };
-  if (typeof radius === "object") {
+  if (isObject(radius)) {
     for (let side in radius) {
       radii[side] = radius[side];
     }

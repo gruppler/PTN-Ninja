@@ -4,14 +4,46 @@ export default class Piece {
   constructor(params) {
     defaults(this, {
       game: null,
-      square: null,
       ply: null,
       color: 1,
-      isSelected: false,
-      isStanding: false,
       isCapstone: false,
+      reactive: {
+        square: null,
+        isStanding: false,
+        isSelected: false,
+      },
     });
     Object.keys(params).forEach((key) => (this[key] = params[key]));
+  }
+
+  get square() {
+    return this.reactive.square;
+  }
+  set square(square) {
+    this.reactive.square = square;
+    if (this.game.state) {
+      this.game.state.dirtyPiece(this.id);
+    }
+  }
+
+  get isStanding() {
+    return this.reactive.isStanding;
+  }
+  set isStanding(isStanding) {
+    this.reactive.isStanding = isStanding;
+    if (this.game.state) {
+      this.game.state.dirtyPiece(this.id);
+    }
+  }
+
+  get isSelected() {
+    return this.reactive.isSelected;
+  }
+  set isSelected(isSelected) {
+    this.reactive.isSelected = isSelected;
+    if (this.game.state) {
+      this.game.state.dirtyPiece(this.id);
+    }
   }
 
   get snapshot() {
@@ -23,6 +55,7 @@ export default class Piece {
         "isSelected",
         "isStanding",
         "isCapstone",
+        "isImmovable",
       ]),
       ...this.state,
       type: this.type,

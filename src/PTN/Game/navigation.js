@@ -24,55 +24,54 @@ export default class GameNavigation {
     }
   }
 
-  _afterPly(ply) {
-    if (ply.result && ply.result.type !== "1") {
-      if (ply.result.type === "R" && !ply.result.roads) {
-        this.state.updateSquareConnections();
-        ply.result.roads = this.findRoads();
+  _afterPly(ply, isDone) {
+    if (isDone) {
+      if (ply.result && ply.result.type !== "1") {
+        if (ply.result.type === "R" && !ply.result.roads) {
+          this.state.updateSquareConnections();
+          ply.result.roads = this.findRoads();
+        }
+        this.state.setRoads(ply.result.roads);
+      } else if (ply.index === this.state.plies.length - 1) {
+        this.checkGameEnd();
       }
-      // this.state.roads = ply.result.roads;
-      this.state.setRoads(ply.result.roads);
-    } else if (ply.index === this.state.plies.length - 1) {
-      this.checkGameEnd();
-    }
-    if (
-      this.state.isGameEnd ||
-      (this.state.nextPly && this.state.nextPly.branches.length)
-    ) {
-      this.saveBoardState();
-    }
-  }
-
-  _doPly(deferUpdate = false) {
-    const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
-    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply, deferUpdate)) {
-      this._setPly(ply.id, true);
-      this._afterPly(ply);
-      this.state.setRoads(ply.result ? ply.result.roads : null);
-      return true;
+      if (
+        this.state.isGameEnd ||
+        (this.state.nextPly && this.state.nextPly.branches.length)
+      ) {
+        this.saveBoardState();
+      }
     } else {
-      return false;
-    }
-  }
-
-  _undoPly(deferUpdate = false) {
-    const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
-    if (
-      ply &&
-      this._doMoveset(ply.toUndoMoveset(), ply.color, ply, deferUpdate)
-    ) {
-      this._setPly(ply.id, false);
       this.state.setRoads(null);
       if (ply.branches.length) {
         this.saveBoardState();
       }
+    }
+  }
+
+  _doPly() {
+    const ply = this.state.plyIsDone ? this.state.nextPly : this.state.ply;
+    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
+      this._setPly(ply.id, true);
+      this._afterPly(ply, true);
       return true;
     } else {
       return false;
     }
   }
 
-  _doMoveset(moveset, color = 1, ply = null, deferUpdate = false) {
+  _undoPly() {
+    const ply = this.state.plyIsDone ? this.state.ply : this.state.prevPly;
+    if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
+      this._setPly(ply.id, false);
+      this._afterPly(ply, false);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  _doMoveset(moveset, color = 1, ply = null) {
     let stack = [];
 
     if (moveset[0].errors) {
@@ -93,10 +92,10 @@ export default class GameNavigation {
       if (type) {
         if (action === "pop") {
           // Undo placement
-          this.state.unplayPiece(square, deferUpdate);
+          this.state.unplayPiece(square);
         } else {
           // Do placement
-          const piece = this.state.playPiece(color, type, square, deferUpdate);
+          const piece = this.state.playPiece(color, type, square);
           if (!piece) {
             return false;
           }
@@ -104,12 +103,10 @@ export default class GameNavigation {
         }
       } else if (action === "pop") {
         // Undo movement
-        times(count, () => stack.push(square.popPiece(deferUpdate)));
+        times(count, () => stack.push(square.popPiece()));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
-          square.setPiece(square.piece, deferUpdate);
-          this.state.dirtyPiece(piece.id);
-          this.state.dirtySquare(square.static.coord, true);
+          square.setPiece(square.piece);
         }
       } else {
         // Do movement
@@ -126,7 +123,7 @@ export default class GameNavigation {
         }
         if (flatten && square.pieces.length) {
           square.piece.isStanding = false;
-          square.setPiece(square.piece, deferUpdate);
+          square.setPiece(square.piece);
         } else if (flatten) {
           ply.wallSmash = "";
           this._updatePTN();
@@ -138,9 +135,7 @@ export default class GameNavigation {
             throw new Error("Invalid ply");
             return false;
           }
-          square.pushPiece(piece, deferUpdate);
-          this.state.dirtyPiece(piece.id);
-          this.state.dirtySquare(square.static.coord, true);
+          square.pushPiece(piece);
         });
       }
     }
@@ -148,7 +143,7 @@ export default class GameNavigation {
     return true;
   }
 
-  _undoMoveset(moveset, color = 1, ply = null, deferUpdate = false) {
+  _undoMoveset(moveset, color = 1, ply = null) {
     return this._doMoveset(
       moveset
         .map((move) => ({
@@ -157,8 +152,7 @@ export default class GameNavigation {
         }))
         .reverse(),
       color,
-      ply,
-      deferUpdate
+      ply
     );
   }
 
@@ -254,9 +248,6 @@ export default class GameNavigation {
       // Switch to the target branch if we're on a sibling
       if (this.state.plyIsDone) {
         this._undoPly(true);
-        this.state.ply.squares.forEach((coord) =>
-          this.state.dirtySquare(coord, true)
-        );
       }
       this._setPly(targetPly.id, false);
     }
@@ -264,16 +255,10 @@ export default class GameNavigation {
     if (this.state.ply.index < targetPly.index) {
       while (this.state.ply.index < targetPly.index && this._doPly(true)) {
         // Go forward until we reach the target ply
-        this.state.ply.squares.forEach((coord) =>
-          this.state.dirtySquare(coord, true)
-        );
       }
     } else if (this.state.ply.index > targetPly.index) {
       while (this.state.ply.index > targetPly.index && this._undoPly(true)) {
         // Go backward until we reach the target ply
-        this.state.ply.squares.forEach((coord) =>
-          this.state.dirtySquare(coord, true)
-        );
       }
     }
 
@@ -284,9 +269,6 @@ export default class GameNavigation {
       } else {
         this._undoPly(true);
       }
-      this.state.ply.squares.forEach((coord) =>
-        this.state.dirtySquare(coord, true)
-      );
     }
 
     this.state.updateBoardOutput();

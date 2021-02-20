@@ -1,9 +1,10 @@
 import { i18n } from "./boot/i18n";
 import { toDate } from "date-fns";
+import { isString } from "lodash";
 
 export const formatError = (error) => {
   const errorMessages = i18n.messages[i18n.locale].error;
-  if (typeof error === "string") {
+  if (isString(error)) {
     if (error in errorMessages) {
       return i18n.t(`error["${error}"]`);
     } else {
@@ -25,7 +26,7 @@ export const formatError = (error) => {
 
 export const formatSuccess = (success) => {
   const successMessages = i18n.messages[i18n.locale].success;
-  if (typeof success === "string") {
+  if (isString(success)) {
     if (success in successMessages) {
       return i18n.t(`success["${success}"]`);
     } else {
@@ -36,7 +37,7 @@ export const formatSuccess = (success) => {
 
 export const formatWarning = (warning) => {
   const warningMessages = i18n.messages[i18n.locale].warning;
-  if (typeof warning === "string") {
+  if (isString(warning)) {
     if (warning in warningMessages) {
       return i18n.t(`warning["${warning}"]`);
     } else {
@@ -47,7 +48,7 @@ export const formatWarning = (warning) => {
 
 export const formatHint = (hint) => {
   const warningMessages = i18n.messages[i18n.locale].hint;
-  if (typeof hint === "string") {
+  if (isString(hint)) {
     if (hint in warningMessages) {
       return i18n.t(`hint["${hint}"]`);
     } else {

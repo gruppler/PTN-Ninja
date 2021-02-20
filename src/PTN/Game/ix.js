@@ -1,6 +1,6 @@
 import Ply from "../Ply";
 
-import { last } from "lodash";
+import { isString, last } from "lodash";
 
 export default class GameIX {
   isValidSquare(square, assumeSoloCap = false) {
@@ -105,7 +105,6 @@ export default class GameIX {
     if (piece.isSelected) {
       if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
         piece.isStanding = !piece.isStanding;
-        this.state.dirtyPiece(piece.id);
       } else {
         piece.isStanding = false;
         this.state.deselectPiece();
@@ -117,7 +116,6 @@ export default class GameIX {
       this.state.selectPiece(piece);
       if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
         piece.isStanding = true;
-        this.state.dirtyPiece(piece.id);
       }
     }
     this.state.updatePiecesOutput();
@@ -131,7 +129,7 @@ export default class GameIX {
     }
 
     let piece = square.piece;
-    if (typeof piece === "string") {
+    if (isString(piece)) {
       piece = this.state.getPiece(piece);
     }
 
@@ -313,9 +311,7 @@ export default class GameIX {
       // Move selection from currentSquare to new square
       currentSquare.popPieces(this.state.selected.pieces.length);
       square.pushPieces(this.state.selected.pieces);
-      this.state.selected.pieces.forEach((piece) =>
-        this.state.dirtyPiece(piece.id)
-      );
+
       if (altSelect) {
         // Drop all
         this.state.deselectAllPieces();
