@@ -336,8 +336,8 @@
       v-model="tags.komi"
       name="komi"
       type="number"
-      min="0"
-      :max="tags.size"
+      min="-20.5"
+      max="20.5"
       step="0.5"
       :label="$t('Komi')"
       :rules="rules('komi')"
@@ -770,7 +770,7 @@ export default {
       } else if (tag.startsWith("caps")) {
         rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
       } else if (tag === "komi") {
-        rules[0] = (value) => value <= tags.size;
+        rules[0] = (value) => value >= -20.5 && value <= 20.5;
         rules[1] = (value) => !value || formats[tag].test(value);
       } else {
         rules[0] = (value) => !value || formats[tag].test(value);

@@ -91,7 +91,7 @@ export default class Ply extends Ptn {
   }
 
   static test(notation) {
-    return /^\s*[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?/.test(notation);
+    return /^\s*[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?/i.test(notation);
   }
 
   static parse(notation, params = {}) {

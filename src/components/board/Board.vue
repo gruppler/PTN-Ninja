@@ -39,7 +39,11 @@
               {{ player1 }}
             </div>
             <div class="flats absolute-right q-px-sm">
-              {{ $store.state.ui.flatCounts ? flats[0] : "" }}
+              {{
+                $store.state.flatCounts
+                  ? flats[0].toString().replace(".5", " ½")
+                  : ""
+              }}
             </div>
           </div>
           <div class="turn-indicator"></div>
