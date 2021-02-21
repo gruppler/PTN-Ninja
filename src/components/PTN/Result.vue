@@ -25,7 +25,7 @@ import Result from "../../Game/PTN/Result";
 export default {
   name: "Result",
   props: {
-    result: String,
+    result: [String, Object],
     done: {
       type: Boolean,
       default: true,
@@ -37,7 +37,9 @@ export default {
       return this.$store.state.ui.theme;
     },
     resultObject() {
-      return Result.parse(this.result || "");
+      return typeof this.result === "string"
+        ? Result.parse(this.result || "")
+        : this.result;
     },
   },
 };
