@@ -547,9 +547,9 @@ export default class GameBase {
 
   _updatePTN(recordChange = false) {
     if (recordChange && this.ptn) {
-      this.recordChange(() => (this.ptn = this.text()));
+      this.recordChange(() => (this.ptn = this.toString()));
     } else {
-      this.ptn = this.text();
+      this.ptn = this.toString();
     }
   }
 
@@ -562,17 +562,17 @@ export default class GameBase {
     }
   }
 
-  text(showAllBranches = true, showComments = true, tags) {
+  toString(showAllBranches = true, showComments = true, tags) {
     return this.headerText(tags) + this.moveText(showAllBranches, showComments);
   }
 
   headerText(tags = this.tags) {
-    return map(tags, (tag) => tag.text()).join("\r\n") + "\r\n\r\n";
+    return map(tags, (tag) => tag.toString()).join("\r\n") + "\r\n\r\n";
   }
 
   moveText(showAllBranches = false, showComments = false) {
     const printMove = (move) =>
-      move.text(
+      move.toString(
         showComments ? this.getMoveComments(move) : null,
         showAllBranches
       );
@@ -581,12 +581,12 @@ export default class GameBase {
     if (showComments) {
       if (this.notes[-1]) {
         prefix +=
-          this.notes[-1].map((comment) => comment.text()).join("\r\n") +
+          this.notes[-1].map((comment) => comment.toString()).join("\r\n") +
           "\r\n\r\n";
       }
       if (this.chatlog[-1]) {
         prefix +=
-          this.chatlog[-1].map((comment) => comment.text()).join("\r\n") +
+          this.chatlog[-1].map((comment) => comment.toString()).join("\r\n") +
           "\r\n\r\n";
       }
     }

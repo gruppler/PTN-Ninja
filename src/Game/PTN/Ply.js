@@ -185,7 +185,7 @@ export default class Ply extends Ptn {
     return isEqual(this.min, ply.min);
   }
 
-  text(plyOnly = false) {
+  toString(plyOnly = false) {
     return (
       (this.minPieceCount || "") +
       (this.specialPiece || "") +

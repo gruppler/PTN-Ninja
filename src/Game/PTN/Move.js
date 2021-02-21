@@ -125,31 +125,31 @@ export default class Move {
     this.plies = this.plies.concat();
   }
 
-  text(comments = null, showBranch = true) {
+  toString(comments = null, showBranch = true) {
     let ply1 = "";
     let ply2 = "";
     let comments1 = "";
     let comments2 = "";
 
     if (!showBranch && this.ply1Original) {
-      ply1 = this.ply1Original.text();
+      ply1 = this.ply1Original.toString();
     } else if (this.ply1) {
-      ply1 = this.ply1.text();
+      ply1 = this.ply1.toString();
     }
     if (this.ply2) {
-      ply2 = this.ply2.text();
+      ply2 = this.ply2.toString();
     }
 
     if (comments) {
       if (comments[0] && comments[0].length) {
-        comments1 = comments[0].map((comment) => comment.text()).join(" ");
+        comments1 = comments[0].map((comment) => comment.toString()).join(" ");
       }
       if (comments[1] && comments[1].length) {
-        comments2 = comments[1].map((comment) => comment.text()).join(" ");
+        comments2 = comments[1].map((comment) => comment.toString()).join(" ");
       }
     }
 
-    return [this.linenum.text(showBranch), ply1, comments1, ply2, comments2]
+    return [this.linenum.toString(showBranch), ply1, comments1, ply2, comments2]
       .filter((item) => item)
       .join(" ");
   }

@@ -20,10 +20,10 @@ export default class Nop {
   }
 
   get output() {
-    return Object.freeze({ isNop: true, text: this.text() });
+    return Object.freeze({ isNop: true, text: this.toString() });
   }
 
-  text() {
+  toString() {
     return this.raw || "--";
   }
 }

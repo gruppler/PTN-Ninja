@@ -124,7 +124,7 @@ export default class GameOnline {
       };
     } else {
       let json = {
-        text: ply.text(true),
+        text: ply.toString(true),
       };
       if (ply.evaluation) {
         json.evaluation = ply.evaluation.text;

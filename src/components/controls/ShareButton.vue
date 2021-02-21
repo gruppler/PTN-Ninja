@@ -140,8 +140,8 @@ export default {
           break;
         case "ply":
           output = {
-            title: this.$game.board.ply.text(),
-            text: this.$game.board.ply.text(),
+            title: this.$game.board.ply.toString(),
+            text: this.$game.board.ply.toString(),
           };
           break;
         case "tps":

@@ -172,7 +172,7 @@ export default class Tag {
         break;
     }
     this.valueText =
-      this.value.text !== undefined ? this.value.text : this.value;
+      this.value.text !== undefined ? this.value.text : this.value.toString();
   }
 
   static parse(notation) {
@@ -184,7 +184,7 @@ export default class Tag {
   static timeFromDate = timeFromDate;
   static toDate = toDate;
 
-  text() {
+  toString() {
     return `[${this.key} "${this.valueText}"]`;
   }
 }

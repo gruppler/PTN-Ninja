@@ -835,7 +835,7 @@ export default {
     if (!this.gameID) {
       if (!this.games.length) {
         this.$store.dispatch("game/ADD_GAME", {
-          ptn: this.$game.text(),
+          ptn: this.$game.toString(),
           name: this.$game.name,
           state: this.$game.minState,
           config: this.$game.config,

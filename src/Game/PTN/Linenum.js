@@ -57,7 +57,7 @@ export default class Linenum {
       : game.branches[this.branch].move.number;
   }
 
-  text(showBranch = true) {
+  toString(showBranch = true) {
     return (
       (showBranch && this.isRoot && this.branch ? `{${this.branch}}\n` : "") +
       this.number +

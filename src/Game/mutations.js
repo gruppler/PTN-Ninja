@@ -164,7 +164,7 @@ export default class GameMutations {
       return;
     }
     this.recordChange(() => {
-      this.init(this.text(false), {
+      this.init(this.toString(false), {
         ...this,
         state: { ...this.minState, targetBranch: "" },
       });

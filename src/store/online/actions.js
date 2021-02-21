@@ -122,7 +122,7 @@ export const CREATE_GAME = async (
   tags["player" + player] = playerName;
   game.setTags(tags, false);
   game.clearHistory();
-  dispatch("SAVE_PTN", game.text(), { root: true });
+  dispatch("SAVE_PTN", game.toString(), { root: true });
 
   if (game.isDefaultName) {
     game.name = game.generateName();
@@ -177,7 +177,7 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   let tags = { ["player" + player]: playerName, ...now() };
   game.setTags(tags, false);
   dispatch("SAVE_CONFIG", { game, config }, { root: true });
-  dispatch("SAVE_PTN", game.text(), { root: true });
+  dispatch("SAVE_PTN", game.toString(), { root: true });
   game.clearHistory();
 
   let changes = {

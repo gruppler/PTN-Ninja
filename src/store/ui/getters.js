@@ -79,7 +79,7 @@ export const png_url = (state, getters) => (game) => {
   if (state.pngConfig.highlightSquares) {
     const ply = game.board.ply;
     if (ply) {
-      params.push("hl=" + encodeURIComponent(ply.text(true)));
+      params.push("hl=" + encodeURIComponent(ply.toString(true)));
     }
   }
 
@@ -121,7 +121,7 @@ export const url = (state, getters) => (game, options = {}) => {
   const origin = location.origin + "/";
   let ptn =
     "names" in options && !options.names
-      ? game.text(true, true, omit(game.tags, ["player1", "player2"]))
+      ? game.toString(true, true, omit(game.tags, ["player1", "player2"]))
       : game.ptn;
   let url = compressToEncodedURIComponent(ptn);
   let params = {};

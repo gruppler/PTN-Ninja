@@ -20,7 +20,7 @@ export default class Comment {
     return new Comment(notation);
   }
 
-  text() {
+  toString() {
     return (
       "{" +
       (this.time === null ? "" : `+${this.time}:`) +
