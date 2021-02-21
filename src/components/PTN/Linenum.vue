@@ -116,7 +116,7 @@ export default {
       });
     },
     deleteBranch() {
-      this.$game.deleteBranch(this.linenum.branch);
+      this.$store.dispatch("game/DELETE_BRANCH", this.linenum.branch);
     },
   },
 };

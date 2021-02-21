@@ -26,3 +26,10 @@ export const disabledOptions = (state) => {
   }
   return disabled;
 };
+
+export const isValidSquare = () => (square) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    return game.board.isValidSquare(square);
+  }
+};

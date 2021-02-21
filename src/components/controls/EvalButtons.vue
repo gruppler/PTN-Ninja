@@ -53,7 +53,9 @@ export default {
   },
   computed: {
     ply() {
-      return this.$game ? this.$game.board.ply : null;
+      return this.$store.state.game
+        ? this.$store.state.game.position.ply
+        : null;
     },
     eval() {
       return this.ply ? this.ply.evaluation : null;
@@ -79,9 +81,7 @@ export default {
   },
   methods: {
     toggle(type, double = false) {
-      if (this.$game) {
-        this.$game.toggleEvaluation(type, double);
-      }
+      this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });
     },
   },
 };

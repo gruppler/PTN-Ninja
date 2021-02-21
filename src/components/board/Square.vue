@@ -152,7 +152,8 @@ export default {
   methods: {
     checkValid() {
       this.valid =
-        this.isEditingTPS || this.$game.board.isValidSquare(this.square);
+        this.isEditingTPS ||
+        this.$store.getters["game/isValidSquare"](this.square);
     },
     select(alt = false) {
       this.checkValid();

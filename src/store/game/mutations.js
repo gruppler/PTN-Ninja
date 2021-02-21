@@ -117,6 +117,13 @@ export const DELETE_PLY = (state, plyID) => {
   }
 };
 
+export const DELETE_BRANCH = (state, branch) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.deleteBranch(branch, true);
+  }
+};
+
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
   if (game && !state.isEditingTPS) {
@@ -149,6 +156,13 @@ export const TRIM_TO_PLY = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.trimToPly();
+  }
+};
+
+export const TOGGLE_EVALUATION = (state, { type, double }) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.toggleEvaluation(type, double);
   }
 };
 

@@ -407,6 +407,10 @@ export const DELETE_PLY = function ({ commit }, plyID) {
   commit("DELETE_PLY", plyID);
 };
 
+export const DELETE_BRANCH = function ({ commit }, branch) {
+  commit("DELETE_BRANCH", branch);
+};
+
 export const UNDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");
