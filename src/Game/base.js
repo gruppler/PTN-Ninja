@@ -212,7 +212,11 @@ export default class GameBase {
     if (notation) {
       let item, ply;
       let branch = null;
-      let move = new Move({ game: this, id: 0, index: 0 });
+      let move = new Move({
+        game: this,
+        id: 0,
+        index: 0,
+      });
       let isDoubleBreak = false;
       const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
 
@@ -278,6 +282,10 @@ export default class GameBase {
         } else if (Ply.test(notation)) {
           // Ply
           item = ply = Ply.parse(notation, { id: this.plies.length });
+          if (!move.linenum) {
+            move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+            moveNumber++;
+          }
           if (
             move.number === this.firstMoveNumber &&
             this.firstPlayer === 2 &&
@@ -334,23 +342,6 @@ export default class GameBase {
         this.parseJSONComments(params.comments, -1);
       }
       this.parseJSONMoves(params.moves);
-    }
-
-    if (!this.moves.length) {
-      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
-    }
-
-    if (!this.moves.length) {
-      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
-    }
-
-    if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ".", this);
-    } else if (
-      this.moves.length === 1 &&
-      this.moves[0].number !== this.firstMoveNumber
-    ) {
-      this.moves[0].linenum.number = this.firstMoveNumber;
     }
 
     this._updatePTN();

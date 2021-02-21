@@ -68,6 +68,7 @@ export default class Ply extends Ptn {
       this.minPieceCount = this.pieceCount === "1" ? "" : this.pieceCount;
     }
     this.id = id;
+    this.linenum = null;
     this.player = player;
     this.color = color;
     this.evaluation = evaluation;
