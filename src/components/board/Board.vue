@@ -40,7 +40,7 @@
             </div>
             <div class="flats absolute-right q-px-sm">
               {{
-                $store.state.flatCounts
+                $store.state.ui.flatCounts
                   ? flats[0].toString().replace(".5", " ½")
                   : ""
               }}
