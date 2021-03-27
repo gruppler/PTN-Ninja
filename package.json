@@ -19,7 +19,7 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
-    "@quasar/extras": "^1.9.15",
+    "@quasar/extras": "^1.10.0",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",
@@ -30,7 +30,7 @@
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
-    "quasar": "^1.15.2",
+    "quasar": "^1.15.9",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-qriously": "^1.1.1",
@@ -38,7 +38,7 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^2.1.14",
+    "@quasar/app": "^2.2.3",
     "@quasar/quasar-app-extension-qmarkdown": "^1.4.1",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",

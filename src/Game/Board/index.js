@@ -116,6 +116,7 @@ export default class Board extends Aggregation(
       squareConnections: {},
     };
 
+    // Create pieces
     this.pieces = {
       all: {
         1: { flat: [], cap: [] },
@@ -149,6 +150,7 @@ export default class Board extends Aggregation(
       });
     });
 
+    // Create squares
     this.squares = new Marray.two(
       this.size,
       this.size,
@@ -679,7 +681,7 @@ export default class Board extends Aggregation(
   }
 
   get color() {
-    if (this.isFirstMove) {
+    if (this.isFirstMove && this.game.openingSwap) {
       return this.turn === 1 ? 2 : 1;
     } else {
       return this.turn;

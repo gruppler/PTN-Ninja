@@ -52,6 +52,7 @@ export default {
   notes_off: "mdi-message-bulleted-off",
   online: "mdi-earth",
   open_in_new: "mdi-open-in-new",
+  opening: "mdi-ray-start-arrow",
   password: "mdi-lock",
   pause: "mdi-pause",
   play: "mdi-play",

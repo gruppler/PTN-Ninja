@@ -14,6 +14,7 @@ let defaults = {
   highlightSquares: true,
   isEditingTPS: false,
   isPortrait: false,
+  nativeSharing: navigator.canShare || false,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",

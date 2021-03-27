@@ -65,17 +65,31 @@ export default class BoardIX {
       }
     } else if (!this.isGameEnd) {
       if (this.turn === this.player) {
-        // Placement
+        // It's the user's turn
         if (!piece) {
           // Empty square
           return true;
         }
-        if (piece.color === this.turn && this.number !== 1) {
-          // Player's piece
+
+        if (
+          piece.color === this.turn &&
+          (!this.game.openingSwap ||
+            this.number !== 1 ||
+            (this.plyIsDone && this.turn === 1))
+        ) {
+          // Player's piece, can be selected
+          // Edge case: on opening swap, after 2 has played, let 1 move
           return true;
         }
       }
-      if (this.ply && piece && piece.ply === this.ply && this.number !== 1) {
+
+      if (
+        this.ply &&
+        piece &&
+        piece.ply === this.ply &&
+        (this.game.isLocal || piece.ply.player === this.player) &&
+        this.number !== 1
+      ) {
         // Piece just placed; valid for stone cycling
         return true;
       }
@@ -87,7 +101,7 @@ export default class BoardIX {
     if (this.isGameEnd) {
       return false;
     }
-    if (this.isFirstMove) {
+    if (this.game.openingSwap && this.isFirstMove) {
       type = "flat";
     }
     const color = this.color;
@@ -98,7 +112,11 @@ export default class BoardIX {
       return false;
     }
     if (piece.isSelected) {
-      if (!piece.isCapstone && toggleWall && !this.isFirstMove) {
+      if (
+        !piece.isCapstone &&
+        toggleWall &&
+        !(this.game.openingSwap && this.isFirstMove)
+      ) {
         piece.isStanding = !piece.isStanding;
       } else {
         piece.isStanding = false;
@@ -108,8 +126,12 @@ export default class BoardIX {
       if (this.selected.pieces.length) {
         this.cancelMove(true);
       }
-      this._selectPiece(piece);
-      if (!piece.isCapstone && toggleWall && !this.isFirstMove) {
+      this.selectPiece(piece);
+      if (
+        !piece.isCapstone &&
+        toggleWall &&
+        !(this.game.openingSwap && this.isFirstMove)
+      ) {
         piece.isStanding = true;
       }
     }
@@ -203,7 +225,7 @@ export default class BoardIX {
       }
     } else {
       // Place piece as new ply
-      if (this.isFirstMove) {
+      if (this.game.openingSwap && this.isFirstMove) {
         move.type = "flat";
       } else {
         move.type = types[0];

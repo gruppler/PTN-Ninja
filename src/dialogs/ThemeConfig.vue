@@ -231,7 +231,7 @@ export default {
       return isEqual(this.theme, this.initialTheme);
     },
     canShare() {
-      return navigator.canShare;
+      return this.$store.state.nativeSharing;
     },
   },
   methods: {

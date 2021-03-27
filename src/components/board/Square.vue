@@ -112,7 +112,10 @@ export default {
         this.piece &&
         this.piece.ply &&
         this.piece.ply === this.game.position.ply &&
-        !this.game.position.isFirstMove
+        !(
+          (this.game.openingSwap && this.game.position.isFirstMove) ||
+          (this.game.position.plyIsDone && this.game.position.turn === 1)
+        )
       );
     },
     showRoads() {

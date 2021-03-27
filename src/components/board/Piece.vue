@@ -47,7 +47,10 @@ export default {
       return (
         !this.square &&
         (this.$store.state.ui.editingTPS ||
-          this.piece.color === this.$store.state.game.position.color)
+          this.piece.color ===
+            this.$store.state.game.position[
+              this.piece.index || this.piece.isCapstone ? "turn" : "color"
+            ])
       );
     },
     isSelected() {
@@ -67,7 +70,15 @@ export default {
       if (this.square) {
         x *= this.piece.x;
       } else {
-        x *= this.$game.size + 0.75 * (this.piece.color === 2);
+        x *=
+          this.game.size +
+          0.75 *
+            (this.piece.color ===
+              (!this.piece.index &&
+              this.piece.type !== "cap" &&
+              this.game.openingSwap
+                ? 1
+                : 2));
       }
       return x;
     },
@@ -145,7 +156,14 @@ export default {
           if (this.piece.type !== "cap") {
             z -= this.pieceCounts.cap;
           }
-          if (this.piece.color === 1) {
+          if (
+            this.piece.color ===
+            (!this.piece.index &&
+            this.piece.type !== "cap" &&
+            this.game.openingSwap
+              ? 2
+              : 1)
+          ) {
             z += 1;
           } else {
             z += this.$game.size - 1;

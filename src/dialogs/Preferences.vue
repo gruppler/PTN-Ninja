@@ -264,6 +264,18 @@
                 />
               </q-item-section>
             </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="nativeSharing"
+                  :disabled="isDisabled('nativeSharing')"
+                />
+              </q-item-section>
+            </q-item>
           </q-list>
         </recess>
       </q-expansion-item>
@@ -290,6 +302,7 @@ const props = [
   "board3D",
   "flatCounts",
   "highlightSquares",
+  "nativeSharing",
   "notifyGame",
   "notifyNotes",
   "openDuplicate",

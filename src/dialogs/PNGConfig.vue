@@ -219,7 +219,7 @@ export default {
       return this.$game.board.tps;
     },
     canShare() {
-      return navigator.canShare;
+      return this.$store.state.nativeSharing;
     },
   },
   methods: {
