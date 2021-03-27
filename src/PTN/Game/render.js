@@ -483,11 +483,24 @@ export default function render(game, options = {}) {
         const total = game.pieceCounts[color][type];
         const played = game.state.pieces.played[color][type].length;
         const remaining = total - played;
-        game.state.pieces.all[color][type]
-          .slice(total - remaining)
-          .concat()
-          .reverse()
-          .forEach(drawPiece);
+        const pieces = game.state.pieces.all[color][type].slice(
+          total - remaining
+        );
+        if (type === "flat" && game.openingSwap) {
+          // Swap first pieces
+          if (color === 1) {
+            if (!game.state.pieces.played[2][type].length) {
+              pieces[0] = game.state.pieces.all[2][type][0];
+            } else {
+              if (!played) {
+                pieces.shift();
+              }
+            }
+          } else if (!game.state.pieces.played[1][type].length) {
+            pieces.unshift(game.state.pieces.all[1][type][0]);
+          }
+        }
+        pieces.reverse().forEach(drawPiece);
       });
       ctx.restore();
     });

@@ -100,7 +100,10 @@ export default {
         this.piece &&
         this.piece.ply &&
         this.piece.ply === this.game.state.ply &&
-        !this.game.state.isFirstMove
+        !(
+          (this.game.openingSwap && this.game.state.isFirstMove) ||
+          (this.game.state.plyIsDone && this.game.state.turn === 1)
+        )
       );
     },
     valid() {

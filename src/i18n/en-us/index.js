@@ -82,6 +82,7 @@ export default {
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
   Name: "Name",
+  "Native Sharing": "Native Sharing",
   "New Game": "New Game",
   "Next Branch": "Next Branch",
   "Next Branch End": "Next Branch End",
@@ -91,6 +92,7 @@ export default {
   Notes: "Notes",
   OK: "OK",
   Online: "Online",
+  Opening: "Opening",
   Orthogonal: "Orthogonal",
   "Orthogonal Board": "Orthogonal Board",
   Padding: "Padding",
@@ -173,6 +175,11 @@ export default {
     F: "{player} wins by flats",
     R: "{player} wins by road",
     tie: "It's a tie",
+  },
+
+  openings: {
+    swap: "Swap",
+    "no-swap": "No Swap",
   },
 
   theme: {

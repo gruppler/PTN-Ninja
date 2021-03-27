@@ -6,6 +6,7 @@ import {
   LocalStorage,
   Dialog,
   Notify,
+  Platform,
 } from "quasar";
 import {
   formatError,
@@ -510,7 +511,7 @@ export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function ({ dispatch }, { url, text, title }) {
+export const COPY = function ({ dispatch, state }, { url, text, title }) {
   function copy() {
     copyToClipboard(text || url)
       .then(() => {
@@ -534,7 +535,7 @@ export const COPY = function ({ dispatch }, { url, text, title }) {
       });
   }
 
-  if (navigator.canShare) {
+  if (state.nativeSharing) {
     navigator.share({ url, text, title }).catch((error) => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {

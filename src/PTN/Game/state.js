@@ -52,6 +52,7 @@ export default class GameState {
       initialCount: 0,
     };
 
+    // Create pieces
     this.pieces = {
       all: {
         1: { flat: [], cap: [] },
@@ -84,6 +85,7 @@ export default class GameState {
       });
     });
 
+    // Create squares
     this.squares = new Marray.two(
       this.game.size,
       this.game.size,
@@ -432,7 +434,7 @@ export default class GameState {
   }
 
   get color() {
-    if (this.isFirstMove) {
+    if (this.isFirstMove && this.game.openingSwap) {
       return this.turn === 1 ? 2 : 1;
     } else {
       return this.turn;

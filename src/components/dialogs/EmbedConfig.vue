@@ -274,7 +274,7 @@ export default {
       return `<iframe src="${this.url}" width="${this.config.width}" height="${this.config.height}" style="width:${this.config.width}; max-width:100%; height:${this.config.height}; max-height:100vh;" frameborder="0" allowfullscreen></iframe>`;
     },
     canShare() {
-      return navigator.canShare;
+      return this.$store.state.nativeSharing;
     },
   },
   methods: {

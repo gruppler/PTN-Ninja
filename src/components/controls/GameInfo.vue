@@ -281,24 +281,45 @@
       <q-btn @click="swapPlayers" icon="swap_vert" stretch dense flat />
     </div>
 
-    <q-input
-      class="col-grow"
-      v-show="isVisible('komi')"
-      v-model="tags.komi"
-      name="komi"
-      type="number"
-      min="-20.5"
-      max="20.5"
-      step="0.5"
-      :label="$t('Komi')"
-      :rules="rules('komi')"
-      hide-bottom-space
-      filled
+    <div
+      v-show="isVisible('komi', 'opening')"
+      class="row q-gutter-md q-mt-none"
     >
-      <template v-slot:prepend>
-        <q-icon name="komi" />
-      </template>
-    </q-input>
+      <q-input
+        class="col-grow"
+        v-show="isVisible('komi')"
+        v-model="tags.komi"
+        name="komi"
+        type="number"
+        min="-20.5"
+        max="20.5"
+        step="0.5"
+        :label="$t('Komi')"
+        :rules="rules('komi')"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="komi" />
+        </template>
+      </q-input>
+
+      <q-select
+        class="col-grow"
+        v-show="isVisible('opening')"
+        v-model="tags.opening"
+        :options="openings"
+        :label="$t('Opening')"
+        name="opening"
+        map-options
+        emit-value
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="opening" />
+        </template>
+      </q-select>
+    </div>
 
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
       <q-input
@@ -550,12 +571,20 @@ import {
 } from "../../PTN/Game/base";
 
 import Result from "../PTN/Result";
+import { map } from "lodash";
 
 export default {
   name: "GameInfo",
   components: { Result },
   props: ["game", "values", "showAll"],
   data() {
+    const openings = map(
+      this.$i18n.messages[this.$i18n.locale].openings,
+      (label, value) => ({
+        label,
+        value,
+      })
+    );
     return {
       name: "",
       tags: {
@@ -569,6 +598,7 @@ export default {
         date: null,
         event: null,
         komi: null,
+        opening: "swap",
         player1: null,
         player2: null,
         points: null,
@@ -587,6 +617,7 @@ export default {
       showTimePicker: false,
       showPieceCounts: false,
       separatePieceCounts: false,
+      openings,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
       pieceCounts,
       sizes: [3, 4, 5, 6, 7, 8].map((size) => ({
@@ -706,7 +737,8 @@ export default {
         this.showAll ||
         tags.find(
           (tag) =>
-            !!this.tags[tag] ||
+            (!!this.tags[tag] &&
+              (tag !== "opening" || this.tags.opening !== "swap")) ||
             (document.activeElement && document.activeElement.name === tag)
         )
       );

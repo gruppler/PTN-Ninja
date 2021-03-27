@@ -46,7 +46,10 @@ export default {
       return (
         !this.piece.square &&
         (this.$store.state.editingTPS ||
-          this.piece.color === this.game.state.color)
+          this.piece.color ===
+            this.game.state[
+              this.piece.index || this.piece.isCapstone ? "turn" : "color"
+            ])
       );
     },
     firstSelected() {
@@ -60,7 +63,15 @@ export default {
       if (this.piece.square) {
         x *= this.piece.x;
       } else {
-        x *= this.game.size + 0.75 * (this.piece.color === 2);
+        x *=
+          this.game.size +
+          0.75 *
+            (this.piece.color ===
+              (!this.piece.index &&
+              this.piece.type !== "cap" &&
+              this.game.openingSwap
+                ? 1
+                : 2));
       }
       return x;
     },
@@ -138,7 +149,14 @@ export default {
           if (this.piece.type !== "cap") {
             z -= this.pieceCounts.cap;
           }
-          if (this.piece.color === 1) {
+          if (
+            this.piece.color ===
+            (!this.piece.index &&
+            this.piece.type !== "cap" &&
+            this.game.openingSwap
+              ? 2
+              : 1)
+          ) {
             z += 1;
           } else {
             z += this.game.size - 1;

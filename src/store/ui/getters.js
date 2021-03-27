@@ -1,3 +1,4 @@
+import { Platform } from "quasar";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
