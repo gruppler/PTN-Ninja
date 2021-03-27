@@ -280,17 +280,18 @@ export default class GameBase {
           // Insert placeholder if necessary
           move.ply1 = Nop.parse("--");
         }
-        const isFirstTurn =
-          move.number === 1 || (!move.number && this.firstMoveNumber === 1);
+        const isSwap =
+          (this.openingSwap && move.number === 1) ||
+          (!move.number && this.firstMoveNumber === 1);
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
-          ply.color = this.openingSwap && isFirstTurn ? 2 : 1;
+          ply.color = isSwap ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
-          ply.color = this.openingSwap && isFirstTurn ? 1 : 2;
+          ply.color = isSwap ? 1 : 2;
           move.ply2 = ply;
           moveNumber += 1;
         } else {
@@ -303,7 +304,7 @@ export default class GameBase {
           });
           this.moves.push(move);
         }
-        if (move.number === 1 && ply.specialPiece) {
+        if (isSwap && ply.specialPiece) {
           throw new Error("Invalid first move");
         }
         this.plies.push(ply);

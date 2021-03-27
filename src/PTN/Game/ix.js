@@ -100,7 +100,7 @@ export default class GameIX {
     if (this.state.isGameEnd) {
       return false;
     }
-    if (this.state.isFirstMove) {
+    if (this.openingSwap && this.state.isFirstMove) {
       type = "flat";
     }
     const color = this.state.color;
@@ -111,7 +111,11 @@ export default class GameIX {
       return false;
     }
     if (piece.isSelected) {
-      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+      if (
+        !piece.isCapstone &&
+        toggleWall &&
+        !(this.openingSwap && this.state.isFirstMove)
+      ) {
         piece.isStanding = !piece.isStanding;
       } else {
         this.state.deselectPiece();
@@ -122,7 +126,11 @@ export default class GameIX {
         this.cancelMove(true);
       }
       this.state.selectPiece(piece);
-      if (!piece.isCapstone && toggleWall && !this.state.isFirstMove) {
+      if (
+        !piece.isCapstone &&
+        toggleWall &&
+        !(this.openingSwap && this.state.isFirstMove)
+      ) {
         piece.isStanding = true;
       }
     }
@@ -216,7 +224,7 @@ export default class GameIX {
       }
     } else {
       // Place piece as new ply
-      if (this.state.isFirstMove) {
+      if (this.openingSwap && this.state.isFirstMove) {
         move.type = "flat";
       } else {
         move.type = types[0];
