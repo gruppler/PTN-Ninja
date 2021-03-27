@@ -78,10 +78,12 @@ export const generateName = (tags = {}, game) => {
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
+  const opening = tag("opening");
   return (
     (player1.length || player2.length ? player1 + " vs " + player2 + " " : "") +
     `${size}x${size}` +
     (isSample(tags) ? " SMASH" : "") +
+    (opening !== "swap" ? " " + opening.toUpperCase() : "") +
     (result ? " " + result : "") +
     (date ? " " + date : "") +
     (time ? (date ? "-" : " ") + time : "")
@@ -89,7 +91,7 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = (name) => {
-  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( NO-SWAP)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
 };
@@ -162,6 +164,10 @@ export default class GameBase {
       } else {
         throw new Error("Missing board size");
       }
+    }
+
+    if (!this.tags.opening) {
+      this.tags.opening = Tag.parse('[Opening "swap"]');
     }
 
     if (this.tags.tps) {
@@ -279,12 +285,12 @@ export default class GameBase {
         if (!move.ply1) {
           // Player 1 ply
           ply.player = 1;
-          ply.color = isFirstTurn ? 2 : 1;
+          ply.color = this.openingSwap && isFirstTurn ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
           ply.player = 2;
-          ply.color = isFirstTurn ? 1 : 2;
+          ply.color = this.openingSwap && isFirstTurn ? 1 : 2;
           move.ply2 = ply;
           moveNumber += 1;
         } else {
@@ -376,6 +382,10 @@ export default class GameBase {
 
   get isSample() {
     return isSample(this.JSONTags);
+  }
+
+  get openingSwap() {
+    return this.tag("opening") === "swap";
   }
 
   get sample() {

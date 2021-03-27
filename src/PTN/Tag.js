@@ -14,6 +14,7 @@ const capitalized = {
   date: "Date",
   event: "Event",
   komi: "Komi",
+  opening: "Opening",
   player1: "Player1",
   player2: "Player2",
   points: "Points",
@@ -38,6 +39,7 @@ export const formats = {
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
   komi: /^-?\d*(\.5)?$/,
+  opening: /^swap|no.?swap$/i,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
   points: /^\d+$/,
@@ -126,6 +128,9 @@ export default class Tag {
               : Math.floor(this.value) + 0.5;
           this.value = Math.max(-20.5, Math.min(20.5, this.value));
         }
+        break;
+      case "opening":
+        this.value = this.value.toLowerCase();
         break;
       case "date":
         this.value = this.value.split(".");
