@@ -83,7 +83,7 @@ export const generateName = (tags = {}, game) => {
     (player1.length || player2.length ? player1 + " vs " + player2 + " " : "") +
     `${size}x${size}` +
     (isSample(tags) ? " SMASH" : "") +
-    (opening !== "swap" ? " " + opening.toUpperCase() : "") +
+    (opening !== "swap" ? " " + opening : "") +
     (result ? " " + result : "") +
     (date ? " " + date : "") +
     (time ? (date ? "-" : " ") + time : "")
@@ -91,7 +91,7 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = (name) => {
-  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( NO-SWAP)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( no-swap)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
 };

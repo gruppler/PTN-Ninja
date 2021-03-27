@@ -39,7 +39,7 @@ export const formats = {
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
   komi: /^-?\d*(\.5)?$/,
-  opening: /^swap|no.?swap$/i,
+  opening: /^swap|no-swap$/i,
   player1: /^[^"]+$/,
   player2: /^[^"]+$/,
   points: /^\d+$/,
