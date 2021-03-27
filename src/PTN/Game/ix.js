@@ -64,16 +64,24 @@ export default class GameIX {
       }
     } else if (!this.state.isGameEnd) {
       if (this.state.turn === this.state.player) {
-        // Placement
+        // It's the user's turn
         if (!piece) {
           // Empty square
           return true;
         }
-        if (piece.color === this.state.turn && this.state.number !== 1) {
-          // Player's piece
+
+        if (
+          piece.color === this.state.turn &&
+          (!this.openingSwap ||
+            this.state.number !== 1 ||
+            (this.state.plyIsDone && this.state.turn === 1))
+        ) {
+          // Player's piece, can be selected
+          // Edge case: on opening swap, after 2 has played, let 1 move
           return true;
         }
       }
+
       if (
         this.state.ply &&
         piece &&
