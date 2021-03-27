@@ -24,6 +24,9 @@ export const disabledOptions = (state) => {
   if (game.config.disableShowRoads) {
     disabled.push("showRoads");
   }
+  if (!navigator.canShare) {
+    disabled.push("nativeSharing");
+  }
   return disabled;
 };
 
