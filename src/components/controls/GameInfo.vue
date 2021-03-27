@@ -330,19 +330,9 @@
       />
     </div>
 
-    <q-input
-      class="col-grow"
-      v-show="isVisible('komi')"
-      v-model="tags.komi"
-      name="komi"
-      type="number"
-      min="-20.5"
-      max="20.5"
-      step="0.5"
-      :label="$t('Komi')"
-      :rules="rules('komi')"
-      hide-bottom-space
-      filled
+    <div
+      v-show="isVisible('komi', 'opening')"
+      class="row q-gutter-md q-mt-none"
     >
       <q-input
         class="col-grow"

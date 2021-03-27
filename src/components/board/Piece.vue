@@ -31,8 +31,11 @@ export default {
     pieceCounts() {
       return this.$game.pieceCounts[this.piece.color];
     },
+    game() {
+      return this.$store.state.game;
+    },
     board() {
-      return this.$store.state.game.board;
+      return this.game.board;
     },
     piece() {
       return this.board.pieces[this.id];
@@ -48,7 +51,7 @@ export default {
         !this.square &&
         (this.$store.state.ui.editingTPS ||
           this.piece.color ===
-            this.$store.state.game.position[
+            this.game.position[
               this.piece.index || this.piece.isCapstone ? "turn" : "color"
             ])
       );
@@ -58,8 +61,7 @@ export default {
     },
     firstSelected() {
       return (
-        this.isSelected &&
-        this.piece.id === this.$store.state.game.selected.pieces[0].id
+        this.isSelected && this.piece.id === this.game.selected.pieces[0].id
       );
     },
     board3D() {
@@ -71,12 +73,12 @@ export default {
         x *= this.piece.x;
       } else {
         x *=
-          this.game.size +
+          this.$game.size +
           0.75 *
             (this.piece.color ===
               (!this.piece.index &&
               this.piece.type !== "cap" &&
-              this.game.openingSwap
+              this.$game.openingSwap
                 ? 1
                 : 2));
       }

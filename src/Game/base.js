@@ -322,6 +322,22 @@ export default class GameBase {
           }
           if (isSwap && ply.specialPiece) {
             throw new Error("Invalid first move");
+          }
+          this.plies.push(ply);
+          if (!(ply.branch in this.branches)) {
+            this.branches[ply.branch] = ply;
+          }
+        } else if (Evaluation.test(notation[0])) {
+          // Evalutaion
+          item = Evaluation.parse(notation);
+          if (ply) {
+            ply.evaluation = item;
+          }
+        } else if (/[^\s]/.test(notation)) {
+          throw new Error("Invalid PTN format");
+        } else {
+          break;
+        }
 
         notation = notation.trimStart().substr(item.ptn.length);
         isDoubleBreak = startsWithDoubleBreak.test(notation);
