@@ -162,7 +162,7 @@ export default {
             this.piece.color ===
             (!this.piece.index &&
             this.piece.type !== "cap" &&
-            this.game.openingSwap
+            this.$game.openingSwap
               ? 2
               : 1)
           ) {
