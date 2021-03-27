@@ -82,6 +82,7 @@ export default {
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
   Name: "Name",
+  "Native Sharing": "Native Sharing",
   "New Game": "New Game",
   "Next Branch": "Next Branch",
   "Next Branch End": "Next Branch End",

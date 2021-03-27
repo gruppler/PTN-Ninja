@@ -204,7 +204,7 @@ export default {
       return this.game.state.tps;
     },
     canShare() {
-      return navigator.canShare;
+      return this.$store.state.nativeSharing;
     },
   },
   methods: {
