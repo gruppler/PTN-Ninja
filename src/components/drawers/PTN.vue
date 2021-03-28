@@ -83,15 +83,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-$padding: 16px;
-.full-ptn {
-  .move:first-child {
-    margin-top: $padding;
-  }
-  .move:last-child {
-    margin-bottom: $padding;
-  }
-}
-</style>

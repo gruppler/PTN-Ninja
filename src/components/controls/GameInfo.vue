@@ -28,11 +28,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon
-            @click.right.prevent="showPieceCounts = !showPieceCounts"
-            name="size"
-            class="flip-vertical"
-          />
+          <q-icon name="size" class="flip-vertical" />
         </template>
       </q-select>
 
@@ -69,7 +65,7 @@
 
     <div
       v-if="tags.size in pieceCounts"
-      v-show="showPieceCounts && isVisible(...pieceCountTags)"
+      v-show="isVisible(...pieceCountTags)"
       class="row"
     >
       <div class="col">
@@ -676,7 +672,6 @@ export default {
       proxyTime: null,
       showDatePicker: false,
       showTimePicker: false,
-      showPieceCounts: false,
       separatePieceCounts: false,
       openings,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
@@ -784,9 +779,6 @@ export default {
             ? this.game.tag(key)
             : null) || null;
       });
-      this.showPieceCounts = this.pieceCountTags.find(
-        (tag) => !!this.tags[tag]
-      );
       this.separatePieceCounts =
         this.tags.caps1 !== this.tags.caps2 ||
         this.tags.flats1 !== this.tags.flats2;

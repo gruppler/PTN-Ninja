@@ -69,6 +69,8 @@ export default class GameMutations {
         this._updatePTN();
       }
     });
+    this.board.updatePTNOutput();
+    this.board.updatePositionOutput();
   }
 
   _trimToPly() {
@@ -372,6 +374,7 @@ export default class GameMutations {
           ply1: ply,
         });
         this.moves.push(move);
+        this.board.dirtyMove(move.id);
       }
     } else {
       // Check to see if ply already exists
@@ -412,6 +415,7 @@ export default class GameMutations {
             this.board.goToPly(equalPly.id, true);
           }
         }
+        this.board.updatePTNOutput();
         return this.board.updatePositionOutput();
       }
 

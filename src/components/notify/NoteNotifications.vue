@@ -25,12 +25,12 @@ export default {
       if (
         (!ply || !ply.index) &&
         !this.game.position.plyIsDone &&
-        "-1" in this.$game.notes
+        "-1" in this.game.comments.notes
       ) {
-        notes = notes.concat(this.$game.notes["-1"]);
+        notes = notes.concat(this.game.comments.notes["-1"]);
       }
-      if (ply && ply.id >= 0 && ply.id in this.$game.notes) {
-        notes = notes.concat(this.$game.notes[ply.id]);
+      if (ply && ply.id >= 0 && ply.id in this.game.comments.notes) {
+        notes = notes.concat(this.game.comments.notes[ply.id]);
       }
       return notes.map((note) => ({
         message: note.message,

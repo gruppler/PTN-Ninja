@@ -3,23 +3,23 @@ import { pick } from "lodash";
 const outputProps = ["id", "index", "branch"];
 
 export default class Move {
-  constructor(parts = {}) {
-    this.game = parts.game;
-    this.id = parts.id;
-    this.linenum = parts.linenum;
+  constructor({ game, id, linenum, index, ply1, ply2 }) {
+    this.game = game;
+    this.id = id;
+    this.linenum = linenum;
     if (this.linenum) {
       this.linenum.move = this;
     }
     this.index =
-      parts.index !== undefined
-        ? parts.index
+      index !== undefined
+        ? index
         : this.linenum.number - this.game.firstMoveNumber;
     this.plies = [];
-    if (parts.ply1) {
-      this.ply1 = parts.ply1;
+    if (ply1) {
+      this.ply1 = ply1;
     }
-    if (parts.ply2) {
-      this.ply2 = parts.ply2;
+    if (ply2) {
+      this.ply2 = ply2;
     }
   }
 
@@ -73,6 +73,10 @@ export default class Move {
   setPly(ply, index = 0) {
     const oldPly = this.plies[index] || null;
     this.plies[index] = ply;
+    this.game.board.dirtyMove(this.id);
+    if (ply.id || (oldPly && oldPly.id)) {
+      this.game.board.dirtyPly(ply.id || oldPly.id);
+    }
     if (!ply) {
       if (index === 1 || this.plies.length === 1) {
         this.plies.length--;

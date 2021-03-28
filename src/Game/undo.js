@@ -26,6 +26,7 @@ export default class GameUndo {
     }
     const history = this.history[--this.historyIndex];
     this._applyPatch(diff.patch_fromText(history.undoPatch), history.state);
+    this.board.updateOutput();
     return true;
   }
 
@@ -38,6 +39,7 @@ export default class GameUndo {
       diff.patch_fromText(history.patch),
       history.afterState || history.state
     );
+    this.board.updateOutput();
     return true;
   }
 

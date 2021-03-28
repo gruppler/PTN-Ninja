@@ -14,6 +14,7 @@ export const SET_GAME = (state, game) => {
   game.board.updateOutput();
   Vue.prototype.$game = game;
   state.board = game.board.output.board;
+  state.comments = game.board.output.comments;
   state.config = game.config;
   state.history = game.history;
   state.historyIndex = game.historyIndex;
@@ -159,13 +160,6 @@ export const TRIM_TO_PLY = (state) => {
   }
 };
 
-export const TOGGLE_EVALUATION = (state, { type, double }) => {
-  const game = Vue.prototype.$game;
-  if (game) {
-    game.toggleEvaluation(type, double);
-  }
-};
-
 export const SAVE_CURRENT_GAME_STATE = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -228,4 +222,20 @@ export const RESET_TPS = function (state) {
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
   Vue.prototype.$game.renameBranch(oldName, newName);
+};
+
+export const TOGGLE_EVALUATION = (state, { type, double }) => {
+  Vue.prototype.$game.toggleEvaluation(type, double);
+};
+
+export const EDIT_NOTE = (state, { plyID, index, message }) => {
+  Vue.prototype.$game.editNote(plyID, index, message);
+};
+
+export const ADD_NOTE = (state, message) => {
+  Vue.prototype.$game.addNote(message);
+};
+
+export const REMOVE_NOTE = (state, { plyID, index }) => {
+  Vue.prototype.$game.removeNote(plyID, index);
 };

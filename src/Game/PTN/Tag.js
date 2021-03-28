@@ -40,8 +40,8 @@ export const formats = {
   event: /^[^"]+$/,
   komi: /^-?\d*(\.5)?$/,
   opening: /^swap|no-swap$/i,
-  player1: /^[^"]+$/,
-  player2: /^[^"]+$/,
+  player1: /^[^"{}]+$/,
+  player2: /^[^"{}]+$/,
   points: /^\d+$/,
   rating1: /^\d+$/,
   rating2: /^\d+$/,
@@ -178,6 +178,10 @@ export default class Tag {
     }
     this.valueText =
       this.value.text !== undefined ? this.value.text : this.value.toString();
+  }
+
+  get output() {
+    return Object.freeze(this.value.output || this.value);
   }
 
   static parse(notation) {

@@ -175,7 +175,7 @@ export default {
           z += SELECTED_GAP;
         }
       }
-      return z;
+      return z || 0.001;
     },
     transform() {
       return `translate3d(${this.x}%, -${this.y}%, ${this.z}em)`;

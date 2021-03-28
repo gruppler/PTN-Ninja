@@ -172,7 +172,7 @@ export default class BoardNavigation {
         if (col[0] !== "x") {
           stack = col.split("");
           square = this.squares[y][x];
-          this.dirty.squareConnections[square.static.coord] = true;
+          this.dirty.board.squareConnections[square.static.coord] = true;
           while ((piece = stack.shift())) {
             if (/[SC]/.test(stack[0])) {
               type = stack.shift();

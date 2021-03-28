@@ -1,3 +1,7 @@
+import { pick } from "lodash";
+
+const outputProps = ["grid", "linenum", "player", "size", "text"];
+
 export default class TPS {
   constructor(notation) {
     this.errors = [];
@@ -31,6 +35,10 @@ export default class TPS {
     if (this.grid.find((row) => row.length !== this.size)) {
       this.errors.push(new Error("Invalid TPS grid"));
     }
+  }
+
+  get output() {
+    return Object.freeze(pick(this, outputProps));
   }
 
   static parse(notation) {

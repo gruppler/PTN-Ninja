@@ -1,7 +1,7 @@
 import Comment from "./PTN/Comment";
 import Evaluation from "./PTN/Evaluation";
 
-import { omit } from "lodash";
+import { forEach, omit } from "lodash";
 
 export default class GameComments {
   get hasChat() {
@@ -23,36 +23,43 @@ export default class GameComments {
     return comments;
   }
 
-  addComment(log, message) {
+  addComment(type, message) {
     message = Comment.parse("{" + message + "}");
     const plyID =
-      this.state.plyIndex <= 0 && !this.state.plyIsDone ? -1 : this.state.plyID;
-    if (!this[log][plyID]) {
-      this[log] = Object.assign({ [plyID]: [message] }, this[log]);
+      this.board.plyIndex <= 0 && !this.board.plyIsDone ? -1 : this.board.plyID;
+    if (!this[type][plyID]) {
+      // First comment
+      this[type] = Object.assign({ [plyID]: [message] }, this[type]);
     } else {
-      this[log][plyID].push(message);
+      // Another comment
+      this[type][plyID].push(message);
     }
     this._updatePTN(true);
+    this.board.dirtyComment(type, plyID);
+    this.board.updateCommentsOutput();
     return message;
   }
 
-  editComment(log, plyID, index, message) {
-    if (this[log][plyID] && this[log][plyID][index]) {
-      this[log][plyID][index].message = message;
+  editComment(type, plyID, index, message) {
+    if (this[type][plyID] && this[type][plyID][index]) {
+      this[type][plyID][index].message = message;
       this._updatePTN(true);
-      return this[log][plyID][index];
+      this.board.dirtyComment(type, plyID);
+      this.board.updateCommentsOutput();
+      return this[type][plyID][index];
     }
     return null;
   }
 
-  removeComment(log, plyID, index) {
-    if (this[log][plyID]) {
-      if (this[log][plyID].length > 1) {
-        this[log][plyID].splice(index, 1);
+  removeComment(type, plyID, index) {
+    if (this[type][plyID]) {
+      if (this[type][plyID].length > 1) {
+        this[type][plyID].splice(index, 1);
       } else {
-        this[log] = omit(this[log], plyID);
+        this[type] = omit(this[type], plyID);
       }
       this._updatePTN(true);
+      this.board.dirtyComment(type, plyID);
     }
   }
 
@@ -87,7 +94,7 @@ export default class GameComments {
   }
 
   toggleEvaluation(type, double = false) {
-    const ply = this.state.ply;
+    const ply = this.board.ply;
     const types = { tak: "'", tinue: '"', "?": "?", "!": "!" };
     if (!ply) {
       return false;
@@ -146,5 +153,6 @@ export default class GameComments {
       }
     }
     this._updatePTN(true);
+    this.board.dirtyPly(ply.id);
   }
 }

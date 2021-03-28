@@ -17,8 +17,8 @@
             >
               <div v-if="plyID >= 0 && plies[plyID]" class="ply-container">
                 <Move
-                  :move="plies[plyID].move"
-                  :player="plies[plyID].player"
+                  :move="getMove(plyID)"
+                  :player="getPlayer(plyID)"
                   separate-branch
                   no-decoration
                 />
@@ -70,7 +70,7 @@
         @blur="cancelEdit"
         debounce="50"
         class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
-        v-model="message"
+        v-model.trim="message"
         :placeholder="$t('Note')"
         dense
         rounded
@@ -130,9 +130,9 @@ export default {
     },
     log() {
       return this.$store.state.ui.showAllBranches
-        ? this.$game.notes
+        ? this.game.comments.notes
         : pickBy(
-            this.$game.notes,
+            this.game.comments.notes,
             (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
           );
     },
@@ -175,18 +175,33 @@ export default {
     },
   },
   methods: {
+    getMove(plyID) {
+      const ply = this.game.ptn.allPlies[plyID];
+      if (ply) {
+        return this.game.ptn.allMoves[ply.move];
+      } else {
+        throw "Invalid plyID";
+      }
+    },
+    getPlayer(plyID) {
+      const ply = this.game.ptn.allPlies[plyID];
+      if (ply) {
+        return ply.player;
+      } else {
+        throw "Invalid plyID";
+      }
+    },
     send() {
-      if (this.message.trim()) {
-        this.message = this.message.trim();
+      if (this.message) {
         if (this.editing) {
-          this.$game.editNote(
-            this.editing.plyID,
-            this.editing.index,
-            this.message
-          );
+          this.$store.dispatch("game/EDIT_NOTE", {
+            plyID: this.editing.plyID,
+            index: this.editing.index,
+            message: this.message,
+          });
           this.editing = null;
         } else {
-          this.$game.addNote(this.message);
+          this.$store.dispatch("game/ADD_NOTE", this.message);
         }
         this.message = "";
         this.$refs.input.focus();
@@ -209,7 +224,7 @@ export default {
       }
     },
     remove(plyID, index) {
-      this.$game.removeNote(plyID, index);
+      this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
     },
     isCurrent(plyID) {
       return (
@@ -226,7 +241,7 @@ export default {
         ply1 &&
         ply2 &&
         ply1.branch === ply2.branch &&
-        ply2.move.number - ply1.move.number <= 1
+        ply2.linenum.number - ply1.linenum.number <= 1
       );
     },
     scroll(animate = false) {

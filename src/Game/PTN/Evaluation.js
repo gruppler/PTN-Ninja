@@ -23,7 +23,13 @@ export default class Evaluation {
   }
 
   get output() {
-    return Object.freeze(pick(this, outputProps));
+    return Object.freeze({
+      ...pick(this, outputProps),
+      isDouble: {
+        "?": this.isDouble("?"),
+        "!": this.isDouble("!"),
+      },
+    });
   }
 
   isDouble(type) {

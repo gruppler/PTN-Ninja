@@ -170,10 +170,10 @@ export default {
       return this.board.ply;
     },
     player1() {
-      return this.$game.tag("player1");
+      return this.$store.state.game.ptn.tags.player1;
     },
     player2() {
-      return this.$game.tag("player2");
+      return this.$store.state.game.ptn.tags.player2;
     },
     flats() {
       return this.board.flats;
@@ -280,10 +280,7 @@ export default {
   },
   methods: {
     dropPiece() {
-      if (
-        this.selected.pieces.length === 1 &&
-        (!this.selected.moveset || !this.selected.moveset.length)
-      ) {
+      if (this.selected.pieces.length === 1) {
         this.$store.dispatch("game/SELECT_PIECE", {
           type: this.selected.pieces[0].type,
         });

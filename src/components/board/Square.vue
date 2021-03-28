@@ -174,7 +174,7 @@ export default {
           selectedPiece: this.selectedPiece,
         });
         if (this.isEditingTPS) {
-          this.editingTPS = this.$game.board.getTPS(
+          this.editingTPS = this.$game.board._getTPS(
             this.selectedPiece.color,
             this.firstMoveNumber
           );

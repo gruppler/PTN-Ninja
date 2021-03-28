@@ -73,10 +73,10 @@ export default {
       return this.eval && this.eval["!"];
     },
     isDoubleQ() {
-      return this.eval && this.eval.isDouble("?");
+      return this.eval && this.eval.isDouble["?"];
     },
     isDoubleBang() {
-      return this.eval && this.eval.isDouble("!");
+      return this.eval && this.eval.isDouble["!"];
     },
   },
   methods: {

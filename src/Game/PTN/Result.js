@@ -43,7 +43,7 @@ export default class Result {
   }
 
   static validate(notation) {
-    return /^R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2/.test(
+    return /^0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2/.test(
       notation.replace(/\s/g, "")
     );
   }

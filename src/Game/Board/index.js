@@ -17,6 +17,7 @@ import {
   isArray,
   isString,
   map,
+  omit,
   pick,
   uniq,
   without,
@@ -47,6 +48,10 @@ export default class Board extends Aggregation(
         pieces: {},
         flats: null,
       },
+      comments: {
+        notes: {},
+        chatlog: {},
+      },
       position: {
         isGameEnd: false,
         isFirstMove: true,
@@ -62,12 +67,13 @@ export default class Board extends Aggregation(
         color: 1,
       },
       ptn: {
-        allMoves: null,
-        allPlies: null,
-        branchMenu: null,
-        branchMoves: null,
-        branchPlies: null,
-        branches: null,
+        allMoves: [],
+        allPlies: [],
+        branchMenu: {},
+        branchMoves: {},
+        branchPlies: {},
+        branches: {},
+        tags: {},
       },
       selected: {
         squares: null,
@@ -111,9 +117,19 @@ export default class Board extends Aggregation(
     };
 
     this.dirty = {
-      pieces: {},
-      squares: {},
-      squareConnections: {},
+      board: {
+        pieces: {},
+        squares: {},
+        squareConnections: {},
+      },
+      comments: {
+        chat: {},
+        notes: {},
+      },
+      ptn: {
+        moves: {},
+        plies: {},
+      },
     };
 
     // Create pieces
@@ -145,7 +161,7 @@ export default class Board extends Aggregation(
           });
           this.pieces.all[color][type][index] = piece;
           this.pieces.all.byID[id] = piece;
-          this.dirty.pieces[id] = true;
+          this.dirty.board.pieces[id] = true;
         }
       });
     });
@@ -178,7 +194,7 @@ export default class Board extends Aggregation(
         ];
       }
       Object.freeze(square.static);
-      this.dirty.squares[square.static.coord] = true;
+      this.dirty.board.squares[square.static.coord] = true;
     });
   }
 
@@ -229,10 +245,22 @@ export default class Board extends Aggregation(
     }
   }
 
+  dirtyMove(id) {
+    this.dirty.ptn.moves[id] = true;
+  }
+
+  dirtyPly(id) {
+    this.dirty.ptn.plies[id] = true;
+  }
+
+  dirtyPiece(id) {
+    this.dirty.board.pieces[id] = true;
+  }
+
   dirtySquare(coord, connections = false) {
-    this.dirty.squares[coord] = true;
+    this.dirty.board.squares[coord] = true;
     if (connections) {
-      this.dirty.squareConnections[coord] = true;
+      this.dirty.board.squareConnections[coord] = true;
     }
   }
 
@@ -240,15 +268,23 @@ export default class Board extends Aggregation(
     coords.forEach((coord) => this.dirtySquare(coord, connections));
   }
 
-  dirtyPiece(id) {
-    this.dirty.pieces[id] = true;
+  dirtyComment(type, id) {
+    this.dirty.comments[type][id] = true;
+  }
+
+  dirtyChat(id) {
+    this.dirty.comments.chat[id] = true;
+  }
+
+  dirtyNote(id) {
+    this.dirty.comments.notes[id] = true;
   }
 
   updateSquareConnections() {
-    map(this.dirty.squareConnections, (isDirty, coord) => {
+    map(this.dirty.board.squareConnections, (isDirty, coord) => {
       if (isDirty) {
         this.getSquare(coord).updateConnected();
-        this.dirty.squareConnections[coord] = false;
+        this.dirty.board.squareConnections[coord] = false;
       }
     });
   }
@@ -256,6 +292,7 @@ export default class Board extends Aggregation(
   updateOutput() {
     this.updateBoardOutput();
     this.updatePTNOutput();
+    this.updateCommentsOutput();
     this.updatePositionOutput();
     this.updateSelectedOutput();
   }
@@ -265,21 +302,6 @@ export default class Board extends Aggregation(
     this.updatePiecesOutput();
     this.updateSquaresOutput();
 
-    map(this.dirty.pieces, (isDirty, id) => {
-      if (isDirty) {
-        pieces[id] = this.getPiece(id).snapshot;
-        this.dirty.pieces[id] = false;
-      }
-    });
-
-    map(this.dirty.squares, (isDirty, coord) => {
-      if (isDirty) {
-        const square = this.getSquare(coord);
-        squares[coord] = square.snapshot;
-        this.dirty.squares[coord] = false;
-      }
-    });
-
     return Object.assign(this.output.board, {
       ply: { ...this.boardPly },
       flats: this.flats.concat(),
@@ -287,43 +309,97 @@ export default class Board extends Aggregation(
   }
 
   updatePiecesOutput() {
-    map(this.dirty.pieces, (isDirty, id) => {
+    return map(this.dirty.board.pieces, (isDirty, id) => {
       if (isDirty) {
         this.output.board.pieces[id] = this.getPiece(id).snapshot;
-        this.dirty.pieces[id] = false;
+        this.dirty.board.pieces[id] = false;
       }
     });
   }
 
   updateSquaresOutput() {
-    map(this.dirty.squares, (isDirty, coord) => {
+    return map(this.dirty.board.squares, (isDirty, coord) => {
       if (isDirty) {
         const square = this.getSquare(coord);
         this.output.board.squares[coord] = square.snapshot;
-        this.dirty.squares[coord] = false;
+        this.dirty.board.squares[coord] = false;
       }
     });
   }
 
   updatePTNOutput() {
-    const allPlies =
-      this.output.ptn.allPlies || this.game.plies.map((ply) => ply.output);
-    const allMoves =
-      this.output.ptn.allMoves ||
-      this.game.movesSorted.map((move) => move.output(allPlies));
-    const branches = zipObject(
+    const output = { ...this.output.ptn };
+
+    map(this.dirty.ptn.plies, (isDirty, plyID) => {
+      if (isDirty) {
+        this.dirty.ptn.plies[plyID] = false;
+        let ply = this.game.plies[plyID];
+        if (ply) {
+          ply = ply.output;
+          output.allPlies[plyID] = ply;
+          this.dirty.ptn.moves[ply.move] = true;
+        } else {
+          delete this.dirty.ptn.plies[plyID];
+          output.allPlies = omit(this.output.allPlies, plyID);
+        }
+      }
+    });
+    map(this.dirty.ptn.moves, (isDirty, moveID) => {
+      if (isDirty) {
+        this.dirty.ptn.moves[moveID] = false;
+        let move = this.game.moves[moveID];
+        if (move) {
+          move = move.output(output.allPlies);
+          output.allMoves[moveID] = move;
+        } else {
+          output.allMoves = omit(this.output.allMoves, moveID);
+        }
+      }
+    });
+
+    output.branches = zipObject(
       Object.keys(this.game.branches),
-      Object.values(this.game.branches).map((ply) => allPlies[ply.id])
+      Object.values(this.game.branches).map((ply) => output.allPlies[ply.id])
     );
-    return Object.assign(this.output.ptn, {
-      allMoves,
-      allPlies,
-      branches,
-      branchMoves: this.moves.map((move) => allMoves[move.id]),
-      branchPlies: this.plies.map((ply) => allPlies[ply.id]),
-      branchMenu: uniq(
-        flatten(Object.values(branches).map((ply) => ply.branches))
-      ).map((id) => allPlies[id]),
+    output.branchMoves = this.moves.map((move) => output.allMoves[move.id]);
+    output.branchPlies = this.plies.map((ply) => output.allPlies[ply.id]);
+    output.branchMenu = uniq(
+      flatten(Object.values(output.branches).map((ply) => ply.branches))
+    ).map((id) => output.allPlies[id]);
+
+    output.tags = this.updateTagsOutput();
+
+    return Object.assign(this.output.ptn, output);
+  }
+
+  updateTagsOutput() {
+    return Object.assign(
+      this.output.ptn.tags,
+      zipObject(
+        Object.keys(this.game.tags),
+        Object.values(this.game.tags).map((tag) => tag.output)
+      )
+    );
+  }
+
+  updateCommentsOutput() {
+    return map(this.dirty.comments, (log, type) => {
+      map(log, (isDirty, plyID) => {
+        if (isDirty) {
+          this.dirty.comments[type][plyID] = false;
+          let comments = this.game[type][plyID];
+          if (comments && comments.length) {
+            comments = comments.map((comment) => comment.output);
+            this.output.comments[type][plyID] = comments;
+          } else {
+            delete this.dirty.comments[type][plyID];
+            this.output.comments[type] = omit(
+              this.output.comments[type],
+              plyID
+            );
+          }
+        }
+      });
     });
   }
 

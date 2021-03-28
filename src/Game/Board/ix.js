@@ -126,7 +126,7 @@ export default class BoardIX {
       if (this.selected.pieces.length) {
         this.cancelMove(true);
       }
-      this.selectPiece(piece);
+      this._selectPiece(piece);
       if (
         !piece.isCapstone &&
         toggleWall &&
@@ -357,5 +357,6 @@ export default class BoardIX {
     this.selected.moveset = [];
     this.selected.initialCount = 0;
     this.updateSelectedOutput();
+    this.updateBoardOutput();
   }
 }

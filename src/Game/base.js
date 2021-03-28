@@ -241,11 +241,12 @@ export default class GameBase {
           } else {
             // Comment
             const plyID = this.plies.length - 1;
-            const log = item.player === null ? "notes" : "chatlog";
-            if (!this[log][plyID]) {
-              this[log][plyID] = [];
+            const type = item.player === null ? "notes" : "chatlog";
+            if (!this[type][plyID]) {
+              this[type][plyID] = [];
             }
-            this[log][plyID].push(item);
+            this[type][plyID].push(item);
+            this.board.dirtyComment(type, plyID);
           }
         } else if (Linenum.test(notation)) {
           // Line number
@@ -259,6 +260,7 @@ export default class GameBase {
                 throw new Error("Invalid first line number");
               }
             }
+            this.board.dirtyMove(move.id);
           } else {
             move = new Move({
               game: this,
@@ -266,6 +268,7 @@ export default class GameBase {
               linenum: item,
             });
             this.moves[move.id] = move;
+            this.board.dirtyMove(move.id);
           }
           branch = item.branch;
           moveNumber = item.number + 1;
@@ -318,11 +321,13 @@ export default class GameBase {
               ply1: ply,
             });
             this.moves.push(move);
+            this.board.dirtyMove(move.id);
           }
           if (isSwap && ply.specialPiece) {
             throw new Error("Invalid first move");
           }
           this.plies.push(ply);
+          this.board.dirtyPly(ply.id);
           if (!(ply.branch in this.branches)) {
             this.branches[ply.branch] = ply;
           }
@@ -486,6 +491,7 @@ export default class GameBase {
       this._updatePTN(recordChange);
       if (
         [
+          "opening",
           "size",
           "tps",
           "caps",
@@ -497,6 +503,8 @@ export default class GameBase {
         ].find((tag) => tag in tags && tags[tag] !== this.tag(tag))
       ) {
         this.init(this.ptn, { ...this, state: null });
+      } else {
+        this.board.updateTagsOutput();
       }
     }
   }

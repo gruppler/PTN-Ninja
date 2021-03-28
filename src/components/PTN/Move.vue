@@ -153,6 +153,12 @@ export default {
       margin-top: 0;
     }
   }
+  &:first-child {
+    padding-top: 0.75em;
+  }
+  &:last-child {
+    padding-bottom: 0.75em;
+  }
 
   .nop {
     font-family: "Source Code Pro";

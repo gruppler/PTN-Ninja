@@ -507,3 +507,23 @@ export const RENAME_BRANCH = function ({ commit, dispatch }, args) {
   commit("RENAME_BRANCH", args);
   dispatch("SAVE_CURRENT_GAME");
 };
+
+export const TOGGLE_EVALUATION = ({ commit, dispatch }, { type, double }) => {
+  commit("TOGGLE_EVALUATION", { type, double });
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
+  commit("EDIT_NOTE", { plyID, index, message });
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const ADD_NOTE = ({ commit, dispatch }, message) => {
+  commit("ADD_NOTE", message);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
+  commit("REMOVE_NOTE", { plyID, index });
+  dispatch("SAVE_CURRENT_GAME");
+};

@@ -1,15 +1,32 @@
+import { pick } from "lodash";
+
+const outputProps = ["time", "player", "message"];
+
 export default class Comment {
   constructor(notation) {
-    const matchData = notation.match(/\{(([+-][0-9]+:)?([12]:)?([^}]*))\}/);
+    const matchData = notation.match(/\{((@[^"}]+:)?([0-9]+:)?([^}]*))\}/);
 
     if (!matchData) {
       throw new Error("Invalid comment");
     }
 
-    [this.ptn, this.contents, this.time, this.player, this.message] = matchData;
+    [this.ptn, this.contents, this.player, this.time, this.message] = matchData;
 
-    this.time = this.time ? 1 * this.time : null;
-    this.player = 1 * this.player || null;
+    this.time = this.time ? Number(this.time) : null;
+
+    if (this.player) {
+      this.player = this.player.substr(1);
+      if (/[1|2]/.test(this.player)) {
+        this.player = Number(this.player);
+      }
+    } else {
+      this.player = null;
+    }
+  }
+
+  get output() {
+    const output = pick(this, outputProps);
+    return Object.freeze(output);
   }
 
   static test(notation) {
@@ -23,8 +40,8 @@ export default class Comment {
   toString() {
     return (
       "{" +
-      (this.time === null ? "" : `+${this.time}:`) +
-      (this.player ? this.player + ":" : "") +
+      (this.player ? "@" + this.player + ":" : "") +
+      (this.time === null ? "" : `${this.time}:`) +
       (this.time !== null || this.player ? " " : "") +
       this.message +
       "}"
