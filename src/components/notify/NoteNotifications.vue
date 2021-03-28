@@ -16,12 +16,15 @@ export default {
           (this.$store.state.ui.textTab !== "notes" && this.$game.hasChat))
       );
     },
+    game() {
+      return this.$store.state.game;
+    },
     notifications() {
-      const ply = this.$game.board.ply;
+      const ply = this.game.position.ply;
       let notes = [];
       if (
         (!ply || !ply.index) &&
-        !this.$game.board.plyIsDone &&
+        !this.game.position.plyIsDone &&
         "-1" in this.$game.notes
       ) {
         notes = notes.concat(this.$game.notes["-1"]);

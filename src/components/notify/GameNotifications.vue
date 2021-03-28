@@ -12,10 +12,13 @@ export default {
     show() {
       return this.$store.state.ui.notifyGame;
     },
+    game() {
+      return this.$store.state.game;
+    },
     notifications() {
-      const ply = this.$game.board.plyIsDone
-        ? this.$game.board.ply
-        : this.$game.board.prevPly;
+      const ply = this.game.position.plyIsDone
+        ? this.game.position.ply
+        : this.game.position.prevPly;
       let alerts = [];
       if (ply) {
         if (ply.result) {
