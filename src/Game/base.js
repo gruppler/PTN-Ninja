@@ -299,8 +299,8 @@ export default class GameBase {
             move.ply1 = Nop.parse("--");
           }
           const isSwap =
-            (this.openingSwap && move.number === 1) ||
-            (!move.number && this.firstMoveNumber === 1);
+            this.openingSwap &&
+            (move.number === 1 || (!move.number && this.firstMoveNumber === 1));
           if (!move.ply1) {
             // Player 1 ply
             ply.player = 1;
