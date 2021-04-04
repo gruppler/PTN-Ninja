@@ -14,6 +14,7 @@ import { atoi, itoa } from "../PTN/Ply";
 import {
   defaults,
   flatten,
+  forEach,
   isArray,
   isString,
   map,
@@ -309,22 +310,26 @@ export default class Board extends Aggregation(
   }
 
   updatePiecesOutput() {
-    return map(this.dirty.board.pieces, (isDirty, id) => {
+    const output = {};
+    forEach(this.dirty.board.pieces, (isDirty, id) => {
       if (isDirty) {
-        this.output.board.pieces[id] = this.getPiece(id).snapshot;
+        output[id] = this.getPiece(id).snapshot;
         this.dirty.board.pieces[id] = false;
       }
     });
+    Object.assign(this.output.board.pieces, output);
   }
 
   updateSquaresOutput() {
-    return map(this.dirty.board.squares, (isDirty, coord) => {
+    const output = {};
+    forEach(this.dirty.board.squares, (isDirty, coord) => {
       if (isDirty) {
         const square = this.getSquare(coord);
-        this.output.board.squares[coord] = square.snapshot;
+        output[coord] = square.snapshot;
         this.dirty.board.squares[coord] = false;
       }
     });
+    Object.assign(this.output.board.squares, output);
   }
 
   updatePTNOutput() {
