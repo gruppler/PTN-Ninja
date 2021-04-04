@@ -426,8 +426,12 @@ export default class Board extends Aggregation(
       {
         ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
-        prevPly: Boolean(this.prevPly),
-        nextPly: Boolean(this.nextPly),
+        prevPly: this.prevPly
+          ? this.output.ptn.allPlies[this.prevPly.id]
+          : null,
+        nextPly: this.nextPly
+          ? this.output.ptn.allPlies[this.nextPly.id]
+          : null,
       }
     );
   }

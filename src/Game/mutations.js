@@ -398,7 +398,7 @@ export default class GameMutations {
             this.board.targetBranch = equalPly.branch;
           }
           this.board._setPly(equalPly.id, true);
-          this.board._afterPly(equalPly);
+          this.board._afterPly(equalPly, true);
           this.board.setRoads(equalPly.result ? equalPly.result.roads : null);
         } else {
           if (replaceCurrent && !this.board.nextPly) {
