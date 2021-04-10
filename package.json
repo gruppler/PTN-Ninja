@@ -30,7 +30,7 @@
     "lodash": "^4.17.14",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
-    "quasar": "^1.15.9",
+    "quasar": "^1.15.10",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-qriously": "^1.1.1",
@@ -38,7 +38,7 @@
     "vue-smooth-reflow": "^0.1.12"
   },
   "devDependencies": {
-    "@quasar/app": "^2.2.3",
+    "@quasar/app": "^2.2.4",
     "@quasar/quasar-app-extension-qmarkdown": "^1.4.1",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",

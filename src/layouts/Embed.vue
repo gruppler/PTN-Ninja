@@ -51,7 +51,7 @@
     <q-drawer
       v-model="showPTN"
       side="left"
-      :breakpoint="showText ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -81,13 +81,13 @@
           <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
-      <div class="gt-md absolute-fit inset-shadow no-pointer-events" />
+      <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
       v-model="showText"
       side="right"
-      :breakpoint="showPTN ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -160,6 +160,8 @@ export default {
       errors: [],
       hotkeys: HOTKEYS,
       defaults: { ...this.$store.state.ui.embedConfig.ui },
+      doubleWidth: 1025,
+      singleWidth: this.$q.screen.sizes.sm,
     };
   },
   computed: {

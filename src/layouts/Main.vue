@@ -68,7 +68,7 @@
       id="left-drawer"
       v-model="showPTN"
       side="left"
-      :breakpoint="showText ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -98,14 +98,14 @@
           <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
-      <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
+      <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
       id="right-drawer"
       v-model="showText"
       side="right"
-      :breakpoint="showPTN ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -131,14 +131,14 @@
         </q-toolbar>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" />
+            <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
-            <Chat ref="chat" class="fit" />
+            <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
-      <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
+      <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-footer class="bg-ui">
@@ -236,6 +236,8 @@ export default {
       Platform,
       errors: [],
       hotkeys: HOTKEYS,
+      doubleWidth: 1025,
+      singleWidth: this.$q.screen.sizes.sm,
     };
   },
   computed: {

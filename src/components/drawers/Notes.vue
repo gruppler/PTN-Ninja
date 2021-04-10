@@ -1,6 +1,9 @@
 <template>
   <div class="notes column no-wrap">
-    <recess class="col-grow">
+    <component
+      :is="recess ? 'recess' : 'div'"
+      class="col-grow relative-position"
+    >
       <q-scroll-area ref="scroll" class="absolute-fit">
         <div class="content q-px-md">
           <template v-for="(plyID, i) in plyIDs">
@@ -61,7 +64,7 @@
         </div>
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
-    </recess>
+    </component>
     <div>
       <q-input
         ref="input"
@@ -103,6 +106,9 @@ import { pickBy } from "lodash";
 export default {
   name: "Notes",
   components: { Move },
+  props: {
+    recess: Boolean,
+  },
   data() {
     return {
       message: "",
