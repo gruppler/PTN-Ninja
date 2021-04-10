@@ -45,7 +45,7 @@ export default {
     selectable() {
       return (
         !this.piece.square &&
-        (this.$store.state.editingTPS ||
+        (this.$store.state.isEditingTPS ||
           this.piece.color ===
             this.game.state[
               this.piece.index || this.piece.isCapstone ? "turn" : "color"
@@ -171,7 +171,7 @@ export default {
   },
   methods: {
     select(alt = false) {
-      if (this.$store.state.editingTPS) {
+      if (this.$store.state.isEditingTPS) {
         let type = this.piece.typeCode;
         if (alt && !this.piece.isCapstone) {
           type = "S";
