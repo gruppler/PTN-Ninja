@@ -139,10 +139,10 @@
         </q-toolbar>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" :game="game" />
+            <Notes ref="notes" class="fit" :game="game" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
-            <Chat ref="chat" class="fit" :game="game" />
+            <Chat ref="chat" class="fit" :game="game" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
