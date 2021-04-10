@@ -62,7 +62,7 @@
       id="left-drawer"
       v-model="left"
       side="left"
-      :breakpoint="right ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="right ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -106,14 +106,14 @@
           />
         </q-toolbar>
       </div>
-      <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
+      <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
       id="right-drawer"
       v-model="right"
       side="right"
-      :breakpoint="left ? $q.screen.sizes.lg : $q.screen.sizes.sm"
+      :breakpoint="left ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -146,7 +146,7 @@
           </q-tab-panel>
         </q-tab-panels>
       </div>
-      <div class="gt-sm absolute-fit inset-shadow no-pointer-events" />
+      <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-footer class="bg-ui">
@@ -289,6 +289,8 @@ export default {
       errors,
       game,
       hotkeys: HOTKEYS,
+      doubleWidth: 1025,
+      singleWidth: this.$q.screen.sizes.sm,
     };
   },
   computed: {
