@@ -163,7 +163,7 @@ export const TRIM_TO_PLY = (state) => {
 export const SAVE_CURRENT_GAME_STATE = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
-    state.list[0].history = game.history.concat();
+    state.list[0].state = cloneDeep(game.minState);
   }
 };
 
@@ -172,7 +172,7 @@ export const SAVE_UNDO_HISTORY = (state) => {
   if (game) {
     state.list[0].historyIndex = game.historyIndex;
     state.list[0].history = game.history.concat();
-    state.list[0].state - cloneDeep(game.minState);
+    state.list[0].state = cloneDeep(game.minState);
   }
 };
 
