@@ -3,19 +3,18 @@ import { toDate } from "date-fns";
 import { isString } from "lodash";
 
 export const formatError = (error) => {
-  const errorMessages = i18n.messages[i18n.locale].error;
   if (isString(error)) {
-    if (error in errorMessages) {
+    if (i18n.te(`error["${error}"]`)) {
       return i18n.t(`error["${error}"]`);
     } else {
       return error;
     }
   } else {
     console.error(error);
-    if ("code" in error && error.code in errorMessages) {
+    if (i18n.te(`error["${error.code}"]`)) {
       return i18n.t(`error["${error.code}"]`);
     } else if ("message" in error) {
-      if (error.message in errorMessages) {
+      if (i18n.te(`error["${error.message}"]`)) {
         return i18n.t(`error["${error.message}"]`);
       } else {
         return error.message;
@@ -25,9 +24,8 @@ export const formatError = (error) => {
 };
 
 export const formatSuccess = (success) => {
-  const successMessages = i18n.messages[i18n.locale].success;
   if (isString(success)) {
-    if (success in successMessages) {
+    if (i18n.te(`success["${success}"]`)) {
       return i18n.t(`success["${success}"]`);
     } else {
       return success;
@@ -36,9 +34,8 @@ export const formatSuccess = (success) => {
 };
 
 export const formatWarning = (warning) => {
-  const warningMessages = i18n.messages[i18n.locale].warning;
   if (isString(warning)) {
-    if (warning in warningMessages) {
+    if (i18n.te(`warning["${warning}"]`)) {
       return i18n.t(`warning["${warning}"]`);
     } else {
       return warning;
@@ -47,9 +44,8 @@ export const formatWarning = (warning) => {
 };
 
 export const formatHint = (hint) => {
-  const warningMessages = i18n.messages[i18n.locale].hint;
   if (isString(hint)) {
-    if (hint in warningMessages) {
+    if (i18n.te(`hint["${hint}"]`)) {
       return i18n.t(`hint["${hint}"]`);
     } else {
       return hint;
