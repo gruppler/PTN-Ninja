@@ -579,7 +579,10 @@ export default {
   props: ["game", "values", "showAll"],
   data() {
     const openings = map(
-      this.$i18n.messages[this.$i18n.locale].openings,
+      (
+        this.$i18n.messages[this.$i18n.locale] ||
+        this.$i18n.messages[this.$i18n.fallbackLocale]
+      ).openings,
       (label, value) => ({
         label,
         value,
