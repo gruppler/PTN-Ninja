@@ -475,7 +475,7 @@ export default {
         if (name) {
           game.name = name;
         }
-        if (error.message in this.$i18n.messages[this.$i18n.locale].error) {
+        if (this.$te(`error["${error.message}"]`)) {
           this.errors.push(this.$t(`error["${error.message}"]`));
         } else {
           console.error(error);
