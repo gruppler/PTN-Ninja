@@ -20,7 +20,13 @@
         </q-toolbar-title>
         <q-btn
           :icon="
-            textTab === 'notes' ? (notifyNotes ? 'notes' : 'notes_off') : 'chat'
+            textTab === 'notes'
+              ? notifyNotes
+                ? 'notes'
+                : 'notes_off'
+              : textTab === 'chat'
+              ? 'chat'
+              : 'database'
           "
           @click.left="right = !right"
           @click.right.prevent="notifyNotes = !notifyNotes"
@@ -120,7 +126,6 @@
     >
       <div class="absolute-fit column">
         <q-tabs
-          v-if="hasChat"
           class="bg-ui text-weight-medium"
           :value="textTab"
           @input="showTextTab"
@@ -129,20 +134,18 @@
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="chat">{{ $t("Chat") }}</q-tab>
+          <q-tab name="database">{{ $t("Database") }}</q-tab>
+          <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
-        <q-toolbar
-          v-else
-          class="bg-ui text-weight-medium justify-center text-uppercase"
-        >
-          {{ $t("Notes") }}
-        </q-toolbar>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" :game="game" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" :game="game" recess />
+          </q-tab-panel>
+          <q-tab-panel name="database">
+            <GamesDB ref="database" class="fit" :game="game" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -206,6 +209,7 @@ import Board from "../components/board/Board";
 import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
+import GamesDB from "../components/drawers/GamesDB";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -259,6 +263,7 @@ export default {
     CurrentMove,
     PTN,
     Notes,
+    GamesDB,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
@@ -335,7 +340,7 @@ export default {
     },
     textTab: {
       get() {
-        return this.hasChat ? this.$store.state.textTab : "notes";
+        return this.$store.state.textTab;
       },
       set(value) {
         this.$store.dispatch("SET_UI", ["textTab", value]);
@@ -595,6 +600,7 @@ export default {
           break;
         case "add":
           this.dialogAddGame = true;
+          break;
           break;
         case "share":
           this.share();

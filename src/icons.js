@@ -21,6 +21,8 @@ export default {
   chat: "mdi-forum-outline",
   color: "mdi-palette",
   copy: "mdi-content-copy",
+  database: "mdi-database",
+  database_add: "mdi-database-plus",
   date: "mdi-calendar",
   date_time: "mdi-calendar-clock",
   delete: "mdi-delete",
