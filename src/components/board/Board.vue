@@ -543,6 +543,7 @@ $radius: 0.35em;
     .content {
       overflow: hidden;
       white-space: nowrap;
+      will-change: transform;
     }
   }
   .player1 .content {
