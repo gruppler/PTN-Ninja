@@ -10,7 +10,12 @@
           hidden
         />
       </q-field>
-      <q-btn v-on:click="selectPath">load database</q-btn>
+      <q-btn v-on:click="selectPath">{{ $t("load database") }}</q-btn>
+      <q-btn
+        type="a"
+        href="https://github.com/Skoolin/TAKexplorer/releases/download/refs%2Fheads%2Fmaster/db_dump"
+        label="download"
+      />
       <div class="q-pa-md" v-if="db_moves">
         <DatabaseEntry
           class="q-mt-sm"
@@ -67,6 +72,8 @@ export default {
           this.refs.splice(0, 1);
         });
       await reader.readAsText(file);
+
+      await this.query_position();
     },
 
     async query_position() {
@@ -87,7 +94,11 @@ export default {
         let move_pos_ids = [];
         let new_moves = [];
         this.moves.forEach((m) => {
-          if (m[2] === position_id && !move_pos_ids.includes(m[3]) && m[4].length < 10) {
+          if (
+            m[2] === position_id &&
+            !move_pos_ids.includes(m[3]) &&
+            m[4].length < 10
+          ) {
             move_pos_ids.push(m[3]);
             let w_win = parseInt(m[6]);
             let b_win = parseInt(m[5]);

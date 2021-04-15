@@ -1,5 +1,3 @@
-
-
 export default function read_dump(data, callback) {
   let spl = data.split("\nTABLE\n");
   let pos = read_csv(spl[0]);
