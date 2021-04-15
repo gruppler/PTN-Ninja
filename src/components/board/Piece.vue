@@ -1,5 +1,5 @@
 <template>
-  <div class="piece" :style="{ transform }">
+  <div class="piece" :style="{ transform: CSSTransform }">
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
@@ -67,10 +67,34 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
+    transform() {
+      return this.$store.state.ui.boardTransform;
+    },
+    row() {
+      if (!this.square) {
+        return null;
+      }
+      let row = this.piece[this.transform[0] % 2 ? "x" : "y"];
+      if (this.transform[0] === 1 || this.transform[0] === 2) {
+        row = this.$game.size - row - 1;
+      }
+      return row;
+    },
+    col() {
+      if (!this.square) {
+        return null;
+      }
+      let col = this.piece[this.transform[0] % 2 ? "y" : "x"];
+      let rotation = (this.transform[0] + 2 * this.transform[1]) % 4;
+      if (rotation === 2 || rotation === 3) {
+        col = this.$game.size - col - 1;
+      }
+      return col;
+    },
     x() {
       let x = 100;
       if (this.square) {
-        x *= this.piece.x;
+        x *= this.col;
       } else {
         x *=
           this.$game.size +
@@ -88,7 +112,7 @@ export default {
       let y = 100;
       let spacing = 7;
       if (this.square) {
-        y *= this.piece.y;
+        y *= this.row;
         if (!this.board3D) {
           const pieces = this.square.pieces;
           y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
@@ -177,7 +201,7 @@ export default {
       }
       return z || 0.001;
     },
-    transform() {
+    CSSTransform() {
       return `translate3d(${this.x}%, -${this.y}%, ${this.z}em)`;
     },
   },

@@ -17,8 +17,12 @@
         :disabled="!isLocal"
       />
 
-      <q-btn :title="$t('Trim')" class="no-border-radius" :disabled="!isLocal">
-        <q-icon name="trim" class="rotate-180" />
+      <q-btn
+        icon="trim"
+        :title="$t('Trim')"
+        class="no-border-radius"
+        :disabled="!isLocal"
+      >
         <q-menu
           v-if="isLocal"
           transition-show="none"
@@ -36,7 +40,7 @@
 
             <q-item clickable @click="$store.dispatch('game/TRIM_TO_PLY')">
               <q-item-section side>
-                <q-icon name="trim" class="rotate-180" />
+                <q-icon name="ply" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>

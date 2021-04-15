@@ -40,6 +40,8 @@
 </template>
 
 <script>
+import { atoi, itoa } from "../../Game/PTN/Ply";
+
 export default {
   name: "Square",
   props: ["coord"],

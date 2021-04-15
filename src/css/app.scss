@@ -262,7 +262,10 @@ kbd {
 }
 
 .dimmed-btn {
-  opacity: .15;
+  opacity: .2;
+  &.q-fab--opened {
+    opacity: 1;
+  }
   @media (hover) {
     &:hover {
       opacity: 1;

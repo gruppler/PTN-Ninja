@@ -246,3 +246,32 @@ export const COPY = function ({ dispatch, state }, { url, text, title }) {
     copy();
   }
 };
+
+export const RESET_TRANSFORM = ({ dispatch }) => {
+  dispatch("SET_UI", ["boardTransform", [0, 0]]);
+};
+
+export const ROTATE_180 = ({ dispatch, state }) => {
+  const t = state.boardTransform;
+  dispatch("SET_UI", ["boardTransform", [(t[0] + 2) % 4, t[1]]]);
+};
+
+export const ROTATE_LEFT = ({ dispatch, state }) => {
+  const t = state.boardTransform;
+  dispatch("SET_UI", ["boardTransform", [(t[0] + 3 - 2 * t[1]) % 4, t[1]]]);
+};
+
+export const ROTATE_RIGHT = ({ dispatch, state }) => {
+  const t = state.boardTransform;
+  dispatch("SET_UI", ["boardTransform", [(t[0] + 1 + 2 * t[1]) % 4, t[1]]]);
+};
+
+export const FLIP_HORIZONTAL = ({ dispatch, state }) => {
+  const t = state.boardTransform;
+  dispatch("SET_UI", ["boardTransform", [t[0], t[1] ^ 1]]);
+};
+
+export const FLIP_VERTICAL = ({ dispatch, state }) => {
+  const t = state.boardTransform;
+  dispatch("SET_UI", ["boardTransform", [(t[0] + 2) % 4, t[1] ^ 1]]);
+};
