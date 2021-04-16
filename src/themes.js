@@ -104,7 +104,9 @@ export const computeFrom = (
       forEach(compute, (computeVar, toVar) => {
         if (
           fromKey in theme.colors &&
-          (!missingOnly || !(toVar in theme[toKey]))
+          (HIDDEN_COLOR_IDS.includes(toVar) ||
+            !missingOnly ||
+            !(toVar in theme[toKey]))
         ) {
           theme[toKey][toVar] = computeVar(theme.colors[fromKey], theme);
         }

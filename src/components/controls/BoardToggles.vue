@@ -87,6 +87,7 @@
     </template>
     <q-fab
       v-else
+      @contextmenu.prevent="resetTransform"
       :direction="isPortrait ? 'down' : 'right'"
       icon="rotate_180"
       :title="$t('Rotate/Flip')"
@@ -97,7 +98,6 @@
     >
       <q-fab-action
         @click="rotate180"
-        @contextmenu.prevent="resetTransform"
         icon="rotate_180"
         :title="$t('Rotate 180')"
         class="bg-bg"
@@ -105,7 +105,6 @@
 
       <q-fab-action
         @click="rotateLeft"
-        @contextmenu.prevent="resetTransform"
         icon="rotate_left"
         :title="$t('Rotate Left')"
         class="bg-bg"
@@ -113,7 +112,6 @@
 
       <q-fab-action
         @click="rotateRight"
-        @contextmenu.prevent="resetTransform"
         icon="rotate_right"
         :title="$t('Rotate Right')"
         class="bg-bg"
@@ -121,7 +119,6 @@
 
       <q-fab-action
         @click="flipHorizontal"
-        @contextmenu.prevent="resetTransform"
         icon="flip_horizontal"
         :title="$t('Flip Horizontally')"
         class="bg-bg"
@@ -129,7 +126,6 @@
 
       <q-fab-action
         @click="flipVertical"
-        @contextmenu.prevent="resetTransform"
         icon="flip_vertical"
         :title="$t('Flip Vertically')"
         class="bg-bg"

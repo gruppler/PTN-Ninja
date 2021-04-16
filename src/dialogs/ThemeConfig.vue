@@ -81,7 +81,7 @@
         <q-list>
           <q-item tag="label" v-ripple>
             <q-item-section>
-              <q-item-label>{{ $t("Advanced") }}</q-item-label>
+              <q-item-label>{{ $t("Manual Mode") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
               <q-toggle v-model="advanced" />
