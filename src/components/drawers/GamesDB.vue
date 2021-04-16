@@ -128,7 +128,6 @@ export default {
               o_id
             );
             new_moves.push({
-              id: parseInt(m[0]),
               ptn: m_ptn,
               total_games: w_win + b_win,
               white_wins: w_win,
@@ -136,11 +135,20 @@ export default {
             });
           }
         });
-        this.db_moves.splice(0, this.db_moves.length);
+        this.db_moves.splice(new_moves.length, this.db_moves.length);
         new_moves = new_moves.sort((a, b) => {
           return b.total_games - a.total_games;
         });
-        this.db_moves.push(...new_moves);
+        let i = 0;
+        for (let new_move of new_moves) {
+          new_move.id = i;
+          if (i < this.db_moves.length) {
+            this.db_moves.splice(i, 1, new_move);
+          } else {
+            this.db_moves.push(new_move);
+          }
+          i++;
+        }
       }
     },
   },
