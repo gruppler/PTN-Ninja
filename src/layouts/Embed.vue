@@ -45,7 +45,7 @@
           <BoardToggles />
         </q-page-sticky>
         <q-page-sticky position="bottom-left" :offset="[0, 0]">
-          <CurrentMove />
+          <CurrentMove :game="game" />
         </q-page-sticky>
       </q-page>
     </q-page-container>

@@ -55,7 +55,7 @@
           <BoardToggles v-if="!dialogEmbed" />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove style="margin-right: 65px" />
+          <CurrentMove :game="game" style="margin-right: 65px" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
