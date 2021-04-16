@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="game"
     v-show="game.state.ply && !$store.state.showPTN"
     class="board-move-container no-pointer-events"
   >

@@ -65,6 +65,7 @@
       <ThemeSelector
         v-model="config.ui.themeID"
         :game="game"
+        :config="$store.state.embedConfig.ui"
         item-aligned
         edit-button
         filled

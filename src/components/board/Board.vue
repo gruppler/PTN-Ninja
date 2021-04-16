@@ -21,7 +21,7 @@
         'show-unplayed-pieces': $store.state.unplayedPieces,
         'is-game-end': game.state.isGameEnd,
       }"
-      :style="{ width, fontSize, transform }"
+      :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
@@ -71,15 +71,18 @@
       <div class="board-row row no-wrap no-pointer-events">
         <div
           v-if="$store.state.axisLabels"
-          class="y-axis column no-pointer-events"
+          class="y-axis column reverse no-pointer-events"
         >
-          <div v-for="i in (1, game.size)" :key="i">
-            {{ game.size - i + 1 }}
+          <div v-for="y in yAxis" :key="y">
+            {{ y }}
           </div>
         </div>
 
         <div class="board relative-position all-pointer-events">
-          <div class="squares absolute-fit row">
+          <div
+            class="squares absolute-fit row reverse-wrap"
+            :style="{ transform: CSS2DTransform }"
+          >
             <Square
               v-for="square in squares"
               :key="square.static.coord"
@@ -111,7 +114,7 @@
         class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
-        <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
+        <div v-for="x in xAxis" :key="x">{{ x }}</div>
       </div>
 
       <q-resize-observer @resize="resizeBoard" :debounce="10" />
@@ -150,6 +153,35 @@ export default {
     };
   },
   computed: {
+    transform() {
+      return this.$store.state.boardTransform;
+    },
+    cols() {
+      return "abcdefgh".substr(0, this.game.size).split("");
+    },
+    rows() {
+      return "12345678".substr(0, this.game.size).split("");
+    },
+    yAxis() {
+      let axis =
+        this.transform[0] % 2 ? this.cols.concat() : this.rows.concat();
+      if (this.transform[0] === 1 || this.transform[0] === 2) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    xAxis() {
+      let axis =
+        this.transform[0] % 2 ? this.rows.concat() : this.cols.concat();
+      if (
+        this.transform[1]
+          ? this.transform[0] === 0 || this.transform[0] === 1
+          : this.transform[0] === 2 || this.transform[0] === 3
+      ) {
+        axis.reverse();
+      }
+      return axis;
+    },
     style() {
       return this.$store.state.theme.boardStyle;
     },
@@ -254,7 +286,12 @@ export default {
         );
       }
     },
-    transform() {
+    CSS2DTransform() {
+      return `scaleX(${-1 * this.transform[1] || 1}) rotateZ(${
+        90 * this.transform[0]
+      }deg)`;
+    },
+    CSS3DTransform() {
       const x = this.boardRotation[0];
       const y = this.boardRotation[1];
       const magnitude = Math.sqrt(x * x + y * y);
@@ -271,11 +308,9 @@ export default {
     },
     squares() {
       let squares = [];
-      for (let y = this.game.size - 1; y >= 0; y--) {
-        for (let x = 0; x < this.game.size; x++) {
-          squares.push(this.game.state.squares[y][x]);
-        }
-      }
+      this.game.state.squares.forEach((row) => {
+        row.forEach((square) => squares.push(square));
+      });
       return squares;
     },
   },
@@ -543,6 +578,7 @@ $radius: 0.35em;
     .content {
       overflow: hidden;
       white-space: nowrap;
+      will-change: transform;
     }
   }
   .player1 .content {

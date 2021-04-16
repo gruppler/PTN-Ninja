@@ -10,6 +10,7 @@ let defaults = {
   axisLabels: true,
   board3D: false,
   boardRotation: [0, 0.65],
+  boardTransform: [0, 0],
   editingTPS: "",
   editingBranch: "",
   firstMoveNumber: 1,

@@ -40,10 +40,12 @@
           @shortkey="miscShortkey"
         >
           <Board ref="board" class="col-grow" :game="game" />
-          <CurrentMove :game="game" />
         </div>
-        <q-page-sticky position="top-left" :offset="[18, 18]">
+        <q-page-sticky position="top-left" :offset="[6, 6]">
           <BoardToggles />
+        </q-page-sticky>
+        <q-page-sticky position="bottom-left" :offset="[0, 0]">
+          <CurrentMove :game="game" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
