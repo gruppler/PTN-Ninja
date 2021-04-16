@@ -17,7 +17,7 @@
     "rules-deploy": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
-    "@quasar/extras": "^1.10.0",
+    "@quasar/extras": "^1.10.3",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",
