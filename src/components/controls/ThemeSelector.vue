@@ -10,9 +10,9 @@
     emit-value
     v-bind="$attrs"
   >
-    <template v-slot:prepend v-if="preview">
+    <template v-slot:prepend>
       <q-avatar rounded>
-        <img :src="preview" />
+        <img :src="previews[value]" />
       </q-avatar>
     </template>
 
@@ -31,10 +31,12 @@
         v-bind="scope.itemProps"
         v-on="scope.itemEvents"
       >
-        <q-item-section v-if="scope.opt.preview" side>
-          <q-avatar rounded>
-            <img :src="scope.opt.preview" />
-          </q-avatar>
+        <q-item-section side>
+          <img
+            :src="previews[scope.opt.id]"
+            :height="thumbnailHeight"
+            class="rounded-borders"
+          />
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ scope.opt.name }}</q-item-label>
@@ -58,7 +60,7 @@
 </template>
 
 <script>
-import { cloneDeep, pick } from "lodash";
+import { cloneDeep, pick, without } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 export default {
@@ -67,21 +69,16 @@ export default {
     value: String,
     game: Object,
     "edit-button": Boolean,
+    config: Object,
+  },
+  data() {
+    return {
+      thumbnailHeight: 0,
+      previews: {},
+    };
   },
   computed: {
     themes() {
-      if (this.game) {
-        const config = cloneDeep(
-          pick(this.$store.state, Object.keys(this.$store.state.pngConfig))
-        );
-        config.imageSize = "xs";
-        return this.$store.getters.themes.map((theme) => {
-          theme = cloneDeep(theme);
-          const canvas = this.game.render({ ...config, theme });
-          theme.preview = canvas.toDataURL();
-          return theme;
-        });
-      }
       return this.$store.getters.themes;
     },
     theme: {
@@ -92,12 +89,36 @@ export default {
         this.$emit("input", value);
       },
     },
-    preview() {
-      const theme = this.themes.find((theme) => theme.id === this.value);
-      return theme ? theme.preview : null;
+    previewConfig() {
+      const config = cloneDeep(
+        this.config ||
+          pick(
+            this.$store.state,
+            without(
+              Object.keys(this.$store.state.pngConfig),
+              "theme",
+              "themeID"
+            )
+          )
+      );
+      config.imageSize = "xs";
+      return config;
     },
   },
   methods: {
+    updatePreviews() {
+      if (!this.game) {
+        return;
+      }
+      this.$store.getters.themes.forEach((theme, i) => {
+        const canvas = this.game.render({ ...this.previewConfig, theme });
+        this.previews[theme.id] = canvas.toDataURL();
+
+        if (!i) {
+          this.thumbnailHeight = canvas.height / 2;
+        }
+      });
+    },
     remove(id) {
       if (id === this.theme) {
         return false;
@@ -129,6 +150,13 @@ export default {
         ],
       });
     },
+  },
+  created() {
+    this.updatePreviews();
+  },
+  watch: {
+    "$store.state.game.board": "updatePreviews",
+    previewConfig: "updatePreviews",
   },
 };
 </script>
