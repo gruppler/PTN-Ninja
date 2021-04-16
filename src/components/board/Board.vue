@@ -80,7 +80,7 @@
 
         <div class="board relative-position all-pointer-events">
           <div
-            class="squares absolute-fit row"
+            class="squares absolute-fit row reverse-wrap"
             :style="{ transform: CSS2DTransform }"
           >
             <Square
@@ -308,11 +308,9 @@ export default {
     },
     squares() {
       let squares = [];
-      for (let y = this.game.size - 1; y >= 0; y--) {
-        for (let x = 0; x < this.game.size; x++) {
-          squares.push(this.game.state.squares[y][x]);
-        }
-      }
+      this.game.state.squares.forEach((row) => {
+        row.forEach((square) => squares.push(square));
+      });
       return squares;
     },
   },

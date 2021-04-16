@@ -28,10 +28,10 @@
   >
     <div class="hl current" />
     <div class="road" v-if="$store.state.showRoads">
-      <div class="n" />
-      <div class="e" />
-      <div class="s" />
-      <div class="w" />
+      <div v-if="en" class="n" />
+      <div v-if="ee" class="e" />
+      <div class="s" :class="{ es }" />
+      <div class="w" :class="{ ew }" />
       <div class="center" />
     </div>
     <div class="hl player" />
@@ -109,14 +109,26 @@ export default {
     valid() {
       return this.isEditingTPS || this.game.isValidSquare(this.square);
     },
+    en() {
+      return this.square.static.edges.N;
+    },
+    ee() {
+      return this.square.static.edges.E;
+    },
+    es() {
+      return this.square.static.edges.S;
+    },
+    ew() {
+      return this.square.static.edges.W;
+    },
     n() {
-      return this.square.connected.N;
+      return this.en && this.square.connected.N;
     },
     s() {
       return this.square.connected.S;
     },
     e() {
-      return this.square.connected.E;
+      return this.ee && this.square.connected.E;
     },
     w() {
       return this.square.connected.W;
@@ -125,13 +137,13 @@ export default {
       return this.square.connected.length > 0;
     },
     rn() {
-      return this.square.roads.N;
+      return this.en && this.square.roads.N;
     },
     rs() {
       return this.square.roads.S;
     },
     re() {
-      return this.square.roads.E;
+      return this.ee && this.square.roads.E;
     },
     rw() {
       return this.square.roads.W;
@@ -340,15 +352,21 @@ export default {
       }
       &.s {
         top: 65%;
-        bottom: 0;
+        bottom: -35%;
+        &.es {
+          bottom: 0;
+        }
       }
       &.e {
         left: 65%;
         right: 0;
       }
       &.w {
-        left: 0;
+        left: -35%;
         right: 65%;
+        &.ew {
+          left: 0;
+        }
       }
     }
   }
