@@ -1,18 +1,8 @@
 <template>
   <recess class="col-grow relative-position">
     <q-scroll-area ref="scroll" class="games-db absolute-fit">
-      <q-field helper="Path to data store" dense borderless>
-        <input
-          type="file"
-          id="dataPath"
-          v-on:change="loadCSVFromFile"
-          ref="fileInput"
-          hidden
-          height="0"
-        />
-      </q-field>
-      <q-btn v-on:click="selectPath">{{ $t("Load Database") }}</q-btn>
       <div class="q-pa-md" v-if="db_moves">
+        <q-card> {{ $t("Database Moves") }}: </q-card>
         <DatabaseEntry
           class="q-mt-sm"
           v-for="move in db_moves"
@@ -24,18 +14,34 @@
           :game="game"
         />
       </div>
+      <div class="q-pa-md" v-if="db_games">
+        <q-card> {{ $t("Top Games from Position") }}: </q-card>
+        <DatabaseGame
+          class="q-mt-sm"
+          v-for="game in db_games"
+          :key="game.id"
+          :ptn="game.ptn"
+          :playtak_id="game.playtak_id"
+          :white_player="game.white_player"
+          :black_player="game.black_player"
+          :white_rating="game.white_rating"
+          :black_rating="game.black_rating"
+          :result="game.result"
+        />
+      </div>
     </q-scroll-area>
   </recess>
 </template>
 
 <script>
-import DatabaseEntry from "../../database/DatabaseEntry";
+import DatabaseEntry from "../database/DatabaseEntry";
+import DatabaseGame from "../database/DatabaseGame";
 import read_dump from "../../openingDB/csv_reader";
 import symmetry_normalizer from "../../openingDB/symmetry_normalizer";
 
 export default {
   name: "GamesDB",
-  components: { DatabaseEntry },
+  components: { DatabaseEntry, DatabaseGame },
   props: {
     game: Object,
     recess: Boolean,
@@ -43,6 +49,7 @@ export default {
   data() {
     return {
       db_moves: [],
+      db_games: [],
     };
   },
   methods: {
@@ -149,6 +156,46 @@ export default {
           }
           i++;
         }
+
+        let games_in_position = [];
+        let found_game = false;
+
+        for (let ref of this.refs) {
+          let game_id = parseInt(ref[1]);
+          let pos_id = parseInt(ref[2]);
+          if (pos_id == position_id) {
+            let game = this.games[game_id - 1];
+            if(game) {
+              games_in_position.push(this.games[game_id - 1]);
+            }
+            found_game = true;
+          }
+        }
+
+        let best_game = undefined;
+        let best_rating = 0;
+
+        for (let game of games_in_position) {
+          let new_rating = parseInt(game[7]) + parseInt(game[8]);
+          if (new_rating > best_rating) {
+            best_rating = new_rating;
+            best_game = game;
+          }
+        }
+
+        best_game = {
+          id: 0,
+          ptn: best_game[6],
+          playtak_id: parseInt(best_game[2]),
+          white_player: best_game[3],
+          black_player: best_game[4],
+          white_rating: parseInt(best_game[7]),
+          black_rating: parseInt(best_game[8]),
+          result: best_game[5],
+        };
+
+        this.db_games.splice(0, this.db_games.length);
+        this.db_games.push(best_game);
       }
     },
   },
