@@ -16,8 +16,12 @@
         :title="$t('Edit')"
       />
 
-      <q-btn :title="$t('Trim')" class="no-border-radius">
-        <q-icon name="trim" class="rotate-180" />
+      <q-btn
+        icon="trim"
+        :title="$t('Trim')"
+        class="no-border-radius"
+        :disabled="!game.isLocal"
+      >
         <q-menu v-if="game.isLocal" auto-close square>
           <q-list>
             <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
@@ -29,7 +33,7 @@
 
             <q-item clickable @click="$store.dispatch('TRIM_TO_PLY', game)">
               <q-item-section side>
-                <q-icon name="trim" class="rotate-180" />
+                <q-icon name="ply" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
