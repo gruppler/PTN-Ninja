@@ -13,6 +13,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
+public/resources/db_dump
 
 # Editor directories and files
 .idea

@@ -11,12 +11,7 @@
           height="0"
         />
       </q-field>
-      <q-btn v-on:click="selectPath">{{ $t("load database") }}</q-btn>
-      <q-btn
-        type="a"
-        href="https://github.com/Skoolin/TAKexplorer/releases/download/refs%2Fheads%2Fmaster/db_dump"
-        label="download"
-      />
+      <q-btn v-on:click="selectPath">{{ $t("Load Database") }}</q-btn>
       <div class="q-pa-md" v-if="db_moves">
         <DatabaseEntry
           class="q-mt-sm"
@@ -75,15 +70,36 @@ export default {
       await this.query_position();
     },
 
+    async cache_db() {
+      let url = "/resources/db_dump";
+      let cache = await caches.open("v1");
+      let cached_db = await cache.match(url);
+
+      if (cached_db === undefined) {
+        console.log("no database cached, loading new one...");
+        await cache.add(url);
+        cached_db = await cache.match(url);
+      }
+
+      let txt = await cached_db.text();
+      read_dump(txt, (pos, games, moves, refs) => {
+        this.positions = pos;
+        this.positions.splice(0, 1);
+        this.games = games;
+        this.games.splice(0, 1);
+        this.moves = moves;
+        this.moves.splice(0, 1);
+        this.refs = refs;
+        this.refs.splice(0, 1);
+      });
+
+      await this.query_position();
+    },
+
     async query_position() {
       let tps = this.game.state.tps.split(" ")[0];
       let o_id = symmetry_normalizer.get_tps_orientation(tps);
       let t_tps = symmetry_normalizer.transform_tps(tps, o_id);
-
-      for (let i = 0; i < 8; i++) {
-        let t_i = symmetry_normalizer.transform_tps(tps, i);
-        let i_t = symmetry_normalizer.get_tps_orientation(t_i);
-      }
 
       if (this.positions) {
         let position_id = -1;
@@ -132,12 +148,15 @@ export default {
     game() {
       this.query_position();
     },
+    "game.state.plyID"() {
+      this.query_position();
+    },
     "game.state.plyIsDone"() {
       this.query_position();
     },
   },
   mounted() {
-    this.query_position();
+    this.cache_db();
   },
 };
 </script>
