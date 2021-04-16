@@ -39,11 +39,7 @@
               {{ player1 }}
             </div>
             <div class="flats absolute-right q-px-sm">
-              {{
-                $store.state.ui.flatCounts
-                  ? flats[0].toString().replace(".5", " ½")
-                  : ""
-              }}
+              {{ flatCounts[0] }}
             </div>
           </div>
           <div class="turn-indicator"></div>
@@ -54,11 +50,7 @@
         >
           <div class="content absolute-fit row no-wrap">
             <div class="flats q-px-sm">
-              {{
-                $store.state.ui.flatCounts
-                  ? flats[1].toString().replace(".5", " ½")
-                  : ""
-              }}
+              {{ flatCounts[1] }}
             </div>
             <div class="name q-mx-sm relative-position">
               {{ player2 }}
@@ -213,6 +205,26 @@ export default {
     minNameWidth() {
       return 100 / this.$game.size;
     },
+    komi() {
+      return this.$game.tags.komi ? this.$game.tags.komi.value : 0;
+    },
+    flatCounts() {
+      if (this.$store.state.ui.flatCounts) {
+        return [
+          this.komi < 0
+            ? this.flats[0] + this.komi + " " + this.formatKomi(-this.komi)
+            : this.flats[0],
+          this.komi > 0
+            ? this.flats[1] - this.komi + " " + this.formatKomi(this.komi)
+            : this.flats[1],
+        ];
+      } else {
+        return [
+          this.komi < 0 ? this.formatKomi(-this.komi) : "",
+          this.komi > 0 ? this.formatKomi(this.komi) : "",
+        ];
+      }
+    },
     flatWidths() {
       const total = (this.flats[0] + this.flats[1]) / 100;
       const player1width = total
@@ -316,6 +328,9 @@ export default {
     },
   },
   methods: {
+    formatKomi(komi) {
+      return "+" + komi.toString().replace(".5", " ½");
+    },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
         this.$store.dispatch("game/SELECT_PIECE", {
@@ -585,6 +600,14 @@ $radius: 0.35em;
       overflow: hidden;
       white-space: nowrap;
       will-change: transform;
+      .komi {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: $dim;
+        will-change: width;
+        transition: width $generic-hover-transition;
+      }
     }
   }
   .player1 .content {
@@ -607,10 +630,16 @@ $radius: 0.35em;
         var(--q-color-player1) calc(100% - #{$fadeWidth}),
         var(--q-color-player1clear)
       );
+      .komi {
+        right: 0;
+      }
     }
     body.player1Dark & {
       color: $textLight;
       color: var(--q-color-textLight);
+      .content .komi {
+        background: $highlight;
+      }
     }
   }
   .player2 .content {
@@ -634,9 +663,15 @@ $radius: 0.35em;
         var(--q-color-player2clear)
       );
     }
+    .komi {
+      left: 0;
+    }
     body.player2Dark & {
       color: $textLight;
       color: var(--q-color-textLight);
+      .content .komi {
+        background: $highlight;
+      }
     }
   }
   .flats {
