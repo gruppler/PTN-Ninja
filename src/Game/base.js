@@ -306,6 +306,9 @@ export default class GameBase {
             if (isSwap && ply.specialPiece) {
               throw new Error("Invalid first move");
             }
+            if (!move.linenum) {
+              move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+            }
             ply.player = 1;
             ply.color = isSwap ? 2 : 1;
             move.ply1 = ply;
@@ -317,9 +320,6 @@ export default class GameBase {
             ply.player = 2;
             ply.color = isSwap ? 1 : 2;
             move.ply2 = ply;
-            if (!move.linenum) {
-              move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
-            }
             moveNumber += 1;
           } else {
             // New move
