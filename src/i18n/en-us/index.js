@@ -4,7 +4,6 @@ export default {
 
   About: "About",
   Action: "Action",
-  Advanced: "Advanced",
   "Animate Board": "Animate Board",
   "Axis Labels": "Axis Labels",
   Backward: "Backward",
@@ -78,6 +77,7 @@ export default {
   "Load Files": "Load Files",
   "Load Game": "Load Game",
   Local: "Local",
+  "Manual Mode": "Manual Mode",
   Message: "Message",
   More: "More",
   Move: "Move",
