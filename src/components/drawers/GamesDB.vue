@@ -81,6 +81,15 @@ export default {
       let o_id = symmetry_normalizer.get_tps_orientation(tps);
       let t_tps = symmetry_normalizer.transform_tps(tps, o_id);
 
+      console.log("tps: " + tps);
+      console.log("t_tps: " + t_tps);
+
+      for (let i = 0; i < 8; i++) {
+        let t_i = symmetry_normalizer.transform_tps(tps, i);
+        let i_t = symmetry_normalizer.get_tps_orientation(t_i);
+        console.log("o " + i + ": " + t_i + ", " + i_t);
+      }
+
       if (this.positions) {
         let position_id = -1;
         for (let i = 0; i < this.positions.length; i++) {
@@ -126,9 +135,6 @@ export default {
   },
   watch: {
     game() {
-      this.query_position();
-    },
-    "game.state.plyID"() {
       this.query_position();
     },
     "game.state.plyIsDone"() {

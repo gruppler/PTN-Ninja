@@ -73,12 +73,12 @@ function get_tps_orientation(tps) {
   if (rot_tps < best_tps) {
     o = 4;
     best_tps = rot_tps;
-    for (let i = 5; i < 8; i++) {
-      rot_tps = rotate_tps(rot_tps);
-      if (rot_tps < best_tps) {
-        o = i;
-        best_tps = rot_tps;
-      }
+  }
+  for (let i = 5; i < 8; i++) {
+    rot_tps = rotate_tps(rot_tps);
+    if (rot_tps < best_tps) {
+      o = i;
+      best_tps = rot_tps;
     }
   }
   return o;
