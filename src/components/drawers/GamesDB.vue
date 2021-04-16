@@ -1,13 +1,14 @@
 <template>
-  <recess>
-    <q-scroll-area ref="scroll" class="games-db absolute-fit non-selectable">
-      <q-field helper="Path to data store">
+  <recess class="col-grow relative-position">
+    <q-scroll-area ref="scroll" class="games-db absolute-fit">
+      <q-field helper="Path to data store" dense borderless>
         <input
           type="file"
           id="dataPath"
           v-on:change="loadCSVFromFile"
           ref="fileInput"
           hidden
+          height="0"
         />
       </q-field>
       <q-btn v-on:click="selectPath">{{ $t("load database") }}</q-btn>

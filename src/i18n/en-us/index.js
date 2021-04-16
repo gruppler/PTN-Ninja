@@ -74,6 +74,7 @@ export default {
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",
   Less: "Less",
+  "Load Database": "Load Database",
   "Load Files": "Load Files",
   "Load Game": "Load Game",
   Local: "Local",
