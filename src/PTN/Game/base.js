@@ -283,14 +283,23 @@ export default class GameBase {
           (move.number === 1 || (!move.number && this.firstMoveNumber === 1));
         if (!move.ply1) {
           // Player 1 ply
+          if (isSwap && ply.specialPiece) {
+            throw new Error("Invalid first move");
+          }
           ply.player = 1;
           ply.color = isSwap ? 2 : 1;
           move.ply1 = ply;
         } else if (!move.ply2) {
           // Player 2 ply
+          if (isSwap && ply.specialPiece) {
+            throw new Error("Invalid first move");
+          }
           ply.player = 2;
           ply.color = isSwap ? 1 : 2;
           move.ply2 = ply;
+          if (!move.linenum) {
+            move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+          }
           moveNumber += 1;
         } else {
           // New move
@@ -301,9 +310,6 @@ export default class GameBase {
             ply1: ply,
           });
           this.moves.push(move);
-        }
-        if (isSwap && ply.specialPiece) {
-          throw new Error("Invalid first move");
         }
         this.plies.push(ply);
         if (!(ply.branch in this.branches)) {
@@ -328,15 +334,6 @@ export default class GameBase {
 
     if (!this.moves.length) {
       this.moves[0] = new Move({ game: this, id: 0, index: 0 });
-    }
-
-    if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ". ", this);
-    } else if (
-      this.moves.length === 1 &&
-      this.moves[0].number !== this.firstMoveNumber
-    ) {
-      this.moves[0].linenum.number = this.firstMoveNumber;
     }
 
     this._updatePTN();
