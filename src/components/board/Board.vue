@@ -25,40 +25,7 @@
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
-      <div
-        v-if="$store.state.ui.turnIndicator"
-        class="player-names row no-wrap"
-        @click.right.prevent
-      >
-        <div
-          class="player1 relative-position"
-          :style="{ width: $store.state.ui.flatCounts ? flatWidths[0] : '50%' }"
-        >
-          <div class="content absolute-fit">
-            <div class="name absolute-left q-px-sm">
-              {{ player1 }}
-            </div>
-            <div class="flats absolute-right q-px-sm">
-              {{ flatCounts[0] }}
-            </div>
-          </div>
-          <div class="turn-indicator"></div>
-        </div>
-        <div
-          class="player2 relative-position"
-          :style="{ width: $store.state.ui.flatCounts ? flatWidths[1] : '50%' }"
-        >
-          <div class="content absolute-fit row no-wrap">
-            <div class="flats q-px-sm">
-              {{ flatCounts[1] }}
-            </div>
-            <div class="name q-mx-sm relative-position">
-              {{ player2 }}
-            </div>
-          </div>
-          <div class="turn-indicator" />
-        </div>
-      </div>
+      <TurnIndicator />
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
@@ -115,6 +82,7 @@
 <script>
 import Piece from "./Piece";
 import Square from "./Square";
+import TurnIndicator from "./TurnIndicator";
 
 import { forEach, throttle } from "lodash";
 
@@ -127,6 +95,7 @@ export default {
   components: {
     Square,
     Piece,
+    TurnIndicator,
   },
   data() {
     return {
@@ -328,9 +297,6 @@ export default {
     },
   },
   methods: {
-    formatKomi(komi) {
-      return "+" + komi.toString().replace(".5", " ½");
-    },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
         this.$store.dispatch("game/SELECT_PIECE", {
@@ -521,7 +487,6 @@ export default {
 </script>
 
 <style lang="scss">
-$turn-indicator-height: 0.5em;
 $axis-size: 1.5em;
 $radius: 0.35em;
 
@@ -582,127 +547,6 @@ $radius: 0.35em;
     .board-container.axis-labels.show-unplayed-pieces.size-#{$i} & {
       width: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
     }
-  }
-}
-
-.player-names {
-  $fadeWidth: 10px;
-  text-align: left;
-  height: 2.25em;
-  padding-bottom: $turn-indicator-height;
-  line-height: 2.25em - $turn-indicator-height;
-  .player1,
-  .player2 {
-    width: 50%;
-    will-change: width;
-    transition: width $generic-hover-transition;
-    .content {
-      overflow: hidden;
-      white-space: nowrap;
-      will-change: transform;
-      .komi {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        background: $dim;
-        will-change: width;
-        transition: width $generic-hover-transition;
-      }
-    }
-  }
-  .player1 .content {
-    color: $textDark;
-    color: var(--q-color-textDark);
-    border-top-left-radius: $radius;
-    background: $player1;
-    background: var(--q-color-player1);
-    .flats {
-      text-align: right;
-      background: $player1;
-      background: var(--q-color-player1);
-      background: linear-gradient(
-        to left,
-        $player1 calc(100% - #{$fadeWidth}),
-        $player1clear
-      );
-      background: linear-gradient(
-        to left,
-        var(--q-color-player1) calc(100% - #{$fadeWidth}),
-        var(--q-color-player1clear)
-      );
-      .komi {
-        right: 0;
-      }
-    }
-    body.player1Dark & {
-      color: $textLight;
-      color: var(--q-color-textLight);
-      .content .komi {
-        background: $highlight;
-      }
-    }
-  }
-  .player2 .content {
-    color: $textDark;
-    color: var(--q-color-textDark);
-    border-top-right-radius: $radius;
-    background: $player2;
-    background: var(--q-color-player2);
-    &::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      width: $fadeWidth;
-      text-align: left;
-      background: linear-gradient(to left, $player2 0, $player2clear);
-      background: linear-gradient(
-        to left,
-        var(--q-color-player2) 0,
-        var(--q-color-player2clear)
-      );
-    }
-    .komi {
-      left: 0;
-    }
-    body.player2Dark & {
-      color: $textLight;
-      color: var(--q-color-textLight);
-      .content .komi {
-        background: $highlight;
-      }
-    }
-  }
-  .flats {
-    white-space: nowrap;
-    min-width: 2em;
-    flex-grow: 1;
-    flex-shrink: 0;
-    z-index: 1;
-  }
-  .name {
-    flex-shrink: 1;
-    transform: translateZ(0);
-  }
-}
-
-.turn-indicator {
-  opacity: 0;
-  width: 100%;
-  height: $turn-indicator-height;
-  position: absolute;
-  bottom: -$turn-indicator-height;
-  background: $primary;
-  background: var(--q-color-primary);
-  will-change: opacity;
-  transition: opacity $generic-hover-transition;
-  .board-container.turn-1 .player1 &,
-  .board-container.turn-2 .player2 & {
-    opacity: 1;
-  }
-  .board-container.is-game-end & {
-    opacity: 0 !important;
   }
 }
 
