@@ -79,7 +79,7 @@ export default {
 
     async cache_db() {
       let url = "/resources/db_dump";
-      caches.delete("v1");
+      await caches.delete("v1");
       let cache = await caches.open("v2");
       let cached_db = await cache.match(url);
 
@@ -166,7 +166,7 @@ export default {
           let pos_id = parseInt(ref[2]);
           if (pos_id == position_id) {
             let game = this.games[game_id - 1];
-            if(game) {
+            if (game) {
               games_in_position.push(this.games[game_id - 1]);
             }
             found_game = true;
@@ -184,19 +184,20 @@ export default {
           }
         }
 
-        best_game = {
-          id: 0,
-          ptn: best_game[6],
-          playtak_id: parseInt(best_game[2]),
-          white_player: best_game[3],
-          black_player: best_game[4],
-          white_rating: parseInt(best_game[7]),
-          black_rating: parseInt(best_game[8]),
-          result: best_game[5],
-        };
-
         this.db_games.splice(0, this.db_games.length);
-        this.db_games.push(best_game);
+        if (best_game) {
+          best_game = {
+            id: 0,
+            ptn: best_game[6],
+            playtak_id: parseInt(best_game[2]),
+            white_player: best_game[3],
+            black_player: best_game[4],
+            white_rating: parseInt(best_game[7]),
+            black_rating: parseInt(best_game[8]),
+            result: best_game[5],
+          };
+          this.db_games.push(best_game);
+        }
       }
     },
   },
