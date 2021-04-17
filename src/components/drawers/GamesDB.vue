@@ -79,7 +79,8 @@ export default {
 
     async cache_db() {
       let url = "/resources/db_dump";
-      let cache = await caches.open("v1");
+      caches.delete("v1");
+      let cache = await caches.open("v2");
       let cached_db = await cache.match(url);
 
       if (cached_db === undefined) {
