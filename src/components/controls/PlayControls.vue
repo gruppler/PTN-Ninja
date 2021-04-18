@@ -95,6 +95,7 @@
           @select="selectBranch"
           :game="game"
           :branches="branches"
+          selected-played
           linenum
         />
       </q-btn>
