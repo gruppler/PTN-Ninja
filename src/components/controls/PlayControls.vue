@@ -94,6 +94,7 @@
           v-model="branchMenu"
           @select="selectBranch"
           :branches="branches"
+          selected-played
           linenum
         />
       </q-btn>

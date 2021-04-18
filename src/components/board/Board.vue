@@ -162,51 +162,6 @@ export default {
     boardPly() {
       return this.board.ply;
     },
-    player1() {
-      return this.$store.state.game.ptn.tags.player1;
-    },
-    player2() {
-      return this.$store.state.game.ptn.tags.player2;
-    },
-    flats() {
-      return this.board.flats;
-    },
-    minNameWidth() {
-      return 100 / this.$game.size;
-    },
-    komi() {
-      return this.$game.tags.komi ? this.$game.tags.komi.value : 0;
-    },
-    flatCounts() {
-      if (this.$store.state.ui.flatCounts) {
-        return [
-          this.komi < 0
-            ? this.flats[0] + this.komi + " " + this.formatKomi(-this.komi)
-            : this.flats[0],
-          this.komi > 0
-            ? this.flats[1] - this.komi + " " + this.formatKomi(this.komi)
-            : this.flats[1],
-        ];
-      } else {
-        return [
-          this.komi < 0 ? this.formatKomi(-this.komi) : "",
-          this.komi > 0 ? this.formatKomi(this.komi) : "",
-        ];
-      }
-    },
-    flatWidths() {
-      const total = (this.flats[0] + this.flats[1]) / 100;
-      const player1width = total
-        ? Math.max(
-            this.minNameWidth,
-            Math.min(
-              100 - this.minNameWidth,
-              (this.flats[0] / total).toPrecision(4)
-            )
-          )
-        : 50;
-      return [player1width + "%", 100 - player1width + "%"];
-    },
     board3D() {
       return this.$store.state.ui.board3D;
     },

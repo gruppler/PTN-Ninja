@@ -113,16 +113,13 @@ export default {
       const player1width = total
         ? Math.max(
             this.minNameWidth,
-            Math.min(
-              100 - this.minNameWidth,
-              (this.flats[0] / total).toPrecision(4)
-            )
-          )
+            Math.min(100 - this.minNameWidth, this.flats[0] / total)
+          ).toPrecision(4)
         : 50;
       const player2width = 100 - player1width;
-      const komiWidth = Math.min(
-        100 - this.minNameWidth,
-        Math.abs(this.komi) / total
+      const komiWidth = (this.komi < 0
+        ? player1width * (-this.komi / this.flats[0])
+        : player2width * (this.komi / this.flats[1])
       ).toPrecision(4);
       const komiLeft = this.komi < 0 ? player1width - komiWidth : player1width;
       return {

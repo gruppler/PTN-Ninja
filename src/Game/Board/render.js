@@ -132,7 +132,11 @@ export default function render(board, options = {}) {
     );
     const flats2Width = Math.round(boardSize - flats1Width);
     const komiWidth = options.flatCounts
-      ? Math.round((boardSize * Math.abs(komi)) / totalFlats)
+      ? Math.round(
+          komi < 0
+            ? flats1Width * (-komi / flats[0])
+            : flats2Width * (komi / flats[1])
+        )
       : 0;
     if (options.flatCounts) {
       if (komi < 0) {
@@ -179,7 +183,7 @@ export default function render(board, options = {}) {
       const dark = komi < 0 ? theme.player1Dark : theme.player2Dark;
       ctx.fillStyle = dark ? "#fff" : "#000";
       ctx.globalAlpha = 0.13;
-      if (komiWidth > flatWidth) {
+      if (komiWidth >= flatWidth) {
         roundRect(
           ctx,
           padding + axisSize + (komi > 0) * flats1Width,

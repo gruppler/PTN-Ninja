@@ -50,6 +50,7 @@ export default {
     value: Boolean,
     branches: Array,
     linenum: Boolean,
+    "selected-played": Boolean,
   },
   data() {
     return {
@@ -62,7 +63,8 @@ export default {
         this.branches,
         (ply) =>
           this.$store.state.game.ptn.branchPlies.find((p) => p.id === ply.id) &&
-          ply.id <= this.$store.state.game.position.plyID
+          (!this.selectedPlayed ||
+            ply.id <= this.$store.state.game.position.plyID)
       );
       return index >= 0 ? index : 0;
     },
