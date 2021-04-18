@@ -332,8 +332,8 @@ export default class GameBase {
       delete item.ptn;
     }
 
-    if (!this.moves.length) {
-      this.moves[0] = new Move({ game: this, id: 0, index: 0 });
+    if (!move.linenum) {
+      move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
     }
 
     this._updatePTN();
