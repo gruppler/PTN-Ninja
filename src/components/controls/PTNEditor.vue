@@ -27,7 +27,16 @@ export default {
       rules: [
         (moves) => {
           const result = Game.validate(this.header + moves);
-          return result === true ? true : this.$t(`error["${result}"]`);
+          if (result === true) {
+            return true;
+          } else {
+            if (this.$te(`error["${result}"]`)) {
+              return this.$t(`error["${result}"]`);
+            } else {
+              console.error(result);
+              return result;
+            }
+          }
         },
       ],
     };
