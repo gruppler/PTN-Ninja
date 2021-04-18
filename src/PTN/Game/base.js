@@ -442,12 +442,10 @@ export default class GameBase {
     this.name = name || this.generateName();
   }
 
-  tag(key, defaultValue) {
-    return key in this.tags && this.tags[key].value
-      ? this.tags[key].valueText
-      : defaultValue !== undefined
-      ? defaultValue
-      : "";
+  tag(key, rawValue = false) {
+    if (key in this.tags && this.tags[key].value) {
+      return rawValue ? this.tags[key].value : this.tags[key].valueText;
+    }
   }
 
   setTags(tags, recordChange = true, updatePTN = true) {
