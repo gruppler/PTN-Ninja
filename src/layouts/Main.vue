@@ -765,7 +765,7 @@ export default {
     },
     openFiles(event) {
       this.nop(event);
-      this.$store.dispatch("ui/OPEN_FILES", event.dataTransfer.files);
+      this.$store.dispatch("game/OPEN_FILES", event.dataTransfer.files);
     },
     nop(event) {
       event.stopPropagation();

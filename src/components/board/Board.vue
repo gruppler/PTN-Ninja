@@ -435,6 +435,7 @@ export default {
     boardPly: "zoomFitAfterTransition",
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
+    transform: "zoomFitAfterDelay",
     board3D: "zoomFitAfterTransition",
     orthogonal: "zoomFitNextTick",
   },
