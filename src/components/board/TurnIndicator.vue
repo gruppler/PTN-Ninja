@@ -1,10 +1,6 @@
 <template>
-  <div class="turn-indicator">
-    <div
-      v-if="$store.state.ui.turnIndicator"
-      class="player-names row no-wrap"
-      @click.right.prevent
-    >
+  <div v-if="$store.state.ui.turnIndicator" class="turn-indicator">
+    <div class="player-names row no-wrap" @click.right.prevent>
       <div
         class="player1 relative-position"
         :style="{ width: $store.state.ui.flatCounts ? widths[1] : '50%' }"
