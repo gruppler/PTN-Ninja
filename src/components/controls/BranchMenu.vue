@@ -50,6 +50,7 @@ export default {
     game: Object,
     branches: Array,
     linenum: Boolean,
+    "selected-played": Boolean,
   },
   data() {
     return {
@@ -61,7 +62,8 @@ export default {
       const index = findLastIndex(
         this.branches,
         (ply) =>
-          this.game.state.plies.includes(ply) && ply.id <= this.game.state.plyID
+          this.game.state.plies.includes(ply) &&
+          (!this.selectedPlayed || ply.id <= this.game.state.plyID)
       );
       return index >= 0 ? index : 0;
     },
