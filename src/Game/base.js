@@ -360,6 +360,10 @@ export default class GameBase {
       this.parseJSONMoves(params.moves);
     }
 
+    if (!move.linenum) {
+      move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+    }
+
     this._updatePTN();
 
     if (!this.name) {
