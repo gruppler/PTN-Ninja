@@ -524,14 +524,15 @@ $radius: 0.35em;
     .piece,
     .stone,
     .road > div,
-    .player-names > div,
-    .turn-indicator {
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi {
       transition: none !important;
     }
   }
 }
 
-.player-names,
+.turn-indicator,
 .x-axis {
   width: 100%;
   will-change: width;

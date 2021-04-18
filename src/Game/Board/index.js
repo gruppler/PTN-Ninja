@@ -790,7 +790,7 @@ export default class Board extends Aggregation(
         flats[square.color - 1]++;
       }
     });
-    const komi = this.game.tag("komi");
+    const komi = this.game.tag("komi", true);
     if (komi) {
       flats[1 * (komi > 0)] += Math.abs(komi);
     }

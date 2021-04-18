@@ -116,7 +116,8 @@ export default function render(board, options = {}) {
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
-  const flats = board.flats;
+  const flats = board.flats.concat();
+  const komi = board.game.tag("komi", true) || 0;
   if (options.turnIndicator) {
     const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
@@ -129,7 +130,26 @@ export default function render(board, options = {}) {
         )
       )
     );
-    const flats2Width = boardSize - flats1Width;
+    const flats2Width = Math.round(boardSize - flats1Width);
+    const komiWidth = options.flatCounts
+      ? Math.round((boardSize * Math.abs(komi)) / totalFlats)
+      : 0;
+    if (options.flatCounts) {
+      if (komi < 0) {
+        flats[0] =
+          flats[0] + komi + " +" + (-komi).toString().replace(".5", "½");
+      } else if (komi > 0) {
+        flats[1] = flats[1] - komi + " +" + komi.toString().replace(".5", "½");
+      }
+    } else {
+      flats[0] = "";
+      flats[1] = "";
+      if (komi < 0) {
+        flats[0] = "+" + (-komi).toString().replace(".5", "½");
+      } else if (komi > 0) {
+        flats[1] = "+" + komi.toString().replace(".5", "½");
+      }
+    }
 
     // Flat Bars
     ctx.fillStyle = theme.colors.player1;
@@ -142,6 +162,7 @@ export default function render(board, options = {}) {
       { tl: counterRadius }
     );
     ctx.fill();
+
     ctx.fillStyle = theme.colors.player2;
     roundRect(
       ctx,
@@ -152,6 +173,32 @@ export default function render(board, options = {}) {
       { tr: counterRadius }
     );
     ctx.fill();
+
+    if (komiWidth) {
+      const flatWidth = komi < 0 ? flats1Width : flats2Width;
+      const dark = komi < 0 ? theme.player1Dark : theme.player2Dark;
+      ctx.fillStyle = dark ? "#fff" : "#000";
+      ctx.globalAlpha = 0.13;
+      if (komiWidth > flatWidth) {
+        roundRect(
+          ctx,
+          padding + axisSize + (komi > 0) * flats1Width,
+          padding,
+          flatWidth,
+          flatCounterHeight,
+          { [komi < 0 ? "tl" : "tr"]: counterRadius }
+        );
+        ctx.fill();
+      } else {
+        ctx.fillRect(
+          padding + axisSize + flats1Width - (komi < 0) * komiWidth,
+          padding,
+          komiWidth,
+          flatCounterHeight
+        );
+      }
+      ctx.globalAlpha = 1;
+    }
 
     // Flat Counts
     ctx.fillStyle = theme.player1Dark
@@ -164,7 +211,7 @@ export default function render(board, options = {}) {
       options.player1 ||
       (board.game.tags.player1 ? board.game.tags.player1.value : "");
     if (options.includeNames && name1) {
-      const flatCount1Width = ctx.measureText(flats[0]).width;
+      const flatCount1Width = ctx.measureText(flats[0] + " ").width;
       name1 = limitText(
         ctx,
         name1,
@@ -178,16 +225,31 @@ export default function render(board, options = {}) {
       );
     }
     // Player 1 Flat Count
-    if (options.flatCounts) {
+    if (flats[0] !== "") {
       ctx.textAlign = "end";
+      flats[0] = String(flats[0]).split(" ");
       ctx.fillText(
-        flats[0],
+        flats[0][0],
         padding + axisSize + flats1Width - fontSize / 2,
         padding + flatCounterHeight / 2 + offset
       );
+      if (flats[0][1]) {
+        // Komi
+        flats[0][1] = flats[0][1].substr(1) + "+";
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(
+          flats[0][1],
+          padding +
+            axisSize +
+            flats1Width -
+            fontSize / 2 -
+            ctx.measureText(flats[0][0] + " ").width,
+          padding + flatCounterHeight / 2 + offset
+        );
+        ctx.globalAlpha = 1;
+      }
     }
 
-    flats[1] = flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
@@ -210,13 +272,28 @@ export default function render(board, options = {}) {
       );
     }
     // Player 2 Flat Count
-    if (options.flatCounts) {
+    if (flats[1] !== "") {
       ctx.textAlign = "start";
+      flats[1] = String(flats[1]).split(" ");
       ctx.fillText(
-        flats[1],
+        flats[1][0],
         padding + axisSize + flats1Width + fontSize / 2,
         padding + flatCounterHeight / 2 + offset
       );
+      if (flats[1][1]) {
+        // Komi
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(
+          flats[1][1],
+          padding +
+            axisSize +
+            flats1Width +
+            fontSize / 2 +
+            ctx.measureText(flats[1][0] + " ").width,
+          padding + flatCounterHeight / 2 + offset
+        );
+        ctx.globalAlpha = 1;
+      }
     }
 
     // Turn Indicator
@@ -224,9 +301,9 @@ export default function render(board, options = {}) {
       const turn = board.turn;
       ctx.fillStyle = theme.colors.primary;
       ctx.fillRect(
-        padding + axisSize + (turn === 1 ? 0 : flats1Width),
+        padding + axisSize + (turn === 1 ? 0 : boardSize / 2),
         padding + flatCounterHeight,
-        turn === 1 ? flats1Width : flats2Width,
+        boardSize / 2,
         turnIndicatorHeight
       );
     }
