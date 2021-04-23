@@ -1,5 +1,9 @@
 // app global css
 
+html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
+  touch-action: none;
+}
+
 @font-face {
   font-family: 'Source Code Pro';
   font-style: normal;
