@@ -307,7 +307,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.$game.board.getTPS(
+        this.editingTPS = this.$game.board._getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -315,15 +315,14 @@ export default {
     },
     minFirstMoveNumber() {
       const min1 =
-        this.$game.board.pieces.played[1].cap.length +
-        this.$game.board.pieces.played[1].flat.length +
+        this.$store.state.game.board.piecesPlayed[1].total +
         this.$game.board.squares.reduce(
           (total, row) =>
             row.reduce(
               (total, square) =>
                 square.pieces.length
                   ? total +
-                    square.pieces.slice(1).filter((piece) => piece.color === 1)
+                    square.pieces.slice(1).filter((piece) => piece[0] === "1")
                       .length
                   : total,
               total
@@ -331,19 +330,14 @@ export default {
           0
         );
       const min2 =
-        this.$game.board.pieces.played[2].cap.length +
-        this.$game.board.pieces.played[2].flat.length +
-        this.$game.board.squares.reduce(
-          (total, row) =>
-            row.reduce(
-              (total, square) =>
-                square.pieces.length
-                  ? total +
-                    square.pieces.slice(1).filter((piece) => piece.color === 2)
-                      .length
-                  : total,
-              total
-            ),
+        this.$store.state.game.board.piecesPlayed[2].total +
+        Object.values(this.$store.state.game.board.squares).reduce(
+          (total, square) =>
+            square.pieces.length
+              ? total +
+                square.pieces.slice(1).filter((piece) => piece[0] === "2")
+                  .length
+              : total,
           0
         );
       return Math.max(min1, min2) + 1 * (min1 <= min2);
@@ -354,7 +348,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.$game.board.getTPS(
+        this.editingTPS = this.$game.board._getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );

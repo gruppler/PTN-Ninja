@@ -28,14 +28,17 @@ export default {
     theme() {
       return this.$store.getters["ui/theme"]();
     },
-    pieceCounts() {
-      return this.$game.pieceCounts[this.piece.color];
-    },
     game() {
       return this.$store.state.game;
     },
     board() {
       return this.game.board;
+    },
+    config() {
+      return this.game.config;
+    },
+    pieceCounts() {
+      return this.config.pieceCounts[this.piece.color];
     },
     piece() {
       return this.board.pieces[this.id];
@@ -76,7 +79,7 @@ export default {
       }
       let row = this.piece[this.transform[0] % 2 ? "x" : "y"];
       if (this.transform[0] === 1 || this.transform[0] === 2) {
-        row = this.$game.size - row - 1;
+        row = this.config.size - row - 1;
       }
       return row;
     },
@@ -87,7 +90,7 @@ export default {
       let col = this.piece[this.transform[0] % 2 ? "y" : "x"];
       let rotation = (this.transform[0] + 2 * this.transform[1]) % 4;
       if (rotation === 2 || rotation === 3) {
-        col = this.$game.size - col - 1;
+        col = this.config.size - col - 1;
       }
       return col;
     },
@@ -97,12 +100,12 @@ export default {
         x *= this.col;
       } else {
         x *=
-          this.$game.size +
+          this.config.size +
           0.75 *
             (this.piece.color ===
               (!this.piece.index &&
               this.piece.type !== "cap" &&
-              this.$game.openingSwap
+              this.config.openingSwap
                 ? 1
                 : 2));
       }
@@ -117,10 +120,10 @@ export default {
           const pieces = this.square.pieces;
           y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
           if (
-            pieces.length > this.$game.size &&
-            this.piece.z >= pieces.length - this.$game.size
+            pieces.length > this.config.size &&
+            this.piece.z >= pieces.length - this.config.size
           ) {
-            y -= spacing * (pieces.length - this.$game.size);
+            y -= spacing * (pieces.length - this.config.size);
           }
           if (this.piece.isStanding && pieces.length > 1) {
             y -= spacing;
@@ -128,21 +131,21 @@ export default {
         }
       } else {
         // Unplayed piece
-        y = this.$game.size - 1;
+        y = this.config.size - 1;
         if (this.board3D) {
           if (!this.piece.isCapstone) {
             y *=
               Math.floor(
                 (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
-                  this.$game.size
+                  this.config.size
               ) /
               Math.floor(
                 this.pieceCounts.flat /
-                  (this.$game.size -
+                  (this.config.size -
                     1 *
                       !!(
                         this.pieceCounts.cap &&
-                        this.pieceCounts.flat % this.$game.size
+                        this.pieceCounts.flat % this.config.size
                       ))
               );
           }
@@ -174,7 +177,7 @@ export default {
         if (this.board3D) {
           z =
             (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
-            this.$game.size;
+            this.config.size;
         } else {
           z =
             (this.pieceCounts.total - this.piece.index) /
@@ -186,13 +189,13 @@ export default {
             this.piece.color ===
             (!this.piece.index &&
             this.piece.type !== "cap" &&
-            this.$game.openingSwap
+            this.config.openingSwap
               ? 2
               : 1)
           ) {
             z += 1;
           } else {
-            z += this.$game.size - 1;
+            z += this.config.size - 1;
           }
         }
         if (this.isSelected) {

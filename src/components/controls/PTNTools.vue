@@ -70,7 +70,7 @@ export default {
   },
   computed: {
     isLocal() {
-      return this.$game.isLocal;
+      return !this.$store.state.game.config.isOnline;
     },
     showAllBranches: {
       get() {

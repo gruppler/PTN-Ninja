@@ -90,7 +90,7 @@ export default {
         });
       }
 
-      if (!this.$store.state.embed && this.$game.isLocal) {
+      if (!this.$store.state.embed && !this.$store.state.game.config.isOnline) {
         actions.push(
           {
             id: "embed",

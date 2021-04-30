@@ -57,7 +57,7 @@
         <q-separator vertical class="q-mr-sm" />
 
         <q-btn
-          v-if="$game.config.isOnline"
+          v-if="config.isOnline"
           :icon="icon($game)"
           @click.stop="account"
           dense
@@ -114,6 +114,9 @@ import { zipObject } from "lodash";
 export default {
   name: "GameSelector",
   computed: {
+    config() {
+      return this.$store.state.game.config;
+    },
     games() {
       return this.$store.state.game.list.map((game, index) => ({
         label: game.name,
@@ -126,10 +129,10 @@ export default {
     },
     name() {
       const name = this.games[0].label;
-      if (!this.$game.config.isOnline || this.$q.screen.gt.sm) {
+      if (!this.config.isOnline || this.$q.screen.gt.sm) {
         return name;
       } else {
-        let player = this.$game.config.player;
+        let player = this.onfig.player;
         let otherPlayer = player ? (player === 1 ? 2 : 1) : 0;
         if (!otherPlayer) {
           return name;

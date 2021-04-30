@@ -108,7 +108,7 @@ export const RELOAD_USER = async ({ commit }) => {
 
 export const CREATE_GAME = async (
   { dispatch, getters, state },
-  { game, players, isPrivate, disableRoads }
+  { game, players, isPrivate, disableFlatCounts, disableRoads }
 ) => {
   const playerName = getters.playerName(isPrivate);
   const player = players[1] === state.user.uid ? 1 : 2;
@@ -129,12 +129,7 @@ export const CREATE_GAME = async (
   }
 
   let json = game.json;
-  let config = Object.assign(json.config, {
-    isOnline: true,
-    players: [players[1] || null, players[2] || null],
-    isPrivate,
-    disableRoads,
-  });
+  let config = Object.assign(json.config, config);
 
   // Add game to DB
   let gameDoc = await db.collection("games").add(omit(json, "moves"));

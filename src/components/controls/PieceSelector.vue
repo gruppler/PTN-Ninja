@@ -34,7 +34,7 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "PieceSelector",
-  props: ["value", "types"],
+  props: ["value"],
   data() {
     return {
       color: this.value.color || 1,
@@ -43,13 +43,13 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
     available() {
-      return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
+      return ["F", "S", "C"].filter((type) => {
         type = type === "C" ? "cap" : "flat";
-        return (
-          this.$game.board.pieces.played[this.color][type].length <
-          this.$game.pieceCounts[this.color][type]
-        );
+        return this.game.board.piecesRemaining[this.color][type].length > 0;
       });
     },
     shadows() {

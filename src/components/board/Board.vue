@@ -11,7 +11,7 @@
       class="board-container"
       :class="{
         [style]: true,
-        ['size-' + $game.size]: true,
+        ['size-' + config.size]: true,
         ['turn-' + turn]: true,
         'no-animations': !$store.state.ui.animateBoard,
         'axis-labels': $store.state.ui.axisLabels,
@@ -113,14 +113,17 @@ export default {
     board() {
       return this.$store.state.game.board;
     },
+    config() {
+      return this.$store.state.game.config;
+    },
     transform() {
       return this.$store.state.ui.boardTransform;
     },
     cols() {
-      return "abcdefgh".substr(0, this.$game.size).split("");
+      return "abcdefgh".substr(0, this.config.size).split("");
     },
     rows() {
-      return "12345678".substr(0, this.$game.size).split("");
+      return "12345678".substr(0, this.config.size).split("");
     },
     yAxis() {
       let axis =

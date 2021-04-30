@@ -1,9 +1,9 @@
 import Aggregation from "aggregation/es6";
 import Marray from "marray";
 
-import BoardGameEnd from "./End";
-import BoardIX from "./IX";
-import BoardNavigation from "./Navigation";
+import BoardGameEnd from "./end";
+import BoardIX from "./ix";
+import BoardNavigation from "./nav";
 
 import Piece from "./Piece";
 import Square from "./Square";
@@ -47,6 +47,8 @@ export default class Board extends Aggregation(
         ply: null,
         squares: {},
         pieces: {},
+        piecesPlayed: {},
+        piecesRemaining: {},
         flats: null,
       },
       comments: {
@@ -317,6 +319,23 @@ export default class Board extends Aggregation(
         this.dirty.board.pieces[id] = false;
       }
     });
+    const played = {};
+    const remaining = {};
+    [1, 2].forEach((color) => {
+      played[color] = {};
+      remaining[color] = {};
+      ["flat", "cap"].forEach((type) => {
+        played[color][type] = this.pieces.played[color][type].length;
+        remaining[color][type] =
+          this.game.config.pieceCounts[color][type] - played[color][type];
+      });
+      played[color].total = played[color].flat + played[color].cap;
+      remaining[color].total = remaining[color].flat + remaining[color].cap;
+    });
+    Object.freeze(played);
+    Object.freeze(remaining);
+    Object.assign(this.output.board.piecesPlayed, remaining);
+    Object.assign(this.output.board.piecesRemaining, remaining);
     Object.assign(this.output.board.pieces, output);
   }
 
@@ -790,7 +809,7 @@ export default class Board extends Aggregation(
         flats[square.color - 1]++;
       }
     });
-    const komi = this.game.tag("komi", true);
+    const komi = this.game.config.komi;
     if (komi) {
       flats[1 * (komi > 0)] += Math.abs(komi);
     }

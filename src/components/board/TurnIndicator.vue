@@ -84,10 +84,10 @@ export default {
       return this.board.flats;
     },
     minNameWidth() {
-      return 100 / this.$game.size;
+      return 100 / this.$store.state.game.config.size;
     },
     komi() {
-      return this.$game.tags.komi ? this.$game.tags.komi.value : 0;
+      return this.$store.state.game.config.komi;
     },
     komiDark() {
       return this.komi < 0

@@ -9,7 +9,17 @@ import Tag from "./PTN/Tag";
 
 import Board from "./board";
 
-import { defaults, each, flatten, isEmpty, map, uniq } from "lodash";
+import {
+  cloneDeep,
+  defaults,
+  each,
+  flatten,
+  isEmpty,
+  isEqual,
+  map,
+  pick,
+  uniq,
+} from "lodash";
 import memoize from "./memoize";
 
 export const pieceCounts = {
@@ -119,9 +129,7 @@ export default class GameBase {
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
     this.config =
-      params.config && !isEmpty(params.config)
-        ? { ...params.config }
-        : { isOnline: false };
+      params.config && !isEmpty(params.config) ? { ...params.config } : {};
     this.tags = {};
     this.moves = [];
     this.boardStates = {};
@@ -211,6 +219,7 @@ export default class GameBase {
     this.pieceCounts[2].total =
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
     Object.freeze(this.pieceCounts);
+    this.updateConfig();
     this.board = new Board(this);
 
     // Parse BODY
@@ -495,6 +504,7 @@ export default class GameBase {
     });
     this.tags = Object.assign({}, this.tags, tags);
     this.hasTPS = "tps" in this.tags;
+    this.updateConfig();
     if (updatePTN) {
       this._updatePTN(recordChange);
       if (
@@ -514,6 +524,23 @@ export default class GameBase {
       } else {
         this.board.updateTagsOutput();
       }
+    }
+  }
+
+  updateConfig() {
+    const requireBoardUpdate = ["size", "komi"];
+    const old = pick(this.config, requireBoardUpdate);
+    const config = {
+      size: this.tag("size", true),
+      komi: this.tag("komi", true) || 0,
+      opening: this.tag("opening"),
+      openingSwap: this.openingSwap,
+      pieceCounts: this.pieceCounts,
+      isOnline: false,
+    };
+    Object.assign(this.config, config);
+    if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
+      this.board.updateBoardOutput();
     }
   }
 

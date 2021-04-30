@@ -117,7 +117,7 @@ export default function render(board, options = {}) {
 
   // Header
   const flats = board.flats.concat();
-  const komi = board.game.tag("komi", true) || 0;
+  const komi = board.game.config.komi;
   if (options.turnIndicator) {
     const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
