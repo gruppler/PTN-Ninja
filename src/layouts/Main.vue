@@ -511,8 +511,6 @@ export default {
         this.$store.dispatch("ui/NOTIFY_WARNING", warning)
       );
 
-      this.setWindowTitle(game.name);
-
       if (game.config.unseen) {
         this.$store.dispatch("game/SAVE_CONFIG", {
           game,

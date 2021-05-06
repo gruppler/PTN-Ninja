@@ -133,7 +133,7 @@ export default class GameBase {
       params.config && !isEmpty(params.config) ? { ...params.config } : {};
     this.tags = {};
     this.defaultSize = params.defaultSize || 6;
-    this.moves = [move];
+    this.moves = [];
     this.boardStates = {};
     this.branches = {};
     this.plies = [];
