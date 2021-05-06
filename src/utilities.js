@@ -39,6 +39,16 @@ export const formatWarning = (warning) => {
     } else {
       return warning;
     }
+  } else {
+    if (i18n.te(`warning["${warning.code}"]`)) {
+      return i18n.t(`warning["${warning.code}"]`);
+    } else if ("message" in warning) {
+      if (i18n.te(`warning["${warning.message}"]`)) {
+        return i18n.t(`warning["${warning.message}"]`);
+      } else {
+        return warning.message;
+      }
+    }
   }
 };
 
