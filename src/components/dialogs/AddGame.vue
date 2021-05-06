@@ -150,13 +150,18 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
-      let game = new Game(`[Size "${this.size}"]\n\n1. `, { name });
-      game.setTags(tags, false);
+      let game = new Game("", { name, tags });
+
+      // game.warnings.forEach((warning) =>
+      //   this.$store.dispatch("NOTIFY_WARNING", warning)
+      // );
+
       this.$store.dispatch("ADD_GAME", {
         ptn: game.ptn,
         name: game.name,
         state: game.minState,
       });
+
       this.close();
     },
     ok() {

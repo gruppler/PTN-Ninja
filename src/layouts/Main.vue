@@ -458,13 +458,11 @@ export default {
       }, 100);
     },
     newGame() {
-      const game = new Game(
-        `[Player1 "${this.$store.state.player1}"]\n` +
-          `[Player2 "${this.$store.state.player2}"]\n` +
-          `[Size "${this.$store.state.size}"]\n` +
-          "\n" +
-          "1. "
-      );
+      const game = new Game("", {
+        player1: this.$store.state.player1,
+        player2: this.$store.state.player2,
+        size: this.$store.state.size,
+      });
       return game;
     },
     getGame() {
@@ -570,6 +568,10 @@ export default {
       if (!game) {
         game = this.newGame();
       }
+      game.warnings.forEach((warning) =>
+        this.$store.dispatch("NOTIFY_WARNING", warning)
+      );
+
       this.setWindowTitle(game.name);
 
       if (process.env.DEV) {

@@ -134,6 +134,7 @@ export const NOTIFY_WARNING = (context, warning) => {
   return Notify.create({
     message: formatWarning(warning),
     type: "warning",
+    icon: "warning",
     timeout: 0,
     position: "top-right",
     multiLine: false,

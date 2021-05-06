@@ -11,7 +11,7 @@ import GameState from "./state";
 
 import render from "./render";
 
-import { defaults, each, flatten, map, uniq } from "lodash";
+import { defaults, each, flatten, isString, map, uniq } from "lodash";
 import memoize from "./memoize";
 
 export const pieceCounts = {
@@ -101,7 +101,7 @@ export default class GameBase {
 
   init(
     notation,
-    params = { name: "", state: null, history: [], historyIndex: 0 }
+    params = { name: "", tags: {}, state: null, history: [], historyIndex: 0 }
   ) {
     Object.defineProperty(this, "movesGrouped", {
       get: memoize(this.getMovesGrouped, () => this.moves.length),
@@ -126,22 +126,58 @@ export default class GameBase {
     this.history = params.history ? params.history.concat() : [];
     this.historyIndex = params.historyIndex || 0;
     this.tags = {};
+    this.defaultSize = params.defaultSize || 6;
     this.moves = [move];
     this.boards = {};
     this.branches = {};
     this.plies = [];
     this.chatlog = {};
     this.notes = {};
+    this.warnings = [];
 
     // Parse HEAD
     notation = notation.trimStart();
     while (notation.length && notation[0] === "[") {
       // Tag
-      item = Tag.parse(notation);
-      key = item.key.toLowerCase();
-      this.tags[key] = item;
-      notation = notation.substr(item.ptn.length).trimStart();
-      delete item.ptn;
+      try {
+        item = Tag.parse(notation);
+        key = item.key.toLowerCase();
+        if (item.value) {
+          this.tags[key] = item;
+        }
+        notation = notation.substr(item.ptn.length).trimStart();
+        delete item.ptn;
+      } catch (error) {
+        console.warn(error);
+        this.warnings.push(error);
+        let match = notation.match(/]\s*/);
+        if (match) {
+          notation = notation.substr(match.index + 1).trimStart();
+        } else {
+          notation = "";
+        }
+      }
+    }
+
+    if (params.tags) {
+      each(params.tags, (value, key) => {
+        if (value) {
+          if (value instanceof Tag) {
+            this.tags[key.toLowerCase()] = value;
+          } else {
+            if (isString(value)) {
+              value = value.replaceAll('"', "''");
+            }
+            try {
+              const tag = Tag.parse(`[${key} "${value}"]`);
+              this.tags[key.toLowerCase()] = tag;
+            } catch (error) {
+              console.warn(error);
+              this.warnings.push(error);
+            }
+          }
+        }
+      });
     }
 
     if (this.tags.date) {
@@ -160,7 +196,11 @@ export default class GameBase {
         this.size = this.tags.tps.value.size;
         this.tags.size = Tag.parse(`[Size "${this.size}"]`);
       } else {
-        throw new Error("Missing board size");
+        const warning = "Missing board size";
+        console.warn(warning);
+        this.warnings.push(warning);
+        this.size = this.defaultSize;
+        this.tags.size = Tag.parse(`[Size "${this.size}"]`);
       }
     }
 
@@ -237,11 +277,17 @@ export default class GameBase {
           move.linenum = item;
           if (move.index === 0 && item.number !== this.firstMoveNumber) {
             if (item.ptn.trim() === notation.trim()) {
+              // Nothing but the first move's number, so overwrite
               Linenum.parse(this.firstMoveNumber + ".", this, branch);
             } else {
               throw new Error("Invalid first line number");
             }
           }
+        } else if (
+          move.linenum.number === item.number &&
+          move.linenum.branch === item.branch
+        ) {
+          // Ignore
         } else {
           move = new Move({
             game: this,

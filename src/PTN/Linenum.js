@@ -2,7 +2,7 @@ import { compact, last } from "lodash";
 
 export default class Linenum {
   constructor(notation, game, branch = "") {
-    const matchData = notation.match(/((?:[\d-]+\.+|\/)+)?(\d+\.)/);
+    const matchData = notation.match(/((?:[\d-]+\.+|\/)+)?(\d+\.+)/);
 
     if (!matchData) {
       throw new Error("Invalid line number");
@@ -23,7 +23,7 @@ export default class Linenum {
   }
 
   static test(notation) {
-    return /^\s*([\d-]+(\.+|\/))*(\d+\.)/.test(notation);
+    return /^\s*([\d-]+(\.+|\/))*(\d+\.+)/.test(notation);
   }
 
   static parse(notation, game, branch) {
