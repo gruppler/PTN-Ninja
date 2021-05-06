@@ -387,13 +387,11 @@ export default {
   },
   methods: {
     newGame() {
-      const game = new Game(
-        `[Player1 "${this.$store.state.ui.player1}"]\n` +
-          `[Player2 "${this.$store.state.ui.player2}"]\n` +
-          `[Size "${this.$store.state.ui.size}"]\n` +
-          "\n" +
-          "1. "
-      );
+      const game = new Game("", {
+        player1: this.$store.state.ui.player1,
+        player2: this.$store.state.ui.player2,
+        size: this.$store.state.ui.size,
+      });
       return game;
     },
     getGame() {
@@ -509,6 +507,11 @@ export default {
       if (!game) {
         game = this.newGame();
       }
+      game.warnings.forEach((warning) =>
+        this.$store.dispatch("ui/NOTIFY_WARNING", warning)
+      );
+
+      this.setWindowTitle(game.name);
 
       if (game.config.unseen) {
         this.$store.dispatch("game/SAVE_CONFIG", {

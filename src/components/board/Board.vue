@@ -581,6 +581,7 @@ $radius: 0.35em;
   background-color: $board3;
   background-color: var(--q-color-board3);
   will-change: width;
+  pointer-events: all;
   .board-container:not(.show-unplayed-pieces) & {
     width: 0 !important;
   }
