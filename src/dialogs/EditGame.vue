@@ -59,7 +59,7 @@ export default {
     reset() {
       this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
-        message: this.$t("confirm.resetForm"),
+        message: this.$t("confirm.resetGame"),
         success: () => {
           this.$refs.gameInfo.init();
         },

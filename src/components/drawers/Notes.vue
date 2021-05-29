@@ -36,28 +36,30 @@
                 sent
               >
                 <span>{{ comment.message }}</span>
-                <q-menu
-                  context-menu
-                  auto-close
-                  transition-show="none"
-                  transition-hide="none"
-                  :target="`#message-${plyID}-${index} > div > div`"
-                >
-                  <q-list>
-                    <q-item @click="edit(plyID, index)" clickable>
-                      <q-item-section side>
-                        <q-icon name="edit" />
-                      </q-item-section>
-                      <q-item-section>{{ $t("Edit") }}</q-item-section>
-                    </q-item>
-                    <q-item @click="remove(plyID, index)" clickable>
-                      <q-item-section side>
-                        <q-icon name="delete" />
-                      </q-item-section>
-                      <q-item-section>{{ $t("Delete") }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
+                <template v-slot:stamp>
+                  <q-menu
+                    context-menu
+                    auto-close
+                    transition-show="none"
+                    transition-hide="none"
+                    :target="`#message-${plyID}-${index} > div > div`"
+                  >
+                    <q-list>
+                      <q-item @click="edit(plyID, index)" clickable>
+                        <q-item-section side>
+                          <q-icon name="edit" />
+                        </q-item-section>
+                        <q-item-section>{{ $t("Edit") }}</q-item-section>
+                      </q-item>
+                      <q-item @click="remove(plyID, index)" clickable>
+                        <q-item-section side>
+                          <q-icon name="delete" />
+                        </q-item-section>
+                        <q-item-section>{{ $t("Delete") }}</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </template>
               </q-chat-message>
             </div>
           </template>

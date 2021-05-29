@@ -539,7 +539,7 @@ export default class Board extends Aggregation(
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
-      if (flatten) {
+      if (!piece.square && flatten) {
         piece.isStanding = false;
       }
     }

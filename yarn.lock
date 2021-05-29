@@ -1524,7 +1524,7 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@quasar/app@^2.2.6":
+"@quasar/app@^2.2.8":
   version "2.2.8"
   resolved "https://registry.yarnpkg.com/@quasar/app/-/app-2.2.8.tgz#ea567d90ee74d1e6a204e147cdeeab28654761e3"
   integrity sha512-aZdA39Jrc+Egy6l+KJh9NGjEpYy+OVM3NpypU89PmB80/pTK8nSfSjXbnkblXTJpR4zURCTs48b1sCSDXgFuSQ==
@@ -1634,7 +1634,7 @@
     core-js "^3.6.5"
     core-js-compat "^3.6.5"
 
-"@quasar/extras@^1.10.4":
+"@quasar/extras@^1.10.6":
   version "1.10.6"
   resolved "https://registry.yarnpkg.com/@quasar/extras/-/extras-1.10.6.tgz#9d7a609bc941d1ec40ba42718b6b39631baf982f"
   integrity sha512-LdqgITUDWr6c3bTS0Br/UIE+92JvUdZ0mu08qM4C+y0t6Q4i4WYgbjurLJKpU55g5zUXvzra868qbljLbNSLxg==
@@ -1644,7 +1644,7 @@
   resolved "https://registry.yarnpkg.com/@quasar/fastclick/-/fastclick-1.1.4.tgz#21ed3e9a4387dcb43022a08af4ef08a5f1abf159"
   integrity sha512-i9wbyV4iT+v4KhtHJynUFhH5LiEPvAEgSnwMqPN4hf/8uRe82nDl5qP5agrp2el1h0HzyBpbvHaW7NB0BPrtvA==
 
-"@quasar/quasar-app-extension-qmarkdown@^1.4.1":
+"@quasar/quasar-app-extension-qmarkdown@^1.4.3":
   version "1.4.3"
   resolved "https://registry.yarnpkg.com/@quasar/quasar-app-extension-qmarkdown/-/quasar-app-extension-qmarkdown-1.4.3.tgz#e5a5f97c682108ec18cc01c9198f6e1b8e4fbbab"
   integrity sha512-pJpLlKs2l5zLHJgTUJxzVTi84foNt1y6u1A8HVwQbA50o3xrL3r2+cA+bzVvS/XvO6AQmsUicjnyUOBBEbjxdw==
@@ -9857,7 +9857,7 @@ qs@~6.5.2:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
   integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
 
-quasar@^1.15.13:
+quasar@^1.15.19:
   version "1.15.19"
   resolved "https://registry.yarnpkg.com/quasar/-/quasar-1.15.19.tgz#8e8ceae248887cd903a3e59a6fcb6fc193c0ad17"
   integrity sha512-r1w0TC43MsqdXUnqRa7CowsYG9mnBwSb1GJ7nzKOfFpnNXi+/qXTEIzAobv1VmMOI5tAnTPHycWJlpt9EKwIog==

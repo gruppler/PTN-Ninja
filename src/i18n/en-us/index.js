@@ -10,7 +10,6 @@ export default {
   Backward: "Backward",
   "Backward Half-Step": "Backward Half-Step",
   Beginning: "Beginning",
-  Black: "Black",
   Board: "Board",
   "Board Style": "Board Style",
   "2D Board": "2D Board",
@@ -191,7 +190,6 @@ export default {
   Usage: "Usage",
   "Verify Email Address": "Verify Email Address",
   Walls: "Walls",
-  White: "White",
   Width: "Width",
   "?": "?",
   "??": "??",
@@ -202,7 +200,7 @@ export default {
     1: "{player} wins by default",
     F: "{player} wins by flats",
     R: "{player} wins by road",
-    tie: "It's a tie",
+    tie: "Draw",
   },
 
   openings: {
@@ -263,7 +261,7 @@ export default {
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
     logInOK: "Proceed and Abandon Games",
     resetEmbed: "Reset embed settings to default?",
-    resetForm: "Reset the form?",
+    resetGame: "Reset the game?",
     resetPassword: "Reset the password for {email}?",
     resetPNG: "Reset PNG settings to default?",
     resetTheme: "Reset the theme?",

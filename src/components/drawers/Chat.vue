@@ -13,6 +13,8 @@
               :stamp="relativeTime(message)"
               :title="absoluteTime(message)"
               :sent="wasSent(message)"
+              :name="names[message.player]"
+              name-sanitize
               text-sanitize
             />
             <template v-if="message.ply">
@@ -104,6 +106,12 @@ export default {
     time() {
       return this.$game.datetime;
     },
+    names() {
+      return {
+        1: this.game.tag("Player1") || "",
+        2: this.game.tag("Player2") || "",
+      };
+    },
     messages() {
       let messages = [];
       let previous;
@@ -166,10 +174,12 @@ export default {
       return Math.floor((new Date().getTime() - this.time) / 1e3);
     },
     bgColor(message) {
-      return message.player == 1 ? "white" : "secondary";
+      return "player" + message.player;
     },
     textColor(message) {
-      return message.player == 2 ? "white" : "";
+      return this.$store.state.theme[`player${message.player}Dark`]
+        ? "white"
+        : "black";
     },
     relativeTime(message) {
       if (message.time) {

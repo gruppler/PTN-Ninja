@@ -24,7 +24,7 @@
       <q-input
         :label="$t('Name')"
         :error="!isValid"
-        v-model="theme.name"
+        v-model.trim="theme.name"
         :maxlength="maxNameLength"
         hide-bottom-space
         item-aligned
@@ -266,10 +266,10 @@ export default {
       }
     },
     getID(name) {
-      return kebabCase((name || "").trim());
+      return kebabCase(name || "");
     },
     isValidName(name) {
-      name = (name || "").trim();
+      name = name || "";
       return name.length > 0 && name.length <= MAX_NAME_LENGTH;
     },
     isUniqueID(name) {
