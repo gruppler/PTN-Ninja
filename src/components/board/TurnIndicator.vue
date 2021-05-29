@@ -115,9 +115,10 @@ export default {
           ).toPrecision(4)
         : 50;
       const player2width = 100 - player1width;
-      const komiWidth = (this.komi < 0
-        ? player1width * (-this.komi / this.flats[0])
-        : player2width * (this.komi / this.flats[1])
+      const komiWidth = (
+        this.komi < 0
+          ? player1width * (-this.komi / this.flats[0])
+          : player2width * (this.komi / this.flats[1])
       ).toPrecision(4);
       const komiLeft = this.komi < 0 ? player1width - komiWidth : player1width;
       return {
