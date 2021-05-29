@@ -25,9 +25,8 @@ export default class BoardIX {
 
         if (this.selected.moveset.length > 1) {
           // Direction is defined
-          const prevSquare = this.selected.squares[
-            this.selected.squares.length - 2
-          ];
+          const prevSquare =
+            this.selected.squares[this.selected.squares.length - 2];
           const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
             Ply.getDirection([
               currentSquare.static.x - prevSquare.static.x,
@@ -105,9 +104,8 @@ export default class BoardIX {
       type = "flat";
     }
     const color = this.color;
-    const piece = this.pieces.all[color][type][
-      this.pieces.played[color][type].length
-    ];
+    const piece =
+      this.pieces.all[color][type][this.pieces.played[color][type].length];
     if (!piece) {
       return false;
     }
