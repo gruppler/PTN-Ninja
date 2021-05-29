@@ -194,7 +194,7 @@ export default class GameState {
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
-      if (flatten) {
+      if (!piece.square && flatten) {
         piece.isStanding = false;
       }
     }

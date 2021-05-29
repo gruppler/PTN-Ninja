@@ -1,6 +1,6 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
-    <q-input v-model="name" name="name" :label="$t('Name')" filled>
+    <q-input v-model.trim="name" name="name" :label="$t('Name')" filled>
       <template v-slot:prepend>
         <q-icon name="file" />
       </template>
@@ -28,11 +28,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon
-            @click.right.prevent="showPieceCounts = !showPieceCounts"
-            name="size"
-            class="flip-vertical"
-          />
+          <q-icon name="size" class="flip-vertical" />
         </template>
       </q-select>
 
@@ -40,7 +36,7 @@
         ref="tps"
         v-show="tags.tps || !game || !game.plies.length"
         class="col-grow"
-        v-model="tags.tps"
+        v-model.trim="tags.tps"
         name="tps"
         :label="$t('TPS')"
         :rules="rules('tps')"
@@ -69,7 +65,7 @@
 
     <div
       v-if="tags.size in pieceCounts"
-      v-show="showPieceCounts && isVisible(...pieceCountTags)"
+      v-show="isVisible(...pieceCountTags)"
       class="row"
     >
       <div class="col">
@@ -213,7 +209,7 @@
         <div class="row q-gutter-md q-mb-md">
           <q-input
             class="col-grow"
-            v-model="tags.player1"
+            v-model.trim="tags.player1"
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
@@ -247,7 +243,7 @@
         <div class="row q-gutter-md">
           <q-input
             class="col-grow"
-            v-model="tags.player2"
+            v-model.trim="tags.player2"
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
@@ -481,7 +477,19 @@
         </template>
 
         <template v-slot:selected>
-          <Result :result="result" />
+          <q-item-section avatar>
+            <Result :result="result" />
+          </q-item-section>
+          <q-item-section v-if="result">
+            <q-item-label>{{
+              $t("result." + result.type, {
+                player: result.winner
+                  ? tags["player" + result.winner] ||
+                    $t("Player" + result.winner)
+                  : "",
+              })
+            }}</q-item-label>
+          </q-item-section>
         </template>
 
         <template v-slot:option="scope">
@@ -493,11 +501,10 @@
               <q-item-section>
                 <q-item-label>{{
                   $t("result." + scope.opt.label.type, {
-                    player:
-                      tags["player" + scope.opt.label.winner] ||
-                      (scope.opt.label.winner === 1
-                        ? $t("White")
-                        : $t("Black")),
+                    player: scope.opt.label.winner
+                      ? tags["player" + scope.opt.label.winner] ||
+                        $t("Player" + scope.opt.label.winner)
+                      : "",
                   })
                 }}</q-item-label>
               </q-item-section>
@@ -531,7 +538,7 @@
 
     <q-input
       v-show="isVisible('site')"
-      v-model="tags.site"
+      v-model.trim="tags.site"
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
@@ -545,7 +552,7 @@
 
     <q-input
       v-show="isVisible('event')"
-      v-model="tags.event"
+      v-model.trim="tags.event"
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
@@ -618,7 +625,6 @@ export default {
       proxyTime: null,
       showDatePicker: false,
       showTimePicker: false,
-      showPieceCounts: false,
       separatePieceCounts: false,
       openings,
       pieceCountTags: ["caps", "flats", "caps1", "flats1", "caps2", "flats2"],
@@ -657,7 +663,7 @@ export default {
       if (this.hasErrors()) {
         return false;
       }
-      this.name = (this.name || "").trim();
+      this.name = this.name || "";
       if (!this.game || this.game.name !== this.name) {
         if (!this.name) {
           this.name = this.generatedName;
@@ -709,9 +715,6 @@ export default {
             ? this.game.tag(key)
             : null) || null;
       });
-      this.showPieceCounts = this.pieceCountTags.find(
-        (tag) => !!this.tags[tag]
-      );
       this.separatePieceCounts =
         this.tags.caps1 !== this.tags.caps2 ||
         this.tags.flats1 !== this.tags.flats2;
