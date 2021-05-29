@@ -94,24 +94,20 @@ export default class GameState {
     this.squares.forEach((row) => {
       row.forEach((square) => {
         if (!square.static.edges.N) {
-          square.static.neighbors.N = this.squares[square.static.y + 1][
-            square.static.x
-          ];
+          square.static.neighbors.N =
+            this.squares[square.static.y + 1][square.static.x];
         }
         if (!square.static.edges.S) {
-          square.static.neighbors.S = this.squares[square.static.y - 1][
-            square.static.x
-          ];
+          square.static.neighbors.S =
+            this.squares[square.static.y - 1][square.static.x];
         }
         if (!square.static.edges.E) {
-          square.static.neighbors.E = this.squares[square.static.y][
-            square.static.x + 1
-          ];
+          square.static.neighbors.E =
+            this.squares[square.static.y][square.static.x + 1];
         }
         if (!square.static.edges.W) {
-          square.static.neighbors.W = this.squares[square.static.y][
-            square.static.x - 1
-          ];
+          square.static.neighbors.W =
+            this.squares[square.static.y][square.static.x - 1];
         }
         Object.freeze(square.static);
       });
@@ -198,7 +194,7 @@ export default class GameState {
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
-      if (flatten) {
+      if (!piece.square && flatten) {
         piece.isStanding = false;
       }
     }
@@ -235,9 +231,8 @@ export default class GameState {
     if (!(type in this.game.pieceCounts[1])) {
       type = type === "C" ? "cap" : "flat";
     }
-    const piece = this.pieces.all[color][type][
-      this.pieces.played[color][type].length
-    ];
+    const piece =
+      this.pieces.all[color][type][this.pieces.played[color][type].length];
     if (piece) {
       piece.isStanding = isStanding;
       this.pieces.played[color][type].push(piece);

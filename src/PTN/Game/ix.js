@@ -24,9 +24,8 @@ export default class GameIX {
 
         if (this.state.selected.moveset.length > 1) {
           // Direction is defined
-          const prevSquare = this.state.selected.squares[
-            this.state.selected.squares.length - 2
-          ];
+          const prevSquare =
+            this.state.selected.squares[this.state.selected.squares.length - 2];
           const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
             Ply.getDirection([
               currentSquare.static.x - prevSquare.static.x,
@@ -104,9 +103,10 @@ export default class GameIX {
       type = "flat";
     }
     const color = this.state.color;
-    const piece = this.state.pieces.all[color][type][
-      this.state.pieces.played[color][type].length
-    ];
+    const piece =
+      this.state.pieces.all[color][type][
+        this.state.pieces.played[color][type].length
+      ];
     if (!piece) {
       return false;
     }
@@ -278,9 +278,8 @@ export default class GameIX {
         } else {
           // Drop all
           this.state.deselectAllPieces();
-          last(
-            this.state.selected.moveset
-          ).count = this.state.selected.initialCount;
+          last(this.state.selected.moveset).count =
+            this.state.selected.initialCount;
         }
       } else {
         this.state.deselectPiece();
@@ -348,9 +347,8 @@ export default class GameIX {
 
   cancelMove(flatten = false) {
     if (this.state.selected.moveset.length > 1) {
-      last(
-        this.state.selected.moveset
-      ).count = this.state.selected.initialCount;
+      last(this.state.selected.moveset).count =
+        this.state.selected.initialCount;
       this._undoMoveset(this.state.selected.moveset, this.state.color);
     }
     this.state.deselectAllPieces(flatten);

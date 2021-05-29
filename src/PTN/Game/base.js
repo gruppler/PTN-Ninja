@@ -27,28 +27,24 @@ export const sample = (tags) => {
   return defaults(
     {
       5: {
-        tps:
-          "x2,21S,x2/x,2S,21S,1S,x/12S,12S,x,12S,12S/x,1S,21S,2S,x/x2,21S,x2 1 15",
+        tps: "x2,21S,x2/x,2S,21S,1S,x/12S,12S,x,12S,12S/x,1S,21S,2S,x/x2,21S,x2 1 15",
         caps: 2,
         flats: 10,
       },
       6: {
-        tps:
-          "21S,1S,x2,2S,12S/1S,21S,1S,2S,12S,2S/x,1S,21S,12S,2S,x/x,2S,12S,21S,1S,x/2S,12S,2S,1S,21S,1S/12S,2S,x2,1S,21S 1 27",
+        tps: "21S,1S,x2,2S,12S/1S,21S,1S,2S,12S,2S/x,1S,21S,12S,2S,x/x,2S,12S,21S,1S,x/2S,12S,2S,1S,21S,1S/12S,2S,x2,1S,21S 1 27",
         caps: 2,
         flats: 20,
       },
       7: {
-        tps:
-          "21S,1S,x3,2S,12S/1S,21S,1S,x,2S,12S,2S/x,1S,21S,21S,12S,2S,x/x2,12S,x,12S,x2/x,2S,12S,21S,21S,1S,x/2S,12S,2S,x,1S,21S,1S/12S,2S,x3,1S,21S 1 33",
+        tps: "21S,1S,x3,2S,12S/1S,21S,1S,x,2S,12S,2S/x,1S,21S,21S,12S,2S,x/x2,12S,x,12S,x2/x,2S,12S,21S,21S,1S,x/2S,12S,2S,x,1S,21S,1S/12S,2S,x3,1S,21S 1 33",
         caps1: 2,
         caps2: 3,
         flats1: 25,
         flats2: 24,
       },
       8: {
-        tps:
-          "21S,1S,x4,2S,12S/1S,21S,1S,x2,2S,12S,2S/x,1S,21S,1S,2S,12S,2S,x/x2,1S,21S,12S,2S,x2/x2,2S,12S,21S,1S,x2/x,2S,12S,2S,1S,21S,1S,x/2S,12S,2S,x2,1S,21S,1S/12S,2S,x4,1S,21S 1 37",
+        tps: "21S,1S,x4,2S,12S/1S,21S,1S,x2,2S,12S,2S/x,1S,21S,1S,2S,12S,2S,x/x2,1S,21S,12S,2S,x2/x2,2S,12S,21S,1S,x2/x,2S,12S,2S,1S,21S,1S,x/2S,12S,2S,x2,1S,21S,1S/12S,2S,x4,1S,21S 1 37",
         caps: 4,
         flats: 28,
       },

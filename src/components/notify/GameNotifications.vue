@@ -25,10 +25,8 @@ export default {
           const winner = result.winner || ply.player;
           alerts.push({
             message: this.$t("result." + result.type, {
-              player: this.game.tag(
-                "player" + winner,
-                this.$t(winner === 1 ? "White" : "Black")
-              ),
+              player:
+                this.game.tag("player" + winner) || this.$t("Player" + winner),
             }),
             player: winner,
           });
