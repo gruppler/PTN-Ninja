@@ -60,12 +60,15 @@ export default class GameComments {
       }
       this._updatePTN(true);
       this.board.dirtyComment(type, plyID);
+      this.board.updateCommentsOutput();
     }
   }
 
   removePlyComments(plyID) {
     if (this.notes[plyID]) {
       this.notes = omit(this.notes, plyID);
+      this.board.dirtyComment("notes", plyID);
+      this.board.updateCommentsOutput();
     }
   }
 

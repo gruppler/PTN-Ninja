@@ -83,20 +83,7 @@
           <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <q-btn-group spread stretch flat unelevated>
-            <q-btn
-              @click="undo"
-              icon="undo"
-              :title="$t('Undo')"
-              :disabled="isEditingTPS || !canUndo"
-            />
-            <q-btn
-              @click="redo"
-              icon="redo"
-              :title="$t('Redo')"
-              :disabled="isEditingTPS || !canRedo"
-            />
-          </q-btn-group>
+          <UndoButtons spread stretch flat unelevated />
           <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
@@ -196,6 +183,7 @@ import NoteNotifications from "../components/notify/NoteNotifications";
 import PlayControls from "../components/controls/PlayControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
+import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
@@ -224,6 +212,7 @@ export default {
     PlayControls,
     Scrubber,
     PTNTools,
+    UndoButtons,
     EvalButtons,
     BoardToggles,
     ShareButton,
@@ -248,12 +237,6 @@ export default {
     },
     isLocal() {
       return this.$game ? this.$game.isLocal : false;
-    },
-    canUndo() {
-      return this.$game ? this.$game.canUndo : false;
-    },
-    canRedo() {
-      return this.$game ? this.$game.canRedo : false;
     },
     showPTN: {
       get() {

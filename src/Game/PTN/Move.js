@@ -74,8 +74,8 @@ export default class Move {
     const oldPly = this.plies[index] || null;
     this.plies[index] = ply;
     this.game.board.dirtyMove(this.id);
-    if (ply.id || (oldPly && oldPly.id)) {
-      this.game.board.dirtyPly(ply.id || oldPly.id);
+    if ((ply && ply.id) || (oldPly && oldPly.id)) {
+      this.game.board.dirtyPly(ply ? ply.id : oldPly.id);
     }
     if (!ply) {
       if (index === 1 || this.plies.length === 1) {

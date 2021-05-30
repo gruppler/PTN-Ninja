@@ -333,6 +333,7 @@ export default class GameMutations {
             : this.plies.length,
       });
     }
+    this.board.dirtyPly(ply.id);
     if (replaceCurrent && !this.board.plyIsDone && this.board.prevPly) {
       this.board._setPly(this.board.prevPly.id, true);
     } else if (!replaceCurrent && this.board.plyIsDone && this.board.nextPly) {
@@ -415,7 +416,6 @@ export default class GameMutations {
             this.board.goToPly(equalPly.id, true);
           }
         }
-        this.board.updatePTNOutput();
         return this.board.updatePositionOutput();
       }
 
@@ -504,6 +504,8 @@ export default class GameMutations {
       }
 
       this._updatePTN();
+      this.board.updatePTNOutput();
+      this.board.updatePositionOutput();
     });
   }
 

@@ -16,6 +16,7 @@ import {
   flatten,
   isEmpty,
   isEqual,
+  isFunction,
   isString,
   map,
   pick,
@@ -95,7 +96,10 @@ export const isDefaultName = (name) => {
 };
 
 export default class GameBase {
-  constructor(notation, params) {
+  constructor(notation, params, onInit) {
+    if (isFunction(onInit)) {
+      this.onInit = onInit;
+    }
     this.init(notation, params);
   }
 
@@ -255,7 +259,7 @@ export default class GameBase {
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
     Object.freeze(this.pieceCounts);
     this.updateConfig();
-    this.board = new Board(this);
+    this.board = new Board(this, null, this.board ? this.board.output : null);
 
     // Parse BODY
     if (notation) {
@@ -410,8 +414,15 @@ export default class GameBase {
       this.parseJSONMoves(params.moves);
     }
 
+    if (!this.moves[0]) {
+      this.moves[0] = new Move({
+        game: this,
+        id: 0,
+        index: 0,
+      });
+    }
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this, branch);
+      this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this);
     }
 
     this._updatePTN();
@@ -444,6 +455,10 @@ export default class GameBase {
       }
     } else if (this.board.plies.length) {
       this.board.plyID = 0;
+    }
+
+    if (this.onInit) {
+      this.onInit(this);
     }
   }
 
