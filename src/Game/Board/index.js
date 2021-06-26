@@ -349,6 +349,8 @@ export default class Board extends Aggregation(
 
   updatePTNOutput() {
     const output = { ...this.output.ptn };
+    let allPlies = output.allPlies.concat();
+    let allMoves = output.allMoves.concat();
 
     map(this.dirty.ptn.plies, (isDirty, plyID) => {
       if (isDirty) {
@@ -356,11 +358,11 @@ export default class Board extends Aggregation(
         let ply = this.game.plies[plyID];
         if (ply) {
           ply = ply.output;
-          output.allPlies[plyID] = ply;
+          allPlies[plyID] = ply;
           this.dirty.ptn.moves[ply.move] = true;
         } else {
           delete this.dirty.ptn.plies[plyID];
-          output.allPlies = omit(this.output.allPlies, plyID);
+          allPlies = omit(allPlies, plyID);
         }
       }
     });
@@ -369,14 +371,16 @@ export default class Board extends Aggregation(
         this.dirty.ptn.moves[moveID] = false;
         let move = this.game.moves[moveID];
         if (move) {
-          move = move.output(output.allPlies);
-          output.allMoves[moveID] = move;
+          move = move.output(allPlies);
+          allMoves[moveID] = move;
         } else {
-          output.allMoves = omit(this.output.allMoves, moveID);
+          allMoves = omit(allMoves, moveID);
         }
       }
     });
 
+    output.allPlies = allPlies;
+    output.allMoves = allMoves;
     output.branches = zipObject(
       Object.keys(this.game.branches),
       Object.values(this.game.branches).map((ply) => output.allPlies[ply.id])
