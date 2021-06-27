@@ -8,7 +8,7 @@ export default class GameUndo {
   _applyPatch(patch, state) {
     const result = diff.patch_apply(patch, this.ptn);
     if (result && result.length) {
-      this.init(result[0], { ...this, state });
+      this.init(result[0], { ...this.params, state });
     }
   }
 

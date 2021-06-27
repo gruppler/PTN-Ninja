@@ -55,6 +55,41 @@ export const SET_CURRENT_PTN = (state, ptn) => {
   Vue.prototype.$game.updatePTN(ptn);
 };
 
+export const SAVE_CURRENT_GAME = (state) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    state.ptn = game.board.output.ptn;
+    state.history = game.history;
+    state.historyIndex = game.historyIndex;
+
+    state.list[0].ptn = game.ptn;
+    state.list[0].state = cloneDeep(game.minState);
+    state.list[0].history = game.history.concat();
+    state.list[0].historyIndex = game.historyIndex;
+  }
+};
+
+export const SAVE_CURRENT_GAME_STATE = (state) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    state.list[0].state = cloneDeep(game.minState);
+  }
+};
+
+export const SAVE_UNDO_HISTORY = (state) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    state.list[0].history = game.history.concat();
+  }
+};
+
+export const SAVE_UNDO_INDEX = (state) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    state.list[0].historyIndex = game.historyIndex;
+  }
+};
+
 export const SAVE_PTN = (state, ptn) => {
   state.list[0].ptn = ptn;
 };
@@ -165,29 +200,6 @@ export const TRIM_TO_PLY = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.trimToPly();
-  }
-};
-
-export const SAVE_CURRENT_GAME_STATE = (state) => {
-  const game = Vue.prototype.$game;
-  if (game) {
-    state.list[0].state = cloneDeep(game.minState);
-  }
-};
-
-export const SAVE_UNDO_HISTORY = (state) => {
-  const game = Vue.prototype.$game;
-  if (game) {
-    state.list[0].historyIndex = game.historyIndex;
-    state.list[0].history = game.history.concat();
-    state.list[0].state = cloneDeep(game.minState);
-  }
-};
-
-export const SAVE_UNDO_INDEX = (state) => {
-  const game = Vue.prototype.$game;
-  if (game) {
-    state.list[0].historyIndex = game.historyIndex;
   }
 };
 

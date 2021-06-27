@@ -103,6 +103,18 @@ export default class GameBase {
     this.init(notation, params);
   }
 
+  get params() {
+    const params = pick(this, [
+      "name",
+      "state",
+      "config",
+      "history",
+      "historyIndex",
+    ]);
+    params.state = this.minState;
+    return params;
+  }
+
   init(
     notation,
     params = {
@@ -420,9 +432,11 @@ export default class GameBase {
         id: 0,
         index: 0,
       });
+      this.board.dirtyMove(0);
     }
     if (!this.moves[0].linenum) {
       this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this);
+      this.board.dirtyMove(0);
     }
 
     this._updatePTN();
@@ -576,7 +590,7 @@ export default class GameBase {
           "flats2",
         ].find((tag) => tag in tags && tags[tag] !== this.tag(tag))
       ) {
-        this.init(this.ptn, { ...this, state: null });
+        this.init(this.ptn, { ...this.params, state: null });
       } else {
         this.board.updateTagsOutput();
       }
@@ -663,7 +677,7 @@ export default class GameBase {
   }
 
   updatePTN(ptn, recordChange = true) {
-    const update = () => this.init(ptn, { ...this, state: this.minState });
+    const update = () => this.init(ptn, this.params);
     if (recordChange) {
       this.recordChange(update);
     } else {

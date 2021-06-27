@@ -7,9 +7,9 @@ import Tag from "./PTN/Tag";
 import { escapeRegExp, isArray } from "lodash";
 
 export default class GameMutations {
-  replacePTN(ptn, state) {
+  replacePTN(ptn, state = this.minState) {
     this.recordChange(() => {
-      this.init(ptn, { ...this, state: state || this.minState });
+      this.init(ptn, { ...this.params, state });
     });
   }
 
@@ -133,7 +133,7 @@ export default class GameMutations {
     this.board._setPly(newPly.id, false);
 
     this._updatePTN();
-    this.init(this.ptn, { ...this, state: null });
+    this.init(this.ptn, { ...this.params, state: null });
     return true;
   }
 
@@ -145,13 +145,14 @@ export default class GameMutations {
   }
 
   _trimToBoard() {
-    this.tags.tps = new Tag(false, "tps", this.board.tps);
-    this.branches = {};
-    this.moves = [];
-    this.plies = [];
-    this.chatlog = {};
-    this._updatePTN();
-    this.init(this.ptn, { ...this, state: null });
+    this.init(this.headerText(), {
+      ...this.params,
+      state: null,
+      tags: {
+        ...this.tags,
+        tps: new Tag(false, "tps", this.board.tps),
+      },
+    });
   }
 
   trimToBoard() {
@@ -167,7 +168,7 @@ export default class GameMutations {
     }
     this.recordChange(() => {
       this.init(this.toString(false), {
-        ...this,
+        ...this.params,
         state: { ...this.minState, targetBranch: "" },
       });
     });
@@ -313,7 +314,7 @@ export default class GameMutations {
       mutate();
     }
 
-    this.init(this.ptn, { ...this, state: this.minState });
+    this.init(this.ptn, this.params);
     return success;
   }
 

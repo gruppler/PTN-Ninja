@@ -278,19 +278,20 @@ export const SET_CURRENT_PTN = function ({ commit, dispatch }, ptn) {
   dispatch("SAVE_CURRENT_GAME");
 };
 
-export const SAVE_CURRENT_GAME = function ({ dispatch, state }) {
+export const SAVE_CURRENT_GAME = function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    dispatch("SAVE_PTN", game.ptn);
-    dispatch("SAVE_CURRENT_GAME_STATE");
+    LocalStorage.set("ptn-" + game.name, game.ptn);
+    LocalStorage.set("state-" + game.name, game.minState);
+    LocalStorage.set("history-" + game.name, game.history);
+    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    commit("SAVE_CURRENT_GAME");
   }
 };
 
 export const SAVE_CURRENT_GAME_STATE = debounce(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("state-" + game.name, game.minState);
     commit("SAVE_CURRENT_GAME_STATE");
   }
