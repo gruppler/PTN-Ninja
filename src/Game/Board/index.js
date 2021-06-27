@@ -407,24 +407,27 @@ export default class Board extends Aggregation(
   }
 
   updateCommentsOutput() {
-    return map(this.dirty.comments, (log, type) => {
-      map(log, (isDirty, plyID) => {
+    const output = { ...this.output.comments };
+
+    forEach(this.dirty.comments, (log, type) => {
+      let logOutput = { ...output[type] };
+      forEach(log, (isDirty, plyID) => {
         if (isDirty) {
           this.dirty.comments[type][plyID] = false;
           let comments = this.game[type][plyID];
           if (comments && comments.length) {
             comments = comments.map((comment) => comment.output);
-            this.output.comments[type][plyID] = comments;
+            logOutput[plyID] = comments;
           } else {
             delete this.dirty.comments[type][plyID];
-            this.output.comments[type] = omit(
-              this.output.comments[type],
-              plyID
-            );
+            logOutput = omit(logOutput, plyID);
           }
         }
       });
+      output[type] = logOutput;
     });
+
+    return Object.assign(this.output.comments, output);
   }
 
   updatePTNBranchOutput() {

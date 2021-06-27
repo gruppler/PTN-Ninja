@@ -269,14 +269,14 @@ export default {
   },
   watch: {
     log() {
-      this.scroll(true);
+      this.$nextTick(() => this.scroll(true));
     },
     currentPlyID() {
       this.scroll(true);
     },
   },
   mounted() {
-    this.scroll();
+    this.$nextTick(() => this.scroll());
   },
 };
 </script>
