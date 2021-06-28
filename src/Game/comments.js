@@ -157,5 +157,7 @@ export default class GameComments {
     }
     this._updatePTN(true);
     this.board.dirtyPly(ply.id);
+    this.board.updatePTNOutput();
+    this.board.updatePositionOutput();
   }
 }
