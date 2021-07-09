@@ -95,23 +95,11 @@ const routes = [
         name: "edit",
         path: "/edit",
         component: () => import("../dialogs/EditPTN"),
-        beforeEnter: (to, from, next) => {
-          const game = Vue.prototype.$game;
-          if (game && game.isLocal) {
-            next();
-          }
-        },
       },
       {
         name: "embed",
         path: "/embed",
         component: () => import("../dialogs/EmbedConfig"),
-        beforeEnter: (to, from, next) => {
-          const game = Vue.prototype.$game;
-          if (game && game.isLocal) {
-            next();
-          }
-        },
       },
       // {
       //   name: "info-view",
