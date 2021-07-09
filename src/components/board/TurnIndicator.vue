@@ -7,7 +7,7 @@
       >
         <div class="content absolute-fit">
           <div class="name absolute-left q-px-sm">
-            {{ player1 }}
+            {{ hideNames ? "" : player1 }}
           </div>
           <div class="flats absolute-right q-px-sm">
             <span v-if="komi < 0 && counts[2]" class="komi-count">
@@ -29,7 +29,7 @@
             </span>
           </div>
           <div class="name q-mx-sm relative-position">
-            {{ player2 }}
+            {{ hideNames ? "" : player2 }}
           </div>
         </div>
       </div>
@@ -50,6 +50,9 @@
 <script>
 export default {
   name: "TurnIndicator",
+  props: {
+    hideNames: Boolean,
+  },
   data() {
     return {
       size: null,

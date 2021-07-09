@@ -239,7 +239,7 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
-import { cloneDeep } from "lodash";
+import { cloneDeep, once } from "lodash";
 
 export default {
   name: "EmbedConfig",
@@ -280,6 +280,11 @@ export default {
     },
   },
   methods: {
+    postMessage(action, value) {
+      if (this.$refs.preview) {
+        this.$refs.preview.contentWindow.postMessage({ action, value });
+      }
+    },
     reset() {
       this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
@@ -303,10 +308,32 @@ export default {
     },
   },
   watch: {
-    url(url) {
-      if (this.$refs.preview) {
-        this.$refs.preview.contentWindow.location.replace(url);
+    // url(url) {
+    //   if (this.$refs.preview) {
+    //     this.$refs.preview.contentWindow.location.replace(url);
+    //   }
+    // },
+    name(value) {
+      this.postMessage("SET_NAME", value);
+    },
+    "config.includeNames"(value) {
+      this.postMessage("SHOW_NAMES", value);
+    },
+    "config.state"(value) {
+      if (value) {
+        this.postMessage("GO_TO_PLY", {
+          ply: this.$game.board.plyIndex,
+          isDone: this.$game.board.plyIsDone,
+        });
+      } else {
+        this.postMessage("FIRST");
       }
+    },
+    "config.ui": {
+      handler(value) {
+        this.postMessage("SET_UI", value);
+      },
+      deep: true,
     },
     config: {
       handler(value) {
@@ -317,7 +344,22 @@ export default {
   },
   mounted() {
     this.name = this.gameName;
-    this.initialURL = this.url;
+    this.initialURL = this.$store.getters["ui/url"](this.$game, {
+      origin: true,
+      name: this.name,
+      names: true,
+      state: this.config.state,
+      ui: this.config.ui,
+    });
+    if (!this.config.includeNames) {
+      const hideNames = () => {
+        this.postMessage("SHOW_NAMES", false);
+        this.$refs.preview.contentWindow.removeEventListener("load", hideNames);
+      };
+      this.$nextTick(() => {
+        this.$refs.preview.contentWindow.addEventListener("load", hideNames);
+      });
+    }
   },
 };
 </script>
