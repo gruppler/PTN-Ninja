@@ -316,6 +316,9 @@ export default {
     name(value) {
       this.postMessage("SET_NAME", value);
     },
+    "config.ui.themeID"(themeID) {
+      this.config.ui.theme = this.$store.getters["ui/theme"](themeID);
+    },
     "config.includeNames"(value) {
       this.postMessage("SHOW_NAMES", value);
     },

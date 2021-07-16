@@ -125,7 +125,7 @@ import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, forEach } from "lodash";
+import { defaults, forEach, isEqual } from "lodash";
 
 export default {
   components: {
@@ -261,7 +261,9 @@ export default {
   created() {
     this.$store.commit("ui/SET_EMBED_GAME");
     forEach(this.state, (value, key) => {
-      this.$store.commit("ui/SET_UI", [key, value]);
+      if (!isEqual(value, this.$store.state[key])) {
+        this.$store.commit("ui/SET_UI", [key, value]);
+      }
     });
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
