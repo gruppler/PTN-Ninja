@@ -7,9 +7,19 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org
 - Intuitive, with a minimal UI that is enjoyable to use.
 - Responsive, with a fluid design that works as well on a phone as it does in full-screen on a desktop.
 
+## Prerequisites
+- Quasar: https://quasar.dev/quasar-cli/installation
+- Firebase: https://firebase.google.com/docs/emulator-suite/install_and_configure
+
 ## Install the dependencies
 ```bash
 yarn
+pushd functions && npm install; popd
+```
+
+### Sync the TPS-Ninja submodule
+```bash
+git submodule init && git submodule sync && git submodule update
 ```
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
