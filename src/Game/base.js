@@ -7,7 +7,7 @@ import Ply from "./PTN/Ply";
 import Result from "./PTN/Result";
 import Tag from "./PTN/Tag";
 
-import Board from "./board";
+import Board from "./Board";
 
 import {
   cloneDeep,
