@@ -30,60 +30,46 @@ exports.accountcleanup = functions.pubsub
     const MAX_CONCURRENT = 5;
     // Fetch all user details.
     const inactiveUsers = await getInactiveUsers();
+    console.log("Inactive Users:", inactiveUsers.length);
     await asyncPool(MAX_CONCURRENT, inactiveUsers, deleteInactiveUser);
-    console.log("User cleanup finished");
   });
 
-function deleteInactiveUser(inactiveUsers) {
-  if (inactiveUsers.length > 0) {
-    const userToDelete = inactiveUsers.pop();
-    return admin
+async function deleteInactiveUser(user) {
+  let games;
+  try {
+    games = await admin
       .firestore()
       .collection("games")
-      .where("config.players", "array-contains", userToDelete.uid)
-      .get()
-      .then((games) => {
-        if (games.size === 0) {
-          // Delete the inactive user.
-          return admin
-            .auth()
-            .deleteUser(userToDelete.uid)
-            .then(() => {
-              return console.log(
-                "Deleted user account",
-                userToDelete.uid,
-                "because of inactivity"
-              );
-            })
-            .catch((error) => {
-              return console.error(
-                "Deletion of inactive user account",
-                userToDelete.uid,
-                "failed:",
-                error
-              );
-            });
-        }
-      })
-      .catch((error) => {
-        return console.error(
-          `Checking games for user ${userToDelete.uid} failed:`,
-          error
-        );
-      });
-  } else {
-    return null;
+      .where("config.players", "array-contains", user.uid)
+      .get();
+  } catch (error) {
+    return console.error(`Checking games for user ${user.uid} failed:`, error);
+  }
+
+  if (games && games.size === 0) {
+    // Delete the inactive user if they have zero games
+    try {
+      await admin.auth().deleteUser(user.uid);
+      console.log(
+        `Deleted user account ${user.uid} because of inactivity (${user.metadata.lastRefreshTime})`
+      );
+      return user;
+    } catch (error) {
+      return console.error(
+        `Deletion of inactive user account ${user.uid} failed:`,
+        error
+      );
+    }
   }
 }
 
 async function getInactiveUsers(users = [], nextPageToken) {
+  const LIMIT = Date.now() - 21 * 864e5;
   const result = await admin.auth().listUsers(1000, nextPageToken);
   // Find users that have not signed in in the last 30 days.
   const inactiveUsers = result.users.filter((user) => {
     return (
-      !user.emailVerified &&
-      Date.parse(user.metadata.lastSignInTime) <
-        Date.now() - 21 * 24 * 60 * 60 * 1000
+      !user.emailVerified && Date.parse(user.metadata.lastRefreshTime) < LIMIT
     );
   });
 
