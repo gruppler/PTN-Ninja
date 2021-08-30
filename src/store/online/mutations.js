@@ -10,13 +10,9 @@ export const SET_USER = (state, user) => {
     state.user = null;
     return;
   }
-  state.user = pick(user, [
-    "uid",
-    "email",
-    "emailVerified",
-    "displayName",
-    "isAnonymous",
-  ]);
+  state.user = Object.freeze(
+    pick(user, ["uid", "email", "emailVerified", "displayName", "isAnonymous"])
+  );
   state.playerGames = {};
   state.privateGames = {};
 };

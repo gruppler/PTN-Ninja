@@ -42,8 +42,9 @@ export const INIT = ({ commit, dispatch, state }) => {
   });
 };
 
-export const ANONYMOUS = () => {
-  return auth.signInAnonymously();
+export const ANONYMOUS = async ({ commit }) => {
+  await auth.signInAnonymously();
+  return commit("SET_USER", auth.currentUser);
 };
 
 export const CHECK_USERNAME = async (context, name) => {
@@ -80,7 +81,7 @@ export const LOG_IN = async (context, { email, password }) => {
 export const LOG_OUT = async ({ dispatch }) => {
   dispatch("UNLISTEN_CURRENT_GAME");
   await auth.signOut();
-  dispatch("ANONYMOUS");
+  return dispatch("ANONYMOUS");
 };
 
 export const UPDATE_ACCOUNT = async ({ commit }, { email, password }) => {
@@ -101,9 +102,26 @@ export const VERIFY = () => {
   return auth.currentUser.sendEmailVerification();
 };
 
-export const RELOAD_USER = async ({ commit }) => {
-  await auth.currentUser.reload();
-  commit("SET_USER", auth.currentUser);
+export const VERIFY_EMAIL = (context, oobCode) => {
+  return auth.applyActionCode(oobCode);
+};
+
+export const VERIFY_PASSWORD_RESET_CODE = (context, oobCode) => {
+  return auth.verifyPasswordResetCode(oobCode);
+};
+
+export const RECOVER_EMAIL = async ({ commit }, oobCode) => {
+  const oldEmail = auth.currentUser.email;
+  const email = (await auth.checkActionCode(oobCode)).data.email;
+  if (email !== oldEmail) {
+    await auth.currentUser.updateEmail(email);
+    commit("SET_USER", auth.currentUser);
+  }
+  return email;
+};
+
+export const SET_PASSWORD = (context, { oobCode, password }) => {
+  return auth.confirmPasswordReset(oobCode, password);
 };
 
 export const CREATE_GAME = async (

@@ -153,8 +153,8 @@ export const NOTIFY_HINT = (context, hint) => {
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
-    Vue.nextTick(() => {
-      action();
+    Vue.nextTick(async () => {
+      await action();
       Vue.nextTick(() => {
         commit("SET_UI", ["animateBoard", true]);
       });

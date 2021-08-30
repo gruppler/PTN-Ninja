@@ -32,7 +32,7 @@
           key="password"
           :type="showPassword ? 'text' : 'password'"
           autocomplete="new-password"
-          :label="$t('Password')"
+          :label="$t('New Password')"
           @keydown.enter.prevent="submit"
           hide-bottom-space
           filled
@@ -55,7 +55,7 @@
             @click="verify"
             :label="$t('Verify Email Address')"
             icon="email"
-            :loading="loadingVerify"
+            :loading="verifying"
             color="primary"
             class="full-width q-mb-md text-textDark"
           />
@@ -76,7 +76,8 @@
         <q-btn
           @click="logOut"
           :label="$t('Log Out')"
-          :loading="loadingLogOut"
+          :loading="loggingOut"
+          color="primary"
           flat
         />
         <div class="col-grow" />
@@ -84,7 +85,7 @@
         <q-btn
           @click="submit"
           :label="$t('OK')"
-          :loading="loadingSubmit"
+          :loading="submitting"
           color="primary"
           flat
         />
@@ -98,9 +99,9 @@ export default {
   name: "Account",
   data() {
     return {
-      loadingLogOut: false,
-      loadingVerify: false,
-      loadingSubmit: false,
+      loggingOut: false,
+      verifying: false,
+      submitting: false,
       error: "",
       success: "",
       playerName: "",
@@ -122,46 +123,43 @@ export default {
       this.$router.back();
     },
     async logOut() {
-      this.loadingLogOut = true;
+      this.loggingOut = true;
       try {
         await this.$store.dispatch("online/LOG_OUT");
-        this.loadingLogOut = false;
-        this.$nextTick(() => {
-          this.$router.replace({ name: "login" });
-        });
+        this.loggingOut = false;
       } catch (error) {
         this.error = error;
         console.error(error);
       }
-      this.loadingLogOut = false;
+      this.loggingOut = false;
     },
     verify() {
-      this.loadingVerify = true;
+      this.verifying = true;
       this.$store
         .dispatch("online/VERIFY")
         .then(() => {
-          this.loadingVerify = false;
+          this.verifying = false;
           this.success = "verifyEmailSent";
         })
         .catch((error) => {
-          this.loadingVerify = false;
+          this.verifying = false;
           this.error = error;
         });
     },
     submit() {
       if (this.email !== this.user.email || this.password) {
-        this.loadingSubmit = true;
+        this.submitting = true;
         this.$store
           .dispatch("online/UPDATE_ACCOUNT", {
             email: this.email,
             password: this.password,
           })
           .then(() => {
-            this.loadingSubmit = false;
+            this.submitting = false;
             this.close();
           })
           .catch((error) => {
-            this.loadingSubmit = false;
+            this.submitting = false;
             this.error = error;
             console.error(error);
           });
@@ -172,21 +170,20 @@ export default {
   },
   watch: {
     user(user) {
+      if (user && user.isAnonymous) {
+        return this.$router.replace({ name: "login" });
+      }
       this.email = user ? user.email : "";
     },
   },
   mounted() {
-    if (this.user && this.user.isAnonymous) {
-      return this.$router.replace({ name: "login" });
-    }
-    this.$store.dispatch("online/RELOAD_USER");
     this.email = this.user ? this.user.email : "";
     this.password = "";
     this.error = "";
     this.success = "";
-    this.loadingLogOut = false;
-    this.loadingVerify = false;
-    this.loadingSubmit = false;
+    this.loggingOut = false;
+    this.verifying = false;
+    this.submitting = false;
   },
 };
 </script>

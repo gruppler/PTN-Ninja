@@ -1,7 +1,7 @@
 <template>
   <div
     class="board-toggles q-gutter-sm"
-    :class="{ row: isPortrait, column: !isPortrait }"
+    :class="{ 'row reverse': isPortrait, column: !isPortrait }"
   >
     <FullscreenToggle
       v-if="$q.fullscreen.isCapable"
@@ -88,7 +88,7 @@
     <q-fab
       v-else
       @contextmenu.prevent="resetTransform"
-      :direction="isPortrait ? 'down' : 'right'"
+      :direction="isPortrait ? 'down' : 'left'"
       icon="rotate_180"
       :title="$t('Rotate/Flip')"
       class="dimmed-btn"

@@ -145,7 +145,7 @@ $radius: 0.35em;
 
 .turn-indicator {
   .player-names {
-    $fadeWidth: 10px;
+    $fadeWidth: 8px;
     text-align: left;
     height: 1.75em;
     line-height: 1.75;

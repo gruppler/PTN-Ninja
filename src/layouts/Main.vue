@@ -52,13 +52,13 @@
         >
           <Board ref="board" class="col-grow" />
         </div>
-        <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu @input="menuAction" @click.right.prevent="switchGame" />
-        </q-page-sticky>
-        <q-page-sticky position="top-left" :offset="[6, 6]">
+        <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles
             v-if="$route.name !== 'embed' && !isGamesTableShowing"
           />
+        </q-page-sticky>
+        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+          <Menu @input="menuAction" @click.right.prevent="switchGame" />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove style="margin-right: 65px" />

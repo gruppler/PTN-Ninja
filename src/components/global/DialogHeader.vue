@@ -7,10 +7,12 @@
     </q-item-section>
     <q-item-section>
       <q-item-label class="text-h6">
-        <slot />
+        <slot>
+          {{ title }}
+        </slot>
       </q-item-label>
     </q-item-section>
-    <q-item-section side>
+    <q-item-section v-if="!noCloseBtn" side>
       <q-btn v-close-popup icon="close" dense flat />
     </q-item-section>
   </q-item>
@@ -21,6 +23,8 @@ export default {
   name: "dialog-header",
   props: {
     icon: String,
+    title: String,
+    noCloseBtn: Boolean,
   },
 };
 </script>

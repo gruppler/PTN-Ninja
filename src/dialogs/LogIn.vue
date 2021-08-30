@@ -82,7 +82,6 @@
           content-class="q-mt-md"
         />
       </q-card-section>
-      <q-inner-loading :showing="loading" />
     </q-card>
 
     <template v-slot:footer>
@@ -93,6 +92,7 @@
           v-show="tab === 'login'"
           @click="resetPassword()"
           :label="$t('Reset Password')"
+          :loading="resetting"
           :disable="!email.trim().length"
           flat
         />
@@ -102,7 +102,8 @@
           v-show="tab === 'login'"
           @click="submit"
           :label="$t('Log In')"
-          :disable="!validateLogIn() || loading"
+          :loading="submitting"
+          :disable="!validateLogIn()"
           color="primary"
           flat
         />
@@ -110,7 +111,8 @@
           v-show="tab === 'register'"
           @click="submit"
           :label="$t('Register')"
-          :disable="!validateRegister() || loading"
+          :loading="submitting"
+          :disable="!validateRegister()"
           color="primary"
           flat
         />
@@ -133,7 +135,8 @@ export default {
       email: "",
       password: "",
       playerName: "",
-      loading: false,
+      resetting: false,
+      submitting: false,
       showPassword: false,
     };
   },
@@ -207,7 +210,7 @@ export default {
       if (!this.validateRegister()) {
         return;
       }
-      this.loading = true;
+      this.submitting = true;
       try {
         await this.$store.dispatch("online/REGISTER", {
           email: this.email,
@@ -221,7 +224,7 @@ export default {
       } catch (error) {
         this.showError(error);
       }
-      this.loading = false;
+      this.submitting = false;
     },
     logIn() {
       if (!this.validateLogIn()) {
@@ -230,7 +233,7 @@ export default {
 
       const logIn = async () => {
         this.showError();
-        this.loading = true;
+        this.submitting = true;
         try {
           await this.$store.dispatch("online/LOG_IN", {
             email: this.email,
@@ -242,7 +245,7 @@ export default {
         } catch (error) {
           this.showError(error);
         }
-        this.loading = false;
+        this.submitting = false;
       };
 
       if (Object.values(this.$store.state.online.privateGames).length) {
@@ -266,15 +269,15 @@ export default {
           title: this.$t("Confirm"),
           message: this.$t("confirm.resetPassword", { email: this.email }),
           success: () => {
-            this.loading = true;
+            this.resetting = true;
             this.$store
               .dispatch("online/RESET_PASSWORD", this.email)
               .then(() => {
-                this.loading = false;
+                this.resetting = false;
                 this.showSuccess("resetPasswordSent");
               })
               .catch((error) => {
-                this.loading = false;
+                this.resetting = false;
                 this.showError(error);
               });
           },

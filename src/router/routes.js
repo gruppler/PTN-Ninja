@@ -14,6 +14,11 @@ const routes = [
     props: true,
   },
   {
+    name: "auth",
+    path: "/auth",
+    component: () => import("pages/Auth"),
+  },
+  {
     name: "local",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {

@@ -92,6 +92,7 @@ export default {
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "New Game": "New Game",
+  "New Password": "New Password",
   "Next Branch": "Next Branch",
   "Next Branch End": "Next Branch End",
   "No Games": "Unable to find any games",
@@ -136,6 +137,7 @@ export default {
   Random: "Random",
   Rating1: "Rating 1",
   Rating2: "Rating 2",
+  "Recover Email": "Recover Email",
   Redo: "Redo",
   Register: "Register",
   Rename: "Rename",
@@ -312,8 +314,11 @@ export default {
   },
 
   success: {
-    copied: "Copied!",
     closedMultipleGames: "Closed 1 game | Closed {count} games",
+    copied: "Copied!",
+    emailRecovered: "Email address restored",
+    emailVerified: "Email address verified",
+    passwordChanged: "Password changed",
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
     themeRemoved: 'Removed theme "{name}"',

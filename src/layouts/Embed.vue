@@ -41,7 +41,7 @@
         >
           <Board ref="board" class="col-grow" />
         </div>
-        <q-page-sticky position="top-left" :offset="[6, 6]">
+        <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
