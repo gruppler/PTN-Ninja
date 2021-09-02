@@ -2,13 +2,28 @@
   <small-dialog
     :value="true"
     @before-hide="restore"
-    content-class="theme-config non-selectable"
+    :content-class="{ seethrough, 'theme-config non-selectable': true }"
     no-backdrop-dismiss
     v-on="$listeners"
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="color">{{ $t("Theme") }}</dialog-header>
+      <dialog-header icon="color" :title="$t('Theme')">
+        <template v-slot:buttons>
+          <q-btn
+            icon="visibility_off"
+            @mousedown="hide"
+            @mouseup="unhide"
+            @touchstart="hide"
+            @touchend="unhide"
+            @click.right.prevent.stop
+            v-touch-pan.mouse.preserveCursor.prevent="unhide"
+            v-ripple="false"
+            dense
+            flat
+          />
+        </template>
+      </dialog-header>
     </template>
 
     <q-list>
@@ -199,6 +214,7 @@ export default {
       initialThemeID: theme.id,
       initialTheme: cloneDeep(theme),
       palette: [],
+      seethrough: false,
       advanced: false,
       showImport: false,
       json: "",
@@ -235,6 +251,14 @@ export default {
     },
   },
   methods: {
+    hide() {
+      this.seethrough = true;
+    },
+    unhide(event) {
+      if (event.isFinal || !("isFinal" in event)) {
+        this.seethrough = false;
+      }
+    },
     getText(key) {
       return this.$t("theme." + key);
     },
@@ -361,8 +385,8 @@ export default {
 
 <style lang="scss">
 .theme-config {
-  .q-dialog__backdrop {
-    background: transparent;
+  &.seethrough {
+    opacity: 0;
   }
 }
 </style>
