@@ -32,6 +32,7 @@ module.exports = function(ctx) {
     },
 
     build: {
+      env: require("dotenv").config().parsed,
       scopeHoisting: true,
       vueRouterMode: "history",
       // vueCompiler: true,

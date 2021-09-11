@@ -9,7 +9,7 @@
       <dialog-header :icon="icon" :title="title" no-close-btn />
     </template>
 
-    <q-card flat>
+    <q-card style="min-height: 3em" flat>
       <q-card-section class="q-gutter-y-md">
         <q-input
           v-if="email || mode === 'recoverEmail'"
@@ -42,12 +42,7 @@
             />
           </template>
         </q-input>
-        <message-output
-          ref="errors"
-          :error="error"
-          :success="success"
-          style="min-height: 3em"
-        />
+        <message-output ref="errors" :error="error" :success="success" />
       </q-card-section>
       <q-inner-loading :showing="loading" />
     </q-card>

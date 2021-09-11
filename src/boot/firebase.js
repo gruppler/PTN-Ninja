@@ -1,10 +1,20 @@
-import config from "../../.firebase/config.js";
 import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
 import "firebase/functions";
 import "firebase/messaging";
 
+const config = {
+  apiKey: process.env.apiKey,
+  authDomain: process.env.authDomain,
+  databaseURL: process.env.databaseURL,
+  projectId: process.env.projectId,
+  storageBucket: process.env.storageBucket,
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId,
+  measurementId: process.env.measurementId,
+  vapidKey: process.env.vapidKey,
+};
 firebase.initializeApp(config);
 
 const auth = firebase.auth();
@@ -25,9 +35,8 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
 });
 
 if (process.env.DEV) {
-  // auth.useEmulator("http://localhost:9099");
-  db.useEmulator("localhost", 4999);
-  functions.useEmulator("localhost", 5001);
+  db.useEmulator(process.env.emulatorIP || "localhost", 4999);
+  functions.useEmulator(process.env.emulatorIP || "localhost", 5001);
   window.auth = auth;
   window.db = db;
   window.functions = functions;
