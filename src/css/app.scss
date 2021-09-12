@@ -29,6 +29,11 @@ html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
   src: url('./fonts/Source+Code+Pro_700_normal.woff');
 }
 
+
+.fg-inherit {
+  color: inherit !important;
+}
+
 .bg-bg {
   background: $bg !important;
   background: var(--q-color-bg) !important;

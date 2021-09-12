@@ -12,7 +12,7 @@
         </slot>
       </q-item-label>
     </q-item-section>
-    <q-item-section side top>
+    <q-item-section class="fg-inherit" side top>
       <div class="row reverse items-center q-gutter-sm">
         <q-btn v-close-popup v-if="!noCloseBtn" icon="close" dense flat />
         <slot name="buttons" />
