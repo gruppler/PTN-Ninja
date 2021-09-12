@@ -23,7 +23,7 @@ export default {
     };
 
     // Load theme
-    this.$store.commit("ui/SET_THEME", this.$store.state.ui.theme);
+    this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.themeID);
   },
 };
 </script>

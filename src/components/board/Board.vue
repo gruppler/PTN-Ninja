@@ -20,6 +20,8 @@
         'piece-shadows': $store.state.ui.pieceShadows,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         'is-game-end': position.isGameEnd,
+        scrubbing,
+        rotating,
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
@@ -104,6 +106,7 @@ export default {
       scale: 1,
       x: 0,
       y: 0,
+      rotating: false,
       prevBoardRotation: null,
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
@@ -118,6 +121,9 @@ export default {
     },
     transform() {
       return this.$store.state.ui.boardTransform;
+    },
+    scrubbing() {
+      return this.$store.state.ui.scrubbing;
     },
     cols() {
       return "abcdefgh".substr(0, this.config.size).split("");
@@ -288,7 +294,11 @@ export default {
       }
 
       if (event.isFirst) {
+        this.rotating = true;
         this.prevBoardRotation = { ...this.boardRotation };
+      }
+      if (event.isFinal) {
+        this.rotating = false;
       }
 
       let x = Math.max(
@@ -475,8 +485,16 @@ $radius: 0.35em;
   z-index: 0;
   transition: transform $generic-hover-transition;
 
-  body.non-selectable & {
+  &.rotating {
     transition: none !important;
+  }
+  &.scrubbing {
+    &,
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi {
+      transition: none !important;
+    }
   }
   &.no-animations {
     &,

@@ -91,6 +91,7 @@ defaults.pngConfig = {
 
 let state = {
   embed: Platform.within.iframe,
+  scrubbing: false,
   defaults,
   ...defaults,
 };

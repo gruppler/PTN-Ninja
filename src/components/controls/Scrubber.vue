@@ -8,6 +8,7 @@
     :value="position"
     :disable="!maxPosition"
     @input="scrub"
+    @pan="pan"
     :dark="false"
     dense
   />
@@ -55,6 +56,9 @@ export default {
           });
         }
       });
+    },
+    pan(phase) {
+      this.$store.commit("ui/SET_SCRUBBING", phase);
     },
   },
   created() {
