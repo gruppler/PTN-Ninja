@@ -212,14 +212,19 @@ export default {
 
   theme: {
     // Names
+    aer: "Aer",
+    aether: "Aether",
+    aqua: "Aqua",
     classic: "Classic",
     discord: "Discord",
     festive: "Festive",
     fresh: "Fresh",
+    ignis: "Ignis",
     neon: "Neon",
     print: "Print",
     retro: "Retro",
     stealth: "Stealth",
+    terra: "Terra",
     zen: "Zen",
 
     // Board Styles
