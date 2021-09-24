@@ -201,8 +201,10 @@ export default class BoardNavigation {
       number: targetPly.move.number,
     };
 
+    const boardPly = this.game.plies[this.boardPly.id];
+
     // Load a board state?
-    if (!this.ply.isInBranch(target.branch)) {
+    if (!boardPly.isInBranch(target.branch)) {
       let parentPly = this.game.branches[target.branch];
       while (parentPly && !(parentPly.id in this.game.boardStates)) {
         // Find the closest branch that has a saved board state

@@ -119,6 +119,7 @@ export default class Move {
       );
       if (original && original.plies[index]) {
         original.plies[index].addBranch(ply);
+        this.game.board.dirtyPly(original.plies[index].id);
 
         // If first ply is placeholder, save reference to its original
         if (this.ply1.isNop) {

@@ -78,14 +78,14 @@ export default {
         : null;
     },
     index() {
-      return this.ptn.allMoves.findIndex((move) => move === this.move);
+      return this.ptn.sortedMoves.findIndex((move) => move === this.move);
     },
     prevMove() {
-      const moves = this.ptn.allMoves;
+      const moves = this.ptn.sortedMoves;
       return this.index > 0 ? moves[this.index - 1] : null;
     },
     nextMove() {
-      const moves = this.ptn.allMoves;
+      const moves = this.ptn.sortedMoves;
       return this.index < moves.length - 1 ? moves[this.index + 1] : null;
     },
     isCurrentMove() {
@@ -111,6 +111,7 @@ export default {
       return (
         this.linebreak &&
         (!this.move.branch ||
+          // Next move's branch originates from root
           !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
     },

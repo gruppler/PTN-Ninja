@@ -36,7 +36,7 @@ export default {
     },
     moves() {
       return this.$store.state.ui.showAllBranches
-        ? this.ptn.allMoves
+        ? this.ptn.sortedMoves
         : this.ptn.branchMoves;
     },
   },

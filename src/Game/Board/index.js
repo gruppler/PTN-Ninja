@@ -72,6 +72,7 @@ export default class Board extends Aggregation(
       ptn: {
         allMoves: [],
         allPlies: [],
+        sortedMoves: [],
         branchMenu: {},
         branchMoves: {},
         branchPlies: {},
@@ -351,6 +352,7 @@ export default class Board extends Aggregation(
     const output = { ...this.output.ptn };
     let allPlies = output.allPlies.concat();
     let allMoves = output.allMoves.concat();
+    let sortedMoves;
 
     map(this.dirty.ptn.plies, (isDirty, plyID) => {
       if (isDirty) {
@@ -379,8 +381,11 @@ export default class Board extends Aggregation(
       }
     });
 
+    sortedMoves = this.game.movesSorted.map((move) => allMoves[move.id]);
+
     output.allPlies = allPlies;
     output.allMoves = allMoves;
+    output.sortedMoves = sortedMoves;
     output.branches = zipObject(
       Object.keys(this.game.branches),
       Object.values(this.game.branches).map((ply) => output.allPlies[ply.id])
