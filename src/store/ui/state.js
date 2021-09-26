@@ -86,6 +86,7 @@ defaults.pngConfig = {
   textSize: "md",
   includeNames: true,
   padding: true,
+  bgAlpha: 1,
   ...pick(defaults, pngUIOptions),
 };
 

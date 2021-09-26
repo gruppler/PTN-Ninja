@@ -66,6 +66,23 @@
         </q-item-section>
       </q-item>
 
+      <q-item>
+        <q-item-section>
+          <q-item-label>
+            {{ $t("Background Opacity") }}
+          </q-item-label>
+          <q-slider
+            v-model="config.bgAlpha"
+            :min="0"
+            :max="1"
+            :label-value="Math.round(config.bgAlpha * 100) + '%'"
+            :step="0.05"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Axis Labels") }}</q-item-label>

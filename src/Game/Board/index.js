@@ -719,6 +719,8 @@ export default class Board extends Aggregation(
       targetBranch: this.targetBranch,
       plyIndex: this.ply ? this.ply.index : 0,
       plyIsDone: this.plyIsDone,
+      tps: this.tps,
+      ply: this.ply ? this.ply.toString() : "",
     };
   }
 

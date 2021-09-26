@@ -185,6 +185,7 @@ export default class BoardNavigation {
       });
     });
     this.updateSquareConnections();
+    this.setRoads(this.findRoads());
   }
 
   goToPly(plyID, isDone) {

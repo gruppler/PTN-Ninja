@@ -1,4 +1,5 @@
 import { LocalStorage, Platform } from "quasar";
+import Game from "../../Game";
 
 const state = {
   board: null,
@@ -16,14 +17,22 @@ const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
 if (!Platform.within.iframe && LocalStorage.has("games")) {
-  state.list = LocalStorage.getItem("games").map((name) => ({
-    name,
-    ptn: load("ptn-" + name),
-    state: load("state-" + name),
-    config: load("config-" + name) || {},
-    history: load("history-" + name),
-    historyIndex: load("historyIndex-" + name),
-  }));
+  state.list = LocalStorage.getItem("games").map((name) => {
+    const ptn = load("ptn-" + name);
+    let state = load("state-" + name);
+    if (ptn && state && (!state.tps || !state.ply)) {
+      state = new Game(ptn, { state }).minState;
+      LocalStorage.set("state-" + name, state);
+    }
+    return {
+      name,
+      ptn,
+      state,
+      config: load("config-" + name) || {},
+      history: load("history-" + name),
+      historyIndex: load("historyIndex-" + name),
+    };
+  });
 }
 
 export default state;

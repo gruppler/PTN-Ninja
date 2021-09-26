@@ -7,6 +7,7 @@ export default {
   Action: "Action",
   "Animate Board": "Animate Board",
   "Axis Labels": "Axis Labels",
+  "Background Opacity": "Background Opacity",
   Backward: "Backward",
   "Backward Half-Step": "Backward Half-Step",
   Beginning: "Beginning",

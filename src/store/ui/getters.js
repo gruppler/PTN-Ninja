@@ -49,6 +49,9 @@ export const png_url = (state, getters) => (game) => {
   if (state.pngConfig.textSize !== "md") {
     params.push("textSize=" + state.pngConfig.textSize);
   }
+  if (state.pngConfig.bgAlpha !== 1) {
+    params.push("bgAlpha=" + state.pngConfig.bgAlpha);
+  }
 
   // UI toggles
   [

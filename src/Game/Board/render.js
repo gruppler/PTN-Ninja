@@ -1,5 +1,5 @@
 import { cloneDeep, isObject, isString } from "lodash";
-import { itoa } from "../PTN/Ply";
+import Ply, { itoa } from "../PTN/Ply";
 import { THEMES, computeMissing } from "../../themes";
 
 const pieceSizes = {
@@ -30,6 +30,7 @@ const defaults = {
   unplayedPieces: true,
   includeNames: true,
   padding: true,
+  bgAlpha: 1,
 };
 
 export default function render(board, options = {}) {
@@ -51,7 +52,12 @@ export default function render(board, options = {}) {
   theme = options.theme ? computeMissing(cloneDeep(options.theme)) : THEMES[0];
 
   let hlSquares = [];
-  if (board.plies.length) {
+  if (options.ply) {
+    const ply = new Ply(options.ply, {});
+    if (ply) {
+      hlSquares = ply.squares;
+    }
+  } else if (board.plies.length) {
     const ply = board.game.plies[board.boardPly.id];
     if (options.highlightSquares && ply) {
       hlSquares = ply.squares;
@@ -112,8 +118,10 @@ export default function render(board, options = {}) {
 
   const ctx = canvas.getContext("2d");
   ctx.font = fontSize + "px Roboto";
+  ctx.globalAlpha = options.bgAlpha;
   ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  ctx.globalAlpha = 1;
 
   // Header
   const flats = board.flats.concat();

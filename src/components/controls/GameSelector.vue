@@ -71,6 +71,9 @@
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         >
+          <q-item-section side>
+            <img :src="thumbnail(scope.opt)" :height="thumbnailHeight" />
+          </q-item-section>
           <q-item-section side v-if="hasOnlineGames">
             <q-icon
               :name="icon(scope.opt)"
@@ -109,10 +112,27 @@
 </template>
 
 <script>
+import Game from "../../Game";
 import { zipObject } from "lodash";
 
 export default {
   name: "GameSelector",
+  data() {
+    return {
+      thumbnails: {},
+      thumbnailHeight: 0,
+      thumbnailConfig: {
+        imageSize: "xs",
+        axisLabels: false,
+        turnIndicator: true,
+        highlightSquares: true,
+        pieceShadows: false,
+        includeNames: false,
+        padding: false,
+        bgAlpha: 0,
+      },
+    };
+  },
   computed: {
     config() {
       return this.$store.state.game.config;
@@ -122,6 +142,7 @@ export default {
         label: game.name,
         value: index,
         config: game.config,
+        state: game.state,
       }));
     },
     hasOnlineGames() {
@@ -132,7 +153,7 @@ export default {
       if (!this.config.isOnline || this.$q.screen.gt.sm) {
         return name;
       } else {
-        let player = this.onfig.player;
+        let player = this.config.player;
         let otherPlayer = player ? (player === 1 ? 2 : 1) : 0;
         if (!otherPlayer) {
           return name;
@@ -212,6 +233,49 @@ export default {
       } else {
         return "file";
       }
+    },
+    thumbnail(game) {
+      if (!game.state || !game.state.tps) {
+        return "";
+      }
+
+      // Existing render
+      const id = game.label;
+      const existing = this.thumbnails[id];
+      if (
+        existing &&
+        existing.tps === game.state.tps &&
+        existing.themeID === this.$store.state.ui.themeID
+      ) {
+        return existing.img;
+      }
+
+      // New render
+      const ply = game.state.ply;
+      const tps = game.state.tps;
+      const config = game.config;
+      game = new Game("", {
+        state: { ...game.state },
+        tags: { tps: game.state.tps },
+      });
+      const canvas = game.board.render({
+        ...this.thumbnailConfig,
+        ply,
+        flatCounts: config.disableFlatCounts
+          ? false
+          : this.$store.state.ui.flatCounts,
+        showRoads: config.disableShowRoads
+          ? false
+          : this.$store.state.ui.showRoads,
+        theme: this.$store.state.ui.theme,
+      });
+
+      if (!this.thumbnailHeight) {
+        this.thumbnailHeight = canvas.height / 2;
+      }
+      const img = canvas.toDataURL();
+      this.thumbnails[id] = { tps, img, themeID: this.$store.state.ui.themeID };
+      return img;
     },
     close(index) {
       this.$store.dispatch("game/REMOVE_GAME", index);
