@@ -435,7 +435,8 @@ export default class GameBase {
       this.board.dirtyMove(0);
     }
     if (!this.moves[0].linenum) {
-      this.moves[0].linenum = Linenum.parse(moveNumber + ". ", this);
+      this.moves[0].linenum = Linenum.parse(this.firstMoveNumber + ". ", this);
+      this.moves[0].plies.forEach((ply) => (ply.linenum = ply.move.linenum));
       this.board.dirtyMove(0);
     }
 
@@ -469,6 +470,7 @@ export default class GameBase {
       }
     } else if (this.board.plies.length) {
       this.board.plyID = 0;
+      this.board.last();
     }
 
     if (this.onInit) {

@@ -72,7 +72,7 @@ export const SAVE_CURRENT_GAME = (state) => {
 export const SAVE_CURRENT_GAME_STATE = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
-    state.list[0].state = cloneDeep(game.minState);
+    Vue.set(state.list[0], "state", cloneDeep(game.minState));
   }
 };
 
@@ -86,7 +86,7 @@ export const SAVE_UNDO_HISTORY = (state) => {
 export const SAVE_UNDO_INDEX = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
-    state.list[0].historyIndex = game.historyIndex;
+    Vue.set(state.list[0], "historyIndex", game.historyIndex);
   }
 };
 
