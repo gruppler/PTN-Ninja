@@ -71,21 +71,21 @@ export const fromDate = (date) => {
 
 export const dateFromDate = (date) => {
   return (
-    date.getFullYear() +
+    date.getUTCFullYear() +
     "." +
-    padStart(date.getMonth() + 1, 2, "0") +
+    padStart(date.getUTCMonth() + 1, 2, "0") +
     "." +
-    padStart(date.getDate(), 2, "0")
+    padStart(date.getUTCDate(), 2, "0")
   );
 };
 
 export const timeFromDate = (date) => {
   return (
-    padStart(date.getHours(), 2, "0") +
+    padStart(date.getUTCHours(), 2, "0") +
     ":" +
-    padStart(date.getMinutes(), 2, "0") +
+    padStart(date.getUTCMinutes(), 2, "0") +
     ":" +
-    padStart(date.getSeconds(), 2, "0")
+    padStart(date.getUTCSeconds(), 2, "0")
   );
 };
 
