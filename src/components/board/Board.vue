@@ -488,15 +488,8 @@ $radius: 0.35em;
   &.rotating {
     transition: none !important;
   }
-  &.scrubbing {
-    &,
-    .turn-indicator .player1,
-    .turn-indicator .player2,
-    .turn-indicator .komi {
-      transition: none !important;
-    }
-  }
-  &.no-animations {
+
+  &.no-animations, &.scrubbing {
     &,
     .piece,
     .stone,
