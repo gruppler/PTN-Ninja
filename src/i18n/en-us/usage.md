@@ -20,21 +20,10 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
-- **Swipe left** or **right-click** the Floating Action Button to switch to the previous game.
+- **Right-click** the Floating Action Button to switch to the previous game.
 :::
 
 When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number). If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
-
-### Playback
-
-PTN Ninja enables you to navigate the timeline of a game freely.
-
-:::
-- Use the Play/Pause button to automatically progress through the game.
-- Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
-- **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
-- **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
-:::
 
 ### Place a Stone
 
@@ -60,6 +49,26 @@ Moving a stone or stack of stones is fairly straightforward:
 - Then, **click** further squares to drop pieces.
   - Or, **right-click** a square to pick up dropped pieces, or drop the remaining stack if there are none.
 - To cancel the move, **click** the initial square.
+:::
+
+### Playback
+
+PTN Ninja enables you to navigate the timeline of a game freely.
+
+:::
+- Use the Play/Pause button to automatically progress through the game.
+- Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
+- **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
+- **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
+:::
+
+### Board Transformation
+
+PTN Ninja allows you to rotate and flip the orientation of the board. This does not affect the notation, so the axis labels change accordingly.
+
+:::
+- Use the Rotate and Flip buttons found next to the board, or hotkeys, to change the board orientation.
+- **Right-click** any of the Rotate/Flip buttons to reset the board orientation.
 :::
 
 Branches
