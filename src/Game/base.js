@@ -337,7 +337,7 @@ export default class GameBase {
             this.board.dirtyMove(move.id);
           }
           branch = item.branch;
-          moveNumber = item.number + 1;
+          moveNumber = item.number;
           ply = null;
         } else if (Result.test(notation)) {
           // Result
