@@ -327,12 +327,14 @@ export default function render(board, options = {}) {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = fontSize * 0.05;
     ctx.shadowBlur = fontSize * 0.1;
-    ctx.shadowColor = theme.secondaryDark
-      ? theme.colors.textDark
-      : theme.colors.textLight;
-    ctx.fillStyle = theme.secondaryDark
-      ? theme.colors.textLight
-      : theme.colors.textDark;
+    ctx.shadowColor =
+      theme.secondaryDark || options.bgAlpha < 0.5
+        ? theme.colors.textDark
+        : theme.colors.textLight;
+    ctx.fillStyle =
+      theme.secondaryDark || options.bgAlpha < 0.5
+        ? theme.colors.textLight
+        : theme.colors.textDark;
     for (let i = 0; i < board.game.size; i++) {
       const coord = itoa(i, i);
       ctx.textBaseline = padding ? "middle" : "bottom";
