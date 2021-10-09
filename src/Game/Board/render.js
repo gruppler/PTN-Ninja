@@ -81,11 +81,11 @@ export default function render(board, options = {}) {
     W: [0, (squareSize - roadSize) / 2],
   };
 
-  const shadowBlur = Math.round(squareSize * 0.03);
-  const shadowOffset = Math.round(squareSize * 0.02);
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.02
+    theme.vars["piece-border-width"] * squareSize * 0.01
   );
+  const shadowOffset = strokeWidth / 2 + Math.round(squareSize * 0.02);
+  const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
 
   const fontSize =
     (squareSize * textSizes[options.textSize] * board.game.size) / 5;
@@ -496,14 +496,6 @@ export default function render(board, options = {}) {
 
     y = Math.round(y);
 
-    if (options.pieceShadows) {
-      ctx.shadowBlur = shadowBlur;
-      ctx.shadowOffsetY = shadowOffset;
-      ctx.shadowColor = theme.colors.umbra;
-    }
-    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
-    ctx.lineWidth = strokeWidth;
-
     if (piece.isCapstone) {
       ctx.fillStyle = theme.colors[`player${piece.color}special`];
       ctx.beginPath();
@@ -542,8 +534,23 @@ export default function render(board, options = {}) {
         );
       }
     }
-    ctx.stroke();
+
+    // Fill
+    if (options.pieceShadows) {
+      ctx.save();
+      ctx.shadowBlur = shadowBlur;
+      ctx.shadowOffsetY = shadowOffset;
+      ctx.shadowColor = theme.colors.umbra;
+    }
     ctx.fill();
+    if (options.pieceShadows) {
+      ctx.restore();
+    }
+
+    // Stroke
+    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
+    ctx.lineWidth = strokeWidth;
+    ctx.stroke();
 
     ctx.restore();
   };
