@@ -288,7 +288,7 @@
 
             <q-item tag="label" :title="hotkeys.scrollScrubbing" v-ripple>
               <q-item-section>
-                <q-item-label>{{ $t("Scroll to scrub") }}</q-item-label>
+                <q-item-label>{{ $t("Scrub with scroll wheel") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle
