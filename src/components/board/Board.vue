@@ -341,7 +341,10 @@ export default {
           this.$store.commit("ui/SET_SCRUBBING", "start");
         }
 
-        this.$store.dispatch(event.deltaY < 0 ? "game/PREV" : "game/NEXT");
+        this.$store.dispatch(
+          event.deltaY < 0 ? "game/PREV" : "game/NEXT",
+          event.shiftKey
+        );
 
         clearTimeout(this.scrollTimer);
         this.scrollTimer = setTimeout(() => {
