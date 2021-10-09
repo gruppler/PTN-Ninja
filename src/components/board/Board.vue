@@ -13,7 +13,9 @@
         [style]: true,
         ['size-' + config.size]: true,
         ['turn-' + turn]: true,
-        'no-animations': !$store.state.ui.animateBoard,
+        'no-animations':
+          !$store.state.ui.animateBoard ||
+          (!$store.state.ui.animateScrub && scrubbing),
         'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
@@ -488,8 +490,15 @@ $radius: 0.35em;
   &.rotating {
     transition: none !important;
   }
-
-  &.no-animations, &.scrubbing {
+  &.scrubbing {
+    &,
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi {
+      transition: none !important;
+    }
+  }
+  &.no-animations {
     &,
     .piece,
     .stone,

@@ -62,13 +62,14 @@ export default {
           )
         );
         if (scrollTop !== $scroll.scrollPosition) {
-          $scroll.setScrollPosition(
-            scrollTop,
-            animate && this.$store.state.ui.showPTN ? 300 : 0
-          );
+          animate =
+            animate &&
+            this.$store.state.ui.showPTN &&
+            !this.$store.state.ui.scrubbing;
+          $scroll.setScrollPosition(scrollTop, animate ? 300 : 0);
         }
       }
-    }, 100),
+    }, 50),
   },
   watch: {
     "position.plyID"() {

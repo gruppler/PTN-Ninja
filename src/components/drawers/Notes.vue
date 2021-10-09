@@ -258,12 +258,12 @@ export default {
         message = message[0];
       }
       if (message) {
-        this.$refs.scroll.setScrollPosition(
+        const scrollTop =
           message.offsetTop -
-            this.$refs.scroll.$el.offsetHeight +
-            message.offsetHeight,
-          animate && this.isShowing ? 300 : 0
-        );
+          this.$refs.scroll.$el.offsetHeight +
+          message.offsetHeight;
+        animate = animate && this.isShowing && !this.$store.state.ui.scrubbing;
+        this.$refs.scroll.setScrollPosition(scrollTop, animate ? 300 : 0);
       }
     },
   },

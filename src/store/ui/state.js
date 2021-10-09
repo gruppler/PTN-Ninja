@@ -4,6 +4,7 @@ import { THEMES } from "../../themes";
 
 let defaults = {
   animateBoard: true,
+  animateScrub: false,
   axisLabels: true,
   board3D: false,
   boardRotation: [0, 0.65],

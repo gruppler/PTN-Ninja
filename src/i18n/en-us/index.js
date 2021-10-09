@@ -6,6 +6,7 @@ export default {
   Account: "Account",
   Action: "Action",
   "Animate Board": "Animate Board",
+  "Animate while scrubbing": "Animate while scrubbing",
   "Axis Labels": "Axis Labels",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",

@@ -71,18 +71,6 @@
               </q-item>
             </smooth-reflow>
 
-            <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="animateBoard"
-                  :disabled="isDisabled('animateBoard')"
-                />
-              </q-item-section>
-            </q-item>
-
             <q-item tag="label" :title="hotkeys.axisLabels" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -205,6 +193,39 @@
               filled
             />
 
+            <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="animateBoard"
+                  :disabled="isDisabled('animateBoard')"
+                />
+              </q-item-section>
+            </q-item>
+
+            <smooth-reflow>
+              <q-item
+                v-if="animateBoard"
+                tag="label"
+                :title="hotkeys.animateScrub"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("Animate while scrubbing")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="animateScrub"
+                    :disabled="isDisabled('animateScrub')"
+                  />
+                </q-item-section>
+              </q-item>
+            </smooth-reflow>
+
             <q-item tag="label" :title="hotkeys.showAllBranches" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
@@ -298,6 +319,7 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 
 const props = [
   "animateBoard",
+  "animateScrub",
   "axisLabels",
   "board3D",
   "flatCounts",
