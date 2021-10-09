@@ -91,6 +91,7 @@ export default {
   Move: "Move",
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
+  n_games: "No Games | 1 Game | {count} Games",
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "New Game": "New Game",

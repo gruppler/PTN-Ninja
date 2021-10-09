@@ -4,7 +4,7 @@
       <dialog-header icon="close_multiple">{{ $t("Close") }}...</dialog-header>
     </template>
 
-    <q-card style="width: 400px; overflow-x: hidden">
+    <q-card style="width: 400px; max-width: 100%; overflow-x: hidden">
       <q-card-section>
         <q-range
           v-model="range"
@@ -25,6 +25,10 @@
 
     <template v-slot:footer>
       <q-card-actions align="right">
+        <div class="q-pl-md">
+          {{ $tc("n_games", count) }}
+        </div>
+        <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn :label="$t('OK')" @click="submit" color="primary" flat />
       </q-card-actions>
@@ -51,6 +55,9 @@ export default {
     max() {
       return this.games.length - 1;
     },
+    count() {
+      return this.range.max - this.range.min + 1;
+    },
   },
   methods: {
     close() {
@@ -59,7 +66,7 @@ export default {
     submit() {
       this.$store.dispatch("game/REMOVE_MULTIPLE_GAMES", {
         start: this.range.min,
-        count: this.range.max - this.range.min + 1,
+        count: this.count,
       });
       this.close();
     },
