@@ -28,6 +28,7 @@ let defaults = {
   player2: "",
   player: 1,
   playerName: "",
+  scrollScrubbing: false,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,

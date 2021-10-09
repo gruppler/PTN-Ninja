@@ -5,6 +5,7 @@
     :style="{ perspective }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
+    @wheel="scroll"
     ref="wrapper"
   >
     <div
@@ -331,6 +332,22 @@ export default {
           "boardRotation",
           this.boardRotation,
         ]);
+      }
+    },
+    scroll(event) {
+      if (this.$store.state.ui.scrollScrubbing) {
+        // Start scrubbing
+        if (!this.$store.state.ui.scrubbing) {
+          this.$store.commit("ui/SET_SCRUBBING", "start");
+        }
+
+        this.$store.dispatch(event.deltaY < 0 ? "game/PREV" : "game/NEXT");
+
+        clearTimeout(this.scrollTimer);
+        this.scrollTimer = setTimeout(() => {
+          // End scrubbing
+          this.$store.commit("ui/SET_SCRUBBING", "end");
+        }, 300);
       }
     },
     getBounds(nodes) {

@@ -156,6 +156,7 @@ export default {
   "Rotate Right": "Rotate Right",
   Round: "Round",
   Save: "Save",
+  "Scroll to scrub": "Scroll to scrub",
   "Scrub Bar": "Scrub Bar",
   "Select Branch": "Select Branch",
   Share: "Share",
