@@ -42,10 +42,16 @@ export default {
     actions() {
       let actions = [
         {
-          id: "url",
-          label: this.$t("URL"),
+          id: "urlCurrent",
+          label: this.$t("Link to Game"),
           icon: "url",
           action: () => this.shareText("url"),
+        },
+        {
+          id: "urlStart",
+          label: this.$t("Link to Position"),
+          icon: "url",
+          action: () => this.shareText("url", true),
         },
       ];
 
@@ -134,7 +140,7 @@ export default {
             title: this.$game.name,
             url: this.$store.getters["ui/url"](this.$game, {
               origin: true,
-              state: true,
+              state: Boolean(arguments[1]),
             }),
           };
           break;
