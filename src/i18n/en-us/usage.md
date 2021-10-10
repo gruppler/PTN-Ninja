@@ -1,10 +1,6 @@
 Getting Started
 ===
 
-::: tip
-To **right-click** on a touchscreen device, try **long-pressing**.
-:::
-
 ### Games
 
 PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need.
@@ -23,7 +19,17 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - **Right-click** the Floating Action Button to switch to the previous game.
 :::
 
-When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number). If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
+::: tip
+To **right-click** on a touchscreen device, try **long-pressing**.
+:::
+
+::: info Note
+When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number).
+
+If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names."
+
+**Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
+:::
 
 ### Place a Stone
 
@@ -60,6 +66,12 @@ PTN Ninja enables you to navigate the timeline of a game freely.
 - Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
 - **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
 - **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
+- Use the **scroll wheel** to scrub, if enabled in UI Preferences.
+  - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
+:::
+
+::: tip
+If you have a wheel mouse, you can enable **Scrub with scroll wheel** in the UI section of the Preferences dialog for easy navigation.
 :::
 
 ### Board Transformation
