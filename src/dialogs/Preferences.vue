@@ -193,6 +193,18 @@
               filled
             />
 
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="nativeSharing"
+                  :disabled="isDisabled('nativeSharing')"
+                />
+              </q-item-section>
+            </q-item>
+
             <q-item tag="label" :title="hotkeys.animateBoard" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Animate Board") }}</q-item-label>
@@ -294,18 +306,6 @@
                 <q-toggle
                   v-model="scrollScrubbing"
                   :disabled="isDisabled('scrollScrubbing')"
-                />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="nativeSharing"
-                  :disabled="isDisabled('nativeSharing')"
                 />
               </q-item-section>
             </q-item>

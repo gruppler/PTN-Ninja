@@ -136,7 +136,6 @@ export default {
   "Private Game": "Private Game",
   PTN: "PTN",
   "PTN File": "PTN File",
-  "PTN Text": "PTN Text",
   Public: "Public",
   "QR Code": "QR Code",
   Random: "Random",

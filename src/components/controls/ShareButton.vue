@@ -80,7 +80,7 @@ export default {
         },
         {
           id: "ptn",
-          label: this.$t("PTN Text"),
+          label: this.$t("PTN"),
           icon: "text",
           action: () => this.shareText("ptn"),
         },
