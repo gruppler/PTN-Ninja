@@ -360,6 +360,7 @@ export default {
         this.scrollTimer = setTimeout(() => {
           // End scrubbing
           this.$store.commit("ui/SET_SCRUBBING", "end");
+          this.isSlowScrub = false;
         }, 300);
       }
     },
