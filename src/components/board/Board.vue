@@ -14,9 +14,7 @@
         [style]: true,
         ['size-' + config.size]: true,
         ['turn-' + turn]: true,
-        'no-animations':
-          !$store.state.ui.animateBoard ||
-          (!$store.state.ui.animateScrub && scrubbing),
+        'no-animations': disableAnimations,
         'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
@@ -110,6 +108,7 @@ export default {
       x: 0,
       y: 0,
       rotating: false,
+      isSlowScrub: false,
       prevBoardRotation: null,
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
@@ -127,6 +126,14 @@ export default {
     },
     scrubbing() {
       return this.$store.state.ui.scrubbing;
+    },
+    disableAnimations() {
+      return (
+        !this.$store.state.ui.animateBoard ||
+        (!this.$store.state.ui.animateScrub &&
+          this.scrubbing &&
+          !this.isSlowScrub)
+      );
     },
     cols() {
       return "abcdefgh".substr(0, this.config.size).split("");
@@ -341,9 +348,12 @@ export default {
           this.$store.commit("ui/SET_SCRUBBING", "start");
         }
 
+        // Scroll by half-ply and re-enable animations
+        this.isSlowScrub = event.shiftKey;
+
         this.$store.dispatch(
           event.deltaY < 0 ? "game/PREV" : "game/NEXT",
-          event.shiftKey
+          this.isSlowScrub
         );
 
         clearTimeout(this.scrollTimer);
