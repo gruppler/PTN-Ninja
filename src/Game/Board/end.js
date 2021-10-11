@@ -21,6 +21,11 @@ export default class BoardGameEnd {
         // Completed opponent's road
         result = player == 1 ? "0-R" : "R-0";
       }
+      if (!this.ply.result || this.ply.result.type != "R") {
+        this.dirtyPly(this.ply.id);
+        this.updatePTNOutput();
+        this.game._updatePTN();
+      }
     } else if (
       pieces.flat.length + pieces.cap.length ===
         this.game.pieceCounts[player].total ||
@@ -37,6 +42,8 @@ export default class BoardGameEnd {
       }
     } else if (this.ply.result && this.ply.result.type != "1") {
       this.ply.result = null;
+      this.dirtyPly(this.ply.id);
+      this.updatePTNOutput();
       this.game._updatePTN();
       return false;
     } else {
@@ -49,6 +56,8 @@ export default class BoardGameEnd {
     }
     this.ply.result = result;
     if (updatePTN) {
+      this.dirtyPly(this.ply.id);
+      this.updatePTNOutput();
       this.game._updatePTN();
     }
 

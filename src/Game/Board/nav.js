@@ -110,6 +110,8 @@ export default class BoardNavigation {
           if (stack[0].isCapstone) {
             if (ply && !flatten) {
               flatten = ply.wallSmash = "*";
+              this.dirtyPly(ply.id);
+              this.updatePTNOutput();
               this.game._updatePTN();
             }
           } else {
@@ -122,6 +124,8 @@ export default class BoardNavigation {
           square.setPiece(square.piece);
         } else if (flatten) {
           ply.wallSmash = "";
+          this.dirtyPly(ply.id);
+          this.updatePTNOutput();
           this.game._updatePTN();
         }
 

@@ -471,6 +471,16 @@ export default class GameBase {
     } else if (this.board.plies.length) {
       this.board.plyID = 0;
       this.board.last();
+      if (this.board.checkGameEnd()) {
+        let ply = this.board.ply;
+        if (ply) {
+          if (!this.tag("result")) {
+            // Add Result tag if missing
+            this.setTags({ result: ply.result.text }, false, true);
+          }
+          this.board.setRoads(ply.result.roads || null);
+        }
+      }
     }
 
     if (this.onInit) {
