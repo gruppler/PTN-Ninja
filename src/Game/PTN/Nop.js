@@ -1,6 +1,6 @@
 export default class Nop {
   constructor(notation = "") {
-    const matchData = notation.match(/([.-]+)/);
+    const matchData = notation.match(/([*.-]+)/);
 
     if (matchData) {
       [this.ptn] = matchData;
@@ -12,7 +12,7 @@ export default class Nop {
   }
 
   static test(notation) {
-    return /^\s*[.-]+/.test(notation);
+    return /^\s*[*.-]+/.test(notation);
   }
 
   static parse(notation) {
