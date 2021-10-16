@@ -54,6 +54,9 @@ export default {
     game() {
       return this.$store.state.game;
     },
+    board() {
+      return this.game.board;
+    },
     eog() {
       return this.game.position.isGameEnd;
     },
@@ -73,9 +76,6 @@ export default {
     },
     firstMoveNumber() {
       return this.$store.state.ui.firstMoveNumber;
-    },
-    board() {
-      return this.$store.state.game.board;
     },
     square() {
       return this.board.squares[this.coord];
@@ -113,7 +113,7 @@ export default {
       return (
         this.piece &&
         this.piece.ply &&
-        this.piece.ply === this.game.position.ply &&
+        this.piece.ply === this.game.position.ply.id &&
         !(
           (this.game.openingSwap && this.game.position.isFirstMove) ||
           (this.game.position.plyIsDone && this.game.position.turn === 1)
