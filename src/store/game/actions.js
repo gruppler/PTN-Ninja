@@ -241,11 +241,11 @@ export const OPEN_FILES = function ({ dispatch }, files) {
   setTimeout(
     () =>
       files.forEach((file) => {
-        if (file && /\.ptn$|\.txt$/i.test(file.name)) {
+        if (file && /(\.ptn|\.txt)+$/i.test(file.name)) {
           let reader = new FileReader();
           reader.onload = (event) => {
             games.push({
-              name: file.name.replace(/\.ptn$|\.txt$/, ""),
+              name: file.name.replace(/(\.ptn|\.txt)+$/, ""),
               ptn: event.target.result,
             });
             if (!--count) {
