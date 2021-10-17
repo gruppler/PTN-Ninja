@@ -32,11 +32,29 @@ export const SET_GAME = (state, game) => {
 };
 
 export const ADD_GAME = (state, game) => {
-  state.list.unshift(game);
+  state.list.unshift({
+    ptn: game.ptn,
+    name: game.name,
+    state: game.minState || game.state,
+    config: game.config,
+    history: game.history,
+    historyIndex: game.historyIndex,
+  });
 };
 
 export const ADD_GAMES = (state, { games, index }) => {
-  state.list.splice(index, 0, ...games);
+  state.list.splice(
+    index,
+    0,
+    ...games.map((game) => ({
+      ptn: game.ptn,
+      name: game.name,
+      state: game.minState || game.state,
+      config: game.config,
+      history: game.history,
+      historyIndex: game.historyIndex,
+    }))
+  );
 };
 
 export const REMOVE_GAME = (state, index) => {

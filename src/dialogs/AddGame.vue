@@ -170,12 +170,7 @@ export default {
         this.$store.dispatch("NOTIFY_WARNING", warning)
       );
 
-      this.$store.dispatch("game/ADD_GAME", {
-        ptn: game.ptn,
-        name: game.name,
-        state: game.minState,
-        config: game.config,
-      });
+      this.$store.dispatch("game/ADD_GAME", game);
 
       this.close();
     },

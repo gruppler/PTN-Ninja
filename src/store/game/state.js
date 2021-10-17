@@ -20,7 +20,7 @@ if (!Platform.within.iframe && LocalStorage.has("games")) {
   state.list = LocalStorage.getItem("games").map((name) => {
     const ptn = load("ptn-" + name);
     let state = load("state-" + name);
-    if (ptn && state && (!state.tps || !state.ply)) {
+    if (ptn && (!state || !state.tps || !state.ply)) {
       state = new Game(ptn, { state }).minState;
       LocalStorage.set("state-" + name, state);
     }

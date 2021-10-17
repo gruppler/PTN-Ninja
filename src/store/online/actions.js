@@ -232,16 +232,7 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
 
       // Add game
       let game = new Game(false, gameJSON);
-      dispatch(
-        "ADD_GAME",
-        {
-          ptn: game.ptn,
-          name: game.name,
-          state: game.minState,
-          config: game.config,
-        },
-        { root: true }
-      );
+      dispatch("ADD_GAME", game, { root: true });
 
       Loading.hide();
       return game;

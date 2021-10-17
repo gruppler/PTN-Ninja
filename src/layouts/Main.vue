@@ -419,7 +419,7 @@ export default {
           // Add game from URL
           let name = this.name;
           if (!this.name) {
-            game = new Game(this.ptn, { board: this.board });
+            game = new Game(this.ptn);
             name = game.name;
           }
           const index = this.$store.state.game.list.findIndex(
@@ -427,15 +427,10 @@ export default {
           );
           if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
             if (!game) {
-              game = new Game(this.ptn, { name, board: this.board });
+              game = new Game(this.ptn, { name });
             }
             if (game) {
-              this.$store.dispatch("game/ADD_GAME", {
-                ptn: this.ptn,
-                name: game.name,
-                state: game.minState,
-                config: game.config,
-              });
+              this.$store.dispatch("game/ADD_GAME", game);
               this.$router.replace("/");
             }
           } else {

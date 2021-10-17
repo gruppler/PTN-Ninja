@@ -2,6 +2,7 @@ import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { debounce } from "lodash";
+import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
   document.title = game.name + " — " + i18n.t("app_title");
@@ -16,10 +17,7 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   LocalStorage.set("games", gameNames);
   LocalStorage.set("ptn-" + game.name, game.ptn);
   if (game.board) {
-    LocalStorage.set(
-      "state-" + game.name,
-      game.minState || game.board || game.state
-    );
+    LocalStorage.set("state-" + game.name, game.minState || game.state);
   }
   if (game.config) {
     LocalStorage.set("config-" + game.name, game.config);
@@ -54,10 +52,7 @@ export const ADD_GAMES = function (
     LocalStorage.set("games", gameNames);
     LocalStorage.set("ptn-" + game.name, game.ptn);
     if (game.board) {
-      LocalStorage.set(
-        "state-" + game.name,
-        game.minState || game.board || game.state
-      );
+      LocalStorage.set("state-" + game.name, game.minState || game.state);
     }
     if (game.config) {
       LocalStorage.set("config-" + game.name, game.config);
@@ -244,10 +239,11 @@ export const OPEN_FILES = function ({ dispatch }, files) {
         if (file && /(\.ptn|\.txt)+$/i.test(file.name)) {
           let reader = new FileReader();
           reader.onload = (event) => {
-            games.push({
-              name: file.name.replace(/(\.ptn|\.txt)+$/, ""),
-              ptn: event.target.result,
-            });
+            games.push(
+              new Game(event.target.result, {
+                name: file.name.replace(/(\.ptn|\.txt)+$/, ""),
+              })
+            );
             if (!--count) {
               Loading.hide();
               dispatch("ADD_GAMES", { games, index: 0 });

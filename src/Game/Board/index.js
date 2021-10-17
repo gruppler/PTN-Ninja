@@ -364,7 +364,7 @@ export default class Board extends Aggregation(
           this.dirty.ptn.moves[ply.move] = true;
         } else {
           delete this.dirty.ptn.plies[plyID];
-          allPlies = omit(allPlies, plyID);
+          allPlies = without(allPlies, plyID);
         }
       }
     });
@@ -376,7 +376,7 @@ export default class Board extends Aggregation(
           move = move.output(allPlies);
           allMoves[moveID] = move;
         } else {
-          allMoves = omit(allMoves, moveID);
+          allMoves = without(allMoves, moveID);
         }
       }
     });
