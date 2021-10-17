@@ -496,11 +496,13 @@ export default class GameMutations {
         this.setTags(Tag.now(), false, false);
       }
 
+      this.board.updateSquareConnections();
       if (this.board.checkGameEnd(false)) {
         if (ply.branch === "" || !this.tag("result")) {
           // Record result
           this.setTags({ result: ply.result.text }, false, false);
         }
+        this.board.dirtyPly(ply.id);
         this.board.setRoads(ply.result.roads || null);
       }
 
