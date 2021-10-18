@@ -514,7 +514,7 @@ export default class GameMutations {
 
   newBranchID(branch, number, player) {
     const prefix = branch ? branch + "/" : "";
-    player = player ? (player === 2 ? "b" : "a") : "";
+    player = player ? (player === 2 ? "b" : "w") : "";
     let i = 1;
     do {
       branch = prefix + number + player + i++;
