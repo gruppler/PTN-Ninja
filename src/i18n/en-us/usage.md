@@ -76,7 +76,7 @@ If you have a wheel mouse, you can enable **Scrub with scroll wheel** in the UI 
 
 ### Board Transformation
 
-PTN Ninja allows you to rotate and flip the orientation of the board. This does not affect the notation, so the axis labels change accordingly.
+PTN Ninja allows you to rotate and flip the orientation of the board, which may help reduce visual bias during analysis, or in getting a better view around tall stacks. This does not affect the notation, so the axis labels change accordingly.
 
 :::
 - Use the Rotate and Flip buttons found next to the board, or hotkeys, to change the board orientation.
