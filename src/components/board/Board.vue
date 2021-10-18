@@ -40,7 +40,11 @@
           </div>
         </div>
 
-        <div class="board relative-position all-pointer-events">
+        <div
+          class="board relative-position all-pointer-events"
+          @touchstart.stop
+          @mousedown.stop
+        >
           <div
             class="squares absolute-fit row reverse-wrap"
             :style="{ transform: CSS2DTransform }"
@@ -65,6 +69,8 @@
           class="unplayed-bg all-pointer-events"
           @click.self="dropPiece"
           @click.right.prevent
+          @touchstart.stop
+          @mousedown.stop
         ></div>
       </div>
 

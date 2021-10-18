@@ -83,6 +83,17 @@ PTN Ninja allows you to rotate and flip the orientation of the board. This does 
 - **Right-click** any of the Rotate/Flip buttons to reset the board orientation.
 :::
 
+3D Mode
+---
+
+Although 2D mode offers a better analytical view of the board, 3D mode provides some semblance of how the game might look on a physical board.
+
+:::
+- Toggle 3D/2D mode by **clicking** the "3D" button in the corner of the board area, or using the hotkey <kbd>d</kbd>.
+- Rotate the board by dragging in the space around the it.
+- Reset the board rotation by **right-clicking** in the space around the board.
+:::
+
 Branches
 ---
 
@@ -137,14 +148,4 @@ TPS Mode enables you to create any board state directly. To enter TPS Mode, **cl
 :::
 - Select a piece type and color from the piece selector or unplayed pieces, then **click** a square to place a piece.
 - **Right-click** a square to remove a piece. The color and type of that piece will be selected.
-:::
-
-3D Mode
----
-
-3D mode may not work in all browsers, so it's disabled by default. You can toggle it by **clicking** the "3D" button in the corner of the board area.
-
-:::
-- Rotate the board by dragging it.
-- Reset the board rotation by **right-clicking** in the space around the board.
 :::
