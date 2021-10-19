@@ -14,7 +14,7 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org
 ## Install the dependencies
 ```bash
 yarn
-pushd functions && npm install; popd
+pushd functions && npm install && popd
 ```
 
 ### Sync the TPS-Ninja submodule
