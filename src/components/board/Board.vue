@@ -293,6 +293,7 @@ export default {
     },
     resizeSpace(size) {
       this.space = size;
+      this.$store.commit("ui/SET_UI", ["boardSpace", size]);
     },
     resetBoardRotation() {
       if (this.board3D) {

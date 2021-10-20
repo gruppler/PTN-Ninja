@@ -159,8 +159,8 @@ export default {
     },
     showAll() {
       return this.isPortrait
-        ? this.$q.screen.width >= this.$q.screen.sizes.sm
-        : this.$q.screen.height >= this.$q.screen.sizes.sm;
+        ? this.$store.state.ui.boardSpace.width >= 453
+        : this.$store.state.ui.boardSpace.height >= 522;
     },
   },
   methods: {
