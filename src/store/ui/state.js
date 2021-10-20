@@ -37,7 +37,7 @@ let defaults = {
   showRoads: true,
   showScrubber: true,
   showText: false,
-  size: 5,
+  size: 6,
   textTab: "chat",
   themeID: "classic",
   theme: THEMES[0],
