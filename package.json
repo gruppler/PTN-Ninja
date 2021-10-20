@@ -13,6 +13,7 @@
     "dev:pwa": "quasar dev -m pwa",
     "deploy": "quasar build -m pwa && firebase deploy --only hosting",
     "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja-dev",
+    "deploy:staging": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja-staging",
     "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:functions": "firebase deploy --only functions",

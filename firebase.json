@@ -26,6 +26,21 @@
       ]
     },
     {
+      "site": "ptn-ninja-staging",
+      "public": "dist/pwa",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
       "site": "ptn-ninja-dev",
       "public": "dist/pwa",
       "ignore": [
