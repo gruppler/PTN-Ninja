@@ -30,7 +30,7 @@ let defaults = {
   player2: "",
   player: 1,
   playerName: "",
-  scrollScrubbing: false,
+  scrollScrubbing: Platform.is.desktop,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
