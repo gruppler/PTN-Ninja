@@ -96,7 +96,7 @@ export default {
       if (this.selected) {
         return (
           this.game.selected.squares.length > 1 &&
-          this.game.selected.squares[0] === this.square
+          this.game.selected.squares[0].static.coord === this.coord
         );
       } else if (this.current) {
         const isDestination =
