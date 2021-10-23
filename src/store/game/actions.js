@@ -7,6 +7,12 @@ import Game from "../../Game";
 export const SET_GAME = function ({ commit }, game) {
   document.title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
+  if (game.config.unseen) {
+    dispatch("SAVE_CONFIG", {
+      game,
+      config: { ...game.config, unseen: false },
+    });
+  }
 };
 
 export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
@@ -69,6 +75,50 @@ export const ADD_GAMES = function (
   if (!index) {
     this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
       dispatch("SET_GAME", state.list[0]);
+    });
+  }
+};
+
+export const REPLACE_GAME = function ({ dispatch, state }, { index, ptn }) {
+  if (index < 0) {
+    throw new Error("Cannot replace a game that is not open");
+  }
+  if (index > 0) {
+    // If game isn't current, select it
+    dispatch("SELECT_GAME", { index, immediate: true });
+  }
+
+  // Clone the current game
+  let game = state.list[0];
+  game = new Game(game.ptn, game);
+
+  if (game.ptn !== ptn) {
+    game.replacePTN(ptn, state);
+    dispatch("SAVE_UNDO_INDEX", game);
+    dispatch("SAVE_UNDO_HISTORY", game);
+    dispatch("SAVE_PTN", ptn);
+    dispatch("SAVE_STATE", {
+      game,
+      gameState: game.minState,
+    });
+
+    Vue.nextTick(() => {
+      this.dispatch("ui/NOTIFY", {
+        message: i18n.t("success.replacedExistingGame"),
+        timeout: 5000,
+        progress: true,
+        multiLine: false,
+        actions: [
+          {
+            label: i18n.t("Undo"),
+            color: "primary",
+            handler: () => {
+              dispatch("UNDO", game);
+            },
+          },
+          { icon: "close" },
+        ],
+      });
     });
   }
 };
@@ -225,7 +275,7 @@ export const EXPORT_PNG = function ({ state }) {
   });
 };
 
-export const OPEN_FILES = function ({ dispatch }, files) {
+export const OPEN_FILES = function ({ dispatch, state }, files) {
   const games = [];
   let count = 0;
   files = Array.from(files);
@@ -239,11 +289,14 @@ export const OPEN_FILES = function ({ dispatch }, files) {
         if (file && /(\.ptn|\.txt)+$/i.test(file.name)) {
           let reader = new FileReader();
           reader.onload = (event) => {
-            games.push(
-              new Game(event.target.result, {
-                name: file.name.replace(/(\.ptn|\.txt)+$/, ""),
-              })
-            );
+            const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
+            const index = state.list.findIndex((g) => g.name === name);
+            const ptn = event.target.result;
+            if (index < 0 || this.state.ui.openDuplicate !== "replace") {
+              games.push(new Game(ptn, { name }));
+            } else {
+              dispatch("REPLACE_GAME", { index, ptn });
+            }
             if (!--count) {
               Loading.hide();
               dispatch("ADD_GAMES", { games, index: 0 });

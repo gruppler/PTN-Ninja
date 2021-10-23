@@ -419,6 +419,7 @@ export default {
           // Add game from URL
           let name = this.name;
           if (!this.name) {
+            // If name isn't provided, parse the game to get a name
             game = new Game(this.ptn);
             name = game.name;
           }
@@ -426,7 +427,9 @@ export default {
             (g) => g.name === name
           );
           if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
+            // Open as a new game
             if (!game) {
+              // If it hasn't been parsed yet, do it now
               game = new Game(this.ptn, { name });
             }
             if (game) {
@@ -434,45 +437,12 @@ export default {
               this.$router.replace("/");
             }
           } else {
-            if (index > 0) {
-              this.$store.dispatch("game/SELECT_GAME", {
-                index,
-                immediate: true,
-              });
+            // Replace an existing game
+            if (!game) {
+              // If it hasn't been parsed yet, do it now
+              game = new Game(this.ptn, { name });
             }
-
-            game = this.$store.state.game.list[0];
-            game = new Game(game.ptn, game);
-
-            if (game.ptn !== this.ptn) {
-              game.replacePTN(this.ptn, this.state);
-              this.$store.dispatch("game/SAVE_UNDO_INDEX", game);
-              this.$store.dispatch("game/SAVE_UNDO_HISTORY", game);
-              this.$store.dispatch("game/SAVE_PTN", this.ptn);
-              this.$store.dispatch("game/SAVE_STATE", {
-                game,
-                gameState: game.minState,
-              });
-
-              this.$nextTick(() => {
-                this.$store.dispatch("ui/NOTIFY", {
-                  message: this.$t("success.replacedExistingGame"),
-                  timeout: 5000,
-                  progress: true,
-                  multiLine: false,
-                  actions: [
-                    {
-                      label: this.$t("Undo"),
-                      color: "primary",
-                      handler: () => {
-                        this.$store.dispatch("game/UNDO", game);
-                      },
-                    },
-                    { icon: "close" },
-                  ],
-                });
-              });
-            }
+            this.$store.dispatch("game/REPLACE_GAME", { index, ptn: this.ptn });
             this.$router.replace("/");
           }
         } catch (error) {
@@ -488,13 +458,6 @@ export default {
       game.warnings.forEach((warning) =>
         this.$store.dispatch("ui/NOTIFY_WARNING", warning)
       );
-
-      if (game.config.unseen) {
-        this.$store.dispatch("game/SAVE_CONFIG", {
-          game,
-          config: { ...game.config, unseen: false },
-        });
-      }
 
       if (process.env.DEV) {
         window.main = this;
