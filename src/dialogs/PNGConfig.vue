@@ -248,12 +248,12 @@ export default {
       this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       let canvas = this.$game.board.render(config);
       const filename = this.$game.pngFilename;
-      this.preview = canvas.toDataURL();
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {
           type: "image/png",
         });
         this.fileSize = humanStorageSize(this.file.size);
+        this.preview = URL.createObjectURL(blob);
       });
     },
     loadPreview() {
