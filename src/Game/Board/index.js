@@ -735,7 +735,20 @@ export default class Board extends Aggregation(
   }
 
   get isGameEnd() {
-    return this.ply && this.plyIsDone && !!this.ply.result;
+    if (this.ply) {
+      return this.plyIsDone && !!this.ply.result;
+    } else if (this.game.hasTPS) {
+      return (
+        this.roads.length > 0 ||
+        Object.keys(this.pieces.played).some(
+          (player) =>
+            this.pieces.played[player].flat.length +
+              this.pieces.played[player].cap.length ===
+            this.game.pieceCounts[player].total
+        ) ||
+        !this.squares.find((row) => row.find((square) => !square.pieces.length))
+      );
+    }
   }
 
   setRoads(roads) {
