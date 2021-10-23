@@ -22,7 +22,7 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     theme = getters.theme(theme);
   }
   if (!theme) {
-    theme = getters.theme() || THEMES[0];
+    theme = getters.theme() || THEMES.find((t) => t.id === "classic");
   }
   if (!state.embed) {
     LocalStorage.set("theme", theme);

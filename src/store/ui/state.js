@@ -43,7 +43,7 @@ let defaults = {
   size: 6,
   textTab: "chat",
   themeID: "classic",
-  theme: THEMES[0],
+  theme: THEMES.find((t) => t.id === "classic"),
   themes: [],
   turnIndicator: true,
   unplayedPieces: true,

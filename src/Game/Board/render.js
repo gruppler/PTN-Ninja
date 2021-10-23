@@ -49,7 +49,9 @@ export default function render(board, options = {}) {
     }
     options.theme = theme;
   }
-  theme = options.theme ? computeMissing(cloneDeep(options.theme)) : THEMES[0];
+  theme = options.theme
+    ? computeMissing(cloneDeep(options.theme))
+    : THEMES.find((t) => t.id === "classic");
 
   let hlSquares = [];
   if (options.ply) {
