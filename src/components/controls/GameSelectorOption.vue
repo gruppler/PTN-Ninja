@@ -83,7 +83,12 @@ export default {
       const config = game.config;
       game = new Game("", {
         state: { ...game.state },
-        tags: { tps: game.state.tps },
+        tags: {
+          tps: game.state.tps,
+          komi: config.komi,
+          opening: config.opening,
+        },
+        config,
       });
       const canvas = game.board.render({
         ...this.thumbnailConfig,
