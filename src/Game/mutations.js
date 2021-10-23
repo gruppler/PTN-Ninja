@@ -38,6 +38,7 @@ export default class GameMutations {
     // Update moves/linenums
     this.moves.forEach((move) => {
       move.branch = move.branch.replace(oldBranchRegExp, newBranchFull);
+      this.board.dirtyMove(move.id);
     });
 
     // Update branches
