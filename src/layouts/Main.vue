@@ -373,7 +373,7 @@ export default {
       const game = new Game("", {
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
-        size: this.$store.state.ui.size,
+        tags: { size: this.$store.state.ui.size },
       });
       return game;
     },
