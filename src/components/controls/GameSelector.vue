@@ -15,6 +15,7 @@
       popup-content-class="game-selector-options"
       transition-show="none"
       transition-hide="none"
+      :virtual-scroll-item-size="84"
       emit-value
       filled
       dense
@@ -66,34 +67,12 @@
       </template>
 
       <template v-slot:option="scope">
-        <q-item
-          class="non-selectable"
+        <GameSelectorOption
+          :option="scope.opt"
+          :show-icon="hasOnlineGames"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
-        >
-          <q-item-section side>
-            <img :src="thumbnail(scope.opt)" :height="thumbnailHeight" />
-          </q-item-section>
-          <q-item-section side v-if="hasOnlineGames">
-            <q-icon
-              :name="icon(scope.opt)"
-              :class="{ 'text-primary': scope.opt.value === 0 }"
-            >
-              <q-badge v-if="scope.opt.config.unseen" floating />
-            </q-icon>
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ scope.opt.label }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-btn
-              @click.stop="close(scope.opt.value)"
-              icon="close"
-              flat
-              dense
-            />
-          </q-item-section>
-        </q-item>
+        />
       </template>
 
       <template v-slot:append>
@@ -112,27 +91,11 @@
 </template>
 
 <script>
-import Game from "../../Game";
-import { zipObject } from "lodash";
+import GameSelectorOption from "./GameSelectorOption";
 
 export default {
   name: "GameSelector",
-  data() {
-    return {
-      thumbnails: {},
-      thumbnailHeight: 0,
-      thumbnailConfig: {
-        imageSize: "xs",
-        axisLabels: false,
-        turnIndicator: true,
-        highlightSquares: true,
-        pieceShadows: false,
-        includeNames: false,
-        padding: false,
-        bgAlpha: 0,
-      },
-    };
-  },
+  components: { GameSelectorOption },
   computed: {
     config() {
       return this.$store.state.game.config;
@@ -147,6 +110,16 @@ export default {
     },
     hasOnlineGames() {
       return this.games.some((game) => game.config.id);
+    },
+    icon() {
+      if (this.$game.config.isOnline) {
+        return this.$store.getters["ui/playerIcon"](
+          this.$game.config.player,
+          this.$game.config.isPrivate
+        );
+      } else {
+        return "file";
+      }
     },
     name() {
       const name = this.games[0].label;
@@ -223,62 +196,6 @@ export default {
           _select();
         }
       }
-    },
-    icon(game) {
-      if (game.config.isOnline) {
-        return this.$store.getters["ui/playerIcon"](
-          game.config.player,
-          game.config.isPrivate
-        );
-      } else {
-        return "file";
-      }
-    },
-    thumbnail(game) {
-      if (!game.state || !game.state.tps) {
-        return "";
-      }
-
-      // Existing render
-      const id = game.label;
-      const existing = this.thumbnails[id];
-      if (
-        existing &&
-        existing.tps === game.state.tps &&
-        existing.themeID === this.$store.state.ui.themeID
-      ) {
-        return existing.img;
-      }
-
-      // New render
-      const ply = game.state.ply;
-      const tps = game.state.tps;
-      const config = game.config;
-      game = new Game("", {
-        state: { ...game.state },
-        tags: { tps: game.state.tps },
-      });
-      const canvas = game.board.render({
-        ...this.thumbnailConfig,
-        ply,
-        flatCounts: config.disableFlatCounts
-          ? false
-          : this.$store.state.ui.flatCounts,
-        showRoads: config.disableShowRoads
-          ? false
-          : this.$store.state.ui.showRoads,
-        theme: this.$store.state.ui.theme,
-      });
-
-      if (!this.thumbnailHeight) {
-        this.thumbnailHeight = canvas.height / 2;
-      }
-      const img = canvas.toDataURL();
-      this.thumbnails[id] = { tps, img, themeID: this.$store.state.ui.themeID };
-      return img;
-    },
-    close(index) {
-      this.$store.dispatch("game/REMOVE_GAME", index);
     },
   },
 };

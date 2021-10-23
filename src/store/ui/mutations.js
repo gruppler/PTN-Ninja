@@ -38,3 +38,7 @@ export const SET_EMBED_GAME = (state) => {
 export const SET_SCRUBBING = (state, phase) => {
   state.scrubbing = phase === "start";
 };
+
+export const SET_THUMBNAIL = (state, { id, tps, url, themeID }) => {
+  state.thumbnails[id] = Object.freeze({ tps, url, themeID });
+};
