@@ -1,16 +1,29 @@
 <template>
   <recess>
-    <q-scroll-area ref="scroll" class="full-ptn absolute-fit non-selectable">
-      <div v-if="gameExists">
-        <Move
-          class="q-px-md"
-          v-for="move in moves"
-          :ref="move.id"
-          :move="move"
-          :key="move.id"
-          separate-branch
-        />
-      </div>
+    <q-scroll-area
+      id="ptn-scroll-area"
+      class="full-ptn absolute-fit non-selectable"
+    >
+      <q-virtual-scroll
+        v-if="gameExists"
+        ref="scroll"
+        class="content absolute-fit"
+        :items="moves"
+        scroll-target="#ptn-scroll-area > .content"
+        :virtual-scroll-item-size="36"
+        :virtual-scroll-slice-ratio-before="0.5"
+        :virtual-scroll-slice-ratio-after="0.5"
+      >
+        <template v-slot="{ item }">
+          <Move
+            class="q-px-md"
+            :ref="item.id"
+            :move="item"
+            :key="item.id"
+            separate-branch
+          />
+        </template>
+      </q-virtual-scroll>
     </q-scroll-area>
     <q-resize-observer @resize="scroll" />
   </recess>
@@ -19,7 +32,7 @@
 <script>
 import Move from "../PTN/Move";
 
-import { debounce } from "lodash";
+import { throttle } from "lodash";
 
 export default {
   name: "PTN",
@@ -36,40 +49,22 @@ export default {
     },
     moves() {
       return this.$store.state.ui.showAllBranches
-        ? this.ptn.sortedMoves
-        : this.ptn.branchMoves;
+        ? Object.freeze(this.ptn.sortedMoves)
+        : Object.freeze(this.ptn.branchMoves);
     },
   },
   methods: {
-    scroll: debounce(function (animate = false) {
+    scroll: throttle(function (animate = false) {
       const editingBranch = this.$store.state.ui.editingBranch
         ? this.ptn.branches[this.$store.state.ui.editingBranch] || null
         : null;
-      const move = editingBranch
-        ? this.$refs[editingBranch.move][0]
-        : this.position.ply && this.position.move.id in this.$refs
-        ? this.$refs[this.position.move.id][0]
-        : null;
-      if (move) {
-        const $scroll = this.$refs.scroll;
-        const movesHeight = $scroll.$el.firstChild.scrollHeight;
-        const scrollHeight = $scroll.$el.offsetHeight;
-        const scrollTop = Math.max(
-          0,
-          Math.min(
-            movesHeight - scrollHeight,
-            move.$el.offsetTop - (scrollHeight - move.$el.offsetHeight) / 2
-          )
-        );
-        if (scrollTop !== $scroll.scrollPosition) {
-          animate =
-            animate &&
-            this.$store.state.ui.showPTN &&
-            !this.$store.state.ui.scrubbing;
-          $scroll.setScrollPosition(scrollTop, animate ? 300 : 0);
-        }
+      const index = editingBranch
+        ? editingBranch.move.id
+        : this.position.move.id;
+      if (index >= 0) {
+        this.$refs.scroll.scrollTo(index, "center-force");
       }
-    }, 50),
+    }, 20),
   },
   watch: {
     "position.plyID"() {
@@ -79,7 +74,7 @@ export default {
       this.scroll(true);
     },
   },
-  mounted() {
+  updated() {
     this.scroll();
   },
 };

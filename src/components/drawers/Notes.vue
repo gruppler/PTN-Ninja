@@ -4,66 +4,51 @@
       :is="recess ? 'recess' : 'div'"
       class="col-grow relative-position"
     >
-      <q-scroll-area ref="scroll" class="absolute-fit">
-        <div class="content q-px-md">
-          <template v-for="(plyID, i) in plyIDs">
+      <q-scroll-area id="notes-scroll-area" class="absolute-fit">
+        <q-virtual-scroll
+          ref="scroll"
+          class="content absolute-fit q-px-md"
+          :items="plyIDs"
+          scroll-target="#notes-scroll-area > .content"
+          :virtual-scroll-item-size="128"
+          :virtual-scroll-slice-ratio-before="0.5"
+          :virtual-scroll-slice-ratio-after="0.5"
+        >
+          <template v-slot="{ item, index }">
             <q-separator
-              v-if="i && !areSequential(plyIDs[i - 1], plyID)"
+              v-if="index && !areSequential(plyIDs[index - 1], item)"
               class="fullwidth-padded-md"
-              :key="'divider-' + plyID"
+              :key="'divider-' + item"
             />
             <div
               class="fullwidth-padded-md q-py-xs"
-              :class="{ current: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
-              :key="plyID"
-              :ref="plyID"
+              :class="{
+                current: isCurrent(item),
+                'q-pt-md': item < 0,
+              }"
+              :key="item"
+              :ref="item"
             >
-              <div v-if="plyID >= 0 && plies[plyID]" class="ply-container">
+              <div v-if="item >= 0 && plies[item]" class="ply-container">
                 <Move
-                  :move="getMove(plyID)"
-                  :player="getPlayer(plyID)"
+                  :move="getMove(item)"
+                  :player="getPlayer(item)"
                   separate-branch
                   no-decoration
                 />
               </div>
-              <q-chat-message
-                v-for="(comment, index) in log[plyID]"
-                :key="`message-${plyID}-${index}`"
-                :id="`message-${plyID}-${index}`"
-                bg-color="primary"
-                :text-color="primaryDark ? 'textLight' : 'textDark'"
-                text-sanitize
-                sent
-              >
-                <span>{{ comment.message }}</span>
-                <template v-slot:stamp>
-                  <q-menu
-                    context-menu
-                    auto-close
-                    transition-show="none"
-                    transition-hide="none"
-                    :target="`#message-${plyID}-${index} > div > div`"
-                  >
-                    <q-list>
-                      <q-item @click="edit(plyID, index)" clickable>
-                        <q-item-section side>
-                          <q-icon name="edit" />
-                        </q-item-section>
-                        <q-item-section>{{ $t("Edit") }}</q-item-section>
-                      </q-item>
-                      <q-item @click="remove(plyID, index)" clickable>
-                        <q-item-section side>
-                          <q-icon name="delete" />
-                        </q-item-section>
-                        <q-item-section>{{ $t("Delete") }}</q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </template>
-              </q-chat-message>
+              <Note
+                v-for="(comment, index) in log[item]"
+                :key="`message-${item}-${index}`"
+                :plyID="item"
+                :index="index"
+                :comment="comment"
+                @edit="edit"
+                @remove="remove"
+              />
             </div>
           </template>
-        </div>
+        </q-virtual-scroll>
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </component>
@@ -101,13 +86,14 @@
 </template>
 
 <script>
+import Note from "./Note";
 import Move from "../PTN/Move";
 
-import { pickBy } from "lodash";
+import { pickBy, throttle } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Move },
+  components: { Note, Move },
   props: {
     recess: Boolean,
   },
@@ -139,22 +125,23 @@ export default {
     log() {
       return this.$store.state.ui.showAllBranches
         ? this.game.comments.notes
-        : pickBy(
-            this.game.comments.notes,
-            (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
+        : Object.freeze(
+            pickBy(
+              this.game.comments.notes,
+              (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
+            )
           );
     },
     plyIDs() {
-      return Object.keys(this.log)
-        .map((id) => 1 * id)
-        .sort((a, b) => a - b);
+      return Object.freeze(
+        Object.keys(this.log)
+          .map((id) => 1 * id)
+          .sort((a, b) => a - b)
+      );
     },
     currentPlyID() {
       if (!this.log) {
         return null;
-      }
-      if (this.editing) {
-        return this.editing.plyID;
       }
       let plyID, ply;
       if (!this.game.position.plyID && !this.game.position.plyIsDone) {
@@ -215,13 +202,16 @@ export default {
         this.$refs.input.focus();
       }
     },
-    edit(plyID, index) {
+    edit({ plyID, index }) {
       const log = this.log[plyID][index];
       this.editing = { plyID, index };
+      if (!this.isCurrent(plyID)) {
+        this.$store.dispatch("game/GO_TO_PLY", { ply: plyID, isDone: true });
+      }
       setTimeout(() => {
         this.$refs.input.focus();
         this.message = log.message;
-      }, 100);
+      }, 10);
     },
     cancelEdit() {
       if (this.editing) {
@@ -231,7 +221,7 @@ export default {
         this.$refs.input.blur();
       }
     },
-    remove(plyID, index) {
+    remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
     },
     isCurrent(plyID) {
@@ -252,31 +242,23 @@ export default {
         ply2.linenum.number - ply1.linenum.number <= 1
       );
     },
-    scroll(animate = false) {
-      let message = this.$refs[this.currentPlyID];
-      if (message) {
-        message = message[0];
+    scroll: throttle(function () {
+      const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
+      if (index >= 0) {
+        this.$refs.scroll.scrollTo(index, "center-force");
       }
-      if (message) {
-        const scrollTop =
-          message.offsetTop -
-          this.$refs.scroll.$el.offsetHeight +
-          message.offsetHeight;
-        animate = animate && this.isShowing && !this.$store.state.ui.scrubbing;
-        this.$refs.scroll.setScrollPosition(scrollTop, animate ? 300 : 0);
-      }
-    },
+    }, 20),
   },
   watch: {
     log() {
-      this.$nextTick(() => this.scroll(true));
+      this.$nextTick(() => this.scroll());
     },
     currentPlyID() {
-      this.scroll(true);
+      this.scroll();
     },
   },
-  mounted() {
-    this.$nextTick(() => this.scroll());
+  updated() {
+    this.scroll();
   },
 };
 </script>
@@ -284,7 +266,7 @@ export default {
 <style lang="scss">
 .notes {
   .content {
-    padding-top: calc(100vh - #{$toolbar-min-height + $footer-toolbar-height});
+    background: transparent;
   }
   .q-separator {
     opacity: 0.75;
