@@ -11,7 +11,7 @@
     <q-item-section>
       <q-item-label>{{ option.label }}</q-item-label>
     </q-item-section>
-    <q-item-section side>
+    <q-item-section v-if="!isLastGame" side>
       <q-btn @click.stop="close" icon="close" flat dense />
     </q-item-section>
   </q-item>
@@ -54,6 +54,9 @@ export default {
       } else {
         return "file";
       }
+    },
+    isLastGame() {
+      return this.$store.state.game.list.length === 1;
     },
   },
   methods: {
