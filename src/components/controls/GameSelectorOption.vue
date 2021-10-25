@@ -67,17 +67,15 @@ export default {
       }
 
       // Existing render
-      const id = game.label;
+      const id = "game-" + game.label;
       const existing = this.$store.state.ui.thumbnails[id];
       const themeID = this.$store.state.ui.themeID;
-      if (
-        existing &&
-        existing.tps === game.state.tps &&
-        existing.themeID === themeID
-      ) {
+      if (existing && existing.themeID === themeID) {
         this.thumbnail = existing;
         this.thumbnailURL = this.thumbnail.url;
-        return;
+        if (existing.tps === game.state.tps) {
+          return;
+        }
       }
 
       // New render
