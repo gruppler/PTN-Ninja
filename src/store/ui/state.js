@@ -36,7 +36,7 @@ let defaults = {
   showAllBranches: false,
   showControls: true,
   showMove: true,
-  showPTN: false,
+  showPTN: true,
   showRoads: true,
   showScrubber: true,
   showText: false,
