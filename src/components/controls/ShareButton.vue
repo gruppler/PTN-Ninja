@@ -87,14 +87,14 @@ export default {
         {}
       );
 
-      // if (!this.$store.state.embed) {
-      //   actions.push({
-      //     id: "online",
-      //     label: this.$t("Online"),
-      //     icon: "online",
-      //     action: this.online,
-      //   });
-      // }
+      if (!this.$store.state.embed) {
+        actions.push({
+          id: "online",
+          label: this.$t("Online"),
+          icon: "online",
+          action: this.online,
+        });
+      }
 
       if (!this.$store.state.embed && !this.$store.state.game.config.isOnline) {
         actions.push(

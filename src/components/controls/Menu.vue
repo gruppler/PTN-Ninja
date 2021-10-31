@@ -36,10 +36,10 @@ export default {
           icon: "settings",
           action: "settings",
         },
-        // {
-        //   icon: "account",
-        //   action: "account",
-        // },
+        {
+          icon: "account",
+          action: "account",
+        },
         {
           icon: "help",
           action: "help",

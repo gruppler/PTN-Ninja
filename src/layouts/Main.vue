@@ -189,7 +189,7 @@ import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
-// import onlineStore from "../store/online";
+import onlineStore from "../store/online";
 import GameSelector from "../components/controls/GameSelector";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
@@ -359,8 +359,7 @@ export default {
       return this.$store.state.game.list;
     },
     user() {
-      return null;
-      // return this.$store.state.online.user;
+      return this.$store.state.online.user;
     },
     player() {
       return this.user ? this.$game.getPlayerFromUID(this.user.uid) : 0;
@@ -714,9 +713,9 @@ export default {
     },
   },
   watch: {
-    // game() {
-    //   this.$store.dispatch("online/LISTEN_CURRENT_GAME");
-    // },
+    game() {
+      this.$store.dispatch("online/LISTEN_CURRENT_GAME");
+    },
     editingTPS() {
       if (this.firstMoveNumber < this.minFirstMoveNumber) {
         this.firstMoveNumber = this.minFirstMoveNumber;
@@ -737,10 +736,10 @@ export default {
   },
   beforeCreate() {
     // Load online functionality
-    // if (process.env.DEV && this.$store.state.online) {
-    //   this.$store.unregisterModule("online");
-    // }
-    // this.$store.registerModule("online", onlineStore);
+    if (process.env.DEV && this.$store.state.online) {
+      this.$store.unregisterModule("online");
+    }
+    this.$store.registerModule("online", onlineStore);
 
     // Redirect hash URLs
     if (location.hash.length) {
@@ -752,27 +751,27 @@ export default {
     }
 
     // Initialize
-    // this.$store.dispatch("online/INIT").then(() => {
-    //   if (this.gameID) {
-    //     // Check that the game is not already open
-    //     const index = this.$store.state.game.list.findIndex(
-    //       (game) => game.config.id === this.gameID
-    //     );
-    //     if (index >= 0) {
-    //       this.$store.dispatch("game/SELECT_GAME", index);
-    //     } else {
-    //       // Add online game from URL
-    //       this.$store
-    //         .dispatch("online/LOAD_GAME", this.gameID)
-    //         .then(() => {
-    //           this.$router.replace("/");
-    //         })
-    //         .catch((error) => {
-    //           this.$store.dispatch("ui/NOTIFY_ERROR", error);
-    //         });
-    //     }
-    //   }
-    // });
+    this.$store.dispatch("online/INIT").then(() => {
+      if (this.gameID) {
+        // Check that the game is not already open
+        const index = this.$store.state.game.list.findIndex(
+          (game) => game.config.id === this.gameID
+        );
+        if (index >= 0) {
+          this.$store.dispatch("game/SELECT_GAME", index);
+        } else {
+          // Add online game from URL
+          this.$store
+            .dispatch("online/LOAD_GAME", this.gameID)
+            .then(() => {
+              this.$router.replace("/");
+            })
+            .catch((error) => {
+              this.$store.dispatch("ui/NOTIFY_ERROR", error);
+            });
+        }
+      }
+    });
   },
   async created() {
     await this.getGame();
