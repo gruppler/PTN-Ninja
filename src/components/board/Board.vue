@@ -267,7 +267,7 @@ export default {
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 0.75 + "deg";
 
       const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
@@ -318,23 +318,23 @@ export default {
         this.rotating = false;
       }
 
-      let x = Math.max(
-        -1,
-        Math.min(
-          1,
-          this.prevBoardRotation[0] +
-            (ROTATE_SENSITIVITY * event.offset.x) / this.size.width
-        )
-      );
+      let x =
+        this.prevBoardRotation[0] +
+        (ROTATE_SENSITIVITY * event.offset.x) / this.size.width;
+      if (x > 1) {
+        x = 1 + (x - 1) / 3;
+      } else if (x < -1) {
+        x = -1 + (x + 1) / 3;
+      }
 
-      let y = Math.max(
-        0,
-        Math.min(
-          1,
-          this.prevBoardRotation[1] -
-            (ROTATE_SENSITIVITY * event.offset.y) / this.size.width
-        )
-      );
+      let y =
+        this.prevBoardRotation[1] -
+        (ROTATE_SENSITIVITY * event.offset.y) / this.size.width;
+      if (y > 1) {
+        y = 1 + (y - 1) / 3;
+      } else if (y < 0) {
+        y /= 3;
+      }
 
       if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
@@ -342,10 +342,17 @@ export default {
 
       this.boardRotation = [x, y];
       if (event.isFinal) {
-        this.$store.dispatch("ui/SET_UI", [
-          "boardRotation",
-          this.boardRotation,
-        ]);
+        this.$nextTick(() => {
+          this.boardRotation = [
+            Math.max(-1, Math.min(1, x)),
+            Math.max(0, Math.min(1, y)),
+          ];
+          this.$store.dispatch("ui/SET_UI", [
+            "boardRotation",
+            this.boardRotation,
+          ]);
+          this.zoomFitAfterTransition();
+        });
       }
     },
     scroll(event) {
