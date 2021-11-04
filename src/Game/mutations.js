@@ -134,7 +134,7 @@ export default class GameMutations {
     this.board._setPly(newPly.id, false);
 
     this._updatePTN();
-    this.init(this.ptn, { ...this.params, state: null });
+    this.init(this.ptn, { ...this.params, state: { plyIndex: 0 } });
     return true;
   }
 
