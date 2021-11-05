@@ -39,6 +39,11 @@ export default class GameMutations {
     this.moves.forEach((move) => {
       move.branch = move.branch.replace(oldBranchRegExp, newBranchFull);
       this.board.dirtyMove(move.id);
+      move.plies.forEach((ply) => {
+        if (ply) {
+          this.board.dirtyPly(ply.id);
+        }
+      });
     });
 
     // Update branches
@@ -68,10 +73,10 @@ export default class GameMutations {
     this.recordChange(() => {
       if (this._renameBranch(oldBranch, newBranch)) {
         this._updatePTN();
+        this.board.updatePTNOutput();
+        this.board.updatePositionOutput();
       }
     });
-    this.board.updatePTNOutput();
-    this.board.updatePositionOutput();
   }
 
   _trimToPly() {
