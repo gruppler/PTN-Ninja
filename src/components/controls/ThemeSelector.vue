@@ -3,7 +3,6 @@
     :label="$t('Theme')"
     v-model="theme"
     :options="themes"
-    behavior="menu"
     transition-show="none"
     transition-hide="none"
     :virtual-scroll-item-size="84"
