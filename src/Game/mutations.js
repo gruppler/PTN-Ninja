@@ -9,7 +9,7 @@ import { escapeRegExp, isArray } from "lodash";
 export default class GameMutations {
   replacePTN(ptn, state = this.minState) {
     this.recordChange(() => {
-      this.init(ptn, { ...this.params, state });
+      this.init({ ...this.params, ptn, state });
     });
   }
 
@@ -139,7 +139,7 @@ export default class GameMutations {
     this.board._setPly(newPly.id, false);
 
     this._updatePTN();
-    this.init(this.ptn, { ...this.params, state: { plyIndex: 0 } });
+    this.init({ ...this.params, ptn: this.ptn, state: { plyIndex: 0 } });
     return true;
   }
 
@@ -151,8 +151,9 @@ export default class GameMutations {
   }
 
   _trimToBoard() {
-    this.init(this.headerText(), {
+    this.init({
       ...this.params,
+      ptn: this.headerText(),
       state: null,
       tags: {
         ...this.tags,
@@ -173,8 +174,9 @@ export default class GameMutations {
       return;
     }
     this.recordChange(() => {
-      this.init(this.toString(false), {
+      this.init({
         ...this.params,
+        ptn: this.toString(false),
         state: { ...this.minState, targetBranch: "" },
       });
     });
@@ -320,7 +322,7 @@ export default class GameMutations {
       mutate();
     }
 
-    this.init(this.ptn, this.params);
+    this.init(this.params);
     return success;
   }
 

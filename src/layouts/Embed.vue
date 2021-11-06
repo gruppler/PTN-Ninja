@@ -194,7 +194,7 @@ export default {
     getGame() {
       let game;
       try {
-        game = new Game(this.ptn, { name: this.name, board: this.board });
+        game = new Game({ ptn: this.ptn, name: this.name, board: this.board });
       } catch (error) {
         const name = game ? game.name : "";
         if (game && name) {
