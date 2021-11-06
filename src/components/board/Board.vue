@@ -358,6 +358,10 @@ export default {
       }
     },
     scroll(event) {
+      if (this.$store.state.ui.embed) {
+        return;
+      }
+
       if (this.$store.state.ui.scrollScrubbing) {
         // Start scrubbing
         if (!this.$store.state.ui.scrubbing) {
