@@ -9,8 +9,11 @@ import Game from "../../Game";
 
 export const SET_GAME = (state, game) => {
   if (!(game instanceof Game)) {
-    game = new Game(game.ptn, game, (game) => {
-      SET_GAME(state, game);
+    game = new Game({
+      ...game,
+      onInit: (game) => {
+        SET_GAME(state, game);
+      },
     });
   } else {
     game.board.updateOutput();

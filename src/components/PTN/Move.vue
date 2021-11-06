@@ -119,7 +119,7 @@ export default {
       return !!(
         !this.noBranch &&
         this.move.branch &&
-        this.showAllBranches &&
+        (this.showAllBranches || this.currentOnly) &&
         this.separateBranch &&
         (this.standalone ||
           this.player ||
