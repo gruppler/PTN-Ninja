@@ -79,7 +79,10 @@ export const ADD_GAMES = function (
   }
 };
 
-export const REPLACE_GAME = function ({ dispatch, state }, { index, ptn }) {
+export const REPLACE_GAME = function (
+  { commit, dispatch, state },
+  { index, ptn, gameState }
+) {
   if (index < 0) {
     throw new Error("Cannot replace a game that is not open");
   }
@@ -89,17 +92,20 @@ export const REPLACE_GAME = function ({ dispatch, state }, { index, ptn }) {
   }
 
   // Clone the current game
-  let game = state.list[0];
-  game = new Game(game.ptn, game);
+  const game = new Game(state.list[0]);
 
   if (game.ptn !== ptn) {
-    game.replacePTN(ptn, state);
-    dispatch("SAVE_UNDO_INDEX", game);
-    dispatch("SAVE_UNDO_HISTORY", game);
+    if (!gameState) {
+      gameState = game.minState;
+    }
+    game.replacePTN(ptn, gameState);
+    commit("SET_GAME", game);
+    dispatch("SAVE_UNDO_INDEX");
+    dispatch("SAVE_UNDO_HISTORY");
     dispatch("SAVE_PTN", ptn);
     dispatch("SAVE_STATE", {
       game,
-      gameState: game.minState,
+      gameState,
     });
 
     Vue.nextTick(() => {
@@ -121,6 +127,7 @@ export const REPLACE_GAME = function ({ dispatch, state }, { index, ptn }) {
       });
     });
   }
+  return game;
 };
 
 export const REMOVE_GAME = function (
@@ -293,7 +300,7 @@ export const OPEN_FILES = function ({ dispatch, state }, files) {
             const index = state.list.findIndex((g) => g.name === name);
             const ptn = event.target.result;
             if (index < 0 || this.state.ui.openDuplicate !== "replace") {
-              games.push(new Game(ptn, { name }));
+              games.push(new Game({ ptn, name }));
             } else {
               dispatch("REPLACE_GAME", { index, ptn });
             }

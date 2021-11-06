@@ -74,7 +74,7 @@ export const generateName = (tags = {}, game) => {
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
   const player1 = tag("player1");
   const player2 = tag("player2");
-  const result = tag("result").replace(/1\/2-1\/2/g, "TIE");
+  const result = tag("result").replace(/1\/2-1\/2/g, "DRAW");
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
@@ -90,21 +90,22 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = (name) => {
-  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| TIE)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| DRAW)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
 };
 
 export default class GameBase {
-  constructor(notation, params, onInit) {
-    if (isFunction(onInit)) {
-      this.onInit = onInit;
+  constructor(params = {}) {
+    if (isFunction(params.onInit)) {
+      this.onInit = params.onInit;
     }
-    this.init(notation, params);
+    this.init(params);
   }
 
   get params() {
     const params = pick(this, [
+      "ptn",
       "name",
       "state",
       "config",
@@ -115,16 +116,19 @@ export default class GameBase {
     return params;
   }
 
-  init(
-    notation,
-    params = {
-      name: "",
-      state: null,
-      config: null,
-      history: [],
-      historyIndex: 0,
-    }
-  ) {
+  init({
+    ptn,
+    name,
+    state,
+    config,
+    tags,
+    moves,
+    comments,
+    history,
+    historyIndex,
+    defaultSize,
+    onInit,
+  }) {
     Object.defineProperty(this, "movesGrouped", {
       get: memoize(this.getMovesGrouped, () => this.moves.length),
       configurable: true,
@@ -137,14 +141,13 @@ export default class GameBase {
     let moveNumber = 1;
 
     this.hasTPS = false;
-    this.name = params.name;
+    this.name = name || "";
     this.board = null;
-    this.history = params.history ? params.history.concat() : [];
-    this.historyIndex = params.historyIndex || 0;
-    this.config =
-      params.config && !isEmpty(params.config) ? { ...params.config } : {};
+    this.history = history ? history.concat() : [];
+    this.historyIndex = historyIndex || 0;
+    this.config = config ? { ...config } : {};
     this.tags = {};
-    this.defaultSize = params.defaultSize || 6;
+    this.defaultSize = defaultSize || 6;
     this.moves = [];
     this.boardStates = {};
     this.branches = {};
@@ -154,35 +157,35 @@ export default class GameBase {
     this.warnings = [];
 
     // Parse HEAD
-    if (notation) {
+    if (ptn) {
       let item, key;
 
-      notation = notation.trimStart();
-      while (notation.length && notation[0] === "[") {
+      ptn = ptn.trimStart();
+      while (ptn.length && ptn[0] === "[") {
         // Tag
         try {
-          item = Tag.parse(notation);
+          item = Tag.parse(ptn);
           key = item.key.toLowerCase();
           if (item.value) {
             this.tags[key] = item;
           }
-          notation = notation.substr(item.ptn.length).trimStart();
+          ptn = ptn.substr(item.ptn.length).trimStart();
           delete item.ptn;
         } catch (error) {
           console.warn(error);
           this.warnings.push(error);
-          let match = notation.match(/]\s*/);
+          let match = ptn.match(/]\s*/);
           if (match) {
-            notation = notation.substr(match.index + 1).trimStart();
+            ptn = ptn.substr(match.index + 1).trimStart();
           } else {
-            notation = "";
+            ptn = "";
           }
         }
       }
     }
 
-    if (params.tags) {
-      each(params.tags, (value, key) => {
+    if (tags) {
+      each(tags, (value, key) => {
         if (value) {
           if (value instanceof Tag) {
             this.tags[key.toLowerCase()] = value;
@@ -274,7 +277,7 @@ export default class GameBase {
     this.board = new Board(this, null, this.board ? this.board.output : null);
 
     // Parse BODY
-    if (notation) {
+    if (ptn) {
       let item, ply;
       let branch = null;
       let move = new Move({
@@ -287,14 +290,14 @@ export default class GameBase {
 
       this.moves[0] = move;
 
-      while (notation.length) {
-        if (Comment.test(notation)) {
+      while (ptn.length) {
+        if (Comment.test(ptn)) {
           // Comment
-          item = Comment.parse(notation);
+          item = Comment.parse(ptn);
           if (
             isDoubleBreak &&
             this.plies.length &&
-            Linenum.test(notation.trimStart().substr(item.ptn.length))
+            Linenum.test(ptn.trimStart().substr(item.ptn.length))
           ) {
             // Branch identifier
             branch = item.contents;
@@ -308,13 +311,13 @@ export default class GameBase {
             this[type][plyID].push(item);
             this.board.dirtyComment(type, plyID);
           }
-        } else if (Linenum.test(notation)) {
+        } else if (Linenum.test(ptn)) {
           // Line number
-          item = Linenum.parse(notation, this, branch);
+          item = Linenum.parse(ptn, this, branch);
           if (!move.linenum) {
             move.linenum = item;
             if (move.index === 0 && item.number !== this.firstMoveNumber) {
-              if (item.ptn.trim() === notation.trim()) {
+              if (item.ptn.trim() === ptn.trim()) {
                 // Nothing but the first move's number, so overwrite
                 Linenum.parse(this.firstMoveNumber + ".", this, branch);
               } else {
@@ -339,23 +342,23 @@ export default class GameBase {
           branch = item.branch;
           moveNumber = item.number;
           ply = null;
-        } else if (Result.test(notation)) {
+        } else if (Result.test(ptn)) {
           // Result
-          item = Result.parse(notation);
+          item = Result.parse(ptn);
           if (ply) {
             ply.result = item;
           }
-        } else if (Nop.test(notation)) {
+        } else if (Nop.test(ptn)) {
           // Placeholder
-          item = Nop.parse(notation);
+          item = Nop.parse(ptn);
           if (!move.ply1) {
             move.ply1 = item;
           } else if (!move.ply2 && !move.ply1.result) {
             move.ply2 = item;
           }
-        } else if (Ply.test(notation)) {
+        } else if (Ply.test(ptn)) {
           // Ply
-          item = ply = Ply.parse(notation, { id: this.plies.length });
+          item = ply = Ply.parse(ptn, { id: this.plies.length });
           if (
             (!move.number || move.number === this.firstMoveNumber) &&
             this.firstPlayer === 2 &&
@@ -403,27 +406,27 @@ export default class GameBase {
           if (!(ply.branch in this.branches)) {
             this.branches[ply.branch] = ply;
           }
-        } else if (Evaluation.test(notation[0])) {
+        } else if (Evaluation.test(ptn[0])) {
           // Evalutaion
-          item = Evaluation.parse(notation);
+          item = Evaluation.parse(ptn);
           if (ply) {
             ply.evaluation = item;
           }
-        } else if (/[^\s]/.test(notation)) {
+        } else if (/[^\s]/.test(ptn)) {
           throw new Error("Invalid PTN format");
         } else {
           break;
         }
 
-        notation = notation.trimStart().substr(item.ptn.length);
-        isDoubleBreak = startsWithDoubleBreak.test(notation);
+        ptn = ptn.trimStart().substr(item.ptn.length);
+        isDoubleBreak = startsWithDoubleBreak.test(ptn);
         delete item.ptn;
       }
-    } else if (params.moves) {
-      if (params.comments) {
-        this.parseJSONComments(params.comments, -1);
+    } else if (moves) {
+      if (comments) {
+        this.parseJSONComments(comments, -1);
       }
-      this.parseJSONMoves(params.moves);
+      this.parseJSONMoves(moves);
     }
 
     if (!this.moves[0]) {
@@ -453,15 +456,15 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (params.state) {
-      if (!(params.state.targetBranch in this.branches)) {
-        params.state.targetBranch = "";
+    if (state) {
+      if (!(state.targetBranch in this.branches)) {
+        state.targetBranch = "";
       }
-      this.board.targetBranch = params.state.targetBranch || "";
-      let ply = this.board.plies[params.state.plyIndex];
+      this.board.targetBranch = state.targetBranch || "";
+      let ply = this.board.plies[state.plyIndex];
       if (ply) {
-        if (ply.id || params.state.plyIsDone) {
-          this.board.goToPly(ply.id, params.state.plyIsDone);
+        if (ply.id || state.plyIsDone) {
+          this.board.goToPly(ply.id, state.plyIsDone);
         } else {
           this.board.plyID = ply.id;
         }
@@ -602,7 +605,7 @@ export default class GameBase {
           "flats2",
         ].find((tag) => tag in tags && tags[tag] !== this.tag(tag))
       ) {
-        this.init(this.ptn, { ...this.params, state: null });
+        this.init({ ...this.params, state: null });
       } else {
         this.board.updateTagsOutput();
       }
@@ -689,7 +692,7 @@ export default class GameBase {
   }
 
   updatePTN(ptn, recordChange = true) {
-    const update = () => this.init(ptn, this.params);
+    const update = () => this.init({ ...this.params, ptn });
     if (recordChange) {
       this.recordChange(update);
     } else {

@@ -98,6 +98,7 @@ import { forEach, throttle } from "lodash";
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+const SCROLL_THRESHOLD = 250;
 
 export default {
   name: "Board",
@@ -113,6 +114,7 @@ export default {
       scale: 1,
       x: 0,
       y: 0,
+      deltaY: 0,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -267,7 +269,7 @@ export default {
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 0.75 + "deg";
 
       const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
@@ -318,23 +320,23 @@ export default {
         this.rotating = false;
       }
 
-      let x = Math.max(
-        -1,
-        Math.min(
-          1,
-          this.prevBoardRotation[0] +
-            (ROTATE_SENSITIVITY * event.offset.x) / this.size.width
-        )
-      );
+      let x =
+        this.prevBoardRotation[0] +
+        (ROTATE_SENSITIVITY * event.offset.x) / this.size.width;
+      if (x > 1) {
+        x = 1 + (x - 1) / 3;
+      } else if (x < -1) {
+        x = -1 + (x + 1) / 3;
+      }
 
-      let y = Math.max(
-        0,
-        Math.min(
-          1,
-          this.prevBoardRotation[1] -
-            (ROTATE_SENSITIVITY * event.offset.y) / this.size.width
-        )
-      );
+      let y =
+        this.prevBoardRotation[1] -
+        (ROTATE_SENSITIVITY * event.offset.y) / this.size.width;
+      if (y > 1) {
+        y = 1 + (y - 1) / 3;
+      } else if (y < 0) {
+        y /= 3;
+      }
 
       if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
@@ -342,13 +344,24 @@ export default {
 
       this.boardRotation = [x, y];
       if (event.isFinal) {
-        this.$store.dispatch("ui/SET_UI", [
-          "boardRotation",
-          this.boardRotation,
-        ]);
+        this.$nextTick(() => {
+          this.boardRotation = [
+            Math.max(-1, Math.min(1, x)),
+            Math.max(0, Math.min(1, y)),
+          ];
+          this.$store.dispatch("ui/SET_UI", [
+            "boardRotation",
+            this.boardRotation,
+          ]);
+          this.zoomFitAfterTransition();
+        });
       }
     },
     scroll(event) {
+      if (this.$store.state.ui.embed) {
+        return;
+      }
+
       if (this.$store.state.ui.scrollScrubbing) {
         // Start scrubbing
         if (!this.$store.state.ui.scrubbing) {
@@ -358,10 +371,16 @@ export default {
         // Scroll by half-ply and re-enable animations
         this.isSlowScrub = event.shiftKey;
 
-        this.$store.dispatch(
-          event.deltaY < 0 ? "game/PREV" : "game/NEXT",
-          this.isSlowScrub
-        );
+        // Handle smooth scrolling
+        this.deltaY += event.deltaY;
+        if (Math.abs(this.deltaY) >= SCROLL_THRESHOLD) {
+          const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
+          let times = Math.floor(Math.abs(this.deltaY) / SCROLL_THRESHOLD);
+          this.deltaY = (this.deltaY + event.deltaY) % SCROLL_THRESHOLD;
+          while (times-- > 0) {
+            this.$store.dispatch(action, this.isSlowScrub);
+          }
+        }
 
         clearTimeout(this.scrollTimer);
         this.scrollTimer = setTimeout(() => {

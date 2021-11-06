@@ -38,7 +38,7 @@ export default class GameOnline {
   }
 
   set json(json) {
-    this.init(false, json);
+    this.init(json);
   }
 
   get JSONTags() {

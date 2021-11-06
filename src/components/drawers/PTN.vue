@@ -54,7 +54,7 @@ export default {
     },
   },
   methods: {
-    scroll: throttle(function (animate = false) {
+    scroll: throttle(function () {
       const editingBranch = this.$store.state.ui.editingBranch
         ? this.ptn.branches[this.$store.state.ui.editingBranch] || null
         : null;
@@ -68,14 +68,14 @@ export default {
   },
   watch: {
     "position.plyID"() {
-      this.scroll(true);
+      this.$nextTick(() => this.scroll());
     },
     "$store.state.ui.showAllBranches"() {
-      this.scroll(true);
+      this.$nextTick(() => this.scroll());
     },
   },
   updated() {
-    this.scroll();
+    this.$nextTick(() => this.scroll());
   },
 };
 </script>

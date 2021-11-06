@@ -58,11 +58,14 @@
                 </q-item-section>
               </q-item>
               <recess>
-                <GameTable
+                <!-- <GameTable
                   v-if="showOnline"
                   ref="gameTable"
                   v-model="selectedGames"
-                />
+                /> -->
+                <div v-if="showOnline" class="q-pa-md text-center">
+                  {{ $t("Coming soon") }}
+                </div>
               </recess>
             </q-list>
           </q-tab-panel>
@@ -90,14 +93,14 @@
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
-import GameTable from "../components/controls/GameTable";
+// import GameTable from "../components/controls/GameTable";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, GameTable, MoreToggle },
+  components: { GameInfo, /* GameTable, */ MoreToggle },
   data() {
     return {
       tags: {
@@ -164,7 +167,7 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
-      let game = new Game("", { name, tags });
+      let game = new Game({ name, tags });
 
       game.warnings.forEach((warning) =>
         this.$store.dispatch("NOTIFY_WARNING", warning)

@@ -82,8 +82,8 @@ export default {
       const ply = game.state.ply;
       const tps = game.state.tps;
       const config = game.config;
-      game = new Game("", {
-        state: { ...game.state },
+      game = new Game({
+        state: game.minState,
         tags: {
           tps: game.state.tps,
           komi: config.komi,

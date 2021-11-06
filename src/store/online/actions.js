@@ -231,7 +231,7 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
       moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
 
       // Add game
-      let game = new Game(false, gameJSON);
+      let game = new Game(gameJSON);
       dispatch("ADD_GAME", game, { root: true });
 
       Loading.hide();

@@ -6,9 +6,14 @@ const maxHistoryLength = 10;
 
 export default class GameUndo {
   _applyPatch(patch, state) {
-    const result = diff.patch_apply(patch, this.ptn);
-    if (result && result.length) {
-      this.init(result[0], { ...this.params, state });
+    let ptn;
+    try {
+      ptn = diff.patch_apply(patch, this.ptn)[0];
+    } catch (error) {
+      console.error(error);
+    }
+    if (ptn) {
+      this.init({ ...this.params, ptn, state });
     }
   }
 

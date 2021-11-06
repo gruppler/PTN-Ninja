@@ -13,9 +13,9 @@ export default class Game extends Aggregation(
   GameMutations,
   GameUndo
 ) {
-  static validate(notation) {
+  static validate(ptn) {
     try {
-      new Game(notation);
+      new Game({ ptn });
     } catch (error) {
       return error ? error.message : "";
     }

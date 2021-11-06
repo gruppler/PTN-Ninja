@@ -189,7 +189,7 @@ import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
-import onlineStore from "../store/online";
+// import onlineStore from "../store/online";
 import GameSelector from "../components/controls/GameSelector";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
@@ -359,7 +359,8 @@ export default {
       return this.$store.state.game.list;
     },
     user() {
-      return this.$store.state.online.user;
+      return null;
+      // return this.$store.state.online.user;
     },
     player() {
       return this.user ? this.$game.getPlayerFromUID(this.user.uid) : 0;
@@ -370,14 +371,14 @@ export default {
   },
   methods: {
     newGame() {
-      const game = new Game("", {
+      const game = new Game({
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
         tags: { size: this.$store.state.ui.size },
       });
       return game;
     },
-    getGame() {
+    async getGame() {
       let game;
       this.errors = [];
 
@@ -398,7 +399,7 @@ export default {
         if (this.$store.state.game.list && this.$store.state.game.list.length) {
           try {
             game = this.$store.state.game.list[0];
-            game = new Game(game.ptn, game);
+            game = new Game(game);
             if (
               this.$store.state.ui.isEditingTPS &&
               this.$store.state.ui.editingTPS
@@ -420,7 +421,7 @@ export default {
           let name = this.name;
           if (!this.name) {
             // If name isn't provided, parse the game to get a name
-            game = new Game(this.ptn);
+            game = new Game({ ptn: this.ptn });
             name = game.name;
           }
           const index = this.$store.state.game.list.findIndex(
@@ -430,7 +431,7 @@ export default {
             // Open as a new game
             if (!game) {
               // If it hasn't been parsed yet, do it now
-              game = new Game(this.ptn, { name });
+              game = new Game({ ptn: this.ptn, name });
             }
             if (game) {
               this.$store.dispatch("game/ADD_GAME", game);
@@ -440,9 +441,13 @@ export default {
             // Replace an existing game
             if (!game) {
               // If it hasn't been parsed yet, do it now
-              game = new Game(this.ptn, { name });
+              game = new Game({ ptn: this.ptn, name });
             }
-            this.$store.dispatch("game/REPLACE_GAME", { index, ptn: this.ptn });
+            game = await this.$store.dispatch("game/REPLACE_GAME", {
+              index,
+              ptn: this.ptn,
+              gameState: this.state,
+            });
             this.$router.replace("/");
           }
         } catch (error) {
@@ -709,9 +714,9 @@ export default {
     },
   },
   watch: {
-    game() {
-      this.$store.dispatch("online/LISTEN_CURRENT_GAME");
-    },
+    // game() {
+    //   this.$store.dispatch("online/LISTEN_CURRENT_GAME");
+    // },
     editingTPS() {
       if (this.firstMoveNumber < this.minFirstMoveNumber) {
         this.firstMoveNumber = this.minFirstMoveNumber;
@@ -732,10 +737,10 @@ export default {
   },
   beforeCreate() {
     // Load online functionality
-    if (process.env.DEV && this.$store.state.online) {
-      this.$store.unregisterModule("online");
-    }
-    this.$store.registerModule("online", onlineStore);
+    // if (process.env.DEV && this.$store.state.online) {
+    //   this.$store.unregisterModule("online");
+    // }
+    // this.$store.registerModule("online", onlineStore);
 
     // Redirect hash URLs
     if (location.hash.length) {
@@ -747,30 +752,30 @@ export default {
     }
 
     // Initialize
-    this.$store.dispatch("online/INIT").then(() => {
-      if (this.gameID) {
-        // Check that the game is not already open
-        const index = this.$store.state.game.list.findIndex(
-          (game) => game.config.id === this.gameID
-        );
-        if (index >= 0) {
-          this.$store.dispatch("game/SELECT_GAME", index);
-        } else {
-          // Add online game from URL
-          this.$store
-            .dispatch("online/LOAD_GAME", this.gameID)
-            .then(() => {
-              this.$router.replace("/");
-            })
-            .catch((error) => {
-              this.$store.dispatch("ui/NOTIFY_ERROR", error);
-            });
-        }
-      }
-    });
+    // this.$store.dispatch("online/INIT").then(() => {
+    //   if (this.gameID) {
+    //     // Check that the game is not already open
+    //     const index = this.$store.state.game.list.findIndex(
+    //       (game) => game.config.id === this.gameID
+    //     );
+    //     if (index >= 0) {
+    //       this.$store.dispatch("game/SELECT_GAME", index);
+    //     } else {
+    //       // Add online game from URL
+    //       this.$store
+    //         .dispatch("online/LOAD_GAME", this.gameID)
+    //         .then(() => {
+    //           this.$router.replace("/");
+    //         })
+    //         .catch((error) => {
+    //           this.$store.dispatch("ui/NOTIFY_ERROR", error);
+    //         });
+    //     }
+    //   }
+    // });
   },
-  created() {
-    this.getGame();
+  async created() {
+    await this.getGame();
 
     if (!this.gameID) {
       if (!this.games.length) {
