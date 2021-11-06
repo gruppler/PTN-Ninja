@@ -98,6 +98,7 @@ import { forEach, throttle } from "lodash";
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+const SCROLL_THRESHOLD = 250;
 
 export default {
   name: "Board",
@@ -113,6 +114,7 @@ export default {
       scale: 1,
       x: 0,
       y: 0,
+      deltaY: 0,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -365,10 +367,16 @@ export default {
         // Scroll by half-ply and re-enable animations
         this.isSlowScrub = event.shiftKey;
 
-        this.$store.dispatch(
-          event.deltaY < 0 ? "game/PREV" : "game/NEXT",
-          this.isSlowScrub
-        );
+        // Handle smooth scrolling
+        this.deltaY += event.deltaY;
+        if (Math.abs(this.deltaY) >= SCROLL_THRESHOLD) {
+          const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
+          let times = Math.floor(Math.abs(this.deltaY) / SCROLL_THRESHOLD);
+          this.deltaY = (this.deltaY + event.deltaY) % SCROLL_THRESHOLD;
+          while (times-- > 0) {
+            this.$store.dispatch(action, this.isSlowScrub);
+          }
+        }
 
         clearTimeout(this.scrollTimer);
         this.scrollTimer = setTimeout(() => {
