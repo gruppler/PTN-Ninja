@@ -14,236 +14,6 @@
       </template>
     </q-input>
 
-    <div class="row q-gutter-md q-mt-none">
-      <q-select
-        class="col-grow"
-        v-model="tags.size"
-        :label="$t('Size')"
-        :options="sizes"
-        :readonly="game && game.plies.length > 0"
-        @input="$refs.tps.validate()"
-        behavior="menu"
-        map-options
-        emit-value
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="size" class="flip-vertical" />
-        </template>
-      </q-select>
-
-      <q-input
-        ref="tps"
-        v-show="tags.tps || !game || !game.plies.length"
-        class="col-grow"
-        v-model.trim="tags.tps"
-        name="tps"
-        :label="$t('TPS')"
-        :rules="rules('tps')"
-        :readonly="game && game.plies.length > 0"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon @click.right.prevent="fillTPS" name="board" />
-        </template>
-        <template v-slot:append>
-          <q-icon
-            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
-            @click="editTPS"
-            name="edit"
-            class="q-field__focusable-action"
-            v-close-popup
-          />
-        </template>
-      </q-input>
-    </div>
-
-    <div
-      v-if="tags.size in pieceCounts"
-      v-show="isVisible(...pieceCountTags)"
-      class="row"
-    >
-      <div class="col">
-        <div
-          v-show="!separatePieceCounts"
-          class="row q-gutter-md"
-          :class="{ 'q-mb-md': separatePieceCounts }"
-        >
-          <q-input
-            class="col-grow"
-            v-show="!separatePieceCounts"
-            v-model="tags.caps"
-            :placeholder="pieceCounts[tags.size].cap"
-            name="caps"
-            type="number"
-            min="0"
-            :max="tags.size"
-            :label="$t('Caps')"
-            :rules="rules('caps')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="caps1" />
-            </template>
-          </q-input>
-          <q-input
-            class="col-grow"
-            v-show="!separatePieceCounts"
-            v-model="tags.flats"
-            :placeholder="pieceCounts[tags.size].flat"
-            name="flats"
-            type="number"
-            min="0"
-            max="99"
-            :label="$t('Flats')"
-            :rules="rules('flats')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="flats1" />
-            </template>
-          </q-input>
-        </div>
-
-        <div
-          v-show="separatePieceCounts"
-          class="row q-gutter-md"
-          :class="{ 'q-mb-md': separatePieceCounts }"
-        >
-          <q-input
-            class="col-grow"
-            v-model="tags.caps1"
-            :placeholder="tags.caps || pieceCounts[tags.size].cap"
-            name="caps1"
-            type="number"
-            min="0"
-            :max="tags.size"
-            :label="$t('Caps1')"
-            :rules="rules('caps1')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="caps1" />
-            </template>
-          </q-input>
-          <q-input
-            class="col-grow"
-            v-model="tags.flats1"
-            :placeholder="tags.flats || pieceCounts[tags.size].flat"
-            name="flats1"
-            type="number"
-            min="0"
-            max="99"
-            :label="$t('Flats1')"
-            :rules="rules('flats1')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="flats1" />
-            </template>
-          </q-input>
-        </div>
-
-        <div v-show="separatePieceCounts" class="row q-gutter-md">
-          <q-input
-            class="col-grow"
-            v-model="tags.caps2"
-            :placeholder="tags.caps || pieceCounts[tags.size].cap"
-            name="caps2"
-            type="number"
-            min="0"
-            :max="tags.size"
-            :label="$t('Caps2')"
-            :rules="rules('caps2')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="caps2" />
-            </template>
-          </q-input>
-          <q-input
-            class="col-grow"
-            v-model="tags.flats2"
-            :placeholder="tags.flats || pieceCounts[tags.size].flat"
-            name="flats2"
-            type="number"
-            min="0"
-            max="99"
-            :label="$t('Flats2')"
-            :rules="rules('flats2')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="flats2" />
-            </template>
-          </q-input>
-        </div>
-      </div>
-      <q-btn
-        @click="separatePieceCounts = !separatePieceCounts"
-        stretch
-        dense
-        flat
-      >
-        <div v-show="separatePieceCounts" class="column">
-          <q-icon :name="$store.getters['ui/playerIcon'](1)" />
-          <q-icon :name="$store.getters['ui/playerIcon'](2)" />
-        </div>
-        <q-icon v-show="!separatePieceCounts" name="players" />
-      </q-btn>
-    </div>
-
-    <div
-      v-show="isVisible('komi', 'opening')"
-      class="row q-gutter-md q-mt-none"
-    >
-      <q-input
-        class="col-grow"
-        v-show="isVisible('komi')"
-        v-model="tags.komi"
-        name="komi"
-        type="number"
-        min="-20.5"
-        max="20.5"
-        step="0.5"
-        :label="$t('Komi')"
-        :rules="rules('komi')"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="komi" />
-        </template>
-      </q-input>
-
-      <q-select
-        class="col-grow"
-        v-show="isVisible('opening')"
-        v-model="tags.opening"
-        :options="openings"
-        :label="$t('Opening')"
-        name="opening"
-        map-options
-        emit-value
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="opening" />
-        </template>
-      </q-select>
-    </div>
-
     <div class="row">
       <div class="col">
         <div class="row q-gutter-md q-mb-md">
@@ -366,113 +136,234 @@
       />
     </div>
 
-    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
-      <q-input
+    <div class="row q-gutter-md q-mt-none">
+      <q-select
         class="col-grow"
-        v-show="isVisible('date')"
-        v-model="tags.date"
-        name="date"
-        :label="$t('Date')"
-        :rules="rules('date')"
-        :readonly="game && !game.isLocal"
-        hide-bottom-space
+        v-model="tags.size"
+        :label="$t('Size')"
+        :options="sizes"
+        :readonly="game && game.plies.length > 0"
+        @input="$refs.tps.validate()"
+        behavior="menu"
+        map-options
+        emit-value
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="date" />
+          <q-icon name="size" class="flip-vertical" />
         </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showDatePicker"
-          @before-show="proxyDate = tags.date"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-date
-              v-model="proxyDate"
-              name="date"
-              mask="YYYY.MM.DD"
-              :text-color="primaryFG"
-              today-btn
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.date = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.date = proxyDate"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-date>
-          </div>
-        </q-popup-proxy>
-      </q-input>
+      </q-select>
 
       <q-input
+        ref="tps"
+        v-show="tags.tps || !game || !game.plies.length"
         class="col-grow"
-        v-show="isVisible('time')"
-        v-model="tags.time"
-        name="time"
-        :label="$t('Time')"
-        :rules="rules('time')"
-        :readonly="game && !game.isLocal"
+        v-model.trim="tags.tps"
+        name="tps"
+        :label="$t('TPS')"
+        :rules="rules('tps')"
+        :readonly="game && game.plies.length > 0"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
         hide-bottom-space
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="time" />
+          <q-icon @click.right.prevent="fillTPS" name="board" />
         </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showTimePicker"
-          @before-show="proxyTime = tags.time"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-time
-              v-model="proxyTime"
-              name="time"
-              :text-color="primaryFG"
-              format24h
-              with-seconds
-              now-btn
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.time = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.time = proxyTime"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-time>
-          </div>
-        </q-popup-proxy>
+        <template v-slot:append>
+          <q-icon
+            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
+            @click="editTPS"
+            name="edit"
+            class="q-field__focusable-action"
+            v-close-popup
+          />
+        </template>
       </q-input>
+    </div>
+
+    <div
+      v-if="tags.size in pieceCounts"
+      v-show="isVisible(...pieceCountTags)"
+      class="row"
+    >
+      <div class="col">
+        <div
+          v-show="!separatePieceCounts"
+          class="row q-gutter-md"
+          :class="{ 'q-mb-md': separatePieceCounts }"
+        >
+          <q-input
+            class="col-grow"
+            v-show="!separatePieceCounts"
+            v-model="tags.flats"
+            :placeholder="pieceCounts[tags.size].flat"
+            name="flats"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats')"
+            :rules="rules('flats')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="flats1" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-show="!separatePieceCounts"
+            v-model="tags.caps"
+            :placeholder="pieceCounts[tags.size].cap"
+            name="caps"
+            type="number"
+            min="0"
+            :max="tags.size"
+            :label="$t('Caps')"
+            :rules="rules('caps')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="caps1" />
+            </template>
+          </q-input>
+        </div>
+
+        <div
+          v-show="separatePieceCounts"
+          class="row q-gutter-md"
+          :class="{ 'q-mb-md': separatePieceCounts }"
+        >
+          <q-input
+            class="col-grow"
+            v-model="tags.flats1"
+            :placeholder="tags.flats || pieceCounts[tags.size].flat"
+            name="flats1"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats1')"
+            :rules="rules('flats1')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="flats1" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-model="tags.caps1"
+            :placeholder="tags.caps || pieceCounts[tags.size].cap"
+            name="caps1"
+            type="number"
+            min="0"
+            :max="tags.size"
+            :label="$t('Caps1')"
+            :rules="rules('caps1')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="caps1" />
+            </template>
+          </q-input>
+        </div>
+
+        <div v-show="separatePieceCounts" class="row q-gutter-md">
+          <q-input
+            class="col-grow"
+            v-model="tags.flats2"
+            :placeholder="tags.flats || pieceCounts[tags.size].flat"
+            name="flats2"
+            type="number"
+            min="0"
+            max="99"
+            :label="$t('Flats2')"
+            :rules="rules('flats2')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="flats2" />
+            </template>
+          </q-input>
+          <q-input
+            class="col-grow"
+            v-model="tags.caps2"
+            :placeholder="tags.caps || pieceCounts[tags.size].cap"
+            name="caps2"
+            type="number"
+            min="0"
+            :max="tags.size"
+            :label="$t('Caps2')"
+            :rules="rules('caps2')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="caps2" />
+            </template>
+          </q-input>
+        </div>
+      </div>
+      <q-btn
+        @click="separatePieceCounts = !separatePieceCounts"
+        stretch
+        dense
+        flat
+      >
+        <div v-show="separatePieceCounts" class="column">
+          <q-icon :name="$store.getters['ui/playerIcon'](1)" />
+          <q-icon :name="$store.getters['ui/playerIcon'](2)" />
+        </div>
+        <q-icon v-show="!separatePieceCounts" name="players" />
+      </q-btn>
+    </div>
+
+    <div
+      v-show="isVisible('komi', 'opening')"
+      class="row q-gutter-md q-mt-none"
+    >
+      <q-input
+        class="col-grow"
+        v-show="isVisible('komi')"
+        v-model="tags.komi"
+        name="komi"
+        type="number"
+        min="-20.5"
+        max="20.5"
+        step="0.5"
+        :label="$t('Komi')"
+        :rules="rules('komi')"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="komi" />
+        </template>
+      </q-input>
+
+      <q-select
+        class="col-grow"
+        v-show="isVisible('opening')"
+        v-model="tags.opening"
+        :options="openings"
+        :label="$t('Opening')"
+        name="opening"
+        map-options
+        emit-value
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="opening" />
+        </template>
+      </q-select>
     </div>
 
     <div class="row q-gutter-md q-mt-none">
@@ -622,6 +513,114 @@
         <q-icon name="event" />
       </template>
     </q-input>
+    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
+      <q-input
+        class="col-grow"
+        v-show="isVisible('date')"
+        v-model="tags.date"
+        name="date"
+        :label="$t('Date') + ' (UTC)'"
+        :rules="rules('date')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="date" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showDatePicker"
+          @before-show="proxyDate = tags.date"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-date
+              v-model="proxyDate"
+              name="date"
+              mask="YYYY.MM.DD"
+              :text-color="primaryFG"
+              today-btn
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.date = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.date = proxyDate"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-date>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+
+      <q-input
+        class="col-grow"
+        v-show="isVisible('time')"
+        v-model="tags.time"
+        name="time"
+        :label="$t('Time') + ' (UTC)'"
+        :rules="rules('time')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="time" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showTimePicker"
+          @before-show="proxyTime = tags.time"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-time
+              v-model="proxyTime"
+              name="time"
+              :text-color="primaryFG"
+              format24h
+              with-seconds
+              now-btn
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.time = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.time = proxyTime"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-time>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+    </div>
   </div>
 </template>
 

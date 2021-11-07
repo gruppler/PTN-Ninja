@@ -1,10 +1,5 @@
 <template>
-  <small-dialog
-    :value="true"
-    no-backdrop-dismiss
-    v-bind="$attrs"
-    v-on="$listeners"
-  >
+  <small-dialog :value="true" v-bind="$attrs" v-on="$listeners">
     <template v-slot:header>
       <dialog-header icon="info" :title="title">
         <template v-slot:buttons>
@@ -29,10 +24,60 @@
         <q-item-section>
           <q-item-label caption>{{ $t("Name") }}</q-item-label>
           <q-item-label class="ellipsis">
-            {{ name }}
-            <tooltip>{{ name }}</tooltip>
+            <span>
+              {{ name }}
+              <tooltip>{{ name }}</tooltip>
+            </span>
           </q-item-label>
         </q-item-section>
+      </q-item>
+
+      <!-- Player 1 -->
+      <q-item v-if="tags.player1">
+        <q-item-section side>
+          <q-icon
+            :name="$store.getters['ui/playerIcon'](1, game.config.isPrivate)"
+          />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label caption>{{ $t("Player1") }}</q-item-label>
+          <q-item-label>{{ tags.player1 }}</q-item-label>
+        </q-item-section>
+
+        <!-- Player 1 Rating -->
+        <template v-if="tags.rating1">
+          <q-item-section align="right">
+            <q-item-label caption>{{ $t("Rating1") }}</q-item-label>
+            <q-item-label>{{ tags.rating1 }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-icon name="rating1" />
+          </q-item-section>
+        </template>
+      </q-item>
+
+      <q-item v-if="tags.player2">
+        <!-- Player 2 -->
+        <q-item-section side>
+          <q-icon
+            :name="$store.getters['ui/playerIcon'](2, game.config.isPrivate)"
+          />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label caption>{{ $t("Player2") }}</q-item-label>
+          <q-item-label>{{ tags.player2 }}</q-item-label>
+        </q-item-section>
+
+        <!-- Player 2 Rating -->
+        <template v-if="tags.rating2">
+          <q-item-section align="right">
+            <q-item-label caption>{{ $t("Rating2") }}</q-item-label>
+            <q-item-label>{{ tags.rating2 }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-icon name="rating2" />
+          </q-item-section>
+        </template>
       </q-item>
 
       <!-- Size -->
@@ -49,9 +94,9 @@
         <template v-if="tags.tps">
           <q-item-section align="right">
             <q-item-label>
-              <q-chip icon="copy" :label="$t('TPS')" @click="copyTPS" clickable>
+              <q-btn icon="copy" :label="$t('TPS')" @click="copyTPS" dense flat>
                 <tooltip>{{ tags.tps.text }}</tooltip>
-              </q-chip>
+              </q-btn>
             </q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -63,25 +108,9 @@
       <!-- Piece Counts -->
       <template v-if="hasPieceCounts">
         <template v-if="separatePieceCounts">
+          <!-- Player 1 Pieces -->
           <q-item>
-            <!-- Caps -->
-            <q-item-section side>
-              <q-icon name="caps1" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label caption>{{ $t("Caps1") }}</q-item-label>
-              <q-item-label>{{ tags.caps1 }}</q-item-label>
-            </q-item-section>
-            <q-item-section>
-              <q-item-label caption>{{ $t("Caps2") }}</q-item-label>
-              <q-item-label>{{ tags.caps2 }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-icon name="caps2" />
-            </q-item-section>
-          </q-item>
-          <!-- Flats -->
-          <q-item>
+            <!-- Flats 1 -->
             <q-item-section side>
               <q-icon name="flats1" />
             </q-item-section>
@@ -89,99 +118,91 @@
               <q-item-label caption>{{ $t("Flats1") }}</q-item-label>
               <q-item-label>{{ tags.flats1 }}</q-item-label>
             </q-item-section>
+            <!-- Caps 1 -->
+            <q-item-section align="right">
+              <q-item-label caption>{{ $t("Caps1") }}</q-item-label>
+              <q-item-label>{{ tags.caps1 }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-icon name="caps1" />
+            </q-item-section>
+          </q-item>
+
+          <!-- Player 2 Pieces -->
+          <q-item>
+            <!-- Flats 2 -->
+            <q-item-section side>
+              <q-icon name="flats2" />
+            </q-item-section>
             <q-item-section>
               <q-item-label caption>{{ $t("Flats2") }}</q-item-label>
               <q-item-label>{{ tags.flats2 }}</q-item-label>
             </q-item-section>
+            <!-- Caps 2 -->
+            <q-item-section align="right">
+              <q-item-label caption>{{ $t("Caps2") }}</q-item-label>
+              <q-item-label>{{ tags.caps2 }}</q-item-label>
+            </q-item-section>
             <q-item-section side>
-              <q-icon name="flats2" />
+              <q-icon name="caps2" />
             </q-item-section>
           </q-item>
         </template>
         <template v-else>
           <q-item>
-            <!-- Caps -->
+            <!-- Flats -->
             <q-item-section side>
-              <q-icon name="caps1" />
+              <q-icon name="flats1" />
             </q-item-section>
             <q-item-section>
-              <q-item-label caption>{{ $t("Caps") }}</q-item-label>
-              <q-item-label>{{ tags.caps }}</q-item-label>
-            </q-item-section>
-            <!-- Flats -->
-            <q-item-section align="right">
               <q-item-label caption>{{ $t("Flats") }}</q-item-label>
               <q-item-label>{{ tags.flats }}</q-item-label>
             </q-item-section>
+            <!-- Caps -->
+            <q-item-section align="right">
+              <q-item-label caption>{{ $t("Caps") }}</q-item-label>
+              <q-item-label>{{ tags.caps }}</q-item-label>
+            </q-item-section>
             <q-item-section side>
-              <q-icon name="flats1" />
+              <q-icon name="caps1" />
             </q-item-section>
           </q-item>
         </template>
       </template>
 
-      <!-- Player 1 -->
-      <q-item>
+      <q-item v-if="tags.komi">
+        <!-- Komi -->
         <q-item-section side>
-          <q-icon
-            :name="$store.getters['ui/playerIcon'](1, game.config.isPrivate)"
-          />
+          <q-icon name="komi" />
         </q-item-section>
         <q-item-section>
-          <q-item-label caption>{{ $t("Player1") }}</q-item-label>
-          <q-item-label>{{ tags.player1 }}</q-item-label>
+          <q-item-label caption>{{ $t("Komi") }}</q-item-label>
+          <q-item-label>{{ tags.komi }}</q-item-label>
         </q-item-section>
-
-        <!-- Player 2 -->
-        <q-item-section align="right">
-          <q-item-label caption>{{ $t("Player2") }}</q-item-label>
-          <q-item-label>{{ tags.player2 }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-icon
-            :name="$store.getters['ui/playerIcon'](2, game.config.isPrivate)"
-          />
-        </q-item-section>
-      </q-item>
-
-      <q-item v-if="tags.rating1 || tags.rating2">
-        <!-- Player 1 Rating -->
-        <template v-if="tags.rating1">
-          <q-item-section side>
-            <q-icon name="rating1" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label caption>{{ $t("Rating1") }}</q-item-label>
-            <q-item-label>{{ tags.rating1 }}</q-item-label>
-          </q-item-section>
-        </template>
-
-        <!-- Player 2 Rating -->
-        <template v-if="tags.rating2">
+        <!-- Opening -->
+        <template v-if="tags.opening && tags.opening !== 'swap'">
           <q-item-section align="right">
-            <q-item-label caption>{{ $t("Rating2") }}</q-item-label>
-            <q-item-label>{{ tags.rating2 }}</q-item-label>
+            <q-item-label caption>{{ $t("Opening") }}</q-item-label>
+            <q-item-label>{{ $t("openings." + tags.opening) }}</q-item-label>
           </q-item-section>
           <q-item-section side>
-            <q-icon name="rating2" />
+            <q-icon name="opening" />
           </q-item-section>
         </template>
       </q-item>
-
-      <!-- Date/Time -->
-      <q-item>
+      <q-item v-else-if="tags.opening && tags.opening !== 'swap'">
+        <!-- Opening -->
         <q-item-section side>
-          <q-icon name="date_time" />
+          <q-icon name="opening" />
         </q-item-section>
         <q-item-section>
-          <q-item-label>
-            <relative-time :value="datetime" />
-          </q-item-label>
+          <q-item-label caption>{{ $t("Opening") }}</q-item-label>
+          <q-item-label>{{ $t("openings." + tags.opening) }}</q-item-label>
         </q-item-section>
       </q-item>
 
-      <!-- Clock -->
       <q-item v-if="tags.clock">
+        <!-- Clock -->
         <q-item-section side>
           <q-icon name="clock" />
         </q-item-section>
@@ -189,7 +210,6 @@
           <q-item-label caption>{{ $t("Clock") }}</q-item-label>
           <q-item-label>{{ tags.clock }}</q-item-label>
         </q-item-section>
-
         <!-- Round -->
         <template v-if="tags.round">
           <q-item-section align="right">
@@ -202,8 +222,8 @@
         </template>
       </q-item>
 
-      <!-- Result -->
       <q-item v-if="tags.clock">
+        <!-- Result -->
         <q-item-section side>
           <q-icon name="result" />
         </q-item-section>
@@ -221,7 +241,6 @@
             }}
           </q-item-label>
         </q-item-section>
-
         <!-- Round -->
         <template v-if="tags.points">
           <q-item-section class="col-shrink" align="right">
@@ -253,6 +272,19 @@
         <q-item-section>
           <q-item-label caption>{{ $t("Event") }}</q-item-label>
           <q-item-label>{{ tags.event }}</q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <!-- Date/Time -->
+      <q-item v-if="tags.date || tags.time">
+        <q-item-section side>
+          <q-icon name="date_time" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>
+            <relative-time v-if="tags.time" :value="datetime" invert />
+            <relative-date v-else :value="datetime" invert />
+          </q-item-label>
         </q-item-section>
       </q-item>
     </q-list>
@@ -295,9 +327,7 @@ export default {
       return this.game.ptn.tags;
     },
     hasPieceCounts() {
-      return ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].some(
-        (tag) => tag in this.tags
-      );
+      return this.$game.hasCustomPieceCount;
     },
     separatePieceCounts() {
       return (
