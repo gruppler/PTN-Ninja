@@ -13,7 +13,7 @@
     <template v-slot:append>
       <q-icon
         v-if="editButton"
-        @click="$router.push({ name: 'theme' })"
+        @click.stop="$router.push({ name: 'theme' })"
         name="edit"
         class="q-field__focusable-action"
       />
