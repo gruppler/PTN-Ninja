@@ -522,6 +522,13 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editGame":
           if (this.$route.name !== "info-edit") {
             this.$router.push({ name: "info-edit" });

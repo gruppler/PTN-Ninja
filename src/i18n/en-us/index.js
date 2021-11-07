@@ -63,6 +63,7 @@ export default {
   Forward: "Forward",
   "Forward Half-Step": "Forward Half-Step",
   Fullscreen: "Fullscreen",
+  "Game Info": "Game Info",
   "Game Notifications": "Game Notifications",
   "Game x closed": 'Closed "{game}"',
   Height: "Height",
