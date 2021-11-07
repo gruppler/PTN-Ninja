@@ -24,14 +24,14 @@ import {
 } from "lodash";
 import memoize from "./memoize";
 
-export const pieceCounts = {
-  3: { flat: 10, cap: 0 },
-  4: { flat: 15, cap: 0 },
-  5: { flat: 21, cap: 1 },
-  6: { flat: 30, cap: 1 },
-  7: { flat: 40, cap: 2 },
-  8: { flat: 50, cap: 2 },
-};
+export const pieceCounts = Object.freeze({
+  3: Object.freeze({ flat: 10, cap: 0 }),
+  4: Object.freeze({ flat: 15, cap: 0 }),
+  5: Object.freeze({ flat: 21, cap: 1 }),
+  6: Object.freeze({ flat: 30, cap: 1 }),
+  7: Object.freeze({ flat: 40, cap: 2 }),
+  8: Object.freeze({ flat: 50, cap: 2 }),
+});
 
 export const sample = (tags) => {
   return defaults(
@@ -244,10 +244,11 @@ export default class GameBase {
     }
 
     // Initialize board
-    this.pieceCounts = {
-      1: { ...pieceCounts[this.size] },
-      2: { ...pieceCounts[this.size] },
+    this.defaultPieceCounts = {
+      1: pieceCounts[this.size],
+      2: pieceCounts[this.size],
     };
+    this.pieceCounts = cloneDeep(this.defaultPieceCounts);
     if (this.tags.flats) {
       this.pieceCounts[1].flat = this.tags.flats.value;
       this.pieceCounts[2].flat = this.tags.flats.value;
@@ -507,6 +508,15 @@ export default class GameBase {
 
   get isSample() {
     return isSample(this.JSONTags);
+  }
+
+  get hasCustomPieceCount() {
+    return !(
+      this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
+      this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&
+      this.defaultPieceCounts[2].flat === this.pieceCounts[2].flat &&
+      this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
+    );
   }
 
   get openingSwap() {

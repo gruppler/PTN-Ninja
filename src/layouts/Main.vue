@@ -12,9 +12,8 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              v-if="isLocal || player"
-              name="edit"
-              @click.stop="edit"
+              name="info"
+              @click.stop="info"
               class="q-field__focusable-action q-mr-sm"
             />
           </GameSelector>
@@ -517,6 +516,13 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editGame":
           if (this.$route.name !== "info-edit") {
             this.$router.push({ name: "info-edit" });
@@ -689,6 +695,9 @@ export default {
           this.share();
           break;
       }
+    },
+    info() {
+      this.$router.push({ name: "info-view" });
     },
     edit() {
       this.$router.push({ name: "info-edit" });

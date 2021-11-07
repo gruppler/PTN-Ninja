@@ -8,6 +8,20 @@
       <smooth-reflow tag="recess" class="col">
         <div v-if="isLocal">
           <q-list>
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Private Game") }}</q-item-label>
+                <smooth-reflow>
+                  <q-item-label caption v-show="isPrivate">
+                    {{ $t("hint.privateGame") }}
+                  </q-item-label>
+                </smooth-reflow>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="isPrivate" />
+              </q-item-section>
+            </q-item>
+
             <q-item>
               <q-item-section>
                 <PlayerName
@@ -33,20 +47,6 @@
                   dense
                   stack
                 />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Private Game") }}</q-item-label>
-                <smooth-reflow>
-                  <q-item-label caption v-show="isPrivate">
-                    {{ $t("hint.privateGame") }}
-                  </q-item-label>
-                </smooth-reflow>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="isPrivate" />
               </q-item-section>
             </q-item>
 

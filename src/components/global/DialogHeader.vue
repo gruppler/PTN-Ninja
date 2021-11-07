@@ -11,6 +11,15 @@
           {{ title }}
         </slot>
       </q-item-label>
+      <q-item-label
+        v-if="subtitle || $slots.subtitle"
+        class="text-subtitle1"
+        subtitle
+      >
+        <slot name="subtitle">
+          {{ subtitle }}
+        </slot>
+      </q-item-label>
     </q-item-section>
     <q-item-section class="fg-inherit" side top>
       <div class="row reverse items-center q-gutter-sm">
@@ -27,6 +36,7 @@ export default {
   props: {
     icon: String,
     title: String,
+    subtitle: String,
     noCloseBtn: Boolean,
   },
 };
