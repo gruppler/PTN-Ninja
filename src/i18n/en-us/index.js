@@ -40,6 +40,7 @@ export default {
   "Delete Ply": "Delete Ply",
   Dismiss: "Dismiss",
   Download: "Download",
+  Duplicate: "Duplicate",
   "Duplicate Game Names": "Duplicate Game Names",
   Edit: "Edit",
   "Edit Game": "Edit Game",

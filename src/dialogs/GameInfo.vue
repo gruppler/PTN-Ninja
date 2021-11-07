@@ -3,14 +3,24 @@
     <template v-slot:header>
       <dialog-header icon="info" :title="title">
         <template v-slot:buttons>
-          <q-btn icon="open_in_new" @click="duplicate" dense flat />
+          <q-btn
+            v-if="isDuplicable"
+            icon="open_in_new"
+            @click="duplicate"
+            dense
+            flat
+          >
+            <tooltip>{{ $t("Duplicate") }}</tooltip>
+          </q-btn>
           <q-btn
             v-if="isEditable"
             icon="edit"
             :to="{ name: 'info-edit' }"
             dense
             flat
-          />
+          >
+            <tooltip>{{ $t("Edit") }}</tooltip>
+          </q-btn>
         </template>
       </dialog-header>
     </template>
@@ -301,6 +311,9 @@ export default {
     isEditable() {
       return !this.game.config.isOnline || this.game.config.player;
     },
+    isDuplicable() {
+      return !(this.game.config.isOnline && this.game.config.isOngoing);
+    },
     icon() {
       if (this.game.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
@@ -315,7 +328,7 @@ export default {
       return this.$t(this.game.config.isOnline ? "Online Game" : "Local Game");
     },
     name() {
-      return this.$game.name;
+      return this.$store.state.game.list[0].name;
     },
     datetime() {
       return this.$game.datetime;
@@ -344,7 +357,9 @@ export default {
         });
       }
     },
-    duplicate() {},
+    duplicate() {
+      this.$store.dispatch("game/ADD_GAME", this.$game);
+    },
   },
 };
 </script>
