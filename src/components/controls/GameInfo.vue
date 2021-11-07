@@ -204,6 +204,46 @@
       </q-btn>
     </div>
 
+    <div
+      v-show="isVisible('komi', 'opening')"
+      class="row q-gutter-md q-mt-none"
+    >
+      <q-input
+        class="col-grow"
+        v-show="isVisible('komi')"
+        v-model="tags.komi"
+        name="komi"
+        type="number"
+        min="-20.5"
+        max="20.5"
+        step="0.5"
+        :label="$t('Komi')"
+        :rules="rules('komi')"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="komi" />
+        </template>
+      </q-input>
+
+      <q-select
+        class="col-grow"
+        v-show="isVisible('opening')"
+        v-model="tags.opening"
+        :options="openings"
+        :label="$t('Opening')"
+        name="opening"
+        map-options
+        emit-value
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="opening" />
+        </template>
+      </q-select>
+    </div>
+
     <div class="row">
       <div class="col">
         <div class="row q-gutter-md q-mb-md">
@@ -324,46 +364,6 @@
         dense
         flat
       />
-    </div>
-
-    <div
-      v-show="isVisible('komi', 'opening')"
-      class="row q-gutter-md q-mt-none"
-    >
-      <q-input
-        class="col-grow"
-        v-show="isVisible('komi')"
-        v-model="tags.komi"
-        name="komi"
-        type="number"
-        min="-20.5"
-        max="20.5"
-        step="0.5"
-        :label="$t('Komi')"
-        :rules="rules('komi')"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="komi" />
-        </template>
-      </q-input>
-
-      <q-select
-        class="col-grow"
-        v-show="isVisible('opening')"
-        v-model="tags.opening"
-        :options="openings"
-        :label="$t('Opening')"
-        name="opening"
-        map-options
-        emit-value
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="opening" />
-        </template>
-      </q-select>
     </div>
 
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
