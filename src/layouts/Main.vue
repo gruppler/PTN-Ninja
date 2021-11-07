@@ -12,12 +12,6 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              v-if="(isLocal || player) && $q.screen.gt.sm"
-              name="edit"
-              @click.stop="edit"
-              class="q-field__focusable-action q-mr-sm"
-            />
-            <q-icon
               name="info"
               @click.stop="info"
               class="q-field__focusable-action q-mr-sm"
