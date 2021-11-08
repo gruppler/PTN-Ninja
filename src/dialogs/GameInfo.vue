@@ -1,12 +1,13 @@
 <template>
   <small-dialog :value="true" v-bind="$attrs" v-on="$listeners">
     <template v-slot:header>
-      <dialog-header icon="info" :title="title">
+      <dialog-header :icon="icon" :title="type">
         <template v-slot:buttons>
           <q-btn
             v-if="isDuplicable"
             icon="open_in_new"
             @click="duplicate"
+            v-close-popup
             dense
             flat
           >
@@ -15,7 +16,7 @@
           <q-btn
             v-if="isEditable"
             icon="edit"
-            :to="{ name: 'info-edit' }"
+            @click="$router.push({ name: 'info-edit' })"
             dense
             flat
           >
@@ -29,7 +30,7 @@
       <!-- Name -->
       <q-item>
         <q-item-section side>
-          <q-icon :name="icon" />
+          <q-icon name="file" />
         </q-item-section>
         <q-item-section>
           <q-item-label caption>{{ $t("Name") }}</q-item-label>
@@ -315,16 +316,9 @@ export default {
       return !(this.game.config.isOnline && this.game.config.isOngoing);
     },
     icon() {
-      if (this.game.config.isOnline) {
-        return this.$store.getters["ui/playerIcon"](
-          this.game.config.player,
-          this.game.config.isPrivate
-        );
-      } else {
-        return "file";
-      }
+      return this.game.config.isOnline ? "online" : "local";
     },
-    title() {
+    type() {
       return this.$t(this.game.config.isOnline ? "Online Game" : "Local Game");
     },
     name() {
