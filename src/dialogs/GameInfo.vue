@@ -98,7 +98,7 @@
         </q-item-section>
         <q-item-section class="col-shrink">
           <q-item-label caption>{{ $t("Size") }}</q-item-label>
-          <q-item-label>{{ tags.size }}&times;{{ tags.size }}</q-item-label>
+          <q-item-label>{{ tags.size }}x{{ tags.size }}</q-item-label>
         </q-item-section>
 
         <!-- TPS -->
@@ -264,17 +264,6 @@
         </template>
       </q-item>
 
-      <!-- Site -->
-      <q-item v-if="tags.clock">
-        <q-item-section side>
-          <q-icon name="site" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label caption>{{ $t("Site") }}</q-item-label>
-          <q-item-label>{{ tags.site }}</q-item-label>
-        </q-item-section>
-      </q-item>
-
       <!-- Event -->
       <q-item v-if="tags.clock">
         <q-item-section side>
@@ -283,6 +272,17 @@
         <q-item-section>
           <q-item-label caption>{{ $t("Event") }}</q-item-label>
           <q-item-label>{{ tags.event }}</q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <!-- Site -->
+      <q-item v-if="tags.clock">
+        <q-item-section side>
+          <q-icon name="site" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label caption>{{ $t("Site") }}</q-item-label>
+          <q-item-label>{{ tags.site }}</q-item-label>
         </q-item-section>
       </q-item>
 

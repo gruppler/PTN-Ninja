@@ -1,5 +1,6 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
+    <!-- Game Name -->
     <q-input v-model.trim="name" name="name" :label="$t('Name')" filled>
       <template v-slot:prepend>
         <q-icon name="file" />
@@ -17,6 +18,7 @@
     <div class="row">
       <div class="col">
         <div class="row q-gutter-md q-mb-md">
+          <!-- Player 1 Account -->
           <PlayerName
             v-if="game && !game.isLocal && player === 1"
             class="col-grow"
@@ -28,6 +30,7 @@
             hide-hint
           />
 
+          <!-- Player 1 Name -->
           <q-input
             v-else
             class="col-grow"
@@ -51,6 +54,7 @@
             </template>
           </q-input>
 
+          <!-- Rating 1 -->
           <q-input
             class="col-grow"
             v-show="isVisible('rating1')"
@@ -72,6 +76,7 @@
         </div>
 
         <div class="row q-gutter-md">
+          <!-- Player 2 Account -->
           <PlayerName
             v-if="game && !game.isLocal && player === 2"
             class="col-grow"
@@ -83,6 +88,7 @@
             hide-hint
           />
 
+          <!-- Player 2 Name -->
           <q-input
             v-else
             class="col-grow"
@@ -106,6 +112,7 @@
             </template>
           </q-input>
 
+          <!-- Rating 2 -->
           <q-input
             class="col-grow"
             v-show="isVisible('rating2')"
@@ -137,6 +144,7 @@
     </div>
 
     <div class="row q-gutter-md q-mt-none">
+      <!-- Size -->
       <q-select
         class="col-grow"
         v-model="tags.size"
@@ -154,6 +162,7 @@
         </template>
       </q-select>
 
+      <!-- TPS -->
       <q-input
         ref="tps"
         v-show="tags.tps || !game || !game.plies.length"
@@ -196,6 +205,7 @@
           class="row q-gutter-md"
           :class="{ 'q-mb-md': separatePieceCounts }"
         >
+          <!-- Flats -->
           <q-input
             class="col-grow"
             v-show="!separatePieceCounts"
@@ -214,6 +224,8 @@
               <q-icon name="flats1" />
             </template>
           </q-input>
+
+          <!-- Caps -->
           <q-input
             class="col-grow"
             v-show="!separatePieceCounts"
@@ -239,6 +251,7 @@
           class="row q-gutter-md"
           :class="{ 'q-mb-md': separatePieceCounts }"
         >
+          <!-- Flats 1 -->
           <q-input
             class="col-grow"
             v-model="tags.flats1"
@@ -256,6 +269,8 @@
               <q-icon name="flats1" />
             </template>
           </q-input>
+
+          <!-- Caps 1 -->
           <q-input
             class="col-grow"
             v-model="tags.caps1"
@@ -276,6 +291,7 @@
         </div>
 
         <div v-show="separatePieceCounts" class="row q-gutter-md">
+          <!-- Flats 2 -->
           <q-input
             class="col-grow"
             v-model="tags.flats2"
@@ -293,6 +309,8 @@
               <q-icon name="flats2" />
             </template>
           </q-input>
+
+          <!-- Caps 2 -->
           <q-input
             class="col-grow"
             v-model="tags.caps2"
@@ -330,6 +348,7 @@
       v-show="isVisible('komi', 'opening')"
       class="row q-gutter-md q-mt-none"
     >
+      <!-- Komi -->
       <q-input
         class="col-grow"
         v-show="isVisible('komi')"
@@ -349,6 +368,7 @@
         </template>
       </q-input>
 
+      <!-- Opening -->
       <q-select
         class="col-grow"
         v-show="isVisible('opening')"
@@ -367,6 +387,7 @@
     </div>
 
     <div class="row q-gutter-md q-mt-none">
+      <!-- Clock -->
       <q-input
         class="col-grow"
         v-show="isVisible('clock')"
@@ -385,6 +406,7 @@
         </template>
       </q-input>
 
+      <!-- Round -->
       <q-input
         class="col-grow"
         v-show="isVisible('round')"
@@ -405,6 +427,7 @@
     </div>
 
     <div class="row q-gutter-md q-mt-none">
+      <!-- Result -->
       <q-select
         v-if="game"
         class="col-grow"
@@ -466,6 +489,7 @@
         </template>
       </q-select>
 
+      <!-- Points -->
       <q-input
         v-if="game"
         v-show="isVisible('points')"
@@ -486,6 +510,22 @@
       </q-input>
     </div>
 
+    <!-- Event -->
+    <q-input
+      v-show="isVisible('event')"
+      v-model.trim="tags.event"
+      name="event"
+      :label="$t('Event')"
+      :rules="rules('event')"
+      hide-bottom-space
+      filled
+    >
+      <template v-slot:prepend>
+        <q-icon name="event" />
+      </template>
+    </q-input>
+
+    <!-- Site -->
     <q-input
       v-show="isVisible('site')"
       v-model.trim="tags.site"
@@ -500,19 +540,7 @@
       </template>
     </q-input>
 
-    <q-input
-      v-show="isVisible('event')"
-      v-model.trim="tags.event"
-      name="event"
-      :label="$t('Event')"
-      :rules="rules('event')"
-      hide-bottom-space
-      filled
-    >
-      <template v-slot:prepend>
-        <q-icon name="event" />
-      </template>
-    </q-input>
+    <!-- Date/Time -->
     <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
       <q-input
         class="col-grow"

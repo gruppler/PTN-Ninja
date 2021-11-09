@@ -35,7 +35,7 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="browse_files" />
+                  <q-icon name="local" />
                 </q-item-section>
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
