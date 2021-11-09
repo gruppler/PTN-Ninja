@@ -49,7 +49,7 @@ export default {
     available() {
       return ["F", "S", "C"].filter((type) => {
         type = type === "C" ? "cap" : "flat";
-        return this.game.board.piecesRemaining[this.color][type].length > 0;
+        return this.game.board.piecesRemaining[this.color][type] > 0;
       });
     },
     shadows() {
