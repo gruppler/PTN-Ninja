@@ -399,15 +399,6 @@ export default {
           try {
             game = this.$store.state.game.list[0];
             game = new Game(game);
-            if (
-              this.$store.state.ui.isEditingTPS &&
-              this.$store.state.ui.editingTPS
-            ) {
-              this.$store.dispatch(
-                "game/DO_TPS",
-                this.$store.state.ui.editingTPS
-              );
-            }
           } catch (error) {
             _handleError(error);
           }
@@ -468,13 +459,14 @@ export default {
         window.game = game;
       }
       this.$store.dispatch("game/SET_GAME", game);
-
-      if (
-        this.$store.state.ui.isEditingTPS &&
-        this.$store.state.ui.editingTPS
-      ) {
-        this.$store.dispatch("game/DO_TPS", this.$store.state.ui.editingTPS);
-      }
+      this.$nextTick(() => {
+        if (
+          this.$store.state.ui.isEditingTPS &&
+          this.$store.state.ui.editingTPS
+        ) {
+          this.$store.dispatch("game/DO_TPS", this.$store.state.ui.editingTPS);
+        }
+      });
     },
     undo() {
       return this.$store.dispatch("game/UNDO");

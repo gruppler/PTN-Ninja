@@ -3,10 +3,6 @@ import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
 import Game from "../../Game";
 
-// export const UPDATE = (state) => {
-//   Vue.prototype.$game.board.updateOutput();
-// };
-
 export const SET_GAME = (state, game) => {
   if (!(game instanceof Game)) {
     game = new Game({
@@ -253,7 +249,6 @@ export const DO_TPS = function (state, tps) {
 };
 
 export const SAVE_TPS = function (state, tps) {
-  Vue.prototype.$game.moves[0].linenum.number = Number(tps.split(/\s/)[2]);
   Vue.prototype.$game.setTags({ tps });
 };
 

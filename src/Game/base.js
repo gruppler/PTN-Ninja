@@ -599,6 +599,9 @@ export default class GameBase {
     });
     this.tags = Object.assign({}, this.tags, tags);
     this.hasTPS = "tps" in this.tags;
+    if (this.hasTPS) {
+      this.moves[0].linenum.number = Number(this.tags.tps.value.linenum);
+    }
     this.updateConfig();
     if (updatePTN) {
       this._updatePTN(recordChange);

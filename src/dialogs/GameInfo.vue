@@ -232,8 +232,18 @@
           </q-item-section>
         </template>
       </q-item>
+      <q-item v-else-if="tags.round">
+        <!-- Round -->
+        <q-item-section side>
+          <q-icon name="round" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label caption>{{ $t("Round") }}</q-item-label>
+          <q-item-label>{{ tags.round }}</q-item-label>
+        </q-item-section>
+      </q-item>
 
-      <q-item v-if="tags.clock">
+      <q-item v-if="tags.result">
         <!-- Result -->
         <q-item-section side>
           <q-icon name="result" />
@@ -252,7 +262,7 @@
             }}
           </q-item-label>
         </q-item-section>
-        <!-- Round -->
+        <!-- Points -->
         <template v-if="tags.points">
           <q-item-section class="col-shrink" align="right">
             <q-item-label caption>{{ $t("Points") }}</q-item-label>
@@ -265,7 +275,7 @@
       </q-item>
 
       <!-- Event -->
-      <q-item v-if="tags.clock">
+      <q-item v-if="tags.event">
         <q-item-section side>
           <q-icon name="event" />
         </q-item-section>
@@ -276,7 +286,7 @@
       </q-item>
 
       <!-- Site -->
-      <q-item v-if="tags.clock">
+      <q-item v-if="tags.site">
         <q-item-section side>
           <q-icon name="site" />
         </q-item-section>
