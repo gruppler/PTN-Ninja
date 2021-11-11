@@ -53,6 +53,7 @@ export default {
   notes: "mdi-message-bulleted",
   notes_off: "mdi-message-bulleted-off",
   online: "mdi-cloud",
+  online_private: "mdi-cloud-lock",
   open_in_new: "mdi-open-in-new",
   opening: "mdi-ray-start-arrow",
   password: "mdi-lock",

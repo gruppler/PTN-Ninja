@@ -28,7 +28,7 @@ export const playerIcon =
       case 2:
         return isPrivate ? "player2_private" : "player2";
       case 0:
-        return isPrivate ? "spectator_private" : "spectator";
+        return isPrivate ? "online_private" : "online";
       case "random":
       case "tie":
         return isPrivate ? "players_private" : "players";
