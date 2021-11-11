@@ -572,7 +572,6 @@
               name="date"
               mask="YYYY.MM.DD"
               :text-color="primaryFG"
-              today-btn
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
@@ -626,7 +625,6 @@
               :text-color="primaryFG"
               format24h
               with-seconds
-              now-btn
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
