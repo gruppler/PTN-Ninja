@@ -9,7 +9,11 @@
     </template>
 
     <q-list separator>
-      <ThemeSelector v-model="themeID" edit-button filled square />
+      <ThemeSelector v-model="themeID" edit-button filled square>
+        <template v-slot:prepend>
+          <q-icon name="color" />
+        </template>
+      </ThemeSelector>
 
       <q-expansion-item icon="board" :label="$t('Board')" group="settings">
         <recess>
