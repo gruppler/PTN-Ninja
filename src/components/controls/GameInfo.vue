@@ -719,7 +719,7 @@ export default {
       pieceCounts,
       sizes: [3, 4, 5, 6, 7, 8].map((size) => ({
         label: `${size}x${size}`,
-        value: size,
+        value: size.toString(),
       })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         (value) => ({
