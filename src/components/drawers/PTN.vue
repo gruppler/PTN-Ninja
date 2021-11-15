@@ -64,7 +64,7 @@ export default {
       if (index >= 0) {
         this.$refs.scroll.scrollTo(index, "center-force");
       }
-    }, 20),
+    }, 50),
   },
   watch: {
     "position.plyID"() {
