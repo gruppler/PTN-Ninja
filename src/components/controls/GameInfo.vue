@@ -134,7 +134,7 @@
         </div>
       </div>
       <q-btn
-        v-show="game && game.isLocal"
+        v-show="!game || game.isLocal"
         @click="swapPlayers"
         icon="swap_vert"
         stretch
