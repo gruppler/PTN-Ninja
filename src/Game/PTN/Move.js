@@ -26,7 +26,9 @@ export default class Move {
   output(plies) {
     const output = pick(this, outputProps);
     output.linenum = this.linenum.output;
-    output.plies = this.plies.map((ply) => (ply.isNop ? null : plies[ply.id]));
+    output.plies = this.plies.map((ply) =>
+      ply.isNop ? ply.output : plies[ply.id]
+    );
     output.ply1Original = this.ply1Original
       ? plies[this.ply1Original.id]
       : null;
