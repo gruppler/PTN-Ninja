@@ -1,5 +1,6 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     :min-height="588"
@@ -299,7 +300,7 @@ export default {
       });
     },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
   },
   watch: {

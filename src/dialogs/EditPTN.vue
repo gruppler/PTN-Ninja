@@ -1,5 +1,6 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     content-class="ptn-editor-dialog"
@@ -48,7 +49,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     save(notation) {
       this.$store.dispatch("game/SET_CURRENT_PTN", notation);

@@ -1,7 +1,8 @@
 <template>
   <q-dialog
+    ref="dialog"
     :value="true"
-    @hide="$router.back()"
+    @hide="hide"
     no-backdrop-dismiss
     no-route-dismiss
   >
@@ -39,7 +40,10 @@ import Linenum from "../Game/PTN/Linenum";
 
 export default {
   name: "RenameBranch",
-  props: ["branch"],
+  props: {
+    branch: String,
+    goBack: Boolean,
+  },
   data() {
     return {
       newBranch: "",
@@ -51,8 +55,13 @@ export default {
     },
   },
   methods: {
+    hide() {
+      if (this.goBack) {
+        this.$router.back();
+      }
+    },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     beforeEdit() {
       this.newBranch = this.branchParts[this.branchParts.length - 1];

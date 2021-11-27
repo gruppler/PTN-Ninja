@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="true" v-bind="$attrs">
+  <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="close_multiple">{{ $t("Close") }}...</dialog-header>
     </template>
@@ -61,7 +61,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     submit() {
       this.$store.dispatch("game/REMOVE_MULTIPLE_GAMES", {

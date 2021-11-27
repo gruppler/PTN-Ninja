@@ -30,10 +30,11 @@ export default {
   name: "large-dialog",
   props: {
     value: Boolean,
+    goBack: Boolean,
     fullscreen: Boolean,
-    "min-height": Number,
-    "no-maximize": Boolean,
-    "content-class": String,
+    minHeight: Number,
+    noMaximize: Boolean,
+    contentClass: String,
   },
   computed: {
     maximized() {
@@ -58,7 +59,9 @@ export default {
   },
   methods: {
     hide() {
-      this.$router.back();
+      if (this.goBack) {
+        this.$router.back();
+      }
     },
   },
 };

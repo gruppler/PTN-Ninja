@@ -3,6 +3,7 @@
     ref="dialog"
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
     :value.sync="value"
+    :maximized="maximized"
     @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
@@ -26,10 +27,24 @@ export default {
   name: "small-dialog",
   props: {
     value: Boolean,
+    goBack: Boolean,
+    noMaximize: Boolean,
+  },
+  computed: {
+    maximized() {
+      return (
+        !this.noMaximize &&
+        (this.$q.screen.width < this.$q.screen.height
+          ? this.$q.screen.height <= this.$q.screen.sizes.sm
+          : this.$q.screen.width <= this.$q.screen.sizes.xs)
+      );
+    },
   },
   methods: {
     hide() {
-      this.$router.back();
+      if (this.goBack) {
+        this.$router.back();
+      }
     },
   },
 };

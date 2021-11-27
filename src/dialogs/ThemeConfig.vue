@@ -4,7 +4,6 @@
     @before-hide="restore"
     :content-class="{ seethrough, 'theme-config non-selectable': true }"
     no-backdrop-dismiss
-    v-on="$listeners"
     v-bind="$attrs"
   >
     <template v-slot:header>

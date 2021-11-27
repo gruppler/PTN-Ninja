@@ -1,5 +1,10 @@
 <template>
-  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
+  <small-dialog
+    ref="dialog"
+    :value="true"
+    content-class="non-selectable"
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <q-tabs
         v-model="tab"
@@ -160,7 +165,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     createGame({ name, tags }) {
       this.player1 = tags.player1;

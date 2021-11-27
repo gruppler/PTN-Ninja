@@ -1,5 +1,6 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     :min-height="showAll ? 750 : 495"
@@ -66,7 +67,7 @@ export default {
       });
     },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     async save({ name, tags }) {
       this.$store.dispatch("game/RENAME_CURRENT_GAME", name);

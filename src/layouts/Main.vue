@@ -157,7 +157,7 @@
       </q-toolbar>
     </q-footer>
 
-    <router-view ref="dialog" no-route-dismiss />
+    <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />

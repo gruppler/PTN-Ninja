@@ -1,8 +1,8 @@
 <template>
-  <small-dialog :value="true" v-bind="$attrs" v-on="$listeners">
+  <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header :icon="icon" :title="type">
-        <template v-slot:buttons>
+      <dialog-header :icon="icon" :title="title">
+        <template v-if="!$store.state.ui.embed" v-slot:buttons>
           <q-btn
             v-if="isDuplicable"
             icon="open_in_new"
@@ -16,7 +16,7 @@
           <q-btn
             v-if="isEditable"
             icon="edit"
-            @click="$router.push({ name: 'info-edit' })"
+            @click="$router.replace({ name: 'info-edit' })"
             dense
             flat
           >
@@ -318,6 +318,12 @@ import Result from "../components/PTN/Result";
 export default {
   name: "GameInfo",
   components: { Result },
+  props: {
+    value: {
+      type: Boolean,
+      default: true,
+    },
+  },
   computed: {
     isEditable() {
       return !this.game.config.isOnline || this.game.config.player;
@@ -326,13 +332,25 @@ export default {
       return !(this.game.config.isOnline && this.game.config.isOngoing);
     },
     icon() {
-      return this.game.config.isOnline ? "online" : "local";
+      return this.$store.state.ui.embed
+        ? "info"
+        : this.game.config.isOnline
+        ? "online"
+        : "local";
     },
-    type() {
-      return this.$t(this.game.config.isOnline ? "Online Game" : "Local Game");
+    title() {
+      return this.$t(
+        this.$store.state.ui.embed
+          ? "Game Info"
+          : this.game.config.isOnline
+          ? "Online Game"
+          : "Local Game"
+      );
     },
     name() {
-      return this.$store.state.game.list[0].name;
+      return this.$store.state.ui.embed
+        ? this.$game.name
+        : this.$store.state.game.list[0].name;
     },
     datetime() {
       return this.$game.datetime;

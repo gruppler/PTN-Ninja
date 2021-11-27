@@ -2,7 +2,7 @@
   <q-dialog
     :value="true"
     v-show="text"
-    @hide="$router.back()"
+    @hide="hide"
     content-class="flex-center"
     v-bind="$attrs"
     :maximized="maximized"
@@ -28,6 +28,9 @@ const SCREEN = SIZE + PADDING * 2;
 
 export default {
   name: "QRCode",
+  props: {
+    goBack: Boolean,
+  },
   data() {
     return { size: SIZE };
   },
@@ -46,6 +49,13 @@ export default {
     },
     bg() {
       return this.$store.state.ui.theme.isDark ? "black" : "white";
+    },
+  },
+  methods: {
+    hide() {
+      if (this.goBack) {
+        this.$router.back();
+      }
     },
   },
 };
