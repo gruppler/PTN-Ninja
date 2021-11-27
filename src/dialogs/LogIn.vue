@@ -1,5 +1,10 @@
 <template>
-  <small-dialog ref="dialog" :value="true" content-class="non-selectable" v-bind="$attrs">
+  <small-dialog
+    ref="dialog"
+    :value="true"
+    content-class="non-selectable"
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <q-tabs
         v-model="tab"

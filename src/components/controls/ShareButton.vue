@@ -96,7 +96,10 @@ export default {
       //   });
       // }
 
-      if (!this.$store.state.ui.embed && !this.$store.state.game.config.isOnline) {
+      if (
+        !this.$store.state.ui.embed &&
+        !this.$store.state.game.config.isOnline
+      ) {
         actions.push(
           {
             id: "embed",
