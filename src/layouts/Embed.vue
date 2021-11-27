@@ -12,6 +12,7 @@
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
+        <q-btn icon="info" @click.prevent="info" stretch flat />
         <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
@@ -91,7 +92,7 @@
       </q-toolbar>
     </q-footer>
 
-    <router-view no-route-dismiss />
+    <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />
@@ -192,6 +193,9 @@ export default {
   },
   methods: {
     getGame() {
+      if (!this.ptn) {
+        return;
+      }
       let game;
       try {
         game = new Game({ ptn: this.ptn, name: this.name, board: this.board });
@@ -204,6 +208,10 @@ export default {
         this.errors.push(this.$t(`error["${error.message}"]`));
       }
       this.$store.dispatch("game/SET_GAME", game);
+      this.$router.replace("/");
+    },
+    info() {
+      this.$router.push({ name: "info-view" });
     },
     openLink() {
       window.open(
@@ -228,18 +236,29 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editPTN":
-          this.$refs.tools.editDialog = true;
+          if (this.$route.name !== "edit") {
+            this.$router.push({ name: "edit" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "focusText":
           this.showText = true;
           this.$refs.notes.$refs.input.focus();
           break;
         case "qrCode":
-          if (this.$refs.shareButton.qrDialog) {
-            this.$refs.shareButton.qrDialog = false;
+          if (this.$route.name !== "qr") {
+            this.$router.push({ name: "qr" });
           } else {
-            this.$refs.shareButton.qrCode();
+            this.$refs.dialog.$children[0].hide();
           }
           break;
         case "share":
@@ -265,8 +284,10 @@ export default {
     this.getGame();
   },
   watch: {
-    ptn() {
-      this.$game = this.getGame();
+    ptn(ptn) {
+      if (ptn) {
+        this.getGame();
+      }
     },
     state: {
       handler(state, oldState) {

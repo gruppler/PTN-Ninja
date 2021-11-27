@@ -87,7 +87,7 @@ export default {
         {}
       );
 
-      // if (!this.$store.state.embed) {
+      // if (!this.$store.state.ui.embed) {
       //   actions.push({
       //     id: "online",
       //     label: this.$t("Online"),
@@ -96,7 +96,7 @@ export default {
       //   });
       // }
 
-      if (!this.$store.state.embed && !this.$store.state.game.config.isOnline) {
+      if (!this.$store.state.ui.embed && !this.$store.state.game.config.isOnline) {
         actions.push(
           {
             id: "embed",
