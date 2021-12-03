@@ -7,19 +7,14 @@
       <q-scroll-area id="notes-scroll-area" class="absolute-fit">
         <q-virtual-scroll
           ref="scroll"
-          class="content absolute-fit q-px-md"
+          class="bg-transparent q-px-md"
           :items="plyIDs"
-          scroll-target="#notes-scroll-area > .content"
+          scroll-target="#notes-scroll-area > .scroll"
           :virtual-scroll-item-size="128"
           :virtual-scroll-slice-ratio-before="0.5"
           :virtual-scroll-slice-ratio-after="0.5"
         >
-          <template v-slot="{ item, index }">
-            <q-separator
-              v-if="index && !areSequential(plyIDs[index - 1], item)"
-              class="fullwidth-padded-md"
-              :key="'divider-' + item"
-            />
+          <template v-slot="{ item }">
             <div
               class="fullwidth-padded-md q-py-xs"
               :class="{
@@ -232,22 +227,12 @@ export default {
             (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
-    areSequential(plyID1, plyID2) {
-      const ply1 = plyID1 < 0 ? null : this.plies[plyID1];
-      const ply2 = this.plies[plyID2];
-      return (
-        ply1 &&
-        ply2 &&
-        ply1.branch === ply2.branch &&
-        ply2.linenum.number - ply1.linenum.number <= 1
-      );
-    },
     scroll: throttle(function () {
       const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
       if (index >= 0) {
         this.$refs.scroll.scrollTo(index, "center-force");
       }
-    }, 50),
+    }, 100),
   },
   watch: {
     log() {
@@ -265,9 +250,6 @@ export default {
 
 <style lang="scss">
 .notes {
-  .content {
-    background: transparent;
-  }
   .q-separator {
     opacity: 0.75;
   }
