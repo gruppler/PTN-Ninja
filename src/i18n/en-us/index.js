@@ -198,6 +198,7 @@ export default {
   Update: "Update",
   Usage: "Usage",
   "Verify Email Address": "Verify Email Address",
+  "View Game Info": "View Game Info",
   Walls: "Walls",
   Width: "Width",
   "?": "?",

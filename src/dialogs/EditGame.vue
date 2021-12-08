@@ -7,7 +7,19 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="edit">{{ $t("Edit Game") }}</dialog-header>
+      <dialog-header icon="edit" :title="$t('Edit Game')">
+        <template v-slot:buttons>
+          <q-btn
+            icon="info"
+            @click="$router.replace({ name: 'info-view' })"
+            class="q-field__focusable-action q-mr-sm"
+            dense
+            flat
+          >
+            <tooltip>{{ $t("View Game Info") }}</tooltip>
+          </q-btn>
+        </template>
+      </dialog-header>
     </template>
 
     <q-card-section>

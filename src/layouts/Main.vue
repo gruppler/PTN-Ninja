@@ -14,6 +14,7 @@
             <q-icon
               name="info"
               @click.stop="info"
+              @click.right.prevent.stop="edit"
               class="q-field__focusable-action q-mr-sm"
             />
           </GameSelector>
