@@ -624,6 +624,9 @@ function limitText(ctx, text, width) {
   if (width <= 0) {
     return "";
   }
+  if (width >= ctx.measureText(text).width) {
+    return text;
+  }
   while (text.length && ctx.measureText(text + suffix).width >= width) {
     text = text.substring(0, text.length - 1);
   }
