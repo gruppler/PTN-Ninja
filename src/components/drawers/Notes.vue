@@ -201,7 +201,7 @@ export default {
       const log = this.log[plyID][index];
       this.editing = { plyID, index };
       if (!this.isCurrent(plyID)) {
-        this.$store.dispatch("game/GO_TO_PLY", { ply: plyID, isDone: true });
+        this.$store.dispatch("game/GO_TO_PLY", { plyID, isDone: true });
       }
       setTimeout(() => {
         this.$refs.input.focus();

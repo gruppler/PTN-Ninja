@@ -535,8 +535,8 @@ export const SET_TARGET = function ({ commit, dispatch }, ply) {
   return result;
 };
 
-export const GO_TO_PLY = function ({ commit, dispatch }, { ply, isDone }) {
-  const result = commit("GO_TO_PLY", { ply, isDone });
+export const GO_TO_PLY = function ({ commit, dispatch }, { plyID, isDone }) {
+  const result = commit("GO_TO_PLY", { plyID, isDone });
   dispatch("SAVE_CURRENT_GAME_STATE");
   return result;
 };

@@ -240,8 +240,8 @@ export const SET_TARGET = function (state, ply) {
   return Vue.prototype.$game.board.setTarget(ply);
 };
 
-export const GO_TO_PLY = function (state, { ply, isDone }) {
-  Vue.prototype.$game.board.goToPly(ply, isDone);
+export const GO_TO_PLY = function (state, { plyID, isDone }) {
+  Vue.prototype.$game.board.goToPly(plyID, isDone);
 };
 
 export const DO_TPS = function (state, tps) {

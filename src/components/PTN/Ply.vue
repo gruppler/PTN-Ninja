@@ -105,7 +105,7 @@ export default {
       if (this.noClick) {
         return;
       }
-      this.$store.dispatch("game/GO_TO_PLY", { ply: ply.id, isDone });
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
     },
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);

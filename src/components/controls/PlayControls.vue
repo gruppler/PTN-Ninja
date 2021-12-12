@@ -254,7 +254,7 @@ export default {
     },
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
-      this.$store.dispatch("game/GO_TO_PLY", { ply: ply.id, isDone: true });
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
     },
     branchKey({ srcKey }) {
       switch (srcKey) {

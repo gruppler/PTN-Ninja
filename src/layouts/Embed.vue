@@ -301,12 +301,12 @@ export default {
           const ply = this.$game.board.plies[state.plyIndex];
           if (ply) {
             this.$store.dispatch("game/GO_TO_PLY", {
-              ply: ply.id,
+              plyID: ply.id,
               isDone: state.plyIsDone,
             });
           }
         } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
+          this.$store.dispatch("game/GO_TO_PLY", { plyID: 0, isDone: false });
         }
       },
       deep: true,
