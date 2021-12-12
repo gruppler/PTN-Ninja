@@ -91,8 +91,11 @@ export const REPLACE_GAME = function (
     dispatch("SELECT_GAME", { index, immediate: true });
   }
 
-  // Clone the current game
-  const game = new Game(state.list[0]);
+  // Clone the current game, overriding state with gameState
+  const game = new Game({
+    ...state.list[0],
+    state: gameState || state.list[0].state,
+  });
 
   if (game.ptn !== ptn) {
     if (!gameState) {
@@ -103,10 +106,7 @@ export const REPLACE_GAME = function (
     dispatch("SAVE_UNDO_INDEX");
     dispatch("SAVE_UNDO_HISTORY");
     dispatch("SAVE_PTN", ptn);
-    dispatch("SAVE_STATE", {
-      game,
-      gameState,
-    });
+    dispatch("SAVE_STATE", { game, gameState });
 
     Vue.nextTick(() => {
       this.dispatch("ui/NOTIFY", {
@@ -126,6 +126,9 @@ export const REPLACE_GAME = function (
         ],
       });
     });
+  } else {
+    commit("SET_GAME", game);
+    dispatch("SAVE_STATE", { game, gameState });
   }
   return game;
 };
