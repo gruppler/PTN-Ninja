@@ -61,7 +61,6 @@
         <q-icon
           v-if="props.col.icon"
           :name="props.col.icon"
-          :title="isWide ? '' : props.col.label"
           :class="{
             'q-mr-xs': isWide && props.col.label,
             [props.col.iconClass]: true,
@@ -71,6 +70,7 @@
         <span v-show="(!props.col.icon && !props.col.icons) || isWide">
           {{ props.col.label }}
         </span>
+        <tooltip v-if="!isWide">{{ props.col.label }}</tooltip>
       </q-th>
     </template>
 
@@ -85,16 +85,16 @@
         }"
         :no-hover="props.row.isActive"
         :key="props.row.id"
-        :title="isWide ? '' : props.row.name"
       >
         <td></td>
         <q-td key="role" :props="props">
           <q-icon
             v-if="props.row.player || props.row.isActive"
             :name="playerIcon(props.row.player, props.row.config.isPrivate)"
-            :title="roleText(props.row.player)"
             size="md"
-          />
+          >
+            <tooltip>{{ roleText(props.row.player) }}</tooltip>
+          </q-icon>
         </q-td>
         <q-td key="name" :props="props">
           {{ props.row.name }}
@@ -124,6 +124,7 @@
         <q-td key="result" :props="props">
           <Result :result="props.row.tags.result" />
         </q-td>
+        <tooltip v-if="!isWide">{{ props.row.name }}</tooltip>
       </q-tr>
     </template>
   </q-table>

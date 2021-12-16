@@ -23,7 +23,9 @@
     </q-item-section>
     <q-item-section class="fg-inherit" side top>
       <div class="row reverse items-center q-gutter-sm">
-        <q-btn v-close-popup v-if="!noCloseBtn" icon="close" dense flat />
+        <q-btn v-close-popup v-if="!noCloseBtn" icon="close" dense flat>
+          <hint>{{ $t("Close") }}</hint>
+        </q-btn>
         <slot name="buttons" />
       </div>
     </q-item-section>

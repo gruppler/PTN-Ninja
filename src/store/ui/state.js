@@ -35,6 +35,7 @@ let defaults = {
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
+  showHints: true,
   showMove: true,
   showPTN: true,
   showRoads: true,

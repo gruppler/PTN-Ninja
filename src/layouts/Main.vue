@@ -77,7 +77,7 @@
     >
       <div class="absolute-fit column">
         <PTN-Tools ref="tools">
-          <ShareButton ref="shareButton" :title="$t('Share')" />
+          <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />

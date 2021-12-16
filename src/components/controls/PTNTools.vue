@@ -3,26 +3,23 @@
     <q-btn-group class="full-width" spread stretch flat unelevated>
       <q-btn
         @click="showAllBranches = !showAllBranches"
-        :title="$t('Show All Branches')"
         :text-color="showAllBranches ? 'primary' : ''"
         class="no-border-radius"
       >
         <q-icon name="branch" class="rotate-180" />
+        <hint>{{ $t("Show All Branches") }}</hint>
       </q-btn>
 
       <q-btn
         @click="$router.push({ name: 'edit' })"
         icon="edit"
-        :title="$t('Edit')"
-        :disabled="!isLocal"
-      />
-
-      <q-btn
-        icon="trim"
-        :title="$t('Trim')"
-        class="no-border-radius"
         :disabled="!isLocal"
       >
+        <hint>{{ $t("Edit") }}</hint>
+      </q-btn>
+
+      <q-btn icon="trim" class="no-border-radius" :disabled="!isLocal">
+        <hint>{{ $t("Trim") }}</hint>
         <q-menu
           v-if="isLocal"
           transition-show="none"

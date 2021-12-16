@@ -1,4 +1,5 @@
 import DialogHeader from "../components/global/DialogHeader";
+import Hint from "../components/global/Hint";
 import LargeDialog from "../components/global/LargeDialog";
 import MessageOutput from "../components/global/MessageOutput";
 import Recess from "../components/global/Recess";
@@ -10,6 +11,7 @@ import Tooltip from "../components/global/Tooltip";
 
 export default ({ Vue }) => {
   Vue.component("dialog-header", DialogHeader);
+  Vue.component("hint", Hint);
   Vue.component("large-dialog", LargeDialog);
   Vue.component("message-output", MessageOutput);
   Vue.component("recess", Recess);

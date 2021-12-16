@@ -5,6 +5,7 @@
     @click="noMenu ? share() : null"
     @click.right.prevent="share"
   >
+    <hint>{{ $t("Share") }}</hint>
     <q-menu
       v-if="!noMenu"
       transition-show="none"
