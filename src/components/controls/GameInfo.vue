@@ -664,7 +664,7 @@ import {
   sample,
 } from "../../Game/base";
 
-import { map } from "lodash";
+import { map, throttle } from "lodash";
 
 export default {
   name: "GameInfo",
@@ -707,6 +707,8 @@ export default {
         time: null,
         tps: null,
       },
+      changes: {},
+      hasChanges: false,
       proxyDate: null,
       proxyTime: null,
       showDatePicker: false,
@@ -741,7 +743,9 @@ export default {
       return result ? result.label : "";
     },
     player() {
-      const user = this.$store.state.online.user;
+      const user = this.$store.state.online
+        ? this.$store.state.online.user
+        : false;
       return user ? this.game.player(user.uid) : 0;
     },
   },
@@ -774,7 +778,11 @@ export default {
         this.player;
       }
 
-      this.$emit("submit", { name: this.name, tags: { ...this.tags } });
+      this.$emit("submit", {
+        name: this.name,
+        tags: { ...this.tags },
+        changes: this.changes,
+      });
       this.updateTags();
     },
     editTPS() {
@@ -870,6 +878,28 @@ export default {
       if (isDefaultName(this.name)) {
         this.name = newName;
       }
+    },
+    tags: {
+      handler: throttle(function (tags) {
+        if (!this.game) {
+          this.return;
+        }
+        const changes = {};
+        Object.keys(tags).forEach((key) => {
+          const value = this.tags[key] || null;
+          const originalValue = this.game.tag(key) || null;
+          if (!this.game || value !== originalValue) {
+            changes[key] = value;
+          }
+        });
+        const hasChanges = Object.values(changes).length > 0;
+        this.changes = changes;
+        if (this.hasChanges !== hasChanges) {
+          this.hasChanges = hasChanges;
+          this.$emit("hasChanges", hasChanges);
+        }
+      }, 100),
+      deep: true,
     },
   },
 };

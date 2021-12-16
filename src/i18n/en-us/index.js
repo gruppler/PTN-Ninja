@@ -302,6 +302,7 @@ export default {
     "Invalid flats2": "Invalid flat stone 2 count",
     "Invalid komi": "Invalid komi",
     "Invalid line number": "Invalid line number",
+    "Invalid move": "Invalid move",
     "Invalid player1": "Invalid player 1",
     "Invalid player2": "Invalid player 2",
     "Invalid player name": "Invalid player name",

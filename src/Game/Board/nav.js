@@ -84,6 +84,9 @@ export default class BoardNavigation {
       const count = move.count || 1;
       let flatten = move.flatten;
       const type = move.type;
+      if (!this.squares[y] || !this.squares[y][x]) {
+        throw new Error("Invalid move");
+      }
       const square = this.squares[y][x];
 
       if (type) {
@@ -92,49 +95,72 @@ export default class BoardNavigation {
           this.unplayPiece(square);
         } else {
           // Do placement
+          if (square.piece) {
+            throw new Error("Invalid move");
+          }
           const piece = this.playPiece(color, type, square);
           if (!piece) {
-            return false;
+            throw new Error("Invalid move");
           }
           piece.ply = ply;
         }
       } else if (action === "pop") {
-        // Undo movement
-        times(count, () => stack.push(square.popPiece()));
+        // Begin movement
+        if (i === 0 && square.color !== color) {
+          throw new Error("Invalid move");
+        }
+        times(count, () => {
+          const piece = square.popPiece();
+          if (!piece) {
+            throw new Error("Invalid move");
+          }
+          stack.push(piece);
+        });
         if (flatten && square.pieces.length) {
+          // Undo smash
           square.piece.isStanding = true;
           square.setPiece(square.piece);
         }
       } else {
-        // Do movement
-        if (square.pieces.length && square.piece.isStanding) {
-          if (stack[0].isCapstone) {
-            if (ply && !flatten) {
-              flatten = ply.wallSmash = "*";
-              this.dirtyPly(ply.id);
-              this.updatePTNOutput();
-              this.game._updatePTN();
+        // Continue movement
+        if (square.pieces.length) {
+          // Check that we can move onto existing piece(s)
+          if (square.piece.isCapstone) {
+            throw new Error("Invalid move");
+          } else if (square.piece.isStanding) {
+            if (
+              stack[0].isCapstone &&
+              count === 1 &&
+              i === moveset.length - 1
+            ) {
+              if (ply && !flatten) {
+                // Add smash notation if it's missing
+                flatten = ply.wallSmash = "*";
+                this.dirtyPly(ply.id);
+                this.updatePTNOutput();
+                this.game._updatePTN();
+              }
+            } else {
+              throw new Error("Invalid move");
             }
-          } else {
-            throw new Error("Invalid ply");
-            return false;
           }
-        }
-        if (flatten && square.pieces.length) {
-          square.piece.isStanding = false;
-          square.setPiece(square.piece);
-        } else if (flatten) {
-          ply.wallSmash = "";
-          this.dirtyPly(ply.id);
-          this.updatePTNOutput();
-          this.game._updatePTN();
+          if (flatten && square.pieces.length) {
+            // Smash
+            square.piece.isStanding = false;
+            square.setPiece(square.piece);
+          } else if (flatten) {
+            // Remove false smash
+            ply.wallSmash = "";
+            this.dirtyPly(ply.id);
+            this.updatePTNOutput();
+            this.game._updatePTN();
+          }
         }
 
         times(count, () => {
-          let piece = stack.pop();
+          const piece = stack.pop();
           if (!piece) {
-            throw new Error("Invalid ply");
-            return false;
+            throw new Error("Invalid move");
           }
           square.pushPiece(piece);
         });

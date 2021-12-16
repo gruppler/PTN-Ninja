@@ -10,20 +10,37 @@
       <dialog-header icon="edit">{{ $t("Edit PTN") }}</dialog-header>
     </template>
 
-    <PTN-editor ref="editor" @save="save" />
+    <PTN-editor ref="editor" @save="save" @hasChanges="hasChanges = $event" />
 
     <template v-slot:footer>
       <q-card-actions align="right">
+        <q-btn icon="menu_vertical" flat>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item clickable @click="reset">
+                <q-item-section side>
+                  <q-icon name="undo" />
+                </q-item-section>
+                <q-item-section>{{ $t("Reset") }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
         <div class="col-grow error-message q-px-sm">
           {{ editor ? editor.error : "" }}
         </div>
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          :label="$t('OK')"
+          :label="$t('Save')"
           @click="editor.save()"
-          color="primary"
           :disabled="editor && !!editor.error"
-          flat
+          :flat="!hasChanges"
+          color="primary"
         />
       </q-card-actions>
     </template>
@@ -40,6 +57,7 @@ export default {
     return {
       showAll: false,
       editor: null,
+      hasChanges: false,
     };
   },
   computed: {
@@ -50,6 +68,9 @@ export default {
   methods: {
     close() {
       this.$refs.dialog.hide();
+    },
+    reset() {
+      this.editor.reset();
     },
     save(notation) {
       this.$store.dispatch("game/SET_CURRENT_PTN", notation);
