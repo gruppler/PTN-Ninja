@@ -40,7 +40,9 @@
               <q-item-section side>
                 <q-toggle v-model="board3D" :disabled="isDisabled('board3D')" />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.board3D }}</hint>
+              <hint v-if="hotkeys.board3D">
+                {{ $t("Hotkey") }}: {{ hotkeys.board3D }}
+              </hint>
             </q-item>
 
             <smooth-reflow>
@@ -54,6 +56,9 @@
                     :disabled="isDisabled('orthogonal')"
                   />
                 </q-item-section>
+                <hint v-if="hotkeys.orthogonal">
+                  {{ $t("Hotkey") }}: {{ hotkeys.orthogonal }}
+                </hint>
               </q-item>
 
               <q-item v-if="board3D && !orthogonal">
@@ -81,7 +86,9 @@
                   :disabled="isDisabled('axisLabels')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.axisLabels }}</hint>
+              <hint v-if="hotkeys.axisLabels">
+                {{ $t("Hotkey") }}: {{ hotkeys.axisLabels }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -94,7 +101,9 @@
                   :disabled="isDisabled('showRoads')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.showRoads }}</hint>
+              <hint v-if="hotkeys.showRoads">
+                {{ $t("Hotkey") }}: {{ hotkeys.showRoads }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -107,7 +116,9 @@
                   :disabled="isDisabled('turnIndicator')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.turnIndicator }}</hint>
+              <hint v-if="hotkeys.turnIndicator">
+                {{ $t("Hotkey") }}: {{ hotkeys.turnIndicator }}
+              </hint>
             </q-item>
 
             <smooth-reflow>
@@ -122,7 +133,9 @@
                   />
                 </q-item-section>
               </q-item>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.flatCounts }}</hint>
+              <hint v-if="hotkeys.flatCounts">
+                {{ $t("Hotkey") }}: {{ hotkeys.flatCounts }}
+              </hint>
             </smooth-reflow>
 
             <q-item tag="label" v-ripple>
@@ -135,7 +148,9 @@
                   :disabled="isDisabled('highlightSquares')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.highlightSquares }}</hint>
+              <hint v-if="hotkeys.highlightSquares">
+                {{ $t("Hotkey") }}: {{ hotkeys.highlightSquares }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -148,7 +163,9 @@
                   :disabled="isDisabled('pieceShadows')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.pieceShadows }}</hint>
+              <hint v-if="hotkeys.pieceShadows">
+                {{ $t("Hotkey") }}: {{ hotkeys.pieceShadows }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -161,7 +178,9 @@
                   :disabled="isDisabled('unplayedPieces')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.unplayedPieces }}</hint>
+              <hint v-if="hotkeys.unplayedPieces">
+                {{ $t("Hotkey") }}: {{ hotkeys.unplayedPieces }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -174,7 +193,9 @@
                   :disabled="isDisabled('showMove')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.showMove }}</hint>
+              <hint v-if="hotkeys.showMove">
+                {{ $t("Hotkey") }}: {{ hotkeys.showMove }}
+              </hint>
             </q-item>
           </q-list>
         </recess>
@@ -198,6 +219,21 @@
 
             <q-item tag="label" v-ripple>
               <q-item-section>
+                <q-item-label>{{ $t("Show UI Hints") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showHints"
+                  :disabled="isDisabled('showHints')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.showHints">
+                {{ $t("Hotkey") }}: {{ hotkeys.showHints }}
+              </hint>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
                 <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -206,6 +242,9 @@
                   :disabled="isDisabled('nativeSharing')"
                 />
               </q-item-section>
+              <hint v-if="hotkeys.nativeSharing">
+                {{ $t("Hotkey") }}: {{ hotkeys.nativeSharing }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -218,7 +257,9 @@
                   :disabled="isDisabled('animateBoard')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.animateBoard }}</hint>
+              <hint v-if="hotkeys.animateBoard">
+                {{ $t("Hotkey") }}: {{ hotkeys.animateBoard }}
+              </hint>
             </q-item>
 
             <smooth-reflow>
@@ -234,6 +275,9 @@
                     :disabled="isDisabled('animateScrub')"
                   />
                 </q-item-section>
+                <hint v-if="hotkeys.animateScrub">
+                  {{ $t("Hotkey") }}: {{ hotkeys.animateScrub }}
+                </hint>
               </q-item>
             </smooth-reflow>
 
@@ -247,19 +291,9 @@
                   :disabled="isDisabled('showAllBranches')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.showAllBranches }}</hint>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Show UI Hints") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="showHints"
-                  :disabled="isDisabled('showHints')"
-                />
-              </q-item-section>
+              <hint v-if="hotkeys.showAllBranches">
+                {{ $t("Hotkey") }}: {{ hotkeys.showAllBranches }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -272,7 +306,9 @@
                   :disabled="isDisabled('notifyGame')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.notifyGame }}</hint>
+              <hint v-if="hotkeys.notifyGame">
+                {{ $t("Hotkey") }}: {{ hotkeys.notifyGame }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -285,7 +321,9 @@
                   :disabled="isDisabled('notifyNotes')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.notifyNotes }}</hint>
+              <hint v-if="hotkeys.notifyNotes">
+                {{ $t("Hotkey") }}: {{ hotkeys.notifyNotes }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -298,7 +336,9 @@
                   :disabled="isDisabled('showControls')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.showControls }}</hint>
+              <hint v-if="hotkeys.showControls">
+                {{ $t("Hotkey") }}: {{ hotkeys.showControls }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -311,7 +351,9 @@
                   :disabled="isDisabled('showScrubber')"
                 />
               </q-item-section>
-              <hint>{{ $t("Hotkey") }}: {{ hotkeys.showScrubber }}</hint>
+              <hint v-if="hotkeys.showScrubber">
+                {{ $t("Hotkey") }}: {{ hotkeys.showScrubber }}
+              </hint>
             </q-item>
 
             <q-item tag="label" v-ripple>
@@ -324,6 +366,9 @@
                   :disabled="isDisabled('scrollScrubbing')"
                 />
               </q-item-section>
+              <hint v-if="hotkeys.scrollScrubbing">
+                {{ $t("Hotkey") }}: {{ hotkeys.scrollScrubbing }}
+              </hint>
             </q-item>
           </q-list>
         </recess>

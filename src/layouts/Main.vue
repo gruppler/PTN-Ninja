@@ -8,7 +8,9 @@
           :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
@@ -16,7 +18,9 @@
               @click.stop="info"
               @click.right.prevent.stop="edit"
               class="q-field__focusable-action q-mr-sm"
-            />
+            >
+              <hint>{{ $t("View Game Info") }}</hint>
+            </q-icon>
           </GameSelector>
         </q-toolbar-title>
         <q-btn
@@ -28,7 +32,21 @@
           :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>
+            {{
+              $t(
+                textTab === "notes"
+                  ? showText
+                    ? "Hide Notes"
+                    : "Show Notes"
+                  : showText
+                  ? "Hide Chat"
+                  : "Show Chat"
+              )
+            }}
+          </hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 

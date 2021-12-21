@@ -14,7 +14,11 @@
         :ripple="false"
         :disable="!position.ply || plyInProgress"
         icon="backspace"
-      />
+      >
+        <hint v-if="position.ply && !plyInProgress">
+          {{ $t("Delete Ply") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="first"
         @shortkey="first"
@@ -25,7 +29,11 @@
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
-      />
+      >
+        <hint v-if="!isFirst && !plyInProgress">
+          {{ $t("Beginning") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="prev"
         @click.right.prevent="prev(true)"
@@ -40,7 +48,11 @@
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
-      />
+      >
+        <hint v-if="!isFirst && !plyInProgress">
+          {{ $t("Backward") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="playpause"
         @shortkey="playpause"
@@ -51,7 +63,11 @@
         :text-color="primaryFG"
         :disable="!position.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
-      />
+      >
+        <hint v-if="position.ply && !plyInProgress">
+          {{ $t("Play/Pause") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="next"
         @click.right.prevent="next(true)"
@@ -66,7 +82,11 @@
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
-      />
+      >
+        <hint v-if="!isLast && !plyInProgress">
+          {{ $t("Forward") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="last"
         @shortkey="last"
@@ -77,7 +97,11 @@
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
-      />
+      >
+        <hint v-if="!isLast && !plyInProgress">
+          {{ $t("End") }}
+        </hint>
+      </q-btn>
       <q-btn
         v-shortkey="{ ...options, ...branchControls }"
         @shortkey="branchKey"
@@ -97,6 +121,9 @@
           selected-played
           linenum
         />
+        <hint v-if="branches.length >= 2 && !plyInProgress">
+          {{ $t("Branches") }}
+        </hint>
       </q-btn>
     </div>
   </div>

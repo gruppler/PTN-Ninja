@@ -16,7 +16,7 @@
             dense
             flat
           >
-            <tooltip>{{ $t("View Game Info") }}</tooltip>
+            <hint>{{ $t("View Game Info") }}</hint>
           </q-btn>
         </template>
       </dialog-header>

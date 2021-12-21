@@ -15,7 +15,7 @@
         icon="edit"
         :disabled="!isLocal"
       >
-        <hint>{{ $t("Edit") }}</hint>
+        <hint>{{ $t("Edit PTN") }}</hint>
       </q-btn>
 
       <q-btn icon="trim" class="no-border-radius" :disabled="!isLocal">

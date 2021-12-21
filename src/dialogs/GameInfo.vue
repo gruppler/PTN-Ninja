@@ -11,7 +11,7 @@
             dense
             flat
           >
-            <tooltip>{{ $t("Duplicate") }}</tooltip>
+            <hint>{{ $t("Duplicate") }}</hint>
           </q-btn>
           <q-btn
             v-if="isEditable"
@@ -20,7 +20,7 @@
             dense
             flat
           >
-            <tooltip>{{ $t("Edit") }}</tooltip>
+            <hint>{{ $t("Edit Game") }}</hint>
           </q-btn>
         </template>
       </dialog-header>

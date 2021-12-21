@@ -8,7 +8,9 @@
           :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
@@ -21,7 +23,9 @@
           :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showText ? "Hide Notes" : "Show Notes") }}</hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
