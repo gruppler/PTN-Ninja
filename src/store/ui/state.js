@@ -41,7 +41,7 @@ let defaults = {
   showRoads: true,
   showScrubber: true,
   showText: false,
-  size: 6,
+  size: "6",
   textTab: "chat",
   themeID: "classic",
   theme: THEMES.find((t) => t.id === "classic"),

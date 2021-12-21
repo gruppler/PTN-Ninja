@@ -111,7 +111,7 @@ export default {
       tags: {
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
-        size: this.$store.state.ui.size,
+        size: String(this.$store.state.ui.size),
         site: this.$t("site_name"),
       },
       selectedGames: [],

@@ -887,7 +887,7 @@ export default {
         const changes = {};
         Object.keys(tags).forEach((key) => {
           const value = this.tags[key] || null;
-          const originalValue = this.game.tag(key) || null;
+          const originalValue = this.game ? this.game.tag(key) || null : null;
           if (!this.game || value !== originalValue) {
             changes[key] = value;
           }
