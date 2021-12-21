@@ -30,7 +30,13 @@
         </div>
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
-        <q-btn :label="$t('OK')" @click="submit" color="primary" flat />
+        <q-btn
+          :label="$t('OK')"
+          @click="submit"
+          :disable="!canSubmit"
+          color="primary"
+          flat
+        />
       </q-card-actions>
     </template>
   </small-dialog>
@@ -58,12 +64,18 @@ export default {
     count() {
       return this.range.max - this.range.min + 1;
     },
+    canSubmit() {
+      return this.count < this.games.length;
+    },
   },
   methods: {
     close() {
       this.$refs.dialog.hide();
     },
     submit() {
+      if (!this.canSubmit) {
+        return;
+      }
       this.$store.dispatch("game/REMOVE_MULTIPLE_GAMES", {
         start: this.range.min,
         count: this.count,
