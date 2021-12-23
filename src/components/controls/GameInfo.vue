@@ -795,11 +795,10 @@ export default {
         "firstMoveNumber",
         this.game ? this.game.firstMoveNumber : 1,
       ]);
-      this.$store.dispatch("ui/SET_UI", [
-        "editingTPS",
-        this.game ? this.game.board.tps : "",
-      ]);
-      this.$store.dispatch("ui/SET_UI", ["isEditingTPS", true]);
+      this.$store.dispatch(
+        "game/EDIT_TPS",
+        this.game ? this.game.board.tps : ""
+      );
     },
     fillTPS() {
       if (!this.game || !this.game.plies.length) {

@@ -182,7 +182,7 @@ export default {
       return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
-      return this.$store.state.ui.isEditingTPS
+      return this.$store.state.game.editingTPS !== undefined
         ? this.$store.state.ui.selectedPiece.color
         : this.position.turn;
     },

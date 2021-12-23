@@ -10,12 +10,10 @@ let defaults = {
   boardRotation: [0, 0.65],
   boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
-  editingTPS: "",
   editingBranch: "",
   firstMoveNumber: 1,
   flatCounts: true,
   highlightSquares: true,
-  isEditingTPS: false,
   isPortrait: false,
   nativeSharing: navigator.canShare
     ? navigator.canShare({ text: "test", url: location.href })

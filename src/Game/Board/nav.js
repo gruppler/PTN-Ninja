@@ -184,7 +184,7 @@ export default class BoardNavigation {
   }
 
   doTPS(tps) {
-    if (!tps) {
+    if (tps === undefined) {
       if (this.game.tags.tps) {
         tps = this.game.tags.tps.value;
       } else {

@@ -127,6 +127,7 @@ export default class GameBase {
     history,
     historyIndex,
     defaultSize,
+    editingTPS,
     onInit,
   }) {
     Object.defineProperty(this, "movesGrouped", {
@@ -147,6 +148,7 @@ export default class GameBase {
     this.historyIndex = historyIndex || 0;
     this.config = config ? { ...config } : {};
     this.tags = {};
+    this.editingTPS = editingTPS;
     this.defaultSize = defaultSize || 6;
     this.moves = [];
     this.boardStates = {};
@@ -450,8 +452,8 @@ export default class GameBase {
       this.name = this.generateName();
     }
 
-    if (this.tags.tps) {
-      this.board.doTPS();
+    if (this.tags.tps || this.editingTPS) {
+      this.board.doTPS(this.editingTPS);
     }
 
     this.board.updateOutput();
@@ -623,6 +625,16 @@ export default class GameBase {
         this.board.updateTagsOutput();
       }
     }
+  }
+
+  setEditingTPS(tps) {
+    this.editingTPS = tps;
+    if (tps === undefined) {
+      this.board.doTPS();
+    } else {
+      this.board.setRoads(this.board.findRoads());
+    }
+    this.board.updateBoardOutput();
   }
 
   updateConfig() {
