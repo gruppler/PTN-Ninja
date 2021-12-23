@@ -879,6 +879,21 @@ export default {
         this.name = newName;
       }
     },
+    name(name) {
+      if (this.game) {
+        if (this.game.name !== name) {
+          this.changes.name = name;
+        } else {
+          delete this.changes.name;
+        }
+
+        const hasChanges = Object.values(this.changes).length > 0;
+        if (this.hasChanges !== hasChanges) {
+          this.hasChanges = hasChanges;
+          this.$emit("hasChanges", hasChanges);
+        }
+      }
+    },
     tags: {
       handler: throttle(function (tags) {
         if (!this.game) {
@@ -892,6 +907,9 @@ export default {
             changes[key] = value;
           }
         });
+        if (this.game && this.game.name !== this.name) {
+          changes.name = this.name;
+        }
         const hasChanges = Object.values(changes).length > 0;
         this.changes = changes;
         if (this.hasChanges !== hasChanges) {
