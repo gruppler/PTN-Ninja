@@ -14,8 +14,12 @@
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <q-btn icon="info" @click.prevent="info" stretch flat />
-        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
+        <q-btn icon="info" @click.prevent="info" stretch flat>
+          <hint>{{ $t("View Game Info") }}</hint>
+        </q-btn>
+        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat>
+          <hint>{{ $t("app_title") }}</hint>
+        </q-btn>
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="showText = !showText"
@@ -155,10 +159,10 @@ export default {
       Platform,
       errors: [],
       hotkeys: HOTKEYS,
+      title: "",
       defaults: { ...this.$store.state.ui.embedConfig.ui },
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
-      nameOverride: null,
       showNames: true,
     };
   },
@@ -189,9 +193,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    title() {
-      return this.nameOverride !== null ? this.nameOverride : this.name;
     },
     url() {
       return this.$store.getters["ui/url"](this.$game, { state: true });
@@ -250,21 +251,17 @@ export default {
           }
           break;
         case "editPTN":
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
+          this.$refs.tools.editDialog = true;
           break;
         case "focusText":
           this.showText = true;
           this.$refs.notes.$refs.input.focus();
           break;
         case "qrCode":
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
+          if (this.$refs.shareButton.qrDialog) {
+            this.$refs.shareButton.qrDialog = false;
           } else {
-            this.$refs.dialog.$children[0].hide();
+            this.$refs.shareButton.qrCode();
           }
           break;
         case "share":
@@ -290,20 +287,18 @@ export default {
     });
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
+    this.title = this.name || this.$game.generateName();
 
     // Embed API
     const handleMessage = ({ data }) => {
       switch (data.action) {
         case "SET_NAME":
-          this.nameOverride = data.value;
+          this.title = data.value;
           break;
         case "SET_UI":
           Object.keys(data.value).forEach((key) => {
             this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
           });
-          break;
-        case "TOGGLE_UI":
-          this.$store.dispatch("ui/TOGGLE_UI", data.action);
           break;
         case "SHOW_NAMES":
           this.showNames = data.value;
@@ -317,6 +312,7 @@ export default {
         case "GO_TO_PLY":
         case "RENAME_BRANCH":
         case "TOGGLE_EVALUATION":
+        case "TOGGLE_UI":
         case "EDIT_NOTE":
         case "ADD_NOTE":
         case "REMOVE_NOTE":
@@ -361,13 +357,14 @@ export default {
     window.addEventListener("message", handleMessage);
   },
   watch: {
-    ptn(ptn) {
-      if (ptn) {
-        this.getGame();
-      }
+    ptn() {
+      this.$game = this.getGame();
     },
     state: {
       handler(state, oldState) {
+        if (!this.$game) {
+          return;
+        }
         let fullState = {};
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
           this.$store.commit("ui/SET_UI", [key, value]);
@@ -378,12 +375,12 @@ export default {
           const ply = this.$game.board.plies[state.plyIndex];
           if (ply) {
             this.$store.dispatch("game/GO_TO_PLY", {
-              plyID: ply.id,
+              ply: ply.id,
               isDone: state.plyIsDone,
             });
           }
         } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.$store.dispatch("game/GO_TO_PLY", { plyID: 0, isDone: false });
+          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
         }
       },
       deep: true,
