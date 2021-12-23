@@ -44,7 +44,7 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" />
+          <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
         <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles />
@@ -130,7 +130,7 @@ import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, forEach } from "lodash";
+import { defaults, forEach, isEqual } from "lodash";
 
 export default {
   components: {
@@ -158,6 +158,8 @@ export default {
       defaults: { ...this.$store.state.ui.embedConfig.ui },
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      nameOverride: null,
+      showNames: true,
     };
   },
   computed: {
@@ -189,7 +191,7 @@ export default {
       },
     },
     title() {
-      return this.name || this.$game.generateName();
+      return this.nameOverride !== null ? this.nameOverride : this.name;
     },
     url() {
       return this.$store.getters["ui/url"](this.$game, { state: true });
@@ -282,10 +284,81 @@ export default {
   created() {
     this.$store.commit("ui/SET_EMBED_GAME");
     forEach(this.state, (value, key) => {
-      this.$store.commit("ui/SET_UI", [key, value]);
+      if (!isEqual(value, this.$store.state[key])) {
+        this.$store.commit("ui/SET_UI", [key, value]);
+      }
     });
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
+
+    // Embed API
+    const handleMessage = ({ data }) => {
+      switch (data.action) {
+        case "SET_NAME":
+          this.nameOverride = data.value;
+          break;
+        case "SET_UI":
+          Object.keys(data.value).forEach((key) => {
+            this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
+          });
+          break;
+        case "TOGGLE_UI":
+          this.$store.dispatch("ui/TOGGLE_UI", data.action);
+          break;
+        case "SHOW_NAMES":
+          this.showNames = data.value;
+          break;
+        case "SET_GAME":
+        case "SELECT_SQUARE":
+        case "SELECT_PIECE":
+        case "DELETE_PLY":
+        case "DELETE_BRANCH":
+        case "SET_TARGET":
+        case "GO_TO_PLY":
+        case "RENAME_BRANCH":
+        case "TOGGLE_EVALUATION":
+        case "EDIT_NOTE":
+        case "ADD_NOTE":
+        case "REMOVE_NOTE":
+          this.$store.dispatch("game/" + data.action, data.value);
+          break;
+        case "FIRST":
+        case "LAST":
+        case "PREV":
+        case "NEXT":
+        case "UNDO":
+        case "REDO":
+        case "TRIM_BRANCHES":
+        case "TRIM_TO_BOARD":
+        case "TRIM_TO_PLY":
+        case "CANCEL_MOVE":
+          this.$store.dispatch("game/" + data.action);
+          break;
+        case "NOTIFY":
+        case "NOTIFY_ERROR":
+        case "NOTIFY_SUCCESS":
+        case "NOTIFY_WARNING":
+        case "NOTIFY_HINT":
+          this.$store.dispatch("ui/" + data.action, data.value);
+          break;
+        case "RESET_TRANSFORM":
+        case "ROTATE_180":
+        case "ROTATE_LEFT":
+        case "ROTATE_RIGHT":
+        case "FLIP_HORIZONTAL":
+        case "FLIP_VERTICAL":
+          this.$store.dispatch("ui/" + data.action);
+          break;
+        default:
+          if (data.action) {
+            throw "Invalid message: " + data.action;
+          }
+      }
+    };
+    if (process.env.DEV) {
+      window.removeEventListener("message", handleMessage);
+    }
+    window.addEventListener("message", handleMessage);
   },
   watch: {
     ptn(ptn) {
