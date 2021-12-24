@@ -326,7 +326,7 @@ export default {
     "config.state"(value) {
       if (value) {
         this.postMessage("GO_TO_PLY", {
-          ply: this.$game.board.plyIndex,
+          plyID: this.$game.board.plyID,
           isDone: this.$game.board.plyIsDone,
         });
       } else {
