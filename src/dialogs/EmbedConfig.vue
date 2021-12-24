@@ -231,8 +231,13 @@
       <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t(canShare ? 'Share' : 'Copy')" @click="share" flat />
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
+        <q-btn
+          :label="$t(canShare ? 'Share' : 'Copy')"
+          color="primary"
+          @click="share"
+          v-close-popup
+        />
       </q-card-actions>
     </template>
   </large-dialog>
@@ -309,11 +314,6 @@ export default {
     },
   },
   watch: {
-    // url(url) {
-    //   if (this.$refs.preview) {
-    //     this.$refs.preview.contentWindow.location.replace(url);
-    //   }
-    // },
     name(value) {
       this.postMessage("SET_NAME", value);
     },
