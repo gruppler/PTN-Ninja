@@ -11,6 +11,7 @@ const state = {
   position: null,
   ptn: null,
   selected: null,
+  editingTPS: undefined,
 };
 
 const load = (key, initial) =>
@@ -32,6 +33,7 @@ if (!Platform.within.iframe && LocalStorage.has("games")) {
       config: load("config-" + name) || {},
       history: load("history-" + name),
       historyIndex: load("historyIndex-" + name),
+      editingTPS: load("editingTPS-" + name),
     };
   });
 }

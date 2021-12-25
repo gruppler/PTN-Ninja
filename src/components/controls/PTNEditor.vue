@@ -23,6 +23,7 @@ export default {
   data() {
     return {
       ptn: "",
+      original: "",
       rules: [
         (moves) => {
           const result = Game.validate(this.header + moves);
@@ -47,13 +48,27 @@ export default {
     error() {
       return this.$refs.input.computedErrorMessage;
     },
+    hasChanges() {
+      return this.ptn !== this.original;
+    },
   },
   methods: {
     save() {
       this.$emit("save", this.header + this.ptn);
     },
+    reset() {
+      this.ptn = this.original;
+    },
     init() {
-      this.ptn = this.$game ? this.$game.moveText(true, true) : "";
+      this.original = this.$game
+        ? this.$game.moveText(true, true).replace(/\r\n/g, "\n")
+        : "";
+      this.ptn = this.original;
+    },
+  },
+  watch: {
+    ptn() {
+      this.$emit("hasChanges", this.hasChanges);
     },
   },
   mounted() {

@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="true" v-bind="$attrs">
+  <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="download">{{ $t("Download") }}...</dialog-header>
     </template>
@@ -61,7 +61,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     submit() {
       const count = this.range.max - this.range.min + 1;

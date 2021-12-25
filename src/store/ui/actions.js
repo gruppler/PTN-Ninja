@@ -36,7 +36,7 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
       LocalStorage.set(key, value);
     }
     commit("SET_UI", [key, value]);
-    if (key === "themeID") {
+    if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
     }
   }

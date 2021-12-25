@@ -1,5 +1,6 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
+    <!-- Game Name -->
     <q-input v-model.trim="name" name="name" :label="$t('Name')" filled>
       <template v-slot:prepend>
         <q-icon name="file" />
@@ -14,7 +15,136 @@
       </template>
     </q-input>
 
+    <div class="row">
+      <div class="col">
+        <div class="row q-gutter-md q-mb-md">
+          <!-- Player 1 Account -->
+          <PlayerName
+            v-if="game && !game.isLocal && player === 1"
+            class="col-grow"
+            v-model="tags.player1"
+            :player="player"
+            :is-private="game.config.isPrivate"
+            @keydown.enter.prevent="submit"
+            hide-bottom-space
+            hide-hint
+          />
+
+          <!-- Player 1 Name -->
+          <q-input
+            v-else
+            class="col-grow"
+            v-model.trim="tags.player1"
+            name="player1"
+            :label="$t('Player1')"
+            :rules="rules('player1')"
+            :readonly="game && !game.isLocal"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon
+                :name="
+                  $store.getters['ui/playerIcon'](
+                    1,
+                    game && game.config.isPrivate
+                  )
+                "
+              />
+            </template>
+          </q-input>
+
+          <!-- Rating 1 -->
+          <q-input
+            class="col-grow"
+            v-show="isVisible('rating1')"
+            v-model="tags.rating1"
+            name="rating1"
+            type="number"
+            min="0"
+            max="3000"
+            :label="$t('Rating1')"
+            :rules="rules('rating1')"
+            :readonly="game && !game.isLocal && player !== 1"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="rating1" />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="row q-gutter-md">
+          <!-- Player 2 Account -->
+          <PlayerName
+            v-if="game && !game.isLocal && player === 2"
+            class="col-grow"
+            v-model="tags.player2"
+            :player="player"
+            :is-private="game.config.isPrivate"
+            @keydown.enter.prevent="submit"
+            hide-bottom-space
+            hide-hint
+          />
+
+          <!-- Player 2 Name -->
+          <q-input
+            v-else
+            class="col-grow"
+            v-model.trim="tags.player2"
+            name="player2"
+            :label="$t('Player2')"
+            :rules="rules('player2')"
+            :readonly="game && !game.isLocal"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon
+                :name="
+                  $store.getters['ui/playerIcon'](
+                    2,
+                    game && game.config.isPrivate
+                  )
+                "
+              />
+            </template>
+          </q-input>
+
+          <!-- Rating 2 -->
+          <q-input
+            class="col-grow"
+            v-show="isVisible('rating2')"
+            v-model="tags.rating2"
+            name="rating2"
+            type="number"
+            min="0"
+            max="3000"
+            :label="$t('Rating2')"
+            :rules="rules('rating2')"
+            :readonly="game && !game.isLocal && player !== 2"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="rating2" />
+            </template>
+          </q-input>
+        </div>
+      </div>
+      <q-btn
+        v-show="!game || game.isLocal"
+        @click="swapPlayers"
+        icon="swap_vert"
+        stretch
+        dense
+        flat
+      />
+    </div>
+
     <div class="row q-gutter-md q-mt-none">
+      <!-- Size -->
       <q-select
         class="col-grow"
         v-model="tags.size"
@@ -32,6 +162,7 @@
         </template>
       </q-select>
 
+      <!-- TPS -->
       <q-input
         ref="tps"
         v-show="tags.tps || !game || !game.plies.length"
@@ -74,24 +205,7 @@
           class="row q-gutter-md"
           :class="{ 'q-mb-md': separatePieceCounts }"
         >
-          <q-input
-            class="col-grow"
-            v-show="!separatePieceCounts"
-            v-model="tags.caps"
-            :placeholder="pieceCounts[tags.size].cap"
-            name="caps"
-            type="number"
-            min="0"
-            :max="tags.size"
-            :label="$t('Caps')"
-            :rules="rules('caps')"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="caps1" />
-            </template>
-          </q-input>
+          <!-- Flats -->
           <q-input
             class="col-grow"
             v-show="!separatePieceCounts"
@@ -110,23 +224,19 @@
               <q-icon name="flats1" />
             </template>
           </q-input>
-        </div>
 
-        <div
-          v-show="separatePieceCounts"
-          class="row q-gutter-md"
-          :class="{ 'q-mb-md': separatePieceCounts }"
-        >
+          <!-- Caps -->
           <q-input
             class="col-grow"
-            v-model="tags.caps1"
-            :placeholder="tags.caps || pieceCounts[tags.size].cap"
-            name="caps1"
+            v-show="!separatePieceCounts"
+            v-model="tags.caps"
+            :placeholder="pieceCounts[tags.size].cap"
+            name="caps"
             type="number"
             min="0"
             :max="tags.size"
-            :label="$t('Caps1')"
-            :rules="rules('caps1')"
+            :label="$t('Caps')"
+            :rules="rules('caps')"
             hide-bottom-space
             filled
           >
@@ -134,6 +244,14 @@
               <q-icon name="caps1" />
             </template>
           </q-input>
+        </div>
+
+        <div
+          v-show="separatePieceCounts"
+          class="row q-gutter-md"
+          :class="{ 'q-mb-md': separatePieceCounts }"
+        >
+          <!-- Flats 1 -->
           <q-input
             class="col-grow"
             v-model="tags.flats1"
@@ -151,26 +269,29 @@
               <q-icon name="flats1" />
             </template>
           </q-input>
-        </div>
 
-        <div v-show="separatePieceCounts" class="row q-gutter-md">
+          <!-- Caps 1 -->
           <q-input
             class="col-grow"
-            v-model="tags.caps2"
+            v-model="tags.caps1"
             :placeholder="tags.caps || pieceCounts[tags.size].cap"
-            name="caps2"
+            name="caps1"
             type="number"
             min="0"
             :max="tags.size"
-            :label="$t('Caps2')"
-            :rules="rules('caps2')"
+            :label="$t('Caps1')"
+            :rules="rules('caps1')"
             hide-bottom-space
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="caps2" />
+              <q-icon name="caps1" />
             </template>
           </q-input>
+        </div>
+
+        <div v-show="separatePieceCounts" class="row q-gutter-md">
+          <!-- Flats 2 -->
           <q-input
             class="col-grow"
             v-model="tags.flats2"
@@ -186,6 +307,25 @@
           >
             <template v-slot:prepend>
               <q-icon name="flats2" />
+            </template>
+          </q-input>
+
+          <!-- Caps 2 -->
+          <q-input
+            class="col-grow"
+            v-model="tags.caps2"
+            :placeholder="tags.caps || pieceCounts[tags.size].cap"
+            name="caps2"
+            type="number"
+            min="0"
+            :max="tags.size"
+            :label="$t('Caps2')"
+            :rules="rules('caps2')"
+            hide-bottom-space
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="caps2" />
             </template>
           </q-input>
         </div>
@@ -204,132 +344,11 @@
       </q-btn>
     </div>
 
-    <div class="row">
-      <div class="col">
-        <div class="row q-gutter-md q-mb-md">
-          <PlayerName
-            v-if="game && !game.isLocal && player === 1"
-            class="col-grow"
-            v-model="tags.player1"
-            :player="player"
-            :is-private="game.config.isPrivate"
-            @keydown.enter.prevent="submit"
-            hide-bottom-space
-            hide-hint
-          />
-
-          <q-input
-            v-else
-            class="col-grow"
-            v-model.trim="tags.player1"
-            name="player1"
-            :label="$t('Player1')"
-            :rules="rules('player1')"
-            :readonly="game && !game.isLocal"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon
-                :name="
-                  $store.getters['ui/playerIcon'](
-                    1,
-                    game && game.config.isPrivate
-                  )
-                "
-              />
-            </template>
-          </q-input>
-
-          <q-input
-            class="col-grow"
-            v-show="isVisible('rating1')"
-            v-model="tags.rating1"
-            name="rating1"
-            type="number"
-            min="0"
-            max="3000"
-            :label="$t('Rating1')"
-            :rules="rules('rating1')"
-            :readonly="game && !game.isLocal && player !== 1"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="rating1" />
-            </template>
-          </q-input>
-        </div>
-
-        <div class="row q-gutter-md">
-          <PlayerName
-            v-if="game && !game.isLocal && player === 2"
-            class="col-grow"
-            v-model="tags.player2"
-            :player="player"
-            :is-private="game.config.isPrivate"
-            @keydown.enter.prevent="submit"
-            hide-bottom-space
-            hide-hint
-          />
-
-          <q-input
-            v-else
-            class="col-grow"
-            v-model.trim="tags.player2"
-            name="player2"
-            :label="$t('Player2')"
-            :rules="rules('player2')"
-            :readonly="game && !game.isLocal"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon
-                :name="
-                  $store.getters['ui/playerIcon'](
-                    2,
-                    game && game.config.isPrivate
-                  )
-                "
-              />
-            </template>
-          </q-input>
-
-          <q-input
-            class="col-grow"
-            v-show="isVisible('rating2')"
-            v-model="tags.rating2"
-            name="rating2"
-            type="number"
-            min="0"
-            max="3000"
-            :label="$t('Rating2')"
-            :rules="rules('rating2')"
-            :readonly="game && !game.isLocal && player !== 2"
-            hide-bottom-space
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="rating2" />
-            </template>
-          </q-input>
-        </div>
-      </div>
-      <q-btn
-        v-show="game && game.isLocal"
-        @click="swapPlayers"
-        icon="swap_vert"
-        stretch
-        dense
-        flat
-      />
-    </div>
-
     <div
       v-show="isVisible('komi', 'opening')"
       class="row q-gutter-md q-mt-none"
     >
+      <!-- Komi -->
       <q-input
         class="col-grow"
         v-show="isVisible('komi')"
@@ -349,6 +368,7 @@
         </template>
       </q-input>
 
+      <!-- Opening -->
       <q-select
         class="col-grow"
         v-show="isVisible('opening')"
@@ -366,116 +386,8 @@
       </q-select>
     </div>
 
-    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
-      <q-input
-        class="col-grow"
-        v-show="isVisible('date')"
-        v-model="tags.date"
-        name="date"
-        :label="$t('Date')"
-        :rules="rules('date')"
-        :readonly="game && !game.isLocal"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="date" />
-        </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showDatePicker"
-          @before-show="proxyDate = tags.date"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-date
-              v-model="proxyDate"
-              name="date"
-              mask="YYYY.MM.DD"
-              :text-color="primaryFG"
-              today-btn
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.date = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.date = proxyDate"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-date>
-          </div>
-        </q-popup-proxy>
-      </q-input>
-
-      <q-input
-        class="col-grow"
-        v-show="isVisible('time')"
-        v-model="tags.time"
-        name="time"
-        :label="$t('Time')"
-        :rules="rules('time')"
-        :readonly="game && !game.isLocal"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="time" />
-        </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showTimePicker"
-          @before-show="proxyTime = tags.time"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-time
-              v-model="proxyTime"
-              name="time"
-              :text-color="primaryFG"
-              format24h
-              with-seconds
-              now-btn
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.time = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.time = proxyTime"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-time>
-          </div>
-        </q-popup-proxy>
-      </q-input>
-    </div>
-
     <div class="row q-gutter-md q-mt-none">
+      <!-- Clock -->
       <q-input
         class="col-grow"
         v-show="isVisible('clock')"
@@ -494,6 +406,7 @@
         </template>
       </q-input>
 
+      <!-- Round -->
       <q-input
         class="col-grow"
         v-show="isVisible('round')"
@@ -514,6 +427,7 @@
     </div>
 
     <div class="row q-gutter-md q-mt-none">
+      <!-- Result -->
       <q-select
         v-if="game"
         class="col-grow"
@@ -575,6 +489,7 @@
         </template>
       </q-select>
 
+      <!-- Points -->
       <q-input
         v-if="game"
         v-show="isVisible('points')"
@@ -595,6 +510,22 @@
       </q-input>
     </div>
 
+    <!-- Event -->
+    <q-input
+      v-show="isVisible('event')"
+      v-model.trim="tags.event"
+      name="event"
+      :label="$t('Event')"
+      :rules="rules('event')"
+      hide-bottom-space
+      filled
+    >
+      <template v-slot:prepend>
+        <q-icon name="event" />
+      </template>
+    </q-input>
+
+    <!-- Site -->
     <q-input
       v-show="isVisible('site')"
       v-model.trim="tags.site"
@@ -609,19 +540,123 @@
       </template>
     </q-input>
 
-    <q-input
-      v-show="isVisible('event')"
-      v-model.trim="tags.event"
-      name="event"
-      :label="$t('Event')"
-      :rules="rules('event')"
-      hide-bottom-space
-      filled
-    >
-      <template v-slot:prepend>
-        <q-icon name="event" />
-      </template>
-    </q-input>
+    <!-- Date/Time -->
+    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
+      <q-input
+        class="col-grow"
+        v-show="isVisible('date')"
+        v-model="tags.date"
+        name="date"
+        :label="$t('Date') + ' (UTC)'"
+        :rules="rules('date')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="date" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showDatePicker"
+          @before-show="proxyDate = tags.date"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-date
+              v-model="proxyDate"
+              name="date"
+              mask="YYYY.MM.DD"
+              :text-color="primaryFG"
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.date = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.date = proxyDate"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-date>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+
+      <q-input
+        class="col-grow"
+        v-show="isVisible('time')"
+        v-model="tags.time"
+        name="time"
+        :label="$t('Time') + ' (UTC)'"
+        :rules="rules('time')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="time" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showTimePicker"
+          @before-show="proxyTime = tags.time"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-time
+              v-model="proxyTime"
+              name="time"
+              :text-color="primaryFG"
+              format24h
+              with-seconds
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.time = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.time = proxyTime"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-time>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+      <div v-if="tags.date || tags.time" class="text-caption flex flex-center">
+        <template v-if="tags.time">
+          <relative-time :value="datetime" text-only invert /> &nbsp;
+          (<relative-time :value="datetime" text-only />)
+        </template>
+        <template v-else>
+          <relative-date :value="datetime" text-only invert /> &nbsp;
+          (<relative-date :value="datetime" text-only />)
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -629,7 +664,7 @@
 import PlayerName from "../controls/PlayerName";
 import Result from "../PTN/Result";
 
-import { formats } from "../../Game/PTN/Tag";
+import Tag, { formats } from "../../Game/PTN/Tag";
 import TPS from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
 import {
@@ -639,7 +674,7 @@ import {
   sample,
 } from "../../Game/base";
 
-import { map } from "lodash";
+import { map, throttle } from "lodash";
 
 export default {
   name: "GameInfo",
@@ -682,6 +717,8 @@ export default {
         time: null,
         tps: null,
       },
+      changes: {},
+      hasChanges: false,
       proxyDate: null,
       proxyTime: null,
       showDatePicker: false,
@@ -692,7 +729,7 @@ export default {
       pieceCounts,
       sizes: [3, 4, 5, 6, 7, 8].map((size) => ({
         label: `${size}x${size}`,
-        value: size,
+        value: size.toString(),
       })),
       results: ["", "R-0", "0-R", "F-0", "0-F", "1-0", "0-1", "1/2-1/2"].map(
         (value) => ({
@@ -716,8 +753,13 @@ export default {
       return result ? result.label : "";
     },
     player() {
-      const user = this.$store.state.online.user;
+      const user = this.$store.state.online
+        ? this.$store.state.online.user
+        : false;
       return user ? this.game.player(user.uid) : 0;
+    },
+    datetime() {
+      return Tag.toDate(this.tags.date, this.tags.time || "");
     },
   },
   methods: {
@@ -749,7 +791,11 @@ export default {
         this.player;
       }
 
-      this.$emit("submit", { name: this.name, tags: { ...this.tags } });
+      this.$emit("submit", {
+        name: this.name,
+        tags: { ...this.tags },
+        changes: this.changes,
+      });
       this.updateTags();
     },
     editTPS() {
@@ -762,11 +808,10 @@ export default {
         "firstMoveNumber",
         this.game ? this.game.firstMoveNumber : 1,
       ]);
-      this.$store.dispatch("ui/SET_UI", [
-        "editingTPS",
-        this.game ? this.game.board.tps : "",
-      ]);
-      this.$store.dispatch("ui/SET_UI", ["isEditingTPS", true]);
+      this.$store.dispatch(
+        "game/EDIT_TPS",
+        this.game ? this.game.board.tps : ""
+      );
     },
     fillTPS() {
       if (!this.game || !this.game.plies.length) {
@@ -845,6 +890,46 @@ export default {
       if (isDefaultName(this.name)) {
         this.name = newName;
       }
+    },
+    name(name) {
+      if (this.game) {
+        if (this.game.name !== name) {
+          this.changes.name = name;
+        } else {
+          delete this.changes.name;
+        }
+
+        const hasChanges = Object.values(this.changes).length > 0;
+        if (this.hasChanges !== hasChanges) {
+          this.hasChanges = hasChanges;
+          this.$emit("hasChanges", hasChanges);
+        }
+      }
+    },
+    tags: {
+      handler: throttle(function (tags) {
+        if (!this.game) {
+          this.return;
+        }
+        const changes = {};
+        Object.keys(tags).forEach((key) => {
+          const value = this.tags[key] || null;
+          const originalValue = this.game ? this.game.tag(key) || null : null;
+          if (!this.game || value !== originalValue) {
+            changes[key] = value;
+          }
+        });
+        if (this.game && this.game.name !== this.name) {
+          changes.name = this.name;
+        }
+        const hasChanges = Object.values(changes).length > 0;
+        this.changes = changes;
+        if (this.hasChanges !== hasChanges) {
+          this.hasChanges = hasChanges;
+          this.$emit("hasChanges", hasChanges);
+        }
+      }, 100),
+      deep: true,
     },
   },
 };

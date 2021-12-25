@@ -91,7 +91,7 @@ export const timeFromDate = (date) => {
 
 export const toDate = (date, time = "") => {
   return new Date(
-    date && date.seconds ? date.seconds * 1e3 : `${date} ${time}`
+    date && date.seconds ? date.seconds * 1e3 : `${date} ${time} UTC`
   );
 };
 

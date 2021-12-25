@@ -17,119 +17,113 @@
     <q-btn
       @click="board3D = !board3D"
       :icon="board3D ? '2d' : '3d'"
-      :title="$t((board3D ? '2' : '3') + 'D Board')"
       class="dimmed-btn"
       :ripple="false"
       :color="fg"
       flat
       fab
-    />
+    >
+      <hint>{{ $t((board3D ? "2" : "3") + "D Board") }}</hint>
+    </q-btn>
 
     <template v-if="showAll">
       <q-btn
         @click="rotate180"
         @contextmenu.prevent="resetTransform"
         icon="rotate_180"
-        :title="$t('Rotate 180')"
         class="dimmed-btn"
         :ripple="false"
         :color="fg"
         flat
         fab
-      />
+      >
+        <hint>{{ $t("Rotate 180") }}</hint>
+      </q-btn>
       <q-btn
         @click="rotateLeft"
         @contextmenu.prevent="resetTransform"
         icon="rotate_left"
-        :title="$t('Rotate Left')"
         class="dimmed-btn"
         :ripple="false"
         :color="fg"
         flat
         fab
-      />
+      >
+        <hint>{{ $t("Rotate Left") }}</hint>
+      </q-btn>
 
       <q-btn
         @click="rotateRight"
         @contextmenu.prevent="resetTransform"
         icon="rotate_right"
-        :title="$t('Rotate Right')"
         class="dimmed-btn"
         :ripple="false"
         :color="fg"
         flat
         fab
-      />
+      >
+        <hint>{{ $t("Rotate Right") }}</hint>
+      </q-btn>
 
       <q-btn
         @click="flipHorizontal"
         @contextmenu.prevent="resetTransform"
         icon="flip_horizontal"
-        :title="$t('Flip Horizontally')"
         class="dimmed-btn"
         :ripple="false"
         :color="fg"
         flat
         fab
-      />
+      >
+        <hint>{{ $t("Flip Horizontally") }}</hint>
+      </q-btn>
 
       <q-btn
         @click="flipVertical"
         @contextmenu.prevent="resetTransform"
         icon="flip_vertical"
-        :title="$t('Flip Vertically')"
         class="dimmed-btn"
         :ripple="false"
         :color="fg"
         flat
         fab
-      />
+      >
+        <hint>{{ $t("Flip Vertically") }}</hint>
+      </q-btn>
     </template>
     <q-fab
       v-else
       @contextmenu.prevent="resetTransform"
       :direction="isPortrait ? 'down' : 'left'"
       icon="rotate_180"
-      :title="$t('Rotate/Flip')"
       class="dimmed-btn"
       :ripple="false"
       :color="fg"
       flat
     >
-      <q-fab-action
-        @click="rotate180"
-        icon="rotate_180"
-        :title="$t('Rotate 180')"
-        class="bg-bg"
-      />
+      <q-fab-action @click="rotate180" icon="rotate_180" class="bg-bg">
+        <hint>{{ $t("Rotate 180") }}</hint>
+      </q-fab-action>
 
-      <q-fab-action
-        @click="rotateLeft"
-        icon="rotate_left"
-        :title="$t('Rotate Left')"
-        class="bg-bg"
-      />
+      <q-fab-action @click="rotateLeft" icon="rotate_left" class="bg-bg">
+        <hint>{{ $t("Rotate Left") }}</hint>
+      </q-fab-action>
 
-      <q-fab-action
-        @click="rotateRight"
-        icon="rotate_right"
-        :title="$t('Rotate Right')"
-        class="bg-bg"
-      />
+      <q-fab-action @click="rotateRight" icon="rotate_right" class="bg-bg">
+        <hint>{{ $t("Rotate Right") }}</hint>
+      </q-fab-action>
 
       <q-fab-action
         @click="flipHorizontal"
         icon="flip_horizontal"
-        :title="$t('Flip Horizontally')"
         class="bg-bg"
-      />
+      >
+        <hint>{{ $t("Flip Horizontally") }}</hint>
+      </q-fab-action>
 
-      <q-fab-action
-        @click="flipVertical"
-        icon="flip_vertical"
-        :title="$t('Flip Vertically')"
-        class="bg-bg"
-      />
+      <q-fab-action @click="flipVertical" icon="flip_vertical" class="bg-bg">
+        <hint>{{ $t("Flip Vertically") }}</hint>
+      </q-fab-action>
     </q-fab>
   </div>
 </template>

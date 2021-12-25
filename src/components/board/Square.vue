@@ -61,17 +61,17 @@ export default {
       return this.game.position.isGameEnd;
     },
     isEditingTPS() {
-      return this.$store.state.ui.isEditingTPS;
+      return this.$store.state.game.editingTPS !== undefined;
     },
     selectedPiece() {
       return this.$store.state.ui.selectedPiece;
     },
     editingTPS: {
       get() {
-        return this.$store.state.ui.editingTPS;
+        return this.$store.state.game.editingTPS;
       },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
+      set(tps) {
+        this.$store.dispatch("game/EDIT_TPS", tps);
       },
     },
     firstMoveNumber() {
@@ -181,7 +181,6 @@ export default {
         this.$store.dispatch("game/SELECT_SQUARE", {
           square: this.square,
           alt,
-          isEditingTPS: this.isEditingTPS,
           selectedPiece: this.selectedPiece,
         });
         if (this.isEditingTPS) {

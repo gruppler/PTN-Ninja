@@ -1,6 +1,6 @@
 <template>
   <span v-if="textOnly">
-    {{ label }}
+    {{ invert ? tooltip : label }}
   </span>
   <span
     v-else-if="date"
@@ -28,7 +28,7 @@ export default {
   name: "relative-date",
   props: {
     value: [Date, Number, String],
-    "text-only": Boolean,
+    textOnly: Boolean,
     invert: Boolean,
     dark: Boolean,
   },
@@ -45,7 +45,7 @@ export default {
     date() {
       return !this.value || this.value instanceof Date
         ? this.value
-        : parse(this.value, this.$t("format.date-standard"), new Date());
+        : parse(this.value, this.$t("format.date-full"), new Date());
     },
     tooltip() {
       return format(this.date, this.$t("format.date-full"));

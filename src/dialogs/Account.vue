@@ -1,5 +1,5 @@
 <template>
-  <small-dialog :value="true" v-bind="$attrs">
+  <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header icon="account">{{ $t("Account") }}</dialog-header>
     </template>
@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     async logOut() {
       this.loggingOut = true;

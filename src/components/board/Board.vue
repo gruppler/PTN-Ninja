@@ -28,7 +28,7 @@
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
-      <TurnIndicator />
+      <TurnIndicator :hide-names="hideNames" />
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
@@ -107,6 +107,9 @@ export default {
     Piece,
     TurnIndicator,
   },
+  props: {
+    hideNames: Boolean,
+  },
   data() {
     return {
       size: null,
@@ -182,7 +185,7 @@ export default {
       return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
-      return this.$store.state.ui.isEditingTPS
+      return this.$store.state.game.editingTPS !== undefined
         ? this.$store.state.ui.selectedPiece.color
         : this.position.turn;
     },

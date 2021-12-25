@@ -8,15 +8,19 @@
           :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              v-if="isLocal || player"
-              name="edit"
-              @click.stop="edit"
+              name="info"
+              @click.stop="info"
+              @click.right.prevent.stop="edit"
               class="q-field__focusable-action q-mr-sm"
-            />
+            >
+              <hint>{{ $t("View Game Info") }}</hint>
+            </q-icon>
           </GameSelector>
         </q-toolbar-title>
         <q-btn
@@ -28,7 +32,21 @@
           :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>
+            {{
+              $t(
+                textTab === "notes"
+                  ? showText
+                    ? "Hide Notes"
+                    : "Show Notes"
+                  : showText
+                  ? "Hide Chat"
+                  : "Show Chat"
+              )
+            }}
+          </hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -77,7 +95,7 @@
     >
       <div class="absolute-fit column">
         <PTN-Tools ref="tools">
-          <ShareButton ref="shareButton" :title="$t('Share')" />
+          <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
@@ -140,25 +158,12 @@
           v-if="isEditingTPS"
           class="justify-around items-center"
           style="width: 100%; max-width: 500px; margin: 0 auto"
-          v-model="selectedPiece"
-        >
-          <q-input
-            type="number"
-            v-model="firstMoveNumber"
-            :label="$t('Move')"
-            :min="minFirstMoveNumber"
-            :max="999"
-            filled
-            dense
-          />
-          <q-btn :label="$t('Cancel')" @click="resetTPS" color="primary" flat />
-          <q-btn :label="$t('OK')" @click="saveTPS" color="primary" flat />
-        </PieceSelector>
+        />
         <PlayControls v-else />
       </q-toolbar>
     </q-footer>
 
-    <router-view ref="dialog" no-route-dismiss />
+    <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />
@@ -273,77 +278,8 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
-    isEditingTPS: {
-      get() {
-        return this.$store.state.ui.isEditingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["isEditingTPS", value]);
-        if (!value) {
-          this.editingTPS = "";
-        }
-      },
-    },
-    selectedPiece: {
-      get() {
-        return this.$store.state.ui.selectedPiece;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.$game.board._getTPS(
-          this.selectedPiece.color,
-          this.firstMoveNumber
-        );
-      },
-    },
-    minFirstMoveNumber() {
-      const min1 =
-        this.$store.state.game.board.piecesPlayed[1].total +
-        this.$game.board.squares.reduce(
-          (total, row) =>
-            row.reduce(
-              (total, square) =>
-                square.pieces.length
-                  ? total +
-                    square.pieces.slice(1).filter((piece) => piece[0] === "1")
-                      .length
-                  : total,
-              total
-            ),
-          0
-        );
-      const min2 =
-        this.$store.state.game.board.piecesPlayed[2].total +
-        Object.values(this.$store.state.game.board.squares).reduce(
-          (total, square) =>
-            square.pieces.length
-              ? total +
-                square.pieces.slice(1).filter((piece) => piece[0] === "2")
-                  .length
-              : total,
-          0
-        );
-      return Math.max(min1, min2) + 1 * (min1 <= min2);
-    },
-    firstMoveNumber: {
-      get() {
-        return this.$store.state.ui.firstMoveNumber;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.$game.board._getTPS(
-          this.selectedPiece.color,
-          this.firstMoveNumber
-        );
-      },
-    },
-    editingTPS: {
-      get() {
-        return this.$store.state.ui.editingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
-      },
+    isEditingTPS() {
+      return this.$store.state.game.editingTPS !== undefined;
     },
     disabledOptions() {
       return this.$store.getters["game/disabledOptions"];
@@ -399,15 +335,6 @@ export default {
           try {
             game = this.$store.state.game.list[0];
             game = new Game(game);
-            if (
-              this.$store.state.ui.isEditingTPS &&
-              this.$store.state.ui.editingTPS
-            ) {
-              this.$store.dispatch(
-                "game/DO_TPS",
-                this.$store.state.ui.editingTPS
-              );
-            }
           } catch (error) {
             _handleError(error);
           }
@@ -468,25 +395,12 @@ export default {
         window.game = game;
       }
       this.$store.dispatch("game/SET_GAME", game);
-
-      if (
-        this.$store.state.ui.isEditingTPS &&
-        this.$store.state.ui.editingTPS
-      ) {
-        this.$store.dispatch("game/DO_TPS", this.$store.state.ui.editingTPS);
-      }
     },
     undo() {
       return this.$store.dispatch("game/UNDO");
     },
     redo() {
       return this.$store.dispatch("game/REDO");
-    },
-    resetTPS() {
-      this.$store.dispatch("game/RESET_TPS");
-    },
-    saveTPS() {
-      this.$store.dispatch("game/SAVE_TPS", this.editingTPS);
     },
     menuAction(action) {
       switch (action) {
@@ -516,6 +430,13 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editGame":
           if (this.$route.name !== "info-edit") {
             this.$router.push({ name: "info-edit" });
@@ -689,6 +610,9 @@ export default {
           break;
       }
     },
+    info() {
+      this.$router.push({ name: "info-view" });
+    },
     edit() {
       this.$router.push({ name: "info-edit" });
     },
@@ -715,11 +639,6 @@ export default {
   watch: {
     game() {
       this.$store.dispatch("online/LISTEN_CURRENT_GAME");
-    },
-    editingTPS() {
-      if (this.firstMoveNumber < this.minFirstMoveNumber) {
-        this.firstMoveNumber = this.minFirstMoveNumber;
-      }
     },
     user(user, oldUser) {
       if (this.$game && this.$game.config.isOnline) {

@@ -8,11 +8,18 @@
           :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
+        <q-btn icon="info" @click.prevent="info" stretch flat>
+          <hint>{{ $t("View Game Info") }}</hint>
+        </q-btn>
+        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat>
+          <hint>{{ $t("app_title") }}</hint>
+        </q-btn>
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="showText = !showText"
@@ -20,7 +27,9 @@
           :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showText ? "Hide Notes" : "Show Notes") }}</hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -39,7 +48,7 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" />
+          <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
         <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles />
@@ -91,7 +100,7 @@
       </q-toolbar>
     </q-footer>
 
-    <router-view no-route-dismiss />
+    <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
     <GameNotifications />
@@ -125,7 +134,7 @@ import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, forEach } from "lodash";
+import { defaults, forEach, isEqual } from "lodash";
 
 export default {
   components: {
@@ -150,9 +159,11 @@ export default {
       Platform,
       errors: [],
       hotkeys: HOTKEYS,
+      title: "",
       defaults: { ...this.$store.state.ui.embedConfig.ui },
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      showNames: true,
     };
   },
   computed: {
@@ -183,18 +194,23 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
-    title() {
-      return this.name || this.$game.generateName();
-    },
     url() {
       return this.$store.getters["ui/url"](this.$game, { state: true });
     },
   },
   methods: {
     getGame() {
+      if (!this.ptn) {
+        return;
+      }
       let game;
       try {
-        game = new Game({ ptn: this.ptn, name: this.name, board: this.board });
+        game = new Game({
+          ptn: this.ptn,
+          name: this.name,
+          board: this.board,
+          state: this.state,
+        });
       } catch (error) {
         const name = game ? game.name : "";
         if (game && name) {
@@ -204,6 +220,10 @@ export default {
         this.errors.push(this.$t(`error["${error.message}"]`));
       }
       this.$store.dispatch("game/SET_GAME", game);
+      this.$router.replace("/");
+    },
+    info() {
+      this.$router.push({ name: "info-view" });
     },
     openLink() {
       window.open(
@@ -228,6 +248,13 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editPTN":
           this.$refs.tools.editDialog = true;
           break;
@@ -259,10 +286,80 @@ export default {
   created() {
     this.$store.commit("ui/SET_EMBED_GAME");
     forEach(this.state, (value, key) => {
-      this.$store.commit("ui/SET_UI", [key, value]);
+      if (!isEqual(value, this.$store.state[key])) {
+        this.$store.commit("ui/SET_UI", [key, value]);
+      }
     });
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
+    this.title = this.name || this.$game.generateName();
+
+    // Embed API
+    const handleMessage = ({ data }) => {
+      switch (data.action) {
+        case "SET_NAME":
+          this.title = data.value;
+          break;
+        case "SET_UI":
+          Object.keys(data.value).forEach((key) => {
+            this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
+          });
+          break;
+        case "SHOW_NAMES":
+          this.showNames = data.value;
+          break;
+        case "SET_GAME":
+        case "SELECT_SQUARE":
+        case "SELECT_PIECE":
+        case "DELETE_PLY":
+        case "DELETE_BRANCH":
+        case "SET_TARGET":
+        case "GO_TO_PLY":
+        case "RENAME_BRANCH":
+        case "TOGGLE_EVALUATION":
+        case "TOGGLE_UI":
+        case "EDIT_NOTE":
+        case "ADD_NOTE":
+        case "REMOVE_NOTE":
+          this.$store.dispatch("game/" + data.action, data.value);
+          break;
+        case "FIRST":
+        case "LAST":
+        case "PREV":
+        case "NEXT":
+        case "UNDO":
+        case "REDO":
+        case "TRIM_BRANCHES":
+        case "TRIM_TO_BOARD":
+        case "TRIM_TO_PLY":
+        case "CANCEL_MOVE":
+          this.$store.dispatch("game/" + data.action);
+          break;
+        case "NOTIFY":
+        case "NOTIFY_ERROR":
+        case "NOTIFY_SUCCESS":
+        case "NOTIFY_WARNING":
+        case "NOTIFY_HINT":
+          this.$store.dispatch("ui/" + data.action, data.value);
+          break;
+        case "RESET_TRANSFORM":
+        case "ROTATE_180":
+        case "ROTATE_LEFT":
+        case "ROTATE_RIGHT":
+        case "FLIP_HORIZONTAL":
+        case "FLIP_VERTICAL":
+          this.$store.dispatch("ui/" + data.action);
+          break;
+        default:
+          if (data.action) {
+            throw "Invalid message: " + data.action;
+          }
+      }
+    };
+    if (process.env.DEV) {
+      window.removeEventListener("message", handleMessage);
+    }
+    window.addEventListener("message", handleMessage);
   },
   watch: {
     ptn() {
@@ -270,6 +367,9 @@ export default {
     },
     state: {
       handler(state, oldState) {
+        if (!this.$game) {
+          return;
+        }
         let fullState = {};
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
           this.$store.commit("ui/SET_UI", [key, value]);

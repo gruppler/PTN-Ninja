@@ -1,5 +1,6 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     :min-height="588"
@@ -230,8 +231,13 @@
       <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t(canShare ? 'Share' : 'Copy')" @click="share" flat />
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
+        <q-btn
+          :label="$t(canShare ? 'Share' : 'Copy')"
+          color="primary"
+          @click="share"
+          v-close-popup
+        />
       </q-card-actions>
     </template>
   </large-dialog>
@@ -239,7 +245,7 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
-import { cloneDeep } from "lodash";
+import { cloneDeep, once } from "lodash";
 
 export default {
   name: "EmbedConfig",
@@ -280,6 +286,11 @@ export default {
     },
   },
   methods: {
+    postMessage(action, value) {
+      if (this.$refs.preview) {
+        this.$refs.preview.contentWindow.postMessage({ action, value });
+      }
+    },
     reset() {
       this.$store.dispatch("ui/PROMPT", {
         title: this.$t("Confirm"),
@@ -299,14 +310,34 @@ export default {
       });
     },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
   },
   watch: {
-    url(url) {
-      if (this.$refs.preview) {
-        this.$refs.preview.contentWindow.location.replace(url);
+    name(value) {
+      this.postMessage("SET_NAME", value);
+    },
+    "config.ui.themeID"(themeID) {
+      this.config.ui.theme = this.$store.getters["ui/theme"](themeID);
+    },
+    "config.includeNames"(value) {
+      this.postMessage("SHOW_NAMES", value);
+    },
+    "config.state"(value) {
+      if (value) {
+        this.postMessage("GO_TO_PLY", {
+          plyID: this.$game.board.plyID,
+          isDone: this.$game.board.plyIsDone,
+        });
+      } else {
+        this.postMessage("FIRST");
       }
+    },
+    "config.ui": {
+      handler(value) {
+        this.postMessage("SET_UI", value);
+      },
+      deep: true,
     },
     config: {
       handler(value) {
@@ -317,7 +348,22 @@ export default {
   },
   mounted() {
     this.name = this.gameName;
-    this.initialURL = this.url;
+    this.initialURL = this.$store.getters["ui/url"](this.$game, {
+      origin: true,
+      name: this.name,
+      names: true,
+      state: this.config.state,
+      ui: this.config.ui,
+    });
+    if (!this.config.includeNames) {
+      const hideNames = () => {
+        this.postMessage("SHOW_NAMES", false);
+        this.$refs.preview.contentWindow.removeEventListener("load", hideNames);
+      };
+      this.$nextTick(() => {
+        this.$refs.preview.contentWindow.addEventListener("load", hideNames);
+      });
+    }
   },
 };
 </script>

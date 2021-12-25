@@ -14,7 +14,9 @@
       @click="$emit('input', item.action)"
       color="primary"
       :text-color="fg"
-    />
+    >
+      <hint>{{ item.label }}</hint>
+    </q-fab-action>
   </q-fab>
 </template>
 
@@ -26,22 +28,27 @@ export default {
       items: [
         {
           icon: "add",
+          label: this.$t("New Game"),
           action: "add",
         },
         {
           icon: "share",
+          label: this.$t("Share"),
           action: "share",
         },
         {
           icon: "settings",
+          label: this.$t("Preferences"),
           action: "settings",
         },
         {
           icon: "account",
+          label: this.$t("Account"),
           action: "account",
         },
         {
           icon: "help",
+          label: this.$t("Help"),
           action: "help",
         },
       ],

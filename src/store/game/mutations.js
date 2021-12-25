@@ -3,11 +3,8 @@ import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
 import Game from "../../Game";
 
-// export const UPDATE = (state) => {
-//   Vue.prototype.$game.board.updateOutput();
-// };
-
 export const SET_GAME = (state, game) => {
+  const editingTPS = game.editingTPS;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
@@ -32,6 +29,7 @@ export const SET_GAME = (state, game) => {
   state.position = game.board.output.position;
   state.ptn = game.board.output.ptn;
   state.selected = game.board.output.selected;
+  state.editingTPS = editingTPS;
 };
 
 export const ADD_GAME = (state, game) => {
@@ -42,6 +40,7 @@ export const ADD_GAME = (state, game) => {
     config: game.config,
     history: game.history,
     historyIndex: game.historyIndex,
+    editingTPS: game.editingTPS,
   });
 };
 
@@ -56,6 +55,7 @@ export const ADD_GAMES = (state, { games, index }) => {
       config: game.config,
       history: game.history,
       historyIndex: game.historyIndex,
+      editingTPS: game.editingTPS,
     }))
   );
 };
@@ -151,13 +151,15 @@ export const SELECT_GAME = (state, index) => {
   state.list.unshift(state.list.splice(index, 1)[0]);
 };
 
-export const SELECT_SQUARE = (
-  state,
-  { square, alt, isEditingTPS, selectedPiece }
-) => {
+export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
-    game.board.selectSquare(square, alt, isEditingTPS, selectedPiece);
+    game.board.selectSquare(
+      square,
+      alt,
+      state.editingTPS !== undefined,
+      selectedPiece
+    );
   }
 };
 
@@ -244,21 +246,27 @@ export const SET_TARGET = function (state, ply) {
   return Vue.prototype.$game.board.setTarget(ply);
 };
 
-export const GO_TO_PLY = function (state, { ply, isDone }) {
-  Vue.prototype.$game.board.goToPly(ply, isDone);
+export const GO_TO_PLY = function (state, { plyID, isDone }) {
+  Vue.prototype.$game.board.goToPly(plyID, isDone);
 };
 
-export const DO_TPS = function (state, tps) {
-  Vue.prototype.$game.board.doTPS(tps);
+export const EDIT_TPS = function (state, tps) {
+  state.list[0].editingTPS = tps;
+  state.editingTPS = tps;
+  Vue.prototype.$game.setEditingTPS(tps);
 };
 
 export const SAVE_TPS = function (state, tps) {
-  Vue.prototype.$game.moves[0].linenum.number = Number(tps.split(/\s/)[2]);
+  state.list[0].editingTPS = undefined;
+  state.editingTPS = undefined;
   Vue.prototype.$game.setTags({ tps });
+  Vue.prototype.$game.setEditingTPS();
 };
 
 export const RESET_TPS = function (state) {
-  Vue.prototype.$game.board.doTPS();
+  state.list[0].editingTPS = undefined;
+  state.editingTPS = undefined;
+  Vue.prototype.$game.setEditingTPS();
 };
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {

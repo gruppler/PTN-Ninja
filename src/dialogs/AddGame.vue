@@ -1,5 +1,10 @@
 <template>
-  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
+  <small-dialog
+    ref="dialog"
+    :value="true"
+    content-class="non-selectable"
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <q-tabs
         v-model="tab"
@@ -35,7 +40,7 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="browse_files" />
+                  <q-icon name="local" />
                 </q-item-section>
                 <q-item-section>{{ $t("Local") }}</q-item-section>
               </q-item>
@@ -103,7 +108,7 @@ export default {
       tags: {
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
-        size: this.$store.state.ui.size,
+        size: String(this.$store.state.ui.size),
         site: this.$t("site_name"),
       },
       selectedGames: [],
@@ -157,7 +162,7 @@ export default {
   },
   methods: {
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
     createGame({ name, tags }) {
       this.player1 = tags.player1;

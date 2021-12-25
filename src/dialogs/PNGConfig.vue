@@ -1,5 +1,6 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     :min-height="588"
@@ -174,13 +175,19 @@
       <q-card-actions align="right">
         <q-btn :label="$t('Reset')" @click="reset" flat />
         <div class="col-grow" />
-        <q-btn :label="$t('Download')" @click="download" flat />
+        <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
+        <q-btn
+          :label="$t('Download')"
+          @click="download"
+          color="primary"
+          v-close-popup
+        />
         <q-btn
           :label="$t(canShare ? 'Share URL' : 'Copy URL')"
           @click="share"
-          flat
+          color="primary"
+          v-close-popup
         />
-        <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
     </template>
   </large-dialog>
@@ -290,7 +297,7 @@ export default {
       });
     },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
   },
   watch: {

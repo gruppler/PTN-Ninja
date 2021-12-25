@@ -146,25 +146,6 @@ export default {
     unseenCount() {
       return this.games.filter((game) => game.config.unseen).length;
     },
-    isEditingTPS: {
-      get() {
-        return this.$store.state.ui.isEditingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["isEditingTPS", value]);
-        if (!value) {
-          this.editingTPS = "";
-        }
-      },
-    },
-    editingTPS: {
-      get() {
-        return this.$store.state.ui.editingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["editingTPS", value]);
-      },
-    },
   },
   methods: {
     account() {
@@ -179,23 +160,8 @@ export default {
       }
     },
     select(index) {
-      const _select = () => {
-        this.$store.dispatch("game/SELECT_GAME", { index });
-        this.$emit("input", this.$store.state.game.list[0]);
-        this.editingTPS = "";
-        this.isEditingTPS = false;
-      };
-      if (index >= 0 && this.games.length > index) {
-        if (this.isEditingTPS && this.editingTPS !== this.$game.board.tps) {
-          this.$store.dispatch("ui/PROMPT", {
-            title: this.$t("Confirm"),
-            message: this.$t("confirm.abandonChanges"),
-            success: _select,
-          });
-        } else {
-          _select();
-        }
-      }
+      this.$store.dispatch("game/SELECT_GAME", { index });
+      this.$emit("input", this.$store.state.game.list[0]);
     },
   },
 };

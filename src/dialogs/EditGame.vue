@@ -1,12 +1,25 @@
 <template>
   <large-dialog
+    ref="dialog"
     :value="true"
     no-backdrop-dismiss
     :min-height="showAll ? 750 : 495"
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="edit">{{ $t("Edit Game") }}</dialog-header>
+      <dialog-header icon="edit" :title="$t('Edit Game')">
+        <template v-slot:buttons>
+          <q-btn
+            icon="info"
+            @click="$router.replace({ name: 'info-view' })"
+            class="q-field__focusable-action q-mr-sm"
+            dense
+            flat
+          >
+            <hint>{{ $t("View Game Info") }}</hint>
+          </q-btn>
+        </template>
+      </dialog-header>
     </template>
 
     <q-card-section>
@@ -15,6 +28,7 @@
         :game="$game"
         :show-all="showAll"
         @submit="save"
+        @hasChanges="hasChanges = $event"
       />
     </q-card-section>
 
@@ -29,12 +43,12 @@
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          :label="$t('OK')"
+          :label="$t('Save')"
           @click="$refs.gameInfo.submit()"
           :loading="loading"
           :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
+          :flat="!hasChanges"
           color="primary"
-          flat
         />
       </q-card-actions>
     </template>
@@ -53,6 +67,7 @@ export default {
       loading: false,
       error: "",
       showAll: false,
+      hasChanges: false,
     };
   },
   methods: {
@@ -66,20 +81,13 @@ export default {
       });
     },
     close() {
-      this.$router.back();
+      this.$refs.dialog.hide();
     },
-    async save({ name, tags }) {
+    async save({ name, tags, changes }) {
       this.$store.dispatch("game/RENAME_CURRENT_GAME", name);
 
-      let changedTags = {};
-      Object.keys(tags).forEach((key) => {
-        const value = tags[key];
-        if (value !== this.$game.tag(key)) {
-          changedTags[key] = value;
-        }
-      });
-      if (Object.keys(changedTags).length) {
-        this.$store.dispatch("game/SET_TAGS", changedTags);
+      if (this.hasChanges) {
+        this.$store.dispatch("game/SET_TAGS", changes);
       }
 
       if (this.$game.config.id) {

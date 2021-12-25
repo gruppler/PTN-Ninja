@@ -624,10 +624,13 @@ function limitText(ctx, text, width) {
   if (width <= 0) {
     return "";
   }
-  while (text.length && ctx.measureText(text + suffix).width >= width) {
-    text = text.substring(0, text.length - 1);
+  if (width >= ctx.measureText(text).width) {
+    return text;
   }
-  return text + (text.length < originalLength ? suffix : "");
+  do {
+    text = text.substring(0, text.length - 1);
+  } while (text.length && ctx.measureText(text + suffix).width >= width);
+  return text + suffix;
 }
 
 function roundRect(ctx, x, y, width, height, radius) {

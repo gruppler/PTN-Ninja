@@ -51,7 +51,7 @@ export default {
         if (this.$game && this.plies) {
           const ply = this.plies[Math.floor(position)];
           this.$store.dispatch("game/GO_TO_PLY", {
-            ply: ply.id,
+            plyID: ply.id,
             isDone: position > ply.index,
           });
         }

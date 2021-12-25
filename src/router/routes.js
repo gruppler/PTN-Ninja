@@ -106,15 +106,15 @@ const routes = [
         path: "/embed",
         component: () => import("../dialogs/EmbedConfig"),
       },
-      // {
-      //   name: "info-view",
-      //   path: "/info",
-      //   component: () => import("../dialogs/")
-      // },
       {
         name: "help",
         path: "/help/:section?",
         component: () => import("../dialogs/Help"),
+      },
+      {
+        name: "info-view",
+        path: "/info",
+        component: () => import("../dialogs/GameInfo"),
       },
       {
         name: "info-edit",

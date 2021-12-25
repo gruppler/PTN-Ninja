@@ -59,6 +59,7 @@ export default class Piece {
       ]),
       ...this.state,
       type: this.type,
+      typeCode: this.typeCode,
       square: this.square ? this.square.static.coord : null,
     });
   }

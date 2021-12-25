@@ -52,7 +52,7 @@ export default {
     selectable() {
       return (
         !this.square &&
-        (this.$store.state.ui.isEditingTPS ||
+        (this.$store.state.game.editingTPS !== undefined ||
           this.piece.color ===
             this.game.position[
               this.piece.index || this.piece.isCapstone ? "turn" : "color"
@@ -210,7 +210,7 @@ export default {
   },
   methods: {
     select(alt = false) {
-      if (this.$store.state.ui.isEditingTPS) {
+      if (this.$store.state.game.editingTPS !== undefined) {
         let type = this.piece.typeCode;
         if (alt && !this.piece.isCapstone) {
           type = "S";

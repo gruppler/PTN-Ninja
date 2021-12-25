@@ -22,7 +22,7 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   gameNames.unshift(game.name);
   LocalStorage.set("games", gameNames);
   LocalStorage.set("ptn-" + game.name, game.ptn);
-  if (game.board) {
+  if (game.board || game.state) {
     LocalStorage.set("state-" + game.name, game.minState || game.state);
   }
   if (game.config) {
@@ -33,6 +33,11 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   if (game.history) {
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+  }
+  if (game.editingTPS !== undefined) {
+    LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
+  } else {
+    LocalStorage.remove("editingTPS-" + game.name);
   }
 
   Loading.show();
@@ -57,7 +62,7 @@ export const ADD_GAMES = function (
     gameNames.splice(index + i, 0, game.name);
     LocalStorage.set("games", gameNames);
     LocalStorage.set("ptn-" + game.name, game.ptn);
-    if (game.board) {
+    if (game.board || game.state) {
       LocalStorage.set("state-" + game.name, game.minState || game.state);
     }
     if (game.config) {
@@ -68,6 +73,11 @@ export const ADD_GAMES = function (
     if (game.history) {
       LocalStorage.set("history-" + game.name, game.history);
       LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    }
+    if (game.editingTPS !== undefined) {
+      LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
+    } else {
+      LocalStorage.remove("editingTPS-" + game.name);
     }
   });
 
@@ -91,8 +101,11 @@ export const REPLACE_GAME = function (
     dispatch("SELECT_GAME", { index, immediate: true });
   }
 
-  // Clone the current game
-  const game = new Game(state.list[0]);
+  // Clone the current game, overriding state with gameState
+  const game = new Game({
+    ...state.list[0],
+    state: gameState || state.list[0].state,
+  });
 
   if (game.ptn !== ptn) {
     if (!gameState) {
@@ -103,10 +116,7 @@ export const REPLACE_GAME = function (
     dispatch("SAVE_UNDO_INDEX");
     dispatch("SAVE_UNDO_HISTORY");
     dispatch("SAVE_PTN", ptn);
-    dispatch("SAVE_STATE", {
-      game,
-      gameState,
-    });
+    dispatch("SAVE_STATE", { game, gameState });
 
     Vue.nextTick(() => {
       this.dispatch("ui/NOTIFY", {
@@ -126,6 +136,9 @@ export const REPLACE_GAME = function (
         ],
       });
     });
+  } else {
+    commit("SET_GAME", game);
+    dispatch("SAVE_STATE", { game, gameState });
   }
   return game;
 };
@@ -143,6 +156,7 @@ export const REMOVE_GAME = function (
   LocalStorage.remove("config-" + name);
   LocalStorage.remove("history-" + name);
   LocalStorage.remove("historyIndex-" + name);
+  LocalStorage.remove("editingTPS-" + name);
 
   const finish = () => {
     commit("REMOVE_GAME", index);
@@ -210,6 +224,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
     LocalStorage.remove("config-" + name);
     LocalStorage.remove("history-" + name);
     LocalStorage.remove("historyIndex-" + name);
+    LocalStorage.remove("editingTPS-" + name);
   });
 
   const finish = () => {
@@ -391,7 +406,7 @@ export const SET_NAME = function (
   LocalStorage.remove("ptn-" + oldName);
   LocalStorage.set("ptn-" + name, game.ptn);
   LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, game.board);
+  LocalStorage.set("state-" + name, game.board || game.state);
   if (game.config) {
     LocalStorage.remove("config-" + oldName);
     LocalStorage.set("config-" + name, game.config);
@@ -535,30 +550,33 @@ export const SET_TARGET = function ({ commit, dispatch }, ply) {
   return result;
 };
 
-export const GO_TO_PLY = function ({ commit, dispatch }, { ply, isDone }) {
-  const result = commit("GO_TO_PLY", { ply, isDone });
+export const GO_TO_PLY = function ({ commit, dispatch }, { plyID, isDone }) {
+  const result = commit("GO_TO_PLY", { plyID, isDone });
   dispatch("SAVE_CURRENT_GAME_STATE");
   return result;
 };
 
-export const DO_TPS = function ({ commit }, tps) {
-  return commit("DO_TPS", tps);
+export const EDIT_TPS = function ({ commit, state }, tps) {
+  if (tps !== undefined) {
+    LocalStorage.set("editingTPS-" + state.list[0].name, tps);
+  } else {
+    LocalStorage.remove("editingTPS-" + game.name);
+  }
+  commit("EDIT_TPS", tps);
 };
 
-export const SAVE_TPS = function ({ commit, dispatch }, tps) {
+export const SAVE_TPS = function ({ commit, dispatch, state }, tps) {
+  LocalStorage.remove("editingTPS-" + state.list[0].name);
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("SAVE_TPS", tps);
-    this.dispatch("ui/SET_UI", ["isEditingTPS", false]);
-    this.dispatch("ui/SET_UI", ["editingTPS", ""]);
     dispatch("SAVE_CURRENT_GAME");
   });
 };
 
-export const RESET_TPS = function ({ commit }) {
+export const RESET_TPS = function ({ commit, state }) {
+  LocalStorage.remove("editingTPS-" + state.list[0].name);
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("RESET_TPS");
-    this.dispatch("ui/SET_UI", ["isEditingTPS", false]);
-    this.dispatch("ui/SET_UI", ["editingTPS", ""]);
   });
 };
 

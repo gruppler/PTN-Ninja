@@ -7,10 +7,10 @@
       <q-virtual-scroll
         v-if="gameExists"
         ref="scroll"
-        class="content absolute-fit"
+        class="bg-transparent"
         :items="moves"
-        scroll-target="#ptn-scroll-area > .content"
-        :virtual-scroll-item-size="36"
+        scroll-target="#ptn-scroll-area > .scroll"
+        :virtual-scroll-item-size="35"
         :virtual-scroll-slice-ratio-before="0.5"
         :virtual-scroll-slice-ratio-after="0.5"
       >
@@ -64,7 +64,7 @@ export default {
       if (index >= 0) {
         this.$refs.scroll.scrollTo(index, "center-force");
       }
-    }, 20),
+    }, 100),
   },
   watch: {
     "position.plyID"() {
