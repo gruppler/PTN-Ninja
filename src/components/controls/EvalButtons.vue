@@ -46,7 +46,6 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "EvalButtons",
-  props: ["game"],
   data() {
     return {
       hotkeys: HOTKEYS.EVAL,
@@ -54,7 +53,9 @@ export default {
   },
   computed: {
     ply() {
-      return this.game ? this.game.state.ply : null;
+      return this.$store.state.game
+        ? this.$store.state.game.position.ply
+        : null;
     },
     eval() {
       return this.ply ? this.ply.evaluation : null;
@@ -72,17 +73,15 @@ export default {
       return this.eval && this.eval["!"];
     },
     isDoubleQ() {
-      return this.eval && this.eval.isDouble("?");
+      return this.eval && this.eval.isDouble["?"];
     },
     isDoubleBang() {
-      return this.eval && this.eval.isDouble("!");
+      return this.eval && this.eval.isDouble["!"];
     },
   },
   methods: {
     toggle(type, double = false) {
-      if (this.game) {
-        this.game.toggleEvaluation(type, double);
-      }
+      this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });
     },
   },
 };

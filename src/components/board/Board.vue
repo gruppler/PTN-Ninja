@@ -5,31 +5,34 @@
     :style="{ perspective }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
+    @wheel="scroll"
     ref="wrapper"
   >
     <div
       class="board-container"
       :class="{
         [style]: true,
-        ['size-' + game.size]: true,
+        ['size-' + config.size]: true,
         ['turn-' + turn]: true,
-        'no-animations': !$store.state.animateBoard,
-        'axis-labels': $store.state.axisLabels,
-        'show-turn-indicator': $store.state.turnIndicator,
-        'highlight-squares': $store.state.highlightSquares,
-        'piece-shadows': $store.state.pieceShadows,
-        'show-unplayed-pieces': $store.state.unplayedPieces,
-        'is-game-end': game.state.isGameEnd,
+        'no-animations': disableAnimations,
+        'axis-labels': $store.state.ui.axisLabels,
+        'show-turn-indicator': $store.state.ui.turnIndicator,
+        'highlight-squares': $store.state.ui.highlightSquares,
+        'piece-shadows': $store.state.ui.pieceShadows,
+        'show-unplayed-pieces': $store.state.ui.unplayedPieces,
+        'is-game-end': position.isGameEnd,
+        scrubbing,
+        rotating,
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
-      <TurnIndicator :game="game" />
+      <TurnIndicator :hide-names="hideNames" />
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
-          v-if="$store.state.axisLabels"
+          v-if="$store.state.ui.axisLabels"
           class="y-axis column reverse no-pointer-events"
         >
           <div v-for="y in yAxis" :key="y">
@@ -37,39 +40,42 @@
           </div>
         </div>
 
-        <div class="board relative-position all-pointer-events">
+        <div
+          class="board relative-position all-pointer-events"
+          @touchstart.stop
+          @mousedown.stop
+        >
           <div
             class="squares absolute-fit row reverse-wrap"
             :style="{ transform: CSS2DTransform }"
           >
             <Square
-              v-for="square in squares"
-              :key="square.static.coord"
-              :x="square.static.x"
-              :y="square.static.y"
-              :game="game"
+              v-for="(square, coord) in board.squares"
+              :key="coord"
+              :coord="coord"
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
             <Piece
-              v-for="piece in game.state.pieces.all.byID"
-              :key="piece.id"
-              :ref="piece.id"
-              :id="piece.id"
-              :game="game"
+              v-for="(piece, id) in board.pieces"
+              :key="id"
+              :ref="id"
+              :id="id"
             />
           </div>
         </div>
 
         <div
-          class="unplayed-bg"
+          class="unplayed-bg all-pointer-events"
           @click.self="dropPiece"
           @click.right.prevent
+          @touchstart.stop
+          @mousedown.stop
         ></div>
       </div>
 
       <div
-        v-if="$store.state.axisLabels"
+        v-if="$store.state.ui.axisLabels"
         class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
@@ -87,11 +93,12 @@ import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
 
-import { throttle } from "lodash";
+import { forEach, throttle } from "lodash";
 
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+const SCROLL_THRESHOLD = 250;
 
 export default {
   name: "Board",
@@ -100,7 +107,9 @@ export default {
     Piece,
     TurnIndicator,
   },
-  props: ["game"],
+  props: {
+    hideNames: Boolean,
+  },
   data() {
     return {
       size: null,
@@ -108,20 +117,40 @@ export default {
       scale: 1,
       x: 0,
       y: 0,
+      deltaY: 0,
+      rotating: false,
+      isSlowScrub: false,
       prevBoardRotation: null,
-      boardRotation: this.$store.state.boardRotation,
+      boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
     };
   },
   computed: {
+    board() {
+      return this.$store.state.game.board;
+    },
+    config() {
+      return this.$store.state.game.config;
+    },
     transform() {
-      return this.$store.state.boardTransform;
+      return this.$store.state.ui.boardTransform;
+    },
+    scrubbing() {
+      return this.$store.state.ui.scrubbing;
+    },
+    disableAnimations() {
+      return (
+        !this.$store.state.ui.animateBoard ||
+        (!this.$store.state.ui.animateScrub &&
+          this.scrubbing &&
+          !this.isSlowScrub)
+      );
     },
     cols() {
-      return "abcdefgh".substr(0, this.game.size).split("");
+      return "abcdefgh".substr(0, this.config.size).split("");
     },
     rows() {
-      return "12345678".substr(0, this.game.size).split("");
+      return "12345678".substr(0, this.config.size).split("");
     },
     yAxis() {
       let axis =
@@ -143,70 +172,34 @@ export default {
       }
       return axis;
     },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
+    selected() {
+      return this.$store.state.game.selected;
+    },
     style() {
-      return this.$store.state.theme.boardStyle;
+      return this.$store.state.ui.theme.boardStyle;
     },
     turn() {
-      return this.$store.state.isEditingTPS
-        ? this.$store.state.selectedPiece.color
-        : this.game.state.turn;
+      return this.$store.state.game.editingTPS !== undefined
+        ? this.$store.state.ui.selectedPiece.color
+        : this.position.turn;
     },
     boardPly() {
-      return this.game.state.boardPly;
-    },
-    player1() {
-      return this.game.tag("player1");
-    },
-    player2() {
-      return this.game.tag("player2");
-    },
-    flats() {
-      return this.game.state.flats;
-    },
-    minNameWidth() {
-      return 100 / this.game.size;
-    },
-    komi() {
-      return this.game.tags.komi ? this.game.tags.komi.value : 0;
-    },
-    flatCounts() {
-      if (this.$store.state.flatCounts) {
-        return [
-          this.komi < 0
-            ? this.flats[0] + this.komi + " " + this.formatKomi(-this.komi)
-            : this.flats[0],
-          this.komi > 0
-            ? this.flats[1] - this.komi + " " + this.formatKomi(this.komi)
-            : this.flats[1],
-        ];
-      } else {
-        return [
-          this.komi < 0 ? this.formatKomi(-this.komi) : "",
-          this.komi > 0 ? this.formatKomi(this.komi) : "",
-        ];
-      }
-    },
-    flatWidths() {
-      const total = (this.flats[0] + this.flats[1]) / 100;
-      const player1width = total
-        ? Math.max(
-            this.minNameWidth,
-            Math.min(
-              100 - this.minNameWidth,
-              (this.flats[0] / total).toPrecision(4)
-            )
-          )
-        : 50;
-      return [player1width + "%", 100 - player1width + "%"];
+      return this.board.ply;
     },
     board3D() {
-      return this.$store.state.board3D;
+      return this.$store.state.ui.board3D;
     },
     orthogonal() {
-      return this.$store.state.orthogonal;
+      return this.$store.state.ui.orthogonal;
     },
     perspective() {
-      const factor = 1 - this.$store.state.perspective / 10;
+      const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
     padding() {
@@ -279,7 +272,7 @@ export default {
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 0.75 + "deg";
 
       const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
@@ -287,21 +280,13 @@ export default {
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
-    squares() {
-      let squares = [];
-      this.game.state.squares.forEach((row) => {
-        row.forEach((square) => squares.push(square));
-      });
-      return squares;
-    },
   },
   methods: {
     dropPiece() {
-      if (
-        this.game.state.selected.pieces.length === 1 &&
-        !this.game.state.selected.moveset.length
-      ) {
-        this.game.selectUnplayedPiece(this.game.state.selected.pieces[0].type);
+      if (this.selected.pieces.length === 1) {
+        this.$store.dispatch("game/SELECT_PIECE", {
+          type: this.selected.pieces[0].type,
+        });
       }
     },
     isInputFocused() {
@@ -313,11 +298,15 @@ export default {
     },
     resizeSpace(size) {
       this.space = size;
+      this.$store.commit("ui/SET_UI", ["boardSpace", size]);
     },
     resetBoardRotation() {
       if (this.board3D) {
-        this.boardRotation = this.$store.state.defaults.boardRotation;
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.boardRotation = this.$store.state.ui.defaults.boardRotation;
+        this.$store.dispatch("ui/SET_UI", [
+          "boardRotation",
+          this.boardRotation,
+        ]);
         this.zoomFitAfterTransition();
       }
     },
@@ -327,26 +316,30 @@ export default {
       }
 
       if (event.isFirst) {
+        this.rotating = true;
         this.prevBoardRotation = { ...this.boardRotation };
       }
+      if (event.isFinal) {
+        this.rotating = false;
+      }
 
-      let x = Math.max(
-        -1,
-        Math.min(
-          1,
-          this.prevBoardRotation[0] +
-            (ROTATE_SENSITIVITY * event.offset.x) / this.size.width
-        )
-      );
+      let x =
+        this.prevBoardRotation[0] +
+        (ROTATE_SENSITIVITY * event.offset.x) / this.size.width;
+      if (x > 1) {
+        x = 1 + (x - 1) / 3;
+      } else if (x < -1) {
+        x = -1 + (x + 1) / 3;
+      }
 
-      let y = Math.max(
-        0,
-        Math.min(
-          1,
-          this.prevBoardRotation[1] -
-            (ROTATE_SENSITIVITY * event.offset.y) / this.size.width
-        )
-      );
+      let y =
+        this.prevBoardRotation[1] -
+        (ROTATE_SENSITIVITY * event.offset.y) / this.size.width;
+      if (y > 1) {
+        y = 1 + (y - 1) / 3;
+      } else if (y < 0) {
+        y /= 3;
+      }
 
       if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
@@ -354,7 +347,50 @@ export default {
 
       this.boardRotation = [x, y];
       if (event.isFinal) {
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.$nextTick(() => {
+          this.boardRotation = [
+            Math.max(-1, Math.min(1, x)),
+            Math.max(0, Math.min(1, y)),
+          ];
+          this.$store.dispatch("ui/SET_UI", [
+            "boardRotation",
+            this.boardRotation,
+          ]);
+          this.zoomFitAfterTransition();
+        });
+      }
+    },
+    scroll(event) {
+      if (this.$store.state.ui.embed) {
+        return;
+      }
+
+      if (this.$store.state.ui.scrollScrubbing) {
+        // Start scrubbing
+        if (!this.$store.state.ui.scrubbing) {
+          this.$store.commit("ui/SET_SCRUBBING", "start");
+        }
+
+        // Scroll by half-ply and re-enable animations
+        this.isSlowScrub = event.shiftKey;
+
+        // Handle smooth scrolling
+        this.deltaY += event.deltaY;
+        if (Math.abs(this.deltaY) >= SCROLL_THRESHOLD) {
+          const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
+          let times = Math.floor(Math.abs(this.deltaY) / SCROLL_THRESHOLD);
+          this.deltaY = (this.deltaY + event.deltaY) % SCROLL_THRESHOLD;
+          while (times-- > 0) {
+            this.$store.dispatch(action, this.isSlowScrub);
+          }
+        }
+
+        clearTimeout(this.scrollTimer);
+        this.scrollTimer = setTimeout(() => {
+          // End scrubbing
+          this.$store.commit("ui/SET_SCRUBBING", "end");
+          this.isSlowScrub = false;
+        }, 300);
       }
     },
     getBounds(nodes) {
@@ -387,16 +423,16 @@ export default {
     },
     zoomFit() {
       let nodes = [this.$refs.container];
-      if (this.$store.state.unplayedPieces) {
-        Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
+      if (this.$store.state.ui.unplayedPieces) {
+        forEach(this.board.pieces, (piece, id) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$refs.stone);
+            nodes.push(this.$refs[id][0].$refs.stone);
           }
         });
       }
-      this.squares.forEach((square) => {
+      forEach(this.board.squares, (square) => {
         if (square.piece) {
-          nodes.push(this.$refs[square.piece.id][0].$refs.stone);
+          nodes.push(this.$refs[square.piece][0].$refs.stone);
         }
       });
       const boardBB = this.getBounds(nodes);
@@ -443,7 +479,7 @@ export default {
     },
     zoomFitAfterTransition() {
       if (this.board3D) {
-        if (this.$store.state.animateBoard) {
+        if (this.$store.state.ui.animateBoard) {
           if (this.zoomFitTimer) {
             clearTimeout(this.zoomFitTimer);
           }
@@ -467,8 +503,8 @@ export default {
   },
   watch: {
     isPortrait(isPortrait) {
-      if (isPortrait !== this.$store.state.isPortrait) {
-        this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
+      if (isPortrait !== this.$store.state.ui.isPortrait) {
+        this.$store.commit("ui/SET_UI", ["isPortrait", isPortrait]);
       }
     },
     boardPly: "zoomFitAfterTransition",
@@ -511,8 +547,16 @@ $radius: 0.35em;
   z-index: 0;
   transition: transform $generic-hover-transition;
 
-  body.non-selectable & {
+  &.rotating {
     transition: none !important;
+  }
+  &.scrubbing {
+    &,
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi {
+      transition: none !important;
+    }
   }
   &.no-animations {
     &,

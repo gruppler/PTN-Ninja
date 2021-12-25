@@ -1,10 +1,6 @@
 Getting Started
 ===
 
-::: tip
-To **right-click** on a touchscreen device, try **long-pressing**.
-:::
-
 ### Games
 
 PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need.
@@ -20,20 +16,19 @@ You can load games from **.ptn** or **.txt** files, or from URLs originating fro
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, then select the Load Game tab.
 - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
-- **Swipe left** or **right-click** the Floating Action Button to switch to the previous game.
+- **Right-click** the Floating Action Button to switch to the previous game.
 :::
 
-When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number). If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names." Replacing a game will preserve the undo history of the existing game, so the replacement can be undone.
-
-### Playback
-
-PTN Ninja enables you to navigate the timeline of a game freely.
-
+::: tip
+To **right-click** on a touchscreen device, try **long-pressing**.
 :::
-- Use the Play/Pause button to automatically progress through the game.
-- Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
-- **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
-- **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
+
+::: info Note
+When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number).
+
+If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names."
+
+**Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
 :::
 
 ### Place a Stone
@@ -60,6 +55,43 @@ Moving a stone or stack of stones is fairly straightforward:
 - Then, **click** further squares to drop pieces.
   - Or, **right-click** a square to pick up dropped pieces, or drop the remaining stack if there are none.
 - To cancel the move, **click** the initial square.
+:::
+
+### Playback
+
+PTN Ninja enables you to navigate the timeline of a game freely.
+
+:::
+- Use the Play/Pause button to automatically progress through the game.
+- Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
+- **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
+- **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
+- Use the **scroll wheel** to scrub, if enabled in UI Preferences.
+  - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
+:::
+
+::: tip
+If you have a wheel mouse, you can enable **Scrub with scroll wheel** in the UI section of the Preferences dialog for easy navigation.
+:::
+
+### Board Transformation
+
+PTN Ninja allows you to rotate and flip the orientation of the board, which may help reduce visual bias during analysis, or in getting a better view around tall stacks. This does not affect the notation, so the axis labels change accordingly.
+
+:::
+- Use the Rotate and Flip buttons found next to the board, or hotkeys, to change the board orientation.
+- **Right-click** any of the Rotate/Flip buttons to reset the board orientation.
+:::
+
+3D Mode
+---
+
+Although 2D mode offers a better analytical view of the board, 3D mode provides some semblance of how the game might look on a physical board.
+
+:::
+- Toggle 3D/2D mode by **clicking** the "3D" button in the corner of the board area, or using the hotkey <kbd>D</kbd>.
+- Rotate the board by dragging in the space around the it.
+- Reset the board rotation by **right-clicking** in the space around the board.
 :::
 
 Branches
@@ -116,14 +148,4 @@ TPS Mode enables you to create any board state directly. To enter TPS Mode, **cl
 :::
 - Select a piece type and color from the piece selector or unplayed pieces, then **click** a square to place a piece.
 - **Right-click** a square to remove a piece. The color and type of that piece will be selected.
-:::
-
-3D Mode
----
-
-3D mode may not work in all browsers, so it's disabled by default. You can toggle it by **clicking** the "3D" button in the corner of the board area.
-
-:::
-- Rotate the board by dragging it.
-- Reset the board rotation by **right-clicking** in the space around the board.
 :::

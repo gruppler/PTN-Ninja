@@ -7,7 +7,13 @@
       @click.left="selectBranch(ply)"
     >
       <span v-html="branch" />
-      <q-menu v-if="!noEdit" context-menu auto-close>
+      <q-menu
+        v-if="!noEdit"
+        transition-show="none"
+        transition-hide="none"
+        context-menu
+        auto-close
+      >
         <q-list class="bg-ui">
           <q-item @click="renameBranch" clickable>
             <q-item-section side>
@@ -33,7 +39,6 @@
       >
         <BranchMenu
           @select="selectBranch"
-          :game="game"
           :branches="branches"
           linenum
           v-model="menu"
@@ -43,21 +48,19 @@
     <span class="number" v-if="!onlyBranch"
       >{{ this.linenum.number }}.&nbsp;</span
     >
-
-    <RenameBranch v-model="dialogRename" :game="game" :linenum="linenum" />
   </span>
 </template>
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
-import RenameBranch from "../dialogs/RenameBranch";
+
+import { isNumber } from "lodash";
 
 export default {
   name: "Linenum",
-  components: { BranchMenu, RenameBranch },
+  components: { BranchMenu },
   props: {
     linenum: Object,
-    game: Object,
     noEdit: Boolean,
     noBranch: Boolean,
     onlyBranch: Boolean,
@@ -78,28 +81,42 @@ export default {
       const branch = text.value;
       return branch.split("/").join('/<span class="space"> </span>');
     },
+    plies() {
+      return this.$store.state.game.ptn.allPlies;
+    },
     ply() {
-      return this.activePly || this.game.branches[this.linenum.branch];
+      return (
+        this.activePly ||
+        this.$store.state.game.ptn.branches[this.linenum.branch]
+      );
     },
     branches() {
-      return this.ply.branches;
+      return this.ply.branches.map((ply) =>
+        isNumber(ply) ? this.plies[ply] : ply
+      );
     },
     showBranch() {
       return !this.noBranch && this.linenum.branch;
     },
     isSelected() {
-      return !this.unselected && this.game.state.plies.includes(this.ply);
+      return (
+        !this.unselected &&
+        this.$store.state.game.ptn.branchPlies.includes(this.ply)
+      );
     },
   },
   methods: {
     selectBranch(ply) {
-      this.game.setTarget(ply);
+      this.$store.dispatch("game/SET_TARGET", ply);
     },
     renameBranch() {
-      this.dialogRename = true;
+      this.$router.push({
+        name: "rename-branch",
+        params: { branch: this.linenum.branch },
+      });
     },
     deleteBranch() {
-      this.game.deleteBranch(this.linenum.branch);
+      this.$store.dispatch("game/DELETE_BRANCH", this.linenum.branch);
     },
   },
 };

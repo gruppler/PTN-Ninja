@@ -3,6 +3,7 @@
     :content-class="classes"
     :value.sync="value"
     :maximized="maximized"
+    @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -29,10 +30,11 @@ export default {
   name: "large-dialog",
   props: {
     value: Boolean,
+    goBack: Boolean,
     fullscreen: Boolean,
-    "min-height": Number,
-    "no-maximize": Boolean,
-    "content-class": String,
+    minHeight: Number,
+    noMaximize: Boolean,
+    contentClass: String,
   },
   computed: {
     maximized() {
@@ -53,6 +55,13 @@ export default {
         classes.push("maximized");
       }
       return classes;
+    },
+  },
+  methods: {
+    hide() {
+      if (this.goBack) {
+        this.$router.back();
+      }
     },
   },
 };

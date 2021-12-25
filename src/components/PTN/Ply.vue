@@ -31,7 +31,7 @@
         }}</span>
       </span>
       <q-btn
-        v-if="!noBranches && ply.branches.length"
+        v-if="!noBranches && branches.length"
         @click.stop
         icon="arrow_drop_down"
         size="md"
@@ -40,15 +40,15 @@
       >
         <BranchMenu
           @select="selectBranch"
-          v-if="ply.branches.length"
-          :game="game"
-          :branches="ply.branches"
+          v-if="branches.length"
+          :branches="branches"
           v-model="menu"
         />
       </q-btn>
     </q-chip>
     <Result
-      :result="ply.result"
+      v-if="ply.result"
+      :result="ply.result.text"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
       @click.right.prevent.native="select(ply, false)"
@@ -65,7 +65,6 @@ export default {
   name: "Ply",
   components: { BranchMenu, Result },
   props: {
-    game: Object,
     plyID: Number,
     noBranches: Boolean,
     noClick: Boolean,
@@ -77,32 +76,39 @@ export default {
   },
   computed: {
     theme() {
-      return this.$store.state.theme;
+      return this.$store.state.ui.theme;
+    },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
     },
     ply() {
-      return this.game.plies[this.plyID];
+      return this.ptn.allPlies[this.plyID];
+    },
+    branches() {
+      return this.ply.branches.map((id) => this.ptn.allPlies[id]);
     },
     isSelected() {
-      return this.game ? this.game.state.plyID === this.ply.id : false;
+      return this.position.plyID === this.ply.id;
     },
     isDone() {
-      return this.game && this.ply
-        ? this.game.state.plyID === this.ply.id
-          ? this.game.state.plyIsDone
-          : this.game.state.plyIDs.includes(this.ply.id) &&
-            this.game.state.ply.index > this.ply.index
-        : true;
+      return this.position.plyID === this.ply.id
+        ? this.position.plyIsDone
+        : this.ptn.branchPlies.includes(this.ply) &&
+            this.position.plyIndex > this.ply.index;
     },
   },
   methods: {
-    select(ply, isDone = this.game.state.plyIsDone) {
+    select(ply, isDone = this.position.plyIsDone) {
       if (this.noClick) {
         return;
       }
-      this.game.goToPly(ply.id, isDone);
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
     },
     selectBranch(ply) {
-      this.game.setTarget(ply);
+      this.$store.dispatch("game/SET_TARGET", ply);
     },
   },
 };

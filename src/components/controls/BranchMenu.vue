@@ -4,6 +4,8 @@
     :value="value"
     @input="$emit('input', $event)"
     content-class="bg-panel"
+    transition-show="none"
+    transition-hide="none"
     auto-close
   >
     <q-list class="branch-menu bg-panel" dense>
@@ -25,11 +27,10 @@
           <Linenum
             v-if="linenum"
             :linenum="ply.linenum"
-            :game="game"
             no-edit
             :active-ply="ply"
           />
-          <Ply :plyID="ply.id" :game="game" no-branches no-click />
+          <Ply :plyID="ply.id" no-branches no-click />
         </q-item-label>
       </q-item>
     </q-list>
@@ -47,7 +48,6 @@ export default {
   },
   props: {
     value: Boolean,
-    game: Object,
     branches: Array,
     linenum: Boolean,
     "selected-played": Boolean,
@@ -62,8 +62,9 @@ export default {
       const index = findLastIndex(
         this.branches,
         (ply) =>
-          this.game.state.plies.includes(ply) &&
-          (!this.selectedPlayed || ply.id <= this.game.state.plyID)
+          this.$store.state.game.ptn.branchPlies.find((p) => p.id === ply.id) &&
+          (!this.selectedPlayed ||
+            ply.id <= this.$store.state.game.position.plyID)
       );
       return index >= 0 ? index : 0;
     },

@@ -3,42 +3,46 @@
     <q-btn-group class="full-width" spread stretch flat unelevated>
       <q-btn
         @click="showAllBranches = !showAllBranches"
-        :title="$t('Show All Branches')"
         :text-color="showAllBranches ? 'primary' : ''"
         class="no-border-radius"
       >
         <q-icon name="branch" class="rotate-180" />
+        <hint>{{ $t("Show All Branches") }}</hint>
       </q-btn>
 
       <q-btn
-        @click="editDialog = game.isLocal"
+        @click="$router.push({ name: 'edit' })"
         icon="edit"
-        :title="$t('Edit')"
-      />
-
-      <q-btn
-        icon="trim"
-        :title="$t('Trim')"
-        class="no-border-radius"
-        :disabled="!game.isLocal"
+        :disabled="!isLocal"
       >
-        <q-menu v-if="game.isLocal" auto-close square>
+        <hint>{{ $t("Edit PTN") }}</hint>
+      </q-btn>
+
+      <q-btn icon="trim" class="no-border-radius" :disabled="!isLocal">
+        <hint>{{ $t("Trim") }}</hint>
+        <q-menu
+          v-if="isLocal"
+          transition-show="none"
+          transition-hide="none"
+          auto-close
+          square
+        >
           <q-list>
-            <q-item clickable @click="$store.dispatch('TRIM_BRANCHES', game)">
+            <q-item clickable @click="$store.dispatch('game/TRIM_BRANCHES')">
               <q-item-section side>
                 <q-icon name="branch" class="rotate-180" />
               </q-item-section>
               <q-item-section>{{ $t("Trim Branches") }}</q-item-section>
             </q-item>
 
-            <q-item clickable @click="$store.dispatch('TRIM_TO_PLY', game)">
+            <q-item clickable @click="$store.dispatch('game/TRIM_TO_PLY')">
               <q-item-section side>
                 <q-icon name="ply" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
 
-            <q-item clickable @click="$store.dispatch('TRIM_TO_BOARD', game)">
+            <q-item clickable @click="$store.dispatch('game/TRIM_TO_BOARD')">
               <q-item-section side>
                 <q-icon name="board" />
               </q-item-section>
@@ -50,39 +54,28 @@
 
       <slot />
     </q-btn-group>
-
-    <EditPTN v-model="editDialog" :game="game" no-route-dismiss />
   </q-toolbar>
 </template>
 
 <script>
-import EditPTN from "../dialogs/EditPTN";
-
 export default {
   name: "PTN-Tools",
-  components: { EditPTN },
-  props: ["game", "showEditor"],
   data() {
     return {
       editDialog: false,
     };
   },
   computed: {
+    isLocal() {
+      return !this.$store.state.game.config.isOnline;
+    },
     showAllBranches: {
       get() {
-        return this.$store.state.showAllBranches;
+        return this.$store.state.ui.showAllBranches;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showAllBranches", value]);
+        this.$store.dispatch("ui/SET_UI", ["showAllBranches", value]);
       },
-    },
-  },
-  watch: {
-    editDialog(isVisible) {
-      this.$emit("update:showEditor", isVisible);
-    },
-    showEditor(isVisible) {
-      this.editDialog = isVisible;
     },
   },
 };

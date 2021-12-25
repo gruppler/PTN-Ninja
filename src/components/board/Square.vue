@@ -1,11 +1,12 @@
 <template>
   <div
     class="square"
+    @mouseover="checkValid"
     :class="{
       light: square.static.isLight,
       dark: !square.static.isLight,
       ['p' + color]: !!color,
-      'no-roads': !$store.state.showRoads,
+      'no-roads': !showRoads,
       eog,
       current,
       primary,
@@ -27,7 +28,7 @@
     @click.right.prevent="select(true)"
   >
     <div class="hl current" />
-    <div class="road" v-if="$store.state.showRoads">
+    <div class="road" v-if="showRoads">
       <div v-if="en" class="n" />
       <div v-if="ee" class="e" />
       <div class="s" :class="{ es }" />
@@ -39,56 +40,69 @@
 </template>
 
 <script>
+import { atoi, itoa } from "../../Game/PTN/Ply";
+
 export default {
   name: "Square",
-  props: ["game", "x", "y"],
+  props: ["coord"],
+  data() {
+    return {
+      valid: false,
+    };
+  },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
+    board() {
+      return this.game.board;
+    },
     eog() {
-      return this.game.state.isGameEnd;
+      return this.game.position.isGameEnd;
     },
     isEditingTPS() {
-      return this.$store.state.isEditingTPS;
+      return this.$store.state.game.editingTPS !== undefined;
     },
     selectedPiece() {
-      return this.$store.state.selectedPiece;
+      return this.$store.state.ui.selectedPiece;
     },
     editingTPS: {
       get() {
-        return this.$store.state.editingTPS;
+        return this.$store.state.game.editingTPS;
       },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
+      set(tps) {
+        this.$store.dispatch("game/EDIT_TPS", tps);
       },
     },
     firstMoveNumber() {
-      return this.$store.state.firstMoveNumber;
+      return this.$store.state.ui.firstMoveNumber;
     },
     square() {
-      return this.game.state.squares[this.y][this.x];
+      return this.board.squares[this.coord];
     },
     piece() {
-      return this.square.piece;
+      return this.square.piece ? this.board.pieces[this.square.piece] : null;
     },
     color() {
       return this.piece ? this.piece.color : "";
     },
     current() {
       return (
-        this.game.state.ply &&
-        this.game.state.ply.squares.includes(this.square.static.coord)
+        this.game.position.ply &&
+        this.game.position.ply.squares.includes(this.square.static.coord)
       );
     },
     primary() {
       if (this.selected) {
         return (
-          this.game.state.selected.squares.length > 1 &&
-          this.game.state.selected.squares[0] === this.square
+          this.game.selected.squares.length > 1 &&
+          this.game.selected.squares[0].static.coord === this.coord
         );
       } else if (this.current) {
         const isDestination =
-          this.game.state.ply.squares.length === 1 ||
-          this.game.state.ply.squares[0] !== this.square.static.coord;
-        return this.game.state.plyIsDone ? isDestination : !isDestination;
+          this.game.position.ply.squares.length === 1 ||
+          this.game.position.ply.squares[0] !== this.square.static.coord;
+        return this.game.position.plyIsDone ? isDestination : !isDestination;
       }
       return false;
     },
@@ -99,15 +113,12 @@ export default {
       return (
         this.piece &&
         this.piece.ply &&
-        this.piece.ply === this.game.state.ply &&
-        !(
-          (this.game.openingSwap && this.game.state.isFirstMove) ||
-          (this.game.state.plyIsDone && this.game.state.turn === 1)
-        )
+        this.piece.ply === this.game.position.ply.id &&
+        !(this.game.config.openingSwap && this.game.position.isFirstMove)
       );
     },
-    valid() {
-      return this.isEditingTPS || this.game.isValidSquare(this.square);
+    showRoads() {
+      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     en() {
       return this.square.static.edges.N;
@@ -153,22 +164,27 @@ export default {
     },
   },
   methods: {
+    checkValid() {
+      this.valid =
+        this.isEditingTPS ||
+        this.$store.getters["game/isValidSquare"](this.square);
+    },
     select(alt = false) {
+      this.checkValid();
       if (this.valid) {
         if (alt && this.isEditingTPS && this.piece) {
-          this.$store.dispatch("SET_UI", [
+          this.$store.dispatch("ui/SET_UI", [
             "selectedPiece",
             { color: this.piece.color, type: this.piece.typeCode },
           ]);
         }
-        this.game.selectSquare(
-          this.square,
+        this.$store.dispatch("game/SELECT_SQUARE", {
+          square: this.square,
           alt,
-          this.isEditingTPS,
-          this.selectedPiece
-        );
+          selectedPiece: this.selectedPiece,
+        });
         if (this.isEditingTPS) {
-          this.editingTPS = this.game.state.getTPS(
+          this.editingTPS = this.$game.board._getTPS(
             this.selectedPiece.color,
             this.firstMoveNumber
           );

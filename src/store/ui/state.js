@@ -1,24 +1,23 @@
-import { LocalStorage } from "quasar";
-import { Platform } from "quasar";
-
+import { LocalStorage, Platform } from "quasar";
 import { pick } from "lodash";
-
 import { THEMES } from "../../themes";
 
 let defaults = {
   animateBoard: true,
+  animateScrub: false,
   axisLabels: true,
   board3D: false,
   boardRotation: [0, 0.65],
+  boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
-  editingTPS: "",
   editingBranch: "",
   firstMoveNumber: 1,
   flatCounts: true,
   highlightSquares: true,
-  isEditingTPS: false,
   isPortrait: false,
-  nativeSharing: navigator.canShare || false,
+  nativeSharing: navigator.canShare
+    ? navigator.canShare({ text: "test", url: location.href })
+    : false,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
@@ -28,18 +27,22 @@ let defaults = {
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
+  player: 1,
+  playerName: "",
+  scrollScrubbing: Platform.is.desktop,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
+  showHints: true,
   showMove: true,
-  showPTN: false,
+  showPTN: true,
   showRoads: true,
   showScrubber: true,
   showText: false,
-  size: 5,
-  textTab: "notes",
+  size: "6",
+  textTab: "chat",
   themeID: "classic",
-  theme: THEMES[0],
+  theme: THEMES.find((t) => t.id === "classic"),
   themes: [],
   turnIndicator: true,
   unplayedPieces: true,
@@ -87,12 +90,14 @@ defaults.pngConfig = {
   textSize: "md",
   includeNames: true,
   padding: true,
+  bgAlpha: 1,
   ...pick(defaults, pngUIOptions),
 };
 
 let state = {
   embed: Platform.within.iframe,
-  games: [],
+  scrubbing: false,
+  thumbnails: {},
   defaults,
   ...defaults,
 };
@@ -100,19 +105,10 @@ let state = {
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
-if (!state.embed) {
-  if (!LocalStorage.isEmpty()) {
-    for (let key in state) {
-      state[key] = load(key, state[key]);
-    }
+if (!state.embed && !LocalStorage.isEmpty()) {
+  for (let key in defaults) {
+    state[key] = load(key, state[key]);
   }
-  state.games = load("games", []).map((name) => ({
-    name,
-    ptn: load("ptn-" + name),
-    state: load("state-" + name),
-    history: load("history-" + name),
-    historyIndex: load("historyIndex-" + name),
-  }));
 }
 
 export default state;

@@ -1,4 +1,5 @@
 import { i18n } from "./boot/i18n";
+import { toDate } from "date-fns";
 import { isString } from "lodash";
 
 export const formatError = (error) => {
@@ -60,4 +61,20 @@ export const formatHint = (hint) => {
       return hint;
     }
   }
+};
+
+export const timestampToDate = (date) => {
+  if (date && date.constructor !== Date) {
+    if (date.toDate) {
+      date = date.toDate(date);
+    } else if (date instanceof Object && "_nanoseconds" in date) {
+      date = new Date(date._seconds * 1e3 + date._nanoseconds / 1e6);
+    } else {
+      date = new Date(date);
+      if (isNaN(date)) {
+        date = toDate(date);
+      }
+    }
+  }
+  return date;
 };

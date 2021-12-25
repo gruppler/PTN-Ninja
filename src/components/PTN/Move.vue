@@ -12,7 +12,6 @@
     <Linenum
       v-if="showSeparateBranch"
       :linenum="move.linenum"
-      :game="game"
       :unselected="currentOnly"
       only-branch
     />
@@ -20,15 +19,14 @@
       <Linenum
         v-if="move.linenum"
         :linenum="move.linenum"
-        :game="game"
         :no-branch="noBranch || separateBranch"
       />
-      <template v-if="ply1 && (!player || player === 1)">
-        <span v-if="ply1.isNop" class="ptn nop">{{ ply1.text() }}</span>
-        <Ply v-else :key="ply1.id" :plyID="ply1.id" :game="game" />
+      <template v-if="!player || player === 1">
+        <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
+        <Ply v-else-if="ply1" :key="ply1.id" :plyID="ply1.id" />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :plyID="ply2.id" :game="game" />
+        <Ply :key="ply2.id" :plyID="ply2.id" />
       </template>
     </div>
     <q-separator v-if="separator" class="fullwidth-padded-md" />
@@ -44,7 +42,6 @@ export default {
   components: { Linenum, Ply },
   props: {
     move: Object,
-    game: Object,
     player: Number,
     currentOnly: Boolean,
     standalone: Boolean,
@@ -53,42 +50,51 @@ export default {
     noBranch: Boolean,
   },
   computed: {
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
+    },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
     ply1() {
-      return !this.standalone && this.$store.state.showAllBranches
+      return !this.standalone && this.showAllBranches
         ? this.move.ply1
         : this.move.ply1Original || this.move.ply1;
     },
     ply2() {
       return this.move.ply2
-        ? this.$store.state.showAllBranches && !this.currentOnly
+        ? this.showAllBranches && !this.currentOnly
           ? this.move.ply2
-          : this.move.ply2.getBranch(this.game.state.targetBranch)
+          : this.ptn.branchPlies[this.move.ply2.index]
         : null;
     },
     index() {
-      return this.game.movesSorted.findIndex((move) => move === this.move);
+      return this.ptn.sortedMoves.findIndex((move) => move === this.move);
     },
     prevMove() {
-      const moves = this.game.movesSorted;
+      const moves = this.ptn.sortedMoves;
       return this.index > 0 ? moves[this.index - 1] : null;
     },
     nextMove() {
-      const moves = this.game.movesSorted;
+      const moves = this.ptn.sortedMoves;
       return this.index < moves.length - 1 ? moves[this.index + 1] : null;
     },
     isCurrentMove() {
       return (
         !this.noDecoration &&
         !this.currentOnly &&
-        this.game.state.move &&
-        (this.$store.state.showAllBranches
-          ? this.game.state.move.id === this.move.id
-          : this.game.state.move.index === this.move.index)
+        this.position.move &&
+        (this.showAllBranches
+          ? this.position.move.id === this.move.id
+          : this.position.move.index === this.move.index)
       );
     },
     linebreak() {
       return (
-        this.$store.state.showAllBranches &&
+        this.showAllBranches &&
         !this.noDecoration &&
         !this.currentOnly &&
         this.nextMove &&
@@ -98,14 +104,16 @@ export default {
     separator() {
       return (
         this.linebreak &&
-        (!this.move.branch || !this.nextMove.firstPly.branches[0].branch)
+        (!this.move.branch ||
+          // Next move's branch originates from root
+          !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
     },
     showSeparateBranch() {
       return !!(
         !this.noBranch &&
         this.move.branch &&
-        this.$store.state.showAllBranches &&
+        (this.showAllBranches || this.currentOnly) &&
         this.separateBranch &&
         (this.standalone ||
           this.player ||
@@ -139,6 +147,12 @@ export default {
       padding-top: 0.75em;
       margin-top: 0;
     }
+  }
+  &:first-child {
+    padding-top: 0.75em;
+  }
+  &:last-child {
+    padding-bottom: 0.75em;
   }
 
   .nop {

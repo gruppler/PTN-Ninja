@@ -3,72 +3,52 @@
     :label="$t('Theme')"
     v-model="theme"
     :options="themes"
-    popup-content-class="bg-accent"
-    option-value="id"
-    option-label="name"
+    transition-show="none"
+    transition-hide="none"
+    :virtual-scroll-item-size="84"
     map-options
     emit-value
     v-bind="$attrs"
   >
-    <template v-slot:prepend>
-      <q-avatar rounded>
-        <img :src="previews[value]" />
-      </q-avatar>
+    <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
+      <slot :name="slot" v-bind="scope" />
     </template>
 
     <template v-slot:append>
       <q-icon
         v-if="editButton"
-        @click="$router.push({ name: 'theme' })"
+        @click.stop="$router.push({ name: 'theme' })"
         name="edit"
         class="q-field__focusable-action"
       />
     </template>
 
     <template v-slot:option="scope">
-      <q-item
-        class="non-selectable"
+      <ThemeSelectorOption
+        :option="scope.opt"
+        @remove="remove"
+        :is-current="
+          scope.opt.value === theme ||
+          scope.opt.value === $store.state.ui.themeID
+        "
         v-bind="scope.itemProps"
         v-on="scope.itemEvents"
-      >
-        <q-item-section side>
-          <img
-            :src="previews[scope.opt.id]"
-            :height="thumbnailHeight"
-            class="rounded-borders"
-          />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>{{ scope.opt.name }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-btn
-            v-if="
-              !scope.opt.isBuiltIn &&
-              scope.opt.id !== theme &&
-              scope.opt.id !== $store.state.themeID
-            "
-            @click.stop="remove(scope.opt.id)"
-            icon="delete"
-            flat
-            dense
-          />
-        </q-item-section>
-      </q-item>
+      />
     </template>
   </q-select>
 </template>
 
 <script>
-import { cloneDeep, pick, without } from "lodash";
-import { HOTKEYS } from "../../keymap";
+import ThemeSelectorOption from "./ThemeSelectorOption";
+
+import { cloneDeep } from "lodash";
 
 export default {
   name: "ThemeSelector",
+  components: { ThemeSelectorOption },
   props: {
     value: String,
-    game: Object,
-    "edit-button": Boolean,
+    editButton: Boolean,
     config: Object,
   },
   data() {
@@ -79,7 +59,14 @@ export default {
   },
   computed: {
     themes() {
-      return this.$store.getters.themes;
+      return Object.freeze(
+        this.$store.getters["ui/themes"].map((theme, index) => ({
+          value: theme.id,
+          label: theme.name,
+          index,
+          theme,
+        }))
+      );
     },
     theme: {
       get() {
@@ -89,49 +76,20 @@ export default {
         this.$emit("input", value);
       },
     },
-    previewConfig() {
-      const config = cloneDeep(
-        this.config ||
-          pick(
-            this.$store.state,
-            without(
-              Object.keys(this.$store.state.pngConfig),
-              "theme",
-              "themeID"
-            )
-          )
-      );
-      config.imageSize = "xs";
-      return config;
-    },
   },
   methods: {
-    updatePreviews() {
-      if (!this.game) {
-        return;
-      }
-      this.$store.getters.themes.forEach((theme, i) => {
-        const canvas = this.game.render({ ...this.previewConfig, theme });
-        this.previews[theme.id] = canvas.toDataURL();
-
-        if (!i) {
-          this.thumbnailHeight = canvas.height / 2;
-        }
-      });
-    },
     remove(id) {
       if (id === this.theme) {
         return false;
       }
-      const themes = cloneDeep(this.$store.state.themes);
-      const builtInThemeCount = this.themes.length - themes.length;
+      const themes = cloneDeep(this.$store.state.ui.themes);
       let index = themes.findIndex((theme) => theme.id === id);
       if (index < 0) {
         return false;
       }
       const theme = cloneDeep(themes.splice(index, 1)[0]);
-      this.$store.dispatch("SET_UI", ["themes", themes]);
-      this.$store.dispatch("NOTIFY", {
+      this.$store.dispatch("ui/SET_UI", ["themes", themes]);
+      this.$store.dispatch("ui/NOTIFY", {
         icon: "color",
         message: this.$t("success.themeRemoved", theme),
         timeout: 5000,
@@ -143,20 +101,13 @@ export default {
             color: "primary",
             handler: () => {
               themes.splice(index, 0, theme);
-              this.$store.dispatch("SET_UI", ["themes", themes]);
+              this.$store.dispatch("ui/SET_UI", ["themes", themes]);
             },
           },
           { icon: "close" },
         ],
       });
     },
-  },
-  created() {
-    this.updatePreviews();
-  },
-  watch: {
-    "$store.state.game.board": "updatePreviews",
-    previewConfig: "updatePreviews",
   },
 };
 </script>

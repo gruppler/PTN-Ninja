@@ -1,44 +1,66 @@
 <template>
-  <q-layout class="non-selectable" view="lHr LpR lFr">
+  <q-layout v-if="gameExists" class="non-selectable" view="lHr LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
-          @click="left = !left"
-          :color="left ? 'primary' : ''"
+          @click="showPTN = !showPTN"
+          :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector" :game="game">
+          <GameSelector ref="gameSelector">
             <q-icon
-              name="edit"
-              @click.stop="edit"
+              name="info"
+              @click.stop="info"
+              @click.right.prevent.stop="edit"
               class="q-field__focusable-action q-mr-sm"
-            />
+            >
+              <hint>{{ $t("View Game Info") }}</hint>
+            </q-icon>
           </GameSelector>
         </q-toolbar-title>
         <q-btn
           :icon="
             textTab === 'notes' ? (notifyNotes ? 'notes' : 'notes_off') : 'chat'
           "
-          @click.left="right = !right"
+          @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'primary' : ''"
+          :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>
+            {{
+              $t(
+                textTab === "notes"
+                  ? showText
+                    ? "Hide Notes"
+                    : "Show Notes"
+                  : showText
+                  ? "Hide Chat"
+                  : "Show Chat"
+              )
+            }}
+          </hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
     <q-page-container
       class="bg-bg"
       v-shortkey="hotkeys.UI"
-      @shortkey="$store.dispatch('TOGGLE_UI', $event.srcKey)"
+      @shortkey="
+        if (!disabledOptions.includes($event.srcKey))
+          $store.dispatch('ui/TOGGLE_UI', $event.srcKey);
+      "
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
-        @shortkey="$store.dispatch($event.srcKey, game)"
+        @shortkey="shortkeyAction"
         class="overflow-hidden"
       >
         <div
@@ -46,66 +68,41 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" :game="game" />
+          <Board ref="board" class="col-grow" />
         </div>
+        <q-page-sticky position="top-right" :offset="[6, 6]">
+          <BoardToggles
+            v-if="$route.name !== 'embed' && !isGamesTableShowing"
+          />
+        </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
         </q-page-sticky>
-        <q-page-sticky position="top-left" :offset="[6, 6]">
-          <BoardToggles v-if="!dialogEmbed" />
-        </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove :game="game" style="margin-right: 65px" />
+          <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
 
     <q-drawer
       id="left-drawer"
-      v-model="left"
+      v-model="showPTN"
       side="left"
-      :breakpoint="right ? doubleWidth : singleWidth"
+      :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools ref="tools" :game="game" :showEditor.sync="dialogEditPTN">
-          <ShareButton
-            ref="shareButton"
-            :title="$t('Share')"
-            :game="game"
-            :showQR.sync="dialogQR"
-            @embed="dialogEmbed = true"
-            @png="dialogPNG = true"
-          />
+        <PTN-Tools ref="tools">
+          <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" :game="game" />
+          <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <q-btn-group spread stretch flat unelevated>
-            <q-btn
-              @click="$store.dispatch('UNDO', game)"
-              icon="undo"
-              :title="$t('Undo')"
-              :disabled="isEditingTPS || !game.canUndo"
-            />
-            <q-btn
-              @click="$store.dispatch('REDO', game)"
-              icon="redo"
-              :title="$t('Redo')"
-              :disabled="isEditingTPS || !game.canRedo"
-            />
-          </q-btn-group>
-          <EvalButtons
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-            :game="game"
-          />
+          <UndoButtons spread stretch flat unelevated />
+          <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
@@ -113,9 +110,9 @@
 
     <q-drawer
       id="right-drawer"
-      v-model="right"
+      v-model="showText"
       side="right"
-      :breakpoint="left ? doubleWidth : singleWidth"
+      :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
@@ -141,10 +138,10 @@
         </q-toolbar>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" :game="game" recess />
+            <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
-            <Chat ref="chat" class="fit" :game="game" recess />
+            <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -152,54 +149,27 @@
     </q-drawer>
 
     <q-footer class="bg-ui">
-      <Scrubber :game="game" />
+      <Scrubber />
       <q-toolbar
-        v-show="isEditingTPS || $store.state.showControls"
+        v-show="isEditingTPS || $store.state.ui.showControls"
         class="footer-toolbar q-pa-sm"
       >
         <PieceSelector
           v-if="isEditingTPS"
           class="justify-around items-center"
           style="width: 100%; max-width: 500px; margin: 0 auto"
-          v-model="selectedPiece"
-          :game="game"
-        >
-          <q-input
-            type="number"
-            v-model="firstMoveNumber"
-            :label="$t('Move')"
-            :min="minFirstMoveNumber"
-            :max="999"
-            filled
-            dense
-          />
-          <q-btn
-            :label="$t('Cancel')"
-            @click="
-              isEditingTPS = false;
-              game.state.board = game.boards[0].false;
-            "
-            color="primary"
-            flat
-          />
-          <q-btn :label="$t('OK')" @click="setTPS" color="primary" flat />
-        </PieceSelector>
-        <PlayControls v-else :game="game" />
+        />
+        <PlayControls v-else />
       </q-toolbar>
     </q-footer>
 
-    <Help ref="help" v-model="dialogHelp" no-route-dismiss />
-    <AddGame ref="addGame" v-model="dialogAddGame" no-route-dismiss />
-    <EditGame v-model="dialogEditGame" :game="game" no-route-dismiss />
-    <Preferences v-model="dialogPreferences" :game="game" no-route-dismiss />
-    <ThemeConfig v-model="dialogThemeConfig" :game="game" no-route-dismiss />
-    <EmbedConfig v-model="dialogEmbed" :game="game" no-route-dismiss />
-    <PNGConfig v-model="dialogPNG" :game="game" no-route-dismiss />
+    <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
-    <GameNotifications :game="game" />
-    <NoteNotifications :game="game" />
+    <GameNotifications />
+    <NoteNotifications />
   </q-layout>
+  <q-dialog v-else :value="true" persistent>No Game</q-dialog>
 </template>
 
 <script>
@@ -218,42 +188,22 @@ import NoteNotifications from "../components/notify/NoteNotifications";
 import PlayControls from "../components/controls/PlayControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
+import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
+// import onlineStore from "../store/online";
 import GameSelector from "../components/controls/GameSelector";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
 import Chat from "../components/drawers/Chat";
 
-// Dialogs:
-import Help from "../components/dialogs/Help";
-import AddGame from "../components/dialogs/AddGame";
-import EditGame from "../components/dialogs/EditGame";
-import Preferences from "../components/dialogs/Preferences";
-import ThemeConfig from "../components/dialogs/ThemeConfig";
-import EmbedConfig from "../components/dialogs/EmbedConfig";
-import PNGConfig from "../components/dialogs/PNGConfig";
-
-import Game from "../PTN/Game";
+import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { isEqual, zipObject } from "lodash";
-
-const HISTORY_DIALOGS = {
-  dialogHelp: "help",
-  dialogAddGame: "add",
-  dialogPreferences: "preferences",
-  dialogThemeConfig: "theme",
-  dialogEditGame: "info",
-  dialogEditPTN: "edit",
-  dialogEmbed: "embed",
-  dialogPNG: "png",
-  dialogQR: "qr",
-};
 
 export default {
   components: {
@@ -267,6 +217,7 @@ export default {
     PlayControls,
     Scrubber,
     PTNTools,
+    UndoButtons,
     EvalButtons,
     BoardToggles,
     ShareButton,
@@ -274,198 +225,96 @@ export default {
     GameSelector,
     PieceSelector,
     Menu,
-    Help,
-    AddGame,
-    EditGame,
-    Preferences,
-    ThemeConfig,
-    EmbedConfig,
-    PNGConfig,
   },
-  props: ["ptn", "state", "name"],
+  props: ["ptn", "state", "name", "gameID"],
   data() {
-    const game = this.getGame();
-    const errors = this.errors;
     return {
       Platform,
-      errors,
-      game,
+      errors: [],
       hotkeys: HOTKEYS,
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
     };
   },
   computed: {
-    ...zipObject(
-      Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map((key) => ({
-        get() {
-          return this.$route.name === key;
-        },
-        set(value) {
-          if (value) {
-            if (this.$route.name !== key) {
-              this.$router.push({ name: key });
-            }
-          } else {
-            if (this.$route.name === key) {
-              this.$router.go(-1);
-              this.$router.replace({ name: "local" });
-            }
-          }
-        },
-      }))
-    ),
-    left: {
+    gameExists() {
+      return Boolean(this.$game);
+    },
+    isLocal() {
+      return this.$game ? this.$game.isLocal : false;
+    },
+    showPTN: {
       get() {
-        return this.$store.state.showPTN;
+        return this.$store.state.ui.showPTN;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showPTN", value]);
+        this.$store.dispatch("ui/SET_UI", ["showPTN", value]);
       },
     },
-    right: {
+    showText: {
       get() {
-        return this.$store.state.showText;
+        return this.$store.state.ui.showText;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showText", value]);
+        this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
     },
     hasChat() {
-      return this.game.hasChat;
+      return this.$game ? this.$game.hasChat : false;
     },
     textTab: {
       get() {
-        return this.hasChat ? this.$store.state.textTab : "notes";
+        return this.hasChat ? this.$store.state.ui.textTab : "notes";
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["textTab", value]);
+        this.$store.dispatch("ui/SET_UI", ["textTab", value]);
       },
     },
     notifyNotes: {
       get() {
-        return this.$store.state.notifyNotes;
+        return this.$store.state.ui.notifyNotes;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
+        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
-    isEditingTPS: {
-      get() {
-        return this.$store.state.isEditingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
-        if (!value) {
-          this.editingTPS = "";
-        }
-      },
+    isEditingTPS() {
+      return this.$store.state.game.editingTPS !== undefined;
     },
-    selectedPiece: {
-      get() {
-        return this.$store.state.selectedPiece;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.game.state.getTPS(
-          this.selectedPiece.color,
-          this.firstMoveNumber
-        );
-      },
+    disabledOptions() {
+      return this.$store.getters["game/disabledOptions"];
     },
-    minFirstMoveNumber() {
-      const min1 =
-        this.game.state.pieces.played[1].cap.length +
-        this.game.state.pieces.played[1].flat.length +
-        this.game.state.squares.reduce(
-          (total, row) =>
-            row.reduce(
-              (total, square) =>
-                square.pieces.length
-                  ? total +
-                    square.pieces.slice(1).filter((piece) => piece.color === 1)
-                      .length
-                  : total,
-              total
-            ),
-          0
-        );
-      const min2 =
-        this.game.state.pieces.played[2].cap.length +
-        this.game.state.pieces.played[2].flat.length +
-        this.game.state.squares.reduce(
-          (total, row) =>
-            row.reduce(
-              (total, square) =>
-                square.pieces.length
-                  ? total +
-                    square.pieces.slice(1).filter((piece) => piece.color === 2)
-                      .length
-                  : total,
-              total
-            ),
-          0
-        );
-      return Math.max(min1, min2) + 1 * (min1 <= min2);
-    },
-    firstMoveNumber: {
-      get() {
-        return this.$store.state.firstMoveNumber;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.game.state.getTPS(
-          this.selectedPiece.color,
-          this.firstMoveNumber
-        );
-      },
-    },
-    editingTPS: {
-      get() {
-        return this.$store.state.editingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
-      },
+    isGamesTableShowing() {
+      return (
+        this.$route.name === "add" &&
+        this.$route.params.tab === "load" &&
+        this.$route.params.online
+      );
     },
     games() {
-      return this.$store.state.games.concat();
+      return this.$store.state.game.list;
     },
-    gameState() {
-      let state = this.game.minState;
-      state.name = this.game.name;
-      return state;
+    user() {
+      return null;
+      // return this.$store.state.online.user;
     },
-    gameHistory() {
-      return {
-        history: this.game.history.concat(),
-        index: this.game.historyIndex,
-        name: this.game.name,
-      };
+    player() {
+      return this.user ? this.$game.getPlayerFromUID(this.user.uid) : 0;
     },
-    gameText() {
-      return { ptn: this.game.ptn, name: this.game.name };
-    },
-    gameName() {
-      return { name: this.game.name, game: this.game };
+    isAnonymous() {
+      return !this.user || this.user.isAnonymous;
     },
   },
   methods: {
-    setWindowTitle(prefix = this.game.name) {
-      setTimeout(() => {
-        document.title = prefix + " — " + this.$t("app_title");
-      }, 100);
-    },
     newGame() {
-      const game = new Game("", {
-        player1: this.$store.state.player1,
-        player2: this.$store.state.player2,
-        size: this.$store.state.size,
+      const game = new Game({
+        player1: this.$store.state.ui.player1,
+        player2: this.$store.state.ui.player2,
+        tags: { size: this.$store.state.ui.size },
       });
       return game;
     },
-    getGame() {
+    async getGame() {
       let game;
       this.errors = [];
 
@@ -483,16 +332,10 @@ export default {
       };
 
       const _loadPrevious = () => {
-        if (this.$store.state.games && this.$store.state.games.length) {
+        if (this.$store.state.game.list && this.$store.state.game.list.length) {
           try {
-            game = this.$store.state.games[0];
-            game = new Game(game.ptn, game);
-            if (
-              this.$store.state.isEditingTPS &&
-              this.$store.state.editingTPS
-            ) {
-              game.doTPS(this.$store.state.editingTPS);
-            }
+            game = this.$store.state.game.list[0];
+            game = new Game(game);
           } catch (error) {
             _handleError(error);
           }
@@ -504,58 +347,34 @@ export default {
           // Add game from URL
           let name = this.name;
           if (!this.name) {
-            game = new Game(this.ptn, { state: this.state });
+            // If name isn't provided, parse the game to get a name
+            game = new Game({ ptn: this.ptn });
             name = game.name;
           }
-          const index = this.$store.state.games.findIndex(
+          const index = this.$store.state.game.list.findIndex(
             (g) => g.name === name
           );
-          if (index < 0 || this.$store.state.openDuplicate !== "replace") {
+          if (index < 0 || this.$store.state.ui.openDuplicate !== "replace") {
+            // Open as a new game
             if (!game) {
-              game = new Game(this.ptn, { name, state: this.state });
+              // If it hasn't been parsed yet, do it now
+              game = new Game({ ptn: this.ptn, name });
             }
             if (game) {
-              this.$store.dispatch("ADD_GAME", {
-                ptn: this.ptn,
-                name: game.name,
-                state: game.minState,
-              });
+              this.$store.dispatch("game/ADD_GAME", game);
               this.$router.replace("/");
             }
           } else {
-            if (index > 0) {
-              this.$store.dispatch("SELECT_GAME", { index, immediate: true });
+            // Replace an existing game
+            if (!game) {
+              // If it hasn't been parsed yet, do it now
+              game = new Game({ ptn: this.ptn, name });
             }
-
-            game = this.$store.state.games[0];
-            game = new Game(game.ptn, game);
-
-            if (game.ptn !== this.ptn) {
-              game.replacePTN(this.ptn, this.state);
-              this.$store.dispatch("SAVE_UNDO_INDEX", game);
-              this.$store.dispatch("SAVE_UNDO_HISTORY", game);
-              this.$store.dispatch("UPDATE_PTN", this.ptn);
-              this.$store.dispatch("SET_STATE", game.minState);
-
-              this.$nextTick(() => {
-                this.$store.dispatch("NOTIFY", {
-                  message: this.$t("success.replacedExistingGame"),
-                  timeout: 5000,
-                  progress: true,
-                  multiLine: false,
-                  actions: [
-                    {
-                      label: this.$t("Undo"),
-                      color: "primary",
-                      handler: () => {
-                        this.$store.dispatch("UNDO", game);
-                      },
-                    },
-                    { icon: "close" },
-                  ],
-                });
-              });
-            }
+            game = await this.$store.dispatch("game/REPLACE_GAME", {
+              index,
+              ptn: this.ptn,
+              gameState: this.state,
+            });
             this.$router.replace("/");
           }
         } catch (error) {
@@ -569,61 +388,86 @@ export default {
         game = this.newGame();
       }
       game.warnings.forEach((warning) =>
-        this.$store.dispatch("NOTIFY_WARNING", warning)
+        this.$store.dispatch("ui/NOTIFY_WARNING", warning)
       );
-
-      this.setWindowTitle(game.name);
 
       if (process.env.DEV) {
         window.main = this;
         window.game = game;
       }
-      return game;
+      this.$store.dispatch("game/SET_GAME", game);
     },
-    updateGame() {
-      this.game = this.getGame();
+    undo() {
+      return this.$store.dispatch("game/UNDO");
     },
-    setTPS() {
-      this.$store.dispatch("WITHOUT_BOARD_ANIM", () => {
-        this.game.moves[0].linenum.number = Number(
-          this.editingTPS.split(/\s/)[2]
-        );
-        this.game.setTags({ tps: this.editingTPS });
-        this.isEditingTPS = false;
-      });
+    redo() {
+      return this.$store.dispatch("game/REDO");
     },
     menuAction(action) {
       switch (action) {
         case "help":
-          this.dialogHelp = true;
+          this.$router.push({ name: "help" });
           break;
-        case "add":
-          this.dialogAddGame = true;
+        case "account":
+          if (this.isAnonymous) {
+            this.$router.push({ name: "login" });
+          } else {
+            this.$router.push({ name: "account" });
+          }
+          break;
+        case "settings":
+          this.$router.push({ name: "preferences" });
           break;
         case "share":
           this.share();
           break;
-        case "settings":
-          this.dialogPreferences = true;
+        case "add":
+          this.$router.push({ name: "add", params: { tab: "new" } });
           break;
       }
     },
+    shortkeyAction(event) {
+      this.$store.dispatch(event.srcKey);
+    },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editGame":
-          this.dialogEditGame = true;
+          if (this.$route.name !== "info-edit") {
+            this.$router.push({ name: "info-edit" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "editPTN":
-          this.dialogEditPTN = true;
+          if (this.$route.name !== "edit") {
+            this.$router.push({ name: "edit" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "embedGame":
-          this.dialogEmbed = true;
+          if (this.$route.name !== "embed") {
+            this.$router.push({ name: "embed" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "sharePNG":
-          this.dialogPNG = this.game.isLocal;
+          if (this.$route.name !== "png") {
+            this.$router.push({ name: "png" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "focusText":
-          this.right = true;
+          this.showText = true;
           this.$refs[
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
@@ -632,54 +476,134 @@ export default {
           this.$refs.gameSelector.$refs.select.showPopup();
           break;
         case "previousGame":
-          if (this.$store.state.games.length > 1) {
+          if (this.$store.state.game.list.length > 1) {
             this.$refs.gameSelector.select(1);
           }
           break;
+        case "toggleText":
+          if (this.hasChat) {
+            this.textTab = this.textTab === "notes" ? "chat" : "notes";
+          }
+          break;
         case "help":
-          if (!this.dialogHelp || this.$refs.help.section !== "usage") {
-            this.dialogHelp = true;
-            this.$refs.help.section = "usage";
+          if (this.$route.name !== "help") {
+            this.$router.push({
+              name: "help",
+              params: { section: "usage" },
+            });
+          } else if (this.$route.params.section !== "usage") {
+            this.$router.replace({
+              name: "help",
+              params: { section: "usage" },
+            });
           } else {
-            this.dialogHelp = false;
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
+        case "account":
+          if (this.isAnonymous) {
+            if (this.$route.name !== "login") {
+              this.$router.push({ name: "login" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
+          } else {
+            if (this.$route.name !== "account") {
+              this.$router.push({ name: "account" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
           }
           break;
         case "hotkeys":
-          if (!this.dialogHelp || this.$refs.help.section !== "hotkeys") {
-            this.dialogHelp = true;
-            this.$refs.help.section = "hotkeys";
+          if (this.$route.name !== "help") {
+            this.$router.push({
+              name: "help",
+              params: { section: "hotkeys" },
+            });
+          } else if (this.$route.params.section !== "hotkeys") {
+            this.$router.replace({
+              name: "help",
+              params: { section: "hotkeys" },
+            });
           } else {
-            this.dialogHelp = false;
+            this.$refs.dialog.$children[0].hide();
           }
           break;
         case "loadGame":
-          if (!this.dialogAddGame) {
-            this.$router.push({ name: "add", params: { tab: "load" } });
+          if (this.$route.name !== "add") {
+            this.$router.push({
+              name: "add",
+              params: { tab: "load" },
+            });
           } else if (this.$route.params.tab !== "load") {
-            this.$router.replace({ name: "add", params: { tab: "load" } });
+            this.$router.replace({
+              name: "add",
+              params: { tab: "load" },
+            });
           } else {
-            this.dialogAddGame = false;
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
+        case "loadOnlineGame":
+          if (this.$route.name !== "add") {
+            this.$router.push({
+              name: "add",
+              params: { tab: "load", online: "online" },
+            });
+          } else if (
+            this.$route.params.tab !== "load" ||
+            !this.$route.params.online
+          ) {
+            this.$router.replace({
+              name: "add",
+              params: { tab: "load", online: "online" },
+            });
+          } else {
+            this.$refs.dialog.$children[0].hide();
           }
           break;
         case "newGame":
-          if (!this.dialogAddGame || this.$refs.addGame.tab !== "new") {
-            this.dialogAddGame = true;
-            this.$refs.addGame.tab = "new";
+          if (this.$route.name !== "add") {
+            this.$router.push({
+              name: "add",
+              params: { tab: "new" },
+            });
+          } else if (this.$route.params.tab !== "new") {
+            this.$router.replace({
+              name: "add",
+              params: { tab: "new" },
+            });
           } else {
-            this.dialogAddGame = false;
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
+        case "online":
+          if (this.$route.name !== "online") {
+            this.$router.push({ name: "online" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
           }
           break;
         case "preferences":
-          this.dialogPreferences = !this.dialogPreferences;
+          if (this.$route.name !== "preferences") {
+            this.$router.push({ name: "preferences" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "theme":
-          this.dialogThemeConfig = !this.dialogThemeConfig;
+          if (this.$route.name !== "theme") {
+            this.$router.push({ name: "theme" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
           break;
         case "qrCode":
-          if (this.dialogQR) {
-            this.dialogQR = false;
+          if (this.$route.name !== "qr") {
+            this.$router.push({ name: "qr" });
           } else {
-            this.$refs.shareButton.qrCode();
+            this.$refs.dialog.$children[0].hide();
           }
           break;
         case "share":
@@ -687,8 +611,11 @@ export default {
           break;
       }
     },
+    info() {
+      this.$router.push({ name: "info-view" });
+    },
     edit() {
-      this.dialogEditGame = true;
+      this.$router.push({ name: "info-edit" });
     },
     switchGame(event) {
       if (!event.currentTarget.classList.contains("q-fab--opened")) {
@@ -703,7 +630,7 @@ export default {
     },
     openFiles(event) {
       this.nop(event);
-      this.$store.dispatch("OPEN_FILES", event.dataTransfer.files);
+      this.$store.dispatch("game/OPEN_FILES", event.dataTransfer.files);
     },
     nop(event) {
       event.stopPropagation();
@@ -711,59 +638,73 @@ export default {
     },
   },
   watch: {
-    games(newGames, oldGames) {
-      if (!newGames[0] || !oldGames[0] || newGames[0] !== oldGames[0]) {
-        this.updateGame();
-      }
-    },
-    gameState(newState, oldState) {
-      if (oldState.name === newState.name) {
-        this.$store.dispatch("SET_STATE", this.game.minState);
-      }
-    },
-    gameHistory(newHistory, oldHistory) {
-      if (oldHistory.name === newHistory.name) {
-        if (oldHistory.index !== newHistory.index) {
-          this.$store.dispatch("SAVE_UNDO_INDEX", this.game);
+    // game() {
+    //   this.$store.dispatch("online/LISTEN_CURRENT_GAME");
+    // },
+    user(user, oldUser) {
+      if (this.$game && this.$game.config.isOnline) {
+        if (
+          user &&
+          (!oldUser || user.uid !== oldUser.uid) &&
+          !this.$game.getPlayerFromUID(user.uid) &&
+          this.$game.openPlayer
+        ) {
+          this.$router.push({ name: "join" });
         }
-        if (!isEqual(oldHistory.history, newHistory.history)) {
-          this.$store.dispatch("SAVE_UNDO_HISTORY", this.game);
-        }
-      }
-    },
-    gameText(newText, oldText) {
-      if (oldText.name === newText.name) {
-        this.$store.dispatch("UPDATE_PTN", newText.ptn);
-      }
-    },
-    gameName(newName, oldName) {
-      if (oldName.game === newName.game) {
-        this.$store.dispatch("SET_NAME", newName.name);
-      }
-      this.setWindowTitle(newName.name);
-    },
-    editingTPS() {
-      if (this.firstMoveNumber < this.minFirstMoveNumber) {
-        this.firstMoveNumber = this.minFirstMoveNumber;
       }
     },
   },
   beforeCreate() {
+    // Load online functionality
+    // if (process.env.DEV && this.$store.state.online) {
+    //   this.$store.unregisterModule("online");
+    // }
+    // this.$store.registerModule("online", onlineStore);
+
     // Redirect hash URLs
     if (location.hash.length) {
       const url = location.hash.substr(1);
       location.hash = "";
       this.$router.replace(url);
       location.reload();
+      return;
     }
+
+    // Initialize
+    // this.$store.dispatch("online/INIT").then(() => {
+    //   if (this.gameID) {
+    //     // Check that the game is not already open
+    //     const index = this.$store.state.game.list.findIndex(
+    //       (game) => game.config.id === this.gameID
+    //     );
+    //     if (index >= 0) {
+    //       this.$store.dispatch("game/SELECT_GAME", index);
+    //     } else {
+    //       // Add online game from URL
+    //       this.$store
+    //         .dispatch("online/LOAD_GAME", this.gameID)
+    //         .then(() => {
+    //           this.$router.replace("/");
+    //         })
+    //         .catch((error) => {
+    //           this.$store.dispatch("ui/NOTIFY_ERROR", error);
+    //         });
+    //     }
+    //   }
+    // });
   },
-  created() {
-    if (!this.games.length) {
-      this.$store.dispatch("ADD_GAME", {
-        ptn: this.game.text(),
-        name: this.game.name,
-        state: this.game.minState,
-      });
+  async created() {
+    await this.getGame();
+
+    if (!this.gameID) {
+      if (!this.games.length) {
+        this.$store.dispatch("game/ADD_GAME", {
+          ptn: this.$game.toString(),
+          name: this.$game.name,
+          state: this.$game.minState,
+          config: this.$game.config,
+        });
+      }
     }
 
     // Listen for dropped files

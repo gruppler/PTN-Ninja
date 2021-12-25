@@ -1,6 +1,6 @@
 <template>
   <q-slider
-    v-if="$store.state.showScrubber"
+    v-if="$store.state.ui.showScrubber"
     class="scrubber"
     :step="0.5"
     :min="0"
@@ -8,6 +8,7 @@
     :value="position"
     :disable="!maxPosition"
     @input="scrub"
+    @pan="pan"
     :dark="false"
     dense
   />
@@ -24,27 +25,40 @@ import { throttle } from "lodash";
 
 export default {
   name: "Scrubber",
-  props: ["game"],
   computed: {
+    plies() {
+      return this.$store.state.game.ptn.branchPlies;
+    },
+    ply() {
+      return this.$store.state.game.position.plyIndex;
+    },
+    plyIsDone() {
+      return this.$store.state.game.position.plyIsDone;
+    },
     position() {
-      return this.game.state.ply && this.game.state.plies.length
-        ? this.game.state.ply.index + 0.5 * this.game.state.plyIsDone
-        : 0;
+      if (!this.plies.length) {
+        return 0;
+      }
+      return this.ply + 0.5 * this.plyIsDone;
     },
     maxPosition() {
-      return this.game.state.plies && this.game.state.plies.length
-        ? this.game.state.plies.length - 0.5
-        : 0;
+      return this.plies && this.plies.length ? this.plies.length - 0.5 : 0;
     },
   },
   methods: {
     scrub(position) {
       requestAnimationFrame(() => {
-        if (this.game && this.game.state.plies) {
-          const ply = this.game.state.plies[Math.floor(position)];
-          this.game.goToPly(ply.id, position > ply.index);
+        if (this.$game && this.plies) {
+          const ply = this.plies[Math.floor(position)];
+          this.$store.dispatch("game/GO_TO_PLY", {
+            plyID: ply.id,
+            isDone: position > ply.index,
+          });
         }
       });
+    },
+    pan(phase) {
+      this.$store.commit("ui/SET_SCRUBBING", phase);
     },
   },
   created() {
@@ -53,7 +67,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .scrubber {
   position: absolute;
   top: -11px;

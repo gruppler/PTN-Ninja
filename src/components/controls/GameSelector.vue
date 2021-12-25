@@ -13,6 +13,9 @@
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="game-selector-options"
+      transition-show="none"
+      transition-hide="none"
+      :virtual-scroll-item-size="84"
       emit-value
       filled
       dense
@@ -25,11 +28,16 @@
           dense
           flat
         >
-          <q-menu auto-close square>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
             <q-list>
               <q-item
                 clickable
-                @click="dialogCloseGames = true"
+                @click="$router.push({ name: 'close' })"
                 :disable="games.length < 2"
               >
                 <q-item-section side>
@@ -37,7 +45,7 @@
                 </q-item-section>
                 <q-item-section>{{ $t("Close") }}...</q-item-section>
               </q-item>
-              <q-item clickable @click="dialogDownloadGames = true">
+              <q-item clickable @click="$router.push({ name: 'download' })">
                 <q-item-section side>
                   <q-icon name="download" />
                 </q-item-section>
@@ -46,129 +54,114 @@
             </q-list>
           </q-menu>
         </q-btn>
+
         <q-separator vertical class="q-mr-sm" />
+
+        <q-btn
+          v-if="config.isOnline"
+          :icon="icon($game)"
+          @click.stop="account"
+          dense
+          flat
+        />
       </template>
 
       <template v-slot:option="scope">
-        <q-item
-          class="non-selectable"
+        <GameSelectorOption
+          :option="scope.opt"
+          :show-icon="hasOnlineGames"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
-        >
-          <q-item-section>
-            <q-item-label>{{ scope.opt.label }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-btn
-              @click.stop="close(scope.opt.value)"
-              icon="close"
-              flat
-              dense
-            />
-          </q-item-section>
-        </q-item>
+        />
       </template>
 
       <template v-slot:append>
         <div class="row">
+          <q-badge
+            v-if="unseenCount"
+            text-color="ui"
+            :label="unseenCount"
+            class="q-mr-sm"
+          />
           <slot />
         </div>
       </template>
     </q-select>
-
-    <CloseGames v-model="dialogCloseGames" no-route-dismiss />
-    <DownloadGames v-model="dialogDownloadGames" no-route-dismiss />
   </div>
 </template>
 
 <script>
-import CloseGames from "../dialogs/CloseGames";
-import DownloadGames from "../dialogs/DownloadGames";
-
-import { zipObject } from "lodash";
-
-const HISTORY_DIALOGS = {
-  dialogCloseGames: "close",
-  dialogDownloadGames: "download",
-};
+import GameSelectorOption from "./GameSelectorOption";
 
 export default {
   name: "GameSelector",
-  components: { CloseGames, DownloadGames },
-  props: ["game"],
+  components: { GameSelectorOption },
   computed: {
-    ...zipObject(
-      Object.keys(HISTORY_DIALOGS),
-      Object.values(HISTORY_DIALOGS).map((name) => ({
-        get() {
-          return this.$route.name === name;
-        },
-        set(value) {
-          if (value) {
-            if (this.$route.name !== name) {
-              this.$router.push({ name });
-            }
-          } else {
-            if (this.$route.name === name) {
-              this.$router.go(-1);
-              this.$router.replace({ name: "local" });
-            }
-          }
-        },
-      }))
-    ),
-
+    config() {
+      return this.$store.state.game.config;
+    },
     games() {
-      return this.$store.state.games.map((game, index) => ({
+      return this.$store.state.game.list.map((game, index) => ({
         label: game.name,
         value: index,
+        config: game.config,
+        state: game.state,
       }));
     },
+    hasOnlineGames() {
+      return this.games.some((game) => game.config.id);
+    },
+    icon() {
+      if (this.$game.config.isOnline) {
+        return this.$store.getters["ui/playerIcon"](
+          this.$game.config.player,
+          this.$game.config.isPrivate
+        );
+      } else {
+        return "file";
+      }
+    },
     name() {
-      return this.games[0].label;
-    },
-    isEditingTPS: {
-      get() {
-        return this.$store.state.isEditingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["isEditingTPS", value]);
-        if (!value) {
-          this.editingTPS = "";
-        }
-      },
-    },
-    editingTPS: {
-      get() {
-        return this.$store.state.editingTPS;
-      },
-      set(value) {
-        this.$store.dispatch("SET_UI", ["editingTPS", value]);
-      },
-    },
-  },
-  methods: {
-    select(index) {
-      const _select = () => {
-        this.$store.dispatch("SELECT_GAME", { index });
-        this.$emit("input", this.$store.state.games[0]);
-        this.editingTPS = "";
-        this.isEditingTPS = false;
-      };
-      if (index >= 0 && this.games.length > index) {
-        if (this.isEditingTPS && this.editingTPS !== this.game.state.tps) {
-          this.$store.dispatch("PROMPT", {
-            title: this.$t("Confirm"),
-            message: this.$t("confirm.abandonChanges"),
-            success: _select,
-          });
+      const name = this.games[0].label;
+      if (!this.config.isOnline || this.$q.screen.gt.sm) {
+        return name;
+      } else {
+        let player = this.config.player;
+        let otherPlayer = player ? (player === 1 ? 2 : 1) : 0;
+        if (!otherPlayer) {
+          return name;
         } else {
-          _select();
+          otherPlayer = this.$game.tag("player" + otherPlayer);
+          if (otherPlayer) {
+            return name.replace(
+              /[^"]+ vs [^"]+( \dx\d)/,
+              "vs " + otherPlayer + "$1"
+            );
+          } else {
+            return name;
+          }
         }
       }
     },
-    close(index) {
-      this.$store.dispatch("REMOVE_GAME", index);
+    unseenCount() {
+      return this.games.filter((game) => game.config.unseen).length;
+    },
+  },
+  methods: {
+    account() {
+      const user = this.$store.state.online.user;
+      const player = this.games[0].config.player;
+      if (!player) {
+        this.$router.push({ name: "join" });
+      } else if (user && !user.isAnonymous) {
+        this.$router.push({ name: "account" });
+      } else {
+        this.$router.push({ name: "login" });
+      }
+    },
+    select(index) {
+      this.$store.dispatch("game/SELECT_GAME", { index });
+      this.$emit("input", this.$store.state.game.list[0]);
     },
   },
 };

@@ -5,8 +5,9 @@
     @shortkey="toggle"
     v-shortkey="hotkey"
     :icon="value ? 'fullscreen_exit' : 'fullscreen'"
-    :title="$t('Fullscreen')"
-  />
+  >
+    <hint>{{ $t("Fullscreen") }}</hint>
+  </q-btn>
 </template>
 
 <script>

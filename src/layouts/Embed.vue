@@ -1,26 +1,35 @@
 <template>
-  <q-layout class="non-selectable" view="lHh LpR lFr">
+  <q-layout v-if="gameExists" class="non-selectable" view="lHh LpR lFr">
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           icon="moves"
-          @click="left = !left"
-          :color="left ? 'primary' : ''"
+          @click="showPTN = !showPTN"
+          :color="showPTN ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
+        </q-btn>
         <q-toolbar-title id="title" class="ellipsis-2-lines">
           {{ title }}
         </q-toolbar-title>
-        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat />
+        <q-btn icon="info" @click.prevent="info" stretch flat>
+          <hint>{{ $t("View Game Info") }}</hint>
+        </q-btn>
+        <q-btn icon="open_in_new" @click.prevent="openLink" stretch flat>
+          <hint>{{ $t("app_title") }}</hint>
+        </q-btn>
         <q-btn
           :icon="notifyNotes ? 'notes' : 'notes_off'"
-          @click.left="right = !right"
+          @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
-          :color="right ? 'primary' : ''"
+          :color="showText ? 'primary' : ''"
           stretch
           flat
-        />
+        >
+          <hint>{{ $t(showText ? "Hide Notes" : "Show Notes") }}</hint>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
@@ -31,7 +40,7 @@
     >
       <q-page
         v-shortkey="hotkeys.ACTIONS"
-        @shortkey="$store.dispatch($event.srcKey, game)"
+        @shortkey="shortkeyAction"
         class="overflow-hidden"
       >
         <div
@@ -39,82 +48,65 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" :game="game" />
+          <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
-        <q-page-sticky position="top-left" :offset="[6, 6]">
+        <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove :game="game" />
+          <CurrentMove />
         </q-page-sticky>
       </q-page>
     </q-page-container>
 
     <q-drawer
-      v-model="left"
+      v-model="showPTN"
       side="left"
-      :breakpoint="right ? doubleWidth : singleWidth"
+      :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools" :game="game">
-          <ShareButton ref="shareButton" :game="game" flat stretch no-menu />
+        <PTNTools ref="tools">
+          <ShareButton ref="shareButton" flat stretch no-menu />
         </PTNTools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" :game="game" />
+          <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <q-btn-group spread stretch flat unelevated>
-            <q-btn
-              @click="$store.dispatch('UNDO', game)"
-              icon="undo"
-              :title="$t('Undo')"
-              :disabled="!game.canUndo"
-            />
-            <q-btn
-              @click="$store.dispatch('REDO', game)"
-              icon="redo"
-              :title="$t('Redo')"
-              :disabled="!game.canRedo"
-            />
-          </q-btn-group>
-          <EvalButtons
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-            :game="game"
-          />
+          <UndoButtons spread stretch flat unelevated />
+          <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
     <q-drawer
-      v-model="right"
+      v-model="showText"
       side="right"
-      :breakpoint="left ? doubleWidth : singleWidth"
+      :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
       persistent
     >
-      <Notes ref="notes" class="fit" :game="game" />
+      <Notes ref="notes" class="fit" />
     </q-drawer>
 
     <q-footer>
-      <Scrubber :game="game" />
-      <q-toolbar v-show="$store.state.showControls" class="q-pa-sm bg-ui">
-        <PlayControls :game="game" />
+      <Scrubber />
+      <q-toolbar v-show="$store.state.ui.showControls" class="q-pa-sm bg-ui">
+        <PlayControls />
       </q-toolbar>
     </q-footer>
 
+    <router-view ref="dialog" go-back no-route-dismiss />
+
     <ErrorNotifications :errors="errors" />
-    <GameNotifications :game="game" />
-    <NoteNotifications :game="game" />
+    <GameNotifications />
+    <NoteNotifications />
   </q-layout>
+  <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
 
 <script>
@@ -133,15 +125,16 @@ import NoteNotifications from "../components/notify/NoteNotifications";
 import PlayControls from "../components/controls/PlayControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
+import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 
-import Game from "../PTN/Game";
+import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, forEach } from "lodash";
+import { defaults, forEach, isEqual } from "lodash";
 
 export default {
   components: {
@@ -155,6 +148,7 @@ export default {
     PlayControls,
     Scrubber,
     PTNTools,
+    UndoButtons,
     EvalButtons,
     BoardToggles,
     ShareButton,
@@ -163,51 +157,60 @@ export default {
   data() {
     return {
       Platform,
-      game: this.getGame(),
       errors: [],
       hotkeys: HOTKEYS,
-      defaults: { ...this.$store.state.embedConfig.ui },
+      title: "",
+      defaults: { ...this.$store.state.ui.embedConfig.ui },
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      showNames: true,
     };
   },
   computed: {
-    left: {
+    gameExists() {
+      return Boolean(this.$game);
+    },
+    showPTN: {
       get() {
-        return this.$store.state.showPTN;
+        return this.$store.state.ui.showPTN;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showPTN", value]);
+        this.$store.dispatch("ui/SET_UI", ["showPTN", value]);
       },
     },
-    right: {
+    showText: {
       get() {
-        return this.$store.state.showText;
+        return this.$store.state.ui.showText;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showText", value]);
+        this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
     },
     notifyNotes: {
       get() {
-        return this.$store.state.notifyNotes;
+        return this.$store.state.ui.notifyNotes;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["notifyNotes", value]);
+        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
-    title() {
-      return this.name || this.game.generateName();
-    },
     url() {
-      return this.$store.getters.url(this.game, { state: true });
+      return this.$store.getters["ui/url"](this.$game, { state: true });
     },
   },
   methods: {
     getGame() {
+      if (!this.ptn) {
+        return;
+      }
       let game;
       try {
-        game = new Game(this.ptn, { name: this.name, state: this.state });
+        game = new Game({
+          ptn: this.ptn,
+          name: this.name,
+          board: this.board,
+          state: this.state,
+        });
       } catch (error) {
         const name = game ? game.name : "";
         if (game && name) {
@@ -216,24 +219,47 @@ export default {
         console.error(error);
         this.errors.push(this.$t(`error["${error.message}"]`));
       }
-      return game;
+      this.$store.dispatch("game/SET_GAME", game);
+      this.$router.replace("/");
+    },
+    info() {
+      this.$router.push({ name: "info-view" });
     },
     openLink() {
       window.open(
-        this.$store.getters.url(this.game, { origin: true, state: true }),
+        this.$store.getters["ui/url"](this.$game, {
+          origin: true,
+          state: true,
+        }),
         "_blank"
       );
     },
+    undo() {
+      return $store.dispatch("game/UNDO");
+    },
+    redo() {
+      return $store.dispatch("game/REDO");
+    },
+    shortkeyAction(event) {
+      this.$store.dispatch(event.srcKey);
+    },
     uiShortkey({ srcKey }) {
-      this.$store.dispatch("TOGGLE_UI", srcKey);
+      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "gameInfo":
+          if (this.$route.name !== "info-view") {
+            this.$router.push({ name: "info-view" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "editPTN":
           this.$refs.tools.editDialog = true;
           break;
         case "focusText":
-          this.right = true;
+          this.showText = true;
           this.$refs.notes.$refs.input.focus();
           break;
         case "qrCode":
@@ -258,31 +284,108 @@ export default {
     }
   },
   created() {
-    this.$store.commit("SET_EMBED_GAME");
+    this.$store.commit("ui/SET_EMBED_GAME");
     forEach(this.state, (value, key) => {
-      this.$store.commit("SET_UI", [key, value]);
+      if (!isEqual(value, this.$store.state[key])) {
+        this.$store.commit("ui/SET_UI", [key, value]);
+      }
     });
-    this.$store.dispatch("SET_THEME", this.$store.state.theme);
+    this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
+    this.getGame();
+    this.title = this.name || this.$game.generateName();
+
+    // Embed API
+    const handleMessage = ({ data }) => {
+      switch (data.action) {
+        case "SET_NAME":
+          this.title = data.value;
+          break;
+        case "SET_UI":
+          Object.keys(data.value).forEach((key) => {
+            this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
+          });
+          break;
+        case "SHOW_NAMES":
+          this.showNames = data.value;
+          break;
+        case "SET_GAME":
+        case "SELECT_SQUARE":
+        case "SELECT_PIECE":
+        case "DELETE_PLY":
+        case "DELETE_BRANCH":
+        case "SET_TARGET":
+        case "GO_TO_PLY":
+        case "RENAME_BRANCH":
+        case "TOGGLE_EVALUATION":
+        case "TOGGLE_UI":
+        case "EDIT_NOTE":
+        case "ADD_NOTE":
+        case "REMOVE_NOTE":
+          this.$store.dispatch("game/" + data.action, data.value);
+          break;
+        case "FIRST":
+        case "LAST":
+        case "PREV":
+        case "NEXT":
+        case "UNDO":
+        case "REDO":
+        case "TRIM_BRANCHES":
+        case "TRIM_TO_BOARD":
+        case "TRIM_TO_PLY":
+        case "CANCEL_MOVE":
+          this.$store.dispatch("game/" + data.action);
+          break;
+        case "NOTIFY":
+        case "NOTIFY_ERROR":
+        case "NOTIFY_SUCCESS":
+        case "NOTIFY_WARNING":
+        case "NOTIFY_HINT":
+          this.$store.dispatch("ui/" + data.action, data.value);
+          break;
+        case "RESET_TRANSFORM":
+        case "ROTATE_180":
+        case "ROTATE_LEFT":
+        case "ROTATE_RIGHT":
+        case "FLIP_HORIZONTAL":
+        case "FLIP_VERTICAL":
+          this.$store.dispatch("ui/" + data.action);
+          break;
+        default:
+          if (data.action) {
+            throw "Invalid message: " + data.action;
+          }
+      }
+    };
+    if (process.env.DEV) {
+      window.removeEventListener("message", handleMessage);
+    }
+    window.addEventListener("message", handleMessage);
   },
   watch: {
     ptn() {
-      this.game = this.getGame();
+      this.$game = this.getGame();
     },
     state: {
       handler(state, oldState) {
+        if (!this.$game) {
+          return;
+        }
         let fullState = {};
         forEach(defaults(fullState, state, this.defaults), (value, key) => {
-          this.$store.commit("SET_UI", [key, value]);
+          this.$store.commit("ui/SET_UI", [key, value]);
         });
-        this.game.state.targetBranch =
+        this.$game.board.targetBranch =
           "targetBranch" in state ? state.targetBranch || "" : "";
         if ("plyIndex" in state && !("plyIndex" in oldState)) {
-          const ply = this.game.state.plies[state.plyIndex];
+          const ply = this.$game.board.plies[state.plyIndex];
           if (ply) {
-            this.game.goToPly(ply.id, state.plyIsDone);
+            this.$store.dispatch("game/GO_TO_PLY", {
+              ply: ply.id,
+              isDone: state.plyIsDone,
+            });
           }
         } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.game.goToPly(0, false);
+          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
         }
       },
       deep: true,

@@ -1,13 +1,13 @@
 <template>
-  <div v-if="$store.state.turnIndicator" class="turn-indicator">
+  <div v-if="$store.state.ui.turnIndicator" class="turn-indicator">
     <div class="player-names row no-wrap" @click.right.prevent>
       <div
         class="player1 relative-position"
-        :style="{ width: $store.state.flatCounts ? widths[1] : '50%' }"
+        :style="{ width: $store.state.ui.flatCounts ? widths[1] : '50%' }"
       >
         <div class="content absolute-fit">
           <div class="name absolute-left q-px-sm">
-            {{ player1 }}
+            {{ hideNames ? "" : player1 }}
           </div>
           <div class="flats absolute-right q-px-sm">
             <span v-if="komi < 0 && counts[2]" class="komi-count">
@@ -19,7 +19,7 @@
       </div>
       <div
         class="player2 relative-position"
-        :style="{ width: $store.state.flatCounts ? widths[2] : '50%' }"
+        :style="{ width: $store.state.ui.flatCounts ? widths[2] : '50%' }"
       >
         <div class="content absolute-fit row no-wrap">
           <div class="flats q-px-sm">
@@ -29,12 +29,12 @@
             </span>
           </div>
           <div class="name q-mx-sm relative-position">
-            {{ player2 }}
+            {{ hideNames ? "" : player2 }}
           </div>
         </div>
       </div>
       <div
-        v-if="komi !== 0 && $store.state.flatCounts"
+        v-if="komi !== 0 && $store.state.ui.flatCounts"
         class="komi"
         :class="{ dark: komiDark }"
         :style="{ width: widths.komiWidth, left: widths.komiLeft }"
@@ -50,7 +50,9 @@
 <script>
 export default {
   name: "TurnIndicator",
-  props: ["game"],
+  props: {
+    hideNames: Boolean,
+  },
   data() {
     return {
       size: null,
@@ -59,41 +61,44 @@ export default {
       x: 0,
       y: 0,
       prevBoardRotation: null,
-      boardRotation: this.$store.state.boardRotation,
+      boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
     };
   },
   computed: {
+    board() {
+      return this.$store.state.game.board;
+    },
     turn() {
-      return this.$store.state.isEditingTPS
-        ? this.$store.state.selectedPiece.color
+      return this.$store.state.game.editingTPS !== undefined
+        ? this.$store.state.ui.selectedPiece.color
         : this.position.turn;
     },
     boardPly() {
-      return this.game.state.ply;
+      return this.board.ply;
     },
     player1() {
-      return this.game.tag("player1");
+      return this.$store.state.game.ptn.tags.player1;
     },
     player2() {
-      return this.game.tag("player2");
+      return this.$store.state.game.ptn.tags.player2;
     },
     flats() {
-      return this.game.state.flats;
+      return this.board.flats;
     },
     minNameWidth() {
-      return 100 / this.game.size;
+      return 100 / this.$store.state.game.config.size;
     },
     komi() {
-      return this.game.tags.komi ? this.game.tags.komi.value : 0;
+      return this.$store.state.game.config.komi;
     },
     komiDark() {
       return this.komi < 0
-        ? this.$store.state.theme.player1Dark
-        : this.$store.state.theme.player2Dark;
+        ? this.$store.state.ui.theme.player1Dark
+        : this.$store.state.ui.theme.player2Dark;
     },
     counts() {
-      if (this.$store.state.flatCounts) {
+      if (this.$store.state.ui.flatCounts) {
         return [
           this.komi < 0 ? this.flats[0] + this.komi : this.flats[0],
           this.komi > 0 ? this.flats[1] - this.komi : this.flats[1],
@@ -142,8 +147,10 @@ $turn-indicator-height: 0.5em;
 $radius: 0.35em;
 
 .turn-indicator {
+  transform-style: preserve-3d;
+
   .player-names {
-    $fadeWidth: 10px;
+    $fadeWidth: 8px;
     text-align: left;
     height: 1.75em;
     line-height: 1.75;

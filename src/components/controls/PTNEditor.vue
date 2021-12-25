@@ -14,16 +14,16 @@
 </template>
 
 <script>
-import Game from "../../PTN/Game";
+import Game from "../../Game";
 
 import { unescape } from "lodash";
 
 export default {
   name: "PTNEditor",
-  props: ["game"],
   data() {
     return {
       ptn: "",
+      original: "",
       rules: [
         (moves) => {
           const result = Game.validate(this.header + moves);
@@ -43,18 +43,32 @@ export default {
   },
   computed: {
     header() {
-      return this.game.headerText();
+      return this.$game.headerText();
     },
     error() {
       return this.$refs.input.computedErrorMessage;
+    },
+    hasChanges() {
+      return this.ptn !== this.original;
     },
   },
   methods: {
     save() {
       this.$emit("save", this.header + this.ptn);
     },
+    reset() {
+      this.ptn = this.original;
+    },
     init() {
-      this.ptn = this.game ? this.game.moveText(true, true) : "";
+      this.original = this.$game
+        ? this.$game.moveText(true, true).replace(/\r\n/g, "\n")
+        : "";
+      this.ptn = this.original;
+    },
+  },
+  watch: {
+    ptn() {
+      this.$emit("hasChanges", this.hasChanges);
     },
   },
   mounted() {
