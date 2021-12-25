@@ -1,6 +1,6 @@
 <template>
   <span v-if="textOnly">
-    {{ label }}
+    {{ invert ? tooltip : label }}
   </span>
   <span
     v-else-if="date"
@@ -22,7 +22,7 @@ export default {
   name: "relative-time",
   props: {
     value: [Date, Number, String],
-    "text-only": Boolean,
+    textOnly: Boolean,
     invert: Boolean,
     dark: Boolean,
   },

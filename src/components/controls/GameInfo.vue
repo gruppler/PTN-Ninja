@@ -646,6 +646,16 @@
           </div>
         </q-popup-proxy>
       </q-input>
+      <div v-if="tags.date || tags.time" class="text-caption flex flex-center">
+        <template v-if="tags.time">
+          <relative-time :value="datetime" text-only invert /> &nbsp;
+          (<relative-time :value="datetime" text-only />)
+        </template>
+        <template v-else>
+          <relative-date :value="datetime" text-only invert /> &nbsp;
+          (<relative-date :value="datetime" text-only />)
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -654,7 +664,7 @@
 import PlayerName from "../controls/PlayerName";
 import Result from "../PTN/Result";
 
-import { formats } from "../../Game/PTN/Tag";
+import Tag, { formats } from "../../Game/PTN/Tag";
 import TPS from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
 import {
@@ -747,6 +757,9 @@ export default {
         ? this.$store.state.online.user
         : false;
       return user ? this.game.player(user.uid) : 0;
+    },
+    datetime() {
+      return Tag.toDate(this.tags.date, this.tags.time || "");
     },
   },
   methods: {
