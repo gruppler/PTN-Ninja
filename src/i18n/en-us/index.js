@@ -7,7 +7,7 @@ export default {
   Action: "Action",
   "Animate Board": "Animate Board",
   "Animate while scrubbing": "Animate while scrubbing",
-  "Autodetect": "Autodetect",
+  Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",
