@@ -234,12 +234,12 @@ export const LAST = function (state) {
   Vue.prototype.$game.board.last();
 };
 
-export const PREV = function (state, half) {
-  Vue.prototype.$game.board.prev(half);
+export const PREV = function (state, { half, times }) {
+  Vue.prototype.$game.board.prev(half, times);
 };
 
-export const NEXT = function (state, half) {
-  Vue.prototype.$game.board.next(half);
+export const NEXT = function (state, { half, times }) {
+  Vue.prototype.$game.board.next(half, times);
 };
 
 export const SET_TARGET = function (state, ply) {
