@@ -815,12 +815,22 @@ export default class Board extends Aggregation(
   }
 
   get prevPly() {
-    return this.ply && this.ply.index ? this.plies[this.ply.index - 1] : null;
+    return this.getPrevPly();
+  }
+
+  getPrevPly(times = 1) {
+    return this.ply && this.ply.index > 0
+      ? this.plies[Math.max(0, this.ply.index - times)]
+      : null;
   }
 
   get nextPly() {
+    return this.getNextPly();
+  }
+
+  getNextPly(times = 1) {
     return this.ply && this.ply.index < this.plies.length - 1
-      ? this.plies[this.ply.index + 1]
+      ? this.plies[Math.min(this.plies.length - 1, this.ply.index + times)]
       : null;
   }
 

@@ -532,14 +532,14 @@ export const LAST = function ({ commit, dispatch }) {
   return result;
 };
 
-export const PREV = function ({ commit, dispatch }, half) {
-  const result = commit("PREV", half);
+export const PREV = function ({ commit, dispatch }, { half, times }) {
+  const result = commit("PREV", { half, times });
   dispatch("SAVE_CURRENT_GAME_STATE");
   return result;
 };
 
-export const NEXT = function ({ commit, dispatch }, half) {
-  const result = commit("NEXT", half);
+export const NEXT = function ({ commit, dispatch }, { half, times }) {
+  const result = commit("NEXT", { half, times });
   dispatch("SAVE_CURRENT_GAME_STATE");
   return result;
 };

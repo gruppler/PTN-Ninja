@@ -314,6 +314,8 @@ export default {
         case "DELETE_PLY":
         case "DELETE_BRANCH":
         case "SET_TARGET":
+        case "PREV":
+        case "NEXT":
         case "GO_TO_PLY":
         case "RENAME_BRANCH":
         case "TOGGLE_EVALUATION":
@@ -325,8 +327,6 @@ export default {
           break;
         case "FIRST":
         case "LAST":
-        case "PREV":
-        case "NEXT":
         case "UNDO":
         case "REDO":
         case "TRIM_BRANCHES":

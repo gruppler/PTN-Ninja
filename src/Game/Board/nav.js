@@ -316,7 +316,7 @@ export default class BoardNavigation {
     return this.goToPly(last(this.plies).id, true);
   }
 
-  prev(half = false) {
+  prev(half = false, times = 1) {
     if (this.selected.pieces.length) {
       return false;
     }
@@ -325,13 +325,16 @@ export default class BoardNavigation {
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;
-    } else if (this.prevPly) {
-      return this.goToPly(this.prevPly.id, true);
+    } else {
+      let destination = this.getPrevPly(times);
+      if (destination) {
+        return this.goToPly(destination.id, !half);
+      }
     }
     return false;
   }
 
-  next(half = false) {
+  next(half = false, times = 1) {
     if (this.selected.pieces.length) {
       return false;
     }
@@ -340,8 +343,11 @@ export default class BoardNavigation {
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;
-    } else if (this.nextPly) {
-      return this.goToPly(this.nextPly.id, !half);
+    } else {
+      let destination = this.getNextPly(times);
+      if (destination) {
+        return this.goToPly(destination.id, !half);
+      }
     }
     return false;
   }
