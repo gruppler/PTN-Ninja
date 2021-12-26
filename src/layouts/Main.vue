@@ -417,6 +417,9 @@ export default {
           break;
       }
     },
+    share() {
+      this.$refs.shareButton.share();
+    },
     uiShortkey({ srcKey }) {
       if (!this.disabledOptions.includes(srcKey)) {
         this.$store.dispatch("ui/TOGGLE_UI", srcKey);

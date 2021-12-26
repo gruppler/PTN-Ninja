@@ -342,7 +342,7 @@ export default {
   success: {
     closedMultipleGames: "Closed 1 game | Closed {count} games",
     copied: "Copied!",
-    copiedItem: "Copied {item}!",
+    copiedItem: "Copied {item}",
     emailRecovered: "Email address restored",
     emailVerified: "Email address verified",
     passwordChanged: "Password changed",

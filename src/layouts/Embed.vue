@@ -69,7 +69,7 @@
     >
       <div class="absolute-fit column">
         <PTNTools ref="tools">
-          <ShareButton ref="shareButton" flat stretch no-menu />
+          <ShareButton flat stretch no-menu />
         </PTNTools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
