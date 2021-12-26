@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { debounce } from "lodash";
+import { throttle } from "lodash";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -357,35 +357,35 @@ export const SAVE_CURRENT_GAME = function ({ commit, state }) {
     LocalStorage.set("state-" + game.name, game.minState);
     LocalStorage.set("history-" + game.name, game.history);
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    commit("SAVE_CURRENT_GAME");
   }
+  commit("SAVE_CURRENT_GAME");
 };
 
-export const SAVE_CURRENT_GAME_STATE = debounce(function ({ commit, state }) {
+export const SAVE_CURRENT_GAME_STATE = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
     LocalStorage.set("state-" + game.name, game.minState);
-    commit("SAVE_CURRENT_GAME_STATE");
   }
+  commit("SAVE_CURRENT_GAME_STATE");
 }, 300);
 
-export const SAVE_UNDO_HISTORY = debounce(function ({ commit, state }) {
+export const SAVE_UNDO_HISTORY = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
     LocalStorage.set("history-" + game.name, game.history);
-    commit("SAVE_UNDO_HISTORY");
   }
+  commit("SAVE_UNDO_HISTORY");
 }, 300);
 
-export const SAVE_UNDO_INDEX = debounce(function ({ commit, state }) {
+export const SAVE_UNDO_INDEX = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
     LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    commit("SAVE_UNDO_INDEX");
   }
+  commit("SAVE_UNDO_INDEX");
 }, 300);
 
-export const SAVE_PTN = debounce(function ({ state, commit }, ptn) {
+export const SAVE_PTN = throttle(function ({ state, commit }, ptn) {
   LocalStorage.set("ptn-" + state.list[0].name, ptn);
   commit("SAVE_PTN", ptn);
 }, 300);

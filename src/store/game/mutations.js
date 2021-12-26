@@ -83,30 +83,32 @@ export const SAVE_CURRENT_GAME = (state) => {
     state.history = game.history;
     state.historyIndex = game.historyIndex;
 
-    state.list[0].ptn = game.ptn;
-    state.list[0].state = cloneDeep(game.minState);
-    state.list[0].history = game.history.concat();
-    state.list[0].historyIndex = game.historyIndex;
+    if (state.list.length) {
+      state.list[0].ptn = game.ptn;
+      state.list[0].state = cloneDeep(game.minState);
+      state.list[0].history = game.history.concat();
+      state.list[0].historyIndex = game.historyIndex;
+    }
   }
 };
 
 export const SAVE_CURRENT_GAME_STATE = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     Vue.set(state.list[0], "state", cloneDeep(game.minState));
   }
 };
 
 export const SAVE_UNDO_HISTORY = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     state.list[0].history = game.history.concat();
   }
 };
 
 export const SAVE_UNDO_INDEX = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     Vue.set(state.list[0], "historyIndex", game.historyIndex);
   }
 };
