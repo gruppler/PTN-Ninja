@@ -459,7 +459,7 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (state) {
+    if (state && !isEmpty(state)) {
       if (!(state.targetBranch in this.branches)) {
         state.targetBranch = "";
       }
