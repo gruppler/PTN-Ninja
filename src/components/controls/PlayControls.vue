@@ -242,10 +242,9 @@ export default {
           this.timestamp = new Date().getTime();
         }
         if (!this.isFirst) {
-          this.$store.dispatch(
-            "game/PREV",
-            event === true || event.srcKey === "half"
-          );
+          this.$store.dispatch("game/PREV", {
+            half: event === true || event.srcKey === "half",
+          });
         }
       });
     },
@@ -261,10 +260,9 @@ export default {
         }
         if (!this.isLast) {
           this.isPlaying =
-            this.$store.dispatch(
-              "game/NEXT",
-              this.isPlaying || event === true || event.srcKey === "half"
-            ) && this.isPlaying;
+            this.$store.dispatch("game/NEXT", {
+              half: this.isPlaying || event === true || event.srcKey === "half",
+            }) && this.isPlaying;
           if (this.isLast && this.isPlaying) {
             this.pause();
           }

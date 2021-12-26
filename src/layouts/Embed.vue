@@ -39,8 +39,8 @@
       @shortkey="uiShortkey"
     >
       <q-page
-        v-shortkey="hotkeys.ACTIONS"
-        @shortkey="shortkeyAction"
+        v-shortkey="hotkeys.DIALOGS"
+        @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
         <div
@@ -51,7 +51,7 @@
           <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
         <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles />
+          <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove />
@@ -197,6 +197,9 @@ export default {
     url() {
       return this.$store.getters["ui/url"](this.$game, { state: true });
     },
+    isDialogShowing() {
+      return !["local", "game"].includes(this.$route.name);
+    },
   },
   methods: {
     getGame() {
@@ -240,13 +243,10 @@ export default {
     redo() {
       return $store.dispatch("game/REDO");
     },
-    shortkeyAction(event) {
-      this.$store.dispatch(event.srcKey);
-    },
     uiShortkey({ srcKey }) {
       this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
-    miscShortkey({ srcKey }) {
+    dialogShortkey({ srcKey }) {
       switch (srcKey) {
         case "gameInfo":
           if (this.$route.name !== "info-view") {
@@ -256,21 +256,28 @@ export default {
           }
           break;
         case "editPTN":
-          this.$refs.tools.editDialog = true;
-          break;
-        case "focusText":
-          this.showText = true;
-          this.$refs.notes.$refs.input.focus();
-          break;
-        case "qrCode":
-          if (this.$refs.shareButton.qrDialog) {
-            this.$refs.shareButton.qrDialog = false;
+          if (this.$route.name !== "edit") {
+            this.$router.push({ name: "edit" });
           } else {
-            this.$refs.shareButton.qrCode();
+            this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "share":
-          this.$refs.shareButton.share();
+        case "qrCode":
+          if (this.$route.name !== "qr") {
+            this.$router.push({ name: "qr" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
+      }
+    },
+    miscShortkey({ srcKey }) {
+      switch (srcKey) {
+        case "focusText":
+          this.showText = true;
+          this.$refs[
+            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
+          ].$refs.input.focus();
           break;
       }
     },
@@ -314,6 +321,8 @@ export default {
         case "DELETE_PLY":
         case "DELETE_BRANCH":
         case "SET_TARGET":
+        case "PREV":
+        case "NEXT":
         case "GO_TO_PLY":
         case "RENAME_BRANCH":
         case "TOGGLE_EVALUATION":
@@ -325,8 +334,6 @@ export default {
           break;
         case "FIRST":
         case "LAST":
-        case "PREV":
-        case "NEXT":
         case "UNDO":
         case "REDO":
         case "TRIM_BRANCHES":

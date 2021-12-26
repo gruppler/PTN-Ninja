@@ -28,7 +28,7 @@
       </smooth-reflow>
     </template>
 
-    <div class="help">
+    <div ref="help" class="help">
       <q-tab-panels v-model="section" animated>
         <q-tab-panel name="about">
           <q-markdown :src="about" no-heading-anchor-links />
@@ -36,6 +36,15 @@
 
         <q-tab-panel name="usage">
           <q-markdown :src="usage" no-heading-anchor-links />
+          <q-page-sticky position="top-right" :offset="[6, 6]">
+            <FullscreenToggle
+              :target="$refs.help"
+              class="dimmed-btn"
+              :ripple="false"
+              flat
+              fab
+            />
+          </q-page-sticky>
         </q-tab-panel>
 
         <q-tab-panel name="hotkeys">
@@ -58,10 +67,11 @@
 
 <script>
 import Hotkeys from "../components/general/Hotkeys.vue";
+import FullscreenToggle from "../components/controls/FullscreenToggle";
 
 export default {
   name: "Help",
-  components: { Hotkeys },
+  components: { Hotkeys, FullscreenToggle },
   data() {
     return {
       about: "",
@@ -110,6 +120,8 @@ export default {
 
 <style lang="scss">
 .help {
+  overflow: auto;
+
   h6 {
     margin-top: 0;
     margin-bottom: 1em;
@@ -119,6 +131,9 @@ export default {
   }
 
   .q-markdown {
+    max-width: 900px;
+    margin: 0 auto;
+
     .q-markdown--link {
       color: $primary;
       color: var(--q-color-primary);

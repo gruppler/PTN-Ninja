@@ -55,7 +55,7 @@
         @blur="cancelEdit"
         debounce="50"
         class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
-        v-model.trim="message"
+        v-model="message"
         :placeholder="$t('Note')"
         dense
         rounded
@@ -69,7 +69,7 @@
           <q-btn
             @click="send"
             :icon="editing ? 'edit' : 'add_note'"
-            :disabled="!message.length"
+            :disabled="!message.trim().length"
             flat
             dense
             round
@@ -187,11 +187,11 @@ export default {
           this.$store.dispatch("game/EDIT_NOTE", {
             plyID: this.editing.plyID,
             index: this.editing.index,
-            message: this.message,
+            message: this.message.trim(),
           });
           this.editing = null;
         } else {
-          this.$store.dispatch("game/ADD_NOTE", this.message);
+          this.$store.dispatch("game/ADD_NOTE", this.message.trim());
         }
         this.message = "";
         this.$refs.input.focus();

@@ -326,7 +326,7 @@ export default {
       if (!this.isSaved) {
         delete theme.isBuiltIn;
       }
-      this.$store.dispatch("ui/COPY", {
+      this.$store.dispatch("ui/SHARE", {
         title: this.$t("Theme") + " – " + this.theme.name,
         text: JSON.stringify(theme),
       });

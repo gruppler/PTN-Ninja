@@ -376,6 +376,7 @@ export default {
       if (this.tags.tps) {
         this.$store.dispatch("ui/COPY", {
           text: this.tags.tps.text,
+          title: this.$t("TPS"),
         });
       }
     },

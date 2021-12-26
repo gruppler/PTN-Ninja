@@ -98,7 +98,6 @@ import { forEach, throttle } from "lodash";
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
-const SCROLL_THRESHOLD = 250;
 
 export default {
   name: "Board",
@@ -137,6 +136,9 @@ export default {
     },
     scrubbing() {
       return this.$store.state.ui.scrubbing;
+    },
+    scrollThreshold() {
+      return this.$store.state.ui.scrollThreshold;
     },
     disableAnimations() {
       return (
@@ -376,12 +378,12 @@ export default {
 
         // Handle smooth scrolling
         this.deltaY += event.deltaY;
-        if (Math.abs(this.deltaY) >= SCROLL_THRESHOLD) {
+        if (Math.abs(this.deltaY) >= this.scrollThreshold) {
           const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
-          let times = Math.floor(Math.abs(this.deltaY) / SCROLL_THRESHOLD);
-          this.deltaY = (this.deltaY + event.deltaY) % SCROLL_THRESHOLD;
-          while (times-- > 0) {
-            this.$store.dispatch(action, this.isSlowScrub);
+          let times = Math.floor(Math.abs(this.deltaY) / this.scrollThreshold);
+          this.deltaY = (this.deltaY + event.deltaY) % this.scrollThreshold;
+          if (times) {
+            this.$store.dispatch(action, { half: this.isSlowScrub, times });
           }
         }
 
@@ -390,6 +392,7 @@ export default {
           // End scrubbing
           this.$store.commit("ui/SET_SCRUBBING", "end");
           this.isSlowScrub = false;
+          this.deltaY = 0;
         }, 300);
       }
     },

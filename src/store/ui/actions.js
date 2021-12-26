@@ -212,39 +212,41 @@ export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function ({ dispatch, state }, { url, text, title }) {
-  function copy() {
-    copyToClipboard(text || url)
-      .then(() => {
-        dispatch("NOTIFY", {
-          icon: "copy",
-          message: i18n.t("success.copied"),
-          timeout: 1000,
-        });
-      })
-      .catch(() => {
-        Dialog.create({
-          class: "bg-ui",
-          color: "primary",
-          prompt: {
-            model: text || url,
-            filled: true,
-            type: text && text.includes("\n") ? "textarea" : "text",
-          },
-          cancel: false,
-        });
+export const COPY = function ({ dispatch, state }, { text, title }) {
+  return copyToClipboard(text)
+    .then(() => {
+      dispatch("NOTIFY", {
+        icon: "copy",
+        message: i18n.t(title ? "success.copiedItem" : "success.copied", {
+          item: title,
+        }),
+        timeout: 1000,
       });
-  }
+    })
+    .catch(() => {
+      Dialog.create({
+        class: "bg-ui",
+        color: "primary",
+        prompt: {
+          model: text,
+          filled: true,
+          type: text && text.includes("\n") ? "textarea" : "text",
+        },
+        cancel: false,
+      });
+    });
+};
 
+export const SHARE = function ({ dispatch, state }, { text, title }) {
   if (state.nativeSharing) {
-    navigator.share({ url, text, title }).catch((error) => {
+    navigator.share({ text, title }).catch((error) => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
-        copy();
+        dispatch("COPY", { text, title });
       }
     });
   } else {
-    copy();
+    dispatch("COPY", { text, title });
   }
 };
 

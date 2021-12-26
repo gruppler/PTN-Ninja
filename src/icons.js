@@ -6,6 +6,7 @@ export default {
   add_note: "mdi-message-plus",
   arrow_back: "mdi-arrow-left",
   arrow_drop_down: "mdi-menu-down",
+  autofix: "mdi-auto-fix",
   backspace: "mdi-backspace",
   backward: "mdi-chevron-left",
   board: "mdi-checkerboard",
