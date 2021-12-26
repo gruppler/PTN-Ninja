@@ -23,8 +23,12 @@ if (!Platform.within.iframe && LocalStorage.has("games")) {
     let state = load("state-" + name);
     if (ptn && (!state || !state.tps || !state.ply)) {
       // Backward compatibility
-      state = new Game({ ptn, state }).minState;
-      LocalStorage.set("state-" + name, state);
+      try {
+        state = new Game({ ptn, state }).minState;
+        LocalStorage.set("state-" + name, state);
+      } catch (error) {
+        console.error("Error parsing " + name, error);
+      }
     }
     return {
       name,

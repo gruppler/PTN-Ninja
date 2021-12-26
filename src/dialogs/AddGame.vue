@@ -172,7 +172,11 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
-      let game = new Game({ name, tags });
+      try {
+        let game = new Game({ name, tags });
+      } catch (error) {
+        console.error(error);
+      }
 
       game.warnings.forEach((warning) =>
         this.$store.dispatch("NOTIFY_WARNING", warning)
