@@ -279,6 +279,10 @@ export default {
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
+        case "game/UNDO":
+        case "game/REDO":
+          this.$store.dispatch(srcKey);
+          break;
       }
     },
   },
