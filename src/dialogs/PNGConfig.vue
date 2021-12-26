@@ -197,7 +197,7 @@
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { pngUIOptions } from "../store/ui/state";
 
-import { cloneDeep } from "lodash";
+import { cloneDeep, throttle } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -250,7 +250,7 @@ export default {
     updateConfig() {
       this.config = cloneDeep(this.$store.state.ui.pngConfig);
     },
-    updatePreview() {
+    updatePreview: throttle(function () {
       const config = cloneDeep(this.config);
       this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       let canvas = this.$game.board.render(config);
@@ -262,7 +262,7 @@ export default {
         this.fileSize = humanStorageSize(this.file.size);
         this.preview = URL.createObjectURL(blob);
       });
-    },
+    }, 250),
     loadPreview() {
       const img = this.$refs.preview;
       this.dimensions =
