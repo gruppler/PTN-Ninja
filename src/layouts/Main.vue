@@ -53,14 +53,11 @@
     <q-page-container
       class="bg-bg"
       v-shortkey="hotkeys.UI"
-      @shortkey="
-        if (!disabledOptions.includes($event.srcKey))
-          $store.dispatch('ui/TOGGLE_UI', $event.srcKey);
-      "
+      @shortkey="uiShortkey"
     >
       <q-page
-        v-shortkey="hotkeys.ACTIONS"
-        @shortkey="shortkeyAction"
+        v-shortkey="hotkeys.DIALOGS"
+        @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
         <div
@@ -68,12 +65,10 @@
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
         >
-          <Board ref="board" class="col-grow" />
+          <Board class="col-grow" />
         </div>
         <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles
-            v-if="$route.name !== 'embed' && !isGamesTableShowing"
-          />
+          <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
@@ -284,12 +279,8 @@ export default {
     disabledOptions() {
       return this.$store.getters["game/disabledOptions"];
     },
-    isGamesTableShowing() {
-      return (
-        this.$route.name === "add" &&
-        this.$route.params.tab === "load" &&
-        this.$route.params.online
-      );
+    isDialogShowing() {
+      return !["local", "game"].includes(this.$route.name);
     },
     games() {
       return this.$store.state.game.list;
@@ -426,11 +417,27 @@ export default {
           break;
       }
     },
-    shortkeyAction(event) {
-      this.$store.dispatch(event.srcKey);
+    uiShortkey({ srcKey }) {
+      if (!this.disabledOptions.includes(srcKey)) {
+        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      }
     },
-    miscShortkey({ srcKey }) {
+    dialogShortkey({ srcKey }) {
       switch (srcKey) {
+        case "embedGame":
+          if (this.$route.name !== "embed") {
+            this.$router.push({ name: "embed" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
+        case "configPNG":
+          if (this.$route.name !== "png") {
+            this.$router.push({ name: "png" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "gameInfo":
           if (this.$route.name !== "info-view") {
             this.$router.push({ name: "info-view" });
@@ -450,39 +457,6 @@ export default {
             this.$router.push({ name: "edit" });
           } else {
             this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "embedGame":
-          if (this.$route.name !== "embed") {
-            this.$router.push({ name: "embed" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "sharePNG":
-          if (this.$route.name !== "png") {
-            this.$router.push({ name: "png" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "focusText":
-          this.showText = true;
-          this.$refs[
-            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
-          ].$refs.input.focus();
-          break;
-        case "focusGame":
-          this.$refs.gameSelector.$refs.select.showPopup();
-          break;
-        case "previousGame":
-          if (this.$store.state.game.list.length > 1) {
-            this.$refs.gameSelector.select(1);
-          }
-          break;
-        case "toggleText":
-          if (this.hasChat) {
-            this.textTab = this.textTab === "notes" ? "chat" : "notes";
           }
           break;
         case "help":
@@ -606,8 +580,33 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "share":
-          this.share();
+      }
+    },
+    miscShortkey({ srcKey }) {
+      switch (srcKey) {
+        case "focusText":
+          this.showText = true;
+          this.$refs[
+            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
+          ].$refs.input.focus();
+          break;
+        case "focusGame":
+          this.$refs.gameSelector.$refs.select.showPopup();
+          break;
+        case "previousGame":
+          if (this.$store.state.game.list.length > 1) {
+            this.$refs.gameSelector.select(1);
+          }
+          break;
+        case "toggleText":
+          if (this.hasChat) {
+            this.textTab = this.textTab === "notes" ? "chat" : "notes";
+          }
+          break;
+        case "game/UNDO":
+        case "game/REDO":
+        case "ui/OPEN":
+          this.$store.dispatch(srcKey);
           break;
       }
     },
@@ -624,9 +623,6 @@ export default {
     },
     showTextTab(value) {
       this.textTab = value;
-    },
-    share() {
-      this.$refs.shareButton.share();
     },
     openFiles(event) {
       this.nop(event);

@@ -1,7 +1,7 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
     <!-- Game Name -->
-    <q-input v-model.trim="name" name="name" :label="$t('Name')" filled>
+    <q-input v-model="name" name="name" :label="$t('Name')" filled>
       <template v-slot:prepend>
         <q-icon name="file" />
       </template>
@@ -34,7 +34,7 @@
           <q-input
             v-else
             class="col-grow"
-            v-model.trim="tags.player1"
+            v-model="tags.player1"
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
@@ -92,7 +92,7 @@
           <q-input
             v-else
             class="col-grow"
-            v-model.trim="tags.player2"
+            v-model="tags.player2"
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
@@ -167,7 +167,7 @@
         ref="tps"
         v-show="tags.tps || !game || !game.plies.length"
         class="col-grow"
-        v-model.trim="tags.tps"
+        v-model="tags.tps"
         name="tps"
         :label="$t('TPS')"
         :rules="rules('tps')"
@@ -513,7 +513,7 @@
     <!-- Event -->
     <q-input
       v-show="isVisible('event')"
-      v-model.trim="tags.event"
+      v-model="tags.event"
       name="event"
       :label="$t('Event')"
       :rules="rules('event')"
@@ -528,7 +528,7 @@
     <!-- Site -->
     <q-input
       v-show="isVisible('site')"
-      v-model.trim="tags.site"
+      v-model="tags.site"
       name="site"
       :label="$t('Site')"
       :rules="rules('site')"
@@ -770,7 +770,15 @@ export default {
       if (this.hasErrors()) {
         return false;
       }
-      this.name = this.name || "";
+      // Trim
+      this.name = (this.name || "").trim();
+      if (this.tags.player1) this.tags.player1 = this.tags.player1.trim();
+      if (this.tags.player2) this.tags.player2 = this.tags.player2.trim();
+      if (this.tags.tps) this.tags.tps = this.tags.tps.trim();
+      if (this.tags.event) this.tags.event = this.tags.event.trim();
+      if (this.tags.site) this.tags.site = this.tags.site.trim();
+
+      // Auto-generate name if necessary
       if (!this.game || this.game.name !== this.name) {
         if (!this.name) {
           this.name = this.generatedName;
@@ -893,6 +901,7 @@ export default {
     },
     name(name) {
       if (this.game) {
+        name = name.trim();
         if (this.game.name !== name) {
           this.changes.name = name;
         } else {
@@ -912,8 +921,15 @@ export default {
           this.return;
         }
         const changes = {};
+        // Trim
+        tags = { ...tags };
+        if (tags.player1) tags.player1 = tags.player1.trim();
+        if (tags.player2) tags.player2 = tags.player2.trim();
+        if (tags.tps) tags.tps = tags.tps.trim();
+        if (tags.event) tags.event = tags.event.trim();
+        if (tags.site) tags.site = tags.site.trim();
         Object.keys(tags).forEach((key) => {
-          const value = this.tags[key] || null;
+          const value = tags[key] || null;
           const originalValue = this.game ? this.game.tag(key) || null : null;
           if (!this.game || value !== originalValue) {
             changes[key] = value;

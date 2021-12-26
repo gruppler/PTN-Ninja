@@ -2,11 +2,11 @@
   <div
     class="board-toggles q-gutter-sm"
     :class="{ 'row reverse': isPortrait, column: !isPortrait }"
+    v-shortkey="hotkeys"
+    @shortkey="shortkey"
   >
     <FullscreenToggle
-      v-if="$q.fullscreen.isCapable"
-      @input="$q.fullscreen.toggle()"
-      :value="$q.fullscreen.isActive"
+      :target="fullscreenTarget"
       class="dimmed-btn"
       :ripple="false"
       :color="fg"
@@ -130,10 +130,17 @@
 
 <script>
 import FullscreenToggle from "./FullscreenToggle";
+import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "BoardToggles",
   components: { FullscreenToggle },
+  props: ["fullscreenTarget"],
+  data() {
+    return {
+      hotkeys: HOTKEYS.TRANSFORMS,
+    };
+  },
   computed: {
     fg() {
       return this.$store.state.ui.theme.secondaryDark
@@ -175,6 +182,9 @@ export default {
     },
     flipVertical() {
       this.$store.dispatch("ui/FLIP_VERTICAL");
+    },
+    shortkey({ srcKey }) {
+      this[srcKey]();
     },
   },
 };

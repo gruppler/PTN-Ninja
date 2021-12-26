@@ -86,7 +86,7 @@ PTN Ninja allows you to rotate and flip the orientation of the board, which may 
 3D Mode
 ---
 
-Although 2D mode offers a better analytical view of the board, 3D mode provides some semblance of how the game might look on a physical board.
+While 2D mode gives a more analytical view of the board, 3D mode offers some semblance of how the game might look on a physical board.
 
 :::
 - Toggle 3D/2D mode by **clicking** the "3D" button in the corner of the board area, or using the hotkey <kbd>D</kbd>.
