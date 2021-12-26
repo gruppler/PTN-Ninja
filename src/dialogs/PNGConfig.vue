@@ -291,9 +291,9 @@ export default {
       this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
     },
     share() {
-      this.$store.dispatch("ui/COPY", {
+      this.$store.dispatch("ui/SHARE", {
         title: this.$t("Share PNG"),
-        url: this.url,
+        text: this.url,
       });
     },
     close() {

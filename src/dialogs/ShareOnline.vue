@@ -262,10 +262,7 @@ export default {
         });
     },
     copy(text) {
-      this.$store.dispatch("ui/COPY", {
-        text,
-        message: this.$t("Copied"),
-      });
+      this.$store.dispatch("ui/COPY", { text, title: "URL" });
     },
     qrCode(text) {
       this.$router.push({ name: "qr", params: { text } });

@@ -4,6 +4,8 @@
     v-bind="$attrs"
     @click="noMenu ? share() : null"
     @click.right.prevent="share"
+    v-shortkey="hotkeys"
+    @shortkey="shortkey"
   >
     <hint>{{ $t("Share") }}</hint>
     <q-menu
@@ -29,6 +31,8 @@
 </template>
 
 <script>
+import { HOTKEYS } from "../../keymap";
+
 export default {
   name: "ShareButton",
   props: {
@@ -37,6 +41,7 @@ export default {
   data() {
     return {
       bottomSheet: false,
+      hotkeys: HOTKEYS.SHARING,
     };
   },
   computed: {
@@ -136,15 +141,37 @@ export default {
     },
   },
   methods: {
-    shareText(type) {
+    shortkey({ srcKey }) {
+      switch (srcKey) {
+        case "exportPNG":
+          this.$store.dispatch("game/EXPORT_PNG");
+          break;
+        case "exportPTN":
+          this.shareFile();
+          break;
+        case "share":
+          this.share();
+          break;
+        case "shareTPS":
+          this.shareText("tps");
+          break;
+        case "sharePTN":
+          this.shareText("ptn");
+          break;
+        case "shareURL":
+          this.shareText("url", true);
+          break;
+      }
+    },
+    shareText(type, option) {
       let output;
       switch (type) {
         case "url":
           output = {
-            title: this.$game.name,
-            url: this.$store.getters["ui/url"](this.$game, {
+            title: this.$t(option ? "Link to Position" : "Link to Game"),
+            text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
-              state: Boolean(arguments[1]),
+              state: Boolean(option),
             }),
           };
           break;
@@ -156,24 +183,24 @@ export default {
           break;
         case "tps":
           output = {
-            title: this.$game.board.tps,
+            title: this.$t("TPS"),
             text: this.$game.board.tps,
           };
           break;
         case "moves":
           output = {
-            title: this.$t("Moves") + " – " + this.$game.name,
+            title: this.$t("Moves"),
             text: this.$game.moveText(this.$store.state.showAllBranches, true),
           };
           break;
         case "ptn":
           output = {
-            title: this.$t("PTN") + " – " + this.$game.name,
+            title: this.$t("PTN"),
             text: this.$game.ptn,
           };
           break;
       }
-      this.$store.dispatch("ui/COPY", output);
+      this.$store.dispatch("ui/SHARE", output);
     },
     shareFile() {
       this.$store.dispatch("ui/EXPORT_PTN");

@@ -304,7 +304,7 @@ export default {
       });
     },
     share() {
-      this.$store.dispatch("ui/COPY", {
+      this.$store.dispatch("ui/SHARE", {
         title: this.$t("Embed") + " – " + this.name,
         text: this.code,
       });

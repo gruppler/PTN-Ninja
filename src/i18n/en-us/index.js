@@ -31,6 +31,7 @@ export default {
   Close: "Close",
   Colors: "Colors",
   "Coming soon": "Coming soon!",
+  "Configure PNG": "Configure PNG",
   Confirm: "Confirm",
   Copy: "Copy",
   "Copy URL": "Copy URL",
@@ -156,8 +157,8 @@ export default {
   Rename: "Rename",
   Replace: "Replace",
   Reset: "Reset",
-  "Reset Board Transformation": "Reset Board Transformation",
   "Reset Password": "Reset Password",
+  "Reset Transformation": "Reset Transformation",
   Result: "Result",
   "Road Connections": "Road Connections",
   Role: "Role",
@@ -173,6 +174,8 @@ export default {
   "Select Branch": "Select Branch",
   Share: "Share",
   "Share PNG": "Share PNG",
+  "Share PTN": "Share PTN",
+  "Share TPS": "Share TPS",
   "Share URL": "Share URL",
   "Show All Branches": "Show All Branches",
   "Show Branch Menu": "Show Branch Menu",
@@ -339,6 +342,7 @@ export default {
   success: {
     closedMultipleGames: "Closed 1 game | Closed {count} games",
     copied: "Copied!",
+    copiedItem: "Copied {item}!",
     emailRecovered: "Email address restored",
     emailVerified: "Email address verified",
     passwordChanged: "Password changed",
@@ -365,12 +369,14 @@ export default {
   },
 
   hotkeys: {
-    UI: "UI Preferences", // User Interface
     CONTROLS: "Play Controls",
-    ACTIONS: "Global Actions",
+    DIALOGS: "Dialogs",
     EVAL: "Evaluation",
-    PIECE: "Piece Selector (TPS Mode)",
     MISC: "Miscellaneous",
+    PIECE: "Piece Selector (TPS Mode)",
+    SHARING: "Sharing",
+    TRANSFORMS: "Board Transformations",
+    UI: "UI Preferences", // User Interface
     "0-9": "0–9",
     Alt: "Alt",
     Arrowdown: "▼",
