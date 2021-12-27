@@ -292,7 +292,7 @@ export default {
       }
     },
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {

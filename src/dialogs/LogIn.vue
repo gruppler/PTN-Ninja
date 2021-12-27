@@ -254,7 +254,7 @@ export default {
       };
 
       if (Object.values(this.$store.state.online.privateGames).length) {
-        this.$store.dispatch("ui/PROMPT", {
+        this.prompt({
           title: this.$t("confirm.logInTitle"),
           message: this.$t("confirm.logInMessage"),
           ok: this.$t("confirm.logInOK"),
@@ -270,7 +270,7 @@ export default {
     },
     resetPassword() {
       if (this.email.trim().length) {
-        this.$store.dispatch("ui/PROMPT", {
+        this.prompt({
           title: this.$t("Confirm"),
           message: this.$t("confirm.resetPassword", { email: this.email }),
           success: () => {

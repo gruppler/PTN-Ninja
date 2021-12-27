@@ -220,91 +220,102 @@ export default class BoardNavigation {
   }
 
   goToPly(plyID, isDone) {
-    const targetPly = this.game.plies[plyID];
+    try {
+      const targetPly = this.game.plies[plyID];
 
-    if (!targetPly || !this.ply || this.selected.pieces.length) {
-      return false;
-    }
-
-    const target = {
-      plyIsDone: isDone,
-      move: targetPly.move,
-      branch: targetPly.branch,
-      number: targetPly.move.number,
-    };
-
-    const boardPly = this.game.plies[this.boardPly.id];
-
-    // Load a board state?
-    if (!boardPly.isInBranch(target.branch)) {
-      let parentPly = this.game.branches[target.branch];
-      while (parentPly && !(parentPly.id in this.game.boardStates)) {
-        // Find the closest branch that has a saved board state
-        parentPly = this.game.branches[parentPly.branches[0].branch];
+      if (!targetPly || !this.ply || this.selected.pieces.length) {
+        return false;
       }
-      if (
-        parentPly &&
-        parentPly.id in this.game.boardStates &&
-        "false" in this.game.boardStates[parentPly.id]
+
+      const target = {
+        plyIsDone: isDone,
+        move: targetPly.move,
+        branch: targetPly.branch,
+        number: targetPly.move.number,
+      };
+
+      const boardPly = this.game.plies[this.boardPly.id];
+
+      // Load a board state?
+      if (!boardPly.isInBranch(target.branch)) {
+        let parentPly = this.game.branches[target.branch];
+        while (parentPly && !(parentPly.id in this.game.boardStates)) {
+          // Find the closest branch that has a saved board state
+          parentPly = this.game.branches[parentPly.branches[0].branch];
+        }
+        if (
+          parentPly &&
+          parentPly.id in this.game.boardStates &&
+          "false" in this.game.boardStates[parentPly.id]
+        ) {
+          // Load the board state
+          this.setBoard(
+            this.game.boardStates[parentPly.id].false,
+            parentPly.id,
+            false
+          );
+        } else {
+          // Failed to find a close board state, so go to the beginning
+          // (This should theoretically never happen)
+          this.setBoard(this.game.boardStates[0].false, 0, false);
+        }
+      } else if (
+        plyID in this.game.boardStates &&
+        Math.abs(targetPly.index - this.ply.index) > this.size * this.size
       ) {
-        // Load the board state
-        this.setBoard(
-          this.game.boardStates[parentPly.id].false,
-          parentPly.id,
-          false
-        );
+        // Load board state if it exists and is far enough away
+        if (!(isDone in this.game.boardStates[plyID])) {
+          isDone = !isDone;
+        }
+        this.setBoard(this.game.boardStates[plyID][isDone], plyID, isDone);
+      }
+
+      // Set targetBranch if target is outside of it
+      if (!targetPly.isInBranch(this.targetBranch)) {
+        this.targetBranch = target.branch;
+      }
+
+      if (this.ply.branches.includes(targetPly)) {
+        // Switch to the target branch if we're on a sibling
+        if (this.plyIsDone) {
+          this._undoPly(true);
+        }
+        this._setPly(targetPly.id, false);
+      }
+
+      if (this.ply.index < targetPly.index) {
+        while (this.ply.index < targetPly.index && this._doPly(true)) {
+          // Go forward until we reach the target ply
+        }
+      } else if (this.ply.index > targetPly.index) {
+        while (this.ply.index > targetPly.index && this._undoPly(true)) {
+          // Go backward until we reach the target ply
+        }
+      }
+
+      // Do or undo the target ply
+      if (target.plyIsDone !== this.plyIsDone) {
+        if (target.plyIsDone) {
+          this._doPly(true);
+        } else {
+          this._undoPly(true);
+        }
+      }
+
+      this.updateBoardOutput();
+      this.updatePositionOutput();
+      this.updatePTNBranchOutput();
+    } catch (error) {
+      if (this.game.onError) {
+        this.game.onError(error, this.plyID);
+        this.updateBoardOutput();
+        this.updatePositionOutput();
+        this.updatePTNBranchOutput();
+        return false;
       } else {
-        // Failed to find a close board state, so go to the beginning
-        // (This should theoretically never happen)
-        this.setBoard(this.game.boardStates[0].false, 0, false);
-      }
-    } else if (
-      plyID in this.game.boardStates &&
-      Math.abs(targetPly.index - this.ply.index) > this.size * this.size
-    ) {
-      // Load board state if it exists and is far enough away
-      if (!(isDone in this.game.boardStates[plyID])) {
-        isDone = !isDone;
-      }
-      this.setBoard(this.game.boardStates[plyID][isDone], plyID, isDone);
-    }
-
-    // Set targetBranch if target is outside of it
-    if (!targetPly.isInBranch(this.targetBranch)) {
-      this.targetBranch = target.branch;
-    }
-
-    if (this.ply.branches.includes(targetPly)) {
-      // Switch to the target branch if we're on a sibling
-      if (this.plyIsDone) {
-        this._undoPly(true);
-      }
-      this._setPly(targetPly.id, false);
-    }
-
-    if (this.ply.index < targetPly.index) {
-      while (this.ply.index < targetPly.index && this._doPly(true)) {
-        // Go forward until we reach the target ply
-      }
-    } else if (this.ply.index > targetPly.index) {
-      while (this.ply.index > targetPly.index && this._undoPly(true)) {
-        // Go backward until we reach the target ply
+        throw error;
       }
     }
-
-    // Do or undo the target ply
-    if (target.plyIsDone !== this.plyIsDone) {
-      if (target.plyIsDone) {
-        this._doPly(true);
-      } else {
-        this._undoPly(true);
-      }
-    }
-
-    this.updateBoardOutput();
-    this.updatePositionOutput();
-    this.updatePTNBranchOutput();
-
     return true;
   }
 

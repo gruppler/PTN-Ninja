@@ -76,7 +76,7 @@ export default {
 
       // Join game
       this.$store.dispatch("online/JOIN_GAME", this.$game).catch((error) => {
-        this.$store.dispatch("ui/NOTIFY_ERROR", error);
+        this.notifyError(error);
       });
 
       this.close();

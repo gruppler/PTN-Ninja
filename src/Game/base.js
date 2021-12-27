@@ -97,9 +97,6 @@ export const isDefaultName = (name) => {
 
 export default class GameBase {
   constructor(params = {}) {
-    if (isFunction(params.onInit)) {
-      this.onInit = params.onInit;
-    }
     this.init(params);
   }
 
@@ -129,7 +126,25 @@ export default class GameBase {
     defaultSize,
     editingTPS,
     onInit,
+    onError,
   }) {
+    // Set up init handler
+    if (isFunction(onInit)) {
+      this.onInit = onInit;
+    }
+
+    // Set up error handling
+    if (isFunction(onError)) {
+      this.onError = onError;
+    }
+    const handleError = (error) => {
+      if (this.onError) {
+        this.onError(error, this.plies.length - 1);
+      } else {
+        throw error;
+      }
+    };
+
     Object.defineProperty(this, "movesGrouped", {
       get: memoize(this.getMovesGrouped, () => this.moves.length),
       configurable: true,
@@ -159,277 +174,282 @@ export default class GameBase {
     this.warnings = [];
 
     // Parse HEAD
-    if (ptn) {
-      let item, key;
+    try {
+      if (ptn) {
+        let item, key;
 
-      ptn = ptn.trimStart();
-      while (ptn.length && ptn[0] === "[") {
-        // Tag
-        try {
-          item = Tag.parse(ptn);
-          key = item.key.toLowerCase();
-          if (item.value) {
-            this.tags[key] = item;
-          }
-          ptn = ptn.substr(item.ptn.length).trimStart();
-          delete item.ptn;
-        } catch (error) {
-          console.warn(error);
-          this.warnings.push(error);
-          let match = ptn.match(/]\s*/);
-          if (match) {
-            ptn = ptn.substr(match.index + 1).trimStart();
-          } else {
-            ptn = "";
-          }
-        }
-      }
-    }
-
-    if (tags) {
-      each(tags, (value, key) => {
-        if (value) {
-          if (value instanceof Tag) {
-            this.tags[key.toLowerCase()] = value;
-          } else {
-            if (isString(value)) {
-              value = value.replaceAll('"', "''");
+        ptn = ptn.trimStart();
+        while (ptn.length && ptn[0] === "[") {
+          // Tag
+          try {
+            item = Tag.parse(ptn);
+            key = item.key.toLowerCase();
+            if (item.value) {
+              this.tags[key] = item;
             }
-            try {
-              const tag = Tag.parse(`[${key} "${value}"]`);
-              this.tags[key.toLowerCase()] = tag;
-            } catch (error) {
-              console.warn(error);
-              this.warnings.push(error);
+            ptn = ptn.substr(item.ptn.length).trimStart();
+            delete item.ptn;
+          } catch (error) {
+            console.warn(error);
+            this.warnings.push(error);
+            let match = ptn.match(/]\s*/);
+            if (match) {
+              ptn = ptn.substr(match.index + 1).trimStart();
+            } else {
+              ptn = "";
             }
           }
         }
-      });
-    }
-
-    if (this.tags.date) {
-      this.datetime = Tag.toDate(
-        this.tags.date.value,
-        this.tags.time ? this.tags.time.value : ""
-      );
-    } else {
-      this.datetime = new Date();
-    }
-
-    if (this.tags.size) {
-      this.size = this.tags.size.value;
-    } else {
-      if (this.tags.tps) {
-        this.size = this.tags.tps.value.size;
-        this.tags.size = Tag.parse(`[Size "${this.size}"]`);
-      } else {
-        const warning = "Missing board size";
-        console.warn(warning);
-        this.warnings.push(warning);
-        this.size = this.defaultSize;
-        this.tags.size = Tag.parse(`[Size "${this.size}"]`);
       }
-    }
 
-    if (!this.tags.opening) {
-      this.tags.opening = Tag.parse('[Opening "swap"]');
-    }
-
-    if (this.tags.tps) {
-      this.hasTPS = true;
-      this.firstMoveNumber = this.tags.tps.value.linenum;
-      this.firstPlayer = this.tags.tps.value.player;
-      moveNumber = this.tags.tps.value.linenum;
-    } else {
-      this.firstMoveNumber = 1;
-      this.firstPlayer = 1;
-    }
-
-    // Initialize board
-    this.defaultPieceCounts = {
-      1: pieceCounts[this.size],
-      2: pieceCounts[this.size],
-    };
-    this.pieceCounts = cloneDeep(this.defaultPieceCounts);
-    if (this.tags.flats) {
-      this.pieceCounts[1].flat = this.tags.flats.value;
-      this.pieceCounts[2].flat = this.tags.flats.value;
-    }
-    if (this.tags.caps) {
-      this.pieceCounts[1].cap = this.tags.caps.value;
-      this.pieceCounts[2].cap = this.tags.caps.value;
-    }
-    if (this.tags.flats1) {
-      this.pieceCounts[1].flat = this.tags.flats1.value;
-    }
-    if (this.tags.caps1) {
-      this.pieceCounts[1].cap = this.tags.caps1.value;
-    }
-    if (this.tags.flats2) {
-      this.pieceCounts[2].flat = this.tags.flats2.value;
-    }
-    if (this.tags.caps2) {
-      this.pieceCounts[2].cap = this.tags.caps2.value;
-    }
-    this.pieceCounts[1].total =
-      this.pieceCounts[1].flat + this.pieceCounts[1].cap;
-    this.pieceCounts[2].total =
-      this.pieceCounts[2].flat + this.pieceCounts[2].cap;
-    Object.freeze(this.pieceCounts);
-    this.updateConfig();
-    this.board = new Board(this, null, this.board ? this.board.output : null);
-
-    // Parse BODY
-    if (ptn) {
-      let item, ply;
-      let branch = null;
-      let move = new Move({
-        game: this,
-        id: 0,
-        index: 0,
-      });
-      let isDoubleBreak = false;
-      const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
-
-      this.moves[0] = move;
-
-      while (ptn.length) {
-        if (Comment.test(ptn)) {
-          // Comment
-          item = Comment.parse(ptn);
-          if (
-            isDoubleBreak &&
-            this.plies.length &&
-            Linenum.test(ptn.trimStart().substr(item.ptn.length))
-          ) {
-            // Branch identifier
-            branch = item.contents;
-          } else {
-            // Comment
-            const plyID = this.plies.length - 1;
-            const type = item.player === null ? "notes" : "chatlog";
-            if (!this[type][plyID]) {
-              this[type][plyID] = [];
-            }
-            this[type][plyID].push(item);
-            this.board.dirtyComment(type, plyID);
-          }
-        } else if (Linenum.test(ptn)) {
-          // Line number
-          item = Linenum.parse(ptn, this, branch);
-          if (!move.linenum) {
-            move.linenum = item;
-            if (move.index === 0 && item.number !== this.firstMoveNumber) {
-              if (item.ptn.trim() === ptn.trim()) {
-                // Nothing but the first move's number, so overwrite
-                Linenum.parse(this.firstMoveNumber + ".", this, branch);
-              } else {
-                throw new Error("Invalid first line number");
+      if (tags) {
+        each(tags, (value, key) => {
+          if (value) {
+            if (value instanceof Tag) {
+              this.tags[key.toLowerCase()] = value;
+            } else {
+              if (isString(value)) {
+                value = value.replaceAll('"', "''");
+              }
+              try {
+                const tag = Tag.parse(`[${key} "${value}"]`);
+                this.tags[key.toLowerCase()] = tag;
+              } catch (error) {
+                console.warn(error);
+                this.warnings.push(error);
               }
             }
-            this.board.dirtyMove(move.id);
-          } else if (
-            move.linenum.number === item.number &&
-            move.linenum.branch === item.branch
-          ) {
-            // Ignore
-          } else {
-            move = new Move({
-              game: this,
-              id: this.moves.length,
-              linenum: item,
-            });
-            this.moves[move.id] = move;
-            this.board.dirtyMove(move.id);
           }
-          branch = item.branch;
-          moveNumber = item.number;
-          ply = null;
-        } else if (Result.test(ptn)) {
-          // Result
-          item = Result.parse(ptn);
-          if (ply) {
-            ply.result = item;
-          }
-        } else if (Nop.test(ptn)) {
-          // Placeholder
-          item = Nop.parse(ptn);
-          if (!move.ply1) {
-            move.ply1 = item;
-          } else if (!move.ply2 && !move.ply1.result) {
-            move.ply2 = item;
-          }
-        } else if (Ply.test(ptn)) {
-          // Ply
-          item = ply = Ply.parse(ptn, { id: this.plies.length });
-          if (
-            (!move.number || move.number === this.firstMoveNumber) &&
-            this.firstPlayer === 2 &&
-            !move.ply1
-          ) {
-            // Insert placeholder if necessary
-            move.ply1 = Nop.parse("--");
-          }
-          const isSwap =
-            this.openingSwap &&
-            (move.number === 1 || (!move.number && this.firstMoveNumber === 1));
-          if (!move.ply1) {
-            // Player 1 ply
-            if (isSwap && ply.specialPiece) {
-              throw new Error("Invalid first move");
-            }
-            if (!move.linenum) {
-              move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
-            }
-            ply.player = 1;
-            ply.color = isSwap ? 2 : 1;
-            move.ply1 = ply;
-          } else if (!move.ply2) {
-            // Player 2 ply
-            if (isSwap && ply.specialPiece) {
-              throw new Error("Invalid first move");
-            }
-            ply.player = 2;
-            ply.color = isSwap ? 1 : 2;
-            move.ply2 = ply;
-            moveNumber += 1;
-          } else {
-            // New move
-            move = new Move({
-              game: this,
-              id: this.moves.length,
-              linenum: Linenum.parse(moveNumber + ". ", this, branch),
-              ply1: ply,
-            });
-            this.moves.push(move);
-            this.board.dirtyMove(move.id);
-          }
-          this.plies.push(ply);
-          this.board.dirtyPly(ply.id);
-          if (!(ply.branch in this.branches)) {
-            this.branches[ply.branch] = ply;
-          }
-        } else if (Evaluation.test(ptn[0])) {
-          // Evalutaion
-          item = Evaluation.parse(ptn);
-          if (ply) {
-            ply.evaluation = item;
-          }
-        } else if (/[^\s]/.test(ptn)) {
-          throw new Error("Invalid PTN format");
-        } else {
-          break;
-        }
+        });
+      }
 
-        ptn = ptn.trimStart().substr(item.ptn.length);
-        isDoubleBreak = startsWithDoubleBreak.test(ptn);
-        delete item.ptn;
+      if (this.tags.date) {
+        this.datetime = Tag.toDate(
+          this.tags.date.value,
+          this.tags.time ? this.tags.time.value : ""
+        );
+      } else {
+        this.datetime = new Date();
       }
-    } else if (moves) {
-      if (comments) {
-        this.parseJSONComments(comments, -1);
+
+      if (this.tags.size) {
+        this.size = this.tags.size.value;
+      } else {
+        if (this.tags.tps) {
+          this.size = this.tags.tps.value.size;
+          this.tags.size = Tag.parse(`[Size "${this.size}"]`);
+        } else {
+          const warning = "Missing board size";
+          console.warn(warning);
+          this.warnings.push(warning);
+          this.size = this.defaultSize;
+          this.tags.size = Tag.parse(`[Size "${this.size}"]`);
+        }
       }
-      this.parseJSONMoves(moves);
+
+      if (!this.tags.opening) {
+        this.tags.opening = Tag.parse('[Opening "swap"]');
+      }
+
+      if (this.tags.tps) {
+        this.hasTPS = true;
+        this.firstMoveNumber = this.tags.tps.value.linenum;
+        this.firstPlayer = this.tags.tps.value.player;
+        moveNumber = this.tags.tps.value.linenum;
+      } else {
+        this.firstMoveNumber = 1;
+        this.firstPlayer = 1;
+      }
+
+      // Initialize board
+      this.defaultPieceCounts = {
+        1: pieceCounts[this.size],
+        2: pieceCounts[this.size],
+      };
+      this.pieceCounts = cloneDeep(this.defaultPieceCounts);
+      if (this.tags.flats) {
+        this.pieceCounts[1].flat = this.tags.flats.value;
+        this.pieceCounts[2].flat = this.tags.flats.value;
+      }
+      if (this.tags.caps) {
+        this.pieceCounts[1].cap = this.tags.caps.value;
+        this.pieceCounts[2].cap = this.tags.caps.value;
+      }
+      if (this.tags.flats1) {
+        this.pieceCounts[1].flat = this.tags.flats1.value;
+      }
+      if (this.tags.caps1) {
+        this.pieceCounts[1].cap = this.tags.caps1.value;
+      }
+      if (this.tags.flats2) {
+        this.pieceCounts[2].flat = this.tags.flats2.value;
+      }
+      if (this.tags.caps2) {
+        this.pieceCounts[2].cap = this.tags.caps2.value;
+      }
+      this.pieceCounts[1].total =
+        this.pieceCounts[1].flat + this.pieceCounts[1].cap;
+      this.pieceCounts[2].total =
+        this.pieceCounts[2].flat + this.pieceCounts[2].cap;
+      Object.freeze(this.pieceCounts);
+      this.updateConfig();
+      this.board = new Board(this, null, this.board ? this.board.output : null);
+
+      // Parse BODY
+      if (ptn) {
+        let item, ply;
+        let branch = null;
+        let move = new Move({
+          game: this,
+          id: 0,
+          index: 0,
+        });
+        let isDoubleBreak = false;
+        const startsWithDoubleBreak = /^\s*(\r?\n|\r){2,}\s*/;
+
+        this.moves[0] = move;
+
+        while (ptn.length) {
+          if (Comment.test(ptn)) {
+            // Comment
+            item = Comment.parse(ptn);
+            if (
+              isDoubleBreak &&
+              this.plies.length &&
+              Linenum.test(ptn.trimStart().substr(item.ptn.length))
+            ) {
+              // Branch identifier
+              branch = item.contents;
+            } else {
+              // Comment
+              const plyID = this.plies.length - 1;
+              const type = item.player === null ? "notes" : "chatlog";
+              if (!this[type][plyID]) {
+                this[type][plyID] = [];
+              }
+              this[type][plyID].push(item);
+              this.board.dirtyComment(type, plyID);
+            }
+          } else if (Linenum.test(ptn)) {
+            // Line number
+            item = Linenum.parse(ptn, this, branch);
+            if (!move.linenum) {
+              move.linenum = item;
+              if (move.index === 0 && item.number !== this.firstMoveNumber) {
+                if (item.ptn.trim() === ptn.trim()) {
+                  // Nothing but the first move's number, so overwrite
+                  Linenum.parse(this.firstMoveNumber + ".", this, branch);
+                } else {
+                  throw new Error("Invalid first line number");
+                }
+              }
+              this.board.dirtyMove(move.id);
+            } else if (
+              move.linenum.number === item.number &&
+              move.linenum.branch === item.branch
+            ) {
+              // Ignore
+            } else {
+              move = new Move({
+                game: this,
+                id: this.moves.length,
+                linenum: item,
+              });
+              this.moves[move.id] = move;
+              this.board.dirtyMove(move.id);
+            }
+            branch = item.branch;
+            moveNumber = item.number;
+            ply = null;
+          } else if (Result.test(ptn)) {
+            // Result
+            item = Result.parse(ptn);
+            if (ply) {
+              ply.result = item;
+            }
+          } else if (Nop.test(ptn)) {
+            // Placeholder
+            item = Nop.parse(ptn);
+            if (!move.ply1) {
+              move.ply1 = item;
+            } else if (!move.ply2 && !move.ply1.result) {
+              move.ply2 = item;
+            }
+          } else if (Ply.test(ptn)) {
+            // Ply
+            item = ply = Ply.parse(ptn, { id: this.plies.length });
+            if (
+              (!move.number || move.number === this.firstMoveNumber) &&
+              this.firstPlayer === 2 &&
+              !move.ply1
+            ) {
+              // Insert placeholder if necessary
+              move.ply1 = Nop.parse("--");
+            }
+            const isSwap =
+              this.openingSwap &&
+              (move.number === 1 ||
+                (!move.number && this.firstMoveNumber === 1));
+            if (!move.ply1) {
+              // Player 1 ply
+              if (isSwap && ply.specialPiece) {
+                throw new Error("Invalid first move");
+              }
+              if (!move.linenum) {
+                move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+              }
+              ply.player = 1;
+              ply.color = isSwap ? 2 : 1;
+              move.ply1 = ply;
+            } else if (!move.ply2) {
+              // Player 2 ply
+              if (isSwap && ply.specialPiece) {
+                throw new Error("Invalid first move");
+              }
+              ply.player = 2;
+              ply.color = isSwap ? 1 : 2;
+              move.ply2 = ply;
+              moveNumber += 1;
+            } else {
+              // New move
+              move = new Move({
+                game: this,
+                id: this.moves.length,
+                linenum: Linenum.parse(moveNumber + ". ", this, branch),
+                ply1: ply,
+              });
+              this.moves.push(move);
+              this.board.dirtyMove(move.id);
+            }
+            this.plies.push(ply);
+            this.board.dirtyPly(ply.id);
+            if (!(ply.branch in this.branches)) {
+              this.branches[ply.branch] = ply;
+            }
+          } else if (Evaluation.test(ptn[0])) {
+            // Evalutaion
+            item = Evaluation.parse(ptn);
+            if (ply) {
+              ply.evaluation = item;
+            }
+          } else if (/[^\s]/.test(ptn)) {
+            throw new Error("Invalid PTN format");
+          } else {
+            break;
+          }
+
+          ptn = ptn.trimStart().substr(item.ptn.length);
+          isDoubleBreak = startsWithDoubleBreak.test(ptn);
+          delete item.ptn;
+        }
+      } else if (moves) {
+        if (comments) {
+          this.parseJSONComments(comments, -1);
+        }
+        this.parseJSONMoves(moves);
+      }
+    } catch (error) {
+      return handleError(error);
     }
 
     if (!this.moves[0]) {
@@ -460,6 +480,7 @@ export default class GameBase {
     this.saveBoardState();
 
     if (state && !isEmpty(state)) {
+      // Go to specified position
       if (!(state.targetBranch in this.branches)) {
         state.targetBranch = "";
       }
@@ -475,6 +496,7 @@ export default class GameBase {
         this.board.plyID = -1;
       }
     } else if (this.board.plies.length) {
+      // Go to end of main branch
       this.board.plyID = 0;
       this.board.last();
       if (this.board.checkGameEnd()) {

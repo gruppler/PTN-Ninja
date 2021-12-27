@@ -2,6 +2,7 @@ import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { throttle } from "lodash";
+import { notifyError } from "../../utilities";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -119,7 +120,7 @@ export const REPLACE_GAME = function (
     dispatch("SAVE_STATE", { game, gameState });
 
     Vue.nextTick(() => {
-      this.dispatch("ui/NOTIFY", {
+      Vue.prototype.notify({
         message: i18n.t("success.replacedExistingGame"),
         timeout: 5000,
         progress: true,
@@ -167,7 +168,7 @@ export const REMOVE_GAME = function (
       const icon = game.config.isOnline
         ? getters.playerIcon(game.config.player, game.config.isPrivate)
         : "file";
-      this.dispatch("ui/NOTIFY", {
+      Vue.prototype.notify({
         icon,
         message: i18n.t("Game x closed", { game: game.name }),
         timeout: 5000,
@@ -233,7 +234,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
       if (start === 0) {
         dispatch("SET_GAME", state.list[0]);
       }
-      this.dispatch("ui/NOTIFY", {
+      Vue.prototype.notify({
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
         timeout: 5000,
@@ -297,7 +298,7 @@ export const EXPORT_PNG = function ({ state }) {
   });
 };
 
-export const OPEN_FILES = function ({ dispatch, state }, files) {
+export const OPEN_FILES = function ({ commit, dispatch, state }, files) {
   const games = [];
   let count = 0;
   files = Array.from(files);
@@ -314,8 +315,15 @@ export const OPEN_FILES = function ({ dispatch, state }, files) {
             const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
             const index = state.list.findIndex((g) => g.name === name);
             const ptn = event.target.result;
+            const onError = (error, plyID) => {
+              console.warn(
+                `Encountered an error in "${name}" at plyID:`,
+                plyID
+              );
+              console.error(error);
+            };
             if (index < 0 || this.state.ui.openDuplicate !== "replace") {
-              games.push(new Game({ ptn, name }));
+              games.push(new Game({ ptn, name, onError }));
             } else {
               dispatch("REPLACE_GAME", { index, ptn });
             }
@@ -324,7 +332,7 @@ export const OPEN_FILES = function ({ dispatch, state }, files) {
               dispatch("ADD_GAMES", { games, index: 0 });
             }
           };
-          reader.onerror = (error) => console.error(error);
+          reader.onerror = notifyError;
           ++count;
           reader.readAsText(file);
         }
@@ -520,40 +528,43 @@ export const TRIM_TO_PLY = function ({ commit, dispatch }) {
   });
 };
 
-export const FIRST = function ({ commit, dispatch }) {
-  const result = commit("FIRST");
+export const FIRST = function ({ commit, dispatch, state }) {
+  commit("FIRST");
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
-export const LAST = function ({ commit, dispatch }) {
-  const result = commit("LAST");
+export const LAST = function ({ commit, dispatch, state }) {
+  commit("LAST");
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
-export const PREV = function ({ commit, dispatch }, { half, times }) {
-  const result = commit("PREV", { half, times });
+export const PREV = function ({ commit, dispatch, state }, { half, times }) {
+  commit("PREV", { half, times });
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
-export const NEXT = function ({ commit, dispatch }, { half, times }) {
-  const result = commit("NEXT", { half, times });
+export const NEXT = function ({ commit, dispatch, state }, { half, times }) {
+  commit("NEXT", { half, times });
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
-export const SET_TARGET = function ({ commit, dispatch }, ply) {
-  const result = commit("SET_TARGET", ply);
+export const SET_TARGET = function ({ commit, dispatch, state }, ply) {
+  commit("SET_TARGET", ply);
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
-export const GO_TO_PLY = function ({ commit, dispatch }, { plyID, isDone }) {
-  const result = commit("GO_TO_PLY", { plyID, isDone });
+export const GO_TO_PLY = function (
+  { commit, dispatch, state },
+  { plyID, isDone }
+) {
+  commit("GO_TO_PLY", { plyID, isDone });
   dispatch("SAVE_CURRENT_GAME_STATE");
-  return result;
+  return !state.error;
 };
 
 export const EDIT_TPS = function ({ commit, state }, tps) {

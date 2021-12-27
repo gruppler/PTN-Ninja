@@ -65,7 +65,7 @@ export default {
     },
     submit() {
       const count = this.range.max - this.range.min + 1;
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$tc("confirm.downloadMultipleGames", count),
         success: () => {

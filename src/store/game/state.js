@@ -2,6 +2,7 @@ import { LocalStorage, Platform } from "quasar";
 import Game from "../../Game";
 
 const state = {
+  error: null,
   board: null,
   comments: null,
   config: null,

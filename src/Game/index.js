@@ -14,11 +14,24 @@ export default class Game extends Aggregation(
   GameUndo
 ) {
   static validate(ptn) {
-    try {
-      new Game({ ptn });
-    } catch (error) {
-      return error ? error.message : "";
-    }
-    return true;
+    let result = true;
+    const game = new Game({
+      ptn,
+      state: { plyIndex: 0 },
+      onError: (error, plyID) => {
+        result = error.message || error;
+        console.warn("Encountered an error at plyID:", plyID);
+        console.error(error);
+      },
+    });
+
+    // Navigate through each branch
+    Object.values(game.branches).forEach((ply) => {
+      if (result === true) {
+        game.board.goToPly(ply.id, true);
+        game.board.last();
+      }
+    });
+    return result;
   }
 }
