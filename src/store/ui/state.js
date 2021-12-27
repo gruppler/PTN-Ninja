@@ -15,6 +15,7 @@ let defaults = {
   flatCounts: true,
   highlightSquares: true,
   isPortrait: false,
+  moveNumber: true,
   nativeSharing: navigator.canShare
     ? navigator.canShare({ text: "test", url: location.href })
     : false,
@@ -72,6 +73,7 @@ export const pngUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "moveNumber",
   "pieceShadows",
   "showRoads",
   "themeID",

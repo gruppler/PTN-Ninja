@@ -3,7 +3,19 @@ import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
 import Game from "../../Game";
 
+export const SET_ERROR = (state, error) => {
+  state.error = error;
+};
+
 export const SET_GAME = (state, game) => {
+  const handleError = (error, plyID) => {
+    state.error = error.message || error;
+    console.warn("Encountered an error at plyID:", plyID);
+    console.warn("Last stable position:", Object.freeze({ ...state.position }));
+    console.error(error);
+  };
+
+  state.error = null;
   const editingTPS = game.editingTPS;
   if (!(game instanceof Game)) {
     game = new Game({
@@ -11,12 +23,18 @@ export const SET_GAME = (state, game) => {
       onInit: (game) => {
         SET_GAME(state, game);
       },
+      onError: (error, plyID) => {
+        handleError(error, plyID);
+      },
     });
   } else {
     game.board.updateOutput();
     if (!game.onInit) {
       game.onInit = (game) => {
         SET_GAME(state, game);
+      };
+      game.onError = (error, plyID) => {
+        handleError(error, plyID);
       };
     }
   }
@@ -83,30 +101,32 @@ export const SAVE_CURRENT_GAME = (state) => {
     state.history = game.history;
     state.historyIndex = game.historyIndex;
 
-    state.list[0].ptn = game.ptn;
-    state.list[0].state = cloneDeep(game.minState);
-    state.list[0].history = game.history.concat();
-    state.list[0].historyIndex = game.historyIndex;
+    if (state.list.length) {
+      state.list[0].ptn = game.ptn;
+      state.list[0].state = cloneDeep(game.minState);
+      state.list[0].history = game.history.concat();
+      state.list[0].historyIndex = game.historyIndex;
+    }
   }
 };
 
 export const SAVE_CURRENT_GAME_STATE = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     Vue.set(state.list[0], "state", cloneDeep(game.minState));
   }
 };
 
 export const SAVE_UNDO_HISTORY = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     state.list[0].history = game.history.concat();
   }
 };
 
 export const SAVE_UNDO_INDEX = (state) => {
   const game = Vue.prototype.$game;
-  if (game) {
+  if (game && state.list[0]) {
     Vue.set(state.list[0], "historyIndex", game.historyIndex);
   }
 };
@@ -227,27 +247,34 @@ export const TRIM_TO_PLY = (state) => {
 };
 
 export const FIRST = function (state) {
-  Vue.prototype.$game.board.first();
+  state.error = null;
+  return Vue.prototype.$game.board.first();
 };
 
 export const LAST = function (state) {
-  Vue.prototype.$game.board.last();
+  state.error = null;
+  return Vue.prototype.$game.board.last();
 };
 
 export const PREV = function (state, { half, times }) {
-  Vue.prototype.$game.board.prev(half, times);
+  state.error = null;
+  return Vue.prototype.$game.board.prev(half, times);
 };
 
 export const NEXT = function (state, { half, times }) {
-  Vue.prototype.$game.board.next(half, times);
+  state.error = null;
+  let result = Vue.prototype.$game.board.next(half, times);
+  return result;
 };
 
 export const SET_TARGET = function (state, ply) {
+  state.error = null;
   return Vue.prototype.$game.board.setTarget(ply);
 };
 
 export const GO_TO_PLY = function (state, { plyID, isDone }) {
-  Vue.prototype.$game.board.goToPly(plyID, isDone);
+  state.error = null;
+  return Vue.prototype.$game.board.goToPly(plyID, isDone);
 };
 
 export const EDIT_TPS = function (state, tps) {

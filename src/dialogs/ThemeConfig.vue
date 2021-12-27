@@ -276,7 +276,7 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["themeID", this.initialThemeID]);
       };
       if (!this.isSaved) {
-        this.$store.dispatch("ui/PROMPT", {
+        this.prompt({
           title: this.$t("Confirm"),
           message: this.$t("confirm.abandonChanges"),
           success,
@@ -312,7 +312,7 @@ export default {
       this.palette = Object.values(this.theme.colors);
     },
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetTheme"),
         success: () => {

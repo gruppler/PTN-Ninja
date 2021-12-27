@@ -378,9 +378,7 @@ export default {
       if (!game) {
         game = this.newGame();
       }
-      game.warnings.forEach((warning) =>
-        this.$store.dispatch("ui/NOTIFY_WARNING", warning)
-      );
+      game.warnings.forEach((warning) => this.notifyWarning(warning));
 
       if (process.env.DEV) {
         window.main = this;
@@ -416,6 +414,9 @@ export default {
           this.$router.push({ name: "add", params: { tab: "new" } });
           break;
       }
+    },
+    share() {
+      this.$refs.shareButton.share();
     },
     uiShortkey({ srcKey }) {
       if (!this.disabledOptions.includes(srcKey)) {
@@ -683,7 +684,7 @@ export default {
     //           this.$router.replace("/");
     //         })
     //         .catch((error) => {
-    //           this.$store.dispatch("ui/NOTIFY_ERROR", error);
+    //           this.notifyError(error);
     //         });
     //     }
     //   }

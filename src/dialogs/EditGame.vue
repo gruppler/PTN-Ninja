@@ -72,7 +72,7 @@ export default {
   },
   methods: {
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetGame"),
         success: () => {

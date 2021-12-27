@@ -87,33 +87,37 @@ export default {
       const ply = game.state.ply;
       const tps = game.state.tps;
       const config = game.config;
-      game = new Game({
-        state: game.minState,
-        tags: {
-          tps: game.state.tps,
-          komi: config.komi,
-          opening: config.opening,
-        },
-        config,
-      });
-      const canvas = game.board.render({
-        ...this.thumbnailConfig,
-        ply,
-        flatCounts: config.disableFlatCounts
-          ? false
-          : this.$store.state.ui.flatCounts,
-        showRoads: config.disableShowRoads
-          ? false
-          : this.$store.state.ui.showRoads,
-        theme: this.$store.state.ui.theme,
-      });
+      try {
+        game = new Game({
+          state: game.minState,
+          tags: {
+            tps: game.state.tps,
+            komi: config.komi,
+            opening: config.opening,
+          },
+          config,
+        });
+        const canvas = game.board.render({
+          ...this.thumbnailConfig,
+          ply,
+          flatCounts: config.disableFlatCounts
+            ? false
+            : this.$store.state.ui.flatCounts,
+          showRoads: config.disableShowRoads
+            ? false
+            : this.$store.state.ui.showRoads,
+          theme: this.$store.state.ui.theme,
+        });
 
-      canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        this.thumbnail = { id, tps, url, themeID };
-        this.thumbnailURL = this.thumbnail.url;
-        this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
-      }, "image/png");
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          this.thumbnail = { id, tps, url, themeID };
+          this.thumbnailURL = this.thumbnail.url;
+          this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
+        }, "image/png");
+      } catch (error) {
+        console.error(error);
+      }
     },
     close() {
       this.$store.dispatch("game/REMOVE_GAME", this.option.value);

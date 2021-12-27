@@ -89,7 +89,7 @@ export default {
       }
       const theme = cloneDeep(themes.splice(index, 1)[0]);
       this.$store.dispatch("ui/SET_UI", ["themes", themes]);
-      this.$store.dispatch("ui/NOTIFY", {
+      this.notify({
         icon: "color",
         message: this.$t("success.themeRemoved", theme),
         timeout: 5000,

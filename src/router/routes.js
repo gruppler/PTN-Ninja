@@ -27,7 +27,9 @@ const routes = [
         : import("layouts/Main");
     },
     props(route) {
-      let stateRaw = (route.params.state || "").substr(1).split("&");
+      let stateRaw = route.params.state
+        ? route.params.state.substr(1).split("&")
+        : [];
       let state = {};
       let name = "";
       let ptn = route.params.ptn;

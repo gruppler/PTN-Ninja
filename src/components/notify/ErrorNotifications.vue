@@ -9,17 +9,31 @@ export default {
   name: "ErrorNotifications",
   components: { Notifications },
   props: ["errors"],
+  data() {
+    return {
+      show: this.errors.length > 0,
+    };
+  },
   computed: {
-    show() {
-      return this.errors && this.errors.length;
-    },
     notifications() {
-      return this.errors.map((message) => ({
+      const errors = [...this.errors];
+      if (this.currentError) {
+        errors.push(this.currentError);
+      }
+      return errors.map((message) => ({
         message,
         color: "negative",
         icon: "error",
         textColor: "textLight",
       }));
+    },
+    currentError() {
+      return this.$store.state.game.error;
+    },
+  },
+  watch: {
+    notifications(errors) {
+      this.show = errors.length > 0;
     },
   },
 };

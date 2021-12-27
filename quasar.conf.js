@@ -7,7 +7,8 @@ module.exports = function(ctx) {
     boot: [
       "i18n",
       "shortkey",
-      "globalComponents"
+      "globalComponents",
+      "utilities"
     ],
 
     css: ["app.scss"],

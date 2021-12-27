@@ -60,6 +60,7 @@
     </q-page-container>
 
     <q-drawer
+      id="left-drawer"
       v-model="showPTN"
       side="left"
       :breakpoint="showText ? doubleWidth : singleWidth"
@@ -68,9 +69,9 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools">
-          <ShareButton ref="shareButton" flat stretch no-menu />
-        </PTNTools>
+        <PTN-Tools ref="tools">
+          <ShareButton flat stretch no-menu />
+        </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
         </div>
@@ -83,6 +84,7 @@
     </q-drawer>
 
     <q-drawer
+      id="right-drawer"
       v-model="showText"
       side="right"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
@@ -279,6 +281,10 @@ export default {
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
+        case "game/UNDO":
+        case "game/REDO":
+          this.$store.dispatch(srcKey);
+          break;
       }
     },
   },
@@ -402,9 +408,15 @@ export default {
 </script>
 
 <style lang="scss">
-.q-drawer {
-  background: $panel;
-  background: var(--q-color-panel);
+#left-drawer,
+#right-drawer {
+  .q-drawer {
+    background: $panel;
+    background: var(--q-color-panel);
+    .q-drawer__content {
+      overflow: hidden;
+    }
+  }
 }
 
 @media (max-width: $breakpoint-xs-max) {

@@ -133,6 +133,21 @@
         </div>
       </smooth-reflow>
 
+      <smooth-reflow>
+        <q-item
+          v-if="config.turnIndicator && config.unplayedPieces"
+          tag="label"
+          v-ripple
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Move Number") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.moveNumber" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -197,7 +212,7 @@
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { pngUIOptions } from "../store/ui/state";
 
-import { cloneDeep, throttle } from "lodash";
+import { cloneDeep, debounce } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -250,7 +265,7 @@ export default {
     updateConfig() {
       this.config = cloneDeep(this.$store.state.ui.pngConfig);
     },
-    updatePreview: throttle(function () {
+    updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
       this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       let canvas = this.$game.board.render(config);
@@ -262,14 +277,14 @@ export default {
         this.fileSize = humanStorageSize(this.file.size);
         this.preview = URL.createObjectURL(blob);
       });
-    }, 250),
+    }),
     loadPreview() {
       const img = this.$refs.preview;
       this.dimensions =
         img.naturalWidth + " &times; " + img.naturalHeight + " px";
     },
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetPNG"),
         success: () => {

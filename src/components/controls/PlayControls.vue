@@ -258,11 +258,18 @@ export default {
           );
           this.timestamp = new Date().getTime();
         }
+        if (this.$store.state.game.error) {
+          this.pause();
+          return false;
+        }
         if (!this.isLast) {
-          this.isPlaying =
-            this.$store.dispatch("game/NEXT", {
-              half: this.isPlaying || event === true || event.srcKey === "half",
-            }) && this.isPlaying;
+          this.$store.dispatch("game/NEXT", {
+            half:
+              this.isPlaying ||
+              event === true ||
+              (event && event.srcKey === "half"),
+          });
+          this.isPlaying = this.isPlaying;
           if (this.isLast && this.isPlaying) {
             this.pause();
           }
