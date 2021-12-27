@@ -25,6 +25,7 @@ const defaults = {
   turnIndicator: true,
   flatCounts: true,
   highlightSquares: true,
+  moveNumber: true,
   pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
@@ -320,6 +321,30 @@ export default function render(board, options = {}) {
         boardSize / 2,
         turnIndicatorHeight
       );
+    }
+
+    // Move number
+    if (options.moveNumber && options.unplayedPieces) {
+      ctx.save();
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = fontSize * 0.05;
+      ctx.shadowBlur = fontSize * 0.1;
+      ctx.shadowColor =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textDark
+          : theme.colors.textLight;
+      ctx.fillStyle =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      ctx.fillText(
+        board.output.position.move.linenum.number + ".",
+        padding + axisSize + boardSize + unplayedWidth / 2,
+        padding + flatCounterHeight / 2 + offset
+      );
+      ctx.restore();
     }
   }
 

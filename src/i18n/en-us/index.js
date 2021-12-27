@@ -102,6 +102,7 @@ export default {
   Message: "Message",
   More: "More",
   Move: "Move",
+  "Move Number": "Move Number",
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
   n_games: "No Games | 1 Game | {count} Games",
