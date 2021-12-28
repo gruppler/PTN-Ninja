@@ -376,7 +376,7 @@ export default {
   },
   watch: {
     ptn() {
-      this.$game = this.getGame();
+      this.getGame();
     },
     state: {
       handler(state, oldState) {
