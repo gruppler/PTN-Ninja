@@ -216,7 +216,6 @@ export default {
           board: this.board,
           state: this.state,
         });
-        this.$game = game;
       } catch (error) {
         const name = game ? game.name : "";
         if (game && name) {
@@ -377,7 +376,7 @@ export default {
   },
   watch: {
     ptn() {
-      this.$game = this.getGame();
+      this.getGame();
     },
     state: {
       handler(state, oldState) {
