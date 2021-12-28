@@ -16,9 +16,10 @@ let defaults = {
   highlightSquares: true,
   isPortrait: false,
   moveNumber: true,
-  nativeSharing: navigator.canShare
-    ? navigator.canShare({ text: "test", url: location.href })
-    : false,
+  nativeSharing:
+    navigator.canShare && !Platform.is.desktop
+      ? navigator.canShare({ text: "test", url: location.href })
+      : false,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
