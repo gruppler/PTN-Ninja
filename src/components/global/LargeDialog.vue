@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     :content-class="classes"
-    :value.sync="value"
+    :value="model"
     :maximized="maximized"
     @hide="hide"
     v-on="$listeners"
@@ -37,6 +37,9 @@ export default {
     contentClass: String,
   },
   computed: {
+    model() {
+      return this.value;
+    },
     maximized() {
       return (
         this.fullscreen ||

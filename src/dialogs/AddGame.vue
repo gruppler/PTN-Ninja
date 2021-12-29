@@ -185,7 +185,8 @@ export default {
       this.close();
     },
     async toggleOnline() {
-      await this.$nextTick(() => (this.showOnline = !this.showOnline));
+      await this.$nextTick();
+      this.showOnline = !this.showOnline;
     },
     ok() {
       if (this.tab === "new") {
