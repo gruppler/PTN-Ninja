@@ -172,8 +172,9 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
+      let game;
       try {
-        let game = new Game({ name, tags });
+        game = new Game({ name, tags });
       } catch (error) {
         console.error(error);
       }
