@@ -52,6 +52,9 @@ export const png_url = (state, getters) => (game) => {
   if (state.pngConfig.bgAlpha !== 1) {
     params.push("bgAlpha=" + state.pngConfig.bgAlpha);
   }
+  if (state.pngConfig.moveNumber) {
+    params.push("moveNumber=" + game.board.move.linenum.number);
+  }
 
   // UI toggles
   [
@@ -60,6 +63,7 @@ export const png_url = (state, getters) => (game) => {
     "padding",
     "pieceShadows",
     "showRoads",
+    "moveNumber",
     "turnIndicator",
     "unplayedPieces",
   ].forEach((toggle) => {
