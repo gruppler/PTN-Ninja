@@ -12,7 +12,6 @@ export default {
     id: Number,
     white_player: String,
     black_player: String,
-    result: String,
     white_rating: Number,
     black_rating: Number,
     ptn: String,
@@ -20,14 +19,22 @@ export default {
   },
 
   methods: {
-    load_game() {
-      let ninjatpn = this.ptn.split("\n");
-      ninjatpn.splice(8, 2);
-      ninjatpn = ninjatpn.join("\n");
-      this.$store.dispatch("ADD_GAME", {
-        ptn: ninjatpn,
-        name: this.caption,
-      });
+    async load_game() {
+      let response = await fetch("http://127.0.0.1:5000/api/v1/game/465262");
+
+      if(response.ok) {
+        let data = await(response.json());
+        console.log(data);
+        let ninjatpn = data.ptn.split("\n");
+        ninjatpn.splice(8, 2);
+        ninjatpn = ninjatpn.join("\n");
+        this.$store.dispatch("ADD_GAME", {
+          ptn: ninjatpn,
+          name: this.caption,
+        });
+      } else {
+        alert("HTTP-Error: " + response.status);
+      }
     },
   },
 
@@ -38,9 +45,7 @@ export default {
         " (" + this.white_rating + ")" +
         " vs." +
         this.black_player +
-        " (" + this.black_rating + ")" +
-        " : " +
-        this.result
+        " (" + this.black_rating + ")"
       );
     },
   },
