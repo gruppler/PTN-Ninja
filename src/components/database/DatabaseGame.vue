@@ -20,7 +20,7 @@ export default {
 
   methods: {
     async load_game() {
-      let response = await fetch("http://127.0.0.1:5000/api/v1/game/465262");
+      let response = await fetch("http://127.0.0.1:5000/api/v1/game/"+this.playtak_id);
 
       if(response.ok) {
         let data = await(response.json());

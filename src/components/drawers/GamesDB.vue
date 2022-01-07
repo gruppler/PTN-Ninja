@@ -53,8 +53,7 @@ export default {
   methods: {
 
     async query_position() {
-      let tps = this.game.state.tps.split(" ");
-      tps = tps[0] + " " + tps[1] + " 1"; // ignore game turn
+      let tps = this.game.state.tps
       console.log(tps)
       tps = tps.replaceAll("/","A")
       tps = tps.replaceAll(",","%2C")
