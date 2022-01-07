@@ -55,7 +55,6 @@ export default {
     async query_position() {
       let tps = this.game.state.tps
       console.log(tps)
-      tps = tps.replaceAll("/","A")
       tps = tps.replaceAll(",","%2C")
       tps = tps.replaceAll(" ","%20")
 
