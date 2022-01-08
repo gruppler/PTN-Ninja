@@ -93,6 +93,7 @@ export default {
             black_player: game.black.name,
             white_rating: game.white.rating,
             black_rating: game.black.rating,
+            result: game.result,
           }
           this.db_games.push(new_game);
           i++;

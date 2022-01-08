@@ -16,6 +16,7 @@ export default {
     black_rating: Number,
     ptn: String,
     playtak_id: Number,
+    result: String,
   },
 
   methods: {
@@ -45,7 +46,7 @@ export default {
         " (" + this.white_rating + ")" +
         " vs." +
         this.black_player +
-        " (" + this.black_rating + ")"
+        " (" + this.black_rating + ") : " + this.result
       );
     },
   },
