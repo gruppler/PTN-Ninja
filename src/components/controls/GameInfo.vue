@@ -15,6 +15,124 @@
       </template>
     </q-input>
 
+    <!-- Date/Time -->
+    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
+      <q-input
+        class="col-grow"
+        v-show="isVisible('date')"
+        v-model="tags.date"
+        name="date"
+        :label="$t('Date') + ' (UTC)'"
+        :rules="rules('date')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="date" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showDatePicker"
+          @before-show="proxyDate = tags.date"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-date
+              v-model="proxyDate"
+              name="date"
+              mask="YYYY.MM.DD"
+              :text-color="primaryFG"
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.date = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.date = proxyDate"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-date>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+
+      <q-input
+        class="col-grow"
+        v-show="isVisible('time')"
+        v-model="tags.time"
+        name="time"
+        :label="$t('Time') + ' (UTC)'"
+        :rules="rules('time')"
+        :readonly="game && !game.isLocal"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="time" />
+        </template>
+        <q-popup-proxy
+          v-if="!game || game.isLocal"
+          v-model="showTimePicker"
+          @before-show="proxyTime = tags.time"
+          anchor="center middle"
+          self="center middle"
+          transition-show="none"
+          transition-hide="none"
+          no-refocus
+        >
+          <div>
+            <q-time
+              v-model="proxyTime"
+              name="time"
+              :text-color="primaryFG"
+              format24h
+              with-seconds
+            >
+              <div class="row items-center justify-end q-gutter-sm">
+                <q-btn
+                  :label="$t('Clear')"
+                  @click="tags.time = null"
+                  flat
+                  v-close-popup
+                />
+                <div class="col-grow" />
+                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('OK')"
+                  @click="tags.time = proxyTime"
+                  flat
+                  v-close-popup
+                />
+              </div>
+            </q-time>
+          </div>
+        </q-popup-proxy>
+      </q-input>
+      <div v-if="tags.date || tags.time" class="text-caption flex flex-center">
+        <template v-if="tags.time">
+          <relative-time :value="datetime" text-only invert /> &nbsp;
+          (<relative-time :value="datetime" text-only />)
+        </template>
+        <template v-else>
+          <relative-date :value="datetime" text-only invert /> &nbsp;
+          (<relative-date :value="datetime" text-only />)
+        </template>
+      </div>
+    </div>
+
     <div class="row">
       <div class="col">
         <div class="row q-gutter-md q-mb-md">
@@ -539,124 +657,6 @@
         <q-icon name="site" />
       </template>
     </q-input>
-
-    <!-- Date/Time -->
-    <div v-show="isVisible('date', 'time')" class="row q-gutter-md q-mt-none">
-      <q-input
-        class="col-grow"
-        v-show="isVisible('date')"
-        v-model="tags.date"
-        name="date"
-        :label="$t('Date') + ' (UTC)'"
-        :rules="rules('date')"
-        :readonly="game && !game.isLocal"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="date" />
-        </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showDatePicker"
-          @before-show="proxyDate = tags.date"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-date
-              v-model="proxyDate"
-              name="date"
-              mask="YYYY.MM.DD"
-              :text-color="primaryFG"
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.date = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.date = proxyDate"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-date>
-          </div>
-        </q-popup-proxy>
-      </q-input>
-
-      <q-input
-        class="col-grow"
-        v-show="isVisible('time')"
-        v-model="tags.time"
-        name="time"
-        :label="$t('Time') + ' (UTC)'"
-        :rules="rules('time')"
-        :readonly="game && !game.isLocal"
-        hide-bottom-space
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="time" />
-        </template>
-        <q-popup-proxy
-          v-if="!game || game.isLocal"
-          v-model="showTimePicker"
-          @before-show="proxyTime = tags.time"
-          anchor="center middle"
-          self="center middle"
-          transition-show="none"
-          transition-hide="none"
-          no-refocus
-        >
-          <div>
-            <q-time
-              v-model="proxyTime"
-              name="time"
-              :text-color="primaryFG"
-              format24h
-              with-seconds
-            >
-              <div class="row items-center justify-end q-gutter-sm">
-                <q-btn
-                  :label="$t('Clear')"
-                  @click="tags.time = null"
-                  flat
-                  v-close-popup
-                />
-                <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
-                <q-btn
-                  :label="$t('OK')"
-                  @click="tags.time = proxyTime"
-                  flat
-                  v-close-popup
-                />
-              </div>
-            </q-time>
-          </div>
-        </q-popup-proxy>
-      </q-input>
-      <div v-if="tags.date || tags.time" class="text-caption flex flex-center">
-        <template v-if="tags.time">
-          <relative-time :value="datetime" text-only invert /> &nbsp;
-          (<relative-time :value="datetime" text-only />)
-        </template>
-        <template v-else>
-          <relative-date :value="datetime" text-only invert /> &nbsp;
-          (<relative-date :value="datetime" text-only />)
-        </template>
-      </div>
-    </div>
   </div>
 </template>
 

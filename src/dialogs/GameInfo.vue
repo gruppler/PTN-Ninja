@@ -43,6 +43,19 @@
         </q-item-section>
       </q-item>
 
+      <!-- Date/Time -->
+      <q-item v-if="tags.date || tags.time">
+        <q-item-section side>
+          <q-icon name="date_time" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>
+            <relative-time v-if="tags.time" :value="datetime" invert />
+            <relative-date v-else :value="datetime" invert />
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+
       <!-- Player 1 -->
       <q-item v-if="tags.player1">
         <q-item-section side>
@@ -293,19 +306,6 @@
         <q-item-section>
           <q-item-label caption>{{ $t("Site") }}</q-item-label>
           <q-item-label>{{ tags.site }}</q-item-label>
-        </q-item-section>
-      </q-item>
-
-      <!-- Date/Time -->
-      <q-item v-if="tags.date || tags.time">
-        <q-item-section side>
-          <q-icon name="date_time" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>
-            <relative-time v-if="tags.time" :value="datetime" invert />
-            <relative-date v-else :value="datetime" invert />
-          </q-item-label>
         </q-item-section>
       </q-item>
     </q-list>
