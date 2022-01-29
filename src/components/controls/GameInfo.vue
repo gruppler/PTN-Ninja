@@ -121,7 +121,7 @@
           </div>
         </q-popup-proxy>
       </q-input>
-      <div v-if="tags.date || tags.time" class="text-caption flex flex-center">
+      <div v-if="datetime" class="text-caption flex flex-center">
         <template v-if="tags.time">
           <relative-time :value="datetime" text-only invert /> &nbsp;
           (<relative-time :value="datetime" text-only />)
@@ -759,7 +759,8 @@ export default {
       return user ? this.game.player(user.uid) : 0;
     },
     datetime() {
-      return Tag.toDate(this.tags.date, this.tags.time || "");
+      const date = Tag.toDate(this.tags.date, this.tags.time);
+      return isNaN(date) ? null : date;
     },
   },
   methods: {
