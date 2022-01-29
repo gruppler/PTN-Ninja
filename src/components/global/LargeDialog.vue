@@ -7,7 +7,7 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout view="hhh lpr fff" class="bg-ui" :style="{ height }" container>
+    <q-layout view="hHh lpr fFf" class="bg-ui" :style="{ height }" container>
       <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>

@@ -21,19 +21,18 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
-    "@quasar/extras": "^1.11.5",
+    "@quasar/extras": "^1.12.4",
     "aggregation": "^1.2.6",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",
     "diff-match-patch": "^1.0.4",
     "firebase": "8.10.0",
     "firebase-functions": "^3.16.0",
-    "firebase-tools": "^10.0.1",
     "lodash": "^4.17.21",
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
     "qrious": "^4.0.2",
-    "quasar": "^1.16.0",
+    "quasar": "^1.17.8",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-shortkey": "^3.1.7",
@@ -42,8 +41,8 @@
   "devDependencies": {
     "@quasar/app": "^2.2.8",
     "@quasar/cli": "^1.2.2",
-    "@quasar/quasar-app-extension-qmarkdown": "^1.4.3",
-    "@vue/eslint-config-prettier": "^6.0.0",
+    "@quasar/quasar-app-extension-qmarkdown": "^1.4.4",
+    "@vue/eslint-config-prettier": "^7.0.0",
     "babel-eslint": "^10.1.0",
     "dotenv": "^10.0.0",
     "eslint": "^7.15.0",
@@ -51,11 +50,12 @@
     "eslint-loader": "^4.0.2",
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-vue": "^8.2.0",
-    "firebase-admin": "^9.4.2",
+    "eslint-plugin-vue": "^7.2.0",
+    "firebase-admin": "^10.0.1",
+    "firebase-tools": "^10.1.0",
     "prettier": "^2.5.1",
     "webpack": "^5.10.1",
-    "workbox-webpack-plugin": "^4.0.0"
+    "workbox-webpack-plugin": "^6.4.2"
   },
   "engines": {
     "node": ">= 8.9.0",
