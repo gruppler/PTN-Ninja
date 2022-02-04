@@ -193,6 +193,10 @@ kbd {
   background-color: rgba($highlight, .09);
 }
 
+.text-selectable {
+  user-select: text;
+}
+
 .fullwidth-padded-md{
   padding-left: $space-base;
   padding-right: $space-base;
