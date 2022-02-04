@@ -1,7 +1,7 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
     <!-- Game Name -->
-    <q-input v-model="name" name="name" :label="$t('Name')" filled>
+    <q-input v-model="name" name="name" :label="$t('Name')" clearable filled>
       <template v-slot:prepend>
         <q-icon name="file" />
       </template>
@@ -26,6 +26,7 @@
         :rules="rules('date')"
         :readonly="game && !game.isLocal"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -78,6 +79,7 @@
         :rules="rules('time')"
         :readonly="game && !game.isLocal"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -158,6 +160,7 @@
             :rules="rules('player1')"
             :readonly="game && !game.isLocal"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -185,6 +188,7 @@
             :rules="rules('rating1')"
             :readonly="game && !game.isLocal && player !== 1"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -216,6 +220,7 @@
             :rules="rules('player2')"
             :readonly="game && !game.isLocal"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -243,6 +248,7 @@
             :rules="rules('rating2')"
             :readonly="game && !game.isLocal && player !== 2"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -336,6 +342,7 @@
             :label="$t('Flats')"
             :rules="rules('flats')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -356,6 +363,7 @@
             :label="$t('Caps')"
             :rules="rules('caps')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -381,6 +389,7 @@
             :label="$t('Flats1')"
             :rules="rules('flats1')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -400,6 +409,7 @@
             :label="$t('Caps1')"
             :rules="rules('caps1')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -421,6 +431,7 @@
             :label="$t('Flats2')"
             :rules="rules('flats2')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -440,6 +451,7 @@
             :label="$t('Caps2')"
             :rules="rules('caps2')"
             hide-bottom-space
+            clearable
             filled
           >
             <template v-slot:prepend>
@@ -479,6 +491,7 @@
         :label="$t('Komi')"
         :rules="rules('komi')"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -496,6 +509,7 @@
         name="opening"
         map-options
         emit-value
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -517,6 +531,7 @@
         autocapitalize="off"
         spellcheck="false"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -536,6 +551,7 @@
         :label="$t('Round')"
         :rules="rules('round')"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -561,6 +577,7 @@
         transition-hide="none"
         hide-bottom-space
         emit-value
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -620,6 +637,7 @@
         :label="$t('Points')"
         :rules="rules('points')"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -636,6 +654,7 @@
       :label="$t('Event')"
       :rules="rules('event')"
       hide-bottom-space
+      clearable
       filled
     >
       <template v-slot:prepend>
@@ -651,6 +670,7 @@
       :label="$t('Site')"
       :rules="rules('site')"
       hide-bottom-space
+      clearable
       filled
     >
       <template v-slot:prepend>
