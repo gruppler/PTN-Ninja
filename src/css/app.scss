@@ -263,7 +263,8 @@ kbd {
   }
 }
 
-.q-slider__pin-value-marker-text {
+.q-slider__pin-value-marker-text,
+.q-slider__text {
   color: $textDark;
   color: var(--q-color-textDark);
   body.primaryDark & {
