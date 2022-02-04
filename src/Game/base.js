@@ -481,10 +481,9 @@ export default class GameBase {
 
     if (state && !isEmpty(state)) {
       // Go to specified position
-      if (!(state.targetBranch in this.branches)) {
-        state.targetBranch = "";
+      if (state.targetBranch in this.branches) {
+        this.board.targetBranch = state.targetBranch || "";
       }
-      this.board.targetBranch = state.targetBranch || "";
       let ply = this.board.plies[state.plyIndex];
       if (ply) {
         if (ply.id || state.plyIsDone) {

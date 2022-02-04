@@ -36,9 +36,22 @@
           <q-item-label caption>{{ $t("Name") }}</q-item-label>
           <q-item-label class="ellipsis">
             <span>
-              {{ name }}
+              <span class="text-selectable">{{ name }}</span>
               <tooltip>{{ name }}</tooltip>
             </span>
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <!-- Date/Time -->
+      <q-item v-if="tags.date || tags.time">
+        <q-item-section side>
+          <q-icon name="date_time" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>
+            <relative-time v-if="tags.time" :value="datetime" invert />
+            <relative-date v-else :value="datetime" invert />
           </q-item-label>
         </q-item-section>
       </q-item>
@@ -52,14 +65,18 @@
         </q-item-section>
         <q-item-section>
           <q-item-label caption>{{ $t("Player1") }}</q-item-label>
-          <q-item-label>{{ tags.player1 }}</q-item-label>
+          <q-item-label class="text-selectable">{{
+            tags.player1
+          }}</q-item-label>
         </q-item-section>
 
         <!-- Player 1 Rating -->
         <template v-if="tags.rating1">
           <q-item-section align="right">
             <q-item-label caption>{{ $t("Rating1") }}</q-item-label>
-            <q-item-label>{{ tags.rating1 }}</q-item-label>
+            <q-item-label class="text-selectable">{{
+              tags.rating1
+            }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-icon name="rating1" />
@@ -76,14 +93,18 @@
         </q-item-section>
         <q-item-section>
           <q-item-label caption>{{ $t("Player2") }}</q-item-label>
-          <q-item-label>{{ tags.player2 }}</q-item-label>
+          <q-item-label class="text-selectable">{{
+            tags.player2
+          }}</q-item-label>
         </q-item-section>
 
         <!-- Player 2 Rating -->
         <template v-if="tags.rating2">
           <q-item-section align="right">
             <q-item-label caption>{{ $t("Rating2") }}</q-item-label>
-            <q-item-label>{{ tags.rating2 }}</q-item-label>
+            <q-item-label class="text-selectable">{{
+              tags.rating2
+            }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-icon name="rating2" />
@@ -251,15 +272,15 @@
         <q-item-section>
           <q-item-label caption>{{ $t("Result") }}</q-item-label>
           <q-item-label>
-            <Result :result="tags.result" />
-            {{
+            <Result :result="tags.result" />&nbsp;
+            <span class="text-selectable">{{
               $t("result." + tags.result.type, {
                 player: tags.result.winner
                   ? tags["player" + tags.result.winner] ||
                     $t("Player" + tags.result.winner)
                   : "",
               })
-            }}
+            }}</span>
           </q-item-label>
         </q-item-section>
         <!-- Points -->
@@ -281,7 +302,9 @@
         </q-item-section>
         <q-item-section>
           <q-item-label caption>{{ $t("Event") }}</q-item-label>
-          <q-item-label>{{ tags.event }}</q-item-label>
+          <q-item-label class="text-selectable">
+            {{ tags.event }}
+          </q-item-label>
         </q-item-section>
       </q-item>
 
@@ -292,19 +315,8 @@
         </q-item-section>
         <q-item-section>
           <q-item-label caption>{{ $t("Site") }}</q-item-label>
-          <q-item-label>{{ tags.site }}</q-item-label>
-        </q-item-section>
-      </q-item>
-
-      <!-- Date/Time -->
-      <q-item v-if="tags.date || tags.time">
-        <q-item-section side>
-          <q-icon name="date_time" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>
-            <relative-time v-if="tags.time" :value="datetime" invert />
-            <relative-date v-else :value="datetime" invert />
+          <q-item-label class="text-selectable">
+            {{ tags.site }}
           </q-item-label>
         </q-item-section>
       </q-item>

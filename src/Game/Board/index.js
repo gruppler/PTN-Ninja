@@ -402,13 +402,10 @@ export default class Board extends Aggregation(
   }
 
   updateTagsOutput() {
-    return Object.assign(
-      this.output.ptn.tags,
-      zipObject(
-        Object.keys(this.game.tags),
-        Object.values(this.game.tags).map((tag) => tag.output)
-      )
-    );
+    return (this.output.ptn.tags = zipObject(
+      Object.keys(this.game.tags),
+      Object.values(this.game.tags).map((tag) => tag.output)
+    ));
   }
 
   updateCommentsOutput() {
