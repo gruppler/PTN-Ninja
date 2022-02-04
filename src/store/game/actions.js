@@ -44,7 +44,6 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   Loading.show();
   setTimeout(async () => {
     await dispatch("SET_GAME", game);
-    await dispatch("SAVE_CURRENT_GAME_STATE");
     this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
       commit("ADD_GAME", game);
       Loading.hide();
