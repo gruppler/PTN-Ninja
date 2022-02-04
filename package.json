@@ -55,7 +55,7 @@
     "firebase-tools": "^10.1.0",
     "prettier": "^2.5.1",
     "webpack": "^5.10.1",
-    "workbox-webpack-plugin": "^6.4.2"
+    "workbox-webpack-plugin": "^5.0.0"
   },
   "engines": {
     "node": ">= 8.9.0",
