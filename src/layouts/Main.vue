@@ -339,7 +339,7 @@ export default {
           let name = this.name;
           if (!this.name) {
             // If name isn't provided, parse the game to get a name
-            game = new Game({ ptn: this.ptn });
+            game = new Game({ ptn: this.ptn, state: this.state });
             name = game.name;
           }
           const index = this.$store.state.game.list.findIndex(
@@ -349,7 +349,7 @@ export default {
             // Open as a new game
             if (!game) {
               // If it hasn't been parsed yet, do it now
-              game = new Game({ ptn: this.ptn, name });
+              game = new Game({ ptn: this.ptn, name, state: this.state });
             }
             if (game) {
               this.$store.dispatch("game/ADD_GAME", game);
@@ -359,7 +359,7 @@ export default {
             // Replace an existing game
             if (!game) {
               // If it hasn't been parsed yet, do it now
-              game = new Game({ ptn: this.ptn, name });
+              game = new Game({ ptn: this.ptn, name, state: this.state });
             }
             game = await this.$store.dispatch("game/REPLACE_GAME", {
               index,

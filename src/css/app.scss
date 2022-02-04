@@ -193,6 +193,10 @@ kbd {
   background-color: rgba($highlight, .09);
 }
 
+.text-selectable {
+  user-select: text;
+}
+
 .fullwidth-padded-md{
   padding-left: $space-base;
   padding-right: $space-base;
@@ -203,6 +207,12 @@ kbd {
 .ptn {
   font-size: 18px;
   line-height: 1.5em;
+}
+
+@media (min-width: 600px){
+  .q-dialog__inner--minimized > div {
+      max-width: 580px;
+  }
 }
 
 .q-dialog {
@@ -253,7 +263,8 @@ kbd {
   }
 }
 
-.q-slider__pin-value-marker-text {
+.q-slider__pin-value-marker-text,
+.q-slider__text {
   color: $textDark;
   color: var(--q-color-textDark);
   body.primaryDark & {

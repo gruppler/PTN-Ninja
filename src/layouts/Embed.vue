@@ -374,36 +374,6 @@ export default {
     }
     window.addEventListener("message", handleMessage);
   },
-  watch: {
-    ptn() {
-      this.getGame();
-    },
-    state: {
-      handler(state, oldState) {
-        if (!this.$game) {
-          return;
-        }
-        let fullState = {};
-        forEach(defaults(fullState, state, this.defaults), (value, key) => {
-          this.$store.commit("ui/SET_UI", [key, value]);
-        });
-        this.$game.board.targetBranch =
-          "targetBranch" in state ? state.targetBranch || "" : "";
-        if ("plyIndex" in state && !("plyIndex" in oldState)) {
-          const ply = this.$game.board.plies[state.plyIndex];
-          if (ply) {
-            this.$store.dispatch("game/GO_TO_PLY", {
-              ply: ply.id,
-              isDone: state.plyIsDone,
-            });
-          }
-        } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
-        }
-      },
-      deep: true,
-    },
-  },
 };
 </script>
 

@@ -59,6 +59,8 @@
 import GameInfo from "../components/controls/GameInfo";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
+import { pick } from "lodash";
+
 export default {
   name: "EditGame",
   components: { GameInfo, MoreToggle },
@@ -87,7 +89,7 @@ export default {
       this.$store.dispatch("game/RENAME_CURRENT_GAME", name);
 
       if (this.hasChanges) {
-        this.$store.dispatch("game/SET_TAGS", changes);
+        this.$store.dispatch("game/SET_TAGS", pick(changes, Object.keys(tags)));
       }
 
       if (this.$game.config.id) {

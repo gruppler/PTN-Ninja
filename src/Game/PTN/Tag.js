@@ -2,6 +2,7 @@ import TPS from "./TPS";
 import Result from "./Result";
 
 import { padStart } from "lodash";
+import { parseISO } from "date-fns";
 
 const capitalized = {
   caps: "Caps",
@@ -90,9 +91,18 @@ export const timeFromDate = (date) => {
 };
 
 export const toDate = (date, time = "") => {
-  return new Date(
-    date && date.seconds ? date.seconds * 1e3 : `${date} ${time} UTC`
-  );
+  if (date) {
+    if (date.seconds) {
+      return new Date(date.seconds * 1e3);
+    } else {
+      date = date.replace(/\./g, "-");
+      if (time) {
+        date += ` ${time}Z`;
+      }
+      return parseISO(date);
+    }
+  }
+  return null;
 };
 
 export default class Tag {

@@ -89,7 +89,7 @@ export default {
       const config = game.config;
       try {
         game = new Game({
-          state: game.minState,
+          state: game.minState || game.state,
           tags: {
             tps: game.state.tps,
             komi: config.komi,
