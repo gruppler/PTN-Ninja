@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed Test</title>
+
+    <style media="screen">
+      body {
+        margin: 0;
+        padding: 30px;
+      }
+      .row {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        align-items: stretch;
+      }
+      .row > * {
+        flex-grow: 1;
+        min-width: 200px;
+      }
+      .row input,
+      .row textarea {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <fieldset>
+        <legend>Input</legend>
+        <form id="sendMessage" method="post">
+          <p><input name="action" placeholder="Action" /></p>
+          <p><textarea name="value" placeholder="Value"></textarea></p>
+          <p><input type="submit" value="Send" /></p>
+          <p><input type="button" value="Clear" /></p>
+        </form>
+      </fieldset>
+
+      <fieldset>
+        <legend>Output</legend>
+        <output id="output" />
+      </fieldset>
+    </div>
+    <br />
+
+    <script type="text/javascript">
+      document.getElementById("sendMessage").addEventListener(
+        "submit",
+        (event) => {
+          const data = new FormData(event.target);
+          const action = data.get("action");
+          const value = data.get("value");
+          const ninja = document.getElementById("ninja");
+
+          try {
+            console.log(ninja.contentWindow.postMessage({ action, value }));
+          } catch (error) {
+            console.error(error);
+          }
+
+          event.preventDefault();
+          return false;
+        },
+        true
+      );
+    </script>
+
+    <iframe
+      id="ninja"
+      src="http://localhost:8080/NoBQNghgngpgTgRgAQCIAqALGBbFBdUSWOAJlQE0B7AV32AGUBLALxlQDY6BpS7R1AAx0AShAAujAHYBzZCiEFREmWRQIBGugGEwlAMYBrQQC4BSANQLgAUQBuMSWNQB5SWCltw0OkzFsUXlBoEAYAdHq8IjAAztRgTvIAtML4SBAALEgAJuxpyHqZAEYArEiFAMxpuXqlWaV6uQBmmXpkesiFZIUdmVnIjcgw-V25MGRZZAhjADzICH3mc60AfP25WZmNlVmV88WJczuLSHrbu6erQA&ply=34%21&flatCounts=false&highlightSquares=false&showRoads=false&showScrubber=false"
+      width="100%"
+      height="600px"
+      style="width: 100%; height: 600px; max-height: 100vh"
+      frameborder="0"
+      allowfullscreen
+    />
+  </body>
+</html>
