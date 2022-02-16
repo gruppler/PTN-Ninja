@@ -9,21 +9,30 @@
       body {
         margin: 0;
         padding: 30px;
+        font-family: sans-serif;
       }
       .row {
         width: 100%;
         display: flex;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
+        justify-content: space-between;
         align-items: stretch;
       }
-      .row > * {
+      body > .row {
+        flex-grow: 1;
+        min-width: 200px;
+        flex-wrap: wrap;
+      }
+      body > .row > * {
         flex-grow: 1;
         min-width: 200px;
       }
       .row input,
       .row textarea {
-        width: 100%;
+        width: 100% !important;
+      }
+      #output {
+        font-family: monospace;
+        white-space: pre-wrap;
       }
     </style>
   </head>
@@ -33,35 +42,53 @@
         <legend>Input</legend>
         <form id="sendMessage" method="post">
           <p><input name="action" placeholder="Action" /></p>
-          <p><textarea name="value" placeholder="Value"></textarea></p>
-          <p><input type="submit" value="Send" /></p>
-          <p><input type="button" value="Clear" /></p>
+          <textarea name="value" placeholder="Value"></textarea>
+          <p class="row">
+            <input type="reset" value="Clear" />
+            <input type="submit" value="Send" />
+          </p>
         </form>
       </fieldset>
 
       <fieldset>
         <legend>Output</legend>
-        <output id="output" />
+        <input type="button" value="Clear" onclick="output.value = ''" />
+        <output id="output"></output>
       </fieldset>
     </div>
     <br />
 
     <script type="text/javascript">
-      document.getElementById("sendMessage").addEventListener(
+      const form = document.getElementById("sendMessage");
+
+      window.addEventListener(
+        "message",
+        (event) => {
+          document.getElementById("output").value +=
+            JSON.stringify(event.data) + "\n";
+        },
+        false
+      );
+
+      form.addEventListener(
         "submit",
         (event) => {
+          event.preventDefault();
+          const ninja = document.getElementById("ninja");
           const data = new FormData(event.target);
           const action = data.get("action");
-          const value = data.get("value");
-          const ninja = document.getElementById("ninja");
-
+          const valueString = data.get("value");
+          let value;
           try {
-            console.log(ninja.contentWindow.postMessage({ action, value }));
+            value = JSON.parse(valueString);
+          } catch (error) {
+            value = valueString;
+          }
+          try {
+            ninja.contentWindow.postMessage({ action, value }, "*");
           } catch (error) {
             console.error(error);
           }
-
-          event.preventDefault();
           return false;
         },
         true

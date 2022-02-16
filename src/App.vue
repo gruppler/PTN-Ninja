@@ -40,6 +40,7 @@ export default {
           this.showNames = data.value;
           break;
         case "SET_GAME":
+        case "SET_CURRENT_PTN":
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
         case "DELETE_PLY":
