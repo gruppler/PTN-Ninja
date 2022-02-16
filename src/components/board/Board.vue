@@ -86,7 +86,7 @@
 
       <q-resize-observer @resize="resizeBoard" :debounce="10" />
     </div>
-    <q-resize-observer @resize="resizeSpace" :debounce="10" />
+    <q-resize-observer @resize="resizeSpace" :debounce="100" />
   </div>
 </template>
 
