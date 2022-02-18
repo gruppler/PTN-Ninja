@@ -90,12 +90,10 @@ export default class Square {
       this.color = null;
       this.isStanding = false;
     }
-    if (piece !== prevPiece) {
-      this.board.dirtySquare(
-        this.static.coord,
-        this.color !== prevColor || this.isStanding !== wasStanding
-      );
-    }
+    this.board.dirtySquare(
+      this.static.coord,
+      this.color !== prevColor || this.isStanding !== wasStanding
+    );
   }
 
   clear() {
