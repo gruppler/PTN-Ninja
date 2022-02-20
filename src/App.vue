@@ -6,6 +6,8 @@
 
 <script>
 import ICONS from "./icons";
+import { postMessage } from "./utilities";
+import { omit } from "lodash";
 
 export default {
   name: "App",
@@ -36,6 +38,7 @@ export default {
             this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
           });
           break;
+        case "TOGGLE_UI":
         case "SHOW_NAMES":
           this.showNames = data.value;
           break;
@@ -46,9 +49,13 @@ export default {
         case "DELETE_PLY":
         case "DELETE_BRANCH":
         case "SET_TARGET":
+        case "GO_TO_PLY":
         case "PREV":
         case "NEXT":
-        case "GO_TO_PLY":
+        case "FIRST":
+        case "LAST":
+        case "UNDO":
+        case "REDO":
         case "RENAME_BRANCH":
         case "TOGGLE_EVALUATION":
         case "EDIT_NOTE":
@@ -56,10 +63,6 @@ export default {
         case "REMOVE_NOTE":
           this.$store.dispatch("game/" + data.action, data.value);
           break;
-        case "FIRST":
-        case "LAST":
-        case "UNDO":
-        case "REDO":
         case "TRIM_BRANCHES":
         case "TRIM_TO_BOARD":
         case "TRIM_TO_PLY":
@@ -73,13 +76,12 @@ export default {
         case "NOTIFY_HINT":
           this.$store.dispatch("ui/" + data.action, data.value);
           break;
-        case "TOGGLE_UI":
-        case "RESET_TRANSFORM":
         case "ROTATE_180":
         case "ROTATE_LEFT":
         case "ROTATE_RIGHT":
         case "FLIP_HORIZONTAL":
         case "FLIP_VERTICAL":
+        case "RESET_TRANSFORM":
           this.$store.dispatch("ui/" + data.action);
           break;
         default:
@@ -92,6 +94,25 @@ export default {
       window.removeEventListener("message", handleMessage);
     }
     window.addEventListener("message", handleMessage);
+  },
+  watch: {
+    "$store.state.game.position": {
+      handler(position) {
+        position = {
+          ...omit(position, "plyID"),
+          move: position.move ? position.move.id : null,
+          ply: position.ply ? position.ply.id : null,
+          prevPly: position.prevPly ? position.prevPly.id : null,
+          nextPly: position.nextPly ? position.nextPly.id : null,
+          result:
+            position.ply && position.ply.result
+              ? omit(position.ply.result, "roads")
+              : null,
+        };
+        postMessage("GAME_STATE", position);
+      },
+      deep: true,
+    },
   },
 };
 </script>

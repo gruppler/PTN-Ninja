@@ -21,6 +21,7 @@
         flex-grow: 1;
         min-width: 200px;
         flex-wrap: wrap;
+        margin-top: 1em;
       }
       body > .row > * {
         flex-grow: 1;
@@ -29,6 +30,11 @@
       .row input,
       .row textarea {
         width: 100% !important;
+        margin-bottom: 1em;
+      }
+      #sendMessage, #clearOutput {
+        position: sticky;
+        top: 1em;
       }
       #output {
         font-family: monospace;
@@ -37,26 +43,40 @@
     </style>
   </head>
   <body>
+    <iframe
+      id="ninja"
+      src="http://localhost:8080/NoBQNghgngpgTgRgAQCIAqALGBbFBdUSWOAJlQE0B7AV32AGUBLALxlQDY6BpS7R1AAx0AShAAujAHYBzZCiEFREmWRQIBGugGEwlAMYBrQQC4BSANQLgAUQBuMSWNQB5SWCltw0OkzFsUXlBoEAYAdHq8IjAAztRgTvIAtML4SBAALEgAJuxpyHqZAEYArEiFAMxpuXqlWaV6uQBmmXpkesiFZIUdmVnIjcgw-V25MGRZZAhjADzICH3mc60AfP25WZmNlVmV88WJczuLSHrbu6erQA&ply=34%21&flatCounts=false&highlightSquares=false&showRoads=false&showScrubber=false"
+      width="100%"
+      height="600px"
+      style="width: 100%; height: 600px; max-height: 100vh"
+      frameborder="0"
+      allowfullscreen
+    ></iframe>
+
     <div class="row">
       <fieldset>
-        <legend>Input</legend>
+        <legend>Send Message</legend>
         <form id="sendMessage" method="post">
-          <p><input name="action" placeholder="Action" /></p>
+          <input name="action" placeholder="Action" />
           <textarea name="value" placeholder="Value"></textarea>
-          <p class="row">
+          <div class="row">
             <input type="reset" value="Clear" />
             <input type="submit" value="Send" />
-          </p>
+          </div>
         </form>
       </fieldset>
 
       <fieldset>
-        <legend>Output</legend>
-        <input type="button" value="Clear" onclick="output.value = ''" />
+        <legend>Received Messages</legend>
+        <input
+          id="clearOutput"
+          type="button"
+          value="Clear"
+          onclick="output.value = ''"
+        />
         <output id="output"></output>
       </fieldset>
     </div>
-    <br />
 
     <script type="text/javascript">
       const form = document.getElementById("sendMessage");
@@ -65,7 +85,7 @@
         "message",
         (event) => {
           document.getElementById("output").value +=
-            JSON.stringify(event.data) + "\n";
+            JSON.stringify(event.data, null, 2) + "\n";
         },
         false
       );
@@ -94,15 +114,5 @@
         true
       );
     </script>
-
-    <iframe
-      id="ninja"
-      src="http://localhost:8080/NoBQNghgngpgTgRgAQCIAqALGBbFBdUSWOAJlQE0B7AV32AGUBLALxlQDY6BpS7R1AAx0AShAAujAHYBzZCiEFREmWRQIBGugGEwlAMYBrQQC4BSANQLgAUQBuMSWNQB5SWCltw0OkzFsUXlBoEAYAdHq8IjAAztRgTvIAtML4SBAALEgAJuxpyHqZAEYArEiFAMxpuXqlWaV6uQBmmXpkesiFZIUdmVnIjcgw-V25MGRZZAhjADzICH3mc60AfP25WZmNlVmV88WJczuLSHrbu6erQA&ply=34%21&flatCounts=false&highlightSquares=false&showRoads=false&showScrubber=false"
-      width="100%"
-      height="600px"
-      style="width: 100%; height: 600px; max-height: 100vh"
-      frameborder="0"
-      allowfullscreen
-    />
   </body>
 </html>

@@ -182,11 +182,6 @@ export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
       state.editingTPS !== undefined,
       selectedPiece
     );
-    postMessage("SELECT_SQUARE", {
-      square: square.static.coord,
-      alt,
-      selectedPiece,
-    });
   }
 };
 
@@ -194,7 +189,6 @@ export const SELECT_PIECE = (state, { type, alt }) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.board.selectUnplayedPiece(type, alt);
-    postMessage("SELECT_PIECE", { type, alt });
   }
 };
 
@@ -202,7 +196,6 @@ export const CANCEL_MOVE = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.board.cancelMove();
-    postMessage("CANCEL_MOVE");
   }
 };
 
@@ -289,7 +282,6 @@ export const NEXT = function (state, { half, times }) {
 
 export const SET_TARGET = function (state, ply) {
   state.error = null;
-  postMessage("SET_TARGET", ply);
   return Vue.prototype.$game.board.setTarget(ply);
 };
 
