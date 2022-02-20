@@ -7,7 +7,7 @@
       <q-scroll-area id="notes-scroll-area" class="absolute-fit">
         <q-virtual-scroll
           ref="scroll"
-          class="bg-transparent q-px-md"
+          class="bg-transparent"
           :items="plyIDs"
           scroll-target="#notes-scroll-area > .scroll"
           :virtual-scroll-item-size="128"
@@ -16,7 +16,7 @@
         >
           <template v-slot="{ item }">
             <div
-              class="fullwidth-padded-md q-py-xs"
+              class="q-py-xs q-px-md"
               :class="{
                 current: isCurrent(item),
                 'q-pt-md': item < 0,
