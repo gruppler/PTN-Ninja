@@ -21,7 +21,7 @@ export default {
 
   methods: {
     async load_game() {
-      let response = await fetch("http://127.0.0.1:5000/api/v1/game/"+this.playtak_id);
+      let response = await fetch("https://tak-db.herokuapp.com/api/v1/game/"+this.playtak_id);
 
       if(response.ok) {
         let data = await(response.json());
@@ -44,7 +44,7 @@ export default {
       return (
         this.white_player +
         " (" + this.white_rating + ")" +
-        " vs." +
+        " vs. " +
         this.black_player +
         " (" + this.black_rating + ") : " + this.result
       );
