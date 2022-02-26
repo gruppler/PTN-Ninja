@@ -3,7 +3,7 @@
     <div class="player-names row no-wrap" @click.right.prevent>
       <div
         class="player1 relative-position"
-        :style="{ width: $store.state.ui.flatCounts ? widths[1] : '50%' }"
+        :style="{ width: showFlatCounts ? widths[1] : '50%' }"
       >
         <div class="content absolute-fit">
           <div class="name absolute-left q-px-sm">
@@ -19,7 +19,7 @@
       </div>
       <div
         class="player2 relative-position"
-        :style="{ width: $store.state.ui.flatCounts ? widths[2] : '50%' }"
+        :style="{ width: showFlatCounts ? widths[2] : '50%' }"
       >
         <div class="content absolute-fit row no-wrap">
           <div class="flats q-px-sm">
@@ -34,7 +34,7 @@
         </div>
       </div>
       <div
-        v-if="komi !== 0 && $store.state.ui.flatCounts"
+        v-if="komi !== 0 && showFlatCounts"
         class="komi"
         :class="{ dark: komiDark }"
         :style="{ width: widths.komiWidth, left: widths.komiLeft }"
@@ -83,6 +83,9 @@ export default {
     player2() {
       return this.$store.state.game.ptn.tags.player2;
     },
+    showFlatCounts() {
+      return this.$store.state.ui.flatCounts;
+    },
     flats() {
       return this.board.flats;
     },
@@ -98,7 +101,7 @@ export default {
         : this.$store.state.ui.theme.player2Dark;
     },
     counts() {
-      if (this.$store.state.ui.flatCounts) {
+      if (this.showFlatCounts) {
         return [
           this.komi < 0 ? this.flats[0] + this.komi : this.flats[0],
           this.komi > 0 ? this.flats[1] - this.komi : this.flats[1],

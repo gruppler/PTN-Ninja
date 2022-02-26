@@ -138,6 +138,27 @@
               </hint>
             </smooth-reflow>
 
+            <smooth-reflow>
+              <q-item
+                v-if="turnIndicator && unplayedPieces"
+                tag="label"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t("Move Number") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="moveNumber"
+                    :disabled="isDisabled('moveNumber')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.moveNumber">
+                  {{ $t("Hotkey") }}: {{ hotkeys.moveNumber }}
+                </hint>
+              </q-item>
+            </smooth-reflow>
+
             <q-item tag="label" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -180,21 +201,6 @@
               </q-item-section>
               <hint v-if="hotkeys.unplayedPieces">
                 {{ $t("Hotkey") }}: {{ hotkeys.unplayedPieces }}
-              </hint>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Current Move") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="showMove"
-                  :disabled="isDisabled('showMove')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.showMove">
-                {{ $t("Hotkey") }}: {{ hotkeys.showMove }}
               </hint>
             </q-item>
           </q-list>
@@ -280,6 +286,21 @@
                 </hint>
               </q-item>
             </smooth-reflow>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Current Move") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showMove"
+                  :disabled="isDisabled('showMove')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.showMove">
+                {{ $t("Hotkey") }}: {{ hotkeys.showMove }}
+              </hint>
+            </q-item>
 
             <q-item tag="label" v-ripple>
               <q-item-section>
@@ -435,6 +456,7 @@ const props = [
   "board3D",
   "flatCounts",
   "highlightSquares",
+  "moveNumber",
   "nativeSharing",
   "notifyGame",
   "notifyNotes",

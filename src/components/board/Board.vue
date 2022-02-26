@@ -30,6 +30,8 @@
     >
       <TurnIndicator :hide-names="hideNames" />
 
+      <div v-if="showMoveNumber" class="move-number">{{ moveNumber }}.</div>
+
       <div class="board-row row no-wrap no-pointer-events">
         <div
           v-if="$store.state.ui.axisLabels"
@@ -82,9 +84,9 @@
         <div v-for="x in xAxis" :key="x">{{ x }}</div>
       </div>
 
-      <q-resize-observer @resize="resizeBoard" :debounce="10" />
+      <q-resize-observer @resize="resizeBoard" :debounce="20" />
     </div>
-    <q-resize-observer @resize="resizeSpace" :debounce="10" />
+    <q-resize-observer @resize="resizeSpace" :debounce="20" />
   </div>
 </template>
 
@@ -185,6 +187,16 @@ export default {
     },
     style() {
       return this.$store.state.ui.theme.boardStyle;
+    },
+    moveNumber() {
+      return this.$store.state.game.position.move.linenum.number;
+    },
+    showMoveNumber() {
+      return (
+        this.$store.state.ui.moveNumber &&
+        this.$store.state.ui.turnIndicator &&
+        this.$store.state.ui.unplayedPieces
+      );
     },
     turn() {
       return this.$store.state.game.editingTPS !== undefined
@@ -544,6 +556,7 @@ $radius: 0.35em;
 }
 
 .board-container {
+  position: relative;
   width: 100%;
   will-change: width, font-size;
   text-align: center;
@@ -572,6 +585,15 @@ $radius: 0.35em;
       transition: none !important;
     }
   }
+
+  .move-number {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 1.75em;
+    line-height: 1.75;
+    background: transparent;
+  }
 }
 
 .turn-indicator,
@@ -594,7 +616,8 @@ $radius: 0.35em;
 }
 
 .x-axis,
-.y-axis {
+.y-axis,
+.move-number {
   color: $textDark;
   color: var(--q-color-textDark);
   text-shadow: 0 1px 2px $textLight;
@@ -659,7 +682,8 @@ $radius: 0.35em;
   }
 }
 
-.unplayed-bg {
+.unplayed-bg,
+.move-number {
   border-radius: 0 $radius $radius 0;
   background-color: $board3;
   background-color: var(--q-color-board3);

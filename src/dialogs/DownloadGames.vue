@@ -14,7 +14,6 @@
           :left-label-value="games[range.min]"
           :right-label-value="games[range.max]"
           style="max-height: calc(100vh - 196px)"
-          label-text-color="textDark"
           label-always
           vertical
           markers
@@ -65,7 +64,7 @@ export default {
     },
     submit() {
       const count = this.range.max - this.range.min + 1;
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$tc("confirm.downloadMultipleGames", count),
         success: () => {

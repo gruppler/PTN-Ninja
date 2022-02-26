@@ -15,9 +15,11 @@ let defaults = {
   flatCounts: true,
   highlightSquares: true,
   isPortrait: false,
-  nativeSharing: navigator.canShare
-    ? navigator.canShare({ text: "test", url: location.href })
-    : false,
+  moveNumber: true,
+  nativeSharing:
+    navigator.canShare && !Platform.is.desktop
+      ? navigator.canShare({ text: "test", url: location.href })
+      : false,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
@@ -54,11 +56,12 @@ export const embedUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "moveNumber",
   "pieceShadows",
   "playSpeed",
   "showAllBranches",
-  "showControls",
   "showMove",
+  "showControls",
   "showPTN",
   "showRoads",
   "showScrubber",
@@ -72,6 +75,7 @@ export const pngUIOptions = [
   "flatCounts",
   "turnIndicator",
   "highlightSquares",
+  "moveNumber",
   "pieceShadows",
   "showRoads",
   "themeID",

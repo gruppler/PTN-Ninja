@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed Test</title>
+
+    <style media="screen">
+      body {
+        margin: 0;
+        padding: 30px;
+        font-family: sans-serif;
+      }
+      .row {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+      }
+      body > .row {
+        flex-grow: 1;
+        min-width: 200px;
+        flex-wrap: wrap;
+        margin-top: 1em;
+      }
+      body > .row > * {
+        flex-grow: 1;
+        min-width: 200px;
+      }
+      .row input,
+      .row textarea {
+        width: 100% !important;
+        margin-bottom: 1em;
+      }
+      #sendMessage, #clearOutput {
+        position: sticky;
+        top: 1em;
+      }
+      #output {
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      id="ninja"
+      src="http://localhost:8080/NoBQNghgngpgTgRgAQCIAqALGBbFBdUSWOAJlQE0B7AV32AGUBLALxlQDY6BpS7R1AAx0AShAAujAHYBzZCiEFREmWRQIBGugGEwlAMYBrQQC4BSANQLgAUQBuMSWNQB5SWCltw0OkzFsUXlBoEAYAdHq8IjAAztRgTvIAtML4SBAALEgAJuxpyHqZAEYArEiFAMxpuXqlWaV6uQBmmXpkesiFZIUdmVnIjcgw-V25MGRZZAhjADzICH3mc60AfP25WZmNlVmV88WJczuLSHrbu6erQA&ply=34%21&flatCounts=false&highlightSquares=false&showRoads=false&showScrubber=false"
+      width="100%"
+      height="600px"
+      style="width: 100%; height: 600px; max-height: 100vh"
+      frameborder="0"
+      allowfullscreen
+    ></iframe>
+
+    <div class="row">
+      <fieldset>
+        <legend>Send Message</legend>
+        <form id="sendMessage" method="post">
+          <input name="action" placeholder="Action" />
+          <textarea name="value" placeholder="Value"></textarea>
+          <div class="row">
+            <input type="reset" value="Clear" />
+            <input type="submit" value="Send" />
+          </div>
+        </form>
+      </fieldset>
+
+      <fieldset>
+        <legend>Received Messages</legend>
+        <input
+          id="clearOutput"
+          type="button"
+          value="Clear"
+          onclick="output.value = ''"
+        />
+        <output id="output"></output>
+      </fieldset>
+    </div>
+
+    <script type="text/javascript">
+      const form = document.getElementById("sendMessage");
+
+      window.addEventListener(
+        "message",
+        (event) => {
+          document.getElementById("output").value +=
+            JSON.stringify(event.data, null, 2) + "\n";
+        },
+        false
+      );
+
+      form.addEventListener(
+        "submit",
+        (event) => {
+          event.preventDefault();
+          const ninja = document.getElementById("ninja");
+          const data = new FormData(event.target);
+          const action = data.get("action");
+          const valueString = data.get("value");
+          let value;
+          try {
+            value = JSON.parse(valueString);
+          } catch (error) {
+            value = valueString;
+          }
+          try {
+            ninja.contentWindow.postMessage({ action, value }, "*");
+          } catch (error) {
+            console.error(error);
+          }
+          return false;
+        },
+        true
+      );
+    </script>
+  </body>
+</html>

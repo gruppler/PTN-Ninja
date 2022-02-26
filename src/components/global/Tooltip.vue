@@ -1,5 +1,6 @@
 <template>
   <q-tooltip
+    ref="tooltip"
     :delay="0"
     self="bottom middle"
     anchor="top middle"
@@ -30,5 +31,7 @@ export default {
   font-size: 0.8rem;
   background-color: rgba(#000, 0.8);
   color: #fff;
+  overflow: visible;
+  white-space: nowrap;
 }
 </style>

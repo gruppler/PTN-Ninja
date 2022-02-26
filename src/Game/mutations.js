@@ -463,6 +463,9 @@ export default class GameMutations {
         move.setPly(ply, ply.player - 1);
         this.moves.push(move);
         this.branches[ply.branch] = ply;
+        ply.branches.forEach((ply) => {
+          this.board.dirtyPly(ply.id);
+        });
       }
     }
 

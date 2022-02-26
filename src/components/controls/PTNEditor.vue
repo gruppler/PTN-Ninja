@@ -33,7 +33,6 @@ export default {
             if (this.$te(`error["${result}"]`)) {
               return this.$t(`error["${result}"]`);
             } else {
-              console.error(result);
               return result;
             }
           }

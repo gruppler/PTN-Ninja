@@ -169,18 +169,22 @@ export default {
       this.player2 = tags.player2;
       this.size = tags.size;
 
-      let game = new Game({ name, tags });
+      let game;
+      try {
+        game = new Game({ name, tags });
+      } catch (error) {
+        console.error(error);
+      }
 
-      game.warnings.forEach((warning) =>
-        this.$store.dispatch("NOTIFY_WARNING", warning)
-      );
+      game.warnings.forEach((warning) => this.notifyWarning(warning));
 
       this.$store.dispatch("game/ADD_GAME", game);
 
       this.close();
     },
     async toggleOnline() {
-      await this.$nextTick(() => (this.showOnline = !this.showOnline));
+      await this.$nextTick();
+      this.showOnline = !this.showOnline;
     },
     ok() {
       if (this.tab === "new") {
@@ -192,7 +196,7 @@ export default {
             this.$store
               .dispatch("online/LOAD_GAME", game.config.id)
               .catch((error) => {
-                this.$store.dispatch("ui/NOTIFY_ERROR", error);
+                this.notifyError(error);
               });
           });
           this.selectedGames = [];

@@ -150,7 +150,7 @@
       </q-item>
 
       <smooth-reflow>
-        <div v-show="config.ui.turnIndicator">
+        <div v-if="config.ui.turnIndicator">
           <q-item tag="label" v-ripple>
             <q-item-section>
               <q-item-label>{{ $t("Player Names") }}</q-item-label>
@@ -197,6 +197,21 @@
           <q-toggle v-model="config.ui.unplayedPieces" />
         </q-item-section>
       </q-item>
+
+      <smooth-reflow>
+        <q-item
+          v-if="config.ui.turnIndicator && config.ui.unplayedPieces"
+          tag="label"
+          v-ripple
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Move Number") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.moveNumber" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -292,7 +307,7 @@ export default {
       }
     },
     reset() {
-      this.$store.dispatch("ui/PROMPT", {
+      this.prompt({
         title: this.$t("Confirm"),
         message: this.$t("confirm.resetEmbed"),
         success: () => {

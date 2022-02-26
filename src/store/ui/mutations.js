@@ -1,6 +1,7 @@
 import { Dark } from "quasar";
 import { cloneDeep, forEach, isBoolean, isNumber } from "lodash";
 import { computeMissing } from "../../themes";
+import { postMessage } from "../../utilities";
 
 export const SET_THEME = (state, theme) => {
   theme = cloneDeep(theme);
@@ -28,6 +29,7 @@ export const SET_THEME = (state, theme) => {
 export const SET_UI = (state, [key, value]) => {
   if (key in state.defaults) {
     state[key] = cloneDeep(value);
+    postMessage("SET_UI", { [key]: value });
   }
 };
 

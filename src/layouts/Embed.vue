@@ -60,6 +60,7 @@
     </q-page-container>
 
     <q-drawer
+      id="left-drawer"
       v-model="showPTN"
       side="left"
       :breakpoint="showText ? doubleWidth : singleWidth"
@@ -68,9 +69,9 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTNTools ref="tools">
-          <ShareButton ref="shareButton" flat stretch no-menu />
-        </PTNTools>
+        <PTN-Tools ref="tools">
+          <ShareButton flat stretch no-menu />
+        </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" />
         </div>
@@ -83,6 +84,7 @@
     </q-drawer>
 
     <q-drawer
+      id="right-drawer"
       v-model="showText"
       side="right"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
@@ -279,6 +281,10 @@ export default {
             this.hasChat && this.textTab === "chat" ? "chat" : "notes"
           ].$refs.input.focus();
           break;
+        case "game/UNDO":
+        case "game/REDO":
+          this.$store.dispatch(srcKey);
+          break;
       }
     },
   },
@@ -300,111 +306,20 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
     this.title = this.name || this.$game.generateName();
-
-    // Embed API
-    const handleMessage = ({ data }) => {
-      switch (data.action) {
-        case "SET_NAME":
-          this.title = data.value;
-          break;
-        case "SET_UI":
-          Object.keys(data.value).forEach((key) => {
-            this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
-          });
-          break;
-        case "SHOW_NAMES":
-          this.showNames = data.value;
-          break;
-        case "SET_GAME":
-        case "SELECT_SQUARE":
-        case "SELECT_PIECE":
-        case "DELETE_PLY":
-        case "DELETE_BRANCH":
-        case "SET_TARGET":
-        case "PREV":
-        case "NEXT":
-        case "GO_TO_PLY":
-        case "RENAME_BRANCH":
-        case "TOGGLE_EVALUATION":
-        case "TOGGLE_UI":
-        case "EDIT_NOTE":
-        case "ADD_NOTE":
-        case "REMOVE_NOTE":
-          this.$store.dispatch("game/" + data.action, data.value);
-          break;
-        case "FIRST":
-        case "LAST":
-        case "UNDO":
-        case "REDO":
-        case "TRIM_BRANCHES":
-        case "TRIM_TO_BOARD":
-        case "TRIM_TO_PLY":
-        case "CANCEL_MOVE":
-          this.$store.dispatch("game/" + data.action);
-          break;
-        case "NOTIFY":
-        case "NOTIFY_ERROR":
-        case "NOTIFY_SUCCESS":
-        case "NOTIFY_WARNING":
-        case "NOTIFY_HINT":
-          this.$store.dispatch("ui/" + data.action, data.value);
-          break;
-        case "RESET_TRANSFORM":
-        case "ROTATE_180":
-        case "ROTATE_LEFT":
-        case "ROTATE_RIGHT":
-        case "FLIP_HORIZONTAL":
-        case "FLIP_VERTICAL":
-          this.$store.dispatch("ui/" + data.action);
-          break;
-        default:
-          if (data.action) {
-            throw "Invalid message: " + data.action;
-          }
-      }
-    };
-    if (process.env.DEV) {
-      window.removeEventListener("message", handleMessage);
-    }
-    window.addEventListener("message", handleMessage);
-  },
-  watch: {
-    ptn() {
-      this.$game = this.getGame();
-    },
-    state: {
-      handler(state, oldState) {
-        if (!this.$game) {
-          return;
-        }
-        let fullState = {};
-        forEach(defaults(fullState, state, this.defaults), (value, key) => {
-          this.$store.commit("ui/SET_UI", [key, value]);
-        });
-        this.$game.board.targetBranch =
-          "targetBranch" in state ? state.targetBranch || "" : "";
-        if ("plyIndex" in state && !("plyIndex" in oldState)) {
-          const ply = this.$game.board.plies[state.plyIndex];
-          if (ply) {
-            this.$store.dispatch("game/GO_TO_PLY", {
-              ply: ply.id,
-              isDone: state.plyIsDone,
-            });
-          }
-        } else if ("plyIndex" in oldState && !("plyIndex" in state)) {
-          this.$store.dispatch("game/GO_TO_PLY", { ply: 0, isDone: false });
-        }
-      },
-      deep: true,
-    },
   },
 };
 </script>
 
 <style lang="scss">
-.q-drawer {
-  background: $panel;
-  background: var(--q-color-panel);
+#left-drawer,
+#right-drawer {
+  .q-drawer {
+    background: $panel;
+    background: var(--q-color-panel);
+    .q-drawer__content {
+      overflow: hidden;
+    }
+  }
 }
 
 @media (max-width: $breakpoint-xs-max) {

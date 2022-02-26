@@ -70,6 +70,7 @@ export const HOTKEYS = {
     flipVertical: ["shift", ":"],
   },
   UI: {
+    showHints: ["shift", "h"],
     showPTN: ["q"],
     showText: ["w"],
     notifyGame: ["g"],
@@ -83,6 +84,7 @@ export const HOTKEYS = {
     pieceShadows: ["shift", "s"],
     turnIndicator: ["t"],
     flatCounts: ["f"],
+    moveNumber: ["shift", "m"],
     unplayedPieces: ["u"],
     showMove: ["m"],
     showControls: ["c"],
@@ -170,6 +172,7 @@ export const HOTKEY_NAMES = {
     flipVertical: "Flip Vertically",
   },
   UI: {
+    showHints: "Show UI Hints",
     showPTN: "Show PTN",
     showText: "Show Text",
     notifyGame: "Game Notifications",
@@ -183,6 +186,7 @@ export const HOTKEY_NAMES = {
     pieceShadows: "Piece Shadows",
     turnIndicator: "Turn Indicator",
     flatCounts: "Flat Counts",
+    moveNumber: "Move Number",
     unplayedPieces: "Unplayed Pieces",
     showMove: "Current Move",
     showControls: "Play Controls",

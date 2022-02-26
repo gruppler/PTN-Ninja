@@ -8,10 +8,12 @@ import {
   Notify,
 } from "quasar";
 import {
-  formatError,
-  formatSuccess,
-  formatWarning,
-  formatHint,
+  prompt,
+  notify,
+  notifyError,
+  notifySuccess,
+  notifyWarning,
+  notifyHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
 import { i18n } from "../../boot/i18n";
@@ -51,92 +53,24 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
   }
 };
 
-export const PROMPT = (
-  context,
-  { title, message, prompt, ok, cancel, success, failure }
-) => {
-  let dialog = Dialog.create({
-    title,
-    message,
-    prompt,
-    color: "primary",
-    "no-backdrop-dismiss": true,
-    ok: {
-      label: ok || i18n.t("OK"),
-      flat: true,
-      color: "primary",
-    },
-    cancel: {
-      label: cancel || i18n.t("Cancel"),
-      flat: true,
-      color: "primary",
-    },
-    class: "bg-ui non-selectable",
-  });
-  if (success) {
-    dialog.onOk(success);
-  }
-  if (failure) {
-    dialog.onCancel(failure);
-  }
-  return dialog;
+export const PROMPT = (context, options) => {
+  return prompt(options);
 };
 
 export const NOTIFY = ({ state }, options) => {
-  let fg = state.theme.isDark ? "textLight" : "textDark";
-  let bg = "ui";
-  if (options.invert) {
-    [bg, fg] = [fg, bg];
-  }
-  if (options.actions) {
-    options.actions.forEach((action) => {
-      if (!action.color) {
-        action.color = fg;
-      }
-    });
-  }
-  return Notify.create({
-    progressClass: "bg-primary",
-    color: bg,
-    textColor: fg,
-    position: "bottom",
-    timeout: 0,
-    actions: [{ icon: "close", color: fg }],
-    ...options,
-  });
+  return notify(options);
 };
 
 export const NOTIFY_ERROR = (context, error) => {
-  Notify.create({
-    message: formatError(error),
-    type: "negative",
-    timeout: 0,
-    position: "top-right",
-    actions: [{ icon: "close", color: "textLight" }],
-  });
+  return notifyError(error);
 };
 
 export const NOTIFY_SUCCESS = (context, success) => {
-  return Notify.create({
-    message: formatSuccess(success),
-    type: "positive",
-    timeout: 0,
-    position: "top-right",
-    multiLine: false,
-    actions: [{ icon: "close", color: "textLight" }],
-  });
+  return notifySuccess(success);
 };
 
 export const NOTIFY_WARNING = (context, warning) => {
-  return Notify.create({
-    message: formatWarning(warning),
-    type: "warning",
-    icon: "warning",
-    timeout: 0,
-    position: "top-right",
-    multiLine: false,
-    actions: [{ icon: "close", color: "textDark" }],
-  });
+  return notifyWarning(warning);
 };
 
 export const NOTIFY_HINT = (context, hint) => {

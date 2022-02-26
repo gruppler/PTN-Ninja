@@ -52,8 +52,8 @@ export default {
   name: "PieceSelector",
   data() {
     return {
-      color: this.selectedPiece ? this.selectedPiece.color : 1,
-      type: this.selectedPiece ? this.selectedPiece.type : "F",
+      color: 1,
+      type: "F",
       hotkeys: HOTKEYS.PIECE,
     };
   },

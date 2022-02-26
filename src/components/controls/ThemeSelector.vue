@@ -26,6 +26,7 @@
     <template v-slot:option="scope">
       <ThemeSelectorOption
         :option="scope.opt"
+        :key="scope.opt.value"
         @remove="remove"
         :is-current="
           scope.opt.value === theme ||
@@ -89,7 +90,7 @@ export default {
       }
       const theme = cloneDeep(themes.splice(index, 1)[0]);
       this.$store.dispatch("ui/SET_UI", ["themes", themes]);
-      this.$store.dispatch("ui/NOTIFY", {
+      this.notify({
         icon: "color",
         message: this.$t("success.themeRemoved", theme),
         timeout: 5000,

@@ -7,7 +7,9 @@
         class="no-border-radius"
       >
         <q-icon name="branch" class="rotate-180" />
-        <hint>{{ $t("Show All Branches") }}</hint>
+        <hint>{{
+          $t(showAllBranches ? "Hide Other Lines" : "Show All Branches")
+        }}</hint>
       </q-btn>
 
       <q-btn

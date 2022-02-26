@@ -2,7 +2,7 @@
   <q-dialog
     ref="dialog"
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
-    :value.sync="value"
+    :value="model"
     :maximized="maximized"
     @hide="hide"
     v-on="$listeners"
@@ -31,6 +31,9 @@ export default {
     noMaximize: Boolean,
   },
   computed: {
+    model() {
+      return this.value;
+    },
     maximized() {
       return (
         !this.noMaximize &&
