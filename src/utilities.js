@@ -4,6 +4,17 @@ import { toDate } from "date-fns";
 import { isString, isObject } from "lodash";
 import { Dialog, Notify } from "quasar";
 
+let parent = window.parent || window.opener;
+if (parent === window) {
+  parent = null;
+}
+
+export function postMessage(action, value) {
+  if (parent) {
+    parent.postMessage({ action, value }, "*");
+  }
+}
+
 export function deepFreeze(object) {
   const keys = Object.getOwnPropertyNames(object);
 

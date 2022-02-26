@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
+import { postMessage } from "../../utilities";
 import Game from "../../Game";
 
 export const SET_ERROR = (state, error) => {
@@ -92,6 +93,7 @@ export const RENAME_CURRENT_GAME = (state, name) => {
 
 export const SET_CURRENT_PTN = (state, ptn) => {
   Vue.prototype.$game.updatePTN(ptn);
+  postMessage("SET_CURRENT_PTN", ptn);
 };
 
 export const SAVE_CURRENT_GAME = (state) => {
@@ -201,6 +203,7 @@ export const DELETE_PLY = (state, plyID) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.deletePly(plyID, true, true);
+    postMessage("DELETE_PLY", plyID);
   }
 };
 
@@ -208,6 +211,7 @@ export const DELETE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.deleteBranch(branch, true);
+    postMessage("DELETE_BRANCH", branch);
   }
 };
 
@@ -215,6 +219,7 @@ export const UNDO = (state) => {
   const game = Vue.prototype.$game;
   if (game && !state.isEditingTPS) {
     game.undo();
+    postMessage("UNDO");
   }
 };
 
@@ -222,6 +227,7 @@ export const REDO = (state) => {
   const game = Vue.prototype.$game;
   if (game && !state.isEditingTPS) {
     game.redo();
+    postMessage("REDO");
   }
 };
 
@@ -229,6 +235,7 @@ export const TRIM_BRANCHES = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.trimBranches();
+    postMessage("TRIM_BRANCHES");
   }
 };
 
@@ -236,6 +243,7 @@ export const TRIM_TO_BOARD = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.trimToBoard();
+    postMessage("TRIM_TO_BOARD");
   }
 };
 
@@ -243,27 +251,32 @@ export const TRIM_TO_PLY = (state) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.trimToPly();
+    postMessage("TRIM_TO_PLY");
   }
 };
 
 export const FIRST = function (state) {
   state.error = null;
+  postMessage("FIRST");
   return Vue.prototype.$game.board.first();
 };
 
 export const LAST = function (state) {
   state.error = null;
+  postMessage("LAST");
   return Vue.prototype.$game.board.last();
 };
 
 export const PREV = function (state, { half, times }) {
   state.error = null;
+  postMessage("PREV");
   return Vue.prototype.$game.board.prev(half, times);
 };
 
 export const NEXT = function (state, { half, times }) {
   state.error = null;
   let result = Vue.prototype.$game.board.next(half, times);
+  postMessage("NEXT");
   return result;
 };
 
@@ -274,6 +287,7 @@ export const SET_TARGET = function (state, ply) {
 
 export const GO_TO_PLY = function (state, { plyID, isDone }) {
   state.error = null;
+  postMessage("GO_TO_PLY", { plyID, isDone });
   return Vue.prototype.$game.board.goToPly(plyID, isDone);
 };
 

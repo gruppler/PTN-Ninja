@@ -26,6 +26,7 @@
     <template v-slot:option="scope">
       <ThemeSelectorOption
         :option="scope.opt"
+        :key="scope.opt.value"
         @remove="remove"
         :is-current="
           scope.opt.value === theme ||

@@ -70,7 +70,7 @@ export default {
 <style lang="scss">
 .scrubber {
   position: absolute;
-  top: -11px;
+  top: -10px;
   z-index: 1;
 
   &.q-linear-progress {
