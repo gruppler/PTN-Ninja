@@ -5,9 +5,11 @@ import { isString, isObject } from "lodash";
 import { Dialog, Notify } from "quasar";
 
 let parent = window.parent || window.opener;
-if (parent === window) {
-  parent = null;
-}
+try {
+  if (parent === window || window.origin === parent.origin) {
+    parent = null;
+  }
+} catch (error) {}
 
 export function postMessage(action, value) {
   if (parent) {
