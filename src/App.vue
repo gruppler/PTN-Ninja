@@ -28,7 +28,10 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.themeID);
 
     // Embed API Listeners
-    const handleMessage = ({ data }) => {
+    const handleMessage = ({ data, source }) => {
+      if (source === window) {
+        return;
+      }
       switch (data.action) {
         case "SET_NAME":
           this.title = data.value;
