@@ -14,8 +14,7 @@
     "deploy": "quasar build -m pwa && firebase deploy --only hosting",
     "deploy:dev": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja-dev",
     "deploy:live": "quasar build -m pwa && firebase deploy --only hosting:ptn-ninja",
-    "rules-deploy": "firebase deploy --only firestore:rules",
-    "start": "quasar build"
+    "rules-deploy": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@quasar/extras": "^1.10.0",
