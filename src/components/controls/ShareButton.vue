@@ -96,7 +96,7 @@ export default {
       if (!this.$store.state.embed) {
         actions.push({
           id: "online",
-          label: this.$t("Online"),
+          label: this.$t("Play Online"),
           icon: "online",
           action: this.online,
         });
