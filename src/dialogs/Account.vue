@@ -1,7 +1,12 @@
 <template>
   <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="account">{{ $t("Account") }}</dialog-header>
+      <dialog-header>
+        <template v-slot:icon>
+          <PlayerAvatar :value="username" />
+        </template>
+        {{ $t("Account") }}
+      </dialog-header>
     </template>
 
     <q-card>
@@ -95,8 +100,11 @@
 </template>
 
 <script>
+import PlayerAvatar from "../components/general/PlayerAvatar";
+
 export default {
   name: "Account",
+  components: { PlayerAvatar },
   data() {
     return {
       loggingOut: false,

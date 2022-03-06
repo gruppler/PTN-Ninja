@@ -44,13 +44,10 @@
 
         <div class="col-grow" />
 
-        <q-btn
-          icon="account"
-          :label="user && !user.isAnonymous ? user.displayName : $t('Log In')"
-          :to="{ name: user && !user.isAnonymous ? 'account' : 'login' }"
-          color="primary"
+        <AccountBtn
           :dense="$q.screen.lt.md"
           class="q-ml-sm"
+          color="primary"
           flat
         />
       </div>
@@ -131,6 +128,7 @@
 </template>
 
 <script>
+import AccountBtn from "../general/AccountBtn.vue";
 import FullscreenToggle from "../controls/FullscreenToggle.vue";
 import Result from "../PTN/Result";
 
@@ -140,7 +138,7 @@ const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
-  components: { FullscreenToggle, Result },
+  components: { AccountBtn, FullscreenToggle, Result },
   props: ["value", "selection-mode"],
   data() {
     return {

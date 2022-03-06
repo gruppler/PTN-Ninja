@@ -13,7 +13,15 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon :name="$store.getters['ui/playerIcon'](player, isPrivate)" />
+          <PlayerAvatar
+            v-if="!isPrivate && username"
+            :value="username"
+            size="sm"
+          />
+          <q-icon
+            v-else
+            :name="$store.getters['ui/playerIcon'](player, isPrivate)"
+          />
         </template>
         <template v-slot:append v-if="!isPrivate && isLoggedIn">
           <q-btn
@@ -42,10 +50,13 @@
 </template>
 
 <script>
+import PlayerAvatar from "../general/PlayerAvatar";
+
 import { formats } from "../../Game/PTN/Tag";
 
 export default {
   name: "PlayerName",
+  components: { PlayerAvatar },
   props: {
     value: String,
     "is-private": Boolean,

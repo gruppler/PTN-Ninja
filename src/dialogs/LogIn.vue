@@ -33,7 +33,8 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="account" />
+              <PlayerAvatar v-if="playerName" :value="playerName" />
+              <q-icon v-else name="account" />
             </template>
           </q-input>
         </smooth-reflow>
@@ -127,12 +128,15 @@
 </template>
 
 <script>
+import PlayerAvatar from "../components/general/PlayerAvatar";
+
 import { formats } from "../Game/PTN/Tag";
 
 const MIN_NAME_LENGTH = 3;
 
 export default {
   name: "LogIn",
+  components: { PlayerAvatar },
   data() {
     return {
       error: "",
