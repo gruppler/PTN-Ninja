@@ -112,6 +112,7 @@ export default {
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
         size: String(this.$store.state.ui.size),
+        komi: Number(this.$store.state.ui.komi),
         site: this.$t("site_name"),
       },
       selectedGames: [],
@@ -144,6 +145,15 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["size", value || ""]);
       },
     },
+    komi: {
+      get() {
+        return this.$store.state.ui.komi;
+      },
+      set(value) {
+        this.tags.komi = value;
+        this.$store.dispatch("ui/SET_UI", ["komi", Number(value) || 0]);
+      },
+    },
     player1: {
       get() {
         return this.$store.state.ui.player1;
@@ -171,6 +181,7 @@ export default {
       this.player1 = tags.player1;
       this.player2 = tags.player2;
       this.size = tags.size;
+      this.komi = tags.komi;
 
       let game;
       try {
