@@ -1,7 +1,7 @@
 <template>
   <q-item class="q-pa-md bg-accent">
-    <q-item-section v-if="icon" class="items-center" avatar>
-      <slot name="avatar">
+    <q-item-section v-if="icon || $slots.icon" class="items-center" avatar>
+      <slot name="icon">
         <q-icon :name="icon" size="md" />
       </slot>
     </q-item-section>
