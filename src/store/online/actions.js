@@ -47,9 +47,9 @@ export const ANONYMOUS = async ({ commit }) => {
   return commit("SET_USER", auth.currentUser);
 };
 
-export const CHECK_USERNAME = async (context, name) => {
+export const USER_EXISTS = async (context, name) => {
   let nameSnapshot = await db.collection("names").doc(name.toLowerCase()).get();
-  return !nameSnapshot.exists;
+  return nameSnapshot.exists;
 };
 
 export const REGISTER = async (context, { email, password, name }) => {
@@ -126,10 +126,10 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
 
 export const CREATE_GAME = async (
   { dispatch, getters, state },
-  { game, players, isPrivate, disableFlatCounts, disableRoads }
+  { game, isPrivate, config }
 ) => {
   const playerName = getters.playerName(isPrivate);
-  const player = players[1] === state.user.uid ? 1 : 2;
+  const player = config.players[1] === state.user.uid ? 1 : 2;
   let tags = {
     player1: "",
     player2: "",
@@ -147,7 +147,7 @@ export const CREATE_GAME = async (
   }
 
   let json = game.json;
-  let config = Object.assign(json.config, config);
+  config = Object.assign(json.config, config);
 
   // Add game to DB
   let gameDoc = await db.collection("games").add(omit(json, "moves"));

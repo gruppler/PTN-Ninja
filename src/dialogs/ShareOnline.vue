@@ -4,7 +4,7 @@
       <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
     </template>
 
-    <q-card style="width: 330px">
+    <q-card>
       <smooth-reflow tag="recess" class="col">
         <div v-if="isLocal">
           <q-list>
@@ -31,7 +31,19 @@
                   v-model="playerName"
                   :player="player"
                   :is-private="isPrivate"
-                  @validate="isValid = $event"
+                  @validate="isPlayerValid = $event"
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item>
+              <q-item-section>
+                <OpponentName
+                  ref="opponentName"
+                  v-model="opponentName"
+                  :player="opponent"
+                  :is-private="isPrivate"
+                  @validate="isOpponentValid = $event"
                 />
               </q-item-section>
             </q-item>
@@ -39,11 +51,9 @@
             <q-item tag="label" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Private Game") }}</q-item-label>
-                <smooth-reflow>
-                  <q-item-label caption v-show="isPrivate">
-                    {{ $t("hint.privateGame") }}
-                  </q-item-label>
-                </smooth-reflow>
+                <q-item-label caption>
+                  {{ $t("hint." + (isPrivate ? "privateGame" : "publicGame")) }}
+                </q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle v-model="isPrivate" />
@@ -65,6 +75,15 @@
               </q-item-section>
               <q-item-section side>
                 <q-toggle v-model="showRoads" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="allowScratchboard" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -115,7 +134,7 @@
           <q-btn
             @click="create"
             :label="$t('Create Online Game')"
-            :disabled="!isValid"
+            :disabled="!isPlayerValid || !isOpponentValid"
             color="primary"
             flat
           />
@@ -130,20 +149,25 @@
 
 <script>
 import PlayerName from "../components/controls/PlayerName";
+import OpponentName from "../components/controls/OpponentName";
 
 export default {
   name: "ShareOnline",
-  components: { PlayerName },
+  components: { PlayerName, OpponentName },
   data() {
+    const user = this.$store.state.online.user;
     return {
       error: "",
-      isValid: false,
-      isPrivate: true,
+      isPlayerValid: false,
+      isOpponentValid: false,
+      isPrivate: !user || user.isAnonymous,
       playerName: this.$store.state.ui.playerName,
+      opponentName: "",
       qrText: "",
       loading: false,
       flatCounts: false,
       showRoads: false,
+      allowScratchboard: false,
     };
   },
   computed: {
@@ -195,6 +219,9 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["player", value]);
       },
     },
+    opponent() {
+      return this.player === "random" ? this.player : this.player === 1 ? 2 : 1;
+    },
     playerBGColor() {
       switch (this.player) {
         case 1:
@@ -225,8 +252,8 @@ export default {
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },
-    create() {
-      if (!this.isValid) {
+    async create() {
+      if (!this.isPlayerValid || !this.isOpponentValid) {
         return;
       }
 
@@ -244,22 +271,23 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["playerName", this.playerName]);
       }
 
-      this.loading = true;
-      this.$store
-        .dispatch("online/CREATE_GAME", {
+      try {
+        this.loading = true;
+        this.$store.dispatch("online/CREATE_GAME", {
           game: this.$game,
-          players,
           isPrivate: this.isPrivate,
-          disableFlatCounts: !this.flatCounts,
-          disableShowRoads: !this.showRoads,
-        })
-        .then(() => {
-          this.loading = false;
-        })
-        .catch((error) => {
-          this.loading = false;
-          this.error = error;
+          config: {
+            players,
+            flatCounts: this.flatCounts,
+            showRoads: this.showRoads,
+            allowScratchboard: this.allowScratchboard,
+          },
         });
+      } catch (error) {
+        this.error = error;
+      } finally {
+        this.loading = false;
+      }
     },
     copy(text) {
       this.$store.dispatch("ui/COPY", { text, title: "URL" });

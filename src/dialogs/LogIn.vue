@@ -205,8 +205,8 @@ export default {
     },
     validateNameUniqueness(value) {
       return this.$store
-        .dispatch("online/CHECK_USERNAME", value.trim())
-        .then((success) => success || this.$t("error['Player exists']"));
+        .dispatch("online/USER_EXISTS", value.trim())
+        .then((exists) => !exists || this.$t("error['Player exists']"));
     },
     showError(error) {
       this.error = error;

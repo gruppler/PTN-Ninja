@@ -59,7 +59,7 @@ export default {
   components: { PlayerAvatar },
   props: {
     value: String,
-    "is-private": Boolean,
+    isPrivate: Boolean,
     player: [Number, String],
   },
   data() {
@@ -88,17 +88,15 @@ export default {
     },
   },
   methods: {
-    logOut() {
-      this.loading = true;
-      this.$store
-        .dispatch("online/LOG_OUT")
-        .then(() => {
-          this.loading = false;
-        })
-        .catch((error) => {
-          this.loading = false;
-          console.error(error);
-        });
+    async logOut() {
+      try {
+        this.loading = true;
+        this.$store.dispatch("online/LOG_OUT");
+      } catch (error) {
+        console.error(error);
+      } finally {
+        this.loading = false;
+      }
     },
     validateName(value) {
       return (
