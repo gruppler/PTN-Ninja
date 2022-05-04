@@ -1,5 +1,5 @@
 import { Dark } from "quasar";
-import { cloneDeep, forEach, isBoolean, isNumber } from "lodash";
+import { cloneDeep, forEach, isBoolean } from "lodash";
 import { computeMissing } from "../../themes";
 import { postMessage } from "../../utilities";
 
@@ -14,9 +14,6 @@ export const SET_THEME = (state, theme) => {
     document.body.style.setProperty("--q-color-" + key, color);
   });
   forEach(theme.vars, (value, key) => {
-    if (isNumber(value)) {
-      value += "px";
-    }
     document.body.style.setProperty("--" + key, value);
   });
   forEach(theme, (value, key) => {
