@@ -247,8 +247,8 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border-width: $piece-border-width;
-    border-width: var(--piece-border-width);
+    border-width: ($piece-border-width * 0.15vmin);
+    border-width: calc(var(--piece-border-width) * 0.15vmin);
     border-style: solid;
     border-radius: 10%;
     will-change: opacity, transform, width, height, left, border-radius,

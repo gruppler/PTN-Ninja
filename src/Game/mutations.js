@@ -190,18 +190,25 @@ export default class GameMutations {
     const move = ply.move;
     const plyWasDone = this.board.plyIsDone;
 
-    // Go backward if deleting current ply
+    // If deleting current ply...
     if (this.board.plyID === plyID) {
+      // Undo current ply
       if (plyWasDone) {
         this.board._undoPly();
       }
+      // If deleting a ply with branches/siblings...
       if (!removeOrphans && ply.branches && ply.branches.length > 1) {
-        if (ply.branches[0] === ply) {
-          this.board._setPly(ply.branches[1].id, plyWasDone);
+        let index = ply.branches.indexOf(ply);
+        if (index < ply.branches.length - 1) {
+          // Go to the next sibling
+          index += 1;
         } else {
-          this.board._setPly(ply.branches[0].id, plyWasDone);
+          // ...unless it's the last one; then go to the previous one
+          index -= 1;
         }
+        this.board._setPly(ply.branches[index].id, plyWasDone);
       } else {
+        // Go to the previous ply if there is one
         const prevPly = this.board.prevPly;
         if (prevPly) {
           if (ply.branch !== prevPly.branch) {
