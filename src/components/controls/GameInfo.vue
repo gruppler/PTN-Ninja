@@ -922,7 +922,7 @@ export default {
     },
     name(name) {
       if (this.game) {
-        name = name.trim();
+        name = (name || "").trim();
         if (this.game.name !== name) {
           this.changes.name = name;
         } else {

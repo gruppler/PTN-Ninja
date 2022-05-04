@@ -15,6 +15,7 @@ let defaults = {
   flatCounts: true,
   highlightSquares: true,
   isPortrait: false,
+  komi: 0,
   moveNumber: true,
   nativeSharing:
     navigator.canShare && !Platform.is.desktop
