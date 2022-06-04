@@ -61,7 +61,7 @@ export const png_url = (state, getters) => (game) => {
     "axisLabels",
     "flatCounts",
     "padding",
-    "pieceShadows",
+    "stackCounts",
     "showRoads",
     "moveNumber",
     "turnIndicator",

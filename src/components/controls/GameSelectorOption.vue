@@ -41,7 +41,6 @@ export default {
         axisLabels: false,
         turnIndicator: true,
         highlightSquares: true,
-        pieceShadows: false,
         includeNames: false,
         padding: false,
         bgAlpha: 0,

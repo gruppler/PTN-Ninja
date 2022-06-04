@@ -55,6 +55,12 @@ export const COMPUTED = {
       board3: (c) => colors.lighten(c, isDark(c) ? 15 : -15),
     },
   },
+  board1: {
+    board1Dark: isDark,
+  },
+  board2: {
+    board2Dark: isDark,
+  },
   ui: {
     isDark,
     colors: {

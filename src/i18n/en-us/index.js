@@ -191,6 +191,7 @@ export default {
   Size: "Size",
   Spectate: "Spectate",
   Spectator: "Spectator",
+  "Stack Counts": "Stack Counts",
   "Start at Current Position": "Start at Current Position",
   "Stone Border Width": "Stone Border Width",
   "Switch Player": "Switch Player",

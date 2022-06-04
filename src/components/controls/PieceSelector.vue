@@ -13,19 +13,19 @@
 
     <q-btn @click="select('F')" :disabled="!available.includes('F')" flat round>
       <div class="square" :class="{ selected: type === 'F' }">
-        <div class="stone" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
 
     <q-btn @click="select('S')" :disabled="!available.includes('S')" flat round>
       <div class="square" :class="{ selected: type === 'S' }">
-        <div class="stone S" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone S" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
 
     <q-btn @click="select('C')" :disabled="!available.includes('C')" flat round>
       <div class="square" :class="{ selected: type === 'C' }">
-        <div class="stone C" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone C" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
 
@@ -66,9 +66,6 @@ export default {
         type = type === "C" ? "cap" : "flat";
         return this.game.board.piecesRemaining[this.color][type] > 0;
       });
-    },
-    shadows() {
-      return this.$store.state.ui.pieceShadows;
     },
     selectedPiece: {
       get() {
@@ -180,10 +177,7 @@ export default {
     border-width: var(--piece-border-width);
     border-style: solid;
     border-radius: 10%;
-
-    &.shadows {
-      box-shadow: $shadow-1;
-    }
+    box-shadow: $shadow-1;
 
     &.p1 {
       background-color: $player1flat;
@@ -207,17 +201,13 @@ export default {
         background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        &.shadows {
-          box-shadow: -1px 1px 2px rgba(#000, 0.3);
-        }
+        box-shadow: -1px 1px 2px rgba(#000, 0.3);
       }
       &.p2 {
         background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        &.shadows {
-          box-shadow: 1px 1px 2px rgba(#000, 0.3);
-        }
+        box-shadow: 1px 1px 2px rgba(#000, 0.3);
       }
     }
     &.C {

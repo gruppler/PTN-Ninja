@@ -24,9 +24,9 @@ const defaults = {
   axisLabels: true,
   turnIndicator: true,
   flatCounts: true,
+  stackCounts: true,
   highlightSquares: true,
   moveNumber: true,
-  pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
   includeNames: true,
@@ -92,6 +92,7 @@ export default function render(board, options = {}) {
 
   const fontSize =
     (squareSize * textSizes[options.textSize] * board.game.size) / 5;
+  const stackCountFontSize = Math.min(squareSize * 0.2, fontSize);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -480,6 +481,25 @@ export default function render(board, options = {}) {
       drawSquareHighlight();
     }
 
+    // Stack Count
+    if (options.stackCounts && square.pieces.length > 1) {
+      ctx.save();
+      ctx.font = stackCountFontSize + "px Roboto";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = stackCountFontSize * 0.05;
+      ctx.shadowBlur = stackCountFontSize * 0.1;
+      ctx.shadowColor = (isDark ? theme.board2Dark : theme.board1Dark)
+        ? theme.colors.textDark
+        : theme.colors.textLight;
+      ctx.fillStyle = (isDark ? theme.board2Dark : theme.board1Dark)
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+      ctx.textBaseline = "top";
+      ctx.textAlign = "right";
+      ctx.fillText(square.pieces.length, squareSize * 0.9, squareSize * 0.8);
+      ctx.restore();
+    }
+
     if (square.piece) {
       square.pieces.forEach(drawPiece);
       drawPiece(square.piece);
@@ -565,16 +585,12 @@ export default function render(board, options = {}) {
     }
 
     // Fill
-    if (options.pieceShadows) {
-      ctx.save();
-      ctx.shadowBlur = shadowBlur;
-      ctx.shadowOffsetY = shadowOffset;
-      ctx.shadowColor = theme.colors.umbra;
-    }
+    ctx.save();
+    ctx.shadowBlur = shadowBlur;
+    ctx.shadowOffsetY = shadowOffset;
+    ctx.shadowColor = theme.colors.umbra;
     ctx.fill();
-    if (options.pieceShadows) {
-      ctx.restore();
-    }
+    ctx.restore();
 
     // Stroke
     if (strokeWidth > 0) {

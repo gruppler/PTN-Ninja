@@ -138,6 +138,21 @@
               </hint>
             </smooth-reflow>
 
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="stackCounts"
+                  :disabled="isDisabled('stackCounts')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.stackCounts">
+                {{ $t("Hotkey") }}: {{ hotkeys.stackCounts }}
+              </hint>
+            </q-item>
+
             <smooth-reflow>
               <q-item
                 v-if="turnIndicator && unplayedPieces"
@@ -171,21 +186,6 @@
               </q-item-section>
               <hint v-if="hotkeys.highlightSquares">
                 {{ $t("Hotkey") }}: {{ hotkeys.highlightSquares }}
-              </hint>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="pieceShadows"
-                  :disabled="isDisabled('pieceShadows')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.pieceShadows">
-                {{ $t("Hotkey") }}: {{ hotkeys.pieceShadows }}
               </hint>
             </q-item>
 
@@ -463,7 +463,6 @@ const props = [
   "openDuplicate",
   "orthogonal",
   "perspective",
-  "pieceShadows",
   "playSpeed",
   "scrollScrubbing",
   "scrollThreshold",
@@ -473,6 +472,7 @@ const props = [
   "showMove",
   "showRoads",
   "showScrubber",
+  "stackCounts",
   "themeID",
   "turnIndicator",
   "unplayedPieces",
