@@ -481,6 +481,11 @@ export default function render(board, options = {}) {
       drawSquareHighlight();
     }
 
+    if (square.piece) {
+      square.pieces.forEach(drawPiece);
+      drawPiece(square.piece);
+    }
+
     // Stack Count
     if (options.stackCounts && square.pieces.length > 1) {
       ctx.save();
@@ -488,21 +493,22 @@ export default function render(board, options = {}) {
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = stackCountFontSize * 0.05;
       ctx.shadowBlur = stackCountFontSize * 0.1;
-      ctx.shadowColor = (isDark ? theme.board2Dark : theme.board1Dark)
+      let isTextLight = theme.board1Dark;
+      if (hlSquares.includes(square.static.coord)) {
+        isTextLight = theme.primaryDark;
+      } else if (isDark) {
+        isTextLight = theme.board2Dark;
+      }
+      ctx.shadowColor = isTextLight
         ? theme.colors.textDark
         : theme.colors.textLight;
-      ctx.fillStyle = (isDark ? theme.board2Dark : theme.board1Dark)
+      ctx.fillStyle = isTextLight
         ? theme.colors.textLight
         : theme.colors.textDark;
       ctx.textBaseline = "top";
       ctx.textAlign = "right";
-      ctx.fillText(square.pieces.length, squareSize * 0.9, squareSize * 0.8);
+      ctx.fillText(square.pieces.length, squareSize * 0.9, squareSize * 0.77);
       ctx.restore();
-    }
-
-    if (square.piece) {
-      square.pieces.forEach(drawPiece);
-      drawPiece(square.piece);
     }
 
     ctx.restore();

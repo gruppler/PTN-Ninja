@@ -35,10 +35,10 @@
       <div class="w" :class="{ ew }" />
       <div class="center" />
     </div>
+    <div class="hl player" />
     <div class="stack-count" v-if="stackCount">
       <span>{{ stackCount }}</span>
     </div>
-    <div class="hl player" />
   </div>
 </template>
 
@@ -317,6 +317,43 @@ export default {
     }
   }
 
+  .stack-count {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 0.65em;
+    line-height: 1em;
+    color: $textDark;
+    color: var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textLight;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+    span {
+      position: absolute;
+      top: 77%;
+      right: 10%;
+    }
+  }
+  body.boardChecker.board1Dark &.light .stack-count,
+  body.boardChecker.board2Dark &.dark .stack-count,
+  body:not(.boardChecker).board1Dark & .stack-count,
+  body.primaryDark .board-container.highlight-squares &.current .stack-count {
+    color: $textLight;
+    color: var(--q-color-textLight);
+    text-shadow: 0 0.05em 0.1em $textDark;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+  }
+  body:not(.primaryDark)
+    .board-container.highlight-squares
+    &.current
+    .stack-count {
+    color: $textDark;
+    color: var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textLight;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+  }
+
   .board-container.turn-1 & {
     .hl.player {
       background-color: $player1road;
@@ -431,32 +468,6 @@ export default {
   &.p2 .road > div {
     background-color: $player2road;
     background-color: var(--q-color-player2road);
-  }
-
-  .stack-count {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    font-size: 0.65em;
-    color: $textDark;
-    color: var(--q-color-textDark);
-    text-shadow: 0 0.05em 0.1em $textLight;
-    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
-    span {
-      position: absolute;
-      top: 75%;
-      right: 10%;
-    }
-  }
-  body.boardChecker.board1Dark &.light .stack-count,
-  body.boardChecker.board2Dark &.dark .stack-count,
-  body:not(.boardChecker).board1Dark & .stack-count {
-    color: $textLight;
-    color: var(--q-color-textLight);
-    text-shadow: 0 0.05em 0.1em $textDark;
-    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
   }
 
   .board-container.rotate-1 & .stack-count {
