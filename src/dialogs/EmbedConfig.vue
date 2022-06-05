@@ -173,19 +173,19 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+          <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.highlightSquares" />
+          <q-toggle v-model="config.ui.stackCounts" />
         </q-item-section>
       </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
+          <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.pieceShadows" />
+          <q-toggle v-model="config.ui.highlightSquares" />
         </q-item-section>
       </q-item>
 
@@ -294,7 +294,7 @@ export default {
       });
     },
     code() {
-      return `<iframe src="${this.url}" width="${this.config.width}" height="${this.config.height}" style="width:${this.config.width}; max-width:calc(100vw - 30px); height:${this.config.height}; max-height:100vh;" frameborder="0" allowfullscreen />`;
+      return `<iframe src="${this.url}" width="${this.config.width}" height="${this.config.height}" style="width:${this.config.width}; max-width:calc(100vw - 30px); height:${this.config.height}; max-height:100vh;" frameborder="0" allowfullscreen></iframe>`;
     },
     canShare() {
       return this.$store.state.nativeSharing;

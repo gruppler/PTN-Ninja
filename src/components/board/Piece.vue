@@ -260,14 +260,12 @@ export default {
       background-color $generic-hover-transition,
       box-shadow $generic-hover-transition;
 
-    .board-container.piece-shadows & {
-      box-shadow: 0 0.2vmin 0.4vmin $umbra;
-      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
-      &.firstSelected {
-        box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
-        box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
-          0 2.8vmin 1.5vmin var(--q-color-umbra);
-      }
+    box-shadow: 0 0.2vmin 0.4vmin $umbra;
+    box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
+    &.firstSelected {
+      box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
+      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
+        0 2.8vmin 1.5vmin var(--q-color-umbra);
     }
 
     &.p1 {
@@ -292,28 +290,24 @@ export default {
         background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        .board-container.piece-shadows & {
-          box-shadow: -1px 1px 2px $umbra;
-          box-shadow: -1px 1px 2px var(--q-color-umbra);
-          &.firstSelected {
-            box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
-            box-shadow: -1px 1px 2px var(--q-color-umbra),
-              -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
-          }
+        box-shadow: -1px 1px 2px $umbra;
+        box-shadow: -1px 1px 2px var(--q-color-umbra);
+        &.firstSelected {
+          box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
+          box-shadow: -1px 1px 2px var(--q-color-umbra),
+            -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
         }
       }
       &.p2 {
         background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        .board-container.piece-shadows & {
-          box-shadow: 1px 1px 2px $umbra;
-          box-shadow: 1px 1px 2px var(--q-color-umbra);
-          &.firstSelected {
-            box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
-            box-shadow: 1px 1px 2px var(--q-color-umbra),
-              1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
-          }
+        box-shadow: 1px 1px 2px $umbra;
+        box-shadow: 1px 1px 2px var(--q-color-umbra);
+        &.firstSelected {
+          box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
+          box-shadow: 1px 1px 2px var(--q-color-umbra),
+            1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
         }
       }
     }

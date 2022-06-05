@@ -479,7 +479,7 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (state && !isEmpty(state)) {
+    if (state && "plyIndex" in state) {
       // Go to specified position
       if (state.targetBranch in this.branches) {
         this.board.targetBranch = state.targetBranch || "";

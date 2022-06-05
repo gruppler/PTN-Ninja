@@ -36,11 +36,15 @@
       <div class="center" />
     </div>
     <div class="hl player" />
+    <div class="stack-count" v-if="stackCount">
+      <span>{{ stackCount }}</span>
+    </div>
   </div>
 </template>
 
 <script>
 import { atoi, itoa } from "../../Game/PTN/Ply";
+import { last } from "lodash";
 
 export default {
   name: "Square",
@@ -119,6 +123,24 @@ export default {
     },
     showRoads() {
       return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
+    },
+    stackCounts() {
+      return !this.game.config.disableRoads && this.$store.state.ui.stackCounts;
+    },
+    stackCount() {
+      if (!this.stackCounts) {
+        return false;
+      }
+      const count = this.square.pieces.length;
+      if (
+        this.selected &&
+        this.coord ===
+          last(this.$store.state.game.selected.squares).static.coord
+      ) {
+        return count - this.$store.state.game.selected.pieces.length;
+      } else {
+        return count > 1 ? count : false;
+      }
     },
     en() {
       return this.square.static.edges.N;
@@ -295,6 +317,43 @@ export default {
     }
   }
 
+  .stack-count {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 0.65em;
+    line-height: 1em;
+    color: $textDark;
+    color: var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textLight;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+    span {
+      position: absolute;
+      top: 77%;
+      right: 10%;
+    }
+  }
+  body.boardChecker.board1Dark &.light .stack-count,
+  body.boardChecker.board2Dark &.dark .stack-count,
+  body:not(.boardChecker).board1Dark & .stack-count,
+  body.primaryDark .board-container.highlight-squares &.current .stack-count {
+    color: $textLight;
+    color: var(--q-color-textLight);
+    text-shadow: 0 0.05em 0.1em $textDark;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+  }
+  body:not(.primaryDark)
+    .board-container.highlight-squares
+    &.current
+    .stack-count {
+    color: $textDark;
+    color: var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textLight;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+  }
+
   .board-container.turn-1 & {
     .hl.player {
       background-color: $player1road;
@@ -409,6 +468,28 @@ export default {
   &.p2 .road > div {
     background-color: $player2road;
     background-color: var(--q-color-player2road);
+  }
+
+  .board-container.rotate-1 & .stack-count {
+    transform: rotateZ(270deg);
+  }
+  .board-container.rotate-2 & .stack-count {
+    transform: rotateZ(180deg);
+  }
+  .board-container.rotate-3 & .stack-count {
+    transform: rotateZ(90deg);
+  }
+  .board-container.flip & .stack-count {
+    transform: scaleX(-1);
+  }
+  .board-container.flip.rotate-1 & .stack-count {
+    transform: scaleX(-1) rotateZ(90deg);
+  }
+  .board-container.flip.rotate-2 & .stack-count {
+    transform: scaleX(-1) rotateZ(180deg);
+  }
+  .board-container.flip.rotate-3 & .stack-count {
+    transform: scaleX(-1) rotateZ(270deg);
   }
 }
 </style>

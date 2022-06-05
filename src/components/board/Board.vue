@@ -18,9 +18,12 @@
         'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
-        'piece-shadows': $store.state.ui.pieceShadows,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         'is-game-end': position.isGameEnd,
+        'rotate-1': transform[0] === 1,
+        'rotate-2': transform[0] === 2,
+        'rotate-3': transform[0] === 3,
+        flip: transform[1] === 1,
         scrubbing,
         rotating,
       }"
@@ -47,10 +50,7 @@
           @touchstart.stop
           @mousedown.stop
         >
-          <div
-            class="squares absolute-fit row reverse-wrap"
-            :style="{ transform: CSS2DTransform }"
-          >
+          <div class="squares absolute-fit row reverse-wrap">
             <Square
               v-for="(square, coord) in board.squares"
               :key="coord"
@@ -273,11 +273,6 @@ export default {
           ) + "px"
         );
       }
-    },
-    CSS2DTransform() {
-      return `scaleX(${-1 * this.transform[1] || 1}) rotateZ(${
-        90 * this.transform[0]
-      }deg)`;
     },
     CSS3DTransform() {
       const x = this.boardRotation[0];
@@ -586,6 +581,28 @@ $radius: 0.35em;
     }
   }
 
+  &.rotate-1 .squares {
+    transform: rotateZ(90deg);
+  }
+  &.rotate-2 .squares {
+    transform: rotateZ(180deg);
+  }
+  &.rotate-3 .squares {
+    transform: rotateZ(270deg);
+  }
+  &.flip .squares {
+    transform: scaleX(-1);
+  }
+  &.flip.rotate-1 .squares {
+    transform: scaleX(-1) rotateZ(90deg);
+  }
+  &.flip.rotate-2 .squares {
+    transform: scaleX(-1) rotateZ(180deg);
+  }
+  &.flip.rotate-3 .squares {
+    transform: scaleX(-1) rotateZ(270deg);
+  }
+
   .move-number {
     position: absolute;
     top: 0;
@@ -620,15 +637,15 @@ $radius: 0.35em;
 .move-number {
   color: $textDark;
   color: var(--q-color-textDark);
-  text-shadow: 0 1px 2px $textLight;
-  text-shadow: 0 1px 2px var(--q-color-textLight);
+  text-shadow: 0 0.05em 0.1em $textLight;
+  text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
     color: $textLight;
     color: var(--q-color-textLight);
-    text-shadow: 0 1px 2px $textDark;
-    text-shadow: 0 1px 2px var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textDark;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
   }
 }
 .x-axis {

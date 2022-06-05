@@ -239,6 +239,10 @@ The structure of the URL is as follows:
 
 - Show flat counts
 
+#### `stackCounts` (default: `true`)
+
+- Show stack counts
+
 #### `turnIndicator` (default: `true`)
 
 - Show turn indicator
@@ -246,10 +250,6 @@ The structure of the URL is as follows:
 #### `highlightSquares` (default: `true`)
 
 - Show square highlights
-
-#### `pieceShadows` (default: `true`)
-
-- Show piece shadows
 
 #### `playSpeed` (default: `60`)
 
