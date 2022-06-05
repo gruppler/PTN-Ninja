@@ -173,19 +173,19 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+          <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.highlightSquares" />
+          <q-toggle v-model="config.ui.stackCounts" />
         </q-item-section>
       </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
+          <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.pieceShadows" />
+          <q-toggle v-model="config.ui.highlightSquares" />
         </q-item-section>
       </q-item>
 

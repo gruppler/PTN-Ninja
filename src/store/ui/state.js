@@ -26,7 +26,6 @@ let defaults = {
   openDuplicate: "replace",
   orthogonal: false,
   perspective: 5,
-  pieceShadows: true,
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
@@ -44,6 +43,7 @@ let defaults = {
   showScrubber: true,
   showText: false,
   size: "6",
+  stackCounts: true,
   textTab: "chat",
   themeID: "classic",
   theme: THEMES.find((t) => t.id === "classic"),
@@ -58,7 +58,6 @@ export const embedUIOptions = [
   "turnIndicator",
   "highlightSquares",
   "moveNumber",
-  "pieceShadows",
   "playSpeed",
   "showAllBranches",
   "showMove",
@@ -67,6 +66,7 @@ export const embedUIOptions = [
   "showRoads",
   "showScrubber",
   "showText",
+  "stackCounts",
   "themeID",
   "unplayedPieces",
 ];
@@ -77,8 +77,8 @@ export const pngUIOptions = [
   "turnIndicator",
   "highlightSquares",
   "moveNumber",
-  "pieceShadows",
   "showRoads",
+  "stackCounts",
   "themeID",
   "unplayedPieces",
 ];
