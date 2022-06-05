@@ -44,6 +44,7 @@
 
 <script>
 import { atoi, itoa } from "../../Game/PTN/Ply";
+import { last } from "lodash";
 
 export default {
   name: "Square",
@@ -127,8 +128,19 @@ export default {
       return !this.game.config.disableRoads && this.$store.state.ui.stackCounts;
     },
     stackCount() {
+      if (!this.stackCounts) {
+        return false;
+      }
       const count = this.square.pieces.length;
-      return this.stackCounts && count > 1 ? count : false;
+      if (
+        this.selected &&
+        this.coord ===
+          last(this.$store.state.game.selected.squares).static.coord
+      ) {
+        return count - this.$store.state.game.selected.pieces.length;
+      } else {
+        return count > 1 ? count : false;
+      }
     },
     en() {
       return this.square.static.edges.N;
