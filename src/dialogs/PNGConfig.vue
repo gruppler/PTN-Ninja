@@ -133,6 +133,15 @@
         </div>
       </smooth-reflow>
 
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.stackCounts" />
+        </q-item-section>
+      </q-item>
+
       <smooth-reflow>
         <q-item
           v-if="config.turnIndicator && config.unplayedPieces"
@@ -154,15 +163,6 @@
         </q-item-section>
         <q-item-section side>
           <q-toggle v-model="config.highlightSquares" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Piece Shadows") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.pieceShadows" />
         </q-item-section>
       </q-item>
 
