@@ -484,12 +484,14 @@ export const CANCEL_MOVE = function ({ commit }) {
   commit("CANCEL_MOVE");
 };
 
-export const DELETE_PLY = function ({ commit }, plyID) {
+export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
   commit("DELETE_PLY", plyID);
+  dispatch("SAVE_CURRENT_GAME");
 };
 
-export const DELETE_BRANCH = function ({ commit }, branch) {
+export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
   commit("DELETE_BRANCH", branch);
+  dispatch("SAVE_CURRENT_GAME");
 };
 
 export const UNDO = function ({ commit, dispatch }) {

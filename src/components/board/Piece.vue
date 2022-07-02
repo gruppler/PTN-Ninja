@@ -9,6 +9,7 @@
         ['p' + piece.color]: true,
         C: piece.isCapstone,
         S: piece.isStanding,
+        overflow: piece.z < overflow,
         unplayed: !square,
         firstSelected,
         immovable,
@@ -58,6 +59,11 @@ export default {
               this.piece.index || this.piece.isCapstone ? "turn" : "color"
             ])
       );
+    },
+    overflow() {
+      return this.square
+        ? Math.max(0, this.square.pieces.length - 10 - this.config.size)
+        : 0;
     },
     isSelected() {
       return this.piece.isSelected;
@@ -117,6 +123,7 @@ export default {
       if (this.square) {
         y *= this.row;
         if (!this.board3D) {
+          // 2D
           const pieces = this.square.pieces;
           y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
           if (
@@ -127,6 +134,9 @@ export default {
           }
           if (this.piece.isStanding && pieces.length > 1) {
             y -= spacing;
+          }
+          if (this.piece.isImmovable) {
+            y -= spacing * this.overflow;
           }
         }
       } else {
@@ -172,13 +182,21 @@ export default {
       let z;
       if (this.square) {
         z = this.piece.z + this.isSelected * SELECTED_GAP;
+        if (!this.board3D) {
+          // 2D
+          if (this.piece.isImmovable) {
+            z -= this.overflow;
+          }
+        }
       } else {
         // Unplayed piece
         if (this.board3D) {
+          // 3D
           z =
             (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
             this.config.size;
         } else {
+          // 2D
           z =
             (this.pieceCounts.total - this.piece.index) /
             this.pieceCounts.total;
@@ -344,6 +362,10 @@ export default {
       .board-container:not(.show-unplayed-pieces) & {
         opacity: 0;
       }
+    }
+
+    &.overflow {
+      opacity: 0;
     }
   }
 }
