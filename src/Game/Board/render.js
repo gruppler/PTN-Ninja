@@ -536,6 +536,14 @@ export default function render(board, options = {}) {
       if (piece.isStanding && pieces.length > 1) {
         y += pieceSpacing;
       }
+      const overflow = Math.max(0, pieces.length - 10 - board.game.size);
+      if (isImmovable) {
+        if (z < overflow) {
+          ctx.restore();
+          return;
+        }
+        y += pieceSpacing * overflow;
+      }
     } else {
       // Unplayed
       const caps = board.game.pieceCounts[piece.color].cap;
