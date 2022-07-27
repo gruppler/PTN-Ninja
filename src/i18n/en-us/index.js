@@ -7,7 +7,6 @@ export default {
   Action: "Action",
   "Animate Board": "Animate Board",
   "Animate while scrubbing": "Animate while scrubbing",
-  Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",
@@ -170,7 +169,6 @@ export default {
   "Rotate Right": "Rotate Right",
   Round: "Round",
   Save: "Save",
-  "Scroll threshold": "Scroll threshold",
   "Scrub Bar": "Scrub Bar",
   "Scrub with scroll wheel": "Scrub with scroll wheel",
   "Select Branch": "Select Branch",
@@ -364,7 +362,6 @@ export default {
   },
 
   hint: {
-    autodetectScroll: "Scroll one mouse wheel tick here",
     pasteThemeCode: "Paste theme code here",
     playerNamePrivate: "Whatever you want to call yourself",
     playerNamePublic: "Your unique name",

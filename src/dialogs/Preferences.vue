@@ -391,36 +391,6 @@
                 {{ $t("Hotkey") }}: {{ hotkeys.scrollScrubbing }}
               </hint>
             </q-item>
-
-            <smooth-reflow>
-              <q-item v-if="scrollScrubbing">
-                <q-item-section>
-                  <q-item-label>{{ $t("Scroll threshold") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-input
-                    v-model="scrollThreshold"
-                    type="number"
-                    :min="1"
-                    :max="999"
-                    suffix="px"
-                    filled
-                    dense
-                  >
-                    <template v-slot:before>
-                      <q-btn
-                        @click="dialogAutodetect = true"
-                        icon="autofix"
-                        flat
-                        dense
-                      >
-                        <hint>{{ $t("Autodetect") }}</hint>
-                      </q-btn>
-                    </template>
-                  </q-input>
-                </q-item-section>
-              </q-item>
-            </smooth-reflow>
           </q-list>
         </recess>
       </q-expansion-item>
@@ -432,14 +402,6 @@
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
     </template>
-
-    <q-dialog @wheel="autodetect" v-model="dialogAutodetect">
-      <q-card class="non-selectable">
-        <q-card-section class="q-py-xl">
-          {{ $t("hint.autodetectScroll") }}
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </small-dialog>
 </template>
 
@@ -465,7 +427,6 @@ const props = [
   "perspective",
   "playSpeed",
   "scrollScrubbing",
-  "scrollThreshold",
   "showAllBranches",
   "showControls",
   "showHints",
@@ -484,7 +445,6 @@ export default {
   data() {
     return {
       hotkeys: HOTKEYS_FORMATTED.UI,
-      dialogAutodetect: false,
       openDuplicateOptions: [
         { label: this.$t("Rename"), value: "rename" },
         { label: this.$t("Replace"), value: "replace" },
@@ -514,19 +474,10 @@ export default {
     isDisabled(key) {
       return this.disabled && this.disabled.includes(key);
     },
-    autodetect(event) {
-      this.scrollThreshold = Math.abs(event.deltaY);
-      this.dialogAutodetect = false;
-    },
   },
   watch: {
     theme(theme) {
       this.$store.dispatch("ui/SET_THEME", theme);
-    },
-    scrollThreshold(value) {
-      if (value < 1) {
-        this.scrollThreshold = 1;
-      }
     },
   },
 };

@@ -32,7 +32,6 @@ let defaults = {
   player: 1,
   playerName: "",
   scrollScrubbing: Platform.is.desktop,
-  scrollThreshold: 250,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showControls: true,
