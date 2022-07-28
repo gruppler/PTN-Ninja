@@ -58,7 +58,7 @@ export default {
       tps = tps.replaceAll(",","%2C")
       tps = tps.replaceAll(" ","%20")
 
-      let response = await fetch("https://tak-db.herokuapp.com/api/v1/opening/"+tps);
+      let response = await fetch("http://127.0.0.1:5000/api/v1/opening/"+tps);
 
       if(response.ok) {
         let data = await(response.json());
