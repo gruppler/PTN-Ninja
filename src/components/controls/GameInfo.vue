@@ -145,7 +145,6 @@
             v-model="tags.player1"
             :player="player"
             :is-private="game.config.isPrivate"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             hide-hint
           />
@@ -205,7 +204,6 @@
             v-model="tags.player2"
             :player="player"
             :is-private="game.config.isPrivate"
-            @keydown.enter.prevent="submit"
             hide-bottom-space
             hide-hint
           />
@@ -787,7 +785,7 @@ export default {
     hasErrors() {
       return this.$el.getElementsByClassName("q-field--error").length > 0;
     },
-    submit() {
+    submit(editTPS = false) {
       if (this.hasErrors()) {
         return false;
       }
@@ -824,23 +822,24 @@ export default {
         name: this.name,
         tags: { ...this.tags },
         changes: this.changes,
+        editTPS,
       });
       this.updateTags();
     },
     editTPS() {
-      this.submit();
-      this.$store.dispatch("ui/SET_UI", [
-        "selectedPiece",
-        { color: this.game ? this.game.firstPlayer : 1, type: "F" },
-      ]);
-      this.$store.dispatch("ui/SET_UI", [
-        "firstMoveNumber",
-        this.game ? this.game.firstMoveNumber : 1,
-      ]);
-      this.$store.dispatch(
-        "game/EDIT_TPS",
-        this.game ? this.game.board.tps : ""
-      );
+      if (this.game) {
+        this.$store.dispatch("ui/SET_UI", [
+          "selectedPiece",
+          { color: this.game.firstPlayer, type: "F" },
+        ]);
+        this.$store.dispatch("ui/SET_UI", [
+          "firstMoveNumber",
+          this.game.firstMoveNumber,
+        ]);
+        this.$store.dispatch("game/EDIT_TPS", this.game.board.tps);
+      } else {
+        this.submit(true);
+      }
     },
     fillTPS() {
       if (!this.game || !this.game.plies.length) {

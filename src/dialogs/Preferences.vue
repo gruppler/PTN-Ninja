@@ -395,15 +395,18 @@
             <smooth-reflow>
               <q-item v-if="scrollScrubbing">
                 <q-item-section>
-                  <q-item-label>{{ $t("Scroll threshold") }}</q-item-label>
+                  <q-item-label class="text-no-wrap">
+                    {{ $t("Scroll threshold") }}
+                  </q-item-label>
                 </q-item-section>
                 <q-item-section side>
                   <q-input
                     v-model="scrollThreshold"
                     type="number"
-                    :min="1"
+                    :min="0"
                     :max="999"
                     suffix="px"
+                    clearable
                     filled
                     dense
                   >
@@ -524,8 +527,8 @@ export default {
       this.$store.dispatch("ui/SET_THEME", theme);
     },
     scrollThreshold(value) {
-      if (value < 1) {
-        this.scrollThreshold = 1;
+      if (!value || value < 1) {
+        this.scrollThreshold = 0;
       }
     },
   },

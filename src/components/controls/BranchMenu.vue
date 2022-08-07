@@ -24,12 +24,7 @@
           />
         </q-item-section>
         <q-item-label class="row no-wrap">
-          <Linenum
-            v-if="linenum"
-            :linenum="ply.linenum"
-            no-edit
-            :active-ply="ply"
-          />
+          <Linenum :linenum="ply.linenum" :active-ply="ply" />
           <Ply :plyID="ply.id" no-branches no-click />
         </q-item-label>
       </q-item>
@@ -49,7 +44,6 @@ export default {
   props: {
     value: Boolean,
     branches: Array,
-    linenum: Boolean,
     "selected-played": Boolean,
   },
   data() {

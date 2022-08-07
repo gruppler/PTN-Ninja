@@ -59,6 +59,8 @@ export default {
         case "LAST":
         case "UNDO":
         case "REDO":
+        case "PROMOTE_BRANCH":
+        case "MAKE_BRANCH_MAIN":
         case "RENAME_BRANCH":
         case "TOGGLE_EVALUATION":
         case "EDIT_NOTE":

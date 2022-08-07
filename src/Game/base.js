@@ -569,7 +569,7 @@ export default class GameBase {
       // Self
       sorted.push(ply.branch);
       // Siblings
-      ply.branches.slice(1).forEach(pushBranch);
+      ply.branches.slice(1).sort(this.plySort).forEach(pushBranch);
     };
 
     if (branches.length) {
@@ -731,9 +731,11 @@ export default class GameBase {
 
   _updatePTN(recordChange = false) {
     if (recordChange && this.ptn) {
-      this.recordChange(() => (this.ptn = this.toString()));
+      this.recordChange(
+        () => (this.ptn = this.toString(undefined, undefined, undefined, true))
+      );
     } else {
-      this.ptn = this.toString();
+      this.ptn = this.toString(undefined, undefined, undefined, true);
     }
   }
 
@@ -746,15 +748,23 @@ export default class GameBase {
     }
   }
 
-  toString(showAllBranches = true, showComments = true, tags) {
-    return this.headerText(tags) + this.moveText(showAllBranches, showComments);
+  toString(
+    showAllBranches = true,
+    showComments = true,
+    tags,
+    skipCache = false
+  ) {
+    return (
+      this.headerText(tags) +
+      this.moveText(showAllBranches, showComments, skipCache)
+    );
   }
 
   headerText(tags = this.tags) {
     return map(tags, (tag) => tag.toString()).join("\r\n") + "\r\n\r\n";
   }
 
-  moveText(showAllBranches = false, showComments = false) {
+  moveText(showAllBranches = false, showComments = false, skipCache = false) {
     const printMove = (move) =>
       move.toString(
         showComments ? this.getMoveComments(move) : null,
@@ -778,7 +788,7 @@ export default class GameBase {
     if (showAllBranches) {
       return (
         prefix +
-        this.movesGrouped
+        (skipCache ? this.getMovesGrouped() : this.movesGrouped)
           .map((moves) => moves.map(printMove).join("\r\n"))
           .join("\r\n\r\n")
       );

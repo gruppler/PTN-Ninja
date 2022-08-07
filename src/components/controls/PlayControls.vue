@@ -119,7 +119,6 @@
           @select="selectBranch"
           :branches="branches"
           selected-played
-          linenum
         />
         <hint v-if="branches.length >= 2 && !plyInProgress">
           {{ $t("Branches") }}
