@@ -139,6 +139,9 @@ export default {
     scrubbing() {
       return this.$store.state.ui.scrubbing;
     },
+    scrollThreshold() {
+      return this.$store.state.ui.scrollThreshold;
+    },
     disableAnimations() {
       return (
         !this.$store.state.ui.animateBoard ||
@@ -372,8 +375,9 @@ export default {
       }
 
       if (this.$store.state.ui.scrollScrubbing) {
-        // Get threshold from screen resolution
-        const scrollThreshold = window.devicePixelRatio * 100;
+        // Get threshold from screen resolution if not specified
+        const scrollThreshold =
+          this.scrollThreshold || window.devicePixelRatio * 100;
 
         // Start scrubbing
         if (!this.$store.state.ui.scrubbing) {

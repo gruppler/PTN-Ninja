@@ -15,6 +15,18 @@
         auto-close
       >
         <q-list class="bg-ui">
+          <q-item @click="promoteBranch" clickable>
+            <q-item-section side>
+              <q-icon name="promote" />
+            </q-item-section>
+            <q-item-section>{{ $t("Promote") }}</q-item-section>
+          </q-item>
+          <q-item @click="makeBranchMain" clickable>
+            <q-item-section side>
+              <q-icon name="make_main" />
+            </q-item-section>
+            <q-item-section>{{ $t("Make Main") }}</q-item-section>
+          </q-item>
           <q-item @click="renameBranch" clickable>
             <q-item-section side>
               <q-icon name="edit" />
@@ -40,7 +52,6 @@
         <BranchMenu
           @select="selectBranch"
           :branches="branches"
-          linenum
           v-model="menu"
         />
       </q-btn>
@@ -109,6 +120,12 @@ export default {
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
     },
+    promoteBranch() {
+      this.$store.dispatch("game/PROMOTE_BRANCH", this.linenum.branch);
+    },
+    makeBranchMain() {
+      this.$store.dispatch("game/MAKE_BRANCH_MAIN", this.linenum.branch);
+    },
     renameBranch() {
       this.$router.push({
         name: "rename-branch",
@@ -141,6 +158,7 @@ export default {
     padding: 4px;
     margin: 0;
     cursor: pointer;
+    word-break: break-word;
     border-radius: $generic-border-radius;
     background-color: $bg;
     background-color: var(--q-color-bg);

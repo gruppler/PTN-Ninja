@@ -124,6 +124,14 @@ For example:
 
 - Redo
 
+#### `PROMOTE_BRANCH` (value: `<String>`)
+
+- Promote a branch specified by its name
+
+#### `MAKE_BRANCH_MAIN` (value: `<String>`)
+
+- Swap a branch with its main line, specified by branch name
+
 #### `RENAME_BRANCH` (value: `<Object>: { oldName, newName }`)
 
 - Rename a branch

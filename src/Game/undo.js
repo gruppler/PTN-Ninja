@@ -30,7 +30,15 @@ export default class GameUndo {
       return false;
     }
     const history = this.history[--this.historyIndex];
-    this._applyPatch(diff.patch_fromText(history.undoPatch), history.state);
+    if (history.undoPatch) {
+      this._applyPatch(diff.patch_fromText(history.undoPatch), history.state);
+    } else if (history.beforePTN) {
+      this.init({
+        ...this.params,
+        ptn: history.beforePTN,
+        state: history.state,
+      });
+    }
     this.board.updateOutput();
     return true;
   }
@@ -40,10 +48,18 @@ export default class GameUndo {
       return false;
     }
     const history = this.history[this.historyIndex++];
-    this._applyPatch(
-      diff.patch_fromText(history.patch),
-      history.afterState || history.state
-    );
+    if (history.patch) {
+      this._applyPatch(
+        diff.patch_fromText(history.patch),
+        history.afterState || history.state
+      );
+    } else if (history.afterPTN) {
+      this.init({
+        ...this.params,
+        ptn: history.afterPTN,
+        state: history.afterState || history.state,
+      });
+    }
     this.board.updateOutput();
     return true;
   }
@@ -54,19 +70,28 @@ export default class GameUndo {
       ptn: this.ptn,
     };
     mutate.call(this);
-    const patch = diff.patch_toText(diff.patch_make(before.ptn, this.ptn));
+    let patch = diff.patch_make(before.ptn, this.ptn);
     if (patch) {
       this.history.length = this.historyIndex;
-      this.history.push(
-        Object.freeze({
-          state: before.state,
-          patch,
-          undoPatch: diff.patch_toText(diff.patch_make(this.ptn, before.ptn)),
-          afterState: isEqual(before.state, this.minState)
-            ? undefined
-            : this.minState,
-        })
-      );
+      let historyEntry = {
+        state: before.state,
+        afterState: isEqual(before.state, this.minState)
+          ? undefined
+          : this.minState,
+      };
+
+      if (patch.length === 1) {
+        // Use diff only if it's a simple patch
+        historyEntry.patch = diff.patch_toText(patch);
+        historyEntry.undoPatch = diff.patch_toText(
+          diff.patch_make(this.ptn, before.ptn)
+        );
+      } else {
+        // Otherwise just store the whole PTN
+        historyEntry.beforePTN = before.ptn;
+        historyEntry.afterPTN = this.ptn;
+      }
+      this.history.push(Object.freeze(historyEntry));
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {
         this.history.shift();
