@@ -310,6 +310,14 @@ export const RESET_TPS = function (state) {
   Vue.prototype.$game.setEditingTPS();
 };
 
+export const PROMOTE_BRANCH = (state, branch) => {
+  Vue.prototype.$game.promoteBranch(branch);
+};
+
+export const MAKE_BRANCH_MAIN = (state, branch) => {
+  Vue.prototype.$game.makeBranchMain(branch);
+};
+
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
   Vue.prototype.$game.renameBranch(oldName, newName);
 };

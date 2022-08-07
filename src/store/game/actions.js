@@ -595,6 +595,16 @@ export const RESET_TPS = function ({ commit, state }) {
   });
 };
 
+export const PROMOTE_BRANCH = function ({ commit, dispatch }, args) {
+  commit("PROMOTE_BRANCH", args);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const MAKE_BRANCH_MAIN = function ({ commit, dispatch }, args) {
+  commit("MAKE_BRANCH_MAIN", args);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
 export const RENAME_BRANCH = function ({ commit, dispatch }, args) {
   commit("RENAME_BRANCH", args);
   dispatch("SAVE_CURRENT_GAME");

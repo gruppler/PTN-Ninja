@@ -24,6 +24,6 @@ Previous Version
 Legal
 ---
 
-&copy; 2020 Craig Laparo
+&copy; 2022 Craig Laparo
 
 This work is licensed under a GNU AGPLv3 [License](https://www.gnu.org/licenses/agpl-3.0.en.html).

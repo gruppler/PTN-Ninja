@@ -24,9 +24,9 @@ To **right-click** on a touchscreen device, try **long-pressing**.
 :::
 
 ::: info Note
-When opening via URL a game with the same name as an already open game, the new game will be opened under a unique name (by appending an incrementing number).
+When opening via URL a game with the same name as an already open game, the new game will replace the existing game.
 
-If you prefer to instead replace the open game, select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names."
+If you prefer to instead open the new game under a unique name (by appending an incrementing number), select the "Replace" option found in the UI section of the Preferences dialog under "Duplicate Game Names."
 
 **Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
 :::
@@ -99,10 +99,12 @@ Branches
 
 PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
 
+You can perform several actions on branches by **right-clicking** the branch name wherever it appears, such as in the branch menu next to the play controls.
+
 :::
 - Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
 - Use <kbd>▲/▼</kbd> <span>or</span> <kbd>0-9</kbd> to navigate between branches.
-- **Right-click** a branch title to **rename** or **delete** it.
+- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
 :::
 
 PTN
