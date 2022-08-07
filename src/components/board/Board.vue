@@ -375,6 +375,10 @@ export default {
       }
 
       if (this.$store.state.ui.scrollScrubbing) {
+        // Get threshold from screen resolution if not specified
+        const scrollThreshold =
+          this.scrollThreshold || window.devicePixelRatio * 100;
+
         // Start scrubbing
         if (!this.$store.state.ui.scrubbing) {
           this.$store.commit("ui/SET_SCRUBBING", "start");
@@ -385,10 +389,10 @@ export default {
 
         // Handle smooth scrolling
         this.deltaY += event.deltaY;
-        if (Math.abs(this.deltaY) >= this.scrollThreshold) {
+        if (Math.abs(this.deltaY) >= scrollThreshold) {
           const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
-          let times = Math.floor(Math.abs(this.deltaY) / this.scrollThreshold);
-          this.deltaY = (this.deltaY + event.deltaY) % this.scrollThreshold;
+          let times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
+          this.deltaY = (this.deltaY + event.deltaY) % scrollThreshold;
           if (times) {
             this.$store.dispatch(action, { half: this.isSlowScrub, times });
           }

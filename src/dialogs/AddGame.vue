@@ -174,7 +174,7 @@ export default {
     close() {
       this.$refs.dialog.hide();
     },
-    createGame({ name, tags }) {
+    async createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;
       this.player2 = tags.player2;
       this.size = tags.size;
@@ -189,7 +189,16 @@ export default {
 
       game.warnings.forEach((warning) => this.notifyWarning(warning));
 
-      this.$store.dispatch("game/ADD_GAME", game);
+      await this.$store.dispatch("game/ADD_GAME", game);
+
+      if (editTPS) {
+        this.$store.dispatch("ui/SET_UI", [
+          "selectedPiece",
+          { color: 1, type: "F" },
+        ]);
+        this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1]);
+        this.$store.dispatch("game/EDIT_TPS", "");
+      }
 
       this.close();
     },

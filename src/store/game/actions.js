@@ -16,7 +16,7 @@ export const SET_GAME = function ({ commit }, game) {
   }
 };
 
-export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
+export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   const gameNames = LocalStorage.getItem("games") || [];
 
   game.name = getters.uniqueName(game.name);
@@ -42,13 +42,16 @@ export const ADD_GAME = function ({ commit, dispatch, getters }, game) {
   }
 
   Loading.show();
-  setTimeout(async () => {
-    await dispatch("SET_GAME", game);
-    this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-      commit("ADD_GAME", game);
-      Loading.hide();
-    });
-  }, 200);
+  return new Promise((resolve) => {
+    setTimeout(async () => {
+      await dispatch("SET_GAME", game);
+      this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+        commit("ADD_GAME", game);
+        Loading.hide();
+        resolve();
+      });
+    }, 200);
+  });
 };
 
 export const ADD_GAMES = function (
@@ -590,6 +593,16 @@ export const RESET_TPS = function ({ commit, state }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("RESET_TPS");
   });
+};
+
+export const PROMOTE_BRANCH = function ({ commit, dispatch }, args) {
+  commit("PROMOTE_BRANCH", args);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const MAKE_BRANCH_MAIN = function ({ commit, dispatch }, args) {
+  commit("MAKE_BRANCH_MAIN", args);
+  dispatch("SAVE_CURRENT_GAME");
 };
 
 export const RENAME_BRANCH = function ({ commit, dispatch }, args) {
