@@ -277,7 +277,8 @@ export default {
           game: this.$game,
           isPrivate: this.isPrivate,
           config: {
-            players,
+            player,
+            opponent: this.opponentName,
             flatCounts: this.flatCounts,
             showRoads: this.showRoads,
             allowScratchboard: this.allowScratchboard,

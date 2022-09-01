@@ -8,6 +8,40 @@ const asyncPool = require("tiny-async-pool");
 
 const { TPStoCanvas } = require("./TPS-Ninja/src");
 
+// Start a game
+exports.createGame = functions.https.onCall((data, context) => {
+  const uid = context.auth.uid;
+
+  // Validate user
+
+  // Add game to the database
+  let game;
+
+  // Notify opponent if specified
+
+  return game.id;
+});
+
+// Make a move
+exports.insertPly = functions.https.onCall((data, context) => {
+  const uid = context.auth.uid;
+
+  // Get game
+
+  // Validate user
+
+  // Validate ply
+
+  // Add ply to the main branch
+
+  // Update game state
+
+  // Notify opponent
+
+  return true;
+});
+
+// HTTP => PNG
 exports.tps = functions.https.onRequest((request, response) => {
   try {
     const canvas = TPStoCanvas(request.query);
@@ -24,6 +58,7 @@ exports.tps = functions.https.onRequest((request, response) => {
   }
 });
 
+// Delete inactive guest accounts periodically
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async (context) => {
@@ -61,6 +96,8 @@ async function deleteInactiveUser(user) {
       );
     }
   }
+
+  return true;
 }
 
 async function getInactiveUsers(users = [], nextPageToken) {
