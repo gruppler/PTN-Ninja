@@ -63,7 +63,7 @@ export default {
       return (
         !value ||
         formats.player1.test(value.trim()) ||
-        this.$t("error['Invalid player name']")
+        this.$t("error['Invalid opponent name']")
       );
     },
     async validate(value = this.value) {

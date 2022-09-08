@@ -99,12 +99,13 @@ export default {
         const canvas = game.board.render({
           ...this.thumbnailConfig,
           ply,
-          flatCounts: config.disableFlatCounts
-            ? false
-            : this.$store.state.ui.flatCounts,
-          showRoads: config.disableShowRoads
-            ? false
-            : this.$store.state.ui.showRoads,
+          flatCounts: config.flatCounts
+            ? this.$store.state.ui.flatCounts
+            : false,
+          stackCounts: config.stackCounts
+            ? this.$store.state.ui.stackCounts
+            : false,
+          showRoads: config.showRoads ? false : this.$store.state.ui.showRoads,
           theme: this.$store.state.ui.theme,
         });
 

@@ -5,6 +5,7 @@ import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
 
 import Game from "../../Game";
 import { toDate, now } from "../../Game/PTN/Tag";
+import { call } from "../../utilities";
 
 const configToDB = (config) => omit(config, ["id", "player", "unseen"]);
 
@@ -48,13 +49,16 @@ export const ANONYMOUS = async ({ commit }) => {
 };
 
 export const USER_EXISTS = async (context, name) => {
-  let nameSnapshot = await db.collection("names").doc(name.toLowerCase()).get();
+  let nameSnapshot = await db
+    .collection("names")
+    .doc(name.trim().toLowerCase())
+    .get();
   return nameSnapshot.exists;
 };
 
 export const REGISTER = async (context, { email, password, name }) => {
   // Check name uniqueness
-  const nameDoc = db.collection("names").doc(name.toLowerCase());
+  const nameDoc = db.collection("names").doc(name.trim().toLowerCase());
   let nameSnapshot = await nameDoc.get();
   if (nameSnapshot.exists) {
     throw new Error("Player exists");
@@ -124,45 +128,21 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
   return auth.confirmPasswordReset(oobCode, password);
 };
 
-export const CREATE_GAME = async (
-  { dispatch, getters, state },
-  { game, isPrivate, config }
-) => {
-  const playerName = getters.playerName(isPrivate);
-  const player = config.players[1] === state.user.uid ? 1 : 2;
-  let tags = {
-    player1: "",
-    player2: "",
-    rating1: "",
-    rating2: "",
-    ...now(),
+export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
+  if (!game || !(game instanceof Game)) {
+    throw new Error("Invalid game");
+  }
+  let state = {
+    hasEnded: game.hasEnded,
+    tps: game.board.tps,
+    ply: game.ply ? game.ply.toString(true) : null,
+    branch: game.board.branch,
+    plyIndex: game.board.plyIndex,
+    plyIsDone: game.board.plyIsDone,
   };
-  tags["player" + player] = playerName;
-  game.setTags(tags, false);
-  game.clearHistory();
-  dispatch("SAVE_PTN", game.toString(), { root: true });
-
-  if (game.isDefaultName) {
-    game.name = game.generateName();
-  }
-
-  let json = game.json;
-  config = Object.assign(json.config, config);
-
-  // Add game to DB
-  let gameDoc = await db.collection("games").add(omit(json, "moves"));
-  config.id = gameDoc.id;
-  dispatch("SAVE_CONFIG", { game, config }, { root: true });
-
-  // Add moves to game in DB
-  if (json.moves.length) {
-    let batch = db.batch();
-    const moves = gameDoc.collection("moves");
-    json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
-    await batch.commit();
-  }
-
-  dispatch("LISTEN_CURRENT_GAME");
+  let tags = game.JSONTags;
+  return call("createGame", { config, state, tags });
+  // dispatch("LISTEN_CURRENT_GAME");
 };
 
 export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {

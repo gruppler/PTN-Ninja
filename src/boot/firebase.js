@@ -24,7 +24,7 @@ let messaging = null;
 
 try {
   messaging = firebase.messaging();
-  messaging.usePublicVapidKey(config.vapidKey);
+  messaging.getToken({ vapidKey: config.vapidKey });
 } catch (error) {
   console.error(error);
 }
@@ -35,8 +35,8 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
 });
 
 if (process.env.DEV) {
-  db.useEmulator(process.env.emulatorIP || "localhost", 4999);
-  functions.useEmulator(process.env.emulatorIP || "localhost", 5001);
+  db.useEmulator("localhost", 4999);
+  functions.useEmulator("localhost", 5001);
   window.auth = auth;
   window.db = db;
   window.functions = functions;

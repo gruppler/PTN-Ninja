@@ -2,25 +2,131 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-admin.initializeApp();
+const firebase = admin.initializeApp();
+const auth = admin.auth();
+const db = admin.firestore();
+const messaging = firebase.messaging();
 
 const asyncPool = require("tiny-async-pool");
 
 const { TPStoCanvas } = require("./TPS-Ninja/src");
+const { Board } = require("./TPS-Ninja/src/Board");
+
+const httpError = function (type, message) {
+  console.error(type, message);
+  throw new functions.https.HttpsError(type, message || type);
+};
 
 // Start a game
-exports.createGame = functions.https.onCall((data, context) => {
-  const uid = context.auth.uid;
+exports.createGame = functions.https.onCall(
+  async ({ config, state, tags }, context) => {
+    const uid = context.auth ? context.auth.uid : false;
 
-  // Validate user
+    // Abort if unauthenticated
+    if (!uid) {
+      return httpError("unauthenticated");
+    }
 
-  // Add game to the database
-  let game;
+    // Determine player seats if it's not a finished game
+    let playerSeat = config.playerSeat;
+    if (!state.hasEnded && playerSeat) {
+      if (playerSeat === "random") {
+        playerSeat = Math.round(Math.random() + 1);
+      }
+    }
+    let opponentSeat = playerSeat === 1 ? 2 : 1;
+    let opponentUID = null;
 
-  // Notify opponent if specified
+    if (playerSeat) {
+      // New game
+      delete tags.rating2;
+      delete tags.rating1;
+      delete tags.result;
+      delete tags.date;
+      delete tags.time;
+      config.players = [];
+      if (config.isPrivate) {
+        // Private game
+        tags[`player${playerSeat}`] = config.playerName;
+        config.players[playerSeat - 1] = uid;
 
-  return game.id;
-});
+        tags[`player${opponentSeat}`] = config.opponentName || "";
+        config.players[opponentSeat - 1] = null;
+      } else {
+        // Public game
+        tags[`player${playerSeat}`] = context.auth.token.name;
+        config.players[playerSeat - 1] = uid;
+
+        config.opponentName = (config.opponentName || "").trim();
+        if (config.opponentName) {
+          // Find opponent uid from name
+          let snapshot = await db
+            .collection("names")
+            .doc(config.opponentName.toLowerCase())
+            .get();
+          if (snapshot.exists) {
+            opponentUID = snapshot.data().uid;
+            tags[`player${opponentSeat}`] = config.opponentName;
+            config.players[opponentSeat - 1] = opponentUID;
+          } else {
+            return httpError("invalid-argument", "Invalid opponent name");
+          }
+        } else {
+          // Open opponent seat
+          tags[`player${opponentSeat}`] = "";
+          config.players[opponentSeat - 1] = null;
+        }
+      }
+    }
+
+    let game;
+    try {
+      game = new Board({ ...config, ...tags });
+      console.log(game, tags);
+      // Add game to the database
+    } catch (error) {
+      return httpError("invalid-argument", error);
+    }
+
+    // const playerName = getters.playerName(isPrivate);
+    // const player = config.players[1] === state.user.uid ? 1 : 2;
+    // let tags = {
+    //   player1: "",
+    //   player2: "",
+    //   rating1: "",
+    //   rating2: "",
+    //   ...now(),
+    // };
+    // tags["player" + player] = playerName;
+    // game.setTags(tags, false);
+    // game.clearHistory();
+    // dispatch("SAVE_PTN", game.toString(), { root: true });
+
+    // if (game.isDefaultName) {
+    //   game.name = game.generateName();
+    // }
+
+    // let json = game.json;
+    // config = Object.assign(json.config, config);
+
+    // // Add game to DB
+    // let gameDoc = await db.collection("games").add(omit(json, "moves"));
+    // config.id = gameDoc.id;
+    // dispatch("SAVE_CONFIG", { game, config }, { root: true });
+
+    // // Add moves to game in DB
+    // if (json.moves.length) {
+    //   let batch = db.batch();
+    //   const moves = gameDoc.collection("moves");
+    //   json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
+    //   await batch.commit();
+    // }
+
+    // Notify opponent if specified
+
+    return true; //game.id;
+  }
+);
 
 // Make a move
 exports.insertPly = functions.https.onCall((data, context) => {

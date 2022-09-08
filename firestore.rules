@@ -31,11 +31,10 @@ service cloud.firestore {
     }
 
     match /names/{nameID} {
-      allow delete: if isUser(
-				get(/databases/$(database)/documents/names/$(nameID)).data.uid
-			);
-    	allow read, create: if isSignedIn();
+    	allow create: if isSignedIn() && isUser(incomingData().uid);
+    	allow read: if isSignedIn();
     	allow update: if false;
+      allow delete: if isUser(existingData().uid);
     }
 
     match /games/{gameID} {
@@ -66,7 +65,8 @@ service cloud.firestore {
       allow write: if false;
 
       match /branches/{branch} {
-        allow read: isPlayer(gameID, "gamesPrivate");
+    	  allow read: if isUser(existingData().uid) ||
+          existingData().uid == null && isPlayer(gameID, "gamesPrivate");
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }

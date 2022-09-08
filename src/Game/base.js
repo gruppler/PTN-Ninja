@@ -542,6 +542,10 @@ export default class GameBase {
     );
   }
 
+  get hasEnded() {
+    return Boolean(this.tags.result);
+  }
+
   get openingSwap() {
     return this.tag("opening") === "swap";
   }

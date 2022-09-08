@@ -1,4 +1,5 @@
 import store from "./store";
+import { functions } from "./boot/firebase.js";
 import { i18n } from "./boot/i18n";
 import { toDate } from "date-fns";
 import { isString, isObject } from "lodash";
@@ -16,6 +17,20 @@ export function postMessage(action, value) {
     parent.postMessage({ action, value }, "*");
   }
 }
+
+export const call = async (functionName, data) => {
+  let response = await functions.httpsCallable(functionName)(data);
+  if ("data" in response) {
+    response = response.data;
+  } else if ("result" in response) {
+    response = response.result;
+  }
+  if (response && response.errorInfo) {
+    throw response.errorInfo;
+  } else {
+    return response;
+  }
+};
 
 export function deepFreeze(object) {
   const keys = Object.getOwnPropertyNames(object);

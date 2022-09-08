@@ -324,6 +324,7 @@ export default {
     "Invalid komi": "Invalid komi",
     "Invalid line number": "Invalid line number",
     "Invalid move": "Invalid move",
+    "Invalid opponent name": "Invalid opponent name",
     "Invalid player1": "Invalid player 1",
     "Invalid player2": "Invalid player 2",
     "Invalid player name": "Invalid player name",
@@ -346,6 +347,7 @@ export default {
     "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
     "auth/wrong-password": "Incorrect password",
+    unauthenticated: "You must be logged in to do that",
   },
 
   success: {

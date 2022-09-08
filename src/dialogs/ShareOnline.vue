@@ -11,7 +11,7 @@
             <q-item>
               <q-item-section>
                 <q-btn-toggle
-                  v-model="player"
+                  v-model="config.playerSeat"
                   class="highlight"
                   :toggle-color="playerBGColor"
                   :toggle-text-color="playerTextColor"
@@ -27,10 +27,9 @@
             <q-item>
               <q-item-section>
                 <PlayerName
-                  ref="playerName"
-                  v-model="playerName"
-                  :player="player"
-                  :is-private="isPrivate"
+                  v-model="config.playerName"
+                  :player="config.playerSeat"
+                  :is-private="config.isPrivate"
                   @validate="isPlayerValid = $event"
                 />
               </q-item-section>
@@ -39,11 +38,12 @@
             <q-item>
               <q-item-section>
                 <OpponentName
-                  ref="opponentName"
                   v-model="opponentName"
                   :player="opponent"
-                  :is-private="isPrivate"
+                  :is-private="config.isPrivate"
                   @validate="isOpponentValid = $event"
+                  :error="!isOpponentValid"
+                  :error-message="$t('error[\'Invalid opponent name\']')"
                 />
               </q-item-section>
             </q-item>
@@ -52,29 +52,16 @@
               <q-item-section>
                 <q-item-label>{{ $t("Private Game") }}</q-item-label>
                 <q-item-label caption>
-                  {{ $t("hint." + (isPrivate ? "privateGame" : "publicGame")) }}
+                  {{
+                    $t(
+                      "hint." +
+                        (config.isPrivate ? "privateGame" : "publicGame")
+                    )
+                  }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="isPrivate" />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="flatCounts" />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="showRoads" />
+                <q-toggle v-model="config.isPrivate" />
               </q-item-section>
             </q-item>
 
@@ -83,12 +70,37 @@
                 <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="allowScratchboard" />
+                <q-toggle v-model="config.allowScratchboard" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.flatCounts" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.showRoads" />
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.stackCounts" />
               </q-item-section>
             </q-item>
           </q-list>
-
-          <message-output :error="error" content-class="q-ma-md" />
         </div>
 
         <div v-else>
@@ -128,6 +140,8 @@
     <template v-slot:footer>
       <q-separator />
 
+      <message-output :error="error" content-class="q-ma-md" />
+
       <q-card-actions align="right">
         <template v-if="isLocal">
           <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
@@ -135,6 +149,7 @@
             @click="create"
             :label="$t('Create Online Game')"
             :disabled="!isPlayerValid || !isOpponentValid"
+            :loading="loading"
             color="primary"
             flat
           />
@@ -151,23 +166,25 @@
 import PlayerName from "../components/controls/PlayerName";
 import OpponentName from "../components/controls/OpponentName";
 
+import { cloneDeep } from "lodash";
+
 export default {
   name: "ShareOnline",
   components: { PlayerName, OpponentName },
   data() {
     const user = this.$store.state.online.user;
+    const config = cloneDeep(this.$store.state.ui.onlineConfig);
+    if (!user || user.isAnonymous) {
+      config.isPrivate = true;
+    }
     return {
+      config,
       error: "",
       isPlayerValid: false,
       isOpponentValid: false,
-      isPrivate: !user || user.isAnonymous,
-      playerName: this.$store.state.ui.playerName,
       opponentName: "",
       qrText: "",
       loading: false,
-      flatCounts: false,
-      showRoads: false,
-      allowScratchboard: false,
     };
   },
   computed: {
@@ -211,19 +228,15 @@ export default {
     isSpectator() {
       return !this.user || !this.$game.getPlayerFromUID(this.user.id);
     },
-    player: {
-      get() {
-        return this.$store.state.ui.player;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["player", value]);
-      },
-    },
     opponent() {
-      return this.player === "random" ? this.player : this.player === 1 ? 2 : 1;
+      return this.config.playerSeat === "random"
+        ? this.config.playerSeat
+        : this.config.playerSeat === 1
+        ? 2
+        : 1;
     },
     playerBGColor() {
-      switch (this.player) {
+      switch (this.config.playerSeat) {
         case 1:
           return "player1";
         case 2:
@@ -233,7 +246,7 @@ export default {
       }
     },
     playerTextColor() {
-      switch (this.player) {
+      switch (this.config.playerSeat) {
         case 1:
           return "player2";
         case 2:
@@ -257,31 +270,20 @@ export default {
         return;
       }
 
-      let player = this.player;
-      let players = {};
-
-      // Determine player
-      if (player === "random") {
-        player = Math.round(Math.random() + 1);
-      }
-      players[player] = this.user.uid;
-
-      if (this.isPrivate) {
-        // Remember player name
-        this.$store.dispatch("ui/SET_UI", ["playerName", this.playerName]);
-      }
-
       try {
+        this.error = null;
         this.loading = true;
-        this.$store.dispatch("online/CREATE_GAME", {
+        await this.$store.dispatch("online/CREATE_GAME", {
           game: this.$game,
-          isPrivate: this.isPrivate,
           config: {
-            player,
-            opponent: this.opponentName,
-            flatCounts: this.flatCounts,
-            showRoads: this.showRoads,
-            allowScratchboard: this.allowScratchboard,
+            isPrivate: this.config.isPrivate,
+            playerSeat: this.config.playerSeat,
+            playerName: this.config.isPrivate ? this.config.playerName : "",
+            opponentName: this.opponentName,
+            allowScratchboard: this.config.allowScratchboard,
+            flatCounts: this.config.flatCounts,
+            showRoads: this.config.showRoads,
+            stackCounts: this.config.stackCounts,
           },
         });
       } catch (error) {
@@ -300,11 +302,14 @@ export default {
   watch: {
     isLoggedIn(isLoggedIn) {
       if (isLoggedIn) {
-        this.isPrivate = false;
+        this.config.isPrivate = false;
       }
     },
-    "$store.state.ui.playerName"(playerName) {
-      this.playerName = playerName;
+    config: {
+      handler(config) {
+        this.$store.dispatch("ui/SET_UI", ["onlineConfig", cloneDeep(config)]);
+      },
+      deep: true,
     },
   },
 };

@@ -29,7 +29,6 @@ let defaults = {
   playSpeed: 60, //BPM
   player1: "",
   player2: "",
-  player: 1,
   playerName: "",
   scrollScrubbing: Platform.is.desktop,
   scrollThreshold: 0,
@@ -70,6 +69,13 @@ export const embedUIOptions = [
   "themeID",
   "unplayedPieces",
 ];
+defaults.embedConfig = {
+  width: "100%",
+  height: "600px",
+  includeNames: false,
+  state: true,
+  ui: pick(defaults, embedUIOptions),
+};
 
 export const pngUIOptions = [
   "axisLabels",
@@ -82,15 +88,6 @@ export const pngUIOptions = [
   "themeID",
   "unplayedPieces",
 ];
-
-defaults.embedConfig = {
-  width: "100%",
-  height: "600px",
-  includeNames: false,
-  state: true,
-  ui: pick(defaults, embedUIOptions),
-};
-
 defaults.pngConfig = {
   imageSize: "md",
   textSize: "md",
@@ -98,6 +95,19 @@ defaults.pngConfig = {
   padding: true,
   bgAlpha: 1,
   ...pick(defaults, pngUIOptions),
+};
+
+export const onlineUIOptions = [
+  "playerName",
+  "flatCounts",
+  "showRoads",
+  "stackCounts",
+];
+defaults.onlineConfig = {
+  isPrivate: true,
+  playerSeat: "random",
+  allowScratchboard: true,
+  ...pick(defaults, onlineUIOptions),
 };
 
 let state = {

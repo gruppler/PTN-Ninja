@@ -20,11 +20,19 @@ export const uniqueName =
 export const disabledOptions = (state) => {
   const game = Vue.prototype.$game;
   const disabled = [];
-  if (game.config.disableFlatCounts) {
-    disabled.push("flatCounts");
-  }
-  if (game.config.disableShowRoads) {
-    disabled.push("showRoads");
+  if (!game.hasEnded) {
+    if (!game.config.flatCounts) {
+      disabled.push("flatCounts");
+    }
+    if (!game.config.stackCounts) {
+      disabled.push("stackCounts");
+    }
+    if (!game.config.showRoads) {
+      disabled.push("showRoads");
+    }
+    if (!game.config.allowScratchboard) {
+      disabled.push("allowScratchboard");
+    }
   }
   if (!navigator.canShare) {
     disabled.push("nativeSharing");

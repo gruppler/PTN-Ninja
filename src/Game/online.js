@@ -42,8 +42,13 @@ export default class GameOnline {
   }
 
   get JSONTags() {
-    let tags = zipObject(Object.keys(this.tags), map(this.tags, "valueText"));
-    tags.date = Tag.toDate(tags.date, tags.time);
+    let tags = zipObject(
+      Object.keys(this.tags),
+      map(this.tags, (tag) => tag.output.text || tag.output)
+    );
+    if (tags.data) {
+      tags.date = Tag.toDate(tags.date, tags.time);
+    }
     delete tags.time;
     return tags;
   }

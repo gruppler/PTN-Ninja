@@ -18,7 +18,7 @@ export default {
   },
   computed: {
     icon() {
-      return toSvg(this.value, "100");
+      return toSvg(this.value.trim().toLowerCase(), "100");
     },
   },
 };
