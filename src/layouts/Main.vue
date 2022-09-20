@@ -617,7 +617,10 @@ export default {
       this.$router.push({ name: "info-edit" });
     },
     switchGame(event) {
-      if (!event.currentTarget.classList.contains("q-fab--opened")) {
+      if (
+        this.$store.state.game.list.length > 1 &&
+        !event.currentTarget.classList.contains("q-fab--opened")
+      ) {
         this.$refs.gameSelector.select(1);
       }
     },
