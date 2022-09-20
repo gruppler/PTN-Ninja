@@ -273,7 +273,7 @@ export default {
       try {
         this.error = null;
         this.loading = true;
-        await this.$store.dispatch("online/CREATE_GAME", {
+        const id = await this.$store.dispatch("online/CREATE_GAME", {
           game: this.$game,
           config: {
             isPrivate: this.config.isPrivate,
@@ -285,6 +285,10 @@ export default {
             showRoads: this.config.showRoads,
             stackCounts: this.config.stackCounts,
           },
+        });
+        await this.$store.dispatch("online/LOAD_GAME", {
+          id,
+          isPrivate: this.config.isPrivate,
         });
       } catch (error) {
         this.error = error;

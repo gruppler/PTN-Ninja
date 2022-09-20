@@ -188,13 +188,16 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   Loading.hide();
 };
 
-export const LOAD_GAME = async ({ dispatch, state }, id) => {
+export const LOAD_GAME = async function (
+  { dispatch, state },
+  { id, isPrivate }
+) {
   if (!id) {
     throw new Error("Missing game ID");
   }
 
   Loading.show();
-  const gameDoc = db.collection("games").doc(id);
+  const gameDoc = db.collection(isPrivate ? "gamesPrivate" : "games").doc(id);
   let gameJSON;
 
   // Load game
@@ -206,13 +209,13 @@ export const LOAD_GAME = async ({ dispatch, state }, id) => {
       gameJSON = snapshotToGameJSON(gameSnapshot, state);
 
       // Load moves
-      let moveDocs = await gameDoc.collection("moves").get();
-      gameJSON.moves = [];
-      moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
+      // let moveDocs = await gameDoc.collection("moves").get();
+      // gameJSON.moves = [];
+      // moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
 
       // Add game
       let game = new Game(gameJSON);
-      dispatch("ADD_GAME", game, { root: true });
+      this.dispatch("game/ADD_GAME", game);
 
       Loading.hide();
       return game;

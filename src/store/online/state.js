@@ -1,6 +1,7 @@
 export default function () {
   return {
     initialized: false,
+    openGamesListeners: {},
     privateGames: {},
     currentGameListener: null,
     playerGames: {},

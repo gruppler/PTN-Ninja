@@ -79,52 +79,32 @@ exports.createGame = functions.https.onCall(
       }
     }
 
-    let game;
     try {
-      game = new Board({ ...config, ...tags });
-      console.log(game, tags);
+      // Validate game arguments
+      new Board({ ...config, ...tags });
+      let game = {
+        name: "",
+        config,
+        state,
+        tags,
+        createdBy: uid,
+        createdOn: new Date(),
+      };
       // Add game to the database
+      let gameDoc = await db
+        .collection(config.isPrivate ? "gamesPrivate" : "games")
+        .add(game);
+
+      // TODO: Add branches/plies
+
+      if (!state.hasEnded && opponentUID) {
+        // TODO: Notify opponent if specified
+      }
+
+      return gameDoc.id;
     } catch (error) {
       return httpError("invalid-argument", error);
     }
-
-    // const playerName = getters.playerName(isPrivate);
-    // const player = config.players[1] === state.user.uid ? 1 : 2;
-    // let tags = {
-    //   player1: "",
-    //   player2: "",
-    //   rating1: "",
-    //   rating2: "",
-    //   ...now(),
-    // };
-    // tags["player" + player] = playerName;
-    // game.setTags(tags, false);
-    // game.clearHistory();
-    // dispatch("SAVE_PTN", game.toString(), { root: true });
-
-    // if (game.isDefaultName) {
-    //   game.name = game.generateName();
-    // }
-
-    // let json = game.json;
-    // config = Object.assign(json.config, config);
-
-    // // Add game to DB
-    // let gameDoc = await db.collection("games").add(omit(json, "moves"));
-    // config.id = gameDoc.id;
-    // dispatch("SAVE_CONFIG", { game, config }, { root: true });
-
-    // // Add moves to game in DB
-    // if (json.moves.length) {
-    //   let batch = db.batch();
-    //   const moves = gameDoc.collection("moves");
-    //   json.moves.forEach((move, i) => batch.set(moves.doc("" + i), move));
-    //   await batch.commit();
-    // }
-
-    // Notify opponent if specified
-
-    return true; //game.id;
   }
 );
 
