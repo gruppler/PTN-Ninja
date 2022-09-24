@@ -2,11 +2,11 @@
   <q-btn :to="route" v-bind="$attrs">
     <template v-if="user && !user.isAnonymous">
       <PlayerAvatar :value="user.displayName" size="md" class="on-left" />
-      {{ user.displayName }}
+      <span class="ellipsis">{{ user.displayName }}</span>
     </template>
     <template v-else>
       <q-icon name="account" left />
-      {{ $t("Log In") }}
+      {{ loginText || $t("Log In") }}
     </template>
   </q-btn>
 </template>
@@ -17,6 +17,7 @@ import PlayerAvatar from "./PlayerAvatar";
 export default {
   name: "AccountBtn",
   components: { PlayerAvatar },
+  props: ["loginText"],
   computed: {
     user() {
       return this.$store.state.online.user;

@@ -18,38 +18,28 @@
     v-bind="$attrs"
   >
     <template v-slot:top>
-      <div class="full-width row no-wrap">
-        <FullscreenToggle
-          v-model="fullscreen"
-          class="q-px-xs q-mr-sm"
-          flat
-          dense
-        />
-
-        <q-input
-          ref="search"
+      <q-toolbar class="q-pa-none">
+        <q-btn-toggle
+          class="highlight"
           v-model="filter"
-          debounce="200"
-          class="col col-sm-6"
-          @focus="focusSearch"
-          autocomplete="off"
-          clearable
-          filled
-          dense
-        >
-          <template v-slot:prepend>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+          :options="filterOptions"
+          :ripple="false"
+          stack
+        />
 
-        <div class="col-grow" />
+        <q-space />
 
-        <AccountBtn
-          :dense="$q.screen.lt.md"
+        <FullscreenToggle
+          v-if="$refs.table"
+          v-model="fullscreen"
+          :target="$refs.table.$el"
           class="q-ml-sm"
-          color="primary"
+          round
           flat
         />
+      </q-toolbar>
+      <div class="q-mt-sm">
+        <AccountBtn :login-text="$t('Guest')" rounded flat />
       </div>
     </template>
 
@@ -143,12 +133,29 @@ export default {
   data() {
     return {
       error: "",
-      filter: "",
       loading: false,
       pagination: {
         rowsPerPage: 0,
         sortBy: "date",
       },
+      filter: "mine",
+      filterOptions: [
+        {
+          value: "mine",
+          icon: "account",
+          label: this.$t("Mine"),
+        },
+        {
+          value: "open",
+          icon: "players",
+          label: this.$t("Open"),
+        },
+        {
+          value: "puzzle",
+          icon: "puzzle",
+          label: this.$tc("Puzzle", 100),
+        },
+      ],
       columns: [
         {
           name: "role",

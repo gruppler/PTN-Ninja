@@ -4,15 +4,15 @@
       <dialog-header icon="online">{{ $t("Play Online") }}</dialog-header>
     </template>
 
-    <q-card>
+    <q-card style="width: 330px">
       <smooth-reflow tag="recess" class="col">
         <div v-if="isLocal">
           <q-list>
             <q-item>
               <q-item-section>
                 <q-btn-toggle
-                  v-model="config.playerSeat"
                   class="highlight"
+                  v-model="config.playerSeat"
                   :toggle-color="playerBGColor"
                   :toggle-text-color="playerTextColor"
                   :options="players"
@@ -68,6 +68,13 @@
             <q-item tag="label" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
+                <q-item-label caption>{{
+                  $t(
+                    config.allowScratchboard
+                      ? "hint.scratchboardAllowed"
+                      : "hint.scratchboardDenied"
+                  )
+                }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle v-model="config.allowScratchboard" />

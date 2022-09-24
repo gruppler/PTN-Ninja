@@ -70,6 +70,7 @@ export default {
   ply: "mdi-layers",
   points: "mdi-star-circle",
   promote: "mdi-arrow-up",
+  puzzle: "mdi-puzzle",
   qrcode: "mdi-qrcode",
   random: "mdi-dice-5",
   rating1: "mdi-star",

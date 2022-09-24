@@ -1,5 +1,6 @@
 <template>
   <q-avatar
+    v-if="value"
     class="player-avatar"
     v-html="icon"
     v-bind="$attrs"

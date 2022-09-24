@@ -54,6 +54,7 @@ exports.createGame = functions.https.onCall(
         config.players[opponentSeat - 1] = null;
       } else {
         // Public game
+        config.playerName = context.auth.token.name;
         tags[`player${playerSeat}`] = context.auth.token.name;
         config.players[playerSeat - 1] = uid;
 
