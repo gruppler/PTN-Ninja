@@ -65,13 +65,15 @@ PTN Ninja enables you to navigate the timeline of a game freely.
 - Use the Play/Pause button to automatically progress through the game.
 - Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
 - **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
-- **Drag** or **click** the scrub bar to quickly jump to a different point in the game.
-- Use the **scroll wheel** to scrub, if enabled in UI Preferences.
-  - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
 :::
 
-::: tip
-If you have a wheel mouse, you can enable **Scrub with scroll wheel** in the UI section of the Preferences dialog for easy navigation.
+To navigate through a game quickly, you can scrub using a **mouse wheel** or the **Scrub Bar**, which is located above the **Play Controls** but disabled by default.
+
+:::
+
+- To use the **Scrub Bar**, enable it with <kbd>Shift</kbd><kbd>S</kbd> or via **UI Preferences**, then **drag** or **click** it to quickly jump to a different point in the game.
+- Use the **scroll wheel** to scrub. You may need to enable it via **UI Preferences**.
+  - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
 :::
 
 ### Board Transformation
