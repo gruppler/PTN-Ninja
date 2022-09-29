@@ -598,6 +598,7 @@ export default class GameMutations {
           this.board._setPly(equalPly.id, true);
           this.board._afterPly(equalPly, true);
           this.board.setRoads(equalPly.result ? equalPly.result.roads : null);
+          this.board.updatePTNBranchOutput();
         } else {
           if (replaceCurrent && !this.board.nextPly) {
             // Delete newly formed branch
