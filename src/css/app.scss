@@ -1,34 +1,39 @@
 // app global css
 
-html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
+html,
+body,
+main,
+.disabled,
+.disabled *,
+[disabled],
+[disabled] * {
   touch-action: none;
 }
 
 @font-face {
-  font-family: 'Source Code Pro';
+  font-family: "Source Code Pro";
   font-style: normal;
   font-weight: 300;
-  src: url('./fonts/Source+Code+Pro_300_normal.woff');
+  src: url("./fonts/Source+Code+Pro_300_normal.woff");
 }
 @font-face {
-  font-family: 'Source Code Pro';
+  font-family: "Source Code Pro";
   font-style: normal;
   font-weight: 400;
-  src: url('./fonts/Source+Code+Pro_400_normal.woff');
+  src: url("./fonts/Source+Code+Pro_400_normal.woff");
 }
 @font-face {
-  font-family: 'Source Code Pro';
+  font-family: "Source Code Pro";
   font-style: normal;
   font-weight: 600;
-  src: url('./fonts/Source+Code+Pro_600_normal.woff');
+  src: url("./fonts/Source+Code+Pro_600_normal.woff");
 }
 @font-face {
-  font-family: 'Source Code Pro';
+  font-family: "Source Code Pro";
   font-style: normal;
   font-weight: 700;
-  src: url('./fonts/Source+Code+Pro_700_normal.woff');
+  src: url("./fonts/Source+Code+Pro_700_normal.woff");
 }
-
 
 .fg-inherit {
   color: inherit !important;
@@ -92,7 +97,8 @@ html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
   color: $textDark;
   color: var(--q-color-textDark);
 }
-.bg-panel {
+.bg-panel,
+.bg-panelOpaque {
   background: $panel !important;
   background: var(--q-color-panel) !important;
   color: $textDark;
@@ -136,9 +142,12 @@ html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
   background: var(--q-color-accent);
 }
 
-.q-card, .q-card--dark,
-.q-list, .q-list--dark,
-.q-tab-panels, .q-tab-panels--dark {
+.q-card,
+.q-card--dark,
+.q-list,
+.q-list--dark,
+.q-tab-panels,
+.q-tab-panels--dark {
   background: $ui;
   background: var(--q-color-ui);
 }
@@ -155,17 +164,17 @@ html, body, main, .disabled, .disabled *, [disabled], [disabled] * {
 }
 
 kbd {
-  font-family: 'Source Code Pro';
+  font-family: "Source Code Pro";
   display: inline-block;
-  padding: .17em .5em;
-  margin: .1em 0;
+  padding: 0.17em 0.5em;
+  margin: 0.1em 0;
   text-decoration: none;
   cursor: default;
-  border-radius: .3em;
+  border-radius: 0.3em;
   background: $highlight;
   position: relative;
   + kbd {
-    margin-left: .5em;
+    margin-left: 0.5em;
   }
 }
 
@@ -185,19 +194,19 @@ kbd {
   background-color: $dim;
 }
 
-.hover-info{
+.hover-info {
   $pad: 5px;
   padding: $pad;
   margin: -$pad;
   border-radius: 1em;
-  background-color: rgba($highlight, .09);
+  background-color: rgba($highlight, 0.09);
 }
 
 .text-selectable {
   user-select: text;
 }
 
-.fullwidth-padded-md{
+.fullwidth-padded-md {
   padding-left: $space-base;
   padding-right: $space-base;
   margin-left: -$space-base;
@@ -209,9 +218,9 @@ kbd {
   line-height: 1.5em;
 }
 
-@media (min-width: 600px){
+@media (min-width: 600px) {
   .q-dialog__inner--minimized > div {
-      max-width: 580px;
+    max-width: 580px;
   }
 }
 
@@ -241,7 +250,8 @@ kbd {
   bottom: $footer-toolbar-height;
 }
 
-.q-date--dark, .q-time--dark {
+.q-date--dark,
+.q-time--dark {
   background: $ui;
   background: var(--q-color-ui);
 }
@@ -286,7 +296,7 @@ kbd {
 }
 
 .dimmed-btn {
-  opacity: .2;
+  opacity: 0.2;
   &.q-fab--opened {
     opacity: 1;
   }

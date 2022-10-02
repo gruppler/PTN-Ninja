@@ -1,14 +1,15 @@
 <template>
   <q-menu
     ref="menu"
+    content-class="q-branch-menu"
     :value="value"
     @input="$emit('input', $event)"
-    content-class="bg-panel"
     transition-show="none"
     transition-hide="none"
     auto-close
+    cover
   >
-    <q-list class="branch-menu bg-panel" dense>
+    <q-list class="branch-menu" dense>
       <q-item
         v-for="(ply, i) in branches"
         :key="i"
@@ -16,15 +17,19 @@
         @click="select(ply)"
         clickable
       >
-        <q-item-section side>
-          <q-badge
-            class="option-number text-subtitle2 q-pa-sm"
-            :class="{ selected: selected === i }"
-            :label="i"
+        <q-item-label class="row no-wrap overflow-hidden items-center">
+          <span class="fade">
+            <q-badge
+              class="option-number text-subtitle2 q-pa-sm"
+              :class="{ selected: selected === i }"
+              :label="i"
+            />
+          </span>
+          <Linenum
+            :linenum="ply.linenum"
+            :active-ply="ply"
+            class="col-shrink"
           />
-        </q-item-section>
-        <q-item-label class="row no-wrap">
-          <Linenum :linenum="ply.linenum" :active-ply="ply" />
           <Ply :plyID="ply.id" no-branches no-click />
         </q-item-label>
       </q-item>
@@ -98,6 +103,9 @@ export default {
 
 <style lang="scss">
 .branch-menu {
+  background: $panelOpaque !important;
+  background: var(--q-color-panelOpaque) !important;
+
   .option-number {
     line-height: 1em;
     border-radius: $generic-border-radius;
@@ -120,8 +128,63 @@ export default {
     }
   }
 
-  .branch {
-    flex-shrink: 1;
+  .linenum {
+    z-index: 1;
+  }
+
+  $fadeWidth: 1em;
+  .fade {
+    z-index: 2;
+    position: relative;
+    padding-right: $fadeWidth;
+    background: linear-gradient(
+      90deg,
+      #{$panelOpaque} calc(100% - #{$fadeWidth}),
+      #{$panelClear} 100%
+    );
+    background: linear-gradient(
+      90deg,
+      var(--q-color-panelOpaque) calc(100% - #{$fadeWidth}),
+      var(--q-color-panelClear) 100%
+    );
+  }
+  body.desktop & .q-hoverable:hover,
+  body.desktop & .q-focusable:focus {
+    .fade {
+      background: linear-gradient(
+        90deg,
+        #{$panelOpaqueHover} calc(100% - #{$fadeWidth}),
+        #{$panelClearHover} 100%
+      );
+      background: linear-gradient(
+        90deg,
+        var(--q-color-panelOpaqueHover) calc(100% - #{$fadeWidth}),
+        var(--q-color-panelClearHover) 100%
+      );
+    }
+    > .q-focus-helper {
+      background: $panelOpaqueHover !important;
+      background: var(--q-color-panelOpaqueHover) !important;
+      opacity: 1 !important;
+    }
+  }
+  .q-focus-helper {
+    transition: none !important;
+
+    &:before,
+    &:after {
+      display: none;
+    }
+  }
+}
+
+@media (pointer: fine) {
+  .q-branch-menu.scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .q-branch-menu.scroll::-webkit-scrollbar-thumb {
+    background: $panelOpaqueHover;
+    background: var(--q-color-panelOpaqueHover);
   }
 }
 </style>

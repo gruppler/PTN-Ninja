@@ -67,15 +67,20 @@ export default {
     }, 100),
   },
   watch: {
-    "position.plyID"() {
+    "position.tps"() {
       this.$nextTick(() => this.scroll());
     },
     "$store.state.ui.showAllBranches"() {
       this.$nextTick(() => this.scroll());
     },
   },
-  updated() {
-    this.$nextTick(() => this.scroll());
-  },
 };
 </script>
+
+<style lang="scss">
+.full-ptn {
+  .ptn.ply.other {
+    opacity: 0.5;
+  }
+}
+</style>

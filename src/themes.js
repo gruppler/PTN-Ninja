@@ -8,7 +8,15 @@ export const PRIMARY_COLOR_IDS = [
   "player1",
   "player2",
 ];
-export const HIDDEN_COLOR_IDS = ["bg", "player1clear", "player2clear"];
+export const HIDDEN_COLOR_IDS = [
+  "bg",
+  "player1clear",
+  "player2clear",
+  "panelOpaque",
+  "panelOpaqueHover",
+  "panelClear",
+  "panelClearHover",
+];
 
 const LIGHT = 0.6;
 const MED = 0.4;
@@ -72,6 +80,26 @@ export const COMPUTED = {
   },
   panel: {
     panelDark: isDark,
+    colors: {
+      panelOpaque: (c) => colors.changeAlpha(c, 1),
+      panelOpaqueHover: (c) =>
+        colors.changeAlpha(
+          colors.blend(
+            isDark(c) ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.075)",
+            c
+          ),
+          1
+        ),
+      panelClear: (c) => colors.changeAlpha(c, -1),
+      panelClearHover: (c) =>
+        colors.changeAlpha(
+          colors.blend(
+            isDark(c) ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.075)",
+            c
+          ),
+          -1
+        ),
+    },
   },
   player1: {
     player1Dark: isDark,

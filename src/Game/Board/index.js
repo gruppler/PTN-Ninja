@@ -453,6 +453,7 @@ export default class Board extends Aggregation(
         )
       ),
       {
+        tps: this.tps,
         ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly

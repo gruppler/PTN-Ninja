@@ -1,9 +1,12 @@
 <template>
-  <span class="ptn ply" v-if="ply">
+  <span
+    class="ptn ply"
+    :class="{ selected: isSelected, other: !isInBranch }"
+    v-if="ply"
+  >
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
       @click.right.prevent.native="select(ply, false)"
-      :class="{ selected: isSelected }"
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
@@ -93,11 +96,13 @@ export default {
     isSelected() {
       return this.position.plyID === this.ply.id;
     },
+    isInBranch() {
+      return this.ptn.branchPlies.includes(this.ply);
+    },
     isDone() {
       return this.position.plyID === this.ply.id
         ? this.position.plyIsDone
-        : this.ptn.branchPlies.includes(this.ply) &&
-            this.position.plyIndex > this.ply.index;
+        : this.isInBranch && this.position.plyIndex > this.ply.index;
     },
   },
   methods: {
@@ -135,7 +140,7 @@ export default {
       border-color: var(--q-color-player2);
     }
   }
-  &.selected {
+  .ptn.ply.selected & {
     box-shadow: 0 0 0 2px $primary;
     box-shadow: 0 0 0 2px var(--q-color-primary);
     body.desktop &.q-chip--clickable:focus {
