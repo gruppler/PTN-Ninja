@@ -1,8 +1,8 @@
 <template>
-  <span class="ptn linenum">
+  <span class="ptn linenum justify-end">
     <span
       v-if="showBranch"
-      class="branch ellipsis-2-lines"
+      class="branch row no-wrap justify-end"
       :class="{ selected: isSelected, only: onlyBranch }"
       @click.left="selectBranch(ply)"
     >
@@ -158,7 +158,6 @@ export default {
     padding: 4px;
     margin: 0;
     cursor: pointer;
-    word-break: break-word;
     border-radius: $generic-border-radius;
     background-color: $bg;
     background-color: var(--q-color-bg);
@@ -167,6 +166,10 @@ export default {
     body.secondaryDark & {
       color: $textLight;
       color: var(--q-color-textLight);
+    }
+    &:not(.only) > span {
+      white-space: nowrap;
+      overflow: hidden;
     }
     &.selected {
       background-color: $primary;
@@ -181,6 +184,9 @@ export default {
     &.only {
       margin-top: 0.25em;
       margin-bottom: 0.25em;
+      > span {
+        word-break: break-word;
+      }
     }
     .space {
       width: 0;

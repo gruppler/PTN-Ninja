@@ -315,7 +315,7 @@ export const PROMOTE_BRANCH = (state, branch) => {
 };
 
 export const MAKE_BRANCH_MAIN = (state, branch) => {
-  Vue.prototype.$game.makeBranchMain(branch);
+  Vue.prototype.$game.makeBranchMain(branch, true);
 };
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
