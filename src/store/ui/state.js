@@ -39,7 +39,7 @@ let defaults = {
   showMove: true,
   showPTN: true,
   showRoads: true,
-  showScrubber: true,
+  showScrubber: false,
   showText: false,
   size: "6",
   stackCounts: true,

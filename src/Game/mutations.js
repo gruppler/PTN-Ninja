@@ -47,7 +47,7 @@ export default class GameMutations {
     }
   }
 
-  _makeBranchMain(branch) {
+  _makeBranchMain(branch, recursively) {
     let ply = this.branches[branch];
     if (!ply) {
       throw new Error("Invalid branch");
@@ -95,37 +95,32 @@ export default class GameMutations {
       }
       ply.branch = ply.branch.replace(oldBranchRegExp, newBranchFull);
       ply.linenum.branch = ply.branch;
+      if (this.board.plyID === ply.id) {
+        this.board.targetBranch = ply.branch;
+      }
     });
 
     // Rename old main branches
     oldMain.forEach((ply) => {
-      ply.branch = ply.branch
-        ? ply.isInBranch(branch)
-          ? ply.branch
-          : branch + "/" + ply.branch
-        : branch;
+      ply.branch =
+        ply.branch === mainBranch ? branch : branch + "/" + ply.branch;
       ply.linenum.branch = ply.branch;
+      if (this.board.plyID === ply.id) {
+        this.board.targetBranch = ply.branch;
+      }
     });
-
-    if (oldBranchRegExp.test(this.board.targetBranch)) {
-      // Update targetBranch if it's a descendent of the new main branch
-      this.board.targetBranch = this.board.targetBranch.replace(
-        oldBranchRegExp,
-        newBranchFull
-      );
-    } else if (
-      this.board.targetBranch === mainBranch &&
-      this.board.plyIndex >= ply.index
-    ) {
-      // Update targetBranch if it's a descendent of the old main branch
-      this.board.targetBranch = this.board.targetBranch
-        ? branch + "/" + this.board.targetBranch
-        : branch;
-    }
 
     // Move new main plies into position
     let plies = [...this.plies];
     let notes = {};
+
+    // Swap moves' first plies if necessary
+    if (newMain[0].move.ply1.isNop) {
+      const nop = newMain[0].move.ply1;
+      newMain[0].move.plies[0] = oldMain[0].move.ply1;
+      oldMain[0].move.plies[0] = nop;
+    }
+
     newMain = plies.splice(oldID, length);
     plies.splice(newID, 0, ...newMain);
     for (let id = 0; id < plies.length; id++) {
@@ -141,22 +136,41 @@ export default class GameMutations {
     // Mark old main as new branch
     oldMain[0].linenum.isRoot = true;
 
-    // Swap moves' first plies
-    if (newMain[0].move.ply1.isNop) {
-      const nop = newMain[0].move.ply1;
-      newMain[0].move.plies[0] = oldMain[0].move.ply1;
-      oldMain[0].move.plies[0] = nop;
+    // Sort siblings
+    newMain[0].branches.sort((a, b) => a.id - b.id);
+    oldMain[0].branches.sort((a, b) => a.id - b.id);
+
+    // Update game branches
+    let branches = {};
+    plies.forEach((ply) => {
+      ply.children = [];
+      if (!(ply.branch in branches)) {
+        branches[ply.branch] = ply;
+      } else {
+        if (ply.branches.length) {
+          ply.branches.parent = branches[ply.branch];
+          ply.branches.parent.children.push(ply);
+        }
+      }
+    });
+
+    this.branches = branches;
+
+    if (recursively && mainBranch) {
+      this._updatePTN();
+      this.init({ ...this.params, ptn: this.ptn });
+      this._makeBranchMain(mainBranch, true);
     }
 
     return true;
   }
 
-  makeBranchMain(branch) {
+  makeBranchMain(branch, recursively = false) {
     this.recordChange(() => {
-      if (this._makeBranchMain(branch)) {
+      if (this._makeBranchMain(branch, recursively)) {
         this._updatePTN();
-        this.init({ ...this.params, ptn: this.ptn });
       }
+      this.init({ ...this.params, ptn: this.ptn });
     });
   }
 
@@ -564,6 +578,7 @@ export default class GameMutations {
           this.board._setPly(equalPly.id, true);
           this.board._afterPly(equalPly, true);
           this.board.setRoads(equalPly.result ? equalPly.result.roads : null);
+          this.board.updatePTNBranchOutput();
         } else {
           if (replaceCurrent && !this.board.nextPly) {
             // Delete newly formed branch
