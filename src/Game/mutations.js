@@ -47,7 +47,7 @@ export default class GameMutations {
     }
   }
 
-  _makeBranchMain(branch) {
+  _makeBranchMain(branch, recursively) {
     let ply = this.branches[branch];
     if (!ply) {
       throw new Error("Invalid branch");
@@ -156,12 +156,18 @@ export default class GameMutations {
 
     this.branches = branches;
 
+    if (recursively && mainBranch) {
+      this._updatePTN();
+      this.init({ ...this.params, ptn: this.ptn });
+      this._makeBranchMain(mainBranch, true);
+    }
+
     return true;
   }
 
-  makeBranchMain(branch) {
+  makeBranchMain(branch, recursively = false) {
     this.recordChange(() => {
-      if (this._makeBranchMain(branch)) {
+      if (this._makeBranchMain(branch, recursively)) {
         this._updatePTN();
       }
       this.init({ ...this.params, ptn: this.ptn });
