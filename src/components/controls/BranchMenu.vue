@@ -148,8 +148,8 @@ export default {
       var(--q-color-panelClear) 100%
     );
   }
-  .q-hoverable:hover,
-  .q-focusable:focus {
+  body.desktop & .q-hoverable:hover,
+  body.desktop & .q-focusable:focus {
     .fade {
       background: linear-gradient(
         90deg,
