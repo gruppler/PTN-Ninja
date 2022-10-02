@@ -93,52 +93,22 @@ export default class GameMutations {
       if (ply.branch === branch) {
         length += 1;
       }
-      console.log(
-        ply.linenum.toString(false),
-        ply.toString(),
-        `new main before: "${ply.branch}"`
-      );
       ply.branch = ply.branch.replace(oldBranchRegExp, newBranchFull);
-      console.log(
-        ply.linenum.toString(false),
-        ply.toString(),
-        `new main after: "${ply.branch}"`
-      );
       ply.linenum.branch = ply.branch;
+      if (this.board.plyID === ply.id) {
+        this.board.targetBranch = ply.branch;
+      }
     });
 
     // Rename old main branches
     oldMain.forEach((ply) => {
-      console.log(
-        ply.linenum.toString(false),
-        ply.toString(),
-        `old main before: "${ply.branch}"`
-      );
       ply.branch =
         ply.branch === mainBranch ? branch : branch + "/" + ply.branch;
-      console.log(
-        ply.linenum.toString(false),
-        ply.toString(),
-        `old main after: "${ply.branch}"`
-      );
       ply.linenum.branch = ply.branch;
+      if (this.board.plyID === ply.id) {
+        this.board.targetBranch = ply.branch;
+      }
     });
-
-    if (oldBranchRegExp.test(this.board.targetBranch)) {
-      // Update targetBranch if it's a descendent of the new main branch
-      this.board.targetBranch = this.board.targetBranch.replace(
-        oldBranchRegExp,
-        newBranchFull
-      );
-    } else if (
-      this.board.targetBranch === mainBranch &&
-      this.board.plyIndex >= ply.index
-    ) {
-      // Update targetBranch if it's a descendent of the old main branch
-      this.board.targetBranch = this.board.targetBranch
-        ? branch + "/" + this.board.targetBranch
-        : branch;
-    }
 
     // Move new main plies into position
     let plies = [...this.plies];
@@ -170,16 +140,21 @@ export default class GameMutations {
     newMain[0].branches.sort((a, b) => a.id - b.id);
     oldMain[0].branches.sort((a, b) => a.id - b.id);
 
-    // Update game branches and moves
+    // Update game branches
     let branches = {};
     plies.forEach((ply) => {
+      ply.children = [];
       if (!(ply.branch in branches)) {
         branches[ply.branch] = ply;
+      } else {
+        if (ply.branches.length) {
+          ply.branches.parent = branches[ply.branch];
+          ply.branches.parent.children.push(ply);
+        }
       }
     });
 
     this.branches = branches;
-    console.log(branches, this.moves);
 
     return true;
   }
@@ -188,7 +163,6 @@ export default class GameMutations {
     this.recordChange(() => {
       if (this._makeBranchMain(branch)) {
         this._updatePTN();
-        console.log(this.ptn);
       }
       this.init({ ...this.params, ptn: this.ptn });
     });
