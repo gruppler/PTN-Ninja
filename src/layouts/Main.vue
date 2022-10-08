@@ -396,18 +396,17 @@ export default {
         case "help":
           this.$router.push({ name: "help" });
           break;
-        case "account":
-          if (this.isAnonymous) {
-            this.$router.push({ name: "login" });
-          } else {
-            this.$router.push({ name: "account" });
-          }
-          break;
         case "settings":
           this.$router.push({ name: "preferences" });
           break;
         case "share":
           this.share();
+          break;
+        case "online":
+          this.$router.push({
+            name: "add",
+            params: { tab: "load", online: "online" },
+          });
           break;
         case "add":
           this.$router.push({ name: "add", params: { tab: "new" } });

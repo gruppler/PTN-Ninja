@@ -18,28 +18,28 @@
     v-bind="$attrs"
   >
     <template v-slot:top>
-      <q-toolbar class="q-pa-none">
+      <div class="column fit overflow-hidden">
+        <q-toolbar>
+          <AccountBtn :login-text="$t('Guest')" rounded flat />
+
+          <q-space />
+
+          <FullscreenToggle
+            v-if="$refs.table"
+            v-model="fullscreen"
+            :target="$refs.table.$el"
+            class="q-ml-sm"
+            round
+            flat
+          />
+        </q-toolbar>
         <q-btn-toggle
-          class="highlight"
+          class="highlight no-border-radius justify-center"
           v-model="filter"
           :options="filterOptions"
           :ripple="false"
           stack
         />
-
-        <q-space />
-
-        <FullscreenToggle
-          v-if="$refs.table"
-          v-model="fullscreen"
-          :target="$refs.table.$el"
-          class="q-ml-sm"
-          round
-          flat
-        />
-      </q-toolbar>
-      <div class="q-mt-sm">
-        <AccountBtn :login-text="$t('Guest')" rounded flat />
       </div>
     </template>
 
@@ -138,22 +138,27 @@ export default {
         rowsPerPage: 0,
         sortBy: "date",
       },
-      filter: "mine",
+      filter: "ongoing",
       filterOptions: [
         {
-          value: "mine",
-          icon: "account",
-          label: this.$t("Mine"),
+          value: "ongoing",
+          icon: "ongoing",
+          label: this.$t("Ongoing"),
         },
         {
           value: "open",
-          icon: "players",
+          icon: "open_game",
           label: this.$t("Open"),
         },
         {
           value: "puzzle",
           icon: "puzzle",
           label: this.$tc("Puzzle", 100),
+        },
+        {
+          value: "recent",
+          icon: "recent",
+          label: this.$t("Recent"),
         },
       ],
       columns: [
@@ -354,6 +359,9 @@ $header: 64px;
     display: none;
   }
 
+  .q-table__top {
+    padding: 0;
+  }
   .q-table__middle {
     min-height: 12rem;
     max-height: calc(50vh - #{$header + $toolbar-min-height});

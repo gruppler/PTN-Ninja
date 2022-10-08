@@ -6,15 +6,18 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <q-tabs
-        v-model="tab"
-        active-color="primary"
-        indicator-color="primary"
-        align="justify"
-      >
-        <q-tab name="new" :label="$t('New Game')" />
-        <q-tab name="load" :label="$t('Load Game')" />
-      </q-tabs>
+      <smooth-reflow class="fit">
+        <q-tabs
+          v-show="!showOnline"
+          v-model="tab"
+          active-color="primary"
+          indicator-color="primary"
+          align="justify"
+        >
+          <q-tab name="new" :label="$t('New Game')" />
+          <q-tab name="load" :label="$t('Load Game')" />
+        </q-tabs>
+      </smooth-reflow>
     </template>
 
     <q-card>
@@ -34,41 +37,49 @@
 
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
-              <q-item
-                @click="$store.dispatch('ui/OPEN', close)"
-                clickable
-                v-ripple
-              >
-                <q-item-section avatar>
-                  <q-icon name="local" />
-                </q-item-section>
-                <q-item-section>{{ $t("Local") }}</q-item-section>
-              </q-item>
-              <q-item
-                @click="toggleOnline"
-                :class="{ 'text-primary': showOnline }"
-                clickable
-                v-ripple
-              >
-                <q-item-section avatar>
-                  <q-icon name="online" />
-                </q-item-section>
-                <q-item-section>{{ $t("Online") }}</q-item-section>
-                <q-item-section side>
-                  <q-icon
-                    name="arrow_drop_down"
-                    class="q-expansion-item__toggle-icon"
-                    :class="{ 'rotate-180': showOnline }"
-                  />
-                </q-item-section>
-              </q-item>
-              <recess>
+              <!-- Local -->
+              <smooth-reflow>
+                <q-item
+                  v-show="!showOnline"
+                  @click="$store.dispatch('ui/OPEN', close)"
+                  clickable
+                  v-ripple
+                >
+                  <q-item-section avatar>
+                    <q-icon name="local" />
+                  </q-item-section>
+                  <q-item-section>{{ $t("Local") }}</q-item-section>
+                </q-item>
+              </smooth-reflow>
+
+              <!-- Online -->
+              <smooth-reflow>
+                <q-item
+                  @click="toggleOnline"
+                  :class="{ 'text-primary': showOnline }"
+                  clickable
+                  v-ripple
+                >
+                  <q-item-section avatar>
+                    <q-icon name="online" />
+                  </q-item-section>
+                  <q-item-section>{{ $t("Online") }}</q-item-section>
+                  <q-item-section side>
+                    <q-icon
+                      name="down"
+                      class="fg-inherit q-expansion-item__toggle-icon"
+                      :class="{ 'rotate-180': showOnline }"
+                    />
+                  </q-item-section>
+                </q-item>
+              </smooth-reflow>
+              <smooth-reflow tag="recess">
                 <GameTable
                   v-if="showOnline"
                   ref="gameTable"
                   v-model="selectedGames"
                 />
-              </recess>
+              </smooth-reflow>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>

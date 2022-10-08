@@ -32,6 +32,11 @@ export default {
           action: "add",
         },
         {
+          icon: "online",
+          label: this.$t("Online"),
+          action: "online",
+        },
+        {
           icon: "share",
           label: this.$t("Share"),
           action: "share",
@@ -40,11 +45,6 @@ export default {
           icon: "settings",
           label: this.$t("Preferences"),
           action: "settings",
-        },
-        {
-          icon: "account",
-          label: this.$t("Account"),
-          action: "account",
         },
         {
           icon: "help",

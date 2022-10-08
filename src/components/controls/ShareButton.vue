@@ -48,16 +48,10 @@ export default {
     actions() {
       let actions = [
         {
-          id: "urlCurrent",
-          label: this.$t("Link to Game"),
+          id: "url",
+          label: this.$t("Link"),
           icon: "url",
           action: () => this.shareText("url"),
-        },
-        {
-          id: "urlStart",
-          label: this.$t("Link to Position"),
-          icon: "url",
-          action: () => this.shareText("url", true),
         },
       ];
 
@@ -94,12 +88,15 @@ export default {
       );
 
       if (!this.$store.state.embed) {
-        actions.push({
-          id: "online",
-          label: this.$t("Online"),
-          icon: "online",
-          action: this.online,
-        });
+        actions.unshift(
+          {
+            id: "online",
+            label: this.$t("Online"),
+            icon: "online",
+            action: this.online,
+          },
+          {}
+        );
       }
 
       if (
@@ -163,15 +160,15 @@ export default {
           break;
       }
     },
-    shareText(type, option) {
+    shareText(type) {
       let output;
       switch (type) {
         case "url":
           output = {
-            title: this.$t(option ? "Link to Position" : "Link to Game"),
+            title: this.$t("Link to Position"),
             text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
-              state: Boolean(option),
+              state: true,
             }),
           };
           break;

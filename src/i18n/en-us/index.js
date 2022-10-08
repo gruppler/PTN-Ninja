@@ -90,7 +90,7 @@ export default {
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",
   Less: "Less",
-  "Link to Game": "Link to Game",
+  Link: "Link",
   "Link to Position": "Link to Position",
   "Load Files": "Load Files",
   "Load Game": "Load Game",
@@ -103,7 +103,6 @@ export default {
   "Log Out": "Log Out",
   "Make Main": "Make Main",
   Message: "Message",
-  Mine: "Mine", // Games you have played
   More: "More",
   Move: "Move",
   "Move Number": "Move Number",
@@ -122,6 +121,7 @@ export default {
   "Note Notifications": "Note Notifications",
   Notes: "Notes",
   OK: "OK",
+  Ongoing: "Ongoing",
   Online: "Online",
   "Online Game": "Online Game",
   Open: "Open", // Games with an open seat
@@ -161,6 +161,7 @@ export default {
   Random: "Random",
   Rating1: "Rating 1",
   Rating2: "Rating 2",
+  Recent: "Recent",
   "Recover Email": "Recover Email",
   Redo: "Redo",
   Register: "Register",
