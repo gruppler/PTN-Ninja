@@ -131,14 +131,14 @@ export default {
       if (!this.stackCounts) {
         return false;
       }
-      const count = this.square.pieces.length;
       if (
         this.selected &&
         this.coord ===
           last(this.$store.state.game.selected.squares).static.coord
       ) {
-        return count - this.$store.state.game.selected.pieces.length;
+        return last(this.$store.state.game.selected.moveset);
       } else {
+        const count = this.square.pieces.length;
         return count > 1 ? count : false;
       }
     },
