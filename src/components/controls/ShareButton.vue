@@ -49,13 +49,7 @@ export default {
       let actions = [
         {
           id: "urlCurrent",
-          label: this.$t("Link to Game"),
-          icon: "url",
-          action: () => this.shareText("url"),
-        },
-        {
-          id: "urlStart",
-          label: this.$t("Link to Position"),
+          label: this.$t("Link"),
           icon: "url",
           action: () => this.shareText("url", true),
         },
@@ -163,15 +157,15 @@ export default {
           break;
       }
     },
-    shareText(type, option) {
+    shareText(type) {
       let output;
       switch (type) {
         case "url":
           output = {
-            title: this.$t(option ? "Link to Position" : "Link to Game"),
+            title: this.$t("Link to Position"),
             text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
-              state: Boolean(option),
+              state: true,
             }),
           };
           break;

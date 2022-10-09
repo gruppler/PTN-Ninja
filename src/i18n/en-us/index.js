@@ -88,6 +88,7 @@ export default {
   "Last Branch": "Last Branch",
   "Last Branch End": "Last Branch End",
   Less: "Less",
+  Link: "Link",
   "Link to Game": "Link to Game",
   "Link to Position": "Link to Position",
   "Load Files": "Load Files",
