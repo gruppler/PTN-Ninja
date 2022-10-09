@@ -474,6 +474,7 @@ export default class Board extends Aggregation(
       squares: this.selected.squares.map(
         (square) => this.output.board.squares[square.static.coord]
       ),
+      moveset: this.selected.moveset.map((moveset) => moveset.count),
     });
   }
 
