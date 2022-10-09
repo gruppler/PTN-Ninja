@@ -23,7 +23,7 @@
       <template v-slot:prepend>
         <q-btn
           :label="games.length"
-          @click.stop
+          @click.stop.prevent
           class="text-subtitle2 q-pa-sm"
           dense
           flat
@@ -60,7 +60,7 @@
         <q-btn
           v-if="config.isOnline"
           :icon="icon($game)"
-          @click.stop="account"
+          @click.stop.prevent="account"
           dense
           flat
         />
