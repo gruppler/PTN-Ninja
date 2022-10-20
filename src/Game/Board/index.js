@@ -737,13 +737,16 @@ export default class Board extends Aggregation(
 
   get isGameEndFlats() {
     return (
-      Object.keys(this.pieces.played).some(
+      !this.roads &&
+      (Object.keys(this.pieces.played).some(
         (player) =>
           this.pieces.played[player].flat.length +
             this.pieces.played[player].cap.length ===
           this.game.pieceCounts[player].total
       ) ||
-      !this.squares.find((row) => row.find((square) => !square.pieces.length))
+        !this.squares.find((row) =>
+          row.find((square) => !square.pieces.length)
+        ))
     );
   }
 
