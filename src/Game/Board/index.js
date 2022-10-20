@@ -462,6 +462,8 @@ export default class Board extends Aggregation(
         nextPly: this.nextPly
           ? this.output.ptn.allPlies[this.nextPly.id]
           : null,
+        isGameEnd: this.isGameEnd,
+        isGameEndFlats: this.isGameEndFlats,
       }
     );
   }
@@ -733,20 +735,26 @@ export default class Board extends Aggregation(
     }
   }
 
+  get isGameEndFlats() {
+    return (
+      !this.roads &&
+      (Object.keys(this.pieces.played).some(
+        (player) =>
+          this.pieces.played[player].flat.length +
+            this.pieces.played[player].cap.length ===
+          this.game.pieceCounts[player].total
+      ) ||
+        !this.squares.find((row) =>
+          row.find((square) => !square.pieces.length)
+        ))
+    );
+  }
+
   get isGameEnd() {
     if (this.ply) {
-      return this.plyIsDone && !!this.ply.result;
+      return this.plyIsDone && Boolean(this.ply.result);
     } else if (this.game.hasTPS) {
-      return (
-        this.roads.length > 0 ||
-        Object.keys(this.pieces.played).some(
-          (player) =>
-            this.pieces.played[player].flat.length +
-              this.pieces.played[player].cap.length ===
-            this.game.pieceCounts[player].total
-        ) ||
-        !this.squares.find((row) => row.find((square) => !square.pieces.length))
-      );
+      return this.roads.length > 0 || this.isGameEndFlats;
     }
   }
 

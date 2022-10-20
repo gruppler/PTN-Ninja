@@ -52,7 +52,7 @@ export default {
   name: "PieceSelector",
   data() {
     return {
-      color: 1,
+      color: this.$store.state.ui.selectedPiece.color,
       type: "F",
       hotkeys: HOTKEYS.PIECE,
     };
