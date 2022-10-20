@@ -482,6 +482,14 @@ export default function render(board, options = {}) {
     }
 
     if (square.piece) {
+      if (board.isGameEndFlats && !square.piece.typeCode) {
+        ctx.fillStyle = withAlpha(
+          theme.colors[`player${square.color}road`],
+          0.6
+        );
+        drawSquareHighlight();
+      }
+
       square.pieces.forEach(drawPiece);
       drawPiece(square.piece);
     }
