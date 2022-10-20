@@ -8,6 +8,7 @@
       ['p' + color]: !!color,
       'no-roads': !showRoads,
       eog,
+      flatwin,
       current,
       primary,
       selected,
@@ -63,6 +64,11 @@ export default {
     },
     eog() {
       return this.game.position.isGameEnd;
+    },
+    flatwin() {
+      return (
+        this.piece && !this.piece.typeCode && this.game.position.isGameEndFlats
+      );
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -354,7 +360,7 @@ export default {
     text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   }
 
-  .board-container.turn-1 & {
+  .board-container.turn-1 &.valid {
     .hl.player {
       background-color: $player1road;
       background-color: var(--q-color-player1road);
@@ -364,7 +370,7 @@ export default {
       background-color: var(--q-color-player2road);
     }
   }
-  .board-container.turn-2 & {
+  .board-container.turn-2 &.valid {
     .hl.player {
       background-color: $player2road;
       background-color: var(--q-color-player2road);
@@ -381,7 +387,18 @@ export default {
     opacity: 0.25;
   }
   &.no-roads.road .hl.player {
-    opacity: 0.25;
+    opacity: 0.35;
+  }
+  &.flatwin .hl.player {
+    opacity: 0.6;
+  }
+  &.eog.p1 .hl.player {
+    background-color: $player1road;
+    background-color: var(--q-color-player1road);
+  }
+  &.eog.p2 .hl.player {
+    background-color: $player2road;
+    background-color: var(--q-color-player2road);
   }
   @media (pointer: fine) {
     &.valid:hover {
