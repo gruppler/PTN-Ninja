@@ -737,7 +737,7 @@ export default class Board extends Aggregation(
 
   get isGameEndFlats() {
     return (
-      !this.roads &&
+      !(this.roads && this.roads.length) &&
       (Object.keys(this.pieces.played).some(
         (player) =>
           this.pieces.played[player].flat.length +
