@@ -7,6 +7,7 @@
       dark: !square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !showRoads,
+      'no-stack-counts': !stackCounts,
       eog,
       flatwin,
       current,
@@ -37,7 +38,7 @@
       <div class="center" />
     </div>
     <div class="hl player" />
-    <div class="stack-count" v-if="stackCount">
+    <div class="stack-count" v-show="stackCount">
       <span>{{ stackCount }}</span>
     </div>
   </div>
@@ -134,9 +135,6 @@ export default {
       return !this.game.config.disableRoads && this.$store.state.ui.stackCounts;
     },
     stackCount() {
-      if (!this.stackCounts) {
-        return false;
-      }
       if (
         this.selected &&
         this.coord ===
@@ -145,7 +143,7 @@ export default {
         return last(this.$store.state.game.selected.moveset);
       } else {
         const count = this.square.pieces.length;
-        return count > 1 ? count : false;
+        return count > 1 ? count : "";
       }
     },
     en() {
@@ -341,6 +339,9 @@ export default {
       right: 10%;
     }
   }
+  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
+    display: none;
+  }
   body.boardChecker.board1Dark &.light .stack-count,
   body.boardChecker.board2Dark &.dark .stack-count,
   body:not(.boardChecker).board1Dark & .stack-count,
@@ -360,21 +361,25 @@ export default {
     text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   }
 
-  .board-container.turn-1 &.valid {
+  .board-container.turn-1 & {
     .hl.player {
       background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
+  }
+  .board-container.turn-1:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
       background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
-  .board-container.turn-2 &.valid {
+  .board-container.turn-2 & {
     .hl.player {
       background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
+  }
+  .board-container.turn-2:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
       background-color: $player1road;
       background-color: var(--q-color-player1road);
