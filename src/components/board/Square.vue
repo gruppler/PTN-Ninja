@@ -360,21 +360,25 @@ export default {
     text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   }
 
-  .board-container.turn-1 &.valid {
+  .board-container.turn-1 & {
     .hl.player {
       background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
+  }
+  .board-container.turn-1:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
       background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
-  .board-container.turn-2 &.valid {
+  .board-container.turn-2 & {
     .hl.player {
       background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
+  }
+  .board-container.turn-2:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
       background-color: $player1road;
       background-color: var(--q-color-player1road);
