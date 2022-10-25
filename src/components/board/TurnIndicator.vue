@@ -272,7 +272,7 @@ $radius: 0.35em;
       background: var(--q-color-primary);
       will-change: opacity;
       transition: opacity $generic-hover-transition;
-      .board-container.is-game-end & {
+      .board-container.eog & {
         opacity: 0 !important;
       }
     }
