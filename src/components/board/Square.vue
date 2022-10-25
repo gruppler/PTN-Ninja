@@ -7,6 +7,7 @@
       dark: !square.static.isLight,
       ['p' + color]: !!color,
       'no-roads': !showRoads,
+      'no-stack-counts': !stackCounts,
       eog,
       flatwin,
       current,
@@ -37,7 +38,7 @@
       <div class="center" />
     </div>
     <div class="hl player" />
-    <div class="stack-count" v-if="stackCount">
+    <div class="stack-count" v-show="stackCount">
       <span>{{ stackCount }}</span>
     </div>
   </div>
@@ -134,9 +135,6 @@ export default {
       return !this.game.config.disableRoads && this.$store.state.ui.stackCounts;
     },
     stackCount() {
-      if (!this.stackCounts) {
-        return false;
-      }
       if (
         this.selected &&
         this.coord ===
@@ -145,7 +143,7 @@ export default {
         return last(this.$store.state.game.selected.moveset);
       } else {
         const count = this.square.pieces.length;
-        return count > 1 ? count : false;
+        return count > 1 ? count : "";
       }
     },
     en() {
@@ -340,6 +338,9 @@ export default {
       top: 77%;
       right: 10%;
     }
+  }
+  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
+    display: none;
   }
   body.boardChecker.board1Dark &.light .stack-count,
   body.boardChecker.board2Dark &.dark .stack-count,
