@@ -524,7 +524,7 @@ export default {
           if (this.$route.name !== "add") {
             this.$router.push({
               name: "add",
-              params: { tab: "load", online: "online" },
+              params: { tab: "load", type: "online" },
             });
           } else if (
             this.$route.params.tab !== "load" ||
@@ -532,7 +532,7 @@ export default {
           ) {
             this.$router.replace({
               name: "add",
-              params: { tab: "load", online: "online" },
+              params: { tab: "load", type: "online" },
             });
           } else {
             this.$refs.dialog.$children[0].hide();
