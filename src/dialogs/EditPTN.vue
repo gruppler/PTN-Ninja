@@ -76,6 +76,9 @@ export default {
       },
       set(value) {
         this.$emit("input", value);
+        if (!value) {
+          this.close();
+        }
       },
     },
     isNewGame() {
