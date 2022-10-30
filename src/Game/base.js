@@ -239,11 +239,15 @@ export default class GameBase {
           this.size = this.tags.tps.value.size;
           this.tags.size = Tag.parse(`[Size "${this.size}"]`);
         } else {
-          const warning = "Missing board size";
-          console.warn(warning);
-          this.warnings.push(warning);
-          this.size = this.defaultSize;
-          this.tags.size = Tag.parse(`[Size "${this.size}"]`);
+          let error = "Missing board size";
+          if (ptn) {
+            throw new Error(error);
+          } else {
+            console.warn(error);
+            this.warnings.push(error);
+            this.size = this.defaultSize;
+            this.tags.size = Tag.parse(`[Size "${this.size}"]`);
+          }
         }
       }
 
