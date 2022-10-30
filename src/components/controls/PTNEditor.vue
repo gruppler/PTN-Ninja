@@ -16,10 +16,12 @@
 <script>
 import Game from "../../Game";
 
-import { unescape } from "lodash";
-
 export default {
   name: "PTNEditor",
+  props: {
+    value: String,
+    isNewGame: Boolean,
+  },
   data() {
     return {
       ptn: "",
@@ -28,11 +30,15 @@ export default {
         (moves) => {
           const result = Game.validate(this.header + moves);
           if (result === true) {
+            this.$emit("error", "");
             return true;
           } else {
             if (this.$te(`error["${result}"]`)) {
-              return this.$t(`error["${result}"]`);
+              let error = this.$t(`error["${result}"]`);
+              this.$emit("error", error);
+              return error;
             } else {
+              this.$emit("error", result);
               return result;
             }
           }
@@ -42,13 +48,10 @@ export default {
   },
   computed: {
     header() {
-      return this.$game.headerText();
-    },
-    error() {
-      return this.$refs.input.computedErrorMessage;
+      return this.isNewGame ? "" : this.$game.headerText();
     },
     hasChanges() {
-      return this.ptn !== this.original;
+      return this.isNewGame || this.ptn !== this.original;
     },
   },
   methods: {
@@ -59,9 +62,13 @@ export default {
       this.ptn = this.original;
     },
     init() {
-      this.original = this.$game
-        ? this.$game.moveText(true, true).replace(/\r\n/g, "\n")
-        : "";
+      if (this.isNewGame) {
+        this.original = this.value || "";
+      } else {
+        this.original = this.$game
+          ? this.$game.moveText(true, true).replace(/\r\n/g, "\n")
+          : "";
+      }
       this.ptn = this.original;
     },
   },

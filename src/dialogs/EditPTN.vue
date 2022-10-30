@@ -1,16 +1,25 @@
 <template>
   <large-dialog
     ref="dialog"
-    :value="true"
+    v-model="model"
     no-backdrop-dismiss
     content-class="ptn-editor-dialog"
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="edit">{{ $t("Edit PTN") }}</dialog-header>
+      <dialog-header icon="edit">{{
+        $t(isNewGame ? "New Game" : "Edit PTN")
+      }}</dialog-header>
     </template>
 
-    <PTN-editor ref="editor" @save="save" @hasChanges="hasChanges = $event" />
+    <PTN-editor
+      ref="editor"
+      :value="ptn"
+      @save="save"
+      @hasChanges="hasChanges = $event"
+      @error="error = $event"
+      :is-new-game="isNewGame"
+    />
 
     <template v-slot:footer>
       <q-card-actions align="right">
@@ -32,13 +41,13 @@
           </q-menu>
         </q-btn>
         <div class="col-grow error-message q-px-sm">
-          {{ editor ? editor.error : "" }}
+          {{ error }}
         </div>
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          :label="$t('Save')"
-          @click="editor.save()"
-          :disabled="editor && !!editor.error"
+          :label="$t(isNewGame ? 'OK' : 'Save')"
+          @click="$refs.editor.save()"
+          :disabled="Boolean(error)"
           :flat="!hasChanges"
           color="primary"
         />
@@ -53,14 +62,28 @@ import PTNEditor from "../components/controls/PTNEditor.vue";
 export default {
   name: "EditPTN",
   components: { PTNEditor },
+  props: ["value", "ptn"],
   data() {
     return {
-      showAll: false,
-      editor: null,
+      error: "",
       hasChanges: false,
     };
   },
   computed: {
+    model: {
+      get() {
+        return !this.isNewGame || this.value;
+      },
+      set(value) {
+        this.$emit("input", value);
+        if (!value) {
+          this.close();
+        }
+      },
+    },
+    isNewGame() {
+      return this.$route.name === "add";
+    },
     game() {
       return this.$game;
     },
@@ -70,17 +93,16 @@ export default {
       this.$refs.dialog.hide();
     },
     reset() {
-      this.editor.reset();
+      this.$refs.editor.reset();
     },
     save(notation) {
-      this.$store.dispatch("game/SET_CURRENT_PTN", notation);
+      if (this.isNewGame) {
+        this.$emit("submit", notation);
+      } else {
+        this.$store.dispatch("game/SET_CURRENT_PTN", notation);
+      }
       this.close();
     },
-  },
-  mounted() {
-    this.$nextTick(() => {
-      this.editor = this.$refs.editor;
-    });
   },
 };
 </script>

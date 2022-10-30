@@ -85,7 +85,7 @@ const routes = [
       },
       {
         name: "add",
-        path: "/add/:tab?/:online?/:filter?",
+        path: "/add/:tab?/:type?/:filter?",
         component: () => import("../dialogs/AddGame"),
       },
       {

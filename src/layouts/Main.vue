@@ -67,14 +67,18 @@
         >
           <Board class="col-grow" />
         </div>
+        <q-page-sticky position="bottom" :offset="[0, 0]">
+          <CurrentMove style="margin-right: 65px" />
+        </q-page-sticky>
         <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
-        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+        <q-page-sticky
+          position="bottom-right"
+          :offset="[18, 18]"
+          style="z-index: 1"
+        >
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
-        </q-page-sticky>
-        <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -405,7 +409,7 @@ export default {
         case "online":
           this.$router.push({
             name: "add",
-            params: { tab: "load", online: "online" },
+            params: { tab: "load", type: "online" },
           });
           break;
         case "add":
@@ -522,15 +526,15 @@ export default {
           if (this.$route.name !== "add") {
             this.$router.push({
               name: "add",
-              params: { tab: "load", online: "online" },
+              params: { tab: "load", type: "online" },
             });
           } else if (
             this.$route.params.tab !== "load" ||
-            !this.$route.params.online
+            this.$route.params.type !== "online"
           ) {
             this.$router.replace({
               name: "add",
-              params: { tab: "load", online: "online" },
+              params: { tab: "load", type: "online" },
             });
           } else {
             this.$refs.dialog.$children[0].hide();
