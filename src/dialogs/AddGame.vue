@@ -34,6 +34,12 @@
 
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
+              <q-item @click="clipboard" clickable v-ripple>
+                <q-item-section avatar>
+                  <q-icon name="clipboard" />
+                </q-item-section>
+                <q-item-section>{{ $t("Clipboard") }}</q-item-section>
+              </q-item>
               <q-item
                 @click="$store.dispatch('ui/OPEN', close)"
                 clickable
@@ -42,7 +48,7 @@
                 <q-item-section avatar>
                   <q-icon name="local" />
                 </q-item-section>
-                <q-item-section>{{ $t("Local") }}</q-item-section>
+                <q-item-section>{{ $t("Files") }}</q-item-section>
               </q-item>
               <q-item
                 @click="toggleOnline"
@@ -93,11 +99,19 @@
         />
       </q-card-actions>
     </template>
+
+    <EditPTN
+      v-model="showPTN"
+      :ptn="ptn"
+      @submit="clipboardCreate"
+      no-route-dismiss
+    />
   </small-dialog>
 </template>
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
+import EditPTN from "../dialogs/EditPTN.vue";
 // import GameTable from "../components/controls/GameTable";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
@@ -105,7 +119,7 @@ import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, /* GameTable, */ MoreToggle },
+  components: { GameInfo, EditPTN, /* GameTable, */ MoreToggle },
   data() {
     return {
       tags: {
@@ -115,6 +129,7 @@ export default {
         komi: Number(this.$store.state.ui.komi),
         site: this.$t("site_name"),
       },
+      ptn: "",
       selectedGames: [],
       showAll: false,
     };
@@ -130,10 +145,22 @@ export default {
     },
     showOnline: {
       get() {
-        return !!this.$route.params.online;
+        return this.$route.params.type === "online";
       },
-      set(online) {
-        this.$router.replace({ params: { online: online ? "online" : null } });
+      set(show) {
+        this.$router.replace({ params: { type: show ? "online" : null } });
+      },
+    },
+    showPTN: {
+      get() {
+        return this.$route.params.type === "ptn";
+      },
+      set(show) {
+        if (!show && this.showPTN) {
+          this.$router.back();
+        } else if (show && !this.showPTN) {
+          this.$router.push({ params: { type: show ? "ptn" : null } });
+        }
       },
     },
     size: {
@@ -176,6 +203,30 @@ export default {
   methods: {
     close() {
       this.$refs.dialog.hide();
+    },
+    async clipboard() {
+      const ptn = await navigator.clipboard.readText();
+      if (!ptn || Game.validate(ptn) !== true) {
+        this.ptn = ptn;
+        this.showPTN = true;
+      } else {
+        let game = new Game({ ptn });
+        await this.$store.dispatch("game/ADD_GAME", game);
+        this.close();
+      }
+    },
+    async clipboardCreate(ptn) {
+      let game;
+      try {
+        game = new Game({ ptn });
+      } catch (error) {
+        console.error(error);
+      }
+
+      game.warnings.forEach((warning) => this.notifyWarning(warning));
+
+      await this.$store.dispatch("game/ADD_GAME", game);
+      this.close();
     },
     async createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;
