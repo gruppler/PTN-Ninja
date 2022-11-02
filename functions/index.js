@@ -29,10 +29,8 @@ exports.createGame = functions.https.onCall(
 
     // Determine player seats if it's not a finished game
     let playerSeat = config.playerSeat;
-    if (!state.hasEnded && playerSeat) {
-      if (playerSeat === "random") {
-        playerSeat = Math.round(Math.random() + 1);
-      }
+    if (playerSeat && playerSeat === "random") {
+      playerSeat = Math.round(Math.random() + 1);
     }
     let opponentSeat = playerSeat === 1 ? 2 : 1;
     let opponentUID = null;
