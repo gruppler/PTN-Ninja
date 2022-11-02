@@ -2,7 +2,7 @@ import TPS from "./TPS";
 import Result from "./Result";
 
 import { padStart } from "lodash";
-import { parseISO } from "date-fns";
+import { parse, parseISO } from "date-fns";
 
 const capitalized = {
   caps: "Caps",
@@ -70,36 +70,58 @@ export const fromDate = (date) => {
   };
 };
 
-export const dateFromDate = (date) => {
+export const dateFromDate = (date, localTime = false) => {
+  let year, month, day;
+  if (localTime) {
+    year = date.getFullYear();
+    month = date.getMonth() + 1;
+    day = date.getDate();
+  } else {
+    year = date.getUTCFullYear();
+    month = date.getUTCMonth() + 1;
+    day = date.getUTCDate();
+  }
+  return `${year}.${padStart(month, 2, "0")}.${padStart(day, 2, "0")}`;
+};
+
+export const timeFromDate = (date, localTime = false) => {
+  let hours, minutes, seconds;
+  if (localTime) {
+    hours = date.getHours();
+    minutes = date.getMinutes();
+    seconds = date.getSeconds();
+  } else {
+    hours = date.getUTCHours();
+    minutes = date.getUTCMinutes();
+    seconds = date.getUTCSeconds();
+  }
   return (
-    date.getUTCFullYear() +
-    "." +
-    padStart(date.getUTCMonth() + 1, 2, "0") +
-    "." +
-    padStart(date.getUTCDate(), 2, "0")
+    padStart(hours, 2, "0") +
+    ":" +
+    padStart(minutes, 2, "0") +
+    ":" +
+    padStart(seconds, 2, "0")
   );
 };
 
-export const timeFromDate = (date) => {
-  return (
-    padStart(date.getUTCHours(), 2, "0") +
-    ":" +
-    padStart(date.getUTCMinutes(), 2, "0") +
-    ":" +
-    padStart(date.getUTCSeconds(), 2, "0")
-  );
-};
-
-export const toDate = (date, time = "") => {
+export const toDate = (date, time = "", localTime = false) => {
   if (date) {
     if (date.seconds) {
       return new Date(date.seconds * 1e3);
     } else {
-      date = date.replace(/\./g, "-");
-      if (time) {
-        date += ` ${time}Z`;
+      if (localTime) {
+        return parse(
+          `${date} ${time || "00:00:00"}`,
+          "yyyy.MM.dd HH:mm:ss",
+          new Date()
+        );
+      } else {
+        date = date.replace(/\./g, "-");
+        if (time) {
+          date += ` ${time}Z`;
+        }
+        return parseISO(date);
       }
-      return parseISO(date);
     }
   }
   return null;
