@@ -20,9 +20,9 @@
       <q-input
         class="col-grow"
         v-show="isVisible('date')"
-        v-model="tags.date"
+        v-model="date"
         name="date"
-        :label="$t('Date') + ' (UTC)'"
+        :label="$t('Date')"
         :rules="rules('date')"
         :readonly="game && !game.isLocal"
         hide-bottom-space
@@ -35,7 +35,7 @@
         <q-popup-proxy
           v-if="!game || game.isLocal"
           v-model="showDatePicker"
-          @before-show="proxyDate = tags.date"
+          @before-show="proxyDate = date"
           anchor="center middle"
           self="center middle"
           transition-show="none"
@@ -48,11 +48,12 @@
               name="date"
               mask="YYYY.MM.DD"
               :text-color="primaryFG"
+              today-btn
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
                   :label="$t('Clear')"
-                  @click="tags.date = null"
+                  @click="date = null"
                   flat
                   v-close-popup
                 />
@@ -60,7 +61,7 @@
                 <q-btn :label="$t('Cancel')" flat v-close-popup />
                 <q-btn
                   :label="$t('OK')"
-                  @click="tags.date = proxyDate"
+                  @click="date = proxyDate"
                   flat
                   v-close-popup
                 />
@@ -73,9 +74,9 @@
       <q-input
         class="col-grow"
         v-show="isVisible('time')"
-        v-model="tags.time"
+        v-model="time"
         name="time"
-        :label="$t('Time') + ' (UTC)'"
+        :label="$t('Time')"
         :rules="rules('time')"
         :readonly="game && !game.isLocal"
         hide-bottom-space
@@ -88,7 +89,7 @@
         <q-popup-proxy
           v-if="!game || game.isLocal"
           v-model="showTimePicker"
-          @before-show="proxyTime = tags.time"
+          @before-show="proxyTime = time"
           anchor="center middle"
           self="center middle"
           transition-show="none"
@@ -102,11 +103,12 @@
               :text-color="primaryFG"
               format24h
               with-seconds
+              now-btn
             >
               <div class="row items-center justify-end q-gutter-sm">
                 <q-btn
                   :label="$t('Clear')"
-                  @click="tags.time = null"
+                  @click="time = null"
                   flat
                   v-close-popup
                 />
@@ -114,7 +116,7 @@
                 <q-btn :label="$t('Cancel')" flat v-close-popup />
                 <q-btn
                   :label="$t('OK')"
-                  @click="tags.time = proxyTime"
+                  @click="time = proxyTime"
                   flat
                   v-close-popup
                 />
@@ -123,14 +125,15 @@
           </div>
         </q-popup-proxy>
       </q-input>
-      <div v-if="datetime" class="text-caption flex flex-center">
+      <div
+        v-if="tags.date || tags.time"
+        class="col-grow text-caption flex flex-center text-no-wrap"
+      >
         <template v-if="tags.time">
-          <relative-time :value="datetime" text-only invert /> &nbsp;
-          (<relative-time :value="datetime" text-only />)
+          <relative-time :value="datetime" />
         </template>
         <template v-else>
-          <relative-date :value="datetime" text-only invert /> &nbsp;
-          (<relative-date :value="datetime" text-only />)
+          <relative-date :value="datetime" />
         </template>
       </div>
     </div>
@@ -776,8 +779,36 @@ export default {
         : false;
       return user ? this.game.player(user.uid) : 0;
     },
+    date: {
+      get() {
+        return this.tags.date ? Tag.dateFromDate(this.datetime, true) : null;
+      },
+      set(value) {
+        if (!value) {
+          this.tags.date = null;
+        } else {
+          this.tags.date = Tag.dateFromDate(Tag.toDate(value, this.time, true));
+        }
+      },
+    },
+    time: {
+      get() {
+        return this.tags.time ? Tag.timeFromDate(this.datetime, true) : null;
+      },
+      set(value) {
+        if (!value) {
+          this.tags.time = null;
+        } else {
+          let date = this.tags.date || Tag.dateFromDate(new Date());
+          this.tags.time = Tag.timeFromDate(Tag.toDate(date, value, true));
+        }
+      },
+    },
     datetime() {
-      const date = Tag.toDate(this.tags.date, this.tags.time);
+      const date = Tag.toDate(
+        this.tags.date || Tag.dateFromDate(new Date()),
+        this.tags.time
+      );
       return isNaN(date) ? null : date;
     },
   },
