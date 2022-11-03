@@ -19,7 +19,7 @@
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:functions": "firebase deploy --only functions",
     "emulate": "firebase emulators:start --import ./db --export-on-exit",
-    "backup:db": "gsutil -m rm -r gs://ptn-ninja-backup/db && gcloud firestore export gs://ptn-ninja-backup/db",
+    "backup:db": "gcloud config set project ptn-ninja && gsutil -m rm -r gs://ptn-ninja-backup/db && gcloud firestore export gs://ptn-ninja-backup/db",
     "download:db": "gsutil -m cp -r gs://ptn-ninja-backup/db .",
     "download:indexes": "firebase firestore:indexes > firestore.indexes.json"
   },
