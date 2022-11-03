@@ -20,7 +20,7 @@
       </smooth-reflow>
     </template>
 
-    <q-card>
+    <q-card style="width: 333px; max-width: 100%">
       <smooth-reflow>
         <q-tab-panels v-model="tab" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
