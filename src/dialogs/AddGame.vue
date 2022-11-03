@@ -8,7 +8,6 @@
     <template v-slot:header>
       <smooth-reflow class="fit">
         <q-tabs
-          v-show="!showOnline"
           v-model="tab"
           active-color="primary"
           indicator-color="primary"
@@ -20,7 +19,7 @@
       </smooth-reflow>
     </template>
 
-    <q-card style="width: 333px; max-width: 100%">
+    <q-card>
       <smooth-reflow>
         <q-tab-panels v-model="tab" keep-alive animated>
           <q-tab-panel name="new" class="q-pa-none">
@@ -37,58 +36,33 @@
 
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
-              <smooth-reflow>
-                <template v-if="!showOnline">
-                  <!-- Clipboard -->
-                  <q-item @click="clipboard" clickable v-ripple>
-                    <q-item-section avatar>
-                      <q-icon name="clipboard" />
-                    </q-item-section>
-                    <q-item-section>{{ $t("Clipboard") }}</q-item-section>
-                  </q-item>
+              <!-- Clipboard -->
+              <q-item @click="clipboard" clickable v-ripple>
+                <q-item-section avatar>
+                  <q-icon name="clipboard" />
+                </q-item-section>
+                <q-item-section>{{ $t("Clipboard") }}</q-item-section>
+              </q-item>
 
-                  <!-- Files -->
-                  <q-item
-                    @click="$store.dispatch('ui/OPEN', close)"
-                    clickable
-                    v-ripple
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="local" />
-                    </q-item-section>
-                    <q-item-section>{{ $t("Files") }}</q-item-section>
-                  </q-item>
-                </template>
-              </smooth-reflow>
+              <!-- Files -->
+              <q-item
+                @click="$store.dispatch('ui/OPEN', close)"
+                clickable
+                v-ripple
+              >
+                <q-item-section avatar>
+                  <q-icon name="local" />
+                </q-item-section>
+                <q-item-section>{{ $t("Files") }}</q-item-section>
+              </q-item>
 
               <!-- Online -->
-              <smooth-reflow>
-                <q-item
-                  @click="toggleOnline"
-                  :class="{ 'text-primary': showOnline }"
-                  clickable
-                  v-ripple
-                >
-                  <q-item-section avatar>
-                    <q-icon name="online" />
-                  </q-item-section>
-                  <q-item-section>{{ $t("Online") }}</q-item-section>
-                  <q-item-section side>
-                    <q-icon
-                      name="down"
-                      class="fg-inherit q-expansion-item__toggle-icon"
-                      :class="{ 'rotate-180': showOnline }"
-                    />
-                  </q-item-section>
-                </q-item>
-              </smooth-reflow>
-              <smooth-reflow tag="recess">
-                <GameTable
-                  v-if="showOnline"
-                  ref="gameTable"
-                  v-model="selectedGames"
-                />
-              </smooth-reflow>
+              <q-item :to="{ name: 'load-online' }" replace clickable v-ripple>
+                <q-item-section avatar>
+                  <q-icon name="online" />
+                </q-item-section>
+                <q-item-section>{{ $t("Online") }}</q-item-section>
+              </q-item>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>
@@ -104,7 +78,7 @@
         <q-btn
           :label="$t('OK')"
           @click="ok"
-          :disabled="tab === 'load' && !selectedGames.length"
+          :disabled="tab === 'load'"
           color="primary"
           flat
         />
@@ -122,7 +96,6 @@
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
-import GameTable from "../components/controls/GameTable";
 import EditPTN from "../dialogs/EditPTN.vue";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
@@ -130,7 +103,7 @@ import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, EditPTN, GameTable, MoreToggle },
+  components: { GameInfo, EditPTN, MoreToggle },
   data() {
     return {
       tags: {
@@ -141,7 +114,6 @@ export default {
         site: this.$t("site_name"),
       },
       ptn: "",
-      selectedGames: [],
       showAll: false,
     };
   },
@@ -152,14 +124,6 @@ export default {
       },
       set(tab) {
         this.$router.replace({ params: { tab } });
-      },
-    },
-    showOnline: {
-      get() {
-        return this.$route.params.type === "online";
-      },
-      set(show) {
-        this.$router.replace({ params: { type: show ? "online" : null } });
       },
     },
     showPTN: {
@@ -267,26 +231,9 @@ export default {
 
       this.close();
     },
-    async toggleOnline() {
-      await this.$nextTick();
-      this.showOnline = !this.showOnline;
-    },
     ok() {
       if (this.tab === "new") {
         this.$refs.gameInfo.submit();
-      } else {
-        if (this.selectedGames.length) {
-          // Load online game(s)
-          this.selectedGames.forEach((game) => {
-            this.$store
-              .dispatch("online/LOAD_GAME", game.config.id)
-              .catch((error) => {
-                this.notifyError(error);
-              });
-          });
-          this.selectedGames = [];
-        }
-        this.close();
       }
     },
   },

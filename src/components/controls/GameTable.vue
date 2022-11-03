@@ -20,18 +20,11 @@
     <template v-slot:top>
       <div class="column fit overflow-hidden">
         <q-toolbar>
-          <AccountBtn :login-text="$t('Guest')" rounded flat />
+          <!-- List View Options -->
 
           <q-space />
 
-          <FullscreenToggle
-            v-if="$refs.table"
-            v-model="fullscreen"
-            :target="$refs.table.$el"
-            class="q-ml-sm"
-            round
-            flat
-          />
+          <AccountBtn :login-text="$t('Guest')" rounded flat />
         </q-toolbar>
         <q-btn-toggle
           class="highlight no-border-radius justify-center"
@@ -57,7 +50,7 @@
         <span v-show="(!props.col.icon && !props.col.icons) || isWide">
           {{ props.col.label }}
         </span>
-        <tooltip v-if="!isWide">{{ props.col.label }}</tooltip>
+        <hint v-if="!isWide">{{ props.col.label }}</hint>
       </q-th>
     </template>
 
@@ -80,7 +73,7 @@
             :name="playerIcon(props.row.player, props.row.config.isPrivate)"
             size="md"
           >
-            <tooltip>{{ roleText(props.row.player) }}</tooltip>
+            <hint>{{ roleText(props.row.player) }}</hint>
           </q-icon>
         </q-td>
         <q-td key="name" :props="props">
@@ -111,7 +104,7 @@
         <q-td key="result" :props="props">
           <Result :result="props.row.tags.result" />
         </q-td>
-        <tooltip v-if="!isWide">{{ props.row.name }}</tooltip>
+        <hint v-if="!isWide">{{ props.row.name }}</hint>
       </q-tr>
     </template>
   </q-table>
@@ -119,7 +112,6 @@
 
 <script>
 import AccountBtn from "../general/AccountBtn.vue";
-import FullscreenToggle from "../controls/FullscreenToggle.vue";
 import Result from "../PTN/Result";
 
 import { compact, differenceBy, without } from "lodash";
@@ -128,7 +120,7 @@ const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
-  components: { AccountBtn, FullscreenToggle, Result },
+  components: { AccountBtn, Result },
   props: ["value", "selection-mode"],
   data() {
     return {

@@ -408,8 +408,7 @@ export default {
           break;
         case "online":
           this.$router.push({
-            name: "add",
-            params: { tab: "load", type: "online" },
+            name: "load-online",
           });
           break;
         case "add":
@@ -442,17 +441,21 @@ export default {
           }
           break;
         case "gameInfo":
-          if (this.$route.name !== "info-view") {
-            this.$router.push({ name: "info-view" });
-          } else {
+          if (this.$route.name === "info-view") {
             this.$refs.dialog.$children[0].hide();
+          } else if (this.$route.name === "info-edit") {
+            this.$router.replace({ name: "info-view" });
+          } else {
+            this.$router.push({ name: "info-view" });
           }
           break;
         case "editGame":
-          if (this.$route.name !== "info-edit") {
-            this.$router.push({ name: "info-edit" });
-          } else {
+          if (this.$route.name === "info-edit") {
             this.$refs.dialog.$children[0].hide();
+          } else if (this.$route.name === "info-view") {
+            this.$router.replace({ name: "info-edit" });
+          } else {
+            this.$router.push({ name: "info-edit" });
           }
           break;
         case "editPTN":
@@ -523,21 +526,19 @@ export default {
           }
           break;
         case "loadOnlineGame":
-          if (this.$route.name !== "add") {
-            this.$router.push({
-              name: "add",
-              params: { tab: "load", type: "online" },
-            });
+          if (this.$route.name === "load-online") {
+            this.$refs.dialog.$children[0].hide();
           } else if (
-            this.$route.params.tab !== "load" ||
-            this.$route.params.type !== "online"
+            this.$route.name === "add" ||
+            this.$route.name === "share-online"
           ) {
             this.$router.replace({
-              name: "add",
-              params: { tab: "load", type: "online" },
+              name: "load-online",
             });
           } else {
-            this.$refs.dialog.$children[0].hide();
+            this.$router.push({
+              name: "load-online",
+            });
           }
           break;
         case "newGame":
@@ -555,11 +556,17 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "online":
-          if (this.$route.name !== "online") {
-            this.$router.push({ name: "online" });
-          } else {
+        case "shareOnline":
+          if (this.$route.name === "share-online") {
             this.$refs.dialog.$children[0].hide();
+          } else if (this.$route.name === "load-online") {
+            this.$router.replace({
+              name: "share-online",
+            });
+          } else {
+            this.$router.push({
+              name: "share-online",
+            });
           }
           break;
         case "preferences":

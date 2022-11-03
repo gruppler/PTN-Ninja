@@ -42,7 +42,8 @@ service cloud.firestore {
       allow write: if false;
 
       match /branches/{branch} {
-    	  allow read: if existingData().uid == null || isUser(existingData().uid);
+    	  allow list: if isSignedIn();
+    	  allow get: if existingData().uid == null || isUser(existingData().uid);
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }

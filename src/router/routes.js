@@ -84,6 +84,26 @@ const routes = [
         component: () => import("../dialogs/Account"),
       },
       {
+        name: "share-online",
+        path: "/online/new/:qr?",
+        component: () => import("../dialogs/ShareOnline"),
+      },
+      {
+        name: "play-online",
+        path: "/online/new/play",
+        component: () => import("../dialogs/PlayOnline"),
+      },
+      {
+        name: "puzzle-online",
+        path: "/online/new/puzzle",
+        component: () => import("../dialogs/PuzzleOnline"),
+      },
+      {
+        name: "load-online",
+        path: "/online/:filter?",
+        component: () => import("../dialogs/OnlineGames"),
+      },
+      {
         name: "add",
         path: "/add/:tab?/:type?/:filter?",
         component: () => import("../dialogs/AddGame"),
@@ -132,11 +152,6 @@ const routes = [
         name: "login",
         path: "/login/:tab?",
         component: () => import("../dialogs/LogIn"),
-      },
-      {
-        name: "online",
-        path: "/online/:qr?",
-        component: () => import("../dialogs/ShareOnline"),
       },
       {
         name: "png",

@@ -3,6 +3,7 @@
     <template v-if="user && !user.isAnonymous">
       <PlayerAvatar :value="user.displayName" size="md" class="on-left" />
       <span class="ellipsis">{{ user.displayName }}</span>
+      <hint>{{ $t("Account") }}</hint>
     </template>
     <template v-else>
       <q-icon name="account" left />

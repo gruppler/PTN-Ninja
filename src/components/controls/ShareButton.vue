@@ -209,7 +209,7 @@ export default {
       this.$router.push({ name: "png" });
     },
     online() {
-      this.$router.push({ name: "online" });
+      this.$router.push({ name: "share-online" });
     },
     qrCode() {
       this.$router.push({ name: "qr" });
