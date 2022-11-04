@@ -30,16 +30,23 @@ service cloud.firestore {
     	return game.state.hasEnded || !game.players.hasAny([request.auth.uid]);
     }
 
-    match /names/{nameID} {
+    match /names/{name} {
     	allow create: if isSignedIn() && isUser(incomingData().uid);
     	allow read: if isSignedIn();
     	allow update: if false;
       allow delete: if isUser(existingData().uid);
     }
 
-    match /games/{gameID} {
+    match /games/{game} {
     	allow read: if isSignedIn();
       allow write: if false;
+
+      match /analyses/{analysis} {
+    	  allow list: if isSignedIn();
+    	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
+        allow create: if isUser(incomingData().uid);
+        allow update, delete: if isUser(existingData().uid);
+      }
 
       match /branches/{branch} {
     	  allow list: if isSignedIn();
@@ -49,31 +56,50 @@ service cloud.firestore {
       }
 
       match /playerChat/{message} {
-        allow read: if isPlayer(gameID, "games");
+        allow read: if isPlayer(game, "games");
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }
 
       match /spectatorChat/{message} {
-        allow read: if isSpectator(gameID);
+        allow read: if isSpectator(game);
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }
     }
 
-    match /gamesPrivate/{gameID} {
-    	allow read: if isPlayer(gameID, "gamesPrivate");
+    match /gamesPrivate/{game} {
+    	allow read: if isPlayer(game, "gamesPrivate");
       allow write: if false;
 
       match /branches/{branch} {
     	  allow read: if isUser(existingData().uid) ||
-          existingData().uid == null && isPlayer(gameID, "gamesPrivate");
+          existingData().uid == null && isPlayer(game, "gamesPrivate");
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }
 
       match /playerChat/{message} {
-        allow read: if isPlayer(gameID, "gamesPrivate");
+        allow read: if isPlayer(game, "gamesPrivate");
+        allow create: if isUser(incomingData().uid);
+        allow update, delete: if isUser(existingData().uid);
+      }
+    }
+    
+    match /puzzles/{puzzle} {
+    	allow read: if isSignedIn();
+      allow create: if isUser(incomingData().uid);
+      allow update, delete: if isUser(existingData().uid);
+
+      match /solutions/{solution} {
+    	  allow list: if isSignedIn();
+    	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
+        allow create: if isUser(incomingData().uid);
+        allow update, delete: if isUser(existingData().uid);
+      }
+
+      match /comments/{comment} {
+        allow read: if isSignedIn();
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }
