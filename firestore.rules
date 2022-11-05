@@ -41,13 +41,6 @@ service cloud.firestore {
     	allow read: if isSignedIn();
       allow write: if false;
 
-      match /analyses/{analysis} {
-    	  allow list: if isSignedIn();
-    	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
-      }
-
       match /branches/{branch} {
     	  allow list: if isSignedIn();
     	  allow get: if existingData().uid == null || isUser(existingData().uid);
@@ -85,6 +78,18 @@ service cloud.firestore {
         allow update, delete: if isUser(existingData().uid);
       }
     }
+
+    match /analyses/{analysis} {
+    	allow read: if isSignedIn();
+      allow create: if isUser(incomingData().uid);
+      allow update, delete: if isUser(existingData().uid);
+
+      match /comments/{comment} {
+        allow read: if isSignedIn();
+        allow create: if isUser(incomingData().uid);
+        allow update, delete: if isUser(existingData().uid);
+      }
+    }
     
     match /puzzles/{puzzle} {
     	allow read: if isSignedIn();
@@ -96,12 +101,12 @@ service cloud.firestore {
     	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
-      }
 
-      match /comments/{comment} {
-        allow read: if isSignedIn();
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        match /comments/{comment} {
+          allow read: if isSignedIn();
+          allow create: if isUser(incomingData().uid);
+          allow update, delete: if isUser(existingData().uid);
+        }
       }
     }
 
