@@ -6,7 +6,8 @@
           <!-- New Puzzle -->
           <q-btn
             icon="puzzle"
-            @click="$router.replace({ name: 'puzzle-online' })"
+            :to="{ name: 'puzzle-online' }"
+            replace
             class="q-field__focusable-action q-mr-sm"
             dense
             flat
@@ -14,10 +15,23 @@
             <hint>{{ $t("New Puzzle") }}</hint>
           </q-btn>
 
+          <!-- New Analysis -->
+          <q-btn
+            icon="analysis"
+            :to="{ name: 'analysis-online' }"
+            replace
+            class="q-field__focusable-action q-mr-sm"
+            dense
+            flat
+          >
+            <hint>{{ $t("New Analysis") }}</hint>
+          </q-btn>
+
           <!-- New Game -->
           <q-btn
             icon="add"
-            @click="$router.replace({ name: 'play-online' })"
+            :to="{ name: 'play-online' }"
+            replace
             class="q-field__focusable-action q-mr-sm"
             dense
             flat
@@ -54,7 +68,7 @@
 import GameTable from "../components/controls/GameTable";
 
 export default {
-  name: "OnlineGames",
+  name: "LoadOnline",
   components: { GameTable },
   data() {
     return {

@@ -94,6 +94,11 @@ const routes = [
         component: () => import("../dialogs/PlayOnline"),
       },
       {
+        name: "analysis-online",
+        path: "/online/new/analysis",
+        component: () => import("../dialogs/AnalysisOnline"),
+      },
+      {
         name: "puzzle-online",
         path: "/online/new/puzzle",
         component: () => import("../dialogs/PuzzleOnline"),
@@ -101,7 +106,7 @@ const routes = [
       {
         name: "load-online",
         path: "/online/:filter?",
-        component: () => import("../dialogs/OnlineGames"),
+        component: () => import("../dialogs/LoadOnline"),
       },
       {
         name: "add",

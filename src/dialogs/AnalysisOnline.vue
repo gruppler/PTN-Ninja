@@ -1,18 +1,18 @@
 <template>
   <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="puzzle" :title="$t('New Puzzle')">
+      <dialog-header icon="analysis" :title="$t('New Analysis')">
         <template v-slot:buttons>
-          <!-- Online Puzzles -->
+          <!-- Online Games -->
           <q-btn
             icon="online"
-            :to="{ name: 'load-online', params: { filter: 'puzzle' } }"
+            :to="{ name: 'load-online', params: { filter: 'analysis' } }"
             replace
             class="q-field__focusable-action q-mr-sm"
             dense
             flat
           >
-            <hint>{{ $tc("Puzzle", 100) }}</hint>
+            <hint>{{ $tc("Analysis", 100) }}</hint>
           </q-btn>
         </template>
       </dialog-header>
@@ -50,7 +50,7 @@
 import { cloneDeep } from "lodash";
 
 export default {
-  name: "PuzzleOnline",
+  name: "AnalysisOnline",
   data() {
     const user = this.$store.state.online.user;
     const config = cloneDeep(this.$store.state.ui.onlineConfig);

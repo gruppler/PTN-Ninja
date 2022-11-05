@@ -1,7 +1,21 @@
 <template>
   <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="players">{{ $t("Play Online") }}</dialog-header>
+      <dialog-header icon="players" :title="$t('Play Online')">
+        <template v-slot:buttons>
+          <!-- Online Games -->
+          <q-btn
+            icon="online"
+            :to="{ name: 'load-online' }"
+            replace
+            class="q-field__focusable-action q-mr-sm"
+            dense
+            flat
+          >
+            <hint>{{ $tc("Online Game", 100) }}</hint>
+          </q-btn>
+        </template>
+      </dialog-header>
     </template>
 
     <q-card style="width: 330px; max-width: 100%">

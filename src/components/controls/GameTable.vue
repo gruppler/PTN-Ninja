@@ -24,14 +24,25 @@
 
           <q-space />
 
+          <!-- Account -->
           <AccountBtn :login-text="$t('Guest')" rounded flat />
         </q-toolbar>
+
+        <!-- Filter -->
         <q-btn-toggle
+          v-if="$q.screen.width >= 440"
           class="highlight no-border-radius justify-center"
           v-model="filter"
           :options="filterOptions"
           :ripple="false"
           stack
+        />
+        <ListSelect
+          v-else
+          v-model="filter"
+          :options="filterOptions"
+          filled
+          square
         />
       </div>
     </template>
@@ -112,6 +123,7 @@
 
 <script>
 import AccountBtn from "../general/AccountBtn.vue";
+import ListSelect from "../controls/ListSelect.vue";
 import Result from "../PTN/Result";
 
 import { compact, differenceBy, without } from "lodash";
@@ -120,7 +132,7 @@ const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
-  components: { AccountBtn, Result },
+  components: { AccountBtn, ListSelect, Result },
   props: ["value", "selection-mode"],
   data() {
     return {
@@ -130,7 +142,6 @@ export default {
         rowsPerPage: 0,
         sortBy: "date",
       },
-      filter: "ongoing",
       filterOptions: [
         {
           value: "ongoing",
@@ -143,14 +154,19 @@ export default {
           label: this.$t("Open"),
         },
         {
-          value: "puzzle",
-          icon: "puzzle",
-          label: this.$tc("Puzzle", 100),
-        },
-        {
           value: "recent",
           icon: "recent",
           label: this.$t("Recent"),
+        },
+        {
+          value: "analysis",
+          icon: "analysis",
+          label: this.$tc("Analysis", 100),
+        },
+        {
+          value: "puzzle",
+          icon: "puzzle",
+          label: this.$tc("Puzzle", 100),
         },
       ],
       columns: [
@@ -207,6 +223,14 @@ export default {
     };
   },
   computed: {
+    filter: {
+      get() {
+        return this.$route.params.filter || "ongoing";
+      },
+      set(filter) {
+        this.$router.replace({ params: { filter } });
+      },
+    },
     user() {
       return this.$store.state.online.user;
     },
@@ -355,12 +379,7 @@ $header: 64px;
     padding: 0;
   }
   .q-table__middle {
-    min-height: 12rem;
-    max-height: calc(50vh - #{$header + $toolbar-min-height});
-  }
-  &.fullscreen .q-table__middle {
-    height: calc(100vh - #{$header});
-    max-height: calc(100vh - #{$header});
+    height: 100%;
   }
 
   .q-table__top,

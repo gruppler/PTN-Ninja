@@ -33,7 +33,7 @@ export default {
         },
         {
           icon: "online",
-          label: this.$t("Online"),
+          label: this.$tc("Online Game", 100),
           action: "online",
         },
         {

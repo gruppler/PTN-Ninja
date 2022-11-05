@@ -15,6 +15,14 @@
             <q-item-section>{{ $t("Play Online") }}</q-item-section>
           </q-item>
 
+          <!-- Analysis -->
+          <q-item :to="{ name: 'analysis-online' }" clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon name="analysis" />
+            </q-item-section>
+            <q-item-section>{{ $t("New Analysis") }}</q-item-section>
+          </q-item>
+
           <!-- Puzzle -->
           <q-item :to="{ name: 'puzzle-online' }" clickable v-ripple>
             <q-item-section avatar>

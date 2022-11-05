@@ -88,15 +88,39 @@ export default {
       );
 
       if (!this.$store.state.embed) {
-        actions.unshift(
-          {
-            id: "online",
-            label: this.$t("Online"),
-            icon: "online",
-            action: this.online,
-          },
-          {}
-        );
+        if (this.$game.config.isOnline) {
+          actions.unshift(
+            {
+              id: "share",
+              label: this.$t("Share Online"),
+              icon: "online",
+              action: this.shareOnline,
+            },
+            {}
+          );
+        } else {
+          actions.unshift(
+            {
+              id: "playOnline",
+              label: this.$t("Play Online"),
+              icon: "players",
+              action: this.playOnline,
+            },
+            {
+              id: "analysisOnline",
+              label: this.$t("New Analysis"),
+              icon: "analysis",
+              action: this.analysisOnline,
+            },
+            {
+              id: "puzzleOnline",
+              label: this.$t("New Puzzle"),
+              icon: "puzzle",
+              action: this.puzzleOnline,
+            },
+            {}
+          );
+        }
       }
 
       if (
@@ -208,8 +232,17 @@ export default {
     png() {
       this.$router.push({ name: "png" });
     },
-    online() {
+    shareOnline() {
       this.$router.push({ name: "share-online" });
+    },
+    playOnline() {
+      this.$router.push({ name: "play-online" });
+    },
+    analysisOnline() {
+      this.$router.push({ name: "analysis-online" });
+    },
+    puzzleOnline() {
+      this.$router.push({ name: "puzzle-online" });
     },
     qrCode() {
       this.$router.push({ name: "qr" });
