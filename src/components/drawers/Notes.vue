@@ -15,33 +15,17 @@
           :virtual-scroll-slice-ratio-after="0.5"
         >
           <template v-slot="{ item }">
-            <div
-              class="q-py-xs q-px-md"
+            <NoteItem
               :class="{
-                current: isCurrent(item),
                 'q-pt-md': item < 0,
               }"
               :key="item"
               :ref="item"
-            >
-              <div v-if="item >= 0 && plies[item]" class="ply-container">
-                <Move
-                  :move="getMove(item)"
-                  :player="getPlayer(item)"
-                  separate-branch
-                  no-decoration
-                />
-              </div>
-              <Note
-                v-for="(comment, index) in log[item]"
-                :key="`message-${item}-${index}`"
-                :plyID="item"
-                :index="index"
-                :comment="comment"
-                @edit="edit"
-                @remove="remove"
-              />
-            </div>
+              :plyID="item"
+              :notes="log[item]"
+              @edit="edit"
+              @remove="remove"
+            />
           </template>
         </q-virtual-scroll>
       </q-scroll-area>
@@ -81,14 +65,13 @@
 </template>
 
 <script>
-import Note from "./Note";
-import Move from "../PTN/Move";
+import NoteItem from "./NoteItem";
 
 import { pickBy, throttle } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Note, Move },
+  components: { NoteItem },
   props: {
     recess: Boolean,
   },
@@ -165,22 +148,6 @@ export default {
     },
   },
   methods: {
-    getMove(plyID) {
-      const ply = this.game.ptn.allPlies[plyID];
-      if (ply) {
-        return this.game.ptn.allMoves[ply.move];
-      } else {
-        throw "Invalid plyID";
-      }
-    },
-    getPlayer(plyID) {
-      const ply = this.game.ptn.allPlies[plyID];
-      if (ply) {
-        return ply.player;
-      } else {
-        throw "Invalid plyID";
-      }
-    },
     send() {
       if (this.message) {
         if (this.editing) {
@@ -252,25 +219,6 @@ export default {
 .notes {
   .q-separator {
     opacity: 0.75;
-  }
-  .current {
-    background-color: $dim;
-    body.panelDark & {
-      background-color: $highlight;
-    }
-  }
-  .q-message:not(:last-child) {
-    margin-bottom: 3px;
-    .q-message-text {
-      border-radius: $generic-border-radius;
-      min-height: 2em;
-      &:before {
-        display: none;
-      }
-    }
-  }
-  .ply-container {
-    padding-bottom: 0.5em;
   }
 }
 </style>

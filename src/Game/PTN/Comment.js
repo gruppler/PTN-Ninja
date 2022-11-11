@@ -1,6 +1,31 @@
 import { pick } from "lodash";
 
-const outputProps = ["time", "player", "message"];
+const outputProps = ["time", "player", "message", "evaluation"];
+
+// Evaluation formats
+const evalFormats = [
+  {
+    pattern: /(?:\W|^)([+-][.0-9]+)(?:\W|$)/,
+    format: (v) => v * 100,
+  },
+  {
+    pattern: /(?:\W|^)([.0-9]+)%(?:\W|$)/,
+    format: (v) => v * 2 - 100,
+  },
+];
+
+export function getEvaluation(message) {
+  let matches;
+
+  for (let i = 0; i < evalFormats.length; i++) {
+    matches = message.match(evalFormats[i].pattern);
+    if (matches) {
+      return evalFormats[i].format(Number(matches[1]));
+    }
+  }
+
+  return null;
+}
 
 export default class Comment {
   constructor(notation) {
@@ -22,6 +47,10 @@ export default class Comment {
     } else {
       this.player = null;
     }
+  }
+
+  get evaluation() {
+    return getEvaluation(this.message);
   }
 
   get output() {

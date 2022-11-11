@@ -1,6 +1,6 @@
 import Ptn from "./ptn";
 
-import { cloneDeep, pick, isEqual } from "lodash";
+import { pick, isEqual } from "lodash";
 
 const minProps = [
   "column",
