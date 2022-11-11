@@ -21,6 +21,7 @@
             :move="item"
             :key="item.id"
             separate-branch
+            show-eval
           />
         </template>
       </q-virtual-scroll>
