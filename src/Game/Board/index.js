@@ -9,13 +9,12 @@ import Piece from "./Piece";
 import Square from "./Square";
 
 import render from "./render";
-import { atoi, itoa } from "../PTN/Ply";
+import { atoi } from "../PTN/Ply";
 
 import {
   defaults,
   flatten,
   forEach,
-  isArray,
   isString,
   map,
   omit,
@@ -54,6 +53,7 @@ export default class Board extends Aggregation(
       comments: {
         notes: {},
         chatlog: {},
+        evaluations: {},
       },
       position: {
         isGameEnd: false,
@@ -410,6 +410,8 @@ export default class Board extends Aggregation(
 
   updateCommentsOutput() {
     const output = { ...this.output.comments };
+    let evaluations = { ...output.evaluations };
+    output.evaluations = evaluations;
 
     forEach(this.dirty.comments, (log, type) => {
       let logOutput = { ...output[type] };
@@ -420,6 +422,16 @@ export default class Board extends Aggregation(
           if (comments && comments.length) {
             comments = comments.map((comment) => comment.output);
             logOutput[plyID] = comments;
+            if (type === "notes") {
+              let comment;
+              for (let i = 0; i < comments.length; i++) {
+                comment = comments[i];
+                if (comment) {
+                  evaluations[plyID] = comment.evaluation;
+                  break;
+                }
+              }
+            }
           } else {
             delete this.dirty.comments[type][plyID];
             logOutput = omit(logOutput, plyID);
