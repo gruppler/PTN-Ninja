@@ -1,7 +1,7 @@
 import Comment from "./PTN/Comment";
 import Evaluation from "./PTN/Evaluation";
 
-import { forEach, omit } from "lodash";
+import { omit } from "lodash";
 
 export default class GameComments {
   get hasChat() {

@@ -9,6 +9,16 @@
       standalone: standalone,
     }"
   >
+    <div v-if="showEval && evaluations.length" class="evaluations column">
+      <div
+        v-for="(evaluation, i) in evaluations"
+        class="evaluation col"
+        :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+        :style="{ width: Math.abs(evaluation) + '%' }"
+        :key="i"
+      />
+    </div>
+
     <Linenum
       v-if="showSeparateBranch"
       :linenum="move.linenum"
@@ -29,6 +39,7 @@
         <Ply :key="ply2.id" :plyID="ply2.id" />
       </template>
     </div>
+
     <q-separator v-if="separator" class="fullwidth-padded-md" />
   </div>
 </template>
@@ -48,6 +59,7 @@ export default {
     noDecoration: Boolean,
     separateBranch: Boolean,
     noBranch: Boolean,
+    showEval: Boolean,
   },
   computed: {
     showAllBranches() {
@@ -70,6 +82,22 @@ export default {
           ? this.move.ply2
           : this.ptn.branchPlies[this.move.ply2.index]
         : null;
+    },
+    evaluations() {
+      let evaluations = [];
+      let eval1 = this.ply1
+        ? this.$store.state.game.comments.evaluations[this.ply1.id]
+        : null;
+      let eval2 = this.ply2
+        ? this.$store.state.game.comments.evaluations[this.ply2.id]
+        : null;
+      if (eval1) {
+        evaluations.push(eval1);
+      }
+      if (eval2) {
+        evaluations.push(eval2);
+      }
+      return evaluations;
     },
     index() {
       return this.ptn.sortedMoves.findIndex((move) => move === this.move);
@@ -126,6 +154,8 @@ export default {
 
 <style lang="scss">
 .move {
+  position: relative;
+
   &.current-move {
     background-color: $dim;
     body.panelDark & {
@@ -153,6 +183,14 @@ export default {
   }
   &:last-child {
     padding-bottom: 0.75em;
+  }
+
+  .evaluations {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3em;
   }
 
   .nop {
