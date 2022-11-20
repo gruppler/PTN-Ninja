@@ -20,7 +20,10 @@ export function getEvaluation(message) {
   for (let i = 0; i < evalFormats.length; i++) {
     matches = message.match(evalFormats[i].pattern);
     if (matches) {
-      return evalFormats[i].format(Number(matches[1]));
+      return Math.max(
+        -100,
+        Math.min(100, evalFormats[i].format(Number(matches[1])))
+      );
     }
   }
 

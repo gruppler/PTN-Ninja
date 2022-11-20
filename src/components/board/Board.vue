@@ -75,7 +75,13 @@
           @click.right.prevent
           @touchstart.stop
           @mousedown.stop
-        ></div>
+        >
+          <div
+            class="evaluation"
+            :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+            :style="{ height: Math.abs(evaluation || 0) + '%' }"
+          />
+        </div>
       </div>
 
       <div
@@ -183,6 +189,11 @@ export default {
     },
     ptn() {
       return this.$store.state.game.ptn;
+    },
+    evaluation() {
+      return this.position.ply
+        ? this.$store.state.game.comments.evaluations[this.position.plyID]
+        : null;
     },
     selected() {
       return this.$store.state.game.selected;
@@ -571,7 +582,8 @@ $radius: 0.35em;
     &,
     .turn-indicator .player1,
     .turn-indicator .player2,
-    .turn-indicator .komi {
+    .turn-indicator .komi,
+    .evaluation {
       transition: none !important;
     }
   }
@@ -582,7 +594,8 @@ $radius: 0.35em;
     .road > div,
     .turn-indicator .player1,
     .turn-indicator .player2,
-    .turn-indicator .komi {
+    .turn-indicator .komi,
+    .evaluation {
       transition: none !important;
     }
   }
@@ -723,6 +736,22 @@ $radius: 0.35em;
     .board-container.axis-labels.size-#{$i} & {
       width: calc(#{$size} - #{$axis-size * 1.75 / ($i + 1.75)});
     }
+  }
+}
+
+.unplayed-bg {
+  overflow: hidden;
+  position: relative;
+
+  .evaluation {
+    position: absolute;
+    opacity: 0.5 !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    will-change: height, background-color;
+    transition: height $generic-hover-transition,
+      background-color $generic-hover-transition;
   }
 }
 </style>
