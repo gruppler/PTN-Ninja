@@ -671,7 +671,7 @@ export default {
     this.$store.registerModule("online", onlineStore);
 
     // Redirect hash URLs
-    if (location.hash.length) {
+    if (location.hash.length && !this.$q.platform.is.electron) {
       const url = location.hash.substr(1);
       location.hash = "";
       this.$router.replace(url);
