@@ -96,6 +96,12 @@ service cloud.firestore {
       allow create: if isUser(incomingData().uid);
       allow update, delete: if isUser(existingData().uid);
 
+      match /comments/{comment} {
+        allow read: if isSignedIn();
+        allow create: if isUser(incomingData().uid);
+        allow update, delete: if isUser(existingData().uid);
+      }
+
       match /solutions/{solution} {
     	  allow list: if isSignedIn();
     	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
