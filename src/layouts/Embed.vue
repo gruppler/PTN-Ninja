@@ -277,9 +277,7 @@ export default {
       switch (srcKey) {
         case "focusText":
           this.showText = true;
-          this.$refs[
-            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
-          ].$refs.input.focus();
+          this.$refs.notes.$refs.input.focus();
           break;
         case "game/UNDO":
         case "game/REDO":

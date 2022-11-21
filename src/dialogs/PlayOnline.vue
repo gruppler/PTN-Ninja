@@ -1,5 +1,10 @@
 <template>
-  <small-dialog :value="true" content-class="non-selectable" v-bind="$attrs">
+  <small-dialog
+    ref="dialog"
+    :value="true"
+    content-class="non-selectable"
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <dialog-header icon="players" :title="$t('Play Online')">
         <template v-slot:buttons>
@@ -216,6 +221,9 @@ export default {
     },
   },
   methods: {
+    close() {
+      this.$refs.dialog.hide();
+    },
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },

@@ -338,7 +338,7 @@ export default {
   },
   computed: {
     isEditable() {
-      return !this.game.config.isOnline || this.game.config.player;
+      return this.$store.getters["online/canEdit"](this.game);
     },
     isDuplicable() {
       return !(this.game.config.isOnline && this.game.config.isOngoing);
@@ -351,7 +351,7 @@ export default {
         : "local";
     },
     title() {
-      return this.$t(
+      return this.$tc(
         this.$store.state.ui.embed
           ? "Game Info"
           : this.game.config.isOnline
@@ -393,7 +393,10 @@ export default {
       }
     },
     duplicate() {
-      this.$store.dispatch("game/ADD_GAME", this.$game);
+      this.$store.dispatch("game/ADD_GAME", {
+        ...this.$game,
+        config: { ...this.$game.config, isOnline: false },
+      });
     },
   },
 };

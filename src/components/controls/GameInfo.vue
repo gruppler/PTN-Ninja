@@ -777,7 +777,7 @@ export default {
       const user = this.$store.state.online
         ? this.$store.state.online.user
         : false;
-      return user ? this.game.player(user.uid) : 0;
+      return user ? this.game.getPlayerFromUID(user.uid) : 0;
     },
     date: {
       get() {

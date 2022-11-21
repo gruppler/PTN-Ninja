@@ -7,6 +7,7 @@
     :rules="[validateName]"
     :hint="$t('hint.optional')"
     :loading="loading"
+    debounce="250"
     filled
   >
     <template v-slot:prepend>

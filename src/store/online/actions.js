@@ -11,6 +11,7 @@ const configToDB = (config) => omit(config, ["id", "player", "unseen"]);
 
 const snapshotToGameJSON = (doc) => {
   let game = doc.data();
+  game.config.isOnline = true;
   game.config.id = doc.id;
   game.config.player = game.config.players
     ? game.config.players.indexOf(auth.currentUser.uid) + 1

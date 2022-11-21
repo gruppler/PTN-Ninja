@@ -9,3 +9,7 @@ export const playerName =
     }
     return isPrivate ? LocalStorage.getItem("playerName") || name : name;
   };
+
+export const canEdit = (state) => (game) => {
+  return !game.config.isOnline;
+};

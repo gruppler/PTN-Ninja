@@ -88,39 +88,27 @@ export default {
       );
 
       if (!this.$store.state.embed) {
-        if (this.$game.config.isOnline) {
-          actions.unshift(
-            {
-              id: "share",
-              label: this.$t("Share Online"),
-              icon: "online",
-              action: this.shareOnline,
-            },
-            {}
-          );
-        } else {
-          actions.unshift(
-            {
-              id: "playOnline",
-              label: this.$t("Play Online"),
-              icon: "players",
-              action: this.playOnline,
-            },
-            {
-              id: "analysisOnline",
-              label: this.$t("New Analysis"),
-              icon: "analysis",
-              action: this.analysisOnline,
-            },
-            {
-              id: "puzzleOnline",
-              label: this.$t("New Puzzle"),
-              icon: "puzzle",
-              action: this.puzzleOnline,
-            },
-            {}
-          );
-        }
+        actions.unshift(
+          {
+            id: "playOnline",
+            label: this.$t("Play Online"),
+            icon: "players",
+            action: this.playOnline,
+          },
+          {
+            id: "analysisOnline",
+            label: this.$t("New Analysis"),
+            icon: "analysis",
+            action: this.analysisOnline,
+          },
+          {
+            id: "puzzleOnline",
+            label: this.$t("New Puzzle"),
+            icon: "puzzle",
+            action: this.puzzleOnline,
+          },
+          {}
+        );
       }
 
       if (
@@ -189,7 +177,9 @@ export default {
       switch (type) {
         case "url":
           output = {
-            title: this.$t("Link to Position"),
+            title: this.$game.config.isOnline
+              ? "URL"
+              : this.$t("Link to Position"),
             text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
               state: true,

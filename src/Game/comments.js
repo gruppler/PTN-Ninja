@@ -4,10 +4,6 @@ import Evaluation from "./PTN/Evaluation";
 import { omit } from "lodash";
 
 export default class GameComments {
-  get hasChat() {
-    return !this.isLocal || Object.keys(this.chatlog).length > 0;
-  }
-
   getMoveComments(move) {
     let comments = [];
     if (move.ply1 && "id" in move.ply1) {

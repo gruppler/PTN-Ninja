@@ -676,7 +676,6 @@ export default class GameBase {
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
       pieceCounts: this.pieceCounts,
-      isOnline: false,
     };
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {

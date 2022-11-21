@@ -43,6 +43,7 @@ let defaults = {
   showText: false,
   size: "6",
   stackCounts: false,
+  hasChat: false,
   textTab: "chat",
   themeID: "classic",
   theme: THEMES.find((t) => t.id === "classic"),

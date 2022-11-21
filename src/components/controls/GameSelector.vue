@@ -59,7 +59,7 @@
 
         <q-btn
           v-if="config.isOnline"
-          :icon="icon($game)"
+          :icon="icon"
           @click.stop.prevent="account"
           dense
           flat

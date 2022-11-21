@@ -239,9 +239,6 @@ export default {
     gameExists() {
       return Boolean(this.$game);
     },
-    isLocal() {
-      return this.$game ? this.$game.isLocal : false;
-    },
     showPTN: {
       get() {
         return this.$store.state.ui.showPTN;
@@ -259,7 +256,7 @@ export default {
       },
     },
     hasChat() {
-      return this.$game ? this.$game.hasChat : false;
+      return this.$store.state.game.config.isOnline;
     },
     textTab: {
       get() {
@@ -624,7 +621,9 @@ export default {
       this.$router.push({ name: "info-view" });
     },
     edit() {
-      this.$router.push({ name: "info-edit" });
+      if (this.$store.getters["online/canEdit"](this.$game)) {
+        this.$router.push({ name: "info-edit" });
+      }
     },
     switchGame(event) {
       if (

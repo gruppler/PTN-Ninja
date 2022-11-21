@@ -5,10 +5,10 @@
     </template>
 
     <q-card style="width: 330px; max-width: 100%">
-      <smooth-reflow tag="recess" class="col">
-        <q-list v-if="isLocal">
+      <smooth-reflow class="col">
+        <q-list v-if="isLocal" separator>
           <!-- Play -->
-          <q-item :to="{ name: 'play-online' }" clickable v-ripple>
+          <q-item :to="{ name: 'play-online' }" replace clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="players" />
             </q-item-section>
@@ -16,7 +16,7 @@
           </q-item>
 
           <!-- Analysis -->
-          <q-item :to="{ name: 'analysis-online' }" clickable v-ripple>
+          <q-item :to="{ name: 'analysis-online' }" replace clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="analysis" />
             </q-item-section>
@@ -24,7 +24,7 @@
           </q-item>
 
           <!-- Puzzle -->
-          <q-item :to="{ name: 'puzzle-online' }" clickable v-ripple>
+          <q-item :to="{ name: 'puzzle-online' }" replace clickable v-ripple>
             <q-item-section avatar>
               <q-icon name="puzzle" />
             </q-item-section>
@@ -42,7 +42,7 @@
               filled
             >
               <template v-slot:prepend>
-                <q-icon name="link" />
+                <q-icon name="url" />
               </template>
               <template v-slot:append>
                 <q-icon

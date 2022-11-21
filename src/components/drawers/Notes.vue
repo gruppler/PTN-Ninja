@@ -93,7 +93,7 @@ export default {
     },
     isShowing() {
       return (
-        (this.$store.state.ui.showText && !this.hasChat) ||
+        (this.$store.state.ui.showText && !this.$store.state.ui.hasChat) ||
         this.$store.state.ui.textTab === "notes"
       );
     },
