@@ -132,19 +132,28 @@ export default class Move {
     this.plies = this.plies.concat();
   }
 
-  toString(comments = null, showBranch = true) {
+  toString(comments = null, showBranch = true, transform = null) {
     let ply1 = "";
     let ply2 = "";
     let comments1 = "";
     let comments2 = "";
 
     if (!showBranch && this.ply1Original) {
-      ply1 = this.ply1Original.toString();
+      ply1 =
+        transform && !this.ply1Original.isNop
+          ? this.ply1Original.transform(this.game.size, transform)
+          : this.ply1Original.toString();
     } else if (this.ply1) {
-      ply1 = this.ply1.toString();
+      ply1 =
+        transform && !this.ply1.isNop
+          ? this.ply1.transform(this.game.size, transform)
+          : this.ply1.toString();
     }
     if (this.ply2) {
-      ply2 = this.ply2.toString();
+      ply2 =
+        transform && !this.ply2.isNop
+          ? this.ply2.transform(this.game.size, transform)
+          : this.ply2.toString();
     }
 
     if (comments) {

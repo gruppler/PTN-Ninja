@@ -453,6 +453,14 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
   });
 };
 
+export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {
+  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+    commit("APPLY_TRANSFORM", transform);
+    this.dispatch("ui/RESET_TRANSFORM");
+    dispatch("SAVE_CURRENT_GAME");
+  });
+};
+
 export const SELECT_GAME = function (
   { commit, dispatch, state },
   { index, immediate }

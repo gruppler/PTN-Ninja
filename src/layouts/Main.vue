@@ -67,14 +67,14 @@
         >
           <Board class="col-grow" />
         </div>
+        <q-page-sticky position="bottom" :offset="[0, 0]">
+          <CurrentMove style="margin-right: 65px" />
+        </q-page-sticky>
         <q-page-sticky position="top-right" :offset="[6, 6]">
           <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
-        </q-page-sticky>
-        <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
       </q-page>
     </q-page-container>

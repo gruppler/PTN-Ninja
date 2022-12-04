@@ -169,6 +169,14 @@ export const SET_TAGS = (state, tags) => {
   Vue.prototype.$game.setTags(tags);
 };
 
+export const APPLY_TRANSFORM = (state, transform) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    let result = game.transform(transform);
+    postMessage("APPLY_TRANSFORM", { transform, result });
+  }
+};
+
 export const SELECT_GAME = (state, index) => {
   state.list.unshift(state.list.splice(index, 1)[0]);
 };
