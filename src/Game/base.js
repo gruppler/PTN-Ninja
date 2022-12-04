@@ -739,11 +739,9 @@ export default class GameBase {
 
   _updatePTN(recordChange = false) {
     if (recordChange && this.ptn) {
-      this.recordChange(
-        () => (this.ptn = this.toString(undefined, undefined, undefined, true))
-      );
+      this.recordChange(() => (this.ptn = this.toString({ skipCache: true })));
     } else {
-      this.ptn = this.toString(undefined, undefined, undefined, true);
+      this.ptn = this.toString({ skipCache: true });
     }
   }
 
@@ -756,27 +754,40 @@ export default class GameBase {
     }
   }
 
-  toString(
+  toString({
+    tags,
     showAllBranches = true,
     showComments = true,
-    tags,
-    skipCache = false
-  ) {
+    skipCache = false,
+    transform = null,
+  }) {
     return (
-      this.headerText(tags) +
-      this.moveText(showAllBranches, showComments, skipCache)
+      this.headerText(tags, transform) +
+      this.moveText(showAllBranches, showComments, skipCache, transform)
     );
   }
 
-  headerText(tags = this.tags) {
+  headerText(tags = this.tags, transform = null) {
+    if (transform && tags.tps) {
+      tags = {
+        ...tags,
+        tps: new Tag(null, "tps", tags.tps.value.transform(transform)),
+      };
+    }
     return map(tags, (tag) => tag.toString()).join("\r\n") + "\r\n\r\n";
   }
 
-  moveText(showAllBranches = false, showComments = false, skipCache = false) {
+  moveText(
+    showAllBranches = false,
+    showComments = false,
+    skipCache = false,
+    transform = null
+  ) {
     const printMove = (move) =>
       move.toString(
         showComments ? this.getMoveComments(move) : null,
-        showAllBranches
+        showAllBranches,
+        transform
       );
 
     let prefix = "";

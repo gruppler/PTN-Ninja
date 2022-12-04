@@ -1,4 +1,4 @@
-import { pick } from "lodash";
+import { cloneDeep, pick, zip } from "lodash";
 
 const outputProps = ["grid", "linenum", "player", "size", "text"];
 
@@ -39,6 +39,33 @@ export default class TPS {
     ) {
       this.errors.push(new Error("Invalid TPS notation"));
     }
+  }
+
+  transform([rotate, flip]) {
+    rotate = rotate % 4;
+    flip = flip % 2;
+    let grid = cloneDeep(this.grid);
+
+    if (rotate === 1) {
+      grid = zip(...grid.map((row) => row.reverse()));
+    } else if (rotate === 2) {
+      grid = grid.map((row) => row.reverse()).reverse();
+    } else if (rotate === 3) {
+      grid = zip(...grid).map((row) => row.reverse());
+    }
+
+    if (flip) {
+      grid = grid.map((row) => row.reverse());
+    }
+
+    return (
+      grid
+        .reverse()
+        .map((row) => row.join(","))
+        .join("/")
+        .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2) +
+      ` ${this.player} ${this.linenum}`
+    );
   }
 
   get output() {

@@ -132,7 +132,7 @@ export const url =
     const origin = location.origin + "/";
     let ptn =
       "names" in options && !options.names
-        ? game.toString(true, true, omit(game.tags, ["player1", "player2"]))
+        ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
         : game.ptn;
     let url = compressToEncodedURIComponent(ptn);
     let params = {};

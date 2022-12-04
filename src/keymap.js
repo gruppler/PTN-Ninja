@@ -62,6 +62,7 @@ export const HOTKEYS = {
     shareURL: ["alt", "c"],
   },
   TRANSFORMS: {
+    applyTransform: ["shift", "+"],
     resetTransform: ["="],
     rotate180: ["-"],
     rotateLeft: ["["],
@@ -164,6 +165,7 @@ export const HOTKEY_NAMES = {
     shareURL: "Share URL",
   },
   TRANSFORMS: {
+    applyTransform: "Apply Transformation",
     resetTransform: "Reset Transformation",
     rotate180: "Rotate 180",
     rotateLeft: "Rotate Left",
