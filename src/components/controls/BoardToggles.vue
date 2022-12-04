@@ -6,6 +6,7 @@
     @shortkey="shortkey"
   >
     <FullscreenToggle
+      @contextmenu.prevent
       :target="fullscreenTarget"
       class="dimmed-btn"
       :ripple="false"
@@ -15,6 +16,7 @@
     />
 
     <q-btn
+      @contextmenu.prevent
       @click="board3D = !board3D"
       :icon="board3D ? '2d' : '3d'"
       class="dimmed-btn"
@@ -26,73 +28,7 @@
       <hint>{{ $t((board3D ? "2" : "3") + "D Board") }}</hint>
     </q-btn>
 
-    <template v-if="showAll">
-      <q-btn
-        @click="rotate180"
-        @contextmenu.prevent="resetTransform"
-        icon="rotate_180"
-        class="dimmed-btn"
-        :ripple="false"
-        :color="fg"
-        flat
-        fab
-      >
-        <hint>{{ $t("Rotate 180") }}</hint>
-      </q-btn>
-      <q-btn
-        @click="rotateLeft"
-        @contextmenu.prevent="resetTransform"
-        icon="rotate_left"
-        class="dimmed-btn"
-        :ripple="false"
-        :color="fg"
-        flat
-        fab
-      >
-        <hint>{{ $t("Rotate Left") }}</hint>
-      </q-btn>
-
-      <q-btn
-        @click="rotateRight"
-        @contextmenu.prevent="resetTransform"
-        icon="rotate_right"
-        class="dimmed-btn"
-        :ripple="false"
-        :color="fg"
-        flat
-        fab
-      >
-        <hint>{{ $t("Rotate Right") }}</hint>
-      </q-btn>
-
-      <q-btn
-        @click="flipHorizontal"
-        @contextmenu.prevent="resetTransform"
-        icon="flip_horizontal"
-        class="dimmed-btn"
-        :ripple="false"
-        :color="fg"
-        flat
-        fab
-      >
-        <hint>{{ $t("Flip Horizontally") }}</hint>
-      </q-btn>
-
-      <q-btn
-        @click="flipVertical"
-        @contextmenu.prevent="resetTransform"
-        icon="flip_vertical"
-        class="dimmed-btn"
-        :ripple="false"
-        :color="fg"
-        flat
-        fab
-      >
-        <hint>{{ $t("Flip Vertically") }}</hint>
-      </q-btn>
-    </template>
-    <q-fab
-      v-else
+    <q-btn
       @contextmenu.prevent="resetTransform"
       :direction="isPortrait ? 'down' : 'left'"
       icon="rotate_180"
@@ -100,31 +36,74 @@
       :ripple="false"
       :color="fg"
       flat
+      fab
     >
-      <q-fab-action @click="rotate180" icon="rotate_180" class="bg-bg">
-        <hint>{{ $t("Rotate 180") }}</hint>
-      </q-fab-action>
+      <hint>{{ $t("Transform Board") }}</hint>
 
-      <q-fab-action @click="rotateLeft" icon="rotate_left" class="bg-bg">
-        <hint>{{ $t("Rotate Left") }}</hint>
-      </q-fab-action>
-
-      <q-fab-action @click="rotateRight" icon="rotate_right" class="bg-bg">
-        <hint>{{ $t("Rotate Right") }}</hint>
-      </q-fab-action>
-
-      <q-fab-action
-        @click="flipHorizontal"
-        icon="flip_horizontal"
-        class="bg-bg"
-      >
-        <hint>{{ $t("Flip Horizontally") }}</hint>
-      </q-fab-action>
-
-      <q-fab-action @click="flipVertical" icon="flip_vertical" class="bg-bg">
-        <hint>{{ $t("Flip Vertically") }}</hint>
-      </q-fab-action>
-    </q-fab>
+      <q-menu transition-show="none" transition-hide="none" auto-close square>
+        <q-list>
+          <q-item @click="rotate180" clickable v-ripple>
+            <q-item-section side>
+              <q-icon name="rotate_180" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Rotate 180") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item @click="rotateLeft" clickable v-ripple>
+            <q-item-section side>
+              <q-icon name="rotate_left" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Rotate Left") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item @click="rotateRight" clickable v-ripple>
+            <q-item-section side>
+              <q-icon name="rotate_right" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Rotate Right") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item @click="flipHorizontal" clickable v-ripple>
+            <q-item-section side>
+              <q-icon name="flip_horizontal" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Flip Horizontally") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item @click="flipVertical" clickable v-ripple>
+            <q-item-section side>
+              <q-icon name="flip_vertical" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Flip Vertically") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <template v-if="isTransformed">
+            <q-separator />
+            <q-item @click="resetTransform" clickable v-ripple>
+              <q-item-section side>
+                <q-icon name="close" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("Reset") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item @click="applyTransform" clickable v-ripple>
+              <q-item-section side>
+                <q-icon name="apply" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("Apply") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-list>
+      </q-menu>
+    </q-btn>
   </div>
 </template>
 
@@ -158,15 +137,19 @@ export default {
     isPortrait() {
       return this.$store.state.ui.isPortrait;
     },
-    showAll() {
-      return this.isPortrait
-        ? this.$store.state.ui.boardSpace.width >= 453
-        : this.$store.state.ui.boardSpace.height >= 522;
+    boardTransform() {
+      return this.$store.state.ui.boardTransform;
+    },
+    isTransformed() {
+      return this.boardTransform[0] || this.boardTransform[1];
     },
   },
   methods: {
     resetTransform() {
       this.$store.dispatch("ui/RESET_TRANSFORM");
+    },
+    applyTransform() {
+      this.$store.dispatch("game/APPLY_TRANSFORM", this.boardTransform);
     },
     rotate180() {
       this.$store.dispatch("ui/ROTATE_180");

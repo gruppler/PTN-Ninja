@@ -212,6 +212,10 @@ For example:
 
 - Reset any board transformation
 
+#### `APPLY_TRANSFORM`
+
+- Apply the specified board transformation `[int a, int b]` where `a` is the number of clockwise rotations [0, 3], and `b` is the number of horizontal flips [0, 1].
+
 # URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.

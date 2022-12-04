@@ -13,6 +13,12 @@ export default class GameMutations {
     });
   }
 
+  transform(transform) {
+    let ptn = this.toString({ transform });
+    this.replacePTN(ptn);
+    return ptn;
+  }
+
   promoteBranch(branch) {
     let ply = this.branches[branch];
     if (!ply) {
@@ -337,7 +343,7 @@ export default class GameMutations {
     this.recordChange(() => {
       this.init({
         ...this.params,
-        ptn: this.toString(false),
+        ptn: this.toString({ showAllBranches: false }),
         state: { ...this.minState, targetBranch: "" },
       });
     });
