@@ -751,16 +751,25 @@ export default class GameBase {
     }
   }
 
-  toString({
-    tags,
-    showAllBranches = true,
-    showComments = true,
-    skipCache = false,
-    transform = null,
-  }) {
+  toString(options) {
+    options = Object.assign(
+      {
+        tags: undefined,
+        showAllBranches: true,
+        showComments: true,
+        skipCache: false,
+        transform: null,
+      },
+      options
+    );
     return (
-      this.headerText(tags, transform) +
-      this.moveText(showAllBranches, showComments, skipCache, transform)
+      this.headerText(options.tags, options.transform) +
+      this.moveText(
+        options.showAllBranches,
+        options.showComments,
+        options.skipCache,
+        options.transform
+      )
     );
   }
 
