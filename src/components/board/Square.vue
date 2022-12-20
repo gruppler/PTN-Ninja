@@ -395,7 +395,7 @@ export default {
     opacity: 0.35;
   }
   &.flatwin .hl.player {
-    opacity: 0.6;
+    opacity: 0.4;
   }
   &.eog.p1 .hl.player {
     background-color: $player1road;
