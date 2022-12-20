@@ -92,7 +92,7 @@ export default function render(board, options = {}) {
 
   const fontSize =
     (squareSize * textSizes[options.textSize] * board.game.size) / 5;
-  const stackCountFontSize = Math.min(squareSize * 0.2, fontSize);
+  const stackCountFontSize = Math.min(squareSize * 0.175, fontSize);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -490,33 +490,46 @@ export default function render(board, options = {}) {
         drawSquareHighlight();
       }
 
+      // Stack Count
+      if (options.stackCounts && square.pieces.length > 1) {
+        ctx.save();
+        ctx.font = stackCountFontSize + "px Roboto";
+        let isTextLight = theme.board1Dark;
+        ctx.fillStyle = theme.colors.board1;
+        if (hlSquares.includes(square.static.coord)) {
+          isTextLight = theme.primaryDark;
+          ctx.fillStyle = theme.colors.primary;
+        } else if (isDark) {
+          isTextLight = theme.board2Dark;
+          ctx.fillStyle = theme.colors.board2;
+        }
+        let radius = (stackCountFontSize * 1.5) / 2;
+        ctx.beginPath();
+        ctx.arc(
+          squareSize - radius,
+          squareSize - radius,
+          radius,
+          0,
+          2 * Math.PI
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = isTextLight
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          square.pieces.length,
+          squareSize - radius,
+          squareSize - radius * 0.9
+        );
+        ctx.restore();
+      }
+
       square.pieces.forEach(drawPiece);
       drawPiece(square.piece);
-    }
-
-    // Stack Count
-    if (options.stackCounts && square.pieces.length > 1) {
-      ctx.save();
-      ctx.font = stackCountFontSize + "px Roboto";
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = stackCountFontSize * 0.05;
-      ctx.shadowBlur = stackCountFontSize * 0.1;
-      let isTextLight = theme.board1Dark;
-      if (hlSquares.includes(square.static.coord)) {
-        isTextLight = theme.primaryDark;
-      } else if (isDark) {
-        isTextLight = theme.board2Dark;
-      }
-      ctx.shadowColor = isTextLight
-        ? theme.colors.textDark
-        : theme.colors.textLight;
-      ctx.fillStyle = isTextLight
-        ? theme.colors.textLight
-        : theme.colors.textDark;
-      ctx.textBaseline = "top";
-      ctx.textAlign = "right";
-      ctx.fillText(square.pieces.length, squareSize * 0.9, squareSize * 0.77);
-      ctx.restore();
     }
 
     ctx.restore();

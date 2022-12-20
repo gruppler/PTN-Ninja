@@ -327,38 +327,63 @@ export default {
     bottom: 0;
     left: 0;
     right: 0;
-    font-size: 0.65em;
+    font-size: 0.6em;
     line-height: 1em;
-    color: $textDark;
-    color: var(--q-color-textDark);
-    text-shadow: 0 0.05em 0.1em $textLight;
-    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
     span {
+      color: $textDark;
+      color: var(--q-color-textDark);
+      background-color: $board1;
+      background-color: var(--q-color-board1);
+      display: block;
       position: absolute;
-      top: 77%;
-      right: 10%;
+      bottom: 0;
+      right: 0;
+      width: 1.5em;
+      height: 1.5em;
+      line-height: 1.5em;
+      border-radius: 50%;
     }
   }
-  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
+  &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
     display: none;
   }
-  body.boardChecker.board1Dark &.light .stack-count,
-  body.boardChecker.board2Dark &.dark .stack-count,
-  body:not(.boardChecker).board1Dark & .stack-count,
-  body.primaryDark .board-container.highlight-squares &.current .stack-count {
+  body.boardChecker.board1Dark &.light .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
-    text-shadow: 0 0.05em 0.1em $textDark;
-    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+    background-color: $board1;
+    background-color: var(--q-color-board1);
+  }
+  body.boardChecker.board2Dark &.dark .stack-count span {
+    color: $textLight;
+    color: var(--q-color-textLight);
+    background-color: $board2;
+    background-color: var(--q-color-board2);
+  }
+  body:not(.boardChecker).board1Dark & .stack-count span {
+    color: $textLight;
+    color: var(--q-color-textLight);
+    background-color: $board1;
+    background-color: var(--q-color-board1);
+  }
+  body.primaryDark
+    .board-container.highlight-squares
+    &.current
+    .stack-count
+    span {
+    color: $textLight;
+    color: var(--q-color-textLight);
+    background-color: $primary;
+    background-color: var(--q-color-primary);
   }
   body:not(.primaryDark)
     .board-container.highlight-squares
     &.current
-    .stack-count {
+    .stack-count
+    span {
     color: $textDark;
     color: var(--q-color-textDark);
-    text-shadow: 0 0.05em 0.1em $textLight;
-    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+    background-color: $primary;
+    background-color: var(--q-color-primary);
   }
 
   .board-container.turn-1 & {
