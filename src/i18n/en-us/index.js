@@ -268,7 +268,7 @@ export default {
     fresh: "Fresh",
     ignis: "Ignis",
     luna: "Luna",
-    print: "Print",
+    paper: "Paper",
     retro: "Retro",
     stealth: "Stealth",
     terra: "Terra",
