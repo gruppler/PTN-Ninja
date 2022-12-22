@@ -99,6 +99,7 @@ export default {
         const canvas = game.board.render({
           ...this.thumbnailConfig,
           ply,
+          textSize: "xl",
           flatCounts: config.disableFlatCounts
             ? false
             : this.$store.state.ui.flatCounts,
