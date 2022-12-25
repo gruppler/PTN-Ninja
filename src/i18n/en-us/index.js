@@ -75,6 +75,7 @@ export default {
   Fullscreen: "Fullscreen",
   "Game Info": "Game Info",
   "Game Notifications": "Game Notifications",
+  "Game Options": "Game Options",
   "Game x closed": 'Closed "{game}"',
   Guest: "Guest",
   Height: "Height",
@@ -229,6 +230,7 @@ export default {
   "Trim to Current Ply": "Trim to Current Ply",
   "Turn Indicator": "Turn Indicator",
   UI: "UI", // User Interface
+  "UI Options": "UI Options",
   Undo: "Undo",
   "Unplayed Pieces": "Unplayed Pieces",
   Update: "Update",

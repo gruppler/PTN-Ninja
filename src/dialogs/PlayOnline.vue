@@ -23,9 +23,25 @@
       </dialog-header>
     </template>
 
-    <q-card style="width: 330px; max-width: 100%">
+    <q-card style="width: 350px; max-width: 100%">
       <smooth-reflow tag="recess" class="col">
         <q-list>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Private Game") }}</q-item-label>
+              <q-item-label caption>
+                {{
+                  $t(
+                    "hint." + (config.isPrivate ? "privateGame" : "publicGame")
+                  )
+                }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.isPrivate" />
+            </q-item-section>
+          </q-item>
+
           <q-item>
             <q-item-section>
               <q-btn-toggle
@@ -66,64 +82,70 @@
             </q-item-section>
           </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Private Game") }}</q-item-label>
-              <q-item-label caption>
-                {{
+          <!-- Game Info -->
+          <q-expansion-item
+            group="options"
+            v-model="showGameOptions"
+            :label="$t('Game Options')"
+            expand-separator
+          >
+            <GameInfo
+              class="q-pa-md"
+              :values="tags"
+              :show-all="showAll"
+              hide-missing
+            />
+          </q-expansion-item>
+
+          <!-- UI Options -->
+          <q-expansion-item
+            group="options"
+            :label="$t('UI Options')"
+            expand-separator
+          >
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
+                <q-item-label caption>{{
                   $t(
-                    "hint." + (config.isPrivate ? "privateGame" : "publicGame")
+                    config.allowScratchboard
+                      ? "hint.scratchboardAllowed"
+                      : "hint.scratchboardDenied"
                   )
-                }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.isPrivate" />
-            </q-item-section>
-          </q-item>
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.allowScratchboard" />
+              </q-item-section>
+            </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
-              <q-item-label caption>{{
-                $t(
-                  config.allowScratchboard
-                    ? "hint.scratchboardAllowed"
-                    : "hint.scratchboardDenied"
-                )
-              }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.allowScratchboard" />
-            </q-item-section>
-          </q-item>
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.flatCounts" />
+              </q-item-section>
+            </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.flatCounts" />
-            </q-item-section>
-          </q-item>
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.showRoads" />
+              </q-item-section>
+            </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.showRoads" />
-            </q-item-section>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.stackCounts" />
-            </q-item-section>
-          </q-item>
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="config.stackCounts" />
+              </q-item-section>
+            </q-item>
+          </q-expansion-item>
         </q-list>
 
         <q-inner-loading :showing="loading" />
@@ -136,6 +158,8 @@
       <message-output :error="error" content-class="q-ma-md" />
 
       <q-card-actions align="right">
+        <MoreToggle v-show="showGameOptions" v-model="showAll" />
+        <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           @click="create"
@@ -153,24 +177,52 @@
 <script>
 import PlayerName from "../components/controls/PlayerName";
 import OpponentName from "../components/controls/OpponentName";
+import GameInfo from "../components/controls/GameInfo";
+import MoreToggle from "../components/controls/MoreToggle.vue";
+
+import Game from "../Game";
 
 import { cloneDeep } from "lodash";
 
+const TAGS = {
+  size: "",
+  tps: "",
+  komi: "",
+  opening: "",
+  flats: "",
+  caps: "",
+  flats1: "",
+  caps1: "",
+  flats2: "",
+  caps2: "",
+  // clock: "",
+  round: "",
+  event: "",
+};
+
 export default {
   name: "PlayOnline",
-  components: { PlayerName, OpponentName },
+  components: { PlayerName, OpponentName, GameInfo, MoreToggle },
   data() {
     const user = this.$store.state.online.user;
     const config = cloneDeep(this.$store.state.ui.onlineConfig);
     if (!user || user.isAnonymous) {
       config.isPrivate = true;
     }
+    const tags = { ...TAGS };
+    Object.keys(TAGS).forEach((key) => {
+      tags[key] = this.$game.tag(key) || "";
+    });
+    tags.tps = this.$game.board.tps;
     return {
       config,
+      tags,
       error: "",
       isPlayerValid: false,
       isOpponentValid: false,
       opponentName: "",
+      showGameOptions: true,
+      showAll: false,
       loading: false,
     };
   },
@@ -236,7 +288,7 @@ export default {
         this.error = null;
         this.loading = true;
         const id = await this.$store.dispatch("online/CREATE_GAME", {
-          game: this.$game,
+          game: new Game({ tags: this.tags }),
           config: {
             isPrivate: this.config.isPrivate,
             playerSeat: this.config.playerSeat,

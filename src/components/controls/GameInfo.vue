@@ -1,7 +1,14 @@
 <template>
   <div class="q-gutter-y-md column no-wrap">
     <!-- Game Name -->
-    <q-input v-model="name" name="name" :label="$t('Name')" clearable filled>
+    <q-input
+      v-show="isVisible('name')"
+      v-model="name"
+      name="name"
+      :label="$t('Name')"
+      clearable
+      filled
+    >
       <template v-slot:prepend>
         <q-icon name="file" />
       </template>
@@ -138,12 +145,19 @@
       </div>
     </div>
 
-    <div class="row">
+    <div
+      class="row"
+      v-show="isVisible('player1', 'player2', 'rating1', 'rating2')"
+    >
       <div class="col">
-        <div class="row q-gutter-md q-mb-md">
+        <div
+          v-show="isVisible('player1', 'rating1')"
+          class="row q-gutter-md q-mb-md"
+        >
           <!-- Player 1 Account -->
           <PlayerName
             v-if="game && !game.isLocal && player === 1"
+            v-show="isVisible('player1')"
             class="col-grow"
             v-model="tags.player1"
             :player="player"
@@ -155,6 +169,7 @@
           <!-- Player 1 Name -->
           <q-input
             v-else
+            v-show="isVisible('player1')"
             class="col-grow"
             v-model="tags.player1"
             name="player1"
@@ -203,6 +218,7 @@
           <!-- Player 2 Account -->
           <PlayerName
             v-if="game && !game.isLocal && player === 2"
+            v-show="isVisible('player2')"
             class="col-grow"
             v-model="tags.player2"
             :player="player"
@@ -214,6 +230,7 @@
           <!-- Player 2 Name -->
           <q-input
             v-else
+            v-show="isVisible('player2')"
             class="col-grow"
             v-model="tags.player2"
             name="player2"
@@ -271,6 +288,7 @@
     <div class="row q-gutter-md q-mt-none">
       <!-- Size -->
       <q-select
+        v-show="isVisible('size')"
         class="col-grow"
         v-model="tags.size"
         :label="$t('Size')"
@@ -290,7 +308,7 @@
       <!-- TPS -->
       <q-input
         ref="tps"
-        v-show="tags.tps || !game || !game.plies.length"
+        v-show="isVisible('tps')"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
@@ -302,6 +320,7 @@
         autocapitalize="off"
         spellcheck="false"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -317,6 +336,48 @@
           />
         </template>
       </q-input>
+    </div>
+
+    <div
+      v-show="isVisible('komi', 'opening')"
+      class="row q-gutter-md q-mt-none"
+    >
+      <!-- Komi -->
+      <q-input
+        class="col-grow"
+        v-show="isVisible('komi')"
+        v-model="tags.komi"
+        name="komi"
+        type="number"
+        min="-20.5"
+        max="20.5"
+        step="0.5"
+        :label="$t('Komi')"
+        :rules="rules('komi')"
+        hide-bottom-space
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="komi" />
+        </template>
+      </q-input>
+
+      <!-- Opening -->
+      <q-select
+        class="col-grow"
+        v-show="isVisible('opening')"
+        v-model="tags.opening"
+        :options="openings"
+        :label="$t('Opening')"
+        name="opening"
+        map-options
+        emit-value
+        filled
+      >
+        <template v-slot:prepend>
+          <q-icon name="opening" />
+        </template>
+      </q-select>
     </div>
 
     <div
@@ -343,7 +404,6 @@
             :label="$t('Flats')"
             :rules="rules('flats')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -364,7 +424,6 @@
             :label="$t('Caps')"
             :rules="rules('caps')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -390,7 +449,6 @@
             :label="$t('Flats1')"
             :rules="rules('flats1')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -410,7 +468,6 @@
             :label="$t('Caps1')"
             :rules="rules('caps1')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -432,7 +489,6 @@
             :label="$t('Flats2')"
             :rules="rules('flats2')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -452,7 +508,6 @@
             :label="$t('Caps2')"
             :rules="rules('caps2')"
             hide-bottom-space
-            clearable
             filled
           >
             <template v-slot:prepend>
@@ -473,50 +528,6 @@
         </div>
         <q-icon v-show="!separatePieceCounts" name="players" />
       </q-btn>
-    </div>
-
-    <div
-      v-show="isVisible('komi', 'opening')"
-      class="row q-gutter-md q-mt-none"
-    >
-      <!-- Komi -->
-      <q-input
-        class="col-grow"
-        v-show="isVisible('komi')"
-        v-model="tags.komi"
-        name="komi"
-        type="number"
-        min="-20.5"
-        max="20.5"
-        step="0.5"
-        :label="$t('Komi')"
-        :rules="rules('komi')"
-        hide-bottom-space
-        clearable
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="komi" />
-        </template>
-      </q-input>
-
-      <!-- Opening -->
-      <q-select
-        class="col-grow"
-        v-show="isVisible('opening')"
-        v-model="tags.opening"
-        :options="openings"
-        :label="$t('Opening')"
-        name="opening"
-        map-options
-        emit-value
-        clearable
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="opening" />
-        </template>
-      </q-select>
     </div>
 
     <div class="row q-gutter-md q-mt-none">
@@ -700,7 +711,12 @@ import { map, throttle } from "lodash";
 export default {
   name: "GameInfo",
   components: { Result, PlayerName },
-  props: ["game", "values", "showAll"],
+  props: {
+    game: Object,
+    values: Object,
+    showAll: Boolean,
+    hideMissing: Boolean,
+  },
   data() {
     const openings = map(
       (
@@ -761,6 +777,13 @@ export default {
     };
   },
   computed: {
+    primaryTags() {
+      let tags = ["name", "player1", "player2", "size", "komi"];
+      if (!this.game || !this.game.plies.length) {
+        tags.push("tps");
+      }
+      return tags;
+    },
     primaryFG() {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
@@ -921,15 +944,23 @@ export default {
     },
     isVisible() {
       const tags = [...arguments];
-      return (
-        this.showAll ||
-        tags.find(
+      if (
+        this.hideMissing &&
+        this.values &&
+        !tags.some((tag) => tag in this.values)
+      ) {
+        return false;
+      }
+      if (this.showAll || tags.some((tag) => this.primaryTags.includes(tag))) {
+        return true;
+      } else {
+        return tags.some(
           (tag) =>
-            (!!this.tags[tag] &&
+            (Boolean(this.tags[tag]) &&
               (tag !== "opening" || this.tags.opening !== "swap")) ||
             (document.activeElement && document.activeElement.name === tag)
-        )
-      );
+        );
+      }
     },
     init() {
       this.updateTags();
