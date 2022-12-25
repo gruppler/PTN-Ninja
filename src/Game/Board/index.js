@@ -331,7 +331,7 @@ export default class Board extends Aggregation(
     });
     Object.freeze(played);
     Object.freeze(remaining);
-    Object.assign(this.output.board.piecesPlayed, remaining);
+    Object.assign(this.output.board.piecesPlayed, played);
     Object.assign(this.output.board.piecesRemaining, remaining);
     Object.assign(this.output.board.pieces, output);
   }
