@@ -84,11 +84,6 @@ const routes = [
         component: () => import("../dialogs/Account"),
       },
       {
-        name: "share-online",
-        path: "/online/new/:qr?",
-        component: () => import("../dialogs/ShareOnline"),
-      },
-      {
         name: "play-online",
         path: "/online/new/play",
         component: () => import("../dialogs/PlayOnline"),
@@ -102,6 +97,11 @@ const routes = [
         name: "puzzle-online",
         path: "/online/new/puzzle",
         component: () => import("../dialogs/PuzzleOnline"),
+      },
+      {
+        name: "share-online",
+        path: "/online/new/:qr?",
+        component: () => import("../dialogs/ShareOnline"),
       },
       {
         name: "load-online",
