@@ -100,13 +100,15 @@ export default {
           ...this.thumbnailConfig,
           ply,
           textSize: "xl",
-          flatCounts: config.flatCounts
-            ? this.$store.state.ui.flatCounts
-            : false,
-          stackCounts: config.stackCounts
-            ? this.$store.state.ui.stackCounts
-            : false,
-          showRoads: config.showRoads ? false : this.$store.state.ui.showRoads,
+          flatCounts:
+            !config.isOnline || config.flatCounts
+              ? this.$store.state.ui.flatCounts
+              : false,
+          stackCounts: false,
+          showRoads:
+            !config.isOnline || config.showRoads
+              ? this.$store.state.ui.showRoads
+              : false,
           theme: this.$store.state.ui.theme,
         });
 
