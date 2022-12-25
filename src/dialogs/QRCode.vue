@@ -9,7 +9,12 @@
     :maximized="maximized"
     no-route-dismiss
   >
-    <canvas ref="qrcode" class="qr-canvas flex flex-center" v-close-popup />
+    <canvas
+      ref="qrcode"
+      class="qr-canvas flex flex-center"
+      style="max-width: 100%; max-height: 100%"
+      v-close-popup
+    />
   </q-dialog>
 </template>
 
