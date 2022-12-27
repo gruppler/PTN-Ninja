@@ -349,9 +349,9 @@
         v-model="tags.komi"
         name="komi"
         type="number"
-        min="-20.5"
-        max="20.5"
-        step="0.5"
+        :min="KOMI_MIN"
+        :max="KOMI_MAX"
+        :step="0.5"
         :label="$t('Komi')"
         :rules="rules('komi')"
         hide-bottom-space
@@ -696,7 +696,7 @@
 import PlayerName from "../controls/PlayerName";
 import Result from "../PTN/Result";
 
-import Tag, { formats } from "../../Game/PTN/Tag";
+import Tag, { formats, KOMI_MIN, KOMI_MAX } from "../../Game/PTN/Tag";
 import TPS from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
 import {
@@ -774,6 +774,8 @@ export default {
           label: value ? ResultTag.parse(value) : "",
         })
       ),
+      KOMI_MIN,
+      KOMI_MAX,
     };
   },
   computed: {
@@ -935,7 +937,7 @@ export default {
       } else if (tag.startsWith("caps")) {
         rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
       } else if (tag === "komi") {
-        rules[0] = (value) => value >= -20.5 && value <= 20.5;
+        rules[0] = (value) => value >= KOMI_MIN && value <= KOMI_MAX;
         rules[1] = (value) => !value || formats[tag].test(value);
       } else {
         rules[0] = (value) => !value || formats[tag].test(value);

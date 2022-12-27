@@ -4,6 +4,9 @@ import Result from "./Result";
 import { padStart } from "lodash";
 import { parse, parseISO } from "date-fns";
 
+export const KOMI_MIN = -20.5;
+export const KOMI_MAX = 20.5;
+
 const capitalized = {
   caps: "Caps",
   caps1: "Caps1",
@@ -172,7 +175,7 @@ export default class Tag {
             this.value < 0
               ? Math.ceil(this.value) - 0.5
               : Math.floor(this.value) + 0.5;
-          this.value = Math.max(-20.5, Math.min(20.5, this.value));
+          this.value = Math.max(KOMI_MIN, Math.min(KOMI_MAX, this.value));
         }
         break;
       case "opening":
