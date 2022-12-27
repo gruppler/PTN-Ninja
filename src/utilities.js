@@ -111,7 +111,7 @@ export const notifyError = (error) => {
     message: formatError(error),
     type: "negative",
     timeout: 0,
-    position: "top-right",
+    position: "bottom-right",
     actions: [{ icon: "close", color: "textLight" }],
   });
 };
