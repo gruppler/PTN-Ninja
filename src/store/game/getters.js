@@ -20,7 +20,7 @@ export const uniqueName =
 export const disabledOptions = (state) => {
   const game = Vue.prototype.$game;
   const disabled = [];
-  if (!game.hasEnded) {
+  if (game.isOnline && !game.hasEnded) {
     if (!game.config.flatCounts) {
       disabled.push("flatCounts");
     }
