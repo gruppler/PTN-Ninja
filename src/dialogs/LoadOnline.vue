@@ -3,40 +3,14 @@
     <template v-slot:header>
       <dialog-header icon="online" :title="$t('Online')">
         <template v-slot:buttons>
-          <!-- New Puzzle -->
-          <q-btn
-            icon="puzzle"
-            :to="{ name: 'puzzle-online' }"
-            replace
-            class="q-field__focusable-action q-mr-sm"
-            dense
-            flat
-          >
-            <hint>{{ $t("New Puzzle") }}</hint>
-          </q-btn>
-
-          <!-- New Analysis -->
-          <q-btn
-            icon="analysis"
-            :to="{ name: 'analysis-online' }"
-            replace
-            class="q-field__focusable-action q-mr-sm"
-            dense
-            flat
-          >
-            <hint>{{ $t("New Analysis") }}</hint>
-          </q-btn>
-
-          <!-- New Game -->
           <q-btn
             icon="add"
-            :to="{ name: 'play-online' }"
-            replace
+            @click="add"
             class="q-field__focusable-action q-mr-sm"
             dense
             flat
           >
-            <hint>{{ $t("New Game") }}</hint>
+            <hint>{{ $t("Create") }}</hint>
           </q-btn>
         </template>
       </dialog-header>
@@ -78,6 +52,22 @@ export default {
     };
   },
   methods: {
+    add() {
+      if (this.$refs.gameTable) {
+        switch (this.$refs.gameTable.filter) {
+          case "puzzle":
+            this.$router.replace({ name: "puzzle-online" });
+            break;
+          case "analysis":
+            this.$router.replace({ name: "analysis-online" });
+            break;
+          default:
+            this.$router.replace({ name: "play-online" });
+        }
+      } else {
+        this.$router.replace({ name: "play-online" });
+      }
+    },
     close() {
       this.$refs.dialog.hide();
     },
