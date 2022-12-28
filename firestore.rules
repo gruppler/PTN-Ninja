@@ -13,6 +13,10 @@ service cloud.firestore {
       return request.auth.uid != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin;
+    }
+
     function isUser(uid) {
       return request.auth.uid == uid;
     }
@@ -51,13 +55,13 @@ service cloud.firestore {
       match /playerChat/{message} {
         allow read: if isPlayer(game, "games");
         allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow update, delete: if isUser(existingData().uid) || isAdmin();
       }
 
       match /spectatorChat/{message} {
         allow read: if isSpectator(game);
         allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow update, delete: if isUser(existingData().uid) || isAdmin();
       }
     }
 
@@ -82,36 +86,36 @@ service cloud.firestore {
     match /analyses/{analysis} {
     	allow read: if isSignedIn();
       allow create: if isUser(incomingData().uid);
-      allow update, delete: if isUser(existingData().uid);
+      allow update, delete: if isUser(existingData().uid) || isAdmin();
 
       match /comments/{comment} {
         allow read: if isSignedIn();
         allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow update, delete: if isUser(existingData().uid) || isAdmin();
       }
     }
     
     match /puzzles/{puzzle} {
     	allow read: if isSignedIn();
       allow create: if isUser(incomingData().uid);
-      allow update, delete: if isUser(existingData().uid);
+      allow update, delete: if isUser(existingData().uid) || isAdmin();
 
       match /comments/{comment} {
         allow read: if isSignedIn();
         allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow update, delete: if isUser(existingData().uid) || isAdmin();
       }
 
       match /solutions/{solution} {
     	  allow list: if isSignedIn();
     	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
         allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow update, delete: if isUser(existingData().uid) || isAdmin();
 
         match /comments/{comment} {
           allow read: if isSignedIn();
           allow create: if isUser(incomingData().uid);
-          allow update, delete: if isUser(existingData().uid);
+          allow update, delete: if isUser(existingData().uid) || isAdmin();
         }
       }
     }
