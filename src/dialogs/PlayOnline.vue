@@ -90,9 +90,12 @@
             expand-separator
           >
             <GameInfo
+              ref="gameInfo"
               class="q-pa-md"
               :values="tags"
               :show-all="showAll"
+              @submit="create"
+              @validate="isGameInfoValid = $event"
               hide-missing
             />
           </q-expansion-item>
@@ -155,16 +158,14 @@
     <template v-slot:footer>
       <q-separator />
 
-      <message-output :error="error" content-class="q-ma-md" />
-
       <q-card-actions align="right">
         <MoreToggle v-show="showGameOptions" v-model="showAll" />
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          @click="create"
+          @click="submit"
           :label="$t('Create')"
-          :disabled="!isPlayerValid || !isOpponentValid"
+          :disabled="!isValid"
           :loading="loading"
           color="primary"
           flat
@@ -219,9 +220,9 @@ export default {
     return {
       config,
       tags,
-      error: "",
       isPlayerValid: false,
       isOpponentValid: false,
+      isGameInfoValid: false,
       opponentName: "",
       showGameOptions: true,
       showAll: false,
@@ -273,6 +274,9 @@ export default {
           return "textDark";
       }
     },
+    isValid() {
+      return this.isPlayerValid && this.isOpponentValid && this.isGameInfoValid;
+    },
   },
   methods: {
     close() {
@@ -281,13 +285,15 @@ export default {
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },
+    submit() {
+      this.$refs.gameInfo.submit();
+    },
     async create() {
-      if (!this.isPlayerValid || !this.isOpponentValid) {
+      if (!this.isValid) {
         return;
       }
 
       try {
-        this.error = null;
         this.loading = true;
         const id = await this.$store.dispatch("online/CREATE_GAME", {
           game: new Game({ tags: this.tags }),
@@ -308,7 +314,7 @@ export default {
         });
         this.close();
       } catch (error) {
-        this.error = error;
+        this.$store.dispatch("ui/NOTIFY_ERROR", error);
       } finally {
         this.loading = false;
       }

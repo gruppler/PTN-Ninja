@@ -729,6 +729,7 @@ export default {
       })
     );
     return {
+      isValid: false,
       name: "",
       tags: {
         caps: null,
@@ -944,6 +945,9 @@ export default {
       }
       return rules;
     },
+    validate() {
+      return (this.isValid = !this.hasErrors());
+    },
     isVisible() {
       const tags = [...arguments];
       if (
@@ -967,6 +971,7 @@ export default {
     init() {
       this.updateTags();
       this.name = this.game ? this.game.name : this.generatedName;
+      this.validate();
     },
   },
   mounted() {
@@ -1024,12 +1029,18 @@ export default {
         }
         const hasChanges = Object.values(changes).length > 0;
         this.changes = changes;
+        if (this.hasChanges) {
+          this.validate();
+        }
         if (this.hasChanges !== hasChanges) {
           this.hasChanges = hasChanges;
           this.$emit("hasChanges", hasChanges);
         }
       }, 100),
       deep: true,
+    },
+    isValid(isValid) {
+      this.$emit("validate", isValid);
     },
   },
 };
