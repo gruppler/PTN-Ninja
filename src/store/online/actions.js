@@ -1,24 +1,11 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
-
-import { compact, isArray, isEqual, isEqualWith, omit } from "lodash";
+import { toDate } from "date-fns";
+import { omit } from "lodash";
 
 import Game from "../../Game";
-import { toDate, now } from "../../Game/PTN/Tag";
 import { call } from "../../utilities";
-
-const configToDB = (config) => omit(config, ["id", "player", "unseen"]);
-
-const snapshotToGameJSON = (doc) => {
-  let game = doc.data();
-  game.config.isOnline = true;
-  game.config.id = doc.id;
-  game.config.player = game.config.players
-    ? game.config.players.indexOf(auth.currentUser.uid) + 1
-    : 0;
-  game.tags.date = toDate(game.tags.date);
-  return game;
-};
+export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
 export const INIT = ({ commit, dispatch, state }) => {
   return new Promise((resolve, reject) => {
@@ -28,11 +15,11 @@ export const INIT = ({ commit, dispatch, state }) => {
     auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
-        dispatch("LISTEN_CURRENT_GAME");
+        // dispatch("LISTEN_CURRENT_GAME");
         commit("INIT");
         resolve();
       } else {
-        commit("UNLISTEN_CURRENT_GAME");
+        // commit("UNLISTEN_CURRENT_GAME");
         dispatch("ANONYMOUS")
           .then(() => {
             commit("INIT");
@@ -129,18 +116,48 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
   return auth.confirmPasswordReset(oobCode, password);
 };
 
+const gameConverter = {
+  toFirestore(game) {
+    game.config = omit(game.config, ["isOnline", "id", "player"]);
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    data.config.isOnline = true;
+    data.config.id = snapshot.id;
+    data.config.player = data.config.players
+      ? data.config.players.indexOf(auth.currentUser.uid) + 1
+      : 0;
+    data.tags.date = toDate(data.tags.date);
+    return data;
+  },
+};
+
+//  const analysisConverter = {
+//   toFirestore(game) {
+//     return game.json;
+//   },
+//   fromFirestore(snapshot, options) {
+//     const data = snapshot.data(options);
+//     return new Game(snapshot.id, data);
+//   },
+// };
+
+//  const puzzleConverter = {
+//   toFirestore(game) {
+//     return game.json;
+//   },
+//   fromFirestore(snapshot, options) {
+//     const data = snapshot.data(options);
+//     return new Game(snapshot.id, data);
+//   },
+// };
+
 export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
   if (!game || !(game instanceof Game)) {
     throw new Error("Invalid game");
   }
-  let state = {
-    hasEnded: game.hasEnded,
-    tps: game.board.tps,
-    ply: game.ply ? game.ply.toString(true) : null,
-    branch: game.board.branch,
-    plyIndex: game.board.plyIndex,
-    plyIsDone: game.board.plyIsDone,
-  };
+  let state = game.JSONState;
   let tags = game.JSONTags;
   return call("createGame", { config, state, tags });
   // dispatch("LISTEN_CURRENT_GAME");
@@ -152,53 +169,54 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   const playerName = getters.playerName(game.config.isPrivate);
   const gameDoc = db.collection("games").doc(game.config.id);
   Loading.show();
-  let gamesSnapshot = await gameDoc.get();
-  // Check that the player is still open
-  let gameData = gamesSnapshot.data();
-  if (gameData.config.players[player - 1]) {
-    Loading.hide();
-    throw new Error("Player position already filled");
-  }
+  // let gamesSnapshot = await gameDoc.get();
+  // // Check that the player is still open
+  // let gameData = gamesSnapshot.data();
+  // if (gameData.config.players[player - 1]) {
+  //   Loading.hide();
+  //   throw new Error("Player position already filled");
+  // }
 
-  // Update game config and tags
-  let config = {
-    ...game.config,
-    ...gameData.config,
-    players: [...gameData.config.players],
-  };
-  config.players[player - 1] = state.user.uid;
+  // // Update game config and tags
+  // let config = {
+  //   ...game.config,
+  //   ...gameData.config,
+  //   players: [...gameData.config.players],
+  // };
+  // config.players[player - 1] = state.user.uid;
 
-  let tags = { ["player" + player]: playerName, ...now() };
-  game.setTags(tags, false);
-  dispatch("SAVE_CONFIG", { game, config }, { root: true });
-  dispatch("SAVE_PTN", game.toString(), { root: true });
-  game.clearHistory();
+  // let tags = { ["player" + player]: playerName, ...now() };
+  // game.setTags(tags, false);
+  // dispatch("SAVE_CONFIG", { game, config }, { root: true });
+  // dispatch("SAVE_PTN", game.toString(), { root: true });
+  // game.clearHistory();
 
-  let changes = {
-    config: configToDB(config),
-    tags: game.JSONTags,
-  };
+  // let changes = {
+  //   config: configToDB(config),
+  //   tags: game.JSONTags,
+  // };
 
-  // Update name
-  if (game.isDefaultName) {
-    changes.name = game.generateName();
-    game.name = changes.name;
-  }
+  // // Update name
+  // if (game.isDefaultName) {
+  //   changes.name = game.generateName();
+  //   game.name = changes.name;
+  // }
 
-  await gameDoc.update(changes);
+  // await gameDoc.update(changes);
   Loading.hide();
 };
 
-export const LOAD_GAME = async function (
-  { dispatch, state },
-  { id, isPrivate }
-) {
+export const LOAD_GAME = async function ({ state }, { id, collection }) {
   if (!id) {
     throw new Error("Missing game ID");
   }
 
   Loading.show();
-  const gameDoc = db.collection(isPrivate ? "gamesPrivate" : "games").doc(id);
+  const gameDoc = db
+    .collection(collection)
+    .doc(id)
+    .withConverter(gameConverter);
+  console.log(gameDoc);
   let gameJSON;
 
   // Load game
@@ -207,10 +225,10 @@ export const LOAD_GAME = async function (
     if (!gameSnapshot.exists) {
       throw new Error("Game does not exist");
     } else {
-      gameJSON = snapshotToGameJSON(gameSnapshot, state);
+      gameJSON = (gameSnapshot, state);
 
       // Load moves
-      // let moveDocs = await gameDoc.collection("moves").get();
+      // let moveDocs = await gameDoc.collection("branches").get();
       // gameJSON.moves = [];
       // moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
 
@@ -227,173 +245,91 @@ export const LOAD_GAME = async function (
   }
 };
 
-export const LISTEN_CURRENT_GAME = function ({ commit, dispatch, state }) {
-  dispatch("UNLISTEN_CURRENT_GAME");
-  const gameIDs = compact(this.state.game.list.map((game) => game.config.id));
-  if (!gameIDs.length) {
-    return;
+export const LISTEN_PUBLIC_GAMES = async function (
+  { dispatch },
+  { listenerPath, where, limit, pagination, next, error, unlisten }
+) {
+  const converter = gameConverter;
+  const path = "games";
+  const stateKey = "publicGames";
+  await dispatch("UNLISTEN", path);
+  return dispatch("LISTEN_COLLECTION", {
+    converter,
+    path,
+    stateKey,
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    unlisten,
+  });
+};
+
+export const LISTEN_PRIVATE_GAMES = async function (
+  { dispatch },
+  { listenerPath, where, limit, pagination, next, error, unlisten }
+) {
+  const converter = gameConverter;
+  const path = "gamesPrivate";
+  const stateKey = "privateGames";
+  await dispatch("UNLISTEN", path);
+  return dispatch("LISTEN_COLLECTION", {
+    converter,
+    path,
+    stateKey,
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    unlisten,
+  });
+};
+
+// export const LISTEN_ANALYSES = async ({ dispatch }) => {
+//   const converter = analysisConverter;
+//   const path = "analyses";
+//   const stateKey = "analyses";
+//   await dispatch("UNLISTEN", path);
+//   return dispatch("LISTEN_COLLECTION", {
+//     converter,
+//     path,
+//     stateKey,
+//     listenerPath,
+//     where,
+//     limit,
+//     pagination,
+//     next,
+//     error,
+//     unlisten,
+//   });
+// };
+
+// export const LISTEN_PUZZLES = async ({ dispatch }) => {
+//   const converter = puzzleConverter;
+//   const path = "puzzles";
+//   const stateKey = "puzzles";
+//   await dispatch("UNLISTEN", path);
+//   return dispatch("LISTEN_COLLECTION", {
+//     converter,
+//     path,
+//     stateKey,
+//     listenerPath,
+//     where,
+//     limit,
+//     pagination,
+//     next,
+//     error,
+//     unlisten,
+//   });
+// };
+
+export const UNLISTEN = ({ commit, state }, path) => {
+  if (state.listeners[path]) {
+    state.listeners[path].unsubscribe();
+    commit("UNLISTEN", path);
   }
-  let unsubscribe = db
-    .collection("games")
-    .where(firebase.firestore.FieldPath.documentId(), "in", gameIDs)
-    .onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          const currentGame = this.state.game.list[0];
-          let game, stateGame, isActive;
-          let isChanged = false;
-          switch (change.type) {
-            case "added":
-            case "modified":
-              game = snapshotToGameJSON(change.doc, state);
-              stateGame = this.state.game.list.find(
-                (g) => g.config.id === game.config.id
-              );
-              isActive =
-                currentGame && game.config.id === currentGame.config.id;
-              if (stateGame) {
-                if (!isEqual(game.name, stateGame.name)) {
-                  isChanged = true;
-                  console.log("UPDATED NAME", game, game.name, stateGame.name);
-                  this.dispatch("game/SET_NAME", {
-                    oldName: stateGame.name,
-                    newName: game.name,
-                  });
-                }
-                if (!isEqual(game.board, stateGame.state)) {
-                  isChanged = true;
-                  console.log(
-                    "UPDATED STATE",
-                    game,
-                    game.board,
-                    stateGame.state
-                  );
-                  this.dispatch("game/SAVE_STATE", {
-                    game,
-                    gameState: game.board,
-                  });
-                }
-                if (
-                  (isChanged && !isActive) ||
-                  game.config.player !== stateGame.config.player ||
-                  !isEqualWith(
-                    configToDB(game.config),
-                    configToDB(stateGame.config),
-                    (a, b) => {
-                      if (isArray(a) && isArray(b)) {
-                        return isEqual(a, b);
-                      }
-                    }
-                  )
-                ) {
-                  console.log(
-                    "UPDATED CONFIG",
-                    game,
-                    game.config,
-                    stateGame.config
-                  );
-                  this.dispatch("game/SAVE_CONFIG", {
-                    game,
-                    config: { ...game.config, unseen: !isActive },
-                  });
-                }
-              }
-              break;
-          }
-        });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-  commit("LISTEN_CURRENT_GAME", unsubscribe);
-};
-
-export const UNLISTEN_CURRENT_GAME = ({ commit, state }) => {
-  if (state.currentGameListener) {
-    state.currentGameListener();
-    commit("UNLISTEN_CURRENT_GAME");
-  }
-};
-
-export const LISTEN_PLAYER_GAMES = ({ commit, dispatch, state }) => {
-  dispatch("UNLISTEN_PLAYER_GAMES");
-  let unsubscribe = db
-    .collection("games")
-    .where("config.players", "array-contains", state.user.uid)
-    .orderBy("tags.date", "desc")
-    .limit(100)
-    .onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          let game;
-          switch (change.type) {
-            case "added":
-            case "modified":
-              game = snapshotToGameJSON(change.doc, state);
-              commit("SET_PLAYER_GAME", game);
-              break;
-            case "removed":
-              commit("REMOVE_PLAYER_GAME", change.doc.id);
-              break;
-          }
-        });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-  commit("LISTEN_PLAYER_GAMES", unsubscribe);
-};
-
-export const UNLISTEN_PLAYER_GAMES = ({ commit, state }) => {
-  if (state.playerGamesListener) {
-    state.playerGamesListener();
-    commit("UNLISTEN_PLAYER_GAMES");
-  }
-};
-
-export const LISTEN_PUBLIC_GAMES = ({ commit, dispatch, state }) => {
-  dispatch("UNLISTEN_PUBLIC_GAMES");
-  let unsubscribe = db
-    .collection("games")
-    .where("config.isPrivate", "==", false)
-    .orderBy("tags.date", "desc")
-    .limit(100)
-    .onSnapshot(
-      (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          let game;
-          switch (change.type) {
-            case "added":
-            case "modified":
-              game = snapshotToGameJSON(change.doc, state);
-              commit("SET_PUBLIC_GAME", game);
-              break;
-            case "removed":
-              commit("REMOVE_PUBLIC_GAME", change.doc.id);
-              break;
-          }
-        });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
-  commit("LISTEN_PUBLIC_GAMES", unsubscribe);
-};
-
-export const UNLISTEN_PUBLIC_GAMES = ({ commit, state }) => {
-  if (state.publicGamesListener) {
-    state.publicGamesListener();
-    commit("UNLISTEN_PUBLIC_GAMES");
-  }
-};
-
-export const UPDATE_GAME = (context, gameJSON) => {
-  let config = configToDB(gameJSON.config);
-  return db
-    .collection("games")
-    .doc(gameJSON.config.id)
-    .update({ ...gameJSON, config });
 };

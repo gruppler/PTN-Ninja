@@ -70,6 +70,7 @@
         <GameSelectorOption
           :option="scope.opt"
           :show-icon="hasOnlineGames"
+          show-close
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         />

@@ -15,7 +15,7 @@
     <q-item-section>
       <q-item-label>{{ option.label }}</q-item-label>
     </q-item-section>
-    <q-item-section v-if="!isLastGame" side>
+    <q-item-section v-if="canClose" side>
       <q-btn @click.stop="close" icon="close" flat dense />
     </q-item-section>
   </q-item>
@@ -29,6 +29,7 @@ export default {
   props: {
     option: Object,
     showIcon: Boolean,
+    showClose: Boolean,
   },
   data() {
     return {
@@ -59,8 +60,8 @@ export default {
         return "file";
       }
     },
-    isLastGame() {
-      return this.$store.state.game.list.length === 1;
+    canClose() {
+      return this.showClose && this.$store.state.game.list.length > 1;
     },
   },
   methods: {
@@ -123,7 +124,9 @@ export default {
       }
     },
     close() {
-      this.$store.dispatch("game/REMOVE_GAME", this.option.value);
+      if (this.canClose) {
+        this.$store.dispatch("game/REMOVE_GAME", this.option.value);
+      }
     },
   },
   mounted() {

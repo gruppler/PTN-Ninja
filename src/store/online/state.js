@@ -1,13 +1,12 @@
 export default function () {
   return {
     initialized: false,
-    openGamesListeners: {},
-    privateGames: {},
-    currentGameListener: null,
+    listeners: {},
     playerGames: {},
-    playerGamesListener: null,
+    privateGames: {},
     publicGames: {},
-    publicGamesListener: null,
+    analyses: {},
+    puzzles: {},
     user: null,
   };
 }

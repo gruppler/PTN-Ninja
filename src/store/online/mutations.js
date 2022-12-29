@@ -1,5 +1,6 @@
 import Vue from "vue";
 import { isEmpty, pick } from "lodash";
+export { SET, REMOVE, LISTEN, UNLISTEN } from "../../utilities";
 
 export const INIT = (state) => {
   state.initialized = true;
@@ -15,22 +16,6 @@ export const SET_USER = (state, user) => {
   );
   state.playerGames = {};
   state.privateGames = {};
-};
-
-export const LISTEN_CURRENT_GAME = (state, unsubscribe) => {
-  state.currentGameListener = unsubscribe;
-};
-
-export const UNLISTEN_CURRENT_GAME = (state) => {
-  state.currentGameListener = null;
-};
-
-export const LISTEN_PLAYER_GAMES = (state, unsubscribe) => {
-  state.playerGamesListener = unsubscribe;
-};
-
-export const UNLISTEN_PLAYER_GAMES = (state) => {
-  state.playerGamesListener = null;
 };
 
 export const SET_PLAYER_GAME = (state, game) => {
@@ -51,12 +36,4 @@ export const SET_PUBLIC_GAME = (state, game) => {
 
 export const REMOVE_PUBLIC_GAME = (state, id) => {
   Vue.delete(state.publicGames, id);
-};
-
-export const LISTEN_PUBLIC_GAMES = (state, unsubscribe) => {
-  state.publicGamesListener = unsubscribe;
-};
-
-export const UNLISTEN_PUBLIC_GAMES = (state) => {
-  state.publicGamesListener = null;
 };

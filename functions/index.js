@@ -77,10 +77,12 @@ exports.createGame = functions.https.onCall(
           config.players[opponentSeat - 1] = null;
         }
       }
+      config.isOpen = config.players.includes(null);
     }
 
     try {
       // Validate game arguments
+      const createdAt = new Date();
       new Board({ ...config, ...tags });
       let game = {
         name: "",
@@ -88,7 +90,9 @@ exports.createGame = functions.https.onCall(
         state,
         tags,
         createdBy: uid,
-        createdOn: new Date(),
+        createdAt,
+        updatedBy: uid,
+        updatedAt: createdAt,
       };
       // Add game to the database
       let gameDoc = await db

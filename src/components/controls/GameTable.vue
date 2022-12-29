@@ -13,6 +13,7 @@
     :selection="selectionMode || 'multiple'"
     :selected.sync="selected"
     :loading="loading"
+    color="primary"
     hide-bottom
     v-on="$listeners"
     v-bind="$attrs"
@@ -67,6 +68,7 @@
 
     <template v-slot:body="props">
       <q-tr
+        v-if="fullscreen"
         :props="props"
         @click="select(props.row)"
         class="non-selectable"
@@ -110,18 +112,20 @@
           {{ props.row.tags.size + "x" + props.row.tags.size }}
         </q-td>
         <q-td key="date" :props="props">
-          <relative-time :value="props.row.tags.date" :invert="fullscreen" />
+          <relative-time :value="props.row.tags.date" />
         </q-td>
         <q-td key="result" :props="props">
           <Result :result="props.row.tags.result" />
         </q-td>
         <hint v-if="!isWide">{{ props.row.name }}</hint>
       </q-tr>
+      <GameSelectorOption v-else :option="props.row" />
     </template>
   </q-table>
 </template>
 
 <script>
+import GameSelectorOption from "./GameSelectorOption.vue";
 import AccountBtn from "../general/AccountBtn.vue";
 import ListSelect from "../controls/ListSelect.vue";
 import Result from "../PTN/Result";
@@ -132,12 +136,13 @@ const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
-  components: { AccountBtn, ListSelect, Result },
+  components: { GameSelectorOption, AccountBtn, ListSelect, Result },
   props: ["value", "selection-mode"],
   data() {
     return {
       error: "",
       loading: false,
+      listener: null,
       pagination: {
         rowsPerPage: 0,
         sortBy: "date",
@@ -263,29 +268,34 @@ export default {
       },
     },
     games() {
-      return this.playerGames
-        .concat(
-          differenceBy(
-            this.publicGames,
-            this.playerGames,
-            (game) => game.config.id
-          )
-        )
-        .map((game) => ({
+      let games = Object.values(this.$store.state.online.publicGames).map(
+        (game) => ({
           ...game,
           isActive: this.isActive(game),
           player: game.config.player,
-        }));
-    },
-    publicGames() {
-      return Object.values(this.$store.state.online.publicGames).sort(
-        this.sortGames
+        })
       );
-    },
-    playerGames() {
-      return Object.values(this.$store.state.online.playerGames).sort(
-        this.sortGames
-      );
+
+      switch (this.filter) {
+        case "ongoing":
+          games = games.filter(
+            (game) => !game.config.hasEnded && !game.config.isOpen
+          );
+          break;
+        case "open":
+          games = games.filter(
+            (game) => !game.config.hasEnded && game.config.isOpen
+          );
+          break;
+        case "recent":
+          games = games.filter(
+            (game) => game.config.hasEnded && !game.config.isOpen
+          );
+          break;
+        default:
+          [];
+      }
+      return games;
     },
     activeGameIDs() {
       return compact(this.$store.state.game.list.map((game) => game.config.id));
@@ -305,9 +315,6 @@ export default {
     },
   },
   methods: {
-    sortGames(a, b) {
-      return b.tags.date - a.tags.date;
-    },
     playerIcon(player, isPrivate) {
       return this.$store.getters["ui/playerIcon"](player, isPrivate);
     },
@@ -348,20 +355,70 @@ export default {
     isActive(game) {
       return this.activeGameIDs.includes(game.config.id);
     },
+    async init() {
+      this.loading = true;
+
+      const next = () => {
+        this.loading = false;
+      };
+      const error = (error) => {
+        this.$store.dispatch("ui/NOTIFY_ERROR", error);
+      };
+
+      // Unlisten
+      if (this.listener) {
+        await this.$store.dispatch("online/UNLISTEN", this.listener);
+        this.listener = null;
+      }
+
+      const limit = 100;
+      const pagination = {
+        sortBy: "updatedAt",
+        descending: true,
+      };
+
+      switch (this.filter) {
+        case "ongoing":
+          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+            where: ["config.hasEnded", "!=", true],
+            next,
+            error,
+          });
+        case "open":
+          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+            where: ["config.isOpen", "==", true],
+            next,
+            error,
+          });
+        case "recent":
+          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+            limit,
+            pagination,
+            next,
+            error,
+          });
+        case "analysis":
+          break;
+        case "puzzle":
+          break;
+      }
+    },
   },
   mounted() {
-    if (this.user) {
-      this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
-    }
-    this.$store.dispatch("online/LISTEN_PUBLIC_GAMES");
+    this.init();
   },
   beforeDestroy() {
-    this.$store.dispatch("online/UNLISTEN_PLAYER_GAMES");
-    this.$store.dispatch("online/UNLISTEN_PUBLIC_GAMES");
+    // Unlisten
+    if (this.listener) {
+      this.$store.dispatch("online/UNLISTEN", this.listener);
+    }
   },
   watch: {
     "user.uid"() {
-      this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
+      // this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
+    },
+    async filter() {
+      this.init();
     },
   },
 };

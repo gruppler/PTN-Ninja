@@ -646,9 +646,6 @@ export default {
     },
   },
   watch: {
-    game() {
-      this.$store.dispatch("online/LISTEN_CURRENT_GAME");
-    },
     user(user, oldUser) {
       if (this.$game && this.$game.config.isOnline) {
         if (

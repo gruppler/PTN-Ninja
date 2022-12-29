@@ -27,9 +27,9 @@ export default class GameOnline {
   get json() {
     return {
       name: this.name,
-      state: this.minState,
-      config: Object.assign({}, this.config),
       tags: this.JSONTags,
+      config: this.JSONConfig,
+      state: this.JSONState,
       comments: this.JSONComments(
         (this.notes[-1] || []).concat(this.chatlog[-1] || [])
       ),
@@ -39,6 +39,22 @@ export default class GameOnline {
 
   set json(json) {
     this.init(json);
+  }
+
+  get JSONConfig() {
+    const config = Object.assign({}, this.config);
+    return config;
+  }
+
+  get JSONState() {
+    return {
+      hasEnded: this.hasEnded,
+      branch: this.board.branch,
+      plyIndex: this.board.ply ? this.board.ply.index : 0,
+      plyIsDone: this.board.plyIsDone,
+      tps: this.board.tps,
+      ply: this.board.ply ? this.board.ply.toString(true) : null,
+    };
   }
 
   get JSONTags() {
