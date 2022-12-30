@@ -68,7 +68,6 @@
 
     <template v-slot:body="props">
       <q-tr
-        v-if="fullscreen"
         :props="props"
         @click="select(props.row)"
         class="non-selectable"
@@ -80,46 +79,50 @@
         :key="props.row.id"
       >
         <td></td>
-        <q-td key="role" :props="props">
-          <q-icon
-            v-if="props.row.player || props.row.isActive"
-            :name="playerIcon(props.row.player, props.row.config.isPrivate)"
-            size="md"
-          >
-            <hint>{{ roleText(props.row.player) }}</hint>
-          </q-icon>
-        </q-td>
-        <q-td key="name" :props="props">
-          {{ props.row.name }}
-        </q-td>
-        <q-td key="player1" :props="props">
-          {{ props.row.tags.player1 }}
-        </q-td>
-        <q-td key="player2" :props="props">
-          {{ props.row.tags.player2 }}
-        </q-td>
-        <q-td key="players" :props="props">
-          <div v-if="props.row.tags.player1">
-            <q-icon :name="playerIcon(1)" size="sm" />
+        <template v-if="fullscreen">
+          <q-td key="role" :props="props">
+            <q-icon
+              v-if="props.row.player || props.row.isActive"
+              :name="playerIcon(props.row.player, props.row.config.isPrivate)"
+              size="md"
+            >
+              <hint>{{ roleText(props.row.player) }}</hint>
+            </q-icon>
+          </q-td>
+          <q-td key="name" :props="props">
+            {{ props.row.name }}
+          </q-td>
+          <q-td key="player1" :props="props">
             {{ props.row.tags.player1 }}
-          </div>
-          <div v-if="props.row.tags.player2">
-            <q-icon :name="playerIcon(2)" size="sm" />
+          </q-td>
+          <q-td key="player2" :props="props">
             {{ props.row.tags.player2 }}
-          </div>
-        </q-td>
-        <q-td key="size" :props="props">
-          {{ props.row.tags.size + "x" + props.row.tags.size }}
-        </q-td>
-        <q-td key="date" :props="props">
-          <relative-time :value="props.row.tags.date" />
-        </q-td>
-        <q-td key="result" :props="props">
-          <Result :result="props.row.tags.result" />
-        </q-td>
-        <hint v-if="!isWide">{{ props.row.name }}</hint>
+          </q-td>
+          <q-td key="players" :props="props">
+            <div v-if="props.row.tags.player1">
+              <q-icon :name="playerIcon(1)" size="sm" />
+              {{ props.row.tags.player1 }}
+            </div>
+            <div v-if="props.row.tags.player2">
+              <q-icon :name="playerIcon(2)" size="sm" />
+              {{ props.row.tags.player2 }}
+            </div>
+          </q-td>
+          <q-td key="size" :props="props">
+            {{ props.row.tags.size + "x" + props.row.tags.size }}
+          </q-td>
+          <q-td key="date" :props="props">
+            <relative-time :value="props.row.tags.date" />
+          </q-td>
+          <q-td key="result" :props="props">
+            <Result :result="props.row.tags.result" />
+          </q-td>
+          <hint v-if="!isWide">{{ props.row.name }}</hint>
+        </template>
+        <td v-else style="max-width: 100vw" :colspan="visibleColumns.length">
+          <GameSelectorOption class="q-pa-none" :option="props.row" />
+        </td>
       </q-tr>
-      <GameSelectorOption v-else :option="props.row" />
     </template>
   </q-table>
 </template>
@@ -130,7 +133,7 @@ import AccountBtn from "../general/AccountBtn.vue";
 import ListSelect from "../controls/ListSelect.vue";
 import Result from "../PTN/Result";
 
-import { compact, differenceBy, without } from "lodash";
+import { compact, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
 
@@ -271,8 +274,10 @@ export default {
       let games = Object.values(this.$store.state.online.publicGames).map(
         (game) => ({
           ...game,
-          isActive: this.isActive(game),
+          label: game.name,
+          value: game.config.id,
           player: game.config.player,
+          isActive: this.isActive(game),
         })
       );
 

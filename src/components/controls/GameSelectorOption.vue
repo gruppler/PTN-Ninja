@@ -7,8 +7,8 @@
         :style="{ maxHeight: thumbnailHeight + 'px' }"
       />
     </q-item-section>
-    <q-item-section side v-if="showIcon">
-      <q-icon :name="icon" :class="{ 'text-primary': option.value === 0 }">
+    <q-item-section side v-if="showIcon" class="fg-inherit">
+      <q-icon :name="icon" class="fg-inherit">
         <q-badge v-if="option.config.unseen" floating />
       </q-icon>
     </q-item-section>
