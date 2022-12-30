@@ -375,6 +375,9 @@ export default class GameBase {
           } else if (Nop.test(ptn)) {
             // Placeholder
             item = Nop.parse(ptn);
+            if (this.plies.length === 0) {
+              this.firstPlayer = 2;
+            }
             if (!move.ply1) {
               move.ply1 = item;
             } else if (!move.ply2 && !move.ply1.result) {

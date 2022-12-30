@@ -331,7 +331,7 @@ export default class Board extends Aggregation(
     });
     Object.freeze(played);
     Object.freeze(remaining);
-    Object.assign(this.output.board.piecesPlayed, remaining);
+    Object.assign(this.output.board.piecesPlayed, played);
     Object.assign(this.output.board.piecesRemaining, remaining);
     Object.assign(this.output.board.pieces, output);
   }
@@ -519,7 +519,7 @@ export default class Board extends Aggregation(
     let moves = [];
     if (this.plies) {
       this.plies.forEach((ply) => {
-        if (ply.player === 2 || !ply.move.ply2) {
+        if (ply.player === 2 || !ply.move.ply2 || ply.move.ply2.isNop) {
           moves.push(ply.move);
         }
       });
