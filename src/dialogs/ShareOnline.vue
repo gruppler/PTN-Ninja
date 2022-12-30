@@ -49,6 +49,7 @@
                   @click="qrCode(gameURL)"
                   name="qrcode"
                   class="q-field__focusable-action"
+                  left
                 />
                 <q-icon
                   @click="copy(gameURL)"
@@ -116,7 +117,7 @@ export default {
       return this.$store.state.online.user;
     },
     isSpectator() {
-      return !this.user || !this.$game.getPlayerFromUID(this.user.id);
+      return !this.user || !this.$game.getPlayerFromUID(this.user.uid);
     },
     gameURL() {
       return this.$game.isLocal
