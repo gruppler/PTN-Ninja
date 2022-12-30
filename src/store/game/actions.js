@@ -168,7 +168,10 @@ export const REMOVE_GAME = function (
         dispatch("SET_GAME", state.list[0]);
       }
       const icon = game.config.isOnline
-        ? getters.playerIcon(game.config.player, game.config.isPrivate)
+        ? this.getters["ui/playerIcon"](
+            game.config.player,
+            game.config.isPrivate
+          )
         : "file";
       Vue.prototype.notify({
         icon,
