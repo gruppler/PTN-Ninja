@@ -8,7 +8,6 @@
             icon="online"
             :to="{ name: 'load-online', params: { filter: 'analysis' } }"
             replace
-            class="q-field__focusable-action q-mr-sm"
             dense
             flat
           >

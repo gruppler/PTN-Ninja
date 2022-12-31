@@ -12,7 +12,6 @@
           <q-btn
             icon="info"
             @click="$router.replace({ name: 'info-view' })"
-            class="q-field__focusable-action q-mr-sm"
             dense
             flat
           >

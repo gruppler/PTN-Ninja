@@ -22,7 +22,7 @@
       </q-item-label>
     </q-item-section>
     <q-item-section class="fg-inherit" side top>
-      <div class="row reverse items-center q-gutter-sm">
+      <div class="row reverse items-center q-gutter-md">
         <q-btn v-close-popup v-if="!noCloseBtn" icon="close" dense flat>
           <hint>{{ $t("Close") }}</hint>
         </q-btn>

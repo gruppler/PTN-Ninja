@@ -9,14 +9,7 @@
       <dialog-header icon="players" :title="$t('Play Online')">
         <template v-slot:buttons>
           <!-- Online Games -->
-          <q-btn
-            icon="online"
-            :to="{ name: 'load-online' }"
-            replace
-            class="q-field__focusable-action q-mr-sm"
-            dense
-            flat
-          >
+          <q-btn icon="online" :to="{ name: 'load-online' }" replace dense flat>
             <hint>{{ $tc("Online Game", 100) }}</hint>
           </q-btn>
         </template>

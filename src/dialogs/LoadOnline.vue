@@ -3,13 +3,7 @@
     <template v-slot:header>
       <dialog-header icon="online" :title="$t('Online')">
         <template v-slot:buttons>
-          <q-btn
-            icon="add"
-            @click="add"
-            class="q-field__focusable-action q-mr-sm"
-            dense
-            flat
-          >
+          <q-btn icon="add" @click="add" dense flat>
             <hint>{{ $t("Create") }}</hint>
           </q-btn>
         </template>
