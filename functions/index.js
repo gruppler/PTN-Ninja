@@ -96,7 +96,7 @@ exports.createGame = functions.https.onCall(
       };
       // Add game to the database
       let gameDoc = await db
-        .collection(config.isPrivate ? "gamesPrivate" : "games")
+        .collection(config.isPrivate ? "gamesPrivate" : "gamesPublic")
         .add(game);
 
       // TODO: Add branches/plies
@@ -164,7 +164,7 @@ async function deleteInactiveUser(user) {
   try {
     games = await admin
       .firestore()
-      .collection("games")
+      .collection("gamesPublic")
       .where("config.players", "array-contains", user.uid)
       .get();
   } catch (error) {

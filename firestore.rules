@@ -41,7 +41,7 @@ service cloud.firestore {
       allow delete: if isUser(existingData().uid);
     }
 
-    match /games/{game} {
+    match /gamesPublic/{game} {
     	allow read: if isSignedIn();
       allow write: if false;
 

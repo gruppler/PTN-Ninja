@@ -118,13 +118,14 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
 
 const gameConverter = {
   toFirestore(game) {
-    game.config = omit(game.config, ["isOnline", "id", "player"]);
+    game.config = omit(game.config, ["isOnline", "id", "player", "type"]);
     return game.json;
   },
   fromFirestore(snapshot, options) {
     const data = snapshot.data(options);
     data.config.isOnline = true;
     data.config.id = snapshot.id;
+    data.config.collection = snapshot.ref.parent.id;
     data.config.player = data.config.players
       ? data.config.players.indexOf(auth.currentUser.uid) + 1
       : 0;
@@ -157,9 +158,11 @@ export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
   if (!game || !(game instanceof Game)) {
     throw new Error("Invalid game");
   }
-  let state = game.JSONState;
-  let tags = game.JSONTags;
-  return call("createGame", { config, state, tags });
+  const state = game.JSONState;
+  const tags = game.JSONTags;
+  const response = await call("createGame", { config, state, tags });
+  console.log(response);
+  return response;
   // dispatch("LISTEN_CURRENT_GAME");
 };
 
@@ -167,7 +170,7 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   // Join as player if still open
   const player = game.openPlayer;
   const playerName = getters.playerName(game.config.isPrivate);
-  const gameDoc = db.collection("games").doc(game.config.id);
+  const gameDoc = db.collection("gamesPublic").doc(game.config.id);
   Loading.show();
   // let gamesSnapshot = await gameDoc.get();
   // // Check that the player is still open
@@ -206,10 +209,9 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   Loading.hide();
 };
 
-export const LOAD_GAME = async function ({ state }, { id, collection }) {
-  if (!id) {
-    throw new Error("Missing game ID");
-  }
+export const LOAD_GAME = async function ({ state }, game) {
+  console.log(game);
+  return;
 
   Loading.show();
   const gameDoc = db
@@ -250,8 +252,8 @@ export const LISTEN_PUBLIC_GAMES = async function (
   { listenerPath, where, limit, pagination, next, error, unlisten }
 ) {
   const converter = gameConverter;
-  const path = "games";
-  const stateKey = "publicGames";
+  const path = "gamesPublic";
+  const stateKey = "gamesPublic";
   await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,
@@ -273,7 +275,7 @@ export const LISTEN_PRIVATE_GAMES = async function (
 ) {
   const converter = gameConverter;
   const path = "gamesPrivate";
-  const stateKey = "privateGames";
+  const stateKey = "gamesPrivate";
   await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,

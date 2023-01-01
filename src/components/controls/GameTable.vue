@@ -271,12 +271,10 @@ export default {
       },
     },
     games() {
-      let games = Object.values(this.$store.state.online.publicGames).map(
+      let games = Object.values(this.$store.state.online.gamesPublic).map(
         (game) => ({
           ...game,
-          label: game.name,
           value: game.config.id,
-          player: game.config.player,
           isActive: this.isActive(game),
         })
       );

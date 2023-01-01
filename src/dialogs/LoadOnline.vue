@@ -20,10 +20,10 @@
       <q-card-actions align="right">
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
+          @click="ok"
           :label="$t('OK')"
-          @click="$refs.gameInfo.submit()"
           :loading="loading"
-          :disabled="$refs.gameInfo && $refs.gameInfo.hasError"
+          :disabled="!selectedGames.length"
           :flat="!selectedGames.length"
           color="primary"
         />
@@ -47,19 +47,18 @@ export default {
   },
   methods: {
     add() {
-      if (this.$refs.gameTable) {
-        switch (this.$refs.gameTable.filter) {
-          case "puzzle":
-            this.$router.replace({ name: "puzzle-online" });
-            break;
-          case "analysis":
-            this.$router.replace({ name: "analysis-online" });
-            break;
-          default:
-            this.$router.replace({ name: "play-online" });
-        }
-      } else {
-        this.$router.replace({ name: "play-online" });
+      if (!this.$refs.gameTable) {
+        return;
+      }
+      switch (this.$refs.gameTable.filter) {
+        case "puzzle":
+          this.$router.replace({ name: "puzzle-online" });
+          break;
+        case "analysis":
+          this.$router.replace({ name: "analysis-online" });
+          break;
+        default:
+          this.$router.replace({ name: "play-online" });
       }
     },
     close() {
@@ -67,11 +66,9 @@ export default {
     },
     async ok() {
       this.selectedGames.forEach((game) => {
-        this.$store
-          .dispatch("online/LOAD_GAME", game.config.id)
-          .catch((error) => {
-            this.notifyError(error);
-          });
+        this.$store.dispatch("online/LOAD_GAME", game).catch((error) => {
+          this.notifyError(error);
+        });
       });
       this.selectedGames = [];
 

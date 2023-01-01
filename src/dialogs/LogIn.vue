@@ -171,7 +171,7 @@ export default {
         this.tab === "login" &&
         this.user &&
         this.user.isAnonymous &&
-        Object.values(this.$store.state.online.privateGames).length
+        Object.values(this.$store.state.online.gamesPrivate).length
       ) {
         return this.$t("warning.logIn");
       }
@@ -257,7 +257,7 @@ export default {
         this.submitting = false;
       };
 
-      if (Object.values(this.$store.state.online.privateGames).length) {
+      if (Object.values(this.$store.state.online.gamesPrivate).length) {
         this.prompt({
           title: this.$t("confirm.logInTitle"),
           message: this.$t("confirm.logInMessage"),

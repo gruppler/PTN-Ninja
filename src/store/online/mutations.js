@@ -15,25 +15,25 @@ export const SET_USER = (state, user) => {
     pick(user, ["uid", "email", "emailVerified", "displayName", "isAnonymous"])
   );
   state.playerGames = {};
-  state.privateGames = {};
+  state.gamesPrivate = {};
 };
 
 export const SET_PLAYER_GAME = (state, game) => {
   Vue.set(state.playerGames, game.config.id, game);
   if (game.config.isPrivate) {
-    Vue.set(state.privateGames, game.config.id, game);
+    Vue.set(state.gamesPrivate, game.config.id, game);
   }
 };
 
 export const REMOVE_PLAYER_GAME = (state, id) => {
   Vue.delete(state.playerGames, id);
-  Vue.delete(state.privateGames, id);
+  Vue.delete(state.gamesPrivate, id);
 };
 
 export const SET_PUBLIC_GAME = (state, game) => {
-  Vue.set(state.publicGames, game.config.id, game);
+  Vue.set(state.gamesPublic, game.config.id, game);
 };
 
 export const REMOVE_PUBLIC_GAME = (state, id) => {
-  Vue.delete(state.publicGames, id);
+  Vue.delete(state.gamesPublic, id);
 };
