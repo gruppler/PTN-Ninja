@@ -353,6 +353,7 @@ export default {
     "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
     "auth/wrong-password": "Incorrect password",
+    localstorageFull: "LocalStorage is full; please close some games.",
   },
 
   success: {

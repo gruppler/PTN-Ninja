@@ -27,7 +27,14 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     theme = getters.theme() || THEMES.find((t) => t.id === "classic");
   }
   if (!state.embed) {
-    LocalStorage.set("theme", theme);
+    try {
+      LocalStorage.set("theme", theme);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SET_THEME", theme);
 };
@@ -35,7 +42,14 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
 export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
-      LocalStorage.set(key, value);
+      try {
+        LocalStorage.set(key, value);
+      } catch (error) {
+        if (error.code === 22) {
+          error = "localstorageFull";
+        }
+        notifyError(error);
+      }
     }
     commit("SET_UI", [key, value]);
     if (key === "themeID" || key === "theme") {
@@ -47,7 +61,14 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
 export const TOGGLE_UI = ({ state, commit }, key) => {
   if (key in state.defaults) {
     if (!state.embed) {
-      LocalStorage.set(key, !state[key]);
+      try {
+        LocalStorage.set(key, !state[key]);
+      } catch (error) {
+        if (error.code === 22) {
+          error = "localstorageFull";
+        }
+        notifyError(error);
+      }
     }
     commit("SET_UI", [key, !state[key]]);
   }
