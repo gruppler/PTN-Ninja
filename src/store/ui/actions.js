@@ -1,4 +1,6 @@
 import Vue from "vue";
+import JSZip from "jszip";
+
 import {
   copyToClipboard,
   exportFile,
@@ -152,15 +154,20 @@ export const OPEN = function (context, callback) {
   input.click();
 };
 
-export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
+export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
+  let success = false;
   if (!isArray(files)) {
-    files = [files];
+    success = exportFile(files[0].name, files[0]);
+  } else {
+    let zip = new JSZip();
+    files.forEach((file) => {
+      zip.file(file.name, file);
+    });
+    let zipFile = await zip.generateAsync({
+      type: JSZip.support.uint8array ? "uint8array" : "string",
+    });
+    success = exportFile("ptn.zip", zipFile);
   }
-
-  let success = true;
-  files.forEach((file) => {
-    success &= exportFile(file.name, file);
-  });
 
   if (!success) {
     dispatch("NOTIFY_ERROR", "Unable to download");
