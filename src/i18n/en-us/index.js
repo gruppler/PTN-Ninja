@@ -180,6 +180,7 @@ export default {
   "Scroll threshold": "Scroll threshold",
   "Scrub Bar": "Scrub Bar",
   "Scrub with scroll wheel": "Scrub with scroll wheel",
+  Search: "Search",
   "Select Branch": "Select Branch",
   Share: "Share",
   "Share PNG": "Share PNG",

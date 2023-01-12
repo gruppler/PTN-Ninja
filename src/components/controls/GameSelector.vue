@@ -5,10 +5,14 @@
       v-if="games.length"
       class="text-subtitle1 no-wrap"
       :value="0"
-      :options="games"
+      :options="showSearch ? filteredGames : games"
+      :use-input="showSearch"
+      :input-debounce="0"
+      @blur="showSearch = false"
+      @filter="search"
       @input="select"
       @keydown.esc="$refs.select.blur"
-      @keydown.delete="close($refs.select.optionIndex)"
+      @keydown.delete="showSearch ? null : close($refs.select.optionIndex)"
       :display-value="name"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
@@ -20,6 +24,10 @@
       filled
       dense
     >
+      <template v-slot:selected>
+        {{ showSearch ? "" : games[0].label }}
+      </template>
+
       <template v-slot:prepend>
         <q-btn
           :label="games.length"
@@ -76,13 +84,21 @@
       </template>
 
       <template v-slot:append>
-        <div class="row">
+        <div class="row q-gutter-sm">
           <q-badge
             v-if="unseenCount"
             text-color="ui"
             :label="unseenCount"
             class="q-mr-sm"
           />
+          <q-icon
+            name="search"
+            @click.stop="toggleSearch"
+            class="q-field__focusable-action q-mr-sm"
+            :color="showSearch ? 'primary' : ''"
+          >
+            <hint>{{ $t("Search") }}</hint>
+          </q-icon>
           <slot />
         </div>
       </template>
@@ -92,10 +108,19 @@
 
 <script>
 import GameSelectorOption from "./GameSelectorOption";
+import { compact, escapeRegExp } from "lodash";
 
 export default {
   name: "GameSelector",
   components: { GameSelectorOption },
+  data() {
+    return {
+      showSearch: false,
+      filteredGames: null,
+      query: "",
+      searchTerms: [],
+    };
+  },
   computed: {
     config() {
       return this.$store.state.game.config;
@@ -162,6 +187,81 @@ export default {
     select(index) {
       this.$store.dispatch("game/SELECT_GAME", { index });
       this.$emit("input", this.$store.state.game.list[0]);
+    },
+    toggleSearch() {
+      this.showSearch = !this.showSearch;
+      if (this.showSearch) {
+        this.$refs.select.inputValue = this.query;
+      }
+    },
+    search(query, update) {
+      this.query = query;
+      update(
+        () => this.updateFiltered(),
+        (ref) => {
+          if (query.trim() !== "" && ref.options.length > 0) {
+            ref.setOptionIndex(-1);
+            ref.moveOptionSelection(1, true);
+          }
+        }
+      );
+    },
+    updateFiltered() {
+      this.filteredGames = this.games.filter((option) => {
+        let name = option.label.toLowerCase();
+        return this.searchTerms.every((term) => {
+          console.log(name, term, term.test(name));
+          return term.test(name);
+        });
+      });
+    },
+  },
+  watch: {
+    games() {
+      this.updateFiltered();
+    },
+    query(query) {
+      let queryTerms = query.trim().toLowerCase().split(/\s+/);
+      let attrs = query.match(
+        /(?:^|\s)([3-8]x[3-8]|(1\/2|[01RF])-(1\/2|[01RF])|[0-9.-]+)(?=$|\s)/gi
+      );
+      let terms = [];
+
+      // Parse terms
+      if (attrs && attrs.length > 0) {
+        // Extract game attributes
+        attrs = attrs.map((attr) => attr.trim());
+        terms.push(...attrs);
+
+        // Extract 'vs' term
+        queryTerms = queryTerms.map((term, i) =>
+          attrs.includes(term) ? null : term
+        );
+        for (let i = 0; i < queryTerms.length; i++) {
+          let term = queryTerms[i];
+          if (term === "vs") {
+            let vsTerm = "";
+            let j = i;
+            while (--j >= 0 && queryTerms[j] !== null) {
+              vsTerm = queryTerms[j] + " " + vsTerm;
+              queryTerms[j] = null;
+            }
+            vsTerm += term;
+            j = i;
+            while (++j <= queryTerms.length - 1 && queryTerms[j] !== null) {
+              vsTerm += " " + queryTerms[j];
+              queryTerms[j] = null;
+            }
+            queryTerms[i] = vsTerm;
+            i = j - 1;
+          }
+        }
+        terms.unshift(...compact(queryTerms));
+      }
+
+      this.searchTerms = terms.map(
+        (term) => new RegExp(`(?:^|\\s)(${escapeRegExp(term)})(?=$|\\s)`, "gi")
+      );
     },
   },
 };
