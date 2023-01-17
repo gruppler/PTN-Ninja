@@ -1,5 +1,4 @@
 import Vue from "vue";
-import { i18n } from "../../boot/i18n";
 import { cloneDeep } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";

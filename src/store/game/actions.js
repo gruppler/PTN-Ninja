@@ -2,7 +2,7 @@ import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { throttle } from "lodash";
-import { notifyError } from "../../utilities";
+import { notifyError, notifyWarning } from "../../utilities";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -21,23 +21,38 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
 
   game.name = getters.uniqueName(game.name);
   gameNames.unshift(game.name);
-  LocalStorage.set("games", gameNames);
-  LocalStorage.set("ptn-" + game.name, game.ptn);
-  if (game.board || game.state) {
-    LocalStorage.set("state-" + game.name, game.minState || game.state);
-  }
-  if (game.config) {
-    LocalStorage.set("config-" + game.name, game.config);
-  } else {
-    game.config = {};
-  }
-  if (game.history) {
-    LocalStorage.set("history-" + game.name, game.history);
-    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-  }
-  if (game.editingTPS !== undefined) {
-    LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
-  } else {
+  try {
+    LocalStorage.set("games", gameNames);
+    LocalStorage.set("ptn-" + game.name, game.ptn);
+    if (game.board || game.state) {
+      LocalStorage.set("state-" + game.name, game.minState || game.state);
+    }
+    if (game.config) {
+      LocalStorage.set("config-" + game.name, game.config);
+    } else {
+      game.config = {};
+    }
+    if (game.history) {
+      LocalStorage.set("history-" + game.name, game.history);
+      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    }
+    if (game.editingTPS !== undefined) {
+      LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
+    } else {
+      LocalStorage.remove("editingTPS-" + game.name);
+    }
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+    gameNames.shift();
+    LocalStorage.set("games", gameNames);
+    LocalStorage.remove("ptn-" + game.name);
+    LocalStorage.remove("state-" + game.name);
+    LocalStorage.remove("config-" + game.name);
+    LocalStorage.remove("history-" + game.name);
+    LocalStorage.remove("historyIndex-" + game.name);
     LocalStorage.remove("editingTPS-" + game.name);
   }
 
@@ -60,29 +75,47 @@ export const ADD_GAMES = function (
 ) {
   const gameNames = LocalStorage.getItem("games") || [];
 
-  games.forEach((game, i) => {
+  for (let i = 0; i < games.length; i++) {
+    const game = games[i];
     game.name = getters.uniqueName(game.name);
     gameNames.splice(index + i, 0, game.name);
-    LocalStorage.set("games", gameNames);
-    LocalStorage.set("ptn-" + game.name, game.ptn);
-    if (game.board || game.state) {
-      LocalStorage.set("state-" + game.name, game.minState || game.state);
-    }
-    if (game.config) {
-      LocalStorage.set("config-" + game.name, game.config);
-    } else {
-      game.config = {};
-    }
-    if (game.history) {
-      LocalStorage.set("history-" + game.name, game.history);
-      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    }
-    if (game.editingTPS !== undefined) {
-      LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
-    } else {
+    try {
+      LocalStorage.set("games", gameNames);
+      LocalStorage.set("ptn-" + game.name, game.ptn);
+      if (game.board || game.state) {
+        LocalStorage.set("state-" + game.name, game.minState || game.state);
+      }
+      if (game.config) {
+        LocalStorage.set("config-" + game.name, game.config);
+      } else {
+        game.config = {};
+      }
+      if (game.history) {
+        LocalStorage.set("history-" + game.name, game.history);
+        LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+      }
+      if (game.editingTPS !== undefined) {
+        LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
+      } else {
+        LocalStorage.remove("editingTPS-" + game.name);
+      }
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+      gameNames.splice(index + i, 1);
+      LocalStorage.set("games", gameNames);
+      LocalStorage.remove("ptn-" + game.name);
+      LocalStorage.remove("state-" + game.name);
+      LocalStorage.remove("config-" + game.name);
+      LocalStorage.remove("history-" + game.name);
+      LocalStorage.remove("historyIndex-" + game.name);
       LocalStorage.remove("editingTPS-" + game.name);
+      games.length = i;
+      break;
     }
-  });
+  }
 
   commit("ADD_GAMES", { games, index });
   if (!index) {
@@ -153,7 +186,17 @@ export const REMOVE_GAME = function (
   const game = state.list[index];
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
-  LocalStorage.set("games", games);
+  try {
+    LocalStorage.set("games", games);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   LocalStorage.remove("ptn-" + name);
   LocalStorage.remove("state-" + name);
   LocalStorage.remove("config-" + name);
@@ -223,7 +266,14 @@ export const REMOVE_MULTIPLE_GAMES = function (
   const games = state.list.slice(start, start + count);
   const gameNames = LocalStorage.getItem("games") || [];
   const names = gameNames.splice(start, count);
-  LocalStorage.set("games", gameNames);
+  try {
+    LocalStorage.set("games", gameNames);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   names.forEach((name) => {
     LocalStorage.remove("ptn-" + name);
     LocalStorage.remove("state-" + name);
@@ -303,47 +353,69 @@ export const EXPORT_PNG = function ({ state }) {
   });
 };
 
-export const OPEN_FILES = function ({ commit, dispatch, state }, files) {
-  const games = [];
-  let count = 0;
-  files = Array.from(files);
-  if (!files.length) {
-    return false;
-  }
-  Loading.show();
-  setTimeout(
-    () =>
+export const OPEN_FILES = async function ({ commit, dispatch, state }, files) {
+  return new Promise((resolve) => {
+    const games = [];
+    let count = 0;
+    const finish = () => {
+      if (--count === 0) {
+        Loading.hide();
+        dispatch("ADD_GAMES", { games, index: 0 });
+        resolve;
+      }
+    };
+    const onInit = (game) => {
+      games.push(game);
+      finish();
+    };
+
+    files = Array.from(files);
+    if (!files.length) {
+      return false;
+    }
+
+    Loading.show();
+    setTimeout(() => {
+      files = files.filter(
+        (file) => file && /(\.ptn|\.txt)+$/i.test(file.name)
+      );
+      count = files.length;
       files.forEach((file) => {
-        if (file && /(\.ptn|\.txt)+$/i.test(file.name)) {
-          let reader = new FileReader();
-          reader.onload = (event) => {
-            const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
-            const index = state.list.findIndex((g) => g.name === name);
-            const ptn = event.target.result;
-            const onError = (error, plyID) => {
-              console.warn(
-                `Encountered an error in "${name}" at plyID:`,
-                plyID
-              );
-              console.error(error);
-            };
-            if (index < 0 || this.state.ui.openDuplicate !== "replace") {
-              games.push(new Game({ ptn, name, onError }));
-            } else {
-              dispatch("REPLACE_GAME", { index, ptn });
-            }
-            if (!--count) {
-              Loading.hide();
-              dispatch("ADD_GAMES", { games, index: 0 });
-            }
+        let reader = new FileReader();
+        reader.onload = (event) => {
+          const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
+          const index = state.list.findIndex((g) => g.name === name);
+          const ptn = event.target.result;
+          const onError = (error, plyID) => {
+            console.warn(
+              `Encountered an error in "${name}" at plyID:`,
+              plyID,
+              error
+            );
+            notifyError(`${name}: ${error.message}`);
+            finish();
           };
-          reader.onerror = notifyError;
-          ++count;
-          reader.readAsText(file);
-        }
-      }),
-    200
-  );
+          if (index < 0 || this.state.ui.openDuplicate !== "replace") {
+            try {
+              new Game({
+                ptn,
+                name,
+                onError,
+                onInit,
+              });
+            } catch (error) {
+              console.error("Invalid game:", name, error);
+            }
+          } else {
+            dispatch("REPLACE_GAME", { index, ptn });
+            finish();
+          }
+        };
+        reader.onerror = notifyError;
+        reader.readAsText(file);
+      });
+    }, 200);
+  });
 };
 
 export const RENAME_CURRENT_GAME = function (
@@ -366,10 +438,17 @@ export const SET_CURRENT_PTN = function ({ commit, dispatch }, ptn) {
 export const SAVE_CURRENT_GAME = function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    LocalStorage.set("ptn-" + game.name, game.ptn);
-    LocalStorage.set("state-" + game.name, game.minState);
-    LocalStorage.set("history-" + game.name, game.history);
-    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    try {
+      LocalStorage.set("ptn-" + game.name, game.ptn);
+      LocalStorage.set("state-" + game.name, game.minState);
+      LocalStorage.set("history-" + game.name, game.history);
+      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SAVE_CURRENT_GAME");
 };
@@ -377,7 +456,14 @@ export const SAVE_CURRENT_GAME = function ({ commit, state }) {
 export const SAVE_CURRENT_GAME_STATE = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    LocalStorage.set("state-" + game.name, game.minState);
+    try {
+      LocalStorage.set("state-" + game.name, game.minState);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SAVE_CURRENT_GAME_STATE");
 }, 300);
@@ -385,7 +471,14 @@ export const SAVE_CURRENT_GAME_STATE = throttle(function ({ commit, state }) {
 export const SAVE_UNDO_HISTORY = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    LocalStorage.set("history-" + game.name, game.history);
+    try {
+      LocalStorage.set("history-" + game.name, game.history);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SAVE_UNDO_HISTORY");
 }, 300);
@@ -393,13 +486,27 @@ export const SAVE_UNDO_HISTORY = throttle(function ({ commit, state }) {
 export const SAVE_UNDO_INDEX = throttle(function ({ commit, state }) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
-    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    try {
+      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SAVE_UNDO_INDEX");
 }, 300);
 
 export const SAVE_PTN = throttle(function ({ state, commit }, ptn) {
-  LocalStorage.set("ptn-" + state.list[0].name, ptn);
+  try {
+    LocalStorage.set("ptn-" + state.list[0].name, ptn);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   commit("SAVE_PTN", ptn);
 }, 300);
 
@@ -415,20 +522,27 @@ export const SET_NAME = function (
   const games = LocalStorage.getItem("games");
   const name = getters.uniqueName(newName, true);
   games[index] = name;
-  LocalStorage.set("games", games);
-  LocalStorage.remove("ptn-" + oldName);
-  LocalStorage.set("ptn-" + name, game.ptn);
-  LocalStorage.remove("state-" + oldName);
-  LocalStorage.set("state-" + name, game.board || game.state);
-  if (game.config) {
-    LocalStorage.remove("config-" + oldName);
-    LocalStorage.set("config-" + name, game.config);
-  }
-  if (game.history) {
-    LocalStorage.remove("history-" + oldName);
-    LocalStorage.set("history-" + game.name, game.history);
-    LocalStorage.remove("historyIndex-" + oldName);
-    LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+  try {
+    LocalStorage.set("games", games);
+    LocalStorage.remove("ptn-" + oldName);
+    LocalStorage.set("ptn-" + name, game.ptn);
+    LocalStorage.remove("state-" + oldName);
+    LocalStorage.set("state-" + name, game.board || game.state);
+    if (game.config) {
+      LocalStorage.remove("config-" + oldName);
+      LocalStorage.set("config-" + name, game.config);
+    }
+    if (game.history) {
+      LocalStorage.remove("history-" + oldName);
+      LocalStorage.set("history-" + game.name, game.history);
+      LocalStorage.remove("historyIndex-" + oldName);
+      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+    }
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
   }
   commit("SET_NAME", { oldName, newName });
 };
@@ -437,7 +551,14 @@ export const SAVE_STATE = function ({ commit, state }, { game, gameState }) {
   if (!state.list.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
-  LocalStorage.set("state-" + game.name, gameState);
+  try {
+    LocalStorage.set("state-" + game.name, gameState);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   commit("SAVE_STATE", { game, gameState });
 };
 
@@ -445,7 +566,14 @@ export const SAVE_CONFIG = function ({ commit, state }, { game, config }) {
   if (!state.list.some((g) => g.name === game.name)) {
     throw new Error("Game not found: " + game.name);
   }
-  LocalStorage.set("config-" + game.name, config);
+  try {
+    LocalStorage.set("config-" + game.name, config);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   commit("SAVE_CONFIG", { game, config });
 };
 
@@ -470,7 +598,14 @@ export const SELECT_GAME = function (
 ) {
   let games = LocalStorage.getItem("games") || [];
   games.unshift(games.splice(index, 1)[0]);
-  LocalStorage.set("games", games);
+  try {
+    LocalStorage.set("games", games);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
   if (immediate) {
     commit("SELECT_GAME", index);
   } else {
@@ -584,7 +719,14 @@ export const GO_TO_PLY = function (
 
 export const EDIT_TPS = function ({ commit, state }, tps) {
   if (tps !== undefined) {
-    LocalStorage.set("editingTPS-" + state.list[0].name, tps);
+    try {
+      LocalStorage.set("editingTPS-" + state.list[0].name, tps);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   } else {
     LocalStorage.remove("editingTPS-" + game.name);
   }

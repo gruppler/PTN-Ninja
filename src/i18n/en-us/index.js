@@ -191,6 +191,8 @@ export default {
   "Scroll threshold": "Scroll threshold",
   "Scrub Bar": "Scrub Bar",
   "Scrub with scroll wheel": "Scrub with scroll wheel",
+  Search: "Search",
+  "Search Game Selector": "Search Game Selector",
   "Select Branch": "Select Branch",
   Share: "Share",
   "Share or Play Online": "Share or Play Online",
@@ -367,6 +369,7 @@ export default {
     "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
     "auth/wrong-password": "Incorrect password",
+    localstorageFull: "LocalStorage is full; please close some games.",
     unauthenticated: "You must be logged in to do that",
   },
 

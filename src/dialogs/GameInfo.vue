@@ -148,12 +148,17 @@
             </q-item-section>
             <q-item-section>
               <q-item-label caption>{{ $t("Flats1") }}</q-item-label>
-              <q-item-label>{{ tags.flats1 }}</q-item-label>
+              <q-item-label
+                :class="{ disabled: !tags.flats && !tags.flats1 }"
+                >{{ game.config.pieceCounts[1].flat }}</q-item-label
+              >
             </q-item-section>
             <!-- Caps 1 -->
             <q-item-section align="right">
               <q-item-label caption>{{ $t("Caps1") }}</q-item-label>
-              <q-item-label>{{ tags.caps1 }}</q-item-label>
+              <q-item-label :class="{ disabled: !tags.caps && !tags.caps1 }">{{
+                game.config.pieceCounts[1].cap
+              }}</q-item-label>
             </q-item-section>
             <q-item-section side>
               <q-icon name="caps1" />
@@ -168,12 +173,17 @@
             </q-item-section>
             <q-item-section>
               <q-item-label caption>{{ $t("Flats2") }}</q-item-label>
-              <q-item-label>{{ tags.flats2 }}</q-item-label>
+              <q-item-label
+                :class="{ disabled: !tags.flats && !tags.flats2 }"
+                >{{ game.config.pieceCounts[2].flat }}</q-item-label
+              >
             </q-item-section>
             <!-- Caps 2 -->
             <q-item-section align="right">
               <q-item-label caption>{{ $t("Caps2") }}</q-item-label>
-              <q-item-label>{{ tags.caps2 }}</q-item-label>
+              <q-item-label :class="{ disabled: !tags.caps && !tags.caps2 }">{{
+                game.config.pieceCounts[2].cap
+              }}</q-item-label>
             </q-item-section>
             <q-item-section side>
               <q-icon name="caps2" />
@@ -183,17 +193,21 @@
         <template v-else>
           <q-item>
             <!-- Flats -->
-            <q-item-section side>
+            <q-item-section>
               <q-icon name="flats1" />
             </q-item-section>
             <q-item-section>
               <q-item-label caption>{{ $t("Flats") }}</q-item-label>
-              <q-item-label>{{ tags.flats }}</q-item-label>
+              <q-item-label :class="{ disabled: !tags.caps }">{{
+                game.config.pieceCounts[1].flat
+              }}</q-item-label>
             </q-item-section>
             <!-- Caps -->
-            <q-item-section align="right">
+            <q-item-section>
               <q-item-label caption>{{ $t("Caps") }}</q-item-label>
-              <q-item-label>{{ tags.caps }}</q-item-label>
+              <q-item-label :class="{ disabled: !tags.caps }">{{
+                game.config.pieceCounts[1].cap
+              }}</q-item-label>
             </q-item-section>
             <q-item-section side>
               <q-icon name="caps1" />

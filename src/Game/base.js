@@ -14,9 +14,9 @@ import {
   defaults,
   each,
   flatten,
-  isEmpty,
   isEqual,
   isFunction,
+  isObject,
   isString,
   map,
   pick,
@@ -78,7 +78,6 @@ export const generateName = (tags = {}, game) => {
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
-  const opening = tag("opening");
   return (
     (player1.length && player2.length ? player1 + " vs " + player2 + " " : "") +
     `${size}x${size}` +
@@ -268,8 +267,8 @@ export default class GameBase {
 
       // Initialize board
       this.defaultPieceCounts = {
-        1: pieceCounts[this.size],
-        2: pieceCounts[this.size],
+        1: cloneDeep(pieceCounts[this.size]),
+        2: cloneDeep(pieceCounts[this.size]),
       };
       this.pieceCounts = cloneDeep(this.defaultPieceCounts);
       if (this.tags.flats) {
@@ -487,7 +486,7 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (state && "plyIndex" in state) {
+    if (state && isObject(state) && "plyIndex" in state) {
       // Go to specified position
       if (state.targetBranch in this.branches) {
         this.board.targetBranch = state.targetBranch || "";

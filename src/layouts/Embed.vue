@@ -139,6 +139,7 @@ import { Platform } from "quasar";
 import { defaults, forEach, isEqual } from "lodash";
 
 export default {
+  name: "EmbedLayout",
   components: {
     Board,
     CurrentMove,

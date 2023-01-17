@@ -205,6 +205,7 @@ import { HOTKEYS } from "../keymap";
 import { Platform } from "quasar";
 
 export default {
+  name: "MainLayout",
   components: {
     Board,
     CurrentMove,
@@ -599,6 +600,9 @@ export default {
           break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
+          break;
+        case "searchGames":
+          this.$refs.gameSelector.toggleSearch(true);
           break;
         case "previousGame":
           if (this.$store.state.game.list.length > 1) {
