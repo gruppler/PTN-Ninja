@@ -72,7 +72,7 @@ export default function render(board, options = {}) {
     (pieceSizes[options.imageSize] * 5) / board.game.size
   );
   const squareSize = pieceSize * 2;
-  const roadSize = Math.round(squareSize * 0.31);
+  const roadSize = Math.round(squareSize * 0.3333);
   const pieceRadius = Math.round(squareSize * 0.05);
   const pieceSpacing = Math.round(squareSize * 0.07);
   const immovableSize = Math.round(squareSize * 0.15);
@@ -92,7 +92,7 @@ export default function render(board, options = {}) {
 
   const fontSize =
     (squareSize * textSizes[options.textSize] * board.game.size) / 5;
-  const stackCountFontSize = Math.min(squareSize * 0.175, fontSize);
+  const stackCountFontSize = Math.min(squareSize * 0.18, fontSize);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -473,6 +473,16 @@ export default function render(board, options = {}) {
         );
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
+      ctx.fillStyle = withAlpha(
+        theme.colors[`player${square.color}road`],
+        square.roads.length ? 0.8 : 0.2
+      );
+      ctx.fillRect(
+        (squareSize - roadSize) / 2,
+        (squareSize - roadSize) / 2,
+        roadSize,
+        roadSize
+      );
     } else if (square.roads.length) {
       ctx.fillStyle = withAlpha(
         theme.colors[`player${square.color}road`],
@@ -494,14 +504,14 @@ export default function render(board, options = {}) {
       if (options.stackCounts && square.pieces.length > 1) {
         ctx.save();
         ctx.font = stackCountFontSize + "px Roboto";
-        let isTextLight = theme.board1Dark;
-        ctx.fillStyle = theme.colors.board1;
+        let isTextLight = theme.board2Dark;
+        ctx.fillStyle = theme.colors.board2;
         if (hlSquares.includes(square.static.coord)) {
           isTextLight = theme.primaryDark;
           ctx.fillStyle = theme.colors.primary;
         } else if (isDark) {
-          isTextLight = theme.board2Dark;
-          ctx.fillStyle = theme.colors.board2;
+          isTextLight = theme.board1Dark;
+          ctx.fillStyle = theme.colors.board1;
         }
         let radius = (stackCountFontSize * 1.5) / 2;
         ctx.beginPath();
@@ -529,7 +539,6 @@ export default function render(board, options = {}) {
       }
 
       square.pieces.forEach(drawPiece);
-      drawPiece(square.piece);
     }
 
     ctx.restore();
@@ -567,8 +576,14 @@ export default function render(board, options = {}) {
       }
     } else {
       // Unplayed
-      const caps = board.game.pieceCounts[piece.color].cap;
-      const total = board.game.pieceCounts[piece.color].total;
+      const stackColor =
+        board.game.openingSwap && piece.index === 0 && !piece.isCapstone
+          ? piece.color === 1
+            ? 2
+            : 1
+          : piece.color;
+      const caps = board.game.pieceCounts[stackColor].cap;
+      const total = board.game.pieceCounts[stackColor].total;
       y = board.game.size - 1;
       if (piece.isCapstone) {
         y *= total - piece.index - 1;
@@ -658,10 +673,7 @@ export default function render(board, options = {}) {
     [1, 2].forEach((color) => {
       ctx.save();
       ctx.translate(
-        padding +
-          axisSize +
-          boardSize +
-          (color === 2) * (pieceSize + (squareSize - pieceSize) / 2),
+        padding + axisSize + boardSize + (color === 2) * squareSize * 0.75,
         padding + headerHeight + boardSize - squareSize
       );
       ["flat", "cap"].forEach((type) => {
@@ -680,7 +692,7 @@ export default function render(board, options = {}) {
               }
             }
           } else if (!board.pieces.played[1][type].length) {
-            pieces.unshift(board.pieces.all[1][type][0]);
+            pieces[0] = board.pieces.all[1][type][0];
           }
         }
         pieces.reverse().forEach(drawPiece);

@@ -157,7 +157,7 @@ export const OPEN = function (context, callback) {
 export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
   let success = false;
   if (!isArray(files)) {
-    success = exportFile(files[0].name, files[0]);
+    success = exportFile(files.name, files);
   } else {
     let zip = new JSZip();
     files.forEach((file) => {

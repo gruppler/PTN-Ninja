@@ -332,8 +332,8 @@ export default {
     span {
       color: $textDark;
       color: var(--q-color-textDark);
-      background-color: $board1;
-      background-color: var(--q-color-board1);
+      background-color: $board2;
+      background-color: var(--q-color-board2);
       display: block;
       position: absolute;
       bottom: 0;
@@ -350,20 +350,20 @@ export default {
   body.boardChecker.board1Dark &.light .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
-    background-color: $board1;
-    background-color: var(--q-color-board1);
+    background-color: $board2;
+    background-color: var(--q-color-board2);
   }
   body.boardChecker.board2Dark &.dark .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
-    background-color: $board2;
-    background-color: var(--q-color-board2);
+    background-color: $board1;
+    background-color: var(--q-color-board1);
   }
   body:not(.boardChecker).board1Dark & .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
-    background-color: $board1;
-    background-color: var(--q-color-board1);
+    background-color: $board2;
+    background-color: var(--q-color-board2);
   }
   body.primaryDark
     .board-container.highlight-squares
@@ -453,39 +453,39 @@ export default {
       transition: opacity $half-time $easing-reverse,
         background-color $half-time $easing-reverse;
       &.center {
-        top: 35%;
-        bottom: 35%;
-        left: 35%;
-        right: 35%;
+        top: 33.33%;
+        bottom: 33.33%;
+        left: 33.33%;
+        right: 33.33%;
       }
       &.n,
       &.s {
-        left: 35%;
-        right: 35%;
+        left: 33.33%;
+        right: 33.33%;
       }
       &.e,
       &.w {
-        top: 35%;
-        bottom: 35%;
+        top: 33.33%;
+        bottom: 33.33%;
       }
       &.n {
         top: 0;
-        bottom: 65%;
+        bottom: 66.67%;
       }
       &.s {
-        top: 65%;
-        bottom: -35%;
+        top: 66.67%;
+        bottom: -33.33%;
         &.es {
           bottom: 0;
         }
       }
       &.e {
-        left: 65%;
+        left: 66.67%;
         right: 0;
       }
       &.w {
-        left: -35%;
-        right: 65%;
+        left: -33.33%;
+        right: 66.67%;
         &.ew {
           left: 0;
         }
