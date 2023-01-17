@@ -5,11 +5,14 @@
       v-if="games.length"
       class="text-subtitle1 no-wrap"
       :value="0"
-      :options="games"
+      :options="showSearch ? filteredGames : games"
+      :use-input="showSearch"
+      :input-debounce="150"
+      @blur="showSearch = false"
+      @filter="search"
       @input="select"
       @keydown.esc="$refs.select.blur"
-      @keydown.delete="close($refs.select.optionIndex)"
-      :display-value="name"
+      @keydown.delete="showSearch ? null : close($refs.select.optionIndex)"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="game-selector-options"
@@ -20,6 +23,10 @@
       filled
       dense
     >
+      <template v-slot:selected>
+        {{ showSearch ? "" : name }}
+      </template>
+
       <template v-slot:prepend>
         <q-btn
           :label="games.length"
@@ -59,7 +66,7 @@
 
         <q-btn
           v-if="config.isOnline"
-          :icon="icon($game)"
+          :icon="icon"
           @click.stop.prevent="account"
           dense
           flat
@@ -76,13 +83,21 @@
       </template>
 
       <template v-slot:append>
-        <div class="row">
+        <div class="row q-gutter-sm">
           <q-badge
             v-if="unseenCount"
             text-color="ui"
             :label="unseenCount"
             class="q-mr-sm"
           />
+          <q-icon
+            name="search"
+            @click.stop="toggleSearch()"
+            class="q-field__focusable-action q-mr-sm"
+            :color="showSearch ? 'primary' : ''"
+          >
+            <hint>{{ $t("Search") }}</hint>
+          </q-icon>
           <slot />
         </div>
       </template>
@@ -93,9 +108,24 @@
 <script>
 import GameSelectorOption from "./GameSelectorOption";
 
+import Fuse from "fuse.js";
+const fuseOptions = {
+  keys: ["name"],
+  threshold: 0.8,
+  ignoreLocation: true,
+};
+
 export default {
   name: "GameSelector",
   components: { GameSelectorOption },
+  data() {
+    return {
+      showSearch: false,
+      filteredGames: null,
+      query: "",
+      index: null,
+    };
+  },
   computed: {
     config() {
       return this.$store.state.game.config;
@@ -107,6 +137,9 @@ export default {
         config: game.config,
         state: game.state,
       }));
+    },
+    gameList() {
+      return this.$store.state.game.list.map((g) => g.name);
     },
     hasOnlineGames() {
       return this.games.some((game) => game.config.id);
@@ -160,9 +193,55 @@ export default {
       }
     },
     select(index) {
+      this.showSearch = false;
       this.$store.dispatch("game/SELECT_GAME", { index });
       this.$emit("input", this.$store.state.game.list[0]);
     },
+    toggleSearch(focusInput = false) {
+      this.showSearch = !this.showSearch;
+      if (this.showSearch) {
+        this.$refs.select.inputValue = this.query;
+        if (focusInput) {
+          this.$nextTick(() => {
+            this.$refs.select.focus();
+            this.$refs.select.showPopup();
+          });
+        }
+      }
+    },
+    search(query, update) {
+      this.query = query;
+      update(
+        () => this.updateFiltered(),
+        (ref) => {
+          if (query.trim() !== "" && ref.options.length > 0) {
+            ref.setOptionIndex(-1);
+            ref.moveOptionSelection(1, true);
+          }
+        }
+      );
+    },
+    updateIndex() {
+      if (!this.index) {
+        this.index = new Fuse(this.gameList, fuseOptions);
+      } else {
+        this.index.setCollection(this.gameList);
+      }
+    },
+    updateFiltered() {
+      this.filteredGames = this.index
+        .search(this.query)
+        .map((result) => this.games[result.refIndex]);
+    },
+  },
+  watch: {
+    gameList() {
+      this.updateIndex();
+      this.updateFiltered();
+    },
+  },
+  mounted() {
+    this.updateIndex();
   },
 };
 </script>

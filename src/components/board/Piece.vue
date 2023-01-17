@@ -38,8 +38,18 @@ export default {
     config() {
       return this.game.config;
     },
+    stackColor() {
+      if (
+        this.config.openingSwap &&
+        this.piece.index === 0 &&
+        this.piece.type !== "cap"
+      ) {
+        return this.piece.color === 1 ? 2 : 1;
+      }
+      return this.piece.color;
+    },
     pieceCounts() {
-      return this.config.pieceCounts[this.piece.color];
+      return this.config.pieceCounts[this.stackColor];
     },
     piece() {
       return this.board.pieces[this.id];
@@ -105,15 +115,7 @@ export default {
       if (this.square) {
         x *= this.col;
       } else {
-        x *=
-          this.config.size +
-          0.75 *
-            (this.piece.color ===
-              (!this.piece.index &&
-              this.piece.type !== "cap" &&
-              this.config.openingSwap
-                ? 1
-                : 2));
+        x *= this.config.size + 0.75 * (this.stackColor === 2);
       }
       return x;
     },
@@ -121,6 +123,7 @@ export default {
       let y = 100;
       let spacing = 7;
       if (this.square) {
+        // Played piece
         y *= this.row;
         if (!this.board3D) {
           // 2D
@@ -143,6 +146,7 @@ export default {
         // Unplayed piece
         y = this.config.size - 1;
         if (this.board3D) {
+          // 3D
           if (!this.piece.isCapstone) {
             y *=
               Math.floor(
@@ -160,6 +164,7 @@ export default {
               );
           }
         } else {
+          // 2D
           if (this.piece.isCapstone) {
             y *= this.pieceCounts.total - this.piece.index - 1;
           } else {
@@ -203,14 +208,7 @@ export default {
           if (this.piece.type !== "cap") {
             z -= this.pieceCounts.cap;
           }
-          if (
-            this.piece.color ===
-            (!this.piece.index &&
-            this.piece.type !== "cap" &&
-            this.config.openingSwap
-              ? 2
-              : 1)
-          ) {
+          if (this.stackColor === 1) {
             z += 1;
           } else {
             z += this.config.size - 1;

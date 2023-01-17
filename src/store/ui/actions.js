@@ -1,4 +1,6 @@
 import Vue from "vue";
+import JSZip from "jszip";
+
 import {
   copyToClipboard,
   exportFile,
@@ -27,7 +29,14 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     theme = getters.theme() || THEMES.find((t) => t.id === "classic");
   }
   if (!state.embed) {
-    LocalStorage.set("theme", theme);
+    try {
+      LocalStorage.set("theme", theme);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
   }
   commit("SET_THEME", theme);
 };
@@ -35,7 +44,14 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
 export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
   if (key in state.defaults) {
     if (!state.embed) {
-      LocalStorage.set(key, value);
+      try {
+        LocalStorage.set(key, value);
+      } catch (error) {
+        if (error.code === 22) {
+          error = "localstorageFull";
+        }
+        notifyError(error);
+      }
     }
     commit("SET_UI", [key, value]);
     if (key === "themeID" || key === "theme") {
@@ -47,7 +63,14 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
 export const TOGGLE_UI = ({ state, commit }, key) => {
   if (key in state.defaults) {
     if (!state.embed) {
-      LocalStorage.set(key, !state[key]);
+      try {
+        LocalStorage.set(key, !state[key]);
+      } catch (error) {
+        if (error.code === 22) {
+          error = "localstorageFull";
+        }
+        notifyError(error);
+      }
     }
     commit("SET_UI", [key, !state[key]]);
   }
@@ -131,15 +154,20 @@ export const OPEN = function (context, callback) {
   input.click();
 };
 
-export const DOWNLOAD_FILES = ({ dispatch, getters }, files) => {
+export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
+  let success = false;
   if (!isArray(files)) {
-    files = [files];
+    success = exportFile(files.name, files);
+  } else {
+    let zip = new JSZip();
+    files.forEach((file) => {
+      zip.file(file.name.replace(/[\/\\]/g, "-"), file);
+    });
+    let zipFile = await zip.generateAsync({
+      type: JSZip.support.uint8array ? "uint8array" : "string",
+    });
+    success = exportFile("ptn.zip", zipFile);
   }
-
-  let success = true;
-  files.forEach((file) => {
-    success &= exportFile(file.name, file);
-  });
 
   if (!success) {
     dispatch("NOTIFY_ERROR", "Unable to download");
