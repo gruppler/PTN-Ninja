@@ -7,13 +7,12 @@
       :value="0"
       :options="showSearch ? filteredGames : games"
       :use-input="showSearch"
-      :input-debounce="0"
+      :input-debounce="150"
       @blur="showSearch = false"
       @filter="search"
       @input="select"
       @keydown.esc="$refs.select.blur"
       @keydown.delete="showSearch ? null : close($refs.select.optionIndex)"
-      :display-value="name"
       :hide-dropdown-icon="$q.screen.lt.sm"
       behavior="menu"
       popup-content-class="game-selector-options"
@@ -25,7 +24,7 @@
       dense
     >
       <template v-slot:selected>
-        {{ showSearch ? "" : games[0].label }}
+        {{ showSearch ? "" : name }}
       </template>
 
       <template v-slot:prepend>
@@ -67,7 +66,7 @@
 
         <q-btn
           v-if="config.isOnline"
-          :icon="icon($game)"
+          :icon="icon"
           @click.stop.prevent="account"
           dense
           flat
@@ -93,7 +92,7 @@
           />
           <q-icon
             name="search"
-            @click.stop="toggleSearch"
+            @click.stop="toggleSearch()"
             class="q-field__focusable-action q-mr-sm"
             :color="showSearch ? 'primary' : ''"
           >
@@ -108,7 +107,13 @@
 
 <script>
 import GameSelectorOption from "./GameSelectorOption";
-import { compact, escapeRegExp } from "lodash";
+
+import Fuse from "fuse.js";
+const fuseOptions = {
+  keys: ["name"],
+  threshold: 0.8,
+  ignoreLocation: true,
+};
 
 export default {
   name: "GameSelector",
@@ -118,7 +123,7 @@ export default {
       showSearch: false,
       filteredGames: null,
       query: "",
-      searchTerms: [],
+      index: null,
     };
   },
   computed: {
@@ -132,6 +137,9 @@ export default {
         config: game.config,
         state: game.state,
       }));
+    },
+    gameList() {
+      return this.$store.state.game.list.map((g) => g.name);
     },
     hasOnlineGames() {
       return this.games.some((game) => game.config.id);
@@ -185,13 +193,20 @@ export default {
       }
     },
     select(index) {
+      this.showSearch = false;
       this.$store.dispatch("game/SELECT_GAME", { index });
       this.$emit("input", this.$store.state.game.list[0]);
     },
-    toggleSearch() {
+    toggleSearch(focusInput = false) {
       this.showSearch = !this.showSearch;
       if (this.showSearch) {
         this.$refs.select.inputValue = this.query;
+        if (focusInput) {
+          this.$nextTick(() => {
+            this.$refs.select.focus();
+            this.$refs.select.showPopup();
+          });
+        }
       }
     },
     search(query, update) {
@@ -206,63 +221,27 @@ export default {
         }
       );
     },
+    updateIndex() {
+      if (!this.index) {
+        this.index = new Fuse(this.gameList, fuseOptions);
+      } else {
+        this.index.setCollection(this.gameList);
+      }
+    },
     updateFiltered() {
-      this.filteredGames = this.games.filter((option) => {
-        let name = option.label.toLowerCase();
-        return this.searchTerms.every((term) => {
-          console.log(name, term, term.test(name));
-          return term.test(name);
-        });
-      });
+      this.filteredGames = this.index
+        .search(this.query)
+        .map((result) => this.games[result.refIndex]);
     },
   },
   watch: {
-    games() {
+    gameList() {
+      this.updateIndex();
       this.updateFiltered();
     },
-    query(query) {
-      let queryTerms = query.trim().toLowerCase().split(/\s+/);
-      let attrs = query.match(
-        /(?:^|\s)([3-8]x[3-8]|(1\/2|[01RF])-(1\/2|[01RF])|[0-9.-]+)(?=$|\s)/gi
-      );
-      let terms = [];
-
-      // Parse terms
-      if (attrs && attrs.length > 0) {
-        // Extract game attributes
-        attrs = attrs.map((attr) => attr.trim());
-        terms.push(...attrs);
-
-        // Extract 'vs' term
-        queryTerms = queryTerms.map((term, i) =>
-          attrs.includes(term) ? null : term
-        );
-        for (let i = 0; i < queryTerms.length; i++) {
-          let term = queryTerms[i];
-          if (term === "vs") {
-            let vsTerm = "";
-            let j = i;
-            while (--j >= 0 && queryTerms[j] !== null) {
-              vsTerm = queryTerms[j] + " " + vsTerm;
-              queryTerms[j] = null;
-            }
-            vsTerm += term;
-            j = i;
-            while (++j <= queryTerms.length - 1 && queryTerms[j] !== null) {
-              vsTerm += " " + queryTerms[j];
-              queryTerms[j] = null;
-            }
-            queryTerms[i] = vsTerm;
-            i = j - 1;
-          }
-        }
-        terms.unshift(...compact(queryTerms));
-      }
-
-      this.searchTerms = terms.map(
-        (term) => new RegExp(`(?:^|\\s)(${escapeRegExp(term)})(?=$|\\s)`, "gi")
-      );
-    },
+  },
+  mounted() {
+    this.updateIndex();
   },
 };
 </script>

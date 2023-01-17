@@ -181,6 +181,7 @@ export default {
   "Scrub Bar": "Scrub Bar",
   "Scrub with scroll wheel": "Scrub with scroll wheel",
   Search: "Search",
+  "Search Game Selector": "Search Game Selector",
   "Select Branch": "Select Branch",
   Share: "Share",
   "Share PNG": "Share PNG",

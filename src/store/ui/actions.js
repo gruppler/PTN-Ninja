@@ -161,7 +161,7 @@ export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
   } else {
     let zip = new JSZip();
     files.forEach((file) => {
-      zip.file(file.name, file);
+      zip.file(file.name.replace(/[\/\\]/g, "-"), file);
     });
     let zipFile = await zip.generateAsync({
       type: JSZip.support.uint8array ? "uint8array" : "string",
