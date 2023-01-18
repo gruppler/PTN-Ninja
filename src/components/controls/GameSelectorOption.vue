@@ -13,7 +13,9 @@
       </q-icon>
     </q-item-section>
     <q-item-section>
-      <q-item-label>{{ option.label }}</q-item-label>
+      <q-item-label style="word-wrap: break-word">{{
+        option.label
+      }}</q-item-label>
     </q-item-section>
     <q-item-section v-if="canClose" side>
       <q-btn @click.stop="close" icon="close" flat dense />

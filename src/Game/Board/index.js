@@ -108,7 +108,7 @@ export default class Board extends Aggregation(
       set: this.setBoard,
     });
     Object.defineProperty(this, "tps", {
-      get: memoize(this._getTPS, () => JSON.stringify(this.boardPly)),
+      get: memoize(this.getTPS, () => JSON.stringify(this.boardPly)),
     });
 
     this.roads = null;
@@ -465,7 +465,7 @@ export default class Board extends Aggregation(
         )
       ),
       {
-        tps: this.tps,
+        tps: this.getTPS(),
         ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly
@@ -664,21 +664,19 @@ export default class Board extends Aggregation(
     };
   }
 
-  _getTPS(player = this.turn, number = null) {
+  getTPS(player = this.turn, number = null) {
     const grid = this.squares
-      .map((row) => {
-        return row
-          .map((square) => {
-            if (square.pieces.length) {
-              return square.pieces
-                .map((piece) => piece.color + piece.typeCode)
-                .join("");
-            } else {
-              return "x";
-            }
-          })
-          .join(",");
-      })
+      .map((row) =>
+        row
+          .map((square) =>
+            square.pieces.length
+              ? square.pieces
+                  .map((piece) => piece.color + piece.typeCode)
+                  .join("")
+              : "x"
+          )
+          .join(",")
+      )
       .reverse()
       .join("/")
       .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2);
@@ -724,7 +722,7 @@ export default class Board extends Aggregation(
     if (!isDone && ply.branches.length) {
       ply = ply.branches[0];
     }
-    return { id: ply.id, isDone };
+    return { id: ply.id, isDone, ptn: ply.toString() };
   }
 
   get minState() {

@@ -24,7 +24,7 @@
       dense
     >
       <template v-slot:selected>
-        {{ showSearch ? "" : name }}
+        <span>{{ showSearch ? "" : name }}</span>
       </template>
 
       <template v-slot:prepend>

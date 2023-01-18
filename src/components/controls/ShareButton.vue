@@ -195,7 +195,7 @@ export default {
         case "tps":
           output = {
             title: this.$t("TPS"),
-            text: this.$game.board.tps,
+            text: this.$game.board.getTPS(),
           };
           break;
         case "moves":
