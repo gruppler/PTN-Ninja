@@ -73,7 +73,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
-        this.editingTPS = this.$game.board._getTPS(
+        this.editingTPS = this.$game.board.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
@@ -90,7 +90,7 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
-        this.editingTPS = this.$game.board._getTPS(
+        this.editingTPS = this.$game.board.getTPS(
           this.selectedPiece.color,
           this.firstMoveNumber
         );
