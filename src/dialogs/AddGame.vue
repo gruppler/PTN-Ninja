@@ -30,6 +30,7 @@
                 :values="tags"
                 :show-all="showAll"
                 @submit="createGame"
+                tps-edit
               />
             </q-card-section>
           </q-tab-panel>

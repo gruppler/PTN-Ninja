@@ -17,7 +17,7 @@
           v-show="name !== generatedName"
           @click="name = generatedName"
           name="refresh"
-          class="q-field__focusable-action"
+          class="q-field__focusable-action q-ml-md"
         />
       </template>
     </q-input>
@@ -328,10 +328,12 @@
         </template>
         <template v-slot:append>
           <q-icon
-            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
+            v-show="
+              tpsEdit && $refs.tps && !$refs.tps.readonly && !$refs.tps.hasError
+            "
             @click="editTPS"
             name="edit"
-            class="q-field__focusable-action"
+            class="q-field__focusable-action q-ml-md"
             v-close-popup
           />
         </template>
@@ -716,6 +718,7 @@ export default {
     values: Object,
     showAll: Boolean,
     hideMissing: Boolean,
+    tpsEdit: Boolean,
   },
   data() {
     const openings = map(

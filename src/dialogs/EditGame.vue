@@ -28,6 +28,7 @@
         :show-all="showAll"
         @submit="save"
         @hasChanges="hasChanges = $event"
+        tps-edit
       />
     </q-card-section>
 
