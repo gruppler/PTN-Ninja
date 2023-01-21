@@ -37,22 +37,6 @@
 
           <q-item>
             <q-item-section>
-              <q-btn-toggle
-                class="highlight"
-                v-model="config.playerSeat"
-                :toggle-color="playerBGColor"
-                :toggle-text-color="playerTextColor"
-                :options="players"
-                :ripple="false"
-                spread
-                dense
-                stack
-              />
-            </q-item-section>
-          </q-item>
-
-          <q-item>
-            <q-item-section>
               <PlayerName
                 v-model="config.playerName"
                 :player="config.playerSeat"
@@ -71,6 +55,22 @@
                 @validate="isOpponentValid = $event"
                 :error="!isOpponentValid"
                 :error-message="$t('error[\'Invalid opponent name\']')"
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-item>
+            <q-item-section>
+              <q-btn-toggle
+                class="highlight"
+                v-model="config.playerSeat"
+                :toggle-color="playerBGColor"
+                :toggle-text-color="playerTextColor"
+                :options="players"
+                :ripple="false"
+                spread
+                dense
+                stack
               />
             </q-item-section>
           </q-item>
