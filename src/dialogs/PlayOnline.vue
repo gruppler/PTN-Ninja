@@ -207,7 +207,11 @@ export default {
     Object.keys(TAGS).forEach((key) => {
       tags[key] = this.$game.tag(key) || "";
     });
-    if (this.$game.plies.length || this.$game.tags.tps) {
+    if (
+      this.$game.tags.tps ||
+      this.$game.board.plyID > 0 ||
+      (this.$game.board.plyID === 0 && this.$game.board.plyIsDone)
+    ) {
       tags.tps = this.$game.board.tps;
     }
     return {
