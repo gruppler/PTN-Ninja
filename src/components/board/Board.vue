@@ -202,7 +202,11 @@ export default {
       return this.$store.state.ui.theme.boardStyle;
     },
     moveNumber() {
-      return this.$store.state.game.position.move.linenum.number;
+      if (this.$store.state.game.editingTPS) {
+        return this.$store.state.ui.firstMoveNumber;
+      } else {
+        return this.$store.state.game.position.move.linenum.number;
+      }
     },
     showMoveNumber() {
       return (
