@@ -11,6 +11,7 @@ let defaults = {
   boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
   editingBranch: "",
+  editHeader: false,
   firstMoveNumber: 1,
   flatCounts: true,
   highlightSquares: true,

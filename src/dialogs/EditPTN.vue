@@ -31,6 +31,14 @@
             square
           >
             <q-list>
+              <q-item clickable @click="showHeader = !showHeader">
+                <q-item-section side>
+                  <q-icon name="header" />
+                </q-item-section>
+                <q-item-section>{{
+                  $t(showHeader ? "Hide Header Tags" : "Show Header Tags")
+                }}</q-item-section>
+              </q-item>
               <q-item clickable @click="reset">
                 <q-item-section side>
                   <q-icon name="undo" />
@@ -79,6 +87,14 @@ export default {
         if (!value) {
           this.close();
         }
+      },
+    },
+    showHeader: {
+      get() {
+        return this.$store.state.ui.editHeader;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["editHeader", Boolean(value)]);
       },
     },
     isNewGame() {

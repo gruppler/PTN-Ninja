@@ -41,6 +41,7 @@ export default {
   forward: "mdi-chevron-right",
   fullscreen: "mdi-fullscreen",
   fullscreen_exit: "mdi-fullscreen-exit",
+  header: "mdi-code-brackets",
   help: "mdi-help-circle",
   info: "mdi-information",
   json: "mdi-code-json",
