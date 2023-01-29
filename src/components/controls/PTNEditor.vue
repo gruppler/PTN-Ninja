@@ -47,8 +47,11 @@ export default {
     };
   },
   computed: {
+    showHeader() {
+      return this.$store.state.ui.editHeader;
+    },
     header() {
-      return this.isNewGame ? "" : this.$game.headerText();
+      return this.isNewGame || this.showHeader ? "" : this.$game.headerText();
     },
     hasChanges() {
       return this.isNewGame || this.ptn !== this.original;
@@ -64,10 +67,12 @@ export default {
     init() {
       if (this.isNewGame) {
         this.original = this.value || "";
+      } else if (this.$game) {
+        this.original = (
+          this.showHeader ? this.$game.ptn : this.$game.moveText(true, true)
+        ).replace(/\r\n/g, "\n");
       } else {
-        this.original = this.$game
-          ? this.$game.moveText(true, true).replace(/\r\n/g, "\n")
-          : "";
+        this.original = "";
       }
       this.ptn = this.original;
     },
@@ -75,6 +80,9 @@ export default {
   watch: {
     ptn() {
       this.$emit("hasChanges", this.hasChanges);
+    },
+    showHeader() {
+      this.init();
     },
   },
   mounted() {

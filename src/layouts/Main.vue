@@ -151,7 +151,7 @@
       <Scrubber />
       <q-toolbar
         v-show="isEditingTPS || $store.state.ui.showControls"
-        class="footer-toolbar q-pa-sm"
+        class="footer-toolbar"
       >
         <PieceSelector
           v-if="isEditingTPS"

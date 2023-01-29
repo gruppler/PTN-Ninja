@@ -1,6 +1,6 @@
 <template>
   <div
-    class="piece-selector row no-wrap"
+    class="piece-selector row no-wrap justify-around items-center full-height absolute-fit"
     v-shortkey="hotkeys"
     @shortkey="hotkey($event.srcKey)"
   >
@@ -8,22 +8,41 @@
       @click="select(type, color === 1 ? 2 : 1)"
       :icon="$store.getters['ui/playerIcon'](color)"
       flat
-      round
+      :dense="$q.screen.lt.sm"
+      stretch
     />
 
-    <q-btn @click="select('F')" :disabled="!available.includes('F')" flat round>
+    <q-btn
+      @click="select('F')"
+      :disabled="!available.includes('F')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'F' }">
         <div class="stone" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
 
-    <q-btn @click="select('S')" :disabled="!available.includes('S')" flat round>
+    <q-btn
+      @click="select('S')"
+      :disabled="!available.includes('S')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'S' }">
         <div class="stone S" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
 
-    <q-btn @click="select('C')" :disabled="!available.includes('C')" flat round>
+    <q-btn
+      @click="select('C')"
+      :disabled="!available.includes('C')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'C' }">
         <div class="stone C" :class="{ ['p' + color]: true }" />
       </div>
@@ -39,9 +58,23 @@
       dense
     />
 
-    <q-btn :label="$t('Cancel')" @click="resetTPS" color="primary" flat />
+    <q-btn
+      :label="$q.screen.gt.xs ? $t('Cancel') : undefined"
+      :icon="$q.screen.gt.xs ? undefined : 'close'"
+      @click="resetTPS"
+      color="primary"
+      stretch
+      flat
+    />
 
-    <q-btn :label="$t('OK')" @click="saveTPS" color="primary" flat />
+    <q-btn
+      :label="$q.screen.gt.xs ? $t('OK') : undefined"
+      :icon="$q.screen.gt.xs ? undefined : 'apply'"
+      @click="saveTPS"
+      color="primary"
+      stretch
+      flat
+    />
   </div>
 </template>
 
