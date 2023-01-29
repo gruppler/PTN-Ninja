@@ -1,6 +1,6 @@
 <template>
-  <div class="play-controls full-width justify-center">
-    <div class="row no-wrap justify-around items-center">
+  <div class="play-controls absolute-fit justify-center">
+    <div class="row no-wrap justify-around items-center full-height">
       <q-btn
         @click="deletePly"
         @shortkey="deletePly"
@@ -8,7 +8,7 @@
           delete: hotkeys.deletePly,
           backspace: hotkeys.backspacePly,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
@@ -23,7 +23,7 @@
         @click="first"
         @shortkey="first"
         v-shortkey="hotkeys.first"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
@@ -42,7 +42,7 @@
           whole: hotkeys.prev,
           half: hotkeys.prevHalf,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
@@ -76,7 +76,7 @@
           whole: hotkeys.next,
           half: hotkeys.nextHalf,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
@@ -91,7 +91,7 @@
         @click="last"
         @shortkey="last"
         v-shortkey="hotkeys.last"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
@@ -105,7 +105,7 @@
       <q-btn
         v-shortkey="{ ...options, ...branchControls }"
         @shortkey="branchKey"
-        round
+        stretch
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
