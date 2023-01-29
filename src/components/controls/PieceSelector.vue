@@ -68,8 +68,8 @@
     />
 
     <q-btn
-      :label="$q.screen.gt.xs ? $t('OK') : ''"
-      :icon="$q.screen.gt.xs ? '' : 'apply'"
+      :label="$q.screen.gt.xs ? $t('OK') : undefined"
+      :icon="$q.screen.gt.xs ? undefined : 'apply'"
       @click="saveTPS"
       color="primary"
       stretch
