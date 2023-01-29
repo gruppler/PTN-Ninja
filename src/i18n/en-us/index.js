@@ -136,6 +136,7 @@ export default {
   "Piece Shadows": "Piece Shadows",
   Play: "Play",
   "Play/Pause": "Play/Pause",
+  "Play Button": "Play Button",
   "Play Controls": "Play Controls",
   "Play Mode": "Play Mode",
   "Play Online": "Play Online",

@@ -231,6 +231,17 @@
         </q-item-section>
       </q-item>
 
+      <smooth-reflow>
+        <q-item v-if="config.ui.showControls" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Play Button") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showPlayButton" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>

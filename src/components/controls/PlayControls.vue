@@ -54,6 +54,7 @@
         </hint>
       </q-btn>
       <q-btn
+        v-if="showPlayButton"
         @click="playpause"
         @shortkey="playpause"
         v-shortkey="hotkeys.playpause"
@@ -198,6 +199,9 @@ export default {
         keys,
         keys.map((key) => [key])
       );
+    },
+    showPlayButton() {
+      return this.$store.state.ui.showPlayButton;
     },
   },
   methods: {
