@@ -362,6 +362,23 @@
               </hint>
             </q-item>
 
+            <smooth-reflow>
+              <q-item v-if="showControls" tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Play Button") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="showPlayButton"
+                    :disabled="isDisabled('showPlayButton')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.showPlayButton">
+                  {{ $t("Hotkey") }}: {{ hotkeys.showPlayButton }}
+                </hint>
+              </q-item>
+            </smooth-reflow>
+
             <q-item tag="label" v-ripple>
               <q-item-section>
                 <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
@@ -471,6 +488,7 @@ const props = [
   "scrollThreshold",
   "showAllBranches",
   "showControls",
+  "showPlayButton",
   "showHints",
   "showMove",
   "showRoads",

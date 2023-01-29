@@ -4,7 +4,6 @@
       <q-btn
         @click="showAllBranches = !showAllBranches"
         :text-color="showAllBranches ? 'primary' : ''"
-        class="no-border-radius"
       >
         <q-icon name="branch" class="rotate-180" />
         <hint>{{
