@@ -3,8 +3,8 @@
     <q-item-section side>
       <img
         :src="thumbnailURL"
-        :width="thumbnailWidth"
-        :style="{ maxHeight: thumbnailHeight + 'px' }"
+        :height="thumbnailHeight"
+        :style="{ maxWidth: thumbnailWidth + 'px' }"
       />
     </q-item-section>
     <q-item-section side v-if="showIcon" class="fg-inherit">

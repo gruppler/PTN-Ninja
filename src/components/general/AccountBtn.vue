@@ -1,5 +1,5 @@
 <template>
-  <q-btn :to="route" v-bind="$attrs">
+  <q-btn :to="route" v-bind="$attrs" :no-caps="user && !user.isAnonymous">
     <template v-if="user && !user.isAnonymous">
       <PlayerAvatar :value="user.displayName" size="md" class="on-left" />
       <span class="ellipsis">{{ user.displayName }}</span>
