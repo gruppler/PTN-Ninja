@@ -3,26 +3,53 @@
     icon="share"
     v-bind="$attrs"
     @click="noMenu ? share() : null"
-    @click.right.prevent="share"
+    @click.right.prevent="share()"
     v-shortkey="hotkeys"
     @shortkey="shortkey"
   >
     <hint>{{ $t("Share") }}</hint>
-    <q-menu
-      v-if="!noMenu"
-      transition-show="none"
-      transition-hide="none"
-      auto-close
-      square
-    >
+    <q-menu v-if="!noMenu" transition-show="none" transition-hide="none" square>
       <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
-          <q-item v-else clickable @click="item.action" :key="item.id">
+          <q-item
+            v-else
+            clickable
+            @click="item.children ? null : item.action()"
+            :key="item.id"
+          >
             <q-item-section side>
               <q-icon :name="item.icon" />
             </q-item-section>
             <q-item-section>{{ item.label }}</q-item-section>
+            <template v-if="item.children">
+              <q-item-section side>
+                <q-icon name="forward" />
+              </q-item-section>
+              <q-menu
+                auto-close
+                anchor="top end"
+                self="top start"
+                transition-show="none"
+                transition-hide="none"
+                square
+              >
+                <template v-for="(child, j) in item.children">
+                  <q-separator v-if="!child.label" :key="j" />
+                  <q-item
+                    v-else
+                    clickable
+                    @click="child.action"
+                    :key="child.id"
+                  >
+                    <q-item-section side>
+                      <q-icon :name="child.icon" />
+                    </q-item-section>
+                    <q-item-section>{{ child.label }}</q-item-section>
+                  </q-item>
+                </template>
+              </q-menu>
+            </template>
           </q-item>
         </template>
       </q-list>
@@ -46,17 +73,25 @@ export default {
   },
   computed: {
     actions() {
-      let actions = [
+      const actions = [
         {
-          id: "url",
-          label: this.$t("Link"),
-          icon: "url",
-          action: () => this.shareText("url"),
+          id: "copy",
+          label: this.$t("Copy"),
+          icon: "copy",
+          children: [
+            {
+              id: "url",
+              label: this.$t("Link"),
+              icon: "url",
+              action: () => this.shareText("url"),
+            },
+          ],
         },
+        {},
       ];
 
       if (this.$game.board.ply) {
-        actions.push({
+        actions[0].children.push({
           id: "ply",
           label: this.$t("Ply"),
           icon: "ply",
@@ -64,14 +99,14 @@ export default {
         });
       }
 
-      actions.push({
+      actions[0].children.push({
         id: "tps",
         label: this.$t("TPS"),
         icon: "board",
         action: () => this.shareText("tps"),
       });
 
-      actions.push(
+      actions[0].children.push(
         {
           id: "moves",
           label: this.$t("Moves"),
@@ -83,12 +118,11 @@ export default {
           label: this.$t("PTN"),
           icon: "text",
           action: () => this.shareText("ptn"),
-        },
-        {}
+        }
       );
 
       if (!this.$store.state.embed) {
-        actions.unshift(
+        actions.push(
           {
             id: "playOnline",
             label: this.$t("Play Online"),
@@ -145,6 +179,15 @@ export default {
           action: this.qrCode,
         }
       );
+
+      // Add submenu bottom-sheet actions
+      actions.forEach((option) => {
+        if (option.children) {
+          option.action = () => {
+            this.share(option.children, option.label);
+          };
+        }
+      });
 
       return actions;
     },
@@ -237,8 +280,21 @@ export default {
     qrCode() {
       this.$router.push({ name: "qr" });
     },
-    share() {
-      if (this.bottomSheet) {
+    share(actions, label) {
+      if (actions) {
+        if (this.bottomSheet) {
+          this.bottomSheet.hide();
+          this.bottomSheet = this.$q
+            .bottomSheet({
+              grid: true,
+              class: "non-selectable",
+              message: label || this.$t("Share"),
+              actions,
+            })
+            .onOk(({ action }) => action())
+            .onDismiss(() => (this.bottomSheet = false));
+        }
+      } else if (this.bottomSheet) {
         this.bottomSheet.hide();
         this.bottomSheet = false;
       } else {
