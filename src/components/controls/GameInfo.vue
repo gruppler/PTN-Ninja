@@ -312,7 +312,7 @@
         class="col-grow"
         v-model="tags.tps"
         name="tps"
-        :label="$t('TPS')"
+        :label="$t('Starting Position')"
         :rules="rules('tps')"
         :readonly="game && game.plies.length > 0"
         autocomplete="off"

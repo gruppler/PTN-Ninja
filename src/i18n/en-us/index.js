@@ -217,6 +217,7 @@ export default {
   Spectator: "Spectator",
   "Stack Counts": "Stack Counts",
   "Start at Current Position": "Start at Current Position",
+  "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
