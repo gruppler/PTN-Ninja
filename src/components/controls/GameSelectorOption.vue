@@ -16,6 +16,27 @@
       <q-item-label style="word-wrap: break-word">{{
         option.label
       }}</q-item-label>
+      <template v-if="option.tags">
+        <q-item-label v-if="option.tags.player1">
+          <q-icon :name="isRandomPlayer ? 'random' : 'player1'" left />
+          {{ option.tags.player1 }}
+        </q-item-label>
+        <q-item-label v-if="option.tags.player2">
+          <q-icon :name="isRandomPlayer ? 'random' : 'player2'" left />
+          {{ option.tags.player2 }}
+        </q-item-label>
+      </template>
+    </q-item-section>
+    <q-item-section side>
+      <q-item-label>
+        {{ option.config.size || option.tags.size }}x{{
+          option.config.size || option.tags.size
+        }}
+      </q-item-label>
+      <Result
+        v-if="option.tags && option.tags.result"
+        :result="option.tags.result"
+      />
     </q-item-section>
     <q-item-section v-if="canClose" side>
       <q-btn @click.stop="close" icon="close" flat dense />
@@ -25,9 +46,11 @@
 
 <script>
 import Game from "../../Game";
+import Result from "../PTN/Result";
 
 export default {
   name: "GameSelectorOption",
+  components: { Result },
   props: {
     option: Object,
     showIcon: Boolean,
@@ -61,6 +84,13 @@ export default {
       } else {
         return "file";
       }
+    },
+    isRandomPlayer() {
+      return (
+        this.option.config.isOnline &&
+        this.option.config.isOpen &&
+        this.option.config.playerSeat === "random"
+      );
     },
     canClose() {
       return this.showClose && this.$store.state.game.list.length > 1;

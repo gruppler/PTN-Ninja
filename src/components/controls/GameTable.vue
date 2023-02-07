@@ -209,16 +209,16 @@ export default {
           align: "left",
         },
         {
+          name: "date",
+          label: this.$t("DateTime"),
+          icon: "date_time",
+          align: "center",
+        },
+        {
           name: "size",
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
-          align: "center",
-        },
-        {
-          name: "date",
-          label: this.$t("DateTime"),
-          icon: "date_time",
           align: "center",
         },
         {
@@ -431,6 +431,15 @@ export default {
 $header: 64px;
 
 .online-games {
+  thead {
+    display: none;
+  }
+  &.fullscreen {
+    thead {
+      display: table-header-group;
+    }
+  }
+
   tr > :first-child {
     display: none;
   }
