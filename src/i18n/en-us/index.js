@@ -100,6 +100,7 @@ export default {
   Link: "Link",
   "Link to Game": "Link to Game",
   "Link to Position": "Link to Position",
+  "List View": "List View",
   "Load Files": "Load Files",
   "Load Game": "Load Game",
   "Load Online Game": "Load Online Game",
@@ -222,6 +223,7 @@ export default {
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System
+  "Table View": "Table View",
   Tak: "Tak",
   "Text Size": "Text Size",
   Theme: "Theme",

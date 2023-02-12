@@ -14,6 +14,7 @@
     :selected.sync="selected"
     :loading="loading"
     color="primary"
+    no-route-fullscreen-exit
     hide-bottom
     v-on="$listeners"
     v-bind="$attrs"
@@ -21,7 +22,15 @@
     <template v-slot:top>
       <div class="column fit overflow-hidden">
         <q-toolbar>
-          <!-- List View Options -->
+          <!-- View Options -->
+          <q-btn
+            @click="fullscreen = !fullscreen"
+            :icon="fullscreen ? 'list' : 'table'"
+            stretch
+            flat
+          >
+            <hint>{{ $t(fullscreen ? "List View" : "Table View") }}</hint>
+          </q-btn>
 
           <q-space />
 
@@ -152,14 +161,14 @@ export default {
       },
       filterOptions: [
         {
-          value: "ongoing",
-          icon: "ongoing",
-          label: this.$t("Ongoing"),
-        },
-        {
           value: "open",
           icon: "open_game",
           label: this.$t("Open"),
+        },
+        {
+          value: "ongoing",
+          icon: "ongoing",
+          label: this.$t("Ongoing"),
         },
         {
           value: "recent",
@@ -233,10 +242,15 @@ export default {
   computed: {
     filter: {
       get() {
-        return this.$route.params.filter || "ongoing";
+        return this.$route.params.filter || "open";
       },
       set(filter) {
-        this.$router.replace({ params: { filter } });
+        this.$router.replace({
+          params: {
+            filter,
+            fullscreen: this.fullscreen ? "fullscreen" : undefined,
+          },
+        });
       },
     },
     user() {
@@ -249,12 +263,15 @@ export default {
       set(value) {
         if (value) {
           if (!this.$route.params.fullscreen) {
-            this.$router.push({ params: { fullscreen: "fullscreen" } });
+            this.$router.replace({
+              params: { filter: this.filter, fullscreen: "fullscreen" },
+            });
           }
         } else {
           if (this.$route.params.fullscreen) {
-            this.$router.go(-1);
-            this.$router.replace({ params: { fullscreen: null } });
+            this.$router.replace({
+              params: { filter: this.filter, fullscreen: undefined },
+            });
           }
         }
       },
@@ -360,6 +377,14 @@ export default {
     },
     async init() {
       this.loading = true;
+      if (!this.$route.params.filter) {
+        this.$router.replace({
+          params: {
+            filter: this.filter,
+            fullscreen: this.fullscreen ? "fullscreen" : undefined,
+          },
+        });
+      }
 
       const next = () => {
         this.loading = false;

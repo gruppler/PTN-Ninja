@@ -105,7 +105,7 @@ const routes = [
       },
       {
         name: "load-online",
-        path: "/online/:filter?",
+        path: "/online/:filter?/:fullscreen?",
         component: () => import("../dialogs/LoadOnline"),
       },
       {
