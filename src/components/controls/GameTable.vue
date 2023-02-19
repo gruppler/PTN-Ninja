@@ -63,15 +63,14 @@
           v-if="props.col.icon"
           :name="props.col.icon"
           :class="{
-            'q-mr-xs': isWide && props.col.label,
+            'q-mr-xs': props.col.label,
             [props.col.iconClass]: true,
           }"
           size="xs"
         />
-        <span v-show="(!props.col.icon && !props.col.icons) || isWide">
+        <span>
           {{ props.col.label }}
         </span>
-        <hint v-if="!isWide">{{ props.col.label }}</hint>
       </q-th>
     </template>
 
@@ -89,6 +88,9 @@
       >
         <td></td>
         <template v-if="fullscreen">
+          <q-td key="thumbnail" :props="props">
+            <GameThumbnail :game="props.row" />
+          </q-td>
           <q-td key="role" :props="props">
             <q-icon
               v-if="props.row.player || props.row.isActive"
@@ -109,11 +111,19 @@
           </q-td>
           <q-td key="players" :props="props">
             <div v-if="props.row.tags.player1">
-              <q-icon :name="playerIcon(1)" size="sm" />
+              <q-icon
+                :name="isRandomPlayer(props.row) ? 'random' : playerIcon(1)"
+                size="sm"
+                left
+              />
               {{ props.row.tags.player1 }}
             </div>
             <div v-if="props.row.tags.player2">
-              <q-icon :name="playerIcon(2)" size="sm" />
+              <q-icon
+                :name="isRandomPlayer(props.row) ? 'random' : playerIcon(2)"
+                size="sm"
+                left
+              />
               {{ props.row.tags.player2 }}
             </div>
           </q-td>
@@ -126,7 +136,6 @@
           <q-td key="result" :props="props">
             <Result :result="props.row.tags.result" />
           </q-td>
-          <hint v-if="!isWide">{{ props.row.name }}</hint>
         </template>
         <td v-else style="max-width: 100vw" :colspan="visibleColumns.length">
           <GameSelectorOption class="q-pa-none" :option="props.row" />
@@ -137,9 +146,10 @@
 </template>
 
 <script>
-import GameSelectorOption from "./GameSelectorOption.vue";
 import AccountBtn from "../general/AccountBtn.vue";
-import ListSelect from "../controls/ListSelect.vue";
+import GameSelectorOption from "./GameSelectorOption.vue";
+import GameThumbnail from "./GameThumbnail.vue";
+import ListSelect from "./ListSelect.vue";
 import Result from "../PTN/Result";
 
 import { compact, without } from "lodash";
@@ -148,7 +158,13 @@ const MAX_SELECTED = Infinity;
 
 export default {
   name: "GameTable",
-  components: { GameSelectorOption, AccountBtn, ListSelect, Result },
+  components: {
+    AccountBtn,
+    GameSelectorOption,
+    GameThumbnail,
+    ListSelect,
+    Result,
+  },
   props: ["value", "selection-mode"],
   data() {
     return {
@@ -188,6 +204,17 @@ export default {
       ],
       columns: [
         {
+          name: "thumbnail",
+          field: (game) => {
+            return {
+              url,
+              width,
+              height,
+            };
+          },
+          align: "left",
+        },
+        {
           name: "role",
           label: this.$t("Role"),
           icon: "account",
@@ -200,18 +227,6 @@ export default {
           align: "left",
         },
         {
-          name: "player1",
-          label: this.$t("Player1"),
-          icon: this.playerIcon(1),
-          align: "center",
-        },
-        {
-          name: "player2",
-          label: this.$t("Player2"),
-          icon: this.playerIcon(2),
-          align: "center",
-        },
-        {
           name: "players",
           label: this.$t("Players"),
           icon: "players",
@@ -219,6 +234,7 @@ export default {
         },
         {
           name: "date",
+          field: "",
           label: this.$t("DateTime"),
           icon: "date_time",
           align: "center",
@@ -322,19 +338,20 @@ export default {
     },
     visibleColumns() {
       let columns = this.columns.map((col) => col.name);
-      if (this.fullscreen) {
-        return without(columns, "players");
-      } else if (this.$q.screen.gt.sm) {
-        return without(columns, "name", "player1", "player2");
-      } else {
-        return without(columns, "name", "player1", "player2", "date");
+      if (["open", "ongoing"].includes(this.filter)) {
+        columns = without(columns, ["name", "result"]);
       }
-    },
-    isWide() {
-      return this.fullscreen && this.$q.screen.gt.sm;
+      return columns;
     },
   },
   methods: {
+    isRandomPlayer(game) {
+      return (
+        game.config.isOnline &&
+        game.config.isOpen &&
+        game.config.playerSeat === "random"
+      );
+    },
     playerIcon(player, isPrivate) {
       return this.$store.getters["ui/playerIcon"](player, isPrivate);
     },

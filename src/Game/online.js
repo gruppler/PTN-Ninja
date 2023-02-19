@@ -62,7 +62,7 @@ export default class GameOnline {
       Object.keys(this.tags),
       map(this.tags, (tag) => tag.output.text || tag.output)
     );
-    if (tags.data) {
+    if (tags.date) {
       tags.date = Tag.toDate(tags.date, tags.time);
     }
     delete tags.time;

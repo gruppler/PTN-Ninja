@@ -1,11 +1,7 @@
 <template>
   <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
     <q-item-section side>
-      <img
-        :src="thumbnailURL"
-        :height="thumbnailHeight"
-        :style="{ maxWidth: thumbnailWidth + 'px' }"
-      />
+      <GameThumbnail :game="option" />
     </q-item-section>
     <q-item-section side v-if="showIcon" class="fg-inherit">
       <q-icon :name="icon" class="fg-inherit">
@@ -45,33 +41,16 @@
 </template>
 
 <script>
-import Game from "../../Game";
+import GameThumbnail from "./GameThumbnail";
 import Result from "../PTN/Result";
 
 export default {
   name: "GameSelectorOption",
-  components: { Result },
+  components: { GameThumbnail, Result },
   props: {
     option: Object,
     showIcon: Boolean,
     showClose: Boolean,
-  },
-  data() {
-    return {
-      thumbnail: null,
-      thumbnailURL: "",
-      thumbnailHeight: 68,
-      thumbnailWidth: 81,
-      thumbnailConfig: {
-        imageSize: "xs",
-        axisLabels: false,
-        turnIndicator: true,
-        highlightSquares: true,
-        includeNames: false,
-        padding: false,
-        bgAlpha: 0,
-      },
-    };
   },
   computed: {
     icon() {
@@ -97,75 +76,11 @@ export default {
     },
   },
   methods: {
-    updateThumbnail() {
-      let game = this.option;
-      if (!game.state || !game.state.tps) {
-        return;
-      }
-
-      // Existing render
-      const id = "game-" + game.label;
-      const existing = this.$store.state.ui.thumbnails[id];
-      const themeID = this.$store.state.ui.themeID;
-      if (existing && existing.themeID === themeID) {
-        this.thumbnail = existing;
-        this.thumbnailURL = this.thumbnail.url;
-        if (existing.tps === game.state.tps) {
-          return;
-        }
-      }
-
-      // New render
-      const ply = game.state.ply;
-      const tps = game.state.tps;
-      const config = game.config;
-      try {
-        game = new Game({
-          state: game.minState || game.state,
-          tags: {
-            tps: game.state.tps,
-            komi: config.komi,
-            opening: config.opening,
-          },
-          config,
-        });
-        const canvas = game.board.render({
-          ...this.thumbnailConfig,
-          ply,
-          textSize: "xl",
-          flatCounts:
-            !config.isOnline || config.flatCounts
-              ? this.$store.state.ui.flatCounts
-              : false,
-          stackCounts: false,
-          showRoads:
-            !config.isOnline || config.showRoads
-              ? this.$store.state.ui.showRoads
-              : false,
-          theme: this.$store.state.ui.theme,
-        });
-
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          this.thumbnail = { id, tps, url, themeID };
-          this.thumbnailURL = this.thumbnail.url;
-          this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
-        }, "image/png");
-      } catch (error) {
-        console.error(error);
-      }
-    },
     close() {
       if (this.canClose) {
         this.$store.dispatch("game/REMOVE_GAME", this.option.value);
       }
     },
-  },
-  mounted() {
-    this.$nextTick(this.updateThumbnail);
-  },
-  watch: {
-    "option.state.tps": "updateThumbnail",
   },
 };
 </script>
