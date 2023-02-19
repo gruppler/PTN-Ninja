@@ -35,7 +35,7 @@
           <q-space />
 
           <!-- Account -->
-          <AccountBtn :login-text="$t('Guest')" rounded flat />
+          <AccountBtn :login-text="$t('Guest')" stretch flat />
         </q-toolbar>
 
         <!-- Filter -->
