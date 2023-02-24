@@ -142,6 +142,10 @@
         </td>
       </q-tr>
     </template>
+
+    <template v-slot:bottom-row v-if="fullscreen">
+      <slot name="fullscreen-footer" />
+    </template>
   </q-table>
 </template>
 
@@ -280,7 +284,7 @@ export default {
         if (value) {
           if (!this.$route.params.fullscreen) {
             this.$router.replace({
-              params: { filter: this.filter, fullscreen: "fullscreen" },
+              params: { filter: this.filter, fullscreen: "table" },
             });
           }
         } else {

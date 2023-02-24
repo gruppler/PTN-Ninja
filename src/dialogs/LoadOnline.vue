@@ -10,7 +10,27 @@
       </dialog-header>
     </template>
 
-    <GameTable ref="gameTable" v-model="selectedGames" class="fit" />
+    <GameTable ref="gameTable" v-model="selectedGames" class="fit">
+      <template v-slot:fullscreen-footer>
+        <q-footer class="bg-accent" elevated>
+          <q-separator />
+
+          <message-output :error="error" />
+
+          <q-card-actions align="right">
+            <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
+            <q-btn
+              @click="ok"
+              :label="$t('OK')"
+              :loading="loading"
+              :disabled="!selectedGames.length"
+              :flat="!selectedGames.length"
+              color="primary"
+            />
+          </q-card-actions>
+        </q-footer>
+      </template>
+    </GameTable>
 
     <template v-slot:footer>
       <q-separator />
