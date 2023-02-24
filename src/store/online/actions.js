@@ -1,9 +1,9 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
-import { toDate } from "date-fns";
 import { omit } from "lodash";
 
 import Game from "../../Game";
+import { toDate } from "../../Game/PTN/Tag";
 import { call } from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
@@ -129,7 +129,9 @@ const gameConverter = {
     data.config.player = data.config.players
       ? data.config.players.indexOf(auth.currentUser.uid) + 1
       : 0;
-    data.tags.date = toDate(data.tags.date);
+    if (data.tags.date) data.tags.date = toDate(data.tags.date);
+    if (data.createdAt) data.createdAt = toDate(data.createdAt);
+    if (data.updatedAt) data.updatedAt = toDate(data.updatedAt);
     return data;
   },
 };

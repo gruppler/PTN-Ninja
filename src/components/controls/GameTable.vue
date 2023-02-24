@@ -131,7 +131,13 @@
             {{ props.row.tags.size + "x" + props.row.tags.size }}
           </q-td>
           <q-td key="date" :props="props">
-            <relative-time :value="props.row.tags.date" />
+            <relative-time
+              :value="
+                props.row.tags.date ||
+                props.row.updatedAt ||
+                props.row.createdAt
+              "
+            />
           </q-td>
           <q-td key="result" :props="props">
             <Result :result="props.row.tags.result" />
@@ -209,13 +215,11 @@ export default {
       columns: [
         {
           name: "thumbnail",
-          field: (game) => {
-            return {
-              url,
-              width,
-              height,
-            };
-          },
+          field: () => ({
+            url,
+            width,
+            height,
+          }),
           align: "left",
         },
         {
@@ -237,17 +241,16 @@ export default {
           align: "left",
         },
         {
-          name: "date",
-          field: "",
-          label: this.$t("DateTime"),
-          icon: "date_time",
-          align: "center",
-        },
-        {
           name: "size",
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
+          align: "center",
+        },
+        {
+          name: "date",
+          label: this.$t("DateTime"),
+          icon: "date_time",
           align: "center",
         },
         {

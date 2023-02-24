@@ -22,6 +22,9 @@
           {{ option.tags.player2 }}
         </q-item-label>
       </template>
+      <q-item-label v-if="datetime" class="q-pt-xs">
+        <relative-time :value="datetime" />
+      </q-item-label>
     </q-item-section>
     <q-item-section side>
       <q-item-label>
@@ -69,6 +72,13 @@ export default {
         this.option.config.isOnline &&
         this.option.config.isOpen &&
         this.option.config.playerSeat === "random"
+      );
+    },
+    datetime() {
+      return (
+        (this.option.tags && this.option.tags.date) ||
+        this.option.updatedAt ||
+        this.option.createdAt
       );
     },
     canClose() {
