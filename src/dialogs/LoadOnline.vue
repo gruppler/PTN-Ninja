@@ -93,13 +93,16 @@ export default {
       this.$refs.dialog.hide();
     },
     async ok() {
-      this.selectedGames.forEach((game) => {
-        this.$store.dispatch("online/LOAD_GAME", game).catch((error) => {
+      await this.$store
+        .dispatch(
+          "online/LOAD_GAMES",
+          this.selectedGames.map((option) => option.value)
+        )
+        .catch((error) => {
           this.notifyError(error);
         });
-      });
-      this.selectedGames = [];
 
+      this.selectedGames = [];
       this.close();
     },
   },

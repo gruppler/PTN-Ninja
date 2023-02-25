@@ -211,8 +211,8 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   Loading.hide();
 };
 
-export const LOAD_GAME = async function ({ state }, game) {
-  console.log(game);
+export const LOAD_GAMES = async function ({ state }, gameIDs) {
+  console.log(gameIDs);
   return;
 
   Loading.show();
