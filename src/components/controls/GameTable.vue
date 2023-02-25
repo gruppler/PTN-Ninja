@@ -493,6 +493,11 @@ $header: 64px;
     display: none;
   }
 
+  tr.selected * {
+    color: $primary;
+    color: var(--q-color-primary);
+  }
+
   .q-table__top {
     padding: 0;
   }

@@ -8,26 +8,26 @@
         <q-badge v-if="option.config.unseen" floating />
       </q-icon>
     </q-item-section>
-    <q-item-section>
+    <q-item-section class="fg-inherit">
       <q-item-label style="word-wrap: break-word">{{
         option.label
       }}</q-item-label>
       <template v-if="option.tags">
-        <q-item-label v-if="option.tags.player1">
+        <q-item-label v-if="option.tags.player1" class="fg-inherit">
           <q-icon :name="isRandomPlayer ? 'random' : 'player1'" left />
           {{ option.tags.player1 }}
         </q-item-label>
-        <q-item-label v-if="option.tags.player2">
+        <q-item-label v-if="option.tags.player2" class="fg-inherit">
           <q-icon :name="isRandomPlayer ? 'random' : 'player2'" left />
           {{ option.tags.player2 }}
         </q-item-label>
       </template>
-      <q-item-label v-if="datetime" class="q-pt-xs">
-        <relative-time :value="datetime" />
+      <q-item-label v-if="datetime" class="q-pt-xs fg-inherit">
+        <relative-time :value="datetime" class="fg-inherit" />
       </q-item-label>
     </q-item-section>
-    <q-item-section side>
-      <q-item-label>
+    <q-item-section class="fg-inherit" side>
+      <q-item-label class="fg-inherit">
         {{ option.config.size || option.tags.size }}x{{
           option.config.size || option.tags.size
         }}

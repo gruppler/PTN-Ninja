@@ -18,6 +18,10 @@
           <message-output :error="error" />
 
           <q-card-actions align="right">
+            <div v-if="selectedGames.length">
+              {{ $tc("n_games", selectedGames.length) }}
+            </div>
+            <q-space />
             <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
             <q-btn
               @click="ok"
@@ -38,6 +42,10 @@
       <message-output :error="error" />
 
       <q-card-actions align="right">
+        <div v-if="selectedGames.length">
+          {{ $tc("n_games", selectedGames.length) }}
+        </div>
+        <q-space />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           @click="ok"

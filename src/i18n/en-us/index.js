@@ -117,7 +117,7 @@ export default {
   "Move Number": "Move Number",
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
-  n_games: "No Games | 1 Game | {count} Games",
+  n_games: "No games | 1 game | {count} games",
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "New Analysis": "New Analysis",
