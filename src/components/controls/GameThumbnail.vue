@@ -1,5 +1,10 @@
 <template>
-  <img :src="url" :height="height" :style="{ maxWidth: width + 'px' }" />
+  <img
+    :src="url"
+    :height="height"
+    :style="{ maxWidth: width + 'px' }"
+    class="rounded-borders block"
+  />
 </template>
 
 <script>
@@ -14,14 +19,14 @@ export default {
     return {
       thumbnail: null,
       url: "",
-      height: 68,
-      width: 81,
+      height: 60,
+      width: 60,
       thumbnailConfig: {
         imageSize: "xs",
         axisLabels: false,
-        turnIndicator: true,
+        turnIndicator: false,
         highlightSquares: true,
-        includeNames: false,
+        unplayedPieces: false,
         padding: false,
         bgAlpha: 0,
       },
