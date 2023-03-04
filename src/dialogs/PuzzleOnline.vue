@@ -112,7 +112,7 @@ export default {
             playerSeat: this.config.playerSeat,
             playerName: this.config.isPrivate ? this.config.playerName : "",
             opponentName: this.opponentName,
-            allowScratchboard: this.config.allowScratchboard,
+            scratchboard: this.config.scratchboard,
             flatCounts: this.config.flatCounts,
             showRoads: this.config.showRoads,
             stackCounts: this.config.stackCounts,

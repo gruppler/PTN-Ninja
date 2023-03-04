@@ -30,8 +30,8 @@ export const disabledOptions = (state) => {
     if (!game.config.showRoads) {
       disabled.push("showRoads");
     }
-    if (!game.config.allowScratchboard) {
-      disabled.push("allowScratchboard");
+    if (!game.config.scratchboard) {
+      disabled.push("scratchboard");
     }
   }
   if (!navigator.canShare) {

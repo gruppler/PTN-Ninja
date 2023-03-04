@@ -36,6 +36,11 @@
         v-if="option.tags && option.tags.result"
         :result="option.tags.result"
       />
+      <div v-if="uiOptions.length" class="row justify-end q-gutter-xs q-mt-xs">
+        <q-icon v-for="o in uiOptions" :key="o.key" :name="o.icon">
+          <hint>{{ $t(o.label) }}</hint>
+        </q-icon>
+      </div>
     </q-item-section>
     <q-item-section v-if="canClose" side>
       <q-btn @click.stop="close" icon="close" flat dense />
@@ -46,6 +51,8 @@
 <script>
 import GameThumbnail from "./GameThumbnail";
 import Result from "../PTN/Result";
+
+import { uiOptions } from "../../dialogs/GameInfo";
 
 export default {
   name: "GameSelectorOption",
@@ -83,6 +90,11 @@ export default {
     },
     canClose() {
       return this.showClose && this.$store.state.game.list.length > 1;
+    },
+    uiOptions() {
+      return this.option.config
+        ? uiOptions.filter((o) => this.option.config[o.key])
+        : [];
     },
   },
   methods: {

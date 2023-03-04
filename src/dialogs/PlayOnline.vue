@@ -79,6 +79,7 @@
           <q-expansion-item
             group="options"
             v-model="showGameOptions"
+            icon="board"
             :label="$t('Game Options')"
             expand-separator
           >
@@ -96,49 +97,28 @@
           <!-- UI Options -->
           <q-expansion-item
             group="options"
+            icon="ui"
             :label="$t('UI Options')"
             expand-separator
           >
-            <q-item tag="label" v-ripple>
+            <q-item
+              v-for="toggle in toggles"
+              :key="toggle.key"
+              :class="{ 'text-primary': config[toggle.key] }"
+              tag="label"
+              v-ripple
+            >
+              <q-item-section class="fg-inherit" side>
+                <q-icon :name="toggle.icon" />
+              </q-item-section>
               <q-item-section>
-                <q-item-label>{{ $t("Allow Scratchboard") }}</q-item-label>
-                <q-item-label caption>{{
-                  $t(
-                    config.allowScratchboard
-                      ? "hint.scratchboardAllowed"
-                      : "hint.scratchboardDenied"
-                  )
+                <q-item-label>{{ $t(toggle.label) }}</q-item-label>
+                <q-item-label v-if="toggle.hint" class="fg-inherit" caption>{{
+                  $t(toggle.hint(config[toggle.key]))
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="config.allowScratchboard" />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="config.flatCounts" />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="config.showRoads" />
-              </q-item-section>
-            </q-item>
-
-            <q-item tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="config.stackCounts" />
+                <q-toggle v-model="config[toggle.key]" />
               </q-item-section>
             </q-item>
           </q-expansion-item>
@@ -176,6 +156,7 @@ import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
 
+import { uiOptions } from "./GameInfo";
 import { cloneDeep } from "lodash";
 
 const TAGS = {
@@ -203,6 +184,7 @@ export default {
     if (!user || user.isAnonymous) {
       config.isPrivate = true;
     }
+
     const tags = { ...TAGS };
     Object.keys(TAGS).forEach((key) => {
       tags[key] = this.$game.tag(key) || "";
@@ -214,9 +196,15 @@ export default {
     ) {
       tags.tps = this.$game.board.tps;
     }
+
+    const toggles = cloneDeep(uiOptions);
+    toggles.find((o) => o.key === "scratchboard").hint = (enabled) =>
+      enabled ? "hint.scratchboardAllowed" : "hint.scratchboardDenied";
+
     return {
       config,
       tags,
+      toggles,
       isPlayerValid: false,
       isOpponentValid: false,
       isGameInfoValid: false,
@@ -299,7 +287,7 @@ export default {
             playerSeat: this.config.playerSeat,
             playerName: this.config.isPrivate ? this.config.playerName : "",
             opponentName: this.opponentName,
-            allowScratchboard: this.config.allowScratchboard,
+            scratchboard: this.config.scratchboard,
             flatCounts: this.config.flatCounts,
             showRoads: this.config.showRoads,
             stackCounts: this.config.stackCounts,

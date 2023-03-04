@@ -11,5 +11,6 @@ export const playerName =
   };
 
 export const canEdit = (state) => (game) => {
+  // TODO: Actually check permissions
   return !game.config.isOnline;
 };

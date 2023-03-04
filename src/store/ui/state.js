@@ -110,7 +110,7 @@ export const onlineUIOptions = [
 defaults.onlineConfig = {
   isPrivate: true,
   playerSeat: "random",
-  allowScratchboard: true,
+  scratchboard: true,
   ...pick(defaults, onlineUIOptions),
 };
 

@@ -130,6 +130,18 @@
           <q-td key="size" :props="props">
             {{ props.row.tags.size + "x" + props.row.tags.size }}
           </q-td>
+          <q-td key="uiOptions" :props="props">
+            <div class="row q-gutter-sm justify-center">
+              <q-icon
+                v-for="o in props.row.uiOptions"
+                :key="o.key"
+                :name="o.icon"
+                size="sm"
+              >
+                <hint>{{ $t(o.label) }}</hint>
+              </q-icon>
+            </div>
+          </q-td>
           <q-td key="date" :props="props">
             <relative-time
               :value="
@@ -162,6 +174,7 @@ import GameThumbnail from "./GameThumbnail.vue";
 import ListSelect from "./ListSelect.vue";
 import Result from "../PTN/Result";
 
+import { uiOptions } from "../../dialogs/GameInfo";
 import { compact, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
@@ -212,6 +225,7 @@ export default {
           label: this.$tc("Puzzle", 100),
         },
       ],
+      uiOptions,
       columns: [
         {
           name: "thumbnail",
@@ -245,6 +259,12 @@ export default {
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
+          align: "center",
+        },
+        {
+          name: "uiOptions",
+          label: this.$t("UI Options"),
+          icon: "ui",
           align: "center",
         },
         {
@@ -316,6 +336,7 @@ export default {
           ...game,
           value: game.config.id,
           isActive: this.isActive(game),
+          uiOptions: uiOptions.filter((o) => game.config[o.key]),
         })
       );
 

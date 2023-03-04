@@ -334,12 +334,42 @@
           </q-item-label>
         </q-item-section>
       </q-item>
+
+      <!-- UI Options -->
+      <q-item v-if="uiOptions.length">
+        <q-icon v-for="o in uiOptions" :key="o.key" :name="o.icon">
+          <hint>{{ $t(o.label) }}</hint>
+        </q-icon>
+      </q-item>
     </q-list>
   </small-dialog>
 </template>
 
 <script>
 import Result from "../components/PTN/Result";
+
+export const uiOptions = [
+  {
+    icon: "scratch_board",
+    label: "Scratchboard",
+    key: "scratchboard",
+  },
+  {
+    icon: "road_connections",
+    label: "Road Connections",
+    key: "showRoads",
+  },
+  {
+    icon: "flat_counts",
+    label: "Flat Counts",
+    key: "flatCounts",
+  },
+  {
+    icon: "stack_counts",
+    label: "Stack Counts",
+    key: "stackCounts",
+  },
+];
 
 export default {
   name: "GameInfo",
@@ -352,7 +382,9 @@ export default {
   },
   computed: {
     isEditable() {
-      return this.$store.getters["online/canEdit"](this.game);
+      return this.game.config.isOnline
+        ? this.$store.getters["online/canEdit"](this.game)
+        : true;
     },
     isDuplicable() {
       return !(this.game.config.isOnline && this.game.config.isOngoing);
@@ -395,6 +427,11 @@ export default {
         this.tags.caps1 !== this.tags.caps2 ||
         this.tags.flats1 !== this.tags.flats2
       );
+    },
+    uiOptions() {
+      return this.game.isOnline
+        ? uiOptions.filter((o) => this.game.config[o.key])
+        : [];
     },
   },
   methods: {
