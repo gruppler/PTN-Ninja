@@ -116,6 +116,8 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
   return auth.confirmPasswordReset(oobCode, password);
 };
 
+// GAMES
+
 const gameConverter = {
   toFirestore(game) {
     game.config = omit(game.config, ["isOnline", "id", "player", "type"]);
@@ -172,7 +174,9 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   // Join as player if still open
   const player = game.openPlayer;
   const playerName = getters.playerName(game.config.isPrivate);
-  const gameDoc = db.collection("gamesPublic").doc(game.config.id);
+  const gameDoc = db
+    .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
+    .doc(game.config.id);
   Loading.show();
   // let gamesSnapshot = await gameDoc.get();
   // // Check that the player is still open
@@ -211,38 +215,41 @@ export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   Loading.hide();
 };
 
-export const LOAD_GAMES = async function ({ state }, gameIDs) {
-  console.log(gameIDs);
-  return;
+export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
+  const collection = isPrivate ? "gamesPrivate" : "gamesPublic";
+  const games = [];
 
-  Loading.show();
-  const gameDoc = db
-    .collection(collection)
-    .doc(id)
-    .withConverter(gameConverter);
-  console.log(gameDoc);
-  let gameJSON;
-
-  // Load game
   try {
-    let gameSnapshot = await gameDoc.get();
-    if (!gameSnapshot.exists) {
-      throw new Error("Game does not exist");
-    } else {
-      gameJSON = (gameSnapshot, state);
+    Loading.show();
 
-      // Load moves
-      // let moveDocs = await gameDoc.collection("branches").get();
-      // gameJSON.moves = [];
-      // moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
+    // Fetch games
+    await Promise.all(
+      gameIDs.map(async (id) => {
+        const ref = db
+          .collection(collection)
+          .doc(id)
+          .withConverter(gameConverter);
+        const game = (await ref.get()).data();
 
-      // Add game
-      let game = new Game(gameJSON);
-      this.dispatch("game/ADD_GAME", game);
+        if (!game) {
+          throw new Error(`Failed to get game ${collection}/${id}`);
+        }
 
-      Loading.hide();
-      return game;
-    }
+        games.push(game);
+        console.log(game);
+
+        // Load moves
+        // let moveDocs = await gameDoc.collection("branches").get();
+        // gameJSON.moves = [];
+        // moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
+      })
+    );
+
+    // Add games
+    // this.dispatch("game/ADD_GAMES", games);
+
+    Loading.hide();
+    return games;
   } catch (error) {
     Loading.hide();
     throw error;

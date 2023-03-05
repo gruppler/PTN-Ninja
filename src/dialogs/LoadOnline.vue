@@ -94,10 +94,9 @@ export default {
     },
     async ok() {
       await this.$store
-        .dispatch(
-          "online/LOAD_GAMES",
-          this.selectedGames.map((option) => option.value)
-        )
+        .dispatch("online/LOAD_GAMES", {
+          gameIDs: this.selectedGames.map((option) => option.value),
+        })
         .catch((error) => {
           this.notifyError(error);
         });

@@ -146,13 +146,7 @@
             </div>
           </q-td>
           <q-td key="date" :props="props">
-            <relative-time
-              :value="
-                props.row.tags.date ||
-                props.row.updatedAt ||
-                props.row.createdAt
-              "
-            />
+            <relative-time :value="props.row.createdAt" />
           </q-td>
           <q-td key="result" :props="props">
             <Result :result="props.row.tags.result" />
@@ -178,7 +172,7 @@ import ListSelect from "./ListSelect.vue";
 import Result from "../PTN/Result";
 
 import { uiOptions } from "../../dialogs/GameInfo";
-import { compact, without } from "lodash";
+import { compact, sortBy, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
 
@@ -340,30 +334,31 @@ export default {
       },
     },
     games() {
-      let games = Object.values(this.$store.state.online.gamesPublic).map(
-        (game) => ({
+      let games = sortBy(
+        Object.values(this.$store.state.online.gamesPublic).map((game) => ({
           ...game,
           value: game.config.id,
           isActive: this.isActive(game),
           uiOptions: uiOptions.filter((o) => game.config[o.key]),
-        })
+        })),
+        "createdAt"
       );
 
       switch (this.filter) {
-        case "ongoing":
-          games = games.filter(
-            (game) => !game.config.hasEnded && !game.config.isOpen
-          );
-          break;
         case "open":
           games = games.filter(
             (game) => !game.config.hasEnded && game.config.isOpen
           );
           break;
+        case "ongoing":
+          games = games
+            .filter((game) => !game.config.hasEnded && !game.config.isOpen)
+            .reverse();
+          break;
         case "recent":
-          games = games.filter(
-            (game) => game.config.hasEnded && !game.config.isOpen
-          );
+          games = games
+            .filter((game) => game.config.hasEnded && !game.config.isOpen)
+            .reverse();
           break;
         default:
           [];
@@ -455,7 +450,7 @@ export default {
 
       const limit = 100;
       const pagination = {
-        sortBy: "updatedAt",
+        sortBy: "createdAt",
         descending: true,
       };
 

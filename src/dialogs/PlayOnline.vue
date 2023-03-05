@@ -273,24 +273,20 @@ export default {
     submit() {
       this.$refs.gameInfo.submit();
     },
-    async create() {
+    async create({ tags }) {
       if (!this.isValid) {
         return;
       }
 
       try {
         this.loading = true;
+        const game = new Game({ tags });
         const id = await this.$store.dispatch("online/CREATE_GAME", {
-          game: new Game({ tags: this.tags }),
+          game,
           config: {
-            isPrivate: this.config.isPrivate,
-            playerSeat: this.config.playerSeat,
+            ...this.config,
             playerName: this.config.isPrivate ? this.config.playerName : "",
             opponentName: this.opponentName,
-            scratchboard: this.config.scratchboard,
-            flatCounts: this.config.flatCounts,
-            showRoads: this.config.showRoads,
-            stackCounts: this.config.stackCounts,
           },
         });
         await this.$store.dispatch("online/LOAD_GAME", {
