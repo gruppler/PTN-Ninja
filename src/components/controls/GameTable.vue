@@ -130,6 +130,9 @@
           <q-td key="size" :props="props">
             {{ props.row.tags.size + "x" + props.row.tags.size }}
           </q-td>
+          <q-td key="komi" :props="props">
+            {{ props.row.tags.komi }}
+          </q-td>
           <q-td key="uiOptions" :props="props">
             <div class="row q-gutter-sm justify-center">
               <q-icon
@@ -259,6 +262,12 @@ export default {
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
+          align: "center",
+        },
+        {
+          name: "komi",
+          label: this.$t("Komi"),
+          icon: "komi",
           align: "center",
         },
         {

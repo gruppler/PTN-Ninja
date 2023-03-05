@@ -28,19 +28,23 @@
     </q-item-section>
     <q-item-section class="fg-inherit" side>
       <q-item-label class="fg-inherit">
+        <span v-if="option.tags && option.tags.komi" class="q-mr-xs">
+          <q-icon name="komi" />
+          {{ option.tags.komi }}
+        </span>
         {{ option.config.size || option.tags.size }}x{{
           option.config.size || option.tags.size
         }}
       </q-item-label>
-      <Result
-        v-if="option.tags && option.tags.result"
-        :result="option.tags.result"
-      />
       <div v-if="uiOptions.length" class="row justify-end q-gutter-xs q-mt-xs">
         <q-icon v-for="o in uiOptions" :key="o.key" :name="o.icon">
           <hint>{{ $t(o.label) }}</hint>
         </q-icon>
       </div>
+      <Result
+        v-if="option.tags && option.tags.result"
+        :result="option.tags.result"
+      />
     </q-item-section>
     <q-item-section v-if="canClose" side>
       <q-btn @click.stop="close" icon="close" flat dense />
