@@ -1,4 +1,5 @@
 import Vue from "vue";
+import { findLastIndex } from "lodash";
 
 export const uniqueName =
   (state) =>
@@ -45,4 +46,15 @@ export const isValidSquare = () => (square) => {
   if (game) {
     return game.board.isValidSquare(square);
   }
+};
+
+export const currentBranchIndex = (state) => {
+  const branches = state.ptn.branchMenu;
+  const index = findLastIndex(
+    branches,
+    (ply) =>
+      state.ptn.branchPlies.find((p) => p.id === ply.id) &&
+      ply.id <= state.position.plyID
+  );
+  return index >= 0 ? index : 0;
 };

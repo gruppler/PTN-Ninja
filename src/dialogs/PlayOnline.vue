@@ -102,23 +102,23 @@
             expand-separator
           >
             <q-item
-              v-for="toggle in toggles"
-              :key="toggle.key"
-              :class="{ 'text-primary': config[toggle.key] }"
+              v-for="option in uiOptions"
+              :key="option.key"
+              :class="{ 'text-primary': config[option.key] }"
               tag="label"
               v-ripple
             >
               <q-item-section class="fg-inherit" side>
-                <q-icon :name="toggle.icon" />
+                <q-icon :name="option.icon" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>{{ $t(toggle.label) }}</q-item-label>
-                <q-item-label v-if="toggle.hint" class="fg-inherit" caption>{{
-                  $t(toggle.hint(config[toggle.key]))
+                <q-item-label>{{ $t(option.label) }}</q-item-label>
+                <q-item-label v-if="option.hint" class="fg-inherit" caption>{{
+                  $t(option.hint)
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="config[toggle.key]" />
+                <q-toggle v-model="config[option.key]" />
               </q-item-section>
             </q-item>
           </q-expansion-item>
@@ -197,14 +197,10 @@ export default {
       tags.tps = this.$game.board.tps;
     }
 
-    const toggles = cloneDeep(uiOptions);
-    toggles.find((o) => o.key === "scratchboard").hint = (enabled) =>
-      enabled ? "hint.scratchboardAllowed" : "hint.scratchboardDenied";
-
     return {
       config,
       tags,
-      toggles,
+      uiOptions,
       isPlayerValid: false,
       isOpponentValid: false,
       isGameInfoValid: false,

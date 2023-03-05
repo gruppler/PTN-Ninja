@@ -353,6 +353,7 @@ export const uiOptions = [
     icon: "scratch_board",
     label: "Scratchboard",
     key: "scratchboard",
+    hint: "hint.scratchboard",
   },
   {
     icon: "road_connections",

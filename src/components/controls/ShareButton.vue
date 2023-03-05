@@ -73,55 +73,62 @@ export default {
   },
   computed: {
     actions() {
-      const actions = [
-        {
-          id: "copy",
-          label: this.$t("Copy"),
-          icon: "copy",
-          children: [
-            {
-              id: "url",
-              label: this.$t("Link"),
-              icon: "url",
-              action: () => this.shareText("url"),
-            },
-          ],
-        },
-        {},
-      ];
+      const actions = [];
 
-      if (this.$game.board.ply) {
-        actions[0].children.push({
-          id: "ply",
-          label: this.$t("Ply"),
-          icon: "ply",
-          action: () => this.shareText("ply"),
+      const addCopyActions = (actions) => {
+        actions.push({
+          id: "url",
+          label: this.$t("Link"),
+          icon: "url",
+          action: () => this.shareText("url"),
         });
-      }
 
-      actions[0].children.push({
-        id: "tps",
-        label: this.$t("TPS"),
-        icon: "board",
-        action: () => this.shareText("tps"),
-      });
-
-      actions[0].children.push(
-        {
-          id: "moves",
-          label: this.$t("Moves"),
-          icon: "moves",
-          action: () => this.shareText("moves"),
-        },
-        {
-          id: "ptn",
-          label: this.$t("PTN"),
-          icon: "text",
-          action: () => this.shareText("ptn"),
+        if (this.$game.board.ply) {
+          actions.push({
+            id: "ply",
+            label: this.$t("Ply"),
+            icon: "ply",
+            action: () => this.shareText("ply"),
+          });
         }
-      );
 
-      if (!this.$store.state.embed) {
+        actions.push(
+          {
+            id: "tps",
+            label: this.$t("TPS"),
+            icon: "board",
+            action: () => this.shareText("tps"),
+          },
+          {
+            id: "moves",
+            label: this.$t("Moves"),
+            icon: "moves",
+            action: () => this.shareText("moves"),
+          },
+          {
+            id: "ptn",
+            label: this.$t("PTN"),
+            icon: "text",
+            action: () => this.shareText("ptn"),
+          }
+        );
+      };
+
+      if (this.$store.state.ui.embed) {
+        addCopyActions(actions);
+      } else {
+        actions.push(
+          {
+            id: "copy",
+            label: this.$t("Copy"),
+            icon: "copy",
+            children: [],
+          },
+          {}
+        );
+
+        addCopyActions(actions[0].children);
+
         actions.push(
           {
             id: "playOnline",

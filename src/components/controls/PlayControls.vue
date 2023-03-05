@@ -191,7 +191,7 @@ export default {
       return !!(this.position.ply && this.position.ply.branches.length > 1);
     },
     branchIndex() {
-      return this.$refs.branchMenu.selected;
+      return this.$store.getters["game/currentBranchIndex"];
     },
     options() {
       const keys = Object.keys(this.branches);
