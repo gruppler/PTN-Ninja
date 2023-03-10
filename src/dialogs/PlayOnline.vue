@@ -64,8 +64,6 @@
               <q-btn-toggle
                 class="highlight"
                 v-model="config.playerSeat"
-                :toggle-color="playerBGColor"
-                :toggle-text-color="playerTextColor"
                 :options="players"
                 :ripple="false"
                 spread
@@ -234,26 +232,6 @@ export default {
         : this.config.playerSeat === 1
         ? 2
         : 1;
-    },
-    playerBGColor() {
-      switch (this.config.playerSeat) {
-        case 1:
-          return "player1";
-        case 2:
-          return "player2";
-        default:
-          return "primary";
-      }
-    },
-    playerTextColor() {
-      switch (this.config.playerSeat) {
-        case 1:
-          return "player2";
-        case 2:
-          return "player1";
-        default:
-          return "textDark";
-      }
     },
     isValid() {
       return this.isPlayerValid && this.isOpponentValid && this.isGameInfoValid;
