@@ -15,7 +15,7 @@
     :loading="loading"
     color="primary"
     no-route-fullscreen-exit
-    hide-bottom
+    :hide-bottom="!fullscreen"
     v-on="$listeners"
     v-bind="$attrs"
   >
@@ -158,7 +158,7 @@
       </q-tr>
     </template>
 
-    <template v-slot:bottom-row v-if="fullscreen">
+    <template v-slot:bottom v-if="fullscreen">
       <slot name="fullscreen-footer" />
     </template>
   </q-table>
