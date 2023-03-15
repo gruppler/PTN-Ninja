@@ -14,17 +14,15 @@
       }}</q-item-label>
       <template v-if="option.tags">
         <q-item-label v-if="option.tags.player1" class="fg-inherit">
-          <q-icon
-            :name="isRandomPlayer ? 'random' : 'player1'"
-            class="q-mr-xs"
-          />
+          <q-icon :name="isRandomPlayer ? 'random' : 'player1'" class="q-mr-xs">
+            <hint>{{ $t(isRandomPlayer ? "Random" : "Player1") }}</hint>
+          </q-icon>
           {{ option.tags.player1 }}
         </q-item-label>
         <q-item-label v-if="option.tags.player2" class="fg-inherit">
-          <q-icon
-            :name="isRandomPlayer ? 'random' : 'player2'"
-            class="q-mr-xs"
-          />
+          <q-icon :name="isRandomPlayer ? 'random' : 'player2'" class="q-mr-xs">
+            <hint>{{ $t(isRandomPlayer ? "Random" : "Player2") }}</hint>
+          </q-icon>
           {{ option.tags.player2 }}
         </q-item-label>
       </template>

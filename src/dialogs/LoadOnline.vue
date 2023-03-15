@@ -1,5 +1,11 @@
 <template>
-  <large-dialog ref="dialog" :value="true" no-backdrop-dismiss v-bind="$attrs">
+  <large-dialog
+    ref="dialog"
+    content-class="load-online"
+    :value="true"
+    no-backdrop-dismiss
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <dialog-header icon="online" :title="$t('Online')">
         <template v-slot:buttons>
@@ -11,6 +17,15 @@
     </template>
 
     <GameTable ref="gameTable" v-model="selectedGames" class="fit">
+      <template v-slot:fullscreen-header>
+        <q-btn icon="add" @click="add" stretch flat>
+          <hint>{{ $t("Create") }}</hint>
+        </q-btn>
+        <q-btn icon="close" stretch flat v-close-popup>
+          <hint>{{ $t("Close") }}</hint>
+        </q-btn>
+      </template>
+
       <template v-slot:fullscreen-footer>
         <q-footer class="bg-accent" elevated>
           <q-separator />
@@ -107,3 +122,17 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.load-online {
+  .game-table:not(.fullscreen) {
+    margin-bottom: 52px;
+
+    .q-table__top {
+      position: sticky;
+      z-index: 1;
+      top: 64px;
+    }
+  }
+}
+</style>

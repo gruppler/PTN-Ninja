@@ -20,6 +20,9 @@
       <smooth-reflow tag="recess" class="col">
         <q-list>
           <q-item tag="label" v-ripple>
+            <q-item-section side>
+              <q-icon name="online_private" />
+            </q-item-section>
             <q-item-section>
               <q-item-label>{{ $t("Private Game") }}</q-item-label>
               <q-item-label caption>

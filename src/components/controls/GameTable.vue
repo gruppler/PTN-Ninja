@@ -1,7 +1,7 @@
 <template>
   <q-table
     ref="table"
-    class="online-games"
+    class="game-table"
     :class="{ fullscreen }"
     table-class="dim"
     :columns="columns"
@@ -36,6 +36,10 @@
 
           <!-- Account -->
           <AccountBtn :login-text="$t('Guest')" stretch flat />
+
+          <template v-if="fullscreen">
+            <slot name="fullscreen-header" />
+          </template>
         </q-toolbar>
 
         <!-- Filter -->
@@ -115,7 +119,11 @@
                 :name="isRandomPlayer(props.row) ? 'random' : playerIcon(1)"
                 size="sm"
                 left
-              />
+              >
+                <hint>{{
+                  $t(isRandomPlayer(props.row) ? "Random" : "Player1")
+                }}</hint>
+              </q-icon>
               {{ props.row.tags.player1 }}
             </div>
             <div v-if="props.row.tags.player2">
@@ -123,7 +131,11 @@
                 :name="isRandomPlayer(props.row) ? 'random' : playerIcon(2)"
                 size="sm"
                 left
-              />
+              >
+                <hint>{{
+                  $t(isRandomPlayer(props.row) ? "Random" : "Player2")
+                }}</hint>
+              </q-icon>
               {{ props.row.tags.player2 }}
             </div>
           </q-td>
@@ -504,7 +516,7 @@ export default {
 <style lang="scss">
 $header: 64px;
 
-.online-games {
+.game-table {
   thead {
     display: none;
   }
@@ -526,6 +538,9 @@ $header: 64px;
   .q-table__top {
     padding: 0;
   }
+  &:not(.fullscreen) .q-table__top {
+    box-shadow: $shadow-2;
+  }
   .q-table__middle {
     height: 100%;
   }
@@ -541,6 +556,7 @@ $header: 64px;
     position: sticky;
     z-index: 1;
   }
+
   thead tr:first-child th {
     top: 0;
   }
