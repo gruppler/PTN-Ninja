@@ -19,13 +19,13 @@
     <q-card style="width: 350px; max-width: 100%">
       <smooth-reflow tag="recess" class="col">
         <q-list>
-          <q-item tag="label" v-ripple>
-            <q-item-section side>
+          <q-item tag="label" :active="config.isPrivate" v-ripple>
+            <q-item-section class="fg-inherit" side>
               <q-icon name="online_private" />
             </q-item-section>
             <q-item-section>
               <q-item-label>{{ $t("Private Game") }}</q-item-label>
-              <q-item-label caption>
+              <q-item-label class="text-primary" caption>
                 {{
                   $t(
                     "hint." + (config.isPrivate ? "privateGame" : "publicGame")
