@@ -90,78 +90,72 @@
         :no-hover="props.row.isActive"
         :key="props.row.id"
       >
-        <td></td>
+        <td><!-- Hidden checkbox --></td>
         <template v-if="fullscreen">
-          <q-td key="thumbnail" :props="props">
-            <GameThumbnail :game="props.row" />
-          </q-td>
-          <q-td key="role" :props="props">
-            <q-icon
-              v-if="props.row.player || props.row.isActive"
-              :name="playerIcon(props.row.player, props.row.config.isPrivate)"
-              size="md"
-            >
-              <hint>{{ roleText(props.row.player) }}</hint>
-            </q-icon>
-          </q-td>
-          <q-td key="name" :props="props">
-            {{ props.row.name }}
-          </q-td>
-          <q-td key="player1" :props="props">
-            {{ props.row.tags.player1 }}
-          </q-td>
-          <q-td key="player2" :props="props">
-            {{ props.row.tags.player2 }}
-          </q-td>
-          <q-td key="players" :props="props">
-            <div v-if="props.row.tags.player1">
+          <q-td v-for="col in props.cols" :key="col.name" :props="props">
+            <template v-if="col.name === 'thumbnail'">
+              <GameThumbnail :game="col.value" />
+            </template>
+
+            <template v-else-if="col.name === 'role'">
               <q-icon
-                :name="isRandomPlayer(props.row) ? 'random' : playerIcon(1)"
-                size="sm"
-                left
+                v-if="col.value || props.row.isActive"
+                :name="playerIcon(col.value, props.row.config.isPrivate)"
+                size="md"
               >
-                <hint>{{
-                  $t(isRandomPlayer(props.row) ? "Random" : "Player1")
-                }}</hint>
+                <hint>{{ roleText(col.value) }}</hint>
               </q-icon>
-              {{ props.row.tags.player1 }}
-            </div>
-            <div v-if="props.row.tags.player2">
-              <q-icon
-                :name="isRandomPlayer(props.row) ? 'random' : playerIcon(2)"
-                size="sm"
-                left
-              >
-                <hint>{{
-                  $t(isRandomPlayer(props.row) ? "Random" : "Player2")
-                }}</hint>
-              </q-icon>
-              {{ props.row.tags.player2 }}
-            </div>
-          </q-td>
-          <q-td key="size" :props="props">
-            {{ props.row.tags.size + "x" + props.row.tags.size }}
-          </q-td>
-          <q-td key="komi" :props="props">
-            {{ props.row.tags.komi }}
-          </q-td>
-          <q-td key="uiOptions" :props="props">
-            <div class="row q-gutter-sm justify-center">
-              <q-icon
-                v-for="o in props.row.uiOptions"
-                :key="o.key"
-                :name="o.icon"
-                size="sm"
-              >
-                <hint>{{ $t(o.label) }}</hint>
-              </q-icon>
-            </div>
-          </q-td>
-          <q-td key="date" :props="props">
-            <relative-time :value="props.row.createdAt" />
-          </q-td>
-          <q-td key="result" :props="props">
-            <Result :result="props.row.tags.result" />
+            </template>
+
+            <template v-else-if="col.name === 'players'">
+              <div v-if="col.value.player1">
+                <q-icon
+                  :name="col.value.isRandom ? 'random' : playerIcon(1)"
+                  size="sm"
+                  left
+                >
+                  <hint>{{
+                    $t(col.value.isRandom ? "Random" : "Player1")
+                  }}</hint>
+                </q-icon>
+                {{ col.value.player1 }}
+              </div>
+              <div v-if="col.value.player2">
+                <q-icon
+                  :name="col.value.isRandom ? 'random' : playerIcon(2)"
+                  size="sm"
+                  left
+                >
+                  <hint>{{
+                    $t(col.value.isRandom ? "Random" : "Player2")
+                  }}</hint>
+                </q-icon>
+                {{ col.value.player2 }}
+              </div>
+            </template>
+
+            <template v-else-if="col.name === 'uiOptions'">
+              <div class="row q-gutter-sm justify-center">
+                <q-icon
+                  v-for="o in col.value"
+                  :key="o.key"
+                  :name="o.icon"
+                  size="sm"
+                >
+                  <hint>{{ $t(o.label) }}</hint>
+                </q-icon>
+              </div>
+            </template>
+
+            <template v-else-if="col.name === 'date'">
+              <relative-time :value="col.value" />
+            </template>
+
+            <template v-else-if="col.name === 'result'">
+              <Result :result="col.value" />
+            </template>
+
+            <template v-else>{{ col.value }}</template>
           </q-td>
         </template>
         <td v-else style="max-width: 100vw" :colspan="visibleColumns.length">
@@ -238,11 +232,7 @@ export default {
       columns: [
         {
           name: "thumbnail",
-          field: () => ({
-            url,
-            width,
-            height,
-          }),
+          field: (game) => game,
           align: "left",
         },
         {
@@ -261,6 +251,14 @@ export default {
           name: "players",
           label: this.$t("Players"),
           icon: "players",
+          field: (game) => ({
+            player1: game.tags.player1,
+            player2: game.tags.player2,
+            isRandom:
+              game.config.isOnline &&
+              game.config.isOpen &&
+              game.config.playerSeat === "random",
+          }),
           align: "left",
         },
         {
@@ -268,30 +266,36 @@ export default {
           label: this.$t("Size"),
           icon: "size",
           iconClass: "flip-vertical",
+          field: (game) => game.tags.size,
+          format: (size) => size + "x" + size,
           align: "center",
         },
         {
           name: "komi",
           label: this.$t("Komi"),
           icon: "komi",
+          field: (game) => game.tags.komi,
           align: "center",
         },
         {
           name: "uiOptions",
           label: this.$t("UI Options"),
           icon: "ui",
+          field: "uiOptions",
           align: "center",
         },
         {
           name: "date",
           label: this.$t("DateTime"),
           icon: "date_time",
+          field: "createdAt",
           align: "center",
         },
         {
           name: "result",
           label: this.$t("Result"),
           icon: "result",
+          field: (game) => game.tags.result,
           align: "center",
         },
       ],
@@ -382,20 +386,16 @@ export default {
     },
     visibleColumns() {
       let columns = this.columns.map((col) => col.name);
+      if (["open", "ongoing", "recent"].includes(this.filter)) {
+        columns = without(columns, "name");
+      }
       if (["open", "ongoing"].includes(this.filter)) {
-        columns = without(columns, ["name", "result"]);
+        columns = without(columns, "result");
       }
       return columns;
     },
   },
   methods: {
-    isRandomPlayer(game) {
-      return (
-        game.config.isOnline &&
-        game.config.isOpen &&
-        game.config.playerSeat === "random"
-      );
-    },
     playerIcon(player, isPrivate) {
       return this.$store.getters["ui/playerIcon"](player, isPrivate);
     },
