@@ -101,7 +101,7 @@ export default {
   size: "mdi-ruler-square",
   spectator: "mdi-account-group",
   spectator_private: "mdi-lock",
-  stack_counts: "mdi-numeric-1-box-multiple",
+  stack_counts: "mdi-numeric-2-box-multiple",
   success: "mdi-check-circle",
   swap_vert: "mdi-swap-vertical",
   table: "mdi-table-large",
