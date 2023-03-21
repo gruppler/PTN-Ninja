@@ -51,7 +51,7 @@
           <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
         <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles v-if="!isDialogShowing" />
+          <BoardToggles />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove />
@@ -199,9 +199,6 @@ export default {
     },
     url() {
       return this.$store.getters["ui/url"](this.$game, { state: true });
-    },
-    isDialogShowing() {
-      return !["local", "game"].includes(this.$route.name);
     },
   },
   methods: {

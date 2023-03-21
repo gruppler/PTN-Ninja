@@ -71,7 +71,7 @@
           <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
         <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles v-if="!isDialogShowing" />
+          <BoardToggles />
         </q-page-sticky>
         <q-page-sticky
           position="bottom-right"
@@ -280,9 +280,6 @@ export default {
     },
     disabledOptions() {
       return this.$store.getters["game/disabledOptions"];
-    },
-    isDialogShowing() {
-      return !["local", "game"].includes(this.$route.name);
     },
     games() {
       return this.$store.state.game.list;

@@ -21,6 +21,7 @@
           <q-icon
             v-else
             :name="$store.getters['ui/playerIcon'](player, isPrivate)"
+            class="q-mx-xs"
           />
         </template>
         <template v-slot:append v-if="!isPrivate && isLoggedIn">

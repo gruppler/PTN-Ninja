@@ -6,19 +6,20 @@
     :label="$t('Opponent Name')"
     :rules="[validateName]"
     :hint="$t('hint.optional')"
-    :loading="loading"
+    :loading="isLoading"
     debounce="250"
     filled
   >
     <template v-slot:prepend>
       <PlayerAvatar
-        v-if="!isPrivate && playerName"
+        v-if="!isPrivate && playerName && isValid && !isLoading"
         :value="playerName"
         size="sm"
       />
       <q-icon
         v-else
         :name="$store.getters['ui/playerIcon'](player, isPrivate)"
+        class="q-mx-xs"
       />
     </template>
   </q-input>
@@ -40,7 +41,7 @@ export default {
   data() {
     return {
       isValid: false,
-      loading: false,
+      isLoading: false,
     };
   },
   computed: {
@@ -72,7 +73,7 @@ export default {
         this.isValid = false;
       } else if (value && !this.isPrivate) {
         try {
-          this.loading = true;
+          this.isLoading = true;
           this.isValid = await this.$store.dispatch(
             "online/USER_EXISTS",
             value.trim()
@@ -80,7 +81,7 @@ export default {
         } catch (error) {
           console.error(error);
         } finally {
-          this.loading = false;
+          this.isLoading = false;
         }
       } else {
         this.isValid = true;

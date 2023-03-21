@@ -30,6 +30,7 @@ export const playerIcon =
       case 0:
         return isPrivate ? "online_private" : "online";
       case "random":
+        return "random";
       case "tie":
         return isPrivate ? "players_private" : "players";
     }
