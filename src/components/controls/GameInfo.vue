@@ -324,7 +324,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon @click.right.prevent="fillTPS" name="board" />
+          <q-icon name="board" />
         </template>
         <template v-slot:append>
           <q-icon
@@ -701,12 +701,7 @@ import Result from "../PTN/Result";
 import Tag, { formats, KOMI_MIN, KOMI_MAX } from "../../Game/PTN/Tag";
 import TPS from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
-import {
-  generateName,
-  isDefaultName,
-  pieceCounts,
-  sample,
-} from "../../Game/base";
+import { generateName, isDefaultName, pieceCounts } from "../../Game/base";
 
 import { map, throttle } from "lodash";
 
@@ -899,12 +894,6 @@ export default {
         this.$store.dispatch("game/EDIT_TPS", this.game.board.tps);
       } else {
         this.submit(true);
-      }
-    },
-    fillTPS() {
-      if (!this.game || !this.game.plies.length) {
-        this.tags = { ...this.tags, ...sample(this.tags) };
-        this.name = this.generatedName;
       }
     },
     swapPlayers() {
