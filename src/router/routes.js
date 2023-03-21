@@ -8,8 +8,26 @@ import store from "../store";
 
 const routes = [
   {
-    name: "game",
-    path: "/game/:gameID",
+    name: "publicGame",
+    path: "/g/:gameID/:branchID?/:plyIndex?",
+    component: () => import("layouts/Main"),
+    props: true,
+  },
+  {
+    name: "privateGame",
+    path: "/p/:gameID/:branchID?/:plyIndex?",
+    component: () => import("layouts/Main"),
+    props: true,
+  },
+  {
+    name: "analysis",
+    path: "/a/:analysisID/:branchID?/:plyIndex?",
+    component: () => import("layouts/Main"),
+    props: true,
+  },
+  {
+    name: "puzzle",
+    path: "/z/:puzzleID/:solutionID?/:plyID?",
     component: () => import("layouts/Main"),
     props: true,
   },
@@ -19,7 +37,7 @@ const routes = [
     component: () => import("pages/Auth"),
   },
   {
-    name: "local",
+    name: "localGame",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {
       return Platform.within.iframe
