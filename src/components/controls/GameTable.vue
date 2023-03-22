@@ -12,6 +12,8 @@
     :pagination.sync="pagination"
     :selection="selectionMode || 'multiple'"
     :selected.sync="selected"
+    :virtual-scroll="games.length > 50"
+    :virtual-scroll-sticky-size-start="75"
     color="primary"
     no-route-fullscreen-exit
     :hide-bottom="!fullscreen"
@@ -104,12 +106,8 @@
             </template>
 
             <template v-else-if="col.name === 'role'">
-              <q-icon
-                v-if="col.value || props.row.isActive"
-                :name="playerIcon(col.value, props.row.config.isPrivate)"
-                size="md"
-              >
-                <hint>{{ roleText(col.value) }}</hint>
+              <q-icon v-if="col.value" :name="col.value.icon" size="md">
+                <hint>{{ col.value.label }}</hint>
               </q-icon>
             </template>
 
@@ -245,6 +243,16 @@ export default {
           name: "role",
           label: this.$t("Role"),
           icon: "account",
+          field: (game) => {
+            let isRandom = game.config.playerSeat === "random";
+            return {
+              label: isRandom ? "?" : this.roleText(game.config.player),
+              icon: this.playerIcon(
+                isRandom ? "random" : game.config.player,
+                game.config.isPrivate
+              ),
+            };
+          },
           align: "center",
         },
         {
