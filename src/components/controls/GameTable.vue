@@ -12,7 +12,6 @@
     :pagination.sync="pagination"
     :selection="selectionMode || 'multiple'"
     :selected.sync="selected"
-    :loading="loading"
     color="primary"
     no-route-fullscreen-exit
     :hide-bottom="!fullscreen"
@@ -20,7 +19,7 @@
     v-bind="$attrs"
   >
     <template v-slot:top>
-      <div class="column fit overflow-hidden">
+      <div class="column fit overflow-hidden relative-position">
         <q-toolbar>
           <!-- View Options -->
           <q-btn
@@ -57,6 +56,13 @@
           :options="filterOptions"
           filled
           square
+        />
+
+        <q-linear-progress
+          v-show="loading"
+          class="table-progress"
+          track-color="transparent"
+          indeterminate
         />
       </div>
     </template>
@@ -520,13 +526,12 @@ $header: 64px;
   thead {
     display: none;
   }
-  &.fullscreen {
-    thead {
-      display: table-header-group;
-    }
+  &.fullscreen thead {
+    display: table-header-group;
   }
 
-  tr > :first-child {
+  thead tr:first-child > th:first-child,
+  tbody tr > td:first-child {
     display: none;
   }
 
@@ -552,17 +557,15 @@ $header: 64px;
     background-color: var(--q-color-ui);
   }
 
-  thead tr th {
+  thead th:first-child {
     position: sticky;
+    top: 0;
     z-index: 1;
   }
-
-  thead tr:first-child th {
-    top: 0;
-  }
-
-  &.q-table--loading thead tr:last-child th {
-    top: 55px;
+  .q-linear-progress.table-progress {
+    position: absolute;
+    height: 2px;
+    bottom: 0;
   }
 }
 </style>
