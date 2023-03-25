@@ -77,6 +77,7 @@
           @mousedown.stop
         >
           <div
+            v-show="$store.state.ui.showEval"
             class="evaluation"
             :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
             :style="{ height: Math.abs(evaluation || 0) + '%' }"
