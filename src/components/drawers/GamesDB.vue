@@ -97,8 +97,10 @@ export default {
     recess: Boolean,
   },
   data() {
+    const queryParams = new URL(window.location).searchParams;
+
     return {
-      show_bot_moves_panel: true,
+      show_bot_moves_panel: Boolean(queryParams.get("show_bot_moves_panel")),
       loading_bot_moves: false,
       bot_moves: {}, // maps TPS-String to array of moves that were suggested for that position
       db_moves: [],
