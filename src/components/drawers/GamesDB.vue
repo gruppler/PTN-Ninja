@@ -98,7 +98,7 @@ export default {
   },
   data() {
     return {
-      show_bot_moves_panel: false,
+      show_bot_moves_panel: true,
       loading_bot_moves: false,
       bot_moves: {}, // maps TPS-String to array of moves that were suggested for that position
       db_moves: [],
@@ -111,7 +111,11 @@ export default {
   computed: {
     applicable_bot_moves() {
       const tps = this.reactiveTps;
-      return this.bot_moves[tps] ?? [];
+      const moves = this.bot_moves[tps];
+      if (moves || moves == []) {
+        return moves;
+      }
+      return null; // indicates no moves were loaded
     },
     analyzed_position_count() {
       return Object.keys(this.bot_moves).length;
