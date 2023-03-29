@@ -21,10 +21,13 @@ export default {
 
   methods: {
     async load_game() {
-      let response = await fetch("http://127.0.0.1:5000/api/v1/game/"+this.playtak_id);
+      let response = await fetch(
+        // `http://127.0.0.1:5000/api/v1/game/${this.playtak_id}`
+        `https://openings.exegames.de/api/v1/game/${this.playtak_id}`
+      );
 
-      if(response.ok) {
-        let data = await(response.json());
+      if (response.ok) {
+        let data = await response.json();
         console.log(data);
         let ninjatpn = data.ptn.split("\n");
         ninjatpn.splice(8, 2);
@@ -41,13 +44,7 @@ export default {
 
   computed: {
     caption() {
-      return (
-        this.white_player +
-        " (" + this.white_rating + ")" +
-        " vs." +
-        this.black_player +
-        " (" + this.black_rating + ") : " + this.result
-      );
+      return `${this.white_player} (${this.white_rating}) vs. ${this.black_player} (${this.black_rating}) ${this.result}`;
     },
   },
 };

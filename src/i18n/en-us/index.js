@@ -32,8 +32,6 @@ export default {
   Copy: "Copy",
   "Copy URL": "Copy URL",
   "Current Move": "Current Move",
-  Database: "Database",
-  "Database Moves": "Database Moves",
   Date: "Date",
   DateTime: "Date/Time",
   Delete: "Delete",
@@ -153,7 +151,6 @@ export default {
   Theme: "Theme",
   Time: "Time",
   Tinue: "Tinuë",
-  "Top Games from Position": "Top Games from Position",
   Trim: "Trim",
   "Trim Branches": "Trim Branches",
   "Trim to Current Board": "Trim to Current Board",
@@ -306,4 +303,12 @@ export default {
     Shift: "Shift",
     Space: "Space",
   },
+
+  openingExplorer: {
+    Database: "Database",
+    "Database Moves": "Database Moves",
+    "Top Games from Position": "Top Games from Position",
+    "Bot Moves": "Bot suggestions",
+    "analyzed positions": "analyzed positions",
+  }
 };

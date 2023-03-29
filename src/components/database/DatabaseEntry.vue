@@ -12,14 +12,14 @@
         class="database-move-badge absolute-top-left flex flex-center"
         color="ui"
         text-color="textLight"
-        :label="progressLabel1"
+        :label="ptnLabel"
         transparent
       />
       <q-badge
         class="database-move-badge absolute-top-right flex flex-center"
         color="ui"
         text-color="textLight"
-        :label="progressLabel2"
+        :label="totalLabel"
         transparent
       />
     </div>
@@ -36,6 +36,10 @@ export default {
     total_games: Number,
     white_wins: Number,
     black_wins: Number,
+    total_label_suffix: {
+      type: String,
+      default: "games",
+    },
   },
 
   methods: {
@@ -49,12 +53,12 @@ export default {
       return this.white_wins / this.total_games;
     },
 
-    progressLabel1() {
+    ptnLabel() {
       return this.ptn;
     },
 
-    progressLabel2() {
-      return this.total_games + " games";
+    totalLabel() {
+      return `${this.total_games} ${this.total_label_suffix}`;
     },
   },
 };
