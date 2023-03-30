@@ -240,6 +240,21 @@
 
             <q-item tag="label" v-ripple>
               <q-item-section>
+                <q-item-label>{{ $t("Show Evaluation") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showEval"
+                  :disabled="isDisabled('showEval')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.showEval">
+                {{ $t("Hotkey") }}: {{ hotkeys.showEval }}
+              </hint>
+            </q-item>
+
+            <q-item tag="label" v-ripple>
+              <q-item-section>
                 <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -490,6 +505,7 @@ const props = [
   "showControls",
   "showPlayButton",
   "showHints",
+  "showEval",
   "showMove",
   "showRoads",
   "showScrubber",

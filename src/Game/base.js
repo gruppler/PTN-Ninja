@@ -170,7 +170,6 @@ export default class GameBase {
     this.plies = [];
     this.chatlog = {};
     this.notes = {};
-    this.evaluations = {};
     this.warnings = [];
 
     // Parse HEAD
