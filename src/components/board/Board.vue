@@ -5,126 +5,105 @@
     :style="{ perspective }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
+    @wheel="scroll"
     ref="wrapper"
   >
     <div
       class="board-container"
       :class="{
         [style]: true,
-        ['size-' + game.size]: true,
+        ['size-' + config.size]: true,
         ['turn-' + turn]: true,
-        'no-animations': !$store.state.animateBoard,
-        'axis-labels': $store.state.axisLabels,
-        'show-turn-indicator': $store.state.turnIndicator,
-        'highlight-squares': $store.state.highlightSquares,
-        'piece-shadows': $store.state.pieceShadows,
-        'show-unplayed-pieces': $store.state.unplayedPieces,
-        'is-game-end': game.state.isGameEnd,
+        'no-animations': disableAnimations,
+        'axis-labels': $store.state.ui.axisLabels,
+        'show-turn-indicator': $store.state.ui.turnIndicator,
+        'highlight-squares': $store.state.ui.highlightSquares,
+        'show-unplayed-pieces': $store.state.ui.unplayedPieces,
+        eog: position.isGameEnd,
+        flatwin: position.isGameEndFlats,
+        'pieces-selected': selected.pieces.length > 0,
+        'rotate-1': transform[0] === 1,
+        'rotate-2': transform[0] === 2,
+        'rotate-3': transform[0] === 3,
+        flip: transform[1] === 1,
+        scrubbing,
+        rotating,
       }"
-      :style="{ width, fontSize, transform }"
+      :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
       ref="container"
     >
-      <div
-        v-if="$store.state.turnIndicator"
-        class="player-names row no-wrap"
-        @click.right.prevent
-      >
-        <div
-          class="player1 relative-position"
-          :style="{ width: $store.state.flatCounts ? flatWidths[0] : '50%' }"
-        >
-          <div class="content absolute-fit">
-            <div class="name absolute-left q-px-sm">
-              {{ player1 }}
-            </div>
-            <div class="flats absolute-right q-px-sm">
-              {{
-                $store.state.flatCounts
-                  ? flats[0].toString().replace(".5", " ½")
-                  : ""
-              }}
-            </div>
-          </div>
-          <div class="turn-indicator"></div>
-        </div>
-        <div
-          class="player2 relative-position"
-          :style="{ width: $store.state.flatCounts ? flatWidths[1] : '50%' }"
-        >
-          <div class="content absolute-fit row no-wrap">
-            <div class="flats q-px-sm">
-              {{
-                $store.state.flatCounts
-                  ? flats[1].toString().replace(".5", " ½")
-                  : ""
-              }}
-            </div>
-            <div class="name q-mx-sm relative-position">
-              {{ player2 }}
-            </div>
-          </div>
-          <div class="turn-indicator" />
-        </div>
-      </div>
+      <TurnIndicator :hide-names="hideNames" />
+
+      <div v-if="showMoveNumber" class="move-number">{{ moveNumber }}.</div>
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
-          v-if="$store.state.axisLabels"
-          class="y-axis column no-pointer-events"
+          v-if="$store.state.ui.axisLabels"
+          class="y-axis column reverse no-pointer-events"
         >
-          <div v-for="i in (1, game.size)" :key="i">
-            {{ game.size - i + 1 }}
+          <div v-for="y in yAxis" :key="y">
+            {{ y }}
           </div>
         </div>
 
-        <div class="board relative-position all-pointer-events">
-          <div class="squares absolute-fit row">
+        <div
+          class="board relative-position all-pointer-events"
+          @touchstart.stop
+          @mousedown.stop
+        >
+          <div class="squares absolute-fit row reverse-wrap">
             <Square
-              v-for="square in squares"
-              :key="square.static.coord"
-              :x="square.static.x"
-              :y="square.static.y"
-              :game="game"
+              v-for="(square, coord) in board.squares"
+              :key="coord"
+              :coord="coord"
             />
           </div>
           <div class="pieces absolute-fit no-pointer-events">
             <Piece
-              v-for="piece in game.state.pieces.all.byID"
-              :key="piece.id"
-              :ref="piece.id"
-              :id="piece.id"
-              :game="game"
+              v-for="(piece, id) in board.pieces"
+              :key="id"
+              :ref="id"
+              :id="id"
             />
           </div>
         </div>
 
         <div
-          class="unplayed-bg"
+          class="unplayed-bg all-pointer-events"
           @click.self="dropPiece"
           @click.right.prevent
-        ></div>
+          @touchstart.stop
+          @mousedown.stop
+        >
+          <div
+            class="evaluation"
+            :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+            :style="{ height: Math.abs(evaluation || 0) + '%' }"
+          />
+        </div>
       </div>
 
       <div
-        v-if="$store.state.axisLabels"
+        v-if="$store.state.ui.axisLabels"
         class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
-        <div v-for="i in (1, game.size)" :key="i">{{ "abcdefgh"[i - 1] }}</div>
+        <div v-for="x in xAxis" :key="x">{{ x }}</div>
       </div>
 
-      <q-resize-observer @resize="resizeBoard" :debounce="10" />
+      <q-resize-observer @resize="resizeBoard" :debounce="20" />
     </div>
-    <q-resize-observer @resize="resizeSpace" :debounce="10" />
+    <q-resize-observer @resize="resizeSpace" :debounce="20" />
   </div>
 </template>
 
 <script>
 import Piece from "./Piece";
 import Square from "./Square";
+import TurnIndicator from "./TurnIndicator";
 
-import { throttle } from "lodash";
+import { forEach, throttle } from "lodash";
 
 const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
@@ -135,8 +114,11 @@ export default {
   components: {
     Square,
     Piece,
+    TurnIndicator,
   },
-  props: ["game"],
+  props: {
+    hideNames: Boolean,
+  },
   data() {
     return {
       size: null,
@@ -144,56 +126,111 @@ export default {
       scale: 1,
       x: 0,
       y: 0,
+      deltaY: 0,
+      rotating: false,
+      isSlowScrub: false,
       prevBoardRotation: null,
-      boardRotation: this.$store.state.boardRotation,
+      boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
     };
   },
   computed: {
+    board() {
+      return this.$store.state.game.board;
+    },
+    config() {
+      return this.$store.state.game.config;
+    },
+    transform() {
+      return this.$store.state.ui.boardTransform;
+    },
+    scrubbing() {
+      return this.$store.state.ui.scrubbing;
+    },
+    scrollThreshold() {
+      return this.$store.state.ui.scrollThreshold;
+    },
+    disableAnimations() {
+      return (
+        !this.$store.state.ui.animateBoard ||
+        (!this.$store.state.ui.animateScrub &&
+          this.scrubbing &&
+          !this.isSlowScrub)
+      );
+    },
+    cols() {
+      return "abcdefgh".substr(0, this.config.size).split("");
+    },
+    rows() {
+      return "12345678".substr(0, this.config.size).split("");
+    },
+    yAxis() {
+      let axis =
+        this.transform[0] % 2 ? this.cols.concat() : this.rows.concat();
+      if (this.transform[0] === 1 || this.transform[0] === 2) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    xAxis() {
+      let axis =
+        this.transform[0] % 2 ? this.rows.concat() : this.cols.concat();
+      if (
+        this.transform[1]
+          ? this.transform[0] === 0 || this.transform[0] === 1
+          : this.transform[0] === 2 || this.transform[0] === 3
+      ) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    position() {
+      return this.$store.state.game.position;
+    },
+    ptn() {
+      return this.$store.state.game.ptn;
+    },
+    evaluation() {
+      return this.position.ply
+        ? this.$store.state.game.comments.evaluations[this.position.plyID]
+        : null;
+    },
+    selected() {
+      return this.$store.state.game.selected;
+    },
     style() {
-      return this.$store.state.theme.boardStyle;
+      return this.$store.state.ui.theme.boardStyle;
+    },
+    moveNumber() {
+      if (this.$store.state.game.editingTPS) {
+        return this.$store.state.ui.firstMoveNumber;
+      } else {
+        return this.$store.state.game.position.move.linenum.number;
+      }
+    },
+    showMoveNumber() {
+      return (
+        this.$store.state.ui.moveNumber &&
+        this.$store.state.ui.turnIndicator &&
+        this.$store.state.ui.unplayedPieces
+      );
     },
     turn() {
-      return this.$store.state.isEditingTPS
-        ? this.$store.state.selectedPiece.color
-        : this.game.state.turn;
+      return this.$store.state.game.editingTPS !== undefined
+        ? this.$store.state.ui.selectedPiece.color
+        : this.position.turn;
     },
     boardPly() {
-      return this.game.state.boardPly;
-    },
-    player1() {
-      return this.game.tag("player1");
-    },
-    player2() {
-      return this.game.tag("player2");
-    },
-    flats() {
-      return this.game.state.flats;
-    },
-    minNameWidth() {
-      return 100 / this.game.size;
-    },
-    flatWidths() {
-      const total = (this.flats[0] + this.flats[1]) / 100;
-      const player1width = total
-        ? Math.max(
-            this.minNameWidth,
-            Math.min(
-              100 - this.minNameWidth,
-              (this.flats[0] / total).toPrecision(4)
-            )
-          )
-        : 50;
-      return [player1width + "%", 100 - player1width + "%"];
+      return this.board.ply;
     },
     board3D() {
-      return this.$store.state.board3D;
+      return this.$store.state.ui.board3D;
     },
     orthogonal() {
-      return this.$store.state.orthogonal;
+      return this.$store.state.ui.orthogonal;
     },
     perspective() {
-      const factor = 1 - this.$store.state.perspective / 10;
+      const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
     padding() {
@@ -254,14 +291,14 @@ export default {
         );
       }
     },
-    transform() {
+    CSS3DTransform() {
       const x = this.boardRotation[0];
       const y = this.boardRotation[1];
       const magnitude = Math.sqrt(x * x + y * y);
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 0.75 + "deg";
 
       const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
@@ -269,23 +306,13 @@ export default {
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
-    squares() {
-      let squares = [];
-      for (let y = this.game.size - 1; y >= 0; y--) {
-        for (let x = 0; x < this.game.size; x++) {
-          squares.push(this.game.state.squares[y][x]);
-        }
-      }
-      return squares;
-    },
   },
   methods: {
     dropPiece() {
-      if (
-        this.game.state.selected.pieces.length === 1 &&
-        !this.game.state.selected.moveset.length
-      ) {
-        this.game.selectUnplayedPiece(this.game.state.selected.pieces[0].type);
+      if (this.selected.pieces.length === 1) {
+        this.$store.dispatch("game/SELECT_PIECE", {
+          type: this.selected.pieces[0].type,
+        });
       }
     },
     isInputFocused() {
@@ -297,11 +324,15 @@ export default {
     },
     resizeSpace(size) {
       this.space = size;
+      this.$store.commit("ui/SET_UI", ["boardSpace", size]);
     },
     resetBoardRotation() {
       if (this.board3D) {
-        this.boardRotation = this.$store.state.defaults.boardRotation;
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.boardRotation = this.$store.state.ui.defaults.boardRotation;
+        this.$store.dispatch("ui/SET_UI", [
+          "boardRotation",
+          this.boardRotation,
+        ]);
         this.zoomFitAfterTransition();
       }
     },
@@ -311,26 +342,30 @@ export default {
       }
 
       if (event.isFirst) {
+        this.rotating = true;
         this.prevBoardRotation = { ...this.boardRotation };
       }
+      if (event.isFinal) {
+        this.rotating = false;
+      }
 
-      let x = Math.max(
-        -1,
-        Math.min(
-          1,
-          this.prevBoardRotation[0] +
-            (ROTATE_SENSITIVITY * event.offset.x) / this.size.width
-        )
-      );
+      let x =
+        this.prevBoardRotation[0] +
+        (ROTATE_SENSITIVITY * event.offset.x) / this.size.width;
+      if (x > 1) {
+        x = 1 + (x - 1) / 3;
+      } else if (x < -1) {
+        x = -1 + (x + 1) / 3;
+      }
 
-      let y = Math.max(
-        0,
-        Math.min(
-          1,
-          this.prevBoardRotation[1] -
-            (ROTATE_SENSITIVITY * event.offset.y) / this.size.width
-        )
-      );
+      let y =
+        this.prevBoardRotation[1] -
+        (ROTATE_SENSITIVITY * event.offset.y) / this.size.width;
+      if (y > 1) {
+        y = 1 + (y - 1) / 3;
+      } else if (y < 0) {
+        y /= 3;
+      }
 
       if (event.delta.x < 2 && Math.abs(x) < 0.05) {
         x = 0;
@@ -338,7 +373,55 @@ export default {
 
       this.boardRotation = [x, y];
       if (event.isFinal) {
-        this.$store.dispatch("SET_UI", ["boardRotation", this.boardRotation]);
+        this.$nextTick(() => {
+          this.boardRotation = [
+            Math.max(-1, Math.min(1, x)),
+            Math.max(0, Math.min(1, y)),
+          ];
+          this.$store.dispatch("ui/SET_UI", [
+            "boardRotation",
+            this.boardRotation,
+          ]);
+          this.zoomFitAfterTransition();
+        });
+      }
+    },
+    scroll(event) {
+      if (this.$store.state.ui.embed) {
+        return;
+      }
+
+      if (this.$store.state.ui.scrollScrubbing) {
+        // Get threshold from screen resolution if not specified
+        const scrollThreshold =
+          this.scrollThreshold || window.devicePixelRatio * 100;
+
+        // Start scrubbing
+        if (!this.$store.state.ui.scrubbing) {
+          this.$store.commit("ui/SET_SCRUBBING", "start");
+        }
+
+        // Scroll by half-ply and re-enable animations
+        this.isSlowScrub = event.shiftKey;
+
+        // Handle smooth scrolling
+        this.deltaY += event.deltaY;
+        if (Math.abs(this.deltaY) >= scrollThreshold) {
+          const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
+          let times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
+          this.deltaY = (this.deltaY + event.deltaY) % scrollThreshold;
+          if (times) {
+            this.$store.dispatch(action, { half: this.isSlowScrub, times });
+          }
+        }
+
+        clearTimeout(this.scrollTimer);
+        this.scrollTimer = setTimeout(() => {
+          // End scrubbing
+          this.$store.commit("ui/SET_SCRUBBING", "end");
+          this.isSlowScrub = false;
+          this.deltaY = 0;
+        }, 300);
       }
     },
     getBounds(nodes) {
@@ -371,16 +454,16 @@ export default {
     },
     zoomFit() {
       let nodes = [this.$refs.container];
-      if (this.$store.state.unplayedPieces) {
-        Object.values(this.game.state.pieces.all.byID).forEach((piece) => {
+      if (this.$store.state.ui.unplayedPieces) {
+        forEach(this.board.pieces, (piece, id) => {
           if (!piece.square) {
-            nodes.push(this.$refs[piece.id][0].$refs.stone);
+            nodes.push(this.$refs[id][0].$refs.stone);
           }
         });
       }
-      this.squares.forEach((square) => {
+      forEach(this.board.squares, (square) => {
         if (square.piece) {
-          nodes.push(this.$refs[square.piece.id][0].$refs.stone);
+          nodes.push(this.$refs[square.piece][0].$refs.stone);
         }
       });
       const boardBB = this.getBounds(nodes);
@@ -427,7 +510,7 @@ export default {
     },
     zoomFitAfterTransition() {
       if (this.board3D) {
-        if (this.$store.state.animateBoard) {
+        if (this.$store.state.ui.animateBoard) {
           if (this.zoomFitTimer) {
             clearTimeout(this.zoomFitTimer);
           }
@@ -451,13 +534,14 @@ export default {
   },
   watch: {
     isPortrait(isPortrait) {
-      if (isPortrait !== this.$store.state.isPortrait) {
-        this.$store.commit("SET_UI", ["isPortrait", isPortrait]);
+      if (isPortrait !== this.$store.state.ui.isPortrait) {
+        this.$store.commit("ui/SET_UI", ["isPortrait", isPortrait]);
       }
     },
     boardPly: "zoomFitAfterTransition",
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
+    transform: "zoomFitAfterDelay",
     board3D: "zoomFitAfterTransition",
     orthogonal: "zoomFitNextTick",
   },
@@ -465,7 +549,6 @@ export default {
 </script>
 
 <style lang="scss">
-$turn-indicator-height: 0.5em;
 $axis-size: 1.5em;
 $radius: 0.35em;
 
@@ -489,28 +572,71 @@ $radius: 0.35em;
 }
 
 .board-container {
+  position: relative;
   width: 100%;
   will-change: width, font-size;
   text-align: center;
   z-index: 0;
   transition: transform $generic-hover-transition;
 
-  body.non-selectable & {
+  &.rotating {
     transition: none !important;
+  }
+  &.scrubbing {
+    &,
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi,
+    .evaluation {
+      transition: none !important;
+    }
   }
   &.no-animations {
     &,
     .piece,
     .stone,
     .road > div,
-    .player-names > div,
-    .turn-indicator {
+    .turn-indicator .player1,
+    .turn-indicator .player2,
+    .turn-indicator .komi,
+    .evaluation {
       transition: none !important;
     }
   }
+
+  &.rotate-1 .squares {
+    transform: rotateZ(90deg);
+  }
+  &.rotate-2 .squares {
+    transform: rotateZ(180deg);
+  }
+  &.rotate-3 .squares {
+    transform: rotateZ(270deg);
+  }
+  &.flip .squares {
+    transform: scaleX(-1);
+  }
+  &.flip.rotate-1 .squares {
+    transform: scaleX(-1) rotateZ(90deg);
+  }
+  &.flip.rotate-2 .squares {
+    transform: scaleX(-1) rotateZ(180deg);
+  }
+  &.flip.rotate-3 .squares {
+    transform: scaleX(-1) rotateZ(270deg);
+  }
+
+  .move-number {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 1.75em;
+    line-height: 1.75;
+    background: transparent;
+  }
 }
 
-.player-names,
+.turn-indicator,
 .x-axis {
   width: 100%;
   will-change: width;
@@ -529,119 +655,20 @@ $radius: 0.35em;
   }
 }
 
-.player-names {
-  $fadeWidth: 10px;
-  text-align: left;
-  height: 2.25em;
-  padding-bottom: $turn-indicator-height;
-  line-height: 2.25em - $turn-indicator-height;
-  .player1,
-  .player2 {
-    width: 50%;
-    will-change: width;
-    transition: width $generic-hover-transition;
-    .content {
-      overflow: hidden;
-      white-space: nowrap;
-    }
-  }
-  .player1 .content {
-    color: $textDark;
-    color: var(--q-color-textDark);
-    border-top-left-radius: $radius;
-    background: $player1;
-    background: var(--q-color-player1);
-    .flats {
-      text-align: right;
-      background: $player1;
-      background: var(--q-color-player1);
-      background: linear-gradient(
-        to left,
-        $player1 calc(100% - #{$fadeWidth}),
-        $player1clear
-      );
-      background: linear-gradient(
-        to left,
-        var(--q-color-player1) calc(100% - #{$fadeWidth}),
-        var(--q-color-player1clear)
-      );
-    }
-    body.player1Dark & {
-      color: $textLight;
-      color: var(--q-color-textLight);
-    }
-  }
-  .player2 .content {
-    color: $textDark;
-    color: var(--q-color-textDark);
-    border-top-right-radius: $radius;
-    background: $player2;
-    background: var(--q-color-player2);
-    &::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      width: $fadeWidth;
-      text-align: left;
-      background: linear-gradient(to left, $player2 0, $player2clear);
-      background: linear-gradient(
-        to left,
-        var(--q-color-player2) 0,
-        var(--q-color-player2clear)
-      );
-    }
-    body.player2Dark & {
-      color: $textLight;
-      color: var(--q-color-textLight);
-    }
-  }
-  .flats {
-    white-space: nowrap;
-    min-width: 2em;
-    flex-grow: 1;
-    flex-shrink: 0;
-    z-index: 1;
-  }
-  .name {
-    flex-shrink: 1;
-    transform: translateZ(0);
-  }
-}
-
-.turn-indicator {
-  opacity: 0;
-  width: 100%;
-  height: $turn-indicator-height;
-  position: absolute;
-  bottom: -$turn-indicator-height;
-  background: $primary;
-  background: var(--q-color-primary);
-  will-change: opacity;
-  transition: opacity $generic-hover-transition;
-  .board-container.turn-1 .player1 &,
-  .board-container.turn-2 .player2 & {
-    opacity: 1;
-  }
-  .board-container.is-game-end & {
-    opacity: 0 !important;
-  }
-}
-
 .x-axis,
-.y-axis {
+.y-axis,
+.move-number {
   color: $textDark;
   color: var(--q-color-textDark);
-  text-shadow: 0 1px 2px $textLight;
-  text-shadow: 0 1px 2px var(--q-color-textLight);
+  text-shadow: 0 0.05em 0.1em $textLight;
+  text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
     color: $textLight;
     color: var(--q-color-textLight);
-    text-shadow: 0 1px 2px $textDark;
-    text-shadow: 0 1px 2px var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em $textDark;
+    text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
   }
 }
 .x-axis {
@@ -695,11 +722,13 @@ $radius: 0.35em;
   }
 }
 
-.unplayed-bg {
+.unplayed-bg,
+.move-number {
   border-radius: 0 $radius $radius 0;
   background-color: $board3;
   background-color: var(--q-color-board3);
   will-change: width;
+  pointer-events: all;
   .board-container:not(.show-unplayed-pieces) & {
     width: 0 !important;
   }
@@ -711,6 +740,22 @@ $radius: 0.35em;
     .board-container.axis-labels.size-#{$i} & {
       width: calc(#{$size} - #{$axis-size * 1.75 / ($i + 1.75)});
     }
+  }
+}
+
+.unplayed-bg {
+  overflow: hidden;
+  position: relative;
+
+  .evaluation {
+    position: absolute;
+    opacity: 0.5 !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    will-change: height, background-color;
+    transition: height $generic-hover-transition,
+      background-color $generic-hover-transition;
   }
 }
 </style>

@@ -8,6 +8,9 @@
         "dev": [
           "ptn-ninja-dev"
         ],
+        "staging": [
+          "ptn-ninja-staging"
+        ],
         "live": [
           "ptn-ninja"
         ]

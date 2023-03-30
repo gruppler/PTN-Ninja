@@ -2,7 +2,8 @@
   <q-dialog
     ref="dialog"
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
-    :value.sync="value"
+    :value="model"
+    :maximized="maximized"
     @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
@@ -14,7 +15,7 @@
 
       <slot />
 
-      <footer>
+      <footer class="bg-accent">
         <slot name="footer" />
       </footer>
     </div>
@@ -26,7 +27,21 @@ export default {
   name: "small-dialog",
   props: {
     value: Boolean,
-    "go-back": Boolean,
+    goBack: Boolean,
+    noMaximize: Boolean,
+  },
+  computed: {
+    model() {
+      return this.value;
+    },
+    maximized() {
+      return (
+        !this.noMaximize &&
+        (this.$q.screen.width < this.$q.screen.height
+          ? this.$q.screen.height <= this.$q.screen.sizes.sm
+          : this.$q.screen.width <= this.$q.screen.sizes.xs)
+      );
+    },
   },
   methods: {
     hide() {

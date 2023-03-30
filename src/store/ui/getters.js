@@ -1,4 +1,3 @@
-import { Platform } from "quasar";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
@@ -20,58 +19,28 @@ export const theme = (state, getters) => (id) => {
   return getters.themes.find((theme) => theme.id === id);
 };
 
+export const playerIcon =
+  (state) =>
+  (player, isPrivate = false) => {
+    switch (player) {
+      case 1:
+        return isPrivate ? "player1_private" : "player1";
+      case 2:
+        return isPrivate ? "player2_private" : "player2";
+      case 0:
+        return isPrivate ? "online_private" : "online";
+      case "random":
+      case "tie":
+        return isPrivate ? "players_private" : "players";
+    }
+  };
+
 const PNG_URL = process.env.DEV
   ? "http://localhost:5001/ptn-ninja/us-central1/tps"
   : "https://tps.ptn.ninja/";
 
-export const uniqueName = (state) => (name, ignoreFirst = false) => {
-  const names = state.games.slice(1 * ignoreFirst).map((game) => game.name);
-  while (names.includes(name)) {
-    if (/\(\d+\)$/.test(name)) {
-      name = name.replace(/\((\d+)\)$/, (match, number) => {
-        number = parseInt(number, 10) + 1;
-        return `(${number})`;
-      });
-    } else {
-      name += " (1)";
-    }
-  }
-  return name;
-};
-
-export const playerIcon = (state) => (player, isPrivate = false) => {
-  switch (player) {
-    case 1:
-      return isPrivate ? "player1_private" : "player1";
-    case 2:
-      return isPrivate ? "player2_private" : "player2";
-    case 0:
-      return isPrivate ? "spectator_private" : "spectator";
-    case "random":
-    case "tie":
-      return isPrivate ? "players_private" : "players";
-  }
-};
-
-const urlEncode = (url) => {
-  return encodeURIComponent(url).replace(
-    /([()])/g,
-    (char) => "%" + char.charCodeAt(0).toString(16)
-  );
-};
-
-export const png_filename = (state) => (game) => {
-  return (
-    game.name +
-    " - " +
-    game.state.plyID +
-    (game.state.plyIsDone ? "" : "-") +
-    ".png"
-  );
-};
-
 export const png_url = (state, getters) => (game) => {
-  const params = ["tps=" + game.state.tps];
+  const params = ["tps=" + game.board.tps];
 
   // Sizes
   if (state.pngConfig.imageSize !== "md") {
@@ -80,14 +49,21 @@ export const png_url = (state, getters) => (game) => {
   if (state.pngConfig.textSize !== "md") {
     params.push("textSize=" + state.pngConfig.textSize);
   }
+  if (state.pngConfig.bgAlpha !== 1) {
+    params.push("bgAlpha=" + state.pngConfig.bgAlpha);
+  }
+  if (state.pngConfig.moveNumber) {
+    params.push("moveNumber=" + game.board.move.linenum.number);
+  }
 
   // UI toggles
   [
     "axisLabels",
     "flatCounts",
     "padding",
-    "pieceShadows",
+    "stackCounts",
     "showRoads",
+    "moveNumber",
     "turnIndicator",
     "unplayedPieces",
   ].forEach((toggle) => {
@@ -110,14 +86,14 @@ export const png_url = (state, getters) => (game) => {
 
   // Square Highlights
   if (state.pngConfig.highlightSquares) {
-    const ply = game.state.ply;
+    const ply = game.board.ply;
     if (ply) {
-      params.push("hl=" + encodeURIComponent(ply.text(true)));
+      params.push("hl=" + encodeURIComponent(ply.toString(true)));
     }
   }
 
   // Filename
-  params.push("name=" + encodeURIComponent(png_filename(state)(game)));
+  params.push("name=" + encodeURIComponent(game.pngFilename));
 
   // Theme
   if (state.pngConfig.themeID) {
@@ -135,72 +111,86 @@ export const png_url = (state, getters) => (game) => {
   return PNG_URL + "?" + params.join("&");
 };
 
-export const url = (state, getters) => (game, options = {}) => {
-  if (!game) {
-    return "";
-  }
-  options = cloneDeep(options);
-
-  const origin = location.origin + "/";
-  let ptn =
-    "names" in options && !options.names
-      ? game.text(true, true, omit(game.tags, ["player1", "player2"]))
-      : game.ptn;
-  let url = compressToEncodedURIComponent(ptn);
-  let params = {};
-
-  if ("name" in options) {
-    params.name = compressToEncodedURIComponent(options.name);
-  } else if (game.name) {
-    params.name = compressToEncodedURIComponent(game.name);
-  }
-
-  if (options.origin) {
-    url = origin + url;
-  }
-
-  if (options.state) {
-    if (options.state === true) {
-      options.state = game.state;
-    }
-    if (options.state.targetBranch) {
-      params.targetBranch = compressToEncodedURIComponent(
-        options.state.targetBranch
-      );
-    }
-    if (options.state.plyIndex >= 0) {
-      params.ply = options.state.plyIndex;
-      if (options.state.plyIsDone) {
-        params.ply += "!";
-      }
-    }
-  }
-
-  if (options.ui) {
-    if (options.ui.themeID) {
-      let theme = getters.theme(options.ui.themeID) || state.theme;
-      if (theme.isBuiltIn) {
-        theme = theme.id;
-      } else {
-        theme = JSON.stringify(theme);
-      }
-      delete options.ui.themeID;
-      options.ui.theme = compressToEncodedURIComponent(theme);
-    }
-    Object.keys(options.ui).forEach((key) => {
-      const value = options.ui[key];
-      if (key in state.defaults && value !== state.defaults[key]) {
-        params[key] = value;
-      }
-    });
-  }
-
-  if (Object.keys(params).length) {
-    url +=
-      "&" +
-      Object.keys(params)
-        .map((key) => key + "=" + urlEncode(params[key]))
-        .join("&");
-  }
-  return url;
+const urlEncode = (url) => {
+  return encodeURIComponent(url).replace(
+    /([()])/g,
+    (char) => "%" + char.charCodeAt(0).toString(16)
+  );
 };
+
+export const url =
+  (state, getters) =>
+  (game, options = {}) => {
+    if (!game) {
+      return "";
+    }
+    if (game.config.isOnline) {
+      return location.origin + "/game/" + game.config.id;
+    }
+    options = cloneDeep(options);
+
+    const origin = location.origin + "/";
+    let ptn =
+      "names" in options && !options.names
+        ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
+        : game.ptn;
+    let url = compressToEncodedURIComponent(ptn);
+    let params = {};
+
+    if ("name" in options) {
+      params.name = options.name
+        ? compressToEncodedURIComponent(options.name)
+        : "";
+    } else if (game.name) {
+      params.name = compressToEncodedURIComponent(game.name);
+    }
+
+    if (options.origin) {
+      url = origin + url;
+    }
+
+    if (options.state) {
+      if (options.state === true) {
+        options.state = game.board;
+      }
+      if (options.state.targetBranch) {
+        params.targetBranch = compressToEncodedURIComponent(
+          options.state.targetBranch
+        );
+      }
+      if (options.state.plyIndex >= 0) {
+        params.ply = options.state.plyIndex;
+        if (options.state.plyIsDone) {
+          params.ply += "!";
+        }
+      }
+    }
+
+    if (options.ui) {
+      if (options.ui.themeID) {
+        let theme = getters.theme(options.ui.themeID) || state.theme;
+        if (theme.isBuiltIn) {
+          theme = theme.id;
+        } else {
+          theme = JSON.stringify(theme);
+        }
+        delete options.ui.themeID;
+        options.ui.theme = compressToEncodedURIComponent(theme);
+      }
+      Object.keys(options.ui).forEach((key) => {
+        const value = options.ui[key];
+        if (key in state.defaults && value !== state.defaults[key]) {
+          params[key] = value;
+        }
+      });
+    }
+
+    if (Object.keys(params).length) {
+      url +=
+        "&" +
+        Object.keys(params)
+          .map((key) => key + "=" + urlEncode(params[key]))
+          .join("&");
+    }
+    return url;
+  };

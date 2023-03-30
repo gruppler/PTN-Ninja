@@ -1,6 +1,6 @@
 PTN Ninja
 ===
-**Version [3.1.18](https://github.com/gruppler/PTN-Ninja/releases)**
+**Version [3.2.31](https://github.com/gruppler/PTN-Ninja/releases)**
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org/portable-tak-notation/). It aims to be...
 
@@ -13,7 +13,7 @@ If you want to support this project, you can...
 - [View the source code](https://github.com/gruppler/PTN-Ninja/)
 - [Report an issue or feature request](https://github.com/gruppler/PTN-Ninja/issues/)
 - [Donate USD](https://www.paypal.me/gruppler)
-- [Donate ETH](https://etherdonation.com/d?to=0xC222dBFb4c59928b4A25e0dcc7ad8f0f9C263079)
+- [Donate ETH](https://gruppler.argent.xyz)
 
 Previous Version
 ---
@@ -24,6 +24,6 @@ Previous Version
 Legal
 ---
 
-&copy; 2020 Craig Laparo
+&copy; 2022 Craig Laparo
 
 This work is licensed under a GNU AGPLv3 [License](https://www.gnu.org/licenses/agpl-3.0.en.html).

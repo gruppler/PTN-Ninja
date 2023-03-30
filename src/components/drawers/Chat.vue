@@ -13,6 +13,8 @@
               :stamp="relativeTime(message)"
               :title="absoluteTime(message)"
               :sent="wasSent(message)"
+              :name="names[message.player]"
+              name-sanitize
               text-sanitize
             />
             <template v-if="message.ply">
@@ -22,19 +24,17 @@
                 class="fullwidth-padded-md q-py-xs q-mb-md"
                 :class="{
                   'q-mt-md': i > 0,
-                  highlight: game.state.plyID === message.ply.id,
+                  highlight: $game.board.plyID === message.ply.id,
                 }"
                 :key="i"
               >
                 <Linenum
                   v-if="message.ply.linenum"
                   :linenum="message.ply.linenum"
-                  :game="game"
                 />
                 <Ply
                   class="text-no-wrap"
                   :plyID="message.ply.id"
-                  :game="game"
                   :delay="6e4 / $store.state.playSpeed"
                 />
               </div>
@@ -45,7 +45,6 @@
       <q-resize-observer @resize="scroll" />
     </recess>
     <div>
-      <q-separator />
       <q-input
         ref="input"
         v-if="player"
@@ -83,11 +82,11 @@ import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 
 import { debounce } from "quasar";
+import { format, formatDistanceToNow } from "date-fns";
 
 export default {
   name: "Chat",
   components: { Ply, Linenum },
-  props: ["game"],
   data() {
     return {
       message: "",
@@ -96,20 +95,29 @@ export default {
   },
   computed: {
     log() {
-      return this.game.chatlog;
+      return this.$game.chatlog;
     },
     player() {
-      return this.game.state.player;
+      const user = this.$store.state.online.user;
+      return this.$game.isLocal || !user
+        ? this.$game.board.player
+        : this.$game.getPlayerFromUID(user.uid);
     },
     time() {
-      return this.game.datetime;
+      return this.$game.datetime;
+    },
+    names() {
+      return {
+        1: this.game.tag("Player1") || "",
+        2: this.game.tag("Player2") || "",
+      };
     },
     messages() {
       let messages = [];
       let previous;
       for (let plyID in this.log) {
         if (plyID >= 0) {
-          messages.push({ ply: this.game.plies[plyID] });
+          messages.push({ ply: this.$game.plies[plyID] });
         }
         for (let i = 0; i < this.log[plyID].length; i++) {
           let message = this.parseMessage(this.log[plyID][i]);
@@ -129,16 +137,16 @@ export default {
       return messages;
     },
     currentPlyIndex() {
-      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+      if (!this.$game.board.plyID && !this.$game.board.plyIsDone) {
         return 0;
-      } else if (this.game.state.ply) {
+      } else if (this.$game.board.ply) {
         let ids = Object.keys(this.log)
           .map((id) => 1 * id)
           .sort();
         for (let i = 0; i < ids.length; i++) {
-          if (ids[i] === this.game.state.plyID) {
+          if (ids[i] === this.$game.board.plyID) {
             return i;
-          } else if (ids[i] > this.game.state.plyID) {
+          } else if (ids[i] > this.$game.board.plyID) {
             return i - !!i;
           }
         }
@@ -166,19 +174,21 @@ export default {
       return Math.floor((new Date().getTime() - this.time) / 1e3);
     },
     bgColor(message) {
-      return message.player == 1 ? "white" : "secondary";
+      return "player" + message.player;
     },
     textColor(message) {
-      return message.player == 2 ? "white" : "";
+      return this.$store.state.theme[`player${message.player}Dark`]
+        ? "white"
+        : "black";
     },
     relativeTime(message) {
       if (message.time) {
-        return this.$moment(new Date(message.time)).fromNow();
+        return formatDistanceToNow(message.time, { addSuffix: true });
       }
     },
     absoluteTime(message) {
       if (message.time) {
-        return this.$moment(new Date(message.time)).calendar();
+        return format(message.time, this.$t("format.date-time-full"));
       }
     },
     wasSent(message) {
@@ -186,7 +196,7 @@ export default {
     },
     send() {
       if (this.message) {
-        this.game.addChatMessage(
+        this.$game.addChatMessage(
           `+${this.getTime()}:${this.player}: ${this.message}`
         );
         this.message = "";

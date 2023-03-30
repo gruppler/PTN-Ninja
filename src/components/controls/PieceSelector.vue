@@ -1,31 +1,80 @@
 <template>
   <div
-    class="piece-selector row no-wrap"
+    class="piece-selector row no-wrap justify-around items-center full-height absolute-fit"
     v-shortkey="hotkeys"
     @shortkey="hotkey($event.srcKey)"
   >
     <q-btn
       @click="select(type, color === 1 ? 2 : 1)"
-      :icon="$store.getters.playerIcon(color)"
+      :icon="$store.getters['ui/playerIcon'](color)"
       flat
-      round
+      :dense="$q.screen.lt.sm"
+      stretch
     />
-    <q-btn @click="select('F')" :disabled="!available.includes('F')" flat round>
+
+    <q-btn
+      @click="select('F')"
+      :disabled="!available.includes('F')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'F' }">
-        <div class="stone" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
-    <q-btn @click="select('S')" :disabled="!available.includes('S')" flat round>
+
+    <q-btn
+      @click="select('S')"
+      :disabled="!available.includes('S')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'S' }">
-        <div class="stone S" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone S" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
-    <q-btn @click="select('C')" :disabled="!available.includes('C')" flat round>
+
+    <q-btn
+      @click="select('C')"
+      :disabled="!available.includes('C')"
+      flat
+      :dense="$q.screen.lt.sm"
+      stretch
+    >
       <div class="square" :class="{ selected: type === 'C' }">
-        <div class="stone C" :class="{ ['p' + color]: true, shadows }" />
+        <div class="stone C" :class="{ ['p' + color]: true }" />
       </div>
     </q-btn>
-    <slot />
+
+    <q-input
+      type="number"
+      v-model="firstMoveNumber"
+      :label="$t('Move')"
+      :min="minFirstMoveNumber"
+      :max="999"
+      filled
+      dense
+    />
+
+    <q-btn
+      :label="$q.screen.gt.xs ? $t('Cancel') : undefined"
+      :icon="$q.screen.gt.xs ? undefined : 'close'"
+      @click="resetTPS"
+      color="primary"
+      stretch
+      flat
+    />
+
+    <q-btn
+      :label="$q.screen.gt.xs ? $t('OK') : undefined"
+      :icon="$q.screen.gt.xs ? undefined : 'apply'"
+      @click="saveTPS"
+      color="primary"
+      stretch
+      flat
+    />
   </div>
 </template>
 
@@ -34,26 +83,59 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "PieceSelector",
-  props: ["value", "game", "types"],
   data() {
     return {
-      color: this.value.color || 1,
-      type: this.value.type || "F",
+      color: this.$store.state.ui.selectedPiece.color,
+      type: "F",
       hotkeys: HOTKEYS.PIECE,
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
     available() {
-      return (this.types ? this.types : ["F", "S", "C"]).filter((type) => {
+      return ["F", "S", "C"].filter((type) => {
         type = type === "C" ? "cap" : "flat";
-        return (
-          this.game.state.pieces.played[this.color][type].length <
-          this.game.pieceCounts[this.color][type]
-        );
+        return this.game.board.piecesRemaining[this.color][type] > 0;
       });
     },
-    shadows() {
-      return this.$store.state.pieceShadows;
+    selectedPiece: {
+      get() {
+        return this.$store.state.ui.selectedPiece;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["selectedPiece", value]);
+        this.editingTPS = this.$game.board.getTPS(
+          this.selectedPiece.color,
+          this.firstMoveNumber
+        );
+      },
+    },
+    minFirstMoveNumber() {
+      const min1 = this.$store.state.game.board.piecesPlayed[1].total;
+      const min2 = this.$store.state.game.board.piecesPlayed[2].total;
+      return Math.max(min1, min2) + 1 * (min1 <= min2);
+    },
+    firstMoveNumber: {
+      get() {
+        return this.$store.state.ui.firstMoveNumber;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1 * value]);
+        this.editingTPS = this.$game.board.getTPS(
+          this.selectedPiece.color,
+          this.firstMoveNumber
+        );
+      },
+    },
+    editingTPS: {
+      get() {
+        return this.$store.state.game.editingTPS;
+      },
+      set(tps) {
+        this.$store.dispatch("game/EDIT_TPS", tps);
+      },
     },
   },
   methods: {
@@ -61,10 +143,10 @@ export default {
       this.color = color;
       if (this.available.includes(type)) {
         this.type = type;
-        this.$emit("input", { color: this.color, type: this.type });
+        this.selectedPiece = { color: this.color, type: this.type };
       } else if (type === this.type && this.available.length) {
         this.type = this.available[0];
-        this.$emit("input", { color: this.color, type: this.type });
+        this.selectedPiece = { color: this.color, type: this.type };
       }
     },
     hotkey(key) {
@@ -74,17 +156,28 @@ export default {
         this.select(key);
       }
     },
+    resetTPS() {
+      this.$store.dispatch("game/RESET_TPS");
+    },
+    saveTPS() {
+      this.$store.dispatch("game/SAVE_TPS", this.editingTPS);
+    },
   },
   watch: {
     available(available) {
       if (available.length && !available.includes(this.type)) {
         this.type = available[0];
-        this.$emit("input", { color: this.color, type: this.type });
+        this.selectedPiece = { color: this.color, type: this.type };
       }
     },
-    value(value) {
-      this.color = value.color;
-      this.type = value.type || "F";
+    selectedPiece(selected) {
+      this.color = selected.color;
+      this.type = selected.type || "F";
+    },
+    editingTPS() {
+      if (this.firstMoveNumber < this.minFirstMoveNumber) {
+        this.firstMoveNumber = this.minFirstMoveNumber;
+      }
     },
   },
 };
@@ -117,10 +210,7 @@ export default {
     border-width: var(--piece-border-width);
     border-style: solid;
     border-radius: 10%;
-
-    &.shadows {
-      box-shadow: $shadow-1;
-    }
+    box-shadow: $shadow-1;
 
     &.p1 {
       background-color: $player1flat;
@@ -144,17 +234,13 @@ export default {
         background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        &.shadows {
-          box-shadow: -1px 1px 2px rgba(#000, 0.3);
-        }
+        box-shadow: -1px 1px 2px rgba(#000, 0.3);
       }
       &.p2 {
         background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        &.shadows {
-          box-shadow: 1px 1px 2px rgba(#000, 0.3);
-        }
+        box-shadow: 1px 1px 2px rgba(#000, 0.3);
       }
     }
     &.C {

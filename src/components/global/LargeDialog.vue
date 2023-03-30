@@ -1,12 +1,13 @@
 <template>
   <q-dialog
     :content-class="classes"
-    :value.sync="value"
+    :value="model"
     :maximized="maximized"
+    @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout view="hhh lpr fff" class="bg-ui" :style="{ height }" container>
+    <q-layout view="hHh lpr fFf" class="bg-ui" :style="{ height }" container>
       <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>
@@ -29,12 +30,16 @@ export default {
   name: "large-dialog",
   props: {
     value: Boolean,
+    goBack: Boolean,
     fullscreen: Boolean,
-    "min-height": Number,
-    "no-maximize": Boolean,
-    "content-class": String,
+    minHeight: Number,
+    noMaximize: Boolean,
+    contentClass: String,
   },
   computed: {
+    model() {
+      return this.value;
+    },
     maximized() {
       return (
         this.fullscreen ||
@@ -53,6 +58,13 @@ export default {
         classes.push("maximized");
       }
       return classes;
+    },
+  },
+  methods: {
+    hide() {
+      if (this.goBack) {
+        this.$router.back();
+      }
     },
   },
 };

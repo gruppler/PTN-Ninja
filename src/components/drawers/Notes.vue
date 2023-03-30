@@ -4,63 +4,30 @@
       :is="recess ? 'recess' : 'div'"
       class="col-grow relative-position"
     >
-      <q-scroll-area ref="scroll" class="absolute-fit">
-        <div class="content q-px-md">
-          <template v-for="(plyID, i) in plyIDs">
-            <q-separator
-              v-if="i && !areSequential(plyIDs[i - 1], plyID)"
-              class="fullwidth-padded-md"
-              :key="'divider-' + plyID"
+      <q-scroll-area id="notes-scroll-area" class="absolute-fit">
+        <q-virtual-scroll
+          ref="scroll"
+          class="bg-transparent"
+          :items="plyIDs"
+          scroll-target="#notes-scroll-area > .scroll"
+          :virtual-scroll-item-size="128"
+          :virtual-scroll-slice-ratio-before="0.5"
+          :virtual-scroll-slice-ratio-after="0.5"
+        >
+          <template v-slot="{ item }">
+            <NoteItem
+              :class="{
+                'q-pt-md': item < 0,
+              }"
+              :key="item"
+              :ref="item"
+              :plyID="item"
+              :notes="log[item]"
+              @edit="edit"
+              @remove="remove"
             />
-            <div
-              class="fullwidth-padded-md q-py-xs"
-              :class="{ current: isCurrent(plyID), 'q-pt-md': plyID < 0 }"
-              :key="plyID"
-              :ref="plyID"
-            >
-              <div v-if="plyID >= 0 && game.plies[plyID]" class="ply-container">
-                <Move
-                  :game="game"
-                  :move="game.plies[plyID].move"
-                  :player="game.plies[plyID].player"
-                  separate-branch
-                  no-decoration
-                />
-              </div>
-              <q-chat-message
-                v-for="(comment, index) in log[plyID]"
-                :key="`message-${plyID}-${index}`"
-                :id="`message-${plyID}-${index}`"
-                bg-color="primary"
-                :text-color="primaryDark ? 'textLight' : 'textDark'"
-                text-sanitize
-                sent
-              >
-                <span>{{ comment.message }}</span>
-                <q-menu
-                  context-menu
-                  auto-close
-                  :target="`#message-${plyID}-${index} > div > div`"
-                >
-                  <q-list>
-                    <q-item @click="edit(plyID, index)" clickable>
-                      <q-item-section side>
-                        <q-icon name="edit" />
-                      </q-item-section>
-                      <q-item-section>{{ $t("Edit") }}</q-item-section>
-                    </q-item>
-                    <q-item @click="remove(plyID, index)" clickable>
-                      <q-item-section side>
-                        <q-icon name="delete" />
-                      </q-item-section>
-                      <q-item-section>{{ $t("Delete") }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-chat-message>
-            </div>
           </template>
-        </div>
+        </q-virtual-scroll>
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </component>
@@ -86,7 +53,7 @@
           <q-btn
             @click="send"
             :icon="editing ? 'edit' : 'add_note'"
-            :disabled="!message.length"
+            :disabled="!message.trim().length"
             flat
             dense
             round
@@ -98,15 +65,14 @@
 </template>
 
 <script>
-import Move from "../PTN/Move";
+import NoteItem from "./NoteItem";
 
-import { pickBy } from "lodash";
+import { pickBy, throttle } from "lodash";
 
 export default {
   name: "Notes",
-  components: { Move },
+  components: { NoteItem },
   props: {
-    game: Object,
     recess: Boolean,
   },
   data() {
@@ -116,52 +82,61 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
+    plies() {
+      return this.game.ptn.allPlies;
+    },
+    branchPlies() {
+      return this.game.ptn.branchPlies;
+    },
     isShowing() {
       return (
-        (this.$store.state.showText && !this.hasChat) ||
-        this.$store.state.textTab === "notes"
+        (this.$store.state.ui.showText && !this.hasChat) ||
+        this.$store.state.ui.textTab === "notes"
       );
     },
     primaryDark() {
-      return this.$store.state.theme.primaryDark;
+      return this.$store.state.ui.theme.primaryDark;
     },
     log() {
-      return this.$store.state.showAllBranches
-        ? this.game.notes
-        : pickBy(
-            this.game.notes,
-            (notes, id) =>
-              id < 0 || this.game.state.plies.includes(this.game.plies[id])
+      return this.$store.state.ui.showAllBranches
+        ? this.game.comments.notes
+        : Object.freeze(
+            pickBy(
+              this.game.comments.notes,
+              (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
+            )
           );
     },
     plyIDs() {
-      return Object.keys(this.log)
-        .map((id) => 1 * id)
-        .sort((a, b) => a - b);
+      return Object.freeze(
+        Object.keys(this.log)
+          .map((id) => 1 * id)
+          .sort((a, b) => a - b)
+      );
     },
     currentPlyID() {
       if (!this.log) {
         return null;
       }
-      if (this.editing) {
-        return this.editing.plyID;
-      }
       let plyID, ply;
-      if (!this.game.state.plyID && !this.game.state.plyIsDone) {
+      if (!this.game.position.plyID && !this.game.position.plyIsDone) {
         return this.plyIDs[0];
-      } else if (this.game.state.ply) {
-        if (this.game.state.plyID in this.log) {
-          return this.game.state.plyID;
+      } else if (this.game.position.ply) {
+        if (this.game.position.plyID in this.log) {
+          return this.game.position.plyID;
         } else if (this.isCurrent(-1)) {
           return -1;
         } else {
           for (let i = this.plyIDs.length - 1; i >= 0; i--) {
             plyID = this.plyIDs[i];
-            ply = plyID in this.game.plies ? this.game.plies[plyID] : null;
+            ply = plyID in this.plies ? this.plies[plyID] : null;
             if (
               ply &&
-              this.game.state.plies.includes(ply) &&
-              ply.index < this.game.state.ply.index
+              this.branchPlies.includes(ply) &&
+              ply.index < this.game.position.ply.index
             ) {
               return plyID;
             }
@@ -174,29 +149,31 @@ export default {
   },
   methods: {
     send() {
-      if (this.message.trim()) {
-        this.message = this.message.trim();
+      if (this.message) {
         if (this.editing) {
-          this.game.editNote(
-            this.editing.plyID,
-            this.editing.index,
-            this.message
-          );
+          this.$store.dispatch("game/EDIT_NOTE", {
+            plyID: this.editing.plyID,
+            index: this.editing.index,
+            message: this.message.trim(),
+          });
           this.editing = null;
         } else {
-          this.game.addNote(this.message);
+          this.$store.dispatch("game/ADD_NOTE", this.message.trim());
         }
         this.message = "";
         this.$refs.input.focus();
       }
     },
-    edit(plyID, index) {
+    edit({ plyID, index }) {
       const log = this.log[plyID][index];
       this.editing = { plyID, index };
+      if (!this.isCurrent(plyID)) {
+        this.$store.dispatch("game/GO_TO_PLY", { plyID, isDone: true });
+      }
       setTimeout(() => {
         this.$refs.input.focus();
         this.message = log.message;
-      }, 100);
+      }, 10);
     },
     cancelEdit() {
       if (this.editing) {
@@ -206,51 +183,33 @@ export default {
         this.$refs.input.blur();
       }
     },
-    remove(plyID, index) {
-      this.game.removeNote(plyID, index);
+    remove({ plyID, index }) {
+      this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
     },
     isCurrent(plyID) {
       return (
-        this.game.state.plyID === plyID ||
+        this.game.position.plyID === plyID ||
         (plyID < 0 &&
-          (!this.game.state.ply ||
-            (!this.game.state.ply.index && !this.game.state.plyIsDone)))
+          (!this.game.position.ply ||
+            (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
-    areSequential(plyID1, plyID2) {
-      const ply1 = plyID1 < 0 ? null : this.game.plies[plyID1];
-      const ply2 = this.game.plies[plyID2];
-      return (
-        ply1 &&
-        ply2 &&
-        ply1.branch === ply2.branch &&
-        ply2.move.number - ply1.move.number <= 1
-      );
-    },
-    scroll(animate = false) {
-      let message = this.$refs[this.currentPlyID];
-      if (message) {
-        message = message[0];
+    scroll: throttle(function () {
+      const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
+      if (index >= 0) {
+        this.$refs.scroll.scrollTo(index, "center-force");
       }
-      if (message) {
-        this.$refs.scroll.setScrollPosition(
-          message.offsetTop -
-            this.$refs.scroll.$el.offsetHeight +
-            message.offsetHeight,
-          animate && this.isShowing ? 300 : 0
-        );
-      }
-    },
+    }, 100),
   },
   watch: {
     log() {
-      this.scroll(true);
+      this.$nextTick(() => this.scroll());
     },
     currentPlyID() {
-      this.scroll(true);
+      this.scroll();
     },
   },
-  mounted() {
+  updated() {
     this.scroll();
   },
 };
@@ -258,30 +217,8 @@ export default {
 
 <style lang="scss">
 .notes {
-  .content {
-    padding-top: calc(100vh - #{$toolbar-min-height + $footer-toolbar-height});
-  }
   .q-separator {
     opacity: 0.75;
-  }
-  .current {
-    background-color: $dim;
-    body.panelDark & {
-      background-color: $highlight;
-    }
-  }
-  .q-message:not(:last-child) {
-    margin-bottom: 3px;
-    .q-message-text {
-      border-radius: $generic-border-radius;
-      min-height: 2em;
-      &:before {
-        display: none;
-      }
-    }
-  }
-  .ply-container {
-    padding-bottom: 0.5em;
   }
 }
 </style>

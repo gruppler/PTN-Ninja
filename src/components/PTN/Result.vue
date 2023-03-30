@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import Result from "../../PTN/Result";
+import Result from "../../Game/PTN/Result";
 
 export default {
   name: "Result",
@@ -34,12 +34,12 @@ export default {
   },
   computed: {
     theme() {
-      return this.$store.state.theme;
+      return this.$store.state.ui.theme;
     },
     resultObject() {
-      return this.result && this.result.constructor === Result
-        ? this.result
-        : Result.parse(this.result || "");
+      return typeof this.result === "string"
+        ? Result.parse(this.result || "")
+        : this.result;
     },
   },
 };

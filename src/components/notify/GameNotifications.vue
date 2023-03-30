@@ -8,15 +8,17 @@ import Notifications from "../general/Notifications";
 export default {
   name: "GameNotifications",
   components: { Notifications },
-  props: ["game"],
   computed: {
     show() {
-      return this.$store.state.notifyGame;
+      return this.$store.state.ui.notifyGame;
+    },
+    game() {
+      return this.$store.state.game;
     },
     notifications() {
-      const ply = this.game.state.plyIsDone
-        ? this.game.state.ply
-        : this.game.state.prevPly;
+      const ply = this.game.position.plyIsDone
+        ? this.game.position.ply
+        : this.game.position.prevPly;
       let alerts = [];
       if (ply) {
         if (ply.result) {
@@ -25,10 +27,8 @@ export default {
           const winner = result.winner || ply.player;
           alerts.push({
             message: this.$t("result." + result.type, {
-              player: this.game.tag(
-                "player" + winner,
-                this.$t(winner === 1 ? "White" : "Black")
-              ),
+              player:
+                this.$game.tag("player" + winner) || this.$t("Player" + winner),
             }),
             player: winner,
           });
@@ -46,8 +46,8 @@ export default {
       return alerts.map((alert) => ({
         message: alert.message,
         color: "player" + alert.player,
-        icon: this.$store.getters.playerIcon(alert.player || "tie"),
-        textColor: this.$store.state.theme[`player${alert.player}Dark`]
+        icon: this.$store.getters["ui/playerIcon"](alert.player || "tie"),
+        textColor: this.$store.state.ui.theme[`player${alert.player}Dark`]
           ? "textLight"
           : "textDark",
       }));

@@ -4,8 +4,17 @@
     v-bind="$attrs"
     @click="noMenu ? share() : null"
     @click.right.prevent="share"
+    v-shortkey="hotkeys"
+    @shortkey="shortkey"
   >
-    <q-menu v-if="!noMenu" auto-close square>
+    <hint>{{ $t("Share") }}</hint>
+    <q-menu
+      v-if="!noMenu"
+      transition-show="none"
+      transition-hide="none"
+      auto-close
+      square
+    >
       <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
@@ -18,40 +27,35 @@
         </template>
       </q-list>
     </q-menu>
-    <QRCode v-model="qrDialog" :text="qrText" no-route-dismiss />
   </q-btn>
 </template>
 
 <script>
-import QRCode from "../dialogs/QRCode";
+import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "ShareButton",
-  components: { QRCode },
   props: {
-    game: Object,
-    showQR: Boolean,
     "no-menu": Boolean,
   },
   data() {
     return {
       bottomSheet: false,
-      qrText: "",
-      qrDialog: false,
+      hotkeys: HOTKEYS.SHARING,
     };
   },
   computed: {
     actions() {
       let actions = [
         {
-          id: "url",
-          label: this.$t("URL"),
+          id: "urlCurrent",
+          label: this.$t("Link"),
           icon: "url",
-          action: () => this.shareText("url"),
+          action: () => this.shareText("url", true),
         },
       ];
 
-      if (this.game.state.ply) {
+      if (this.$game.board.ply) {
         actions.push({
           id: "ply",
           label: this.$t("Ply"),
@@ -76,14 +80,26 @@ export default {
         },
         {
           id: "ptn",
-          label: this.$t("PTN Text"),
+          label: this.$t("PTN"),
           icon: "text",
           action: () => this.shareText("ptn"),
         },
         {}
       );
 
-      if (!this.$store.state.embed && this.game.isLocal) {
+      // if (!this.$store.state.ui.embed) {
+      //   actions.push({
+      //     id: "online",
+      //     label: this.$t("Online"),
+      //     icon: "online",
+      //     action: this.online,
+      //   });
+      // }
+
+      if (
+        !this.$store.state.ui.embed &&
+        !this.$store.state.game.config.isOnline
+      ) {
         actions.push(
           {
             id: "embed",
@@ -119,13 +135,35 @@ export default {
     },
   },
   methods: {
+    shortkey({ srcKey }) {
+      switch (srcKey) {
+        case "exportPNG":
+          this.$store.dispatch("game/EXPORT_PNG");
+          break;
+        case "exportPTN":
+          this.shareFile();
+          break;
+        case "share":
+          this.share();
+          break;
+        case "shareTPS":
+          this.shareText("tps");
+          break;
+        case "sharePTN":
+          this.shareText("ptn");
+          break;
+        case "shareURL":
+          this.shareText("url", true);
+          break;
+      }
+    },
     shareText(type) {
       let output;
       switch (type) {
         case "url":
           output = {
-            title: this.game.name,
-            url: this.$store.getters.url(this.game, {
+            title: this.$t("Link to Position"),
+            text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
               state: true,
             }),
@@ -133,46 +171,45 @@ export default {
           break;
         case "ply":
           output = {
-            title: this.game.state.ply.text(),
-            text: this.game.state.ply.text(),
+            title: this.$game.board.ply.toString(),
+            text: this.$game.board.ply.toString(),
           };
           break;
         case "tps":
           output = {
-            title: this.game.state.tps,
-            text: this.game.state.tps,
+            title: this.$t("TPS"),
+            text: this.$game.board.getTPS(),
           };
           break;
         case "moves":
           output = {
-            title: this.$t("Moves") + " – " + this.game.name,
-            text: this.game.moveText(this.$store.state.showAllBranches, true),
+            title: this.$t("Moves"),
+            text: this.$game.moveText(this.$store.state.showAllBranches, true),
           };
           break;
         case "ptn":
           output = {
-            title: this.$t("PTN") + " – " + this.game.name,
-            text: this.game.ptn,
+            title: this.$t("PTN"),
+            text: this.$game.ptn,
           };
           break;
       }
-      this.$store.dispatch("COPY", output);
+      this.$store.dispatch("ui/SHARE", output);
     },
     shareFile() {
-      this.$store.dispatch("SAVE_PTN", this.game);
+      this.$store.dispatch("ui/EXPORT_PTN");
     },
     embed() {
-      this.$emit("embed");
+      this.$router.push({ name: "embed" });
     },
     png() {
-      this.$emit("png");
+      this.$router.push({ name: "png" });
+    },
+    online() {
+      this.$router.push({ name: "online" });
     },
     qrCode() {
-      this.qrText = this.$store.getters.url(this.game, {
-        origin: true,
-        state: true,
-      });
-      this.qrDialog = true;
+      this.$router.push({ name: "qr" });
     },
     share() {
       if (this.bottomSheet) {
@@ -189,14 +226,6 @@ export default {
           .onOk(({ action }) => action())
           .onDismiss(() => (this.bottomSheet = false));
       }
-    },
-  },
-  watch: {
-    qrDialog(isVisible) {
-      this.$emit("update:showQR", isVisible);
-    },
-    showQR(isVisible) {
-      this.qrDialog = isVisible;
     },
   },
 };

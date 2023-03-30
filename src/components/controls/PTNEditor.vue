@@ -14,38 +14,75 @@
 </template>
 
 <script>
-import Game from "../../PTN/Game";
-
-import { unescape } from "lodash";
+import Game from "../../Game";
 
 export default {
   name: "PTNEditor",
-  props: ["game"],
+  props: {
+    value: String,
+    isNewGame: Boolean,
+  },
   data() {
     return {
       ptn: "",
+      original: "",
       rules: [
         (moves) => {
           const result = Game.validate(this.header + moves);
-          return result === true ? true : this.$t(`error["${result}"]`);
+          if (result === true) {
+            this.$emit("error", "");
+            return true;
+          } else {
+            if (this.$te(`error["${result}"]`)) {
+              let error = this.$t(`error["${result}"]`);
+              this.$emit("error", error);
+              return error;
+            } else {
+              this.$emit("error", result);
+              return result;
+            }
+          }
         },
       ],
     };
   },
   computed: {
-    header() {
-      return this.game.headerText();
+    showHeader() {
+      return this.$store.state.ui.editHeader;
     },
-    error() {
-      return this.$refs.input.computedErrorMessage;
+    header() {
+      return this.isNewGame || this.showHeader ? "" : this.$game.headerText();
+    },
+    hasChanges() {
+      return this.isNewGame || this.ptn !== this.original;
     },
   },
   methods: {
     save() {
       this.$emit("save", this.header + this.ptn);
     },
+    reset() {
+      this.ptn = this.original;
+    },
     init() {
-      this.ptn = this.game ? this.game.moveText(true, true) : "";
+      if (this.isNewGame) {
+        this.original = this.value || "";
+      } else if (this.$game) {
+        this.original = (
+          this.showHeader ? this.$game.ptn : this.$game.moveText(true, true)
+        ).replace(/\r\n/g, "\n");
+      } else {
+        this.original = "";
+      }
+      this.ptn = this.original;
+    },
+  },
+  watch: {
+    ptn() {
+      this.$emit("hasChanges", this.hasChanges);
+    },
+    showHeader() {
+      this.init();
     },
   },
   mounted() {

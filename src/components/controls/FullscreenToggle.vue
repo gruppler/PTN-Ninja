@@ -1,12 +1,14 @@
 <template>
   <q-btn
+    v-if="$q.fullscreen.isCapable"
     v-bind="$attrs"
     @click="toggle"
     @shortkey="toggle"
     v-shortkey="hotkey"
-    :icon="value ? 'fullscreen_exit' : 'fullscreen'"
-    :title="$t('Fullscreen')"
-  />
+    :icon="isActive ? 'fullscreen_exit' : 'fullscreen'"
+  >
+    <hint>{{ $t("Fullscreen") }}</hint>
+  </q-btn>
 </template>
 
 <script>
@@ -14,15 +16,28 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "FullscreenToggle",
-  props: ["value"],
+  props: ["value", "target"],
   data() {
     return {
       hotkey: HOTKEYS.MISC.fullscreen,
     };
   },
+  computed: {
+    isActive() {
+      if (this.target) {
+        return this.$q.fullscreen.activeEl === this.target;
+      } else {
+        return this.value || this.$q.fullscreen.isActive;
+      }
+    },
+  },
   methods: {
     toggle() {
-      this.$emit("input", !this.value);
+      if (this.isActive) {
+        this.$q.fullscreen.exit();
+      } else {
+        this.$q.fullscreen.request(this.target);
+      }
     },
   },
 };

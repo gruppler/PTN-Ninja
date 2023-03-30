@@ -1,6 +1,6 @@
 <template>
-  <div class="play-controls full-width justify-center">
-    <div class="row no-wrap justify-around items-center">
+  <div class="play-controls absolute-fit justify-center">
+    <div class="row no-wrap justify-around items-center full-height">
       <q-btn
         @click="deletePly"
         @shortkey="deletePly"
@@ -8,24 +8,32 @@
           delete: hotkeys.deletePly,
           backspace: hotkeys.backspacePly,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
-        :disable="!game.state.ply || plyInProgress"
+        :disable="!position.ply || plyInProgress"
         icon="backspace"
-      />
+      >
+        <hint v-if="position.ply && !plyInProgress">
+          {{ $t("Delete Ply") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="first"
         @shortkey="first"
         v-shortkey="hotkeys.first"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
-      />
+      >
+        <hint v-if="!isFirst && !plyInProgress">
+          {{ $t("Beginning") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="prev"
         @click.right.prevent="prev(true)"
@@ -34,14 +42,19 @@
           whole: hotkeys.prev,
           half: hotkeys.prevHalf,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
-      />
+      >
+        <hint v-if="!isFirst && !plyInProgress">
+          {{ $t("Backward") }}
+        </hint>
+      </q-btn>
       <q-btn
+        v-if="showPlayButton"
         @click="playpause"
         @shortkey="playpause"
         v-shortkey="hotkeys.playpause"
@@ -49,9 +62,13 @@
         :ripple="false"
         color="primary"
         :text-color="primaryFG"
-        :disable="!game.state.ply || plyInProgress"
+        :disable="!position.ply || plyInProgress"
         :icon="isPlaying ? 'pause' : 'play'"
-      />
+      >
+        <hint v-if="position.ply && !plyInProgress">
+          {{ $t("Play/Pause") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="next"
         @click.right.prevent="next(true)"
@@ -60,28 +77,36 @@
           whole: hotkeys.next,
           half: hotkeys.nextHalf,
         }"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
-      />
+      >
+        <hint v-if="!isLast && !plyInProgress">
+          {{ $t("Forward") }}
+        </hint>
+      </q-btn>
       <q-btn
         @click="last"
         @shortkey="last"
         v-shortkey="hotkeys.last"
-        round
+        stretch
         flat
         :color="fg"
         :ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
-      />
+      >
+        <hint v-if="!isLast && !plyInProgress">
+          {{ $t("End") }}
+        </hint>
+      </q-btn>
       <q-btn
         v-shortkey="{ ...options, ...branchControls }"
         @shortkey="branchKey"
-        round
+        stretch
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
@@ -89,14 +114,16 @@
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
-          v-if="$store.state.showControls"
+          v-if="$store.state.ui.showControls"
           ref="branchMenu"
           v-model="branchMenu"
           @select="selectBranch"
-          :game="game"
           :branches="branches"
-          linenum
+          selected-played
         />
+        <hint v-if="branches.length >= 2 && !plyInProgress">
+          {{ $t("Branches") }}
+        </hint>
       </q-btn>
     </div>
   </div>
@@ -105,7 +132,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { flatten, omit, pick, throttle, uniq, zipObject } from "lodash";
+import { omit, pick, throttle, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -123,7 +150,6 @@ const BRANCH_KEYS = [
 export default {
   name: "PlayControls",
   components: { BranchMenu },
-  props: ["game"],
   data() {
     return {
       isPlaying: false,
@@ -131,53 +157,57 @@ export default {
       timestamp: null,
       next: null,
       prev: null,
-      branches: [],
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
+    position() {
+      return this.$store.state.game.position;
+    },
+    branches() {
+      return this.$store.state.game.ptn.branchMenu;
+    },
     fg() {
-      return this.$store.state.theme.isDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
     primaryFG() {
-      return this.$store.state.theme.primaryDark ? "textLight" : "textDark";
+      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     isFirst() {
-      return !this.game.state.prevPly && !this.game.state.plyIsDone;
+      return !this.position.prevPly && !this.position.plyIsDone;
     },
     isLast() {
       return (
-        (!this.game.state.nextPly && this.game.state.plyIsDone) ||
-        !this.game.state.ply
+        (!this.position.nextPly && this.position.plyIsDone) ||
+        !this.position.ply
       );
     },
     plyInProgress() {
-      return this.game.state.selected.pieces.length !== 0;
+      return this.$store.state.game.selected.pieces.length !== 0;
     },
     hasBranches() {
-      return !!(this.game.state.ply && this.game.state.ply.branches.length > 1);
+      return !!(this.position.ply && this.position.ply.branches.length > 1);
     },
     branchIndex() {
       return this.$refs.branchMenu.selected;
     },
     options() {
+      const keys = Object.keys(this.branches);
       return zipObject(
-        Object.keys(this.branches),
-        Object.keys(this.branches).map((key) => [key])
+        keys,
+        keys.map((key) => [key])
       );
+    },
+    showPlayButton() {
+      return this.$store.state.ui.showPlayButton;
     },
   },
   methods: {
-    getBranches() {
-      this.branches = uniq(
-        flatten(Object.values(this.game.branches).map((ply) => ply.branches))
-      );
-    },
     deletePly() {
-      if (this.game.state.ply && !this.plyInProgress) {
-        this.game.deletePly(this.game.state.plyID, true, true);
+      if (this.position.ply && !this.plyInProgress) {
+        this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
       }
     },
     play() {
@@ -201,18 +231,23 @@ export default {
     },
     first() {
       if (!this.isFirst) {
-        this.game.first();
+        this.$store.dispatch("game/FIRST");
       }
     },
     _prev(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
-          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timer = setTimeout(
+            this.next,
+            6e4 / this.$store.state.ui.playSpeed
+          );
           this.timestamp = new Date().getTime();
         }
         if (!this.isFirst) {
-          this.game.prev(event === true || event.srcKey === "half");
+          this.$store.dispatch("game/PREV", {
+            half: event === true || event.srcKey === "half",
+          });
         }
       });
     },
@@ -220,14 +255,24 @@ export default {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
-          this.timer = setTimeout(this.next, 6e4 / this.$store.state.playSpeed);
+          this.timer = setTimeout(
+            this.next,
+            6e4 / this.$store.state.ui.playSpeed
+          );
           this.timestamp = new Date().getTime();
         }
+        if (this.$store.state.game.error) {
+          this.pause();
+          return false;
+        }
         if (!this.isLast) {
-          this.isPlaying =
-            this.game.next(
-              this.isPlaying || event === true || event.srcKey === "half"
-            ) && this.isPlaying;
+          this.$store.dispatch("game/NEXT", {
+            half:
+              this.isPlaying ||
+              event === true ||
+              (event && event.srcKey === "half"),
+          });
+          this.isPlaying = this.isPlaying;
           if (this.isLast && this.isPlaying) {
             this.pause();
           }
@@ -236,15 +281,15 @@ export default {
     },
     last() {
       if (!this.isLast) {
-        this.game.last();
+        this.$store.dispatch("game/LAST");
         if (this.isPlaying) {
           this.pause();
         }
       }
     },
     selectBranch(ply) {
-      this.game.setTarget(ply);
-      this.game.goToPly(ply.id, true);
+      this.$store.dispatch("game/SET_TARGET", ply);
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
     },
     branchKey({ srcKey }) {
       switch (srcKey) {
@@ -306,7 +351,7 @@ export default {
   },
   watch: {
     // Make playback speed respond immediately to speed changes
-    "$store.state.playSpeed"(speed) {
+    "$store.state.ui.playSpeed"(speed) {
       let now = new Date().getTime();
       let nextFrame = this.timestamp + 6e4 / speed;
 
@@ -319,15 +364,10 @@ export default {
         }
       }
     },
-    "game.branches": {
-      handler: "getBranches",
-      deep: true,
-    },
   },
   created() {
     this.next = throttle(this._next, 250);
     this.prev = throttle(this._prev, 250);
-    this.getBranches();
   },
 };
 </script>

@@ -1,22 +1,21 @@
 <template>
   <div
-    v-show="game.state.ply && !$store.state.showPTN"
+    v-show="position.ply && !$store.state.ui.showPTN"
     class="board-move-container no-pointer-events"
   >
     <div class="board-move" :class="{ collapsed }">
       <q-btn
-        @click="collapsed = !collapsed"
-        :icon="collapsed ? 'up' : 'down'"
+        @click="toggle"
+        :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
         :ripple="false"
         dense
         flat
       />
       <Move
-        v-if="game.state.move"
+        v-if="position.move"
         :class="{ 'all-pointer-events': !collapsed }"
-        :move="game.state.move"
-        :game="game"
+        :move="position.move"
         separate-branch
         current-only
         standalone
@@ -31,15 +30,25 @@ import Move from "../PTN/Move";
 export default {
   name: "CurrentMove",
   components: { Move },
-  props: ["game"],
   computed: {
     collapsed: {
       get() {
-        return !this.$store.state.showMove;
+        return !this.$store.state.ui.showMove;
       },
       set(value) {
-        this.$store.dispatch("SET_UI", ["showMove", !value]);
+        this.$store.dispatch("ui/SET_UI", ["showMove", !value]);
       },
+    },
+    position() {
+      return this.$store.state.game.position;
+    },
+    icon() {
+      return this.collapsed ? "up" : "down";
+    },
+  },
+  methods: {
+    toggle() {
+      this.collapsed = !this.collapsed;
     },
   },
 };
