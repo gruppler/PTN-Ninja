@@ -9,14 +9,17 @@
               {{ analyzed_position_count }}
               {{ $t("openingExplorer.analyzed positions") }}
             </div>
+          </q-card-section>
+          <q-card-actions vertical>
             <q-btn
-              flat
+              color="primary"
+              :flat="true"
               :loading="loading_bot_moves"
               @click="query_bot_suggestions"
             >
               Ask for suggestions
             </q-btn>
-          </q-card-section>
+          </q-card-actions>
         </q-card>
         <div>
           <span v-if="loading_bot_moves">Loading...</span>
