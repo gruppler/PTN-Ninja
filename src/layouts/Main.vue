@@ -139,7 +139,12 @@
             <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="database">
-            <GamesDB ref="database" class="fit" :game="$store.state.game" recess />
+            <GamesDB
+              ref="database"
+              class="fit"
+              :game="$store.state.game"
+              recess
+            />
           </q-tab-panel>
         </q-tab-panels>
       </div>

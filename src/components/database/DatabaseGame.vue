@@ -22,7 +22,6 @@ export default {
   methods: {
     async load_game() {
       let response = await fetch(
-        // `http://127.0.0.1:5000/api/v1/game/${this.playtak_id}`
         `https://openings.exegames.de/api/v1/game/${this.playtak_id}`
       );
 

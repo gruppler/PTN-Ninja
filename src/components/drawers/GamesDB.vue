@@ -86,7 +86,7 @@
 import DatabaseEntry from "../database/DatabaseEntry";
 import DatabaseGame from "../database/DatabaseGame";
 
-const bestMoveEndpoint = `http://127.0.0.1:5000/api/v1/best_move`;
+const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
 
 export default {
@@ -105,14 +105,14 @@ export default {
       bot_moves: {}, // maps TPS-String to array of moves that were suggested for that position
       db_moves: [],
       db_games: [],
-      // equivalent to game.state.tps, but watchable by Vue and thus
-      // changes trigger re-render of bot moves
-      reactiveTps: this.getTps(),
     };
   },
   computed: {
+    tps() {
+      return this.game.position.tps;
+    },
     applicable_bot_moves() {
-      const tps = this.reactiveTps;
+      const tps = this.tps;
       const moves = this.bot_moves[tps];
       if (moves || moves == []) {
         return moves;
@@ -124,16 +124,13 @@ export default {
     },
   },
   methods: {
-    getTps() {
-      return this.game.state.tps;
-    },
     async query_bot_suggestions() {
       try {
         this.loading_bot_moves = true;
 
-        const tps = this.reactiveTps;
+        const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
-        const komi = this.game.tag("komi");
+        const komi = this.game.config.komi;
         const moveCount = 8; // todo make configurable
         const response = await fetch(
           `${bestMoveEndpoint}/${uriEncodedTps}?komi=${komi}&count=${moveCount}`
@@ -161,7 +158,7 @@ export default {
       }
     },
     async query_position() {
-      const uriEncodedTps = encodeURIComponent(this.reactiveTps);
+      const uriEncodedTps = encodeURIComponent(this.tps);
       const response = await fetch(`${openingsEndpoint}/${uriEncodedTps}`);
 
       if (!response.ok) {
@@ -189,7 +186,7 @@ export default {
 
       this.db_games.splice(0, this.db_games.length);
       i = 0;
-      for (const game of data.games ?? []) {
+      for (const game of data.games || []) {
         console.log(game);
         const new_game = {
           id: i,
@@ -206,18 +203,12 @@ export default {
       }
     },
   },
+  mounted() {
+    this.query_position();
+  },
   watch: {
-    game() {
+    "game.position.tps"() {
       this.query_position();
-    },
-    "game.state.plyID"() {
-      this.query_position();
-    },
-    "game.state.plyIsDone"() {
-      this.query_position();
-    },
-    "game.state.tps"() {
-      this.reactiveTps = this.getTps();
     },
   },
 };
