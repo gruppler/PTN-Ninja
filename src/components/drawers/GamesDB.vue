@@ -91,7 +91,7 @@
 import DatabaseEntry from "../database/DatabaseEntry";
 import DatabaseGame from "../database/DatabaseGame";
 
-const bestMoveEndpoint = `http://127.0.0.1:5000/api/v1/best_move`;
+const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
 
 export default {
