@@ -31,13 +31,12 @@
         :key="i"
         :text-color="textClass(ply_id + i + 1)"
         :color="colorClass(ply_id + i + 1)"
-        :label="mv"
         transparent
-        v-on:click="make_following_move(i)"
+        v-on:click="make_following_moves(i)"
         class="following-move"
       >
-        <q-tooltip> Some text as content of Tooltip </q-tooltip>
-        <hint> Apply all moves till here </hint>
+        {{ mv }}
+        <hint>Play {{ applicable_moves(i).join(" ") }}</hint>
       </q-badge>
     </div>
   </div>
@@ -66,14 +65,16 @@ export default {
     make_move(ptn) {
       this.$store.dispatch("game/INSERT_PLY", ptn);
     },
-    make_following_move(i) {
-      for (const mv of [this.ptn, ...this.following_moves.slice(0, i + 1)]) {
+    applicable_moves(i) {
+      return [this.ptn, ...this.following_moves.slice(0, i + 1)];
+    },
+    make_following_moves(i) {
+      for (const mv of this.applicable_moves(i)) {
         this.make_move(mv);
       }
     },
     textClass(plyId) {
       return plyId % 2 == 1 ? "player1" : "player2";
-      return ["player2", "player1"][plyId % 2];
     },
     colorClass(plyId) {
       return plyId % 2 == 1 ? "bg" : "ui";
