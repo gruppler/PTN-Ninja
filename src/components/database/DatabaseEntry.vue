@@ -118,6 +118,9 @@ export default {
   overflow-x: hidden;
   white-space: nowrap;
 }
+.following-move {
+  margin: 0px 2px;
+}
 .following-move:hover {
   color: lightpink !important;
   background: darkred !important;
