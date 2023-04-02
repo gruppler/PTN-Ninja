@@ -31,7 +31,6 @@ export default {
   name: "DatabaseEntry",
 
   props: {
-    game: Object,
     ptn: String,
     total_games: Number,
     white_wins: Number,
@@ -44,7 +43,7 @@ export default {
 
   methods: {
     make_move() {
-      this.game.insertPly(this.ptn);
+      this.$store.dispatch("game/INSERT_PLY", this.ptn);
     },
   },
 

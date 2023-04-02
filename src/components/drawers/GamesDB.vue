@@ -36,7 +36,6 @@
             :total_games="move.total_games"
             :white_wins="move.white_wins"
             :black_wins="move.black_wins"
-            :game="game"
             total_label_suffix="visits"
           />
         </div>
@@ -112,7 +111,8 @@ export default {
   },
   computed: {
     tps() {
-      return this.game.position.tps;
+      //  do not use this$.game.position.tps as it's not watchable
+      return this.$store.state.game.position.tps;
     },
     applicable_bot_moves() {
       const tps = this.tps;
@@ -210,7 +210,7 @@ export default {
     this.query_position();
   },
   watch: {
-    "game.position.tps"() {
+    tps() {
       this.query_position();
     },
   },
