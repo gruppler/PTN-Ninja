@@ -29,14 +29,16 @@
           </span>
           <DatabaseEntry
             v-else
-            class="q-mt-sm"
             v-for="move in applicable_bot_moves"
+            class="q-mt-sm"
             :key="move.id"
             :ptn="move.ptn"
             :total_games="move.total_games"
             :white_wins="move.white_wins"
             :black_wins="move.black_wins"
+            :following_moves="move.pv"
             total_label_suffix="visits"
+            :ply_id="plyId"
           />
         </div>
       </div>
@@ -57,6 +59,7 @@
           :white_wins="move.white_wins"
           :black_wins="move.black_wins"
           :game="game"
+          :ply_id="plyId"
         />
       </div>
       <div class="q-pa-md" v-if="db_games">
@@ -88,7 +91,7 @@
 import DatabaseEntry from "../database/DatabaseEntry";
 import DatabaseGame from "../database/DatabaseGame";
 
-const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
+const bestMoveEndpoint = `http://127.0.0.1:5000/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
 
 export default {
@@ -110,6 +113,9 @@ export default {
     };
   },
   computed: {
+    plyId() {
+      return this.$store.state.game.position.plyID;
+    },
     tps() {
       //  do not use this$.game.position.tps as it's not watchable
       return this.$store.state.game.position.tps;
@@ -148,6 +154,7 @@ export default {
             id,
             ptn,
             pv,
+            subtitle: pv.join(" "),
             total_games: visits,
             white_wins: winning_probability * visits,
             black_wins: (1 - winning_probability) * visits,
