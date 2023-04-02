@@ -31,7 +31,7 @@ export default {
         let ninjatpn = data.ptn.split("\n");
         ninjatpn.splice(8, 2);
         ninjatpn = ninjatpn.join("\n");
-        this.$store.dispatch("ADD_GAME", {
+        this.$store.dispatch("game/ADD_GAME", {
           ptn: ninjatpn,
           name: this.caption,
         });
