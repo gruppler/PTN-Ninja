@@ -214,6 +214,14 @@ export const DELETE_PLY = (state, plyID) => {
   }
 };
 
+export const INSERT_PLY = (state, ply) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.insertPly(ply, false, false);
+    postMessage("INSERT_PLY", ply);
+  }
+};
+
 export const DELETE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
   if (game) {

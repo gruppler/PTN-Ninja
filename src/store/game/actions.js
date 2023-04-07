@@ -635,6 +635,11 @@ export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
   dispatch("SAVE_CURRENT_GAME");
 };
 
+export const INSERT_PLY = function ({ commit, dispatch }, ply) {
+  commit("INSERT_PLY", ply);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
   commit("DELETE_BRANCH", branch);
   dispatch("SAVE_CURRENT_GAME");
