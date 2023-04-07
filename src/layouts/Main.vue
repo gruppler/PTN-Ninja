@@ -128,7 +128,7 @@
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="database">{{ $t("Database") }}</q-tab>
+          <q-tab name="database">{{ $t("openingExplorer.Database") }}</q-tab>
           <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
         <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
