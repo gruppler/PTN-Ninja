@@ -68,7 +68,7 @@ export default {
   name: "Ply",
   components: { BranchMenu, Result },
   props: {
-    plyID: Number,
+    ply: Object,
     noBranches: Boolean,
     noClick: Boolean,
   },
@@ -86,9 +86,6 @@ export default {
     },
     ptn() {
       return this.$store.state.game.ptn;
-    },
-    ply() {
-      return this.ptn.allPlies[this.plyID];
     },
     branches() {
       return this.ply.branches.map((id) => this.ptn.allPlies[id]);

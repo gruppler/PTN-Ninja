@@ -3,6 +3,11 @@ import { pick } from "lodash";
 import { THEMES } from "../../themes";
 
 let defaults = {
+  analysisSections: {
+    botSuggestions: true,
+    dbMoves: true,
+    dbGames: true,
+  },
   animateBoard: true,
   animateScrub: false,
   axisLabels: true,

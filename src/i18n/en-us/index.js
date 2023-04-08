@@ -5,6 +5,7 @@ export default {
   About: "About",
   Account: "Account",
   Action: "Action",
+  Analysis: "Analysis",
   "Animate Board": "Animate Board",
   "Animate while scrubbing": "Animate while scrubbing",
   Apply: "Apply",
@@ -76,6 +77,7 @@ export default {
   "Game x closed": 'Closed "{game}"',
   Height: "Height",
   Help: "Help",
+  "Hide Analysis": "Hide Analysis",
   "Hide Chat": "Hide Chat",
   "Hide Header Tags": "Hide Header Tags",
   "Hide Notes": "Hide Notes",
@@ -191,6 +193,7 @@ export default {
   "Share TPS": "Share TPS",
   "Share URL": "Share URL",
   "Show All Branches": "Show All Branches",
+  "Show Analysis": "Show Analysis",
   "Show Branch Menu": "Show Branch Menu",
   "Show Chat": "Show Chat",
   "Show Header Tags": "Show Header Tags",
@@ -414,11 +417,16 @@ export default {
   },
 
   openingExplorer: {
+    "analyzed positions":
+      "No analyzed positions | 1 analyzed position | {count} analyzed positions",
+    "Ask for suggestions": "Ask for suggestions",
+    "Bot Moves": "Bot Suggestions",
     Database: "Database",
     "Database Moves": "Database Moves",
+    games: "1 game | {count} games",
+    "No suggested moves": "No suggested moves",
     "Top Games from Position": "Top Games from Position",
-    "Bot Moves": "Bot suggestions",
-    "analyzed positions": "analyzed positions",
+    visits: "1 visit | {count} visits",
   },
 
   format: {

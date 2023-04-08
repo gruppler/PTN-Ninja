@@ -1,49 +1,62 @@
 <template>
-  <q-btn class="caption" v-on:click="load_game()">
-    {{ caption }}
-  </q-btn>
+  <q-item clickable @click="loadGame">
+    <q-item-section>
+      <q-item-label>
+        <q-icon name="player1" left />
+        {{ player1 }} <em>({{ rating1 }})</em>
+      </q-item-label>
+      <q-item-label>
+        <q-icon name="player2" left />
+        {{ player2 }} <em>({{ rating2 }})</em>
+      </q-item-label>
+    </q-item-section>
+    <q-item-section side>
+      <Result :result="result" />
+    </q-item-section>
+    <q-inner-loading :showing="loading" />
+  </q-item>
 </template>
 
 <script>
+import Game from "../../Game";
+import Result from "../PTN/Result";
+
 export default {
   name: "DatabaseGame",
-
+  components: { Result },
   props: {
-    id: Number,
-    white_player: String,
-    black_player: String,
-    white_rating: Number,
-    black_rating: Number,
-    ptn: String,
-    playtak_id: Number,
+    player1: String,
+    player2: String,
+    rating1: Number,
+    rating2: Number,
+    playtakId: Number,
     result: String,
   },
-
-  methods: {
-    async load_game() {
-      let response = await fetch(
-        `https://openings.exegames.de/api/v1/game/${this.playtak_id}`
-      );
-
-      if (response.ok) {
-        let data = await response.json();
-        console.log(data);
-        let ninjatpn = data.ptn.split("\n");
-        ninjatpn.splice(8, 2);
-        ninjatpn = ninjatpn.join("\n");
-        this.$store.dispatch("game/ADD_GAME", {
-          ptn: ninjatpn,
-          name: this.caption,
-        });
-      } else {
-        alert("HTTP-Error: " + response.status);
-      }
-    },
+  data() {
+    return {
+      loading: false,
+    };
   },
+  methods: {
+    async loadGame() {
+      try {
+        this.loading = true;
+        let response = await fetch(
+          `https://openings.exegames.de/api/v1/game/${this.playtakId}`
+        );
 
-  computed: {
-    caption() {
-      return `${this.white_player} (${this.white_rating}) vs. ${this.black_player} (${this.black_rating}) ${this.result}`;
+        if (response.ok) {
+          let data = await response.json();
+          let game = new Game({ ptn: data.ptn });
+          this.$store.dispatch("game/ADD_GAME", game);
+        } else {
+          this.notifyError("HTTP-Error: " + response.status);
+        }
+      } catch (error) {
+        this.notifyError(error);
+      } finally {
+        this.loading = false;
+      }
     },
   },
 };

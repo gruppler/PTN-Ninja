@@ -24,34 +24,14 @@
           </GameSelector>
         </q-toolbar-title>
         <q-btn
-          :icon="
-            textTab === 'notes'
-              ? notifyNotes
-                ? 'notes'
-                : 'notes_off'
-              : textTab === 'chat'
-              ? 'chat'
-              : 'database'
-          "
+          :icon="textPanelIcon"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint>
-            {{
-              $t(
-                textTab === "notes"
-                  ? showText
-                    ? "Hide Notes"
-                    : "Show Notes"
-                  : showText
-                  ? "Hide Chat"
-                  : "Show Chat"
-              )
-            }}
-          </hint>
+          <hint v-if="textPanelHint">{{ textPanelHint }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -128,19 +108,24 @@
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="database">{{ $t("openingExplorer.Database") }}</q-tab>
+          <q-tab name="analysis">{{ $t("Analysis") }}</q-tab>
           <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
-        <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
+        <q-tab-panels
+          class="col-grow bg-transparent"
+          :value="textTab"
+          keep-alive
+          animated
+        >
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
-          <q-tab-panel name="database">
-            <GamesDB
-              ref="database"
+          <q-tab-panel name="analysis">
+            <Analysis
+              ref="analysis"
               class="fit"
               :game="$store.state.game"
               recess
@@ -181,7 +166,7 @@ import Board from "../components/board/Board";
 import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
-import GamesDB from "../components/drawers/GamesDB";
+import Analysis from "../components/drawers/Analysis";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -216,7 +201,7 @@ export default {
     CurrentMove,
     PTN,
     Notes,
-    GamesDB,
+    Analysis,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
@@ -285,6 +270,26 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
+    },
+    textPanelIcon() {
+      if (this.textTab === "notes") {
+        return this.notifyNotes ? "notes" : "notes_off";
+      } else if (this.textTab === "chat") {
+        return "chat";
+      } else if (this.textTab === "analysis") {
+        return "analysis";
+      }
+      return "";
+    },
+    textPanelHint() {
+      if (this.textTab === "notes") {
+        return this.$t(this.showText ? "Hide Notes" : "Show Notes");
+      } else if (this.textTab === "chat") {
+        return this.$t(this.showText ? "Hide Chat" : "Show Chat");
+      } else if (this.textTab === "analysis") {
+        return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
+      }
+      return "";
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
