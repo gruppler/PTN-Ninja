@@ -47,6 +47,15 @@
           <q-card-section>
             <div class="text-h6">
               {{ $t("openingExplorer.Database Moves") }}
+              <q-checkbox
+                v-model="includeBotGames"
+                checked-icon="mdi-robot-happy"
+                unchecked-icon="mdi-robot-dead-outline"
+              >
+                <hint>
+                  Bot games {{ includeBotGames ? "included" : "excluded" }}
+                </hint>
+              </q-checkbox>
             </div>
           </q-card-section>
         </q-card>
@@ -110,6 +119,7 @@ export default {
       bot_moves: {}, // maps TPS-String to array of moves that were suggested for that position
       db_moves: [],
       db_games: [],
+      includeBotGames: false,
     };
   },
   computed: {
@@ -169,7 +179,10 @@ export default {
     },
     async query_position() {
       const uriEncodedTps = encodeURIComponent(this.tps);
-      const response = await fetch(`${openingsEndpoint}/${uriEncodedTps}`);
+      const databaseId = this.includeBotGames ? 1 : 0;
+      const response = await fetch(
+        `${openingsEndpoint}/${databaseId}/${uriEncodedTps}`
+      );
 
       if (!response.ok) {
         return alert("HTTP-Error: " + response.status);
@@ -218,6 +231,9 @@ export default {
   },
   watch: {
     tps() {
+      this.query_position();
+    },
+    includeBotGames() {
       this.query_position();
     },
   },
