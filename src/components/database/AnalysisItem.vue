@@ -19,8 +19,26 @@
           />
         </q-item-label>
       </q-item-section>
-      <q-item-section v-if="$slots.after" side>
-        <slot name="after" />
+      <q-item-section side>
+        <q-item-label v-if="count !== null && countLabel">
+          {{ $tc(countLabel, $n(count, "n0")) }}
+        </q-item-label>
+        <q-item-label>
+          <span class="player-numbers">
+            <span
+              class="player1"
+              v-if="player1Number !== null"
+              :class="{ single: player2Number === null }"
+              >{{ player1Number }}</span
+            >
+            <span
+              class="player2"
+              v-if="player2Number !== null"
+              :class="{ single: player1Number === null }"
+              >{{ player2Number }}</span
+            >
+          </span>
+        </q-item-label>
       </q-item-section>
     </q-item>
   </div>
@@ -35,6 +53,19 @@ export default {
   props: {
     ply: Object,
     evaluation: Number,
+    count: {
+      type: Number,
+      default: null,
+    },
+    countLabel: String,
+    player1Number: {
+      type: [Number, String],
+      default: null,
+    },
+    player2Number: {
+      type: [Number, String],
+      default: null,
+    },
     followingPlies: Array,
   },
   methods: {
@@ -56,9 +87,51 @@ export default {
 <style lang="scss">
 .analysis-item {
   position: relative;
+
   .evaluation {
     position: absolute;
     height: 100%;
+  }
+
+  .player-numbers {
+    white-space: nowrap;
+    font-weight: bold;
+    height: 1.5em;
+    margin-top: 4px;
+    display: inline-block;
+    vertical-align: middle;
+
+    .player1,
+    .player2 {
+      padding: 2px 6px;
+      position: relative;
+      &.single {
+        border-radius: 4px;
+      }
+    }
+
+    .player1 {
+      border-radius: 4px 0 0 4px;
+      background-color: $player1;
+      background-color: var(--q-color-player1);
+      color: $textDark;
+      color: var(--q-color-textDark);
+      body.player1Dark & {
+        color: $textLight;
+        color: var(--q-color-textLight);
+      }
+    }
+    .player2 {
+      border-radius: 0 4px 4px 0;
+      background-color: $player2;
+      background-color: var(--q-color-player2);
+      color: $textDark;
+      color: var(--q-color-textDark);
+      body.player2Dark & {
+        color: $textLight;
+        color: var(--q-color-textLight);
+      }
+    }
   }
 }
 </style>

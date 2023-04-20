@@ -416,17 +416,17 @@ export default {
     Space: "Space",
   },
 
-  openingExplorer: {
+  analysis: {
     "analyzed positions":
       "No analyzed positions | 1 analyzed position | {count} analyzed positions",
     "Ask for suggestions": "Ask for suggestions",
     "Bot Moves": "Bot Suggestions",
-    Database: "Database",
-    "Database Moves": "Database Moves",
+    "Database Moves": "PlayTak History",
     games: "1 game | {count} games",
     "No suggested moves": "No suggested moves",
     "Top Games from Position": "Top Games from Position",
     visits: "1 visit | {count} visits",
+    wins: "1 win | {count} wins",
   },
 
   format: {

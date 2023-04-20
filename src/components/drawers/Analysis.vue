@@ -5,7 +5,7 @@
       <q-expansion-item
         v-if="showBotMovesPanel"
         v-model="sections.botSuggestions"
-        :label="$t('openingExplorer.Bot Moves')"
+        :label="$t('analysis.Bot Moves')"
         icon="bot"
         header-class="bg-accent"
       >
@@ -18,7 +18,7 @@
             color="primary"
             stretch
           >
-            {{ $t("openingExplorer.Ask for suggestions") }}
+            {{ $t("analysis.Ask for suggestions") }}
           </q-btn>
           <AnalysisItem
             v-else
@@ -27,11 +27,15 @@
             :ply="move.ply"
             :evaluation="move.evaluation"
             :following-plies="move.followingPlies"
-          >
-            <template v-slot:after>
-              {{ $tc("openingExplorer.visits", move.visits) }}
-            </template>
-          </AnalysisItem>
+            :count="move.visits"
+            count-label="analysis.visits"
+            :player1-number="
+              move.evaluation >= 0 ? formatEvaluation(move.evaluation) : null
+            "
+            :player2-number="
+              move.evaluation < 0 ? formatEvaluation(move.evaluation) : null
+            "
+          />
         </smooth-reflow>
       </q-expansion-item>
 
@@ -39,7 +43,7 @@
       <q-expansion-item
         v-if="dbMoves"
         v-model="sections.dbMoves"
-        :label="$t('openingExplorer.Database Moves')"
+        :label="$t('analysis.Database Moves')"
         icon="database"
         header-class="bg-accent"
       >
@@ -47,14 +51,13 @@
           <AnalysisItem
             v-for="(move, i) in dbMoves"
             :key="i"
-            :ptn="move.ptn"
-            :evaluation="move.evaluation"
             :ply="move.ply"
-          >
-            <template v-slot:after>
-              {{ $tc("openingExplorer.games", move.totalGames) }}
-            </template>
-          </AnalysisItem>
+            :evaluation="move.evaluation"
+            :count="move.totalGames"
+            count-label="analysis.games"
+            :player1-number="$n(move.wins1, 'n0')"
+            :player2-number="$n(move.wins2, 'n0')"
+          />
           <q-inner-loading :showing="loadingDBMoves" />
         </smooth-reflow>
       </q-expansion-item>
@@ -63,7 +66,7 @@
       <q-expansion-item
         v-if="dbGames"
         v-model="sections.dbGames"
-        :label="$t('openingExplorer.Top Games from Position')"
+        :label="$t('analysis.Top Games from Position')"
         icon="board"
         header-class="bg-accent"
       >
@@ -132,6 +135,9 @@ export default {
       color = color === 1 ? 2 : 1;
       return { player, color };
     },
+    formatEvaluation(v) {
+      return `${this.$n(Math.abs(v), "n2")}%`;
+    },
     async queryBotSuggestions() {
       try {
         this.loadingBotMoves = true;
@@ -153,10 +159,10 @@ export default {
             let player = this.ply.player;
             let color = this.ply.color;
             ({ player, color } = this.nextPly(player, color));
-            let ply = new Ply(ptn, { player, color });
+            let ply = new Ply(ptn, { id: null, player, color });
             let followingMoves = pv.map((ply) => {
               ({ player, color } = this.nextPly(player, color));
-              return new Ply(ply, { player, color });
+              return new Ply(ply, { id: null, player, color });
             });
             let evaluation = 200 * (winning_probability - 0.5);
             return { ply, followingMoves, visits, evaluation };
@@ -185,10 +191,12 @@ export default {
           let player = this.ply.player;
           let color = this.ply.color;
           ({ player, color } = this.nextPly(player, color));
-          let ply = new Ply(move.ptn, { player, color });
-          let totalGames = move.white + move.black;
-          let evaluation = 200 * (move.white / totalGames - 0.5);
-          return { id, ply, totalGames, evaluation };
+          let ply = new Ply(move.ptn, { id: null, player, color });
+          let wins1 = move.white;
+          let wins2 = move.black;
+          let totalGames = wins1 + wins2;
+          let evaluation = 200 * (wins1 / totalGames - 0.5);
+          return { id, ply, evaluation, totalGames, wins1, wins2 };
         });
 
         this.dbGames = (data.games || []).map((game) => ({
