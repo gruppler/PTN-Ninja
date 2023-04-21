@@ -67,6 +67,8 @@
                   clearable
                   filled
                   dense
+                  hint="Must be an exact match"
+                  hide-hint
                 ></q-input>
                 <q-input
                   dense
@@ -76,16 +78,20 @@
                   hide-bottom-space
                   clearable
                   filled
+                  hint="Must be an exact match"
+                  hide-hint
                 ></q-input>
                 <q-input
                   dense
                   class="col-grow col-6"
                   v-model="searchSettings.min_rating"
                   type="number"
-                  min="1000"
-                  max="3000"
+                  max="5000"
                   step="10"
+                  :min="dbMinRating"
                   label="Min Rating"
+                  :hide-hint="dbMinRating <= searchSettings.min_rating"
+                  :hint="`For these settings at least ${dbMinRating}`"
                   hide-bottom-space
                   filled
                 >
@@ -99,11 +105,12 @@
                   v-model="searchSettings.max_suggested_moves"
                   type="number"
                   min="1"
-                  max="20"
                   step="1"
                   label="Moves"
                   hide-bottom-space
                   filled
+                  hint="Maximum number of moves to display below"
+                  hide-hint
                 >
                 </q-input>
               </div>
@@ -191,9 +198,13 @@ export default {
         min_rating: 1200,
         max_suggested_moves: 8,
       },
+      dbConfig: { min_rating: 1200 },
     };
   },
   computed: {
+    dbMinRating() {
+      return this.dbConfig.min_rating || 1000;
+    },
     plyId() {
       return this.$store.state.game.position.plyID;
     },
@@ -281,6 +292,7 @@ export default {
       console.log("search settings", settings);
       console.log("result settings", data.settings);
       this.settings = data.settings;
+      this.dbConfig = data.config;
 
       this.db_moves.splice(data.moves.length, this.db_moves.length);
       let i = 0;
