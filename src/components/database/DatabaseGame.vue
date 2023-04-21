@@ -1,7 +1,16 @@
 <template>
-  <q-btn class="caption" v-on:click="load_game()">
-    {{ caption }}
-  </q-btn>
+  <q-card class="clickable" v-on:click="load_game()">
+    <q-card-section>
+      <div>
+        <div>{{ white_player }} vs. {{ black_player }}</div>
+        <div>({{ white_rating }}) vs. ({{ black_rating }})</div>
+      </div>
+      <div>{{ result }} Komi {{ komi }}</div>
+      <div>
+        {{ date.toISOString().split("T")[0] }}
+      </div>
+    </q-card-section>
+  </q-card>
 </template>
 
 <script>
@@ -17,6 +26,8 @@ export default {
     ptn: String,
     playtak_id: Number,
     result: String,
+    date: Date,
+    komi: Number,
   },
 
   methods: {
@@ -40,11 +51,14 @@ export default {
       }
     },
   },
-
-  computed: {
-    caption() {
-      return `${this.white_player} (${this.white_rating}) vs. ${this.black_player} (${this.black_rating}) ${this.result}`;
-    },
-  },
 };
 </script>
+
+<style>
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  background-color: gray;
+}
+</style>

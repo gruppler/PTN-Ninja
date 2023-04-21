@@ -161,6 +161,8 @@
           :white_rating="game.white_rating"
           :black_rating="game.black_rating"
           :result="game.result"
+          :date="game.date"
+          :komi="game.komi"
         />
       </div>
     </q-scroll-area>
@@ -168,6 +170,7 @@
 </template>
 
 <script>
+import { timestampToDate } from "../../utilities";
 import DatabaseEntry from "../database/DatabaseEntry";
 import DatabaseGame from "../database/DatabaseGame";
 
@@ -324,6 +327,8 @@ export default {
           white_rating: game.white.rating,
           black_rating: game.black.rating,
           result: game.result,
+          date: timestampToDate(game.date),
+          komi: game.komi,
         };
         this.db_games.push(new_game);
         i++;
