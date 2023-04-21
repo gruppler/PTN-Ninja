@@ -126,6 +126,10 @@
               <q-chip>
                 {{ settings.include_bot_games ? "with bots" : "without bots" }}
               </q-chip>
+              <q-chip>
+                {{ Number.isFinite(settings.komi) ? settings.komi : "any" }}
+                komi
+              </q-chip>
             </div>
             <div v-else>...</div>
           </q-card-section>
