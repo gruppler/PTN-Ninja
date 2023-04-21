@@ -57,6 +57,57 @@
                 </hint>
               </q-checkbox>
             </div>
+            <div>
+              <div class="row q-gutter-md">
+                <q-input
+                  class="col-5 col-grow"
+                  v-model="searchSettings.white"
+                  :label="$t('White')"
+                  hide-bottom-space
+                  clearable
+                  filled
+                  dense
+                ></q-input>
+                <q-input
+                  dense
+                  class="col-5 col-grow"
+                  v-model="searchSettings.black"
+                  :label="$t('Black')"
+                  hide-bottom-space
+                  clearable
+                  filled
+                ></q-input>
+                <q-input
+                  dense
+                  class="col-grow col-6"
+                  v-model="searchSettings.min_rating"
+                  type="number"
+                  min="1000"
+                  max="3000"
+                  step="10"
+                  label="Min Rating"
+                  hide-bottom-space
+                  filled
+                >
+                  <template v-slot:prepend>
+                    <q-icon name="rating1" />
+                  </template>
+                </q-input>
+                <q-input
+                  dense
+                  class="col-grow col-3"
+                  v-model="searchSettings.max_suggested_moves"
+                  type="number"
+                  min="1"
+                  max="20"
+                  step="1"
+                  label="Moves"
+                  hide-bottom-space
+                  filled
+                >
+                </q-input>
+              </div>
+            </div>
             <div v-if="settings" class="text-subtitle2">
               <span v-if="settings.white">white={{ settings.white }}</span>
               <span v-if="settings.black">white={{ settings.black }}</span>
@@ -130,6 +181,12 @@ export default {
       db_games: [],
       includeBotGames: false,
       settings: null,
+      searchSettings: {
+        white: "",
+        black: "",
+        min_rating: 1200,
+        max_suggested_moves: 8,
+      },
     };
   },
   computed: {
@@ -190,12 +247,15 @@ export default {
     async query_position() {
       this.settings = null;
       const databaseId = this.includeBotGames ? 1 : 0;
+      const max_suggested_moves = parseInt(
+        this.searchSettings.max_suggested_moves || 20
+      );
       const settings = {
-        white: null,
-        black: null,
-        min_rating: 1400,
+        white: this.searchSettings.white || null,
+        black: this.searchSettings.black || null,
+        min_rating: parseInt(this.searchSettings.min_rating || 0),
         include_bot_games: this.includeBotGames,
-        max_suggested_moves: 4,
+        max_suggested_moves,
       };
       const uriEncodedTps = encodeURIComponent(this.tps);
       const response = await fetch(
@@ -263,6 +323,12 @@ export default {
     },
     includeBotGames() {
       this.query_position();
+    },
+    searchSettings: {
+      handler() {
+        this.query_position();
+      },
+      deep: true,
     },
   },
 };
