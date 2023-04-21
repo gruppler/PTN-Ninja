@@ -109,12 +109,16 @@
               </div>
             </div>
             <div v-if="settings" class="text-subtitle2">
-              <span v-if="settings.white">white={{ settings.white }}</span>
-              <span v-if="settings.black">white={{ settings.black }}</span>
-              <span>elo >= {{ settings.min_rating }}</span>
-              <span>
+              <q-chip v-if="settings.white" color="white" text-color="grey">
+                {{ settings.white }}
+              </q-chip>
+              <q-chip v-if="settings.black" color="black" text-color="grey">
+                {{ settings.black }}
+              </q-chip>
+              <q-chip>elo >= {{ settings.min_rating }}</q-chip>
+              <q-chip>
                 {{ settings.include_bot_games ? "with bots" : "without bots" }}
-              </span>
+              </q-chip>
             </div>
             <div v-else>...</div>
           </q-card-section>
