@@ -57,6 +57,15 @@
                 </hint>
               </q-checkbox>
             </div>
+            <div v-if="settings" class="text-subtitle2">
+              <span v-if="settings.white">white={{ settings.white }}</span>
+              <span v-if="settings.black">white={{ settings.black }}</span>
+              <span>elo >= {{ settings.min_rating }}</span>
+              <span>
+                {{ settings.include_bot_games ? "with bots" : "without bots" }}
+              </span>
+            </div>
+            <div v-else>...</div>
           </q-card-section>
         </q-card>
         <DatabaseEntry
@@ -120,6 +129,7 @@ export default {
       db_moves: [],
       db_games: [],
       includeBotGames: false,
+      settings: null,
     };
   },
   computed: {
@@ -178,16 +188,35 @@ export default {
       }
     },
     async query_position() {
-      const uriEncodedTps = encodeURIComponent(this.tps);
+      this.settings = null;
       const databaseId = this.includeBotGames ? 1 : 0;
+      const settings = {
+        white: null,
+        black: null,
+        min_rating: 1400,
+        include_bot_games: this.includeBotGames,
+        max_suggested_moves: 4,
+      };
+      const uriEncodedTps = encodeURIComponent(this.tps);
       const response = await fetch(
-        `${openingsEndpoint}/${databaseId}/${uriEncodedTps}`
+        `${openingsEndpoint}/${databaseId}/${uriEncodedTps}`,
+        {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(settings),
+        }
       );
 
       if (!response.ok) {
         return alert("HTTP-Error: " + response.status);
       }
       const data = await response.json();
+      console.log("search settings", settings);
+      console.log("result settings", data.settings);
+      this.settings = data.settings;
 
       this.db_moves.splice(data.moves.length, this.db_moves.length);
       let i = 0;
@@ -210,7 +239,6 @@ export default {
       this.db_games.splice(0, this.db_games.length);
       i = 0;
       for (const game of data.games || []) {
-        console.log(game);
         const new_game = {
           id: i,
           ptn: game.ptn,
