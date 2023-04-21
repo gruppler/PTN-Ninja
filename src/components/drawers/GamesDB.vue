@@ -113,6 +113,21 @@
                   hide-hint
                 >
                 </q-input>
+                <q-input
+                  dense
+                  class="col-grow col-3"
+                  v-model="searchSettings.komi"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  label="Komi"
+                  hide-bottom-space
+                  filled
+                  clearable
+                  hint="Empty means ignore"
+                  hide-hint
+                >
+                </q-input>
               </div>
             </div>
             <div v-if="settings" class="text-subtitle2">
@@ -180,6 +195,7 @@ import DatabaseGame from "../database/DatabaseGame";
 
 const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
+// const openingsEndpoint = `http://127.0.0.1:5000/api/v1/opening`;
 
 export default {
   name: "GamesDB",
@@ -204,6 +220,7 @@ export default {
         black: "",
         min_rating: 1200,
         max_suggested_moves: 8,
+        komi: null,
       },
       dbConfig: { min_rating: 1200 },
     };
@@ -272,12 +289,16 @@ export default {
       const max_suggested_moves = parseInt(
         this.searchSettings.max_suggested_moves || 20
       );
+      const komi = this.searchSettings.komi
+        ? parseFloat(this.searchSettings.komi)
+        : null;
       const settings = {
         white: this.searchSettings.white || null,
         black: this.searchSettings.black || null,
         min_rating: parseInt(this.searchSettings.min_rating || 0),
         include_bot_games: this.includeBotGames,
         max_suggested_moves,
+        komi,
       };
       const uriEncodedTps = encodeURIComponent(this.tps);
       const response = await fetch(
