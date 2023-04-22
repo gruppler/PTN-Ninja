@@ -92,6 +92,10 @@ For example:
 
 - Delete the ply specified by ID
 
+#### `INSERT_PLY` (value: `<String>`)
+
+- Execute a single ply specified as a string in PTN (e.g. `Sb4`)
+
 #### `DELETE_BRANCH` (value: `<String>`)
 
 - Delete the specified branch

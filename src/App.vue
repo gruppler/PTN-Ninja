@@ -50,6 +50,7 @@ export default {
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
         case "DELETE_PLY":
+        case "INSERT_PLY":
         case "DELETE_BRANCH":
         case "SET_TARGET":
         case "GO_TO_PLY":
@@ -105,11 +106,11 @@ export default {
     "$store.state.game.position": {
       handler(position) {
         position = {
-          ...omit(position, "plyID"),
-          move: position.move ? position.move.id : null,
-          ply: position.ply ? position.ply.id : null,
-          prevPly: position.prevPly ? position.prevPly.id : null,
-          nextPly: position.nextPly ? position.nextPly.id : null,
+          ...position,
+          move: position.move ? position.move.linenum.number : null,
+          ply: position.ply ? position.ply.text : null,
+          prevPly: position.prevPly ? position.prevPly.text : null,
+          nextPly: position.nextPly ? position.nextPly.text : null,
           result:
             position.ply && position.ply.result
               ? omit(position.ply.result, "roads")
