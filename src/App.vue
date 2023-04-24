@@ -51,6 +51,7 @@ export default {
         case "SELECT_PIECE":
         case "DELETE_PLY":
         case "INSERT_PLY":
+        case "INSERT_PLIES":
         case "DELETE_BRANCH":
         case "SET_TARGET":
         case "GO_TO_PLY":

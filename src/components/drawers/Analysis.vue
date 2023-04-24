@@ -168,12 +168,12 @@ export default {
             let color = this.ply.color;
             ({ player, color } = this.nextPly(player, color));
             let ply = new Ply(ptn, { id: null, player, color });
-            let followingMoves = pv.map((ply) => {
+            let followingPlies = pv.map((ply) => {
               ({ player, color } = this.nextPly(player, color));
               return new Ply(ply, { id: null, player, color });
             });
             let evaluation = 200 * (winning_probability - 0.5);
-            return { ply, followingMoves, visits, evaluation };
+            return { ply, followingPlies, visits, evaluation };
           }
         );
         // this.botMoves[tps] = moves; but with vue reactivity

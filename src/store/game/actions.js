@@ -644,6 +644,11 @@ export const INSERT_PLY = function ({ commit, dispatch }, ply) {
   dispatch("SAVE_CURRENT_GAME");
 };
 
+export const INSERT_PLIES = function ({ commit, dispatch }, plies) {
+  commit("INSERT_PLIES", plies);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
   commit("DELETE_BRANCH", branch);
   dispatch("SAVE_CURRENT_GAME");

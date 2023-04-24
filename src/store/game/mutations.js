@@ -231,6 +231,14 @@ export const INSERT_PLY = (state, ply) => {
   }
 };
 
+export const INSERT_PLIES = (state, plies) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.insertPlies(plies);
+    postMessage("INSERT_PLIES", plies);
+  }
+};
+
 export const DELETE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
   if (game) {

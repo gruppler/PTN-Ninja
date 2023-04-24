@@ -6,22 +6,14 @@
       :style="{ width: Math.abs(evaluation) + '%' }"
     />
     <q-item
-      @click="insertPly"
       @mouseover="highlight"
       @mouseout="unhighlight"
+      @click="insertPly"
       clickable
     >
       <q-item-section>
-        <q-item-label class="ptn">
-          <Ply :ply="ply" />
-        </q-item-label>
-        <q-item-label v-if="followingPlies && followingPlies.length" caption>
-          <Ply
-            v-for="(ply, i) in followingPlies"
-            :key="i"
-            :ply="ply"
-            v-on:click="insertFollowingPlies(i)"
-          />
+        <q-item-label>
+          <Ply :ply="ply" no-click />
         </q-item-label>
       </q-item-section>
       <q-item-section side>
@@ -45,6 +37,18 @@
           </span>
         </q-item-label>
       </q-item-section>
+    </q-item>
+    <q-item
+      v-if="followingPlies && followingPlies.length"
+      class="q-pt-none"
+      @mouseover="highlight"
+      @mouseout="unhighlight"
+      @click="insertFollowingPlies"
+      clickable
+    >
+      <q-item-label class="small">
+        <Ply v-for="(ply, i) in followingPlies" :key="i" :ply="ply" no-click />
+      </q-item-label>
     </q-item>
   </div>
 </template>
@@ -84,13 +88,12 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    applicablePlies(i) {
-      return [this.ply.text, ...this.followingPlies.slice(0, i + 1)];
-    },
     insertFollowingPlies(i) {
-      for (const mv of this.applicablePlies(i)) {
-        this.insertPly(mv);
-      }
+      this.unhighlight();
+      this.$store.dispatch("game/INSERT_PLIES", [
+        this.ply.text,
+        ...this.followingPlies.map((ply) => ply.text),
+      ]);
     },
   },
 };

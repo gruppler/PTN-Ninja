@@ -69,7 +69,7 @@ export default class GameUndo {
       state: this.minState,
       ptn: this.ptn,
     };
-    mutate.call(this);
+    let result = mutate.call(this);
     let patch = diff.patch_make(before.ptn, this.ptn);
     if (patch) {
       this.history.length = this.historyIndex;
@@ -98,6 +98,7 @@ export default class GameUndo {
         this.historyIndex = this.history.length;
       }
     }
+    return result;
   }
 
   clearHistory() {

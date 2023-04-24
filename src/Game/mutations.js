@@ -507,7 +507,7 @@ export default class GameMutations {
     this.deletePly(this.branches[branch].id, recordChange, true);
   }
 
-  insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+  _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
         id:
@@ -516,6 +516,7 @@ export default class GameMutations {
             : this.plies.length,
       });
     }
+
     this.board.dirtyPly(ply.id);
     if (replaceCurrent && !this.board.plyIsDone && this.board.prevPly) {
       this.board._setPly(this.board.prevPly.id, true);
@@ -659,42 +660,68 @@ export default class GameMutations {
       this.plies.push(ply);
     }
 
-    this.recordChange(() => {
-      this.board.targetBranch = ply.branch;
+    // Mutate
 
-      if (!isAlreadyDone) {
-        // do ply;
-        if (!this.board.ply && ply.id === 0) {
-          this.board._setPly(ply.id, false);
-          this.board._doPly();
-        } else if (replaceCurrent && ply.id === this.board.plyID) {
-          this.board._undoPly();
-          this.board._doPly();
-        } else {
-          this.board.goToPly(ply.id, true);
-        }
+    this.board.targetBranch = ply.branch;
+
+    if (!isAlreadyDone) {
+      // do ply;
+      if (!this.board.ply && ply.id === 0) {
+        this.board._setPly(ply.id, false);
+        this.board._doPly();
+      } else if (replaceCurrent && ply.id === this.board.plyID) {
+        this.board._undoPly();
+        this.board._doPly();
       } else {
-        this.board._setPly(ply.id, true);
+        this.board.goToPly(ply.id, true);
       }
+    } else {
+      this.board._setPly(ply.id, true);
+    }
 
-      if (ply.id === 0 && !this.tag("date")) {
-        // Record date and time
-        this.setTags(Tag.now(), false, false);
+    if (ply.id === 0 && !this.tag("date")) {
+      // Record date and time
+      this.setTags(Tag.now(), false, false);
+    }
+
+    this.board.updateSquareConnections();
+    if (this.board.checkGameEnd(false)) {
+      if (ply.branch === "" || !this.tag("result")) {
+        // Record result
+        this.setTags({ result: ply.result.text }, false, false);
       }
+      this.board.dirtyPly(ply.id);
+      this.board.setRoads(ply.result.roads || null);
+    }
 
-      this.board.updateSquareConnections();
-      if (this.board.checkGameEnd(false)) {
-        if (ply.branch === "" || !this.tag("result")) {
-          // Record result
-          this.setTags({ result: ply.result.text }, false, false);
+    return true;
+  }
+
+  insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+    return this.recordChange(() => {
+      if (this._insertPly.apply(this, arguments)) {
+        this._updatePTN();
+        this.board.updatePTNOutput();
+        this.board.updatePositionOutput();
+        return true;
+      }
+    });
+  }
+
+  insertPlies(plies) {
+    return this.recordChange(() => {
+      for (let i = 0; i < plies.length; i++) {
+        try {
+          this._insertPly(plies[i]);
+        } catch (error) {
+          console.error(error);
+          break;
         }
-        this.board.dirtyPly(ply.id);
-        this.board.setRoads(ply.result.roads || null);
       }
-
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
+      return true;
     });
   }
 
