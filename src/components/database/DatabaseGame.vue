@@ -47,7 +47,13 @@ export default {
 
         if (response.ok) {
           let data = await response.json();
-          let game = new Game({ ptn: data.ptn });
+          let game = new Game({
+            ptn: data.ptn,
+            state: {
+              plyIndex: this.$store.state.game.position.plyIndex,
+              plyIsDone: this.$store.state.game.position.plyIsDone,
+            },
+          });
           this.$store.dispatch("game/ADD_GAME", game);
         } else {
           this.notifyError("HTTP-Error: " + response.status);
