@@ -113,10 +113,8 @@ export default {
     recess: Boolean,
   },
   data() {
-    const queryParams = new URL(window.location).searchParams;
-
     return {
-      showBotMovesPanel: true,
+      showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
       positions: {},
