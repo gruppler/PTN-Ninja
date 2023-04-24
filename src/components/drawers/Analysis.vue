@@ -48,7 +48,11 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
+          <q-item v-if="!dbGames.length" class="flex-center">
+            {{ $t("None") }}
+          </q-item>
           <AnalysisItem
+            v-else
             v-for="(move, i) in dbMoves"
             :key="i"
             :ply="move.ply"
@@ -71,7 +75,11 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
+          <q-item v-if="!dbGames.length" class="flex-center">
+            {{ $t("None") }}
+          </q-item>
           <DatabaseGame
+            v-else
             v-for="(game, i) in dbGames"
             :key="i"
             :playtak-id="game.playtakId"
