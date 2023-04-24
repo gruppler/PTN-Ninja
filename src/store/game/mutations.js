@@ -180,6 +180,15 @@ export const SELECT_GAME = (state, index) => {
   state.list.unshift(state.list.splice(index, 1)[0]);
 };
 
+export const HIGHLIGHT_SQUARES = (state, squares) => {
+  if (squares && squares.length) {
+    state.hlSquares = squares;
+  } else {
+    state.hlSquares = [];
+  }
+  postMessage("HIGHLIGHT_SQUARES", squares);
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {

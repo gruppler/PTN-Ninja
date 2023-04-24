@@ -5,7 +5,12 @@
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"
     />
-    <q-item @click="insertPly" clickable>
+    <q-item
+      @click="insertPly"
+      @mouseover="highlight"
+      @mouseout="unhighlight"
+      clickable
+    >
       <q-item-section>
         <q-item-label class="ptn">
           <Ply :ply="ply" />
@@ -70,7 +75,14 @@ export default {
   },
   methods: {
     insertPly() {
+      this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
+    },
+    highlight() {
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
+    },
+    unhighlight() {
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     applicablePlies(i) {
       return [this.ply.text, ...this.followingPlies.slice(0, i + 1)];

@@ -617,6 +617,10 @@ export const SELECT_GAME = function (
   }
 };
 
+export const HIGHLIGHT_SQUARES = function ({ commit }, args) {
+  commit("HIGHLIGHT_SQUARES", args);
+};
+
 export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME");
