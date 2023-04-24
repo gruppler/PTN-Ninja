@@ -11,7 +11,7 @@
       >
         <smooth-reflow>
           <q-btn
-            v-if="!applicableBotMoves"
+            v-if="!botMoves.length"
             @click="queryBotSuggestions"
             :loading="loadingBotMoves"
             class="full-width"
@@ -22,7 +22,7 @@
           </q-btn>
           <AnalysisItem
             v-else
-            v-for="(move, i) in applicableBotMoves"
+            v-for="(move, i) in botMoves"
             :key="i"
             :ply="move.ply"
             :evaluation="move.evaluation"
@@ -99,8 +99,8 @@
 <script>
 import AnalysisItem from "../database/AnalysisItem";
 import DatabaseGame from "../database/DatabaseGame";
-
 import Ply from "../../Game/PTN/Ply";
+import { deepFreeze } from "../../utilities";
 
 const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
@@ -119,7 +119,8 @@ export default {
       showBotMovesPanel: true,
       loadingBotMoves: false,
       loadingDBMoves: false,
-      botMoves: {}, // maps TPS-String to array of moves that were suggested for that position
+      positions: {},
+      botMoves: [],
       dbMoves: [],
       dbGames: [],
       sections: { ...this.$store.state.ui.analysisSections },
@@ -133,8 +134,8 @@ export default {
       //  do not use this.$game.position.tps as it's not watchable
       return this.$store.state.game.position.tps;
     },
-    applicableBotMoves() {
-      return this.botMoves[this.tps] || null;
+    position() {
+      return this.positions[this.tps] || null;
     },
   },
   methods: {
@@ -162,8 +163,8 @@ export default {
         }
         const { _debug } = await response.json();
 
-        const moves = _debug.map(
-          ({ mv: ptn, visits, winning_probability, pv }) => {
+        const botMoves = deepFreeze(
+          _debug.map(({ mv: ptn, visits, winning_probability, pv }) => {
             let player = this.ply.player;
             let color = this.ply.color;
             ({ player, color } = this.nextPly(player, color));
@@ -174,10 +175,12 @@ export default {
             });
             let evaluation = 200 * (winning_probability - 0.5);
             return { ply, followingPlies, visits, evaluation };
-          }
+          })
         );
-        // this.botMoves[tps] = moves; but with vue reactivity
-        this.$set(this.botMoves, tps, moves);
+        this.$set(this.positions, this.tps, {
+          ...(this.position || {}),
+          botMoves,
+        });
       } catch (error) {
         this.notifyError(error);
       } finally {
@@ -185,36 +188,51 @@ export default {
       }
     },
     async queryPosition() {
+      if (this.position) {
+        return;
+      }
+
       try {
         this.loadingDBMoves = true;
 
-        const uriEncodedTps = encodeURIComponent(this.tps);
+        const tps = this.tps;
+        const uriEncodedTps = encodeURIComponent(tps);
         const response = await fetch(`${openingsEndpoint}/${uriEncodedTps}`);
         if (!response.ok) {
           return this.notifyError("HTTP-Error: " + response.status);
         }
         const data = await response.json();
 
-        this.dbMoves = data.moves.map((move, id) => {
-          let player = this.ply.player;
-          let color = this.ply.color;
-          ({ player, color } = this.nextPly(player, color));
-          let ply = new Ply(move.ptn, { id: null, player, color });
-          let wins1 = move.white;
-          let wins2 = move.black;
-          let totalGames = wins1 + wins2;
-          let evaluation = 200 * (wins1 / totalGames - 0.5);
-          return { id, ply, evaluation, totalGames, wins1, wins2 };
-        });
+        const dbMoves = deepFreeze(
+          data.moves.map((move, id) => {
+            let player = this.ply.player;
+            let color = this.ply.color;
+            ({ player, color } = this.nextPly(player, color));
+            let ply = new Ply(move.ptn, { id: null, player, color });
+            let wins1 = move.white;
+            let wins2 = move.black;
+            let totalGames = wins1 + wins2;
+            let evaluation = 200 * (wins1 / totalGames - 0.5);
+            return { id, ply, evaluation, totalGames, wins1, wins2 };
+          })
+        );
 
-        this.dbGames = (data.games || []).map((game) => ({
-          playtakId: game.playtak_id,
-          player1: game.white.name,
-          player2: game.black.name,
-          rating1: game.white.rating,
-          rating2: game.black.rating,
-          result: game.result,
-        }));
+        const dbGames = deepFreeze(
+          (data.games || []).map((game) => ({
+            playtakId: game.playtak_id,
+            player1: game.white.name,
+            player2: game.black.name,
+            rating1: game.white.rating,
+            rating2: game.black.rating,
+            result: game.result,
+          }))
+        );
+
+        this.$set(this.positions, this.tps, {
+          ...(this.position || {}),
+          dbMoves,
+          dbGames,
+        });
       } catch (error) {
         this.notifyError(error);
       } finally {
@@ -228,6 +246,13 @@ export default {
   watch: {
     tps() {
       this.queryPosition();
+    },
+    position(position) {
+      if (position) {
+        this.botMoves = position.botMoves || [];
+        this.dbMoves = position.dbMoves || [];
+        this.dbGames = position.dbGames || [];
+      }
     },
     sections: {
       handler(value) {
