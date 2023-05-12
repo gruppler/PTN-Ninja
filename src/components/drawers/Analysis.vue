@@ -138,9 +138,10 @@ export default {
   },
   methods: {
     nextPly(player, color) {
-      player = player === 1 ? 2 : 1;
-      color = color === 1 ? 2 : 1;
-      return { player, color };
+      if (player === 2 && color === 1) {
+        return { player: 1, color: 1 };
+      }
+      return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
     },
     formatEvaluation(v) {
       return `${this.$n(Math.abs(v), "n2")}%`;
@@ -163,9 +164,8 @@ export default {
 
         const botMoves = deepFreeze(
           _debug.map(({ mv: ptn, visits, winning_probability, pv }) => {
-            let player = this.ply.player;
-            let color = this.ply.color;
-            ({ player, color } = this.nextPly(player, color));
+            let player = this.$store.state.game.position.turn;
+            let color = this.$store.state.game.position.color;
             let ply = new Ply(ptn, { id: null, player, color });
             let followingPlies = pv.map((ply) => {
               ({ player, color } = this.nextPly(player, color));
@@ -203,9 +203,8 @@ export default {
 
         const dbMoves = deepFreeze(
           data.moves.map((move, id) => {
-            let player = this.ply.player;
-            let color = this.ply.color;
-            ({ player, color } = this.nextPly(player, color));
+            let player = this.$store.state.game.position.turn;
+            let color = this.$store.state.game.position.color;
             let ply = new Ply(move.ptn, { id: null, player, color });
             let wins1 = move.white;
             let wins2 = move.black;
