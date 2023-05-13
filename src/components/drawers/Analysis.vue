@@ -43,10 +43,43 @@
       <q-expansion-item
         v-if="dbMoves"
         v-model="sections.dbMoves"
-        :label="$t('analysis.Database Moves')"
-        icon="database"
         header-class="bg-accent"
       >
+        <template v-slot:header>
+          <q-item-section avatar>
+            <q-icon name="database" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn
+              @click.stop="showDBSettings = !showDBSettings"
+              icon="settings"
+              :color="showDBSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            />
+          </q-item-section>
+        </template>
+
+        <smooth-reflow>
+          <template v-if="showDBSettings">
+            <q-input
+              v-model="dbSettings.player1"
+              :label="$t('Player1')"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="player1" />
+              </template>
+            </q-input>
+          </template>
+        </smooth-reflow>
+
         <smooth-reflow>
           <q-item v-if="!dbGames.length" class="flex-center">
             {{ $t("None") }}
@@ -117,10 +150,12 @@ export default {
       showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
+      showDBSettings: false,
       positions: {},
       botMoves: [],
       dbMoves: [],
       dbGames: [],
+      dbSettings: { ...this.$store.state.ui.dbSettings },
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
@@ -200,6 +235,7 @@ export default {
           return this.notifyError("HTTP-Error: " + response.status);
         }
         const data = await response.json();
+        console.log(data);
 
         const dbMoves = deepFreeze(
           data.moves.map((move, id) => {
@@ -254,6 +290,12 @@ export default {
     sections: {
       handler(value) {
         this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
+      },
+      deep: true,
+    },
+    dbSettings: {
+      handler(value) {
+        this.$store.dispatch("ui/SET_UI", ["dbSettings", value]);
       },
       deep: true,
     },
