@@ -306,6 +306,9 @@ export default {
     };
   },
   computed: {
+    isVisible() {
+      return this.$store.state.ui.textTab === "analysis";
+    },
     theme() {
       return this.$store.state.ui.theme;
     },
@@ -466,8 +469,15 @@ export default {
     this.queryPosition();
   },
   watch: {
+    isVisible(isVisible) {
+      if (isVisible) {
+        this.queryPosition();
+      }
+    },
     tps() {
-      this.queryPosition();
+      if (this.isVisible) {
+        this.queryPosition();
+      }
     },
     botPosition(position) {
       if (position) {
