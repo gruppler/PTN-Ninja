@@ -5,13 +5,54 @@
       <q-expansion-item
         v-if="showBotMovesPanel"
         v-model="sections.botSuggestions"
-        :label="$t('analysis.Bot Moves')"
-        icon="bot"
         header-class="bg-accent"
       >
+        <template v-slot:header>
+          <q-item-section avatar>
+            <q-icon name="bot" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn
+              @click.stop="showBotSettings = !showBotSettings"
+              icon="settings"
+              :color="showBotSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            />
+          </q-item-section>
+        </template>
+
+        <smooth-reflow class="bg-ui">
+          <template v-if="showBotSettings">
+            <!-- Max Suggestions -->
+            <q-input
+              v-model.number="botSettings.maxSuggestedMoves"
+              :label="$t('analysis.maxSuggestedMoves')"
+              type="number"
+              min="1"
+              max="99"
+              step="1"
+              item-aligned
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="moves" />
+              </template>
+            </q-input>
+          </template>
+        </smooth-reflow>
+
         <smooth-reflow>
           <q-btn
-            v-if="!botMoves.length"
+            v-if="
+              !botMoves.length ||
+              (showBotSettings &&
+                botSettings.maxSuggestedMoves > botMoves.length)
+            "
             @click="queryBotSuggestions"
             :loading="loadingBotMoves"
             class="full-width"
@@ -20,8 +61,10 @@
           >
             {{ $t("analysis.Ask for suggestions") }}
           </q-btn>
+        </smooth-reflow>
+
+        <smooth-reflow>
           <AnalysisItem
-            v-else
             v-for="(move, i) in botMoves"
             :key="i"
             :ply="move.ply"
@@ -51,6 +94,18 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
+            <q-item-label v-if="hasDBSettings" caption>
+              <div class="q-gutter-xs">
+                <q-icon v-if="dbSettings.includeBotGames" name="bot" />
+                <q-icon v-if="dbSettings.player1" name="player1" />
+                <q-icon v-if="dbSettings.player2" name="player2" />
+                <q-icon
+                  v-if="Number.isFinite(dbSettings.minRating)"
+                  name="rating1"
+                />
+                <q-icon v-if="Number.isFinite(dbSettings.komi)" name="komi" />
+              </div>
+            </q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-btn
@@ -64,10 +119,29 @@
           </q-item-section>
         </template>
 
-        <smooth-reflow>
+        <smooth-reflow class="bg-ui">
           <template v-if="showDBSettings">
+            <!-- Include Bots -->
+            <q-item tag="label" clickable v-ripple>
+              <q-item-section avatar>
+                <q-icon
+                  :name="dbSettings.includeBotGames ? 'bot_on' : 'bot_off'"
+                />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  {{ $t("analysis.includeBotGames") }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="dbSettings.includeBotGames" />
+              </q-item-section>
+            </q-item>
+
+            <!-- Player 1 -->
             <q-input
               v-model="dbSettings.player1"
+              debounce="300"
               :label="$t('Player1')"
               item-aligned
               clearable
@@ -77,10 +151,74 @@
                 <q-icon name="player1" />
               </template>
             </q-input>
+
+            <!-- Player 2 -->
+            <q-input
+              v-model="dbSettings.player2"
+              debounce="300"
+              :label="$t('Player2')"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="player2" />
+              </template>
+            </q-input>
+
+            <!-- Minimum Rating -->
+            <q-input
+              v-model.number="dbSettings.minRating"
+              :label="$t('Minimum Rating')"
+              type="number"
+              min="0"
+              max="5000"
+              step="10"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="rating1" />
+              </template>
+            </q-input>
+
+            <!-- Komi -->
+            <q-input
+              v-model.number="dbSettings.komi"
+              :label="$t('Komi')"
+              type="number"
+              min="-20.5"
+              max="20.5"
+              step="0.5"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="komi" />
+              </template>
+            </q-input>
+
+            <!-- Max Suggestions -->
+            <q-input
+              v-model.number="dbSettings.maxSuggestedMoves"
+              :label="$t('analysis.maxSuggestedMoves')"
+              type="number"
+              min="1"
+              max="99"
+              step="1"
+              item-aligned
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon name="moves" />
+              </template>
+            </q-input>
           </template>
         </smooth-reflow>
 
-        <smooth-reflow>
+        <smooth-reflow class="relative-position">
           <q-item v-if="!dbGames.length" class="flex-center">
             {{ $t("None") }}
           </q-item>
@@ -121,6 +259,8 @@
             :rating1="game.rating1"
             :rating2="game.rating2"
             :result="game.result"
+            :date="game.date"
+            :komi="game.komi"
           />
           <q-inner-loading :showing="loadingDBMoves" />
         </smooth-reflow>
@@ -133,7 +273,8 @@
 import AnalysisItem from "../database/AnalysisItem";
 import DatabaseGame from "../database/DatabaseGame";
 import Ply from "../../Game/PTN/Ply";
-import { deepFreeze } from "../../utilities";
+import { deepFreeze, timestampToDate } from "../../utilities";
+import { omit } from "lodash";
 
 const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
 const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
@@ -150,16 +291,24 @@ export default {
       showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
+      showBotSettings: false,
       showDBSettings: false,
-      positions: {},
+      botPositions: {},
+      dbPositions: {},
       botMoves: [],
       dbMoves: [],
       dbGames: [],
+      botSettings: { ...this.$store.state.ui.botSettings },
       dbSettings: { ...this.$store.state.ui.dbSettings },
+      botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
+      dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
   computed: {
+    theme() {
+      return this.$store.state.ui.theme;
+    },
     ply() {
       return this.$store.state.game.position.ply;
     },
@@ -167,11 +316,22 @@ export default {
       //  do not use this.$game.position.tps as it's not watchable
       return this.$store.state.game.position.tps;
     },
-    position() {
-      return this.positions[this.tps] || null;
+    botPosition() {
+      return this.botPositions[this.tps] || null;
+    },
+    dbPosition() {
+      return this.dbPositions[this.tps] || null;
+    },
+    hasDBSettings() {
+      return Object.values(omit(this.dbSettings, "maxSuggestedMoves")).some(
+        Boolean
+      );
     },
   },
   methods: {
+    hashSettings(settings) {
+      return Object.values(settings).join(",");
+    },
     nextPly(player, color) {
       if (player === 2 && color === 1) {
         return { player: 1, color: 1 };
@@ -188,7 +348,7 @@ export default {
         const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
         const komi = this.game.config.komi;
-        const moveCount = 8; // todo make configurable
+        const moveCount = this.botSettings.maxSuggestedMoves;
         const response = await fetch(
           `${bestMoveEndpoint}/${uriEncodedTps}?komi=${komi}&count=${moveCount}`
         );
@@ -210,9 +370,9 @@ export default {
             return { ply, followingPlies, visits, evaluation };
           })
         );
-        this.$set(this.positions, this.tps, {
-          ...(this.position || {}),
-          botMoves,
+        this.$set(this.botPositions, this.tps, {
+          ...(this.botPositions[this.tps] || {}),
+          [this.botSettingsHash]: botMoves,
         });
       } catch (error) {
         this.notifyError(error);
@@ -221,7 +381,7 @@ export default {
       }
     },
     async queryPosition() {
-      if (this.position) {
+      if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
         return;
       }
 
@@ -230,7 +390,35 @@ export default {
 
         const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
-        const response = await fetch(`${openingsEndpoint}/${uriEncodedTps}`);
+
+        // DB Settings
+        const databaseId = 1 * this.dbSettings.includeBotGames;
+        const max_suggested_moves = parseInt(
+          this.dbSettings.maxSuggestedMoves || 20
+        );
+        const komi = this.dbSettings.komi
+          ? parseFloat(this.dbSettings.komi)
+          : null;
+        const settings = {
+          include_bot_games: this.dbSettings.includeBotGames,
+          white: this.dbSettings.player1 || null,
+          black: this.dbSettings.player2 || null,
+          min_rating: parseInt(this.dbSettings.minRating || 0),
+          komi,
+          max_suggested_moves,
+        };
+
+        const response = await fetch(
+          `${openingsEndpoint}/${databaseId}/${uriEncodedTps}`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(settings),
+          }
+        );
         if (!response.ok) {
           return this.notifyError("HTTP-Error: " + response.status);
         }
@@ -258,13 +446,14 @@ export default {
             rating1: game.white.rating,
             rating2: game.black.rating,
             result: game.result,
+            date: timestampToDate(game.date),
+            komi: game.komi,
           }))
         );
 
-        this.$set(this.positions, this.tps, {
-          ...(this.position || {}),
-          dbMoves,
-          dbGames,
+        this.$set(this.dbPositions, this.tps, {
+          ...(this.dbPositions[this.tps] || {}),
+          [this.dbSettingsHash]: { dbMoves, dbGames },
         });
       } catch (error) {
         this.notifyError(error);
@@ -280,11 +469,30 @@ export default {
     tps() {
       this.queryPosition();
     },
-    position(position) {
+    botPosition(position) {
       if (position) {
-        this.botMoves = position.botMoves || [];
-        this.dbMoves = position.dbMoves || [];
-        this.dbGames = position.dbGames || [];
+        if (this.botSettingsHash in position) {
+          this.botMoves = position[this.botSettingsHash] || [];
+        }
+      } else {
+        this.botMoves = [];
+      }
+    },
+    botSettingsHash(hash) {
+      if (this.botPosition && hash in this.botPosition) {
+        this.botMoves = this.botPosition[hash] || [];
+      }
+    },
+    dbPosition(position) {
+      if (position && this.dbSettingsHash in position) {
+        this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
+        this.dbGames = position[this.dbSettingsHash].dbGames || [];
+      }
+    },
+    dbSettingsHash(hash) {
+      if (this.dbPosition && hash in this.dbPosition) {
+        this.dbMoves = this.dbPosition[hash].dbMoves || [];
+        this.dbGames = this.dbPosition[hash].dbGames || [];
       }
     },
     sections: {
@@ -293,9 +501,18 @@ export default {
       },
       deep: true,
     },
+    botSettings: {
+      handler(settings) {
+        this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
+        this.botSettingsHash = this.hashSettings(settings);
+      },
+      deep: true,
+    },
     dbSettings: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["dbSettings", value]);
+      handler(settings) {
+        this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
+        this.dbSettingsHash = this.hashSettings(settings);
+        this.queryPosition();
       },
       deep: true,
     },

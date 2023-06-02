@@ -17,9 +17,6 @@
         </q-item-label>
       </q-item-section>
       <q-item-section side>
-        <q-item-label v-if="count !== null && countLabel">
-          {{ $tc(countLabel, $n(count, "n0")) }}
-        </q-item-label>
         <q-item-label>
           <span class="player-numbers">
             <span
@@ -35,6 +32,9 @@
               >{{ player2Number }}</span
             >
           </span>
+        </q-item-label>
+        <q-item-label v-if="count !== null && countLabel">
+          {{ $tc(countLabel, $n(count, "n0")) }}
         </q-item-label>
       </q-item-section>
     </q-item>

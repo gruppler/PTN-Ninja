@@ -13,6 +13,8 @@ export default {
   backward: "mdi-chevron-left",
   board: "mdi-checkerboard",
   bot: "mdi-robot",
+  bot_on: "mdi-robot-happy",
+  bot_off: "mdi-robot-dead-outline",
   branch: "mdi-directions-fork",
   edit: "mdi-pencil",
   event: "mdi-trophy",

@@ -9,9 +9,17 @@
         <q-icon name="player2" left />
         {{ player2 }} <em>({{ rating2 }})</em>
       </q-item-label>
+      <q-item-label>
+        <q-icon name="date_time" left />
+        <relative-time :value="date" />
+      </q-item-label>
     </q-item-section>
     <q-item-section side>
       <Result :result="result" />
+      <div class="q-mt-xs">
+        <q-icon name="komi" class="q-mr-xs" />
+        {{ komi || 0 }}
+      </div>
     </q-item-section>
     <q-inner-loading :showing="loading" />
   </q-item>
@@ -31,6 +39,8 @@ export default {
     rating2: Number,
     playtakId: Number,
     result: String,
+    date: Date,
+    komi: Number,
   },
   data() {
     return {
