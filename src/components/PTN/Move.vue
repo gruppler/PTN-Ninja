@@ -9,7 +9,10 @@
       standalone: standalone,
     }"
   >
-    <div v-if="showEval && evaluations.length" class="evaluations column">
+    <div
+      v-if="showEval && $store.state.ui.showEval && evaluations.length"
+      class="evaluations column"
+    >
       <div
         v-for="(evaluation, i) in evaluations"
         class="evaluation col"
@@ -227,6 +230,7 @@ export default {
 
   .move-wrapper {
     min-height: 35px;
+    position: relative;
   }
 }
 </style>

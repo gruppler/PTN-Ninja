@@ -27,6 +27,7 @@ const outputProps = [
   "specialPiece",
   "squares",
   "wallSmash",
+  "text",
 ];
 
 export const atoi = (coord) => [
@@ -225,6 +226,10 @@ export default class Ply extends Ptn {
 
   isEqual(ply) {
     return isEqual(this.min, ply.min);
+  }
+
+  get text() {
+    return this.toString(true);
   }
 
   toString(plyOnly = false) {

@@ -37,6 +37,7 @@ let defaults = {
   showAllBranches: false,
   showControls: true,
   showPlayButton: true,
+  showEval: true,
   showHints: true,
   showMove: true,
   showPTN: true,

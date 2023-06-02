@@ -212,6 +212,7 @@ export default {
   "Show PTN": "Show PTN",
   "Show Text": "Show Text",
   "Show UI Hints": "Show UI Hints",
+  "Show Evaluation": "Show Evaluation",
   Site: "Site",
   Size: "Size",
   Spectate: "Spectate",

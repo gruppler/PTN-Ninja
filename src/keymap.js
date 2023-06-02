@@ -71,9 +71,10 @@ export const HOTKEYS = {
     flipVertical: ["shift", ":"],
   },
   UI: {
-    showHints: ["shift", "h"],
     showPTN: ["q"],
     showText: ["w"],
+    showHints: ["shift", "h"],
+    showEval: ["v"],
     notifyGame: ["g"],
     notifyNotes: ["a"],
     animateBoard: ["shift", "a"],
@@ -175,9 +176,10 @@ export const HOTKEY_NAMES = {
     flipVertical: "Flip Vertically",
   },
   UI: {
-    showHints: "Show UI Hints",
     showPTN: "Show PTN",
     showText: "Show Text",
+    showHints: "Show UI Hints",
+    showEval: "Show Evaluation",
     notifyGame: "Game Notifications",
     notifyNotes: "Note Notifications",
     animateBoard: "Animate Board",

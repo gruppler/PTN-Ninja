@@ -9,7 +9,7 @@
     :ref="plyID"
   >
     <div
-      v-if="evaluation !== null"
+      v-if="$store.state.ui.showEval && evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"
