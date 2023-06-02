@@ -375,8 +375,8 @@ export default {
             return { ply, followingPlies, visits, evaluation };
           })
         );
-        this.$set(this.botPositions, this.tps, {
-          ...(this.botPositions[this.tps] || {}),
+        this.$set(this.botPositions, tps, {
+          ...(this.botPositions[tps] || {}),
           [this.botSettingsHash]: botMoves,
         });
       } catch (error) {
@@ -456,8 +456,8 @@ export default {
           }))
         );
 
-        this.$set(this.dbPositions, this.tps, {
-          ...(this.dbPositions[this.tps] || {}),
+        this.$set(this.dbPositions, tps, {
+          ...(this.dbPositions[tps] || {}),
           [this.dbSettingsHash]: { dbMoves, dbGames, settings: data.settings },
         });
       } catch (error) {
