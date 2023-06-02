@@ -171,9 +171,10 @@
               v-model.number="dbSettings.minRating"
               :label="$t('Minimum Rating')"
               type="number"
-              min="0"
+              :min="dbMinRating"
               max="5000"
               step="10"
+              :placeholder="dbMinRating"
               item-aligned
               clearable
               filled
@@ -298,6 +299,7 @@ export default {
       botMoves: [],
       dbMoves: [],
       dbGames: [],
+      dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
@@ -456,7 +458,7 @@ export default {
 
         this.$set(this.dbPositions, this.tps, {
           ...(this.dbPositions[this.tps] || {}),
-          [this.dbSettingsHash]: { dbMoves, dbGames },
+          [this.dbSettingsHash]: { dbMoves, dbGames, settings: data.settings },
         });
       } catch (error) {
         this.notifyError(error);
@@ -497,12 +499,15 @@ export default {
       if (position && this.dbSettingsHash in position) {
         this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
         this.dbGames = position[this.dbSettingsHash].dbGames || [];
+        this.dbMinRating =
+          position[this.dbSettingsHash].settings.min_rating || 0;
       }
     },
     dbSettingsHash(hash) {
       if (this.dbPosition && hash in this.dbPosition) {
         this.dbMoves = this.dbPosition[hash].dbMoves || [];
         this.dbGames = this.dbPosition[hash].dbGames || [];
+        this.dbMinRating = this.dbPosition[hash].settings.min_rating || 0;
       }
     },
     sections: {
