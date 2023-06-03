@@ -289,7 +289,7 @@ export default {
   },
   data() {
     return {
-      showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
+      showBotMovesPanel: false, //"show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
       showBotSettings: false,
