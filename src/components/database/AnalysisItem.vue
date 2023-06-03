@@ -13,7 +13,7 @@
     >
       <q-item-section>
         <q-item-label>
-          <Ply :ply="ply" no-click />
+          <Ply :ply="ply" no-click done />
         </q-item-label>
       </q-item-section>
       <q-item-section side>

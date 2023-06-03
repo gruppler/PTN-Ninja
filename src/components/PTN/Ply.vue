@@ -71,6 +71,7 @@ export default {
     ply: Object,
     noBranches: Boolean,
     noClick: Boolean,
+    done: Boolean,
   },
   data() {
     return {
@@ -97,9 +98,12 @@ export default {
       return this.ptn.branchPlies.includes(this.ply);
     },
     isDone() {
-      return this.position.plyID === this.ply.id
-        ? this.position.plyIsDone
-        : this.isInBranch && this.position.plyIndex > this.ply.index;
+      return (
+        this.done ||
+        (this.position.plyID === this.ply.id
+          ? this.position.plyIsDone
+          : this.isInBranch && this.position.plyIndex > this.ply.index)
+      );
     },
   },
   methods: {
