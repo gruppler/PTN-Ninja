@@ -393,6 +393,8 @@ export default {
       try {
         this.loadingDBMoves = true;
 
+        const player = this.$store.state.game.position.turn;
+        const color = this.$store.state.game.position.color;
         const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
 
@@ -432,8 +434,6 @@ export default {
 
         const dbMoves = deepFreeze(
           data.moves.map((move, id) => {
-            let player = this.$store.state.game.position.turn;
-            let color = this.$store.state.game.position.color;
             let ply = new Ply(move.ptn, { id: null, player, color });
             let wins1 = move.white;
             let wins2 = move.black;
