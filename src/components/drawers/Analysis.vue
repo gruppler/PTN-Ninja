@@ -309,7 +309,10 @@ export default {
   },
   computed: {
     isVisible() {
-      return this.$store.state.ui.textTab === "analysis";
+      return (
+        this.$store.state.ui.showText &&
+        this.$store.state.ui.textTab === "analysis"
+      );
     },
     theme() {
       return this.$store.state.ui.theme;
@@ -400,17 +403,22 @@ export default {
 
         // DB Settings
         const databaseId = 1 * this.dbSettings.includeBotGames;
+        const min_rating =
+          this.dbSettings.minRating === null
+            ? 0
+            : parseInt(this.dbSettings.minRating);
+        const komi =
+          this.dbSettings.komi === null
+            ? null
+            : parseFloat(this.dbSettings.komi);
         const max_suggested_moves = parseInt(
           this.dbSettings.maxSuggestedMoves || 20
         );
-        const komi = this.dbSettings.komi
-          ? parseFloat(this.dbSettings.komi)
-          : null;
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
           white: this.dbSettings.player1 || null,
           black: this.dbSettings.player2 || null,
-          min_rating: parseInt(this.dbSettings.minRating || 0),
+          min_rating,
           komi,
           max_suggested_moves,
         };

@@ -12,7 +12,7 @@ let defaults = {
     includeBotGames: false,
     player1: "",
     player2: "",
-    minRating: 0,
+    minRating: null,
     komi: null,
     maxSuggestedMoves: 8,
   },
