@@ -197,6 +197,7 @@
           :result="game.result"
           :date="game.date"
           :komi="game.komi"
+          :tournament="game.tournament"
         />
       </div>
     </q-scroll-area>
@@ -377,6 +378,7 @@ export default {
           result: game.result,
           date: timestampToDate(game.date),
           komi: game.komi,
+          tournament: game.tournament,
         };
         this.db_games.push(new_game);
         i++;

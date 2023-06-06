@@ -8,6 +8,7 @@
       <div>{{ result }} Komi {{ komi }}</div>
       <div>
         {{ date.toISOString().split("T")[0] }}
+        <span v-if="tournament">(tournament game)</span>
       </div>
     </q-card-section>
   </q-card>
@@ -28,6 +29,7 @@ export default {
     result: String,
     date: Date,
     komi: Number,
+    tournament: Boolean,
   },
 
   methods: {
