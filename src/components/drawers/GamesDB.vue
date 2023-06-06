@@ -59,28 +59,34 @@
             </div>
             <div>
               <div class="row q-gutter-md">
-                <q-input
+                <q-select
                   class="col-5 col-grow"
                   v-model="searchSettings.white"
+                  :options="whiteNames"
+                  :loading="!whiteNames.length"
                   :label="$t('White')"
                   hide-bottom-space
                   clearable
                   filled
+                  multiple
                   dense
                   hint="Must be an exact match"
                   hide-hint
-                ></q-input>
-                <q-input
+                />
+                <q-select
                   dense
                   class="col-5 col-grow"
                   v-model="searchSettings.black"
+                  :options="blackNames"
+                  :loading="!blackNames.length"
                   :label="$t('Black')"
                   hide-bottom-space
                   clearable
+                  multiple
                   filled
                   hint="Must be an exact match"
                   hide-hint
-                ></q-input>
+                />
                 <q-input
                   dense
                   class="col-grow col-6"
@@ -113,37 +119,46 @@
                   hide-hint
                 >
                 </q-input>
-                <q-input
+                <q-select
                   dense
                   class="col-grow col-3"
                   v-model="searchSettings.komi"
-                  type="number"
-                  min="0"
-                  step="0.5"
+                  :options="[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]"
                   label="Komi"
                   hide-bottom-space
                   filled
                   clearable
+                  multiple
                   hint="Empty means ignore"
                   hide-hint
-                >
-                </q-input>
+                />
               </div>
             </div>
             <div v-if="settings" class="text-subtitle2">
-              <q-chip v-if="settings.white" color="white" text-color="grey">
-                {{ settings.white }}
+              <q-chip
+                v-if="settings.white && settings.white.length"
+                color="white"
+                text-color="grey"
+              >
+                {{ settings.white.join(" / ") }}
               </q-chip>
-              <q-chip v-if="settings.black" color="black" text-color="grey">
-                {{ settings.black }}
+              <q-chip
+                v-if="settings.black && settings.black.length"
+                color="black"
+                text-color="grey"
+              >
+                {{ settings.black.join(" / ") }}
               </q-chip>
               <q-chip>elo >= {{ settings.min_rating }}</q-chip>
               <q-chip>
                 {{ settings.include_bot_games ? "with bots" : "without bots" }}
               </q-chip>
               <q-chip>
-                {{ Number.isFinite(settings.komi) ? settings.komi : "any" }}
-                komi
+                <span v-if="settings.komi && settings.komi.length">
+                  {{ settings.komi.join(" / ") }}
+                </span>
+                <span v-else>any</span>
+                &nbsp;komi
               </q-chip>
             </div>
             <div v-else>...</div>
@@ -193,9 +208,11 @@ import { timestampToDate } from "../../utilities";
 import DatabaseEntry from "../database/DatabaseEntry";
 import DatabaseGame from "../database/DatabaseGame";
 
-const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
-const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
-// const openingsEndpoint = `http://127.0.0.1:5000/api/v1/opening`;
+const apiUrl = `https://openings.exegames.de/api/v1`;
+// const apiUrl = `http://127.0.0.1:5000/api/v1`;
+const bestMoveEndpoint = `${apiUrl}/best_move`;
+const openingsEndpoint = `${apiUrl}/opening`;
+const usernamesEndpoint = `${apiUrl}/players`;
 
 export default {
   name: "GamesDB",
@@ -216,13 +233,15 @@ export default {
       includeBotGames: false,
       settings: null,
       searchSettings: {
-        white: "",
-        black: "",
+        white: [],
+        black: [],
         min_rating: 1200,
         max_suggested_moves: 8,
-        komi: null,
+        komi: [],
       },
       dbConfig: { min_rating: 1200 },
+      blackNames: [],
+      whiteNames: [],
     };
   },
   computed: {
@@ -245,7 +264,7 @@ export default {
       return null; // indicates no moves were loaded
     },
     analyzed_position_count() {
-      return Object.keys(this.bot_moves).length;
+      return this.bot_moves ? Object.keys(this.bot_moves) : 0;
     },
   },
   methods: {
@@ -283,18 +302,22 @@ export default {
         this.loading_bot_moves = false;
       }
     },
+    async loadUsernames() {
+      const response = await fetch(usernamesEndpoint);
+      const { white, black } = await response.json();
+      this.blackNames = black;
+      this.whiteNames = white;
+    },
     async query_position() {
       this.settings = null;
       const databaseId = this.includeBotGames ? 1 : 0;
       const max_suggested_moves = parseInt(
         this.searchSettings.max_suggested_moves || 20
       );
-      const komi = this.searchSettings.komi
-        ? parseFloat(this.searchSettings.komi)
-        : null;
+      const komi = this.searchSettings.komi;
       const settings = {
-        white: this.searchSettings.white || null,
-        black: this.searchSettings.black || null,
+        white: this.searchSettings.white,
+        black: this.searchSettings.black,
         min_rating: parseInt(this.searchSettings.min_rating || 0),
         include_bot_games: this.includeBotGames,
         max_suggested_moves,
@@ -362,6 +385,7 @@ export default {
   },
   mounted() {
     this.query_position();
+    this.loadUsernames();
   },
   watch: {
     tps() {
