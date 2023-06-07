@@ -262,6 +262,7 @@
             :result="game.result"
             :date="game.date"
             :komi="game.komi"
+            :tournament="game.tournament"
           />
           <q-inner-loading :showing="loadingDBMoves" />
         </smooth-reflow>

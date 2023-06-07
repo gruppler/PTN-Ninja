@@ -17,6 +17,7 @@
     <q-item-section side>
       <Result :result="result" />
       <div class="q-mt-xs">
+        <q-icon v-if="tournament" name="event" right />
         <q-icon name="komi" class="q-mr-xs">
           <tooltip>{{ $t("Komi") }} {{ komiString }}</tooltip>
         </q-icon>
@@ -43,6 +44,7 @@ export default {
     result: String,
     date: Date,
     komi: Number,
+    tournament: Boolean,
   },
   data() {
     return {
