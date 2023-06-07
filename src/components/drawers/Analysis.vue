@@ -189,8 +189,8 @@
               v-model.number="dbSettings.komi"
               :label="$t('Komi')"
               type="number"
-              min="-20.5"
-              max="20.5"
+              min="-4.5"
+              max="4.5"
               step="0.5"
               item-aligned
               clearable

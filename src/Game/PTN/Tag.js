@@ -172,7 +172,7 @@ export default class Tag {
             this.value < 0
               ? Math.ceil(this.value) - 0.5
               : Math.floor(this.value) + 0.5;
-          this.value = Math.max(-20.5, Math.min(20.5, this.value));
+          this.value = Math.max(-4.5, Math.min(4.5, this.value));
         }
         break;
       case "opening":
