@@ -17,8 +17,10 @@
     <q-item-section side>
       <Result :result="result" />
       <div class="q-mt-xs">
-        <q-icon name="komi" class="q-mr-xs" />
-        {{ komi || 0 }}
+        <q-icon name="komi" class="q-mr-xs">
+          <tooltip>{{ $t("Komi") }} {{ komiString }}</tooltip>
+        </q-icon>
+        {{ komiString }}
       </div>
     </q-item-section>
     <q-inner-loading :showing="loading" />
@@ -46,6 +48,11 @@ export default {
     return {
       loading: false,
     };
+  },
+  computed: {
+    komiString() {
+      return (this.komi || 0).toString().replace(".5", "½");
+    },
   },
   methods: {
     async loadGame() {
