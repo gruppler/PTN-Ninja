@@ -31,6 +31,9 @@
               :class="{ single: player1Number === null }"
               >{{ player2Number }}</span
             >
+            <tooltip v-if="playerNumbersHint">
+              <span style="white-space: pre">{{ playerNumbersHint }}</span>
+            </tooltip>
           </span>
         </q-item-label>
         <q-item-label v-if="count !== null && countLabel">
@@ -75,6 +78,7 @@ export default {
       type: [Number, String],
       default: null,
     },
+    playerNumbersHint: String,
     followingPlies: Array,
   },
   methods: {

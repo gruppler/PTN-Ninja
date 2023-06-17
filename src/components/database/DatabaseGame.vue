@@ -18,10 +18,11 @@
       <Result :result="result" />
       <div class="q-mt-xs">
         <q-icon v-if="tournament" name="event" right />
-        <q-icon name="komi" class="q-mr-xs">
+        <span>
+          <q-icon name="komi" class="q-mr-xs" />
+          {{ komiString }}
           <tooltip>{{ $t("Komi") }} {{ komiString }}</tooltip>
-        </q-icon>
-        {{ komiString }}
+        </span>
       </div>
     </q-item-section>
     <q-inner-loading :showing="loading" />

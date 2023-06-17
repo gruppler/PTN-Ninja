@@ -233,6 +233,7 @@
             count-label="analysis.games"
             :player1-number="$n(move.wins1, 'n0')"
             :player2-number="$n(move.wins2, 'n0')"
+            :player-numbers-hint="winsHint(move)"
           />
           <q-inner-loading :showing="loadingDBMoves" />
         </smooth-reflow>
@@ -349,6 +350,15 @@ export default {
     },
     formatEvaluation(v) {
       return `${this.$n(Math.abs(v), "n2")}%`;
+    },
+    winsHint(move) {
+      return `${this.$t("Player1")} – ${this.$n(move.wins1)} ${this.$tc(
+        "wins",
+        move.wins1
+      )}\n${this.$t("Player2")} – ${this.$n(move.wins2)} ${this.$tc(
+        "wins",
+        move.wins2
+      )}`;
     },
     async queryBotSuggestions() {
       try {

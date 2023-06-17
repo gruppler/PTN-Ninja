@@ -236,6 +236,7 @@ export default {
   "View Game Info": "View Game Info",
   Walls: "Walls",
   Width: "Width",
+  wins: "win | wins",
   yesterday: "yesterday",
   "?": "?",
   "??": "??",
