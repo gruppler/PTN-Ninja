@@ -17,7 +17,9 @@
     <q-item-section side>
       <Result :result="result" />
       <div class="q-mt-xs">
-        <q-icon v-if="tournament" name="event" right />
+        <q-icon v-if="tournament" name="event" right>
+          <tooltip>Tournament game</tooltip>
+        </q-icon>
         <span>
           <q-icon name="komi" class="q-mr-xs" />
           {{ komiString }}

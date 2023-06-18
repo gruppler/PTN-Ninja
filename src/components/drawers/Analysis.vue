@@ -536,6 +536,7 @@ export default {
             result: game.result,
             date: timestampToDate(game.date),
             komi: game.komi,
+            tournament: game.tournament,
           }))
         );
 
