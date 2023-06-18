@@ -113,6 +113,10 @@
                   v-if="dbSettings.komi && dbSettings.komi.length"
                   name="komi"
                 />
+                <q-icon
+                  v-if="dbSettings.tournament != null"
+                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
+                />
               </div>
             </q-item-label>
           </q-item-section>
@@ -219,6 +223,25 @@
             >
               <template v-slot:prepend>
                 <q-icon name="komi" />
+              </template>
+            </q-select>
+
+            <!-- Game type -->
+            <q-select
+              v-model="dbSettings.tournament"
+              :options="tournamentOptions"
+              emit-value
+              map-options
+              :label="$t('analysis.gameType')"
+              type="string"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon
+                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
+                />
               </template>
             </q-select>
 
@@ -331,6 +354,11 @@ export default {
       player2Index: null,
       player2Names: [],
       komiOptions: ["0", "0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4"],
+      tournamentOptions: [
+        { label: this.$t("analysis.tournamentOptions.only"), value: true },
+        { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
+        { label: this.$t("analysis.tournamentOptions.ignore"), value: null },
+      ],
       dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
       dbSettings: { ...this.$store.state.ui.dbSettings },
@@ -491,6 +519,7 @@ export default {
         );
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
+          tournament: this.dbSettings.tournament,
           white: this.dbSettings.player1 || null,
           black: this.dbSettings.player2 || null,
           min_rating,

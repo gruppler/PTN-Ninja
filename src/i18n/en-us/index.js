@@ -431,6 +431,12 @@ export default {
     "Top Games from Position": "Top Games from Position",
     visits: "1 visit | {count} visits",
     wins: "1 win | {count} wins",
+    gameType: "Game type",
+    tournamentOptions: {
+      only: "Tournament games only",
+      exclude: "Regular games only",
+      ignore: "All games",
+    },
   },
 
   format: {

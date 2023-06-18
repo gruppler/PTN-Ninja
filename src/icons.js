@@ -37,6 +37,7 @@ export default {
   embed: "mdi-code-tags",
   error: "mdi-alert-circle",
   event: "mdi-trophy",
+  event_outline: "mdi-trophy-outline",
   file: "mdi-file",
   file_image: "mdi-file-image",
   first: "mdi-page-first",

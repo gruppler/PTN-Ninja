@@ -15,6 +15,9 @@ let defaults = {
     minRating: null,
     komi: [],
     maxSuggestedMoves: 8,
+    tournament: null,
+    minDate: null,
+    maxDate: null,
   },
   botSettings: {
     maxSuggestedMoves: 8,
