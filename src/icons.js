@@ -27,6 +27,8 @@ export default {
   copy: "mdi-content-copy",
   database: "mdi-database",
   database_add: "mdi-database-plus",
+  date_arrow_left: "mdi-calendar-arrow-left",
+  date_arrow_right: "mdi-calendar-arrow-right",
   date: "mdi-calendar",
   date_time: "mdi-calendar-clock",
   delete: "mdi-delete",
