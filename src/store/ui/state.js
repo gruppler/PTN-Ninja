@@ -10,10 +10,10 @@ let defaults = {
   },
   dbSettings: {
     includeBotGames: false,
-    player1: "",
-    player2: "",
+    player1: [],
+    player2: [],
     minRating: null,
-    komi: null,
+    komi: [],
     maxSuggestedMoves: 8,
   },
   botSettings: {

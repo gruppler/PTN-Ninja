@@ -97,13 +97,22 @@
             <q-item-label v-if="hasDBSettings" caption>
               <div class="q-gutter-xs">
                 <q-icon v-if="dbSettings.includeBotGames" name="bot" />
-                <q-icon v-if="dbSettings.player1" name="player1" />
-                <q-icon v-if="dbSettings.player2" name="player2" />
+                <q-icon
+                  v-if="dbSettings.player1 && dbSettings.player1.length"
+                  name="player1"
+                />
+                <q-icon
+                  v-if="dbSettings.player2 && dbSettings.player2.length"
+                  name="player2"
+                />
                 <q-icon
                   v-if="Number.isFinite(dbSettings.minRating)"
                   name="rating1"
                 />
-                <q-icon v-if="Number.isFinite(dbSettings.komi)" name="komi" />
+                <q-icon
+                  v-if="dbSettings.komi && dbSettings.komi.length"
+                  name="komi"
+                />
               </div>
             </q-item-label>
           </q-item-section>
@@ -119,7 +128,7 @@
           </q-item-section>
         </template>
 
-        <smooth-reflow class="bg-ui">
+        <smooth-reflow class="bg-ui" height-only>
           <template v-if="showDBSettings">
             <!-- Include Bots -->
             <q-item tag="label" clickable v-ripple>
@@ -139,32 +148,42 @@
             </q-item>
 
             <!-- Player 1 -->
-            <q-input
+            <q-select
               v-model="dbSettings.player1"
-              debounce="300"
+              :options="player1Names"
+              :loading="!player1Index"
               :label="$t('Player1')"
               item-aligned
               clearable
               filled
+              multiple
+              use-input
+              @filter="searchPlayer1"
+              hide-dropdown-icon
             >
               <template v-slot:prepend>
                 <q-icon name="player1" />
               </template>
-            </q-input>
+            </q-select>
 
             <!-- Player 2 -->
-            <q-input
+            <q-select
               v-model="dbSettings.player2"
-              debounce="300"
+              :options="player2Names"
+              :loading="!player2Index"
               :label="$t('Player2')"
               item-aligned
               clearable
               filled
+              multiple
+              use-input
+              @filter="searchPlayer2"
+              hide-dropdown-icon
             >
               <template v-slot:prepend>
                 <q-icon name="player2" />
               </template>
-            </q-input>
+            </q-select>
 
             <!-- Minimum Rating -->
             <q-input
@@ -185,8 +204,9 @@
             </q-input>
 
             <!-- Komi -->
-            <q-input
-              v-model.number="dbSettings.komi"
+            <q-select
+              v-model="dbSettings.komi"
+              :options="komiOptions"
               :label="$t('Komi')"
               type="number"
               min="-4.5"
@@ -195,11 +215,12 @@
               item-aligned
               clearable
               filled
+              multiple
             >
               <template v-slot:prepend>
                 <q-icon name="komi" />
               </template>
-            </q-input>
+            </q-select>
 
             <!-- Max Suggestions -->
             <q-input
@@ -278,9 +299,13 @@ import DatabaseGame from "../database/DatabaseGame";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { omit } from "lodash";
+import Fuse from "fuse.js";
 
-const bestMoveEndpoint = `https://openings.exegames.de/api/v1/best_move`;
-const openingsEndpoint = `https://openings.exegames.de/api/v1/opening`;
+const apiUrl = "https://openings.exegames.de/api/v1";
+// const apiUrl = `http://127.0.0.1:5000/api/v1`;
+const bestMoveEndpoint = `${apiUrl}/best_move`;
+const openingsEndpoint = `${apiUrl}/opening`;
+const usernamesEndpoint = `${apiUrl}/players`;
 
 export default {
   name: "Analysis",
@@ -301,6 +326,11 @@ export default {
       botMoves: [],
       dbMoves: [],
       dbGames: [],
+      player1Index: null,
+      player1Names: [],
+      player2Index: null,
+      player2Names: [],
+      komiOptions: ["0", "0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4"],
       dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
       dbSettings: { ...this.$store.state.ui.dbSettings },
@@ -399,6 +429,40 @@ export default {
         this.loadingBotMoves = false;
       }
     },
+    async loadUsernames() {
+      const response = await fetch(usernamesEndpoint);
+      const { white, black } = await response.json();
+      this.player1Index = new Fuse(white);
+      this.player2Index = new Fuse(black);
+    },
+    searchPlayer1(query, update) {
+      update(
+        () =>
+          (this.player1Names = this.player1Index
+            .search(query)
+            .map((result) => result.item)),
+        (ref) => {
+          if (query.trim() !== "" && ref.options.length > 0) {
+            ref.setOptionIndex(-1);
+            ref.moveOptionSelection(1, true);
+          }
+        }
+      );
+    },
+    searchPlayer2(query, update) {
+      update(
+        () =>
+          (this.player2Names = this.player2Index
+            .search(query)
+            .map((result) => result.item)),
+        (ref) => {
+          if (query.trim() !== "" && ref.options.length > 0) {
+            ref.setOptionIndex(-1);
+            ref.moveOptionSelection(1, true);
+          }
+        }
+      );
+    },
     async queryPosition() {
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
         return;
@@ -487,12 +551,18 @@ export default {
     },
   },
   mounted() {
-    this.queryPosition();
+    if (this.isVisible) {
+      this.queryPosition();
+      this.loadUsernames();
+    }
   },
   watch: {
     isVisible(isVisible) {
       if (isVisible) {
         this.queryPosition();
+        if (!this.player1Names.length) {
+          this.loadUsernames();
+        }
       }
     },
     tps() {
