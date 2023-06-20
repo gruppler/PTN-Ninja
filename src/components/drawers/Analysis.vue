@@ -113,6 +113,12 @@
                   v-if="dbSettings.komi && dbSettings.komi.length"
                   name="komi"
                 />
+                <q-icon
+                  v-if="dbSettings.tournament != null"
+                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
+                />
+                <q-icon v-if="dbSettings.minDate" name="date_arrow_right" />
+                <q-icon v-if="dbSettings.maxDate" name="date_arrow_left" />
               </div>
             </q-item-label>
           </q-item-section>
@@ -222,6 +228,39 @@
               </template>
             </q-select>
 
+            <!-- Game type -->
+            <q-select
+              v-model="dbSettings.tournament"
+              :options="tournamentOptions"
+              emit-value
+              map-options
+              :label="$t('analysis.gameType')"
+              type="string"
+              item-aligned
+              clearable
+              filled
+            >
+              <template v-slot:prepend>
+                <q-icon
+                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
+                />
+              </template>
+            </q-select>
+
+            <!-- Min/Max Dates -->
+            <DateInput
+              :label="$t('analysis.minDate')"
+              v-model="dbSettings.minDate"
+              :max="dbSettings.maxDate && new Date(dbSettings.maxDate)"
+              icon="date_arrow_right"
+            />
+            <DateInput
+              :label="$t('analysis.maxDate')"
+              v-model="dbSettings.maxDate"
+              :min="dbSettings.minDate && new Date(dbSettings.minDate)"
+              icon="date_arrow_left"
+            />
+
             <!-- Max Suggestions -->
             <q-input
               v-model.number="dbSettings.maxSuggestedMoves"
@@ -296,6 +335,7 @@
 <script>
 import AnalysisItem from "../database/AnalysisItem";
 import DatabaseGame from "../database/DatabaseGame";
+import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { omit } from "lodash";
@@ -309,7 +349,7 @@ const usernamesEndpoint = `${apiUrl}/players`;
 
 export default {
   name: "Analysis",
-  components: { AnalysisItem, DatabaseGame },
+  components: { AnalysisItem, DatabaseGame, DateInput },
   props: {
     game: Object,
     recess: Boolean,
@@ -331,12 +371,18 @@ export default {
       player2Index: null,
       player2Names: [],
       komiOptions: ["0", "0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4"],
+      tournamentOptions: [
+        { label: this.$t("analysis.tournamentOptions.only"), value: true },
+        { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
+        { label: this.$t("analysis.tournamentOptions.ignore"), value: null },
+      ],
       dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
       dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
+      testMinDate: "2023-06-17",
     };
   },
   computed: {
@@ -491,8 +537,11 @@ export default {
         );
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
+          tournament: this.dbSettings.tournament,
           white: this.dbSettings.player1 || null,
           black: this.dbSettings.player2 || null,
+          min_date: this.dbSettings.minDate,
+          max_date: this.dbSettings.maxDate,
           min_rating,
           komi,
           max_suggested_moves,
@@ -536,6 +585,7 @@ export default {
             result: game.result,
             date: timestampToDate(game.date),
             komi: game.komi,
+            tournament: game.tournament,
           }))
         );
 
