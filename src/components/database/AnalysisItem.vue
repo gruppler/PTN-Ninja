@@ -31,9 +31,9 @@
               :class="{ single: player1Number === null }"
               >{{ player2Number }}</span
             >
-            <tooltip v-if="playerNumbersHint">
+            <hint v-if="playerNumbersHint">
               <span style="white-space: pre">{{ playerNumbersHint }}</span>
-            </tooltip>
+            </hint>
           </span>
         </q-item-label>
         <q-item-label v-if="count !== null && countLabel">

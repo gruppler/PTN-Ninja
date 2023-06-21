@@ -16,14 +16,14 @@
     </q-item-section>
     <q-item-section side>
       <Result :result="result" />
-      <div class="q-mt-xs">
-        <q-icon v-if="tournament" name="event" right>
-          <tooltip>Tournament game</tooltip>
+      <div class="q-mt-xs q-gutter-x-sm">
+        <q-icon v-if="tournament" name="event">
+          <hint>{{ $t("analysis.tournamentGame") }}</hint>
         </q-icon>
         <span>
           <q-icon name="komi" class="q-mr-xs" />
           {{ komiString }}
-          <tooltip>{{ $t("Komi") }} {{ komiString }}</tooltip>
+          <hint>{{ $t("Komi") }} {{ komiString }}</hint>
         </span>
       </div>
     </q-item-section>
@@ -56,7 +56,7 @@ export default {
   },
   computed: {
     komiString() {
-      return (this.komi || 0).toString().replace(".5", "½");
+      return (this.komi || 0).toString().replace(/0?\.5/, "½");
     },
   },
   methods: {

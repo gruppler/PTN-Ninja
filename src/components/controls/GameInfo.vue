@@ -54,14 +54,21 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="date = null"
+                  color="primary"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="primary"
+                  flat
+                  v-close-popup
+                />
                 <q-btn
                   :label="$t('OK')"
                   @click="date = proxyDate"
+                  color="primary"
                   flat
                   v-close-popup
                 />
@@ -109,14 +116,21 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="time = null"
+                  color="primary"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="primary"
+                  flat
+                  v-close-popup
+                />
                 <q-btn
                   :label="$t('OK')"
                   @click="time = proxyTime"
+                  color="primary"
                   flat
                   v-close-popup
                 />

@@ -1,14 +1,11 @@
 <template>
   <q-input
-    v-show="!hidden"
     v-model="modelValueProxy"
-    :label="label"
     :rules="dateRules"
     :readonly="readonly"
     hide-bottom-space
-    clearable
-    filled
-    item-aligned
+    v-bind="$attrs"
+    v-on="$listeners"
   >
     <template v-slot:prepend>
       <q-icon :name="icon" />
@@ -30,22 +27,24 @@
           mask="YYYY.MM.DD"
           :text-color="primaryFG"
           today-btn
-          :navigation-min-year-month="minDateString"
-          :navigation-max-year-month="maxDateString"
+          :navigation-min-year-month="minDateString || undefined"
+          :navigation-max-year-month="maxDateString || undefined"
           :options="dateOptionsFn"
         >
           <div class="row items-center justify-end q-gutter-sm">
             <q-btn
               :label="$t('Clear')"
               @click="modelValueProxy = null"
+              color="primary"
               flat
               v-close-popup
             />
             <div class="col-grow" />
-            <q-btn :label="$t('Cancel')" flat v-close-popup />
+            <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
             <q-btn
               :label="$t('OK')"
               @click="modelValueProxy = proxyDate"
+              color="primary"
               flat
               v-close-popup
             />
@@ -64,8 +63,6 @@ export default {
   name: "DateInput",
   props: {
     value: String, // isoformat  date
-    label: String,
-    hidden: Boolean,
     readonly: Boolean,
     min: Date,
     max: Date,

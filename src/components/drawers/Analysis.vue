@@ -96,29 +96,64 @@
             <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
             <q-item-label v-if="hasDBSettings" caption>
               <div class="q-gutter-xs">
-                <q-icon v-if="dbSettings.includeBotGames" name="bot" />
+                <q-icon v-if="dbSettings.includeBotGames" name="bot">
+                  <tooltip>{{ $t("analysis.includeBotGames") }}</tooltip>
+                </q-icon>
                 <q-icon
                   v-if="dbSettings.player1 && dbSettings.player1.length"
                   name="player1"
-                />
+                >
+                  <tooltip>{{ dbSettings.player1.join(", ") }}</tooltip>
+                </q-icon>
                 <q-icon
                   v-if="dbSettings.player2 && dbSettings.player2.length"
                   name="player2"
-                />
+                >
+                  <tooltip>{{ dbSettings.player2.join(", ") }}</tooltip>
+                </q-icon>
                 <q-icon
                   v-if="Number.isFinite(dbSettings.minRating)"
                   name="rating1"
-                />
+                >
+                  <tooltip>{{ dbSettings.minRating }}</tooltip>
+                </q-icon>
                 <q-icon
                   v-if="dbSettings.komi && dbSettings.komi.length"
                   name="komi"
-                />
+                >
+                  <tooltip>{{
+                    dbSettings.komi.join(", ").replace(/0?\.5/g, "½")
+                  }}</tooltip>
+                </q-icon>
                 <q-icon
-                  v-if="dbSettings.tournament != null"
+                  v-if="dbSettings.tournament !== null"
                   :name="dbSettings.tournament ? 'event' : 'event_outline'"
-                />
-                <q-icon v-if="dbSettings.minDate" name="date_arrow_right" />
-                <q-icon v-if="dbSettings.maxDate" name="date_arrow_left" />
+                >
+                  <tooltip>{{
+                    $t(
+                      "analysis.tournamentOptions." +
+                        (dbSettings.tournament ? "only" : "exclude")
+                    )
+                  }}</tooltip>
+                </q-icon>
+                <q-icon v-if="dbSettings.minDate" name="date_arrow_right">
+                  <tooltip>
+                    {{ $t("analysis.minDate") }}
+                    <relative-date
+                      :value="new Date(dbSettings.minDate)"
+                      text-only
+                    />
+                  </tooltip>
+                </q-icon>
+                <q-icon v-if="dbSettings.maxDate" name="date_arrow_left">
+                  <tooltip>
+                    {{ $t("analysis.maxDate") }}
+                    <relative-date
+                      :value="new Date(dbSettings.maxDate)"
+                      text-only
+                    />
+                  </tooltip>
+                </q-icon>
               </div>
             </q-item-label>
           </q-item-section>
@@ -215,9 +250,8 @@
               :options="komiOptions"
               :label="$t('Komi')"
               type="number"
-              min="-4.5"
-              max="4.5"
-              step="0.5"
+              emit-value
+              map-options
               item-aligned
               clearable
               filled
@@ -232,10 +266,9 @@
             <q-select
               v-model="dbSettings.tournament"
               :options="tournamentOptions"
+              :label="$t('analysis.gameType')"
               emit-value
               map-options
-              :label="$t('analysis.gameType')"
-              type="string"
               item-aligned
               clearable
               filled
@@ -251,14 +284,20 @@
             <DateInput
               :label="$t('analysis.minDate')"
               v-model="dbSettings.minDate"
-              :max="dbSettings.maxDate && new Date(dbSettings.maxDate)"
+              :max="dbSettings.maxDate ? new Date(dbSettings.maxDate) : null"
               icon="date_arrow_right"
+              item-aligned
+              clearable
+              filled
             />
             <DateInput
               :label="$t('analysis.maxDate')"
               v-model="dbSettings.maxDate"
-              :min="dbSettings.minDate && new Date(dbSettings.minDate)"
+              :min="dbSettings.minDate ? new Date(dbSettings.minDate) : null"
               icon="date_arrow_left"
+              item-aligned
+              clearable
+              filled
             />
 
             <!-- Max Suggestions -->
@@ -338,7 +377,7 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { omit } from "lodash";
+import { isArray, omit } from "lodash";
 import Fuse from "fuse.js";
 
 const apiUrl = "https://openings.exegames.de/api/v1";
@@ -355,6 +394,14 @@ export default {
     recess: Boolean,
   },
   data() {
+    let komiOptions = [];
+    for (let value = 0; value <= 4; value += 0.5) {
+      komiOptions.push({
+        label: value.toString().replace(/0?\.5/, "½"),
+        value,
+      });
+    }
+
     return {
       showBotMovesPanel: false, //"show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
@@ -370,11 +417,10 @@ export default {
       player1Names: [],
       player2Index: null,
       player2Names: [],
-      komiOptions: ["0", "0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4"],
+      komiOptions,
       tournamentOptions: [
-        { label: this.$t("analysis.tournamentOptions.only"), value: true },
         { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
-        { label: this.$t("analysis.tournamentOptions.ignore"), value: null },
+        { label: this.$t("analysis.tournamentOptions.only"), value: true },
       ],
       dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
@@ -382,7 +428,6 @@ export default {
       botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
       dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
-      testMinDate: "2023-06-17",
     };
   },
   computed: {
@@ -410,7 +455,7 @@ export default {
     },
     hasDBSettings() {
       return Object.values(omit(this.dbSettings, "maxSuggestedMoves")).some(
-        Boolean
+        (setting) => setting !== null && (!isArray(setting) || setting.length)
       );
     },
   },
@@ -429,10 +474,10 @@ export default {
     },
     winsHint(move) {
       return `${this.$t("Player1")} – ${this.$n(move.wins1)} ${this.$tc(
-        "wins",
+        "analysis.wins",
         move.wins1
       )}\n${this.$t("Player2")} – ${this.$n(move.wins2)} ${this.$tc(
-        "wins",
+        "analysis.wins",
         move.wins2
       )}`;
     },
