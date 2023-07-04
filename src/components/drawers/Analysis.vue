@@ -320,10 +320,10 @@
 
         <smooth-reflow class="relative-position">
           <q-item v-if="!databases.length" class="flex-center">
-            {{ $t("Loading DB list") }}
+            {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
-            {{ $t("No DB available for the board size or search filters") }}
+            {{ $t("analysis.database.noMatchingOneFound") }}
           </q-item>
           <q-item v-else-if="!dbMoves.length" class="flex-center">
             {{ $t("None") }}
@@ -354,10 +354,10 @@
       >
         <smooth-reflow>
           <q-item v-if="!databases.length" class="flex-center">
-            {{ $t("Loading DB list") }}
+            {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
-            {{ $t("No DB available for the board size or search filters") }}
+            {{ $t("analysis.database.noMatchingOneFound") }}
           </q-item>
           <q-item v-else-if="!dbGames.length" class="flex-center">
             {{ $t("None") }}

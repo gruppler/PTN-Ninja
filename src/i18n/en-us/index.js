@@ -438,6 +438,11 @@ export default {
     },
     visits: "1 visit | {count} visits",
     wins: "win | wins",
+    database: {
+      loading: "Loading DB list",
+      noMatchingOneFound:
+        "No DB available for the board size or search filters",
+    },
   },
 
   format: {
