@@ -194,6 +194,9 @@
               :options="player1Names"
               :loading="!player1Index"
               :label="$t('Player1')"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               item-aligned
               clearable
               filled
@@ -213,6 +216,9 @@
               :options="player2Names"
               :loading="!player2Index"
               :label="$t('Player2')"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               item-aligned
               clearable
               filled
@@ -252,6 +258,9 @@
               type="number"
               emit-value
               map-options
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               item-aligned
               clearable
               filled
@@ -269,6 +278,9 @@
               :label="$t('analysis.gameType')"
               emit-value
               map-options
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               item-aligned
               clearable
               filled
@@ -323,7 +335,7 @@
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
-            {{ $t("analysis.database.noMatchingOneFound") }}
+            {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbMoves.length" class="flex-center">
             {{ $t("None") }}
@@ -357,7 +369,7 @@
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
-            {{ $t("analysis.database.noMatchingOneFound") }}
+            {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbGames.length" class="flex-center">
             {{ $t("None") }}
@@ -482,7 +494,9 @@ export default {
      * board-size and include-bot-games are hard filters, min-rating is soft.
      */
     databaseIdToQuery() {
-      if (!this.databases.length) return null;
+      if (!this.databases.length) {
+        return null;
+      }
 
       const dbsOfCorrectSize = this.databases.filter(
         ({ size }) => size == this.game.config.size
@@ -492,13 +506,14 @@ export default {
           include_bot_games || !this.dbSettings.includeBotGames
       );
 
-      if (!dbsMatchingBotFilter.length) return null;
+      if (!dbsMatchingBotFilter.length) {
+        return null;
+      }
       const bestMatchingDb = dbsMatchingBotFilter.reduce(
         (a, b) => (a.min_rating < b.min_rating ? a : b),
         dbsMatchingBotFilter[0]
       );
 
-      if (!bestMatchingDb) return null;
       return this.databases.indexOf(bestMatchingDb);
     },
     noMatchingDatabase() {

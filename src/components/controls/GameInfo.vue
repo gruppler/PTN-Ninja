@@ -294,6 +294,8 @@
         :readonly="game && game.plies.length > 0"
         @input="$refs.tps.validate()"
         behavior="menu"
+        transition-show="none"
+        transition-hide="none"
         map-options
         emit-value
         filled
@@ -524,6 +526,9 @@
         :options="openings"
         :label="$t('Opening')"
         name="opening"
+        behavior="menu"
+        transition-show="none"
+        transition-hide="none"
         map-options
         emit-value
         clearable
@@ -590,6 +595,7 @@
         :readonly="game && !game.isLocal"
         autocorrect="off"
         spellcheck="false"
+        behavior="menu"
         transition-show="none"
         transition-hide="none"
         hide-bottom-space

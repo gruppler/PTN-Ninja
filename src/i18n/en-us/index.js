@@ -440,8 +440,7 @@ export default {
     wins: "win | wins",
     database: {
       loading: "Loading DB list",
-      noMatchingOneFound:
-        "No DB available for the board size or search filters",
+      notFound: "No DB available for the current board size or search filters",
     },
   },
 
