@@ -319,7 +319,13 @@
         </smooth-reflow>
 
         <smooth-reflow class="relative-position">
-          <q-item v-if="!dbGames.length" class="flex-center">
+          <q-item v-if="!databases.length" class="flex-center">
+            {{ $t("analysis.database.loading") }}
+          </q-item>
+          <q-item v-else-if="noMatchingDatabase" class="flex-center">
+            {{ $t("analysis.database.noMatchingOneFound") }}
+          </q-item>
+          <q-item v-else-if="!dbMoves.length" class="flex-center">
             {{ $t("None") }}
           </q-item>
           <AnalysisItem
@@ -347,7 +353,13 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
-          <q-item v-if="!dbGames.length" class="flex-center">
+          <q-item v-if="!databases.length" class="flex-center">
+            {{ $t("analysis.database.loading") }}
+          </q-item>
+          <q-item v-else-if="noMatchingDatabase" class="flex-center">
+            {{ $t("analysis.database.noMatchingOneFound") }}
+          </q-item>
+          <q-item v-else-if="!dbGames.length" class="flex-center">
             {{ $t("None") }}
           </q-item>
           <DatabaseGame
@@ -385,6 +397,7 @@ const apiUrl = "https://openings.exegames.de/api/v1";
 const bestMoveEndpoint = `${apiUrl}/best_move`;
 const openingsEndpoint = `${apiUrl}/opening`;
 const usernamesEndpoint = `${apiUrl}/players`;
+const databasesEndpoint = `${apiUrl}/databases`;
 
 export default {
   name: "Analysis",
@@ -413,6 +426,11 @@ export default {
       botMoves: [],
       dbMoves: [],
       dbGames: [],
+      /**
+       * List of available databases that can be queried by their index
+       * @type { {include_bot_games: bool, min_rating: number, size: number}[]] }
+       */
+      databases: [],
       player1Index: null,
       player1Names: [],
       player2Index: null,
@@ -457,6 +475,34 @@ export default {
       return Object.values(omit(this.dbSettings, "maxSuggestedMoves")).some(
         (setting) => setting !== null && (!isArray(setting) || setting.length)
       );
+    },
+    /**
+     * Select the ID of the database to use for the current board size and search filters
+     * @returns The ID of the best matching DB, `null` if there isn't any.
+     * board-size and include-bot-games are hard filters, min-rating is soft.
+     */
+    databaseIdToQuery() {
+      if (!this.databases.length) return null;
+
+      const dbsOfCorrectSize = this.databases.filter(
+        ({ size }) => size == this.game.config.size
+      );
+      const dbsMatchingBotFilter = dbsOfCorrectSize.filter(
+        ({ include_bot_games }) =>
+          include_bot_games || !this.dbSettings.includeBotGames
+      );
+
+      if (!dbsMatchingBotFilter.length) return null;
+      const bestMatchingDb = dbsMatchingBotFilter.reduce(
+        (a, b) => (a.min_rating < b.min_rating ? a : b),
+        dbsMatchingBotFilter[0]
+      );
+
+      if (!bestMatchingDb) return null;
+      return this.databases.indexOf(bestMatchingDb);
+    },
+    noMatchingDatabase() {
+      return this.databaseIdToQuery === null;
     },
   },
   methods: {
@@ -526,6 +572,10 @@ export default {
       this.player1Index = new Fuse(white);
       this.player2Index = new Fuse(black);
     },
+    async loadDatabases() {
+      const response = await fetch(databasesEndpoint);
+      this.databases = await response.json();
+    },
     searchPlayer1(query, update) {
       update(
         () =>
@@ -555,6 +605,8 @@ export default {
       );
     },
     async queryPosition() {
+      const databaseId = this.databaseIdToQuery;
+      if (databaseId === null) return;
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
         return;
       }
@@ -568,7 +620,6 @@ export default {
         const uriEncodedTps = encodeURIComponent(tps);
 
         // DB Settings
-        const databaseId = 1 * this.dbSettings.includeBotGames;
         const min_rating =
           this.dbSettings.minRating === null
             ? 0
@@ -645,10 +696,12 @@ export default {
       }
     },
   },
-  mounted() {
+  async mounted() {
     if (this.isVisible) {
-      this.queryPosition();
       this.loadUsernames();
+      await this.loadDatabases();
+      // wait for databases to load before querying the position
+      this.queryPosition();
     }
   },
   watch: {
