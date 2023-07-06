@@ -48,12 +48,8 @@
 
         <smooth-reflow>
           <q-btn
-            v-if="
-              !botMoves.length ||
-              (showBotSettings &&
-                botSettings.maxSuggestedMoves > botMoves.length)
-            "
-            @click="queryBotSuggestions"
+            v-if="!botMoves.length"
+            @click="queryBotSuggestions(botThinkBudgetInSeconds.short)"
             :loading="loadingBotMoves"
             class="full-width"
             color="primary"
@@ -65,7 +61,10 @@
 
         <smooth-reflow>
           <AnalysisItem
-            v-for="(move, i) in botMoves"
+            v-for="(move, i) in botMoves.slice(
+              0,
+              botSettings.maxSuggestedMoves
+            )"
             :key="i"
             :ply="move.ply"
             :evaluation="move.evaluation"
@@ -79,6 +78,24 @@
               move.evaluation < 0 ? formatEvaluation(move.evaluation) : null
             "
           />
+        </smooth-reflow>
+        <smooth-reflow>
+          <q-btn
+            v-if="
+              botMoves.length &&
+              botMoves.every(
+                ({ secondsToThink }) =>
+                  secondsToThink < botThinkBudgetInSeconds.long
+              )
+            "
+            @click="queryBotSuggestions(botThinkBudgetInSeconds.long)"
+            :loading="loadingBotMoves"
+            class="full-width"
+            color="primary"
+            stretch
+          >
+            {{ $t("analysis.Ask for better suggestions") }}
+          </q-btn>
         </smooth-reflow>
       </q-expansion-item>
 
@@ -331,14 +348,17 @@
         </smooth-reflow>
 
         <smooth-reflow class="relative-position">
-          <q-item v-if="!databases.length" class="flex-center">
+          <q-item v-if="!databases" class="flex-center text-warning">
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item v-else-if="!databases.length" class="flex-center">
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbMoves.length" class="flex-center">
-            {{ $t("None") }}
+            {{ $t("analysis.database.newPosition") }}
           </q-item>
           <AnalysisItem
             v-else
@@ -365,14 +385,17 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
-          <q-item v-if="!databases.length" class="flex-center">
+          <q-item v-if="!databases" class="flex-center text-warning">
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item v-else-if="!databases.length" class="flex-center">
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbGames.length" class="flex-center">
-            {{ $t("None") }}
+            {{ $t("analysis.database.newPosition") }}
           </q-item>
           <DatabaseGame
             v-else
@@ -406,10 +429,11 @@ import Fuse from "fuse.js";
 
 const apiUrl = "https://openings.exegames.de/api/v1";
 // const apiUrl = `http://127.0.0.1:5000/api/v1`;
-const bestMoveEndpoint = `${apiUrl}/best_move`;
 const openingsEndpoint = `${apiUrl}/opening`;
 const usernamesEndpoint = `${apiUrl}/players`;
 const databasesEndpoint = `${apiUrl}/databases`;
+const bestMoveEndpoint =
+  "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
 
 export default {
   name: "Analysis",
@@ -428,7 +452,7 @@ export default {
     }
 
     return {
-      showBotMovesPanel: false, //"show_bot_moves_panel" in this.$route.query,
+      showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
       showBotSettings: false,
@@ -440,7 +464,7 @@ export default {
       dbGames: [],
       /**
        * List of available databases that can be queried by their index
-       * @type { {include_bot_games: bool, min_rating: number, size: number}[]] }
+       * @type { {include_bot_games: bool, min_rating: number, size: number}[]? }
        */
       databases: [],
       player1Index: null,
@@ -454,6 +478,10 @@ export default {
       ],
       dbMinRating: 0,
       botSettings: { ...this.$store.state.ui.botSettings },
+      botThinkBudgetInSeconds: {
+        short: 3,
+        long: 8,
+      },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
       dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
@@ -494,7 +522,7 @@ export default {
      * board-size and include-bot-games are hard filters, min-rating is soft.
      */
     databaseIdToQuery() {
-      if (!this.databases.length) {
+      if (!this.databases || !this.databases.length) {
         return null;
       }
 
@@ -542,24 +570,42 @@ export default {
         move.wins2
       )}`;
     },
-    async queryBotSuggestions() {
+    async queryBotSuggestions(secondsToThink) {
       try {
         this.loadingBotMoves = true;
 
         const tps = this.tps;
-        const uriEncodedTps = encodeURIComponent(tps);
         const komi = this.game.config.komi;
-        const moveCount = this.botSettings.maxSuggestedMoves;
-        const response = await fetch(
-          `${bestMoveEndpoint}/${uriEncodedTps}?komi=${komi}&count=${moveCount}`
-        );
+        const response = await fetch(bestMoveEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            komi: komi,
+            size: this.game.config.size,
+            tps: tps,
+            moves: [], // moves played on top of the TPS
+            time_control: {
+              // FixedNodes: 100000, // can be used instead of `Time`
+              Time: [
+                { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
+                { secs: 0, nanos: 0 }, // increment, ignored
+              ],
+            },
+            rollout_depth: 0,
+            rollout_temperature: 0.25,
+            action: "SuggestMoves",
+          }),
+        });
         if (!response.ok) {
           return this.notifyError("HTTP-Error: " + response.status);
         }
-        const { _debug } = await response.json();
+        const data = await response.json();
+        const { SuggestMoves: suggestedMoves } = data;
 
         const botMoves = deepFreeze(
-          _debug.map(({ mv: ptn, visits, winning_probability, pv }) => {
+          suggestedMoves.map(({ mv: ptn, visits, winning_probability, pv }) => {
             let player = this.$store.state.game.position.turn;
             let color = this.$store.state.game.position.color;
             let ply = new Ply(ptn, { id: null, player, color });
@@ -568,7 +614,7 @@ export default {
               return new Ply(ply, { id: null, player, color });
             });
             let evaluation = 200 * (winning_probability - 0.5);
-            return { ply, followingPlies, visits, evaluation };
+            return { ply, followingPlies, visits, evaluation, secondsToThink };
           })
         );
         this.$set(this.botPositions, tps, {
@@ -588,8 +634,13 @@ export default {
       this.player2Index = new Fuse(black);
     },
     async loadDatabases() {
-      const response = await fetch(databasesEndpoint);
-      this.databases = await response.json();
+      try {
+        const response = await fetch(databasesEndpoint);
+        this.databases = await response.json();
+      } catch (exc) {
+        this.databases = null;
+        throw exc;
+      }
     },
     searchPlayer1(query, update) {
       update(

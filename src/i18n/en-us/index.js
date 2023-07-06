@@ -421,6 +421,7 @@ export default {
     "analyzed positions":
       "No analyzed positions | 1 analyzed position | {count} analyzed positions",
     "Ask for suggestions": "Ask for suggestions",
+    "Ask for better suggestions": "Think harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
     gameType: "Game Type",
@@ -441,6 +442,8 @@ export default {
     database: {
       loading: "Loading DB list",
       notFound: "No DB available for the current board size or search filters",
+      error: "Failed to load DBs",
+      newPosition: "No data for this position/settings",
     },
   },
 
