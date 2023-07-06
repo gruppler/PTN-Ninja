@@ -138,9 +138,10 @@
                   v-if="dbSettings.komi && dbSettings.komi.length"
                   name="komi"
                 >
-                  <tooltip>{{
-                    dbSettings.komi.join(", ").replace(/0?\.5/g, "½")
-                  }}</tooltip>
+                  <tooltip>
+                    {{ $t("Komi") }}
+                    {{ dbSettings.komi.join(", ").replace(/0?\.5/g, "½") }}
+                  </tooltip>
                 </q-icon>
                 <q-icon
                   v-if="dbSettings.tournament !== null"
@@ -348,7 +349,7 @@
         </smooth-reflow>
 
         <smooth-reflow class="relative-position">
-          <q-item v-if="!databases" class="flex-center text-warning">
+          <q-item v-if="!databases" class="flex-center bg-negative" dark>
             {{ $t("analysis.database.error") }}
           </q-item>
           <q-item v-else-if="!databases.length" class="flex-center">
@@ -358,7 +359,7 @@
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbMoves.length" class="flex-center">
-            {{ $t("analysis.database.newPosition") }}
+            {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
           </q-item>
           <AnalysisItem
             v-else
@@ -372,7 +373,7 @@
             :player2-number="$n(move.wins2, 'n0')"
             :player-numbers-hint="winsHint(move)"
           />
-          <q-inner-loading :showing="loadingDBMoves" />
+          <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
         </smooth-reflow>
       </q-expansion-item>
 
@@ -385,7 +386,7 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
-          <q-item v-if="!databases" class="flex-center text-warning">
+          <q-item v-if="!databases" class="flex-center bg-negative" dark>
             {{ $t("analysis.database.error") }}
           </q-item>
           <q-item v-else-if="!databases.length" class="flex-center">
@@ -395,7 +396,7 @@
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbGames.length" class="flex-center">
-            {{ $t("analysis.database.newPosition") }}
+            {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
           </q-item>
           <DatabaseGame
             v-else
@@ -411,7 +412,7 @@
             :komi="game.komi"
             :tournament="game.tournament"
           />
-          <q-inner-loading :showing="loadingDBMoves" />
+          <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
         </smooth-reflow>
       </q-expansion-item>
     </q-scroll-area>
@@ -494,6 +495,9 @@ export default {
         this.$store.state.ui.showText &&
         this.$store.state.ui.textTab === "analysis"
       );
+    },
+    loadingDBs() {
+      return this.databases && !this.databases.length;
     },
     theme() {
       return this.$store.state.ui.theme;
@@ -651,9 +655,9 @@ export default {
       try {
         const response = await fetch(databasesEndpoint);
         this.databases = await response.json();
-      } catch (exc) {
+      } catch (error) {
         this.databases = null;
-        throw exc;
+        this.notifyError(error);
       }
     },
     searchPlayer1(query, update) {
@@ -784,8 +788,11 @@ export default {
     }
   },
   watch: {
-    isVisible(isVisible) {
+    async isVisible(isVisible) {
       if (isVisible) {
+        if (!this.databases || !this.databases.length) {
+          await this.loadDatabases();
+        }
         this.queryPosition();
         if (!this.player1Names.length) {
           this.loadUsernames();
