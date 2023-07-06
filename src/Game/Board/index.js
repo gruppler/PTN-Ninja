@@ -54,6 +54,7 @@ export default class Board extends Aggregation(
         notes: {},
         chatlog: {},
         evaluations: {},
+        pvs: {},
       },
       position: {
         isGameEnd: false,
@@ -410,8 +411,10 @@ export default class Board extends Aggregation(
 
   updateCommentsOutput() {
     const output = { ...this.output.comments };
-    let evaluations = { ...output.evaluations };
+    const evaluations = { ...output.evaluations };
+    const pvs = { ...output.pvs };
     output.evaluations = evaluations;
+    output.pvs = pvs;
 
     forEach(this.dirty.comments, (log, type) => {
       let logOutput = { ...output[type] };
@@ -428,6 +431,7 @@ export default class Board extends Aggregation(
                 comment = comments[i];
                 if (comment) {
                   evaluations[plyID] = comment.evaluation;
+                  pvs[plyID] = comment.pv;
                   break;
                 }
               }
