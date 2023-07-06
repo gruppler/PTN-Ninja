@@ -348,14 +348,17 @@
         </smooth-reflow>
 
         <smooth-reflow class="relative-position">
-          <q-item v-if="!databases.length" class="flex-center">
+          <q-item v-if="!databases" class="flex-center text-warning">
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item v-else-if="!databases.length" class="flex-center">
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbMoves.length" class="flex-center">
-            {{ $t("None") }}
+            {{ $t("analysis.database.newPosition") }}
           </q-item>
           <AnalysisItem
             v-else
@@ -382,14 +385,17 @@
         header-class="bg-accent"
       >
         <smooth-reflow>
-          <q-item v-if="!databases.length" class="flex-center">
+          <q-item v-if="!databases" class="flex-center text-warning">
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item v-else-if="!databases.length" class="flex-center">
             {{ $t("analysis.database.loading") }}
           </q-item>
           <q-item v-else-if="noMatchingDatabase" class="flex-center">
             {{ $t("analysis.database.notFound") }}
           </q-item>
           <q-item v-else-if="!dbGames.length" class="flex-center">
-            {{ $t("None") }}
+            {{ $t("analysis.database.newPosition") }}
           </q-item>
           <DatabaseGame
             v-else
@@ -458,7 +464,7 @@ export default {
       dbGames: [],
       /**
        * List of available databases that can be queried by their index
-       * @type { {include_bot_games: bool, min_rating: number, size: number}[]] }
+       * @type { {include_bot_games: bool, min_rating: number, size: number}[]? }
        */
       databases: [],
       player1Index: null,
@@ -516,7 +522,7 @@ export default {
      * board-size and include-bot-games are hard filters, min-rating is soft.
      */
     databaseIdToQuery() {
-      if (!this.databases.length) {
+      if (!this.databases || !this.databases.length) {
         return null;
       }
 
@@ -584,7 +590,7 @@ export default {
               // FixedNodes: 100000, // can be used instead of `Time`
               Time: [
                 { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
-                { secs: 0, nanos: 0 }, // ignored
+                { secs: 0, nanos: 0 }, // increment, ignored
               ],
             },
             rollout_depth: 0,
@@ -628,8 +634,13 @@ export default {
       this.player2Index = new Fuse(black);
     },
     async loadDatabases() {
-      const response = await fetch(databasesEndpoint);
-      this.databases = await response.json();
+      try {
+        const response = await fetch(databasesEndpoint);
+        this.databases = await response.json();
+      } catch (exc) {
+        this.databases = null;
+        throw exc;
+      }
     },
     searchPlayer1(query, update) {
       update(

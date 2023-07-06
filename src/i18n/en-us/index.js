@@ -442,6 +442,8 @@ export default {
     database: {
       loading: "Loading DB list",
       notFound: "No DB available for the current board size or search filters",
+      error: "Failed to load DBs",
+      newPosition: "No data for this position/settings",
     },
   },
 
