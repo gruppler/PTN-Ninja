@@ -16,7 +16,7 @@
           </q-item-section>
           <q-item-section side>
             <q-btn
-              @click.stop="showBotSettings = !showBotSettings"
+              @click.stop="toggleBotSettings"
               icon="settings"
               :color="showBotSettings ? 'primary' : ''"
               dense
@@ -176,7 +176,7 @@
           </q-item-section>
           <q-item-section side>
             <q-btn
-              @click.stop="showDBSettings = !showDBSettings"
+              @click.stop="toggleDBSettings"
               icon="settings"
               :color="showDBSettings ? 'primary' : ''"
               dense
@@ -549,6 +549,20 @@ export default {
     },
   },
   methods: {
+    toggleBotSettings() {
+      this.showBotSettings = !this.showBotSettings;
+      // Expand panel with settings if the panel was collapsed
+      if (this.showBotSettings) {
+        this.sections.botSuggestions = true;
+      }
+    },
+    toggleDBSettings() {
+      this.showDBSettings = !this.showDBSettings;
+      // Expand panel with settings if the panel was collapsed
+      if (this.showDBSettings) {
+        this.sections.dbMoves = true;
+      }
+    },
     hashSettings(settings) {
       return Object.values(settings).join(",");
     },
@@ -724,7 +738,6 @@ export default {
           return this.notifyError("HTTP-Error: " + response.status);
         }
         const data = await response.json();
-        console.log(data);
 
         const dbMoves = deepFreeze(
           data.moves.map((move, id) => {
