@@ -421,6 +421,7 @@ export default {
     "analyzed positions":
       "No analyzed positions | 1 analyzed position | {count} analyzed positions",
     "Ask for suggestions": "Ask for suggestions",
+    "Ask for better suggestions": "Think harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
     gameType: "Game Type",
