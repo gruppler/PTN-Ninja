@@ -424,8 +424,9 @@ export default {
     "Ask for better suggestions": "Think harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
-    gameType: "Game Type",
+    draws: "draw | draws",
     games: "1 game | {count} games",
+    gameType: "Game Type",
     includeBotGames: "Include Bot Games",
     maxDate: "Before",
     maxSuggestedMoves: "Max. Suggestions",
@@ -433,18 +434,18 @@ export default {
     "No suggested moves": "No suggested moves",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
-    tournamentOptions: {
-      exclude: "Non-Tournament",
-      only: "Tournament",
-    },
     visits: "1 visit | {count} visits",
     wins: "win | wins",
     database: {
+      error: "Failed to load databases",
       loading: "Loading database list",
+      newPosition: "No data for this position or search filter",
       notFound:
         "No database available for the current board size or search filters",
-      error: "Failed to load databases",
-      newPosition: "No data for this position or search filter",
+    },
+    tournamentOptions: {
+      exclude: "Non-Tournament",
+      only: "Tournament",
     },
   },
 

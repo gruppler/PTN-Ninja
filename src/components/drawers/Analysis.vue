@@ -580,13 +580,20 @@ export default {
       return `${this.$n(Math.abs(v), "n2")}%`;
     },
     winsHint(move) {
+      const gameCount = move.wins1 + move.wins2 + move.draws;
+      const percentageString = (count) => this.$n(count / gameCount, "percent");
+
       return `${this.$t("Player1")} – ${this.$n(move.wins1)} ${this.$tc(
         "analysis.wins",
         move.wins1
-      )}\n${this.$t("Player2")} – ${this.$n(move.wins2)} ${this.$tc(
-        "analysis.wins",
+      )} – ${percentageString(move.wins1)}\n${this.$t("Player2")} – ${this.$n(
         move.wins2
-      )}`;
+      )} ${this.$tc("analysis.wins", move.wins2)} – ${percentageString(
+        move.wins2
+      )}\n${this.$n(move.draws)} ${this.$tc(
+        "analysis.draws",
+        move.draws
+      )} – ${percentageString(move.draws)}`;
     },
     async queryBotSuggestions(secondsToThink) {
       try {
@@ -750,7 +757,8 @@ export default {
             let wins2 = move.black;
             let totalGames = wins1 + wins2;
             let evaluation = 200 * (wins1 / totalGames - 0.5);
-            return { id, ply, evaluation, totalGames, wins1, wins2 };
+            let draws = move.draw;
+            return { id, ply, evaluation, totalGames, wins1, wins2, draws };
           })
         );
 
