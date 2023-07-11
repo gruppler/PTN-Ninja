@@ -16,6 +16,11 @@ const numberFormats = {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     },
+    percent: {
+      style: "percent",
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    },
   },
 };
 
