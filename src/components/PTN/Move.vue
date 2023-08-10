@@ -27,6 +27,7 @@
       :linenum="move.linenum"
       :unselected="currentOnly"
       only-branch
+      class="relative-position"
     />
     <div class="move-wrapper">
       <Linenum
