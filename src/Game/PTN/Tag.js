@@ -47,7 +47,7 @@ export const formats = {
   points: /^\d+$/,
   rating1: /^\d+$/,
   rating2: /^\d+$/,
-  result: /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2)$/,
+  result: /^(R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)$/,
   round: /^\d+$/,
   site: /^[^"]+$/,
   size: /^[3-8]$/,
@@ -172,7 +172,7 @@ export default class Tag {
             this.value < 0
               ? Math.ceil(this.value) - 0.5
               : Math.floor(this.value) + 0.5;
-          this.value = Math.max(-20.5, Math.min(20.5, this.value));
+          this.value = Math.max(-4.5, Math.min(4.5, this.value));
         }
         break;
       case "opening":

@@ -51,6 +51,7 @@ export default {
         case "SELECT_PIECE":
         case "DELETE_PLY":
         case "INSERT_PLY":
+        case "INSERT_PLIES":
         case "DELETE_BRANCH":
         case "SET_TARGET":
         case "GO_TO_PLY":
@@ -68,6 +69,7 @@ export default {
         case "ADD_NOTE":
         case "REMOVE_NOTE":
         case "APPLY_TRANSFORM":
+        case "HIGHLIGHT_SQUARES":
           this.$store.dispatch("game/" + data.action, data.value);
           break;
         case "TRIM_BRANCHES":

@@ -68,9 +68,10 @@ export default {
   name: "Ply",
   components: { BranchMenu, Result },
   props: {
-    plyID: Number,
+    ply: Object,
     noBranches: Boolean,
     noClick: Boolean,
+    done: Boolean,
   },
   data() {
     return {
@@ -87,9 +88,6 @@ export default {
     ptn() {
       return this.$store.state.game.ptn;
     },
-    ply() {
-      return this.ptn.allPlies[this.plyID];
-    },
     branches() {
       return this.ply.branches.map((id) => this.ptn.allPlies[id]);
     },
@@ -100,9 +98,12 @@ export default {
       return this.ptn.branchPlies.includes(this.ply);
     },
     isDone() {
-      return this.position.plyID === this.ply.id
-        ? this.position.plyIsDone
-        : this.isInBranch && this.position.plyIndex > this.ply.index;
+      return (
+        this.done ||
+        (this.position.plyID === this.ply.id
+          ? this.position.plyIsDone
+          : this.isInBranch && this.position.plyIndex > this.ply.index)
+      );
     },
   },
   methods: {

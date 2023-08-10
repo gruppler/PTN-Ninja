@@ -153,17 +153,18 @@ export default function render(board, options = {}) {
     if (options.flatCounts) {
       if (komi < 0) {
         flats[0] =
-          flats[0] + komi + " +" + (-komi).toString().replace(".5", "½");
+          flats[0] + komi + " +" + (-komi).toString().replace(/0?\.5/, "½");
       } else if (komi > 0) {
-        flats[1] = flats[1] - komi + " +" + komi.toString().replace(".5", "½");
+        flats[1] =
+          flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
       }
     } else {
       flats[0] = "";
       flats[1] = "";
       if (komi < 0) {
-        flats[0] = "+" + (-komi).toString().replace(".5", "½");
+        flats[0] = "+" + (-komi).toString().replace(/0?\.5/, "½");
       } else if (komi > 0) {
-        flats[1] = "+" + komi.toString().replace(".5", "½");
+        flats[1] = "+" + komi.toString().replace(/0?\.5/, "½");
       }
     }
 

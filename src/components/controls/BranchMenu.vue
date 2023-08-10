@@ -30,7 +30,7 @@
             :active-ply="ply"
             class="col-shrink"
           />
-          <Ply :plyID="ply.id" no-branches no-click />
+          <Ply :ply="ply" no-branches no-click />
         </q-item-label>
       </q-item>
     </q-list>

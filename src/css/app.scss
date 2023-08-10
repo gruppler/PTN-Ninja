@@ -216,6 +216,12 @@ kbd {
 .ptn {
   font-size: 18px;
   line-height: 1.5em;
+
+  .small &,
+  &.small {
+    font-size: 14px;
+    line-height: 1.5em;
+  }
 }
 
 .evaluation {

@@ -13,6 +13,7 @@ const state = {
   ptn: null,
   selected: null,
   editingTPS: undefined,
+  hlSquares: [],
 };
 
 const load = (key, initial) =>

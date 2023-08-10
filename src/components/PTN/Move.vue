@@ -27,6 +27,7 @@
       :linenum="move.linenum"
       :unselected="currentOnly"
       only-branch
+      class="relative-position"
     />
     <div class="move-wrapper">
       <Linenum
@@ -36,10 +37,10 @@
       />
       <template v-if="!player || player === 1">
         <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else-if="ply1" :key="ply1.id" :plyID="ply1.id" />
+        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1" />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :plyID="ply2.id" />
+        <Ply :key="ply2.id" :ply="ply2" />
       </template>
     </div>
 
