@@ -1,6 +1,6 @@
 <template>
   <div
-    class="note-item q-py-xs q-px-md"
+    class="note-item q-py-xs"
     :class="{
       current,
       'q-pt-md': plyID < 0,
@@ -14,7 +14,7 @@
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"
     />
-    <div v-if="ply && plyID >= 0" class="ply-container">
+    <div v-if="ply && plyID >= 0" class="ply-container q-px-md">
       <Move :move="move" :player="player" separate-branch no-decoration />
     </div>
     <Note
@@ -25,17 +25,35 @@
       :comment="comment"
       @edit="$emit('edit', $event)"
       @remove="$emit('remove', $event)"
+      class="q-px-md"
     />
+
+    <div v-if="pvs && pvs.length">
+      <q-item
+        v-for="(pv, i) in pvs"
+        :key="i"
+        @mouseover="highlight(pv)"
+        @mouseout="unhighlight"
+        @click="insertPV(i)"
+        clickable
+      >
+        <q-item-label class="small">
+          <Ply v-for="(ply, j) in pv" :key="j" :ply="ply" no-click />
+        </q-item-label>
+      </q-item>
+    </div>
   </div>
 </template>
 
 <script>
 import Note from "./Note";
 import Move from "../PTN/Move";
+import Ply from "../PTN/Ply";
+import PlyClass from "../../Game/PTN/Ply";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move },
+  components: { Note, Move, Ply },
   props: {
     plyID: Number,
     notes: Array,
@@ -70,10 +88,57 @@ export default {
     evaluation() {
       return this.$store.state.game.comments.evaluations[this.plyID];
     },
+    pvs() {
+      let pvs = this.$store.state.game.comments.pvs[this.plyID];
+      if (pvs) {
+        return pvs.map(this.formatPV);
+      }
+      return null;
+    },
   },
   methods: {
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+    },
+    nextPly(player, color) {
+      if (player === 2 && color === 1) {
+        return { player: 1, color: 1 };
+      }
+      return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
+    },
+    formatPV(pv) {
+      let player = this.ply.player;
+      let color = this.ply.color;
+      return pv.map((ply, i) => {
+        if (i) {
+          ({ player, color } = this.nextPly(player, color));
+        }
+        return new PlyClass(ply, { id: null, player, color });
+      });
+    },
+    highlight(pv) {
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", pv[0].squares);
+    },
+    unhighlight() {
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+    },
+    insertPV(i) {
+      if (!this.pvs || !this.pvs[i]) {
+        return;
+      }
+      this.unhighlight();
+      if (this.$store.state.game.position.plyID !== this.plyID) {
+        this.$store.commit("game/GO_TO_PLY", {
+          plyID: this.plyID,
+          isDone: false,
+        });
+      } else if (this.$store.state.game.position.plyIsDone) {
+        this.$store.commit("game/PREV", { half: true });
+      }
+      this.$store.dispatch(
+        "game/INSERT_PLIES",
+        this.pvs[i].map((ply) => ply.text)
+      );
     },
   },
 };

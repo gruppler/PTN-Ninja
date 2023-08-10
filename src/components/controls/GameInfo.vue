@@ -54,14 +54,21 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="date = null"
+                  color="primary"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="primary"
+                  flat
+                  v-close-popup
+                />
                 <q-btn
                   :label="$t('OK')"
                   @click="date = proxyDate"
+                  color="primary"
                   flat
                   v-close-popup
                 />
@@ -109,14 +116,21 @@
                 <q-btn
                   :label="$t('Clear')"
                   @click="time = null"
+                  color="primary"
                   flat
                   v-close-popup
                 />
                 <div class="col-grow" />
-                <q-btn :label="$t('Cancel')" flat v-close-popup />
+                <q-btn
+                  :label="$t('Cancel')"
+                  color="primary"
+                  flat
+                  v-close-popup
+                />
                 <q-btn
                   :label="$t('OK')"
                   @click="time = proxyTime"
+                  color="primary"
                   flat
                   v-close-popup
                 />
@@ -185,7 +199,8 @@
             name="rating1"
             type="number"
             min="0"
-            max="3000"
+            max="5000"
+            step="10"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
             :readonly="game && !game.isLocal && player !== 1"
@@ -244,7 +259,8 @@
             name="rating2"
             type="number"
             min="0"
-            max="3000"
+            max="5000"
+            step="10"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
             :readonly="game && !game.isLocal && player !== 2"
@@ -278,6 +294,8 @@
         :readonly="game && game.plies.length > 0"
         @input="$refs.tps.validate()"
         behavior="menu"
+        transition-show="none"
+        transition-hide="none"
         map-options
         emit-value
         filled
@@ -486,8 +504,8 @@
         v-model="tags.komi"
         name="komi"
         type="number"
-        min="-20.5"
-        max="20.5"
+        min="-4.5"
+        max="4.5"
         step="0.5"
         :label="$t('Komi')"
         :rules="rules('komi')"
@@ -508,6 +526,9 @@
         :options="openings"
         :label="$t('Opening')"
         name="opening"
+        behavior="menu"
+        transition-show="none"
+        transition-hide="none"
         map-options
         emit-value
         clearable
@@ -574,6 +595,7 @@
         :readonly="game && !game.isLocal"
         autocorrect="off"
         spellcheck="false"
+        behavior="menu"
         transition-show="none"
         transition-hide="none"
         hide-bottom-space
@@ -912,7 +934,7 @@ export default {
       } else if (tag.startsWith("caps")) {
         rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
       } else if (tag === "komi") {
-        rules[0] = (value) => value >= -20.5 && value <= 20.5;
+        rules[0] = (value) => value >= -4.5 && value <= 4.5;
         rules[1] = (value) => !value || formats[tag].test(value);
       } else {
         rules[0] = (value) => !value || formats[tag].test(value);

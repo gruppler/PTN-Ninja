@@ -24,28 +24,14 @@
           </GameSelector>
         </q-toolbar-title>
         <q-btn
-          :icon="
-            textTab === 'notes' ? (notifyNotes ? 'notes' : 'notes_off') : 'chat'
-          "
+          :icon="textPanelIcon"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint>
-            {{
-              $t(
-                textTab === "notes"
-                  ? showText
-                    ? "Hide Notes"
-                    : "Show Notes"
-                  : showText
-                  ? "Hide Chat"
-                  : "Show Chat"
-              )
-            }}
-          </hint>
+          <hint v-if="textPanelHint">{{ textPanelHint }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -114,7 +100,6 @@
     >
       <div class="absolute-fit column">
         <q-tabs
-          v-if="hasChat"
           class="bg-ui text-weight-medium"
           :value="textTab"
           @input="showTextTab"
@@ -123,20 +108,28 @@
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="chat">{{ $t("Chat") }}</q-tab>
+          <q-tab name="analysis">{{ $t("Analysis") }}</q-tab>
+          <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
-        <q-toolbar
-          v-else
-          class="bg-ui text-weight-medium justify-center text-uppercase"
+        <q-tab-panels
+          class="col-grow bg-transparent"
+          :value="textTab"
+          keep-alive
+          animated
         >
-          {{ $t("Notes") }}
-        </q-toolbar>
-        <q-tab-panels class="col-grow bg-transparent" :value="textTab" animated>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
+          </q-tab-panel>
+          <q-tab-panel name="analysis">
+            <Analysis
+              ref="analysis"
+              class="fit"
+              :game="$store.state.game"
+              recess
+            />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -173,6 +166,7 @@ import Board from "../components/board/Board";
 import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
+import Analysis from "../components/drawers/Analysis";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -207,6 +201,7 @@ export default {
     CurrentMove,
     PTN,
     Notes,
+    Analysis,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
@@ -260,7 +255,9 @@ export default {
     },
     textTab: {
       get() {
-        return this.hasChat ? this.$store.state.ui.textTab : "notes";
+        // todo @nitzel/@skolin check which line to use here:
+        return this.$store.state.ui.textTab; // added by skolin
+        // return this.hasChat ? this.$store.state.ui.textTab : "notes"; // added by gruppler
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["textTab", value]);
@@ -273,6 +270,26 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
+    },
+    textPanelIcon() {
+      if (this.textTab === "notes") {
+        return this.notifyNotes ? "notes" : "notes_off";
+      } else if (this.textTab === "chat") {
+        return "chat";
+      } else if (this.textTab === "analysis") {
+        return "analysis";
+      }
+      return "";
+    },
+    textPanelHint() {
+      if (this.textTab === "notes") {
+        return this.$t(this.showText ? "Hide Notes" : "Show Notes");
+      } else if (this.textTab === "chat") {
+        return this.$t(this.showText ? "Hide Chat" : "Show Chat");
+      } else if (this.textTab === "analysis") {
+        return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
+      }
+      return "";
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -407,6 +424,7 @@ export default {
           break;
         case "settings":
           this.$router.push({ name: "preferences" });
+          break;
           break;
         case "share":
           this.share();

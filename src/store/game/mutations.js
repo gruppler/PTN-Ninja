@@ -180,6 +180,15 @@ export const SELECT_GAME = (state, index) => {
   state.list.unshift(state.list.splice(index, 1)[0]);
 };
 
+export const HIGHLIGHT_SQUARES = (state, squares) => {
+  if (squares && squares.length) {
+    state.hlSquares = squares;
+  } else {
+    state.hlSquares = [];
+  }
+  postMessage("HIGHLIGHT_SQUARES", squares);
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -219,6 +228,14 @@ export const INSERT_PLY = (state, ply) => {
   if (game) {
     game.insertPly(ply, false, false);
     postMessage("INSERT_PLY", ply);
+  }
+};
+
+export const INSERT_PLIES = (state, plies) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.insertPlies(plies);
+    postMessage("INSERT_PLIES", plies);
   }
 };
 

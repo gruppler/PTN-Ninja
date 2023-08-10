@@ -51,9 +51,11 @@ export default {
   white-space: nowrap;
   font-weight: bold;
   height: 1.5em;
-  margin: 4px;
   display: inline-block;
   vertical-align: middle;
+  .ptn & {
+    margin: 4px;
+  }
 
   @media (hover) {
     &.clickable {
@@ -159,7 +161,7 @@ export default {
       &.result-1 {
         color: $textDark;
         color: var(--q-color-textDark);
-        body.player1Dark & {
+        &.dark {
           color: $textLight;
           color: var(--q-color-textLight);
         }
@@ -181,7 +183,7 @@ export default {
       &.result-1 {
         color: $textDark;
         color: var(--q-color-textDark);
-        body.player2Dark & {
+        &.dark {
           color: $textLight;
           color: var(--q-color-textLight);
         }

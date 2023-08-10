@@ -12,15 +12,17 @@ const outputProps = [
 
 export default class Result {
   constructor(notation) {
-    const matchData = notation.match(/(1\/2|[01RF])\s*-\s*(1\/2|[01RF])/);
+    const matchData = notation.match(
+      /(1\/2)(?:-1\/2)?|([01RF])\s*-\s*([01RF])/
+    );
 
     if (!matchData || !Result.validate(notation)) {
       throw new Error("Invalid result");
     }
 
-    [this.ptn, this.player1, this.player2] = matchData;
+    [this.ptn, this.isTie, this.player1, this.player2] = matchData;
     this.text = this.ptn.trim();
-    if (this.player1 === "1/2") {
+    if (this.isTie) {
       this.player1 = "½";
       this.player2 = "½";
       this.isTie = true;
@@ -43,7 +45,7 @@ export default class Result {
   }
 
   static validate(notation) {
-    return /^0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2/.test(
+    return /^0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2/.test(
       notation.replace(/\s/g, "")
     );
   }

@@ -3,6 +3,25 @@ import { pick } from "lodash";
 import { THEMES } from "../../themes";
 
 let defaults = {
+  analysisSections: {
+    botSuggestions: true,
+    dbMoves: true,
+    dbGames: true,
+  },
+  dbSettings: {
+    includeBotGames: false,
+    player1: [],
+    player2: [],
+    minRating: null,
+    komi: [],
+    maxSuggestedMoves: 8,
+    tournament: null,
+    minDate: null,
+    maxDate: null,
+  },
+  botSettings: {
+    maxSuggestedMoves: 8,
+  },
   animateBoard: true,
   animateScrub: false,
   axisLabels: true,
@@ -47,7 +66,7 @@ let defaults = {
   showText: false,
   size: "6",
   stackCounts: false,
-  textTab: "chat",
+  textTab: "notes",
   themeID: "classic",
   theme: THEMES.find((t) => t.id === "classic"),
   themes: [],

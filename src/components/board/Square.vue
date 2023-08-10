@@ -98,10 +98,10 @@ export default {
       return this.piece ? this.piece.color : "";
     },
     current() {
-      return (
-        this.game.position.ply &&
-        this.game.position.ply.squares.includes(this.square.static.coord)
-      );
+      return this.game.hlSquares.length
+        ? this.game.hlSquares.includes(this.square.static.coord)
+        : this.game.position.ply &&
+            this.game.position.ply.squares.includes(this.square.static.coord);
     },
     primary() {
       if (this.selected) {
@@ -110,10 +110,14 @@ export default {
           this.game.selected.squares[0].static.coord === this.coord
         );
       } else if (this.current) {
-        const isDestination =
-          this.game.position.ply.squares.length === 1 ||
-          this.game.position.ply.squares[0] !== this.square.static.coord;
-        return this.game.position.plyIsDone ? isDestination : !isDestination;
+        if (this.game.hlSquares.length) {
+          return this.game.hlSquares[0] === this.square.static.coord;
+        } else {
+          let squares = this.game.position.ply.squares;
+          const isDestination =
+            squares.length === 1 || squares[0] !== this.square.static.coord;
+          return this.game.position.plyIsDone ? isDestination : !isDestination;
+        }
       }
       return false;
     },

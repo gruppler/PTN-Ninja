@@ -617,6 +617,10 @@ export const SELECT_GAME = function (
   }
 };
 
+export const HIGHLIGHT_SQUARES = function ({ commit }, args) {
+  commit("HIGHLIGHT_SQUARES", args);
+};
+
 export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME");
@@ -637,6 +641,11 @@ export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
 
 export const INSERT_PLY = function ({ commit, dispatch }, ply) {
   commit("INSERT_PLY", ply);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const INSERT_PLIES = function ({ commit, dispatch }, plies) {
+  commit("INSERT_PLIES", plies);
   dispatch("SAVE_CURRENT_GAME");
 };
 
