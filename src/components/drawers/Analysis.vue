@@ -368,8 +368,9 @@
             :ply="move.ply"
             :evaluation="move.evaluation"
             :count="move.totalGames"
-            count-label="analysis.games"
+            count-label="analysis.n_games"
             :player1-number="$n(move.wins1, 'n0')"
+            :middle-number="move.draws ? $n(move.draws, 'n0') : null"
             :player2-number="$n(move.wins2, 'n0')"
             :player-numbers-hint="winsHint(move)"
           />
@@ -580,7 +581,7 @@ export default {
       return `${this.$n(Math.abs(v), "n2")}%`;
     },
     winsHint(move) {
-      const gameCount = move.wins1 + move.wins2 + move.draws;
+      const gameCount = move.totalGames;
       const percentageString = (count) => this.$n(count / gameCount, "percent");
 
       return `${this.$t("Player1")} – ${this.$n(move.wins1)} ${this.$tc(
@@ -755,9 +756,9 @@ export default {
             let ply = new Ply(move.ptn, { id: null, player, color });
             let wins1 = move.white;
             let wins2 = move.black;
-            let totalGames = wins1 + wins2;
-            let evaluation = 200 * (wins1 / totalGames - 0.5);
             let draws = move.draw;
+            let totalGames = wins1 + wins2 + draws;
+            let evaluation = 200 * (wins1 / (wins1 + wins2) - 0.5);
             return { id, ply, evaluation, totalGames, wins1, wins2, draws };
           })
         );

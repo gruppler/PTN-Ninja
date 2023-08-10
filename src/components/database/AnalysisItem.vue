@@ -22,13 +22,27 @@
             <span
               class="player1"
               v-if="player1Number !== null"
-              :class="{ single: player2Number === null }"
+              :class="{
+                single: player2Number === null && middleNumber === null,
+              }"
               >{{ player1Number }}</span
+            >
+            <span
+              class="middle"
+              v-if="middleNumber !== null"
+              :class="{
+                single: player1Number === null && player2Number === null,
+                first: player1Number === null,
+                last: player2Number === null,
+              }"
+              >{{ middleNumber }}</span
             >
             <span
               class="player2"
               v-if="player2Number !== null"
-              :class="{ single: player1Number === null }"
+              :class="{
+                single: player1Number === null && middleNumber === null,
+              }"
               >{{ player2Number }}</span
             >
             <hint v-if="playerNumbersHint">
@@ -71,6 +85,10 @@ export default {
     },
     countLabel: String,
     player1Number: {
+      type: [Number, String],
+      default: null,
+    },
+    middleNumber: {
       type: [Number, String],
       default: null,
     },
@@ -121,11 +139,12 @@ export default {
     vertical-align: middle;
 
     .player1,
+    .middle,
     .player2 {
       padding: 2px 6px;
       position: relative;
       &.single {
-        border-radius: 4px;
+        border-radius: 4px !important;
       }
     }
 
@@ -138,6 +157,18 @@ export default {
       body.player1Dark & {
         color: $textLight;
         color: var(--q-color-textLight);
+      }
+    }
+    .middle {
+      background-color: $dim;
+      body.body--light & {
+        background-color: $highlight;
+      }
+      &.first {
+        border-radius: 4px 0 0 4px;
+      }
+      &.last {
+        border-radius: 0 4px 4px 0;
       }
     }
     .player2 {
