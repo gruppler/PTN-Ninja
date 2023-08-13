@@ -17,16 +17,6 @@
     <div v-if="ply && plyID >= 0" class="ply-container q-px-md">
       <Move :move="move" :player="player" separate-branch no-decoration />
     </div>
-    <Note
-      v-for="(comment, index) in notes"
-      :key="`message-${plyID}-${index}`"
-      :plyID="plyID"
-      :index="index"
-      :comment="comment"
-      @edit="$emit('edit', $event)"
-      @remove="$emit('remove', $event)"
-      class="q-px-md"
-    />
 
     <div v-if="pvs && pvs.length">
       <q-item
@@ -42,6 +32,17 @@
         </q-item-label>
       </q-item>
     </div>
+
+    <Note
+      v-for="(comment, index) in notes"
+      :key="`message-${plyID}-${index}`"
+      :plyID="plyID"
+      :index="index"
+      :comment="comment"
+      @edit="$emit('edit', $event)"
+      @remove="$emit('remove', $event)"
+      class="q-px-md"
+    />
   </div>
 </template>
 
