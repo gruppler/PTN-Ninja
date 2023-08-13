@@ -514,7 +514,30 @@ export default class GameMutations {
           replaceCurrent && !this.board.nextPly
             ? this.board.plyID
             : this.plies.length,
+        color: this.board.turn,
       });
+    }
+
+    // Validate
+    if (this.board.isGameEnd) {
+      throw new Error("The game has ended");
+    }
+    if (ply.pieceCount > this.size) {
+      throw new Error("Ply violates carry limit");
+    }
+    if (!ply.isValid) {
+      throw new Error("Invalid ply");
+    }
+    if (
+      this.board.isFirstMove &&
+      this.openingSwap &&
+      (ply.specialPiece || ply.movement)
+    ) {
+      throw new Error("Invalid first move");
+    }
+    if (!isAlreadyDone) {
+      this.board._doMoveset(ply.toMoveset(), ply.color, ply);
+      this.board._undoMoveset(ply.toMoveset(), ply.color, ply);
     }
 
     this.board.dirtyPly(ply.id);

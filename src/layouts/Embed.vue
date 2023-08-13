@@ -207,6 +207,10 @@ export default {
   methods: {
     getGame() {
       if (!this.ptn) {
+        this.$store.dispatch(
+          "game/SET_GAME",
+          new Game({ tags: { size: this.$store.state.ui.size } })
+        );
         return;
       }
       let game;
@@ -234,6 +238,7 @@ export default {
     openLink() {
       window.open(
         this.$store.getters["ui/url"](this.$game, {
+          name: this.title,
           origin: true,
           state: true,
         }),

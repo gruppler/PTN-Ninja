@@ -394,7 +394,11 @@ export default class Board extends Aggregation(
     output.branchMoves = this.moves.map((move) => output.allMoves[move.id]);
     output.branchPlies = this.plies.map((ply) => output.allPlies[ply.id]);
     output.branchMenu = uniq(
-      flatten(Object.values(output.branches).map((ply) => ply.branches))
+      flatten(
+        Object.values(output.branches)
+          .sort(this.game.plySort)
+          .map((ply) => ply.branches)
+      )
     ).map((id) => output.allPlies[id]);
 
     output.tags = this.updateTagsOutput();

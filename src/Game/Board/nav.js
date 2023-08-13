@@ -73,7 +73,6 @@ export default class BoardNavigation {
 
     if (moveset[0].errors) {
       throw new Error(...moveset[0].errors);
-      return false;
     }
 
     for (let i = 0; i < moveset.length; i++) {

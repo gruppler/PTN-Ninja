@@ -1,6 +1,6 @@
 <template>
   <div id="q-app" class="absolute-fit no-scroll">
-    <router-view />
+    <router-view ref="layout" />
   </div>
 </template>
 
@@ -34,7 +34,7 @@ export default {
       }
       switch (data.action) {
         case "SET_NAME":
-          this.title = data.value;
+          this.$refs.layout.title = data.value;
           break;
         case "SET_UI":
           Object.keys(data.value).forEach((key) => {
