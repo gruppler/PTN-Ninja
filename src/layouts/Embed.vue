@@ -98,7 +98,7 @@
     <q-footer class="bg-ui">
       <Scrubber />
       <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
-        <PlayControls />
+        <PlayControls ref="playControls" />
       </q-toolbar>
     </q-footer>
 
