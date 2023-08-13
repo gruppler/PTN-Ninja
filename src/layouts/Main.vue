@@ -147,7 +147,7 @@
           class="justify-around items-center"
           style="width: 100%; max-width: 500px; margin: 0 auto"
         />
-        <PlayControls v-else />
+        <PlayControls ref="playControls" v-else />
       </q-toolbar>
     </q-footer>
 

@@ -96,9 +96,9 @@ For example:
 
 - Execute a single ply specified as a string in PTN (e.g. `Sb4`)
 
-#### `INSERT_PLIES` (value: `<Array>: [ <String> ]`)
+#### `INSERT_PLIES` (value: `<Array>: [ <String> ]` | `<String>`)
 
-- Execute a series of plies specified as strings in PTN (e.g. `['d5', 'e4']`)
+- Execute a series of plies specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`)
 
 #### `DELETE_BRANCH` (value: `<String>`)
 
@@ -107,6 +107,18 @@ For example:
 #### `GO_TO_PLY` (value: `<Object>: { plyID, isDone }`)
 
 - Navigate to the specified ply
+
+#### `PLAY`
+
+- Begin stepping through plies from current position
+
+#### `PAUSE`
+
+- Stop stepping through plies
+
+#### `PLAY_PAUSE`
+
+- Toggle between PLAY and PAUSE
 
 #### `PREV`
 

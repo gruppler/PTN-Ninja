@@ -7,7 +7,7 @@
 <script>
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
-import { omit } from "lodash";
+import { isString, omit } from "lodash";
 
 export default {
   name: "App",
@@ -36,7 +36,25 @@ export default {
         case "SET_NAME":
           this.$refs.layout.title = data.value;
           break;
+        case "PLAY":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.play();
+          }
+          break;
+        case "PAUSE":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.pause();
+          }
+          break;
+        case "PLAY_PAUSE":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.playpause();
+          }
+          break;
         case "SET_UI":
+          if (isString(data.value)) {
+            data.value = JSON.parse(data.value);
+          }
           Object.keys(data.value).forEach((key) => {
             this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
           });

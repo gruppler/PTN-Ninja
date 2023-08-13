@@ -1,8 +1,8 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { throttle } from "lodash";
-import { notifyError, notifyWarning } from "../../utilities";
+import { isString, throttle } from "lodash";
+import { notifyError } from "../../utilities";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -645,6 +645,9 @@ export const INSERT_PLY = function ({ commit, dispatch }, ply) {
 };
 
 export const INSERT_PLIES = function ({ commit, dispatch }, plies) {
+  if (isString(plies)) {
+    plies = plies.split(/\s+/);
+  }
   commit("INSERT_PLIES", plies);
   dispatch("SAVE_CURRENT_GAME");
 };
