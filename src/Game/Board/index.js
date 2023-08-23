@@ -54,6 +54,7 @@ export default class Board extends Aggregation(
         notes: {},
         chatlog: {},
         evaluations: {},
+        pvs: {},
       },
       position: {
         isGameEnd: false,
@@ -393,7 +394,11 @@ export default class Board extends Aggregation(
     output.branchMoves = this.moves.map((move) => output.allMoves[move.id]);
     output.branchPlies = this.plies.map((ply) => output.allPlies[ply.id]);
     output.branchMenu = uniq(
-      flatten(Object.values(output.branches).map((ply) => ply.branches))
+      flatten(
+        Object.values(output.branches)
+          .sort(this.game.plySort)
+          .map((ply) => ply.branches)
+      )
     ).map((id) => output.allPlies[id]);
 
     output.tags = this.updateTagsOutput();
@@ -410,8 +415,10 @@ export default class Board extends Aggregation(
 
   updateCommentsOutput() {
     const output = { ...this.output.comments };
-    let evaluations = { ...output.evaluations };
+    const evaluations = { ...output.evaluations };
+    const pvs = { ...output.pvs };
     output.evaluations = evaluations;
+    output.pvs = pvs;
 
     forEach(this.dirty.comments, (log, type) => {
       let logOutput = { ...output[type] };
@@ -428,6 +435,7 @@ export default class Board extends Aggregation(
                 comment = comments[i];
                 if (comment) {
                   evaluations[plyID] = comment.evaluation;
+                  pvs[plyID] = comment.pv;
                   break;
                 }
               }

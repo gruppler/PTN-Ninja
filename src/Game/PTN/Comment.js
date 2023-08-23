@@ -1,6 +1,6 @@
 import { pick } from "lodash";
 
-const outputProps = ["time", "player", "message", "evaluation"];
+const outputProps = ["time", "player", "message", "evaluation", "pv"];
 
 // Evaluation formats
 const evalFormats = [
@@ -30,6 +30,25 @@ export function getEvaluation(message) {
   return null;
 }
 
+export function getPV(message) {
+  let matches;
+
+  matches = message.match(
+    /(?:\W|^)(pv([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?)+)(?:\W|$)/gim
+  );
+  if (matches) {
+    matches = matches.map((match) =>
+      match
+        .trim()
+        .replace(/^pv[=\s]+/, "")
+        .split(/\s+/)
+    );
+    return matches;
+  }
+
+  return null;
+}
+
 export default class Comment {
   constructor(notation) {
     const matchData = notation.match(/\{((@[^"}]+:)?([0-9]+:)?([^}]*))\}/);
@@ -54,6 +73,10 @@ export default class Comment {
 
   get evaluation() {
     return getEvaluation(this.message);
+  }
+
+  get pv() {
+    return getPV(this.message);
   }
 
   get output() {

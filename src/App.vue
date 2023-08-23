@@ -1,13 +1,13 @@
 <template>
   <div id="q-app" class="absolute-fit no-scroll">
-    <router-view />
+    <router-view ref="layout" />
   </div>
 </template>
 
 <script>
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
-import { omit } from "lodash";
+import { isString, omit } from "lodash";
 
 export default {
   name: "App",
@@ -34,9 +34,27 @@ export default {
       }
       switch (data.action) {
         case "SET_NAME":
-          this.title = data.value;
+          this.$refs.layout.title = data.value;
+          break;
+        case "PLAY":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.play();
+          }
+          break;
+        case "PAUSE":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.pause();
+          }
+          break;
+        case "PLAY_PAUSE":
+          if (this.$refs.layout.$refs.playControls) {
+            this.$refs.layout.$refs.playControls.playpause();
+          }
           break;
         case "SET_UI":
+          if (isString(data.value)) {
+            data.value = JSON.parse(data.value);
+          }
           Object.keys(data.value).forEach((key) => {
             this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
           });
@@ -51,6 +69,7 @@ export default {
         case "SELECT_PIECE":
         case "DELETE_PLY":
         case "INSERT_PLY":
+        case "INSERT_PLIES":
         case "DELETE_BRANCH":
         case "SET_TARGET":
         case "GO_TO_PLY":
@@ -68,6 +87,7 @@ export default {
         case "ADD_NOTE":
         case "REMOVE_NOTE":
         case "APPLY_TRANSFORM":
+        case "HIGHLIGHT_SQUARES":
           this.$store.dispatch("game/" + data.action, data.value);
           break;
         case "TRIM_BRANCHES":

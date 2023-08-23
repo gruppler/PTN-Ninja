@@ -96,6 +96,10 @@ For example:
 
 - Execute a single ply specified as a string in PTN (e.g. `Sb4`)
 
+#### `INSERT_PLIES` (value: `<Array>: [ <String> ]` | `<String>`)
+
+- Execute a series of plies specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`)
+
 #### `DELETE_BRANCH` (value: `<String>`)
 
 - Delete the specified branch
@@ -103,6 +107,18 @@ For example:
 #### `GO_TO_PLY` (value: `<Object>: { plyID, isDone }`)
 
 - Navigate to the specified ply
+
+#### `PLAY`
+
+- Begin stepping through plies from current position
+
+#### `PAUSE`
+
+- Stop stepping through plies
+
+#### `PLAY_PAUSE`
+
+- Toggle between PLAY and PAUSE
 
 #### `PREV`
 
@@ -216,9 +232,13 @@ For example:
 
 - Reset any board transformation
 
-#### `APPLY_TRANSFORM`
+#### `APPLY_TRANSFORM` (value: `<Array>: [ int a, int b ]` )
 
 - Apply the specified board transformation `[int a, int b]` where `a` is the number of clockwise rotations [0, 3], and `b` is the number of horizontal flips [0, 1].
+
+#### `HIGHLIGHT_SQUARES` (value: `<Array>: [ <String> ]` )
+
+- Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
 
 # URLs
 

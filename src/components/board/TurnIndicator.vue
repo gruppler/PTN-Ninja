@@ -139,7 +139,7 @@ export default {
   },
   methods: {
     formatKomi(komi) {
-      return komi.toString().replace(".5", "½");
+      return komi.toString().replace(/0?\.5/, "½");
     },
   },
 };

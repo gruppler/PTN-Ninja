@@ -26,6 +26,8 @@ module.exports = {
 
   // add your custom rules here
   rules: {
+    "prettier/prettier": ["error", { endOfLine: "auto" }], // disable `delete cr` warnings on windows
+
     "prefer-promise-reject-errors": "off",
 
     // allow console.log during development only
