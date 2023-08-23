@@ -536,6 +536,10 @@ export default class GameMutations {
       throw new Error("Invalid first move");
     }
     if (!isAlreadyDone) {
+      if (replaceCurrent && this.board.plyIsDone) {
+        let boardPly = this.board.ply;
+        this.board._undoMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
+      }
       this.board._doMoveset(ply.toMoveset(), ply.color, ply);
       this.board._undoMoveset(ply.toMoveset(), ply.color, ply);
     }
