@@ -550,53 +550,6 @@
       </q-btn>
     </div>
 
-    <div
-      v-show="isVisible('komi', 'opening')"
-      class="row q-gutter-md q-mt-none"
-    >
-      <!-- Komi -->
-      <q-input
-        class="col-grow"
-        v-show="isVisible('komi')"
-        v-model="tags.komi"
-        name="komi"
-        type="number"
-        min="-4.5"
-        max="4.5"
-        step="0.5"
-        :label="$t('Komi')"
-        :rules="rules('komi')"
-        hide-bottom-space
-        clearable
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="komi" />
-        </template>
-      </q-input>
-
-      <!-- Opening -->
-      <q-select
-        class="col-grow"
-        v-show="isVisible('opening')"
-        v-model="tags.opening"
-        :options="openings"
-        :label="$t('Opening')"
-        name="opening"
-        behavior="menu"
-        transition-show="none"
-        transition-hide="none"
-        map-options
-        emit-value
-        clearable
-        filled
-      >
-        <template v-slot:prepend>
-          <q-icon name="opening" />
-        </template>
-      </q-select>
-    </div>
-
     <div class="row q-gutter-md q-mt-none">
       <!-- Clock -->
       <q-input

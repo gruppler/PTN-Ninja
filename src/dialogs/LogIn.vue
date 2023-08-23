@@ -3,6 +3,7 @@
     ref="dialog"
     :value="true"
     content-class="non-selectable"
+    width="320px"
     v-bind="$attrs"
   >
     <template v-slot:header>

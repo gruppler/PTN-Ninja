@@ -8,7 +8,7 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <div class="dialog-content column no-wrap bg-ui">
+    <div class="dialog-content column no-wrap bg-ui" :style="{ width }">
       <header class="bg-accent">
         <slot name="header" />
       </header>
@@ -29,6 +29,7 @@ export default {
     value: Boolean,
     goBack: Boolean,
     noMaximize: Boolean,
+    width: String,
   },
   computed: {
     model() {

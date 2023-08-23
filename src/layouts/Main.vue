@@ -112,7 +112,7 @@
           align="justify"
         >
           <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="analysis">{{ $t("Analysis") }}</q-tab>
+          <q-tab name="analysis">{{ $tc("Analysis") }}</q-tab>
           <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
         </q-tabs>
         <q-tab-panels
