@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@quasar/app": "^2.4.2",
-    "@quasar/cli": "^1.4.0",
+    "@quasar/cli": "^2.2.3",
     "@quasar/quasar-app-extension-qmarkdown": "^1.4.4",
     "@vue/eslint-config-prettier": "^7.0.0",
     "babel-eslint": "^10.1.0",
