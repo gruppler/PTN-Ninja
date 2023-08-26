@@ -200,12 +200,17 @@ export default {
     return {
       error: "",
       loading: false,
-      listener: null,
+      listeners: [],
       pagination: {
         rowsPerPage: 0,
         sortBy: "date",
       },
       filterOptions: [
+        {
+          value: "recent",
+          icon: "recent",
+          label: this.$t("Recent"),
+        },
         {
           value: "open",
           icon: "open_game",
@@ -215,11 +220,6 @@ export default {
           value: "ongoing",
           icon: "ongoing",
           label: this.$t("Ongoing"),
-        },
-        {
-          value: "recent",
-          icon: "recent",
-          label: this.$t("Recent"),
         },
         {
           value: "analysis",
@@ -318,7 +318,7 @@ export default {
   computed: {
     filter: {
       get() {
-        return this.$route.params.filter || "open";
+        return this.$route.params.filter || "recent";
       },
       set(filter) {
         this.$router.replace({
@@ -390,6 +390,12 @@ export default {
             .filter((game) => game.config.hasEnded && !game.config.isOpen)
             .reverse();
           break;
+        case "analysis":
+          games = games.filter((game) => game.isAnalysis).reverse();
+          break;
+        case "puzzle":
+          games = games.filter((game) => game.isPuzzle).reverse();
+          break;
         default:
           [];
       }
@@ -400,7 +406,7 @@ export default {
     },
     visibleColumns() {
       let columns = this.columns.map((col) => col.name);
-      if (["open", "ongoing", "recent"].includes(this.filter)) {
+      if (["recent", "open", "ongoing"].includes(this.filter)) {
         columns = without(columns, "name");
       }
       if (["open", "ongoing"].includes(this.filter)) {
@@ -450,78 +456,65 @@ export default {
     isActive(game) {
       return this.activeGameIDs.includes(game.config.id);
     },
-    async init() {
-      this.loading = true;
-      if (!this.$route.params.filter) {
-        this.$router.replace({
-          params: {
-            filter: this.filter,
-            fullscreen: this.fullscreen ? "fullscreen" : undefined,
-          },
-        });
-      }
-
-      const next = () => {
-        this.loading = false;
-      };
-      const error = (error) => {
-        this.$store.dispatch("ui/NOTIFY_ERROR", error);
-      };
-
-      // Unlisten
-      if (this.listener) {
-        await this.$store.dispatch("online/UNLISTEN", this.listener);
-        this.listener = null;
-      }
-
-      const limit = 100;
-      const pagination = {
-        sortBy: "createdAt",
-        descending: true,
-      };
-
-      switch (this.filter) {
-        case "ongoing":
-          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
-            where: ["config.hasEnded", "!=", true],
-            next,
-            error,
-          });
-        case "open":
-          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
-            where: ["config.isOpen", "==", true],
-            next,
-            error,
-          });
-        case "recent":
-          this.listener = this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
-            limit,
-            pagination,
-            next,
-            error,
-          });
-        case "analysis":
-          break;
-        case "puzzle":
-          break;
-      }
-    },
   },
-  mounted() {
-    this.init();
+  async created() {
+    this.loading = true;
+    if (!this.$route.params.filter) {
+      this.$router.replace({
+        params: {
+          filter: this.filter,
+          fullscreen: this.fullscreen ? "fullscreen" : undefined,
+        },
+      });
+    }
+
+    const next = () => {
+      this.loading = false;
+    };
+    const error = (error) => {
+      this.$store.dispatch("ui/NOTIFY_ERROR", error);
+    };
+
+    const limit = 100;
+    const pagination = {
+      sortBy: "createdAt",
+      descending: true,
+    };
+
+    this.listeners.push(
+      // Recent
+      await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+        where: [],
+        limit,
+        pagination,
+        next,
+        error,
+      }),
+
+      // Open
+      await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+        where: ["config.isOpen", "==", true],
+        next,
+        error,
+      }),
+
+      // Ongoing
+      await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+        where: ["config.hasEnded", "!=", true],
+        next,
+        error,
+      })
+    );
   },
   beforeDestroy() {
     // Unlisten
-    if (this.listener) {
-      this.$store.dispatch("online/UNLISTEN", this.listener);
-    }
+    this.listeners.forEach((listener) => {
+      this.$store.dispatch("online/UNLISTEN", listener);
+    });
   },
   watch: {
     "user.uid"() {
       // this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
-    },
-    async filter() {
-      this.init();
     },
   },
 };

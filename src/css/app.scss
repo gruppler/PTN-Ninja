@@ -151,6 +151,9 @@ main,
   background: $ui;
   background: var(--q-color-ui);
 }
+.q-table__bottom {
+  font-size: inherit;
+}
 
 ::selection {
   background: $primary;
