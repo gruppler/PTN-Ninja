@@ -200,7 +200,6 @@ export default {
   "Search Game Selector": "Search Game Selector",
   "Select Branch": "Select Branch",
   Share: "Share",
-  "Share or Play Online": "Share or Play Online",
   "Share PNG": "Share PNG",
   "Share PTN": "Share PTN",
   "Share TPS": "Share TPS",

@@ -543,7 +543,7 @@ export default {
             this.$refs.dialog.$children[0].hide();
           } else if (
             this.$route.name === "add" ||
-            this.$route.name === "share-online"
+            this.$route.name === "play-online"
           ) {
             this.$router.replace({
               name: "load-online",
@@ -569,16 +569,16 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "shareOnline":
-          if (this.$route.name === "share-online") {
+        case "playOnline":
+          if (this.$route.name === "play-online") {
             this.$refs.dialog.$children[0].hide();
           } else if (this.$route.name === "load-online") {
             this.$router.replace({
-              name: "share-online",
+              name: "play-online",
             });
           } else {
             this.$router.push({
-              name: "share-online",
+              name: "play-online",
             });
           }
           break;

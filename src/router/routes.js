@@ -117,11 +117,6 @@ const routes = [
         component: () => import("../dialogs/PuzzleOnline"),
       },
       {
-        name: "share-online",
-        path: "/online/new/:qr?",
-        component: () => import("../dialogs/ShareOnline"),
-      },
-      {
         name: "load-online",
         path: "/online/:filter?/:fullscreen?",
         component: () => import("../dialogs/LoadOnline"),

@@ -272,9 +272,6 @@ export default {
     png() {
       this.$router.push({ name: "png" });
     },
-    shareOnline() {
-      this.$router.push({ name: "share-online" });
-    },
     playOnline() {
       this.$router.push({ name: "play-online" });
     },
