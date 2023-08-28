@@ -328,7 +328,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
   }
 };
 
-export const EXPORT_PNG = function ({ state }) {
+export const EXPORT_PNG = function () {
   const game = Vue.prototype.$game;
   const options = { tps: game.board.tps, ...this.state.ui.pngConfig };
 
@@ -350,7 +350,7 @@ export const EXPORT_PNG = function ({ state }) {
   });
 };
 
-export const OPEN_FILES = async function ({ commit, dispatch, state }, files) {
+export const OPEN_FILES = async function ({ dispatch, state }, files) {
   return new Promise((resolve) => {
     const games = [];
     let count = 0;
@@ -367,15 +367,13 @@ export const OPEN_FILES = async function ({ commit, dispatch, state }, files) {
     };
 
     files = Array.from(files);
+    files = files.filter((file) => file && /(\.ptn|\.txt)+$/i.test(file.name));
     if (!files.length) {
       return false;
     }
 
     Loading.show();
     setTimeout(() => {
-      files = files.filter(
-        (file) => file && /(\.ptn|\.txt)+$/i.test(file.name)
-      );
       count = files.length;
       files.forEach((file) => {
         let reader = new FileReader();
@@ -415,10 +413,7 @@ export const OPEN_FILES = async function ({ commit, dispatch, state }, files) {
   });
 };
 
-export const RENAME_CURRENT_GAME = function (
-  { commit, dispatch, state },
-  newName
-) {
+export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {
   const oldName = Vue.prototype.$game.name;
   commit("RENAME_CURRENT_GAME", newName);
   dispatch("SET_NAME", { oldName, newName });
