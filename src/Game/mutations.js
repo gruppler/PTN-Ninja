@@ -508,13 +508,12 @@ export default class GameMutations {
   }
 
   _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+    const boardPly = this.board.ply;
+
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
-        id:
-          replaceCurrent && !this.board.nextPly
-            ? this.board.plyID
-            : this.plies.length,
-        color: this.board.turn,
+        id: replaceCurrent && boardPly ? boardPly.id : this.plies.length,
+        color: replaceCurrent && boardPly ? boardPly.color : this.board.turn,
       });
     }
 
@@ -537,7 +536,6 @@ export default class GameMutations {
     }
     if (!isAlreadyDone) {
       if (replaceCurrent && this.board.plyIsDone) {
-        let boardPly = this.board.ply;
         this.board._undoMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
       }
       this.board._doMoveset(ply.toMoveset(), ply.color, ply);
@@ -553,8 +551,8 @@ export default class GameMutations {
 
     let move = this.board.move;
 
-    ply.color = replaceCurrent ? this.board.ply.color : this.board.color;
-    ply.player = replaceCurrent ? this.board.ply.player : this.board.turn;
+    ply.color = replaceCurrent ? boardPly.color : this.board.color;
+    ply.player = replaceCurrent ? boardPly.player : this.board.turn;
 
     if (!move.plies[ply.player - 1]) {
       // Next ply in the move
@@ -595,13 +593,11 @@ export default class GameMutations {
         if (this.board.nextPly && this.board.nextPly.isEqual(ply)) {
           equalPly = this.board.nextPly;
         }
-      } else if (this.board.ply) {
-        if (this.board.ply.isEqual(ply)) {
-          equalPly = this.board.ply;
-        } else if (this.board.ply.branches.length) {
-          equalPly = this.board.ply.branches.find((branch) =>
-            branch.isEqual(ply)
-          );
+      } else if (boardPly) {
+        if (boardPly.isEqual(ply)) {
+          equalPly = boardPly;
+        } else if (boardPly.branches.length) {
+          equalPly = boardPly.branches.find((branch) => branch.isEqual(ply));
         }
       }
       if (equalPly) {
@@ -638,11 +634,11 @@ export default class GameMutations {
         // New branch
         if (
           (replaceCurrent || !this.board.plyIsDone) &&
-          this.board.ply &&
-          this.board.ply.branches.length
+          boardPly &&
+          boardPly.branches.length
         ) {
           ply.branch = this.newBranchID(
-            this.board.ply ? this.board.ply.branches[0].branch : "",
+            boardPly ? boardPly.branches[0].branch : "",
             this.board.number,
             ply.player
           );
@@ -693,7 +689,7 @@ export default class GameMutations {
 
     if (!isAlreadyDone) {
       // do ply;
-      if (!this.board.ply && ply.id === 0) {
+      if (!boardPly && ply.id === 0) {
         this.board._setPly(ply.id, false);
         this.board._doPly();
       } else if (replaceCurrent && ply.id === this.board.plyID) {
@@ -713,7 +709,7 @@ export default class GameMutations {
 
     this.board.updateSquareConnections();
     if (this.board.checkGameEnd(false)) {
-      if (ply.branch === "" || !this.tag("result")) {
+      if (ply.branch === "" && !this.tag("result")) {
         // Record result
         this.setTags({ result: ply.result.text }, false, false);
       }
