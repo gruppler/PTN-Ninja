@@ -745,6 +745,7 @@ export default class GameMutations {
           break;
         }
       }
+      this.board.prev(false, plies.length - 1);
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
