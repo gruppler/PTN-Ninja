@@ -80,17 +80,17 @@ export default class GameUndo {
           : this.minState,
       };
 
-      if (patch.length === 1) {
-        // Use diff only if it's a simple patch
-        historyEntry.patch = diff.patch_toText(patch);
-        historyEntry.undoPatch = diff.patch_toText(
-          diff.patch_make(this.ptn, before.ptn)
-        );
-      } else {
-        // Otherwise just store the whole PTN
-        historyEntry.beforePTN = before.ptn;
-        historyEntry.afterPTN = this.ptn;
-      }
+      // if (patch.length === 1) {
+      //   // Use diff only if it's a simple patch
+      //   historyEntry.patch = diff.patch_toText(patch);
+      //   historyEntry.undoPatch = diff.patch_toText(
+      //     diff.patch_make(this.ptn, before.ptn)
+      //   );
+      // } else {
+      // Otherwise just store the whole PTN
+      historyEntry.beforePTN = before.ptn;
+      historyEntry.afterPTN = this.ptn;
+      // }
       this.history.push(Object.freeze(historyEntry));
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {

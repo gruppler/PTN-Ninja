@@ -14,20 +14,24 @@
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"
     />
-    <div v-if="ply && plyID >= 0" class="ply-container q-px-md">
-      <Move :move="move" :player="player" separate-branch no-decoration />
-    </div>
-
-    <div v-if="pvs && pvs.length">
+    <div v-if="ply && plyID >= 0" class="ply-container">
+      <Move
+        :move="move"
+        :player="player"
+        separate-branch
+        no-decoration
+        class="q-px-md"
+      />
       <q-item
         v-for="(pv, i) in pvs"
         :key="i"
-        @mouseover="highlight(pv)"
-        @mouseout="unhighlight"
+        @mouseover="current ? highlight(pv) : null"
+        @mouseout="current ? unhighlight() : null"
         @click="insertPV(i)"
         clickable
       >
         <q-item-label class="small">
+          <Linenum :linenum="move.linenum" />
           <Ply v-for="(ply, j) in pv" :key="j" :ply="ply" no-click />
         </q-item-label>
       </q-item>
@@ -49,12 +53,13 @@
 <script>
 import Note from "./Note";
 import Move from "../PTN/Move";
+import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 import PlyClass from "../../Game/PTN/Ply";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move, Ply },
+  components: { Note, Move, Linenum, Ply },
   props: {
     plyID: Number,
     notes: Array,
