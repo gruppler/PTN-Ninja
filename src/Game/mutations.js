@@ -508,12 +508,13 @@ export default class GameMutations {
   }
 
   _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
-    const boardPly = this.board.ply;
+    let boardPly = this.board.ply;
 
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
         id: replaceCurrent && boardPly ? boardPly.id : this.plies.length,
         color: replaceCurrent && boardPly ? boardPly.color : this.board.turn,
+        player: replaceCurrent && boardPly ? boardPly.player : this.board.turn,
       });
     }
 
@@ -549,10 +550,8 @@ export default class GameMutations {
       this.board._setPly(this.board.nextPly.id, false);
     }
 
+    boardPly = this.board.ply;
     let move = this.board.move;
-
-    ply.color = replaceCurrent ? boardPly.color : this.board.color;
-    ply.player = replaceCurrent ? boardPly.player : this.board.turn;
 
     if (!move.plies[ply.player - 1]) {
       // Next ply in the move
