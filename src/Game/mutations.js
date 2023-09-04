@@ -513,7 +513,7 @@ export default class GameMutations {
     if (ply.constructor !== Ply) {
       ply = Ply.parse(ply, {
         id: replaceCurrent && boardPly ? boardPly.id : this.plies.length,
-        color: replaceCurrent && boardPly ? boardPly.color : this.board.turn,
+        color: replaceCurrent && boardPly ? boardPly.color : this.board.color,
         player: replaceCurrent && boardPly ? boardPly.player : this.board.turn,
       });
     }
