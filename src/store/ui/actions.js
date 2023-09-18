@@ -142,7 +142,7 @@ export const EXPORT_PTN = ({ dispatch }, games) => {
 export const OPEN = function (context, callback) {
   let input = document.createElement("INPUT");
   input.type = "file";
-  input.accept = ".ptn,.txt";
+  // input.accept = ".ptn,.txt";
   input.multiple = true;
   input.hidden = true;
   input.addEventListener("input", (event) => {
