@@ -28,7 +28,7 @@ const routes = [
     },
     props(route) {
       let stateRaw = route.params.state
-        ? route.params.state.substr(1).split("&")
+        ? route.params.state.substring(1).split("&")
         : [];
       let state = {};
       let name = "";

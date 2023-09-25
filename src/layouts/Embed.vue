@@ -306,7 +306,7 @@ export default {
   },
   beforeCreate() {
     if (location.hash.length) {
-      const url = location.hash.substr(1);
+      const url = location.hash.substring(1);
       location.hash = "";
       this.$router.replace(url);
       location.reload();

@@ -57,7 +57,7 @@ export default class Ply extends Ptn {
 
     // Silenty fix invalid stack distributions by trimming from the end
     while (!this.isValidStackDistribution() && this.distribution.length) {
-      const d = this.distribution.substr(0, this.distribution.length - 1);
+      const d = this.distribution.substring(0, this.distribution.length - 1);
       this.ptn = this.ptn.replace(this.distribution, d);
       this.distribution = d;
     }

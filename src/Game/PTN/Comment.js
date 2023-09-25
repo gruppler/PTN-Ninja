@@ -62,7 +62,7 @@ export default class Comment {
     this.time = this.time ? Number(this.time) : null;
 
     if (this.player) {
-      this.player = this.player.substr(1);
+      this.player = this.player.substring(1);
       if (/[1|2]/.test(this.player)) {
         this.player = Number(this.player);
       }

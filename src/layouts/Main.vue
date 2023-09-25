@@ -695,7 +695,7 @@ export default {
 
     // Redirect hash URLs
     if (location.hash.length && !this.$q.platform.is.electron) {
-      const url = location.hash.substr(1);
+      const url = location.hash.substring(1);
       location.hash = "";
       this.$router.replace(url);
       location.reload();
