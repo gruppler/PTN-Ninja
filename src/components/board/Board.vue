@@ -160,10 +160,10 @@ export default {
       );
     },
     cols() {
-      return "abcdefgh".substr(0, this.config.size).split("");
+      return "abcdefgh".substring(0, this.config.size).split("");
     },
     rows() {
-      return "12345678".substr(0, this.config.size).split("");
+      return "12345678".substring(0, this.config.size).split("");
     },
     yAxis() {
       let axis =
