@@ -186,14 +186,14 @@ export default class GameBase {
             if (item.value) {
               this.tags[key] = item;
             }
-            ptn = ptn.substr(item.ptn.length).trimStart();
+            ptn = ptn.substring(item.ptn.length).trimStart();
             delete item.ptn;
           } catch (error) {
             console.warn(error);
             this.warnings.push(error);
             let match = ptn.match(/]\s*/);
             if (match) {
-              ptn = ptn.substr(match.index + 1).trimStart();
+              ptn = ptn.substring(match.index + 1).trimStart();
             } else {
               ptn = "";
             }
@@ -319,7 +319,7 @@ export default class GameBase {
             if (
               isDoubleBreak &&
               this.plies.length &&
-              Linenum.test(ptn.trimStart().substr(item.ptn.length))
+              Linenum.test(ptn.trimStart().substring(item.ptn.length))
             ) {
               // Branch identifier
               branch = item.contents;
@@ -444,7 +444,7 @@ export default class GameBase {
             break;
           }
 
-          ptn = ptn.trimStart().substr(item.ptn.length);
+          ptn = ptn.trimStart().substring(item.ptn.length);
           isDoubleBreak = startsWithDoubleBreak.test(ptn);
           delete item.ptn;
         }

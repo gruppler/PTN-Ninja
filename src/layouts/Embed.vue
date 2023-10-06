@@ -63,6 +63,7 @@
       id="left-drawer"
       v-model="showPTN"
       side="left"
+      :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
@@ -87,6 +88,7 @@
       id="right-drawer"
       v-model="showText"
       side="right"
+      :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
       :no-swipe-close="!Platform.is.mobile"
@@ -203,6 +205,14 @@ export default {
     isDialogShowing() {
       return !["local", "game"].includes(this.$route.name);
     },
+    panelWidth() {
+      const largeWidth = 1600;
+      let width = 300;
+      if (this.$q.screen.width > largeWidth) {
+        width += (this.$q.screen.width - largeWidth) / 3;
+      }
+      return width;
+    },
   },
   methods: {
     getGame() {
@@ -296,7 +306,7 @@ export default {
   },
   beforeCreate() {
     if (location.hash.length) {
-      const url = location.hash.substr(1);
+      const url = location.hash.substring(1);
       location.hash = "";
       this.$router.replace(url);
       location.reload();
