@@ -316,9 +316,9 @@ export default {
       const largeWidth = 1600;
       let width = 300;
       if (this.$q.screen.width > largeWidth) {
-        width += (this.$q.screen.width - largeWidth) / 3;
+        width += (this.$q.screen.width - largeWidth) / 4;
       }
-      return width;
+      return Math.min(width, 400);
     },
   },
   methods: {
