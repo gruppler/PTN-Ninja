@@ -4,17 +4,12 @@
     v-show="text"
     @show="show"
     @hide="hide"
-    content-class="flex-center"
+    content-class="qr-code flex-center"
     v-bind="$attrs"
     :maximized="maximized"
     no-route-dismiss
   >
-    <canvas
-      ref="qrcode"
-      class="qr-canvas flex flex-center"
-      style="max-width: 100%; max-height: 100%"
-      v-close-popup
-    />
+    <img ref="output" />
   </q-dialog>
 </template>
 
@@ -50,7 +45,7 @@ export default {
   methods: {
     show() {
       new Qrious({
-        element: this.$refs.qrcode,
+        element: this.$refs.output,
         background: this.bg,
         foreground: this.fg,
         value: this.text,
@@ -68,10 +63,11 @@ export default {
 </script>
 
 <style lang="scss">
-.qr-canvas {
-  canvas {
-    display: block;
+.qr-code {
+  img {
+    pointer-events: all;
     max-width: 100vmin;
+    max-height: 100vmin;
   }
 }
 </style>
