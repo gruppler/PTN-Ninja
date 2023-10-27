@@ -3,7 +3,6 @@
     <q-scroll-area ref="scroll" class="games-db absolute-fit">
       <!-- Bot Suggestions -->
       <q-expansion-item
-        v-if="showBotMovesPanel"
         v-model="sections.botSuggestions"
         header-class="bg-accent"
       >
@@ -454,7 +453,6 @@ export default {
     }
 
     return {
-      showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
       loadingBotMoves: false,
       loadingDBMoves: false,
       showBotSettings: false,
