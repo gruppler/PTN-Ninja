@@ -21,7 +21,11 @@
         separate-branch
         no-decoration
         class="q-px-md"
-      />
+      >
+        <template v-slot:plyTooltip>
+          <PlyPreview :game="getGame()" />
+        </template>
+      </Move>
       <q-item
         v-for="(pv, i) in pvs"
         :key="i"
@@ -32,7 +36,15 @@
       >
         <q-item-label class="small">
           <Linenum :linenum="move.linenum" />
-          <Ply v-for="(ply, j) in pv" :key="j" :ply="ply" no-click />
+          <Ply
+            v-for="(ply, j) in pv"
+            :key="j"
+            :ply="ply"
+            @click.stop.prevent.capture="insertPV(i, pv.length - j - 1)"
+            @click.right.stop.prevent
+          >
+            <PlyPreview :game="getGame(i, j)" />
+          </Ply>
         </q-item-label>
       </q-item>
     </div>
@@ -55,11 +67,13 @@ import Note from "./Note";
 import Move from "../PTN/Move";
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
+import PlyPreview from "../controls/PlyPreview";
+import Game from "../../Game";
 import PlyClass from "../../Game/PTN/Ply";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move, Linenum, Ply },
+  components: { Note, Move, Linenum, Ply, PlyPreview },
   props: {
     plyID: Number,
     notes: Array,
@@ -128,9 +142,12 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertPV(i) {
+    insertPV(i, prev) {
       if (!this.pvs || !this.pvs[i]) {
         return;
+      }
+      if (prev === undefined) {
+        prev = this.pvs[i].length - 1;
       }
       this.unhighlight();
       if (this.$store.state.game.position.plyID !== this.plyID) {
@@ -143,8 +160,24 @@ export default {
       }
       this.$store.dispatch("game/INSERT_PLIES", {
         plies: this.pvs[i].map((ply) => ply.text),
-        prev: this.pvs[i].length - 1,
+        prev,
       });
+    },
+    getGame(pv = -1, followingPlies = 0) {
+      let game = new Game({
+        name: "analysis",
+        ptn: this.$game.ptn,
+        state: {
+          plyIndex: this.ply.index,
+          targetBranch: this.ply.branch,
+          plyIsDone: pv < 0,
+        },
+      });
+      if (pv >= 0) {
+        let plies = this.pvs[pv].slice(0, followingPlies + 1);
+        game.insertPlies(plies.map((ply) => ply.ptn));
+      }
+      return game;
     },
   },
 };

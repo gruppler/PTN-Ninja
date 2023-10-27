@@ -37,10 +37,14 @@
       />
       <template v-if="!player || player === 1">
         <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1" />
+        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1">
+          <slot name="plyTooltip" />
+        </Ply>
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :ply="ply2" />
+        <Ply :key="ply2.id" :ply="ply2">
+          <slot name="plyTooltip" />
+        </Ply>
       </template>
     </div>
 
