@@ -73,7 +73,6 @@
           @click.stop.prevent.capture="
             insertFollowingPlies(followingPlies.length - i - 1)
           "
-          @click.right.stop.prevent
         >
           <PlyPreview :game="getGame(i + 1)" />
         </Ply>

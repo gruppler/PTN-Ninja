@@ -41,7 +41,6 @@
             :key="j"
             :ply="ply"
             @click.stop.prevent.capture="insertPV(i, pv.length - j - 1)"
-            @click.right.stop.prevent
           >
             <PlyPreview :game="getGame(i, j)" />
           </Ply>
