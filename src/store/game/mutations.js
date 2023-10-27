@@ -231,11 +231,11 @@ export const INSERT_PLY = (state, ply) => {
   }
 };
 
-export const INSERT_PLIES = (state, plies) => {
+export const INSERT_PLIES = (state, { plies, prev }) => {
   const game = Vue.prototype.$game;
   if (game) {
-    game.insertPlies(plies);
-    postMessage("INSERT_PLIES", plies);
+    game.insertPlies(plies, prev);
+    postMessage("INSERT_PLIES", plies, prev);
   }
 };
 

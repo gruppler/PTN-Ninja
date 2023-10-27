@@ -141,10 +141,10 @@ export default {
       } else if (this.$store.state.game.position.plyIsDone) {
         this.$store.commit("game/PREV", { half: true });
       }
-      this.$store.dispatch(
-        "game/INSERT_PLIES",
-        this.pvs[i].map((ply) => ply.text)
-      );
+      this.$store.dispatch("game/INSERT_PLIES", {
+        plies: this.pvs[i].map((ply) => ply.text),
+        prev: this.pvs[i].length - 1,
+      });
     },
   },
 };

@@ -2,7 +2,7 @@
   <img
     :src="url"
     :height="height"
-    :style="{ maxWidth: width + 'px' }"
+    :width="width"
     class="rounded-borders block"
   />
 </template>
@@ -14,13 +14,24 @@ export default {
   name: "GameThumbnail",
   props: {
     game: Object,
+    height: {
+      type: Number,
+      default: 60,
+    },
+    width: {
+      type: Number,
+      default: 60,
+    },
+    config: {
+      type: Object,
+      default: () => {},
+    },
+    noCache: Boolean,
   },
   data() {
     return {
       thumbnail: null,
       url: "",
-      height: 60,
-      width: 60,
       thumbnailConfig: {
         imageSize: "xs",
         axisLabels: false,
@@ -29,42 +40,51 @@ export default {
         unplayedPieces: false,
         padding: false,
         bgAlpha: 0,
+        ...this.config,
       },
     };
   },
   methods: {
     updateThumbnail() {
       let game = this.game;
-      if (!game.state || !game.state.tps) {
+      if (game.constructor !== Game && (!game.state || !game.state.tps)) {
         return;
       }
 
+      let state = game.state || game.minState || game.board;
+
+      let id;
+      let themeID;
       // Existing render
-      const id = "game-" + game.label;
-      const existing = this.$store.state.ui.thumbnails[id];
-      const themeID = this.$store.state.ui.themeID;
-      if (existing && existing.themeID === themeID) {
-        this.thumbnail = existing;
-        this.url = this.thumbnail.url;
-        if (existing.tps === game.state.tps) {
-          return;
+      if (!this.noCache) {
+        id = "game-" + (game.label || game.name);
+        let existing = this.$store.state.ui.thumbnails[id];
+        themeID = this.$store.state.ui.themeID;
+        if (existing && existing.themeID === themeID) {
+          this.thumbnail = existing;
+          this.url = this.thumbnail.url;
+          if (existing.tps === state.tps) {
+            return;
+          }
         }
       }
 
       // New render
-      const ply = game.state.ply;
-      const tps = game.state.tps;
+      const ply = state.ply;
+      const tps = state.tps;
       const config = game.config;
       try {
-        game = new Game({
-          state: game.minState || game.state,
-          tags: {
-            tps: game.state.tps,
-            komi: config.komi,
-            opening: config.opening,
-          },
-          config,
-        });
+        if (game.constructor !== Game) {
+          game = new Game({
+            state,
+            tags: {
+              tps: state.tps,
+              komi: config.komi,
+              opening: config.opening,
+            },
+            config,
+          });
+        }
         const canvas = game.board.render({
           ...this.thumbnailConfig,
           ply,
@@ -83,9 +103,11 @@ export default {
 
         canvas.toBlob((blob) => {
           const url = URL.createObjectURL(blob);
-          this.thumbnail = { id, tps, url, themeID };
-          this.url = this.thumbnail.url;
-          this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
+          this.url = url;
+          if (!this.noCache) {
+            this.thumbnail = { id, tps, url, themeID };
+            this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
+          }
         }, "image/png");
       } catch (error) {
         console.error(error);

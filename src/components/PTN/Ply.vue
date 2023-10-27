@@ -15,6 +15,7 @@
       :key="ply.id"
       square
       dense
+      v-on="$listeners"
     >
       <span class="ply" :class="'color' + ply.color">
         <span class="pieceCount" v-if="ply.minPieceCount">{{
@@ -57,6 +58,8 @@
       @click.right.prevent.native="select(ply, false)"
       clickable
     />
+
+    <slot />
   </span>
 </template>
 

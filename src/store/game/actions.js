@@ -639,11 +639,11 @@ export const INSERT_PLY = function ({ commit, dispatch }, ply) {
   dispatch("SAVE_CURRENT_GAME");
 };
 
-export const INSERT_PLIES = function ({ commit, dispatch }, plies) {
+export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
-  commit("INSERT_PLIES", plies);
+  commit("INSERT_PLIES", { plies, prev });
   dispatch("SAVE_CURRENT_GAME");
 };
 

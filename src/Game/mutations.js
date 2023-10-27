@@ -730,7 +730,7 @@ export default class GameMutations {
     });
   }
 
-  insertPlies(plies) {
+  insertPlies(plies, prev = 0) {
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
@@ -740,7 +740,9 @@ export default class GameMutations {
           break;
         }
       }
-      this.board.prev(false, plies.length - 1);
+      if (prev) {
+        this.board.prev(false, prev);
+      }
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();

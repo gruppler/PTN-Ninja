@@ -13,7 +13,16 @@
     >
       <q-item-section>
         <q-item-label>
-          <Ply :ply="ply" no-click done />
+          <Ply :ply="ply" no-click done>
+            <tooltip>
+              <GameThumbnail
+                :game="getGame()"
+                :config="{ imageSize: 'sm' }"
+                :width="thumbnailSize"
+                :height="thumbnailSize"
+              />
+            </tooltip>
+          </Ply>
         </q-item-label>
       </q-item-section>
       <q-item-section side>
@@ -60,22 +69,41 @@
       class="q-pt-none"
       @mouseover="highlight"
       @mouseout="unhighlight"
-      @click="insertFollowingPlies"
+      @click="insertFollowingPlies()"
       clickable
     >
       <q-item-label class="small">
-        <Ply v-for="(ply, i) in followingPlies" :key="i" :ply="ply" no-click />
+        <Ply
+          v-for="(ply, i) in followingPlies"
+          :key="i"
+          :ply="ply"
+          @click.stop.prevent.capture="
+            insertFollowingPlies(followingPlies.length - i - 1)
+          "
+          @click.right.stop.prevent
+        >
+          <tooltip>
+            <GameThumbnail
+              :game="getGame(i + 1)"
+              :config="{ imageSize: 'sm' }"
+              :width="thumbnailSize"
+              :height="thumbnailSize"
+            />
+          </tooltip>
+        </Ply>
       </q-item-label>
     </q-item>
   </div>
 </template>
 
 <script>
+import Game from "../../Game";
 import Ply from "../PTN/Ply";
+import GameThumbnail from "../controls/GameThumbnail";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply },
+  components: { Ply, GameThumbnail },
   props: {
     ply: Object,
     evaluation: Number,
@@ -99,6 +127,11 @@ export default {
     playerNumbersHint: String,
     followingPlies: Array,
   },
+  data() {
+    return {
+      thumbnailSize: 150,
+    };
+  },
   methods: {
     insertPly() {
       this.unhighlight();
@@ -110,12 +143,33 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertFollowingPlies(i) {
+    insertFollowingPlies(prev) {
+      if (prev === undefined) {
+        prev = this.followingPlies.length;
+      }
       this.unhighlight();
-      this.$store.dispatch("game/INSERT_PLIES", [
-        this.ply.text,
-        ...this.followingPlies.map((ply) => ply.text),
-      ]);
+      this.$store.dispatch("game/INSERT_PLIES", {
+        plies: [this.ply.text, ...this.followingPlies.map((ply) => ply.text)],
+        prev,
+      });
+    },
+    getGame(followingPlies = 0) {
+      let game = new Game({
+        name: "analysis",
+        state: this.$game.minState || this.$game.state,
+        tags: {
+          tps: this.$game.board.tps,
+          komi: this.$game.config.komi,
+          opening: this.$game.config.opening,
+        },
+        config: this.$game.config,
+      });
+      let plies = [this.ply];
+      if (followingPlies && this.followingPlies) {
+        plies.push(...this.followingPlies.slice(0, followingPlies));
+      }
+      game.insertPlies(plies.map((ply) => ply.ptn));
+      return game;
     },
   },
 };

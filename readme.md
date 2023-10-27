@@ -96,9 +96,9 @@ For example:
 
 - Execute a single ply specified as a string in PTN (e.g. `Sb4`)
 
-#### `INSERT_PLIES` (value: `<Array>: [ <String> ]` | `<String>`)
+#### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
 
-- Execute a series of plies specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`)
+- Execute a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies
 
 #### `DELETE_BRANCH` (value: `<String>`)
 
