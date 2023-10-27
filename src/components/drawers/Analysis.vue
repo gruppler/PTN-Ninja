@@ -56,6 +56,17 @@
           >
             {{ $t("analysis.Ask for suggestions") }}
           </q-btn>
+          <!-- TODO when should we enable/show this button? -->
+          <q-btn
+            v-if="!botMoves.length || true"
+            @click="queryBotSuggestionsForGame()"
+            :loading="loadingBotMoves"
+            class="full-width"
+            color="primary"
+            stretch
+          >
+            {{ $t("analysis.Analyse game") }}
+          </q-btn>
         </smooth-reflow>
 
         <smooth-reflow>
@@ -594,53 +605,57 @@ export default {
         move.draws
       )} – ${percentageString(move.draws)}`;
     },
+    async queryBotSuggestionsForGame() {
+      try {
+        this.loadingBotMoves = true;
+        const komi = this.game.config.komi;
+        const size = this.game.config.size;
+        const secondsToThinkPerPly = 1; // TODO change?
+
+        // TODO there must be a better way to generate TPS with existing code
+        const emptyTps = Array(6).fill(`x${size}`).join("/") + " 1 1";
+
+        // TODO avoid checking positions we already have data for!
+        // TODO iterate over all branches and variations
+
+        const ptnMoves = this.game.ptn.branchPlies.map(({ text }) => text); // ["a6", "a1", ...]
+
+        const moveCounts = [...Array(ptnMoves.length).keys()]; // [0, 1, 2... ptnMoves.length]
+        // Use promises to allow concurrency while waiting for HTTP responses.
+        // AWS Lambda allows limiting concurrent execution (minimum 10)
+        const moveQueryPromises = moveCounts.map(async (moveCount) => {
+          const moves = ptnMoves.slice(0, moveCount);
+          // TODO nitzel: I think it would be better to not use `moves`
+          // instead we should derive the full TPS from emptyTps+moves here
+          // and use that in the request.
+          const botMoves = await this.queryBotSuggestionsExt(
+            secondsToThinkPerPly,
+            emptyTps,
+            komi,
+            moves
+          );
+          console.log("bot moves for", moves, botMoves);
+          return { baseTps: emptyTps, moves, botMoves };
+          // TODO use result to populate this.botMoves as well as the PTN.vue component with the winning-probability graph
+        });
+        const moveResults = await Promise.all(moveQueryPromises);
+        console.log("entire branch", moveResults);
+      } catch (error) {
+        this.notifyError(error);
+      } finally {
+        this.loadingBotMoves = false;
+      }
+    },
     async queryBotSuggestions(secondsToThink) {
       try {
         this.loadingBotMoves = true;
 
         const tps = this.tps;
         const komi = this.game.config.komi;
-        const response = await fetch(bestMoveEndpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            komi: komi,
-            size: this.game.config.size,
-            tps: tps,
-            moves: [], // moves played on top of the TPS
-            time_control: {
-              // FixedNodes: 100000, // can be used instead of `Time`
-              Time: [
-                { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
-                { secs: 0, nanos: 0 }, // increment, ignored
-              ],
-            },
-            rollout_depth: 0,
-            rollout_temperature: 0.25,
-            action: "SuggestMoves",
-          }),
-        });
-        if (!response.ok) {
-          return this.notifyError("HTTP-Error: " + response.status);
-        }
-        const data = await response.json();
-        const { SuggestMoves: suggestedMoves } = data;
-
         const botMoves = deepFreeze(
-          suggestedMoves.map(({ mv: ptn, visits, winning_probability, pv }) => {
-            let player = this.$store.state.game.position.turn;
-            let color = this.$store.state.game.position.color;
-            let ply = new Ply(ptn, { id: null, player, color });
-            let followingPlies = pv.map((ply) => {
-              ({ player, color } = this.nextPly(player, color));
-              return new Ply(ply, { id: null, player, color });
-            });
-            let evaluation = 200 * (winning_probability - 0.5);
-            return { ply, followingPlies, visits, evaluation, secondsToThink };
-          })
+          await this.queryBotSuggestionsExt(secondsToThink, tps, komi)
         );
+
         this.$set(this.botPositions, tps, {
           ...(this.botPositions[tps] || {}),
           [this.botSettingsHash]: botMoves,
@@ -650,6 +665,53 @@ export default {
       } finally {
         this.loadingBotMoves = false;
       }
+    },
+    /** Queries `baseTps` position with `ptnMoves` applied to it.
+     * @returns Explored moves and their winning probability (`evaluation`).
+     * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
+     */
+    async queryBotSuggestionsExt(secondsToThink, baseTps, komi, ptnMoves = []) {
+      const response = await fetch(bestMoveEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          komi: komi,
+          size: this.game.config.size,
+          tps: baseTps,
+          moves: ptnMoves, // moves played on top of the TPS
+          time_control: {
+            // FixedNodes: 100000, // can be used instead of `Time`
+            Time: [
+              { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
+              { secs: 0, nanos: 0 }, // increment, ignored
+            ],
+          },
+          rollout_depth: 0,
+          rollout_temperature: 0.25,
+          action: "SuggestMoves",
+        }),
+      });
+      if (!response.ok) {
+        return this.notifyError("HTTP-Error: " + response.status);
+      }
+      const data = await response.json();
+      const { SuggestMoves: suggestedMoves } = data;
+
+      return suggestedMoves.map(
+        ({ mv: ptn, visits, winning_probability, pv }) => {
+          let player = this.$store.state.game.position.turn;
+          let color = this.$store.state.game.position.color;
+          let ply = new Ply(ptn, { id: null, player, color });
+          let followingPlies = pv.map((ply) => {
+            ({ player, color } = this.nextPly(player, color));
+            return new Ply(ply, { id: null, player, color });
+          });
+          let evaluation = 200 * (winning_probability - 0.5);
+          return { ply, followingPlies, visits, evaluation, secondsToThink };
+        }
+      );
     },
     async loadUsernames() {
       const response = await fetch(usernamesEndpoint);
