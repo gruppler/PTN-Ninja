@@ -228,7 +228,6 @@ export default {
         game = new Game({
           ptn: this.ptn,
           name: this.name,
-          board: this.board,
           state: this.state,
         });
       } catch (error) {
