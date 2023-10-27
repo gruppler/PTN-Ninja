@@ -14,14 +14,7 @@
       <q-item-section>
         <q-item-label>
           <Ply :ply="ply" no-click done>
-            <tooltip>
-              <GameThumbnail
-                :game="getGame()"
-                :config="{ imageSize: 'sm' }"
-                :width="thumbnailSize"
-                :height="thumbnailSize"
-              />
-            </tooltip>
+            <PlyPreview :game="getGame()" />
           </Ply>
         </q-item-label>
       </q-item-section>
@@ -54,9 +47,9 @@
               }"
               >{{ player2Number }}</span
             >
-            <hint v-if="playerNumbersHint">
-              <span style="white-space: pre">{{ playerNumbersHint }}</span>
-            </hint>
+            <tooltip v-if="playerNumbersTooltip">
+              <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+            </tooltip>
           </span>
         </q-item-label>
         <q-item-label v-if="count !== null && countLabel">
@@ -82,14 +75,7 @@
           "
           @click.right.stop.prevent
         >
-          <tooltip>
-            <GameThumbnail
-              :game="getGame(i + 1)"
-              :config="{ imageSize: 'sm' }"
-              :width="thumbnailSize"
-              :height="thumbnailSize"
-            />
-          </tooltip>
+          <PlyPreview :game="getGame(i + 1)" />
         </Ply>
       </q-item-label>
     </q-item>
@@ -99,11 +85,11 @@
 <script>
 import Game from "../../Game";
 import Ply from "../PTN/Ply";
-import GameThumbnail from "../controls/GameThumbnail";
+import PlyPreview from "../controls/PlyPreview";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply, GameThumbnail },
+  components: { Ply, PlyPreview },
   props: {
     ply: Object,
     evaluation: Number,
@@ -124,13 +110,8 @@ export default {
       type: [Number, String],
       default: null,
     },
-    playerNumbersHint: String,
+    playerNumbersTooltip: String,
     followingPlies: Array,
-  },
-  data() {
-    return {
-      thumbnailSize: 150,
-    };
   },
   methods: {
     insertPly() {

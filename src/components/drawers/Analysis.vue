@@ -371,7 +371,7 @@
             :player1-number="$n(move.wins1, 'n0')"
             :middle-number="move.draws ? $n(move.draws, 'n0') : null"
             :player2-number="$n(move.wins2, 'n0')"
-            :player-numbers-hint="winsHint(move)"
+            :player-numbers-tooltip="winsTooltip(move)"
           />
           <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
         </smooth-reflow>
@@ -578,7 +578,7 @@ export default {
     formatEvaluation(v) {
       return `${this.$n(Math.abs(v), "n2")}%`;
     },
-    winsHint(move) {
+    winsTooltip(move) {
       const gameCount = move.totalGames;
       const percentageString = (count) => this.$n(count / gameCount, "percent");
 

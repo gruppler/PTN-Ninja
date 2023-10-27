@@ -6,7 +6,7 @@
     anchor="top middle"
     transition-show="fade"
     transition-hide="fade"
-    content-class="tooltip non-selectable"
+    :content-class="{ 'tooltip non-selectable': true, 'q-pa-sm': square }"
     :offset="offset"
     v-bind="$attrs"
     v-on="$listeners"
@@ -18,6 +18,9 @@
 <script>
 export default {
   name: "tooltip",
+  props: {
+    square: Boolean,
+  },
   computed: {
     offset() {
       return this.$q.platform.has.touch ? [0, 20] : [0, 5];
