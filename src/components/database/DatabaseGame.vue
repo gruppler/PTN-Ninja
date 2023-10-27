@@ -10,7 +10,7 @@
         {{ player2 }} <em>({{ rating2 }})</em>
       </q-item-label>
       <q-item-label>
-        <q-icon name="date_time" left />
+        <span class="q-px-md" />
         <relative-time :value="date" />
       </q-item-label>
     </q-item-section>
