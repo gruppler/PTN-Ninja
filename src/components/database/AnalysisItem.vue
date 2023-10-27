@@ -137,13 +137,13 @@ export default {
     getGame(followingPlies = 0) {
       let game = new Game({
         name: "analysis",
-        state: this.$game.minState || this.$game.state,
+        state: this.$store.state.game.position,
         tags: {
-          tps: this.$game.board.tps,
-          komi: this.$game.config.komi,
-          opening: this.$game.config.opening,
+          tps: this.$store.state.game.position.tps,
+          komi: this.$store.state.game.config.komi,
+          opening: this.$store.state.game.config.opening,
         },
-        config: this.$game.config,
+        config: this.$store.state.game.config,
       });
       let plies = [this.ply];
       if (followingPlies && this.followingPlies) {
