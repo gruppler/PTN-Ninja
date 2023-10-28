@@ -519,7 +519,7 @@ export default class GameMutations {
     }
 
     // Validate
-    if (this.board.isGameEnd) {
+    if (this.board.isGameEnd && !isAlreadyDone) {
       throw new Error("The game has ended");
     }
     if (ply.pieceCount > this.size) {
