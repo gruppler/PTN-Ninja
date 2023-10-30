@@ -787,6 +787,11 @@ export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
   dispatch("SAVE_CURRENT_GAME");
 };
 
+export const ADD_NOTES = ({ commit, dispatch }, messages) => {
+  commit("ADD_NOTES", messages);
+  dispatch("SAVE_CURRENT_GAME");
+};
+
 export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   commit("REMOVE_NOTE", { plyID, index });
   dispatch("SAVE_CURRENT_GAME");

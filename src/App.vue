@@ -85,6 +85,7 @@ export default {
         case "TOGGLE_EVALUATION":
         case "EDIT_NOTE":
         case "ADD_NOTE":
+        case "ADD_NOTES":
         case "REMOVE_NOTE":
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":

@@ -23,7 +23,7 @@ export default class GameComments {
     return comments;
   }
 
-  addComment(type, message, plyID) {
+  _addComment(type, message, plyID) {
     message = Comment.parse("{" + message + "}");
     if (plyID === undefined) {
       plyID =
@@ -40,10 +40,26 @@ export default class GameComments {
       // Another comment
       this[type][plyID].push(message);
     }
+    return message;
+  }
+
+  addComment(type, message, plyID) {
+    message = this._addComment(type, message, plyID);
     this._updatePTN(true);
     this.board.dirtyComment(type, plyID);
     this.board.updateCommentsOutput();
     return message;
+  }
+
+  addComments(type, messages) {
+    for (const plyID in messages) {
+      messages[plyID].forEach((message) => {
+        this._addComment(type, message, plyID);
+      });
+      this.board.dirtyComment(type, plyID);
+    }
+    this._updatePTN(true);
+    this.board.updateCommentsOutput();
   }
 
   editComment(type, plyID, index, message) {
@@ -92,6 +108,10 @@ export default class GameComments {
 
   addNote(message, plyID) {
     return this.addComment("notes", message, plyID);
+  }
+
+  addNotes(messages) {
+    return this.addComments("notes", messages);
   }
 
   editNote(plyID, index, message) {

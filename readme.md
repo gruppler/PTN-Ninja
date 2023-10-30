@@ -168,6 +168,10 @@ For example:
 
 - Add a comment to the specified ply, or the current ply if not specified
 
+#### `ADD_NOTES` (value: `<Object>: { [plyID]: Array(messages) }`)
+
+- Add the comments to the specified plies
+
 #### `REMOVE_NOTE` (value: `<Object>: { plyID, index }`)
 
 - Remove the specified comment
