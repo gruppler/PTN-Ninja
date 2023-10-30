@@ -485,22 +485,7 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (state && isObject(state) && "plyIndex" in state) {
-      // Go to specified position
-      if (state.targetBranch in this.branches) {
-        this.board.targetBranch = state.targetBranch || "";
-      }
-      let ply = this.board.plies[state.plyIndex];
-      if (ply) {
-        if (ply.id || state.plyIsDone) {
-          this.board.goToPly(ply.id, state.plyIsDone);
-        } else {
-          this.board.plyID = ply.id;
-        }
-      } else {
-        this.board.plyID = -1;
-      }
-    } else if (this.board.plies.length) {
+    if (this.board.plies.length) {
       // Go to end of main branch
       this.board.plyID = 0;
       this.board.last();
@@ -514,6 +499,36 @@ export default class GameBase {
           this.board.setRoads(ply.result.roads || null);
         }
       }
+      // Navigate through every branch
+      for (let branch in this.branches) {
+        if (branch) {
+          this.board.goToPly(this.branches[branch].id, true);
+          this.board.last();
+        }
+      }
+    }
+    if (state && isObject(state) && "plyIndex" in state) {
+      // Go to specified position
+      if (state.targetBranch in this.branches) {
+        this.board.targetBranch = state.targetBranch || "";
+      } else {
+        this.board.targetBranch = "";
+      }
+      let ply = this.board.plies[state.plyIndex];
+      if (ply) {
+        if (
+          this.board.plyID !== ply.id ||
+          this.board.plyIsDone !== state.plyIsDone
+        ) {
+          this.board.goToPly(ply.id, state.plyIsDone);
+        }
+      } else {
+        this.board.plyID = -1;
+      }
+    } else if (this.board.targetBranch) {
+      // Go back to root branch
+      this.board.goToPly(0, true);
+      this.board.last();
     }
 
     if (this.onInit) {

@@ -1,6 +1,14 @@
 <template>
   <tooltip v-bind="$attrs" square>
-    <GameThumbnail :game="game" :config="config" :width="size" :height="size" />
+    <GameThumbnail
+      :game-id="gameID"
+      :tps="tps"
+      :plies="plies"
+      :hl="hl"
+      :config="config"
+      :width="240"
+      :height="240"
+    />
   </tooltip>
 </template>
 
@@ -11,13 +19,19 @@ export default {
   name: "PlyPreview",
   components: { GameThumbnail },
   props: {
-    game: Object,
+    tps: String,
+    plies: Array,
+    hl: String,
   },
-  data() {
-    return {
-      size: 240,
-      config: { imageSize: "md" },
-    };
+  computed: {
+    gameID() {
+      return `analysis/${this.tps}/${this.plies ? this.plies.join(",") : ""}`;
+    },
+    config() {
+      return {
+        imageSize: "md",
+      };
+    },
   },
 };
 </script>

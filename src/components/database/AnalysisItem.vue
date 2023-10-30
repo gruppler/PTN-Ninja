@@ -14,7 +14,7 @@
       <q-item-section>
         <q-item-label>
           <Ply :ply="ply" no-click done>
-            <PlyPreview :game="getGame()" />
+            <PlyPreview :tps="tps" :plies="[ply.text]" />
           </Ply>
         </q-item-label>
       </q-item-section>
@@ -67,14 +67,17 @@
     >
       <q-item-label class="small">
         <Ply
-          v-for="(ply, i) in followingPlies"
+          v-for="(fPly, i) in followingPlies"
           :key="i"
-          :ply="ply"
+          :ply="fPly"
           @click.stop.prevent.capture="
             insertFollowingPlies(followingPlies.length - i - 1)
           "
         >
-          <PlyPreview :game="getGame(i + 1)" />
+          <PlyPreview
+            :tps="tps"
+            :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
+          />
         </Ply>
       </q-item-label>
     </q-item>
@@ -82,7 +85,6 @@
 </template>
 
 <script>
-import Game from "../../Game";
 import Ply from "../PTN/Ply";
 import PlyPreview from "../controls/PlyPreview";
 
@@ -112,6 +114,11 @@ export default {
     playerNumbersTooltip: String,
     followingPlies: Array,
   },
+  computed: {
+    tps() {
+      return this.$store.state.game.position.tps;
+    },
+  },
   methods: {
     insertPly() {
       this.unhighlight();
@@ -132,24 +139,6 @@ export default {
         plies: [this.ply.text, ...this.followingPlies.map((ply) => ply.text)],
         prev,
       });
-    },
-    getGame(followingPlies = 0) {
-      let game = new Game({
-        name: "analysis",
-        state: this.$store.state.game.position,
-        tags: {
-          tps: this.$store.state.game.position.tps,
-          komi: this.$store.state.game.config.komi,
-          opening: this.$store.state.game.config.opening,
-        },
-        config: this.$store.state.game.config,
-      });
-      let plies = [this.ply];
-      if (followingPlies && this.followingPlies) {
-        plies.push(...this.followingPlies.slice(0, followingPlies));
-      }
-      game.insertPlies(plies.map((ply) => ply.ptn));
-      return game;
     },
   },
 };

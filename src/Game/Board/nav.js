@@ -26,6 +26,10 @@ export default class BoardNavigation {
 
   _afterPly(ply, isDone) {
     if (isDone) {
+      if (!ply.tpsAfter) {
+        ply.tpsAfter = this.tps;
+        this.dirtyPly(ply.id);
+      }
       if (ply.result && ply.result.type !== "1") {
         if (ply.result.type === "R" && !ply.result.roads) {
           this.updateSquareConnections();
@@ -48,7 +52,14 @@ export default class BoardNavigation {
 
   _doPly() {
     const ply = this.plyIsDone ? this.nextPly : this.ply;
-    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
+    if (!ply) {
+      return false;
+    }
+    if (!ply.tpsBefore) {
+      ply.tpsBefore = this.tps;
+      this.dirtyPly(ply.id);
+    }
+    if (this._doMoveset(ply.toMoveset(), ply.color, ply)) {
       this._setPly(ply.id, true);
       this._afterPly(ply, true);
       return true;
@@ -301,12 +312,14 @@ export default class BoardNavigation {
         }
       }
 
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       this.updatePTNBranchOutput();
     } catch (error) {
       if (this.game.onError) {
         this.game.onError(error, this.plyID);
+        this.updatePTNOutput();
         this.updateBoardOutput();
         this.updatePositionOutput();
         this.updatePTNBranchOutput();
@@ -332,6 +345,7 @@ export default class BoardNavigation {
     }
     if ((half || !this.prevPly) && this.plyIsDone) {
       const result = this._undoPly();
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;
@@ -350,6 +364,7 @@ export default class BoardNavigation {
     }
     if (!this.plyIsDone) {
       const result = this._doPly();
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;

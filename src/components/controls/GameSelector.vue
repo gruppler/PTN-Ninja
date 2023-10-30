@@ -75,6 +75,7 @@
 
       <template v-slot:option="scope">
         <GameSelectorOption
+          :key="scope.opt.label"
           :option="scope.opt"
           :show-icon="hasOnlineGames"
           v-bind="scope.itemProps"

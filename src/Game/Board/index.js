@@ -762,8 +762,8 @@ export default class Board extends Aggregation(
             this.pieces.played[player].cap.length ===
           this.game.pieceCounts[player].total
       ) ||
-        !this.squares.find((row) =>
-          row.find((square) => !square.pieces.length)
+        !this.squares.some((row) =>
+          row.some((square) => !square.pieces.length)
         ))
     );
   }

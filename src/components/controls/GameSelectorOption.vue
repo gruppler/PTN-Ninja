@@ -1,7 +1,13 @@
 <template>
   <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
     <q-item-section side>
-      <GameThumbnail :game="option" />
+      <GameThumbnail
+        :game-id="option.label"
+        :tps="option.state.tps"
+        :hl="option.state.ply"
+        :config="option.config"
+        no-transition
+      />
     </q-item-section>
     <q-item-section side v-if="showIcon">
       <q-icon :name="icon" :class="{ 'text-primary': option.value === 0 }">

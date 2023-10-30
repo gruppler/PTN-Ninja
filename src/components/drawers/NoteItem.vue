@@ -23,7 +23,7 @@
         class="q-px-md"
       >
         <template v-slot:plyTooltip>
-          <PlyPreview :game="getGame()" />
+          <PlyPreview :tps="ply.tpsAfter" :hl="ply.text" />
         </template>
       </Move>
       <q-item
@@ -37,12 +37,15 @@
         <q-item-label class="small">
           <Linenum :linenum="move.linenum" />
           <Ply
-            v-for="(ply, j) in pv"
+            v-for="(pvPly, j) in pv"
             :key="j"
-            :ply="ply"
+            :ply="pvPly"
             @click.stop.prevent.capture="insertPV(i, pv.length - j - 1)"
           >
-            <PlyPreview :game="getGame(i, j)" />
+            <PlyPreview
+              :tps="ply.tpsBefore"
+              :plies="pv.slice(0, j + 1).map((p) => p.ptn)"
+            />
           </Ply>
         </q-item-label>
       </q-item>
@@ -67,7 +70,6 @@ import Move from "../PTN/Move";
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 import PlyPreview from "../controls/PlyPreview";
-import Game from "../../Game";
 import PlyClass from "../../Game/PTN/Ply";
 
 export default {
@@ -161,22 +163,6 @@ export default {
         plies: this.pvs[i].map((ply) => ply.text),
         prev,
       });
-    },
-    getGame(pv = -1, followingPlies = 0) {
-      let game = new Game({
-        name: "analysis",
-        ptn: this.$game.ptn,
-        state: {
-          plyIndex: this.ply.index,
-          targetBranch: this.ply.branch,
-          plyIsDone: pv < 0,
-        },
-      });
-      if (pv >= 0) {
-        let plies = this.pvs[pv].slice(0, followingPlies + 1);
-        game.insertPlies(plies.map((ply) => ply.ptn));
-      }
-      return game;
     },
   },
 };

@@ -1,19 +1,31 @@
 <template>
   <img
+    v-if="imageLoaded"
     :src="url"
     :height="height"
     :width="width"
     class="rounded-borders block"
   />
+  <div
+    v-else
+    :style="{
+      height: height + 'px',
+      width: width + 'px',
+    }"
+  />
 </template>
 
 <script>
-import Game from "../../Game";
+import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
+import { isEqual } from "lodash";
 
 export default {
   name: "GameThumbnail",
   props: {
-    game: Object,
+    gameId: String,
+    tps: String,
+    plies: Array,
+    hl: String,
     height: {
       type: Number,
       default: 60,
@@ -26,10 +38,10 @@ export default {
       type: Object,
       default: () => {},
     },
-    noCache: Boolean,
   },
   data() {
     return {
+      imageLoaded: false,
       thumbnail: null,
       url: "",
       thumbnailConfig: {
@@ -40,74 +52,54 @@ export default {
         unplayedPieces: false,
         padding: false,
         bgAlpha: 0,
-        ...this.config,
       },
     };
   },
+  computed: {
+    options() {
+      return {
+        theme: this.$store.state.ui.theme,
+        showRoads: this.$store.state.ui.showRoads,
+        stackCounts: this.$store.state.ui.stackCounts,
+        ...this.thumbnailConfig,
+        ...this.config,
+        tps: this.tps,
+        plies: this.plies,
+        hl: this.hl,
+      };
+    },
+  },
   methods: {
     updateThumbnail() {
-      let game = this.game;
-      if (game.constructor !== Game && (!game.state || !game.state.tps)) {
-        return;
-      }
+      const options = this.options;
 
-      let state = game.state || game.minState || game.board;
-
+      // Check for existing image
       let id;
-      let themeID;
-      // Existing render
-      if (!this.noCache) {
-        id = "game-" + (game.label || game.name);
+      if (this.gameId) {
+        id = "game-" + this.gameId;
         let existing = this.$store.state.ui.thumbnails[id];
-        themeID = this.$store.state.ui.themeID;
-        if (existing && existing.themeID === themeID) {
+        if (existing && isEqual(existing.options, options)) {
           this.thumbnail = existing;
           this.url = this.thumbnail.url;
-          if (existing.tps === state.tps) {
-            return;
-          }
+          this.imageLoaded = true;
+          return;
         }
       }
 
-      // New render
-      const ply = state.ply;
-      const tps = state.tps;
-      const config = game.config;
+      // Create new image
       try {
-        if (game.constructor !== Game) {
-          game = new Game({
-            state,
-            tags: {
-              tps: state.tps,
-              komi: config.komi,
-              opening: config.opening,
-            },
-            config,
-          });
-        }
-        const canvas = game.board.render({
-          ...this.thumbnailConfig,
-          ply,
-          textSize: "xl",
-          flatCounts:
-            !config.isOnline || config.flatCounts
-              ? this.$store.state.ui.flatCounts
-              : false,
-          stackCounts: false,
-          showRoads:
-            !config.isOnline || config.showRoads
-              ? this.$store.state.ui.showRoads
-              : false,
-          theme: this.$store.state.ui.theme,
-        });
-
-        canvas.toBlob((blob) => {
+        TPStoCanvas(options).toBlob((blob) => {
           const url = URL.createObjectURL(blob);
           this.url = url;
-          if (!this.noCache) {
-            this.thumbnail = { id, tps, url, themeID };
+          if (id) {
+            this.thumbnail = { id, options, url };
             this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
           }
+          let img = new Image();
+          img.onload = () => {
+            this.imageLoaded = true;
+          };
+          img.src = url;
         }, "image/png");
       } catch (error) {
         console.error(error);
@@ -118,7 +110,10 @@ export default {
     this.$nextTick(this.updateThumbnail);
   },
   watch: {
-    "game.state.tps": "updateThumbnail",
+    options: {
+      handler: "updateThumbnail",
+      deep: true,
+    },
   },
 };
 </script>
