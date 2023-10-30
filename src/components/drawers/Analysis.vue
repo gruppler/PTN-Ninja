@@ -502,10 +502,15 @@ export default {
     };
   },
   computed: {
-    isVisible() {
+    isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
         this.$store.state.ui.textTab === "analysis"
+      );
+    },
+    isDBMovesVisible() {
+      return (
+        this.isPanelVisible && (this.sections.dbMoves || this.sections.dbGames)
       );
     },
     isFullyAnalyzed() {
@@ -870,19 +875,26 @@ export default {
     }
   },
   watch: {
-    async isVisible(isVisible) {
-      if (isVisible) {
+    async isPanelVisible(isPanelVisible) {
+      if (isPanelVisible) {
         if (!this.databases || !this.databases.length) {
           await this.loadDatabases();
         }
-        this.queryPosition();
         if (!this.player1Names.length) {
           this.loadUsernames();
         }
+        if (this.isDBMovesVisible) {
+          this.queryPosition();
+        }
+      }
+    },
+    isDBMovesVisible(isVisible) {
+      if (isVisible) {
+        this.queryPosition();
       }
     },
     tps() {
-      if (this.isVisible) {
+      if (this.isDBMovesVisible) {
         this.queryPosition();
       }
     },
