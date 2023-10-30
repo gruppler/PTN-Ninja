@@ -516,8 +516,9 @@ export default {
     isFullyAnalyzed() {
       return this.$store.state.game.ptn.branchPlies.every(
         (ply) =>
-          ply.tpsBefore in this.botPositions &&
-          (ply.result || ply.tpsAfter in this.botPositions)
+          this.plyHasEvalComment(ply) ||
+          (ply.tpsBefore in this.botPositions &&
+            (ply.result || ply.tpsAfter in this.botPositions))
       );
     },
     loadingDBs() {
@@ -624,6 +625,14 @@ export default {
         move.draws
       )} – ${percentageString(move.draws)}`;
     },
+    plyHasEvalComment(ply) {
+      return (
+        ply.id in this.game.comments.notes &&
+        this.game.comments.notes[ply.id].some(
+          (comment) => comment.evaluation || comment.pv
+        )
+      );
+    },
     getAnalysisNote(ply) {
       let positionBefore = this.botPositions[ply.tpsBefore];
       let positionAfter = this.botPositions[ply.tpsAfter];
@@ -653,33 +662,28 @@ export default {
         const concurrency = 10; // TODO: determine ideal value
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = 1; // TODO: change to 3?
-        const positions = this.game.ptn.branchPlies.map((ply) => ply.tpsBefore);
+        const plies = this.game.ptn.branchPlies.filter(
+          (ply) => !this.plyHasEvalComment(ply)
+        );
+        let positions = plies.map((ply) => ply.tpsBefore);
         if (!last(this.game.ptn.branchPlies).result) {
           positions.push(last(this.game.ptn.branchPlies).tpsAfter);
         }
+        positions = positions.filter((tps) => !(tps in this.botPositions));
         let total = positions.length;
         let completed = 0;
 
         for await (const result of asyncPool(
           concurrency,
           positions,
-          async (tps) => {
-            if (tps in this.botPositions) {
-              return;
-            }
-            return await this.queryBotSuggestionsExt(
-              secondsToThinkPerPly,
-              tps,
-              komi
-            );
-          }
+          async (tps) =>
+            await this.queryBotSuggestionsExt(secondsToThinkPerPly, tps, komi)
         )) {
-          completed += 1;
-          this.progressGameAnalysis = (100 * completed) / total;
+          this.progressGameAnalysis = (100 * ++completed) / total;
         }
         // Insert comments
         let messages = {};
-        this.game.ptn.branchPlies.forEach((ply) => {
+        plies.forEach((ply) => {
           messages[ply.id] = [this.getAnalysisNote(ply)];
         });
         this.$store.dispatch("game/ADD_NOTES", messages);
