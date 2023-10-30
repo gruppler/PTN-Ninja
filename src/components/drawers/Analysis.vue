@@ -47,7 +47,7 @@
 
         <smooth-reflow>
           <q-btn
-            v-if="!isFullyAnalyzed"
+            v-if="!isFullyAnalyzed && game.ptn.branchPlies.length"
             @click="analyzeGame()"
             :loading="loadingGameAnalysis"
             :percentage="progressGameAnalysis"
@@ -58,7 +58,7 @@
             stretch
           />
           <q-btn
-            v-if="!botMoves.length"
+            v-if="!botMoves.length && !isGameEnd"
             @click="analyzePosition(botThinkBudgetInSeconds.short)"
             :loading="loadingBotMoves"
             class="full-width"
@@ -436,7 +436,7 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { isArray, omit } from "lodash";
+import { isArray, last, omit } from "lodash";
 import Fuse from "fuse.js";
 import asyncPool from "tiny-async-pool";
 
@@ -515,7 +515,9 @@ export default {
     },
     isFullyAnalyzed() {
       return this.$store.state.game.ptn.branchPlies.every(
-        (ply) => ply.tpsBefore in this.botPositions
+        (ply) =>
+          ply.tpsBefore in this.botPositions &&
+          (ply.result || ply.tpsAfter in this.botPositions)
       );
     },
     loadingDBs() {
@@ -532,6 +534,9 @@ export default {
     },
     tps() {
       return this.$store.state.game.position.tps;
+    },
+    isGameEnd() {
+      return this.$store.state.game.position.isGameEnd;
     },
     botPosition() {
       return this.botPositions[this.tps] || null;
@@ -628,35 +633,41 @@ export default {
         .join(" ")}`;
     },
     async analyzeGame() {
+      if (!this.game.ptn.branchPlies.length) {
+        return;
+      }
       try {
         this.loadingGameAnalysis = true;
         this.progressGameAnalysis = 0;
-        const concurrency = 10;
+        const concurrency = 10; // TODO: determine ideal value
         const komi = this.game.config.komi;
-        const secondsToThinkPerPly = 1; // TODO: change?
-        const positions = this.$store.state.game.ptn.branchPlies
-          .map((ply) => ply.tpsBefore)
-          .filter((position) => !(position in this.botPositions));
+        const secondsToThinkPerPly = 1; // TODO: change to 3?
+        const positions = this.game.ptn.branchPlies.map((ply) => ply.tpsBefore);
+        if (!last(this.game.ptn.branchPlies).result) {
+          positions.push(last(this.game.ptn.branchPlies).tpsAfter);
+        }
         let total = positions.length;
         let completed = 0;
 
-        for await (const botMoves of asyncPool(
+        for await (const result of asyncPool(
           concurrency,
           positions,
           async (tps) => {
-            const botMoves = deepFreeze(
-              await this.queryBotSuggestionsExt(secondsToThinkPerPly, tps, komi)
+            if (tps in this.botPositions) {
+              return;
+            }
+            return await this.queryBotSuggestionsExt(
+              secondsToThinkPerPly,
+              tps,
+              komi
             );
-            this.$set(this.botPositions, tps, {
-              ...(this.botPositions[tps] || {}),
-              [this.botSettingsHash]: botMoves,
-            });
-            return botMoves;
           }
         )) {
           completed += 1;
           this.progressGameAnalysis = (100 * completed) / total;
         }
+        // TODO: insert comments
+        this.branch;
       } catch (error) {
         this.notifyError(error);
       } finally {
@@ -664,18 +675,14 @@ export default {
       }
     },
     async analyzePosition(secondsToThink) {
+      if (this.isGameEnd) {
+        return;
+      }
       try {
         this.loadingBotMoves = true;
         const tps = this.tps;
         const komi = this.game.config.komi;
-        const botMoves = deepFreeze(
-          await this.queryBotSuggestionsExt(secondsToThink, tps, komi)
-        );
-        this.$set(this.botPositions, tps, {
-          ...(this.botPositions[tps] || {}),
-          [this.botSettingsHash]: botMoves,
-        });
-        // this.$store.dispatch("game/ADD_NOTE", this.botMoveToNote(botMoves[0]));
+        await this.queryBotSuggestionsExt(secondsToThink, tps, komi);
       } catch (error) {
         this.notifyError(error);
       } finally {
@@ -687,8 +694,14 @@ export default {
      * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
      */
     async queryBotSuggestionsExt(secondsToThink, tps, komi) {
-      const initialPlayer = this.$store.state.game.position.turn;
-      const initialColor = this.$store.state.game.position.color;
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      const botSettingsHash = this.botSettingsHash;
       const response = await fetch(bestMoveEndpoint, {
         method: "POST",
         headers: {
@@ -717,7 +730,7 @@ export default {
       const data = await response.json();
       const { SuggestMoves: suggestedMoves } = data;
 
-      return suggestedMoves.map(
+      const result = suggestedMoves.map(
         ({ mv: ptn, visits, winning_probability, pv }) => {
           let player = initialPlayer;
           let color = initialColor;
@@ -730,6 +743,12 @@ export default {
           return { ply, followingPlies, visits, evaluation, secondsToThink };
         }
       );
+      deepFreeze(result);
+      this.$set(this.botPositions, tps, {
+        ...(this.botPositions[tps] || {}),
+        [botSettingsHash]: result,
+      });
+      return result;
     },
     async loadUsernames() {
       const response = await fetch(usernamesEndpoint);
@@ -784,8 +803,8 @@ export default {
       try {
         this.loadingDBMoves = true;
 
-        const player = this.$store.state.game.position.turn;
-        const color = this.$store.state.game.position.color;
+        const player = this.game.position.turn;
+        const color = this.game.position.color;
         const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
 
@@ -867,7 +886,7 @@ export default {
     },
   },
   async mounted() {
-    if (this.isVisible) {
+    if (this.isPanelVisible) {
       this.loadUsernames();
       await this.loadDatabases();
       // wait for databases to load before querying the position

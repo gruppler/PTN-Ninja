@@ -229,7 +229,7 @@ export default class BoardNavigation {
     this.setRoads(this.findRoads());
   }
 
-  goToPly(plyID, isDone) {
+  goToPly(plyID, isDone = false) {
     try {
       const targetPly = this.game.plies[plyID];
 

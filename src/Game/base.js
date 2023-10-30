@@ -520,7 +520,7 @@ export default class GameBase {
           this.board.plyID !== ply.id ||
           this.board.plyIsDone !== state.plyIsDone
         ) {
-          this.board.goToPly(ply.id, state.plyIsDone);
+          this.board.goToPly(ply.id, state.plyIsDone || false);
         }
       } else {
         this.board.plyID = -1;
