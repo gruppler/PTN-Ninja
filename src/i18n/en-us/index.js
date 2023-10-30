@@ -420,8 +420,9 @@ export default {
   analysis: {
     "analyzed positions":
       "No analyzed positions | 1 analyzed position | {count} analyzed positions",
-    "Ask for suggestions": "Ask for suggestions",
-    "Ask for better suggestions": "Think harder",
+    "Analyze Game": "Analyze Game",
+    "Analyze Position": "Analyze Position",
+    "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
     draws: "draw | draws",
