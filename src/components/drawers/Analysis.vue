@@ -624,13 +624,24 @@ export default {
         move.draws
       )} – ${percentageString(move.draws)}`;
     },
-    botMoveToNote(botMove) {
-      return `${Math.round(botMove.evaluation * 10) / 10}%, pv ${[
-        botMove.ply,
-        ...botMove.followingPlies,
-      ]
-        .map((p) => p.ptn)
-        .join(" ")}`;
+    getAnalysisNote(ply) {
+      let positionBefore = this.botPositions[ply.tpsBefore];
+      let positionAfter = this.botPositions[ply.tpsAfter];
+      let note = [];
+      if (positionAfter && this.botSettingsHash in positionAfter) {
+        let evaluation = positionAfter[this.botSettingsHash][0].evaluation;
+        note.push(`${Math.round(evaluation * 10) / 10}%`);
+      }
+      if (positionBefore && this.botSettingsHash in positionBefore) {
+        let position = positionBefore[this.botSettingsHash][0];
+        if (position && position.ply) {
+          let pv = [position.ply, ...position.followingPlies].map(
+            (ply) => ply.ptn
+          );
+          note.push(`pv ${pv.join(" ")}`);
+        }
+      }
+      return note.join(", ");
     },
     async analyzeGame() {
       if (!this.game.ptn.branchPlies.length) {
@@ -666,8 +677,12 @@ export default {
           completed += 1;
           this.progressGameAnalysis = (100 * completed) / total;
         }
-        // TODO: insert comments
-        this.branch;
+        // Insert comments
+        let messages = {};
+        this.game.ptn.branchPlies.forEach((ply) => {
+          messages[ply.id] = [this.getAnalysisNote(ply)];
+        });
+        this.$store.dispatch("game/ADD_NOTES", messages);
       } catch (error) {
         this.notifyError(error);
       } finally {
