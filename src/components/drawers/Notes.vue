@@ -158,7 +158,9 @@ export default {
           });
           this.editing = null;
         } else {
-          this.$store.dispatch("game/ADD_NOTE", this.message.trim());
+          this.$store.dispatch("game/ADD_NOTE", {
+            message: this.message.trim(),
+          });
         }
         this.message = "";
         this.$refs.input.focus();

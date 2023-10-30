@@ -23,10 +23,16 @@ export default class GameComments {
     return comments;
   }
 
-  addComment(type, message) {
+  addComment(type, message, plyID) {
     message = Comment.parse("{" + message + "}");
-    const plyID =
-      this.board.plyIndex <= 0 && !this.board.plyIsDone ? -1 : this.board.plyID;
+    if (plyID === undefined) {
+      plyID =
+        this.board.plyIndex <= 0 && !this.board.plyIsDone
+          ? -1
+          : this.board.plyID;
+    } else if (!(plyID in this.plies) && plyID !== -1) {
+      throw "Invalid plyID";
+    }
     if (!this[type][plyID]) {
       // First comment
       this[type] = Object.assign({ [plyID]: [message] }, this[type]);
@@ -72,8 +78,8 @@ export default class GameComments {
     }
   }
 
-  addChatMessage(message) {
-    return this.addComment("chatlog", message);
+  addChatMessage(message, plyID) {
+    return this.addComment("chatlog", message, plyID);
   }
 
   editChatMessage(plyID, index, message) {
@@ -84,8 +90,8 @@ export default class GameComments {
     return this.removeComment("chatlog", plyID, index);
   }
 
-  addNote(message) {
-    return this.addComment("notes", message);
+  addNote(message, plyID) {
+    return this.addComment("notes", message, plyID);
   }
 
   editNote(plyID, index, message) {

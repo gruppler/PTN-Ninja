@@ -782,8 +782,8 @@ export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
   dispatch("SAVE_CURRENT_GAME");
 };
 
-export const ADD_NOTE = ({ commit, dispatch }, message) => {
-  commit("ADD_NOTE", message);
+export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
+  commit("ADD_NOTE", { message, plyID });
   dispatch("SAVE_CURRENT_GAME");
 };
 

@@ -164,9 +164,9 @@ For example:
 
 - Replace the specified comment
 
-#### `ADD_NOTE` (value: `<String>`)
+#### `ADD_NOTE` (value: `<Object>: { message, plyID }`)
 
-- Add a comment to the current ply
+- Add a comment to the specified ply, or the current ply if not specified
 
 #### `REMOVE_NOTE` (value: `<Object>: { plyID, index }`)
 

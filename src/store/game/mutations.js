@@ -362,8 +362,8 @@ export const EDIT_NOTE = (state, { plyID, index, message }) => {
   Vue.prototype.$game.editNote(plyID, index, message);
 };
 
-export const ADD_NOTE = (state, message) => {
-  Vue.prototype.$game.addNote(message);
+export const ADD_NOTE = (state, { message, plyID }) => {
+  Vue.prototype.$game.addNote(message, plyID);
 };
 
 export const REMOVE_NOTE = (state, { plyID, index }) => {
