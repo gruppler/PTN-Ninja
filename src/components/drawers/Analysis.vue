@@ -47,16 +47,27 @@
 
         <smooth-reflow>
           <q-btn
-            v-if="!isFullyAnalyzed && game.ptn.branchPlies.length"
+            v-if="!isFullyAnalyzed && plies.length"
             @click="analyzeGame()"
             :loading="loadingGameAnalysis"
             :percentage="progressGameAnalysis"
             class="full-width"
             color="primary"
-            icon="moves"
-            :label="$t('analysis.Analyze Game')"
             stretch
-          />
+          >
+            <q-icon
+              :name="showAllBranches ? 'moves' : 'branch'"
+              :class="{ 'rotate-180': !showAllBranches }"
+              left
+            />
+            {{
+              $t(
+                showAllBranches
+                  ? "analysis.Analyze Game"
+                  : "analysis.Analyze Branch"
+              )
+            }}
+          </q-btn>
           <q-btn
             v-if="!botMoves.length && !isGameEnd"
             @click="analyzePosition(botThinkBudgetInSeconds.short)"
@@ -67,6 +78,9 @@
             :label="$t('analysis.Analyze Position')"
             stretch
           />
+          <q-item v-else-if="isGameEnd" class="flex-center">
+            {{ $t("analysis.gameOver") }}
+          </q-item>
         </smooth-reflow>
 
         <smooth-reflow>
@@ -89,6 +103,7 @@
             "
           />
         </smooth-reflow>
+
         <smooth-reflow>
           <q-btn
             v-if="
@@ -436,7 +451,7 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { isArray, last, omit } from "lodash";
+import { isArray, omit, uniq } from "lodash";
 import Fuse from "fuse.js";
 import asyncPool from "tiny-async-pool";
 
@@ -513,8 +528,16 @@ export default {
         this.isPanelVisible && (this.sections.dbMoves || this.sections.dbGames)
       );
     },
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
+    },
+    plies() {
+      return this.$store.state.game.ptn[
+        [this.showAllBranches ? "allPlies" : "branchPlies"]
+      ];
+    },
     isFullyAnalyzed() {
-      return this.$store.state.game.ptn.branchPlies.every(
+      return this.plies.every(
         (ply) =>
           this.plyHasEvalComment(ply) ||
           (ply.tpsBefore in this.botPositions &&
@@ -638,7 +661,8 @@ export default {
       let positionAfter = this.botPositions[ply.tpsAfter];
       let note = [];
       if (positionAfter && this.botSettingsHash in positionAfter) {
-        let evaluation = positionAfter[this.botSettingsHash][0].evaluation;
+        let evaluation =
+          (positionAfter[this.botSettingsHash][0].evaluation + 100) / 2;
         note.push(`${Math.round(evaluation * 10) / 10}%`);
       }
       if (positionBefore && this.botSettingsHash in positionBefore) {
@@ -662,14 +686,16 @@ export default {
         const concurrency = 10; // TODO: determine ideal value
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = 1; // TODO: change to 3?
-        const plies = this.game.ptn.branchPlies.filter(
-          (ply) => !this.plyHasEvalComment(ply)
-        );
+        const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
         let positions = plies.map((ply) => ply.tpsBefore);
-        if (!last(this.game.ptn.branchPlies).result) {
-          positions.push(last(this.game.ptn.branchPlies).tpsAfter);
-        }
-        positions = positions.filter((tps) => !(tps in this.botPositions));
+        plies.forEach((ply) => {
+          if (!ply.result) {
+            positions.push(ply.tpsAfter);
+          }
+        });
+        positions = uniq(positions).filter(
+          (tps) => !(tps in this.botPositions)
+        );
         let total = positions.length;
         let completed = 0;
 

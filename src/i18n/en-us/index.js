@@ -420,12 +420,14 @@ export default {
   analysis: {
     "analyzed positions":
       "No analyzed positions | 1 analyzed position | {count} analyzed positions",
+    "Analyze Branch": "Analyze Branch",
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
     draws: "draw | draws",
+    gameOver: "The game has ended",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
     maxDate: "Before",

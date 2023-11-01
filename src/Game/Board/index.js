@@ -475,6 +475,7 @@ export default class Board extends Aggregation(
       {
         tps: this.getTPS(),
         ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
+        boardPly: this.boardPly,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly
           ? this.output.ptn.allPlies[this.prevPly.id]
@@ -690,9 +691,10 @@ export default class Board extends Aggregation(
       .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2);
 
     if (number === null) {
-      const ply = this.boardPly ? this.game.plies[this.boardPly.id] : null;
+      const boardPly = this.boardPly;
+      const ply = boardPly ? this.game.plies[boardPly.id] : null;
       number = ply
-        ? ply.move.number + 1 * (ply.player === 2 && this.plyIsDone)
+        ? ply.move.number + 1 * (ply.player === 2 && boardPly.isDone)
         : this.game.firstMoveNumber;
     }
 

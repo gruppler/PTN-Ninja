@@ -122,7 +122,7 @@
           selected-played
         />
         <hint v-if="branches.length >= 2 && !plyInProgress">
-          {{ $t("Branches") }}
+          {{ $tc("Branches", branches.length) }}
         </hint>
       </q-btn>
     </div>
