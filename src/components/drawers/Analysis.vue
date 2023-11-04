@@ -654,30 +654,38 @@ export default {
     plyHasEvalComment(ply) {
       return (
         ply.id in this.game.comments.notes &&
-        this.game.comments.notes[ply.id].some(
-          (comment) => comment.evaluation || comment.pv
+        this.game.comments.notes[ply.id].some((comment) => comment.evaluation)
+      );
+    },
+    plyHasPVComment(ply, pv = null) {
+      return (
+        ply.id in this.game.comments.notes &&
+        this.game.comments.notes[ply.id].some((comment) =>
+          pv === null ? comment.pv : comment.message === pv
         )
       );
     },
-    getAnalysisNote(ply) {
-      let positionBefore = this.botPositions[ply.tpsBefore];
+    getEvalComment(ply) {
       let positionAfter = this.botPositions[ply.tpsAfter];
-      let note = [];
       if (positionAfter && this.botSettingsHash in positionAfter) {
         let evaluation =
-          (positionAfter[this.botSettingsHash][0].evaluation + 100) / 2;
-        note.push(`${Math.round(evaluation * 10) / 10}%`);
+          Math.round(positionAfter[this.botSettingsHash][0].evaluation) / 100;
+        return `${evaluation >= 0 ? "+" : ""}${evaluation}`;
       }
+      return null;
+    },
+    getPVComment(ply) {
+      let positionBefore = this.botPositions[ply.tpsBefore];
       if (positionBefore && this.botSettingsHash in positionBefore) {
         let position = positionBefore[this.botSettingsHash][0];
         if (position && position.ply) {
           let pv = [position.ply, ...position.followingPlies].map(
             (ply) => ply.ptn
           );
-          note.push(`pv ${pv.join(" ")}`);
+          return `pv ${pv.join(" ")}`;
         }
       }
-      return note.join(", ");
+      return null;
     },
     async analyzeGame() {
       if (!this.game.ptn.branchPlies.length) {
@@ -713,7 +721,16 @@ export default {
         // Insert comments
         let messages = {};
         plies.forEach((ply) => {
-          messages[ply.id] = [this.getAnalysisNote(ply)];
+          let notes = [];
+          let evaluation = this.getEvalComment(ply);
+          if (evaluation !== null && !this.plyHasEvalComment(ply)) {
+            notes.push(evaluation);
+          }
+          let pv = this.getPVComment(ply);
+          if (pv !== null && !this.plyHasPVComment(ply, pv)) {
+            notes.push(pv);
+          }
+          messages[ply.id] = notes;
         });
         this.$store.dispatch("game/ADD_NOTES", messages);
       } catch (error) {
