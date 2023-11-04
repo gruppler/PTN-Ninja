@@ -40,13 +40,13 @@ export default class GameComments {
       // Another comment
       this[type][plyID].push(message);
     }
+    this.board.dirtyComment(type, plyID);
     return message;
   }
 
   addComment(type, message, plyID) {
     message = this._addComment(type, message, plyID);
     this._updatePTN(true);
-    this.board.dirtyComment(type, plyID);
     this.board.updateCommentsOutput();
     return message;
   }
@@ -56,7 +56,6 @@ export default class GameComments {
       messages[plyID].forEach((message) => {
         this._addComment(type, message, plyID);
       });
-      this.board.dirtyComment(type, plyID);
     }
     this._updatePTN(true);
     this.board.updateCommentsOutput();
