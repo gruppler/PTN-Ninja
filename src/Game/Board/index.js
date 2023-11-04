@@ -485,6 +485,7 @@ export default class Board extends Aggregation(
           : null,
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
+        isGameEndDefault: this.isGameEndDefult,
       }
     );
   }
@@ -753,6 +754,15 @@ export default class Board extends Aggregation(
     if (this.plies.length > index) {
       this.plyID = this.plies[index].id;
     }
+  }
+
+  get isGameEndDefult() {
+    return (
+      this.ply &&
+      this.plyIsDone &&
+      this.ply.result &&
+      this.ply.result.type === "1"
+    );
   }
 
   get isGameEndFlats() {

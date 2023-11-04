@@ -560,7 +560,10 @@ export default {
       return this.$store.state.game.position.tps;
     },
     isGameEnd() {
-      return this.$store.state.game.position.isGameEnd;
+      return (
+        this.$store.state.game.position.isGameEnd &&
+        !this.$store.state.game.position.isGameEndDefult
+      );
     },
     botPosition() {
       return this.botPositions[this.tps] || null;
@@ -689,7 +692,7 @@ export default {
         const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
         let positions = plies.map((ply) => ply.tpsBefore);
         plies.forEach((ply) => {
-          if (!ply.result) {
+          if (!ply.result || ply.result.type === "1") {
             positions.push(ply.tpsAfter);
           }
         });
