@@ -688,7 +688,7 @@ export default {
         this.progressGameAnalysis = 0;
         const concurrency = 10; // TODO: determine ideal value
         const komi = this.game.config.komi;
-        const secondsToThinkPerPly = 1; // TODO: change to 3?
+        const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
         const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
         let positions = plies.map((ply) => ply.tpsBefore);
         plies.forEach((ply) => {
