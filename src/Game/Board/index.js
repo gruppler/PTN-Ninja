@@ -434,9 +434,16 @@ export default class Board extends Aggregation(
               for (let i = 0; i < comments.length; i++) {
                 comment = comments[i];
                 if (comment) {
-                  evaluations[plyID] = comment.evaluation;
-                  pvs[plyID] = comment.pv;
-                  break;
+                  if (comment.evaluation !== null) {
+                    evaluations[plyID] = comment.evaluation;
+                  }
+                  if (comment.pv !== null) {
+                    if (pvs[plyID]) {
+                      pvs[plyID] = pvs[plyID].concat(comment.pv);
+                    } else {
+                      pvs[plyID] = comment.pv;
+                    }
+                  }
                 }
               }
             }
