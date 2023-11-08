@@ -122,9 +122,6 @@ export default {
       window.removeEventListener("message", handleMessage);
     }
     window.addEventListener("message", handleMessage);
-
-    // Initialize wasm bots
-    import("./topaz").then((topaz) => (this.$topaz = topaz));
   },
   watch: {
     "$store.state.game.position": {

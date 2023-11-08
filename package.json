@@ -23,6 +23,7 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
+    "@open-wc/webpack-import-meta-loader": "^0.4.7",
     "@quasar/extras": "^1.16.7",
     "aggregation": "^1.2.6",
     "aws-sdk": "^2.885.0",

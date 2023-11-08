@@ -21,6 +21,7 @@ let defaults = {
   },
   botSettings: {
     maxSuggestedMoves: 8,
+    bot: "tiltak",
   },
   animateBoard: true,
   animateScrub: false,
