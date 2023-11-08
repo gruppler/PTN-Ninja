@@ -35,7 +35,7 @@
         clickable
       >
         <q-item-label class="small">
-          <Linenum :linenum="move.linenum" />
+          <Linenum :linenum="move.linenum" no-branch />
           <Ply
             v-for="(pvPly, j) in pv"
             :key="j"
