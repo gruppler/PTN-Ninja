@@ -492,7 +492,7 @@ export default class Board extends Aggregation(
           : null,
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
-        isGameEndDefault: this.isGameEndDefult,
+        isGameEndDefault: this.isGameEndDefault,
       }
     );
   }
@@ -763,7 +763,7 @@ export default class Board extends Aggregation(
     }
   }
 
-  get isGameEndDefult() {
+  get isGameEndDefault() {
     return (
       this.ply &&
       this.plyIsDone &&
@@ -829,7 +829,7 @@ export default class Board extends Aggregation(
 
   get turn() {
     if (this.ply) {
-      if (this.isGameEnd) {
+      if (this.isGameEnd && !this.isGameEndDefault) {
         return this.ply.player;
       } else {
         return this.plyIsDone

@@ -658,7 +658,7 @@ export default {
     isGameEnd() {
       return (
         this.$store.state.game.position.isGameEnd &&
-        !this.$store.state.game.position.isGameEndDefult
+        !this.$store.state.game.position.isGameEndDefault
       );
     },
     botPosition() {
@@ -737,7 +737,7 @@ export default {
       return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
     },
     formatEvaluation(v) {
-      return `${this.$n(Math.abs(v), "n2")}%`;
+      return `+${this.$n(Math.abs(v), "n2")}%`;
     },
     winsTooltip(move) {
       const gameCount = move.totalGames;
