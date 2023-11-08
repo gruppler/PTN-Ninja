@@ -562,7 +562,7 @@ export default {
     isGameEnd() {
       return (
         this.$store.state.game.position.isGameEnd &&
-        !this.$store.state.game.position.isGameEndDefult
+        !this.$store.state.game.position.isGameEndDefault
       );
     },
     botPosition() {
