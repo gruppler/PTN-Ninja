@@ -35,6 +35,9 @@
               v-model="botSettings.bot"
               :options="bots"
               :label="$t('Bot')"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               emit-value
               map-options
               item-aligned
