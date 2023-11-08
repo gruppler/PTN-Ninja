@@ -507,14 +507,17 @@ export default class GameBase {
         }
       }
     }
-    if (state && isObject(state) && "plyIndex" in state) {
+    if (
+      state &&
+      isObject(state) &&
+      "plyIndex" in state &&
+      state.targetBranch in this.branches
+    ) {
       // Go to specified position
-      if (state.targetBranch in this.branches) {
-        this.board.targetBranch = state.targetBranch || "";
-      } else {
-        this.board.targetBranch = "";
-      }
-      let ply = this.board.plies[state.plyIndex];
+      let ply = this.plies.find(
+        (ply) =>
+          ply.index === state.plyIndex && ply.branch === state.targetBranch
+      );
       if (ply) {
         if (
           this.board.plyID !== ply.id ||
