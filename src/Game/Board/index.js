@@ -829,15 +829,7 @@ export default class Board extends Aggregation(
 
   get turn() {
     if (this.ply) {
-      if (this.isGameEnd && !this.isGameEndDefault) {
-        return this.ply.player;
-      } else {
-        return this.plyIsDone
-          ? this.ply.player === 1
-            ? 2
-            : 1
-          : this.ply.player;
-      }
+      return this.plyIsDone ? (this.ply.player === 1 ? 2 : 1) : this.ply.player;
     }
     return this.game.firstPlayer;
   }
