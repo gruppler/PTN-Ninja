@@ -981,7 +981,27 @@ export default {
       this.player1Index = new Fuse(white);
       this.player2Index = new Fuse(black);
     },
-    async loadDatabases() {
+    async init() {
+      // Load wasm bots
+      try {
+        if (!this.topazWorker) {
+          this.topazWorker = new Worker(
+            new URL("/topaz/topaz.worker.js", import.meta.url)
+          );
+          this.topazWorker.onmessage = ({ data }) => {
+            this.receiveTopazSuggestions(data);
+          };
+        }
+      } catch (error) {
+        this.notifyError(error);
+      }
+
+      // Load player names
+      if (!this.player1Names.length) {
+        this.loadUsernames();
+      }
+
+      // Load databases
       try {
         const response = await fetch(databasesEndpoint);
         this.databases = await response.json();
@@ -1112,17 +1132,7 @@ export default {
   },
   async mounted() {
     if (this.isPanelVisible) {
-      if (!this.topazWorker) {
-        this.topazWorker = new Worker(
-          new URL("/topaz/topaz.worker.js", import.meta.url)
-        );
-        this.topazWorker.onmessage = ({ data }) => {
-          this.receiveTopazSuggestions(data);
-        };
-      }
-
-      this.loadUsernames();
-      await this.loadDatabases();
+      await this.init();
       // wait for databases to load before querying the position
       this.queryPosition();
     }
@@ -1131,10 +1141,7 @@ export default {
     async isPanelVisible(isPanelVisible) {
       if (isPanelVisible) {
         if (!this.databases || !this.databases.length) {
-          await this.loadDatabases();
-        }
-        if (!this.player1Names.length) {
-          this.loadUsernames();
+          await this.init();
         }
         if (this.isDBMovesVisible) {
           this.queryPosition();
