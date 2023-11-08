@@ -189,17 +189,21 @@ __exports.main = function() {
 };
 
 /**
+* @param {number} depth
+* @param {number} think_seconds
+* @param {number} size
+* @param {number} komi
 * @param {string} tps
 * @returns {string}
 */
-__exports.evaluate = function(tps) {
+__exports.evaluate = function(depth, think_seconds, size, komi, tps) {
     let deferred2_0;
     let deferred2_1;
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        wasm.evaluate(retptr, ptr0, len0);
+        wasm.evaluate(retptr, depth, think_seconds, size, komi, ptr0, len0);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         deferred2_0 = r0;
