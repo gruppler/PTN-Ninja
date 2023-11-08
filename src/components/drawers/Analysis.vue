@@ -891,7 +891,17 @@ export default {
         id: this.botSettingsHash,
       });
     },
-    receiveTopazSuggestions({ tps, depth, score, nodes, pv, id }) {
+    receiveTopazSuggestions(result) {
+      this.loadingTopazMoves = false;
+      clearInterval(this.topazTimer);
+      this.topazTimer = null;
+
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const { tps, depth, score, nodes, pv, id } = result;
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
         this.game.config.openingSwap && moveNumber === 1
@@ -899,9 +909,6 @@ export default {
             ? 2
             : 1
           : initialPlayer;
-      this.loadingTopazMoves = false;
-      clearInterval(this.topazTimer);
-      this.topazTimer = null;
       let player = initialPlayer;
       let color = initialColor;
       let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
@@ -909,13 +916,13 @@ export default {
         ({ player, color } = this.nextPly(player, color));
         return new Ply(ply, { id: null, player, color });
       });
-      let result = [{ ply, followingPlies, depth, score, nodes }];
-      deepFreeze(result);
+      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
+      deepFreeze(botMoves);
       this.$set(this.botPositions, tps, {
         ...(this.botPositions[tps] || {}),
-        [id]: result,
+        [id]: botMoves,
       });
-      return result;
+      return botMoves;
     },
     /** Queries `tps` position.
      * @returns Explored moves and their winning probability (`evaluation`).
