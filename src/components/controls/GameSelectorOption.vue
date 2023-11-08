@@ -6,6 +6,7 @@
         :tps="option.state.tps"
         :hl="option.state.ply"
         :config="option.config"
+        class="rounded-borders"
         no-transition
       />
     </q-item-section>
