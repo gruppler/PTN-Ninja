@@ -32,6 +32,7 @@ export default {
   date: "mdi-calendar",
   date_time: "mdi-calendar-clock",
   delete: "mdi-delete",
+  depth: "mdi-arrow-collapse-down",
   down: "mdi-chevron-down",
   download: "mdi-download",
   edit: "mdi-pencil",

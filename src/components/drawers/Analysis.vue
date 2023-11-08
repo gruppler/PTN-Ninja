@@ -62,6 +62,39 @@
                 </template>
               </q-input>
             </template>
+            <template v-if="botSettings.bot === 'topaz'">
+              <!-- Depth -->
+              <q-input
+                v-model.number="botSettings.depth"
+                :label="$t('analysis.Depth')"
+                type="number"
+                min="2"
+                max="99"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="depth" />
+                </template>
+              </q-input>
+
+              <!-- Time Budget -->
+              <q-input
+                v-model.number="botSettings.timeBudget"
+                :label="$t('analysis.timeBudget')"
+                type="number"
+                min="1"
+                max="999"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="clock" />
+                </template>
+              </q-input>
+            </template>
           </template>
         </smooth-reflow>
 
@@ -105,6 +138,7 @@
               v-if="!botMoves.length && !isGameEnd"
               @click="requestTopazSuggestions()"
               :loading="loadingTopazMoves"
+              :percentage="progressTopazAnalysis"
               class="full-width"
               color="primary"
               icon="board"
@@ -126,15 +160,34 @@
             )"
             :key="i"
             :ply="move.ply"
-            :evaluation="move.evaluation"
+            :evaluation="'evaluation' in move ? move.evaluation : null"
             :following-plies="move.followingPlies"
-            :count="move.visits"
-            count-label="analysis.visits"
+            :count="
+              'visits' in move
+                ? move.visits
+                : 'nodes' in move
+                ? move.nodes
+                : null
+            "
+            :count-label="
+              'visits' in move
+                ? 'analysis.visits'
+                : 'nodes' in move
+                ? 'analysis.nodes'
+                : null
+            "
             :player1-number="
-              move.evaluation >= 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation >= 0
+                ? formatEvaluation(move.evaluation)
+                : null
             "
             :player2-number="
-              move.evaluation < 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation < 0
+                ? formatEvaluation(move.evaluation)
+                : null
+            "
+            :middle-number="
+              'depth' in move ? `${$t('analysis.depth')} ${move.depth}` : null
             "
           />
         </smooth-reflow>
@@ -487,7 +540,7 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { isArray, omit, uniq } from "lodash";
+import { isArray, omit, pick, uniq } from "lodash";
 import Fuse from "fuse.js";
 import asyncPool from "tiny-async-pool";
 
@@ -519,6 +572,8 @@ export default {
       loadingTiltakAnalysis: false,
       progressTiltakAnalysis: 0,
       loadingTopazMoves: false,
+      progressTopazAnalysis: 0,
+      topazTimer: null,
       loadingDBMoves: false,
       showBotSettings: false,
       showDBSettings: false,
@@ -552,8 +607,8 @@ export default {
         long: 8,
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
-      botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
-      dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
+      botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
+      dbSettingsHash: this.hashBotSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
@@ -664,11 +719,15 @@ export default {
         this.sections.dbMoves = true;
       }
     },
-    hashSettings(settings) {
+    hashBotSettings(settings) {
       if (settings.bot === "tiltak") {
-        return Object.values(settings).join(",");
+        return Object.values(pick(settings, ["bot", "maxSuggestedMoves"])).join(
+          ","
+        );
       } else {
-        return "topaz";
+        return Object.values(
+          pick(settings, ["bot", "depth", "timeBudget"])
+        ).join(",");
       }
     },
     nextPly(player, color) {
@@ -750,7 +809,9 @@ export default {
           }
         });
         positions = uniq(positions).filter(
-          (tps) => !(tps in this.botPositions)
+          (tps) =>
+            !(tps in this.botPositions) ||
+            !(this.botSettingsHash in this.botPositions[tps])
         );
         let total = positions.length;
         let completed = 0;
@@ -812,9 +873,22 @@ export default {
         return;
       }
       this.loadingTopazMoves = true;
-      this.topazWorker.postMessage(this.tps);
+      this.progressTopazAnalysis = 0;
+      const startTime = new Date().getTime();
+      const timeBudget = this.botSettings.timeBudget * 10;
+      this.topazTimer = setInterval(() => {
+        this.progressTopazAnalysis =
+          (new Date().getTime() - startTime) / timeBudget;
+      }, 1000);
+      this.topazWorker.postMessage({
+        ...this.botSettings,
+        size: this.game.config.size,
+        komi: this.game.config.komi,
+        tps: this.tps,
+        id: this.botSettingsHash,
+      });
     },
-    receiveTopazSuggestions({ tps, depth, score, nodes, pv }) {
+    receiveTopazSuggestions({ tps, depth, score, nodes, pv, id }) {
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
         this.game.config.openingSwap && moveNumber === 1
@@ -823,7 +897,8 @@ export default {
             : 1
           : initialPlayer;
       this.loadingTopazMoves = false;
-      pv = pv.split(/\s/);
+      clearInterval(this.topazTimer);
+      this.topazTimer = null;
       let player = initialPlayer;
       let color = initialColor;
       let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
@@ -831,11 +906,11 @@ export default {
         ({ player, color } = this.nextPly(player, color));
         return new Ply(ply, { id: null, player, color });
       });
-      let result = [{ ply, followingPlies, visits: Number(nodes) }];
+      let result = [{ ply, followingPlies, depth, score, nodes }];
       deepFreeze(result);
       this.$set(this.botPositions, tps, {
         ...(this.botPositions[tps] || {}),
-        topaz: result,
+        [id]: result,
       });
       return result;
     },
@@ -1080,6 +1155,8 @@ export default {
       if (position) {
         if (this.botSettingsHash in position) {
           this.botMoves = position[this.botSettingsHash] || [];
+        } else {
+          this.botMoves = [];
         }
       } else {
         this.botMoves = [];
@@ -1116,14 +1193,14 @@ export default {
     botSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-        this.botSettingsHash = this.hashSettings(settings);
+        this.botSettingsHash = this.hashBotSettings(settings);
       },
       deep: true,
     },
     dbSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
-        this.dbSettingsHash = this.hashSettings(settings);
+        this.dbSettingsHash = this.hashBotSettings(settings);
         this.queryPosition();
       },
       deep: true,

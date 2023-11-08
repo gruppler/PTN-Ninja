@@ -20,8 +20,10 @@ let defaults = {
     maxDate: null,
   },
   botSettings: {
-    maxSuggestedMoves: 8,
     bot: "tiltak",
+    maxSuggestedMoves: 8,
+    depth: 6,
+    timeBudget: 120,
   },
   animateBoard: true,
   animateScrub: false,
