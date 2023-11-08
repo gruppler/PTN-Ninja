@@ -1,19 +1,21 @@
 <template>
-  <img
-    v-if="imageLoaded"
-    :src="url"
-    :height="height"
-    :width="width"
-    class="rounded-borders block"
-  />
   <div
-    v-else
+    class="game-thumbnail"
     :style="{
       height: height + 'px',
       width: width + 'px',
+      backgroundImage: imageLoaded ? `url(${url})` : '',
     }"
   />
 </template>
+
+<style lang="scss">
+.game-thumbnail {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+}
+</style>
 
 <script>
 import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
