@@ -23,7 +23,7 @@
     "emulate": "firebase emulators:start --import ./db --export-on-exit"
   },
   "dependencies": {
-    "@quasar/extras": "^1.15.9",
+    "@quasar/extras": "^1.16.7",
     "aggregation": "^1.2.6",
     "aws-sdk": "^2.885.0",
     "core-js": "^3.8.1",
@@ -37,7 +37,7 @@
     "lz-string": "^1.4.4",
     "marray": "^1.1.6",
     "qrious": "^4.0.2",
-    "quasar": "^1.22.5",
+    "quasar": "^1.22.10",
     "tiny-async-pool": "^2.1.0",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
