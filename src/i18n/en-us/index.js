@@ -446,7 +446,7 @@ export default {
     visits: "1 visit | {count} visits",
     wins: "win | wins",
     bots: {
-      tiltak: "TilTak (remote)",
+      tiltak: "Tiltak (remote)",
       topaz: "Topaz (local)",
     },
     database: {
