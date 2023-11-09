@@ -60,9 +60,11 @@ export default {
   computed: {
     options() {
       return {
+        font: "Roboto",
         theme: this.$store.state.ui.theme,
         showRoads: this.$store.state.ui.showRoads,
         stackCounts: this.$store.state.ui.stackCounts,
+        transform: this.$store.state.ui.boardTransform,
         ...this.thumbnailConfig,
         ...this.config,
         tps: this.tps,

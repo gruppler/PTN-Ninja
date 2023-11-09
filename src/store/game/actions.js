@@ -3,6 +3,7 @@ import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { isString, throttle } from "lodash";
 import { notifyError } from "../../utilities";
+import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -330,7 +331,12 @@ export const REMOVE_MULTIPLE_GAMES = function (
 
 export const EXPORT_PNG = function () {
   const game = Vue.prototype.$game;
-  const options = { tps: game.board.tps, ...this.state.ui.pngConfig };
+  const options = {
+    ...this.state.ui.pngConfig,
+    font: "Roboto",
+    tps: game.board.tps,
+    transform: this.state.ui.boardTransform,
+  };
 
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
@@ -340,7 +346,7 @@ export const EXPORT_PNG = function () {
     }
   });
 
-  game.board.render(options).toBlob((blob) => {
+  TPStoCanvas(options).toBlob((blob) => {
     this.dispatch(
       "ui/DOWNLOAD_FILES",
       new File([blob], game.pngFilename, {

@@ -210,6 +210,7 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
+import { TPStoCanvas } from "../../functions/TPS-Ninja/src/index";
 import { pngUIOptions } from "../store/ui/state";
 
 import { cloneDeep, debounce } from "lodash";
@@ -267,8 +268,11 @@ export default {
     },
     updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
-      this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      let canvas = this.$game.board.render(config);
+      config.font = "Roboto";
+      config.tps = this.tps;
+      config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      config.transform = this.$store.state.ui.boardTransform;
+      let canvas = TPStoCanvas(config);
       const filename = this.$game.pngFilename;
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {

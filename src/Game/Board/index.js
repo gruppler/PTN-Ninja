@@ -8,7 +8,6 @@ import BoardNavigation from "./nav";
 import Piece from "./Piece";
 import Square from "./Square";
 
-import render from "./render";
 import { atoi } from "../PTN/Ply";
 
 import {
@@ -197,10 +196,6 @@ export default class Board extends Aggregation(
       Object.freeze(square.static);
       this.dirty.board.squares[square.static.coord] = true;
     });
-  }
-
-  render(options) {
-    return render(this, options);
   }
 
   forEachSquare(f) {

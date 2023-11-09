@@ -23,6 +23,9 @@
 </template>
 
 <script>
+import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
+import { isEqual } from "lodash";
+
 export default {
   name: "ThemeSelectorOption",
   props: {
@@ -35,6 +38,7 @@ export default {
       thumbnailURL: "",
       thumbnailHeight: 68,
       thumbnailConfig: {
+        font: "Roboto",
         imageSize: "xs",
         axisLabels: true,
         turnIndicator: true,
@@ -54,6 +58,7 @@ export default {
     updateThumbnail() {
       const game = this.$game;
       const tps = game.board.tps;
+      const transform = this.$store.state.ui.boardTransform;
 
       // Existing render
       const id = "theme-" + this.theme.id;
@@ -61,14 +66,16 @@ export default {
       if (existing) {
         this.thumbnail = existing;
         this.thumbnailURL = this.thumbnail.url;
-        if (existing.tps === tps) {
+        if (existing.tps === tps && isEqual(existing.transform, transform)) {
           return;
         }
       }
 
       // New render
-      const canvas = game.board.render({
+      const canvas = TPStoCanvas({
         ...this.thumbnailConfig,
+        tps,
+        transform,
         theme: this.theme,
       });
 
