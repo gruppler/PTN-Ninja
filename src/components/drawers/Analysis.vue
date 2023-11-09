@@ -774,19 +774,19 @@ export default {
         )
       );
     },
-    getEvalComment(ply) {
+    getEvalComment(ply, settingsHash) {
       let positionAfter = this.botPositions[ply.tpsAfter];
-      if (positionAfter && this.botSettingsHash in positionAfter) {
+      if (positionAfter && settingsHash in positionAfter) {
         let evaluation =
-          Math.round(positionAfter[this.botSettingsHash][0].evaluation) / 100;
+          Math.round(positionAfter[settingsHash][0].evaluation) / 100;
         return `${evaluation >= 0 ? "+" : ""}${evaluation}`;
       }
       return null;
     },
-    getPVComment(ply) {
+    getPVComment(ply, settingsHash) {
       let positionBefore = this.botPositions[ply.tpsBefore];
-      if (positionBefore && this.botSettingsHash in positionBefore) {
-        let position = positionBefore[this.botSettingsHash][0];
+      if (positionBefore && settingsHash in positionBefore) {
+        let position = positionBefore[settingsHash][0];
         if (position && position.ply) {
           let pv = [position.ply, ...position.followingPlies].map(
             (ply) => ply.ptn
@@ -808,6 +808,7 @@ export default {
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
         const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+        const settingsHash = this.botSettingsHash;
         let positions = plies.map((ply) => ply.tpsBefore);
         plies.forEach((ply) => {
           if (!ply.result || ply.result.type === "1") {
@@ -817,7 +818,7 @@ export default {
         positions = uniq(positions).filter(
           (tps) =>
             !(tps in this.botPositions) ||
-            !(this.botSettingsHash in this.botPositions[tps])
+            !(settingsHash in this.botPositions[tps])
         );
         let total = positions.length;
         let completed = 0;
@@ -829,7 +830,8 @@ export default {
             await this.queryBotSuggestionsTiltak(
               secondsToThinkPerPly,
               tps,
-              komi
+              komi,
+              settingsHash
             )
         )) {
           this.progressTiltakAnalysis = (100 * ++completed) / total;
@@ -838,11 +840,11 @@ export default {
         let messages = {};
         plies.forEach((ply) => {
           let notes = [];
-          let evaluation = this.getEvalComment(ply);
+          let evaluation = this.getEvalComment(ply, settingsHash);
           if (evaluation !== null && !this.plyHasEvalComment(ply)) {
             notes.push(evaluation);
           }
-          let pv = this.getPVComment(ply);
+          let pv = this.getPVComment(ply, settingsHash);
           if (pv !== null && !this.plyHasPVComment(ply, pv)) {
             notes.push(pv);
           }
@@ -870,7 +872,12 @@ export default {
         this.loadingTiltakMoves = false;
       }
     },
-    async queryBotSuggestionsTiltak(secondsToThink, tps, komi) {
+    async queryBotSuggestionsTiltak(
+      secondsToThink,
+      tps,
+      komi,
+      settingsHash = this.botSettingsHash
+    ) {
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
         this.game.config.openingSwap && moveNumber === 1
@@ -878,7 +885,6 @@ export default {
             ? 2
             : 1
           : initialPlayer;
-      const botSettingsHash = this.botSettingsHash;
       const response = await fetch(bestMoveEndpoint, {
         method: "POST",
         headers: {
@@ -923,7 +929,7 @@ export default {
       deepFreeze(result);
       this.$set(this.botPositions, tps, {
         ...(this.botPositions[tps] || {}),
-        [botSettingsHash]: result,
+        [settingsHash]: result,
       });
       return result;
     },
