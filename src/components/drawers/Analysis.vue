@@ -731,15 +731,18 @@ export default {
     hashDBSettings(settings) {
       return Object.values(settings).join(",");
     },
+
     nextPly(player, color) {
       if (player === 2 && color === 1) {
         return { player: 1, color: 1 };
       }
       return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
     },
+
     formatEvaluation(v) {
       return `+${this.$n(Math.abs(v), "n2")}%`;
     },
+
     winsTooltip(move) {
       const gameCount = move.totalGames;
       const percentageString = (count) => this.$n(count / gameCount, "percent");
@@ -756,6 +759,7 @@ export default {
         move.draws
       )} – ${percentageString(move.draws)}`;
     },
+
     plyHasEvalComment(ply) {
       return (
         ply.id in this.game.comments.notes &&
@@ -792,6 +796,7 @@ export default {
       }
       return null;
     },
+
     async analyzeGameTiltak() {
       if (!this.game.ptn.branchPlies.length) {
         return;
@@ -865,67 +870,6 @@ export default {
         this.loadingTiltakMoves = false;
       }
     },
-    requestTopazSuggestions() {
-      if (!this.topazWorker) {
-        this.notifyError("Bot unavailable");
-        return;
-      }
-      if (this.loadingTopazMoves) {
-        return;
-      }
-      this.loadingTopazMoves = true;
-      this.progressTopazAnalysis = 0;
-      const startTime = new Date().getTime();
-      const timeBudget = this.botSettings.timeBudget * 10;
-      this.topazTimer = setInterval(() => {
-        this.progressTopazAnalysis =
-          (new Date().getTime() - startTime) / timeBudget;
-      }, 1000);
-      this.topazWorker.postMessage({
-        ...this.botSettings,
-        size: this.game.config.size,
-        komi: this.game.config.komi,
-        tps: this.tps,
-        id: this.botSettingsHash,
-      });
-    },
-    receiveTopazSuggestions(result) {
-      this.loadingTopazMoves = false;
-      clearInterval(this.topazTimer);
-      this.topazTimer = null;
-
-      if (result.error) {
-        this.notifyError(result.error);
-        return;
-      }
-
-      const { tps, depth, score, nodes, pv, id } = result;
-      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
-      const initialColor =
-        this.game.config.openingSwap && moveNumber === 1
-          ? initialPlayer == 1
-            ? 2
-            : 1
-          : initialPlayer;
-      let player = initialPlayer;
-      let color = initialColor;
-      let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
-      let followingPlies = pv.map((ply) => {
-        ({ player, color } = this.nextPly(player, color));
-        return new Ply(ply, { id: null, player, color });
-      });
-      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
-      deepFreeze(botMoves);
-      this.$set(this.botPositions, tps, {
-        ...(this.botPositions[tps] || {}),
-        [id]: botMoves,
-      });
-      return botMoves;
-    },
-    /** Queries `tps` position.
-     * @returns Explored moves and their winning probability (`evaluation`).
-     * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
-     */
     async queryBotSuggestionsTiltak(secondsToThink, tps, komi) {
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
@@ -983,12 +927,76 @@ export default {
       });
       return result;
     },
+
+    requestTopazSuggestions() {
+      if (!this.topazWorker) {
+        this.notifyError("Bot unavailable");
+        return;
+      }
+      if (this.loadingTopazMoves) {
+        return;
+      }
+      this.loadingTopazMoves = true;
+      this.progressTopazAnalysis = 0;
+      const startTime = new Date().getTime();
+      const timeBudget = this.botSettings.timeBudget * 10;
+      this.topazTimer = setInterval(() => {
+        this.progressTopazAnalysis =
+          (new Date().getTime() - startTime) / timeBudget;
+      }, 1000);
+      this.topazWorker.postMessage({
+        ...this.botSettings,
+        size: this.game.config.size,
+        komi: this.game.config.komi,
+        tps: this.tps,
+        id: this.botSettingsHash,
+      });
+    },
+    receiveTopazSuggestions(result) {
+      this.loadingTopazMoves = false;
+      clearInterval(this.topazTimer);
+      this.topazTimer = null;
+
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const { tps, depth, score, nodes, pv, id } = result;
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      let player = initialPlayer;
+      let color = initialColor;
+      let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
+      let followingPlies = pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
+      deepFreeze(botMoves);
+      this.$set(this.botPositions, tps, {
+        ...(this.botPositions[tps] || {}),
+        [id]: botMoves,
+      });
+      return botMoves;
+    },
+
+    /** Queries `tps` position.
+     * @returns Explored moves and their winning probability (`evaluation`).
+     * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
+     */
     async loadUsernames() {
       const response = await fetch(usernamesEndpoint);
       const { white, black } = await response.json();
       this.player1Index = new Fuse(white);
       this.player2Index = new Fuse(black);
     },
+
     async init() {
       // Load wasm bots
       try {
@@ -1018,6 +1026,7 @@ export default {
         this.notifyError(error);
       }
     },
+
     searchPlayer1(query, update) {
       update(
         () =>
@@ -1046,6 +1055,7 @@ export default {
         }
       );
     },
+
     async queryDBPosition() {
       const databaseId = this.databaseIdToQuery;
       if (databaseId === null) return;
@@ -1138,6 +1148,7 @@ export default {
       }
     },
   },
+
   async mounted() {
     if (this.isPanelVisible) {
       await this.init();
@@ -1145,6 +1156,7 @@ export default {
       this.queryDBPosition();
     }
   },
+
   watch: {
     async isPanelVisible(isPanelVisible) {
       if (isPanelVisible) {
