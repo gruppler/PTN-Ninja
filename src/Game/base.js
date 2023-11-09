@@ -516,15 +516,10 @@ export default class GameBase {
       // Go to specified position
       let ply = this.plies.find(
         (ply) =>
-          ply.index === state.plyIndex && ply.branch === state.targetBranch
+          ply.index === state.plyIndex && ply.isInBranch(state.targetBranch)
       );
       if (ply) {
-        if (
-          this.board.plyID !== ply.id ||
-          this.board.plyIsDone !== state.plyIsDone
-        ) {
-          this.board.goToPly(ply.id, state.plyIsDone || false);
-        }
+        this.board.goToPly(ply.id, state.plyIsDone || false);
       } else {
         this.board.plyID = -1;
       }
