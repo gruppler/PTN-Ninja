@@ -256,7 +256,13 @@ export default {
       },
     },
     tps() {
-      return this.$game.board.tps;
+      return this.$store.state.game.position.tps;
+    },
+    ply() {
+      return this.$store.state.game.position.ply;
+    },
+    plyIsDone() {
+      return this.$store.state.game.position.plyIsDone;
     },
     canShare() {
       return this.$store.state.nativeSharing;
@@ -272,6 +278,13 @@ export default {
       config.tps = this.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.transform = this.$store.state.ui.boardTransform;
+
+      // Highlight current ply
+      if (config.highlightSquares && this.ply) {
+        config.hl = this.ply.text;
+        config.plyIsDone = this.plyIsDone;
+      }
+
       let canvas = TPStoCanvas(config);
       const filename = this.$game.pngFilename;
       canvas.toBlob((blob) => {

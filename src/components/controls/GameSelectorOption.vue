@@ -5,6 +5,7 @@
         :game-id="option.label"
         :tps="option.state.tps"
         :hl="option.state.ply"
+        :plyIsDone="option.state.plyIsDone"
         :config="option.config"
         class="rounded-borders"
         no-transition

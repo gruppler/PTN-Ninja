@@ -338,6 +338,13 @@ export const EXPORT_PNG = function () {
     transform: this.state.ui.boardTransform,
   };
 
+  // Highlight current ply
+  const ply = game.board.ply;
+  if (this.state.ui.pngConfig.highlightSquares && ply) {
+    options.hl = ply.text;
+    options.plyIsDone = game.board.plyIsDone;
+  }
+
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
     const tag = game.tags[tagName];

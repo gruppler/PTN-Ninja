@@ -59,6 +59,9 @@ export default {
       const game = this.$game;
       const tps = game.board.tps;
       const transform = this.$store.state.ui.boardTransform;
+      const ply = this.$store.state.game.position.ply;
+      const hl = ply ? ply.text : null;
+      const plyIsDone = this.$store.state.game.position.plyIsDone;
 
       // Existing render
       const id = "theme-" + this.theme.id;
@@ -75,6 +78,8 @@ export default {
       const canvas = TPStoCanvas({
         ...this.thumbnailConfig,
         tps,
+        hl,
+        plyIsDone,
         transform,
         theme: this.theme,
       });

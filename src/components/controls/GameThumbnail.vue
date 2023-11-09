@@ -28,6 +28,10 @@ export default {
     tps: String,
     plies: Array,
     hl: String,
+    plyIsDone: {
+      type: Boolean,
+      default: true,
+    },
     height: {
       type: Number,
       default: 60,
@@ -70,6 +74,7 @@ export default {
         tps: this.tps,
         plies: this.plies,
         hl: this.hl,
+        plyIsDone: this.plyIsDone,
       };
     },
   },
