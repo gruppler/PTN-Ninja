@@ -346,6 +346,12 @@ export const EXPORT_PNG = function () {
     options.plyIsDone = game.board.plyIsDone;
   }
 
+  // Add player names
+  if (options.includeNames) {
+    options.player1 = game.tag("player1");
+    options.player2 = game.tag("player2");
+  }
+
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
     const tag = game.tags[tagName];

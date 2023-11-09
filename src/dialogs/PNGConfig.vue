@@ -255,17 +255,8 @@ export default {
         }
       },
     },
-    komi() {
-      return this.$store.state.game.config.komi;
-    },
-    tps() {
-      return this.$store.state.game.position.tps;
-    },
-    ply() {
-      return this.$store.state.game.position.ply;
-    },
-    plyIsDone() {
-      return this.$store.state.game.position.plyIsDone;
+    game() {
+      return this.$store.state.game;
     },
     canShare() {
       return this.$store.state.nativeSharing;
@@ -278,15 +269,21 @@ export default {
     updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
       config.font = "Roboto";
-      config.komi = this.komi;
-      config.tps = this.tps;
+      config.komi = this.game.config.komi;
+      config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.transform = this.$store.state.ui.boardTransform;
 
       // Highlight current ply
       if (config.highlightSquares && this.ply) {
         config.hl = this.ply.text;
-        config.plyIsDone = this.plyIsDone;
+        config.plyIsDone = this.game.plyIsDone;
+      }
+
+      // Add player names
+      if (config.includeNames) {
+        config.player1 = this.game.ptn.tags.player1;
+        config.player2 = this.game.ptn.tags.player2;
       }
 
       let canvas = TPStoCanvas(config);
