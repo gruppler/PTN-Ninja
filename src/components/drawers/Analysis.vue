@@ -636,12 +636,7 @@ export default {
       ];
     },
     isFullyAnalyzed() {
-      return this.plies.every(
-        (ply) =>
-          this.plyHasEvalComment(ply) ||
-          (ply.tpsBefore in this.botPositions &&
-            (ply.result || ply.tpsAfter in this.botPositions))
-      );
+      return this.plies.every((ply) => this.plyHasEvalComment(ply));
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
