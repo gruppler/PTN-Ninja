@@ -42,6 +42,7 @@ export default {
         imageSize: "md",
         turnIndicator: true,
         unplayedPieces: true,
+        komi: this.$store.state.game.config.komi,
       };
     },
     size() {

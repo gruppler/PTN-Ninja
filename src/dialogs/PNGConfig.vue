@@ -255,6 +255,9 @@ export default {
         }
       },
     },
+    komi() {
+      return this.$store.state.game.config.komi;
+    },
     tps() {
       return this.$store.state.game.position.tps;
     },
@@ -275,6 +278,7 @@ export default {
     updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
       config.font = "Roboto";
+      config.komi = this.komi;
       config.tps = this.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.transform = this.$store.state.ui.boardTransform;

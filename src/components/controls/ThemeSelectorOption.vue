@@ -57,6 +57,7 @@ export default {
   methods: {
     updateThumbnail() {
       const game = this.$game;
+      const komi = game.config.komi;
       const tps = game.board.tps;
       const transform = this.$store.state.ui.boardTransform;
       const ply = this.$store.state.game.position.ply;
@@ -77,6 +78,7 @@ export default {
       // New render
       const canvas = TPStoCanvas({
         ...this.thumbnailConfig,
+        komi,
         tps,
         hl,
         plyIsDone,
