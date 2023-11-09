@@ -8,7 +8,7 @@ async function init_wasm_in_worker() {
   self.onmessage = async ({ data: options }) => {
     try {
       // Evaluate
-      console.log("Analyzing position:", options);
+      // console.log("Analyzing position", options);
       let result = evaluate(
         options.depth,
         options.timeBudget,
@@ -16,7 +16,7 @@ async function init_wasm_in_worker() {
         options.komi,
         options.tps
       );
-      console.log(result);
+      // console.log(result);
 
       // Check result for errors
       let matches = result.match(
@@ -35,7 +35,7 @@ async function init_wasm_in_worker() {
         nodes: Number(nodes),
         pv: pv.split(" "),
       };
-      console.log(output);
+      // console.log(output);
 
       // Return result
       self.postMessage(output);
