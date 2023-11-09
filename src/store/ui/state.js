@@ -20,7 +20,10 @@ let defaults = {
     maxDate: null,
   },
   botSettings: {
+    bot: "tiltak",
     maxSuggestedMoves: 8,
+    depth: 6,
+    timeBudget: 120,
   },
   animateBoard: true,
   animateScrub: false,

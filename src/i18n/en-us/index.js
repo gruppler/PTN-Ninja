@@ -18,6 +18,7 @@ export default {
   Beginning: "Beginning",
   Board: "Board",
   "Board Style": "Board Style",
+  Bot: "Bot",
   Branches: "Branches",
   "2D Board": "2D Board",
   "3D Board": "3D Board",
@@ -321,6 +322,7 @@ export default {
   },
 
   error: {
+    "Bot unavailable": "The selected bot is currently unavailable",
     "Branch already exists": "That branch already exists.",
     "Game does not exist": "That game does not exist.",
     "Invalid branch": "Invalid branch",
@@ -426,6 +428,8 @@ export default {
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Database Moves": "PlayTak History",
+    depth: "depth",
+    Depth: "Depth",
     draws: "draw | draws",
     gameOver: "The game has ended",
     gameType: "Game Type",
@@ -435,10 +439,16 @@ export default {
     minDate: "After",
     n_games: "1 game | {count} games",
     "No suggested moves": "No suggested moves",
+    nodes: "1 node | {count} nodes",
+    timeBudget: "Seconds to Think",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
     visits: "1 visit | {count} visits",
     wins: "win | wins",
+    bots: {
+      tiltak: "TilTak (remote)",
+      topaz: "Topaz (local)",
+    },
     database: {
       error: "Failed to load databases",
       loading: "Loading database list",

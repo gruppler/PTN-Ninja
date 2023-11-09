@@ -12,6 +12,9 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
+            <q-item-label v-if="botSettings.bot" caption>{{
+              $t(`analysis.bots.${botSettings.bot}`)
+            }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-btn
@@ -27,57 +30,126 @@
 
         <smooth-reflow class="bg-ui">
           <template v-if="showBotSettings">
-            <!-- Max Suggestions -->
-            <q-input
-              v-model.number="botSettings.maxSuggestedMoves"
-              :label="$t('analysis.maxSuggestedMoves')"
-              type="number"
-              min="1"
-              max="99"
-              step="1"
+            <!-- Bot -->
+            <q-select
+              v-model="botSettings.bot"
+              :options="bots"
+              :label="$t('Bot')"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
+              emit-value
+              map-options
               item-aligned
               filled
             >
               <template v-slot:prepend>
-                <q-icon name="moves" />
+                <q-icon name="bot" />
               </template>
-            </q-input>
+            </q-select>
+
+            <template v-if="botSettings.bot === 'tiltak'">
+              <!-- Max Suggestions -->
+              <q-input
+                v-model.number="botSettings.maxSuggestedMoves"
+                :label="$t('analysis.maxSuggestedMoves')"
+                type="number"
+                min="1"
+                max="99"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="moves" />
+                </template>
+              </q-input>
+            </template>
+            <template v-if="botSettings.bot === 'topaz'">
+              <!-- Depth -->
+              <q-input
+                v-model.number="botSettings.depth"
+                :label="$t('analysis.Depth')"
+                type="number"
+                min="2"
+                max="99"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="depth" />
+                </template>
+              </q-input>
+
+              <!-- Time Budget -->
+              <q-input
+                v-model.number="botSettings.timeBudget"
+                :label="$t('analysis.timeBudget')"
+                type="number"
+                min="1"
+                max="999"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="clock" />
+                </template>
+              </q-input>
+            </template>
           </template>
         </smooth-reflow>
 
         <smooth-reflow>
-          <q-btn
-            v-if="!isFullyAnalyzed && plies.length"
-            @click="analyzeGame()"
-            :loading="loadingGameAnalysis"
-            :percentage="progressGameAnalysis"
-            class="full-width"
-            color="primary"
-            stretch
-          >
-            <q-icon
-              :name="showAllBranches ? 'moves' : 'branch'"
-              :class="{ 'rotate-180': !showAllBranches }"
-              left
+          <template v-if="botSettings.bot === 'tiltak'">
+            <q-btn
+              v-if="!isFullyAnalyzed && plies.length"
+              @click="analyzeGameTiltak()"
+              :loading="loadingTiltakAnalysis"
+              :percentage="progressTiltakAnalysis"
+              class="full-width"
+              color="primary"
+              stretch
+            >
+              <q-icon
+                :name="showAllBranches ? 'moves' : 'branch'"
+                :class="{ 'rotate-180': !showAllBranches }"
+                left
+              />
+              {{
+                $t(
+                  showAllBranches
+                    ? "analysis.Analyze Game"
+                    : "analysis.Analyze Branch"
+                )
+              }}
+            </q-btn>
+            <q-btn
+              v-if="!botMoves.length && !isGameEnd"
+              @click="analyzePositionTilTak(botThinkBudgetInSeconds.short)"
+              :loading="loadingTiltakMoves"
+              class="full-width"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+              stretch
             />
-            {{
-              $t(
-                showAllBranches
-                  ? "analysis.Analyze Game"
-                  : "analysis.Analyze Branch"
-              )
-            }}
-          </q-btn>
-          <q-btn
-            v-if="!botMoves.length && !isGameEnd"
-            @click="analyzePosition(botThinkBudgetInSeconds.short)"
-            :loading="loadingBotMoves"
-            class="full-width"
-            color="primary"
-            icon="board"
-            :label="$t('analysis.Analyze Position')"
-            stretch
-          />
+          </template>
+          <template v-else-if="botSettings.bot === 'topaz'">
+            <q-btn
+              v-if="!botMoves.length && !isGameEnd"
+              @click="requestTopazSuggestions()"
+              :loading="loadingTopazMoves"
+              :percentage="progressTopazAnalysis"
+              class="full-width"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+              stretch
+            />
+          </template>
+
           <q-item v-else-if="isGameEnd" class="flex-center">
             {{ $t("analysis.gameOver") }}
           </q-item>
@@ -91,15 +163,34 @@
             )"
             :key="i"
             :ply="move.ply"
-            :evaluation="move.evaluation"
+            :evaluation="'evaluation' in move ? move.evaluation : null"
             :following-plies="move.followingPlies"
-            :count="move.visits"
-            count-label="analysis.visits"
+            :count="
+              'visits' in move
+                ? move.visits
+                : 'nodes' in move
+                ? move.nodes
+                : null
+            "
+            :count-label="
+              'visits' in move
+                ? 'analysis.visits'
+                : 'nodes' in move
+                ? 'analysis.nodes'
+                : null
+            "
             :player1-number="
-              move.evaluation >= 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation >= 0
+                ? formatEvaluation(move.evaluation)
+                : null
             "
             :player2-number="
-              move.evaluation < 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation < 0
+                ? formatEvaluation(move.evaluation)
+                : null
+            "
+            :middle-number="
+              'depth' in move ? `${$t('analysis.depth')} ${move.depth}` : null
             "
           />
         </smooth-reflow>
@@ -107,14 +198,15 @@
         <smooth-reflow>
           <q-btn
             v-if="
+              botSettings.bot === 'tiltak' &&
               botMoves.length &&
               botMoves.every(
                 ({ secondsToThink }) =>
                   secondsToThink < botThinkBudgetInSeconds.long
               )
             "
-            @click="analyzePosition(botThinkBudgetInSeconds.long)"
-            :loading="loadingBotMoves"
+            @click="analyzePositionTilTak(botThinkBudgetInSeconds.long)"
+            :loading="loadingTiltakMoves"
             class="full-width"
             color="primary"
             stretch
@@ -451,7 +543,7 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { isArray, omit, uniq } from "lodash";
+import { isArray, omit, pick, uniq } from "lodash";
 import Fuse from "fuse.js";
 import asyncPool from "tiny-async-pool";
 
@@ -479,9 +571,12 @@ export default {
     }
 
     return {
-      loadingBotMoves: false,
-      loadingGameAnalysis: false,
-      progressGameAnalysis: 0,
+      loadingTiltakMoves: false,
+      loadingTiltakAnalysis: false,
+      progressTiltakAnalysis: 0,
+      loadingTopazMoves: false,
+      progressTopazAnalysis: 0,
+      topazTimer: null,
       loadingDBMoves: false,
       showBotSettings: false,
       showDBSettings: false,
@@ -505,14 +600,18 @@ export default {
         { label: this.$t("analysis.tournamentOptions.only"), value: true },
       ],
       dbMinRating: 0,
+      bots: ["tiltak", "topaz"].map((value) => ({
+        value,
+        label: this.$t(`analysis.bots.${value}`),
+      })),
       botSettings: { ...this.$store.state.ui.botSettings },
       botThinkBudgetInSeconds: {
         short: 3,
         long: 8,
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
-      botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
-      dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
+      botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
+      dbSettingsHash: this.hashDBSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
@@ -623,7 +722,18 @@ export default {
         this.sections.dbMoves = true;
       }
     },
-    hashSettings(settings) {
+    hashBotSettings(settings) {
+      if (settings.bot === "tiltak") {
+        return Object.values(pick(settings, ["bot", "maxSuggestedMoves"])).join(
+          ","
+        );
+      } else {
+        return Object.values(
+          pick(settings, ["bot", "depth", "timeBudget"])
+        ).join(",");
+      }
+    },
+    hashDBSettings(settings) {
       return Object.values(settings).join(",");
     },
     nextPly(player, color) {
@@ -687,13 +797,13 @@ export default {
       }
       return null;
     },
-    async analyzeGame() {
+    async analyzeGameTiltak() {
       if (!this.game.ptn.branchPlies.length) {
         return;
       }
       try {
-        this.loadingGameAnalysis = true;
-        this.progressGameAnalysis = 0;
+        this.loadingTiltakAnalysis = true;
+        this.progressTiltakAnalysis = 0;
         const concurrency = 10; // TODO: determine ideal value
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
@@ -705,7 +815,9 @@ export default {
           }
         });
         positions = uniq(positions).filter(
-          (tps) => !(tps in this.botPositions)
+          (tps) =>
+            !(tps in this.botPositions) ||
+            !(this.botSettingsHash in this.botPositions[tps])
         );
         let total = positions.length;
         let completed = 0;
@@ -714,9 +826,13 @@ export default {
           concurrency,
           positions,
           async (tps) =>
-            await this.queryBotSuggestionsExt(secondsToThinkPerPly, tps, komi)
+            await this.queryBotSuggestionsTiltak(
+              secondsToThinkPerPly,
+              tps,
+              komi
+            )
         )) {
-          this.progressGameAnalysis = (100 * ++completed) / total;
+          this.progressTiltakAnalysis = (100 * ++completed) / total;
         }
         // Insert comments
         let messages = {};
@@ -736,29 +852,86 @@ export default {
       } catch (error) {
         this.notifyError(error);
       } finally {
-        this.loadingGameAnalysis = false;
+        this.loadingTiltakAnalysis = false;
       }
     },
-    async analyzePosition(secondsToThink) {
+    async analyzePositionTilTak(secondsToThink) {
       if (this.isGameEnd) {
         return;
       }
       try {
-        this.loadingBotMoves = true;
+        this.loadingTiltakMoves = true;
         const tps = this.tps;
         const komi = this.game.config.komi;
-        await this.queryBotSuggestionsExt(secondsToThink, tps, komi);
+        await this.queryBotSuggestionsTiltak(secondsToThink, tps, komi);
       } catch (error) {
         this.notifyError(error);
       } finally {
-        this.loadingBotMoves = false;
+        this.loadingTiltakMoves = false;
       }
+    },
+    requestTopazSuggestions() {
+      if (!this.topazWorker) {
+        this.notifyError("Bot unavailable");
+        return;
+      }
+      if (this.loadingTopazMoves) {
+        return;
+      }
+      this.loadingTopazMoves = true;
+      this.progressTopazAnalysis = 0;
+      const startTime = new Date().getTime();
+      const timeBudget = this.botSettings.timeBudget * 10;
+      this.topazTimer = setInterval(() => {
+        this.progressTopazAnalysis =
+          (new Date().getTime() - startTime) / timeBudget;
+      }, 1000);
+      this.topazWorker.postMessage({
+        ...this.botSettings,
+        size: this.game.config.size,
+        komi: this.game.config.komi,
+        tps: this.tps,
+        id: this.botSettingsHash,
+      });
+    },
+    receiveTopazSuggestions(result) {
+      this.loadingTopazMoves = false;
+      clearInterval(this.topazTimer);
+      this.topazTimer = null;
+
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const { tps, depth, score, nodes, pv, id } = result;
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      let player = initialPlayer;
+      let color = initialColor;
+      let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
+      let followingPlies = pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
+      deepFreeze(botMoves);
+      this.$set(this.botPositions, tps, {
+        ...(this.botPositions[tps] || {}),
+        [id]: botMoves,
+      });
+      return botMoves;
     },
     /** Queries `tps` position.
      * @returns Explored moves and their winning probability (`evaluation`).
      * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
      */
-    async queryBotSuggestionsExt(secondsToThink, tps, komi) {
+    async queryBotSuggestionsTiltak(secondsToThink, tps, komi) {
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
         this.game.config.openingSwap && moveNumber === 1
@@ -821,7 +994,27 @@ export default {
       this.player1Index = new Fuse(white);
       this.player2Index = new Fuse(black);
     },
-    async loadDatabases() {
+    async init() {
+      // Load wasm bots
+      try {
+        if (!this.topazWorker) {
+          this.topazWorker = new Worker(
+            new URL("/topaz/topaz.worker.js", import.meta.url)
+          );
+          this.topazWorker.onmessage = ({ data }) => {
+            this.receiveTopazSuggestions(data);
+          };
+        }
+      } catch (error) {
+        this.notifyError(error);
+      }
+
+      // Load player names
+      if (!this.player1Names.length) {
+        this.loadUsernames();
+      }
+
+      // Load databases
       try {
         const response = await fetch(databasesEndpoint);
         this.databases = await response.json();
@@ -858,7 +1051,7 @@ export default {
         }
       );
     },
-    async queryPosition() {
+    async queryDBPosition() {
       const databaseId = this.databaseIdToQuery;
       if (databaseId === null) return;
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
@@ -952,40 +1145,38 @@ export default {
   },
   async mounted() {
     if (this.isPanelVisible) {
-      this.loadUsernames();
-      await this.loadDatabases();
+      await this.init();
       // wait for databases to load before querying the position
-      this.queryPosition();
+      this.queryDBPosition();
     }
   },
   watch: {
     async isPanelVisible(isPanelVisible) {
       if (isPanelVisible) {
         if (!this.databases || !this.databases.length) {
-          await this.loadDatabases();
-        }
-        if (!this.player1Names.length) {
-          this.loadUsernames();
+          await this.init();
         }
         if (this.isDBMovesVisible) {
-          this.queryPosition();
+          this.queryDBPosition();
         }
       }
     },
     isDBMovesVisible(isVisible) {
       if (isVisible) {
-        this.queryPosition();
+        this.queryDBPosition();
       }
     },
     tps() {
       if (this.isDBMovesVisible) {
-        this.queryPosition();
+        this.queryDBPosition();
       }
     },
     botPosition(position) {
       if (position) {
         if (this.botSettingsHash in position) {
           this.botMoves = position[this.botSettingsHash] || [];
+        } else {
+          this.botMoves = [];
         }
       } else {
         this.botMoves = [];
@@ -994,6 +1185,8 @@ export default {
     botSettingsHash(hash) {
       if (this.botPosition && hash in this.botPosition) {
         this.botMoves = this.botPosition[hash] || [];
+      } else {
+        this.botMoves = [];
       }
     },
     dbPosition(position) {
@@ -1020,15 +1213,15 @@ export default {
     botSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-        this.botSettingsHash = this.hashSettings(settings);
+        this.botSettingsHash = this.hashBotSettings(settings);
       },
       deep: true,
     },
     dbSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
-        this.dbSettingsHash = this.hashSettings(settings);
-        this.queryPosition();
+        this.dbSettingsHash = this.hashDBSettings(settings);
+        this.queryDBPosition();
       },
       deep: true,
     },
