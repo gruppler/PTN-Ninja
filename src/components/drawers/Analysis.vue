@@ -611,7 +611,7 @@ export default {
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
-      dbSettingsHash: this.hashBotSettings(this.$store.state.ui.dbSettings),
+      dbSettingsHash: this.hashDBSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
@@ -732,6 +732,9 @@ export default {
           pick(settings, ["bot", "depth", "timeBudget"])
         ).join(",");
       }
+    },
+    hashDBSettings(settings) {
+      return Object.values(settings).join(",");
     },
     nextPly(player, color) {
       if (player === 2 && color === 1) {
@@ -1048,7 +1051,7 @@ export default {
         }
       );
     },
-    async queryPosition() {
+    async queryDBPosition() {
       const databaseId = this.databaseIdToQuery;
       if (databaseId === null) return;
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
@@ -1144,7 +1147,7 @@ export default {
     if (this.isPanelVisible) {
       await this.init();
       // wait for databases to load before querying the position
-      this.queryPosition();
+      this.queryDBPosition();
     }
   },
   watch: {
@@ -1154,18 +1157,18 @@ export default {
           await this.init();
         }
         if (this.isDBMovesVisible) {
-          this.queryPosition();
+          this.queryDBPosition();
         }
       }
     },
     isDBMovesVisible(isVisible) {
       if (isVisible) {
-        this.queryPosition();
+        this.queryDBPosition();
       }
     },
     tps() {
       if (this.isDBMovesVisible) {
-        this.queryPosition();
+        this.queryDBPosition();
       }
     },
     botPosition(position) {
@@ -1217,8 +1220,8 @@ export default {
     dbSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
-        this.dbSettingsHash = this.hashBotSettings(settings);
-        this.queryPosition();
+        this.dbSettingsHash = this.hashDBSettings(settings);
+        this.queryDBPosition();
       },
       deep: true,
     },
