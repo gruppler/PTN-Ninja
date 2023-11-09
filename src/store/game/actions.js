@@ -335,6 +335,7 @@ export const EXPORT_PNG = function () {
     ...this.state.ui.pngConfig,
     font: "Roboto",
     komi: game.config.komi,
+    opening: game.config.opening,
     tps: game.board.tps,
     transform: this.state.ui.boardTransform,
   };

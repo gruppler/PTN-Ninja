@@ -270,6 +270,7 @@ export default {
       const config = cloneDeep(this.config);
       config.font = "Roboto";
       config.komi = this.game.config.komi;
+      config.opening = this.game.config.opening;
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.transform = this.$store.state.ui.boardTransform;
