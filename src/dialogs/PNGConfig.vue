@@ -276,9 +276,9 @@ export default {
       config.transform = this.$store.state.ui.boardTransform;
 
       // Highlight current ply
-      if (config.highlightSquares && this.ply) {
-        config.hl = this.ply.text;
-        config.plyIsDone = this.game.plyIsDone;
+      if (config.highlightSquares && this.game.position.ply) {
+        config.hl = this.game.position.ply.text;
+        config.plyIsDone = this.game.position.plyIsDone;
       }
 
       // Add player names
