@@ -2,7 +2,7 @@ import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { isString, throttle } from "lodash";
-import { notifyError } from "../../utilities";
+import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
 import Game from "../../Game";
 
@@ -432,6 +432,23 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
       });
     }, 200);
   });
+};
+
+export const ADD_PLAYTAK_GAME = async function ({ dispatch }, id) {
+  try {
+    const response = await fetch(
+      `https://api.playtak.com/v1/games-history/ptn/${id}`
+    );
+    console.log(response);
+    const ptn = await response.text();
+    console.log(ptn);
+    let game = new Game({ ptn });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    return dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
 };
 
 export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {

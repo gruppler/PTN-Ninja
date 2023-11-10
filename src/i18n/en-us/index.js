@@ -149,6 +149,7 @@ export default {
   Player2: "Player 2",
   "Player Name": "Player Name",
   Players: "Players",
+  "PlayTak Game ID": "PlayTak Game ID",
   Ply: "Ply",
   "PNG Image": "PNG Image",
   Points: "Points",
