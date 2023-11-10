@@ -15,7 +15,7 @@
           v-if="email || mode === 'recoverEmail'"
           v-model="email"
           :label="$t('Email Address')"
-          @keydown.enter.prevent="submit"
+          @keyup.enter.prevent="submit"
           autocomplete="email"
           readonly
         >
@@ -28,7 +28,7 @@
           v-model="password"
           :type="showPassword ? 'text' : 'password'"
           :label="$t('Password')"
-          @keydown.enter.prevent="submit"
+          @keyup.enter.prevent="submit"
           autocomplete="new-password"
         >
           <template v-slot:prepend>
