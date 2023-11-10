@@ -224,7 +224,7 @@
       >
         <template v-slot:header>
           <q-item-section avatar>
-            <q-icon name="database" />
+            <img src="~assets/playtak.svg" width="24" height="24" />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
