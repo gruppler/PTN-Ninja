@@ -122,6 +122,15 @@ export default {
       window.removeEventListener("message", handleMessage);
     }
     window.addEventListener("message", handleMessage);
+
+    // Watch offline status
+    this.$store.dispatch("ui/SET_UI", ["offline", !navigator.onLine]);
+    window.addEventListener("online", () =>
+      this.$store.dispatch("ui/SET_UI", ["offline", false])
+    );
+    window.addEventListener("offline", () =>
+      this.$store.dispatch("ui/SET_UI", ["offline", true])
+    );
   },
   watch: {
     "$store.state.game.position": {

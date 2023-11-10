@@ -3,6 +3,7 @@ import { pick } from "lodash";
 import { THEMES } from "../../themes";
 
 let defaults = {
+  offline: !navigator.onLine,
   analysisSections: {
     botSuggestions: true,
     dbMoves: true,

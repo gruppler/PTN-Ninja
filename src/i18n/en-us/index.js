@@ -358,6 +358,7 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
+    Offline: "Offline",
     "Player exists": "That name is already taken",
     "Unable to download": "Unable to download files",
     "Unrecognized tag": "Unrecognized tag",

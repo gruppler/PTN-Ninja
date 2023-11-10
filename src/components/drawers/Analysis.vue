@@ -616,6 +616,9 @@ export default {
     };
   },
   computed: {
+    isOffline() {
+      return this.$store.state.ui.offline;
+    },
     isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
@@ -798,7 +801,8 @@ export default {
     },
 
     async analyzeGameTiltak() {
-      if (!this.game.ptn.branchPlies.length) {
+      if (this.isOffline || !this.game.ptn.branchPlies.length) {
+        this.notifyError("Offline");
         return;
       }
       try {
@@ -878,6 +882,10 @@ export default {
       komi,
       settingsHash = this.botSettingsHash
     ) {
+      if (this.isOffline) {
+        this.notifyError("Offline");
+        return;
+      }
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
         this.game.config.openingSwap && moveNumber === 1
@@ -934,10 +942,13 @@ export default {
       return result;
     },
 
-    requestTopazSuggestions() {
+    async requestTopazSuggestions() {
       if (!this.topazWorker) {
-        this.notifyError("Bot unavailable");
-        return;
+        try {
+          await this.init();
+        } catch (error) {
+          return;
+        }
       }
       if (this.loadingTopazMoves) {
         return;
@@ -997,6 +1008,9 @@ export default {
      * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
      */
     async loadUsernames() {
+      if (this.isOffline) {
+        return;
+      }
       const response = await fetch(usernamesEndpoint);
       const { white, black } = await response.json();
       this.player1Index = new Fuse(white);
@@ -1007,29 +1021,35 @@ export default {
       // Load wasm bots
       try {
         if (!this.topazWorker) {
-          this.topazWorker = new Worker(
-            new URL("/topaz/topaz.worker.js", import.meta.url)
-          );
-          this.topazWorker.onmessage = ({ data }) => {
-            this.receiveTopazSuggestions(data);
-          };
+          try {
+            this.topazWorker = new Worker(
+              new URL("/topaz/topaz.worker.js", import.meta.url)
+            );
+            this.topazWorker.onmessage = ({ data }) => {
+              this.receiveTopazSuggestions(data);
+            };
+          } catch (error) {
+            this.notifyError("Bot unavailable");
+          }
         }
       } catch (error) {
         this.notifyError(error);
       }
 
-      // Load player names
-      if (!this.player1Names.length) {
-        this.loadUsernames();
-      }
+      if (!this.isOffline) {
+        // Load player names
+        if (!this.player1Names.length) {
+          this.loadUsernames();
+        }
 
-      // Load databases
-      try {
-        const response = await fetch(databasesEndpoint);
-        this.databases = await response.json();
-      } catch (error) {
-        this.databases = null;
-        this.notifyError(error);
+        // Load databases
+        try {
+          const response = await fetch(databasesEndpoint);
+          this.databases = await response.json();
+        } catch (error) {
+          this.databases = null;
+          this.notifyError(error);
+        }
       }
     },
 
@@ -1063,6 +1083,9 @@ export default {
     },
 
     async queryDBPosition() {
+      if (this.isOffline) {
+        return;
+      }
       const databaseId = this.databaseIdToQuery;
       if (databaseId === null) return;
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
@@ -1156,17 +1179,17 @@ export default {
   },
 
   async mounted() {
-    if (this.isPanelVisible) {
-      await this.init();
-      // wait for databases to load before querying the position
+    await this.init();
+    // wait for databases to load before querying the position
+    if (this.isPanelVisible && !this.isOffline) {
       this.queryDBPosition();
     }
   },
 
   watch: {
-    async isPanelVisible(isPanelVisible) {
-      if (isPanelVisible) {
-        if (!this.databases || !this.databases.length) {
+    async isOffline(isOffline) {
+      if (!isOffline && this.isPanelVisible) {
+        if (!this.topazWorker || !this.databases || !this.databases.length) {
           await this.init();
         }
         if (this.isDBMovesVisible) {
@@ -1174,13 +1197,23 @@ export default {
         }
       }
     },
+    async isPanelVisible(isPanelVisible) {
+      if (isPanelVisible) {
+        if (!this.topazWorker || !this.databases || !this.databases.length) {
+          await this.init();
+        }
+        if (this.isDBMovesVisible && !this.isOffline) {
+          this.queryDBPosition();
+        }
+      }
+    },
     isDBMovesVisible(isVisible) {
-      if (isVisible) {
+      if (isVisible && !this.isOffline) {
         this.queryDBPosition();
       }
     },
     tps() {
-      if (this.isDBMovesVisible) {
+      if (this.isDBMovesVisible && !this.isOffline) {
         this.queryDBPosition();
       }
     },
@@ -1234,7 +1267,9 @@ export default {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
         this.dbSettingsHash = this.hashDBSettings(settings);
-        this.queryDBPosition();
+        if (!this.isOffline) {
+          this.queryDBPosition();
+        }
       },
       deep: true,
     },
