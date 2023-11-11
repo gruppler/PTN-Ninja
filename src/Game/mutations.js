@@ -725,6 +725,7 @@ export default class GameMutations {
         this._updatePTN();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
+        this.board.updateBoardOutput();
         return true;
       }
     });
@@ -746,6 +747,7 @@ export default class GameMutations {
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
+      this.board.updateBoardOutput();
       return true;
     });
   }
