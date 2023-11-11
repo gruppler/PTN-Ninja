@@ -25,6 +25,7 @@
         <q-btn
           :label="$t('OK')"
           :disabled="$refs.input && $refs.input.hasError"
+          :loading="loading"
           @click="load"
           color="primary"
           flat
@@ -43,6 +44,7 @@ export default {
   },
   data() {
     return {
+      loading: false,
       gameID: "",
     };
   },
@@ -64,10 +66,16 @@ export default {
       return /^\d+$/.test(value);
     },
     load() {
-      this.$store.dispatch("game/ADD_PLAYTAK_GAME", this.gameID).then(() => {
-        this.$emit("submit");
-        this.close();
-      });
+      this.loading = true;
+      this.$store
+        .dispatch("game/ADD_PLAYTAK_GAME", this.gameID)
+        .then(() => {
+          this.$emit("submit");
+          this.close();
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
   },
 };
