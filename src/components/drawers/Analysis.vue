@@ -781,7 +781,7 @@ export default {
       let positionAfter = this.botPositions[ply.tpsAfter];
       if (positionAfter && settingsHash in positionAfter) {
         let evaluation =
-          Math.round(positionAfter[settingsHash][0].evaluation) / 100;
+          Math.round(100 * positionAfter[settingsHash][0].evaluation) / 1e4;
         return `${evaluation >= 0 ? "+" : ""}${evaluation}`;
       }
       return null;
