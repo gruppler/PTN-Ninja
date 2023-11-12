@@ -7,7 +7,7 @@ import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
-  document.title = game.name + " — " + i18n.t("app_title");
+  const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
   if (game.config.unseen) {
     dispatch("SAVE_CONFIG", {
@@ -15,6 +15,7 @@ export const SET_GAME = function ({ commit }, game) {
       config: { ...game.config, unseen: false },
     });
   }
+  setTimeout(() => (document.title = title), 200);
 };
 
 export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
@@ -158,7 +159,7 @@ export const REPLACE_GAME = function (
     Vue.nextTick(() => {
       Vue.prototype.notify({
         message: i18n.t("success.replacedExistingGame"),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         multiLine: false,
         actions: [
@@ -217,7 +218,7 @@ export const REMOVE_GAME = function (
       Vue.prototype.notify({
         icon,
         message: i18n.t("Game x closed", { game: game.name }),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         multiLine: false,
         actions: [
@@ -290,7 +291,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
       Vue.prototype.notify({
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         actions: [
           {
