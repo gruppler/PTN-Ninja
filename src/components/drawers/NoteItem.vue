@@ -40,7 +40,7 @@
             v-for="(pvPly, j) in pv"
             :key="j"
             :ply="pvPly"
-            @click.stop.prevent.capture="insertPV(i, pv.length - j - 1)"
+            @click.stop.prevent.capture="insertPV(i, j)"
           >
             <PlyPreview
               :tps="ply.tpsBefore"
@@ -143,12 +143,14 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertPV(i, prev) {
-      if (!this.pvs || !this.pvs[i]) {
+    insertPV(pvIndex, plyIndex) {
+      if (!this.pvs || !this.pvs[pvIndex]) {
         return;
       }
-      if (prev === undefined) {
-        prev = this.pvs[i].length - 1;
+      let prev = 0;
+      if (plyIndex === undefined) {
+        plyIndex = this.pvs[pvIndex].length;
+        prev = plyIndex - 1;
       }
       this.unhighlight();
       if (this.$store.state.game.position.plyID !== this.plyID) {
@@ -160,7 +162,7 @@ export default {
         this.$store.commit("game/PREV", { half: true });
       }
       this.$store.dispatch("game/INSERT_PLIES", {
-        plies: this.pvs[i].map((ply) => ply.text),
+        plies: this.pvs[pvIndex].slice(0, plyIndex + 1).map((ply) => ply.text),
         prev,
       });
     },

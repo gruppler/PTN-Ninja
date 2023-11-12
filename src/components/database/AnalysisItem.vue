@@ -70,9 +70,7 @@
           v-for="(fPly, i) in followingPlies"
           :key="i"
           :ply="fPly"
-          @click.stop.prevent.capture="
-            insertFollowingPlies(followingPlies.length - i - 1)
-          "
+          @click.stop.prevent.capture="insertFollowingPlies(i)"
         >
           <PlyPreview
             :tps="tps"
@@ -130,13 +128,18 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertFollowingPlies(prev) {
-      if (prev === undefined) {
-        prev = this.followingPlies.length;
+    insertFollowingPlies(index) {
+      let prev = 0;
+      if (index === undefined) {
+        index = this.followingPlies.length;
+        prev = index;
       }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLIES", {
-        plies: [this.ply.text, ...this.followingPlies.map((ply) => ply.text)],
+        plies: [
+          this.ply.text,
+          ...this.followingPlies.slice(0, index + 1).map((ply) => ply.text),
+        ],
         prev,
       });
     },
