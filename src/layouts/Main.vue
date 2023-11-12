@@ -62,6 +62,11 @@
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
         </q-page-sticky>
+        <q-page-sticky
+          ref="gameNotificationContainer"
+          position="top-right"
+          :offset="[0, 0]"
+        />
       </q-page>
     </q-page-container>
 
@@ -739,6 +744,16 @@ export default {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
+    }
+  },
+  mounted() {
+    const lists = document.querySelectorAll(
+      ".q-notifications .q-notifications__list--top"
+    );
+    for (const list of lists) {
+      list.style.display = "flex";
+      list.classList.remove("fixed");
+      this.$refs.gameNotificationContainer.$el.appendChild(list);
     }
   },
   beforeDestroy() {

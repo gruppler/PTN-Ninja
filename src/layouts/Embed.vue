@@ -56,6 +56,11 @@
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove />
         </q-page-sticky>
+        <q-page-sticky
+          ref="gameNotificationContainer"
+          position="top-right"
+          :offset="[0, 0]"
+        />
       </q-page>
     </q-page-container>
 
@@ -321,6 +326,16 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
     this.title = this.name || this.$game.generateName();
+  },
+  mounted() {
+    const lists = document.querySelectorAll(
+      ".q-notifications .q-notifications__list--top"
+    );
+    for (const list of lists) {
+      list.style.display = "flex";
+      list.classList.remove("fixed");
+      this.$refs.gameNotificationContainer.$el.appendChild(list);
+    }
   },
 };
 </script>

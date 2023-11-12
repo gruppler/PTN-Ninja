@@ -262,10 +262,6 @@ kbd {
   background: $accent !important;
   background: var(--q-color-accent) !important;
 }
-.q-notifications__list--top {
-  top: $toolbar-min-height;
-  z-index: 5000;
-}
 
 .q-notifications__list--bottom {
   bottom: $footer-toolbar-height;
