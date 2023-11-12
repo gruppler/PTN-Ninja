@@ -352,7 +352,7 @@ export default class BoardNavigation {
     } else {
       let destination = this.getPrevPly(times);
       if (destination) {
-        return this.goToPly(destination.id, !half);
+        return this.goToPly(destination.id, true);
       }
     }
     return false;
