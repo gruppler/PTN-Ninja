@@ -791,9 +791,9 @@ export default {
       if (positionBefore && settingsHash in positionBefore) {
         let position = positionBefore[settingsHash][0];
         if (position && position.ply) {
-          let pv = [position.ply, ...position.followingPlies].map(
-            (ply) => ply.ptn
-          );
+          let pv = [position.ply, ...position.followingPlies]
+            .slice(0, 3)
+            .map((ply) => ply.ptn);
           return `pv ${pv.join(" ")}`;
         }
       }
