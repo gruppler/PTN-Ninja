@@ -149,10 +149,6 @@
               stretch
             />
           </template>
-
-          <q-item v-else-if="isGameEnd" class="flex-center">
-            {{ $t("analysis.gameOver") }}
-          </q-item>
         </smooth-reflow>
 
         <smooth-reflow>
@@ -193,6 +189,10 @@
               'depth' in move ? `${$t('analysis.depth')} ${move.depth}` : null
             "
           />
+
+          <q-item v-if="isGameEnd" class="flex-center">
+            {{ $t("analysis.gameOver") }}
+          </q-item>
         </smooth-reflow>
 
         <smooth-reflow>
@@ -639,7 +639,10 @@ export default {
       ];
     },
     isFullyAnalyzed() {
-      return this.plies.every((ply) => this.plyHasEvalComment(ply));
+      return this.plies.every(
+        (ply) =>
+          this.plyHasEvalComment(ply) || (ply.result && ply.result.type !== "1")
+      );
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
