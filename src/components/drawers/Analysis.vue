@@ -777,14 +777,35 @@ export default {
         )
       );
     },
-    getEvalComment(ply, settingsHash) {
+    getEvalComments(ply, settingsHash) {
+      let comments = [];
+      let positionBefore = this.botPositions[ply.tpsBefore];
       let positionAfter = this.botPositions[ply.tpsAfter];
       if (positionAfter && settingsHash in positionAfter) {
-        let evaluation =
+        let evaluationAfter =
           Math.round(100 * positionAfter[settingsHash][0].evaluation) / 1e4;
-        return `${evaluation >= 0 ? "+" : ""}${evaluation}`;
+        comments.push(`${evaluationAfter >= 0 ? "+" : ""}${evaluationAfter}`);
+        if (positionBefore && settingsHash in positionBefore) {
+          let evaluationBefore =
+            Math.round(100 * positionBefore[settingsHash][0].evaluation) / 1e4;
+          const scoreLoss =
+            (ply.player === 1
+              ? evaluationAfter - evaluationBefore
+              : evaluationBefore - evaluationAfter) / 2;
+          if (scoreLoss > 0.06) {
+            comments.push("!!");
+          } else if (scoreLoss > 0.03) {
+            comments.push("!");
+          } else if (scoreLoss > -0.1) {
+            // Do nothing
+          } else if (scoreLoss > -0.25) {
+            comments.push("?");
+          } else {
+            comments.push("??");
+          }
+        }
       }
-      return null;
+      return comments;
     },
     getPVComment(ply, settingsHash) {
       let positionBefore = this.botPositions[ply.tpsBefore];
@@ -844,9 +865,9 @@ export default {
         let messages = {};
         plies.forEach((ply) => {
           let notes = [];
-          let evaluation = this.getEvalComment(ply, settingsHash);
-          if (evaluation !== null && !this.plyHasEvalComment(ply)) {
-            notes.push(evaluation);
+          let evaluations = this.getEvalComments(ply, settingsHash);
+          if (evaluations.length) {
+            notes.push(...evaluations);
           }
           let pv = this.getPVComment(ply, settingsHash);
           if (pv !== null && !this.plyHasPVComment(ply, pv)) {

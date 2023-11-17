@@ -52,13 +52,20 @@ export default class GameComments {
   }
 
   addComments(type, messages) {
+    const isEvaluation = /^[?!'"]+$/;
     for (const plyID in messages) {
       messages[plyID].forEach((message) => {
-        this._addComment(type, message, plyID);
+        if (isEvaluation.test(message)) {
+          this._setEvaluation(plyID, message);
+        } else {
+          this._addComment(type, message, plyID);
+        }
       });
     }
     this._updatePTN(true);
     this.board.updateCommentsOutput();
+    this.board.updatePTNOutput();
+    this.board.updatePositionOutput();
   }
 
   editComment(type, plyID, index, message) {
@@ -119,6 +126,22 @@ export default class GameComments {
 
   removeNote(plyID, index) {
     return this.removeComment("notes", plyID, index);
+  }
+
+  _setEvaluation(plyID, notation) {
+    const ply = this.plies[plyID];
+    if (!ply) {
+      throw "Invalid plyID";
+    }
+    if (ply.evaluation) {
+      if (ply.evaluation.tinue && !/''|"/.test(notation)) {
+        notation += '"';
+      } else if (ply.evaluation.tak && !notation.includes("'")) {
+        notation += "'";
+      }
+    }
+    ply.evaluation = Evaluation.parse(notation);
+    this.board.dirtyPly(ply.id);
   }
 
   toggleEvaluation(type, double = false) {
