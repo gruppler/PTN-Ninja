@@ -525,6 +525,7 @@ export default class GameBase {
       }
     } else if (this.board.targetBranch) {
       // Go back to root branch
+      this.board.targetBranch = "";
       this.board.goToPly(0, true);
       this.board.last();
     }
