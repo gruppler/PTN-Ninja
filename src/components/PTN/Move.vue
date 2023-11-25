@@ -99,10 +99,10 @@ export default {
       let eval2 = this.ply2
         ? this.$store.state.game.comments.evaluations[this.ply2.id]
         : null;
-      if (eval1) {
+      if (eval1 !== null) {
         evaluations.push(eval1);
       }
-      if (eval2) {
+      if (eval2 !== null) {
         evaluations.push(eval2);
       }
       return evaluations;
