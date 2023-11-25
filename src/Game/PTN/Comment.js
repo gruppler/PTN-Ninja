@@ -1,3 +1,4 @@
+import Ply from "./Ply";
 import { pick } from "lodash";
 
 const outputProps = ["time", "player", "message", "evaluation", "pv"];
@@ -38,7 +39,7 @@ export function getPV(message) {
   let matches;
 
   matches = message.match(
-    /(?:\W|^)(pv([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?)+)(?:\W|$)/gim
+    /(?:\W|^)(pv([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
   );
   if (matches) {
     matches = matches.map((match) =>
@@ -96,13 +97,24 @@ export default class Comment {
     return new Comment(notation);
   }
 
-  toString() {
+  toString({ size, transform }) {
+    let message = this.message;
+    if (size && transform) {
+      message = message.replace(
+        /(^|\s+)[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?/gi,
+        (ptn) => {
+          let prefix = ptn.match(/^\s*/)[0];
+          ptn = Ply.parse(ptn).transform(size, transform);
+          return `${prefix}${ptn}`;
+        }
+      );
+    }
     return (
       "{" +
       (this.player ? "@" + this.player + ":" : "") +
       (this.time === null ? "" : `${this.time}:`) +
       (this.time !== null || this.player ? " " : "") +
-      this.message +
+      message +
       "}"
     );
   }
