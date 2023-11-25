@@ -12,6 +12,10 @@ const evalFormats = [
     pattern: /(?:\W|^)([.0-9]+)%(?:\W|$)/,
     format: (v) => v * 2 - 100,
   },
+  {
+    pattern: /(?:\W|^)([.0-9]+)(?:\W|$)/,
+    format: (v) => v * 2 - 1,
+  },
 ];
 
 export function getEvaluation(message) {
