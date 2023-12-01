@@ -639,10 +639,7 @@ export default {
       ];
     },
     isFullyAnalyzed() {
-      return this.plies.every(
-        (ply) =>
-          this.plyHasEvalComment(ply) || (ply.result && ply.result.type !== "1")
-      );
+      return this.plies.every((ply) => this.plyHasEvalComment(ply));
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
