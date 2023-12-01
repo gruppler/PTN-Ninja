@@ -889,16 +889,20 @@ export default {
         let total = positions.length;
         let completed = 0;
 
-        for await (const result of asyncPool(
-          concurrency,
-          positions,
-          async (tps) =>
-            await this.queryBotSuggestionsTiltak(
-              secondsToThinkPerPly,
+        for await (const result of asyncPool(concurrency, positions, (tps) =>
+          this.queryBotSuggestionsTiltak(
+            secondsToThinkPerPly,
+            tps,
+            komi,
+            settingsHash
+          ).catch((error) => {
+            console.error("Failed to query position", {
               tps,
               komi,
-              settingsHash
-            )
+              secondsToThink,
+              error,
+            });
+          })
         )) {
           this.progressTiltakAnalysis = (100 * ++completed) / total;
         }
@@ -933,7 +937,12 @@ export default {
         const komi = this.game.config.komi;
         await this.queryBotSuggestionsTiltak(secondsToThink, tps, komi);
       } catch (error) {
-        this.notifyError(error);
+        this.console.error("Failed to query position", {
+          tps,
+          komi,
+          secondsToThink,
+          error,
+        });
       } finally {
         this.loadingTiltakMoves = false;
       }
@@ -949,8 +958,7 @@ export default {
         return;
       }
       if (!tps) {
-        console.error("Missing TPS");
-        return;
+        throw new Error("Missing TPS");
       }
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
       const initialColor =
