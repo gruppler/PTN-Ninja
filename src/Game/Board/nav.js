@@ -95,34 +95,50 @@ export default class BoardNavigation {
       let flatten = move.flatten;
       const type = move.type;
       if (!this.squares[y] || !this.squares[y][x]) {
-        throw new Error("Invalid move");
+        throw new Error(`Invalid coordinate (${x}, ${y})`);
       }
       const square = this.squares[y][x];
 
       if (type) {
         if (action === "pop") {
           // Undo placement
+          if (!square.piece) {
+            throw new Error(
+              `Cannot unplace from empty square ${square.static.coord}`
+            );
+          }
           this.unplayPiece(square);
         } else {
           // Do placement
           if (square.piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot place into occupied square ${square.static.coord}`
+            );
           }
           const piece = this.playPiece(color, type, square);
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(`No remaining ${type} pieces`);
           }
           piece.ply = ply;
         }
       } else if (action === "pop") {
         // Begin movement
         if (i === 0 && square.color !== color) {
-          throw new Error("Invalid move");
+          throw new Error(
+            `Player does not control initial square ${square.static.coord}`
+          );
+        }
+        if (count > this.size) {
+          throw new Error(
+            `Cannot move ${count} pieces from square ${square.static.coord}`
+          );
         }
         times(count, () => {
           const piece = square.popPiece();
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot move ${count} pieces from square ${square.static.coord}`
+            );
           }
           stack.push(piece);
         });
@@ -136,7 +152,7 @@ export default class BoardNavigation {
         if (square.pieces.length) {
           // Check that we can move onto existing piece(s)
           if (square.piece.isCapstone) {
-            throw new Error("Invalid move");
+            throw new Error(`Cannot move onto cap at ${square.static.coord}`);
           } else if (square.piece.isStanding) {
             if (
               stack[0].isCapstone &&
@@ -151,7 +167,9 @@ export default class BoardNavigation {
                 this.game._updatePTN();
               }
             } else {
-              throw new Error("Invalid move");
+              throw new Error(
+                `Cannot move onto wall at ${square.static.coord}`
+              );
             }
           }
           if (flatten && square.pieces.length) {
@@ -170,7 +188,9 @@ export default class BoardNavigation {
         times(count, () => {
           const piece = stack.pop();
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot drop ${count} pieces onto square ${square.static.coord}`
+            );
           }
           square.pushPiece(piece);
         });
