@@ -485,49 +485,54 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (this.board.plies.length) {
-      // Go to end of main branch
-      this.board.plyID = 0;
-      this.board.last();
-      if (this.board.checkGameEnd()) {
-        let ply = this.board.ply;
-        if (ply) {
-          if (!this.tag("result")) {
-            // Add Result tag if missing
-            this.setTags({ result: ply.result.text }, false, true);
+    // Validate and generate TPS for each ply, set initial position
+    try {
+      if (this.board.plies.length) {
+        // Go to end of main branch
+        this.board.plyID = 0;
+        this.board.last();
+        if (this.board.checkGameEnd()) {
+          let ply = this.board.ply;
+          if (ply) {
+            if (!this.tag("result")) {
+              // Add Result tag if missing
+              this.setTags({ result: ply.result.text }, false, true);
+            }
+            this.board.setRoads(ply.result.roads || null);
           }
-          this.board.setRoads(ply.result.roads || null);
+        }
+        // Navigate through every branch
+        for (let branch in this.branches) {
+          if (branch) {
+            this.board.goToPly(this.branches[branch].id, true);
+            this.board.last();
+          }
         }
       }
-      // Navigate through every branch
-      for (let branch in this.branches) {
-        if (branch) {
-          this.board.goToPly(this.branches[branch].id, true);
-          this.board.last();
+      if (
+        state &&
+        isObject(state) &&
+        "plyIndex" in state &&
+        state.targetBranch in this.branches
+      ) {
+        // Go to specified position
+        let ply = this.plies.find(
+          (ply) =>
+            ply.index === state.plyIndex && ply.isInBranch(state.targetBranch)
+        );
+        if (ply) {
+          this.board.goToPly(ply.id, state.plyIsDone || false);
+        } else {
+          this.board.plyID = -1;
         }
+      } else if (this.board.targetBranch) {
+        // Go back to root branch
+        this.board.targetBranch = "";
+        this.board.goToPly(0, true);
+        this.board.last();
       }
-    }
-    if (
-      state &&
-      isObject(state) &&
-      "plyIndex" in state &&
-      state.targetBranch in this.branches
-    ) {
-      // Go to specified position
-      let ply = this.plies.find(
-        (ply) =>
-          ply.index === state.plyIndex && ply.isInBranch(state.targetBranch)
-      );
-      if (ply) {
-        this.board.goToPly(ply.id, state.plyIsDone || false);
-      } else {
-        this.board.plyID = -1;
-      }
-    } else if (this.board.targetBranch) {
-      // Go back to root branch
-      this.board.targetBranch = "";
-      this.board.goToPly(0, true);
-      this.board.last();
+    } catch (error) {
+      console.error("PTN validation failed:", error);
     }
 
     if (this.onInit) {

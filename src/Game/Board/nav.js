@@ -59,25 +59,30 @@ export default class BoardNavigation {
       ply.tpsBefore = this.tps;
       this.dirtyPly(ply.id);
     }
-    if (this._doMoveset(ply.toMoveset(), ply.color, ply)) {
+    try {
+      this._doMoveset(ply.toMoveset(), ply.color, ply);
       this._setPly(ply.id, true);
       this._afterPly(ply, true);
       return true;
-    } else {
-      console.error("Failed to do ply", ply);
-      return false;
+    } catch (error) {
+      console.error("Failed to do ply", ply, error);
+      throw error;
     }
   }
 
   _undoPly() {
     const ply = this.plyIsDone ? this.ply : this.prevPly;
-    if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
+    if (!ply) {
+      return false;
+    }
+    try {
+      this._doMoveset(ply.toUndoMoveset(), ply.color, ply);
       this._setPly(ply.id, false);
       this._afterPly(ply, false);
       return true;
-    } else {
-      console.error("Failed to undo ply", ply);
-      return false;
+    } catch (error) {
+      console.error("Failed to undo ply", ply, error);
+      throw error;
     }
   }
 
