@@ -64,6 +64,7 @@ export default class BoardNavigation {
       this._afterPly(ply, true);
       return true;
     } else {
+      console.error("Failed to do ply", ply);
       return false;
     }
   }
@@ -75,6 +76,7 @@ export default class BoardNavigation {
       this._afterPly(ply, false);
       return true;
     } else {
+      console.error("Failed to undo ply", ply);
       return false;
     }
   }
