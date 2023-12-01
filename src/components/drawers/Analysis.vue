@@ -788,7 +788,7 @@ export default {
       if (ply.result && ply.result.type !== "1") {
         evaluationAfter = ply.result.isTie
           ? 0
-          : 100 * (ply.result.winner * 2 - 1);
+          : 100 * (ply.result.winner === 1 ? 1 : -1);
       }
 
       // Get evaulationBefore from existing eval comment of previous ply
