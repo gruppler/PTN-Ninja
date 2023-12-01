@@ -766,7 +766,9 @@ export default {
     plyHasEvalComment(ply) {
       return (
         ply.id in this.game.comments.notes &&
-        this.game.comments.notes[ply.id].some((comment) => comment.evaluation)
+        this.game.comments.notes[ply.id].some(
+          (comment) => comment.evaluation !== null
+        )
       );
     },
     plyHasPVComment(ply, pv = null) {
