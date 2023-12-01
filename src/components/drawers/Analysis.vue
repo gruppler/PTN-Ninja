@@ -784,13 +784,51 @@ export default {
       let comments = [];
       let positionBefore = this.botPositions[ply.tpsBefore];
       let positionAfter = this.botPositions[ply.tpsAfter];
-      if (positionAfter && settingsHash in positionAfter) {
-        let evaluationAfter =
-          Math.round(100 * positionAfter[settingsHash][0].evaluation) / 1e4;
+      let evaluationBefore = null;
+      let evaluationAfter = null;
+
+      // Assume evaluationAfter from game result
+      if (ply.result && ply.result.type !== "1") {
+        evaluationAfter = ply.result.isTie
+          ? 0
+          : 100 * (ply.result.winner * 2 - 1);
+      }
+
+      // Get evaulationBefore from existing eval comment of previous ply
+      let prevPly = this.plies.find(
+        (prevPly) => prevPly.tpsAfter === ply.tpsBefore
+      );
+      if (prevPly && prevPly.id in this.game.comments.notes) {
+        for (let i = 0; i < this.game.comments.notes[prevPly.id].length; i++) {
+          evaluationBefore = this.game.comments.notes[prevPly.id][i].evaluation;
+          if (evaluationBefore !== null);
+          break;
+        }
+      }
+
+      if (
+        evaluationAfter !== null ||
+        (positionAfter && settingsHash in positionAfter)
+      ) {
+        evaluationAfter =
+          Math.round(
+            100 *
+              (evaluationAfter !== null
+                ? evaluationAfter
+                : positionAfter[settingsHash][0].evaluation)
+          ) / 1e4;
         comments.push(`${evaluationAfter >= 0 ? "+" : ""}${evaluationAfter}`);
-        if (positionBefore && settingsHash in positionBefore) {
-          let evaluationBefore =
-            Math.round(100 * positionBefore[settingsHash][0].evaluation) / 1e4;
+        if (
+          evaluationBefore !== null ||
+          (positionBefore && settingsHash in positionBefore)
+        ) {
+          evaluationBefore =
+            Math.round(
+              100 *
+                (evaluationBefore !== null
+                  ? evaluationBefore
+                  : positionBefore[settingsHash][0].evaluation)
+            ) / 1e4;
           const scoreLoss =
             (ply.player === 1
               ? evaluationAfter - evaluationBefore
@@ -908,6 +946,10 @@ export default {
     ) {
       if (this.isOffline) {
         this.notifyError("Offline");
+        return;
+      }
+      if (!tps) {
+        console.error("Missing TPS");
         return;
       }
       const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
