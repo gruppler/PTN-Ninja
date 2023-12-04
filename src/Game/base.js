@@ -513,12 +513,13 @@ export default class GameBase {
         state &&
         isObject(state) &&
         "plyIndex" in state &&
-        state.targetBranch in this.branches
+        (!state.targetBranch || state.targetBranch in this.branches)
       ) {
         // Go to specified position
         let ply = this.plies.find(
           (ply) =>
-            ply.index === state.plyIndex && ply.isInBranch(state.targetBranch)
+            ply.index === state.plyIndex &&
+            ply.isInBranch(state.targetBranch || "")
         );
         if (ply) {
           this.board.goToPly(ply.id, state.plyIsDone || false);
