@@ -13,6 +13,7 @@
     "dev:pwa": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m pwa",
     "dev:electron": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m electron",
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && quasar build -m pwa",
+    "build:dev": "set NODE_OPTIONS=--openssl-legacy-provider && quasar build -d -m pwa",
     "build:electron": "set NODE_OPTIONS=--openssl-legacy-provider && quasar build -m electron",
     "deploy": "firebase deploy --only hosting",
     "deploy:dev": "firebase deploy --only hosting:ptn-ninja-dev",
