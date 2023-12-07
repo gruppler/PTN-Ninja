@@ -541,6 +541,9 @@ export default class GameMutations {
       }
       this.board._doMoveset(ply.toMoveset(), ply.color, ply);
       this.board._undoMoveset(ply.toMoveset(), ply.color, ply);
+      if (replaceCurrent && this.board.plyIsDone) {
+        this.board._doMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
+      }
     }
 
     this.board.dirtyPly(ply.id);
