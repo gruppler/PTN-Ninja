@@ -10,14 +10,14 @@
       <q-input
         ref="input"
         v-model="newBranch"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent
+        @keyup.enter.prevent="save"
         :rules="[validateBranch]"
         hide-bottom-space
         clearable
         autofocus
         autogrow
         filled
-        dense
       >
       </q-input>
 

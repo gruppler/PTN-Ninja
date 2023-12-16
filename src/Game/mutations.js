@@ -519,7 +519,7 @@ export default class GameMutations {
     }
 
     // Validate
-    if (this.board.isGameEnd) {
+    if (this.board.isGameEnd && !isAlreadyDone) {
       throw new Error("The game has ended");
     }
     if (ply.pieceCount > this.size) {
@@ -541,6 +541,9 @@ export default class GameMutations {
       }
       this.board._doMoveset(ply.toMoveset(), ply.color, ply);
       this.board._undoMoveset(ply.toMoveset(), ply.color, ply);
+      if (replaceCurrent && this.board.plyIsDone) {
+        this.board._doMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
+      }
     }
 
     this.board.dirtyPly(ply.id);
@@ -725,12 +728,13 @@ export default class GameMutations {
         this._updatePTN();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
+        this.board.updateBoardOutput();
         return true;
       }
     });
   }
 
-  insertPlies(plies) {
+  insertPlies(plies, prev = 0) {
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
@@ -740,10 +744,13 @@ export default class GameMutations {
           break;
         }
       }
-      this.board.prev(false, plies.length - 1);
+      if (prev) {
+        this.board.prev(false, prev);
+      }
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
+      this.board.updateBoardOutput();
       return true;
     });
   }

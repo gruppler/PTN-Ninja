@@ -3,6 +3,7 @@
     ref="dialog"
     :value="true"
     content-class="non-selectable"
+    no-backdrop-dismiss
     v-bind="$attrs"
   >
     <template v-slot:header>
@@ -34,12 +35,15 @@
 
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
+              <!-- Clipboard -->
               <q-item @click="clipboard" clickable v-ripple>
                 <q-item-section avatar>
                   <q-icon name="clipboard" />
                 </q-item-section>
                 <q-item-section>{{ $t("Clipboard") }}</q-item-section>
               </q-item>
+
+              <!-- Files -->
               <q-item
                 @click="$store.dispatch('ui/OPEN', close)"
                 clickable
@@ -50,34 +54,14 @@
                 </q-item-section>
                 <q-item-section>{{ $t("Files") }}</q-item-section>
               </q-item>
-              <q-item
-                @click="toggleOnline"
-                :class="{ 'text-primary': showOnline }"
-                clickable
-                v-ripple
-              >
+
+              <!-- PlayTak Game ID -->
+              <q-item @click="playTak" clickable v-ripple>
                 <q-item-section avatar>
-                  <q-icon name="online" />
+                  <img src="~assets/playtak.svg" width="24" height="24" />
                 </q-item-section>
-                <q-item-section>{{ $t("Online") }}</q-item-section>
-                <q-item-section side>
-                  <q-icon
-                    name="arrow_drop_down"
-                    class="q-expansion-item__toggle-icon"
-                    :class="{ 'rotate-180': showOnline }"
-                  />
-                </q-item-section>
+                <q-item-section>{{ $t("PlayTak Game ID") }}</q-item-section>
               </q-item>
-              <recess>
-                <!-- <GameTable
-                  v-if="showOnline"
-                  ref="gameTable"
-                  v-model="selectedGames"
-                /> -->
-                <div v-if="showOnline" class="q-pa-md text-center">
-                  {{ $t("Coming soon") }}
-                </div>
-              </recess>
             </q-list>
           </q-tab-panel>
         </q-tab-panels>
@@ -106,12 +90,20 @@
       @submit="clipboardCreate"
       no-route-dismiss
     />
+
+    <PlayTakGameID
+      v-model="showPlayTakID"
+      @submit="close"
+      no-route-dismiss
+      go-back
+    />
   </small-dialog>
 </template>
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
 import EditPTN from "../dialogs/EditPTN.vue";
+import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
 // import GameTable from "../components/controls/GameTable";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
@@ -119,7 +111,7 @@ import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, EditPTN, /* GameTable, */ MoreToggle },
+  components: { GameInfo, EditPTN, PlayTakGameID, /* GameTable, */ MoreToggle },
   data() {
     return {
       tags: {
@@ -160,6 +152,18 @@ export default {
           this.$router.back();
         } else if (show && !this.showPTN) {
           this.$router.push({ params: { type: show ? "ptn" : null } });
+        }
+      },
+    },
+    showPlayTakID: {
+      get() {
+        return this.$route.params.type === "playtak";
+      },
+      set(show) {
+        if (!show && this.showPlayTakID) {
+          this.$router.back();
+        } else if (show && !this.showPlayTakID) {
+          this.$router.push({ params: { type: show ? "playtak" : null } });
         }
       },
     },
@@ -227,6 +231,9 @@ export default {
 
       await this.$store.dispatch("game/ADD_GAME", game);
       this.close();
+    },
+    async playTak() {
+      this.showPlayTakID = true;
     },
     async createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;

@@ -23,10 +23,16 @@ export default class GameComments {
     return comments;
   }
 
-  addComment(type, message) {
+  _addComment(type, message, plyID) {
     message = Comment.parse("{" + message + "}");
-    const plyID =
-      this.board.plyIndex <= 0 && !this.board.plyIsDone ? -1 : this.board.plyID;
+    if (plyID === undefined) {
+      plyID =
+        this.board.plyIndex <= 0 && !this.board.plyIsDone
+          ? -1
+          : this.board.plyID;
+    } else if (!(plyID in this.plies) && plyID !== -1) {
+      throw "Invalid plyID";
+    }
     if (!this[type][plyID]) {
       // First comment
       this[type] = Object.assign({ [plyID]: [message] }, this[type]);
@@ -34,10 +40,32 @@ export default class GameComments {
       // Another comment
       this[type][plyID].push(message);
     }
-    this._updatePTN(true);
     this.board.dirtyComment(type, plyID);
+    return message;
+  }
+
+  addComment(type, message, plyID) {
+    message = this._addComment(type, message, plyID);
+    this._updatePTN(true);
     this.board.updateCommentsOutput();
     return message;
+  }
+
+  addComments(type, messages) {
+    const isEvaluation = /^[?!'"]+$/;
+    for (const plyID in messages) {
+      messages[plyID].forEach((message) => {
+        if (isEvaluation.test(message)) {
+          this._setEvaluation(plyID, message);
+        } else {
+          this._addComment(type, message, plyID);
+        }
+      });
+    }
+    this._updatePTN(true);
+    this.board.updateCommentsOutput();
+    this.board.updatePTNOutput();
+    this.board.updatePositionOutput();
   }
 
   editComment(type, plyID, index, message) {
@@ -72,8 +100,8 @@ export default class GameComments {
     }
   }
 
-  addChatMessage(message) {
-    return this.addComment("chatlog", message);
+  addChatMessage(message, plyID) {
+    return this.addComment("chatlog", message, plyID);
   }
 
   editChatMessage(plyID, index, message) {
@@ -84,8 +112,12 @@ export default class GameComments {
     return this.removeComment("chatlog", plyID, index);
   }
 
-  addNote(message) {
-    return this.addComment("notes", message);
+  addNote(message, plyID) {
+    return this.addComment("notes", message, plyID);
+  }
+
+  addNotes(messages) {
+    return this.addComments("notes", messages);
   }
 
   editNote(plyID, index, message) {
@@ -94,6 +126,22 @@ export default class GameComments {
 
   removeNote(plyID, index) {
     return this.removeComment("notes", plyID, index);
+  }
+
+  _setEvaluation(plyID, notation) {
+    const ply = this.plies[plyID];
+    if (!ply) {
+      throw "Invalid plyID";
+    }
+    if (ply.evaluation) {
+      if (ply.evaluation.tinue && !/''|"/.test(notation)) {
+        notation += '"';
+      } else if (ply.evaluation.tak && !notation.includes("'")) {
+        notation += "'";
+      }
+    }
+    ply.evaluation = Evaluation.parse(notation);
+    this.board.dirtyPly(ply.id);
   }
 
   toggleEvaluation(type, double = false) {

@@ -37,10 +37,14 @@
       />
       <template v-if="!player || player === 1">
         <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1" />
+        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1">
+          <slot name="plyTooltip" />
+        </Ply>
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :ply="ply2" />
+        <Ply :key="ply2.id" :ply="ply2">
+          <slot name="plyTooltip" />
+        </Ply>
       </template>
     </div>
 
@@ -95,10 +99,10 @@ export default {
       let eval2 = this.ply2
         ? this.$store.state.game.comments.evaluations[this.ply2.id]
         : null;
-      if (eval1) {
+      if (eval1 !== null) {
         evaluations.push(eval1);
       }
-      if (eval2) {
+      if (eval2 !== null) {
         evaluations.push(eval2);
       }
       return evaluations;

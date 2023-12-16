@@ -210,6 +210,7 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
+import { TPStoCanvas } from "../../functions/TPS-Ninja/src/index";
 import { pngUIOptions } from "../store/ui/state";
 
 import { cloneDeep, debounce } from "lodash";
@@ -254,8 +255,8 @@ export default {
         }
       },
     },
-    tps() {
-      return this.$game.board.tps;
+    game() {
+      return this.$store.state.game;
     },
     canShare() {
       return this.$store.state.nativeSharing;
@@ -267,8 +268,26 @@ export default {
     },
     updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
-      this.config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      let canvas = this.$game.board.render(config);
+      config.font = "Roboto";
+      config.komi = this.game.config.komi;
+      config.opening = this.game.config.opening;
+      config.tps = this.game.position.tps;
+      config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      config.transform = this.$store.state.ui.boardTransform;
+
+      // Highlight current ply
+      if (config.highlightSquares && this.game.position.ply) {
+        config.hl = this.game.position.ply.text;
+        config.plyIsDone = this.game.position.plyIsDone;
+      }
+
+      // Add player names
+      if (config.includeNames) {
+        config.player1 = this.game.ptn.tags.player1;
+        config.player2 = this.game.ptn.tags.player2;
+      }
+
+      let canvas = TPStoCanvas(config);
       const filename = this.$game.pngFilename;
       canvas.toBlob((blob) => {
         this.file = new File([blob], filename, {

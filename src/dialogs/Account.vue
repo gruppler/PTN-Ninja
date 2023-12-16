@@ -18,7 +18,7 @@
           type="email"
           autocomplete="email"
           :label="$t('Email Address')"
-          @keydown.enter.prevent="submit"
+          @keyup.enter.prevent="submit"
           hide-bottom-space
           filled
         >
@@ -33,7 +33,7 @@
           :type="showPassword ? 'text' : 'password'"
           autocomplete="new-password"
           :label="$t('New Password')"
-          @keydown.enter.prevent="submit"
+          @keyup.enter.prevent="submit"
           hide-bottom-space
           filled
         >

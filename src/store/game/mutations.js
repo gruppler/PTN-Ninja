@@ -231,11 +231,11 @@ export const INSERT_PLY = (state, ply) => {
   }
 };
 
-export const INSERT_PLIES = (state, plies) => {
+export const INSERT_PLIES = (state, { plies, prev }) => {
   const game = Vue.prototype.$game;
   if (game) {
-    game.insertPlies(plies);
-    postMessage("INSERT_PLIES", plies);
+    game.insertPlies(plies, prev);
+    postMessage("INSERT_PLIES", plies, prev);
   }
 };
 
@@ -362,8 +362,12 @@ export const EDIT_NOTE = (state, { plyID, index, message }) => {
   Vue.prototype.$game.editNote(plyID, index, message);
 };
 
-export const ADD_NOTE = (state, message) => {
-  Vue.prototype.$game.addNote(message);
+export const ADD_NOTE = (state, { message, plyID }) => {
+  Vue.prototype.$game.addNote(message, plyID);
+};
+
+export const ADD_NOTES = (state, messages) => {
+  Vue.prototype.$game.addNotes(messages);
 };
 
 export const REMOVE_NOTE = (state, { plyID, index }) => {

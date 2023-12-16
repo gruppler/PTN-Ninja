@@ -26,6 +26,10 @@ export default class BoardNavigation {
 
   _afterPly(ply, isDone) {
     if (isDone) {
+      if (!ply.tpsAfter) {
+        ply.tpsAfter = this.tps;
+        this.dirtyPly(ply.id);
+      }
       if (ply.result && ply.result.type !== "1") {
         if (ply.result.type === "R" && !ply.result.roads) {
           this.updateSquareConnections();
@@ -48,23 +52,37 @@ export default class BoardNavigation {
 
   _doPly() {
     const ply = this.plyIsDone ? this.nextPly : this.ply;
-    if (ply && this._doMoveset(ply.toMoveset(), ply.color, ply)) {
+    if (!ply) {
+      return false;
+    }
+    if (!ply.tpsBefore) {
+      ply.tpsBefore = this.tps;
+      this.dirtyPly(ply.id);
+    }
+    try {
+      this._doMoveset(ply.toMoveset(), ply.color, ply);
       this._setPly(ply.id, true);
       this._afterPly(ply, true);
       return true;
-    } else {
-      return false;
+    } catch (error) {
+      console.error("Failed to do ply", ply, error);
+      throw error;
     }
   }
 
   _undoPly() {
     const ply = this.plyIsDone ? this.ply : this.prevPly;
-    if (ply && this._doMoveset(ply.toUndoMoveset(), ply.color, ply)) {
+    if (!ply) {
+      return false;
+    }
+    try {
+      this._doMoveset(ply.toUndoMoveset(), ply.color, ply);
       this._setPly(ply.id, false);
       this._afterPly(ply, false);
       return true;
-    } else {
-      return false;
+    } catch (error) {
+      console.error("Failed to undo ply", ply, error);
+      throw error;
     }
   }
 
@@ -84,34 +102,50 @@ export default class BoardNavigation {
       let flatten = move.flatten;
       const type = move.type;
       if (!this.squares[y] || !this.squares[y][x]) {
-        throw new Error("Invalid move");
+        throw new Error(`Invalid coordinate (${x}, ${y})`);
       }
       const square = this.squares[y][x];
 
       if (type) {
         if (action === "pop") {
           // Undo placement
+          if (!square.piece) {
+            throw new Error(
+              `Cannot unplace from empty square ${square.static.coord}`
+            );
+          }
           this.unplayPiece(square);
         } else {
           // Do placement
           if (square.piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot place into occupied square ${square.static.coord}`
+            );
           }
           const piece = this.playPiece(color, type, square);
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(`No remaining ${type} pieces`);
           }
           piece.ply = ply;
         }
       } else if (action === "pop") {
         // Begin movement
         if (i === 0 && square.color !== color) {
-          throw new Error("Invalid move");
+          throw new Error(
+            `Player does not control initial square ${square.static.coord}`
+          );
+        }
+        if (count > this.size) {
+          throw new Error(
+            `Cannot move ${count} pieces from square ${square.static.coord}`
+          );
         }
         times(count, () => {
           const piece = square.popPiece();
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot move ${count} pieces from square ${square.static.coord}`
+            );
           }
           stack.push(piece);
         });
@@ -125,7 +159,7 @@ export default class BoardNavigation {
         if (square.pieces.length) {
           // Check that we can move onto existing piece(s)
           if (square.piece.isCapstone) {
-            throw new Error("Invalid move");
+            throw new Error(`Cannot move onto cap at ${square.static.coord}`);
           } else if (square.piece.isStanding) {
             if (
               stack[0].isCapstone &&
@@ -140,7 +174,9 @@ export default class BoardNavigation {
                 this.game._updatePTN();
               }
             } else {
-              throw new Error("Invalid move");
+              throw new Error(
+                `Cannot move onto wall at ${square.static.coord}`
+              );
             }
           }
           if (flatten && square.pieces.length) {
@@ -159,7 +195,9 @@ export default class BoardNavigation {
         times(count, () => {
           const piece = stack.pop();
           if (!piece) {
-            throw new Error("Invalid move");
+            throw new Error(
+              `Cannot drop ${count} pieces onto square ${square.static.coord}`
+            );
           }
           square.pushPiece(piece);
         });
@@ -218,7 +256,7 @@ export default class BoardNavigation {
     this.setRoads(this.findRoads());
   }
 
-  goToPly(plyID, isDone) {
+  goToPly(plyID, isDone = false) {
     try {
       const targetPly = this.game.plies[plyID];
 
@@ -301,12 +339,14 @@ export default class BoardNavigation {
         }
       }
 
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       this.updatePTNBranchOutput();
     } catch (error) {
       if (this.game.onError) {
         this.game.onError(error, this.plyID);
+        this.updatePTNOutput();
         this.updateBoardOutput();
         this.updatePositionOutput();
         this.updatePTNBranchOutput();
@@ -332,13 +372,14 @@ export default class BoardNavigation {
     }
     if ((half || !this.prevPly) && this.plyIsDone) {
       const result = this._undoPly();
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;
     } else {
       let destination = this.getPrevPly(times);
       if (destination) {
-        return this.goToPly(destination.id, !half);
+        return this.goToPly(destination.id, true);
       }
     }
     return false;
@@ -350,6 +391,7 @@ export default class BoardNavigation {
     }
     if (!this.plyIsDone) {
       const result = this._doPly();
+      this.updatePTNOutput();
       this.updateBoardOutput();
       this.updatePositionOutput();
       return result;

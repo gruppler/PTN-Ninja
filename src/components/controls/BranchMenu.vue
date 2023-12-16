@@ -30,7 +30,9 @@
             :active-ply="ply"
             class="col-shrink"
           />
-          <Ply :ply="ply" no-branches no-click />
+          <Ply :ply="ply" no-branches no-click>
+            <PlyPreview :tps="ply.tpsAfter" :hl="ply.text" />
+          </Ply>
         </q-item-label>
       </q-item>
     </q-list>
@@ -38,6 +40,7 @@
 </template>
 
 <script>
+import PlyPreview from "../controls/PlyPreview";
 import { findLastIndex } from "lodash";
 
 export default {
@@ -45,6 +48,7 @@ export default {
   components: {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply"),
+    PlyPreview,
   },
   props: {
     value: Boolean,

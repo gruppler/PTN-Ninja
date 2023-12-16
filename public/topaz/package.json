@@ -1,0 +1,11 @@
+{
+  "name": "topaz-web",
+  "version": "0.1.0",
+  "files": [
+    "topaz_web_bg.wasm",
+    "topaz_web.js",
+    "topaz_web.d.ts"
+  ],
+  "browser": "topaz_web.js",
+  "types": "topaz_web.d.ts"
+}

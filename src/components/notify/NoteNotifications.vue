@@ -13,7 +13,7 @@ export default {
       return (
         this.$store.state.ui.notifyNotes &&
         (!this.$store.state.ui.showText ||
-          (this.$store.state.ui.textTab !== "notes" && this.$game.hasChat))
+          this.$store.state.ui.textTab !== "notes")
       );
     },
     game() {
