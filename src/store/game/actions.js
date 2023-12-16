@@ -438,8 +438,8 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, id) {
   try {
     const response = await fetch(
-      // `https://api.playtak.com/v1/games-history/ptn/${id}`
-      `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+      `https://api.playtak.com/v1/games-history/ptn/${id}`
+      // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
     );
     console.log(response);
     const ptn = await response.text();
