@@ -2,7 +2,7 @@ import Diff from "diff-match-patch";
 import { isEqual } from "lodash";
 
 const diff = new Diff();
-const maxHistoryLength = 10;
+const maxHistoryLength = 3;
 
 export default class GameUndo {
   _applyPatch(patch, state) {
