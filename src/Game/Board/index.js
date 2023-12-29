@@ -760,11 +760,11 @@ export default class Board extends Aggregation(
   }
 
   get isGameEndDefault() {
-    return (
+    return Boolean(
       this.ply &&
-      this.plyIsDone &&
-      this.ply.result &&
-      this.ply.result.type === "1"
+        this.plyIsDone &&
+        this.ply.result &&
+        this.ply.result.type === "1"
     );
   }
 
