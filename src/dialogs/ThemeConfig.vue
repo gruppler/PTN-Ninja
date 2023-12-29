@@ -139,22 +139,14 @@
 
       <q-separator />
 
-      <q-expansion-item
-        group="theme"
-        v-model="showImport"
-        icon="json"
-        :label="$t('Import')"
-      >
-        <q-input
-          type="textarea"
-          style="font-family: 'Source Code Pro'"
-          :placeholder="$t('hint.pasteThemeCode')"
-          v-model="json"
-          filled
-          square
-        />
-        <message-output :error="error" content-class="q-ma-md" />
-      </q-expansion-item>
+      <q-item @click="clipboard" clickable v-ripple>
+        <q-item-section avatar>
+          <q-icon name="clipboard" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ $t("Import") }}</q-item-label>
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>
@@ -183,15 +175,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 
-import {
-  cloneDeep,
-  debounce,
-  defaultsDeep,
-  isEqual,
-  kebabCase,
-  omit,
-  pick,
-} from "lodash";
+import { cloneDeep, debounce, isEqual, kebabCase, omit, pick } from "lodash";
 import {
   BOARD_STYLES,
   PRIMARY_COLOR_IDS,
@@ -215,9 +199,6 @@ export default {
       palette: [],
       seethrough: false,
       advanced: false,
-      showImport: false,
-      json: "",
-      error: "",
     };
   },
   computed: {
@@ -311,6 +292,19 @@ export default {
     updatePalette() {
       this.palette = Object.values(this.theme.colors);
     },
+    async clipboard() {
+      const json = await navigator.clipboard.readText();
+      if (!json) {
+        return;
+      }
+      try {
+        const theme = JSON.parse(json);
+        this.theme = theme;
+        this.preview();
+      } catch (error) {
+        this.notifyError(error);
+      }
+    },
     reset() {
       this.prompt({
         title: this.$t("Confirm"),
@@ -358,23 +352,6 @@ export default {
   created() {
     this.init();
     this.preview = debounce(this.preview, 50);
-  },
-  watch: {
-    json(json) {
-      this.error = "";
-      if (!json) {
-        return;
-      }
-      try {
-        const theme = JSON.parse(json);
-        this.theme = theme;
-        this.preview();
-        this.json = "";
-        this.showImport = false;
-      } catch (error) {
-        this.error = error;
-      }
-    },
   },
   mounted() {
     this.init();
