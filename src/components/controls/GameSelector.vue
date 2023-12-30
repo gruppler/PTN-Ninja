@@ -78,6 +78,7 @@
           :key="scope.opt.label"
           :option="scope.opt"
           :show-icon="hasOnlineGames"
+          @close="close"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         />
@@ -197,6 +198,9 @@ export default {
       this.showSearch = false;
       this.$store.dispatch("game/SELECT_GAME", { index });
       this.$emit("input", this.$store.state.game.list[0]);
+    },
+    close(index) {
+      this.$store.dispatch("game/REMOVE_GAME", index);
     },
     toggleSearch(focusInput = false) {
       this.showSearch = !this.showSearch;

@@ -55,7 +55,7 @@ export default {
   },
   methods: {
     close() {
-      this.$store.dispatch("game/REMOVE_GAME", this.option.value);
+      this.$emit("close", this.option.value);
     },
   },
 };
