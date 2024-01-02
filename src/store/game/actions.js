@@ -186,6 +186,9 @@ export const REMOVE_GAME = function (
   index
 ) {
   const game = state.list[index];
+  if (!game) {
+    new Error(`Invalid index: ${index}`);
+  }
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
   LocalStorage.remove("ptn-" + name);
