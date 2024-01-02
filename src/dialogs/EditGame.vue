@@ -25,10 +25,10 @@
     <q-card-section>
       <GameInfo
         ref="gameInfo"
-        :game="$game"
         :show-all="showAll"
         @submit="save"
         @hasChanges="hasChanges = $event"
+        edit-current
       />
     </q-card-section>
 
@@ -92,16 +92,16 @@ export default {
         this.$store.dispatch("game/SET_TAGS", pick(changes, Object.keys(tags)));
       }
 
-      if (this.$game.config.id) {
-        this.loading = true;
-        try {
-          await this.$store.dispatch("online/UPDATE_GAME", this.$game.json);
-          this.loading = false;
-        } catch (error) {
-          this.loading = false;
-          this.error = error;
-        }
-      }
+      // if (this.$game.config.id) {
+      //   this.loading = true;
+      //   try {
+      //     await this.$store.dispatch("online/UPDATE_GAME", this.$game.json);
+      //     this.loading = false;
+      //   } catch (error) {
+      //     this.loading = false;
+      //     this.error = error;
+      //   }
+      // }
       this.showAll = false;
       this.close();
     },

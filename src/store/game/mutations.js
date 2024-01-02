@@ -39,6 +39,7 @@ export const SET_GAME = (state, game) => {
     }
   }
   Vue.prototype.$game = game;
+  state.name = game.name;
   state.board = game.board.output.board;
   state.comments = game.board.output.comments;
   state.config = game.config;

@@ -61,7 +61,7 @@ export default {
           break;
         case "TOGGLE_UI":
         case "SHOW_NAMES":
-          this.showNames = data.value;
+          this.$refs.layout.showNames = data.value;
           break;
         case "SET_GAME":
         case "SET_CURRENT_PTN":

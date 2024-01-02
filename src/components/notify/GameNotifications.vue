@@ -28,7 +28,7 @@ export default {
           alerts.push({
             message: this.$t("result." + result.type, {
               player:
-                this.$game.tag("player" + winner) || this.$t("Player" + winner),
+                this.game.tags["player" + winner] || this.$t("Player" + winner),
             }),
             player: winner,
           });

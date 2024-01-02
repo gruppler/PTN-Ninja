@@ -3,6 +3,7 @@ import Game from "../../Game";
 import { uniq } from "lodash";
 
 const state = {
+  name: "",
   error: null,
   board: null,
   comments: null,

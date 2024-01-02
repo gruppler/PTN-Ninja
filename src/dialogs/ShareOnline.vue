@@ -140,6 +140,7 @@ export default {
       isValid: false,
       isPrivate: true,
       playerName: this.$store.state.ui.playerName,
+      gameURL: "",
       qrText: "",
       loading: false,
       flatCounts: false,
@@ -176,7 +177,7 @@ export default {
       },
     },
     isLocal() {
-      return this.$game.isLocal;
+      return !this.$store.state.game.config.isOnline;
     },
     isLoggedIn() {
       return this.user && !this.user.isAnonymous;
@@ -185,7 +186,9 @@ export default {
       return this.$store.state.online.user;
     },
     isSpectator() {
-      return !this.user || !this.$game.getPlayerFromUID(this.user.id);
+      return (
+        !this.user || !this.$store.getters["online/playerFromUID"](this.user.id)
+      );
     },
     player: {
       get() {
@@ -215,13 +218,13 @@ export default {
           return "textDark";
       }
     },
-    gameURL() {
-      return this.$game.isLocal
+  },
+  methods: {
+    updateGameURL() {
+      this.gameURL = this.isLocal
         ? ""
         : this.$store.getters["ui/url"](this.$game) || "";
     },
-  },
-  methods: {
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },
@@ -254,11 +257,13 @@ export default {
           disableShowRoads: !this.showRoads,
         })
         .then(() => {
-          this.loading = false;
+          this.updateGameURL();
         })
         .catch((error) => {
-          this.loading = false;
           this.error = error;
+        })
+        .finally(() => {
+          this.loading = false;
         });
     },
     copy(text) {
@@ -267,6 +272,9 @@ export default {
     qrCode(text) {
       this.$router.push({ name: "qr", params: { text } });
     },
+  },
+  mounted() {
+    this.updateGameURL();
   },
   watch: {
     isLoggedIn(isLoggedIn) {

@@ -127,7 +127,7 @@ export default class Board extends Aggregation(
         squareConnections: {},
       },
       comments: {
-        chat: {},
+        chatlog: {},
         notes: {},
       },
       ptn: {
@@ -269,7 +269,7 @@ export default class Board extends Aggregation(
   }
 
   dirtyChat(id) {
-    this.dirty.comments.chat[id] = true;
+    this.dirty.comments.chatlog[id] = true;
   }
 
   dirtyNote(id) {
@@ -403,8 +403,10 @@ export default class Board extends Aggregation(
 
   updateTagsOutput() {
     return (this.output.ptn.tags = zipObject(
-      Object.keys(this.game.tags),
-      Object.values(this.game.tags).map((tag) => tag.output)
+      Object.keys(this.game.tags).concat("datetime"),
+      Object.values(this.game.tags)
+        .map((tag) => tag.output)
+        .concat(this.game.datetime)
     ));
   }
 
@@ -831,10 +833,10 @@ export default class Board extends Aggregation(
   }
 
   get player() {
-    if (this.game.isLocal) {
-      return this.turn;
-    } else {
+    if (this.game.config.isOnline) {
       return this.game.config.player;
+    } else {
+      return this.turn;
     }
   }
 

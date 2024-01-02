@@ -40,7 +40,7 @@ export default {
   components: { Move },
   computed: {
     gameExists() {
-      return Boolean(this.$game);
+      return Boolean(this.ptn);
     },
     position() {
       return this.$store.state.game.position;

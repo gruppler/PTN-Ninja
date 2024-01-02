@@ -24,7 +24,7 @@
         name="date"
         :label="$t('Date')"
         :rules="rules('date')"
-        :readonly="game && !game.isLocal"
+        :readonly="game && game.config.isOnline"
         hide-bottom-space
         clearable
         filled
@@ -33,7 +33,7 @@
           <q-icon name="date" />
         </template>
         <q-popup-proxy
-          v-if="!game || game.isLocal"
+          v-if="!game || !game.config.isOnline"
           v-model="showDatePicker"
           @before-show="proxyDate = date"
           anchor="center middle"
@@ -85,7 +85,7 @@
         name="time"
         :label="$t('Time')"
         :rules="rules('time')"
-        :readonly="game && !game.isLocal"
+        :readonly="game && game.config.isOnline"
         hide-bottom-space
         clearable
         filled
@@ -94,7 +94,7 @@
           <q-icon name="time" />
         </template>
         <q-popup-proxy
-          v-if="!game || game.isLocal"
+          v-if="!game || !game.config.isOnline"
           v-model="showTimePicker"
           @before-show="proxyTime = time"
           anchor="center middle"
@@ -157,7 +157,7 @@
         <div class="row q-gutter-md q-mb-md">
           <!-- Player 1 Account -->
           <PlayerName
-            v-if="game && !game.isLocal && player === 1"
+            v-if="game && game.config.isOnline && player === 1"
             class="col-grow"
             v-model="tags.player1"
             :player="player"
@@ -174,7 +174,7 @@
             name="player1"
             :label="$t('Player1')"
             :rules="rules('player1')"
-            :readonly="game && !game.isLocal"
+            :readonly="game && game.config.isOnline"
             hide-bottom-space
             clearable
             filled
@@ -203,7 +203,7 @@
             step="10"
             :label="$t('Rating1')"
             :rules="rules('rating1')"
-            :readonly="game && !game.isLocal && player !== 1"
+            :readonly="game && game.config.isOnline && player !== 1"
             hide-bottom-space
             clearable
             filled
@@ -217,7 +217,7 @@
         <div class="row q-gutter-md">
           <!-- Player 2 Account -->
           <PlayerName
-            v-if="game && !game.isLocal && player === 2"
+            v-if="game && game.config.isOnline && player === 2"
             class="col-grow"
             v-model="tags.player2"
             :player="player"
@@ -234,7 +234,7 @@
             name="player2"
             :label="$t('Player2')"
             :rules="rules('player2')"
-            :readonly="game && !game.isLocal"
+            :readonly="game && game.config.isOnline"
             hide-bottom-space
             clearable
             filled
@@ -263,7 +263,7 @@
             step="10"
             :label="$t('Rating2')"
             :rules="rules('rating2')"
-            :readonly="game && !game.isLocal && player !== 2"
+            :readonly="game && game.config.isOnline && player !== 2"
             hide-bottom-space
             clearable
             filled
@@ -275,7 +275,7 @@
         </div>
       </div>
       <q-btn
-        v-show="!game || game.isLocal"
+        v-show="!game || !game.config.isOnline"
         @click="swapPlayers"
         icon="swap_vert"
         stretch
@@ -291,7 +291,7 @@
         v-model="tags.size"
         :label="$t('Size')"
         :options="sizes"
-        :readonly="game && game.plies.length > 0"
+        :readonly="hasPlies"
         @input="$refs.tps.validate()"
         behavior="menu"
         transition-show="none"
@@ -308,13 +308,13 @@
       <!-- TPS -->
       <q-input
         ref="tps"
-        v-show="tags.tps || !game || !game.plies.length"
+        v-show="tags.tps || !hasPlies"
         class="col-grow"
         v-model="tags.tps"
         name="tps"
         :label="$t('TPS')"
         :rules="rules('tps')"
-        :readonly="game && game.plies.length > 0"
+        :readonly="hasPlies"
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -323,7 +323,7 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon @click.right.prevent="fillTPS" name="board" />
+          <q-icon name="board" />
         </template>
         <template v-slot:append>
           <q-icon
@@ -592,7 +592,7 @@
         name="result"
         :options="results"
         :label="$t('Result')"
-        :readonly="game && !game.isLocal"
+        :readonly="game && game.config.isOnline"
         autocorrect="off"
         spellcheck="false"
         behavior="menu"
@@ -710,19 +710,19 @@ import Result from "../PTN/Result";
 import Tag, { formats } from "../../Game/PTN/Tag";
 import TPS from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
-import {
-  generateName,
-  isDefaultName,
-  pieceCounts,
-  sample,
-} from "../../Game/base";
+import { getPlayer } from "../../Game/online";
+import { generateName, isDefaultName, pieceCounts } from "../../Game/base";
 
 import { map, throttle } from "lodash";
 
 export default {
   name: "GameInfo",
   components: { Result, PlayerName },
-  props: ["game", "values", "showAll"],
+  props: {
+    values: Object,
+    showAll: Boolean,
+    editCurrent: Boolean,
+  },
   data() {
     const openings = map(
       (
@@ -783,11 +783,17 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.editCurrent ? this.$store.state.game : null;
+    },
+    hasPlies() {
+      return this.game && this.game.ptn.allPlies.length > 0;
+    },
     primaryFG() {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
     },
     generatedName() {
-      return generateName(this.tags, this.game);
+      return generateName(this.tags);
     },
     result() {
       const result = this.tags.result
@@ -799,7 +805,7 @@ export default {
       const user = this.$store.state.online
         ? this.$store.state.online.user
         : false;
-      return user ? this.game.player(user.uid) : 0;
+      return user ? getPlayer(this.game, user.uid) : 0;
     },
     date: {
       get() {
@@ -860,15 +866,14 @@ export default {
 
       if (
         this.game &&
-        !this.game.isLocal &&
+        this.game.config.isOnline &&
         this.game.config.isPrivate &&
-        [1, 2].includes(this.player)
+        (this.player === 1 || this.player === 2)
       ) {
         this.$store.dispatch("ui/SET_UI", [
           "playerName",
           this.tags["player" + this.player],
         ]);
-        this.player;
       }
 
       this.$emit("submit", {
@@ -883,21 +888,15 @@ export default {
       if (this.game) {
         this.$store.dispatch("ui/SET_UI", [
           "selectedPiece",
-          { color: this.game.firstPlayer, type: "F" },
+          { color: this.$game.firstPlayer, type: "F" },
         ]);
         this.$store.dispatch("ui/SET_UI", [
           "firstMoveNumber",
-          this.game.firstMoveNumber,
+          this.$game.firstMoveNumber,
         ]);
-        this.$store.dispatch("game/EDIT_TPS", this.game.board.tps);
+        this.$store.dispatch("game/EDIT_TPS", this.$game.board.tps);
       } else {
         this.submit(true);
-      }
-    },
-    fillTPS() {
-      if (!this.game || !this.game.plies.length) {
-        this.tags = { ...this.tags, ...sample(this.tags) };
-        this.name = this.generatedName;
       }
     },
     swapPlayers() {
@@ -916,7 +915,7 @@ export default {
           (this.values
             ? this.values[key]
             : this.game
-            ? this.game.tag(key)
+            ? this.$game.tag(key)
             : null) || null;
       });
       this.separatePieceCounts =
@@ -1003,7 +1002,7 @@ export default {
         if (tags.site) tags.site = tags.site.trim();
         Object.keys(tags).forEach((key) => {
           const value = tags[key] || null;
-          const originalValue = this.game ? this.game.tag(key) || null : null;
+          const originalValue = this.game ? this.$game.tag(key) || null : null;
           if (!this.game || value !== originalValue) {
             changes[key] = value;
           }

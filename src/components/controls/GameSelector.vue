@@ -148,10 +148,10 @@ export default {
       return this.games.some((game) => game.config.id);
     },
     icon() {
-      if (this.$game.config.isOnline) {
+      if (this.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
-          this.$game.config.player,
-          this.$game.config.isPrivate
+          this.config.player,
+          this.config.isPrivate
         );
       } else {
         return "file";
@@ -167,7 +167,7 @@ export default {
         if (!otherPlayer) {
           return name;
         } else {
-          otherPlayer = this.$game.tag("player" + otherPlayer);
+          otherPlayer = this.$store.state.game.ptn.tags["player" + otherPlayer];
           if (otherPlayer) {
             return name.replace(
               /[^"]+ vs [^"]+( \dx\d)/,

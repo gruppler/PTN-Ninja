@@ -55,7 +55,7 @@ export default {
         },
       ];
 
-      if (this.$game.board.ply) {
+      if (this.$store.state.game.board.ply) {
         actions.push({
           id: "ply",
           label: this.$t("Ply"),

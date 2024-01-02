@@ -47,14 +47,17 @@ export default {
   },
   computed: {
     openPlayer() {
-      return this.$game.openPlayer;
+      return this.$store.getters["online/openPlayer"];
     },
     player() {
       const user = this.$store.state.online.user;
-      return user ? this.$game.getPlayerFromUID(user.uid) : 0;
+      return user ? this.$store.getters["online/playerFromUID"](user.uid) : 0;
+    },
+    isLocal() {
+      return !this.$store.state.game.config.isOnline;
     },
     isPrivate() {
-      return this.$game.config.isPrivate;
+      return this.$store.state.game.config.isPrivate;
     },
   },
   methods: {
@@ -91,7 +94,7 @@ export default {
         this.close();
       }
     },
-    "game.isLocal"(isLocal) {
+    isLocal(isLocal) {
       if (isLocal) {
         this.close();
       }

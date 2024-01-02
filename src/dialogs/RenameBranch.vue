@@ -50,6 +50,9 @@ export default {
     };
   },
   computed: {
+    branches() {
+      return Object.keys(this.$store.state.game.ptn.branches);
+    },
     branchParts() {
       return Linenum.splitBranch(this.branch);
     },
@@ -81,7 +84,7 @@ export default {
         value === this.branch ||
         (value &&
           Linenum.validateBranch(value) &&
-          !Object.keys(this.$game.branches).includes(this.getFullBranch(value)))
+          !this.branches.includes(this.getFullBranch(value)))
       );
     },
     save() {

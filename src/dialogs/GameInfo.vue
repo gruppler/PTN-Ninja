@@ -193,7 +193,7 @@
         <template v-else>
           <q-item>
             <!-- Flats -->
-            <q-item-section>
+            <q-item-section side>
               <q-icon name="flats1" />
             </q-item-section>
             <q-item-section>
@@ -203,7 +203,7 @@
               }}</q-item-label>
             </q-item-section>
             <!-- Caps -->
-            <q-item-section>
+            <q-item-section align="right">
               <q-item-label caption>{{ $t("Caps") }}</q-item-label>
               <q-item-label :class="{ disabled: !tags.caps }">{{
                 game.config.pieceCounts[1].cap
@@ -375,11 +375,11 @@ export default {
     },
     name() {
       return this.$store.state.ui.embed
-        ? this.$game.name
+        ? this.game.name
         : this.$store.state.game.list[0].name;
     },
     datetime() {
-      return this.$game.datetime;
+      return this.game.ptn.tags.datetime;
     },
     game() {
       return this.$store.state.game;
@@ -388,7 +388,7 @@ export default {
       return this.game.ptn.tags;
     },
     hasPieceCounts() {
-      return this.$game.hasCustomPieceCount;
+      return this.game.config.hasCustomPieceCount;
     },
     separatePieceCounts() {
       return (

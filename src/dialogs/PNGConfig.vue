@@ -235,9 +235,6 @@ export default {
     };
   },
   computed: {
-    url() {
-      return this.$store.getters["ui/png_url"](this.$game);
-    },
     theme: {
       get() {
         return isString(this.config.theme)
@@ -327,7 +324,7 @@ export default {
     share() {
       this.$store.dispatch("ui/SHARE", {
         title: this.$t("Share PNG"),
-        text: this.url,
+        text: this.$store.getters["ui/png_url"](this.$game),
       });
     },
     close() {
