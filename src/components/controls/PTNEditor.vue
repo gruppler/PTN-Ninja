@@ -70,7 +70,7 @@ export default {
         this.original = (
           this.showHeader ? this.$game.ptn : this.$game.moveText(true, true)
         ).replace(/\r\n/g, "\n");
-        this.header = this.showHeader ? this.$game.headerText() : "";
+        this.header = this.showHeader ? "" : this.$game.headerText();
       } else {
         this.original = "";
         this.header = "";
