@@ -2,6 +2,7 @@
   <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
     <q-item-section side>
       <GameThumbnail
+        v-if="option.state.tps"
         :game-id="option.label"
         :tps="option.state.tps"
         :hl="option.state.ply"
@@ -10,6 +11,7 @@
         class="rounded-borders"
         no-transition
       />
+      <div v-else style="width: 60px; height: 60px" />
     </q-item-section>
     <q-item-section side v-if="showIcon">
       <q-icon :name="icon" :class="{ 'text-primary': option.value === 0 }">
