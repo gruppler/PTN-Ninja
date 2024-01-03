@@ -209,7 +209,7 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const ptn = await navigator.clipboard.readText();
+      const ptn = await this.$store.dispatch("ui/PASTE");
       if (!ptn || Game.validate(ptn) !== true) {
         this.ptn = ptn;
         this.showPTN = true;

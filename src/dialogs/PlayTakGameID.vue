@@ -73,7 +73,7 @@ export default {
       return /^\d+$/.test(value);
     },
     async clipboard() {
-      this.gameID = await navigator.clipboard.readText();
+      this.gameID = await this.$store.dispatch("ui/PASTE");
     },
     load() {
       this.loading = true;
