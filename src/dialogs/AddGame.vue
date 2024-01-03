@@ -13,26 +13,14 @@
         indicator-color="primary"
         align="justify"
       >
-        <q-tab name="new" :label="$t('New Game')" />
         <q-tab name="load" :label="$t('Load Game')" />
+        <q-tab name="new" :label="$t('New Game')" />
       </q-tabs>
     </template>
 
     <q-card>
       <smooth-reflow>
         <q-tab-panels v-model="tab" keep-alive animated>
-          <q-tab-panel name="new" class="q-pa-none">
-            <q-card-section class="q-pa-none">
-              <GameInfo
-                ref="gameInfo"
-                class="q-pa-md"
-                :values="tags"
-                :show-all="showAll"
-                @submit="createGame"
-              />
-            </q-card-section>
-          </q-tab-panel>
-
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
               <!-- Clipboard -->
@@ -63,6 +51,18 @@
                 <q-item-section>{{ $t("PlayTak Game ID") }}</q-item-section>
               </q-item>
             </q-list>
+          </q-tab-panel>
+
+          <q-tab-panel name="new" class="q-pa-none">
+            <q-card-section class="q-pa-none">
+              <GameInfo
+                ref="gameInfo"
+                class="q-pa-md"
+                :values="tags"
+                :show-all="showAll"
+                @submit="createGame"
+              />
+            </q-card-section>
           </q-tab-panel>
         </q-tab-panels>
       </smooth-reflow>

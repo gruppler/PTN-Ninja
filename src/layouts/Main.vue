@@ -439,12 +439,11 @@ export default {
         case "settings":
           this.$router.push({ name: "preferences" });
           break;
-          break;
         case "share":
           this.share();
           break;
         case "add":
-          this.$router.push({ name: "add", params: { tab: "new" } });
+          this.$router.push({ name: "add", params: { tab: "load" } });
           break;
       }
     },
