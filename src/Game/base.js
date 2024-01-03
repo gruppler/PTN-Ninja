@@ -490,7 +490,10 @@ export default class GameBase {
         if (ply) {
           this.board.goToPly(ply.id, state.plyIsDone || false);
         } else {
-          this.board.plyID = -1;
+          // Go back to root branch
+          this.board.targetBranch = "";
+          this.board.goToPly(0, true);
+          this.board.last();
         }
       } else if (this.board.targetBranch) {
         // Go back to root branch
