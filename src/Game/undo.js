@@ -1,22 +1,8 @@
-import Diff from "diff-match-patch";
 import { isEqual } from "lodash";
 
-const diff = new Diff();
 const maxHistoryLength = 3;
 
 export default class GameUndo {
-  _applyPatch(patch, state) {
-    let ptn;
-    try {
-      ptn = diff.patch_apply(patch, this.ptn)[0];
-    } catch (error) {
-      console.error(error);
-    }
-    if (ptn) {
-      this.init({ ...this.params, ptn, state });
-    }
-  }
-
   get canUndo() {
     return this.historyIndex > 0;
   }
@@ -30,9 +16,7 @@ export default class GameUndo {
       return false;
     }
     const history = this.history[--this.historyIndex];
-    if (history.undoPatch) {
-      this._applyPatch(diff.patch_fromText(history.undoPatch), history.state);
-    } else if (history.beforePTN) {
+    if (history.beforePTN) {
       this.init({
         ...this.params,
         ptn: history.beforePTN,
@@ -48,12 +32,7 @@ export default class GameUndo {
       return false;
     }
     const history = this.history[this.historyIndex++];
-    if (history.patch) {
-      this._applyPatch(
-        diff.patch_fromText(history.patch),
-        history.afterState || history.state
-      );
-    } else if (history.afterPTN) {
+    if (history.afterPTN) {
       this.init({
         ...this.params,
         ptn: history.afterPTN,
@@ -70,27 +49,16 @@ export default class GameUndo {
       ptn: this.ptn,
     };
     let result = mutate.call(this);
-    let patch = diff.patch_make(before.ptn, this.ptn);
-    if (patch) {
+    if (before.ptn !== this.ptn) {
       this.history.length = this.historyIndex;
       let historyEntry = {
         state: before.state,
         afterState: isEqual(before.state, this.minState)
           ? undefined
           : this.minState,
+        beforePTN: before.ptn,
+        afterPTN: this.ptn,
       };
-
-      // if (patch.length === 1) {
-      //   // Use diff only if it's a simple patch
-      //   historyEntry.patch = diff.patch_toText(patch);
-      //   historyEntry.undoPatch = diff.patch_toText(
-      //     diff.patch_make(this.ptn, before.ptn)
-      //   );
-      // } else {
-      // Otherwise just store the whole PTN
-      historyEntry.beforePTN = before.ptn;
-      historyEntry.afterPTN = this.ptn;
-      // }
       this.history.push(Object.freeze(historyEntry));
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {

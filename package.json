@@ -30,7 +30,6 @@
     "aws-sdk": "^2.885.0",
     "core-js": "^3.8.1",
     "date-fns": "^2.16.1",
-    "diff-match-patch": "^1.0.4",
     "firebase": "8.10.0",
     "firebase-functions": "^3.16.0",
     "fuse.js": "^6.6.2",
