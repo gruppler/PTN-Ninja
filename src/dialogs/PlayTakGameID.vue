@@ -18,6 +18,13 @@
         autofocus
         filled
       >
+        <template v-slot:append>
+          <q-icon
+            @click="clipboard"
+            name="clipboard"
+            class="q-field__focusable-action"
+          />
+        </template>
       </q-input>
 
       <q-card-actions align="right">
@@ -64,6 +71,9 @@ export default {
     },
     validateGameID(value) {
       return /^\d+$/.test(value);
+    },
+    async clipboard() {
+      this.gameID = await this.$store.dispatch("ui/PASTE");
     },
     load() {
       this.loading = true;

@@ -231,10 +231,17 @@ export default {
   },
   computed: {
     gameExists() {
-      return Boolean(this.$game);
+      return Boolean(this.$store.state.game.name);
     },
-    isLocal() {
-      return this.$game ? this.$game.isLocal : false;
+    isOnline() {
+      return this.gameExists ? this.$store.state.game.config.isOnline : false;
+    },
+    hasChat() {
+      return (
+        this.isOnline ||
+        (this.$store.state.game.comments &&
+          Object.keys(this.$store.state.game.comments.chatlog).length)
+      );
     },
     showPTN: {
       get() {
@@ -252,14 +259,9 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
     },
-    hasChat() {
-      return this.$game ? this.$game.hasChat : false;
-    },
     textTab: {
       get() {
-        // todo @nitzel/@skolin check which line to use here:
-        return this.$store.state.ui.textTab; // added by skolin
-        // return this.hasChat ? this.$store.state.ui.textTab : "notes"; // added by gruppler
+        return this.$store.state.ui.textTab;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["textTab", value]);
@@ -310,7 +312,9 @@ export default {
       // return this.$store.state.online.user;
     },
     player() {
-      return this.user ? this.$game.getPlayerFromUID(this.user.uid) : 0;
+      return this.user
+        ? this.$store.getters["online/playerFromUID"](this.user.uid)
+        : 0;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -435,12 +439,11 @@ export default {
         case "settings":
           this.$router.push({ name: "preferences" });
           break;
-          break;
         case "share":
           this.share();
           break;
         case "add":
-          this.$router.push({ name: "add", params: { tab: "new" } });
+          this.$router.push({ name: "add", params: { tab: "load" } });
           break;
       }
     },
@@ -616,9 +619,9 @@ export default {
       switch (srcKey) {
         case "focusText":
           this.showText = true;
-          this.$refs[
-            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
-          ].$refs.input.focus();
+          if (["notes", "chat"].includes(this.textTab === "chat")) {
+            this.$refs[this.textTab].$refs.input.focus();
+          }
           break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
@@ -632,9 +635,11 @@ export default {
           }
           break;
         case "toggleText":
+          let tabs = ["notes", "analysis"];
           if (this.hasChat) {
-            this.textTab = this.textTab === "notes" ? "chat" : "notes";
+            tabs.push("chat");
           }
+          this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
         case "game/UNDO":
         case "game/REDO":
@@ -674,15 +679,19 @@ export default {
     //   this.$store.dispatch("online/LISTEN_CURRENT_GAME");
     // },
     user(user, oldUser) {
-      if (this.$game && this.$game.config.isOnline) {
-        if (
-          user &&
-          (!oldUser || user.uid !== oldUser.uid) &&
-          !this.$game.getPlayerFromUID(user.uid) &&
-          this.$game.openPlayer
-        ) {
-          this.$router.push({ name: "join" });
-        }
+      if (
+        this.isOnline &&
+        user &&
+        (!oldUser || user.uid !== oldUser.uid) &&
+        !this.$store.getters["online/playerFromUID"](user.uid) &&
+        this.$store.getters["online/openPlayer"]
+      ) {
+        this.$router.push({ name: "join" });
+      }
+    },
+    hasChat(hasChat) {
+      if (!hasChat && this.textTab === "chat") {
+        this.textTab = "notes";
       }
     },
   },

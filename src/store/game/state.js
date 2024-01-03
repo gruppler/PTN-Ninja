@@ -1,7 +1,9 @@
 import { LocalStorage, Platform } from "quasar";
 import Game from "../../Game";
+import { uniq } from "lodash";
 
 const state = {
+  name: "",
   error: null,
   board: null,
   comments: null,
@@ -20,7 +22,7 @@ const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
 if (!Platform.within.iframe && LocalStorage.has("games")) {
-  state.list = LocalStorage.getItem("games").map((name) => {
+  state.list = uniq(LocalStorage.getItem("games")).map((name) => {
     const ptn = load("ptn-" + name);
     let state = load("state-" + name);
     if (ptn && (!state || !state.tps || !("ply" in state))) {

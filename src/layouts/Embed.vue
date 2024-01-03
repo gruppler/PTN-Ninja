@@ -178,7 +178,7 @@ export default {
   },
   computed: {
     gameExists() {
-      return Boolean(this.$game);
+      return Boolean(this.$store.state.game.name);
     },
     showPTN: {
       get() {
@@ -203,9 +203,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    url() {
-      return this.$store.getters["ui/url"](this.$game, { state: true });
     },
     isDialogShowing() {
       return !["local", "game"].includes(this.$route.name);
@@ -297,9 +294,7 @@ export default {
       switch (srcKey) {
         case "focusText":
           this.showText = true;
-          this.$refs[
-            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
-          ].$refs.input.focus();
+          this.$refs.notes.$refs.input.focus();
           break;
         case "game/UNDO":
         case "game/REDO":

@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isString, throttle } from "lodash";
+import { isString, throttle, uniq } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
 import Game from "../../Game";
@@ -19,7 +19,7 @@ export const SET_GAME = function ({ commit }, game) {
 };
 
 export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
 
   game.name = getters.uniqueName(game.name);
   gameNames.unshift(game.name);
@@ -48,14 +48,14 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
       error = "localstorageFull";
     }
     notifyError(error);
-    gameNames.shift();
-    LocalStorage.set("games", gameNames);
     LocalStorage.remove("ptn-" + game.name);
     LocalStorage.remove("state-" + game.name);
     LocalStorage.remove("config-" + game.name);
     LocalStorage.remove("history-" + game.name);
     LocalStorage.remove("historyIndex-" + game.name);
     LocalStorage.remove("editingTPS-" + game.name);
+    gameNames.shift();
+    LocalStorage.set("games", gameNames);
   }
 
   Loading.show();
@@ -75,7 +75,7 @@ export const ADD_GAMES = function (
   { commit, dispatch, getters, state },
   { games, index }
 ) {
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
 
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
@@ -106,14 +106,14 @@ export const ADD_GAMES = function (
         error = "localstorageFull";
       }
       notifyError(error);
-      gameNames.splice(index + i, 1);
-      LocalStorage.set("games", gameNames);
       LocalStorage.remove("ptn-" + game.name);
       LocalStorage.remove("state-" + game.name);
       LocalStorage.remove("config-" + game.name);
       LocalStorage.remove("history-" + game.name);
       LocalStorage.remove("historyIndex-" + game.name);
       LocalStorage.remove("editingTPS-" + game.name);
+      gameNames.splice(index + i, 1);
+      LocalStorage.set("games", gameNames);
       games.length = i;
       break;
     }
@@ -186,8 +186,17 @@ export const REMOVE_GAME = function (
   index
 ) {
   const game = state.list[index];
+  if (!game) {
+    new Error(`Invalid index: ${index}`);
+  }
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
+  LocalStorage.remove("ptn-" + name);
+  LocalStorage.remove("state-" + name);
+  LocalStorage.remove("config-" + name);
+  LocalStorage.remove("history-" + name);
+  LocalStorage.remove("historyIndex-" + name);
+  LocalStorage.remove("editingTPS-" + name);
   try {
     LocalStorage.set("games", games);
   } catch (error) {
@@ -199,12 +208,6 @@ export const REMOVE_GAME = function (
     }
     notifyError(error);
   }
-  LocalStorage.remove("ptn-" + name);
-  LocalStorage.remove("state-" + name);
-  LocalStorage.remove("config-" + name);
-  LocalStorage.remove("history-" + name);
-  LocalStorage.remove("historyIndex-" + name);
-  LocalStorage.remove("editingTPS-" + name);
 
   const finish = () => {
     commit("REMOVE_GAME", index);
@@ -263,16 +266,8 @@ export const REMOVE_MULTIPLE_GAMES = function (
   { start, count }
 ) {
   const games = state.list.slice(start, start + count);
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
   const names = gameNames.splice(start, count);
-  try {
-    LocalStorage.set("games", gameNames);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
   names.forEach((name) => {
     LocalStorage.remove("ptn-" + name);
     LocalStorage.remove("state-" + name);
@@ -281,6 +276,14 @@ export const REMOVE_MULTIPLE_GAMES = function (
     LocalStorage.remove("historyIndex-" + name);
     LocalStorage.remove("editingTPS-" + name);
   });
+  try {
+    LocalStorage.set("games", gameNames);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
 
   const finish = () => {
     commit("REMOVE_MULTIPLE_GAMES", { start, count });

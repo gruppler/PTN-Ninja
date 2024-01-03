@@ -100,9 +100,6 @@ export default {
     isNewGame() {
       return this.$route.name === "add";
     },
-    game() {
-      return this.$game;
-    },
   },
   methods: {
     close() {

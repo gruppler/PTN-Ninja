@@ -271,7 +271,8 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
-import { cloneDeep, once } from "lodash";
+import { cloneDeep } from "lodash";
+import { generateName } from "../Game/base";
 
 export default {
   name: "EmbedConfig",
@@ -279,6 +280,7 @@ export default {
   data() {
     return {
       name: "",
+      url: "",
       config: cloneDeep(this.$store.state.ui.embedConfig),
       previewError: false,
       previewLoaded: false,
@@ -290,19 +292,15 @@ export default {
       return this.previewError ? "0" : "333px";
     },
     gameName() {
-      return this.$game.name;
+      return this.$store.state.game.name;
     },
     generatedName() {
-      return this.$game.generateName();
-    },
-    url() {
-      return this.$store.getters["ui/url"](this.$game, {
-        origin: true,
-        name: this.name,
-        names: this.config.includeNames,
-        state: this.config.state,
-        ui: this.config.ui,
-      });
+      let tags = { ...this.$store.state.game.ptn.tags };
+      if (!this.config.includeNames) {
+        tags.player1 = "";
+        tags.player2 = "";
+      }
+      return generateName(tags);
     },
     code() {
       return `<iframe src="${this.url}" width="${this.config.width}" height="${this.config.height}" style="width:${this.config.width}; max-width:calc(100vw - 30px); height:${this.config.height}; max-height:100vh;" frameborder="0" allowfullscreen></iframe>`;
@@ -316,6 +314,15 @@ export default {
       if (this.$refs.preview) {
         this.$refs.preview.contentWindow.postMessage({ action, value });
       }
+    },
+    updateURL() {
+      this.url = this.$store.getters["ui/url"](this.$game, {
+        origin: true,
+        name: this.name,
+        names: this.config.includeNames,
+        state: this.config.state,
+        ui: this.config.ui,
+      });
     },
     reset() {
       this.prompt({
@@ -342,6 +349,7 @@ export default {
   watch: {
     name(value) {
       this.postMessage("SET_NAME", value);
+      this.updateURL();
     },
     "config.ui.themeID"(themeID) {
       this.config.ui.theme = this.$store.getters["ui/theme"](themeID);
@@ -368,6 +376,7 @@ export default {
     config: {
       handler(value) {
         this.$store.dispatch("ui/SET_UI", ["embedConfig", cloneDeep(value)]);
+        this.updateURL();
       },
       deep: true,
     },
@@ -381,6 +390,7 @@ export default {
       state: this.config.state,
       ui: this.config.ui,
     });
+    this.updateURL();
     if (!this.config.includeNames) {
       const hideNames = () => {
         this.postMessage("SHOW_NAMES", false);

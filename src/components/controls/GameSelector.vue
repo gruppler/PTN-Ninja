@@ -78,6 +78,7 @@
           :key="scope.opt.label"
           :option="scope.opt"
           :show-icon="hasOnlineGames"
+          @close="close"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"
         />
@@ -112,7 +113,7 @@ import GameSelectorOption from "./GameSelectorOption";
 import Fuse from "fuse.js";
 const fuseOptions = {
   keys: ["name"],
-  threshold: 0.8,
+  threshold: 0.25,
   ignoreLocation: true,
 };
 
@@ -122,6 +123,7 @@ export default {
   data() {
     return {
       showSearch: false,
+      dirtyIndex: false,
       filteredGames: null,
       query: "",
       index: null,
@@ -146,10 +148,10 @@ export default {
       return this.games.some((game) => game.config.id);
     },
     icon() {
-      if (this.$game.config.isOnline) {
+      if (this.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
-          this.$game.config.player,
-          this.$game.config.isPrivate
+          this.config.player,
+          this.config.isPrivate
         );
       } else {
         return "file";
@@ -165,7 +167,7 @@ export default {
         if (!otherPlayer) {
           return name;
         } else {
-          otherPlayer = this.$game.tag("player" + otherPlayer);
+          otherPlayer = this.$store.state.game.ptn.tags["player" + otherPlayer];
           if (otherPlayer) {
             return name.replace(
               /[^"]+ vs [^"]+( \dx\d)/,
@@ -198,6 +200,25 @@ export default {
       this.$store.dispatch("game/SELECT_GAME", { index });
       this.$emit("input", this.$store.state.game.list[0]);
     },
+    close(index) {
+      let filteredIndex = -1;
+      if (this.showSearch && this.index) {
+        filteredIndex = this.filteredGames.findIndex(
+          (game) => game.label === this.gameList[index]
+        );
+        this.filteredGames.forEach((option) => {
+          if (option.value > index) {
+            option.value -= 1;
+          }
+        });
+        if (filteredIndex >= 0) {
+          this.filteredGames.splice(filteredIndex, 1);
+          this.$refs.select.refresh(filteredIndex);
+          this.$refs.select.setOptionIndex(filteredIndex);
+        }
+      }
+      this.$store.dispatch("game/REMOVE_GAME", index);
+    },
     toggleSearch(focusInput = false) {
       this.showSearch = !this.showSearch;
       if (this.showSearch) {
@@ -216,8 +237,10 @@ export default {
         () => this.updateFiltered(),
         (ref) => {
           if (query.trim() !== "" && ref.options.length > 0) {
-            ref.setOptionIndex(-1);
-            ref.moveOptionSelection(1, true);
+            this.$nextTick(() => {
+              ref.refresh(-1);
+              ref.setOptionIndex(-1);
+            });
           }
         }
       );
@@ -228,6 +251,7 @@ export default {
       } else {
         this.index.setCollection(this.gameList);
       }
+      this.dirtyIndex = false;
     },
     updateFiltered() {
       this.filteredGames = this.index
@@ -237,8 +261,19 @@ export default {
   },
   watch: {
     gameList() {
-      this.updateIndex();
-      this.updateFiltered();
+      if (this.showSearch) {
+        this.dirtyIndex = true;
+      } else {
+        this.updateIndex();
+        this.updateFiltered();
+      }
+    },
+    showSearch(showSearch) {
+      if (!showSearch && this.dirtyIndex) {
+        this.updateIndex();
+        this.updateFiltered();
+      }
+      this.$refs.select.refresh(-1);
     },
   },
   mounted() {

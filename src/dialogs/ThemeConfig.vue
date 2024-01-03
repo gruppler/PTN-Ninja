@@ -140,10 +140,12 @@
       <q-separator />
 
       <q-expansion-item
-        group="theme"
+        @click="clipboard"
         v-model="showImport"
-        icon="json"
+        icon="clipboard"
         :label="$t('Import')"
+        expand-icon="none"
+        expanded-icon="up"
       >
         <q-input
           type="textarea"
@@ -310,6 +312,9 @@ export default {
     },
     updatePalette() {
       this.palette = Object.values(this.theme.colors);
+    },
+    async clipboard() {
+      this.json = await this.$store.dispatch("ui/PASTE");
     },
     reset() {
       this.prompt({

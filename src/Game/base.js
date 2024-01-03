@@ -11,7 +11,6 @@ import Board from "./Board";
 
 import {
   cloneDeep,
-  defaults,
   each,
   flatten,
   isEqual,
@@ -21,6 +20,7 @@ import {
   map,
   pick,
   uniq,
+  zipObject,
 } from "lodash";
 import memoize from "./memoize";
 
@@ -33,55 +33,21 @@ export const pieceCounts = Object.freeze({
   8: Object.freeze({ flat: 50, cap: 2 }),
 });
 
-export const sample = (tags) => {
-  return defaults(
-    {
-      5: {
-        tps: "x2,21S,x2/x,2S,21S,1S,x/12S,12S,x,12S,12S/x,1S,21S,2S,x/x2,21S,x2 1 15",
-        caps: 2,
-      },
-      6: {
-        tps: "21S,1S,x2,2S,12S/1S,21S,1S,2S,12S,2S/x,1S,21S,12S,2S,x/x,2S,12S,21S,1S,x/2S,12S,2S,1S,21S,1S/12S,2S,x2,1S,21S 1 27",
-        caps: 2,
-      },
-      7: {
-        tps: "21S,1S,x3,2S,12S/1S,21S,1S,x,2S,12S,2S/x,1S,21S,21S,12S,2S,x/x2,12S,x,12S,x2/x,2S,12S,21S,21S,1S,x/2S,12S,2S,x,1S,21S,1S/12S,2S,x3,1S,21S 1 33",
-        caps: 3,
-      },
-      8: {
-        tps: "21S,1S,x4,2S,12S/1S,21S,1S,x2,2S,12S,2S/x,1S,21S,1S,2S,12S,2S,x/x2,1S,21S,12S,2S,x2/x2,2S,12S,21S,1S,x2/x,2S,12S,2S,1S,21S,1S,x/2S,12S,2S,x2,1S,21S,1S/12S,2S,x4,1S,21S 1 37",
-        caps: 4,
-      },
-    }[tags.size] || {},
-    {
-      caps: "",
-      flats: "",
-      caps1: "",
-      caps2: "",
-      flats1: "",
-      flats2: "",
-      tps: "",
-    }
-  );
-};
-
-export const isSample = (tags) => {
-  return tags.tps && tags.tps === sample(tags).tps;
-};
-
-export const generateName = (tags = {}, game) => {
-  const tag = (key) =>
-    (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
+export const generateName = (tags = {}) => {
+  const tag = (key) => (key in tags ? tags[key] : "") || "";
   const player1 = tag("player1");
   const player2 = tag("player2");
-  const result = tag("result").replace(/1\/2-1\/2/g, "DRAW");
+  let result = tag("result");
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
+  if (result && !isString(result)) {
+    result = result.text;
+  }
+  result = result.replace(/1\/2-1\/2/g, "DRAW");
   return (
     (player1.length && player2.length ? player1 + " vs " + player2 + " " : "") +
     `${size}x${size}` +
-    ((game ? game.isSample : isSample(tags)) ? " SMASH" : "") +
     (result ? " " + result : "") +
     (date ? " " + date : "") +
     (time ? (date ? "-" : " ") + time : "")
@@ -89,7 +55,7 @@ export const generateName = (tags = {}, game) => {
 };
 
 export const isDefaultName = (name) => {
-  return /^([^"]+ vs [^"]+ )?\dx\d( SMASH)?( [01RF]-[01RF]| DRAW)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
+  return /^([^"]+ vs [^"]+ )?\dx\d( [01RF]-[01RF]| DRAW)?( \d{4}\.\d{2}\.\d{2})?([- ]?\d{2}\.\d{2}\.\d{2})?$/.test(
     name
   );
 };
@@ -524,7 +490,10 @@ export default class GameBase {
         if (ply) {
           this.board.goToPly(ply.id, state.plyIsDone || false);
         } else {
-          this.board.plyID = -1;
+          // Go back to root branch
+          this.board.targetBranch = "";
+          this.board.goToPly(0, true);
+          this.board.last();
         }
       } else if (this.board.targetBranch) {
         // Go back to root branch
@@ -551,29 +520,8 @@ export default class GameBase {
     return this.board.minState;
   }
 
-  get isLocal() {
-    return !this.config.isOnline;
-  }
-
-  get isSample() {
-    return isSample(this.JSONTags);
-  }
-
-  get hasCustomPieceCount() {
-    return !(
-      this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
-      this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&
-      this.defaultPieceCounts[2].flat === this.pieceCounts[2].flat &&
-      this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
-    );
-  }
-
   get openingSwap() {
     return this.tag("opening") === "swap";
-  }
-
-  get sample() {
-    return sample(this.JSONTags);
   }
 
   plySort(a, b) {
@@ -618,8 +566,8 @@ export default class GameBase {
     return flatten(this.movesGrouped);
   }
 
-  generateName(tags = {}) {
-    return generateName(tags, this);
+  generateName(tags) {
+    return generateName(tags || this.tagOutput);
   }
 
   get isDefaultName() {
@@ -634,6 +582,13 @@ export default class GameBase {
     if (key in this.tags && this.tags[key].value) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
+  }
+
+  get tagOutput() {
+    return zipObject(
+      Object.keys(this.tags),
+      Object.values(this.tags).map((tag) => tag.output)
+    );
   }
 
   setTags(tags, recordChange = true, updatePTN = true) {
@@ -694,6 +649,12 @@ export default class GameBase {
       openingSwap: this.openingSwap,
       pieceCounts: this.pieceCounts,
       isOnline: false,
+      hasCustomPieceCount: !(
+        this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
+        this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&
+        this.defaultPieceCounts[2].flat === this.pieceCounts[2].flat &&
+        this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
+      ),
     };
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {

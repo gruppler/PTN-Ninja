@@ -1,7 +1,6 @@
 <template>
   <q-dialog
     :value="true"
-    v-show="text"
     @show="show"
     @hide="hide"
     content-class="qr-code flex-center"
@@ -26,12 +25,6 @@ export default {
     goBack: Boolean,
   },
   computed: {
-    text() {
-      return this.$store.getters["ui/url"](this.$game, {
-        origin: true,
-        state: true,
-      });
-    },
     maximized() {
       return this.$q.screen.width <= SCREEN || this.$q.screen.height <= SCREEN;
     },
@@ -48,7 +41,10 @@ export default {
         element: this.$refs.output,
         background: this.bg,
         foreground: this.fg,
-        value: this.text,
+        value: this.$store.getters["ui/url"](this.$game, {
+          origin: true,
+          state: true,
+        }),
         backgroundAlpha: 1,
         size: SIZE,
       });

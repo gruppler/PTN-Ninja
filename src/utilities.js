@@ -23,7 +23,7 @@ export function deepFreeze(object) {
   for (const key of keys) {
     const value = object[key];
 
-    if (value && isObject(value)) {
+    if (value && isObject(value) && !Object.isFrozen(object)) {
       deepFreeze(value);
     }
   }

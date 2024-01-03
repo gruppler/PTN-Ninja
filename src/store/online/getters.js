@@ -1,3 +1,4 @@
+import Vue from "vue";
 import { LocalStorage } from "quasar";
 
 export const playerName =
@@ -9,3 +10,17 @@ export const playerName =
     }
     return isPrivate ? LocalStorage.getItem("playerName") || name : name;
   };
+
+export const playerFromUID = (state) => (uid) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    return game.getPlayerFromUID(uid);
+  }
+};
+
+export const openPlayer = (state) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    return game.openPlayer;
+  }
+};

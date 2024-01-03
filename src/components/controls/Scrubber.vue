@@ -48,7 +48,7 @@ export default {
   methods: {
     scrub(position) {
       requestAnimationFrame(() => {
-        if (this.$game && this.plies) {
+        if (this.plies && this.plies.length) {
           const ply = this.plies[Math.floor(position)];
           this.$store.dispatch("game/GO_TO_PLY", {
             plyID: ply.id,

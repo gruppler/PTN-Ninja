@@ -24,7 +24,6 @@
                 class="fullwidth-padded-md q-py-xs q-mb-md"
                 :class="{
                   'q-mt-md': i > 0,
-                  highlight: $game.board.plyID === message.ply.id,
                 }"
                 :key="i"
               >
@@ -82,6 +81,7 @@ import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 
 import { debounce } from "quasar";
+import { throttle } from "lodash";
 import { format, formatDistanceToNow } from "date-fns";
 
 export default {
@@ -94,17 +94,30 @@ export default {
     };
   },
   computed: {
+    game() {
+      return this.$store.state.game;
+    },
+    plies() {
+      return this.game.ptn.allPlies;
+    },
     log() {
-      return this.$game.chatlog;
+      return this.game.comments.chatlog;
+    },
+    plyIDs() {
+      return Object.freeze(
+        Object.keys(this.log)
+          .map((id) => 1 * id)
+          .sort((a, b) => a - b)
+      );
     },
     player() {
       const user = this.$store.state.online.user;
-      return this.$game.isLocal || !user
-        ? this.$game.board.player
-        : this.$game.getPlayerFromUID(user.uid);
+      return !this.game.config.isOnline || !user
+        ? this.game.position.turn
+        : this.game.config.player;
     },
     time() {
-      return this.$game.datetime;
+      return this.game.ptn.tags.datetime;
     },
     names() {
       return {
@@ -117,7 +130,7 @@ export default {
       let previous;
       for (let plyID in this.log) {
         if (plyID >= 0) {
-          messages.push({ ply: this.$game.plies[plyID] });
+          messages.push({ ply: this.plies[plyID] });
         }
         for (let i = 0; i < this.log[plyID].length; i++) {
           let message = this.parseMessage(this.log[plyID][i]);
@@ -136,22 +149,34 @@ export default {
       }
       return messages;
     },
-    currentPlyIndex() {
-      if (!this.$game.board.plyID && !this.$game.board.plyIsDone) {
-        return 0;
-      } else if (this.$game.board.ply) {
-        let ids = Object.keys(this.log)
-          .map((id) => 1 * id)
-          .sort();
-        for (let i = 0; i < ids.length; i++) {
-          if (ids[i] === this.$game.board.plyID) {
-            return i;
-          } else if (ids[i] > this.$game.board.plyID) {
-            return i - !!i;
+    currentPlyID() {
+      if (!this.log) {
+        return null;
+      }
+      let plyID, ply;
+      if (!this.game.position.plyID && !this.game.position.plyIsDone) {
+        return this.plyIDs[0];
+      } else if (this.game.position.ply) {
+        if (this.game.position.plyID in this.log) {
+          return this.game.position.plyID;
+        } else if (this.isCurrent(-1)) {
+          return -1;
+        } else {
+          for (let i = this.plyIDs.length - 1; i >= 0; i--) {
+            plyID = this.plyIDs[i];
+            ply = plyID in this.plies ? this.plies[plyID] : null;
+            if (
+              ply &&
+              this.branchPlies.includes(ply) &&
+              ply.index < this.game.position.ply.index
+            ) {
+              return plyID;
+            }
           }
+          return this.plyIDs[0];
         }
       }
-      return 0;
+      return null;
     },
   },
   methods: {
@@ -196,28 +221,34 @@ export default {
     },
     send() {
       if (this.message) {
-        this.$game.addChatMessage(
-          `+${this.getTime()}:${this.player}: ${this.message}`
-        );
-        this.message = "";
-        this.$refs.input.focus();
-        this.updateTimer();
+        // this.$game.addChatMessage(
+        //   `+${this.getTime()}:${this.player}: ${this.message}`
+        // );
+        // this.message = "";
+        // this.$refs.input.focus();
+        // this.updateTimer();
       }
     },
-    scroll(smooth) {
-      const message = this.$refs.messages
-        ? this.$refs.messages[this.currentPlyIndex]
-        : null;
-      if (message) {
-        message.scrollIntoView({
-          behavior: smooth ? "smooth" : "auto",
-          block: "start",
-        });
-      }
+    isCurrent(plyID) {
+      return (
+        this.game.position.plyID === plyID ||
+        (plyID < 0 &&
+          (!this.game.position.ply ||
+            (!this.game.position.ply.index && !this.game.position.plyIsDone)))
+      );
     },
+    scroll: throttle(function () {
+      const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
+      if (index >= 0) {
+        this.$refs.scroll.scrollTo(index, "center-force");
+      }
+    }, 100),
   },
   watch: {
-    currentPlyIndex() {
+    log() {
+      this.$nextTick(() => this.scroll());
+    },
+    currentPlyID() {
       this.scroll(true);
     },
   },

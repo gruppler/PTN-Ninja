@@ -92,10 +92,7 @@ export default {
       return this.game.ptn.branchPlies;
     },
     isShowing() {
-      return (
-        (this.$store.state.ui.showText && !this.hasChat) ||
-        this.$store.state.ui.textTab === "notes"
-      );
+      return this.$store.state.ui.textTab === "notes";
     },
     primaryDark() {
       return this.$store.state.ui.theme.primaryDark;

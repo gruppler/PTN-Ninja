@@ -1,8 +1,4 @@
-import {
-  decompressFromBase64,
-  decompressFromEncodedURIComponent,
-} from "lz-string";
-import Vue from "vue";
+import { decompressFromEncodedURIComponent } from "lz-string";
 import { Platform } from "quasar";
 import store from "../store";
 

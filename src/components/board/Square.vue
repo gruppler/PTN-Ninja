@@ -351,19 +351,19 @@ export default {
   &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
     display: none;
   }
-  body.boardChecker.board1Dark &.light .stack-count span {
+  body.boardChecker.board2Dark &.light .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
     background-color: $board2;
     background-color: var(--q-color-board2);
   }
-  body.boardChecker.board2Dark &.dark .stack-count span {
+  body.boardChecker.board1Dark &.dark .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
     background-color: $board1;
     background-color: var(--q-color-board1);
   }
-  body:not(.boardChecker).board1Dark & .stack-count span {
+  body:not(.boardChecker).board2Dark & .stack-count span {
     color: $textLight;
     color: var(--q-color-textLight);
     background-color: $board2;
