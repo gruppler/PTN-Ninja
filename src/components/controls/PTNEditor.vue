@@ -7,6 +7,7 @@
       class="ptn-editor fit"
       :rules="rules"
       @keydown.ctrl.enter.prevent="save"
+      autofocus
       hide-bottom-space
       no-error-icon
     />
