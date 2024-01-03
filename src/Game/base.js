@@ -20,6 +20,7 @@ import {
   map,
   pick,
   uniq,
+  zipObject,
 } from "lodash";
 import memoize from "./memoize";
 
@@ -562,8 +563,8 @@ export default class GameBase {
     return flatten(this.movesGrouped);
   }
 
-  generateName(tags = {}) {
-    return generateName({ ...this.board.output.ptn.tags, ...tags });
+  generateName(tags) {
+    return generateName(tags || this.tagOutput);
   }
 
   get isDefaultName() {
@@ -578,6 +579,13 @@ export default class GameBase {
     if (key in this.tags && this.tags[key].value) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
+  }
+
+  get tagOutput() {
+    return zipObject(
+      Object.keys(this.tags),
+      Object.values(this.tags).map((tag) => tag.output)
+    );
   }
 
   setTags(tags, recordChange = true, updatePTN = true) {

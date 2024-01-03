@@ -402,12 +402,9 @@ export default class Board extends Aggregation(
   }
 
   updateTagsOutput() {
-    return (this.output.ptn.tags = zipObject(
-      Object.keys(this.game.tags).concat("datetime"),
-      Object.values(this.game.tags)
-        .map((tag) => tag.output)
-        .concat(this.game.datetime)
-    ));
+    let tags = this.game.tagOutput;
+    tags.datetime = this.game.datetime;
+    return (this.output.ptn.tags = tags);
   }
 
   updateCommentsOutput() {
