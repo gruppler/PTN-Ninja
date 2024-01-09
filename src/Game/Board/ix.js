@@ -86,7 +86,7 @@ export default class BoardIX {
         this.ply &&
         piece &&
         piece.ply === this.ply &&
-        (this.game.config.isOnline || piece.ply.player === this.player) &&
+        (!this.game.config.isOnline || piece.ply.player === this.player) &&
         this.number !== 1
       ) {
         // Piece just placed; valid for stone cycling
