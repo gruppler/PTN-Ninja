@@ -45,7 +45,6 @@
 </template>
 
 <script>
-import { atoi, itoa } from "../../Game/PTN/Ply";
 import { last } from "lodash";
 
 export default {

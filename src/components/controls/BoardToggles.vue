@@ -82,25 +82,33 @@
               <q-item-label>{{ $t("Flip Vertically") }}</q-item-label>
             </q-item-section>
           </q-item>
-          <template v-if="isTransformed">
-            <q-separator />
-            <q-item @click="resetTransform" clickable v-ripple>
-              <q-item-section side>
-                <q-icon name="close" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ $t("Reset") }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item @click="applyTransform" clickable v-ripple>
-              <q-item-section side>
-                <q-icon name="apply" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ $t("Apply") }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
+          <q-separator />
+          <q-item
+            @click="resetTransform"
+            :disable="!isTransformed"
+            clickable
+            v-ripple
+          >
+            <q-item-section side>
+              <q-icon name="close" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Reset") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item
+            @click="applyTransform"
+            :disable="!isTransformed"
+            clickable
+            v-ripple
+          >
+            <q-item-section side>
+              <q-icon name="apply" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("Apply") }}</q-item-label>
+            </q-item-section>
+          </q-item>
         </q-list>
       </q-menu>
     </q-btn>
@@ -141,7 +149,7 @@ export default {
       return this.$store.state.ui.boardTransform;
     },
     isTransformed() {
-      return this.boardTransform[0] || this.boardTransform[1];
+      return Boolean(this.boardTransform[0] || this.boardTransform[1]);
     },
   },
   methods: {
