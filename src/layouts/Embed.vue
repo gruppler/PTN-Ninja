@@ -294,7 +294,7 @@ export default {
       switch (srcKey) {
         case "focusText":
           this.showText = true;
-          this.$refs.notes.$refs.input.focus();
+          this.$nextTick(() => this.$refs.notes.$refs.input.focus());
           break;
         case "game/UNDO":
         case "game/REDO":

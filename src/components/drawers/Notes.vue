@@ -202,7 +202,7 @@ export default {
   },
   watch: {
     log() {
-      this.$scroll.refresh();
+      this.$refs.scroll.refresh();
       this.$nextTick(() => this.scroll());
     },
     currentPlyID() {
