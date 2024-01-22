@@ -359,10 +359,16 @@ export default class BoardNavigation {
   }
 
   first() {
+    if (!this.plies.length) {
+      return;
+    }
     return this.goToPly(this.plies[0].id, false);
   }
 
   last() {
+    if (!this.plies.length) {
+      return;
+    }
     return this.goToPly(last(this.plies).id, true);
   }
 

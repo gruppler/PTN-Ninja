@@ -93,14 +93,14 @@ export default class Comment {
     return new Comment(notation);
   }
 
-  toString({ size, transform }) {
+  toString(options = {}) {
     let message = this.message;
-    if (size && transform) {
+    if (options.size && options.transform) {
       message = message.replace(
         /(^|\s+)[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?\*?/gi,
         (ptn) => {
           let prefix = ptn.match(/^\s*/)[0];
-          ptn = Ply.parse(ptn).transform(size, transform);
+          ptn = Ply.parse(ptn).transform(options.size, options.transform);
           return `${prefix}${ptn}`;
         }
       );
