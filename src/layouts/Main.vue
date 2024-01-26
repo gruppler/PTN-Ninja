@@ -254,7 +254,9 @@ export default {
       },
     },
     hasChat() {
-      return this.$store.state.game.config.isOnline;
+      return (
+        this.$store.state.game.config && this.$store.state.game.config.isOnline
+      );
     },
     textTab: {
       get() {
