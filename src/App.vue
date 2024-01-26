@@ -61,7 +61,7 @@ export default {
           break;
         case "TOGGLE_UI":
         case "SHOW_NAMES":
-          this.showNames = data.value;
+          this.$refs.layout.showNames = data.value;
           break;
         case "SET_GAME":
         case "SET_CURRENT_PTN":
@@ -85,6 +85,7 @@ export default {
         case "TOGGLE_EVALUATION":
         case "EDIT_NOTE":
         case "ADD_NOTE":
+        case "ADD_NOTES":
         case "REMOVE_NOTE":
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
@@ -121,6 +122,15 @@ export default {
       window.removeEventListener("message", handleMessage);
     }
     window.addEventListener("message", handleMessage);
+
+    // Watch offline status
+    this.$store.dispatch("ui/SET_UI", ["offline", !navigator.onLine]);
+    window.addEventListener("online", () =>
+      this.$store.dispatch("ui/SET_UI", ["offline", false])
+    );
+    window.addEventListener("offline", () =>
+      this.$store.dispatch("ui/SET_UI", ["offline", true])
+    );
   },
   watch: {
     "$store.state.game.position": {

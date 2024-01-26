@@ -3,38 +3,24 @@
     ref="dialog"
     :value="true"
     content-class="non-selectable"
+    no-backdrop-dismiss
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <smooth-reflow class="fit">
-        <q-tabs
-          v-model="tab"
-          active-color="primary"
-          indicator-color="primary"
-          align="justify"
-        >
-          <q-tab name="new" :label="$t('New Game')" />
-          <q-tab name="load" :label="$t('Load Game')" />
-        </q-tabs>
-      </smooth-reflow>
+      <q-tabs
+        v-model="tab"
+        active-color="primary"
+        indicator-color="primary"
+        align="justify"
+      >
+        <q-tab name="load" :label="$t('Load Game')" />
+        <q-tab name="new" :label="$t('New Game')" />
+      </q-tabs>
     </template>
 
     <q-card>
       <smooth-reflow>
         <q-tab-panels v-model="tab" keep-alive animated>
-          <q-tab-panel name="new" class="q-pa-none">
-            <q-card-section class="q-pa-none">
-              <GameInfo
-                ref="gameInfo"
-                class="q-pa-md"
-                :values="tags"
-                :show-all="showAll"
-                @submit="createGame"
-                tps-edit
-              />
-            </q-card-section>
-          </q-tab-panel>
-
           <q-tab-panel name="load" class="q-pa-none">
             <q-list separator>
               <!-- Clipboard -->
@@ -64,7 +50,28 @@
                 </q-item-section>
                 <q-item-section>{{ $t("Online") }}</q-item-section>
               </q-item>
+
+              <!-- PlayTak Game ID -->
+              <q-item @click="playTak" clickable v-ripple>
+                <q-item-section avatar>
+                  <img src="~assets/playtak.svg" width="24" height="24" />
+                </q-item-section>
+                <q-item-section>{{ $t("PlayTak Game ID") }}</q-item-section>
+              </q-item>
             </q-list>
+          </q-tab-panel>
+
+          <q-tab-panel name="new" class="q-pa-none">
+            <q-card-section class="q-pa-none">
+              <GameInfo
+                ref="gameInfo"
+                class="q-pa-md"
+                :values="tags"
+                :show-all="showAll"
+                @submit="createGame"
+                tpsEdit
+              />
+            </q-card-section>
           </q-tab-panel>
         </q-tab-panels>
       </smooth-reflow>
@@ -92,19 +99,27 @@
       @submit="clipboardCreate"
       no-route-dismiss
     />
+
+    <PlayTakGameID
+      v-model="showPlayTakID"
+      @submit="close"
+      no-route-dismiss
+      go-back
+    />
   </small-dialog>
 </template>
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
 import EditPTN from "../dialogs/EditPTN.vue";
+import PlayTakGameID from "../dialogs/PlayTakGameID";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, EditPTN, MoreToggle },
+  components: { GameInfo, EditPTN, PlayTakGameID, MoreToggle },
   data() {
     return {
       tags: {
@@ -136,6 +151,18 @@ export default {
           this.$router.back();
         } else if (show && !this.showPTN) {
           this.$router.push({ params: { type: show ? "ptn" : null } });
+        }
+      },
+    },
+    showPlayTakID: {
+      get() {
+        return this.$route.params.type === "playtak";
+      },
+      set(show) {
+        if (!show && this.showPlayTakID) {
+          this.$router.back();
+        } else if (show && !this.showPlayTakID) {
+          this.$router.push({ params: { type: show ? "playtak" : null } });
         }
       },
     },
@@ -181,7 +208,7 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const ptn = await navigator.clipboard.readText();
+      const ptn = await this.$store.dispatch("ui/PASTE");
       if (!ptn || Game.validate(ptn) !== true) {
         this.ptn = ptn;
         this.showPTN = true;
@@ -203,6 +230,9 @@ export default {
 
       await this.$store.dispatch("game/ADD_GAME", game);
       this.close();
+    },
+    async playTak() {
+      this.showPlayTakID = true;
     },
     async createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;

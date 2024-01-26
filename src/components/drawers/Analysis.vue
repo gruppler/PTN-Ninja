@@ -1,9 +1,8 @@
 <template>
-  <recess class="col-grow relative-position">
+  <component :is="recess ? 'recess' : 'div'" class="col-grow relative-position">
     <q-scroll-area ref="scroll" class="games-db absolute-fit">
       <!-- Bot Suggestions -->
       <q-expansion-item
-        v-if="showBotMovesPanel"
         v-model="sections.botSuggestions"
         header-class="bg-accent"
       >
@@ -13,6 +12,9 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
+            <q-item-label v-if="botSettings.bot" caption>{{
+              $t(`analysis.bots.${botSettings.bot}`)
+            }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-btn
@@ -28,35 +30,125 @@
 
         <smooth-reflow class="bg-ui">
           <template v-if="showBotSettings">
-            <!-- Max Suggestions -->
-            <q-input
-              v-model.number="botSettings.maxSuggestedMoves"
-              :label="$t('analysis.maxSuggestedMoves')"
-              type="number"
-              min="1"
-              max="99"
-              step="1"
+            <!-- Bot -->
+            <q-select
+              v-model="botSettings.bot"
+              :options="bots"
+              :label="$t('Bot')"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
+              emit-value
+              map-options
               item-aligned
               filled
             >
               <template v-slot:prepend>
-                <q-icon name="moves" />
+                <q-icon name="bot" />
               </template>
-            </q-input>
+            </q-select>
+
+            <template v-if="botSettings.bot === 'tiltak'">
+              <!-- Max Suggestions -->
+              <q-input
+                v-model.number="botSettings.maxSuggestedMoves"
+                :label="$t('analysis.maxSuggestedMoves')"
+                type="number"
+                min="1"
+                max="99"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="moves" />
+                </template>
+              </q-input>
+            </template>
+            <template v-if="botSettings.bot === 'topaz'">
+              <!-- Depth -->
+              <q-input
+                v-model.number="botSettings.depth"
+                :label="$t('analysis.Depth')"
+                type="number"
+                min="2"
+                max="99"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="depth" />
+                </template>
+              </q-input>
+
+              <!-- Time Budget -->
+              <q-input
+                v-model.number="botSettings.timeBudget"
+                :label="$t('analysis.timeBudget')"
+                type="number"
+                min="1"
+                max="999"
+                step="1"
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="clock" />
+                </template>
+              </q-input>
+            </template>
           </template>
         </smooth-reflow>
 
         <smooth-reflow>
-          <q-btn
-            v-if="!botMoves.length"
-            @click="queryBotSuggestions(botThinkBudgetInSeconds.short)"
-            :loading="loadingBotMoves"
-            class="full-width"
-            color="primary"
-            stretch
-          >
-            {{ $t("analysis.Ask for suggestions") }}
-          </q-btn>
+          <template v-if="botSettings.bot === 'tiltak'">
+            <q-btn
+              v-if="!isFullyAnalyzed && plies.length"
+              @click="analyzeGameTiltak()"
+              :loading="loadingTiltakAnalysis"
+              :percentage="progressTiltakAnalysis"
+              class="full-width"
+              color="primary"
+              stretch
+            >
+              <q-icon
+                :name="showAllBranches ? 'moves' : 'branch'"
+                :class="{ 'rotate-180': !showAllBranches }"
+                left
+              />
+              {{
+                $t(
+                  showAllBranches
+                    ? "analysis.Analyze Game"
+                    : "analysis.Analyze Branch"
+                )
+              }}
+            </q-btn>
+            <q-btn
+              v-if="!botMoves.length && !isGameEnd"
+              @click="analyzePositionTilTak(botThinkBudgetInSeconds.short)"
+              :loading="loadingTiltakMoves"
+              class="full-width"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+              stretch
+            />
+          </template>
+          <template v-else-if="botSettings.bot === 'topaz'">
+            <q-btn
+              v-if="!botMoves.length && !isGameEnd"
+              @click="requestTopazSuggestions()"
+              :loading="loadingTopazMoves"
+              :percentage="progressTopazAnalysis"
+              class="full-width"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+              stretch
+            />
+          </template>
         </smooth-reflow>
 
         <smooth-reflow>
@@ -67,34 +159,59 @@
             )"
             :key="i"
             :ply="move.ply"
-            :evaluation="move.evaluation"
+            :evaluation="'evaluation' in move ? move.evaluation : null"
             :following-plies="move.followingPlies"
-            :count="move.visits"
-            count-label="analysis.visits"
+            :count="
+              'visits' in move
+                ? move.visits
+                : 'nodes' in move
+                ? move.nodes
+                : null
+            "
+            :count-label="
+              'visits' in move
+                ? 'analysis.visits'
+                : 'nodes' in move
+                ? 'analysis.nodes'
+                : null
+            "
             :player1-number="
-              move.evaluation >= 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation >= 0
+                ? formatEvaluation(move.evaluation)
+                : null
             "
             :player2-number="
-              move.evaluation < 0 ? formatEvaluation(move.evaluation) : null
+              'evaluation' in move && move.evaluation < 0
+                ? formatEvaluation(move.evaluation)
+                : null
+            "
+            :middle-number="
+              'depth' in move ? `${$t('analysis.depth')} ${move.depth}` : null
             "
           />
+
+          <q-item v-if="isGameEnd" class="flex-center">
+            {{ $t("analysis.gameOver") }}
+          </q-item>
         </smooth-reflow>
+
         <smooth-reflow>
           <q-btn
             v-if="
+              botSettings.bot === 'tiltak' &&
               botMoves.length &&
               botMoves.every(
                 ({ secondsToThink }) =>
                   secondsToThink < botThinkBudgetInSeconds.long
               )
             "
-            @click="queryBotSuggestions(botThinkBudgetInSeconds.long)"
-            :loading="loadingBotMoves"
+            @click="analyzePositionTilTak(botThinkBudgetInSeconds.long)"
+            :loading="loadingTiltakMoves"
             class="full-width"
             color="primary"
             stretch
           >
-            {{ $t("analysis.Ask for better suggestions") }}
+            {{ $t("analysis.Think Harder") }}
           </q-btn>
         </smooth-reflow>
       </q-expansion-item>
@@ -107,7 +224,7 @@
       >
         <template v-slot:header>
           <q-item-section avatar>
-            <q-icon name="database" />
+            <img src="~assets/playtak.svg" width="24" height="24" />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
@@ -372,7 +489,7 @@
             :player1-number="$n(move.wins1, 'n0')"
             :middle-number="move.draws ? $n(move.draws, 'n0') : null"
             :player2-number="$n(move.wins2, 'n0')"
-            :player-numbers-hint="winsHint(move)"
+            :player-numbers-tooltip="winsTooltip(move)"
           />
           <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
         </smooth-reflow>
@@ -417,7 +534,7 @@
         </smooth-reflow>
       </q-expansion-item>
     </q-scroll-area>
-  </recess>
+  </component>
 </template>
 
 <script>
@@ -426,8 +543,9 @@ import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
-import { isArray, omit } from "lodash";
+import { isArray, omit, pick, uniq } from "lodash";
 import Fuse from "fuse.js";
+import asyncPool from "tiny-async-pool";
 
 const apiUrl = "https://openings.exegames.de/api/v1";
 // const apiUrl = `http://127.0.0.1:5000/api/v1`;
@@ -441,7 +559,6 @@ export default {
   name: "Analysis",
   components: { AnalysisItem, DatabaseGame, DateInput },
   props: {
-    game: Object,
     recess: Boolean,
   },
   data() {
@@ -454,8 +571,12 @@ export default {
     }
 
     return {
-      showBotMovesPanel: "show_bot_moves_panel" in this.$route.query,
-      loadingBotMoves: false,
+      loadingTiltakMoves: false,
+      loadingTiltakAnalysis: false,
+      progressTiltakAnalysis: 0,
+      loadingTopazMoves: false,
+      progressTopazAnalysis: 0,
+      topazTimer: null,
       loadingDBMoves: false,
       showBotSettings: false,
       showDBSettings: false,
@@ -479,23 +600,46 @@ export default {
         { label: this.$t("analysis.tournamentOptions.only"), value: true },
       ],
       dbMinRating: 0,
+      bots: ["tiltak", "topaz"].map((value) => ({
+        value,
+        label: this.$t(`analysis.bots.${value}`),
+      })),
       botSettings: { ...this.$store.state.ui.botSettings },
       botThinkBudgetInSeconds: {
         short: 3,
         long: 8,
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
-      botSettingsHash: this.hashSettings(this.$store.state.ui.botSettings),
-      dbSettingsHash: this.hashSettings(this.$store.state.ui.dbSettings),
+      botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
+      dbSettingsHash: this.hashDBSettings(this.$store.state.ui.dbSettings),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
   computed: {
-    isVisible() {
+    isOffline() {
+      return this.$store.state.ui.offline;
+    },
+    isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
         this.$store.state.ui.textTab === "analysis"
       );
+    },
+    isDBMovesVisible() {
+      return (
+        this.isPanelVisible && (this.sections.dbMoves || this.sections.dbGames)
+      );
+    },
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
+    },
+    plies() {
+      return this.$store.state.game.ptn[
+        [this.showAllBranches ? "allPlies" : "branchPlies"]
+      ];
+    },
+    isFullyAnalyzed() {
+      return this.plies.every((ply) => this.plyHasEvalComment(ply));
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
@@ -503,12 +647,20 @@ export default {
     theme() {
       return this.$store.state.ui.theme;
     },
+    game() {
+      return this.$store.state.game;
+    },
     ply() {
       return this.$store.state.game.position.ply;
     },
     tps() {
-      //  do not use this.$game.position.tps as it's not watchable
       return this.$store.state.game.position.tps;
+    },
+    isGameEnd() {
+      return (
+        this.$store.state.game.position.isGameEnd &&
+        !this.$store.state.game.position.isGameEndDefault
+      );
     },
     botPosition() {
       return this.botPositions[this.tps] || null;
@@ -568,19 +720,33 @@ export default {
         this.sections.dbMoves = true;
       }
     },
-    hashSettings(settings) {
+    hashBotSettings(settings) {
+      if (settings.bot === "tiltak") {
+        return Object.values(pick(settings, ["bot", "maxSuggestedMoves"])).join(
+          ","
+        );
+      } else {
+        return Object.values(
+          pick(settings, ["bot", "depth", "timeBudget"])
+        ).join(",");
+      }
+    },
+    hashDBSettings(settings) {
       return Object.values(settings).join(",");
     },
+
     nextPly(player, color) {
       if (player === 2 && color === 1) {
         return { player: 1, color: 1 };
       }
       return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
     },
+
     formatEvaluation(v) {
-      return `${this.$n(Math.abs(v), "n2")}%`;
+      return `+${this.$n(Math.abs(v), "n2")}%`;
     },
-    winsHint(move) {
+
+    winsTooltip(move) {
       const gameCount = move.totalGames;
       const percentageString = (count) => this.$n(count / gameCount, "percent");
 
@@ -596,78 +762,370 @@ export default {
         move.draws
       )} – ${percentageString(move.draws)}`;
     },
-    async queryBotSuggestions(secondsToThink) {
-      try {
-        this.loadingBotMoves = true;
 
-        const tps = this.tps;
-        const komi = this.game.config.komi;
-        const response = await fetch(bestMoveEndpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            komi: komi,
-            size: this.game.config.size,
-            tps: tps,
-            moves: [], // moves played on top of the TPS
-            time_control: {
-              // FixedNodes: 100000, // can be used instead of `Time`
-              Time: [
-                { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
-                { secs: 0, nanos: 0 }, // increment, ignored
-              ],
-            },
-            rollout_depth: 0,
-            rollout_temperature: 0.25,
-            action: "SuggestMoves",
-          }),
-        });
-        if (!response.ok) {
-          return this.notifyError("HTTP-Error: " + response.status);
+    plyHasEvalComment(ply) {
+      return (
+        ply.id in this.game.comments.notes &&
+        this.game.comments.notes[ply.id].some(
+          (comment) => comment.evaluation !== null
+        )
+      );
+    },
+    plyHasPVComment(ply, pv = null) {
+      return (
+        ply.id in this.game.comments.notes &&
+        this.game.comments.notes[ply.id].some((comment) =>
+          pv === null ? comment.pv : comment.message === pv
+        )
+      );
+    },
+    getEvalComments(ply, settingsHash) {
+      let comments = [];
+      let positionBefore = this.botPositions[ply.tpsBefore];
+      let positionAfter = this.botPositions[ply.tpsAfter];
+      let evaluationBefore = null;
+      let evaluationAfter = null;
+
+      // Assume evaluationAfter from game result
+      if (ply.result && ply.result.type !== "1") {
+        evaluationAfter = ply.result.isTie
+          ? 0
+          : 100 * (ply.result.winner === 1 ? 1 : -1);
+      }
+
+      // Get evaulationBefore from existing eval comment of previous ply
+      let prevPly = this.plies.find(
+        (prevPly) => prevPly.tpsAfter === ply.tpsBefore
+      );
+      if (prevPly && prevPly.id in this.game.comments.notes) {
+        for (let i = 0; i < this.game.comments.notes[prevPly.id].length; i++) {
+          evaluationBefore = this.game.comments.notes[prevPly.id][i].evaluation;
+          if (evaluationBefore !== null);
+          break;
         }
-        const data = await response.json();
-        const { SuggestMoves: suggestedMoves } = data;
+      }
 
-        const botMoves = deepFreeze(
-          suggestedMoves.map(({ mv: ptn, visits, winning_probability, pv }) => {
-            let player = this.$store.state.game.position.turn;
-            let color = this.$store.state.game.position.color;
-            let ply = new Ply(ptn, { id: null, player, color });
-            let followingPlies = pv.map((ply) => {
-              ({ player, color } = this.nextPly(player, color));
-              return new Ply(ply, { id: null, player, color });
-            });
-            let evaluation = 200 * (winning_probability - 0.5);
-            return { ply, followingPlies, visits, evaluation, secondsToThink };
-          })
-        );
-        this.$set(this.botPositions, tps, {
-          ...(this.botPositions[tps] || {}),
-          [this.botSettingsHash]: botMoves,
+      if (
+        evaluationAfter !== null ||
+        (positionAfter && settingsHash in positionAfter)
+      ) {
+        evaluationAfter =
+          Math.round(
+            100 *
+              (evaluationAfter !== null
+                ? evaluationAfter
+                : positionAfter[settingsHash][0].evaluation)
+          ) / 1e4;
+        comments.push(`${evaluationAfter >= 0 ? "+" : ""}${evaluationAfter}`);
+        if (
+          evaluationBefore !== null ||
+          (positionBefore && settingsHash in positionBefore)
+        ) {
+          evaluationBefore =
+            Math.round(
+              100 *
+                (evaluationBefore !== null
+                  ? evaluationBefore
+                  : positionBefore[settingsHash][0].evaluation)
+            ) / 1e4;
+          const scoreLoss =
+            (ply.player === 1
+              ? evaluationAfter - evaluationBefore
+              : evaluationBefore - evaluationAfter) / 2;
+          if (scoreLoss > 0.06) {
+            comments.push("!!");
+          } else if (scoreLoss > 0.03) {
+            comments.push("!");
+          } else if (scoreLoss > -0.1) {
+            // Do nothing
+          } else if (scoreLoss > -0.25) {
+            comments.push("?");
+          } else {
+            comments.push("??");
+          }
+        }
+      }
+      return comments;
+    },
+    getPVComment(ply, settingsHash) {
+      let positionBefore = this.botPositions[ply.tpsBefore];
+      if (positionBefore && settingsHash in positionBefore) {
+        let position = positionBefore[settingsHash][0];
+        if (position && position.ply) {
+          let pv = [position.ply, ...position.followingPlies]
+            .slice(0, 3)
+            .map((ply) => ply.ptn);
+          return `pv ${pv.join(" ")}`;
+        }
+      }
+      return null;
+    },
+
+    async analyzeGameTiltak() {
+      if (this.isOffline || !this.game.ptn.branchPlies.length) {
+        this.notifyError("Offline");
+        return;
+      }
+      try {
+        this.loadingTiltakAnalysis = true;
+        this.progressTiltakAnalysis = 0;
+        const concurrency = 10; // TODO: determine ideal value
+        const komi = this.game.config.komi;
+        const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
+        const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+        const settingsHash = this.botSettingsHash;
+        let positions = plies.map((ply) => ply.tpsBefore);
+        plies.forEach((ply) => {
+          if (!ply.result || ply.result.type === "1") {
+            positions.push(ply.tpsAfter);
+          }
         });
+        positions = uniq(positions).filter(
+          (tps) =>
+            !(tps in this.botPositions) ||
+            !(settingsHash in this.botPositions[tps])
+        );
+        let total = positions.length;
+        let completed = 0;
+
+        for await (const result of asyncPool(concurrency, positions, (tps) =>
+          this.queryBotSuggestionsTiltak(
+            secondsToThinkPerPly,
+            tps,
+            komi,
+            settingsHash
+          ).catch((error) => {
+            console.error("Failed to query position", {
+              tps,
+              komi,
+              secondsToThink,
+              error,
+            });
+          })
+        )) {
+          this.progressTiltakAnalysis = (100 * ++completed) / total;
+        }
+        // Insert comments
+        let messages = {};
+        plies.forEach((ply) => {
+          let notes = [];
+          let evaluations = this.getEvalComments(ply, settingsHash);
+          if (evaluations.length) {
+            notes.push(...evaluations);
+          }
+          let pv = this.getPVComment(ply, settingsHash);
+          if (pv !== null && !this.plyHasPVComment(ply, pv)) {
+            notes.push(pv);
+          }
+          messages[ply.id] = notes;
+        });
+        this.$store.dispatch("game/ADD_NOTES", messages);
       } catch (error) {
         this.notifyError(error);
       } finally {
-        this.loadingBotMoves = false;
+        this.loadingTiltakAnalysis = false;
       }
     },
+    async analyzePositionTilTak(secondsToThink) {
+      if (this.isGameEnd) {
+        return;
+      }
+      try {
+        this.loadingTiltakMoves = true;
+        const tps = this.tps;
+        const komi = this.game.config.komi;
+        await this.queryBotSuggestionsTiltak(secondsToThink, tps, komi);
+      } catch (error) {
+        this.console.error("Failed to query position", {
+          tps,
+          komi,
+          secondsToThink,
+          error,
+        });
+      } finally {
+        this.loadingTiltakMoves = false;
+      }
+    },
+    async queryBotSuggestionsTiltak(
+      secondsToThink,
+      tps,
+      komi,
+      settingsHash = this.botSettingsHash
+    ) {
+      if (this.isOffline) {
+        this.notifyError("Offline");
+        return;
+      }
+      if (!tps) {
+        throw new Error("Missing TPS");
+      }
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      const response = await fetch(bestMoveEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          komi: komi,
+          size: this.game.config.size,
+          tps,
+          moves: [],
+          time_control: {
+            // FixedNodes: 100000, // can be used instead of `Time`
+            Time: [
+              { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
+              { secs: 0, nanos: 0 }, // increment, ignored
+            ],
+          },
+          rollout_depth: 0,
+          rollout_temperature: 0.25,
+          action: "SuggestMoves",
+        }),
+      });
+      if (!response.ok) {
+        return this.notifyError("HTTP-Error: " + response.status);
+      }
+      const data = await response.json();
+      const { SuggestMoves: suggestedMoves } = data;
+
+      const result = suggestedMoves.map(
+        ({ mv: ptn, visits, winning_probability, pv }) => {
+          let player = initialPlayer;
+          let color = initialColor;
+          let ply = new Ply(ptn, { id: null, player, color });
+          let followingPlies = pv.map((ply) => {
+            ({ player, color } = this.nextPly(player, color));
+            return new Ply(ply, { id: null, player, color });
+          });
+          let evaluation = 200 * (winning_probability - 0.5);
+          return { ply, followingPlies, visits, evaluation, secondsToThink };
+        }
+      );
+      deepFreeze(result);
+      this.$set(this.botPositions, tps, {
+        ...(this.botPositions[tps] || {}),
+        [settingsHash]: result,
+      });
+      return result;
+    },
+
+    async requestTopazSuggestions() {
+      if (!this.topazWorker) {
+        try {
+          await this.init();
+        } catch (error) {
+          return;
+        }
+      }
+      if (this.loadingTopazMoves) {
+        return;
+      }
+      this.loadingTopazMoves = true;
+      this.progressTopazAnalysis = 0;
+      const startTime = new Date().getTime();
+      const timeBudget = this.botSettings.timeBudget * 10;
+      this.topazTimer = setInterval(() => {
+        this.progressTopazAnalysis =
+          (new Date().getTime() - startTime) / timeBudget;
+      }, 1000);
+      this.topazWorker.postMessage({
+        ...this.botSettings,
+        size: this.game.config.size,
+        komi: this.game.config.komi,
+        tps: this.tps,
+        id: this.botSettingsHash,
+      });
+    },
+    receiveTopazSuggestions(result) {
+      this.loadingTopazMoves = false;
+      clearInterval(this.topazTimer);
+      this.topazTimer = null;
+
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const { tps, depth, score, nodes, pv, id } = result;
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      let player = initialPlayer;
+      let color = initialColor;
+      let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
+      let followingPlies = pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
+      deepFreeze(botMoves);
+      this.$set(this.botPositions, tps, {
+        ...(this.botPositions[tps] || {}),
+        [id]: botMoves,
+      });
+      return botMoves;
+    },
+
+    /** Queries `tps` position.
+     * @returns Explored moves and their winning probability (`evaluation`).
+     * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
+     */
     async loadUsernames() {
+      if (this.isOffline) {
+        return;
+      }
       const response = await fetch(usernamesEndpoint);
       const { white, black } = await response.json();
       this.player1Index = new Fuse(white);
       this.player2Index = new Fuse(black);
     },
-    async loadDatabases() {
+
+    async init() {
+      // Load wasm bots
       try {
-        const response = await fetch(databasesEndpoint);
-        this.databases = await response.json();
+        if (!this.topazWorker) {
+          try {
+            this.topazWorker = new Worker(
+              new URL("/topaz/topaz.worker.js", import.meta.url)
+            );
+            this.topazWorker.onmessage = ({ data }) => {
+              this.receiveTopazSuggestions(data);
+            };
+          } catch (error) {
+            this.notifyError("Bot unavailable");
+          }
+        }
       } catch (error) {
-        this.databases = null;
         this.notifyError(error);
       }
+
+      if (!this.isOffline) {
+        // Load player names
+        if (!this.player1Names.length) {
+          this.loadUsernames();
+        }
+
+        // Load databases
+        try {
+          const response = await fetch(databasesEndpoint);
+          this.databases = await response.json();
+        } catch (error) {
+          this.databases = null;
+          this.notifyError(error);
+        }
+      }
     },
+
     searchPlayer1(query, update) {
       update(
         () =>
@@ -696,7 +1154,11 @@ export default {
         }
       );
     },
-    async queryPosition() {
+
+    async queryDBPosition() {
+      if (this.isOffline) {
+        return;
+      }
       const databaseId = this.databaseIdToQuery;
       if (databaseId === null) return;
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
@@ -706,8 +1168,8 @@ export default {
       try {
         this.loadingDBMoves = true;
 
-        const player = this.$store.state.game.position.turn;
-        const color = this.$store.state.game.position.color;
+        const player = this.game.position.turn;
+        const color = this.game.position.color;
         const tps = this.tps;
         const uriEncodedTps = encodeURIComponent(tps);
 
@@ -788,35 +1250,52 @@ export default {
       }
     },
   },
+
   async mounted() {
-    if (this.isVisible) {
-      this.loadUsernames();
-      await this.loadDatabases();
-      // wait for databases to load before querying the position
-      this.queryPosition();
+    await this.init();
+    // wait for databases to load before querying the position
+    if (this.isPanelVisible && !this.isOffline) {
+      this.queryDBPosition();
     }
   },
+
   watch: {
-    async isVisible(isVisible) {
-      if (isVisible) {
-        if (!this.databases || !this.databases.length) {
-          await this.loadDatabases();
+    async isOffline(isOffline) {
+      if (!isOffline && this.isPanelVisible) {
+        if (!this.topazWorker || !this.databases || !this.databases.length) {
+          await this.init();
         }
-        this.queryPosition();
-        if (!this.player1Names.length) {
-          this.loadUsernames();
+        if (this.isDBMovesVisible) {
+          this.queryDBPosition();
         }
       }
     },
+    async isPanelVisible(isPanelVisible) {
+      if (isPanelVisible) {
+        if (!this.topazWorker || !this.databases || !this.databases.length) {
+          await this.init();
+        }
+        if (this.isDBMovesVisible && !this.isOffline) {
+          this.queryDBPosition();
+        }
+      }
+    },
+    isDBMovesVisible(isVisible) {
+      if (isVisible && !this.isOffline) {
+        this.queryDBPosition();
+      }
+    },
     tps() {
-      if (this.isVisible) {
-        this.queryPosition();
+      if (this.isDBMovesVisible && !this.isOffline) {
+        this.queryDBPosition();
       }
     },
     botPosition(position) {
       if (position) {
         if (this.botSettingsHash in position) {
           this.botMoves = position[this.botSettingsHash] || [];
+        } else {
+          this.botMoves = [];
         }
       } else {
         this.botMoves = [];
@@ -825,6 +1304,8 @@ export default {
     botSettingsHash(hash) {
       if (this.botPosition && hash in this.botPosition) {
         this.botMoves = this.botPosition[hash] || [];
+      } else {
+        this.botMoves = [];
       }
     },
     dbPosition(position) {
@@ -851,15 +1332,17 @@ export default {
     botSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-        this.botSettingsHash = this.hashSettings(settings);
+        this.botSettingsHash = this.hashBotSettings(settings);
       },
       deep: true,
     },
     dbSettings: {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
-        this.dbSettingsHash = this.hashSettings(settings);
-        this.queryPosition();
+        this.dbSettingsHash = this.hashDBSettings(settings);
+        if (!this.isOffline) {
+          this.queryDBPosition();
+        }
       },
       deep: true,
     },

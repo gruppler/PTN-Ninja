@@ -13,7 +13,9 @@
     >
       <q-item-section>
         <q-item-label>
-          <Ply :ply="ply" no-click done />
+          <Ply :ply="ply" no-click done>
+            <PlyPreview :tps="tps" :plies="[ply.text]" />
+          </Ply>
         </q-item-label>
       </q-item-section>
       <q-item-section side>
@@ -45,9 +47,9 @@
               }"
               >{{ player2Number }}</span
             >
-            <hint v-if="playerNumbersHint">
-              <span style="white-space: pre">{{ playerNumbersHint }}</span>
-            </hint>
+            <tooltip v-if="playerNumbersTooltip">
+              <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+            </tooltip>
           </span>
         </q-item-label>
         <q-item-label v-if="count !== null && countLabel">
@@ -60,11 +62,21 @@
       class="q-pt-none"
       @mouseover="highlight"
       @mouseout="unhighlight"
-      @click="insertFollowingPlies"
+      @click="insertFollowingPlies()"
       clickable
     >
       <q-item-label class="small">
-        <Ply v-for="(ply, i) in followingPlies" :key="i" :ply="ply" no-click />
+        <Ply
+          v-for="(fPly, i) in followingPlies"
+          :key="i"
+          :ply="fPly"
+          @click.stop.prevent.capture="insertFollowingPlies(i)"
+        >
+          <PlyPreview
+            :tps="tps"
+            :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
+          />
+        </Ply>
       </q-item-label>
     </q-item>
   </div>
@@ -72,10 +84,11 @@
 
 <script>
 import Ply from "../PTN/Ply";
+import PlyPreview from "../controls/PlyPreview";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply },
+  components: { Ply, PlyPreview },
   props: {
     ply: Object,
     evaluation: Number,
@@ -96,8 +109,13 @@ export default {
       type: [Number, String],
       default: null,
     },
-    playerNumbersHint: String,
+    playerNumbersTooltip: String,
     followingPlies: Array,
+  },
+  computed: {
+    tps() {
+      return this.$store.state.game.position.tps;
+    },
   },
   methods: {
     insertPly() {
@@ -110,12 +128,20 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertFollowingPlies(i) {
+    insertFollowingPlies(index) {
+      let prev = 0;
+      if (index === undefined) {
+        index = this.followingPlies.length;
+        prev = index;
+      }
       this.unhighlight();
-      this.$store.dispatch("game/INSERT_PLIES", [
-        this.ply.text,
-        ...this.followingPlies.map((ply) => ply.text),
-      ]);
+      this.$store.dispatch("game/INSERT_PLIES", {
+        plies: [
+          this.ply.text,
+          ...this.followingPlies.slice(0, index + 1).map((ply) => ply.text),
+        ],
+        prev,
+      });
     },
   },
 };

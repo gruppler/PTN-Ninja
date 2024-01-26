@@ -28,6 +28,8 @@ const outputProps = [
   "squares",
   "wallSmash",
   "text",
+  "tpsBefore",
+  "tpsAfter",
 ];
 
 export const atoi = (coord) => [
@@ -78,6 +80,8 @@ export default class Ply extends Ptn {
     this.children = children;
     this.branch = "";
     this.squares = [this.column + this.row];
+    this.tpsBefore = "";
+    this.tpsAfter = "";
     if (this.isMovement()) {
       const [xOffset, yOffset] = this.directionModifier();
       let x = this.x;

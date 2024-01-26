@@ -7,6 +7,7 @@
       class="ptn-editor fit"
       :rules="rules"
       @keydown.ctrl.enter.prevent="save"
+      autofocus
       hide-bottom-space
       no-error-icon
     />
@@ -26,6 +27,7 @@ export default {
     return {
       ptn: "",
       original: "",
+      header: "",
       rules: [
         (moves) => {
           const result = Game.validate(this.header + moves);
@@ -50,9 +52,6 @@ export default {
     showHeader() {
       return this.$store.state.ui.editHeader;
     },
-    header() {
-      return this.isNewGame || this.showHeader ? "" : this.$game.headerText();
-    },
     hasChanges() {
       return this.isNewGame || this.ptn !== this.original;
     },
@@ -67,12 +66,15 @@ export default {
     init() {
       if (this.isNewGame) {
         this.original = this.value || "";
+        this.header = "";
       } else if (this.$game) {
         this.original = (
           this.showHeader ? this.$game.ptn : this.$game.moveText(true, true)
         ).replace(/\r\n/g, "\n");
+        this.header = this.showHeader ? "" : this.$game.headerText();
       } else {
         this.original = "";
+        this.header = "";
       }
       this.ptn = this.original;
     },

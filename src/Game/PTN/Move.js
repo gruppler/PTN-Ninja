@@ -158,10 +158,18 @@ export default class Move {
 
     if (comments) {
       if (comments[0] && comments[0].length) {
-        comments1 = comments[0].map((comment) => comment.toString()).join(" ");
+        comments1 = comments[0]
+          .map((comment) =>
+            comment.toString({ size: this.game.size, transform })
+          )
+          .join(" ");
       }
       if (comments[1] && comments[1].length) {
-        comments2 = comments[1].map((comment) => comment.toString()).join(" ");
+        comments2 = comments[1]
+          .map((comment) =>
+            comment.toString({ size: this.game.size, transform })
+          )
+          .join(" ");
       }
     }
 

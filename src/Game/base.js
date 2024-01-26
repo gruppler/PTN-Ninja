@@ -11,7 +11,6 @@ import Board from "./Board";
 
 import {
   cloneDeep,
-  defaults,
   each,
   flatten,
   isEqual,
@@ -21,6 +20,7 @@ import {
   map,
   pick,
   uniq,
+  zipObject,
 } from "lodash";
 import memoize from "./memoize";
 
@@ -38,10 +38,14 @@ export const generateName = (tags = {}, game) => {
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
   const player1 = tag("player1");
   const player2 = tag("player2");
-  const result = tag("result").replace(/1\/2-1\/2/g, "DRAW");
+  let result = tag("result");
   const date = tag("date");
   const time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
+  if (result && !isString(result)) {
+    result = result.text;
+  }
+  result = result.replace(/1\/2-1\/2/g, "DRAW");
   return (
     (player1.length && player2.length ? player1 + " vs " + player2 + " " : "") +
     `${size}x${size}` +
@@ -448,35 +452,58 @@ export default class GameBase {
     this.board.updateOutput();
     this.saveBoardState();
 
-    if (state && isObject(state) && "plyIndex" in state) {
-      // Go to specified position
-      if (state.targetBranch in this.branches) {
-        this.board.targetBranch = state.targetBranch || "";
-      }
-      let ply = this.board.plies[state.plyIndex];
-      if (ply) {
-        if (ply.id || state.plyIsDone) {
-          this.board.goToPly(ply.id, state.plyIsDone);
-        } else {
-          this.board.plyID = ply.id;
-        }
-      } else {
-        this.board.plyID = -1;
-      }
-    } else if (this.board.plies.length) {
-      // Go to end of main branch
-      this.board.plyID = 0;
-      this.board.last();
-      if (this.board.checkGameEnd()) {
-        let ply = this.board.ply;
-        if (ply) {
-          if (!this.tag("result")) {
-            // Add Result tag if missing
-            this.setTags({ result: ply.result.text }, false, true);
+    // Validate and generate TPS for each ply, set initial position
+    try {
+      if (this.board.plies.length) {
+        // Go to end of main branch
+        this.board.plyID = 0;
+        this.board.last();
+        if (this.board.checkGameEnd()) {
+          let ply = this.board.ply;
+          if (ply) {
+            if (!this.tag("result")) {
+              // Add Result tag if missing
+              this.setTags({ result: ply.result.text }, false, true);
+            }
+            this.board.setRoads(ply.result.roads || null);
           }
-          this.board.setRoads(ply.result.roads || null);
+        }
+        // Navigate through every branch
+        for (let branch in this.branches) {
+          if (branch) {
+            this.board.goToPly(this.branches[branch].id, true);
+            this.board.last();
+          }
         }
       }
+      if (
+        state &&
+        isObject(state) &&
+        "plyIndex" in state &&
+        (!state.targetBranch || state.targetBranch in this.branches)
+      ) {
+        // Go to specified position
+        let ply = this.plies.find(
+          (ply) =>
+            ply.index === state.plyIndex &&
+            ply.isInBranch(state.targetBranch || "")
+        );
+        if (ply) {
+          this.board.goToPly(ply.id, state.plyIsDone || false);
+        } else {
+          // Go back to root branch
+          this.board.targetBranch = "";
+          this.board.goToPly(0, true);
+          this.board.last();
+        }
+      } else if (this.board.targetBranch) {
+        // Go back to root branch
+        this.board.targetBranch = "";
+        this.board.goToPly(0, true);
+        this.board.last();
+      }
+    } catch (error) {
+      console.error("PTN validation failed:", error);
     }
 
     if (this.onInit) {
@@ -492,23 +519,6 @@ export default class GameBase {
 
   get minState() {
     return this.board.minState;
-  }
-
-  get isLocal() {
-    return !this.config.isOnline;
-  }
-
-  get hasCustomPieceCount() {
-    return !(
-      this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
-      this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&
-      this.defaultPieceCounts[2].flat === this.pieceCounts[2].flat &&
-      this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
-    );
-  }
-
-  get hasEnded() {
-    return Boolean(this.tags.result);
   }
 
   get openingSwap() {
@@ -557,8 +567,8 @@ export default class GameBase {
     return flatten(this.movesGrouped);
   }
 
-  generateName(tags = {}) {
-    return generateName(tags, this);
+  generateName(tags) {
+    return generateName(tags || this.tagOutput);
   }
 
   get isDefaultName() {
@@ -573,6 +583,13 @@ export default class GameBase {
     if (key in this.tags && this.tags[key].value) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
+  }
+
+  get tagOutput() {
+    return zipObject(
+      Object.keys(this.tags),
+      Object.values(this.tags).map((tag) => tag.output)
+    );
   }
 
   setTags(tags, recordChange = true, updatePTN = true) {
@@ -632,6 +649,13 @@ export default class GameBase {
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
       pieceCounts: this.pieceCounts,
+      isOnline: false,
+      hasCustomPieceCount: !(
+        this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
+        this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&
+        this.defaultPieceCounts[2].flat === this.pieceCounts[2].flat &&
+        this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
+      ),
     };
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {

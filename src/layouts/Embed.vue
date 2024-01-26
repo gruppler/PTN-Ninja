@@ -56,6 +56,11 @@
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove />
         </q-page-sticky>
+        <q-page-sticky
+          ref="gameNotificationContainer"
+          position="top-right"
+          :offset="[0, 0]"
+        />
       </q-page>
     </q-page-container>
 
@@ -173,7 +178,7 @@ export default {
   },
   computed: {
     gameExists() {
-      return Boolean(this.$game);
+      return Boolean(this.$store.state.game.name);
     },
     showPTN: {
       get() {
@@ -199,9 +204,6 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
-    url() {
-      return this.$store.getters["ui/url"](this.$game, { state: true });
-    },
     panelWidth() {
       const largeWidth = 1600;
       let width = 300;
@@ -225,7 +227,6 @@ export default {
         game = new Game({
           ptn: this.ptn,
           name: this.name,
-          board: this.board,
           state: this.state,
         });
       } catch (error) {
@@ -290,7 +291,7 @@ export default {
       switch (srcKey) {
         case "focusText":
           this.showText = true;
-          this.$refs.notes.$refs.input.focus();
+          this.$nextTick(() => this.$refs.notes.$refs.input.focus());
           break;
         case "game/UNDO":
         case "game/REDO":
@@ -317,6 +318,16 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
     this.title = this.name || this.$game.generateName();
+  },
+  mounted() {
+    const lists = document.querySelectorAll(
+      ".q-notifications .q-notifications__list--top"
+    );
+    for (const list of lists) {
+      list.style.display = "flex";
+      list.classList.remove("fixed");
+      this.$refs.gameNotificationContainer.$el.appendChild(list);
+    }
   },
 };
 </script>

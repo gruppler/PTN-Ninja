@@ -192,8 +192,8 @@ export default {
       return this.$store.state.game.ptn;
     },
     evaluation() {
-      return this.position.ply
-        ? this.$store.state.game.comments.evaluations[this.position.plyID]
+      return this.position.boardPly
+        ? this.$store.state.game.comments.evaluations[this.position.boardPly.id]
         : null;
     },
     selected() {

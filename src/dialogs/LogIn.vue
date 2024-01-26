@@ -30,7 +30,7 @@
             :label="$t('Player Name')"
             :rules="[validateNameFormat, validateNameUniqueness]"
             :hint="$t('hint.playerNamePublic')"
-            @keydown.enter.prevent="submit"
+            @keyup.enter.prevent="submit"
             filled
           >
             <template v-slot:prepend>
@@ -48,7 +48,7 @@
             type="email"
             autocomplete="email"
             :label="$t('Email Address')"
-            @keydown.enter.prevent="submit"
+            @keyup.enter.prevent="submit"
             hide-bottom-space
             filled
           >
@@ -65,7 +65,7 @@
               (tab === 'register' ? 'new' : 'current') + '-password'
             "
             :label="$t('Password')"
-            @keydown.enter.prevent="submit"
+            @keyup.enter.prevent="submit"
             hide-bottom-space
             filled
           >

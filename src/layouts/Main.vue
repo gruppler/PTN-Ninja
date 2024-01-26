@@ -66,6 +66,11 @@
         >
           <Menu @input="menuAction" @click.right.prevent="switchGame" />
         </q-page-sticky>
+        <q-page-sticky
+          ref="gameNotificationContainer"
+          position="top-right"
+          :offset="[0, 0]"
+        />
       </q-page>
     </q-page-container>
 
@@ -130,12 +135,7 @@
             <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="analysis">
-            <Analysis
-              ref="analysis"
-              class="fit"
-              :game="$store.state.game"
-              recess
-            />
+            <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -235,7 +235,7 @@ export default {
   },
   computed: {
     gameExists() {
-      return Boolean(this.$game);
+      return Boolean(this.$store.state.game.name);
     },
     showPTN: {
       get() {
@@ -258,9 +258,7 @@ export default {
     },
     textTab: {
       get() {
-        // todo @nitzel/@skolin check which line to use here:
-        return this.$store.state.ui.textTab; // added by skolin
-        // return this.hasChat ? this.$store.state.ui.textTab : "notes"; // added by gruppler
+        return this.$store.state.ui.textTab;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["textTab", value]);
@@ -307,7 +305,9 @@ export default {
       return this.$store.state.online.user;
     },
     player() {
-      return this.user ? this.$game.getPlayerFromUID(this.user.uid) : 0;
+      return this.user
+        ? this.$store.getters["online/playerFromUID"](this.user.uid)
+        : 0;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -425,7 +425,6 @@ export default {
         case "settings":
           this.$router.push({ name: "preferences" });
           break;
-          break;
         case "share":
           this.share();
           break;
@@ -435,7 +434,7 @@ export default {
           });
           break;
         case "add":
-          this.$router.push({ name: "add", params: { tab: "new" } });
+          this.$router.push({ name: "add", params: { tab: "load" } });
           break;
       }
     },
@@ -618,10 +617,9 @@ export default {
     miscShortkey({ srcKey }) {
       switch (srcKey) {
         case "focusText":
+          this.textTab = "notes";
           this.showText = true;
-          this.$refs[
-            this.hasChat && this.textTab === "chat" ? "chat" : "notes"
-          ].$refs.input.focus();
+          this.$nextTick(() => this.$refs[this.textTab].$refs.input.focus());
           break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
@@ -635,9 +633,11 @@ export default {
           }
           break;
         case "toggleText":
+          let tabs = ["notes", "analysis"];
           if (this.hasChat) {
-            this.textTab = this.textTab === "notes" ? "chat" : "notes";
+            tabs.push("chat");
           }
+          this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
         case "game/UNDO":
         case "game/REDO":
@@ -676,15 +676,19 @@ export default {
   },
   watch: {
     user(user, oldUser) {
-      if (this.$game && this.$game.config.isOnline) {
-        if (
-          user &&
-          (!oldUser || user.uid !== oldUser.uid) &&
-          !this.$game.getPlayerFromUID(user.uid) &&
-          this.$game.openPlayer
-        ) {
-          this.$router.push({ name: "join" });
-        }
+      if (
+        this.isOnline &&
+        user &&
+        (!oldUser || user.uid !== oldUser.uid) &&
+        !this.$store.getters["online/playerFromUID"](user.uid) &&
+        this.$store.getters["online/openPlayer"]
+      ) {
+        this.$router.push({ name: "join" });
+      }
+    },
+    hasChat(hasChat) {
+      if (!hasChat && this.textTab === "chat") {
+        this.textTab = "notes";
       }
     },
   },
@@ -746,6 +750,16 @@ export default {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
+    }
+  },
+  mounted() {
+    const lists = document.querySelectorAll(
+      ".q-notifications .q-notifications__list--top"
+    );
+    for (const list of lists) {
+      list.style.display = "flex";
+      list.classList.remove("fixed");
+      this.$refs.gameNotificationContainer.$el.appendChild(list);
     }
   },
   beforeDestroy() {

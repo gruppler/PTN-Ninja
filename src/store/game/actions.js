@@ -1,12 +1,13 @@
 import Vue from "vue";
 import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isString, throttle } from "lodash";
-import { notifyError } from "../../utilities";
+import { isString, throttle, uniq } from "lodash";
+import { notifyError, notifyWarning } from "../../utilities";
+import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
-  document.title = game.name + " — " + i18n.t("app_title");
+  const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
   if (game.config.unseen) {
     dispatch("SAVE_CONFIG", {
@@ -14,10 +15,11 @@ export const SET_GAME = function ({ commit }, game) {
       config: { ...game.config, unseen: false },
     });
   }
+  setTimeout(() => (document.title = title), 200);
 };
 
 export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
 
   game.name = getters.uniqueName(game.name);
   gameNames.unshift(game.name);
@@ -46,14 +48,14 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
       error = "localstorageFull";
     }
     notifyError(error);
-    gameNames.shift();
-    LocalStorage.set("games", gameNames);
     LocalStorage.remove("ptn-" + game.name);
     LocalStorage.remove("state-" + game.name);
     LocalStorage.remove("config-" + game.name);
     LocalStorage.remove("history-" + game.name);
     LocalStorage.remove("historyIndex-" + game.name);
     LocalStorage.remove("editingTPS-" + game.name);
+    gameNames.shift();
+    LocalStorage.set("games", gameNames);
   }
 
   Loading.show();
@@ -73,7 +75,7 @@ export const ADD_GAMES = function (
   { commit, dispatch, getters, state },
   { games, index }
 ) {
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
 
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
@@ -104,14 +106,14 @@ export const ADD_GAMES = function (
         error = "localstorageFull";
       }
       notifyError(error);
-      gameNames.splice(index + i, 1);
-      LocalStorage.set("games", gameNames);
       LocalStorage.remove("ptn-" + game.name);
       LocalStorage.remove("state-" + game.name);
       LocalStorage.remove("config-" + game.name);
       LocalStorage.remove("history-" + game.name);
       LocalStorage.remove("historyIndex-" + game.name);
       LocalStorage.remove("editingTPS-" + game.name);
+      gameNames.splice(index + i, 1);
+      LocalStorage.set("games", gameNames);
       games.length = i;
       break;
     }
@@ -157,7 +159,7 @@ export const REPLACE_GAME = function (
     Vue.nextTick(() => {
       Vue.prototype.notify({
         message: i18n.t("success.replacedExistingGame"),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         multiLine: false,
         actions: [
@@ -184,8 +186,17 @@ export const REMOVE_GAME = function (
   index
 ) {
   const game = state.list[index];
+  if (!game) {
+    new Error(`Invalid index: ${index}`);
+  }
   const games = LocalStorage.getItem("games") || [];
   const name = games.splice(index, 1);
+  LocalStorage.remove("ptn-" + name);
+  LocalStorage.remove("state-" + name);
+  LocalStorage.remove("config-" + name);
+  LocalStorage.remove("history-" + name);
+  LocalStorage.remove("historyIndex-" + name);
+  LocalStorage.remove("editingTPS-" + name);
   try {
     LocalStorage.set("games", games);
   } catch (error) {
@@ -197,12 +208,6 @@ export const REMOVE_GAME = function (
     }
     notifyError(error);
   }
-  LocalStorage.remove("ptn-" + name);
-  LocalStorage.remove("state-" + name);
-  LocalStorage.remove("config-" + name);
-  LocalStorage.remove("history-" + name);
-  LocalStorage.remove("historyIndex-" + name);
-  LocalStorage.remove("editingTPS-" + name);
 
   const finish = () => {
     commit("REMOVE_GAME", index);
@@ -219,7 +224,7 @@ export const REMOVE_GAME = function (
       Vue.prototype.notify({
         icon,
         message: i18n.t("Game x closed", { game: game.name }),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         multiLine: false,
         actions: [
@@ -264,16 +269,8 @@ export const REMOVE_MULTIPLE_GAMES = function (
   { start, count }
 ) {
   const games = state.list.slice(start, start + count);
-  const gameNames = LocalStorage.getItem("games") || [];
+  const gameNames = uniq(LocalStorage.getItem("games") || []);
   const names = gameNames.splice(start, count);
-  try {
-    LocalStorage.set("games", gameNames);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
   names.forEach((name) => {
     LocalStorage.remove("ptn-" + name);
     LocalStorage.remove("state-" + name);
@@ -282,6 +279,14 @@ export const REMOVE_MULTIPLE_GAMES = function (
     LocalStorage.remove("historyIndex-" + name);
     LocalStorage.remove("editingTPS-" + name);
   });
+  try {
+    LocalStorage.set("games", gameNames);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
 
   const finish = () => {
     commit("REMOVE_MULTIPLE_GAMES", { start, count });
@@ -292,7 +297,7 @@ export const REMOVE_MULTIPLE_GAMES = function (
       Vue.prototype.notify({
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
-        timeout: 5000,
+        timeout: 1e4,
         progress: true,
         actions: [
           {
@@ -333,7 +338,27 @@ export const REMOVE_MULTIPLE_GAMES = function (
 
 export const EXPORT_PNG = function () {
   const game = Vue.prototype.$game;
-  const options = { tps: game.board.tps, ...this.state.ui.pngConfig };
+  const options = {
+    ...this.state.ui.pngConfig,
+    font: "Roboto",
+    komi: game.config.komi,
+    opening: game.config.opening,
+    tps: game.board.tps,
+    transform: this.state.ui.boardTransform,
+  };
+
+  // Highlight current ply
+  const ply = game.board.ply;
+  if (this.state.ui.pngConfig.highlightSquares && ply) {
+    options.hl = ply.text;
+    options.plyIsDone = game.board.plyIsDone;
+  }
+
+  // Add player names
+  if (options.includeNames) {
+    options.player1 = game.tag("player1");
+    options.player2 = game.tag("player2");
+  }
 
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
@@ -343,7 +368,7 @@ export const EXPORT_PNG = function () {
     }
   });
 
-  game.board.render(options).toBlob((blob) => {
+  TPStoCanvas(options).toBlob((blob) => {
     this.dispatch(
       "ui/DOWNLOAD_FILES",
       new File([blob], game.pngFilename, {
@@ -414,6 +439,24 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
       });
     }, 200);
   });
+};
+
+export const ADD_PLAYTAK_GAME = async function ({ dispatch }, id) {
+  try {
+    const response = await fetch(
+      `https://api.playtak.com/v1/games-history/ptn/${id}`
+      // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+    );
+    console.log(response);
+    const ptn = await response.text();
+    console.log(ptn);
+    let game = new Game({ ptn });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    return dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
 };
 
 export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {
@@ -642,11 +685,11 @@ export const INSERT_PLY = function ({ commit, dispatch }, ply) {
   dispatch("SAVE_CURRENT_GAME");
 };
 
-export const INSERT_PLIES = function ({ commit, dispatch }, plies) {
+export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
-  commit("INSERT_PLIES", plies);
+  commit("INSERT_PLIES", { plies, prev });
   dispatch("SAVE_CURRENT_GAME");
 };
 
@@ -785,8 +828,13 @@ export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
   dispatch("SAVE_CURRENT_GAME");
 };
 
-export const ADD_NOTE = ({ commit, dispatch }, message) => {
-  commit("ADD_NOTE", message);
+export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
+  commit("ADD_NOTE", { message, plyID });
+  dispatch("SAVE_CURRENT_GAME");
+};
+
+export const ADD_NOTES = ({ commit, dispatch }, messages) => {
+  commit("ADD_NOTES", messages);
   dispatch("SAVE_CURRENT_GAME");
 };
 

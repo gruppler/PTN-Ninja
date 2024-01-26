@@ -1,14 +1,7 @@
 import Vue from "vue";
 import JSZip from "jszip";
 
-import {
-  copyToClipboard,
-  exportFile,
-  Loading,
-  LocalStorage,
-  Dialog,
-  Notify,
-} from "quasar";
+import { copyToClipboard, exportFile, LocalStorage, Dialog } from "quasar";
 import {
   prompt,
   notify,
@@ -80,7 +73,7 @@ export const PROMPT = (context, options) => {
   return prompt(options);
 };
 
-export const NOTIFY = ({ state }, options) => {
+export const NOTIFY = (context, options) => {
   return notify(options);
 };
 
@@ -97,14 +90,7 @@ export const NOTIFY_WARNING = (context, warning) => {
 };
 
 export const NOTIFY_HINT = (context, hint) => {
-  return Notify.create({
-    message: formatHint(hint),
-    type: "info",
-    timeout: 0,
-    position: "top-right",
-    multiLine: false,
-    actions: [{ icon: "close", color: "textLight" }],
-  });
+  return notifyHint(hint);
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
@@ -176,7 +162,7 @@ export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function ({ dispatch, state }, { text, title }) {
+export const COPY = function ({ dispatch }, { text, title }) {
   return copyToClipboard(text)
     .then(() => {
       dispatch("NOTIFY", {
@@ -199,6 +185,20 @@ export const COPY = function ({ dispatch, state }, { text, title }) {
         cancel: false,
       });
     });
+};
+
+export const PASTE = function ({ dispatch }) {
+  if (
+    !(
+      navigator &&
+      navigator.clipboard &&
+      isFunction(navigator.clipboard.readText)
+    )
+  ) {
+    dispatch("NOTIFY_ERROR", "Unable to read clipboard");
+    return "";
+  }
+  return navigator.clipboard.readText();
 };
 
 export const SHARE = function ({ dispatch, state }, { text, title }) {

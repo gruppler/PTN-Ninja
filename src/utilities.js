@@ -39,7 +39,7 @@ export function deepFreeze(object) {
   for (const key of keys) {
     const value = object[key];
 
-    if (value && isObject(value)) {
+    if (value && isObject(value) && !Object.isFrozen(object)) {
       deepFreeze(value);
     }
   }
@@ -112,7 +112,7 @@ export const notifyError = (error) => {
     message: formatError(error),
     type: "negative",
     timeout: 0,
-    position: "bottom-right",
+    position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
   });
 };

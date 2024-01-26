@@ -3,6 +3,7 @@ import { pick } from "lodash";
 import { THEMES } from "../../themes";
 
 let defaults = {
+  offline: !navigator.onLine,
   analysisSections: {
     botSuggestions: true,
     dbMoves: true,
@@ -20,7 +21,10 @@ let defaults = {
     maxDate: null,
   },
   botSettings: {
+    bot: "tiltak",
     maxSuggestedMoves: 8,
+    depth: 6,
+    timeBudget: 120,
   },
   animateBoard: true,
   animateScrub: false,

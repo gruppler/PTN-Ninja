@@ -8,7 +8,6 @@ import BoardNavigation from "./nav";
 import Piece from "./Piece";
 import Square from "./Square";
 
-import render from "./render";
 import { atoi } from "../PTN/Ply";
 
 import {
@@ -128,7 +127,7 @@ export default class Board extends Aggregation(
         squareConnections: {},
       },
       comments: {
-        chat: {},
+        chatlog: {},
         notes: {},
       },
       ptn: {
@@ -197,10 +196,6 @@ export default class Board extends Aggregation(
       Object.freeze(square.static);
       this.dirty.board.squares[square.static.coord] = true;
     });
-  }
-
-  render(options) {
-    return render(this, options);
   }
 
   forEachSquare(f) {
@@ -274,7 +269,7 @@ export default class Board extends Aggregation(
   }
 
   dirtyChat(id) {
-    this.dirty.comments.chat[id] = true;
+    this.dirty.comments.chatlog[id] = true;
   }
 
   dirtyNote(id) {
@@ -407,10 +402,9 @@ export default class Board extends Aggregation(
   }
 
   updateTagsOutput() {
-    return (this.output.ptn.tags = zipObject(
-      Object.keys(this.game.tags),
-      Object.values(this.game.tags).map((tag) => tag.output)
-    ));
+    let tags = this.game.tagOutput;
+    tags.datetime = this.game.datetime;
+    return (this.output.ptn.tags = tags);
   }
 
   updateCommentsOutput() {
@@ -425,6 +419,7 @@ export default class Board extends Aggregation(
       forEach(log, (isDirty, plyID) => {
         if (isDirty) {
           this.dirty.comments[type][plyID] = false;
+          delete pvs[plyID];
           let comments = this.game[type][plyID];
           if (comments && comments.length) {
             comments = comments.map((comment) => comment.output);
@@ -434,9 +429,16 @@ export default class Board extends Aggregation(
               for (let i = 0; i < comments.length; i++) {
                 comment = comments[i];
                 if (comment) {
-                  evaluations[plyID] = comment.evaluation;
-                  pvs[plyID] = comment.pv;
-                  break;
+                  if (comment.evaluation !== null && !(plyID in evaluations)) {
+                    evaluations[plyID] = comment.evaluation;
+                  }
+                  if (comment.pv !== null) {
+                    if (pvs[plyID]) {
+                      pvs[plyID] = pvs[plyID].concat(comment.pv);
+                    } else {
+                      pvs[plyID] = comment.pv;
+                    }
+                  }
                 }
               }
             }
@@ -475,6 +477,7 @@ export default class Board extends Aggregation(
       {
         tps: this.getTPS(),
         ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
+        boardPly: this.boardPly,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly
           ? this.output.ptn.allPlies[this.prevPly.id]
@@ -484,6 +487,7 @@ export default class Board extends Aggregation(
           : null,
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
+        isGameEndDefault: this.isGameEndDefault,
       }
     );
   }
@@ -690,9 +694,10 @@ export default class Board extends Aggregation(
       .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2);
 
     if (number === null) {
-      const ply = this.boardPly ? this.game.plies[this.boardPly.id] : null;
+      const boardPly = this.boardPly;
+      const ply = boardPly ? this.game.plies[boardPly.id] : null;
       number = ply
-        ? ply.move.number + 1 * (ply.player === 2 && this.plyIsDone)
+        ? ply.move.number + 1 * (ply.player === 2 && boardPly.isDone)
         : this.game.firstMoveNumber;
     }
 
@@ -753,6 +758,15 @@ export default class Board extends Aggregation(
     }
   }
 
+  get isGameEndDefault() {
+    return Boolean(
+      this.ply &&
+        this.plyIsDone &&
+        this.ply.result &&
+        this.ply.result.type === "1"
+    );
+  }
+
   get isGameEndFlats() {
     return (
       !(this.roads && this.roads.length) &&
@@ -762,8 +776,8 @@ export default class Board extends Aggregation(
             this.pieces.played[player].cap.length ===
           this.game.pieceCounts[player].total
       ) ||
-        !this.squares.find((row) =>
-          row.find((square) => !square.pieces.length)
+        !this.squares.some((row) =>
+          row.some((square) => !square.pieces.length)
         ))
     );
   }
@@ -810,24 +824,16 @@ export default class Board extends Aggregation(
 
   get turn() {
     if (this.ply) {
-      if (this.isGameEnd) {
-        return this.ply.player;
-      } else {
-        return this.plyIsDone
-          ? this.ply.player === 1
-            ? 2
-            : 1
-          : this.ply.player;
-      }
+      return this.plyIsDone ? (this.ply.player === 1 ? 2 : 1) : this.ply.player;
     }
     return this.game.firstPlayer;
   }
 
   get player() {
-    if (this.game.isLocal) {
-      return this.turn;
-    } else {
+    if (this.game.config.isOnline) {
       return this.game.config.player;
+    } else {
+      return this.turn;
     }
   }
 

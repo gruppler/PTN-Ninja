@@ -96,9 +96,9 @@ For example:
 
 - Execute a single ply specified as a string in PTN (e.g. `Sb4`)
 
-#### `INSERT_PLIES` (value: `<Array>: [ <String> ]` | `<String>`)
+#### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
 
-- Execute a series of plies specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`)
+- Execute a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies
 
 #### `DELETE_BRANCH` (value: `<String>`)
 
@@ -164,9 +164,13 @@ For example:
 
 - Replace the specified comment
 
-#### `ADD_NOTE` (value: `<String>`)
+#### `ADD_NOTE` (value: `<Object>: { message, plyID }`)
 
-- Add a comment to the current ply
+- Add a comment to the specified ply, or the current ply if not specified
+
+#### `ADD_NOTES` (value: `<Object>: { [plyID]: Array(messages) }`)
+
+- Add the comments to the specified plies
 
 #### `REMOVE_NOTE` (value: `<Object>: { plyID, index }`)
 

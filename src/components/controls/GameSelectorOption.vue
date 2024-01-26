@@ -1,7 +1,17 @@
 <template>
   <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
     <q-item-section side>
-      <GameThumbnail :game="option" />
+      <GameThumbnail
+        v-if="option.state.tps"
+        :game-id="option.label"
+        :tps="option.state.tps"
+        :hl="option.state.ply"
+        :plyIsDone="option.state.plyIsDone"
+        :config="option.config"
+        class="rounded-borders"
+        no-transition
+      />
+      <div v-else style="width: 60px; height: 60px" />
     </q-item-section>
     <q-item-section side v-if="showIcon" class="fg-inherit">
       <q-icon :name="icon" class="fg-inherit">
@@ -108,7 +118,7 @@ export default {
   methods: {
     close() {
       if (this.canClose) {
-        this.$store.dispatch("game/REMOVE_GAME", this.option.value);
+        this.$emit("close", this.option.value);
       }
     },
   },

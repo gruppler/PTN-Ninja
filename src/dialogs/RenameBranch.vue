@@ -10,14 +10,14 @@
       <q-input
         ref="input"
         v-model="newBranch"
-        @keydown.enter.prevent="save"
+        @keydown.enter.prevent
+        @keyup.enter.prevent="save"
         :rules="[validateBranch]"
         hide-bottom-space
         clearable
         autofocus
         autogrow
         filled
-        dense
       >
       </q-input>
 
@@ -50,6 +50,9 @@ export default {
     };
   },
   computed: {
+    branches() {
+      return Object.keys(this.$store.state.game.ptn.branches);
+    },
     branchParts() {
       return Linenum.splitBranch(this.branch);
     },
@@ -81,7 +84,7 @@ export default {
         value === this.branch ||
         (value &&
           Linenum.validateBranch(value) &&
-          !Object.keys(this.$game.branches).includes(this.getFullBranch(value)))
+          !this.branches.includes(this.getFullBranch(value)))
       );
     },
     save() {

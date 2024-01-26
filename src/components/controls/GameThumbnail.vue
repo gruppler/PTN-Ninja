@@ -1,26 +1,55 @@
 <template>
-  <img
-    :src="url"
-    :height="height"
-    :style="{ maxWidth: width + 'px' }"
-    class="rounded-borders block"
+  <div
+    class="game-thumbnail"
+    :style="{
+      height: height + 'px',
+      width: width + 'px',
+      backgroundImage: imageLoaded ? `url(${url})` : '',
+    }"
   />
 </template>
 
+<style lang="scss">
+.game-thumbnail {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+}
+</style>
+
 <script>
-import Game from "../../Game";
+import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
+import { isEqual } from "lodash";
 
 export default {
   name: "GameThumbnail",
   props: {
-    game: Object,
+    gameId: String,
+    tps: String,
+    plies: Array,
+    hl: String,
+    plyIsDone: {
+      type: Boolean,
+      default: true,
+    },
+    height: {
+      type: Number,
+      default: 60,
+    },
+    width: {
+      type: Number,
+      default: 60,
+    },
+    config: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
+      imageLoaded: false,
       thumbnail: null,
       url: "",
-      height: 60,
-      width: 60,
       thumbnailConfig: {
         imageSize: "xs",
         axisLabels: false,
@@ -32,60 +61,54 @@ export default {
       },
     };
   },
+  computed: {
+    options() {
+      return {
+        font: "Roboto",
+        theme: this.$store.state.ui.theme,
+        showRoads: this.$store.state.ui.showRoads,
+        stackCounts: this.$store.state.ui.stackCounts,
+        transform: this.$store.state.ui.boardTransform,
+        ...this.thumbnailConfig,
+        ...this.config,
+        tps: this.tps,
+        plies: this.plies,
+        hl: this.hl,
+        plyIsDone: this.plyIsDone,
+      };
+    },
+  },
   methods: {
     updateThumbnail() {
-      let game = this.game;
-      if (!game.state || !game.state.tps) {
-        return;
-      }
+      const options = this.options;
 
-      // Existing render
-      const id = "game-" + game.label;
-      const existing = this.$store.state.ui.thumbnails[id];
-      const themeID = this.$store.state.ui.themeID;
-      if (existing && existing.themeID === themeID) {
-        this.thumbnail = existing;
-        this.url = this.thumbnail.url;
-        if (existing.tps === game.state.tps) {
+      // Check for existing image
+      let id;
+      if (this.gameId) {
+        id = "game-" + this.gameId;
+        let existing = this.$store.state.ui.thumbnails[id];
+        if (existing && isEqual(existing.options, options)) {
+          this.thumbnail = existing;
+          this.url = this.thumbnail.url;
+          this.imageLoaded = true;
           return;
         }
       }
 
-      // New render
-      const ply = game.state.ply;
-      const tps = game.state.tps;
-      const config = game.config;
+      // Create new image
       try {
-        game = new Game({
-          state: game.minState || game.state,
-          tags: {
-            tps: game.state.tps,
-            komi: config.komi,
-            opening: config.opening,
-          },
-          config,
-        });
-        const canvas = game.board.render({
-          ...this.thumbnailConfig,
-          ply,
-          textSize: "xl",
-          flatCounts:
-            !config.isOnline || config.flatCounts
-              ? this.$store.state.ui.flatCounts
-              : false,
-          stackCounts: false,
-          showRoads:
-            !config.isOnline || config.showRoads
-              ? this.$store.state.ui.showRoads
-              : false,
-          theme: this.$store.state.ui.theme,
-        });
-
-        canvas.toBlob((blob) => {
+        TPStoCanvas(options).toBlob((blob) => {
           const url = URL.createObjectURL(blob);
-          this.thumbnail = { id, tps, url, themeID };
-          this.url = this.thumbnail.url;
-          this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
+          this.url = url;
+          if (id) {
+            this.thumbnail = { id, options, url };
+            this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
+          }
+          let img = new Image();
+          img.onload = () => {
+            this.imageLoaded = true;
+          };
+          img.src = url;
         }, "image/png");
       } catch (error) {
         console.error(error);
@@ -96,7 +119,10 @@ export default {
     this.$nextTick(this.updateThumbnail);
   },
   watch: {
-    "game.state.tps": "updateThumbnail",
+    options: {
+      handler: "updateThumbnail",
+      deep: true,
+    },
   },
 };
 </script>

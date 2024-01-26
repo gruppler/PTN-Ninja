@@ -91,12 +91,6 @@ export default {
     branchPlies() {
       return this.game.ptn.branchPlies;
     },
-    isShowing() {
-      return (
-        (this.$store.state.ui.showText && !this.$store.state.ui.hasChat) ||
-        this.$store.state.ui.textTab === "notes"
-      );
-    },
     primaryDark() {
       return this.$store.state.ui.theme.primaryDark;
     },
@@ -158,7 +152,9 @@ export default {
           });
           this.editing = null;
         } else {
-          this.$store.dispatch("game/ADD_NOTE", this.message.trim());
+          this.$store.dispatch("game/ADD_NOTE", {
+            message: this.message.trim(),
+          });
         }
         this.message = "";
         this.$refs.input.focus();
@@ -203,6 +199,7 @@ export default {
   },
   watch: {
     log() {
+      this.$refs.scroll.refresh();
       this.$nextTick(() => this.scroll());
     },
     currentPlyID() {

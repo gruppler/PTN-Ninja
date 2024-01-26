@@ -21,7 +21,11 @@
         separate-branch
         no-decoration
         class="q-px-md"
-      />
+      >
+        <template v-slot:plyTooltip>
+          <PlyPreview :tps="ply.tpsAfter" :hl="ply.text" />
+        </template>
+      </Move>
       <q-item
         v-for="(pv, i) in pvs"
         :key="i"
@@ -31,8 +35,18 @@
         clickable
       >
         <q-item-label class="small">
-          <Linenum :linenum="move.linenum" />
-          <Ply v-for="(ply, j) in pv" :key="j" :ply="ply" no-click />
+          <Linenum :linenum="move.linenum" no-branch />
+          <Ply
+            v-for="(pvPly, j) in pv"
+            :key="j"
+            :ply="pvPly"
+            @click.stop.prevent.capture="insertPV(i, j)"
+          >
+            <PlyPreview
+              :tps="ply.tpsBefore"
+              :plies="pv.slice(0, j + 1).map((p) => p.ptn)"
+            />
+          </Ply>
         </q-item-label>
       </q-item>
     </div>
@@ -55,11 +69,12 @@ import Note from "./Note";
 import Move from "../PTN/Move";
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
+import PlyPreview from "../controls/PlyPreview";
 import PlyClass from "../../Game/PTN/Ply";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move, Linenum, Ply },
+  components: { Note, Move, Linenum, Ply, PlyPreview },
   props: {
     plyID: Number,
     notes: Array,
@@ -128,9 +143,14 @@ export default {
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
-    insertPV(i) {
-      if (!this.pvs || !this.pvs[i]) {
+    insertPV(pvIndex, plyIndex) {
+      if (!this.pvs || !this.pvs[pvIndex]) {
         return;
+      }
+      let prev = 0;
+      if (plyIndex === undefined) {
+        plyIndex = this.pvs[pvIndex].length;
+        prev = plyIndex - 1;
       }
       this.unhighlight();
       if (this.$store.state.game.position.plyID !== this.plyID) {
@@ -141,10 +161,10 @@ export default {
       } else if (this.$store.state.game.position.plyIsDone) {
         this.$store.commit("game/PREV", { half: true });
       }
-      this.$store.dispatch(
-        "game/INSERT_PLIES",
-        this.pvs[i].map((ply) => ply.text)
-      );
+      this.$store.dispatch("game/INSERT_PLIES", {
+        plies: this.pvs[pvIndex].slice(0, plyIndex + 1).map((ply) => ply.text),
+        prev,
+      });
     },
   },
 };
