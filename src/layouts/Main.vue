@@ -457,6 +457,13 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
+        case "configGIF":
+          if (this.$route.name !== "gif") {
+            this.$router.push({ name: "gif" });
+          } else {
+            this.$refs.dialog.$children[0].hide();
+          }
+          break;
         case "configPNG":
           if (this.$route.name !== "png") {
             this.$router.push({ name: "png" });

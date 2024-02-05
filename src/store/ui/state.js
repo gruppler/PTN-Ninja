@@ -50,7 +50,7 @@ let defaults = {
   openDuplicate: "replace",
   orthogonal: false,
   perspective: 5,
-  playSpeed: 60, //BPM
+  playSpeed: 60, //FPM
   player1: "",
   player2: "",
   playerName: "",
@@ -105,7 +105,7 @@ defaults.embedConfig = {
   ui: pick(defaults, embedUIOptions),
 };
 
-export const pngUIOptions = [
+export const imgUIOptions = [
   "axisLabels",
   "flatCounts",
   "turnIndicator",
@@ -116,13 +116,23 @@ export const pngUIOptions = [
   "themeID",
   "unplayedPieces",
 ];
+defaults.gifConfig = {
+  plyRange: { min: 0, max: 4 },
+  playSpeed: 60, //FPM
+  imageSize: "md",
+  textSize: "md",
+  includeNames: true,
+  padding: true,
+  transparent: false,
+  ...pick(defaults, imgUIOptions),
+};
 defaults.pngConfig = {
   imageSize: "md",
   textSize: "md",
   includeNames: true,
   padding: true,
   bgAlpha: 1,
-  ...pick(defaults, pngUIOptions),
+  ...pick(defaults, imgUIOptions),
 };
 
 export const onlineUIOptions = [

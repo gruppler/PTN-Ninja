@@ -13,6 +13,8 @@ import {
 import { THEMES } from "../../themes";
 import { i18n } from "../../boot/i18n";
 import { isArray, isFunction, isString } from "lodash";
+import hash from "object-hash";
+import { TPStoPNG } from "tps-ninja";
 
 export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
@@ -241,4 +243,43 @@ export const FLIP_HORIZONTAL = ({ dispatch, state }) => {
 export const FLIP_VERTICAL = ({ dispatch, state }) => {
   const t = state.boardTransform;
   dispatch("SET_UI", ["boardTransform", [(t[0] + 2) % 4, t[1] ^ 1]]);
+};
+
+const THUMBNAIL_CONFIG = Object.freeze({
+  imageSize: "xs",
+  axisLabels: false,
+  turnIndicator: false,
+  highlightSquares: true,
+  unplayedPieces: false,
+  padding: false,
+  bgAlpha: 0,
+});
+
+export const GET_THUMBNAIL = ({ commit, state }, options) => {
+  return new Promise((resolve, reject) => {
+    options = {
+      theme: state.theme,
+      showRoads: state.showRoads,
+      stackCounts: state.stackCounts,
+      transform: state.boardTransform,
+      ...THUMBNAIL_CONFIG,
+      ...options,
+    };
+    const id = hash(options);
+    const existing = state.thumbnails[id];
+    if (existing) {
+      resolve(existing.url);
+    } else {
+      // Generate thumbnail
+      try {
+        TPStoPNG(options).toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          commit("SET_THUMBNAIL", { id, options, url });
+          resolve(url);
+        }, "image/png");
+      } catch (error) {
+        reject(error);
+      }
+    }
+  });
 };

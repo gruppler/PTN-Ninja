@@ -3,13 +3,11 @@
     <q-item-section side>
       <GameThumbnail
         v-if="option.state.tps"
-        :game-id="option.label"
         :tps="option.state.tps"
         :hl="option.state.ply"
         :plyIsDone="option.state.plyIsDone"
         :config="option.config"
         class="rounded-borders"
-        no-transition
       />
       <div v-else style="width: 60px; height: 60px" />
     </q-item-section>

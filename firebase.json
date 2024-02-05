@@ -57,16 +57,16 @@
     },
     {
       "site": "tps-ninja",
-      "public": "functions/TPS-Ninja",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "public": "functions",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "**",
-          "function": "tps"
+          "source": "png",
+          "function": "png"
+        },
+        {
+          "source": "gif",
+          "function": "gif"
         }
       ]
     }

@@ -2,24 +2,63 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const firebase = admin.initializeApp();
+let firebase;
+if (admin.apps.length === 0) {
+  firebase = admin.initializeApp();
+} else {
+  firebase = admin.apps[0];
+}
 const auth = admin.auth();
 const db = admin.firestore();
 const messaging = firebase.messaging();
 
 const asyncPool = require("tiny-async-pool");
 
-const { TPStoCanvas } = require("./TPS-Ninja/src");
-const { Board } = require("./TPS-Ninja/src/Board");
-
 const httpError = function (type, message) {
   console.error(type, message);
   throw new functions.https.HttpsError(type, message || type);
 };
 
+// HTTP => PNG
+exports.png = functions.https.onRequest(async (request, response) => {
+  const { TPStoPNG } = await import("tps-ninja");
+
+  try {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Content-Type", "image/png");
+    response.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${request.query.name || "takboard.png"}"`
+    );
+    TPStoPNG({ ...request.query, font: "Roboto" }, response);
+  } catch (error) {
+    response.status(400).send({ message: error.message });
+    console.error(error);
+  }
+});
+
+// HTTP => GIF
+exports.gif = functions.https.onRequest(async (request, response) => {
+  const { TPStoGIF } = await import("tps-ninja");
+
+  try {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Content-Type", "image/gif");
+    response.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${request.query.name || "takboard.gif"}"`
+    );
+    TPStoGIF({ ...request.query, font: "Roboto" }, response);
+  } catch (error) {
+    response.status(400).send({ message: error.message });
+    console.error(error);
+  }
+});
+
 // Start a game
 exports.createGame = functions.https.onCall(
   async ({ config, state, tags }, context) => {
+    const { Board } = await import("./node_modules/tps-ninja/src/Board.js");
     const uid = context.auth ? context.auth.uid : false;
 
     // Abort if unauthenticated
@@ -131,23 +170,6 @@ exports.insertPly = functions.https.onCall((data, context) => {
   return true;
 });
 
-// HTTP => PNG
-exports.tps = functions.https.onRequest((request, response) => {
-  try {
-    const canvas = TPStoCanvas(request.query);
-    let name = request.query.name || canvas.id.replace(/\//g, "-");
-    if (!name.endsWith(".png")) {
-      name += ".png";
-    }
-    response.setHeader("Content-Type", "image/png");
-    response.setHeader("Content-Disposition", `attachment; filename="${name}"`);
-    canvas.pngStream().pipe(response);
-  } catch (error) {
-    response.status(400).send({ message: error.message });
-    console.error(error);
-  }
-});
-
 // Delete inactive guest accounts periodically
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:00")
@@ -174,7 +196,7 @@ async function deleteInactiveUser(user) {
   if (games && games.size === 0) {
     // Delete the inactive user if they have zero games
     try {
-      await admin.auth().deleteUser(user.uid);
+      await auth.deleteUser(user.uid);
       console.log(
         `Deleted user account ${user.uid} because of inactivity (${user.metadata.lastRefreshTime})`
       );
@@ -192,7 +214,7 @@ async function deleteInactiveUser(user) {
 
 async function getInactiveUsers(users = [], nextPageToken) {
   const LIMIT = Date.now() - 21 * 864e5;
-  const result = await admin.auth().listUsers(1000, nextPageToken);
+  const result = await auth.listUsers(1000, nextPageToken);
   // Find users that have not signed in in the last 30 days.
   const inactiveUsers = result.users.filter((user) => {
     return (

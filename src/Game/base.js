@@ -511,12 +511,6 @@ export default class GameBase {
     }
   }
 
-  get pngFilename() {
-    return `${this.name} - ${this.board.plyID}${
-      this.board.plyIsDone ? "" : "-"
-    }.png`;
-  }
-
   get minState() {
     return this.board.minState;
   }

@@ -7,11 +7,12 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="png">{{ $t("Configure PNG") }}</dialog-header>
+      <dialog-header icon="gif">{{ $t("Configure GIF") }}</dialog-header>
     </template>
 
     <smooth-reflow>
       <img
+        v-if="preview"
         ref="preview"
         class="block"
         :src="preview"
@@ -21,11 +22,19 @@
         allowfullscreen
       />
     </smooth-reflow>
+    <q-btn
+      class="full-width no-border-radius"
+      @click="updatePreview"
+      :loading="updating"
+      icon="refresh"
+      :label="$t('Generate')"
+      color="primary"
+    />
 
     <q-list>
       <ThemeSelector
         v-model="config.themeID"
-        :config="$store.state.ui.pngConfig"
+        :config="$store.state.ui.gifConfig"
         item-aligned
         edit-button
         filled
@@ -53,6 +62,39 @@
 
       <q-item>
         <q-item-section>
+          {{ $t("Plies") }}
+          <q-range
+            v-model="config.plyRange"
+            :min="0"
+            :max="branchPlies.length - 1"
+            :left-label-value="getPlyLabel(config.plyRange.min)"
+            :right-label-value="getPlyLabel(config.plyRange.max)"
+            :step="1"
+            markers
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item>
+        <q-item-section>
+          {{ $t("Play Speed") }}
+          <q-slider
+            v-model="config.playSpeed"
+            :min="30"
+            :max="160"
+            :label-value="config.playSpeed + ' ' + $t('FPM')"
+            :step="10"
+            markers
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item>
+        <q-item-section>
           <q-item-label>
             {{ $t("Text Size") }}
           </q-item-label>
@@ -69,21 +111,14 @@
         </q-item-section>
       </q-item>
 
-      <q-item>
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>
-            {{ $t("Background Opacity") }}
+            {{ $t("Transparent Background") }}
           </q-item-label>
-          <q-slider
-            v-model="config.bgAlpha"
-            :min="0"
-            :max="1"
-            :label-value="Math.round(config.bgAlpha * 100) + '%'"
-            :step="0.05"
-            markers
-            snap
-            label
-          />
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.transparent" />
         </q-item-section>
       </q-item>
 
@@ -214,26 +249,28 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { TPStoPNG } from "tps-ninja";
+import { PTNtoTPS } from "tps-ninja";
 
-import { cloneDeep, debounce } from "lodash";
+import { cloneDeep } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
 
 export default {
-  name: "PNGConfig",
+  name: "GIFConfig",
   components: { ThemeSelector },
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
-      config: cloneDeep(this.$store.state.ui.pngConfig),
+      updating: false,
+      progress: 0,
+      config: cloneDeep(this.$store.state.ui.gifConfig),
       preview: "",
       dimensions: "",
       file: null,
       fileSize: "",
-      imageSize: sizes.indexOf(this.$store.state.ui.pngConfig.imageSize),
-      textSize: sizes.indexOf(this.$store.state.ui.pngConfig.textSize),
+      imageSize: sizes.indexOf(this.$store.state.ui.gifConfig.imageSize),
+      textSize: sizes.indexOf(this.$store.state.ui.gifConfig.textSize),
       sizes,
     };
   },
@@ -241,39 +278,115 @@ export default {
     game() {
       return this.$store.state.game;
     },
+    branchPlies() {
+      return this.game.ptn.branchPlies;
+    },
     canShare() {
       return this.$store.state.nativeSharing;
     },
+    options() {
+      const options = cloneDeep(this.config);
+
+      options.delay = Math.round(6e4 / options.playSpeed);
+      options.plies = this.branchPlies
+        .slice(options.plyRange.min, options.plyRange.max + 1)
+        .map((ply) => ply.text);
+      options.hlSquares = options.highlightSquares;
+      options.transform = this.$store.state.ui.boardTransform;
+      if (options.plyRange.min > 0) {
+        options.tps = PTNtoTPS({
+          size: this.game.config.size,
+          tps: this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null,
+          plies: this.branchPlies
+            .slice(0, options.plyRange.min)
+            .map((ply) => ply.text),
+        });
+      } else if (this.game.ptn.tags.tps) {
+        options.tps = this.game.ptn.tags.tps.text;
+      } else {
+        options.size = this.game.config.size;
+      }
+
+      // Theme
+      let theme = this.$store.getters["ui/theme"](this.config.themeID);
+      if (theme) {
+        if (theme.isBuiltIn) {
+          theme = theme.id;
+        } else {
+          theme = boardOnly(theme);
+        }
+        options.theme = theme;
+      }
+
+      // Game Tags
+      const tags = [
+        "caps",
+        "flats",
+        "caps1",
+        "flats1",
+        "caps2",
+        "flats2",
+        "komi",
+        "opening",
+      ];
+      if (options.includeNames) {
+        tags.push("player1", "player2");
+      }
+      tags.forEach((tagName) => {
+        if (tagName in this.game.ptn.tags) {
+          options[tagName] = this.game.ptn.tags[tagName];
+        }
+      });
+
+      options.name = this.filename;
+
+      // Remove invalid options
+      delete options.themeID;
+      delete options.plyRange;
+      delete options.playSpeed;
+      delete options.includeNames;
+      delete options.highlightSquares;
+
+      return options;
+    },
+    filename() {
+      return this.$store.getters["ui/gif_filename"]({
+        name: this.game.name,
+        ...this.config.plyRange,
+      });
+    },
+    url() {
+      return this.$store.getters["ui/gif_url"](this.options);
+    },
   },
   methods: {
-    updatePreview: debounce(function () {
-      const config = cloneDeep(this.config);
-      config.komi = this.game.config.komi;
-      config.opening = this.game.config.opening;
-      config.tps = this.game.position.tps;
-      config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      config.transform = this.$store.state.ui.boardTransform;
-
-      // Highlight current ply
-      if (config.highlightSquares && this.game.position.ply) {
-        config.hl = this.game.position.ply.text;
-        config.plyIsDone = this.game.position.plyIsDone;
-      }
-
-      // Add player names
-      if (config.includeNames) {
-        config.player1 = this.game.ptn.tags.player1;
-        config.player2 = this.game.ptn.tags.player2;
-      }
-
-      // Generate image
-      const filename = this.$game.pngFilename;
-      TPStoPNG(config).toBlob((blob) => {
-        this.file = new File([blob], filename, { type: "image/png" });
+    updateConfig() {
+      this.config = cloneDeep(this.$store.state.ui.gifConfig);
+      this.config.plyRange.max = Math.min(
+        this.config.plyRange.max,
+        this.branchPlies.length - 1
+      );
+    },
+    getPlyLabel(index) {
+      let ply = this.branchPlies[index];
+      return ply
+        ? `${ply.linenum.number}.${ply.player === 2 ? " --" : ""} ${ply.text}`
+        : "";
+    },
+    async updatePreview() {
+      try {
+        this.updating = true;
+        const response = await fetch(this.url);
+        const blob = await response.blob();
+        this.file = new File([blob], this.filename, { type: "image/gif" });
         this.fileSize = humanStorageSize(this.file.size);
         this.preview = URL.createObjectURL(blob);
-      });
-    }),
+      } catch (error) {
+        this.notifyError(error);
+      } finally {
+        this.updating = false;
+      }
+    },
     loadPreview() {
       const img = this.$refs.preview;
       this.dimensions =
@@ -282,9 +395,9 @@ export default {
     reset() {
       this.prompt({
         title: this.$t("Confirm"),
-        message: this.$t("confirm.resetPNG"),
+        message: this.$t("confirm.resetGIF"),
         success: () => {
-          const config = cloneDeep(this.$store.state.ui.defaults.pngConfig);
+          const config = cloneDeep(this.$store.state.ui.defaults.gifConfig);
           Object.keys(config).forEach((key) => {
             if (imgUIOptions.includes(key)) {
               config[key] = this.$store.state.ui[key];
@@ -298,13 +411,16 @@ export default {
         },
       });
     },
-    download() {
+    async download() {
+      if (!this.file) {
+        await this.updatePreview();
+      }
       this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
     },
     share() {
       this.$store.dispatch("ui/SHARE", {
-        title: "PNG",
-        text: this.$store.getters["ui/png_url"](this.$game),
+        title: "GIF",
+        text: this.url,
       });
     },
     close() {
@@ -312,15 +428,9 @@ export default {
     },
   },
   watch: {
-    tps() {
-      if (this.value) {
-        this.updatePreview();
-      }
-    },
     config: {
       handler(config) {
-        this.$store.dispatch("ui/SET_UI", ["pngConfig", cloneDeep(config)]);
-        this.updatePreview();
+        this.$store.dispatch("ui/SET_UI", ["gifConfig", cloneDeep(config)]);
       },
       deep: true,
     },
@@ -332,7 +442,7 @@ export default {
     },
   },
   mounted() {
-    this.updatePreview();
+    this.updateConfig();
   },
 };
 </script>

@@ -102,7 +102,7 @@
         <template v-if="fullscreen">
           <q-td v-for="col in props.cols" :key="col.name" :props="props">
             <template v-if="col.name === 'thumbnail'">
-              <GameThumbnail :game="col.value" />
+              <GameThumbnail v-bind="col.value" class="rounded-borders" />
             </template>
 
             <template v-else-if="col.name === 'role'">
@@ -236,7 +236,12 @@ export default {
       columns: [
         {
           name: "thumbnail",
-          field: (game) => game,
+          field: (game) => ({
+            tps: game.state.tps,
+            hl: game.state.ply,
+            plyIsDone: game.state.plyIsDone,
+            config: game.config,
+          }),
           align: "left",
         },
         {

@@ -164,9 +164,15 @@ export default {
             action: this.embed,
           },
           {
+            id: "gif",
+            label: "GIF",
+            icon: "gif",
+            action: this.gif,
+          },
+          {
             id: "png",
-            label: this.$t("PNG Image"),
-            icon: "file_image",
+            label: "PNG",
+            icon: "png",
             action: this.png,
           }
         );
@@ -268,6 +274,9 @@ export default {
     },
     embed() {
       this.$router.push({ name: "embed" });
+    },
+    gif() {
+      this.$router.push({ name: "gif" });
     },
     png() {
       this.$router.push({ name: "png" });

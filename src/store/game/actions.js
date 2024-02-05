@@ -3,7 +3,7 @@ import { Loading, LocalStorage } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { isString, throttle, uniq } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
-import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
+import { TPStoPNG } from "tps-ninja";
 import Game from "../../Game";
 
 export const SET_GAME = function ({ commit }, game) {
@@ -340,7 +340,6 @@ export const EXPORT_PNG = function () {
   const game = Vue.prototype.$game;
   const options = {
     ...this.state.ui.pngConfig,
-    font: "Roboto",
     komi: game.config.komi,
     opening: game.config.opening,
     tps: game.board.tps,
@@ -368,7 +367,7 @@ export const EXPORT_PNG = function () {
     }
   });
 
-  TPStoCanvas(options).toBlob((blob) => {
+  TPStoPNG(options).toBlob((blob) => {
     this.dispatch(
       "ui/DOWNLOAD_FILES",
       new File([blob], game.pngFilename, {

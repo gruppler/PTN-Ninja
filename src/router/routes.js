@@ -168,6 +168,11 @@ const routes = [
         component: () => import("../dialogs/LogIn"),
       },
       {
+        name: "gif",
+        path: "/gif",
+        component: () => import("../dialogs/GIFConfig"),
+      },
+      {
         name: "png",
         path: "/png",
         component: () => import("../dialogs/PNGConfig"),
