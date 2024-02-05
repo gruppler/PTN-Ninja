@@ -1,7 +1,6 @@
 <template>
   <tooltip v-bind="$attrs" square>
     <GameThumbnail
-      :game-id="gameID"
       :tps="tps"
       :plies="plies"
       :hl="hl"
@@ -16,7 +15,7 @@
 import GameThumbnail from "./GameThumbnail";
 
 const width = 270;
-const heights = {
+export const heights = {
   3: width * 0.7105263157894737,
   4: width * 0.782608695652174,
   5: width * 0.8333333333333334,
@@ -34,9 +33,6 @@ export default {
     hl: String,
   },
   computed: {
-    gameID() {
-      return `analysis/${this.tps}/${this.plies ? this.plies.join(",") : ""}`;
-    },
     config() {
       return {
         imageSize: "md",

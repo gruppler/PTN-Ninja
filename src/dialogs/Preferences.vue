@@ -25,7 +25,7 @@
                   v-model="playSpeed"
                   :min="30"
                   :max="160"
-                  :label-value="playSpeed + ' ' + $t('BPM')"
+                  :label-value="playSpeed + ' ' + $t('FPM')"
                   :step="10"
                   snap
                   label

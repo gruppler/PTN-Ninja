@@ -130,9 +130,9 @@ const routes = [
         component: () => import("../dialogs/LogIn"),
       },
       {
-        name: "online",
-        path: "/online/:qr?",
-        component: () => import("../dialogs/ShareOnline"),
+        name: "gif",
+        path: "/gif",
+        component: () => import("../dialogs/GIFConfig"),
       },
       {
         name: "png",

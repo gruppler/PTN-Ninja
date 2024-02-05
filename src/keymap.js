@@ -24,6 +24,7 @@ export const HOTKEYS = {
   },
   DIALOGS: {
     // account: ["ctrl", "shift", "a"],
+    configGIF: ["ctrl", "g"],
     configPNG: ["ctrl", "p"],
     editGame: ["e"],
     editPTN: ["shift", "e"],
@@ -129,6 +130,7 @@ export const HOTKEY_NAMES = {
   },
   DIALOGS: {
     // account: "Account",
+    configGIF: "Configure GIF",
     configPNG: "Configure PNG",
     editGame: "Edit Game",
     editPTN: "Edit PTN",
@@ -159,6 +161,7 @@ export const HOTKEY_NAMES = {
     C: "Caps",
   },
   SHARING: {
+    exportGIF: "Export GIF Image",
     exportPNG: "Export PNG Image",
     exportPTN: "Export PTN File",
     share: "Share",

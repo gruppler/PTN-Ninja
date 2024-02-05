@@ -1,9 +1,13 @@
 <template>
   <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
-    <q-item-section side>
-      <img
-        :src="thumbnailURL"
-        :height="thumbnailHeight"
+    <q-item-section thumbnail>
+      <GameThumbnail
+        :width="size.width"
+        :height="size.height"
+        :tps="game.position.tps"
+        :hl="game.position.ply ? game.position.ply.text : null"
+        :plyIsDone="game.position.plyIsDone"
+        :config="config"
         class="rounded-borders"
       />
     </q-item-section>
@@ -23,87 +27,60 @@
 </template>
 
 <script>
-import { TPStoCanvas } from "../../../functions/TPS-Ninja/src/index";
-import { isEqual } from "lodash";
+import GameThumbnail from "./GameThumbnail";
+
+const width = 85;
+export const heights = {
+  3: width * 0.7105263157894737,
+  4: width * 0.782608695652174,
+  5: width * 0.8333333333333334,
+  6: width * 0.8709677419354839,
+  7: width * 0.907563025210084,
+  8: width * 0.9230769230769231,
+};
+
+const thumbnailConfig = {
+  axisLabels: true,
+  turnIndicator: true,
+  unplayedPieces: true,
+  padding: true,
+  bgAlpha: 1,
+};
 
 export default {
   name: "ThemeSelectorOption",
+  components: { GameThumbnail },
   props: {
     option: Object,
     isCurrent: Boolean,
   },
   data() {
-    return {
-      thumbnail: null,
-      thumbnailURL: "",
-      thumbnailHeight: 68,
-      thumbnailConfig: {
-        font: "Roboto",
-        imageSize: "xs",
-        axisLabels: true,
-        turnIndicator: true,
-        highlightSquares: true,
-        includeNames: false,
-        padding: true,
-        bgAlpha: 1,
-      },
-    };
+    return {};
   },
   computed: {
     theme() {
       return this.option.theme;
     },
+    game() {
+      return this.$store.state.game;
+    },
+    config() {
+      return { ...thumbnailConfig, theme: this.theme };
+    },
+    size() {
+      return {
+        width,
+        height: heights[this.game.config.size],
+      };
+    },
   },
   methods: {
-    updateThumbnail() {
-      const game = this.$game;
-      const komi = game.config.komi;
-      const opening = game.config.opening;
-      const tps = game.board.tps;
-      const transform = this.$store.state.ui.boardTransform;
-      const ply = this.$store.state.game.position.ply;
-      const hl = ply ? ply.text : null;
-      const plyIsDone = this.$store.state.game.position.plyIsDone;
-
-      // Existing render
-      const id = "theme-" + this.theme.id;
-      const existing = this.$store.state.ui.thumbnails[id];
-      if (existing) {
-        this.thumbnail = existing;
-        this.thumbnailURL = this.thumbnail.url;
-        if (existing.tps === tps && isEqual(existing.transform, transform)) {
-          return;
-        }
-      }
-
-      // New render
-      const canvas = TPStoCanvas({
-        ...this.thumbnailConfig,
-        komi,
-        opening,
-        tps,
-        hl,
-        plyIsDone,
-        transform,
-        theme: this.theme,
-      });
-
-      canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        this.thumbnail = { id, tps, url, themeID: this.theme.id };
-        this.thumbnailURL = this.thumbnail.url;
-        this.$store.commit("ui/SET_THUMBNAIL", this.thumbnail);
-      }, "image/png");
-    },
     remove() {
       if (this.isCurrent) {
         return;
       }
       return this.$emit("remove", this.option.value);
     },
-  },
-  mounted() {
-    this.$nextTick(this.updateThumbnail);
   },
 };
 </script>
