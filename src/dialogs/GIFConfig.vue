@@ -232,8 +232,8 @@
         <q-btn
           :label="$t('Download')"
           @click="download"
+          :loading="downloading"
           color="primary"
-          v-close-popup
         />
         <q-btn
           :label="$t(canShare ? 'Share URL' : 'Copy URL')"
@@ -249,6 +249,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
+import { boardOnly } from "../themes";
 import { PTNtoTPS } from "tps-ninja";
 
 import { cloneDeep } from "lodash";
@@ -263,6 +264,7 @@ export default {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
       updating: false,
+      downloading: false,
       progress: 0,
       config: cloneDeep(this.$store.state.ui.gifConfig),
       preview: "",
@@ -412,10 +414,20 @@ export default {
       });
     },
     async download() {
-      if (!this.file) {
-        await this.updatePreview();
+      try {
+        this.downloading = true;
+        if (!this.file) {
+          await this.updatePreview();
+        }
+        if (this.file) {
+          await this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
+          this.close();
+        }
+      } catch (error) {
+        this.notifyError(error);
+      } finally {
+        this.downloading = false;
       }
-      this.$store.dispatch("ui/DOWNLOAD_FILES", this.file);
     },
     share() {
       this.$store.dispatch("ui/SHARE", {
