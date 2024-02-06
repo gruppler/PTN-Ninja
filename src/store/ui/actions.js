@@ -246,6 +246,7 @@ export const FLIP_VERTICAL = ({ dispatch, state }) => {
 };
 
 const THUMBNAIL_CONFIG = Object.freeze({
+  font: "Roboto",
   imageSize: "xs",
   axisLabels: false,
   turnIndicator: false,
