@@ -1177,7 +1177,7 @@ export default {
         }
 
         // Load databases
-        if (!this.databases) {
+        if (!this.databases.length) {
           try {
             const response = await fetch(databasesEndpoint);
             this.databases = await response.json();
