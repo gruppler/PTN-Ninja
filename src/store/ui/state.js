@@ -50,7 +50,7 @@ let defaults = {
   openDuplicate: "replace",
   orthogonal: false,
   perspective: 5,
-  playSpeed: 60, //BPM
+  playSpeed: 60, //FPM
   player1: "",
   player2: "",
   player: 1,
@@ -98,7 +98,15 @@ export const embedUIOptions = [
   "unplayedPieces",
 ];
 
-export const pngUIOptions = [
+defaults.embedConfig = {
+  width: "100%",
+  height: "600px",
+  includeNames: false,
+  state: true,
+  ui: pick(defaults, embedUIOptions),
+};
+
+export const imgUIOptions = [
   "axisLabels",
   "flatCounts",
   "turnIndicator",
@@ -110,21 +118,23 @@ export const pngUIOptions = [
   "unplayedPieces",
 ];
 
-defaults.embedConfig = {
-  width: "100%",
-  height: "600px",
-  includeNames: false,
-  state: true,
-  ui: pick(defaults, embedUIOptions),
+defaults.gifConfig = {
+  plyRange: { min: 0, max: 4 },
+  playSpeed: 60, //FPM
+  imageSize: "md",
+  textSize: "md",
+  includeNames: true,
+  padding: true,
+  transparent: false,
+  ...pick(defaults, imgUIOptions),
 };
-
 defaults.pngConfig = {
   imageSize: "md",
   textSize: "md",
   includeNames: true,
   padding: true,
   bgAlpha: 1,
-  ...pick(defaults, pngUIOptions),
+  ...pick(defaults, imgUIOptions),
 };
 
 let state = {

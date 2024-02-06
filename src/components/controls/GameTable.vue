@@ -86,45 +86,73 @@
         :no-hover="props.row.isActive"
         :key="props.row.id"
       >
-        <td></td>
-        <q-td key="role" :props="props">
-          <q-icon
-            v-if="props.row.player || props.row.isActive"
-            :name="playerIcon(props.row.player, props.row.config.isPrivate)"
-            size="md"
-          >
-            <tooltip>{{ roleText(props.row.player) }}</tooltip>
-          </q-icon>
-        </q-td>
-        <q-td key="name" :props="props">
-          {{ props.row.name }}
-        </q-td>
-        <q-td key="player1" :props="props">
-          {{ props.row.tags.player1 }}
-        </q-td>
-        <q-td key="player2" :props="props">
-          {{ props.row.tags.player2 }}
-        </q-td>
-        <q-td key="players" :props="props">
-          <div v-if="props.row.tags.player1">
-            <q-icon :name="playerIcon(1)" size="sm" />
-            {{ props.row.tags.player1 }}
-          </div>
-          <div v-if="props.row.tags.player2">
-            <q-icon :name="playerIcon(2)" size="sm" />
-            {{ props.row.tags.player2 }}
-          </div>
-        </q-td>
-        <q-td key="size" :props="props">
-          {{ props.row.tags.size + "x" + props.row.tags.size }}
-        </q-td>
-        <q-td key="date" :props="props">
-          <relative-time :value="props.row.tags.date" :invert="fullscreen" />
-        </q-td>
-        <q-td key="result" :props="props">
-          <Result :result="props.row.tags.result" />
-        </q-td>
-        <tooltip v-if="!isWide">{{ props.row.name }}</tooltip>
+        <td><!-- Hidden checkbox --></td>
+        <template v-if="fullscreen">
+          <q-td v-for="col in props.cols" :key="col.name" :props="props">
+            <template v-if="col.name === 'thumbnail'">
+              <GameThumbnail v-bind="col.value" class="rounded-borders" />
+            </template>
+
+            <template v-else-if="col.name === 'role'">
+              <q-icon v-if="col.value" :name="col.value.icon" size="md">
+                <hint>{{ col.value.label }}</hint>
+              </q-icon>
+            </template>
+
+            <template v-else-if="col.name === 'players'">
+              <div v-if="col.value.player1">
+                <q-icon
+                  :name="col.value.isRandom ? 'random' : playerIcon(1)"
+                  size="sm"
+                  left
+                >
+                  <hint>{{
+                    $t(col.value.isRandom ? "Random" : "Player1")
+                  }}</hint>
+                </q-icon>
+                {{ col.value.player1 }}
+              </div>
+              <div v-if="col.value.player2">
+                <q-icon
+                  :name="col.value.isRandom ? 'random' : playerIcon(2)"
+                  size="sm"
+                  left
+                >
+                  <hint>{{
+                    $t(col.value.isRandom ? "Random" : "Player2")
+                  }}</hint>
+                </q-icon>
+                {{ col.value.player2 }}
+              </div>
+            </template>
+
+            <template v-else-if="col.name === 'uiOptions'">
+              <div class="row q-gutter-sm justify-center">
+                <q-icon
+                  v-for="o in col.value"
+                  :key="o.key"
+                  :name="o.icon"
+                  size="sm"
+                >
+                  <hint>{{ $t(o.label) }}</hint>
+                </q-icon>
+              </div>
+            </template>
+
+            <template v-else-if="col.name === 'date'">
+              <relative-time :value="col.value" />
+            </template>
+
+            <template v-else-if="col.name === 'result'">
+              <Result :result="col.value" />
+            </template>
+
+            <template v-else>{{ col.value }}</template>
+          </q-td>
+        </template>
+        <td v-else style="max-width: 100vw" :colspan="visibleColumns.length">
+          <GameSelectorOption class="q-pa-none" :option="props.row" />
+        </td>
       </q-tr>
     </template>
   </q-table>
@@ -152,6 +180,16 @@ export default {
         sortBy: "date",
       },
       columns: [
+        {
+          name: "thumbnail",
+          field: (game) => ({
+            tps: game.state.tps,
+            hl: game.state.ply,
+            plyIsDone: game.state.plyIsDone,
+            config: game.config,
+          }),
+          align: "left",
+        },
         {
           name: "role",
           label: this.$t("Role"),

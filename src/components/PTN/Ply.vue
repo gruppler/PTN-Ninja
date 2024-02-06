@@ -67,6 +67,8 @@
 import BranchMenu from "../controls/BranchMenu";
 import Result from "./Result";
 
+import { isBoolean } from "lodash";
+
 export default {
   name: "Ply",
   components: { BranchMenu, Result },
@@ -74,7 +76,10 @@ export default {
     ply: Object,
     noBranches: Boolean,
     noClick: Boolean,
-    done: Boolean,
+    done: {
+      type: Boolean,
+      default: null,
+    },
   },
   data() {
     return {
@@ -101,12 +106,11 @@ export default {
       return this.ptn.branchPlies.includes(this.ply);
     },
     isDone() {
-      return (
-        this.done ||
-        (this.position.plyID === this.ply.id
-          ? this.position.plyIsDone
-          : this.isInBranch && this.position.plyIndex > this.ply.index)
-      );
+      return isBoolean(this.done)
+        ? this.done
+        : this.position.plyID === this.ply.id
+        ? this.position.plyIsDone
+        : this.isInBranch && this.position.plyIndex > this.ply.index;
     },
   },
   methods: {

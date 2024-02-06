@@ -1,5 +1,5 @@
 import { compressToEncodedURIComponent } from "lz-string";
-import { cloneDeep, omit, sortBy } from "lodash";
+import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
 import { i18n } from "../../boot/i18n";
 
@@ -35,9 +35,39 @@ export const playerIcon =
     }
   };
 
+const GIF_URL = process.env.DEV
+  ? `http://localhost:5001/${process.env.projectId}/us-central1/gif`
+  : "https://tps.ptn.ninja/gif";
+
+export const gif_filename =
+  () =>
+  ({ name, min, max }) => {
+    return `${name} - ${min + 1}-${max}.gif`;
+  };
+
+export const gif_url = () => (options) => {
+  // Theme
+  if (options.theme && !isString(options.theme)) {
+    options.theme = JSON.stringify(options.theme);
+  }
+
+  const params = [];
+  Object.keys(options).forEach((key) =>
+    params.push(`${key}=${encodeURIComponent(options[key])}`)
+  );
+
+  return GIF_URL + "?" + params.join("&");
+};
+
 const PNG_URL = process.env.DEV
-  ? "http://localhost:5001/ptn-ninja/us-central1/tps"
-  : "https://tps.ptn.ninja/";
+  ? `http://localhost:5001/${process.env.projectId}/us-central1/png`
+  : "https://tps.ptn.ninja/png";
+
+export const pngFilename =
+  () =>
+  ({ name, plyID, plyIsDone }) => {
+    return `${name} - ${plyID}${plyIsDone ? "" : "-"}.png`;
+  };
 
 export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.board.tps];
@@ -73,7 +103,17 @@ export const png_url = (state, getters) => (game) => {
   });
 
   // Game Tags
-  const tags = ["caps", "flats", "caps1", "flats1", "caps2", "flats2", "komi"];
+  const tags = [
+    "size",
+    "caps",
+    "flats",
+    "caps1",
+    "flats1",
+    "caps2",
+    "flats2",
+    "komi",
+    "opening",
+  ];
   if (state.pngConfig.includeNames) {
     tags.push("player1", "player2");
   }
@@ -93,7 +133,16 @@ export const png_url = (state, getters) => (game) => {
   }
 
   // Filename
-  params.push("name=" + encodeURIComponent(game.pngFilename));
+  params.push(
+    "name=" +
+      encodeURIComponent(
+        getters.pngFilename({
+          name: game.name,
+          plyID: game.board.plyID,
+          plyIsDone: game.board.plyIsDone,
+        })
+      )
+  );
 
   // Theme
   if (state.pngConfig.themeID) {

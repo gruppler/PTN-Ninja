@@ -25,12 +25,6 @@ yarn
 pushd functions && npm install && popd
 ```
 
-### Sync the TPS-Ninja submodule
-
-```bash
-git submodule init && git submodule sync && git submodule update
-```
-
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash

@@ -1,7 +1,7 @@
 import { Dark } from "quasar";
 import { cloneDeep, forEach, isBoolean } from "lodash";
 import { computeMissing } from "../../themes";
-import { postMessage } from "../../utilities";
+import { deepFreeze, postMessage } from "../../utilities";
 
 export const SET_THEME = (state, theme) => {
   theme = cloneDeep(theme);
@@ -38,6 +38,6 @@ export const SET_SCRUBBING = (state, phase) => {
   state.scrubbing = phase === "start";
 };
 
-export const SET_THUMBNAIL = (state, { id, tps, url, themeID }) => {
-  state.thumbnails[id] = Object.freeze({ tps, url, themeID });
+export const SET_THUMBNAIL = (state, { id, options, url }) => {
+  state.thumbnails[id] = deepFreeze({ options: cloneDeep(options), url });
 };
