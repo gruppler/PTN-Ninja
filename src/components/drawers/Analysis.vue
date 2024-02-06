@@ -139,10 +139,10 @@
               <template v-slot:loading>
                 <PlyChip
                   v-if="analyzingPly"
-                  :ply="analyzingPly"
+                  :ply="allPlies[analyzingPly.id]"
                   @click.stop.capture="goToAnalysisPly"
                   no-branches
-                  done
+                  :done="analyzingPly.isDone"
                 />
                 <q-spinner />
               </template>
@@ -164,10 +164,10 @@
               <template v-slot:loading>
                 <PlyChip
                   v-if="analyzingPly"
-                  :ply="analyzingPly"
+                  :ply="allPlies[analyzingPly.id]"
                   @click.stop.capture="goToAnalysisPly"
                   no-branches
-                  done
+                  :done="analyzingPly.isDone"
                 />
                 <q-spinner />
                 <q-btn
@@ -664,6 +664,9 @@ export default {
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
     },
+    allPlies() {
+      return this.$store.state.game.ptn.allPlies;
+    },
     plies() {
       return this.$store.state.game.ptn[
         [this.showAllBranches ? "allPlies" : "branchPlies"]
@@ -963,10 +966,7 @@ export default {
       }
       try {
         this.loadingTiltakMoves = true;
-        this.analyzingPly =
-          this.$store.state.game.ptn.allPlies[
-            this.$store.state.game.position.boardPly.id
-          ];
+        this.analyzingPly = this.$store.state.game.position.boardPly;
         const tps = this.tps;
         const komi = this.game.config.komi;
         await this.queryBotSuggestionsTiltak(secondsToThink, tps, komi);
@@ -1061,10 +1061,7 @@ export default {
       if (this.loadingTopazMoves) {
         return;
       }
-      this.analyzingPly =
-        this.$store.state.game.ptn.allPlies[
-          this.$store.state.game.position.boardPly.id
-        ];
+      this.analyzingPly = this.$store.state.game.position.boardPly;
       this.loadingTopazMoves = true;
       this.progressTopazAnalysis = 0;
       const startTime = new Date().getTime();
@@ -1133,7 +1130,7 @@ export default {
       if (this.analyzingPly) {
         this.$store.dispatch("game/GO_TO_PLY", {
           plyID: this.analyzingPly.id,
-          isDone: true,
+          isDone: this.analyzingPly.isDone,
         });
       }
     },
