@@ -248,6 +248,7 @@ export default {
   methods: {
     updatePreview: debounce(function () {
       const config = cloneDeep(this.config);
+      config.font = "Roboto";
       config.komi = this.game.config.komi;
       config.opening = this.game.config.opening;
       config.tps = this.game.position.tps;
