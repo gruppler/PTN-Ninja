@@ -606,8 +606,8 @@ export default {
       })),
       botSettings: { ...this.$store.state.ui.botSettings },
       botThinkBudgetInSeconds: {
-        short: 3,
-        long: 8,
+        short: 5,
+        long: 10,
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
