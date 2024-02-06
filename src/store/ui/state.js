@@ -116,6 +116,7 @@ export const imgUIOptions = [
   "themeID",
   "unplayedPieces",
 ];
+
 defaults.gifConfig = {
   plyRange: { min: 0, max: 4 },
   playSpeed: 60, //FPM

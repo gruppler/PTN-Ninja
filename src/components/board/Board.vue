@@ -78,6 +78,7 @@
         >
           <div
             v-show="$store.state.ui.showEval"
+            @click.self="dropPiece"
             class="evaluation"
             :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
             :style="{ height: Math.abs(evaluation || 0) + '%' }"

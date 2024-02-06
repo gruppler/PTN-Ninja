@@ -452,7 +452,7 @@ export default {
     "Analyze Position": "Analyze Position",
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
-    "Database Moves": "PlayTak History",
+    "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",
     draws: "draw | draws",

@@ -67,7 +67,7 @@
 <script>
 import NoteItem from "./NoteItem";
 
-import { pickBy, throttle } from "lodash";
+import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
@@ -190,20 +190,12 @@ export default {
             (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
-    scroll: throttle(function () {
+    async scroll() {
       const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
       if (index >= 0) {
-        this.$refs.scroll.scrollTo(index, "center-force");
+        await this.$nextTick();
+        this.$refs.scroll.refresh(index, "center-force");
       }
-    }, 100),
-  },
-  watch: {
-    log() {
-      this.$refs.scroll.refresh();
-      this.$nextTick(() => this.scroll());
-    },
-    currentPlyID() {
-      this.scroll();
     },
   },
   updated() {

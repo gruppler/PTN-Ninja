@@ -133,8 +133,20 @@
               color="primary"
               icon="board"
               :label="$t('analysis.Analyze Position')"
+              :no-caps="loadingTiltakMoves"
               stretch
-            />
+            >
+              <template v-slot:loading>
+                <PlyChip
+                  v-if="analyzingPly"
+                  :ply="allPlies[analyzingPly.id]"
+                  @click.stop.capture="goToAnalysisPly"
+                  no-branches
+                  :done="analyzingPly.isDone"
+                />
+                <q-spinner />
+              </template>
+            </q-btn>
           </template>
           <template v-else-if="botSettings.bot === 'topaz'">
             <q-btn
@@ -146,8 +158,25 @@
               color="primary"
               icon="board"
               :label="$t('analysis.Analyze Position')"
+              :no-caps="loadingTopazMoves"
               stretch
-            />
+            >
+              <template v-slot:loading>
+                <PlyChip
+                  v-if="analyzingPly"
+                  :ply="allPlies[analyzingPly.id]"
+                  @click.stop.capture="goToAnalysisPly"
+                  no-branches
+                  :done="analyzingPly.isDone"
+                />
+                <q-spinner />
+                <q-btn
+                  :label="$t('Cancel')"
+                  @click.stop.capture="terminateTopaz"
+                  flat
+                />
+              </template>
+            </q-btn>
           </template>
         </smooth-reflow>
 
@@ -541,6 +570,7 @@
 import AnalysisItem from "../database/AnalysisItem";
 import DatabaseGame from "../database/DatabaseGame";
 import DateInput from "../controls/DateInput";
+import PlyChip from "../PTN/Ply.vue";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit, pick, uniq } from "lodash";
@@ -557,7 +587,7 @@ const bestMoveEndpoint =
 
 export default {
   name: "Analysis",
-  components: { AnalysisItem, DatabaseGame, DateInput },
+  components: { AnalysisItem, DatabaseGame, DateInput, PlyChip },
   props: {
     recess: Boolean,
   },
@@ -580,6 +610,7 @@ export default {
       loadingDBMoves: false,
       showBotSettings: false,
       showDBSettings: false,
+      analyzingPly: null,
       botPositions: {},
       dbPositions: {},
       botMoves: [],
@@ -606,8 +637,8 @@ export default {
       })),
       botSettings: { ...this.$store.state.ui.botSettings },
       botThinkBudgetInSeconds: {
-        short: 3,
-        long: 8,
+        short: 5,
+        long: 10,
       },
       dbSettings: { ...this.$store.state.ui.dbSettings },
       botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
@@ -632,6 +663,9 @@ export default {
     },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
+    },
+    allPlies() {
+      return this.$store.state.game.ptn.allPlies;
     },
     plies() {
       return this.$store.state.game.ptn[
@@ -932,6 +966,7 @@ export default {
       }
       try {
         this.loadingTiltakMoves = true;
+        this.analyzingPly = this.$store.state.game.position.boardPly;
         const tps = this.tps;
         const komi = this.game.config.komi;
         await this.queryBotSuggestionsTiltak(secondsToThink, tps, komi);
@@ -1026,6 +1061,7 @@ export default {
       if (this.loadingTopazMoves) {
         return;
       }
+      this.analyzingPly = this.$store.state.game.position.boardPly;
       this.loadingTopazMoves = true;
       this.progressTopazAnalysis = 0;
       const startTime = new Date().getTime();
@@ -1090,6 +1126,31 @@ export default {
       this.player2Index = new Fuse(black);
     },
 
+    goToAnalysisPly() {
+      if (this.analyzingPly) {
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: this.analyzingPly.id,
+          isDone: this.analyzingPly.isDone,
+        });
+      }
+    },
+
+    async terminateTopaz() {
+      if (this.topazWorker && this.loadingTopazMoves) {
+        try {
+          await this.topazWorker.terminate();
+          clearInterval(this.topazTimer);
+          this.loadingTopazMoves = false;
+          this.topazTimer = null;
+          this.analyzingPly = null;
+          this.topazWorker = null;
+          this.init();
+        } catch (error) {
+          this.notifyError(error);
+        }
+      }
+    },
+
     async init() {
       // Load wasm bots
       try {
@@ -1116,12 +1177,14 @@ export default {
         }
 
         // Load databases
-        try {
-          const response = await fetch(databasesEndpoint);
-          this.databases = await response.json();
-        } catch (error) {
-          this.databases = null;
-          this.notifyError(error);
+        if (!this.databases.length) {
+          try {
+            const response = await fetch(databasesEndpoint);
+            this.databases = await response.json();
+          } catch (error) {
+            this.databases = null;
+            this.notifyError(error);
+          }
         }
       }
     },
