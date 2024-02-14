@@ -10,7 +10,7 @@
         class="bg-transparent"
         :items="moves"
         scroll-target="#ptn-scroll-area > .scroll"
-        :virtual-scroll-item-size="35"
+        :virtual-scroll-item-size="35.64"
         :virtual-scroll-slice-ratio-before="0.5"
         :virtual-scroll-slice-ratio-after="0.5"
       >
