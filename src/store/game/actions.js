@@ -370,9 +370,17 @@ export const EXPORT_PNG = function () {
   TPStoPNG(options).toBlob((blob) => {
     this.dispatch(
       "ui/DOWNLOAD_FILES",
-      new File([blob], game.pngFilename, {
-        type: "image/png",
-      })
+      new File(
+        [blob],
+        this.getters["ui/pngFilename"]({
+          name: game.name,
+          plyID: game.board.plyID,
+          plyIsDone: game.board.plyIsDone,
+        }),
+        {
+          type: "image/png",
+        }
+      )
     );
   });
 };
