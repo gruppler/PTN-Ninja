@@ -193,16 +193,20 @@ export default {
             (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
-    async scroll() {
+    scroll() {
       const index = this.plyIDs.findIndex((id) => id === this.currentPlyID);
       if (index >= 0) {
-        await this.$nextTick();
-        this.$refs.scroll.refresh(index, "center-force");
+        this.$nextTick(() => this.$refs.scroll.scrollTo(index, "center-force"));
       }
     },
   },
-  updated() {
-    this.scroll();
+  watch: {
+    log() {
+      this.scroll();
+    },
+    currentPlyID() {
+      this.scroll();
+    },
   },
 };
 </script>

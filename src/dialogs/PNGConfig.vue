@@ -268,7 +268,11 @@ export default {
       }
 
       // Generate image
-      const filename = this.$game.pngFilename;
+      const filename = this.$store.getters["ui/pngFilename"]({
+        name: this.game.name,
+        plyID: this.game.position.plyID,
+        plyIsDone: this.game.position.plyIsDone,
+      });
       TPStoPNG(config).toBlob((blob) => {
         this.file = new File([blob], filename, { type: "image/png" });
         this.fileSize = humanStorageSize(this.file.size);
