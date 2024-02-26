@@ -323,7 +323,13 @@
         filled
       >
         <template v-slot:prepend>
-          <q-icon name="board" />
+          <q-icon name="board">
+            <PlyPreview
+              v-if="$refs.tps && !$refs.tps.hasError"
+              :tps="tags.tps"
+              :options="tags"
+            />
+          </q-icon>
         </template>
         <template v-slot:append>
           <q-icon
@@ -704,7 +710,8 @@
 </template>
 
 <script>
-import PlayerName from "../controls/PlayerName";
+import PlayerName from "./PlayerName";
+import PlyPreview from "./PlyPreview";
 import Result from "../PTN/Result";
 
 import Tag, { formats } from "../../Game/PTN/Tag";
@@ -717,7 +724,7 @@ import { map, throttle } from "lodash";
 
 export default {
   name: "GameInfo",
-  components: { Result, PlayerName },
+  components: { PlayerName, PlyPreview, Result },
   props: {
     values: Object,
     showAll: Boolean,

@@ -31,6 +31,7 @@ export default {
     tps: String,
     plies: Array,
     hl: String,
+    options: Object,
   },
   computed: {
     config() {
@@ -39,6 +40,7 @@ export default {
         turnIndicator: true,
         unplayedPieces: true,
         komi: this.$store.state.game.config.komi,
+        ...this.options,
       };
     },
     size() {
