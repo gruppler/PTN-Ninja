@@ -351,6 +351,22 @@
           </q-icon>
         </template>
         <template v-slot:append>
+          <!-- Use Current TPS -->
+          <q-icon
+            v-show="
+              tpsCurrentBtn &&
+              (!currentPosition.isGameEnd ||
+                currentPosition.isGameEndDefault) &&
+              currentPosition.tps !== tags.tps &&
+              !isEmptyTPS(currentPosition.tps)
+            "
+            @click="useCurrentPosition"
+            name="scratch_board"
+            class="q-field__focusable-action q-ml-md"
+          >
+            <hint>{{ $t("Start from Current Position") }}</hint>
+          </q-icon>
+          <!-- Edit TPS -->
           <q-icon
             v-show="
               tpsEdit && $refs.tps && !$refs.tps.readonly && !$refs.tps.hasError
@@ -359,7 +375,9 @@
             name="edit"
             class="q-field__focusable-action q-ml-md"
             v-close-popup
-          />
+          >
+            <hint>{{ $t("hint.tpsEditMode") }}</hint>
+          </q-icon>
         </template>
       </q-input>
     </div>
@@ -725,7 +743,7 @@ import PlyPreview from "./PlyPreview";
 import Result from "../PTN/Result";
 
 import Tag, { formats, KOMI_MIN, KOMI_MAX } from "../../Game/PTN/Tag";
-import TPS from "../../Game/PTN/TPS";
+import TPS, { isEmptyTPS } from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
 import { generateName, isDefaultName, pieceCounts } from "../../Game/base";
 
@@ -739,6 +757,7 @@ export default {
     showAll: Boolean,
     hideMissing: Boolean,
     editCurrent: Boolean,
+    tpsCurrentBtn: Boolean,
     tpsEdit: Boolean,
   },
   data() {
@@ -823,6 +842,9 @@ export default {
     generatedName() {
       return generateName(this.tags);
     },
+    currentPosition() {
+      return this.$store.state.game.position;
+    },
     result() {
       const result = this.tags.result
         ? this.results.find((option) => option.value === this.tags.result)
@@ -869,6 +891,7 @@ export default {
     },
   },
   methods: {
+    isEmptyTPS,
     hasErrors() {
       return this.$el.getElementsByClassName("q-field--error").length > 0;
     },
@@ -911,6 +934,10 @@ export default {
         editTPS,
       });
       this.updateTags();
+    },
+    useCurrentPosition() {
+      this.tags.tps = this.currentPosition.tps;
+      this.tags.size = this.$store.state.game.config.size.toString();
     },
     editTPS() {
       if (this.game) {

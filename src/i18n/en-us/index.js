@@ -223,7 +223,7 @@ export default {
   Spectate: "Spectate",
   Spectator: "Spectator",
   "Stack Counts": "Stack Counts",
-  "Start at Current Position": "Start at Current Position",
+  "Start from Current Position": "Start from Current Position",
   "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
   "Switch Player": "Switch Player",
@@ -419,6 +419,7 @@ export default {
     publicGame: "This game is listed publicly",
     scratchboard: "Explore your options before committing",
     spectate: "Share this with other spectators",
+    tpsEditMode: "Edit in TPS Mode",
     url: "Share this with your opponent and spectators",
   },
 

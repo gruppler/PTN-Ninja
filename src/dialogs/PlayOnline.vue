@@ -207,15 +207,9 @@ export default {
 
     const tags = { ...TAGS };
     Object.keys(TAGS).forEach((key) => {
-      tags[key] = this.$game.tag(key) || "";
+      const tag = this.$store.state.game.ptn.tags[key];
+      tags[key] = tag ? tag.text || tag.toString() : "";
     });
-    if (
-      this.$game.tags.tps ||
-      this.$game.board.plyID > 0 ||
-      (this.$game.board.plyID === 0 && this.$game.board.plyIsDone)
-    ) {
-      tags.tps = this.$game.board.tps;
-    }
 
     return {
       config,
