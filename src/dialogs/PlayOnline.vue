@@ -96,12 +96,28 @@
           </q-expansion-item>
 
           <!-- UI Options -->
-          <q-expansion-item
-            group="options"
-            icon="ui"
-            :label="$t('UI Options')"
-            expand-separator
-          >
+          <q-expansion-item group="options" expand-separator>
+            <template v-slot:header>
+              <q-item-section avatar>
+                <q-icon name="ui" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("UI Options") }}</q-item-label>
+              </q-item-section>
+              <q-item-section v-if="uiOptionsEnabled.length" side>
+                <div class="row justify-end q-gutter-xs fg-inherit">
+                  <q-icon
+                    v-for="o in uiOptionsEnabled"
+                    :key="o.key"
+                    :name="o.icon"
+                    color="primary"
+                    size="sm"
+                  >
+                    <hint>{{ $t(o.label) }}</hint>
+                  </q-icon>
+                </div>
+              </q-item-section>
+            </template>
             <q-item
               v-for="option in uiOptions"
               :key="option.key"
@@ -235,6 +251,9 @@ export default {
         : this.config.playerSeat === 1
         ? 2
         : 1;
+    },
+    uiOptionsEnabled() {
+      return this.uiOptions.filter((option) => this.config[option.key]);
     },
     isValid() {
       return this.isPlayerValid && this.isOpponentValid && this.isGameInfoValid;
