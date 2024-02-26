@@ -728,10 +728,10 @@ export default {
   name: "GameInfo",
   components: { Result, PlayerName },
   props: {
-    game: Object,
     values: Object,
     showAll: Boolean,
     hideMissing: Boolean,
+    editCurrent: Boolean,
     tpsEdit: Boolean,
   },
   data() {
@@ -804,8 +804,11 @@ export default {
       }
       return tags;
     },
+    game() {
+      return this.editCurrent ? this.$store.state.game : null;
+    },
     hasPlies() {
-      return this.game && this.game.plies.length > 0;
+      return this.game && this.game.ptn.allPlies.length > 0;
     },
     primaryFG() {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
