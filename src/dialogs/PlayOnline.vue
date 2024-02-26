@@ -84,15 +84,18 @@
             :label="$t('Game Options')"
             expand-separator
           >
-            <GameInfo
-              ref="gameInfo"
-              class="q-pa-md"
-              :values="tags"
-              :show-all="showAll"
-              @submit="create"
-              @validate="isGameInfoValid = $event"
-              hide-missing
-            />
+            <div>
+              <GameInfo
+                ref="gameInfo"
+                class="q-pa-md"
+                :values="tags"
+                :show-all="showAll"
+                @submit="create"
+                @validate="isGameInfoValid = $event"
+                tps-current-btn
+                hide-missing
+              />
+            </div>
           </q-expansion-item>
 
           <!-- UI Options -->
