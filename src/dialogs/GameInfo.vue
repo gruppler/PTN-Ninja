@@ -132,7 +132,9 @@
             </q-item-label>
           </q-item-section>
           <q-item-section side>
-            <q-icon name="board" />
+            <q-icon name="board">
+              <PlyPreview :tps="tags.tps.text" />
+            </q-icon>
           </q-item-section>
         </template>
       </q-item>
@@ -346,6 +348,7 @@
 </template>
 
 <script>
+import PlyPreview from "../components/controls/PlyPreview";
 import Result from "../components/PTN/Result";
 
 export const uiOptions = [
@@ -374,7 +377,7 @@ export const uiOptions = [
 
 export default {
   name: "GameInfo",
-  components: { Result },
+  components: { PlyPreview, Result },
   props: {
     value: {
       type: Boolean,
