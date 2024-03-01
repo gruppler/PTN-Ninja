@@ -14,7 +14,7 @@
     <q-item-section>
       <q-item-label>{{ theme.name }}</q-item-label>
     </q-item-section>
-    <q-item-section side>
+    <q-item-section class="fg-inherit" side>
       <q-btn
         v-if="!theme.isBuiltIn && !isCurrent"
         @click.stop="remove"
