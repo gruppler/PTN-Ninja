@@ -73,6 +73,7 @@ export default {
   Forward: "Forward",
   "Forward Half-Step": "Forward Half-Step",
   FPM: "FPM", // Frames Per Minute
+  "From Center": "From Center",
   Fullscreen: "Fullscreen",
   "Game Info": "Game Info",
   "Game Notifications": "Game Notifications",
@@ -133,6 +134,7 @@ export default {
   OK: "OK",
   Online: "Online",
   "Online Game": "Online Game",
+  Opacity: "Opacity",
   Opening: "Opening",
   Orthogonal: "Orthogonal",
   "Orthogonal Board": "Orthogonal Board",
@@ -178,6 +180,8 @@ export default {
   "Reset Password": "Reset Password",
   "Reset Transformation": "Reset Transformation",
   Result: "Result",
+  "Ring n": "Ring {n}",
+  Rings: "Rings",
   "Road Connections": "Road Connections",
   Role: "Role",
   "Rotate/Flip": "Rotate/Flip",
@@ -215,6 +219,7 @@ export default {
   "Start from Current Position": "Start from Current Position",
   "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
+  Style: "Style",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
   TPS: "TPS", // Tak Positional System

@@ -5,7 +5,7 @@
     :class="{
       light: square.static.isLight,
       dark: !square.static.isLight,
-      ['p' + color]: !!color,
+      ['p' + color]: Boolean(color),
       'no-roads': !showRoads,
       'no-stack-counts': !stackCounts,
       eog,
@@ -29,6 +29,7 @@
     @click.left="select()"
     @click.right.prevent="select(true)"
   >
+    <div v-if="ring" class="hl ring" :class="`ring${ring}`" />
     <div class="hl current" />
     <div class="road" v-if="showRoads">
       <div v-if="en" class="n" />
@@ -95,6 +96,17 @@ export default {
     },
     color() {
       return this.piece ? this.piece.color : "";
+    },
+    ring() {
+      const theme = this.$store.state.ui.theme;
+      let ring = this.square.static.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(this.game.config.size / 2) - ring + 1;
+      }
+      if (theme.rings < ring) {
+        return 0;
+      }
+      return ring;
     },
     current() {
       return this.game.hlSquares.length
@@ -309,6 +321,23 @@ export default {
     transition: background-color $generic-hover-transition,
       opacity $generic-hover-transition;
     will-change: background-color, opacity;
+  }
+
+  .hl.ring {
+    opacity: $rings-opacity;
+    opacity: var(--rings-opacity);
+  }
+  .hl.ring1 {
+    background-color: var(--q-color-ring1);
+  }
+  .hl.ring2 {
+    background-color: var(--q-color-ring2);
+  }
+  .hl.ring3 {
+    background-color: var(--q-color-ring3);
+  }
+  .hl.ring4 {
+    background-color: var(--q-color-ring4);
   }
 
   .hl.current {

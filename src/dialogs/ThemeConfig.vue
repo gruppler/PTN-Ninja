@@ -50,48 +50,60 @@
         </template>
       </q-input>
 
-      <q-select
-        :label="$t('Board Style')"
-        v-model="theme.boardStyle"
-        @input="preview"
-        :options="boardStyles"
-        behavior="menu"
-        :option-label="getText"
-        transition-show="none"
-        transition-hide="none"
-        item-aligned
-        filled
+      <!-- Style -->
+      <q-expansion-item
+        group="theme"
+        icon="board_style"
+        :label="$t('Style')"
+        expand-separator
       >
-        <template v-slot:prepend>
-          <q-icon name="board" />
-        </template>
-      </q-select>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Checker") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="theme.boardChecker" @input="preview" />
-        </q-item-section>
-      </q-item>
-
-      <q-item>
-        <q-item-section>
-          {{ $t("Stone Border Width") }}
-          <q-slider
-            v-model="theme.vars['piece-border-width']"
+        <q-list>
+          <q-select
+            :label="$t('Board Style')"
+            v-model="theme.boardStyle"
             @input="preview"
-            :min="0"
-            :max="4"
-            :step="1"
-            snap
-            label
+            :options="boardStyles"
+            behavior="menu"
+            :option-label="getText"
+            transition-show="none"
+            transition-hide="none"
+            item-aligned
+            filled
           />
-        </q-item-section>
-      </q-item>
 
-      <q-expansion-item group="theme" icon="color" :label="$t('Colors')">
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Checker") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="theme.boardChecker" @input="preview" />
+            </q-item-section>
+          </q-item>
+
+          <q-item>
+            <q-item-section>
+              {{ $t("Stone Border Width") }}
+              <q-slider
+                v-model="theme.vars['piece-border-width']"
+                @input="preview"
+                :min="0"
+                :max="4"
+                :step="1"
+                markers
+                snap
+                label
+              />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-expansion-item>
+
+      <q-expansion-item
+        group="theme"
+        icon="color"
+        :label="$t('Colors')"
+        expand-separator
+      >
         <q-list>
           <q-item tag="label" v-ripple>
             <q-item-section>
@@ -133,6 +145,114 @@
                 </q-btn>
               </template>
             </q-input>
+          </smooth-reflow>
+        </q-list>
+      </q-expansion-item>
+
+      <q-expansion-item group="theme" expand-separator>
+        <template v-slot:header>
+          <q-item-section avatar>
+            <q-icon name="ring1" />
+            <q-icon name="ring2" class="absolute" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ $t("Rings") }}</q-item-label>
+          </q-item-section>
+        </template>
+        <q-list>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("From Center") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="theme.fromCenter" @input="preview" />
+            </q-item-section>
+          </q-item>
+          <q-item>
+            <q-item-section>
+              {{ $t("Rings") }}
+              <q-slider
+                :value="theme.rings"
+                @change="
+                  theme.rings = $event;
+                  preview();
+                "
+                :min="0"
+                :max="4"
+                :step="1"
+                markers
+                snap
+                label
+              />
+            </q-item-section>
+          </q-item>
+          <smooth-reflow>
+            <q-item v-show="theme.rings > 0">
+              <q-item-section>
+                {{ $t("Opacity") }}
+                <q-slider
+                  v-model="theme.vars['rings-opacity']"
+                  @input="preview()"
+                  :min="0"
+                  :max="1"
+                  :step="0.05"
+                  :label-value="
+                    Math.round(100 * theme.vars['rings-opacity']) + '%'
+                  "
+                  snap
+                  label
+                />
+              </q-item-section>
+            </q-item>
+            <div class="row">
+              <div class="col">
+                <q-input
+                  v-for="n in 4"
+                  :key="n"
+                  v-show="theme.rings >= n"
+                  :class="{ 'q-pr-none': theme.rings > 1 }"
+                  :label="$t('Ring n', { n })"
+                  :value="theme.colors[`ring${n}`]"
+                  :rules="['anyColor']"
+                  @input="setColor(`ring${n}`, $event)"
+                  hide-bottom-space
+                  item-aligned
+                  filled
+                >
+                  <template v-slot:prepend>
+                    <q-icon name="color" />
+                  </template>
+
+                  <template v-slot:append>
+                    <q-btn
+                      :style="{ background: theme.colors[`ring${n}`] }"
+                      round
+                    >
+                      <q-popup-proxy
+                        transition-show="none"
+                        transition-hide="none"
+                      >
+                        <div>
+                          <q-color
+                            :value="theme.colors[`ring${n}`]"
+                            @change="setColor(`ring${n}`, $event)"
+                            :palette="palette"
+                          />
+                        </div>
+                      </q-popup-proxy>
+                    </q-btn>
+                  </template>
+                </q-input>
+              </div>
+              <q-btn
+                v-show="theme.rings > 1"
+                @click="invertRings"
+                icon="swap_vert"
+                stretch
+                dense
+                flat
+              />
+            </div>
           </smooth-reflow>
         </q-list>
       </q-expansion-item>
@@ -185,15 +305,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 
-import {
-  cloneDeep,
-  debounce,
-  defaultsDeep,
-  isEqual,
-  kebabCase,
-  omit,
-  pick,
-} from "lodash";
+import { cloneDeep, debounce, isEqual, kebabCase, omit, pick } from "lodash";
 import {
   BOARD_STYLES,
   PRIMARY_COLOR_IDS,
@@ -236,7 +348,7 @@ export default {
         this.advanced
           ? this.theme.colors
           : pick(this.theme.colors, PRIMARY_COLOR_IDS),
-        HIDDEN_COLOR_IDS
+        HIDDEN_COLOR_IDS.concat(["ring1", "ring2", "ring3", "ring4"])
       );
     },
     isValid() {
@@ -292,6 +404,18 @@ export default {
     },
     getID(name) {
       return kebabCase(name || "");
+    },
+    invertRings() {
+      let colors = {};
+      for (let i = 0; i < this.theme.rings; i++) {
+        colors[`ring${i + 1}`] =
+          this.theme.colors[`ring${this.theme.rings - i}`];
+      }
+      // Object.keys(colors).forEach((key) =>
+      //   this.$set(this.theme.colors, key, colors[key])
+      // );
+      Object.assign(this.theme.colors, colors);
+      this.preview();
     },
     isValidName(name) {
       name = name || "";

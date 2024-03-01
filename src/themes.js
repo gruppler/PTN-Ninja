@@ -1,5 +1,5 @@
 import { colors } from "quasar";
-import { forEach, isObject, isFunction, pick } from "lodash";
+import { defaultsDeep, forEach, isObject, isFunction, pick } from "lodash";
 
 export const PRIMARY_COLOR_IDS = [
   "primary",
@@ -153,6 +153,18 @@ export const computeMissing = (theme) => {
   Object.keys(COMPUTED).forEach((fromKey) => {
     computeFrom(theme, fromKey, true);
   });
+  defaultsDeep(theme, {
+    boardChecker: false,
+    fromCenter: false,
+    rings: 4,
+    vars: { "piece-border-width": 1, "rings-opacity": 0.25 },
+    colors: {
+      ring1: theme.isDark ? "#fff4" : "#0004",
+      ring2: theme.isDark ? "#fff8" : "#0008",
+      ring3: theme.isDark ? "#fffc" : "#000c",
+      ring4: theme.isDark ? "#ffff" : "#000f",
+    },
+  });
   return theme;
 };
 
@@ -162,10 +174,16 @@ export const boardOnly = (theme) => {
     "isBuiltIn",
     "boardStyle",
     "boardChecker",
+    "fromCenter",
+    "rings",
     "vars",
     "colors",
     "player1Dark",
     "player2Dark",
+    "ring1",
+    "ring2",
+    "ring3",
+    "ring4",
     "secondaryDark",
   ]);
   theme.vars = pick(theme.vars, ["piece-border-width"]);
@@ -185,6 +203,10 @@ export const boardOnly = (theme) => {
     "player2flat",
     "player2special",
     "player2border",
+    "ring1",
+    "ring2",
+    "ring3",
+    "ring4",
     "textLight",
     "textDark",
     "umbra",
