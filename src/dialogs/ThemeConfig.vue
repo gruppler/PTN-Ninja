@@ -211,7 +211,7 @@
                   :key="n"
                   v-show="theme.rings >= n"
                   :class="{ 'q-pr-none': theme.rings > 1 }"
-                  :label="$t('Ring n', { n })"
+                  :label="$t('theme.ring' + n)"
                   :value="theme.colors[`ring${n}`]"
                   :rules="['anyColor']"
                   @input="setColor(`ring${n}`, $event)"

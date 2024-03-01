@@ -103,7 +103,7 @@ export default {
       if (theme.fromCenter) {
         ring = Math.round(this.game.config.size / 2) - ring + 1;
       }
-      if (theme.rings < ring) {
+      if (ring > theme.rings) {
         return 0;
       }
       return ring;
