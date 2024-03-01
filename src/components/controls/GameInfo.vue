@@ -320,6 +320,7 @@
         autocapitalize="off"
         spellcheck="false"
         hide-bottom-space
+        clearable
         filled
       >
         <template v-slot:prepend>
@@ -332,13 +333,27 @@
           </q-icon>
         </template>
         <template v-slot:append>
+          <!-- Use Current TPS -->
           <q-icon
-            v-show="$refs.tps && !$refs.tps.readonly && !$refs.tps.hasError"
+            v-show="showCurrentPositionButton"
+            @click="useCurrentPosition"
+            name="scratch_board"
+            class="q-field__focusable-action"
+          >
+            <hint>{{ $t("Start from Current Position") }}</hint>
+          </q-icon>
+          <!-- Edit TPS -->
+          <q-icon
+            v-show="
+              tpsEdit && $refs.tps && !$refs.tps.readonly && !$refs.tps.hasError
+            "
             @click="editTPS"
             name="edit"
             class="q-field__focusable-action"
             v-close-popup
-          />
+          >
+            <hint>{{ $t("hint.tpsEditMode") }}</hint>
+          </q-icon>
         </template>
       </q-input>
     </div>
@@ -714,8 +729,8 @@ import PlayerName from "./PlayerName";
 import PlyPreview from "./PlyPreview";
 import Result from "../PTN/Result";
 
-import Tag, { formats } from "../../Game/PTN/Tag";
-import TPS from "../../Game/PTN/TPS";
+import Tag, { formats, KOMI_MIN, KOMI_MAX } from "../../Game/PTN/Tag";
+import TPS, { isEmptyTPS } from "../../Game/PTN/TPS";
 import ResultTag from "../../Game/PTN/Result";
 import { getPlayer } from "../../Game/online";
 import { generateName, isDefaultName, pieceCounts } from "../../Game/base";
@@ -729,6 +744,8 @@ export default {
     values: Object,
     showAll: Boolean,
     editCurrent: Boolean,
+    tpsCurrentBtn: Boolean,
+    tpsEdit: Boolean,
   },
   data() {
     const openings = map(
@@ -790,6 +807,13 @@ export default {
     };
   },
   computed: {
+    primaryTags() {
+      let tags = ["name", "player1", "player2", "size", "komi"];
+      if (!this.hasPlies) {
+        tags.push("tps");
+      }
+      return tags;
+    },
     game() {
       return this.editCurrent ? this.$store.state.game : null;
     },
@@ -801,6 +825,18 @@ export default {
     },
     generatedName() {
       return generateName(this.tags);
+    },
+    currentPosition() {
+      return this.$store.state.game.position;
+    },
+    showCurrentPositionButton() {
+      return (
+        this.tpsCurrentBtn &&
+        (!this.currentPosition.isGameEnd ||
+          this.currentPosition.isGameEndDefault) &&
+        this.currentPosition.tps !== this.tags.tps &&
+        !isEmptyTPS(this.currentPosition.tps)
+      );
     },
     result() {
       const result = this.tags.result
@@ -891,6 +927,10 @@ export default {
       });
       this.updateTags();
     },
+    useCurrentPosition() {
+      this.tags.tps = this.currentPosition.tps;
+      this.tags.size = this.$store.state.game.config.size.toString();
+    },
     editTPS() {
       if (this.game) {
         this.$store.dispatch("ui/SET_UI", [
@@ -949,15 +989,23 @@ export default {
     },
     isVisible() {
       const tags = [...arguments];
-      return (
-        this.showAll ||
-        tags.find(
+      if (
+        this.hideMissing &&
+        this.values &&
+        !tags.some((tag) => tag in this.values)
+      ) {
+        return false;
+      }
+      if (this.showAll || tags.some((tag) => this.primaryTags.includes(tag))) {
+        return true;
+      } else {
+        return tags.some(
           (tag) =>
-            (!!this.tags[tag] &&
+            (Boolean(this.tags[tag]) &&
               (tag !== "opening" || this.tags.opening !== "swap")) ||
             (document.activeElement && document.activeElement.name === tag)
-        )
-      );
+        );
+      }
     },
     init() {
       this.updateTags();

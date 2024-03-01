@@ -212,7 +212,8 @@ export default {
   Spectate: "Spectate",
   Spectator: "Spectator",
   "Stack Counts": "Stack Counts",
-  "Start at Current Position": "Start at Current Position",
+  "Start from Current Position": "Start from Current Position",
+  "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
@@ -400,6 +401,7 @@ export default {
     playerNamePublic: "Your unique name",
     privateGame: "This game will not be listed",
     spectate: "Share this with other spectators",
+    tpsEditMode: "Edit in TPS Mode",
     url: "Share this with your opponent and spectators",
   },
 

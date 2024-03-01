@@ -2,11 +2,21 @@ import { cloneDeep, pick, zip } from "lodash";
 
 const outputProps = ["grid", "linenum", "player", "size", "text"];
 
+const tpsRegex = /^([x1-8SC,\/-]+)\s+([12])\s+(\d+)$/;
+
+export function isEmptyTPS(tps) {
+  const matchData = tps.match(tpsRegex);
+  if (!matchData) {
+    throw new Error("Invalid TPS notation");
+  }
+  return !/[12]/.test(matchData[1]);
+}
+
 export default class TPS {
   constructor(notation) {
     this.errors = [];
 
-    const matchData = notation.match(/^([x1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
+    const matchData = notation.match(tpsRegex);
 
     if (!matchData) {
       this.errors.push(new Error("Invalid TPS notation"));

@@ -93,6 +93,7 @@ export default {
   rotate_left: "mdi-rotate-left",
   rotate_right: "mdi-rotate-right",
   round: "mdi-repeat",
+  scratch_board: "mdi-checkerboard-plus",
   search: "mdi-magnify",
   send: "mdi-send",
   settings: "mdi-cog",
