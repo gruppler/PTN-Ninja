@@ -21,6 +21,11 @@
         option.label
       }}</q-item-label>
     </q-item-section>
+    <q-item-section class="fg-inherit" side>
+      <q-item-label class="fg-inherit">
+        {{ option.config.size }}x{{ option.config.size }}
+      </q-item-label>
+    </q-item-section>
     <q-item-section v-if="!isLastGame" side>
       <q-btn @click.stop="close" icon="close" flat dense />
     </q-item-section>
