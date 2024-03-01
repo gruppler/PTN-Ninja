@@ -200,12 +200,12 @@
           color="primary"
           v-close-popup
         />
-        <q-btn
+        <!-- <q-btn
           :label="$t(canShare ? 'Share URL' : 'Copy URL')"
           @click="share"
           color="primary"
           v-close-popup
-        />
+        /> -->
       </q-card-actions>
     </template>
   </large-dialog>

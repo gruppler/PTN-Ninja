@@ -61,6 +61,8 @@
                 :values="tags"
                 :show-all="showAll"
                 @submit="createGame"
+                tps-current-btn
+                tps-edit
               />
             </q-card-section>
           </q-tab-panel>

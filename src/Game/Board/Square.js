@@ -51,6 +51,7 @@ export default class Square {
       isNS: false,
       isEW: false,
       neighbors: new Sides(),
+      ring: 0,
     };
     this.static.edges.setSides({
       N: y == this.board.game.size - 1,
@@ -59,6 +60,13 @@ export default class Square {
       W: x == 0,
     });
     this.static.edges.onEnable = null;
+    if (this.static.isEdge) {
+      this.static.ring = 1;
+    } else {
+      const offset = (this.board.game.size - 1) / 2;
+      const getRing = (x) => 1 + Math.round(offset - Math.abs(x - offset));
+      this.static.ring = Math.min(getRing(x), getRing(y));
+    }
     Object.freeze(this.static.edges);
   }
 

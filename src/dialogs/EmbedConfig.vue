@@ -88,7 +88,7 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Start at Current Position") }}</q-item-label>
+          <q-item-label>{{ $t("Start from Current Position") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle v-model="config.state" />

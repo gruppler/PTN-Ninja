@@ -29,6 +29,7 @@
         @submit="save"
         @hasChanges="hasChanges = $event"
         edit-current
+        tps-edit
       />
     </q-card-section>
 
