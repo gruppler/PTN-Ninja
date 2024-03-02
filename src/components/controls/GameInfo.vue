@@ -353,16 +353,10 @@
         <template v-slot:append>
           <!-- Use Current TPS -->
           <q-icon
-            v-show="
-              tpsCurrentBtn &&
-              (!currentPosition.isGameEnd ||
-                currentPosition.isGameEndDefault) &&
-              currentPosition.tps !== tags.tps &&
-              !isEmptyTPS(currentPosition.tps)
-            "
+            v-show="showCurrentPositionButton"
             @click="useCurrentPosition"
             name="scratch_board"
-            class="q-field__focusable-action q-ml-md"
+            class="q-field__focusable-action"
           >
             <hint>{{ $t("Start from Current Position") }}</hint>
           </q-icon>
@@ -844,6 +838,15 @@ export default {
     },
     currentPosition() {
       return this.$store.state.game.position;
+    },
+    showCurrentPositionButton() {
+      return (
+        this.tpsCurrentBtn &&
+        (!this.currentPosition.isGameEnd ||
+          this.currentPosition.isGameEndDefault) &&
+        this.currentPosition.tps !== this.tags.tps &&
+        !isEmptyTPS(this.currentPosition.tps)
+      );
     },
     result() {
       const result = this.tags.result

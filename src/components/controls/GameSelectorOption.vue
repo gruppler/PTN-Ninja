@@ -1,5 +1,9 @@
 <template>
-  <q-item class="non-selectable" v-bind="$attrs" v-on="$listeners">
+  <q-item
+    class="game-selector-option non-selectable"
+    v-bind="$attrs"
+    v-on="$listeners"
+  >
     <q-item-section side>
       <GameThumbnail
         v-if="option.state.tps"
@@ -58,11 +62,19 @@
         :result="option.tags.result"
       />
     </q-item-section>
-    <q-item-section v-if="canClose" side>
+    <q-item-section v-if="canClose" class="fg-inherit" side>
       <q-btn @click.stop="close" icon="close" flat dense />
     </q-item-section>
   </q-item>
 </template>
+
+<style lang="scss">
+.game-selector-option .game-thumbnail {
+  border: 1px solid;
+  border-color: $bg;
+  border-color: var(--q-color-bg);
+}
+</style>
 
 <script>
 import GameThumbnail from "./GameThumbnail";
