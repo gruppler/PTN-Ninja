@@ -2,7 +2,11 @@
   <small-dialog
     :value="true"
     @before-hide="restore"
-    :content-class="{ seethrough, 'theme-config non-selectable': true }"
+    :content-class="{
+      seethrough,
+      disablePointerEvents,
+      'theme-config non-selectable': true,
+    }"
     no-backdrop-dismiss
     v-bind="$attrs"
   >
@@ -138,7 +142,7 @@
                   :value="color"
                   :palette="palette"
                   @input="setColor(key, $event)"
-                  @before-show="hide"
+                  @before-show="hide(true)"
                   @before-hide="unhide"
                 />
               </template>
@@ -228,7 +232,7 @@
                     :value="theme.colors[`ring${n}`]"
                     :palette="palette"
                     @input="setColor(`ring${n}`, $event)"
-                    @before-show="hide"
+                    @before-show="hide(true)"
                     @before-hide="unhide"
                   />
                 </template>
@@ -326,6 +330,7 @@ export default {
       initialTheme: cloneDeep(theme),
       palette: [],
       seethrough: false,
+      disablePointerEvents: false,
       advanced: false,
       showImport: false,
       json: "",
@@ -362,12 +367,16 @@ export default {
     },
   },
   methods: {
-    hide() {
+    hide(disablePointerEvents) {
       this.seethrough = true;
+      if (disablePointerEvents === true) {
+        this.disablePointerEvents = disablePointerEvents;
+      }
     },
     unhide(event) {
       if (!event || event.isFinal || !("isFinal" in event)) {
         this.seethrough = false;
+        this.disablePointerEvents = false;
       }
     },
     hideWhilePanning(phase) {
@@ -524,8 +533,12 @@ export default {
   &.seethrough {
     .dialog-content,
     .q-dialog__backdrop {
-      pointer-events: none;
       opacity: 0;
+    }
+  }
+  &.seethrough.disablePointerEvents {
+    .dialog-content {
+      pointer-events: none;
     }
   }
 }
