@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { isArray, isObject } from "lodash";
+
 const HEIGHT = 700;
 
 export default {
@@ -34,7 +36,7 @@ export default {
     fullscreen: Boolean,
     minHeight: Number,
     noMaximize: Boolean,
-    contentClass: String,
+    contentClass: [String, Array, Object],
   },
   computed: {
     model() {
@@ -53,9 +55,22 @@ export default {
       return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
     },
     classes() {
-      let classes = ["large-dialog", "non-selectable", this.contentClass];
+      let classes = ["large-dialog", "non-selectable"];
       if (this.maximized) {
         classes.push("maximized");
+      }
+      if (this.contentClass) {
+        if (isObject(this.contentClass)) {
+          let classObject = { ...this.contentClass };
+          classes.forEach((className) => {
+            classObject[className] = true;
+          });
+          classes = classObject;
+        } else if (isArray(contentClass)) {
+          classes.push(...this.contentClass);
+        } else {
+          classes.push(this.contentClass);
+        }
       }
       return classes;
     },
