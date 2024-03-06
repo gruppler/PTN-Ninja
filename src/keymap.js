@@ -161,7 +161,6 @@ export const HOTKEY_NAMES = {
     C: "Caps",
   },
   SHARING: {
-    exportGIF: "Export GIF Image",
     exportPNG: "Export PNG Image",
     exportPTN: "Export PTN File",
     share: "Share",
