@@ -25,7 +25,7 @@
       </dialog-header>
     </template>
 
-    <q-list>
+    <q-list style="width: 320px">
       <ThemeSelector
         :value="initialThemeID"
         @input="selectTheme"
@@ -86,6 +86,7 @@
               <q-slider
                 v-model="theme.vars['piece-border-width']"
                 @input="preview"
+                @pan="hideWhilePanning"
                 :min="0"
                 :max="4"
                 :step="1"
@@ -132,17 +133,14 @@
               </template>
 
               <template v-slot:append>
-                <q-btn :style="{ background: color }" round>
-                  <q-popup-proxy transition-show="none" transition-hide="none">
-                    <div>
-                      <q-color
-                        :value="color"
-                        @change="setColor(key, $event)"
-                        :palette="palette"
-                      />
-                    </div>
-                  </q-popup-proxy>
-                </q-btn>
+                <ColorPicker
+                  :label="$t('theme.' + key)"
+                  :value="color"
+                  :palette="palette"
+                  @input="setColor(key, $event)"
+                  @before-show="hide"
+                  @before-hide="unhide"
+                />
               </template>
             </q-input>
           </smooth-reflow>
@@ -173,10 +171,11 @@
               {{ $t("Rings") }}
               <q-slider
                 :value="theme.rings"
-                @change="
+                @input="
                   theme.rings = $event;
                   preview();
                 "
+                @pan="hideWhilePanning"
                 :min="0"
                 :max="4"
                 :step="1"
@@ -186,74 +185,64 @@
               />
             </q-item-section>
           </q-item>
-          <smooth-reflow>
-            <q-item v-show="theme.rings > 0">
-              <q-item-section>
-                {{ $t("Opacity") }}
-                <q-slider
-                  v-model="theme.vars['rings-opacity']"
-                  @input="preview()"
-                  :min="0"
-                  :max="1"
-                  :step="0.05"
-                  :label-value="
-                    Math.round(100 * theme.vars['rings-opacity']) + '%'
-                  "
-                  snap
-                  label
-                />
-              </q-item-section>
-            </q-item>
-            <div class="row">
-              <div class="col">
-                <q-input
-                  v-for="n in 4"
-                  :key="n"
-                  v-show="theme.rings >= n"
-                  :class="{ 'q-pr-none': theme.rings > 1 }"
-                  :label="$t('theme.ring' + n)"
-                  :value="theme.colors[`ring${n}`]"
-                  :rules="['anyColor']"
-                  @input="setColor(`ring${n}`, $event)"
-                  hide-bottom-space
-                  item-aligned
-                  filled
-                >
-                  <template v-slot:prepend>
-                    <q-icon name="color" />
-                  </template>
-
-                  <template v-slot:append>
-                    <q-btn
-                      :style="{ background: theme.colors[`ring${n}`] }"
-                      round
-                    >
-                      <q-popup-proxy
-                        transition-show="none"
-                        transition-hide="none"
-                      >
-                        <div>
-                          <q-color
-                            :value="theme.colors[`ring${n}`]"
-                            @change="setColor(`ring${n}`, $event)"
-                            :palette="palette"
-                          />
-                        </div>
-                      </q-popup-proxy>
-                    </q-btn>
-                  </template>
-                </q-input>
-              </div>
-              <q-btn
-                v-show="theme.rings > 1"
-                @click="invertRings"
-                icon="swap_vert"
-                stretch
-                dense
-                flat
+          <q-item v-show="theme.rings > 0">
+            <q-item-section>
+              {{ $t("Opacity") }}
+              <q-slider
+                v-model="theme.vars['rings-opacity']"
+                @input="preview()"
+                @pan="hideWhilePanning"
+                :min="0"
+                :max="1"
+                :step="0.01"
+                :label-value="
+                  Math.round(100 * theme.vars['rings-opacity']) + '%'
+                "
+                snap
+                label
               />
+            </q-item-section>
+          </q-item>
+          <div class="row">
+            <div class="col">
+              <q-input
+                v-for="n in 4"
+                :key="n"
+                v-show="theme.rings >= n"
+                :class="{ 'q-pr-none': theme.rings > 1 }"
+                :label="$t('theme.ring' + n)"
+                :value="theme.colors[`ring${n}`]"
+                :rules="['anyColor']"
+                @input="setColor(`ring${n}`, $event)"
+                hide-bottom-space
+                item-aligned
+                filled
+              >
+                <template v-slot:prepend>
+                  <q-icon name="color" />
+                </template>
+
+                <template v-slot:append>
+                  <ColorPicker
+                    :label="$t('theme.ring' + n)"
+                    :value="theme.colors[`ring${n}`]"
+                    :palette="palette"
+                    @input="setColor(`ring${n}`, $event)"
+                    @before-show="hide"
+                    @before-hide="unhide"
+                  />
+                </template>
+              </q-input>
             </div>
-          </smooth-reflow>
+            <q-btn
+              v-show="theme.rings > 1"
+              @click="invertRings"
+              icon="swap_vert"
+              stretch
+              dense
+              flat
+            />
+          </div>
         </q-list>
       </q-expansion-item>
 
@@ -304,8 +293,17 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
+import ColorPicker from "../components/controls/ColorPicker";
 
-import { cloneDeep, debounce, isEqual, kebabCase, omit, pick } from "lodash";
+import {
+  cloneDeep,
+  debounce,
+  isEqual,
+  kebabCase,
+  omit,
+  pick,
+  throttle,
+} from "lodash";
 import {
   BOARD_STYLES,
   PRIMARY_COLOR_IDS,
@@ -317,7 +315,7 @@ const MAX_NAME_LENGTH = 16;
 
 export default {
   name: "ThemeConfig",
-  components: { ThemeSelector },
+  components: { ThemeSelector, ColorPicker },
   data() {
     const theme = cloneDeep(this.$store.state.ui.theme);
     return {
@@ -368,8 +366,18 @@ export default {
       this.seethrough = true;
     },
     unhide(event) {
-      if (event.isFinal || !("isFinal" in event)) {
+      if (!event || event.isFinal || !("isFinal" in event)) {
         this.seethrough = false;
+      }
+    },
+    hideWhilePanning(phase) {
+      switch (phase) {
+        case "start":
+          this.hide();
+          break;
+        case "end":
+          this.unhide();
+          break;
       }
     },
     getText(key) {
@@ -428,12 +436,12 @@ export default {
         !this.themes.find((theme) => theme.id === id)
       );
     },
-    setColor(key, value) {
+    setColor: throttle(function (key, value) {
       this.theme.colors[key] = value;
       computeFrom(this.theme, key, false, this.advanced);
       this.updatePalette();
       this.preview();
-    },
+    }, 100),
     updatePalette() {
       this.palette = Object.values(this.theme.colors);
     },
@@ -477,9 +485,9 @@ export default {
       this.$store.dispatch("ui/SET_UI", ["themes", themes]);
       this.$store.dispatch("ui/SET_UI", ["themeID", this.id]);
     },
-    preview() {
+    preview: throttle(function () {
       this.$store.commit("ui/SET_THEME", this.theme);
-    },
+    }, 10),
     restore() {
       this.$store.commit("ui/SET_THEME", this.initialTheme);
     },
@@ -512,9 +520,19 @@ export default {
 </script>
 
 <style lang="scss">
-.theme-config {
+.q-dialog.theme-config {
   &.seethrough {
-    opacity: 0;
+    .dialog-content {
+      pointer-events: none;
+      opacity: 0;
+    }
+  }
+
+  &,
+  & + .q-dialog {
+    .q-dialog__backdrop {
+      opacity: 0;
+    }
   }
 }
 </style>
