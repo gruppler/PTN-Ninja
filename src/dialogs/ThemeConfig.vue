@@ -522,15 +522,9 @@ export default {
 <style lang="scss">
 .q-dialog.theme-config {
   &.seethrough {
-    .dialog-content {
-      pointer-events: none;
-      opacity: 0;
-    }
-  }
-
-  &,
-  & + .q-dialog {
+    .dialog-content,
     .q-dialog__backdrop {
+      pointer-events: none;
       opacity: 0;
     }
   }
