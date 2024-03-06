@@ -142,7 +142,7 @@ export const HOTKEY_NAMES = {
     // loadOnlineGame: "Load Online Game",
     newGame: "New Game",
     // online: "Play Online",
-    preferences: "Preferences",
+    preferences: "UI Preferences",
     qrCode: "QR Code",
     theme: "Theme",
   },
@@ -180,7 +180,7 @@ export const HOTKEY_NAMES = {
   UI: {
     showPTN: "Show PTN",
     showText: "Show Text",
-    showHints: "Show UI Hints",
+    showHints: "UI Hints",
     showEval: "Show Evaluation",
     notifyGame: "Game Notifications",
     notifyNotes: "Note Notifications",
