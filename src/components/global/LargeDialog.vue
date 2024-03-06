@@ -66,7 +66,7 @@ export default {
             classObject[className] = true;
           });
           classes = classObject;
-        } else if (isArray(contentClass)) {
+        } else if (isArray(this.contentClass)) {
           classes.push(...this.contentClass);
         } else {
           classes.push(this.contentClass);
