@@ -18,6 +18,7 @@
         'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
+        highlighter: highlighterEnabled,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd,
         flatwin: position.isGameEndFlats,
@@ -49,8 +50,8 @@
 
         <div
           class="board relative-position all-pointer-events"
-          @touchstart.stop
-          @mousedown.stop
+          @pointerdown="highlightStart"
+          @pointermove="highlightMove"
         >
           <div class="squares absolute-fit row reverse-wrap">
             <Square
@@ -129,6 +130,7 @@ export default {
       x: 0,
       y: 0,
       deltaY: 0,
+      highlighting: false,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -254,6 +256,9 @@ export default {
           Math.abs(this.size.height - this.space.height)
       );
     },
+    highlighterEnabled() {
+      return this.$store.state.ui.highlighterEnabled;
+    },
     ratio() {
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
@@ -310,6 +315,53 @@ export default {
     },
   },
   methods: {
+    highlightStart(event) {
+      if (!event || !event.target || !event.target.dataset.coord) {
+        return;
+      }
+      if (event.pointerType === "touch") {
+        const coord = event.target.dataset.coord;
+        const color =
+          this.$store.state.ui.highlighterColor ||
+          this.$store.state.ui.theme.colors.primary;
+        const squares = { ...this.$store.state.ui.highlighterSquares };
+        this.highlighting =
+          !(coord in squares) || squares[coord] !== color ? 1 : 2;
+      } else {
+        this.highlighting = event.which;
+      }
+      window.addEventListener("pointerup", this.highlightEnd);
+      this.highlightMove(event);
+    },
+    highlightMove(event) {
+      if (
+        !event ||
+        !event.target ||
+        !event.target.dataset.coord ||
+        !this.highlighting
+      ) {
+        return;
+      }
+      const coord = event.target.dataset.coord;
+      const color =
+        this.$store.state.ui.highlighterColor ||
+        this.$store.state.ui.theme.colors.primary;
+      const squares = { ...this.$store.state.ui.highlighterSquares };
+      if (
+        this.highlighting === 1 &&
+        (!(coord in squares) || squares[coord] !== color)
+      ) {
+        squares[coord] = color;
+        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+      } else if (this.highlighting > 1 && coord in squares) {
+        delete squares[coord];
+        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+      }
+    },
+    highlightEnd(event) {
+      this.highlighting = false;
+      window.removeEventListener("pointerup", this.highlightEnd);
+    },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
         this.$store.dispatch("game/SELECT_PIECE", {

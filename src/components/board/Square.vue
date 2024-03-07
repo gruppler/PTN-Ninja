@@ -16,6 +16,7 @@
       placed,
       valid,
       connected,
+      highlighted: isHighlighted,
       n,
       e,
       s,
@@ -31,6 +32,12 @@
   >
     <div v-if="ring" class="hl ring" :class="`ring${ring}`" />
     <div class="hl current" />
+    <div class="hl player" />
+    <div
+      class="hl highlighter"
+      :style="{ backgroundColor: highlighterColor }"
+      :data-coord="coord"
+    />
     <div class="road" v-if="showRoads">
       <div v-if="en" class="n" />
       <div v-if="ee" class="e" />
@@ -38,7 +45,6 @@
       <div class="w" :class="{ ew }" />
       <div class="center" />
     </div>
-    <div class="hl player" />
     <div class="stack-count" v-show="stackCount">
       <span>{{ stackCount }}</span>
     </div>
@@ -70,6 +76,18 @@ export default {
       return (
         this.piece && !this.piece.typeCode && this.game.position.isGameEndFlats
       );
+    },
+    highlighterEnabled() {
+      return this.$store.state.ui.highlighterEnabled;
+    },
+    highlighterColor() {
+      return (
+        this.$store.state.ui.highlighterSquares[this.coord] ||
+        this.$store.state.ui.highlighterColor
+      );
+    },
+    isHighlighted() {
+      return this.coord in this.$store.state.ui.highlighterSquares;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -109,10 +127,16 @@ export default {
       return ring;
     },
     current() {
-      return this.game.hlSquares.length
-        ? this.game.hlSquares.includes(this.square.static.coord)
-        : this.game.position.ply &&
-            this.game.position.ply.squares.includes(this.square.static.coord);
+      if (this.highlighterEnabled) {
+        return false;
+      } else if (this.game.hlSquares.length) {
+        return this.game.hlSquares.includes(this.square.static.coord);
+      } else {
+        return (
+          this.game.position.ply &&
+          this.game.position.ply.squares.includes(this.square.static.coord)
+        );
+      }
     },
     primary() {
       if (this.selected) {
@@ -211,25 +235,31 @@ export default {
         this.$store.getters["game/isValidSquare"](this.square);
     },
     select(alt = false) {
+      // Highlighter
+      if (this.highlighterEnabled) {
+        return;
+      }
+
       this.checkValid();
-      if (this.valid) {
-        if (alt && this.isEditingTPS && this.piece) {
-          this.$store.dispatch("ui/SET_UI", [
-            "selectedPiece",
-            { color: this.piece.color, type: this.piece.typeCode },
-          ]);
-        }
-        this.$store.dispatch("game/SELECT_SQUARE", {
-          square: this.square,
-          alt,
-          selectedPiece: this.selectedPiece,
-        });
-        if (this.isEditingTPS) {
-          this.editingTPS = this.$game.board.getTPS(
-            this.selectedPiece.color,
-            this.firstMoveNumber
-          );
-        }
+      if (!this.valid) {
+        return;
+      }
+      if (alt && this.isEditingTPS && this.piece) {
+        this.$store.dispatch("ui/SET_UI", [
+          "selectedPiece",
+          { color: this.piece.color, type: this.piece.typeCode },
+        ]);
+      }
+      this.$store.dispatch("game/SELECT_SQUARE", {
+        square: this.square,
+        alt,
+        selectedPiece: this.selectedPiece,
+      });
+      if (this.isEditingTPS) {
+        this.editingTPS = this.$game.board.getTPS(
+          this.selectedPiece.color,
+          this.firstMoveNumber
+        );
       }
     },
   },
@@ -352,6 +382,15 @@ export default {
       opacity: 0.75;
     }
   }
+  .board-container:not(.highlighter) & .hl.highlighter {
+    pointer-events: none;
+  }
+  .board-container.highlighter & .hl.highlighter {
+    cursor: cell;
+  }
+  .board-container.highlighter &.highlighted .hl.highlighter {
+    opacity: 0.75;
+  }
 
   .stack-count {
     position: absolute;
@@ -361,6 +400,7 @@ export default {
     right: 0;
     font-size: 0.6em;
     line-height: 1em;
+    pointer-events: none;
     span {
       color: $textDark;
       color: var(--q-color-textDark);
@@ -465,7 +505,7 @@ export default {
   @media (pointer: fine) {
     &.valid:hover {
       cursor: pointer;
-      .hl.player {
+      .board-container:not(.highlighter) & .hl.player {
         opacity: 0.35;
       }
     }
