@@ -387,7 +387,10 @@ export default {
       },
     },
     highlighterColor() {
-      return this.$store.state.ui.highlighterColor || "primary";
+      return (
+        this.$store.state.ui.highlighterColor ||
+        this.$store.state.ui.theme.colors.primary
+      );
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
