@@ -331,6 +331,7 @@
       icon="highlighter"
       :class="{ 'dimmed-btn': !highlighterEnabled }"
       :ripple="false"
+      :color="highlighterEnabled ? '' : fg"
       :style="{ color: highlighterEnabled ? highlighterColor : '' }"
       flat
       fab
