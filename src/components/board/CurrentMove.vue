@@ -9,6 +9,7 @@
         :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
         :ripple="false"
+        :color="btnColor"
         dense
         flat
       />
@@ -44,6 +45,11 @@ export default {
     },
     icon() {
       return this.collapsed ? "up" : "down";
+    },
+    btnColor() {
+      return this.$store.state.ui.theme.secondaryDark
+        ? "textLight"
+        : "textDark";
     },
   },
   methods: {

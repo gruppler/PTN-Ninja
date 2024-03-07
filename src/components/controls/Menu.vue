@@ -43,7 +43,7 @@ export default {
         },
         {
           icon: "settings",
-          label: this.$t("Preferences"),
+          label: this.$t("UI Preferences"),
           action: "settings",
         },
         {
