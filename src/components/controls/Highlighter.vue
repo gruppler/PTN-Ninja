@@ -21,8 +21,14 @@
       <hint>{{ $t(colorNames["color" + (i + 1)]) }}</hint>
     </q-btn>
 
-    <q-btn @click="clear" icon="clear" :dense="$q.screen.lt.sm" stretch flat>
-      <hint>{{ $t("Clear") }}</hint>
+    <q-btn
+      @click="clear"
+      :icon="isEmpty ? 'close' : 'clear'"
+      :dense="$q.screen.lt.sm"
+      stretch
+      flat
+    >
+      <hint>{{ $t(isEmpty ? "Close" : "Clear") }}</hint>
     </q-btn>
   </div>
 </template>
@@ -70,10 +76,13 @@ export default {
       ];
       return palette;
     },
+    isEmpty() {
+      return isEmpty(this.$store.state.ui.highlighterSquares);
+    },
   },
   methods: {
     clear() {
-      if (isEmpty(this.$store.state.ui.highlighterSquares)) {
+      if (this.isEmpty) {
         this.$store.dispatch("ui/SET_UI", ["highlighterEnabled", false]);
       } else {
         this.$store.dispatch("ui/SET_UI", ["highlighterSquares", {}]);
