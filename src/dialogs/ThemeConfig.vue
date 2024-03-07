@@ -144,6 +144,7 @@
                   @input="setColor(key, $event)"
                   @before-show="hide(true)"
                   @before-hide="unhide"
+                  round
                 />
               </template>
             </q-input>
@@ -234,6 +235,7 @@
                     @input="setColor(`ring${n}`, $event)"
                     @before-show="hide(true)"
                     @before-hide="unhide"
+                    round
                   />
                 </template>
               </q-input>

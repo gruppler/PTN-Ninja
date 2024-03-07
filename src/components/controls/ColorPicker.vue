@@ -1,13 +1,19 @@
 <template>
-  <q-btn :style="{ background: color }" round>
+  <q-btn
+    :style="{
+      background: $attrs.flat !== undefined ? '' : color,
+      color: $attrs.flat !== undefined ? color : iconColor,
+    }"
+    :icon="icon"
+    v-bind="$attrs"
+  >
     <q-menu
       ref="popup"
       transition-show="none"
       transition-hide="none"
       v-on="popupListeners"
+      v-bind="$attrs"
       @show="show"
-      anchor="top middle"
-      self="top middle"
     >
       <div class="color-picker bg-accent">
         <q-item
@@ -32,15 +38,18 @@
         />
       </div>
     </q-menu>
+
+    <slot />
   </q-btn>
 </template>
 
 <script>
 import { isFunction, omit } from "lodash";
+import { isDark } from "src/themes";
 
 export default {
   name: "ColorPicker",
-  props: ["value", "label"],
+  props: ["value", "label", "icon"],
   data() {
     return {
       position: {},
@@ -56,6 +65,10 @@ export default {
       set(value) {
         this.$emit("input", value);
       },
+    },
+    iconColor() {
+      const themeColors = this.$store.state.ui.theme.colors;
+      return isDark(this.color) ? themeColors.textLight : themeColors.textDark;
     },
     popupListeners() {
       return omit(this.$listeners, "input");

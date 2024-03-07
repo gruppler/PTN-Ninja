@@ -141,11 +141,16 @@
     <q-footer class="bg-ui">
       <Scrubber />
       <q-toolbar
-        v-show="isEditingTPS || $store.state.ui.showControls"
+        v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
         class="footer-toolbar"
       >
+        <Highlighter
+          v-if="isHighlighting"
+          class="justify-around items-center"
+          style="width: 100%; max-width: 500px; margin: 0 auto"
+        />
         <PieceSelector
-          v-if="isEditingTPS"
+          v-else-if="isEditingTPS"
           class="justify-around items-center"
           style="width: 100%; max-width: 500px; margin: 0 auto"
         />
@@ -187,6 +192,7 @@ import ShareButton from "../components/controls/ShareButton";
 // Excluded from Embed layout:
 // import onlineStore from "../store/online";
 import GameSelector from "../components/controls/GameSelector";
+import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Menu from "../components/controls/Menu";
 import Chat from "../components/drawers/Chat";
@@ -216,6 +222,7 @@ export default {
     ShareButton,
     Chat,
     GameSelector,
+    Highlighter,
     PieceSelector,
     Menu,
   },
@@ -294,6 +301,9 @@ export default {
         return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
       }
       return "";
+    },
+    isHighlighting() {
+      return this.$store.state.ui.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;

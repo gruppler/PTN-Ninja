@@ -22,24 +22,24 @@ const LIGHT = 0.6;
 const MED = 0.4;
 const DARK = 0.06;
 
-const isLightLight = function (c) {
+export const isLightLight = function (c) {
   return colors.luminosity(c) > LIGHT;
 };
 
-const isLight = function (c) {
+export const isLight = function (c) {
   return colors.luminosity(c) > MED;
 };
 
-const isMedium = function (c) {
+export const isMedium = function (c) {
   const luminosity = colors.luminosity(c);
   return luminosity > DARK && luminosity <= MED;
 };
 
-const isDark = function (c) {
+export const isDark = function (c) {
   return colors.luminosity(c) <= MED;
 };
 
-const isDarkDark = function (c) {
+export const isDarkDark = function (c) {
   return colors.luminosity(c) <= DARK;
 };
 

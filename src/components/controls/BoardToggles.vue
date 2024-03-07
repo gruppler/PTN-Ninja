@@ -324,15 +324,28 @@
         </q-list>
       </q-menu>
     </q-btn>
+
+    <q-btn
+      @contextmenu.prevent
+      @click="highlighterEnabled = !highlighterEnabled"
+      icon="highlighter"
+      :class="{ 'dimmed-btn': !highlighterEnabled }"
+      :ripple="false"
+      :style="{ color: highlighterEnabled ? highlighterColor : '' }"
+      flat
+      fab
+    >
+      <hint>{{ $t("Highlighter") }}</hint>
+    </q-btn>
   </div>
 </template>
 
 <script>
 import FullscreenToggle from "./FullscreenToggle";
 import ThemeSelector from "./ThemeSelector";
-import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 
 import { zipObject } from "lodash";
+import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 
 const props = [
   "axisLabels",
@@ -361,6 +374,20 @@ export default {
     };
   },
   computed: {
+    highlighterEnabled: {
+      get() {
+        return this.$store.state.ui.highlighterEnabled;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", [
+          "highlighterEnabled",
+          value || false,
+        ]);
+      },
+    },
+    highlighterColor() {
+      return this.$store.state.ui.highlighterColor || "primary";
+    },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
     },

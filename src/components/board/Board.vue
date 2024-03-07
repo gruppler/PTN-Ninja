@@ -18,6 +18,7 @@
         'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
+        highlighter: highlighterEnabled,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd,
         flatwin: position.isGameEndFlats,
@@ -49,8 +50,10 @@
 
         <div
           class="board relative-position all-pointer-events"
-          @touchstart.stop
-          @mousedown.stop
+          @touchstart.stop="dragStart"
+          @mousedown.stop="dragStart"
+          @touchmove.capture="drag"
+          @mousemove="drag"
         >
           <div class="squares absolute-fit row reverse-wrap">
             <Square
@@ -129,6 +132,7 @@ export default {
       x: 0,
       y: 0,
       deltaY: 0,
+      dragging: false,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -254,6 +258,9 @@ export default {
           Math.abs(this.size.height - this.space.height)
       );
     },
+    highlighterEnabled() {
+      return this.$store.state.ui.highlighterEnabled;
+    },
     ratio() {
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
@@ -310,6 +317,45 @@ export default {
     },
   },
   methods: {
+    dragStart(event) {
+      this.dragging = event.which || event.touches.length;
+      window.addEventListener(
+        event.touches ? "touchend" : "mouseup",
+        this.dragEnd
+      );
+      this.drag(event);
+    },
+    drag(event) {
+      if (
+        this.dragging &&
+        event &&
+        event.target &&
+        event.target.dataset.coord
+      ) {
+        const coord = event.target.dataset.coord;
+        const color =
+          this.$store.state.ui.highlighterColor ||
+          this.$store.state.ui.theme.colors.primary;
+        const squares = { ...this.$store.state.ui.highlighterSquares };
+        if (
+          this.dragging === 1 &&
+          (!(coord in squares) || squares[coord] !== color)
+        ) {
+          squares[coord] = color;
+          this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        } else if (this.dragging > 1 && coord in squares) {
+          delete squares[coord];
+          this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        }
+      }
+    },
+    dragEnd(event) {
+      this.dragging = false;
+      window.removeEventListener(
+        event.touches ? "touchend" : "mouseup",
+        this.dragEnd
+      );
+    },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
         this.$store.dispatch("game/SELECT_PIECE", {
