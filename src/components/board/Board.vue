@@ -50,10 +50,8 @@
 
         <div
           class="board relative-position all-pointer-events"
-          @touchstart.stop="dragStart"
-          @mousedown.stop="dragStart"
-          @touchmove.capture="drag"
-          @mousemove="drag"
+          @pointerdown="highlightStart"
+          @pointermove="highlightMove"
         >
           <div class="squares absolute-fit row reverse-wrap">
             <Square
@@ -132,7 +130,7 @@ export default {
       x: 0,
       y: 0,
       deltaY: 0,
-      dragging: false,
+      highlighting: false,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -317,44 +315,52 @@ export default {
     },
   },
   methods: {
-    dragStart(event) {
-      this.dragging = event.which || event.touches.length;
-      window.addEventListener(
-        event.touches ? "touchend" : "mouseup",
-        this.dragEnd
-      );
-      this.drag(event);
-    },
-    drag(event) {
-      if (
-        this.dragging &&
-        event &&
-        event.target &&
-        event.target.dataset.coord
-      ) {
+    highlightStart(event) {
+      if (!event || !event.target || !event.target.dataset.coord) {
+        return;
+      }
+      if (event.pointerType === "touch") {
         const coord = event.target.dataset.coord;
         const color =
           this.$store.state.ui.highlighterColor ||
           this.$store.state.ui.theme.colors.primary;
         const squares = { ...this.$store.state.ui.highlighterSquares };
-        if (
-          this.dragging === 1 &&
-          (!(coord in squares) || squares[coord] !== color)
-        ) {
-          squares[coord] = color;
-          this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
-        } else if (this.dragging > 1 && coord in squares) {
-          delete squares[coord];
-          this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
-        }
+        this.highlighting =
+          !(coord in squares) || squares[coord] !== color ? 1 : 2;
+      } else {
+        this.highlighting = event.which;
+      }
+      window.addEventListener("pointerup", this.highlightEnd);
+      this.highlightMove(event);
+    },
+    highlightMove(event) {
+      if (
+        !event ||
+        !event.target ||
+        !event.target.dataset.coord ||
+        !this.highlighting
+      ) {
+        return;
+      }
+      const coord = event.target.dataset.coord;
+      const color =
+        this.$store.state.ui.highlighterColor ||
+        this.$store.state.ui.theme.colors.primary;
+      const squares = { ...this.$store.state.ui.highlighterSquares };
+      if (
+        this.highlighting === 1 &&
+        (!(coord in squares) || squares[coord] !== color)
+      ) {
+        squares[coord] = color;
+        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+      } else if (this.highlighting > 1 && coord in squares) {
+        delete squares[coord];
+        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
       }
     },
-    dragEnd(event) {
-      this.dragging = false;
-      window.removeEventListener(
-        event.touches ? "touchend" : "mouseup",
-        this.dragEnd
-      );
+    highlightEnd(event) {
+      this.highlighting = false;
+      window.removeEventListener("pointerup", this.highlightEnd);
     },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
