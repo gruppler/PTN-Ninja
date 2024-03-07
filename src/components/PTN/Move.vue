@@ -214,15 +214,6 @@ export default {
     display: inline-block;
     border-radius: 5px;
     padding: 0 0.5em;
-    .linenum,
-    .linenum .branch {
-      color: $textDark;
-      color: var(--q-color-textDark);
-      body.panelDark & {
-        color: $textLight !important;
-        color: var(--q-color-textLight) !important;
-      }
-    }
     background-color: $panel;
     background-color: var(--q-color-panel);
   }

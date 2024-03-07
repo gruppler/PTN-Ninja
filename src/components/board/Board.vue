@@ -319,6 +319,9 @@ export default {
       if (!event || !event.target || !event.target.dataset.coord) {
         return;
       }
+      if (event.target.hasPointerCapture(event.pointerId)) {
+        event.target.releasePointerCapture(event.pointerId);
+      }
       if (event.pointerType === "touch") {
         const coord = event.target.dataset.coord;
         const color =
