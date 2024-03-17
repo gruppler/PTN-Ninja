@@ -50,6 +50,8 @@
 
         <div
           class="board relative-position all-pointer-events"
+          @touchstart.stop
+          @mousedown.stop
           @pointerdown="highlightStart"
           @pointermove="highlightMove"
         >
