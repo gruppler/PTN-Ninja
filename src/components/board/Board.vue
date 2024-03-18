@@ -36,7 +36,12 @@
     >
       <TurnIndicator :hide-names="hideNames" />
 
-      <div v-if="showMoveNumber" class="move-number">{{ moveNumber }}.</div>
+      <div v-if="showMoveNumber" class="move-number">
+        {{ moveNumber }}.
+        <span v-if="evaluationText" class="text-primary text-bold">{{
+          evaluationText
+        }}</span>
+      </div>
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
@@ -201,6 +206,13 @@ export default {
         ? this.$store.state.game.comments.evaluations[this.position.boardPly.id]
         : null;
     },
+    evaluationText() {
+      let evaluation = this.position.boardPly
+        ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
+            .evaluation
+        : null;
+      return evaluation ? evaluation.text : null;
+    },
     selected() {
       return this.$store.state.game.selected;
     },
@@ -211,7 +223,10 @@ export default {
       if (this.$store.state.game.editingTPS) {
         return this.$store.state.ui.firstMoveNumber;
       } else {
-        return this.$store.state.game.position.move.linenum.number;
+        return this.position.boardPly
+          ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
+              .linenum.number
+          : this.$store.state.game.position.move.linenum.number;
       }
     },
     showMoveNumber() {
