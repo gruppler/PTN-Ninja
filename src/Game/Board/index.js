@@ -420,6 +420,7 @@ export default class Board extends Aggregation(
         if (isDirty) {
           this.dirty.comments[type][plyID] = false;
           delete pvs[plyID];
+          delete evaluations[plyID];
           let comments = this.game[type][plyID];
           if (comments && comments.length) {
             comments = comments.map((comment) => comment.output);

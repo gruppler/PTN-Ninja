@@ -180,6 +180,7 @@ export default {
   "Recover Email": "Recover Email",
   Redo: "Redo",
   Register: "Register",
+  "Remove All": "Remove All",
   Rename: "Rename",
   Replace: "Replace",
   Reset: "Reset",
