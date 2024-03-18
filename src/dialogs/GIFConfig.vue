@@ -18,8 +18,6 @@
         :src="preview"
         @load="loadPreview"
         width="100%"
-        frameborder="0"
-        allowfullscreen
       />
     </smooth-reflow>
     <q-btn
@@ -32,6 +30,27 @@
     />
 
     <q-list>
+      <div class="row no-wrap justify-around">
+        <img class="block" :src="previewStart" style="max-width: 50%" />
+        <img class="block" :src="previewEnd" style="max-width: 50%" />
+      </div>
+      <q-item>
+        <q-item-section>
+          {{ $t("Plies") }}
+          <q-range
+            v-model="config.plyRange"
+            :min="0"
+            :max="branchPlies.length - 1"
+            :left-label-value="getPlyLabel(config.plyRange.min)"
+            :right-label-value="getPlyLabel(config.plyRange.max)"
+            :step="1"
+            markers
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
       <ThemeSelector
         v-model="config.themeID"
         :config="$store.state.ui.gifConfig"
@@ -52,23 +71,6 @@
             :min="0"
             :max="4"
             :label-value="sizes[imageSize]"
-            :step="1"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
-
-      <q-item>
-        <q-item-section>
-          {{ $t("Plies") }}
-          <q-range
-            v-model="config.plyRange"
-            :min="0"
-            :max="branchPlies.length - 1"
-            :left-label-value="getPlyLabel(config.plyRange.min)"
-            :right-label-value="getPlyLabel(config.plyRange.max)"
             :step="1"
             markers
             snap
@@ -250,9 +252,9 @@
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
 import { boardOnly } from "../themes";
-import { PTNtoTPS } from "tps-ninja";
+import { PTNtoTPS, TPStoPNG } from "tps-ninja";
 
-import { cloneDeep } from "lodash";
+import { cloneDeep, debounce } from "lodash";
 
 import { format } from "quasar";
 const { humanStorageSize } = format;
@@ -268,6 +270,8 @@ export default {
       progress: 0,
       config: cloneDeep(this.$store.state.ui.gifConfig),
       preview: "",
+      previewStart: "",
+      previewEnd: "",
       dimensions: "",
       file: null,
       fileSize: "",
@@ -289,6 +293,7 @@ export default {
     options() {
       const options = cloneDeep(this.config);
 
+      options.font = "Roboto";
       options.delay = Math.round(6e4 / options.playSpeed);
       options.plies = this.branchPlies
         .slice(options.plyRange.min, options.plyRange.max + 1)
@@ -307,6 +312,9 @@ export default {
         options.tps = this.game.ptn.tags.tps.text;
       } else {
         options.size = this.game.config.size;
+      }
+      if (options.transparent) {
+        options.bgAlpha = 0;
       }
 
       // Theme
@@ -389,6 +397,16 @@ export default {
         this.updating = false;
       }
     },
+    updateRangePreview() {
+      const optionsStart = { ...this.options, plies: this.options.plies[0] };
+      const optionsEnd = this.options;
+      TPStoPNG(optionsStart).toBlob((blob) => {
+        this.previewStart = URL.createObjectURL(blob);
+      });
+      TPStoPNG(optionsEnd).toBlob((blob) => {
+        this.previewEnd = URL.createObjectURL(blob);
+      });
+    },
     loadPreview() {
       const img = this.$refs.preview;
       this.dimensions =
@@ -441,9 +459,10 @@ export default {
   },
   watch: {
     config: {
-      handler(config) {
+      handler: debounce(function (config) {
         this.$store.dispatch("ui/SET_UI", ["gifConfig", cloneDeep(config)]);
-      },
+        this.updateRangePreview();
+      }, 150),
       deep: true,
     },
     imageSize(i) {

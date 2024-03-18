@@ -17,8 +17,6 @@
         :src="preview"
         @load="loadPreview"
         width="100%"
-        frameborder="0"
-        allowfullscreen
       />
     </smooth-reflow>
 
