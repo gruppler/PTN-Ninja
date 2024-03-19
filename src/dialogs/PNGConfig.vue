@@ -144,18 +144,25 @@
       </q-item>
 
       <smooth-reflow>
-        <q-item
-          v-if="config.turnIndicator && config.unplayedPieces"
-          tag="label"
-          v-ripple
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Move Number") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.moveNumber" />
-          </q-item-section>
-        </q-item>
+        <template v-if="config.turnIndicator && config.unplayedPieces">
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.evalText" />
+            </q-item-section>
+          </q-item>
+
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Move Number") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.moveNumber" />
+            </q-item-section>
+          </q-item>
+        </template>
       </smooth-reflow>
 
       <q-item tag="label" v-ripple>

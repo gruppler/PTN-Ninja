@@ -36,11 +36,13 @@
     >
       <TurnIndicator :hide-names="hideNames" />
 
-      <div v-if="showMoveNumber" class="move-number">
-        {{ moveNumber }}.
-        <span v-if="evaluationText" class="text-primary text-bold">{{
-          evaluationText
-        }}</span>
+      <div v-if="$store.state.ui.unplayedPieces" class="move-number">
+        <template v-if="showMoveNumber">{{ moveNumber }}.&nbsp;</template>
+        <span
+          v-if="$store.state.ui.evalText && evaluationText"
+          class="eval-text"
+          >{{ evaluationText.slice(0, 6) }}</span
+        >
       </div>
 
       <div class="board-row row no-wrap no-pointer-events">
@@ -743,6 +745,13 @@ $radius: 0.35em;
     color: var(--q-color-textLight);
     text-shadow: 0 0.05em 0.1em $textDark;
     text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+  }
+
+  .eval-text {
+    position: absolute;
+    font-weight: bold;
+    color: $primary;
+    color: var(--q-color-primary);
   }
 }
 .x-axis {

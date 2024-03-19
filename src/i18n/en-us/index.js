@@ -59,6 +59,7 @@ export default {
   Embed: "Embed",
   End: "End",
   "Evaluation Bars": "Evaluation Bars",
+  "Evaluation Text": "Evaluation Text",
   Event: "Event",
   "Export PNG Image": "Export PNG Image",
   "Export PTN File": "Export PTN File",
