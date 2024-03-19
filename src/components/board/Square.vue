@@ -1,7 +1,7 @@
 <template>
   <div
     class="square"
-    @mouseover="checkValid"
+    :data-coord="coord"
     :class="{
       light: square.static.isLight,
       dark: !square.static.isLight,
@@ -28,6 +28,7 @@
       rs,
       rw,
     }"
+    @mouseover="checkValid"
     @click.left="select()"
     @click.right.prevent="select(true)"
   >
@@ -37,7 +38,6 @@
     <div
       class="hl highlighter"
       :style="{ backgroundColor: highlighterColor }"
-      :data-coord="coord"
     />
     <div class="road" v-if="showRoads">
       <div v-if="en" class="n" />
@@ -393,11 +393,12 @@ export default {
       opacity: 0.75;
     }
   }
-  .board-container:not(.highlighter) & .hl.highlighter {
+  .board-container.highlighter & .hl {
     pointer-events: none;
   }
+  .board-container.highlighter &,
   .board-container.highlighter & .hl.highlighter {
-    cursor: cell;
+    cursor: cell !important;
   }
   .board-container.highlighter &.highlighted {
     .hl.highlighter {
