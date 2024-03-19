@@ -181,13 +181,11 @@ export const boardOnly = (theme) => {
     "colors",
     "player1Dark",
     "player2Dark",
-    "ring1",
-    "ring2",
-    "ring3",
-    "ring4",
     "secondaryDark",
+    "board1Dark",
+    "board2Dark",
   ]);
-  theme.vars = pick(theme.vars, ["piece-border-width"]);
+  theme.vars = pick(theme.vars, ["piece-border-width", "rings-opacity"]);
   theme.colors = pick(theme.colors, [
     "primary",
     "secondary",
