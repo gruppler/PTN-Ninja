@@ -16,6 +16,7 @@
     />
 
     <q-btn
+      v-if="!isEmbedded"
       @contextmenu.prevent
       icon="settings"
       class="dimmed-btn"
@@ -326,6 +327,7 @@
     </q-btn>
 
     <q-btn
+      v-if="!isEmbedded"
       @contextmenu.prevent
       @click="highlighterEnabled = !highlighterEnabled"
       icon="highlighter"
@@ -375,6 +377,9 @@ export default {
     };
   },
   computed: {
+    isEmbedded() {
+      return this.$store.state.ui.embed;
+    },
     highlighterEnabled: {
       get() {
         return this.$store.state.ui.highlighterEnabled;
