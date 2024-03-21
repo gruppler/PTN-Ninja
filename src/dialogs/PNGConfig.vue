@@ -17,8 +17,6 @@
         :src="preview"
         @load="loadPreview"
         width="100%"
-        frameborder="0"
-        allowfullscreen
       />
     </smooth-reflow>
 
@@ -146,18 +144,25 @@
       </q-item>
 
       <smooth-reflow>
-        <q-item
-          v-if="config.turnIndicator && config.unplayedPieces"
-          tag="label"
-          v-ripple
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Move Number") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.moveNumber" />
-          </q-item-section>
-        </q-item>
+        <template v-if="config.turnIndicator && config.unplayedPieces">
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.evalText" />
+            </q-item-section>
+          </q-item>
+
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Move Number") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.moveNumber" />
+            </q-item-section>
+          </q-item>
+        </template>
       </smooth-reflow>
 
       <q-item tag="label" v-ripple>
@@ -253,12 +258,26 @@ export default {
       config.opening = this.game.config.opening;
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      config.hlSquares = config.highlightSquares;
       config.transform = this.$store.state.ui.boardTransform;
 
-      // Highlight current ply
-      if (config.highlightSquares && this.game.position.ply) {
-        config.hl = this.game.position.ply.text;
-        config.plyIsDone = this.game.position.plyIsDone;
+      if (
+        this.$store.state.ui.highlighterEnabled &&
+        Object.keys(this.$store.state.ui.highlighterSquares).length
+      ) {
+        config.highlighter = this.$store.state.ui.highlighterSquares;
+      }
+
+      const ply = this.game.position.ply;
+      if (ply) {
+        if (this.game.position.plyIsDone) {
+          config.ply =
+            ply.text +
+            (config.evalText && ply.evaluation ? ply.evaluation.text : "");
+          config.tps = ply.tpsBefore;
+        } else {
+          config.hl = ply.text;
+        }
       }
 
       // Add player names

@@ -95,6 +95,7 @@ export const png_url = (state, getters) => (game) => {
     "stackCounts",
     "showRoads",
     "moveNumber",
+    "evalText",
     "turnIndicator",
     "unplayedPieces",
   ].forEach((toggle) => {

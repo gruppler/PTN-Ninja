@@ -31,7 +31,7 @@
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </component>
-    <div>
+    <div class="bg-ui row no-wrap">
       <q-input
         ref="input"
         @keydown.shift.enter.prevent="send"
@@ -60,6 +60,18 @@
           />
         </template>
       </q-input>
+      <q-btn icon="menu_vertical" spread stretch flat dense>
+        <q-menu transition-show="none" transition-hide="none" auto-close square>
+          <q-list>
+            <q-item clickable @click="$store.dispatch('game/REMOVE_NOTES')">
+              <q-item-section side>
+                <q-icon name="delete" />
+              </q-item-section>
+              <q-item-section>{{ $t("Remove All") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </div>
   </div>
 </template>

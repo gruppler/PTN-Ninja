@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.4.10",
+  "version": "3.4.11",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -47,7 +47,7 @@
     "quasar": "^1.22.10",
     "sha1": "^1.1.1",
     "tiny-async-pool": "^2.1.0",
-    "tps-ninja": "^1.1.7",
+    "tps-ninja": "^1.1.8",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-shortkey": "^3.1.7",

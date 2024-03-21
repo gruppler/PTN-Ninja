@@ -36,7 +36,15 @@
     >
       <TurnIndicator :hide-names="hideNames" />
 
-      <div v-if="showMoveNumber" class="move-number">{{ moveNumber }}.</div>
+      <div v-if="$store.state.ui.unplayedPieces" class="move-number">
+        <template v-if="showMoveNumber">{{ moveNumber }}.&nbsp;</template>
+        <span
+          v-if="$store.state.ui.evalText && evaluationText"
+          class="eval-text"
+          :class="{ absolute: showMoveNumber }"
+          >{{ evaluationText.slice(0, 6) }}</span
+        >
+      </div>
 
       <div class="board-row row no-wrap no-pointer-events">
         <div
@@ -50,6 +58,8 @@
 
         <div
           class="board relative-position all-pointer-events"
+          @touchstart.stop
+          @mousedown.stop
           @pointerdown="highlightStart"
           @pointermove="highlightMove"
         >
@@ -199,6 +209,13 @@ export default {
         ? this.$store.state.game.comments.evaluations[this.position.boardPly.id]
         : null;
     },
+    evaluationText() {
+      let evaluation = this.position.boardPly
+        ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
+            .evaluation
+        : null;
+      return evaluation ? evaluation.text : null;
+    },
     selected() {
       return this.$store.state.game.selected;
     },
@@ -209,7 +226,10 @@ export default {
       if (this.$store.state.game.editingTPS) {
         return this.$store.state.ui.firstMoveNumber;
       } else {
-        return this.$store.state.game.position.move.linenum.number;
+        return this.position.boardPly
+          ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
+              .linenum.number
+          : this.$store.state.game.position.move.linenum.number;
       }
     },
     showMoveNumber() {
@@ -726,6 +746,12 @@ $radius: 0.35em;
     color: var(--q-color-textLight);
     text-shadow: 0 0.05em 0.1em $textDark;
     text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+  }
+
+  .eval-text {
+    font-weight: bold;
+    color: $primary;
+    color: var(--q-color-primary);
   }
 }
 .x-axis {

@@ -45,6 +45,7 @@ let defaults = {
   isPortrait: false,
   komi: 0,
   moveNumber: true,
+  evalText: true,
   nativeSharing:
     navigator.canShare && !Platform.is.desktop
       ? navigator.canShare({ text: "test", url: location.href })
@@ -88,6 +89,7 @@ export const embedUIOptions = [
   "turnIndicator",
   "highlightSquares",
   "moveNumber",
+  "evalText",
   "playSpeed",
   "showAllBranches",
   "showMove",
@@ -115,6 +117,7 @@ export const imgUIOptions = [
   "turnIndicator",
   "highlightSquares",
   "moveNumber",
+  "evalText",
   "showRoads",
   "stackCounts",
   "themeID",
