@@ -41,6 +41,7 @@
         <span
           v-if="$store.state.ui.evalText && evaluationText"
           class="eval-text"
+          :class="{ absolute: showMoveNumber }"
           >{{ evaluationText.slice(0, 6) }}</span
         >
       </div>
@@ -748,7 +749,6 @@ $radius: 0.35em;
   }
 
   .eval-text {
-    position: absolute;
     font-weight: bold;
     color: $primary;
     color: var(--q-color-primary);
