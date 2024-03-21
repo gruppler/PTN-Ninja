@@ -16,6 +16,7 @@
     />
 
     <q-btn
+      v-if="!isEmbedded"
       @contextmenu.prevent
       icon="settings"
       class="dimmed-btn"
@@ -94,18 +95,6 @@
 
           <q-item tag="label" v-ripple>
             <q-item-section>
-              <q-item-label>{{ $t("Evaluation Bars") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="showEval" :disabled="isDisabled('showEval')" />
-            </q-item-section>
-            <hint v-if="hotkeys.showEval">
-              {{ $t("Hotkey") }}: {{ hotkeysFormatted.showEval }}
-            </hint>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
               <q-item-label>{{ $t("Road Connections") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
@@ -166,21 +155,50 @@
             </hint>
           </q-item>
 
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Evaluation Bars") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="showEval" :disabled="isDisabled('showEval')" />
+            </q-item-section>
+            <hint v-if="hotkeys.UI.showEval">
+              {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.showEval }}
+            </hint>
+          </q-item>
+
           <smooth-reflow>
-            <q-item v-if="turnIndicator && unplayedPieces" tag="label" v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("Move Number") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="moveNumber"
-                  :disabled="isDisabled('moveNumber')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.moveNumber">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
-              </hint>
-            </q-item>
+            <template v-if="turnIndicator && unplayedPieces">
+              <q-item tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="evalText"
+                    :disabled="isDisabled('evalText')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.UI.evalText">
+                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
+                </hint>
+              </q-item>
+
+              <q-item tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>{{ $t("Move Number") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="moveNumber"
+                    :disabled="isDisabled('moveNumber')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.UI.moveNumber">
+                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
+                </hint>
+              </q-item>
+            </template>
           </smooth-reflow>
 
           <q-item tag="label" v-ripple>
@@ -326,6 +344,7 @@
     </q-btn>
 
     <q-btn
+      v-if="!isEmbedded"
       @contextmenu.prevent
       @click="highlighterEnabled = !highlighterEnabled"
       icon="highlighter"
@@ -353,6 +372,7 @@ const props = [
   "board3D",
   "flatCounts",
   "highlightSquares",
+  "evalText",
   "moveNumber",
   "orthogonal",
   "perspective",
@@ -375,6 +395,9 @@ export default {
     };
   },
   computed: {
+    isEmbedded() {
+      return this.$store.state.ui.embed;
+    },
     highlighterEnabled: {
       get() {
         return this.$store.state.ui.highlighterEnabled;

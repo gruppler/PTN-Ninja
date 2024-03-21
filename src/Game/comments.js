@@ -96,6 +96,31 @@ export default class GameComments {
     }
   }
 
+  removeAllComments(type) {
+    const _remove = (type) => {
+      const ids = Object.keys(this[type]);
+      if (ids.length) {
+        ids.forEach((id) => {
+          this.board.dirtyComment(type, id);
+        });
+        this[type] = {};
+        return true;
+      }
+      return false;
+    };
+    if (type) {
+      if (_remove(type)) {
+        this._updatePTN(true);
+        this.board.updateCommentsOutput();
+      }
+    } else {
+      if (["notes", "chatlog"].some(_remove)) {
+        this._updatePTN(true);
+        this.board.updateCommentsOutput();
+      }
+    }
+  }
+
   addChatMessage(message, plyID) {
     return this.addComment("chatlog", message, plyID);
   }
@@ -122,6 +147,10 @@ export default class GameComments {
 
   removeNote(plyID, index) {
     return this.removeComment("notes", plyID, index);
+  }
+
+  removeNotes() {
+    return this.removeAllComments("notes");
   }
 
   _setEvaluation(plyID, notation) {

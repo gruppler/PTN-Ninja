@@ -1,7 +1,7 @@
 <template>
   <div
     class="square"
-    @mouseover="checkValid"
+    :data-coord="coord"
     :class="{
       light: square.static.isLight,
       dark: !square.static.isLight,
@@ -17,6 +17,7 @@
       valid,
       connected,
       highlighted: isHighlighted,
+      highlighterDark,
       n,
       e,
       s,
@@ -27,6 +28,7 @@
       rs,
       rw,
     }"
+    @mouseover="checkValid"
     @click.left="select()"
     @click.right.prevent="select(true)"
   >
@@ -36,7 +38,6 @@
     <div
       class="hl highlighter"
       :style="{ backgroundColor: highlighterColor }"
-      :data-coord="coord"
     />
     <div class="road" v-if="showRoads">
       <div v-if="en" class="n" />
@@ -46,13 +47,20 @@
       <div class="center" />
     </div>
     <div class="stack-count" v-show="stackCount">
-      <span>{{ stackCount }}</span>
+      <span
+        :style="{
+          backgroundColor:
+            highlighterEnabled && isHighlighted ? highlighterColor : '',
+        }"
+        >{{ stackCount }}</span
+      >
     </div>
   </div>
 </template>
 
 <script>
 import { last } from "lodash";
+import { isDark } from "src/themes";
 
 export default {
   name: "Square",
@@ -85,6 +93,9 @@ export default {
         this.$store.state.ui.highlighterSquares[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
+    },
+    highlighterDark() {
+      return this.isHighlighted && isDark(this.highlighterColor);
     },
     isHighlighted() {
       return this.coord in this.$store.state.ui.highlighterSquares;
@@ -382,14 +393,25 @@ export default {
       opacity: 0.75;
     }
   }
-  .board-container:not(.highlighter) & .hl.highlighter {
+  .board-container.highlighter & .hl {
     pointer-events: none;
   }
+  .board-container.highlighter &,
   .board-container.highlighter & .hl.highlighter {
-    cursor: cell;
+    cursor: cell !important;
   }
-  .board-container.highlighter &.highlighted .hl.highlighter {
-    opacity: 0.75;
+  .board-container.highlighter &.highlighted {
+    .hl.highlighter {
+      opacity: 0.75;
+    }
+    .stack-count span {
+      color: $textDark !important;
+      color: var(--q-color-textDark) !important;
+    }
+    &.highlighterDark .stack-count span {
+      color: $textLight !important;
+      color: var(--q-color-textLight) !important;
+    }
   }
 
   .stack-count {
@@ -414,6 +436,9 @@ export default {
       height: 1.5em;
       line-height: 1.5em;
       border-radius: 50%;
+      transition: background-color $generic-hover-transition,
+        color $generic-hover-transition;
+      will-change: background-color, color;
     }
   }
   &.no-stack-counts:not(.selected):not(:hover) .stack-count span {

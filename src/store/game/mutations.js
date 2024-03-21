@@ -374,3 +374,7 @@ export const ADD_NOTES = (state, messages) => {
 export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
 };
+
+export const REMOVE_NOTES = () => {
+  Vue.prototype.$game.removeNotes();
+};

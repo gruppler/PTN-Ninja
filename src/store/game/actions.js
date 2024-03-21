@@ -846,3 +846,8 @@ export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   commit("REMOVE_NOTE", { plyID, index });
   dispatch("SAVE_CURRENT_GAME");
 };
+
+export const REMOVE_NOTES = function ({ commit, dispatch }) {
+  commit("REMOVE_NOTES");
+  dispatch("SAVE_CURRENT_GAME");
+};
