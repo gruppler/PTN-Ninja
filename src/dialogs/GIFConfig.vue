@@ -304,7 +304,11 @@ export default {
       options.delay = Math.round(6e4 / options.playSpeed);
       options.plies = this.branchPlies
         .slice(options.plyRange.min, options.plyRange.max + 1)
-        .map((ply) => ply.text);
+        .map(
+          (ply) =>
+            ply.text +
+            (options.evalText && ply.evaluation ? ply.evaluation.text : "")
+        );
       options.hlSquares = options.highlightSquares;
       options.transform = this.$store.state.ui.boardTransform;
       if (options.plyRange.min > 0) {

@@ -258,12 +258,19 @@ export default {
       config.opening = this.game.config.opening;
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
+      config.hlSquares = config.highlightSquares;
       config.transform = this.$store.state.ui.boardTransform;
 
-      // Highlight current ply
-      if (config.highlightSquares && this.game.position.ply) {
-        config.hl = this.game.position.ply.text;
-        config.plyIsDone = this.game.position.plyIsDone;
+      const ply = this.game.position.ply;
+      if (ply) {
+        if (this.game.position.plyIsDone) {
+          config.ply =
+            ply.text +
+            (config.evalText && ply.evaluation ? ply.evaluation.text : "");
+          config.tps = ply.tpsBefore;
+        } else {
+          config.hl = ply.text;
+        }
       }
 
       // Add player names
