@@ -311,6 +311,14 @@ export default {
         );
       options.hlSquares = options.highlightSquares;
       options.transform = this.$store.state.ui.boardTransform;
+
+      if (
+        this.$store.state.ui.highlighterEnabled &&
+        Object.keys(this.$store.state.ui.highlighterSquares).length
+      ) {
+        options.highlighter = this.$store.state.ui.highlighterSquares;
+      }
+
       if (options.plyRange.min > 0) {
         options.tps = PTNtoTPS({
           size: this.game.config.size,

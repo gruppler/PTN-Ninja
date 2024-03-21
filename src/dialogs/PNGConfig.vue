@@ -261,6 +261,13 @@ export default {
       config.hlSquares = config.highlightSquares;
       config.transform = this.$store.state.ui.boardTransform;
 
+      if (
+        this.$store.state.ui.highlighterEnabled &&
+        Object.keys(this.$store.state.ui.highlighterSquares).length
+      ) {
+        config.highlighter = this.$store.state.ui.highlighterSquares;
+      }
+
       const ply = this.game.position.ply;
       if (ply) {
         if (this.game.position.plyIsDone) {
