@@ -138,25 +138,25 @@ const gameConverter = {
   },
 };
 
-//  const analysisConverter = {
-//   toFirestore(game) {
-//     return game.json;
-//   },
-//   fromFirestore(snapshot, options) {
-//     const data = snapshot.data(options);
-//     return new Game(snapshot.id, data);
-//   },
-// };
+const analysisConverter = {
+  toFirestore(game) {
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    return new Game(snapshot.id, data);
+  },
+};
 
-//  const puzzleConverter = {
-//   toFirestore(game) {
-//     return game.json;
-//   },
-//   fromFirestore(snapshot, options) {
-//     const data = snapshot.data(options);
-//     return new Game(snapshot.id, data);
-//   },
-// };
+const puzzleConverter = {
+  toFirestore(game) {
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    return new Game(snapshot.id, data);
+  },
+};
 
 export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
   if (!game || !(game instanceof Game)) {
@@ -314,43 +314,49 @@ export const LISTEN_PRIVATE_GAMES = async function (
   });
 };
 
-// export const LISTEN_ANALYSES = async ({ dispatch }) => {
-//   const converter = analysisConverter;
-//   const path = "analyses";
-//   const stateKey = "analyses";
-//   await dispatch("UNLISTEN", path);
-//   return dispatch("LISTEN_COLLECTION", {
-//     converter,
-//     path,
-//     stateKey,
-//     listenerPath,
-//     where,
-//     limit,
-//     pagination,
-//     next,
-//     error,
-//     unlisten,
-//   });
-// };
+export const LISTEN_ANALYSES = async (
+  { dispatch },
+  { listenerPath, where, limit, pagination, next, error, unlisten }
+) => {
+  const converter = analysisConverter;
+  const path = "analyses";
+  const stateKey = "analyses";
+  await dispatch("UNLISTEN", path);
+  return dispatch("LISTEN_COLLECTION", {
+    converter,
+    path,
+    stateKey,
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    unlisten,
+  });
+};
 
-// export const LISTEN_PUZZLES = async ({ dispatch }) => {
-//   const converter = puzzleConverter;
-//   const path = "puzzles";
-//   const stateKey = "puzzles";
-//   await dispatch("UNLISTEN", path);
-//   return dispatch("LISTEN_COLLECTION", {
-//     converter,
-//     path,
-//     stateKey,
-//     listenerPath,
-//     where,
-//     limit,
-//     pagination,
-//     next,
-//     error,
-//     unlisten,
-//   });
-// };
+export const LISTEN_PUZZLES = async (
+  { dispatch },
+  { listenerPath, where, limit, pagination, next, error, unlisten }
+) => {
+  const converter = puzzleConverter;
+  const path = "puzzles";
+  const stateKey = "puzzles";
+  await dispatch("UNLISTEN", path);
+  return dispatch("LISTEN_COLLECTION", {
+    converter,
+    path,
+    stateKey,
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    unlisten,
+  });
+};
 
 export const UNLISTEN = ({ commit, state }, path) => {
   if (state.listeners[path]) {

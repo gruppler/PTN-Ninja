@@ -48,9 +48,11 @@
           <q-icon name="komi" />
           {{ option.tags.komi }}
         </span>
-        {{ option.config.size || option.tags.size }}x{{
-          option.config.size || option.tags.size
-        }}
+        <span class="text-bold">
+          {{ option.config.size || option.tags.size }}x{{
+            option.config.size || option.tags.size
+          }}
+        </span>
       </q-item-label>
       <div v-if="uiOptions.length" class="row justify-end q-gutter-xs q-mt-xs">
         <q-icon v-for="o in uiOptions" :key="o.key" :name="o.icon">

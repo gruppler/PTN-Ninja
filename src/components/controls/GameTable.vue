@@ -22,7 +22,7 @@
   >
     <template v-slot:top>
       <div class="column fit overflow-hidden relative-position">
-        <q-toolbar>
+        <q-toolbar class="q-px-none">
           <!-- View Options -->
           <q-btn
             @click="fullscreen = !fullscreen"
@@ -151,7 +151,7 @@
               </div>
             </template>
 
-            <template v-else-if="col.name === 'date'">
+            <template v-else-if="col.name === 'createdAt'">
               <relative-time :value="col.value" />
             </template>
 
@@ -212,7 +212,8 @@ export default {
       listeners: [],
       pagination: {
         rowsPerPage: 0,
-        sortBy: "date",
+        sortBy: "createdAt",
+        descending: true,
       },
       filterOptions: [
         {
@@ -231,12 +232,12 @@ export default {
           label: this.$t("Ongoing"),
         },
         {
-          value: "analysis",
+          value: "analyses",
           icon: "analysis",
           label: this.$tc("Analysis", 100),
         },
         {
-          value: "puzzle",
+          value: "puzzles",
           icon: "puzzle",
           label: this.$tc("Puzzle", 100),
         },
@@ -313,7 +314,7 @@ export default {
           align: "center",
         },
         {
-          name: "date",
+          name: "createdAt",
           label: this.$t("DateTime"),
           icon: "date_time",
           field: "createdAt",
@@ -383,15 +384,18 @@ export default {
       },
     },
     games() {
-      let games = sortBy(
-        Object.values(this.$store.state.online.gamesPublic).map((game) => ({
-          ...game,
-          value: game.config.id,
-          isActive: this.isActive(game),
-          uiOptions: uiOptions.filter((o) => game.config[o.key]),
-        })),
-        "createdAt"
-      );
+      let store;
+      if (this.filter === "analyses" || this.filter === "puzzles") {
+        store = this.$store.state.online[this.filter];
+      } else {
+        store = this.$store.state.online.gamesPublic;
+      }
+      let games = Object.values(store).map((game) => ({
+        ...game,
+        value: game.config.id,
+        isActive: this.isActive(game),
+        uiOptions: uiOptions.filter((o) => game.config[o.key]),
+      }));
 
       switch (this.filter) {
         case "open":
@@ -400,23 +404,17 @@ export default {
           );
           break;
         case "ongoing":
-          games = games
-            .filter((game) => !game.config.hasEnded && !game.config.isOpen)
-            .reverse();
+          games = games.filter(
+            (game) => !game.config.hasEnded && !game.config.isOpen
+          );
           break;
         case "recent":
-          games = games
-            .filter((game) => game.config.hasEnded && !game.config.isOpen)
-            .reverse();
-          break;
-        case "analysis":
-          games = games.filter((game) => game.isAnalysis).reverse();
-          break;
-        case "puzzle":
-          games = games.filter((game) => game.isPuzzle).reverse();
+          games = games.filter(
+            (game) => game.config.hasEnded && !game.config.isOpen
+          );
           break;
         default:
-          [];
+          games = games;
       }
       return games;
     },
@@ -509,7 +507,7 @@ export default {
       this.$store.dispatch("ui/NOTIFY_ERROR", error);
     };
 
-    const limit = 100;
+    const limit = 50;
     const pagination = {
       sortBy: "createdAt",
       descending: true,
@@ -518,15 +516,16 @@ export default {
     this.listeners.push(
       // Recent
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
-        where: [],
-        limit,
+        listenerPath: "publicGames/recent",
         pagination,
+        limit,
         next,
         error,
       }),
 
       // Open
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+        listenerPath: "publicGames/open",
         where: ["config.isOpen", "==", true],
         next,
         error,
@@ -534,7 +533,26 @@ export default {
 
       // Ongoing
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
+        listenerPath: "publicGames/ongoing",
         where: ["config.hasEnded", "!=", true],
+        next,
+        error,
+      }),
+
+      // Analyses
+      await this.$store.dispatch("online/LISTEN_ANALYSES", {
+        listenerPath: "analyses",
+        pagination,
+        limit,
+        next,
+        error,
+      }),
+
+      // Puzzles
+      await this.$store.dispatch("online/LISTEN_PUZZLES", {
+        listenerPath: "puzzles",
+        pagination,
+        limit,
         next,
         error,
       })
