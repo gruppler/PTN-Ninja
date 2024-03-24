@@ -349,6 +349,7 @@ export default {
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
     logInOK: "Proceed and Abandon Games",
+    removeGame: "Are you sure you want to remove this game?",
     resetEmbed: "Reset embed settings to default?",
     resetGame: "Reset the game?",
     resetPassword: "Reset the password for {email}?",

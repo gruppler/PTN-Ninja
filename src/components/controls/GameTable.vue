@@ -159,11 +159,20 @@
               <Result :result="col.value" />
             </template>
 
+            <template v-else-if="col.name === 'close'">
+              <q-btn @click.stop="close(props.row)" icon="close" flat dense />
+            </template>
+
             <template v-else>{{ col.value }}</template>
           </q-td>
         </template>
         <td v-else style="max-width: 100vw" :colspan="visibleColumns.length">
-          <GameSelectorOption class="q-pa-none" :option="props.row" />
+          <GameSelectorOption
+            class="q-pa-none"
+            :option="props.row"
+            :show-close="canClose(props.row)"
+            @close="close(props.row)"
+          />
         </td>
       </q-tr>
     </template>
@@ -317,6 +326,11 @@ export default {
           field: (game) => game.tags.result,
           align: "center",
         },
+        {
+          name: "close",
+          field: this.canClose,
+          align: "center",
+        },
       ],
     };
   },
@@ -411,6 +425,9 @@ export default {
     },
     visibleColumns() {
       let columns = this.columns.map((col) => col.name);
+      if (this.filter !== "open") {
+        columns = without(columns, "close");
+      }
       if (["recent", "open", "ongoing"].includes(this.filter)) {
         columns = without(columns, "name");
       }
@@ -460,6 +477,18 @@ export default {
     },
     isActive(game) {
       return this.activeGameIDs.includes(game.config.id);
+    },
+    canClose(game) {
+      return game.config.isOpen && game.createdBy === this.user.uid;
+    },
+    close(game) {
+      this.prompt({
+        title: this.$t("Confirm"),
+        message: this.$t("confirm.removeGame"),
+        success: () => {
+          this.$store.dispatch("online/REMOVE_GAME", game);
+        },
+      });
     },
   },
   async created() {

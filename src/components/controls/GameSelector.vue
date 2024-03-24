@@ -78,7 +78,7 @@
           :key="scope.opt.label"
           :option="scope.opt"
           :show-icon="hasOnlineGames"
-          show-close
+          :show-close="games.length > 1"
           @close="close"
           v-bind="scope.itemProps"
           v-on="scope.itemEvents"

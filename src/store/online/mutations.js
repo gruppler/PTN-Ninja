@@ -35,5 +35,6 @@ export const SET_PUBLIC_GAME = (state, game) => {
 };
 
 export const REMOVE_PUBLIC_GAME = (state, id) => {
+  Vue.delete(state.playerGames, id);
   Vue.delete(state.gamesPublic, id);
 };

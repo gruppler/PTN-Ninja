@@ -8,7 +8,7 @@ service cloud.firestore {
     function incomingData() {
       return request.resource.data;
     }
-    
+
     function isSignedIn() {
       return request.auth.uid != null;
     }
@@ -44,6 +44,8 @@ service cloud.firestore {
     match /gamesPublic/{game} {
     	allow read: if isSignedIn();
       allow write: if false;
+      allow delete: if isUser(existingData().createdBy) &&
+        existingData().config.isOpen == true;
 
       match /branches/{branch} {
     	  allow list: if isSignedIn();
@@ -68,6 +70,8 @@ service cloud.firestore {
     match /gamesPrivate/{game} {
     	allow read: if isPlayer(game, "gamesPrivate");
       allow write: if false;
+      allow delete: if isUser(existingData().createdBy) &&
+        existingData().config.isOpen == true;
 
       match /branches/{branch} {
     	  allow read: if isUser(existingData().uid) ||
@@ -94,7 +98,7 @@ service cloud.firestore {
         allow update, delete: if isUser(existingData().uid) || isAdmin();
       }
     }
-    
+
     match /puzzles/{puzzle} {
     	allow read: if isSignedIn();
       allow create: if isUser(incomingData().uid);

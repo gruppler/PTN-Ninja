@@ -170,6 +170,20 @@ export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
   // dispatch("LISTEN_CURRENT_GAME");
 };
 
+export const REMOVE_GAME = async ({ commit }, game) => {
+  if (!game || !game.config || !game.config.id) {
+    throw new Error("Invalid game");
+  }
+  const gameDoc = db
+    .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
+    .doc(game.config.id);
+  await gameDoc.delete();
+  commit(
+    game.config.isPrivate ? "REMOVE_PLAYER_GAME" : "REMOVE_PUBLIC_GAME",
+    game.config.id
+  );
+};
+
 export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
   // Join as player if still open
   const player = game.openPlayer;

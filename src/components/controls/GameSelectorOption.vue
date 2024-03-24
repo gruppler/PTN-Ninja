@@ -62,7 +62,7 @@
         :result="option.tags.result"
       />
     </q-item-section>
-    <q-item-section v-if="canClose" class="fg-inherit" side>
+    <q-item-section v-if="showClose" class="fg-inherit" side>
       <q-btn @click.stop="close" icon="close" flat dense />
     </q-item-section>
   </q-item>
@@ -116,9 +116,6 @@ export default {
         this.option.createdAt
       );
     },
-    canClose() {
-      return this.showClose && this.$store.state.game.list.length > 1;
-    },
     uiOptions() {
       return this.option.config
         ? uiOptions.filter((o) => this.option.config[o.key])
@@ -127,7 +124,7 @@ export default {
   },
   methods: {
     close() {
-      if (this.canClose) {
+      if (this.showClose) {
         this.$emit("close", this.option.value);
       }
     },
