@@ -151,6 +151,49 @@ exports.createGame = functions.https.onCall(
   }
 );
 
+// Join a game as player or spectator
+exports.joinGame = functions.https.onCall(
+  async ({ id, isPrivate }, context) => {
+    // // Join as player if still open
+    // const player = game.openPlayer;
+    // const playerName = getters.playerName(game.config.isPrivate);
+    // const gameDoc = db
+    //   .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
+    //   .doc(game.config.id);
+    // let gamesSnapshot = await gameDoc.get();
+    // // Check that the player is still open
+    // let gameData = gamesSnapshot.data();
+    // if (gameData.config.players[player - 1]) {
+    //   Loading.hide();
+    //   throw new Error("Player position already filled");
+    // }
+    // // Update game config and tags
+    // let config = {
+    //   ...game.config,
+    //   ...gameData.config,
+    //   players: [...gameData.config.players],
+    // };
+    // config.players[player - 1] = state.user.uid;
+    // let tags = { ["player" + player]: playerName, ...now() };
+    // game.setTags(tags, false);
+    // dispatch("SAVE_CONFIG", { game, config }, { root: true });
+    // dispatch("SAVE_PTN", game.toString(), { root: true });
+    // game.clearHistory();
+    // let changes = {
+    //   config: configToDB(config),
+    //   tags: game.JSONTags,
+    // };
+    // // Update name
+    // if (game.isDefaultName) {
+    //   changes.name = game.generateName();
+    //   game.name = changes.name;
+    // }
+    // await gameDoc.update(changes);
+
+    return true;
+  }
+);
+
 // Make a move
 exports.insertPly = functions.https.onCall((data, context) => {
   const uid = context.auth.uid;

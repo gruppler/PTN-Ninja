@@ -361,6 +361,8 @@ export default {
   error: {
     "Bot unavailable": "The selected bot is currently unavailable",
     "Branch already exists": "That branch already exists.",
+    "Failed to create game": "Failed to create game",
+    "Failed to join game": "Failed to join game",
     "Game does not exist": "That game does not exist.",
     "Invalid branch": "Invalid branch",
     "Invalid branch name": "Invalid branch name",

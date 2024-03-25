@@ -158,16 +158,21 @@ const puzzleConverter = {
   },
 };
 
-export const CREATE_GAME = async ({ dispatch }, { game, config }) => {
+export const CREATE_GAME = async (context, { game, config }) => {
   if (!game || !(game instanceof Game)) {
     throw new Error("Invalid game");
   }
   const state = game.JSONState;
   const tags = game.JSONTags;
-  const response = await call("createGame", { config, state, tags });
-  console.log(response);
-  return response;
-  // dispatch("LISTEN_CURRENT_GAME");
+  try {
+    const response = await call("createGame", { config, state, tags });
+    console.log(response);
+    // TODO: Open game and listen for changes
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to create game");
+  }
 };
 
 export const REMOVE_GAME = async ({ commit }, game) => {
@@ -184,49 +189,26 @@ export const REMOVE_GAME = async ({ commit }, game) => {
   );
 };
 
-export const JOIN_GAME = async ({ dispatch, getters, state }, game) => {
-  // Join as player if still open
-  const player = game.openPlayer;
-  const playerName = getters.playerName(game.config.isPrivate);
-  const gameDoc = db
-    .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
-    .doc(game.config.id);
-  Loading.show();
-  // let gamesSnapshot = await gameDoc.get();
-  // // Check that the player is still open
-  // let gameData = gamesSnapshot.data();
-  // if (gameData.config.players[player - 1]) {
-  //   Loading.hide();
-  //   throw new Error("Player position already filled");
-  // }
+export const JOIN_GAME = async (context, game) => {
+  if (!game || !game.config || !game.config.id) {
+    throw new Error("Invalid game");
+  }
 
-  // // Update game config and tags
-  // let config = {
-  //   ...game.config,
-  //   ...gameData.config,
-  //   players: [...gameData.config.players],
-  // };
-  // config.players[player - 1] = state.user.uid;
-
-  // let tags = { ["player" + player]: playerName, ...now() };
-  // game.setTags(tags, false);
-  // dispatch("SAVE_CONFIG", { game, config }, { root: true });
-  // dispatch("SAVE_PTN", game.toString(), { root: true });
-  // game.clearHistory();
-
-  // let changes = {
-  //   config: configToDB(config),
-  //   tags: game.JSONTags,
-  // };
-
-  // // Update name
-  // if (game.isDefaultName) {
-  //   changes.name = game.generateName();
-  //   game.name = changes.name;
-  // }
-
-  // await gameDoc.update(changes);
-  Loading.hide();
+  try {
+    Loading.show();
+    const response = await call("joinGame", {
+      id: game.config.id,
+      isPrivate: game.config.isPrivate,
+    });
+    console.log(response);
+    // TODO: Open game and listen for changes
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to join game");
+  } finally {
+    Loading.hide();
+  }
 };
 
 export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
