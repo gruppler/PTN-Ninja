@@ -258,7 +258,8 @@ export default {
       config.opening = this.game.config.opening;
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      config.hlSquares = config.highlightSquares;
+      config.hlSquares =
+        config.highlightSquares && !this.$store.state.ui.highlighterEnabled;
       config.transform = this.$store.state.ui.boardTransform;
 
       if (
@@ -275,7 +276,7 @@ export default {
             ply.text +
             (config.evalText && ply.evaluation ? ply.evaluation.text : "");
           config.tps = ply.tpsBefore;
-        } else {
+        } else if (config.hlSquares) {
           config.hl = ply.text;
         }
       }
