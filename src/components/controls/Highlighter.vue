@@ -94,7 +94,10 @@ export default {
         if (color) {
           this.selectedColor = color;
         }
-      } else if (key === "clear") {
+      } else if (
+        key === "clear" &&
+        ["local", "game"].includes(this.$route.name)
+      ) {
         this.clear();
       }
     },
