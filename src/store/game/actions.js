@@ -336,35 +336,50 @@ export const REMOVE_MULTIPLE_GAMES = function (
   }
 };
 
-export const EXPORT_PNG = function () {
-  const game = Vue.prototype.$game;
+export const EXPORT_PNG = function ({ state }) {
+  const game = state;
   const options = {
     ...this.state.ui.pngConfig,
+    font: "Roboto",
     komi: game.config.komi,
     opening: game.config.opening,
-    tps: game.board.tps,
+    tps: game.position.tps,
+    theme: this.getters["ui/theme"](this.state.ui.pngConfig.themeID),
+    hlSquares:
+      this.state.ui.pngConfig.highlightSquares &&
+      !this.state.ui.highlighterEnabled,
     transform: this.state.ui.boardTransform,
   };
 
-  // Highlight current ply
-  const ply = game.board.ply;
-  if (this.state.ui.pngConfig.highlightSquares && ply) {
-    options.hl = ply.text;
-    options.plyIsDone = game.board.plyIsDone;
+  // Highlights
+  if (
+    this.state.ui.highlighterEnabled &&
+    Object.keys(this.state.ui.highlighterSquares).length
+  ) {
+    options.highlighter = this.state.ui.highlighterSquares;
+  }
+
+  const ply = game.position.ply;
+  if (ply) {
+    if (game.position.plyIsDone) {
+      options.ply =
+        ply.text +
+        (options.evalText && ply.evaluation ? ply.evaluation.text : "");
+      options.tps = ply.tpsBefore;
+    } else if (options.hlSquares) {
+      options.hl = ply.text;
+    }
   }
 
   // Add player names
   if (options.includeNames) {
-    options.player1 = game.tag("player1");
-    options.player2 = game.tag("player2");
+    options.player1 = game.ptn.tags.player1;
+    options.player2 = game.ptn.tags.player2;
   }
 
   // Game Tags
   ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
-    const tag = game.tags[tagName];
-    if (tag && tag.value) {
-      options[tagName] = tag.value;
-    }
+    options[tagName] = game.ptn.tags[tagName];
   });
 
   TPStoPNG(options).toBlob((blob) => {
@@ -374,8 +389,8 @@ export const EXPORT_PNG = function () {
         [blob],
         this.getters["ui/pngFilename"]({
           name: game.name,
-          plyID: game.board.plyID,
-          plyIsDone: game.board.plyIsDone,
+          plyID: game.position.plyID,
+          plyIsDone: game.position.plyIsDone,
         }),
         {
           type: "image/png",

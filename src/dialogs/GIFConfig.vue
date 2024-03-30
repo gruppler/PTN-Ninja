@@ -51,6 +51,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item>
+        <q-item-section>
+          {{ $t("Play Speed") }}
+          <q-slider
+            v-model="config.playSpeed"
+            :min="30"
+            :max="160"
+            :label-value="config.playSpeed + ' ' + $t('FPM')"
+            :step="10"
+            markers
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
+
       <ThemeSelector
         v-model="config.themeID"
         :config="$store.state.ui.gifConfig"
@@ -72,22 +88,6 @@
             :max="4"
             :label-value="sizes[imageSize]"
             :step="1"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
-
-      <q-item>
-        <q-item-section>
-          {{ $t("Play Speed") }}
-          <q-slider
-            v-model="config.playSpeed"
-            :min="30"
-            :max="160"
-            :label-value="config.playSpeed + ' ' + $t('FPM')"
-            :step="10"
             markers
             snap
             label
