@@ -1,7 +1,7 @@
 <template>
   <div
     class="highlighter row no-wrap justify-around items-center full-height absolute-fit"
-    v-shortkey="hotkeys"
+    v-shortkey="isDialogOpen ? null : hotkeys"
     @shortkey="hotkey($event.srcKey)"
   >
     <ColorPicker v-model="selectedColor" :palette="palette" icon="edit" stretch>
@@ -79,6 +79,9 @@ export default {
     isEmpty() {
       return isEmpty(this.$store.state.ui.highlighterSquares);
     },
+    isDialogOpen() {
+      return !["local", "game"].includes(this.$route.name);
+    },
   },
   methods: {
     clear() {
@@ -94,10 +97,7 @@ export default {
         if (color) {
           this.selectedColor = color;
         }
-      } else if (
-        key === "clear" &&
-        ["local", "game"].includes(this.$route.name)
-      ) {
+      } else if (key === "clear") {
         this.clear();
       }
     },

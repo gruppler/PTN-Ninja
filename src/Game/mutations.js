@@ -4,7 +4,7 @@ import Nop from "./PTN/Nop";
 import Ply from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
-import { escapeRegExp, flatten, isArray } from "lodash";
+import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
 
 export default class GameMutations {
   replacePTN(ptn, state = this.minState) {
@@ -78,7 +78,7 @@ export default class GameMutations {
         ply = this.plies[ply.id + 1];
         includeSiblings = true;
       }
-      return descendents;
+      return uniqBy(descendents, "id");
     };
 
     const oldID = ply.id;
@@ -90,10 +90,10 @@ export default class GameMutations {
     let oldMain = getDescendents(this.plies[newID], branch);
 
     // Rename new main branches
-    let oldBranchRegExp = new RegExp(
+    const oldBranchRegExp = new RegExp(
       "^" + (branch ? escapeRegExp(branch) + "(\\/|$)" : "")
     );
-    let newBranchFull = branch && mainBranch ? mainBranch + "$1" : mainBranch;
+    const newBranchFull = branch && mainBranch ? mainBranch + "$1" : mainBranch;
     let length = 0;
     newMain.forEach((ply) => {
       if (ply.branch === branch) {
@@ -107,9 +107,17 @@ export default class GameMutations {
     });
 
     // Rename old main branches
+    const newBranchRegExp = new RegExp(
+      "^" + (branch ? escapeRegExp(mainBranch) + "(\\/|$)" : "")
+    );
+    let oldBranchFull = branch && mainBranch ? branch + "$1" : branch;
     oldMain.forEach((ply) => {
-      ply.branch =
-        ply.branch === mainBranch ? branch : branch + "/" + ply.branch;
+      if (branch && mainBranch) {
+        ply.branch = ply.branch.replace(newBranchRegExp, oldBranchFull);
+      } else {
+        ply.branch =
+          ply.branch === mainBranch ? branch : branch + "/" + ply.branch;
+      }
       ply.linenum.branch = ply.branch;
       if (this.board.plyID === ply.id) {
         this.board.targetBranch = ply.branch;
@@ -735,6 +743,12 @@ export default class GameMutations {
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
         this.board.updateBoardOutput();
+        if (isFunction(this.onInsertPly)) {
+          if (ply.constructor === Ply) {
+            ply = ply.text;
+          }
+          this.onInsertPly(this, ply);
+        }
         return true;
       }
     });
