@@ -466,10 +466,25 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
       `https://api.playtak.com/v1/games-history/ptn/${id}`
       // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
     );
-    const ptn = await response.text();
-    let game = new Game({ ptn, state });
-    game.warnings.forEach((warning) => notifyWarning(warning));
-    return dispatch("ADD_GAME", game);
+    if (response && response.ok) {
+      const ptn = await response.text();
+      console.log(ptn);
+      let game = new Game({ ptn, state });
+      game.warnings.forEach((warning) => notifyWarning(warning));
+      return dispatch("ADD_GAME", game);
+    } else {
+      if (response) {
+        if (response.status === 404) {
+          throw "Game does not exist";
+        } else {
+          response = await response.json();
+          console.log(response);
+          throw response && response.message ? response.message : "unknown";
+        }
+      } else {
+        throw "unknown";
+      }
+    }
   } catch (error) {
     notifyError(error);
     throw error;

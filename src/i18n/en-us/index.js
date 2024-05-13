@@ -385,6 +385,7 @@ export default {
     "Player exists": "That name is already taken",
     "Unable to download": "Unable to download files",
     "Unable to read clipboard": "Unable to read clipboard",
+    unknown: "An unknown error occurred",
     "Unrecognized tag": "Unrecognized tag",
     UnvalidatedEmail: "Please validate your email address.",
     "auth/invalid-email": "Invalid email address",
