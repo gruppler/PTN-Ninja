@@ -4,7 +4,7 @@ import Nop from "./PTN/Nop";
 import Ply from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
-import { escapeRegExp, flatten, isArray, isFunction } from "lodash";
+import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
 
 export default class GameMutations {
   replacePTN(ptn, state = this.minState) {
@@ -78,7 +78,7 @@ export default class GameMutations {
         ply = this.plies[ply.id + 1];
         includeSiblings = true;
       }
-      return descendents;
+      return uniqBy(descendents, "id");
     };
 
     const oldID = ply.id;
