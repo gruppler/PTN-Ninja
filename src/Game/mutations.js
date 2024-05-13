@@ -4,7 +4,7 @@ import Nop from "./PTN/Nop";
 import Ply from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
-import { escapeRegExp, flatten, isArray } from "lodash";
+import { escapeRegExp, flatten, isArray, isFunction } from "lodash";
 
 export default class GameMutations {
   replacePTN(ptn, state = this.minState) {
@@ -735,6 +735,12 @@ export default class GameMutations {
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
         this.board.updateBoardOutput();
+        if (isFunction(this.onInsertPly)) {
+          if (ply.constructor === Ply) {
+            ply = ply.text;
+          }
+          this.onInsertPly(this, ply);
+        }
         return true;
       }
     });
