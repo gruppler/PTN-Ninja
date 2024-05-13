@@ -32,7 +32,6 @@
 </template>
 
 <script>
-import Game from "../../Game";
 import Result from "../PTN/Result";
 
 export default {
@@ -60,31 +59,20 @@ export default {
     },
   },
   methods: {
-    async loadGame() {
-      try {
-        this.loading = true;
-        let response = await fetch(
-          `https://openings.exegames.de/api/v1/game/${this.playtakId}`
-        );
-
-        if (response.ok) {
-          let data = await response.json();
-          let game = new Game({
-            ptn: data.ptn,
-            state: {
-              plyIndex: this.$store.state.game.position.plyIndex,
-              plyIsDone: this.$store.state.game.position.plyIsDone,
-            },
-          });
-          this.$store.dispatch("game/ADD_GAME", game);
-        } else {
-          this.notifyError("HTTP-Error: " + response.status);
-        }
-      } catch (error) {
-        this.notifyError(error);
-      } finally {
-        this.loading = false;
-      }
+    loadGame() {
+      this.loading = true;
+      this.$store
+        .dispatch("game/ADD_PLAYTAK_GAME", {
+          id: this.playtakId,
+          state: {
+            plyIndex: this.$store.state.game.position.plyIndex,
+            plyIsDone: this.$store.state.game.position.plyIsDone,
+          },
+        })
+        .catch()
+        .finally(() => {
+          this.loading = false;
+        });
     },
   },
 };

@@ -23,6 +23,9 @@ export const SET_GAME = (state, game) => {
       onInit: (game) => {
         SET_GAME(state, game);
       },
+      onInsertPly: (game, ply) => {
+        postMessage("INSERT_PLY", ply);
+      },
       onError: (error, plyID) => {
         handleError(error, plyID);
       },
@@ -32,6 +35,9 @@ export const SET_GAME = (state, game) => {
     if (!game.onInit) {
       game.onInit = (game) => {
         SET_GAME(state, game);
+      };
+      game.onInsertPly = (game, ply) => {
+        postMessage("INSERT_PLY", ply);
       };
       game.onError = (error, plyID) => {
         handleError(error, plyID);
@@ -228,7 +234,6 @@ export const INSERT_PLY = (state, ply) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.insertPly(ply, false, false);
-    postMessage("INSERT_PLY", ply);
   }
 };
 

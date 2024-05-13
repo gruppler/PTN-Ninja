@@ -93,6 +93,7 @@ export default class GameBase {
     editingTPS,
     onInit,
     onError,
+    onInsertPly,
   }) {
     // Set up init handler
     if (isFunction(onInit)) {
@@ -103,6 +104,12 @@ export default class GameBase {
     if (isFunction(onError)) {
       this.onError = onError;
     }
+
+    // Set up other handlers
+    if (isFunction(onInsertPly)) {
+      this.onInsertPly = onInsertPly;
+    }
+
     const handleError = (error) => {
       if (this.onError) {
         this.onError(error, this.plies.length - 1);

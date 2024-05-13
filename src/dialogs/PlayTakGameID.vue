@@ -78,7 +78,7 @@ export default {
     load() {
       this.loading = true;
       this.$store
-        .dispatch("game/ADD_PLAYTAK_GAME", this.gameID)
+        .dispatch("game/ADD_PLAYTAK_GAME", { id: this.gameID })
         .then(() => {
           this.$emit("submit");
           this.close();
