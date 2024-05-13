@@ -460,16 +460,14 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
   });
 };
 
-export const ADD_PLAYTAK_GAME = async function ({ dispatch }, id) {
+export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
     const response = await fetch(
       `https://api.playtak.com/v1/games-history/ptn/${id}`
       // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
     );
-    console.log(response);
     const ptn = await response.text();
-    console.log(ptn);
-    let game = new Game({ ptn });
+    let game = new Game({ ptn, state });
     game.warnings.forEach((warning) => notifyWarning(warning));
     return dispatch("ADD_GAME", game);
   } catch (error) {
