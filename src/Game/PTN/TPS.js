@@ -16,6 +16,9 @@ export default class TPS {
   constructor(notation) {
     this.errors = [];
 
+    // Normalize case
+    notation = notation.toUpperCase().replace(/X/g, "x");
+
     const matchData = notation.match(tpsRegex);
 
     if (!matchData) {
