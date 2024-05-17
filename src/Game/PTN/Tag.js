@@ -52,7 +52,7 @@ export const formats = {
   site: /^[^"]+$/,
   size: /^[3-8]$/,
   time: /^\d\d(:\d\d){1,2}$/,
-  tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/,
+  tps: /^[1-8xSC/,]+\s+[1,2]\s+\d+$/i,
 };
 
 export const now = () => {
