@@ -359,6 +359,7 @@ export default {
   },
 
   error: {
+    "Already joined": "You have already joined the game",
     "Bot unavailable": "The selected bot is currently unavailable",
     "Branch already exists": "That branch already exists.",
     "Failed to create game": "Failed to create game",
@@ -398,6 +399,7 @@ export default {
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
+    "No open seats": "The game has no open seats",
     Offline: "Offline",
     "Player exists": "That name is already taken",
     "Unable to download": "Unable to download files",

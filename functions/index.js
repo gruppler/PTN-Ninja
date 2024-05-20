@@ -154,41 +154,45 @@ exports.createGame = functions.https.onCall(
 // Join a game as player or spectator
 exports.joinGame = functions.https.onCall(
   async ({ id, isPrivate }, context) => {
-    // // Join as player if still open
-    // const player = game.openPlayer;
-    // const playerName = getters.playerName(game.config.isPrivate);
-    // const gameDoc = db
-    //   .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
-    //   .doc(game.config.id);
-    // let gamesSnapshot = await gameDoc.get();
-    // // Check that the player is still open
-    // let gameData = gamesSnapshot.data();
-    // if (gameData.config.players[player - 1]) {
-    //   Loading.hide();
-    //   throw new Error("Player position already filled");
-    // }
-    // // Update game config and tags
-    // let config = {
-    //   ...game.config,
-    //   ...gameData.config,
-    //   players: [...gameData.config.players],
-    // };
-    // config.players[player - 1] = state.user.uid;
-    // let tags = { ["player" + player]: playerName, ...now() };
-    // game.setTags(tags, false);
-    // dispatch("SAVE_CONFIG", { game, config }, { root: true });
-    // dispatch("SAVE_PTN", game.toString(), { root: true });
-    // game.clearHistory();
-    // let changes = {
-    //   config: configToDB(config),
-    //   tags: game.JSONTags,
-    // };
-    // // Update name
-    // if (game.isDefaultName) {
-    //   changes.name = game.generateName();
-    //   game.name = changes.name;
-    // }
-    // await gameDoc.update(changes);
+    const uid = context.auth ? context.auth.uid : false;
+
+    // Abort if unauthenticated
+    if (!uid) {
+      return httpError("unauthenticated");
+    }
+
+    // Fetch game from DB
+    const gameRef = db
+      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
+      .doc(id);
+    const gameSnapshot = await gameRef.get();
+    if (!gameSnapshot.exists) {
+      return httpError("invalid-argument", "Game does not exist");
+    }
+
+    // Player already joined
+    if (game.config.players.indexOf(uid)) {
+      return httpError("invalid-argument", "Already joined");
+    }
+
+    const game = gameSnapshot.data();
+    const player = game.config.players
+      ? game.config.players.indexOf(null) + 1
+      : 1;
+
+    // No open seats
+    if (player === 0) {
+      return httpError("invalid-argument", "No open seats");
+    }
+
+    const changes = {
+      [`tags.player${player}`]: context.auth.token.name,
+      [`config.players.${player - 1}`]: uid,
+    };
+
+    await gameRef.update(changes);
+
+    // TODO: Notify other player
 
     return true;
   }
