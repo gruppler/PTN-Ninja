@@ -347,6 +347,9 @@ export default {
   error: {
     "Bot unavailable": "The selected bot is currently unavailable",
     "Branch already exists": "That branch already exists.",
+    "Database not supported": "This browser doesn't support IndexedDB.",
+    "Database outdated":
+      "The local database is outdated. Please reload the page.",
     "Game does not exist": "That game does not exist.",
     "Invalid branch": "Invalid branch",
     "Invalid branch name": "Invalid branch name",

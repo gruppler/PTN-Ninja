@@ -1,10 +1,24 @@
 import Vue from "vue";
-import { Loading, LocalStorage } from "quasar";
+import { Loading, LocalStorage, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { isString, throttle, uniq } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
+import { openLocalDB } from "./db";
 import Game from "../../Game";
+
+let gamesDB;
+
+export const INIT = function ({ commit }) {
+  if (!Platform.within.iframe) {
+    openLocalDB()
+      .then(async (db) => {
+        gamesDB = db;
+        commit("INIT", await db.getAllFromIndex("meta", "lastSeen"));
+      })
+      .catch(notifyError);
+  }
+};
 
 export const SET_GAME = function ({ commit }, game) {
   const title = game.name + " — " + i18n.t("app_title");

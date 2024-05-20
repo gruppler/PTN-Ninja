@@ -7,6 +7,11 @@ export const SET_ERROR = (state, error) => {
   state.error = error;
 };
 
+export const INIT = (state, games) => {
+  state.list = games;
+  state.init = true;
+};
+
 export const SET_GAME = (state, game) => {
   const handleError = (error, plyID) => {
     state.error = error.message || error;
