@@ -15,16 +15,11 @@ export const openLocalDB = async () => {
     upgrade: async (db, oldVersion) => {
       if (!oldVersion) {
         // Initialize
-        const metaStore = db.createObjectStore("meta", { keyPath: "name" });
-        const ptnStore = db.createObjectStore("ptn", { keyPath: "name" });
-        const historyStore = db.createObjectStore("history", {
-          keyPath: "name",
-        });
+        const store = db.createObjectStore("games", { keyPath: "name" });
 
         // Create indices
-        metaStore.createIndex("lastSeen", "lastSeen");
-        metaStore.createIndex("size", "config.size");
-        metaStore.createIndex("isOnline", "config.isOnline");
+        store.createIndex("lastSeen", "lastSeen");
+        store.createIndex("isOnline", "config.isOnline");
 
         // Move games from LocalStorage to IndexedDB
 
@@ -43,21 +38,25 @@ export const openLocalDB = async () => {
                 console.error("Error parsing " + name, error);
               }
             }
-            metaStore.add({
+            await store.add({
               name,
-              config: load("config-" + name, {}),
+              ptn,
               state,
+              config: load("config-" + name, {}),
               editingTPS: load("editingTPS-" + name),
-              lastSeen: new Date(now + i),
+              history: load("history-" + name, []),
+              historyIndex: load("historyIndex-" + name, 0),
+              lastSeen: new Date(now - i),
             });
-            ptnStore.add({ name, ptn });
-            historyStore.add({
-              name,
-              states: load("history-" + name, []),
-              index: load("historyIndex-" + name, 0),
-            });
+            LocalStorage.remove("ptn-" + name);
+            LocalStorage.remove("state-" + name);
+            LocalStorage.remove("config-" + name);
+            LocalStorage.remove("editingTPS-" + name);
+            LocalStorage.remove("history-" + name);
+            LocalStorage.remove("historyIndex-" + name);
           })
         );
+        LocalStorage.remove("games");
       }
     },
   });

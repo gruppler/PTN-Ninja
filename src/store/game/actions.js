@@ -1,7 +1,7 @@
 import Vue from "vue";
-import { Loading, LocalStorage, Platform } from "quasar";
+import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isString, throttle, uniq } from "lodash";
+import { isString, throttle } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
@@ -14,7 +14,10 @@ export const INIT = function ({ commit }) {
     openLocalDB()
       .then(async (db) => {
         gamesDB = db;
-        commit("INIT", await db.getAllFromIndex("meta", "lastSeen"));
+        commit(
+          "INIT",
+          (await db.getAllFromIndex("games", "lastSeen")).reverse()
+        );
       })
       .catch(notifyError);
   }
@@ -23,56 +26,35 @@ export const INIT = function ({ commit }) {
 export const SET_GAME = function ({ commit }, game) {
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
-  if (game.config.unseen) {
-    dispatch("SAVE_CONFIG", {
-      game,
-      config: { ...game.config, unseen: false },
-    });
-  }
   setTimeout(() => (document.title = title), 200);
 };
 
 export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
-  const gameNames = uniq(LocalStorage.getItem("games") || []);
-
-  game.name = getters.uniqueName(game.name);
-  gameNames.unshift(game.name);
-  try {
-    LocalStorage.set("games", gameNames);
-    LocalStorage.set("ptn-" + game.name, game.ptn);
-    if (game.board || game.state) {
-      LocalStorage.set("state-" + game.name, game.minState || game.state);
-    }
-    if (game.config) {
-      LocalStorage.set("config-" + game.name, game.config);
-    } else {
-      game.config = {};
-    }
-    if (game.history) {
-      LocalStorage.set("history-" + game.name, game.history);
-      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    }
-    if (game.editingTPS !== undefined) {
-      LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
-    } else {
-      LocalStorage.remove("editingTPS-" + game.name);
-    }
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-    LocalStorage.remove("ptn-" + game.name);
-    LocalStorage.remove("state-" + game.name);
-    LocalStorage.remove("config-" + game.name);
-    LocalStorage.remove("history-" + game.name);
-    LocalStorage.remove("historyIndex-" + game.name);
-    LocalStorage.remove("editingTPS-" + game.name);
-    gameNames.shift();
-    LocalStorage.set("games", gameNames);
+  const newGame = { lastSeen: game.lastSeen || new Date() };
+  newGame.name = getters.uniqueName(game.name);
+  newGame.ptn = game.ptn;
+  if (game.board || game.state) {
+    newGame.state = game.minState || game.state;
+  }
+  if (game.config) {
+    newGame.config = game.config;
+  }
+  if (game.history) {
+    newGame.history = game.history;
+    newGame.historyIndex = game.historyIndex;
+  }
+  if (game.editingTPS !== undefined) {
+    newGame.editingTPS = game.editingTPS;
   }
 
-  Loading.show();
+  try {
+    Loading.show();
+    await gamesDB.add("games", newGame);
+  } catch (error) {
+    Loading.hide();
+    notifyError(error);
+  }
+
   return new Promise((resolve) => {
     setTimeout(async () => {
       await dispatch("SET_GAME", game);
@@ -85,54 +67,39 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   });
 };
 
-export const ADD_GAMES = function (
+export const ADD_GAMES = async function (
   { commit, dispatch, getters, state },
   { games, index }
 ) {
-  const gameNames = uniq(LocalStorage.getItem("games") || []);
-
+  const now = new Date().getTime();
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
-    game.name = getters.uniqueName(game.name);
-    gameNames.splice(index + i, 0, game.name);
+    const newGame = {
+      name: getters.uniqueName(game.name),
+      ptn: game.ptn,
+      lastSeen: game.lastSeen || new Date(now - i),
+    };
+    if (game.board || game.state) {
+      newGame.state = game.minState || game.state;
+    }
+    if (game.config) {
+      newGame.config = game.config;
+    }
+    if (game.history) {
+      newGame.history = game.history;
+      newGame.historyIndex = game.historyIndex;
+    }
+    if (game.editingTPS !== undefined) {
+      newGame.editingTPS = game.editingTPS;
+    }
     try {
-      LocalStorage.set("games", gameNames);
-      LocalStorage.set("ptn-" + game.name, game.ptn);
-      if (game.board || game.state) {
-        LocalStorage.set("state-" + game.name, game.minState || game.state);
-      }
-      if (game.config) {
-        LocalStorage.set("config-" + game.name, game.config);
-      } else {
-        game.config = {};
-      }
-      if (game.history) {
-        LocalStorage.set("history-" + game.name, game.history);
-        LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-      }
-      if (game.editingTPS !== undefined) {
-        LocalStorage.set("editingTPS-" + game.name, game.editingTPS);
-      } else {
-        LocalStorage.remove("editingTPS-" + game.name);
-      }
+      await gamesDB.add("games", newGame);
     } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
       notifyError(error);
-      LocalStorage.remove("ptn-" + game.name);
-      LocalStorage.remove("state-" + game.name);
-      LocalStorage.remove("config-" + game.name);
-      LocalStorage.remove("history-" + game.name);
-      LocalStorage.remove("historyIndex-" + game.name);
-      LocalStorage.remove("editingTPS-" + game.name);
-      gameNames.splice(index + i, 1);
-      LocalStorage.set("games", gameNames);
       games.length = i;
       break;
     }
   }
-
   commit("ADD_GAMES", { games, index });
   if (!index) {
     this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
@@ -165,10 +132,7 @@ export const REPLACE_GAME = function (
     }
     game.replacePTN(ptn, gameState);
     commit("SET_GAME", game);
-    dispatch("SAVE_UNDO_INDEX");
-    dispatch("SAVE_UNDO_HISTORY");
-    dispatch("SAVE_PTN", ptn);
-    dispatch("SAVE_STATE", { game, gameState });
+    dispatch("SAVE_CURRENT_GAME", true);
 
     Vue.nextTick(() => {
       Vue.prototype.notify({
@@ -190,12 +154,13 @@ export const REPLACE_GAME = function (
     });
   } else {
     commit("SET_GAME", game);
-    dispatch("SAVE_STATE", { game, gameState });
+    commit("SAVE_STATE", { game, gameState });
+    dispatch("SAVE_CURRENT_GAME_STATE");
   }
   return game;
 };
 
-export const REMOVE_GAME = function (
+export const REMOVE_GAME = async function (
   { commit, dispatch, state, getters },
   index
 ) {
@@ -203,23 +168,9 @@ export const REMOVE_GAME = function (
   if (!game) {
     new Error(`Invalid index: ${index}`);
   }
-  const games = LocalStorage.getItem("games") || [];
-  const name = games.splice(index, 1);
-  LocalStorage.remove("ptn-" + name);
-  LocalStorage.remove("state-" + name);
-  LocalStorage.remove("config-" + name);
-  LocalStorage.remove("history-" + name);
-  LocalStorage.remove("historyIndex-" + name);
-  LocalStorage.remove("editingTPS-" + name);
   try {
-    LocalStorage.set("games", games);
+    await gamesDB.delete("games", game.name);
   } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
     notifyError(error);
   }
 
@@ -246,8 +197,8 @@ export const REMOVE_GAME = function (
               if (index === 0) {
                 Loading.show();
                 setTimeout(() => {
-                  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-                    dispatch("ADD_GAMES", { games: [game], index });
+                  this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
+                    await dispatch("ADD_GAMES", { games: [game], index });
                     Loading.hide();
                   });
                 }, 200);
@@ -275,27 +226,15 @@ export const REMOVE_GAME = function (
   }
 };
 
-export const REMOVE_MULTIPLE_GAMES = function (
+export const REMOVE_MULTIPLE_GAMES = async function (
   { commit, dispatch, state },
   { start, count }
 ) {
   const games = state.list.slice(start, start + count);
-  const gameNames = uniq(LocalStorage.getItem("games") || []);
-  const names = gameNames.splice(start, count);
-  names.forEach((name) => {
-    LocalStorage.remove("ptn-" + name);
-    LocalStorage.remove("state-" + name);
-    LocalStorage.remove("config-" + name);
-    LocalStorage.remove("history-" + name);
-    LocalStorage.remove("historyIndex-" + name);
-    LocalStorage.remove("editingTPS-" + name);
-  });
+  const names = games.map((game) => game.name);
   try {
-    LocalStorage.set("games", gameNames);
+    await Promise.all(names.map((name) => gamesDB.delete("games", name)));
   } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
     notifyError(error);
   }
 
@@ -516,155 +455,63 @@ export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {
 
 export const SET_CURRENT_PTN = function ({ commit, dispatch }, ptn) {
   commit("SET_CURRENT_PTN", ptn);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const SAVE_CURRENT_GAME = function ({ commit, state }) {
+export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
   const game = Vue.prototype.$game;
   if (game && !this.state.ui.embed) {
     try {
-      LocalStorage.set("ptn-" + game.name, game.ptn);
-      LocalStorage.set("state-" + game.name, game.minState);
-      LocalStorage.set("history-" + game.name, game.history);
-      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
+      gamesDB.put("games", {
+        name: game.name,
+        ptn: game.ptn,
+        state: game.minState,
+        config: game.config,
+        editingTPS: game.editingTPS,
+        history: game.history,
+        historyIndex: game.historyIndex,
+        lastSeen: new Date(),
+      });
     } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
       notifyError(error);
     }
   }
-  commit("SAVE_CURRENT_GAME");
+  if (rebuildState) {
+    commit("SAVE_CURRENT_GAME");
+  }
 };
 
-export const SAVE_CURRENT_GAME_STATE = throttle(function ({ commit, state }) {
-  const game = Vue.prototype.$game;
-  if (game && !this.state.ui.embed) {
-    try {
-      LocalStorage.set("state-" + game.name, game.minState);
-    } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
-      notifyError(error);
-    }
-  }
+export const SAVE_CURRENT_GAME_STATE = throttle(function ({
+  commit,
+  dispatch,
+}) {
+  dispatch("SAVE_CURRENT_GAME", false);
   commit("SAVE_CURRENT_GAME_STATE");
-}, 300);
+},
+300);
 
-export const SAVE_UNDO_HISTORY = throttle(function ({ commit, state }) {
-  const game = Vue.prototype.$game;
-  if (game && !this.state.ui.embed) {
-    try {
-      LocalStorage.set("history-" + game.name, game.history);
-    } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
-      notifyError(error);
-    }
-  }
-  commit("SAVE_UNDO_HISTORY");
-}, 300);
-
-export const SAVE_UNDO_INDEX = throttle(function ({ commit, state }) {
-  const game = Vue.prototype.$game;
-  if (game && !this.state.ui.embed) {
-    try {
-      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
-      notifyError(error);
-    }
-  }
-  commit("SAVE_UNDO_INDEX");
-}, 300);
-
-export const SAVE_PTN = throttle(function ({ state, commit }, ptn) {
-  try {
-    LocalStorage.set("ptn-" + state.list[0].name, ptn);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
-  commit("SAVE_PTN", ptn);
-}, 300);
-
-export const SET_NAME = function (
-  { state, commit, getters },
+export const SET_NAME = async function (
+  { commit, getters },
   { oldName, newName }
 ) {
-  const index = state.list.findIndex((game) => game.name === oldName);
-  if (index < 0) {
-    throw new Error("Game not found: " + oldName);
-  }
-  const game = state.list[index];
-  const games = LocalStorage.getItem("games");
-  const name = getters.uniqueName(newName, true);
-  games[index] = name;
   try {
-    LocalStorage.set("games", games);
-    LocalStorage.remove("ptn-" + oldName);
-    LocalStorage.set("ptn-" + name, game.ptn);
-    LocalStorage.remove("state-" + oldName);
-    LocalStorage.set("state-" + name, game.board || game.state);
-    if (game.config) {
-      LocalStorage.remove("config-" + oldName);
-      LocalStorage.set("config-" + name, game.config);
+    const game = await gamesDB.get("games", oldName);
+    if (!game) {
+      throw new Error("Game not found: " + oldName);
     }
-    if (game.history) {
-      LocalStorage.remove("history-" + oldName);
-      LocalStorage.set("history-" + game.name, game.history);
-      LocalStorage.remove("historyIndex-" + oldName);
-      LocalStorage.set("historyIndex-" + game.name, game.historyIndex);
-    }
+    game.name = getters.uniqueName(newName, true);
+    await gamesDB.put("games", game);
+    await gamesDB.delete("games", oldName);
   } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
     notifyError(error);
   }
   commit("SET_NAME", { oldName, newName });
 };
 
-export const SAVE_STATE = function ({ commit, state }, { game, gameState }) {
-  if (!state.list.some((g) => g.name === game.name)) {
-    throw new Error("Game not found: " + game.name);
-  }
-  try {
-    LocalStorage.set("state-" + game.name, gameState);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
-  commit("SAVE_STATE", { game, gameState });
-};
-
-export const SAVE_CONFIG = function ({ commit, state }, { game, config }) {
-  if (!state.list.some((g) => g.name === game.name)) {
-    throw new Error("Game not found: " + game.name);
-  }
-  try {
-    LocalStorage.set("config-" + game.name, config);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
-  commit("SAVE_CONFIG", { game, config });
-};
-
 export const SET_TAGS = function ({ commit, dispatch }, tags) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("SET_TAGS", tags);
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
@@ -672,7 +519,7 @@ export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("APPLY_TRANSFORM", transform);
     this.dispatch("ui/RESET_TRANSFORM");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
@@ -680,24 +527,15 @@ export const SELECT_GAME = function (
   { commit, dispatch, state },
   { index, immediate }
 ) {
-  let games = LocalStorage.getItem("games") || [];
-  games.unshift(games.splice(index, 1)[0]);
-  try {
-    LocalStorage.set("games", games);
-  } catch (error) {
-    if (error.code === 22) {
-      error = "localstorageFull";
-    }
-    notifyError(error);
-  }
   if (immediate) {
     commit("SELECT_GAME", index);
   } else {
     Loading.show();
     setTimeout(() => {
-      this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+      this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
         commit("SELECT_GAME", index);
-        dispatch("SET_GAME", state.list[0]);
+        await dispatch("SET_GAME", state.list[0]);
+        dispatch("SAVE_CURRENT_GAME", false);
         Loading.hide();
       });
     }, 200);
@@ -710,7 +548,7 @@ export const HIGHLIGHT_SQUARES = function ({ commit }, args) {
 
 export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
   commit("SELECT_SQUARE", args);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const SELECT_PIECE = function ({ commit }, args) {
@@ -723,12 +561,12 @@ export const CANCEL_MOVE = function ({ commit }) {
 
 export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
   commit("DELETE_PLY", plyID);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const INSERT_PLY = function ({ commit, dispatch }, ply) {
   commit("INSERT_PLY", ply);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
@@ -736,46 +574,46 @@ export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
     plies = plies.split(/\s+/);
   }
   commit("INSERT_PLIES", { plies, prev });
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
   commit("DELETE_BRANCH", branch);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const UNDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
 export const REDO = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("REDO");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
 export const TRIM_BRANCHES = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("TRIM_BRANCHES");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
 export const TRIM_TO_BOARD = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("TRIM_TO_BOARD");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
 export const TRIM_TO_PLY = function ({ commit, dispatch }) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("TRIM_TO_PLY");
-    dispatch("SAVE_CURRENT_GAME");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
@@ -818,78 +656,65 @@ export const GO_TO_PLY = function (
   return !state.error;
 };
 
-export const EDIT_TPS = function ({ commit, state }, tps) {
-  if (tps !== undefined) {
-    try {
-      LocalStorage.set("editingTPS-" + state.list[0].name, tps);
-    } catch (error) {
-      if (error.code === 22) {
-        error = "localstorageFull";
-      }
-      notifyError(error);
-    }
-  } else {
-    LocalStorage.remove("editingTPS-" + game.name);
+export const EDIT_TPS = async function ({ commit, state }, tps) {
+  const game = { ...state.list[0] };
+  try {
+    game.editingTPS = tps || undefined;
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
   }
   commit("EDIT_TPS", tps);
 };
 
-export const SAVE_TPS = function ({ commit, dispatch, state }, tps) {
-  LocalStorage.remove("editingTPS-" + state.list[0].name);
+export const SAVE_TPS = function ({ commit, dispatch }, tps) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("SAVE_TPS", tps);
-    dispatch("SAVE_CURRENT_GAME");
-  });
-};
-
-export const RESET_TPS = function ({ commit, state }) {
-  LocalStorage.remove("editingTPS-" + state.list[0].name);
-  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-    commit("RESET_TPS");
+    dispatch("SAVE_CURRENT_GAME", true);
   });
 };
 
 export const PROMOTE_BRANCH = function ({ commit, dispatch }, args) {
   commit("PROMOTE_BRANCH", args);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const MAKE_BRANCH_MAIN = function ({ commit, dispatch }, args) {
   commit("MAKE_BRANCH_MAIN", args);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const RENAME_BRANCH = function ({ commit, dispatch }, args) {
   commit("RENAME_BRANCH", args);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const TOGGLE_EVALUATION = ({ commit, dispatch }, { type, double }) => {
   commit("TOGGLE_EVALUATION", { type, double });
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
   commit("EDIT_NOTE", { plyID, index, message });
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
   commit("ADD_NOTE", { message, plyID });
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const ADD_NOTES = ({ commit, dispatch }, messages) => {
   commit("ADD_NOTES", messages);
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   commit("REMOVE_NOTE", { plyID, index });
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
-  dispatch("SAVE_CURRENT_GAME");
+  dispatch("SAVE_CURRENT_GAME", true);
 };

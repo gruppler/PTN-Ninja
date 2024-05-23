@@ -130,24 +130,6 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
   }
 };
 
-export const SAVE_UNDO_HISTORY = (state) => {
-  const game = Vue.prototype.$game;
-  if (game && state.list[0]) {
-    state.list[0].history = game.history.concat();
-  }
-};
-
-export const SAVE_UNDO_INDEX = (state) => {
-  const game = Vue.prototype.$game;
-  if (game && state.list[0]) {
-    Vue.set(state.list[0], "historyIndex", game.historyIndex);
-  }
-};
-
-export const SAVE_PTN = (state, ptn) => {
-  state.list[0].ptn = ptn;
-};
-
 export const SET_NAME = (state, { oldName, newName }) => {
   let stateGame = state.list.find((g) => g.name === oldName);
   if (stateGame) {
@@ -335,21 +317,15 @@ export const GO_TO_PLY = function (state, { plyID, isDone }) {
 };
 
 export const EDIT_TPS = function (state, tps) {
-  state.list[0].editingTPS = tps;
-  state.editingTPS = tps;
-  Vue.prototype.$game.setEditingTPS(tps);
+  state.list[0].editingTPS = tps || undefined;
+  state.editingTPS = tps || undefined;
+  Vue.prototype.$game.setEditingTPS(tps || undefined);
 };
 
 export const SAVE_TPS = function (state, tps) {
   state.list[0].editingTPS = undefined;
   state.editingTPS = undefined;
   Vue.prototype.$game.setTags({ tps });
-  Vue.prototype.$game.setEditingTPS();
-};
-
-export const RESET_TPS = function (state) {
-  state.list[0].editingTPS = undefined;
-  state.editingTPS = undefined;
   Vue.prototype.$game.setEditingTPS();
 };
 

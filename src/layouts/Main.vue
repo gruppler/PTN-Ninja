@@ -164,7 +164,10 @@
     <GameNotifications />
     <NoteNotifications />
   </q-layout>
-  <q-dialog v-else :value="true" persistent>No Game</q-dialog>
+  <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
+    No Game
+  </q-dialog>
+  <q-inner-loading v-else showing />
 </template>
 
 <script>
