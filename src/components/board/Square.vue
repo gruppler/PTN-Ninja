@@ -28,7 +28,8 @@
       rs,
       rw,
     }"
-    @mouseover="checkValid"
+    @mouseover="mouseover"
+    @mouseout="mouseout"
     @click.left="select()"
     @click.right.prevent="select(true)"
   >
@@ -240,6 +241,13 @@ export default {
     },
   },
   methods: {
+    mouseover() {
+      this.checkValid();
+      this.$store.dispatch("game/HOVER_SQUARE", this.coord);
+    },
+    mouseout() {
+      this.$store.dispatch("game/HOVER_SQUARE", null);
+    },
     checkValid() {
       this.valid =
         this.isEditingTPS ||

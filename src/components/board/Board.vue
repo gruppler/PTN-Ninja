@@ -6,6 +6,8 @@
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     @wheel="scroll"
+    v-shortkey="isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys"
+    @shortkey="shortkey"
     ref="wrapper"
   >
     <div
@@ -115,6 +117,7 @@
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
+import { HOTKEYS } from "../../keymap";
 
 import { forEach, throttle } from "lodash";
 
@@ -146,6 +149,7 @@ export default {
       prevBoardRotation: null,
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
+      hotkeys: HOTKEYS.MOVES,
     };
   },
   computed: {
@@ -333,8 +337,28 @@ export default {
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
+    isDialogOpen() {
+      return this.$route.name !== "localGame";
+    },
+    isHighlighting() {
+      return this.$store.state.ui.highlighterEnabled;
+    },
+    isEditingTPS() {
+      return this.$store.state.game.editingTPS !== undefined;
+    },
   },
   methods: {
+    shortkey({ srcKey }) {
+      if (srcKey === "cancelMove") {
+        this.$store.dispatch("game/CANCEL_MOVE");
+      } else {
+        let square = this.$store.state.game.hoveredSquare;
+        const count = srcKey.slice(10).toLowerCase();
+        if (square !== null) {
+          this.$store.dispatch("game/SELECT_DROP_PIECES", { square, count });
+        }
+      }
+    },
     highlightStart(event) {
       if (!event || !event.target || !event.target.dataset.coord) {
         return;

@@ -584,6 +584,10 @@ export default class Board extends Aggregation(
     return piece;
   }
 
+  _deselectPieces(pieces) {
+    pieces.forEach(() => this._deselectPiece());
+  }
+
   _deselectAllPieces(flatten = false) {
     while (this.selected.pieces.length) {
       this._deselectPiece(flatten);

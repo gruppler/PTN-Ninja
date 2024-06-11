@@ -140,6 +140,7 @@ export default {
         value: index,
         config: game.config,
         state: game.state,
+        editingTPS: game.editingTPS,
       }));
     },
     gameList() {

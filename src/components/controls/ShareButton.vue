@@ -80,15 +80,27 @@ export default {
           id: "url",
           label: this.$t("Link"),
           icon: "url",
-          action: () => this.shareText("url"),
+          action: async () => await this.shareText("url"),
         });
+
+        if (
+          !this.$store.state.ui.embed &&
+          !this.$store.state.game.config.isOnline
+        ) {
+          actions.push({
+            id: "urlShort",
+            label: this.$t("Short Link"),
+            icon: "url_short",
+            action: async () => await this.shareText("urlShort"),
+          });
+        }
 
         if (this.$game.board.ply) {
           actions.push({
             id: "ply",
             label: this.$t("Ply"),
             icon: "ply",
-            action: () => this.shareText("ply"),
+            action: async () => await this.shareText("ply"),
           });
         }
 
@@ -97,19 +109,19 @@ export default {
             id: "tps",
             label: this.$t("TPS"),
             icon: "board",
-            action: () => this.shareText("tps"),
+            action: async () => await this.shareText("tps"),
           },
           {
             id: "moves",
             label: this.$t("Moves"),
             icon: "moves",
-            action: () => this.shareText("moves"),
+            action: async () => await this.shareText("moves"),
           },
           {
             id: "ptn",
             label: this.$t("PTN"),
             icon: "text",
-            action: () => this.shareText("ptn"),
+            action: async () => await this.shareText("ptn"),
           }
         );
       };
@@ -206,7 +218,7 @@ export default {
     },
   },
   methods: {
-    shortkey({ srcKey }) {
+    async shortkey({ srcKey }) {
       switch (srcKey) {
         case "exportPNG":
           this.$store.dispatch("game/EXPORT_PNG");
@@ -218,17 +230,17 @@ export default {
           this.share();
           break;
         case "shareTPS":
-          this.shareText("tps");
+          await this.shareText("tps");
           break;
         case "sharePTN":
-          this.shareText("ptn");
+          await this.shareText("ptn");
           break;
         case "shareURL":
-          this.shareText("url", true);
+          await this.shareText("url");
           break;
       }
     },
-    shareText(type) {
+    async shareText(type) {
       let output;
       switch (type) {
         case "url":
@@ -238,6 +250,14 @@ export default {
               : this.$t("Link to Position"),
             text: this.$store.getters["ui/url"](this.$game, {
               origin: true,
+              state: true,
+            }),
+          };
+          break;
+        case "urlShort":
+          output = {
+            title: this.$t("Link to Position"),
+            text: await this.$store.getters["ui/urlShort"](this.$game, {
               state: true,
             }),
           };
@@ -267,7 +287,9 @@ export default {
           };
           break;
       }
-      this.$store.dispatch("ui/SHARE", output);
+      if (output && output.text) {
+        this.$store.dispatch("ui/SHARE", output);
+      }
     },
     shareFile() {
       this.$store.dispatch("ui/EXPORT_PTN");

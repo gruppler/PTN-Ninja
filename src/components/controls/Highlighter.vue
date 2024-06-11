@@ -80,7 +80,7 @@ export default {
       return isEmpty(this.$store.state.ui.highlighterSquares);
     },
     isDialogOpen() {
-      return !["local", "game"].includes(this.$route.name);
+      return this.$route.name !== "localGame";
     },
   },
   methods: {

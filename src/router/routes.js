@@ -1,5 +1,6 @@
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { Platform } from "quasar";
+import { isString } from "lodash";
 import store from "../store";
 
 const routes = [
@@ -33,6 +34,11 @@ const routes = [
     component: () => import("pages/Auth"),
   },
   {
+    name: "shortened",
+    path: "/s/:id",
+    redirect: (to) => ({ name: "localGame", params: to.params }),
+  },
+  {
     name: "localGame",
     path: "/:ptn([^&]+)?:state(.*)?",
     component: () => {
@@ -40,20 +46,39 @@ const routes = [
         ? import("layouts/Embed")
         : import("layouts/Main");
     },
+    beforeEnter: async (to, from, next) => {
+      if (to.params.id) {
+        const data = await store.getters["ui/urlUnshort"](to.params.id);
+        next({
+          name: "localGame",
+          params: data
+            ? {
+                ptn: data.ptn,
+                state: data.params,
+              }
+            : {},
+        });
+      } else {
+        next();
+      }
+    },
     props(route) {
-      let stateRaw = route.params.state
-        ? route.params.state.substring(1).split("&")
-        : [];
-      let state = {};
+      let state = route.params.state || {};
       let name = "";
       let ptn = route.params.ptn;
 
-      for (let i = 0; i < stateRaw.length; i++) {
-        let item = stateRaw[i].split("=");
-        if (/^(true|false)$/.test(item[1])) {
-          item[1] = eval(item[1]);
+      if (route.params.state && isString(route.params.state)) {
+        let stateRaw = route.params.state
+          ? route.params.state.substring(1).split("&")
+          : [];
+
+        for (let i = 0; i < stateRaw.length; i++) {
+          let item = stateRaw[i].split("=");
+          if (/^(true|false)$/.test(item[1])) {
+            item[1] = eval(item[1]);
+          }
+          state[item[0]] = item[1];
         }
-        state[item[0]] = item[1];
       }
 
       if (state.name) {

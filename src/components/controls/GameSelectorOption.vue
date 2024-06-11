@@ -6,7 +6,13 @@
   >
     <q-item-section side>
       <GameThumbnail
-        v-if="option.state.tps"
+        v-if="option.editingTPS"
+        :tps="option.editingTPS"
+        :config="option.config"
+        class="rounded-borders"
+      />
+      <GameThumbnail
+        v-else-if="option.state.tps"
         :tps="option.state.tps"
         :hl="option.state.ply"
         :plyIsDone="option.state.plyIsDone"

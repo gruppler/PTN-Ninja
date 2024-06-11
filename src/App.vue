@@ -16,6 +16,9 @@ export default {
       window.app = this;
     }
 
+    // Initialize local DB
+    this.$store.dispatch("game/INIT");
+
     // Map icons
     this.$q.iconMapFn = (name) => {
       const icon = ICONS[name];

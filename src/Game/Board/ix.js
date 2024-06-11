@@ -137,7 +137,13 @@ export default class BoardIX {
     this.updateSelectedOutput();
   }
 
-  selectSquare(square, altSelect = false, editMode = false, selectedPiece) {
+  selectSquare(
+    square,
+    altSelect = false,
+    editMode = false,
+    selectedPiece,
+    count = null
+  ) {
     square = this.getSquare(square);
     if (!editMode && !this.isValidSquare(square)) {
       return false;
@@ -149,7 +155,7 @@ export default class BoardIX {
     }
 
     // Place or remove a piece in TPS mode
-    if (editMode) {
+    if (editMode && count === null) {
       if (altSelect) {
         if (!piece) {
           return false;
@@ -196,10 +202,15 @@ export default class BoardIX {
     }
 
     if (this.selected.pieces.length) {
-      this.dropSelection(square, altSelect);
+      this.dropSelection(square, altSelect, count);
     } else if (piece) {
       // Nothing selected yet, but this square has a piece
-      if (piece.ply && this.ply === piece.ply && this.number !== 1) {
+      if (
+        count === null &&
+        piece.ply &&
+        this.ply === piece.ply &&
+        this.number !== 1123
+      ) {
         // Cycle through F, S, C
         move.type =
           types[
@@ -208,9 +219,33 @@ export default class BoardIX {
           ];
         this.game.insertPly(Ply.fromMoveset([move]), false, true);
         this.cancelMove();
-      } else {
+      } else if (piece.color === this.turn) {
         // Select piece or stack
-        if (altSelect) {
+        if (count) {
+          if (count === "all") {
+            count = Math.min(this.size, square.pieces.length);
+          } else if (count === "friendly") {
+            for (
+              let i = Math.max(0, square.pieces.length - this.size);
+              i < square.pieces.length;
+              i++
+            ) {
+              const prevPiece = square.pieces[i - 1];
+              if (prevPiece && prevPiece.color === this.turn) {
+                count = square.pieces.length - i;
+                break;
+              }
+            }
+            if (!count || count === "friendly") {
+              this.selected.moveset.pop();
+              return;
+            }
+          } else {
+            count = Math.min(Number(count), this.size, square.pieces.length);
+          }
+          this._selectPieces(square.pieces.slice(-count));
+          move.count = this.selected.pieces.length;
+        } else if (altSelect) {
           this._selectPiece(piece);
           move.count = 1;
         } else {
@@ -221,7 +256,7 @@ export default class BoardIX {
         this._selectSquare(square);
         move.action = "pop";
       }
-    } else {
+    } else if (count === null) {
       // Place piece as new ply
       if (this.game.openingSwap && this.isFirstMove) {
         move.type = "flat";
@@ -230,13 +265,16 @@ export default class BoardIX {
       }
       this.game.insertPly(Ply.fromMoveset([move]));
       this.cancelMove();
+    } else {
+      this.selected.moveset.pop();
+      return;
     }
 
     this.updateSelectedOutput();
     return this.updateBoardOutput();
   }
 
-  dropSelection(square, altSelect = false) {
+  dropSelection(square, altSelect = false, count = null) {
     const currentSquare = this.selected.pieces[0].square;
     const isFirstMove = this.selected.moveset.length === 1;
     let move = last(this.selected.moveset);
@@ -279,6 +317,27 @@ export default class BoardIX {
           this._deselectAllPieces();
           last(this.selected.moveset).count = this.selected.initialCount;
         }
+      } else if (count) {
+        if (count === "all") {
+          this._deselectAllPieces();
+          last(this.selected.moveset).count = this.selected.initialCount;
+        } else if (count === "friendly") {
+          for (let i = this.selected.pieces.length; i >= 0; i--) {
+            const topPiece = square.pieces[square.pieces.length - i];
+            if (topPiece && topPiece.color === this.turn) {
+              count = this.selected.pieces.length - i + 1;
+              break;
+            }
+          }
+          if (!count || count === "friendly") {
+            return;
+          }
+        } else {
+          count = Math.min(Number(count), this.selected.pieces.length);
+        }
+        this._deselectPieces(this.selected.pieces.slice(0, count));
+        last(this.selected.moveset).count +=
+          move.action === "pop" ? -count : count;
       } else {
         this._deselectPiece();
         last(this.selected.moveset).count += move.action === "pop" ? -1 : 1;
@@ -297,13 +356,37 @@ export default class BoardIX {
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
 
+      if (count) {
+        if (count === "all") {
+          this.selected.pieces.length;
+        } else if (count === "friendly") {
+          for (let i = 0; i < this.selected.pieces.length; i++) {
+            if (this.selected.pieces[i].color === this.turn) {
+              count = i + 1;
+              break;
+            }
+          }
+          if (!count || count === "friendly") {
+            return;
+          }
+        } else {
+          count = Math.min(Number(count), this.selected.pieces.length);
+        }
+      } else {
+        count = altSelect ? this.selected.pieces.length : 1;
+      }
+
+      // Move selection from currentSquare to new square
       this.selected.initialCount = this.selected.pieces.length;
       this._selectSquare(square);
+      currentSquare.popPieces(this.selected.pieces.length);
+      square.pushPieces(this.selected.pieces);
+
       move = {
         action: "push",
         x: square.static.x,
         y: square.static.y,
-        count: altSelect ? this.selected.pieces.length : 1,
+        count,
         flatten: piece && piece.isStanding,
       };
       this.selected.moveset.push(move);
@@ -312,16 +395,7 @@ export default class BoardIX {
         piece.isStanding = false;
       }
 
-      // Move selection from currentSquare to new square
-      currentSquare.popPieces(this.selected.pieces.length);
-      square.pushPieces(this.selected.pieces);
-
-      if (altSelect) {
-        // Drop all
-        this._deselectAllPieces();
-      } else {
-        this._deselectPiece();
-      }
+      this._deselectPieces(this.selected.pieces.slice(0, count));
 
       // If there's nowhere left to continue, drop the rest
       if (
