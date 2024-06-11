@@ -117,6 +117,7 @@ export default {
   up: "mdi-chevron-up",
   update: "mdi-cached",
   url: "mdi-link",
+  url_short: "mdi-link-box-outline",
   visibility: "mdi-eye",
   visibility_off: "mdi-eye-off",
   warning: "mdi-alert",

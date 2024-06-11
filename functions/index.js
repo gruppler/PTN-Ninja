@@ -19,6 +19,37 @@ const httpError = function (type, message) {
   throw new functions.https.HttpsError(type, message || type);
 };
 
+// URL Shortener
+exports.short = functions.https.onRequest(async (request, response) => {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    if (request.method === "POST") {
+      const params = JSON.parse(request.body);
+      if (params && params.ptn) {
+        params.created = new Date();
+        if ("ply" in params) {
+          params.ply = String(params.ply);
+        }
+        const ref = await db.collection("urls").add(params);
+        response.send("https://ptn.ninja/s/" + ref.id);
+      } else {
+        response.status(400).send({ message: "Invalid request" });
+      }
+    } else if (request.method === "GET" && request.query.id) {
+      const snapshot = await db.collection("urls").doc(request.query.id).get();
+      if (snapshot.exists) {
+        response.send(JSON.stringify(snapshot.data()));
+      } else {
+        response.status(400).send({ message: "URL alias not found" });
+      }
+    }
+  } catch (error) {
+    response.status(400).send({ message: error.message });
+    console.error(error);
+  }
+  return true;
+});
+
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
   const { TPStoPNG } = await import("tps-ninja");
@@ -208,6 +239,7 @@ async function deleteInactiveUser(user) {
       );
     }
   }
+  return true;
 }
 
 async function getInactiveUsers(users = [], nextPageToken) {
