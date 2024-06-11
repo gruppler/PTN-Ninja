@@ -351,7 +351,7 @@ export default {
 
         if (!this.gameID) {
           if (!this.games.length) {
-            this.$store.dispatch("game/ADD_GAME", {
+            await this.$store.dispatch("game/ADD_GAME", {
               ptn: this.$game.toString(),
               name: this.$game.name,
               state: this.$game.minState,
@@ -425,7 +425,7 @@ export default {
               game = new Game({ ptn: this.ptn, name, state: this.state });
             }
             if (game) {
-              this.$store.dispatch("game/ADD_GAME", game);
+              await this.$store.dispatch("game/ADD_GAME", game);
               this.$router.replace("/");
             }
           } else {
