@@ -665,11 +665,6 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "focusText":
-          this.textTab = "notes";
-          this.showText = true;
-          this.$nextTick(() => this.$refs[this.textTab].$refs.input.focus());
-          break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
           break;

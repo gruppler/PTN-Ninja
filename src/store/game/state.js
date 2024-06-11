@@ -13,4 +13,5 @@ export default {
   selected: null,
   editingTPS: undefined,
   hlSquares: [],
+  hoveredSquare: null,
 };

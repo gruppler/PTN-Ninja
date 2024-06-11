@@ -183,6 +183,10 @@ export const HIGHLIGHT_SQUARES = (state, squares) => {
   postMessage("HIGHLIGHT_SQUARES", squares);
 };
 
+export const HOVER_SQUARE = (state, square) => {
+  state.hoveredSquare = square;
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -192,6 +196,13 @@ export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
       state.editingTPS !== undefined,
       selectedPiece
     );
+  }
+};
+
+export const SELECT_DROP_PIECES = (state, { square, count }) => {
+  const game = Vue.prototype.$game;
+  if (game && state.editingTPS === undefined) {
+    game.board.selectSquare(square, false, false, false, count);
   }
 };
 

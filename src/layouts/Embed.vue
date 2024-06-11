@@ -292,10 +292,6 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "focusText":
-          this.showText = true;
-          this.$nextTick(() => this.$refs.notes.$refs.input.focus());
-          break;
         case "game/UNDO":
         case "game/REDO":
           this.$store.dispatch(srcKey);
