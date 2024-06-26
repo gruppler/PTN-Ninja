@@ -22,9 +22,14 @@ const httpError = function (type, message) {
 // URL Shortener
 exports.short = functions.https.onRequest(async (request, response) => {
   const now = new Date();
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.set("Access-Control-Allow-Origin", "*");
   try {
-    if (request.method === "POST") {
+    if (request.method === "OPTIONS") {
+      // Send response to OPTIONS requests
+      response.set("Access-Control-Allow-Methods", "GET, POST");
+      response.set("Access-Control-Allow-Headers", "Content-Type");
+      response.status(204).send("");
+    } else if (request.method === "POST") {
       const params =
         typeof request.body === "string"
           ? JSON.parse(request.body)
@@ -67,9 +72,9 @@ exports.png = functions.https.onRequest(async (request, response) => {
   const { TPStoPNG } = await import("tps-ninja");
 
   try {
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Content-Type", "image/png");
-    response.setHeader(
+    response.set("Access-Control-Allow-Origin", "*");
+    response.set("Content-Type", "image/png");
+    response.set(
       "Content-Disposition",
       `attachment; filename="${request.query.name || "takboard.png"}"`
     );
@@ -85,9 +90,9 @@ exports.gif = functions.https.onRequest(async (request, response) => {
   const { TPStoGIF } = await import("tps-ninja");
 
   try {
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Content-Type", "image/gif");
-    response.setHeader(
+    response.set("Access-Control-Allow-Origin", "*");
+    response.set("Content-Type", "image/gif");
+    response.set(
       "Content-Disposition",
       `attachment; filename="${request.query.name || "takboard.gif"}"`
     );
