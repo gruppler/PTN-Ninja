@@ -1,3 +1,4 @@
+import { Loading } from "quasar";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
@@ -289,6 +290,7 @@ export const urlShort =
     }
 
     try {
+      Loading.show();
       const response = await fetch(SHORTENER_SERVICE, {
         method: "POST",
         mode: "cors",
@@ -302,8 +304,10 @@ export const urlShort =
           return notifyError("HTTP-Error: " + response.status);
         }
       }
+      Loading.hide();
       return await response.text();
     } catch (error) {
+      Loading.hide();
       notifyError(error);
       return false;
     }
