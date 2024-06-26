@@ -249,7 +249,7 @@ export const url =
 
 const SHORTENER_SERVICE = process.env.DEV
   ? `http://localhost:5001/${process.env.projectId}/us-central1/short`
-  : "https://url.ptn.ninja/short";
+  : "https://us-central1-ptn-ninja.cloudfunctions.net/short";
 
 export const urlShort =
   () =>
