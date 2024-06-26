@@ -38,6 +38,8 @@ exports.short = functions.https.onRequest(async (request, response) => {
         response.send("https://ptn.ninja/s/" + ref.id);
       } else {
         response.status(400).send({ message: "Invalid request" });
+        console.log("body", request.body);
+        console.log("query", request.query);
       }
     } else if (request.method === "GET" && request.query.id) {
       const ref = db.collection("urls").doc(request.query.id);
@@ -48,6 +50,10 @@ exports.short = functions.https.onRequest(async (request, response) => {
       } else {
         response.status(400).send({ message: "URL alias not found" });
       }
+    } else {
+      response.status(400).send({ message: "Invalid request" });
+      console.log("body", request.body);
+      console.log("query", request.query);
     }
   } catch (error) {
     response.status(400).send({ message: error.message });
