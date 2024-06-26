@@ -25,7 +25,10 @@ exports.short = functions.https.onRequest(async (request, response) => {
   response.setHeader("Access-Control-Allow-Origin", "*");
   try {
     if (request.method === "POST") {
-      const params = JSON.parse(request.body);
+      const params =
+        typeof request.body === "string"
+          ? JSON.parse(request.body)
+          : request.body;
       if (params && params.ptn) {
         params.created = now;
         if ("ply" in params) {
