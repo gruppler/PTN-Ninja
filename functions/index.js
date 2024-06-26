@@ -21,12 +21,13 @@ const httpError = function (type, message) {
 
 // URL Shortener
 exports.short = functions.https.onRequest(async (request, response) => {
+  const now = new Date();
   response.setHeader("Access-Control-Allow-Origin", "*");
   try {
     if (request.method === "POST") {
       const params = JSON.parse(request.body);
       if (params && params.ptn) {
-        params.created = new Date();
+        params.created = now;
         if ("ply" in params) {
           params.ply = String(params.ply);
         }
@@ -36,9 +37,11 @@ exports.short = functions.https.onRequest(async (request, response) => {
         response.status(400).send({ message: "Invalid request" });
       }
     } else if (request.method === "GET" && request.query.id) {
-      const snapshot = await db.collection("urls").doc(request.query.id).get();
+      const ref = db.collection("urls").doc(request.query.id);
+      const snapshot = await ref.get();
       if (snapshot.exists) {
         response.send(JSON.stringify(snapshot.data()));
+        await ref.update({ accessed: now });
       } else {
         response.status(400).send({ message: "URL alias not found" });
       }
