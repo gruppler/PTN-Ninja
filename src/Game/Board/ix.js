@@ -320,7 +320,8 @@ export default class BoardIX {
       } else if (count) {
         if (count === "all") {
           this._deselectAllPieces();
-          last(this.selected.moveset).count = this.selected.initialCount;
+          count = this.selected.initialCount;
+          last(this.selected.moveset).count = count;
         } else if (count === "friendly") {
           for (let i = this.selected.pieces.length; i >= 0; i--) {
             const topPiece = square.pieces[square.pieces.length - i];
@@ -358,7 +359,7 @@ export default class BoardIX {
 
       if (count) {
         if (count === "all") {
-          this.selected.pieces.length;
+          count = this.selected.pieces.length;
         } else if (count === "friendly") {
           for (let i = 0; i < this.selected.pieces.length; i++) {
             if (this.selected.pieces[i].color === this.turn) {
