@@ -164,29 +164,28 @@ export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function ({ dispatch }, { text, title }) {
-  return copyToClipboard(text)
-    .then(() => {
-      dispatch("NOTIFY", {
-        icon: "copy",
-        message: i18n.t(title ? "success.copiedItem" : "success.copied", {
-          item: title,
-        }),
-        timeout: 1000,
-      });
-    })
-    .catch(() => {
-      Dialog.create({
-        class: "bg-ui",
-        color: "primary",
-        prompt: {
-          model: text,
-          filled: true,
-          type: text && text.includes("\n") ? "textarea" : "text",
-        },
-        cancel: false,
-      });
+export const COPY = async function ({ dispatch }, { text, title }) {
+  try {
+    await copyToClipboard(text);
+    dispatch("NOTIFY", {
+      icon: "copy",
+      message: i18n.t(title ? "success.copiedItem" : "success.copied", {
+        item: title,
+      }),
+      timeout: 1000,
     });
+  } catch (error) {
+    Dialog.create({
+      class: "bg-ui",
+      color: "primary",
+      prompt: {
+        model: text,
+        filled: true,
+        type: text && text.includes("\n") ? "textarea" : "text",
+      },
+      cancel: false,
+    });
+  }
 };
 
 export const PASTE = function ({ dispatch }) {
