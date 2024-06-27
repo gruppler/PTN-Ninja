@@ -143,6 +143,7 @@ export default {
   "Orthogonal Board": "Orthogonal Board",
   Padding: "Padding",
   Password: "Password",
+  "Permanent Link": "Permanent Link",
   Perspective: "Perspective",
   "Piece Shadows": "Piece Shadows",
   Play: "Play",
