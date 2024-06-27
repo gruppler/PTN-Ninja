@@ -55,7 +55,7 @@
                 :label="$t('analysis.maxSuggestedMoves')"
                 type="number"
                 min="1"
-                max="99"
+                max="20"
                 step="1"
                 item-aligned
                 filled
@@ -756,9 +756,7 @@ export default {
     },
     hashBotSettings(settings) {
       if (settings.bot === "tiltak") {
-        return Object.values(pick(settings, ["bot", "maxSuggestedMoves"])).join(
-          ","
-        );
+        return Object.values(pick(settings, ["bot"])).join(",");
       } else {
         return Object.values(
           pick(settings, ["bot", "depth", "timeBudget"])
@@ -1245,9 +1243,7 @@ export default {
           this.dbSettings.komi === null
             ? null
             : parseFloat(this.dbSettings.komi);
-        const max_suggested_moves = parseInt(
-          this.dbSettings.maxSuggestedMoves || 20
-        );
+        const max_suggested_moves = 20;
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
           tournament: this.dbSettings.tournament,
