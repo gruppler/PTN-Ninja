@@ -62,12 +62,18 @@ export default {
   computed: {
     themes() {
       return Object.freeze(
-        this.$store.getters["ui/themes"].map((theme, index) => ({
-          value: theme.id,
-          label: theme.name,
-          index,
-          theme,
-        }))
+        this.$store.getters["ui/themes"]
+          .map((theme, index) => ({
+            value: theme.id,
+            label: theme.name,
+            index,
+            theme,
+          }))
+          .sort((a, b) => {
+            a = a.label.toLowerCase();
+            b = b.label.toLowerCase();
+            return a < b ? -1 : a === b ? 0 : 1;
+          })
       );
     },
     theme: {
