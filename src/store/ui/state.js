@@ -23,8 +23,8 @@ let defaults = {
   botSettings: {
     bot: "tiltak",
     maxSuggestedMoves: 8,
-    depth: 6,
-    timeBudget: 120,
+    depth: 12,
+    timeBudget: 30,
   },
   animateBoard: true,
   animateScrub: false,
