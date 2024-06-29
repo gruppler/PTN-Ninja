@@ -62,7 +62,7 @@ export default class BoardIX {
           }
         }
       }
-    } else if (!this.isGameEnd) {
+    } else if (!this.isGameEnd || this.isGameEndDefault) {
       if (this.turn === this.player) {
         // It's the user's turn
         if (!piece) {
