@@ -203,7 +203,7 @@ export const PASTE = function ({ dispatch }) {
 };
 
 export const SHARE = function ({ dispatch, state }, { text, title }) {
-  if (state.nativeSharing && navigator.share) {
+  if (navigator.canShare && state.nativeSharing) {
     navigator.share({ text, title }).catch((error) => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
