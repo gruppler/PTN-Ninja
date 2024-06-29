@@ -18,6 +18,7 @@ export default {
   Beginning: "Beginning",
   Board: "Board",
   "Board Preferences": "Board Preferences",
+  "Board Preferences Button": "Board Preferences Button",
   "Board Style": "Board Style",
   Bot: "Bot",
   Branches: "Branches",

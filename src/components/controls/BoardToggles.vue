@@ -16,7 +16,7 @@
     />
 
     <q-btn
-      v-if="!isEmbedded"
+      v-if="!isEmbedded || $store.state.ui.showBoardPrefsBtn"
       @contextmenu.prevent
       icon="settings"
       class="dimmed-btn"

@@ -17,7 +17,7 @@
 
     <template v-slot:append>
       <q-icon
-        v-if="editButton"
+        v-if="editButton && !$store.state.ui.embed"
         @click.stop="$router.push({ name: 'theme' })"
         name="edit"
         class="q-field__focusable-action"

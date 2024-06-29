@@ -64,6 +64,7 @@ let defaults = {
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
+  showBoardPrefsBtn: false,
   showControls: true,
   showPlayButton: true,
   showEval: true,
