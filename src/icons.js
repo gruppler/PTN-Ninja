@@ -111,6 +111,7 @@ export default {
   swap_vert: "mdi-swap-vertical",
   text: "mdi-text",
   time: "mdi-clock-outline",
+  to_top: "mdi-arrow-collapse-up",
   trim: "mdi-content-cut",
   ui: "mdi-view-quilt",
   undo: "mdi-undo",

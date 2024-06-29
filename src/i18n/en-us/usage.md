@@ -1,27 +1,39 @@
-# Getting Started
+# This App
 
-## Games
+This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org/portable-tak-notation/). Originally built for transcription of live games, it has become a fully-featured analysis tool for the game [Tak](https://ustak.org/play-beautiful-game-tak/).
 
-PTN Ninja can store multiple games to allow easy switching between them via the Game Selector. Loaded games are stored in the browser until closed from the Game Selector. You're responsible for closing games you no longer need.
+PTN Ninja is a [progressive web app](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app), which means you can install it on your device as if it were a native app. This provides several benefits, including faster load times.
 
-::: tip
-You can automatically close or download multiple games by **clicking** the game count.
+The app is built to work well out of the box on mobile devices and touch screens, but it also comes loaded with options and hotkeys.
+
 :::
 
-You can load games from **.ptn** or **.txt** files, or from URLs originating from [PlayTak](https://www.playtak.com/games) or PTN Ninja itself.
+- Press <kbd>P</kbd> to access the UI Preferences.
+- Press <kbd>Ctrl</kbd><kbd>/</kbd> to see a searchable list of hotkeys.
+
+:::
+
+# Games
+
+PTN Ninja stores your games in a database on your device to allow easy switching between them using the Game Selector. Games you load will be stored until you close them using the Game Selector.
+
+You can load games from your clipboard, files, [PlayTak](https://www.playtak.com/games) game IDs, or PTN Ninja links.
+
+::: tip
+
+Press <kbd>E</kbd> or **Right-click** the Game Selector's Info icon to edit the game metadata directly.
+
+:::
 
 :::
 
 - To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, to open the New Game dialog.
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, then select the Load Game tab.
-- Or, **drag** one or more **.ptn** or **.txt** files into the window.
+  - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
-- **Right-click** the Floating Action Button to switch to the previous game.
+  - **Right-click** the Floating Action Button to switch to the previous game.
+  - **Click** the game count to automatically close or download multiple games.
 
-:::
-
-::: tip
-To **right-click** on a touchscreen device, try **long-pressing**.
 :::
 
 ::: info Note
@@ -32,9 +44,17 @@ If you prefer to instead open the new game under a unique name (by appending an 
 **Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
 :::
 
+# Board
+
 ## Place a Stone
 
 PTN Ninja offers multiple modes of interaction for placing a stone. You may interact with the board directly, selecting an empty square multiple times to cycle the stone type, or you may select an un-played stone to determine its type before placing it.
+
+::: tip
+
+To **right-click** on a touchscreen device, try **long-pressing**.
+
+:::
 
 :::
 
@@ -48,7 +68,7 @@ PTN Ninja offers multiple modes of interaction for placing a stone. You may inte
 
 :::
 
-## Move a Stone or Stack
+## Move Stones
 
 Moving a stone or stack of stones is fairly straightforward:
 
@@ -58,7 +78,15 @@ Moving a stone or stack of stones is fairly straightforward:
   - Or, **right-click** a square to select pieces from the **top** of the stack.
 - Then, **click** further squares to drop pieces.
   - Or, **right-click** a square to pick up dropped pieces, or drop the remaining stack if there are none.
-- To cancel the move, **click** the initial square or press <kbd>esc</kbd>.
+- To cancel the move, **click** the initial square or press <kbd>Esc</kbd>.
+
+:::
+
+If you're using a keyboard and mouse, you can move stacks more efficiently:
+
+:::
+
+- You can press <kbd>Enter</kbd> while hovering a square to pick up or drop as many stones as possible.
 - You can also use <kbd>1-8</kbd> to pick up or drop specific numbers of pieces.
 - To dynamically select or drop pieces such that your piece remains on top, press <kbd>\`</kbd>.
 
@@ -67,6 +95,12 @@ Moving a stone or stack of stones is fairly straightforward:
 ## Playback
 
 PTN Ninja enables you to navigate the timeline of a game freely.
+
+::: tip
+
+The Play/Pause button can be hidden via UI Preferences.
+
+:::
 
 :::
 
@@ -86,14 +120,24 @@ To navigate through a game quickly, you can scrub using a **mouse wheel** or the
 
 :::
 
-## Board Transformation
+## Flip and Rotate
 
 PTN Ninja allows you to rotate and flip the orientation of the board, which may help reduce visual bias during analysis, or in getting a better view around tall stacks. This does not affect the notation, so the axis labels change accordingly.
 
+If you want to preserve a transformation, you can apply it to the game notation.
+
 :::
 
-- Use the Rotate and Flip buttons found next to the board, or hotkeys, to change the board orientation.
-- **Right-click** any of the Rotate/Flip buttons to reset the board orientation.
+- Use the Rotate and Flip button found next to the board (or hotkeys), to change the board orientation.
+- **Right-click** the Rotate/Flip button to reset the board orientation.
+
+:::
+
+:::
+
+- Rotate left, right, and 180° with <kbd>[</kbd>, <kbd>]</kbd> , and <kbd>-</kbd> respectively.
+- Flip horizontally and vertically with <kbd>;</kbd> and <kbd>Shift</kbd><kbd>;</kbd> respectively.
+- Reset or apply the transformation with <kbd>=</kbd> or <kbd>Shift</kbd><kbd>+</kbd> respectively.
 
 :::
 
@@ -109,21 +153,7 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 
 :::
 
-## Branches
-
-PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
-
-You can perform several actions on branches by **right-clicking** the branch name wherever it appears, such as in the branch menu next to the play controls.
-
-:::
-
-- Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
-- Use <kbd>▲/▼</kbd> to navigate between branches.
-- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
-
-:::
-
-## PTN
+# PTN
 
 [PTN](https://ustak.org/portable-tak-notation/) is the notation that describes the moves of the game. PTN Ninja reads and writes information using this notation.
 
@@ -136,7 +166,25 @@ You can perform several actions on branches by **right-clicking** the branch nam
 
 :::
 
-### Trimming
+## Branches
+
+PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the Branch button in the PTN toolbar.
+
+::: tip
+
+You can perform several actions on branches by **right-clicking** the branch name wherever it appears.
+
+:::
+
+:::
+
+- Click the Branch menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+- Use <kbd>▲/▼</kbd> to navigate between branches.
+- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
+
+:::
+
+## Trimming
 
 PTN Ninja provides a few automated tools for removing irrelevant information:
 
@@ -163,7 +211,9 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 :::
 
-## TPS Mode
+# TPS Mode
+
+[Tak Positional System (TPS)](https://ustak.org/tak-positional-system-tps/) is a notation used to describe Tak board states.
 
 TPS Mode enables you to create any board state directly. To enter TPS Mode, **click** the Edit icon in the TPS field of the New Game or Edit Game dialogs. TPS edit mode is available only for games with no plies.
 
@@ -171,5 +221,16 @@ TPS Mode enables you to create any board state directly. To enter TPS Mode, **cl
 
 - Select a piece type and color from the piece selector or unplayed pieces, then **click** a square to place a piece.
 - **Right-click** a square to remove a piece. The color and type of that piece will be selected.
+
+:::
+
+# Themes
+
+PTN Ninja offers a variety of built-in themes, but you can also create your own. You can select and edit themes using the Theme Selector found in both the Board Preferences and UI Preferences, or directly from the theme editor.
+
+:::
+
+- Access the theme editor directly using <kbd>Shift</kbd><kbd>T</kbd>.
+- Themes can be exported as JSON text, enabling you to share your theme with others.
 
 :::

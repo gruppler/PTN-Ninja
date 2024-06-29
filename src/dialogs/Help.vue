@@ -1,5 +1,5 @@
 <template>
-  <large-dialog :value="true" v-bind="$attrs">
+  <large-dialog id="help-dialog" ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <q-tabs
         v-model="section"
@@ -29,15 +29,60 @@
     </template>
 
     <div ref="help" class="help">
-      <q-tab-panels v-model="section" animated>
+      <q-tab-panels v-model="section" animated persistent>
         <q-tab-panel name="about">
-          <q-markdown :src="about" no-heading-anchor-links />
+          <q-markdown ref="markdown" :src="about" no-heading-anchor-links />
         </q-tab-panel>
 
         <q-tab-panel name="usage">
-          <q-markdown :src="usage" no-heading-anchor-links />
+          <ul class="toc" v-if="toc && width < 1200">
+            <li v-for="parent in toc" :key="parent.id">
+              <a
+                :href="$route.path + '#' + parent.id"
+                @click.prevent="tocScroll(parent.id)"
+                >{{ parent.label }}</a
+              >
+              <ul v-if="parent.children.length">
+                <li v-for="child in parent.children" :key="child.id">
+                  <a
+                    :href="$route.path + '#' + child.id"
+                    @click.prevent="tocScroll(child.id)"
+                    >{{ child.label }}</a
+                  >
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <q-page-sticky position="top-left" v-else-if="toc" :offset="[6, 6]">
+            <ul class="toc" v-if="toc">
+              <li v-for="parent in toc" :key="parent.id">
+                <a
+                  :href="$route.path + '#' + parent.id"
+                  @click.prevent="tocScroll(parent.id)"
+                  >{{ parent.label }}</a
+                >
+                <ul v-if="parent.children.length">
+                  <li v-for="child in parent.children" :key="child.id">
+                    <a
+                      :href="$route.path + '#' + child.id"
+                      @click.prevent="tocScroll(child.id)"
+                      >{{ child.label }}</a
+                    >
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </q-page-sticky>
+          <q-markdown
+            ref="markdown"
+            :src="usage"
+            no-heading-anchor-links
+            toc
+            @data="onTOC"
+          />
           <q-page-sticky position="top-right" :offset="[6, 6]">
             <FullscreenToggle
+              ref="fullscreen"
               :target="$refs.help"
               class="dimmed-btn"
               :ripple="false"
@@ -45,10 +90,21 @@
               fab
             />
           </q-page-sticky>
+          <q-page-sticky position="bottom-right" :offset="[6, 6]">
+            <q-btn
+              @click="tocScroll(0)"
+              class="dimmed-btn"
+              :ripple="false"
+              icon="to_top"
+              flat
+              fab
+            />
+          </q-page-sticky>
+          <q-resize-observer @resize="onResize" />
         </q-tab-panel>
 
         <q-tab-panel name="hotkeys">
-          <q-markdown no-heading-anchor-links>{{
+          <q-markdown ref="markdown" no-heading-anchor-links>{{
             $t("Hotkeys") + "\n==="
           }}</q-markdown>
           <Hotkeys ref="hotkeys" v-model="filter" />
@@ -77,6 +133,8 @@ export default {
       about: "",
       usage: "",
       filter: "",
+      toc: null,
+      width: null,
     };
   },
   computed: {
@@ -87,6 +145,38 @@ export default {
       set(section) {
         this.$router.replace({ params: { section } });
       },
+    },
+  },
+  methods: {
+    onResize({ width }) {
+      this.width = width;
+    },
+    onTOC(toc) {
+      if (this.$refs.markdown) {
+        this.toc = this.$refs.markdown.makeTree(toc);
+      }
+    },
+    isFullscreen() {
+      return this.$refs.fullscreen ? this.$refs.fullscreen.isActive : false;
+    },
+    getScroller() {
+      return this.isFullscreen()
+        ? document.querySelector("#help-dialog .help")
+        : document.querySelector("#help-dialog .scroll");
+    },
+    tocScroll(id) {
+      const scroller = this.getScroller();
+      if (!scroller) {
+        return;
+      }
+      if (id === 0) {
+        scroller.scrollTop = 0;
+      } else {
+        const el = document.getElementById(id);
+        if (el) {
+          scroller.scrollTop = el.offsetTop;
+        }
+      }
     },
   },
   created() {
@@ -130,24 +220,52 @@ export default {
     }
   }
 
+  a {
+    color: $primary;
+    color: var(--q-color-primary);
+    border-bottom: none;
+    white-space: nowrap;
+    text-decoration: underline;
+  }
+
+  ul ul {
+    padding-inline-start: 16px;
+  }
+
+  .toc {
+    float: left;
+    position: relative;
+    z-index: 1;
+    padding-left: 0;
+    margin-left: 16px;
+    margin-right: 1em;
+
+    font-weight: bold;
+
+    ul {
+      font-weight: normal;
+    }
+  }
+
   .q-markdown {
     max-width: 900px;
     margin: 0 auto;
 
     .q-markdown--link {
-      color: $primary;
-      color: var(--q-color-primary);
-      border-bottom: none;
-      text-decoration: underline;
-      white-space: nowrap;
       &.q-markdown--link-external:after {
         content: "\F03CC";
         font-family: "Material Design Icons";
       }
+    }
 
-      &:hover {
-        text-decoration: underline;
-      }
+    .q-markdown--note {
+      clear: left;
+    }
+
+    .q-markdown--note--tip {
+      float: right;
+      width: 40%;
+      margin-left: 1em;
     }
   }
 }
