@@ -509,7 +509,7 @@
           </q-item>
           <AnalysisItem
             v-else
-            v-for="(move, i) in dbMoves"
+            v-for="(move, i) in dbMoves.slice(0, dbSettings.maxSuggestedMoves)"
             :key="i"
             :ply="move.ply"
             :evaluation="move.evaluation"
@@ -764,7 +764,7 @@ export default {
       }
     },
     hashDBSettings(settings) {
-      return Object.values(settings).join(",");
+      return Object.values(omit(settings, "maxSuggestedMoves")).join(",");
     },
 
     nextPly(player, color) {
