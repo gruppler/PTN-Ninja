@@ -328,9 +328,9 @@ export const GO_TO_PLY = function (state, { plyID, isDone }) {
 };
 
 export const EDIT_TPS = function (state, tps) {
-  state.list[0].editingTPS = tps || undefined;
-  state.editingTPS = tps || undefined;
-  Vue.prototype.$game.setEditingTPS(tps || undefined);
+  state.list[0].editingTPS = tps;
+  state.editingTPS = tps;
+  Vue.prototype.$game.setEditingTPS(tps);
 };
 
 export const SAVE_TPS = function (state, tps) {
