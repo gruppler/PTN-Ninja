@@ -23,7 +23,11 @@
         class="q-px-md"
       >
         <template v-slot:plyTooltip>
-          <PlyPreview :tps="ply.tpsAfter" :hl="ply.text" />
+          <PlyPreview
+            :tps="ply.tpsAfter"
+            :hl="ply.text"
+            :options="$store.state.game.config"
+          />
         </template>
       </Move>
       <q-item
@@ -45,6 +49,7 @@
             <PlyPreview
               :tps="ply.tpsBefore"
               :plies="pv.slice(0, j + 1).map((p) => p.ptn)"
+              :options="$store.state.game.config"
             />
           </Ply>
         </q-item-label>

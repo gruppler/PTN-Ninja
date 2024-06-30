@@ -133,7 +133,7 @@
           </q-item-section>
           <q-item-section side>
             <q-icon name="board">
-              <PlyPreview :tps="tags.tps.text" />
+              <PlyPreview :tps="tags.tps.text" :options="game.config" />
             </q-icon>
           </q-item-section>
         </template>
