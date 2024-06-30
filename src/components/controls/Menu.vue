@@ -28,7 +28,7 @@ export default {
       items: [
         {
           icon: "add",
-          label: this.$t("New Game"),
+          label: this.$t("Add Game"),
           action: "add",
         },
         {

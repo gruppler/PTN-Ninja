@@ -5,6 +5,7 @@ export default {
   About: "About",
   Account: "Account",
   Action: "Action",
+  "Add Game": "Load/Create Game",
   Analysis: "Analysis",
   "Animate Board": "Animate Board",
   "Animate while scrubbing": "Animate while scrubbing",
