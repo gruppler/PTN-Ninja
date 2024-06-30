@@ -22,7 +22,7 @@
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: highlighterEnabled,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
-        eog: position.isGameEnd,
+        eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
         'pieces-selected': selected.pieces.length > 0,
         'rotate-1': transform[0] === 1,

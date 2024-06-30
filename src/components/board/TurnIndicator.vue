@@ -69,11 +69,6 @@ export default {
     board() {
       return this.$store.state.game.board;
     },
-    turn() {
-      return this.$store.state.game.editingTPS !== undefined
-        ? this.$store.state.ui.selectedPiece.color
-        : this.position.turn;
-    },
     boardPly() {
       return this.board.ply;
     },
