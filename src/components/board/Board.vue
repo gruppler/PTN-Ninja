@@ -6,8 +6,6 @@
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     @wheel="scroll"
-    v-shortkey="isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys"
-    @shortkey="shortkey"
     ref="wrapper"
   >
     <div
@@ -34,6 +32,10 @@
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
+      v-shortkey="
+        isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys
+      "
+      @shortkey="shortkey"
       ref="container"
     >
       <TurnIndicator :hide-names="hideNames" />
