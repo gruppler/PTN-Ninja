@@ -164,7 +164,10 @@
     <GameNotifications />
     <NoteNotifications />
   </q-layout>
-  <q-dialog v-else :value="true" persistent>No Game</q-dialog>
+  <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
+    No Game
+  </q-dialog>
+  <q-inner-loading v-else showing />
 </template>
 
 <script>
@@ -237,6 +240,9 @@ export default {
     };
   },
   computed: {
+    gamesInitialized() {
+      return this.$store.state.game.init;
+    },
     gameExists() {
       return Boolean(this.$store.state.game.name);
     },
@@ -339,6 +345,31 @@ export default {
     },
   },
   methods: {
+    async init() {
+      if (this.gamesInitialized) {
+        await this.getGame();
+
+        if (!this.gameID) {
+          if (!this.games.length) {
+            await this.$store.dispatch("game/ADD_GAME", {
+              ptn: this.$game.toString(),
+              name: this.$game.name,
+              state: this.$game.minState,
+              config: this.$game.config,
+            });
+          }
+        }
+
+        const lists = document.querySelectorAll(
+          ".q-notifications .q-notifications__list--top"
+        );
+        for (const list of lists) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.gameNotificationContainer.$el.appendChild(list);
+        }
+      }
+    },
     newGame() {
       const game = new Game({
         player1: this.$store.state.ui.player1,
@@ -394,7 +425,7 @@ export default {
               game = new Game({ ptn: this.ptn, name, state: this.state });
             }
             if (game) {
-              this.$store.dispatch("game/ADD_GAME", game);
+              await this.$store.dispatch("game/ADD_GAME", game);
               this.$router.replace("/");
             }
           } else {
@@ -634,11 +665,6 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "focusText":
-          this.textTab = "notes";
-          this.showText = true;
-          this.$nextTick(() => this.$refs[this.textTab].$refs.input.focus());
-          break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
           break;
@@ -691,6 +717,9 @@ export default {
     },
   },
   watch: {
+    gamesInitialized() {
+      this.init();
+    },
     // game() {
     //   this.$store.dispatch("online/LISTEN_CURRENT_GAME");
     // },
@@ -750,35 +779,14 @@ export default {
     //   }
     // });
   },
-  async created() {
-    await this.getGame();
-
-    if (!this.gameID) {
-      if (!this.games.length) {
-        this.$store.dispatch("game/ADD_GAME", {
-          ptn: this.$game.toString(),
-          name: this.$game.name,
-          state: this.$game.minState,
-          config: this.$game.config,
-        });
-      }
-    }
+  mounted() {
+    this.init();
 
     // Listen for dropped files
     if (window.File && window.FileReader && window.FileList && window.Blob) {
       window.addEventListener("drop", this.openFiles, true);
       window.addEventListener("dragover", this.nop, true);
       window.addEventListener("dragleave", this.nop, true);
-    }
-  },
-  mounted() {
-    const lists = document.querySelectorAll(
-      ".q-notifications .q-notifications__list--top"
-    );
-    for (const list of lists) {
-      list.style.display = "flex";
-      list.classList.remove("fixed");
-      this.$refs.gameNotificationContainer.$el.appendChild(list);
     }
   },
   beforeDestroy() {

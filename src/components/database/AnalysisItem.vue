@@ -14,7 +14,11 @@
       <q-item-section>
         <q-item-label>
           <Ply :ply="ply" no-click done>
-            <PlyPreview :tps="tps" :plies="[ply.text]" />
+            <PlyPreview
+              :tps="tps"
+              :plies="[ply.text]"
+              :options="$store.state.game.config"
+            />
           </Ply>
         </q-item-label>
       </q-item-section>
@@ -75,6 +79,7 @@
           <PlyPreview
             :tps="tps"
             :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
+            :options="$store.state.game.config"
           />
         </Ply>
       </q-item-label>

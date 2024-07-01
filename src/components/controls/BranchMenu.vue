@@ -31,7 +31,11 @@
             class="col-shrink"
           />
           <Ply :ply="ply" no-branches no-click>
-            <PlyPreview :tps="ply.tpsAfter" :hl="ply.text" />
+            <PlyPreview
+              :tps="ply.tpsAfter"
+              :hl="ply.text"
+              :options="$store.state.game.config"
+            />
           </Ply>
         </q-item-label>
       </q-item>

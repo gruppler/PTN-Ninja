@@ -2,6 +2,8 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const hashObject = require("object-hash");
+
 let firebase;
 if (admin.apps.length === 0) {
   firebase = admin.initializeApp();
@@ -19,14 +21,68 @@ const httpError = function (type, message) {
   throw new functions.https.HttpsError(type, message || type);
 };
 
+// URL Shortener
+exports.short = functions.https.onRequest(async (request, response) => {
+  const now = new Date();
+  response.set("Access-Control-Allow-Origin", "*");
+  try {
+    if (request.method === "OPTIONS") {
+      // Send response to OPTIONS requests
+      response.set("Access-Control-Allow-Methods", "GET, POST");
+      response.set("Access-Control-Allow-Headers", "Content-Type");
+      response.status(204).send("");
+    } else if (request.method === "POST") {
+      const params =
+        typeof request.body === "string"
+          ? JSON.parse(request.body)
+          : request.body;
+      if (params && params.ptn) {
+        const hash = hashObject(params);
+        const ref = db.collection("urls").doc(hash);
+        const snapshot = await ref.get();
+        if (!snapshot.exists) {
+          params.created = now;
+          params.accessed = null;
+          if ("ply" in params) {
+            params.ply = String(params.ply);
+          }
+          await ref.set(params);
+        }
+        response.send("https://ptn.ninja/s/" + ref.id);
+      } else {
+        response.status(400).send({ message: "Invalid request" });
+        console.log("body", request.body);
+        console.log("query", request.query);
+      }
+    } else if (request.method === "GET" && request.query.id) {
+      const ref = db.collection("urls").doc(request.query.id);
+      const snapshot = await ref.get();
+      if (snapshot.exists) {
+        response.send(JSON.stringify(snapshot.data()));
+        await ref.update({ accessed: now });
+      } else {
+        response.status(400).send({ message: "URL alias not found" });
+      }
+    } else {
+      response.status(400).send({ message: "Invalid request" });
+      console.log("body", request.body);
+      console.log("query", request.query);
+    }
+  } catch (error) {
+    response.status(400).send({ message: error.message });
+    console.error(error);
+  }
+  return true;
+});
+
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
   const { TPStoPNG } = await import("tps-ninja");
 
   try {
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Content-Type", "image/png");
-    response.setHeader(
+    response.set("Access-Control-Allow-Origin", "*");
+    response.set("Content-Type", "image/png");
+    response.set(
       "Content-Disposition",
       `attachment; filename="${request.query.name || "takboard.png"}"`
     );
@@ -42,9 +98,9 @@ exports.gif = functions.https.onRequest(async (request, response) => {
   const { TPStoGIF } = await import("tps-ninja");
 
   try {
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Content-Type", "image/gif");
-    response.setHeader(
+    response.set("Access-Control-Allow-Origin", "*");
+    response.set("Content-Type", "image/gif");
+    response.set(
       "Content-Disposition",
       `attachment; filename="${request.query.name || "takboard.gif"}"`
     );
@@ -208,6 +264,7 @@ async function deleteInactiveUser(user) {
       );
     }
   }
+  return true;
 }
 
 async function getInactiveUsers(users = [], nextPageToken) {

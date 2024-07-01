@@ -5,9 +5,9 @@ import { THEMES } from "../../themes";
 let defaults = {
   offline: !navigator.onLine,
   analysisSections: {
-    botSuggestions: true,
-    dbMoves: true,
-    dbGames: true,
+    botSuggestions: false,
+    dbMoves: false,
+    dbGames: false,
   },
   dbSettings: {
     includeBotGames: false,
@@ -23,8 +23,8 @@ let defaults = {
   botSettings: {
     bot: "tiltak",
     maxSuggestedMoves: 8,
-    depth: 6,
-    timeBudget: 120,
+    depth: 12,
+    timeBudget: 30,
   },
   animateBoard: true,
   animateScrub: false,
@@ -64,6 +64,7 @@ let defaults = {
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
+  showBoardPrefsBtn: false,
   showControls: true,
   showPlayButton: true,
   showEval: true,
@@ -148,6 +149,7 @@ let state = {
   embed: Platform.within.iframe,
   scrubbing: false,
   thumbnails: {},
+  shortLinks: {},
   defaults,
   ...defaults,
 };

@@ -157,7 +157,7 @@ export default {
       }
     },
     resetTPS() {
-      this.$store.dispatch("game/RESET_TPS");
+      this.$store.dispatch("game/EDIT_TPS", undefined);
     },
     saveTPS() {
       this.$store.dispatch("game/SAVE_TPS", this.editingTPS);
@@ -206,8 +206,8 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border-width: $piece-border-width;
-    border-width: var(--piece-border-width);
+    border-width: ($piece-border-width * 0.075vmin);
+    border-width: calc(var(--piece-border-width) * 0.075vmin);
     border-style: solid;
     border-radius: 10%;
     box-shadow: $shadow-1;

@@ -13,11 +13,7 @@
     {
       "site": "ptn-ninja",
       "public": "dist/pwa",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
@@ -28,11 +24,7 @@
     {
       "site": "ptn-ninja-staging",
       "public": "dist/pwa",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
@@ -43,11 +35,7 @@
     {
       "site": "ptn-ninja-dev",
       "public": "dist/pwa",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
@@ -67,6 +55,10 @@
         {
           "source": "gif",
           "function": "gif"
+        },
+        {
+          "source": "short",
+          "function": "short"
         }
       ]
     }

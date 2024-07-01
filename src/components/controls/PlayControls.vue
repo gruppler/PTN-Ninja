@@ -139,12 +139,8 @@ const BRANCH_KEYS = [
   "branchMenu",
   "prevBranch",
   "nextBranch",
-  "prevBranchEnd",
-  "nextBranchEnd",
   "firstBranch",
   "lastBranch",
-  "firstBranchEnd",
-  "lastBranchEnd",
 ];
 
 export default {
@@ -300,16 +296,10 @@ export default {
           break;
         case "prevBranch":
         case "nextBranch":
-        case "prevBranchEnd":
-        case "nextBranchEnd":
         case "firstBranch":
         case "lastBranch":
-        case "firstBranchEnd":
-        case "lastBranchEnd":
           this[srcKey]();
           break;
-        default:
-          this.selectBranch(this.branches[srcKey]);
       }
     },
     prevBranch() {
@@ -322,14 +312,6 @@ export default {
         this.selectBranch(this.branches[this.branchIndex + 1]);
       }
     },
-    prevBranchEnd() {
-      this.prevBranch();
-      this.last();
-    },
-    nextBranchEnd() {
-      this.nextBranch();
-      this.last();
-    },
     firstBranch() {
       if (this.branches.length) {
         this.selectBranch(this.branches[0]);
@@ -339,14 +321,6 @@ export default {
       if (this.branches.length) {
         this.selectBranch(this.branches[this.branches.length - 1]);
       }
-    },
-    firstBranchEnd() {
-      this.firstBranch();
-      this.last();
-    },
-    lastBranchEnd() {
-      this.lastBranch();
-      this.last();
     },
   },
   watch: {

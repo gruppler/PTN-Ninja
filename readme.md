@@ -6,50 +6,50 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org
 - Intuitive, with a minimal UI that is enjoyable to use.
 - Responsive, with a fluid design that works as well on a phone as it does in full-screen on a desktop.
 
-# Installation
+## Installation
 
-## Prerequisites
+### Prerequisites
 
 - Quasar: https://quasar.dev/quasar-cli/installation
 - Firebase: https://firebase.google.com/docs/emulator-suite/install_and_configure
 
-## Install the client-side dependencies
+### Install the client-side dependencies
 
 ```bash
 yarn
 ```
 
-## Install the server-side dependencies (optional)
+### Install the server-side dependencies (optional)
 
 ```bash
 pushd functions && npm install && popd
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+#### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash
 yarn dev
 ```
 
-### Start the server emulators (optional)
+#### Start the server emulators (optional)
 
 ```bash
 yarn emulate
 ```
 
-### Lint the files
+#### Lint the files
 
 ```bash
 yarn lint
 ```
 
-### Build the app for production
+#### Build the app for production
 
 ```bash
 yarn build
 ```
 
-# API
+## API
 
 PTN Ninja can send and receive messages with its opening or parent window using [`Window.postMessage()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage). These messages are objects containing an `action`, as well as a `value` where applicable.
 
@@ -238,13 +238,15 @@ For example:
 
 - Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
 
-# URLs
+## URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.
 
 The structure of the URL is as follows:
 
 `https://ptn.ninja/<PTN>&<param1>=<value1>&<param2>=<value2>[...]`
+
+To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` with request body `{ ptn, params }`. If the request is valid, you'll receive the complete shortenend URL as plain text in response.
 
 ### URL Parameters
 
@@ -254,7 +256,7 @@ The structure of the URL is as follows:
 
 #### `ply`
 
-- ID of the current ply
+- Index of the current ply
 - Ending with `!` means `plyIsDone == true`
 
 #### `targetBranch`

@@ -7,6 +7,11 @@ export const SET_ERROR = (state, error) => {
   state.error = error;
 };
 
+export const INIT = (state, games) => {
+  state.list = games;
+  state.init = true;
+};
+
 export const SET_GAME = (state, game) => {
   const handleError = (error, plyID) => {
     state.error = error.message || error;
@@ -125,24 +130,6 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
   }
 };
 
-export const SAVE_UNDO_HISTORY = (state) => {
-  const game = Vue.prototype.$game;
-  if (game && state.list[0]) {
-    state.list[0].history = game.history.concat();
-  }
-};
-
-export const SAVE_UNDO_INDEX = (state) => {
-  const game = Vue.prototype.$game;
-  if (game && state.list[0]) {
-    Vue.set(state.list[0], "historyIndex", game.historyIndex);
-  }
-};
-
-export const SAVE_PTN = (state, ptn) => {
-  state.list[0].ptn = ptn;
-};
-
 export const SET_NAME = (state, { oldName, newName }) => {
   let stateGame = state.list.find((g) => g.name === oldName);
   if (stateGame) {
@@ -196,6 +183,10 @@ export const HIGHLIGHT_SQUARES = (state, squares) => {
   postMessage("HIGHLIGHT_SQUARES", squares);
 };
 
+export const HOVER_SQUARE = (state, square) => {
+  state.hoveredSquare = square;
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -205,6 +196,13 @@ export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
       state.editingTPS !== undefined,
       selectedPiece
     );
+  }
+};
+
+export const SELECT_DROP_PIECES = (state, { square, count }) => {
+  const game = Vue.prototype.$game;
+  if (game && state.editingTPS === undefined) {
+    game.board.selectSquare(square, false, false, false, count);
   }
 };
 
@@ -339,12 +337,6 @@ export const SAVE_TPS = function (state, tps) {
   state.list[0].editingTPS = undefined;
   state.editingTPS = undefined;
   Vue.prototype.$game.setTags({ tps });
-  Vue.prototype.$game.setEditingTPS();
-};
-
-export const RESET_TPS = function (state) {
-  state.list[0].editingTPS = undefined;
-  state.editingTPS = undefined;
   Vue.prototype.$game.setEditingTPS();
 };
 

@@ -20,7 +20,7 @@
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: highlighterEnabled,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
-        eog: position.isGameEnd,
+        eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
         'pieces-selected': selected.pieces.length > 0,
         'rotate-1': transform[0] === 1,
@@ -32,6 +32,10 @@
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
+      v-shortkey="
+        isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys
+      "
+      @shortkey="shortkey"
       ref="container"
     >
       <TurnIndicator :hide-names="hideNames" />
@@ -115,6 +119,7 @@
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
+import { HOTKEYS } from "../../keymap";
 
 import { forEach, throttle } from "lodash";
 
@@ -146,6 +151,7 @@ export default {
       prevBoardRotation: null,
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
+      hotkeys: HOTKEYS.MOVES,
     };
   },
   computed: {
@@ -333,8 +339,28 @@ export default {
         ? `translate(${translate}) scale(${scale}) rotateZ(${rotateZ}) rotate3d(${rotate3d})`
         : "";
     },
+    isDialogOpen() {
+      return !["local", "game"].includes(this.$route.name);
+    },
+    isHighlighting() {
+      return this.$store.state.ui.highlighterEnabled;
+    },
+    isEditingTPS() {
+      return this.$store.state.game.editingTPS !== undefined;
+    },
   },
   methods: {
+    shortkey({ srcKey }) {
+      if (srcKey === "cancelMove") {
+        this.$store.dispatch("game/CANCEL_MOVE");
+      } else {
+        let square = this.$store.state.game.hoveredSquare;
+        const count = srcKey.slice(10).toLowerCase();
+        if (square !== null) {
+          this.$store.dispatch("game/SELECT_DROP_PIECES", { square, count });
+        }
+      }
+    },
     highlightStart(event) {
       if (!event || !event.target || !event.target.dataset.coord) {
         return;

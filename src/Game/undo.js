@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 
-const maxHistoryLength = 3;
+const maxHistoryLength = 5;
 
 export default class GameUndo {
   get canUndo() {

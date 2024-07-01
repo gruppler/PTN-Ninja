@@ -65,7 +65,7 @@ export default {
       return this.$store.state.game;
     },
     config() {
-      return { ...thumbnailConfig, theme: this.theme };
+      return { ...this.game.config, ...thumbnailConfig, theme: this.theme };
     },
     size() {
       return {

@@ -143,7 +143,7 @@ import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 
 import { Platform } from "quasar";
-import { defaults, forEach, isEqual } from "lodash";
+import { forEach, isEqual } from "lodash";
 
 export default {
   name: "EmbedLayout",
@@ -292,10 +292,6 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
-        case "focusText":
-          this.showText = true;
-          this.$nextTick(() => this.$refs.notes.$refs.input.focus());
-          break;
         case "game/UNDO":
         case "game/REDO":
           this.$store.dispatch(srcKey);
