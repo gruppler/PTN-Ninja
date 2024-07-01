@@ -1,7 +1,13 @@
 import Vue from "vue";
 import JSZip from "jszip";
 
-import { copyToClipboard, exportFile, LocalStorage, Dialog } from "quasar";
+import {
+  copyToClipboard,
+  exportFile,
+  Loading,
+  LocalStorage,
+  Dialog,
+} from "quasar";
 import {
   prompt,
   notify,
@@ -11,10 +17,11 @@ import {
   notifyHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
+import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
-import { isArray, isFunction, isString } from "lodash";
-import hash from "object-hash";
+import { cloneDeep, isArray, isFunction, isString } from "lodash";
 import { TPStoPNG } from "tps-ninja";
+import hashObject from "object-hash";
 
 export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
@@ -164,29 +171,28 @@ export const DOWNLOAD_FILES = async ({ dispatch, getters }, files) => {
   }
 };
 
-export const COPY = function ({ dispatch }, { text, title }) {
-  return copyToClipboard(text)
-    .then(() => {
-      dispatch("NOTIFY", {
-        icon: "copy",
-        message: i18n.t(title ? "success.copiedItem" : "success.copied", {
-          item: title,
-        }),
-        timeout: 1000,
-      });
-    })
-    .catch(() => {
-      Dialog.create({
-        class: "bg-ui",
-        color: "primary",
-        prompt: {
-          model: text,
-          filled: true,
-          type: text && text.includes("\n") ? "textarea" : "text",
-        },
-        cancel: false,
-      });
+export const COPY = async function ({ dispatch }, { text, title }) {
+  try {
+    await copyToClipboard(text);
+    dispatch("NOTIFY", {
+      icon: "copy",
+      message: i18n.t(title ? "success.copiedItem" : "success.copied", {
+        item: title,
+      }),
+      timeout: 1000,
     });
+  } catch (error) {
+    Dialog.create({
+      class: "bg-ui",
+      color: "primary",
+      prompt: {
+        model: text,
+        filled: true,
+        type: text && text.includes("\n") ? "textarea" : "text",
+      },
+      cancel: false,
+    });
+  }
 };
 
 export const PASTE = function ({ dispatch }) {
@@ -204,7 +210,7 @@ export const PASTE = function ({ dispatch }) {
 };
 
 export const SHARE = function ({ dispatch, state }, { text, title }) {
-  if (state.nativeSharing) {
+  if (navigator.canShare && state.nativeSharing) {
     navigator.share({ text, title }).catch((error) => {
       console.error(error);
       if (!/canceled|abort/i.test(error)) {
@@ -266,7 +272,7 @@ export const GET_THUMBNAIL = ({ commit, state }, options) => {
       ...THUMBNAIL_CONFIG,
       ...options,
     };
-    const id = hash(options);
+    const id = hashObject(options);
     const existing = state.thumbnails[id];
     if (existing) {
       resolve(existing.url);
@@ -283,4 +289,72 @@ export const GET_THUMBNAIL = ({ commit, state }, options) => {
       }
     }
   });
+};
+
+export const GET_SHORT_URL = async ({ commit, state }, { game, options }) => {
+  if (!game) {
+    return "";
+  }
+  if (game.config.isOnline) {
+    return location.origin + "/game/" + game.config.id;
+  }
+  options = cloneDeep(options);
+
+  const ptn = game.ptn;
+  const params = {};
+
+  if ("name" in options) {
+    params.name = options.name || "";
+  } else if (game.name) {
+    params.name = game.name;
+  }
+
+  if (options.state) {
+    if (options.state === true) {
+      options.state = game.board;
+    }
+    if (options.state.targetBranch) {
+      params.targetBranch = options.state.targetBranch;
+    }
+    if (options.state.plyIndex >= 0) {
+      params.ply = String(options.state.plyIndex);
+      if (options.state.plyIsDone) {
+        params.ply += "!";
+      }
+    }
+  }
+
+  try {
+    const data = { ptn, params };
+    const hash = hashObject(data);
+    if (hash in state.shortLinks) {
+      return state.shortLinks[hash];
+    }
+    Loading.show();
+    const response = await fetch(SHORTENER_SERVICE, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      mode: "cors",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const json = await response.json();
+      if (json && json.message) {
+        return notifyError(json.message);
+      } else {
+        return notifyError("HTTP-Error: " + response.status);
+      }
+    }
+    Loading.hide();
+    const url = await response.text();
+    commit("SET_SHORT_LINK", { hash, url });
+    return url;
+  } catch (error) {
+    Loading.hide();
+    notifyError(error);
+    return false;
+  }
 };

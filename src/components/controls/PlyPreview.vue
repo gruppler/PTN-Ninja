@@ -13,6 +13,7 @@
 
 <script>
 import GameThumbnail from "./GameThumbnail";
+import { pickBy } from "lodash";
 
 const width = 270;
 export const heights = {
@@ -39,8 +40,7 @@ export default {
         imageSize: "md",
         turnIndicator: true,
         unplayedPieces: true,
-        komi: this.$store.state.game.config.komi,
-        ...this.options,
+        ...pickBy(this.options, (v) => v !== null && v !== undefined),
       };
     },
     size() {

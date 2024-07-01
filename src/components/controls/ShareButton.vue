@@ -78,7 +78,7 @@ export default {
       const addCopyActions = (actions) => {
         actions.push({
           id: "url",
-          label: this.$t("Link"),
+          label: this.$t("Permanent Link"),
           icon: "url",
           action: async () => await this.shareText("url"),
         });
@@ -257,8 +257,11 @@ export default {
         case "urlShort":
           output = {
             title: this.$t("Link to Position"),
-            text: await this.$store.getters["ui/urlShort"](this.$game, {
-              state: true,
+            text: await this.$store.dispatch("ui/GET_SHORT_URL", {
+              game: this.$game,
+              options: {
+                state: true,
+              },
             }),
           };
           break;

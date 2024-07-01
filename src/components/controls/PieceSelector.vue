@@ -157,7 +157,7 @@ export default {
       }
     },
     resetTPS() {
-      this.$store.dispatch("game/EDIT_TPS", null);
+      this.$store.dispatch("game/EDIT_TPS", undefined);
     },
     saveTPS() {
       this.$store.dispatch("game/SAVE_TPS", this.editingTPS);

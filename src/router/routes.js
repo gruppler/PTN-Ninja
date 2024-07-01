@@ -71,6 +71,7 @@ const routes = [
         let stateRaw = route.params.state
           ? route.params.state.substring(1).split("&")
           : [];
+        state = {};
 
         for (let i = 0; i < stateRaw.length; i++) {
           let item = stateRaw[i].split("=");

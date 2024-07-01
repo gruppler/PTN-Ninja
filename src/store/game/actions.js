@@ -671,7 +671,7 @@ export const GO_TO_PLY = function (
 export const EDIT_TPS = async function ({ commit, state }, tps) {
   const game = { ...state.list[0] };
   try {
-    game.editingTPS = tps || undefined;
+    game.editingTPS = tps;
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);

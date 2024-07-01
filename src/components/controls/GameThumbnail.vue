@@ -18,6 +18,8 @@
 </style>
 
 <script>
+import { isObject } from "lodash";
+
 export default {
   name: "GameThumbnail",
   props: {
@@ -50,13 +52,20 @@ export default {
   },
   computed: {
     options() {
-      return {
+      let options = {
         ...this.config,
         tps: this.tps,
         plies: this.plies,
         hl: this.hl,
         plyIsDone: this.plyIsDone,
       };
+      if (isObject(options.pieceCounts)) {
+        options.caps1 = options.pieceCounts[1].cap;
+        options.flats1 = options.pieceCounts[1].flat;
+        options.caps2 = options.pieceCounts[2].cap;
+        options.flats2 = options.pieceCounts[2].flat;
+      }
+      return options;
     },
   },
   methods: {

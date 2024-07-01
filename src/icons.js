@@ -120,6 +120,7 @@ export default {
   table: "mdi-table-large",
   text: "mdi-text",
   time: "mdi-clock-outline",
+  to_top: "mdi-arrow-collapse-up",
   trim: "mdi-content-cut",
   ui: "mdi-view-array-outline",
   undo: "mdi-undo",

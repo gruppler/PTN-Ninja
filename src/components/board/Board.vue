@@ -6,8 +6,6 @@
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     @wheel="scroll"
-    v-shortkey="isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys"
-    @shortkey="shortkey"
     ref="wrapper"
   >
     <div
@@ -22,7 +20,7 @@
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: highlighterEnabled,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
-        eog: position.isGameEnd,
+        eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
         'pieces-selected': selected.pieces.length > 0,
         'rotate-1': transform[0] === 1,
@@ -34,6 +32,10 @@
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
+      v-shortkey="
+        isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys
+      "
+      @shortkey="shortkey"
       ref="container"
     >
       <TurnIndicator :hide-names="hideNames" />

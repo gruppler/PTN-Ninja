@@ -235,7 +235,7 @@ export default {
     async playTak() {
       this.showPlayTakID = true;
     },
-    async createGame({ name, tags, editTPS }) {
+    createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;
       this.player2 = tags.player2;
       this.size = tags.size;
@@ -250,18 +250,18 @@ export default {
 
       game.warnings.forEach((warning) => this.notifyWarning(warning));
 
-      await this.$store.dispatch("game/ADD_GAME", game);
-
-      if (editTPS) {
-        this.$store.dispatch("ui/SET_UI", [
-          "selectedPiece",
-          { color: 1, type: "F" },
-        ]);
-        this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1]);
-        this.$store.dispatch("game/EDIT_TPS", "");
-      }
-
-      this.close();
+      this.$store.dispatch("game/ADD_GAME", game).then(() => {
+        if (editTPS) {
+          this.$store.dispatch("ui/SET_UI", [
+            "selectedPiece",
+            { color: 1, type: "F" },
+          ]);
+          this.$store.dispatch("ui/SET_UI", ["firstMoveNumber", 1]);
+          return this.$store.dispatch("game/EDIT_TPS", "");
+        } else {
+          this.close();
+        }
+      });
     },
     ok() {
       if (this.tab === "new") {

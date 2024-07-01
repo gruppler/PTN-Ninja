@@ -3,6 +3,7 @@ import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
 import { notifyError } from "../../utilities";
 import { i18n } from "../../boot/i18n";
+import { GIF_URL, PNG_URL, SHORTENER_SERVICE } from "../../constants";
 
 THEMES.forEach((theme) => {
   theme.name = i18n.t("theme." + theme.id);
@@ -37,10 +38,6 @@ export const playerIcon =
     }
   };
 
-const GIF_URL = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/gif`
-  : "https://tps.ptn.ninja/gif";
-
 export const gif_filename =
   () =>
   ({ name, min, max }) => {
@@ -60,10 +57,6 @@ export const gif_url = () => (options) => {
 
   return GIF_URL + "?" + params.join("&");
 };
-
-const PNG_URL = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/png`
-  : "https://tps.ptn.ninja/png";
 
 export const pngFilename =
   () =>
@@ -182,12 +175,12 @@ export const url =
     options = cloneDeep(options);
 
     const origin = location.origin + "/";
-    let ptn =
+    const ptn =
       "names" in options && !options.names
         ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
         : game.ptn;
     let url = compressToEncodedURIComponent(ptn);
-    let params = {};
+    const params = {};
 
     if ("name" in options) {
       params.name = options.name
@@ -245,69 +238,6 @@ export const url =
           .join("&");
     }
     return url;
-  };
-
-const SHORTENER_SERVICE = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/short`
-  : "https://url.ptn.ninja/short";
-
-export const urlShort =
-  () =>
-  async (game, options = {}) => {
-    if (!game) {
-      return "";
-    }
-    if (game.config.isOnline) {
-      return location.origin + "/game/" + game.config.id;
-    }
-    options = cloneDeep(options);
-
-    let ptn =
-      "names" in options && !options.names
-        ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
-        : game.ptn;
-    let params = {};
-
-    if ("name" in options) {
-      params.name = options.name || "";
-    } else if (game.name) {
-      params.name = game.name;
-    }
-
-    if (options.state) {
-      if (options.state === true) {
-        options.state = game.board;
-      }
-      if (options.state.targetBranch) {
-        params.targetBranch = options.state.targetBranch;
-      }
-      if (options.state.plyIndex >= 0) {
-        params.ply = String(options.state.plyIndex);
-        if (options.state.plyIsDone) {
-          params.ply += "!";
-        }
-      }
-    }
-
-    try {
-      const response = await fetch(SHORTENER_SERVICE, {
-        method: "POST",
-        mode: "cors",
-        body: JSON.stringify({ ptn, params }),
-      });
-      if (!response.ok) {
-        const json = await response.json();
-        if (json && json.message) {
-          return notifyError(json.message);
-        } else {
-          return notifyError("HTTP-Error: " + response.status);
-        }
-      }
-      return await response.text();
-    } catch (error) {
-      notifyError(error);
-      return false;
-    }
   };
 
 export const urlUnshort = () => async (id) => {
