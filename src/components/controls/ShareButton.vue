@@ -48,7 +48,7 @@ export default {
     actions() {
       let actions = [
         {
-          id: "urlCurrent",
+          id: "url",
           label: this.$t("Permanent Link"),
           icon: "url",
           action: async () => await this.shareText("url", true),

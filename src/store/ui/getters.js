@@ -3,6 +3,7 @@ import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
 import { notifyError } from "../../utilities";
 import { i18n } from "../../boot/i18n";
+import { GIF_URL, PNG_URL, SHORTENER_SERVICE } from "../../constants";
 
 THEMES.forEach((theme) => {
   theme.name = i18n.t("theme." + theme.id);
@@ -36,10 +37,6 @@ export const playerIcon =
     }
   };
 
-const GIF_URL = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/gif`
-  : "https://tps.ptn.ninja/gif";
-
 export const gif_filename =
   () =>
   ({ name, min, max }) => {
@@ -59,10 +56,6 @@ export const gif_url = () => (options) => {
 
   return GIF_URL + "?" + params.join("&");
 };
-
-const PNG_URL = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/png`
-  : "https://tps.ptn.ninja/png";
 
 export const pngFilename =
   () =>

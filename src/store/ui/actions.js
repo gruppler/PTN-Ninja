@@ -17,6 +17,7 @@ import {
   notifyHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
+import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
 import { cloneDeep, isArray, isFunction, isString } from "lodash";
 import { TPStoPNG } from "tps-ninja";
@@ -289,10 +290,6 @@ export const GET_THUMBNAIL = ({ commit, state }, options) => {
     }
   });
 };
-
-const SHORTENER_SERVICE = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/short`
-  : "https://us-central1-ptn-ninja.cloudfunctions.net/short";
 
 export const GET_SHORT_URL = async ({ commit, state }, { game, options }) => {
   if (!game) {
