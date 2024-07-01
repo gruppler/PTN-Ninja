@@ -5,9 +5,9 @@ import { THEMES } from "../../themes";
 let defaults = {
   offline: !navigator.onLine,
   analysisSections: {
-    botSuggestions: true,
-    dbMoves: true,
-    dbGames: true,
+    botSuggestions: false,
+    dbMoves: false,
+    dbGames: false,
   },
   dbSettings: {
     includeBotGames: false,
