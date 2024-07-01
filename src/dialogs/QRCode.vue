@@ -3,12 +3,21 @@
     :value="true"
     @show="show"
     @hide="hide"
-    content-class="qr-code flex-center"
+    content-class="qr-code"
     v-bind="$attrs"
     :maximized="maximized"
     no-route-dismiss
   >
-    <img ref="output" />
+    <div class="flex-center column">
+      <img ref="output" />
+      <q-btn-toggle
+        v-model="linkType"
+        :options="linkTypes"
+        class="full-width"
+        :style="{ background: bg }"
+        spread
+      />
+    </div>
   </q-dialog>
 </template>
 
@@ -23,6 +32,24 @@ export default {
   name: "QRCode",
   props: {
     goBack: Boolean,
+  },
+  data() {
+    return {
+      link: "",
+      linkType: "permanent",
+      linkTypes: [
+        {
+          value: "permanent",
+          label: this.$t("Permanent Link"),
+          icon: "url",
+        },
+        {
+          value: "short",
+          label: this.$t("Short Link"),
+          icon: "url_short",
+        },
+      ],
+    };
   },
   computed: {
     maximized() {
@@ -41,10 +68,7 @@ export default {
         element: this.$refs.output,
         background: this.bg,
         foreground: this.fg,
-        value: this.$store.getters["ui/url"](this.$game, {
-          origin: true,
-          state: true,
-        }),
+        value: this.link,
         backgroundAlpha: 1,
         size: SIZE,
       });
@@ -54,6 +78,27 @@ export default {
         this.$router.back();
       }
     },
+    async updateLink() {
+      this.link =
+        this.linkType === "permanent"
+          ? this.$store.getters["ui/url"](this.$game, {
+              origin: true,
+              state: true,
+            })
+          : await this.$store.dispatch("ui/GET_SHORT_URL", {
+              game: this.$game,
+              options: {
+                state: true,
+              },
+            });
+      this.show();
+    },
+  },
+  mounted() {
+    this.updateLink();
+  },
+  watch: {
+    linkType: "updateLink",
   },
 };
 </script>
