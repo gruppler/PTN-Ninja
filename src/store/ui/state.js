@@ -149,6 +149,7 @@ let state = {
   embed: Platform.within.iframe,
   scrubbing: false,
   thumbnails: {},
+  shortLinks: {},
   defaults,
   ...defaults,
 };

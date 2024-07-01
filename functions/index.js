@@ -2,6 +2,8 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const hashObject = require("object-hash");
+
 let firebase;
 if (admin.apps.length === 0) {
   firebase = admin.initializeApp();
@@ -35,11 +37,17 @@ exports.short = functions.https.onRequest(async (request, response) => {
           ? JSON.parse(request.body)
           : request.body;
       if (params && params.ptn) {
-        params.created = now;
-        if ("ply" in params) {
-          params.ply = String(params.ply);
+        const hash = hashObject(params);
+        const ref = db.collection("urls").doc(hash);
+        const snapshot = await ref.get();
+        if (!snapshot.exists) {
+          params.created = now;
+          params.accessed = null;
+          if ("ply" in params) {
+            params.ply = String(params.ply);
+          }
+          await ref.set(params);
         }
-        const ref = await db.collection("urls").add(params);
         response.send("https://ptn.ninja/s/" + ref.id);
       } else {
         response.status(400).send({ message: "Invalid request" });

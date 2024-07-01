@@ -190,8 +190,11 @@ export default {
         case "urlShort":
           output = {
             title: this.$t("Link to Position"),
-            text: await this.$store.getters["ui/urlShort"](this.$game, {
-              state: true,
+            text: await this.$store.dispatch("ui/GET_SHORT_URL", {
+              game: this.$game,
+              options: {
+                state: true,
+              },
             }),
           };
           break;

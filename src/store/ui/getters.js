@@ -1,4 +1,3 @@
-import { Loading } from "quasar";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
@@ -182,12 +181,12 @@ export const url =
     options = cloneDeep(options);
 
     const origin = location.origin + "/";
-    let ptn =
+    const ptn =
       "names" in options && !options.names
         ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
         : game.ptn;
     let url = compressToEncodedURIComponent(ptn);
-    let params = {};
+    const params = {};
 
     if ("name" in options) {
       params.name = options.name
@@ -245,72 +244,6 @@ export const url =
           .join("&");
     }
     return url;
-  };
-
-const SHORTENER_SERVICE = process.env.DEV
-  ? `http://localhost:5001/${process.env.projectId}/us-central1/short`
-  : "https://us-central1-ptn-ninja.cloudfunctions.net/short";
-
-export const urlShort =
-  () =>
-  async (game, options = {}) => {
-    if (!game) {
-      return "";
-    }
-    if (game.config.isOnline) {
-      return location.origin + "/game/" + game.config.id;
-    }
-    options = cloneDeep(options);
-
-    let ptn =
-      "names" in options && !options.names
-        ? game.toString({ tags: omit(game.tags, ["player1", "player2"]) })
-        : game.ptn;
-    let params = {};
-
-    if ("name" in options) {
-      params.name = options.name || "";
-    } else if (game.name) {
-      params.name = game.name;
-    }
-
-    if (options.state) {
-      if (options.state === true) {
-        options.state = game.board;
-      }
-      if (options.state.targetBranch) {
-        params.targetBranch = options.state.targetBranch;
-      }
-      if (options.state.plyIndex >= 0) {
-        params.ply = String(options.state.plyIndex);
-        if (options.state.plyIsDone) {
-          params.ply += "!";
-        }
-      }
-    }
-
-    try {
-      Loading.show();
-      const response = await fetch(SHORTENER_SERVICE, {
-        method: "POST",
-        mode: "cors",
-        body: JSON.stringify({ ptn, params }),
-      });
-      if (!response.ok) {
-        const json = await response.json();
-        if (json && json.message) {
-          return notifyError(json.message);
-        } else {
-          return notifyError("HTTP-Error: " + response.status);
-        }
-      }
-      Loading.hide();
-      return await response.text();
-    } catch (error) {
-      Loading.hide();
-      notifyError(error);
-      return false;
-    }
   };
 
 export const urlUnshort = () => async (id) => {
