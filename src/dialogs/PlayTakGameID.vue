@@ -2,6 +2,7 @@
   <q-dialog
     ref="dialog"
     :value="model"
+    @show="init"
     @hide="hide"
     no-backdrop-dismiss
     no-route-dismiss
@@ -73,7 +74,11 @@ export default {
       return /^\d+$/.test(value);
     },
     async clipboard() {
-      this.gameID = await this.$store.dispatch("ui/PASTE");
+      try {
+        this.gameID = await this.$store.dispatch("ui/PASTE");
+      } catch (error) {
+        console.error(error);
+      }
     },
     load() {
       this.loading = true;
@@ -86,6 +91,16 @@ export default {
         .finally(() => {
           this.loading = false;
         });
+    },
+    async init() {
+      try {
+        const text = await this.$store.dispatch("ui/PASTE");
+        if (this.validateGameID(text)) {
+          this.gameID = text;
+        }
+      } catch (error) {
+        console.error(error);
+      }
     },
   },
 };

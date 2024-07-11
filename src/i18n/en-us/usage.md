@@ -18,7 +18,13 @@ The app is built to work well out of the box on mobile devices and touch screens
 
 PTN Ninja stores your games in a database on your device to allow easy switching between them using the Game Selector. Games you load will be stored until you close them using the Game Selector.
 
-You can load games from your clipboard, files, [PlayTak](https://www.playtak.com/games) game IDs, or PTN Ninja links.
+You can load games from your clipboard, files, PTN Ninja links, or PlayTak Game IDs. To load a game from your clipboard, first copy one of the following:
+
+- Full PTN
+- TPS
+- A PTN Ninja link
+- [PlayTak game ID](https://www.playtak.com/games)
+- JSON copied from [TakBot's](https://github.com/humanat/takbot) `/info` command
 
 ::: tip
 
@@ -29,7 +35,8 @@ Press <kbd>E</kbd> or **Right-click** the Game Selector's 'info' icon to edit th
 :::
 
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, to open the Load Game dialog.
-  - To load one or more games from files, press <kbd>Ctrl</kbd><kbd>O</kbd>.
+  - To quickly load one or more games from files, press <kbd>Ctrl</kbd><kbd>O</kbd>.
+  - To quickly load a game from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying PTN, TPS, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
 - To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, then select the New Game tab.
   - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.

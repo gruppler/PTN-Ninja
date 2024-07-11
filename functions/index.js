@@ -3,6 +3,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const hashObject = require("object-hash");
+const { isString, pick } = require("lodash");
 
 let firebase;
 if (admin.apps.length === 0) {
@@ -21,6 +22,8 @@ const httpError = function (type, message) {
   throw new functions.https.HttpsError(type, message || type);
 };
 
+//#region URLs
+
 // URL Shortener
 exports.short = functions.https.onRequest(async (request, response) => {
   const now = new Date();
@@ -32,10 +35,10 @@ exports.short = functions.https.onRequest(async (request, response) => {
       response.set("Access-Control-Allow-Headers", "Content-Type");
       response.status(204).send("");
     } else if (request.method === "POST") {
-      const params =
-        typeof request.body === "string"
-          ? JSON.parse(request.body)
-          : request.body;
+      const params = pick(
+        isString(request.body) ? JSON.parse(request.body) : request.body,
+        ["ptn", "params"]
+      );
       if (params && params.ptn) {
         const hash = hashObject(params);
         const ref = db.collection("urls").doc(hash);
@@ -58,8 +61,16 @@ exports.short = functions.https.onRequest(async (request, response) => {
       const ref = db.collection("urls").doc(request.query.id);
       const snapshot = await ref.get();
       if (snapshot.exists) {
-        response.send(JSON.stringify(snapshot.data()));
-        await ref.update({ accessed: now });
+        const data = snapshot.data();
+        data.created = data.created.toDate();
+        if (data.accessed) {
+          data.accessed = data.accessed.toDate();
+        }
+        response.send(data);
+        await ref.update({
+          accessed: now,
+          visits: (data.visits || 0) + 1,
+        });
       } else {
         response.status(400).send({ message: "URL alias not found" });
       }
@@ -74,6 +85,44 @@ exports.short = functions.https.onRequest(async (request, response) => {
   }
   return true;
 });
+
+/* // Delete expired shortened URLs
+exports.urlCleanup = functions.pubsub
+  .schedule("every day 00:00")
+  .onRun(async () => {
+    const LIMIT = new Date(Date.now() - 5 * 365 * 864e5);
+
+    // Last accessed over 5 years ago
+    let expiredURLs = (
+      await db.collection("urls").where("accessed", "<=", LIMIT).get()
+    ).docs;
+
+    // Never accessed, created over 5 years ago
+    expiredURLs = expiredURLs.concat(
+      (
+        await db
+          .collection("urls")
+          .where("accessed", "==", null)
+          .where("created", "<=", LIMIT)
+          .get()
+      ).docs
+    );
+
+    // Filter out permanent URLs
+    expiredURLs = expiredURLs.filter((doc) => !doc.data().isPermanent);
+
+    // Delete URLs
+    const MAX_CONCURRENT = 5;
+    console.log("Expired URLs:", expiredURLs.length);
+    await asyncPool(MAX_CONCURRENT, expiredURLs, deleteExpiredURL);
+    return true;
+  });
+
+async function deleteExpiredURL(doc) {
+  return db.collection("urls").doc(doc.id).delete();
+} */
+
+//#region PNG/GIF
 
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
@@ -110,6 +159,8 @@ exports.gif = functions.https.onRequest(async (request, response) => {
     console.error(error);
   }
 });
+
+//#region Gameplay
 
 // Start a game
 exports.createGame = functions.https.onCall(
@@ -226,10 +277,12 @@ exports.insertPly = functions.https.onCall((data, context) => {
   return true;
 });
 
+//#region Users
+
 // Delete inactive guest accounts periodically
 exports.accountcleanup = functions.pubsub
-  .schedule("every day 00:00")
-  .onRun(async (context) => {
+  .schedule("every day 00:10")
+  .onRun(async () => {
     const MAX_CONCURRENT = 5;
     // Fetch all user details.
     const inactiveUsers = await getInactiveUsers();
@@ -270,17 +323,17 @@ async function deleteInactiveUser(user) {
 async function getInactiveUsers(users = [], nextPageToken) {
   const LIMIT = Date.now() - 21 * 864e5;
   const result = await auth.listUsers(1000, nextPageToken);
-  // Find users that have not signed in in the last 30 days.
+  // Find users that have not signed in in the last 3 weeks
   const inactiveUsers = result.users.filter((user) => {
     return (
       !user.emailVerified && Date.parse(user.metadata.lastRefreshTime) < LIMIT
     );
   });
 
-  // Concat with list of previously found inactive users if there was more than 1000 users.
+  // Concat with list of previously found inactive users if there was more than 1000 users
   users = users.concat(inactiveUsers);
 
-  // If there are more users to fetch we fetch them.
+  // If there are more users to fetch we fetch them
   if (result.pageToken) {
     return getInactiveUsers(users, result.pageToken);
   }

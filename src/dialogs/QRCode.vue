@@ -1,6 +1,7 @@
 <template>
   <q-dialog
     :value="true"
+    ref="dialog"
     @show="show"
     @hide="hide"
     content-class="qr-code"
@@ -8,9 +9,10 @@
     :maximized="maximized"
     no-route-dismiss
   >
-    <div class="flex-center column">
-      <img ref="output" />
+    <div class="flex-center column" @click="$refs.dialog.hide()">
+      <img @click.stop ref="output" />
       <q-btn-toggle
+        @click.stop
         v-model="linkType"
         :options="linkTypes"
         class="full-width"
@@ -36,11 +38,11 @@ export default {
   data() {
     return {
       link: "",
-      linkType: "permanent",
+      linkType: "full",
       linkTypes: [
         {
-          value: "permanent",
-          label: this.$t("Permanent Link"),
+          value: "full",
+          label: this.$t("Full Link"),
           icon: "url",
         },
         {
@@ -80,7 +82,7 @@ export default {
     },
     async updateLink() {
       this.link =
-        this.linkType === "permanent"
+        this.linkType === "full"
           ? this.$store.getters["ui/url"](this.$game, {
               origin: true,
               state: true,

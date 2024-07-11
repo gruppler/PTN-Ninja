@@ -457,7 +457,11 @@ export default {
       this.palette = Object.values(this.theme.colors);
     },
     async clipboard() {
-      this.json = await this.$store.dispatch("ui/PASTE");
+      try {
+        this.json = await this.$store.dispatch("ui/PASTE");
+      } catch (error) {
+        console.error(error);
+      }
     },
     reset() {
       this.prompt({

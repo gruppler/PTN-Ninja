@@ -211,13 +211,10 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const ptn = await this.$store.dispatch("ui/PASTE");
-      if (!ptn || Game.validate(ptn) !== true) {
-        this.ptn = ptn;
-        this.showPTN = true;
-      } else {
-        let game = new Game({ ptn });
-        await this.$store.dispatch("game/ADD_GAME", game);
+      const success = await this.$store.dispatch(
+        "game/ADD_GAME_FROM_CLIPBOARD"
+      );
+      if (success) {
         this.close();
       }
     },
@@ -234,7 +231,7 @@ export default {
       await this.$store.dispatch("game/ADD_GAME", game);
       this.close();
     },
-    async playTak() {
+    playTak() {
       this.showPlayTakID = true;
     },
     createGame({ name, tags, editTPS }) {
