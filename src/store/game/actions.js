@@ -132,6 +132,7 @@ export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
       let route = router.match(ptn.substring(17));
       if (route && route.name === "local") {
         if (route.params.id) {
+          Loading.show();
           const data = await this.getters["ui/urlUnshort"](route.params.id);
           route = {
             name: "local",
