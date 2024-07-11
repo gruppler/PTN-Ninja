@@ -38,11 +38,11 @@ export default {
   data() {
     return {
       link: "",
-      linkType: "permanent",
+      linkType: "full",
       linkTypes: [
         {
-          value: "permanent",
-          label: this.$t("Permanent Link"),
+          value: "full",
+          label: this.$t("Full Link"),
           icon: "url",
         },
         {
@@ -82,7 +82,7 @@ export default {
     },
     async updateLink() {
       this.link =
-        this.linkType === "permanent"
+        this.linkType === "full"
           ? this.$store.getters["ui/url"](this.$game, {
               origin: true,
               state: true,

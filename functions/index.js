@@ -86,18 +86,18 @@ exports.short = functions.https.onRequest(async (request, response) => {
   return true;
 });
 
-// Delete expired shortened URLs
+/* // Delete expired shortened URLs
 exports.urlCleanup = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async () => {
-    const LIMIT = new Date(Date.now() - 90 * 864e5);
+    const LIMIT = new Date(Date.now() - 5 * 365 * 864e5);
 
-    // Last accessed over 90 days ago
+    // Last accessed over 5 years ago
     let expiredURLs = (
       await db.collection("urls").where("accessed", "<=", LIMIT).get()
     ).docs;
 
-    // Never accessed, created over 90 days ago
+    // Never accessed, created over 5 years ago
     expiredURLs = expiredURLs.concat(
       (
         await db
@@ -120,7 +120,7 @@ exports.urlCleanup = functions.pubsub
 
 async function deleteExpiredURL(doc) {
   return db.collection("urls").doc(doc.id).delete();
-}
+} */
 
 //#region PNG/GIF
 

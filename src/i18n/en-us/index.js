@@ -79,6 +79,7 @@ export default {
   "Forward Half-Step": "Forward Half-Step",
   FPM: "FPM", // Frames Per Minute
   "From Center": "From Center",
+  "Full Link": "Full Link",
   Fullscreen: "Fullscreen",
   "Game Info": "Game Info",
   "Game Notifications": "Game Notifications",
@@ -146,7 +147,6 @@ export default {
   "Orthogonal Board": "Orthogonal Board",
   Padding: "Padding",
   Password: "Password",
-  "Permanent Link": "Permanent Link",
   Perspective: "Perspective",
   "Piece Shadows": "Piece Shadows",
   Play: "Play",
