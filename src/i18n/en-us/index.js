@@ -54,7 +54,7 @@ export default {
   Dismiss: "Dismiss",
   Download: "Download",
   Duplicate: "Duplicate",
-  "Duplicate Game Names": "Duplicate Game Names",
+  "Duplicate Game Names": "Duplicate Game Names from URL",
   Edit: "Edit",
   "Edit Game": "Edit Game",
   "Edit PTN": "Edit PTN",
