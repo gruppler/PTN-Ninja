@@ -138,6 +138,9 @@ export default {
   watch: {
     "$store.state.game.position": {
       handler(position) {
+        if (!position) {
+          return;
+        }
         position = {
           ...position,
           move: position.move ? position.move.linenum.number : null,
