@@ -22,6 +22,8 @@ const httpError = function (type, message) {
   throw new functions.https.HttpsError(type, message || type);
 };
 
+//#region URLs
+
 // URL Shortener
 exports.short = functions.https.onRequest(async (request, response) => {
   const now = new Date();
@@ -84,6 +86,44 @@ exports.short = functions.https.onRequest(async (request, response) => {
   return true;
 });
 
+// Delete expired shortened URLs
+exports.urlCleanup = functions.pubsub
+  .schedule("every day 00:00")
+  .onRun(async () => {
+    const LIMIT = new Date(Date.now() - 90 * 864e5);
+
+    // Last accessed over 90 days ago
+    let expiredURLs = (
+      await db.collection("urls").where("accessed", "<=", LIMIT).get()
+    ).docs;
+
+    // Never accessed, created over 90 days ago
+    expiredURLs = expiredURLs.concat(
+      (
+        await db
+          .collection("urls")
+          .where("accessed", "==", null)
+          .where("created", "<=", LIMIT)
+          .get()
+      ).docs
+    );
+
+    // Filter out permanent URLs
+    expiredURLs = expiredURLs.filter((doc) => !doc.data().isPermanent);
+
+    // Delete URLs
+    const MAX_CONCURRENT = 5;
+    console.log("Expired URLs:", expiredURLs.length);
+    await asyncPool(MAX_CONCURRENT, expiredURLs, deleteExpiredURL);
+    return true;
+  });
+
+async function deleteExpiredURL(doc) {
+  return db.collection("urls").doc(doc.id).delete();
+}
+
+//#region PNG/GIF
+
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
   const { TPStoPNG } = await import("tps-ninja");
@@ -119,6 +159,8 @@ exports.gif = functions.https.onRequest(async (request, response) => {
     console.error(error);
   }
 });
+
+//#region Gameplay
 
 // Start a game
 exports.createGame = functions.https.onCall(
@@ -235,10 +277,12 @@ exports.insertPly = functions.https.onCall((data, context) => {
   return true;
 });
 
+//#region Users
+
 // Delete inactive guest accounts periodically
 exports.accountcleanup = functions.pubsub
-  .schedule("every day 00:00")
-  .onRun(async (context) => {
+  .schedule("every day 00:10")
+  .onRun(async () => {
     const MAX_CONCURRENT = 5;
     // Fetch all user details.
     const inactiveUsers = await getInactiveUsers();
@@ -279,17 +323,17 @@ async function deleteInactiveUser(user) {
 async function getInactiveUsers(users = [], nextPageToken) {
   const LIMIT = Date.now() - 21 * 864e5;
   const result = await auth.listUsers(1000, nextPageToken);
-  // Find users that have not signed in in the last 30 days.
+  // Find users that have not signed in in the last 3 weeks
   const inactiveUsers = result.users.filter((user) => {
     return (
       !user.emailVerified && Date.parse(user.metadata.lastRefreshTime) < LIMIT
     );
   });
 
-  // Concat with list of previously found inactive users if there was more than 1000 users.
+  // Concat with list of previously found inactive users if there was more than 1000 users
   users = users.concat(inactiveUsers);
 
-  // If there are more users to fetch we fetch them.
+  // If there are more users to fetch we fetch them
   if (result.pageToken) {
     return getInactiveUsers(users, result.pageToken);
   }
