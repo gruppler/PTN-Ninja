@@ -22,7 +22,15 @@
             :key="item.id"
             separate-branch
             show-eval
-          />
+          >
+            <template v-slot:plyTooltip="ply">
+              <PlyPreview
+                :tps="ply.tpsAfter"
+                :hl="ply.text"
+                :options="$store.state.game.config"
+              />
+            </template>
+          </Move>
         </template>
       </q-virtual-scroll>
     </q-scroll-area>
@@ -32,12 +40,13 @@
 
 <script>
 import Move from "../PTN/Move";
+import PlyPreview from "../controls/PlyPreview";
 
 import { throttle } from "lodash";
 
 export default {
   name: "PTN",
-  components: { Move },
+  components: { Move, PlyPreview },
   computed: {
     gameExists() {
       return Boolean(this.ptn);

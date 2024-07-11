@@ -13,25 +13,31 @@ export default class Game extends Aggregation(
   GameMutations,
   GameUndo
 ) {
-  static validate(ptn) {
+  static validate(ptn, silent = false) {
     let result = true;
-    const game = new Game({
-      ptn,
-      state: { plyIndex: 0 },
-      onError: (error, plyID) => {
-        result = error.message || error;
-        console.warn("Encountered an error at plyID:", plyID);
-        console.error(error);
-      },
-    });
+    let game;
+    try {
+      // Parse the game
+      game = new Game({
+        ptn,
+        state: { plyIndex: 0 },
+        onError: (error, plyID) => {
+          result = error.message || error;
+          if (!silent) {
+            console.warn("Encountered an error at plyID:", plyID);
+            console.warn(error);
+          }
+        },
+      });
 
-    // Navigate through each branch
-    Object.values(game.branches).forEach((ply) => {
-      if (result === true) {
-        game.board.goToPly(ply.id, true);
-        game.board.last();
-      }
-    });
+      // Navigate through each branch
+      Object.values(game.branches).forEach((ply) => {
+        if (result === true) {
+          game.board.goToPly(ply.id, true);
+          game.board.last();
+        }
+      });
+    } catch (error) {}
     return result;
   }
 }

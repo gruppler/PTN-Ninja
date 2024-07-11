@@ -3,6 +3,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const hashObject = require("object-hash");
+const { isString, pick } = require("lodash");
 
 let firebase;
 if (admin.apps.length === 0) {
@@ -32,10 +33,10 @@ exports.short = functions.https.onRequest(async (request, response) => {
       response.set("Access-Control-Allow-Headers", "Content-Type");
       response.status(204).send("");
     } else if (request.method === "POST") {
-      const params =
-        typeof request.body === "string"
-          ? JSON.parse(request.body)
-          : request.body;
+      const params = pick(
+        isString(request.body) ? JSON.parse(request.body) : request.body,
+        ["ptn", "params"]
+      );
       if (params && params.ptn) {
         const hash = hashObject(params);
         const ref = db.collection("urls").doc(hash);
@@ -58,8 +59,16 @@ exports.short = functions.https.onRequest(async (request, response) => {
       const ref = db.collection("urls").doc(request.query.id);
       const snapshot = await ref.get();
       if (snapshot.exists) {
-        response.send(JSON.stringify(snapshot.data()));
-        await ref.update({ accessed: now });
+        const data = snapshot.data();
+        data.created = data.created.toDate();
+        if (data.accessed) {
+          data.accessed = data.accessed.toDate();
+        }
+        response.send(data);
+        await ref.update({
+          accessed: now,
+          visits: (data.visits || 0) + 1,
+        });
       } else {
         response.status(400).send({ message: "URL alias not found" });
       }

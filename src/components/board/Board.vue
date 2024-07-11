@@ -32,9 +32,7 @@
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
-      v-shortkey="
-        isDialogOpen || isHighlighting || isEditingTPS ? null : hotkeys
-      "
+      v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
       ref="container"
     >
@@ -176,6 +174,16 @@ export default {
         (!this.$store.state.ui.animateScrub &&
           this.scrubbing &&
           !this.isSlowScrub)
+      );
+    },
+    disableHotkeys() {
+      const $gameSelector =
+        this.$parent.$parent.$parent.$parent.$refs.gameSelector;
+      return (
+        this.isDialogOpen ||
+        this.isHighlighting ||
+        this.isEditingTPS ||
+        ($gameSelector && $gameSelector.$refs.select.menu)
       );
     },
     cols() {

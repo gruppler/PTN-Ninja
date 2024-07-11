@@ -3,8 +3,8 @@
     icon="share"
     v-bind="$attrs"
     @click="noMenu ? share() : null"
-    @click.right.prevent="share()"
-    v-shortkey="hotkeys"
+    @click.right.prevent="share"
+    v-shortkey="isTextSelected ? null : hotkeys"
     @shortkey="shortkey"
   >
     <hint>{{ $t("Share") }}</hint>
@@ -59,6 +59,8 @@
 
 <script>
 import { HOTKEYS } from "../../keymap";
+import { useTextSelection } from "@vueuse/core";
+const selection = useTextSelection();
 
 export default {
   name: "ShareButton",
@@ -72,6 +74,9 @@ export default {
     };
   },
   computed: {
+    isTextSelected() {
+      return Boolean(selection.text.value);
+    },
     actions() {
       const actions = [];
 

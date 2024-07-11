@@ -1,11 +1,14 @@
 import Vue from "vue";
 import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isString, throttle } from "lodash";
+import { isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
+import TPS from "../../Game/PTN/TPS";
+import router from "../../router";
+import { parseURLparams } from "../../router/routes";
 
 let gamesDB;
 
@@ -57,9 +60,9 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
 
   return new Promise((resolve) => {
     setTimeout(async () => {
-      await dispatch("SET_GAME", game);
+      await dispatch("SET_GAME", newGame);
       this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-        commit("ADD_GAME", game);
+        commit("ADD_GAME", newGame);
         Loading.hide();
         resolve();
       });
@@ -105,6 +108,78 @@ export const ADD_GAMES = async function (
     this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
       dispatch("SET_GAME", state.list[0]);
     });
+  }
+};
+
+export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
+  let ptn;
+  try {
+    ptn = await this.dispatch("ui/PASTE");
+  } catch (error) {
+    console.error(error);
+  }
+  let game;
+  if (ptn) {
+    if (/^\d+$/.test(ptn)) {
+      // PlayTak game ID
+      router.push({
+        name: "add",
+        params: { tab: "load", type: "playtak" },
+      });
+      return false;
+    } else if (/^https:\/\/ptn.ninja\/.+/.test(ptn)) {
+      // PTN Ninja url
+      let route = router.match(ptn.substring(17));
+      if (route && route.name === "local") {
+        if (route.params.id) {
+          Loading.show();
+          const data = await this.getters["ui/urlUnshort"](route.params.id);
+          route = {
+            name: "local",
+            params: data
+              ? {
+                  ptn: data.ptn,
+                  state: data.params,
+                }
+              : {},
+          };
+        }
+        if (!isEmpty(route.params)) {
+          try {
+            const params = parseURLparams(route);
+            game = new Game(params);
+            await dispatch("ADD_GAME", game);
+            return true;
+          } catch (error) {
+            console.error(error);
+            return false;
+          }
+        }
+      }
+    } else if (Game.validate(ptn, true) === true) {
+      // PTN
+      game = new Game({ ptn });
+    } else {
+      // TPS
+      let tps = new TPS(ptn);
+      if (tps.isValid) {
+        tps = tps.text;
+        game = new Game({ tags: { tps } });
+      } else {
+        // JSON
+        try {
+          let tags = JSON.parse(ptn);
+          game = new Game({ tags });
+        } catch (error) {}
+      }
+    }
+  }
+  if (ptn && game) {
+    await dispatch("ADD_GAME", game);
+    return true;
+  } else {
+    router.push({ name: "add", params: { tab: "load", type: "ptn" } });
+    return false;
   }
 };
 

@@ -156,7 +156,7 @@ export default class Tag {
         throw new Error("Invalid " + key);
       }
     } else {
-      throw new Error("Unrecognized tag");
+      throw "Unrecognized tag: " + key;
     }
 
     switch (key) {

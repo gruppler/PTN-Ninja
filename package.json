@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.4.16",
+  "version": "3.4.17",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -30,6 +30,7 @@
   "dependencies": {
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
     "@quasar/extras": "^1.16.7",
+    "@vueuse/core": "^10.11.0",
     "aggregation": "^1.2.6",
     "aws-sdk": "^2.885.0",
     "core-js": "^3.8.1",
