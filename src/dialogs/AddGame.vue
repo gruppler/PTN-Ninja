@@ -110,6 +110,9 @@ import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
+import TPS from "../Game/PTN/TPS";
+
+import { isObject } from "lodash";
 
 export default {
   name: "AddGame",
@@ -149,7 +152,7 @@ export default {
       get() {
         return this.$route.params.type === "ptn";
       },
-      set(show) {
+      async set(show) {
         if (!show && this.showPTN) {
           this.$router.back();
         } else if (show && !this.showPTN) {
@@ -211,19 +214,35 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const ptn = await this.$store.dispatch("ui/PASTE");
+      let ptn;
+      try {
+        ptn = await this.$store.dispatch("ui/PASTE");
+      } catch (error) {
+        console.error(error);
+      }
       let game;
       if (ptn) {
-        try {
-          if (Game.validate(ptn, true) === true) {
-            game = new Game({ ptn });
+        if (Game.validate(ptn, true) === true) {
+          // PTN
+          game = new Game({ ptn });
+        } else {
+          // TPS
+          let tps = new TPS(ptn);
+          if (tps.isValid) {
+            tps = tps.text;
+            game = new Game({ tags: { tps } });
           } else {
-            let tags = JSON.parse(ptn);
-            game = new Game({ tags });
+            // JSON
+            try {
+              let tags = JSON.parse(ptn);
+              if (isObject(tags)) {
+                game = new Game({ tags });
+              }
+            } catch (error) {}
           }
-        } catch (error) {}
+        }
       }
-      if (game) {
+      if (ptn && game) {
         await this.$store.dispatch("game/ADD_GAME", game);
         this.close();
       } else {
@@ -244,7 +263,7 @@ export default {
       await this.$store.dispatch("game/ADD_GAME", game);
       this.close();
     },
-    async playTak() {
+    playTak() {
       this.showPlayTakID = true;
     },
     createGame({ name, tags, editTPS }) {

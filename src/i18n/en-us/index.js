@@ -108,6 +108,7 @@ export default {
   "Link to Game": "Link to Game",
   "Link to Position": "Link to Position",
   "Load Files": "Load Files",
+  "Load from Clipboard": "Load from Clipboard",
   "Load Game": "Load Game",
   "Load Online Game": "Load Online Game",
   Loading: "Loading...",

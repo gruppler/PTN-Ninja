@@ -63,9 +63,14 @@ export default {
     reset() {
       this.ptn = this.original;
     },
-    init() {
+    async init() {
       if (this.isNewGame) {
-        this.original = this.value || "";
+        try {
+          this.original =
+            this.value || (await this.$store.dispatch("ui/PASTE"));
+        } catch (error) {
+          console.error(error);
+        }
         this.header = "";
       } else if (this.$game) {
         this.original = (

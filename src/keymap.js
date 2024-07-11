@@ -104,6 +104,7 @@ export const HOTKEYS = {
     showScrubber: ["shift", "s"],
   },
   MISC: {
+    "game/ADD_GAME_FROM_CLIPBOARD": ["ctrl", "v"],
     "game/UNDO": ["ctrl", "z"],
     "game/REDO": ["ctrl", "shift", "z"],
     "ui/OPEN": ["ctrl", "o"],
@@ -219,6 +220,7 @@ export const HOTKEY_NAMES = {
     showScrubber: "Scrub Bar",
   },
   MISC: {
+    "game/ADD_GAME_FROM_CLIPBOARD": "Load from Clipboard",
     "game/UNDO": "Undo",
     "game/REDO": "Redo",
     "ui/OPEN": "Load Files",

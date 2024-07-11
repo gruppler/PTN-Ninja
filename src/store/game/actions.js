@@ -6,6 +6,8 @@ import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
+import TPS from "../../Game/PTN/TPS";
+import router from "../../router";
 
 let gamesDB;
 
@@ -105,6 +107,46 @@ export const ADD_GAMES = async function (
     this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
       dispatch("SET_GAME", state.list[0]);
     });
+  }
+};
+
+export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
+  let ptn;
+  try {
+    ptn = await this.dispatch("ui/PASTE");
+  } catch (error) {
+    console.error(error);
+  }
+  let game;
+  if (ptn) {
+    if (/^\d+$/.test(ptn)) {
+      // PlayTak game ID
+      return router.push({
+        name: "add",
+        params: { tab: "load", type: "playtak" },
+      });
+    } else if (Game.validate(ptn, true) === true) {
+      // PTN
+      game = new Game({ ptn });
+    } else {
+      // TPS
+      let tps = new TPS(ptn);
+      if (tps.isValid) {
+        tps = tps.text;
+        game = new Game({ tags: { tps } });
+      } else {
+        // JSON
+        try {
+          let tags = JSON.parse(ptn);
+          game = new Game({ tags });
+        } catch (error) {}
+      }
+    }
+  }
+  if (ptn && game) {
+    await dispatch("ADD_GAME", game);
+  } else {
+    router.push({ name: "add", params: { tab: "load", type: "ptn" } });
   }
 };
 
