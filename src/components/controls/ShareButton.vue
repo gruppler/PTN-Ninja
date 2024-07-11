@@ -83,7 +83,7 @@ export default {
       const addCopyActions = (actions) => {
         actions.push({
           id: "url",
-          label: this.$t("Permanent Link"),
+          label: this.$t("Full Link"),
           icon: "url",
           action: async () => await this.shareText("url"),
         });

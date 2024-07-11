@@ -246,7 +246,7 @@ The structure of the URL is as follows:
 
 `https://ptn.ninja/<PTN>&<param1>=<value1>&<param2>=<value2>[...]`
 
-To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` with request body `{ ptn, params (optional) }` where `ptn` is a string, and `params` is an optional object containing any of the parameters below. If the request is valid, you'll receive the complete shortenend URL as plain text in response. Shortened links will be removed 90 days after the last time they're accessed.
+To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` with request body `{ ptn, params (optional) }` where `ptn` is a string, and `params` is an optional object containing any of the parameters below. If the request is valid, you'll receive the complete shortenend URL as plain text in response.
 
 ### URL Parameters
 

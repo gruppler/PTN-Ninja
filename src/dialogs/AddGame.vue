@@ -147,7 +147,7 @@ export default {
       get() {
         return this.$route.params.type === "ptn";
       },
-      async set(show) {
+      set(show) {
         if (!show && this.showPTN) {
           this.$router.back();
         } else if (show && !this.showPTN) {
