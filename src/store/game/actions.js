@@ -57,9 +57,9 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
 
   return new Promise((resolve) => {
     setTimeout(async () => {
-      await dispatch("SET_GAME", game);
+      await dispatch("SET_GAME", newGame);
       this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-        commit("ADD_GAME", game);
+        commit("ADD_GAME", newGame);
         Loading.hide();
         resolve();
       });
