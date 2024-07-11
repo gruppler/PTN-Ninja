@@ -59,7 +59,10 @@ exports.short = functions.https.onRequest(async (request, response) => {
       const snapshot = await ref.get();
       if (snapshot.exists) {
         response.send(JSON.stringify(snapshot.data()));
-        await ref.update({ accessed: now });
+        await ref.update({
+          accessed: now,
+          visits: (snapshot.data().visits || 0) + 1,
+        });
       } else {
         response.status(400).send({ message: "URL alias not found" });
       }
