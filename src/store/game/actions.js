@@ -1,13 +1,14 @@
 import Vue from "vue";
 import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isString, throttle } from "lodash";
+import { isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
 import router from "../../router";
+import { parseURLparams } from "../../router/routes";
 
 let gamesDB;
 
@@ -121,10 +122,39 @@ export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
   if (ptn) {
     if (/^\d+$/.test(ptn)) {
       // PlayTak game ID
-      return router.push({
+      router.push({
         name: "add",
         params: { tab: "load", type: "playtak" },
       });
+      return false;
+    } else if (/^https:\/\/ptn.ninja\/.+/.test(ptn)) {
+      // PTN Ninja url
+      let route = router.match(ptn.substring(17));
+      if (route && route.name === "local") {
+        if (route.params.id) {
+          const data = await this.getters["ui/urlUnshort"](route.params.id);
+          route = {
+            name: "local",
+            params: data
+              ? {
+                  ptn: data.ptn,
+                  state: data.params,
+                }
+              : {},
+          };
+        }
+        if (!isEmpty(route.params)) {
+          try {
+            const params = parseURLparams(route);
+            game = new Game(params);
+            await dispatch("ADD_GAME", game);
+            return true;
+          } catch (error) {
+            console.error(error);
+            return false;
+          }
+        }
+      }
     } else if (Game.validate(ptn, true) === true) {
       // PTN
       game = new Game({ ptn });
@@ -145,8 +175,10 @@ export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
   }
   if (ptn && game) {
     await dispatch("ADD_GAME", game);
+    return true;
   } else {
     router.push({ name: "add", params: { tab: "load", type: "ptn" } });
+    return false;
   }
 };
 

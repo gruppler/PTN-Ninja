@@ -110,9 +110,6 @@ import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
-import TPS from "../Game/PTN/TPS";
-
-import { isObject } from "lodash";
 
 export default {
   name: "AddGame",
@@ -214,40 +211,11 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      let ptn;
-      try {
-        ptn = await this.$store.dispatch("ui/PASTE");
-      } catch (error) {
-        console.error(error);
-      }
-      let game;
-      if (ptn) {
-        if (Game.validate(ptn, true) === true) {
-          // PTN
-          game = new Game({ ptn });
-        } else {
-          // TPS
-          let tps = new TPS(ptn);
-          if (tps.isValid) {
-            tps = tps.text;
-            game = new Game({ tags: { tps } });
-          } else {
-            // JSON
-            try {
-              let tags = JSON.parse(ptn);
-              if (isObject(tags)) {
-                game = new Game({ tags });
-              }
-            } catch (error) {}
-          }
-        }
-      }
-      if (ptn && game) {
-        await this.$store.dispatch("game/ADD_GAME", game);
+      const success = await this.$store.dispatch(
+        "game/ADD_GAME_FROM_CLIPBOARD"
+      );
+      if (success) {
         this.close();
-      } else {
-        this.ptn = ptn;
-        this.showPTN = true;
       }
     },
     async clipboardCreate(ptn) {
