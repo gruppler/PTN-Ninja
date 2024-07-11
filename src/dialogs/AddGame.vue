@@ -212,13 +212,23 @@ export default {
     },
     async clipboard() {
       const ptn = await this.$store.dispatch("ui/PASTE");
-      if (!ptn || Game.validate(ptn) !== true) {
-        this.ptn = ptn;
-        this.showPTN = true;
-      } else {
-        let game = new Game({ ptn });
+      let game;
+      if (ptn) {
+        try {
+          if (Game.validate(ptn, true) === true) {
+            game = new Game({ ptn });
+          } else {
+            let tags = JSON.parse(ptn);
+            game = new Game({ tags });
+          }
+        } catch (error) {}
+      }
+      if (game) {
         await this.$store.dispatch("game/ADD_GAME", game);
         this.close();
+      } else {
+        this.ptn = ptn;
+        this.showPTN = true;
       }
     },
     async clipboardCreate(ptn) {
