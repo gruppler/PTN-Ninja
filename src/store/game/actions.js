@@ -134,14 +134,16 @@ export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
         if (route.params.id) {
           Loading.show();
           const data = await this.getters["ui/urlUnshort"](route.params.id);
+          if (!data) {
+            Loading.hide();
+            return false;
+          }
           route = {
             name: "local",
-            params: data
-              ? {
-                  ptn: data.ptn,
-                  state: data.params,
-                }
-              : {},
+            params: {
+              ptn: data.ptn,
+              state: data.params,
+            },
           };
         }
         if (!isEmpty(route.params)) {
