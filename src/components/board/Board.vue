@@ -183,7 +183,9 @@ export default {
         this.isDialogOpen ||
         this.isHighlighting ||
         this.isEditingTPS ||
-        ($gameSelector && $gameSelector.$refs.select.menu)
+        ($gameSelector &&
+          $gameSelector.$refs.select &&
+          $gameSelector.$refs.select.menu)
       );
     },
     cols() {
