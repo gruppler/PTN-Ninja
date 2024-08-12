@@ -471,6 +471,7 @@ export default {
     gameOver: "The game has ended",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
+    interactiveAnalysis: "Interactive Analysis",
     maxDate: "Before",
     maxSuggestedMoves: "Max. Suggestions",
     minDate: "After",
@@ -484,6 +485,7 @@ export default {
     wins: "win | wins",
     bots: {
       tiltak: "Tiltak (remote)",
+      "tiltak-wasm": "Tiltak (local)",
       topaz: "Topaz (local)",
     },
     database: {
