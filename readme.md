@@ -186,23 +186,23 @@ For example:
 
 - Abort any in-progress piece movement interaction
 
-#### `NOTIFY` (value: `<Object>`)
+#### `NOTIFY` (value: `<String>|<Object>`)
 
 - Issue a notification
 
-#### `NOTIFY_ERROR` (value: `<Object>`)
+#### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
 - Issue an error notification
 
-#### `NOTIFY_SUCCESS` (value: `<Object>`)
+#### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
 - Issue a success notification
 
-#### `NOTIFY_WARNING` (value: `<Object>`)
+#### `NOTIFY_WARNING` (value: `<String>|<Object>`)
 
 - Issue a warning notification
 
-#### `NOTIFY_HINT` (value: `<Object>`)
+#### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
 - Issue a hint notification
 
