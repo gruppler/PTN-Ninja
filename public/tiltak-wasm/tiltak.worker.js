@@ -6,7 +6,7 @@ async function init_wasm_in_worker() {
   await wasm_bindgen("./tiltak_wasm_bg.wasm");
 
   let callback = start_engine((result) => {
-    // console.log(`Received ${result} from engine`);
+    console.log(`Received ${result} from engine`);
 
     self.postMessage(result);
   });

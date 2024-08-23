@@ -149,7 +149,7 @@
         <template v-else-if="botSettings.bot === 'tiltak-wasm'">
           <q-btn
             v-if="!botMoves.length && !isGameEnd"
-            @click="requestTiltakSuggestions"
+            @click="requestTiltakInteractiveSuggestions"
             :loading="loadingTiltakWasmMoves"
             class="full-width"
             color="primary"
@@ -569,9 +569,17 @@ export default {
       komi,
       settingsHash = this.botSettingsHash
     ) {
-      if (this.isOffline) {
-        this.notifyError("Offline");
-        return;
+      if (!this.tiltakWorker) {
+        try {
+          this.tiltakWorker = new Worker(
+            new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
+          );
+          this.tiltakWorker.onmessage = ({ data }) => {
+            this.receiveTiltakInteractiveSuggestions(data);
+          };
+        } catch (error) {
+          this.notifyError("Bot unavailable");
+        }
       }
       if (!tps) {
         throw new Error("Missing TPS");
@@ -632,17 +640,37 @@ export default {
       return result;
     },
 
-    async requestTiltakSuggestions() {
+    async initTiltakInteractive(force = false) {
+      if (!this.tiltakWorker || force) {
+        try {
+          this.tiltakWorker = new Worker(
+            new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
+          );
+          return new Promise((resolve, reject) => {
+            this.tiltakWorker.onmessage = ({ data }) => {
+              if (data === "teiok") {
+                resolve(true);
+              } else {
+                this.receiveTiltakInteractiveSuggestions(data);
+              }
+            };
+          });
+        } catch (error) {
+          this.notifyError("Bot unavailable");
+        }
+      }
+    },
+    async requestTiltakInteractiveSuggestions() {
       if (!this.tiltakWorker) {
         try {
           this.tiltakWorker = new Worker(
             new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
           );
           this.tiltakWorker.onmessage = ({ data }) => {
-            this.receiveTiltakSuggestions(data);
+            this.receiveTiltakInteractiveSuggestions(data);
           };
         } catch (error) {
-          this.notifyError("Bot unavailable");
+          return this.notifyError("Bot unavailable");
         }
       }
       this.analyzingPly = this.$store.state.game.position.boardPly;
@@ -655,13 +683,14 @@ export default {
         id: this.botSettingsHash,
       });
     },
-    receiveTiltakSuggestions(result) {
+    receiveTiltakInteractiveSuggestions(result) {
       if (result.error) {
         this.notifyError(result.error);
         return;
       }
+      console.log("from worker:", result);
       if (!result.startsWith("info ")) {
-        console.log(result);
+        // console.log(result);
         return;
       }
       console.log(result);
