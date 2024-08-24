@@ -38,7 +38,7 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="local" />
+                  <q-icon name="browse_fs" />
                 </q-item-section>
                 <q-item-section>{{ $t("Files") }}</q-item-section>
               </q-item>

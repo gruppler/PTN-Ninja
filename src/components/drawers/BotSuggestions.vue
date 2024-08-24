@@ -53,8 +53,28 @@
             item-aligned
             filled
           >
-            <template v-slot:prepend>
-              <q-icon name="bot" />
+            <template v-slot:selected-item="scope">
+              <q-item-section class="fg-inherit" side>
+                <q-icon :name="scope.opt.icon" class="fg-inherit" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ scope.opt.label }}</q-item-label>
+              </q-item-section>
+            </template>
+            <template v-slot:option="scope">
+              <q-item
+                :option="scope.opt"
+                :key="scope.opt.value"
+                v-bind="scope.itemProps"
+                v-on="scope.itemEvents"
+              >
+                <q-item-section class="fg-inherit" side>
+                  <q-icon :name="scope.opt.icon" class="fg-inherit" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.label }}</q-item-label>
+                </q-item-section>
+              </q-item>
             </template>
           </q-select>
 
@@ -323,6 +343,7 @@ export default {
       return this.bots.map((value) => ({
         value,
         label: this.$t(`analysis.bots.${value}`),
+        icon: value.endsWith("-cloud") ? "online" : "local",
       }));
     },
     isOffline() {
