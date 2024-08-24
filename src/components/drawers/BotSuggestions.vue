@@ -674,29 +674,20 @@ export default {
     },
 
     // MARK: Tiltak WASM
-    async initTiltakInteractive(force = false) {
-      if (force || !this.tiltakWorker || !this.bots.includes("tiltak")) {
+    initTiltakInteractive(force = false) {
+      if (force || !this.tiltakWorker) {
         try {
           this.tiltakWorker = new Worker(
             new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
           );
-          await new Promise((resolve, reject) => {
-            this.tiltakWorker.onmessage = ({ data }) => {
-              if (data === "teiok") {
-                this.tiltakWorker.onmessage = ({ data }) => {
-                  this.receiveTiltakInteractiveSuggestions(data);
-                };
-                let bots = this.bots.concat();
-                bots.push("tiltak");
-                this.bots = uniq(bots).sort();
-                resolve(true);
-              }
-            };
-            this.tiltakWorker.postMessage("tei");
-          });
+          this.tiltakWorker.onmessage = ({ data }) => {
+            this.receiveTiltakInteractiveSuggestions(data);
+          };
+          this.bots = uniq(this.bots.concat(["tiltak"])).sort();
+          return true;
         } catch (error) {
           console.error("Failed to load Tiltak (local):", error);
-          return reject(false);
+          return false;
         }
       }
     },
@@ -705,8 +696,8 @@ export default {
       if (this.isGameEnd) {
         return;
       }
-      if (!this.tiltakWorker || !this.bots.includes("tiltak")) {
-        await this.initTiltakInteractive(true);
+      if (!this.tiltakWorker) {
+        this.initTiltakInteractive();
       }
       if (this.loadingTiltakInteractiveMoves) {
         this.tiltakWorker.postMessage("stop");
@@ -733,6 +724,8 @@ export default {
         if (tiltakNewPositionRegex.test(result)) {
           // Consider following results as responses for new position
           this.interactiveTPS = this.nextInteractiveTPS;
+        } else {
+          console.log(result);
         }
         return;
       }
@@ -783,14 +776,14 @@ export default {
           this.npsTiltakInteractive = null;
         } catch (error) {
           await this.tiltakWorker.terminate();
-          await this.initTiltakInteractive();
+          this.initTiltakInteractive();
         }
       }
     },
 
     // MARK: Topaz
-    async initTopaz(force = false) {
-      if (force || !this.topazWorker || !this.bots.includes("topaz")) {
+    initTopaz(force = false) {
+      if (force || !this.topazWorker) {
         try {
           this.topazWorker = new Worker(
             new URL("/topaz/topaz.worker.js", import.meta.url)
@@ -798,9 +791,7 @@ export default {
           this.topazWorker.onmessage = ({ data }) => {
             this.receiveTopazSuggestions(data);
           };
-          let bots = this.bots.concat();
-          bots.push("topaz");
-          this.bots = uniq(bots).sort();
+          this.bots = uniq(this.bots.concat(["topaz"])).sort();
           return true;
         } catch (error) {
           console.error("Failed to load Topaz (local):", error);
@@ -810,9 +801,9 @@ export default {
     },
 
     async requestTopazSuggestions() {
-      if (!this.topazWorker || !this.bots.includes("topaz")) {
+      if (!this.topazWorker) {
         try {
-          await this.initTopaz(true);
+          await this.initTopaz();
         } catch (error) {
           return;
         }
@@ -893,13 +884,14 @@ export default {
     },
 
     // MARK: Init
-    async init() {
+    init() {
       // Load wasm bots
-      await Promise.all([this.initTiltakInteractive(), this.initTopaz()]);
+      this.initTiltakInteractive();
+      this.initTopaz();
     },
   },
 
-  async mounted() {
+  mounted() {
     return this.init();
   },
 
@@ -907,15 +899,15 @@ export default {
     async isOffline(isOffline) {
       if (!isOffline && this.isPanelVisible) {
         if (!this.topazWorker || !this.tiltakWorker) {
-          await this.init();
+          this.init();
         }
       }
     },
     async isPanelVisible(isPanelVisible) {
       if (isPanelVisible) {
-        await this.init();
+        this.init();
       } else if (this.loadingTiltakInteractiveMoves) {
-        this.terminateTiltakInteractive();
+        // this.terminateTiltakInteractive();
       }
     },
     tps() {

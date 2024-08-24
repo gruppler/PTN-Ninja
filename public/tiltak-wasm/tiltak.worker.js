@@ -10,6 +10,8 @@ async function init_wasm_in_worker() {
     self.postMessage(result);
   });
 
+  callback("tei");
+
   self.onmessage = async ({ data }) => {
     // console.log("from ui:", data);
     callback(data);
