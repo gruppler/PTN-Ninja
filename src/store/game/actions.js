@@ -7,6 +7,8 @@ import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
+import Ply from "../../Game/PTN/Ply";
+import Linenum from "../../Game/PTN/Linenum";
 import router from "../../router";
 import { parseURLparams } from "../../router/routes";
 
@@ -111,7 +113,7 @@ export const ADD_GAMES = async function (
   }
 };
 
-export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
+export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
   let ptn;
   try {
     ptn = await this.dispatch("ui/PASTE");
@@ -161,6 +163,10 @@ export const ADD_GAME_FROM_CLIPBOARD = async function ({ dispatch }) {
     } else if (Game.validate(ptn, true) === true) {
       // PTN
       game = new Game({ ptn });
+    } else if (Ply.test(ptn) || Linenum.test(ptn)) {
+      // Plies
+      dispatch("INSERT_PLIES", { plies: ptn });
+      return true;
     } else {
       // TPS
       let tps = new TPS(ptn);

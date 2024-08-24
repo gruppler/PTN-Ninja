@@ -522,6 +522,11 @@ export default class GameMutations {
     let boardPly = this.board.ply;
 
     if (ply.constructor !== Ply) {
+      if (Linenum.test(ply)) {
+        // Silently ignore line numbers
+        return;
+      }
+
       ply = Ply.parse(ply, {
         id:
           replaceCurrent && boardPly && !this.board.nextPly

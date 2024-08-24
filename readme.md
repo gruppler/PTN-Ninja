@@ -92,7 +92,7 @@ For example:
 
 #### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
 
-- Execute a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies
+- Insert a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
 
 #### `DELETE_BRANCH` (value: `<String>`)
 

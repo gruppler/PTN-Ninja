@@ -211,9 +211,7 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const success = await this.$store.dispatch(
-        "game/ADD_GAME_FROM_CLIPBOARD"
-      );
+      const success = await this.$store.dispatch("game/IMPORT_FROM_CLIPBOARD");
       if (success) {
         this.close();
       }

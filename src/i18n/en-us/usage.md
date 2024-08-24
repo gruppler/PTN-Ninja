@@ -36,7 +36,7 @@ Press <kbd>E</kbd> or **Right-click** the Game Selector's 'info' icon to edit th
 
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, to open the Load Game dialog.
   - To quickly load one or more games from files, press <kbd>Ctrl</kbd><kbd>O</kbd>.
-  - To quickly load a game from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying PTN, TPS, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
+  - To quickly load a game or branch from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying TPS, full or partial PTN, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
 - To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, then select the New Game tab.
   - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
@@ -166,6 +166,12 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 # PTN
 
 [PTN](https://ustak.org/portable-tak-notation/) is the notation that describes the moves of the game. PTN Ninja reads and writes information using this notation.
+
+::: tip
+
+You can insert moves with <kbd>Ctrl</kbd><kbd>V</kbd> after copying PTN.
+
+:::
 
 :::
 
