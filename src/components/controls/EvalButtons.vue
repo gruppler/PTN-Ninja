@@ -1,5 +1,5 @@
 <template>
-  <q-btn-group class="eval-buttons" v-bind="$attrs">
+  <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
       :label="$t('Tak')"
       :class="{ active: isTak }"
@@ -57,26 +57,26 @@ export default {
         ? this.$store.state.game.position.ply
         : null;
     },
-    eval() {
+    evaluation() {
       return this.ply ? this.ply.evaluation : null;
     },
     isTak() {
-      return this.eval && this.eval.tak;
+      return this.evaluation && this.evaluation.tak;
     },
     isTinue() {
-      return this.eval && this.eval.tinue;
+      return this.evaluation && this.evaluation.tinue;
     },
     isQ() {
-      return this.eval && this.eval["?"];
+      return this.evaluation && this.evaluation["?"];
     },
     isBang() {
-      return this.eval && this.eval["!"];
+      return this.evaluation && this.evaluation["!"];
     },
     isDoubleQ() {
-      return this.eval && this.eval.isDouble["?"];
+      return this.evaluation && this.evaluation.isDouble["?"];
     },
     isDoubleBang() {
-      return this.eval && this.eval.isDouble["!"];
+      return this.evaluation && this.evaluation.isDouble["!"];
     },
   },
   methods: {
@@ -88,7 +88,7 @@ export default {
 </script>
 
 <style lang="scss">
-.eval-buttons {
+.evaluation-buttons {
   .q-btn.active {
     background-color: $orange-light;
     color: $textDark;
