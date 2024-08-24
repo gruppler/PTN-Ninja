@@ -837,7 +837,7 @@ export default {
           : initialPlayer;
       let player = initialPlayer;
       let color = initialColor;
-      const ply = new Ply(pv.split(" ").splice(0, 1)[0], {
+      const ply = new Ply(pv.splice(0, 1)[0], {
         id: null,
         player,
         color,
