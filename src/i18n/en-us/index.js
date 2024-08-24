@@ -478,14 +478,15 @@ export default {
     n_games: "1 game | {count} games",
     "No suggested moves": "No suggested moves",
     nodes: "1 node | {count} nodes",
+    nps: "NPS",
     timeBudget: "Seconds to Think",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
     visits: "1 visit | {count} visits",
     wins: "win | wins",
     bots: {
-      tiltak: "Tiltak (remote)",
-      "tiltak-wasm": "Tiltak (local)",
+      "tiltak-cloud": "Tiltak (cloud)",
+      tiltak: "Tiltak (local)",
       topaz: "Topaz (local)",
     },
     database: {

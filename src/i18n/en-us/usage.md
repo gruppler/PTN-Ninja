@@ -274,13 +274,17 @@ Thanks in large part to the active [Tak Community](https://discord.gg/2xEt42X), 
 
 ## Bot Analysis
 
-PTN Ninja currently offers access to two bots: **Tiltak** and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (local)**, and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
 
-- [Tiltak](https://github.com/MortenLohne/tiltak)
+- [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
   - runs in the cloud
   - offers several suggestions
   - can provide quick analysis of the entire game
-- [Topaz](https://github.com/Jakur/topaz-tak)
+- [Tiltak (local)](https://github.com/MortenLohne/tiltak)
+  - runs on your device
+  - offers a single suggestion, updated in realtime
+  - provides continual analysis of the current position
+- [Topaz (local)](https://github.com/Jakur/topaz-tak)
   - runs on your device
   - offers a single suggestion
   - can provide deep analysis of the current position
@@ -295,7 +299,7 @@ PTN Ninja currently offers access to two bots: **Tiltak** and **Topaz**. Due to 
 
 ::: info Note
 
-When using Tiltak's "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, these buttons will be hidden.
+When using Tiltak (cloud)'s "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, these buttons will be hidden.
 
 After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes and annotation marks.
 
