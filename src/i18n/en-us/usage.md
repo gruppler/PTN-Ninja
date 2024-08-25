@@ -280,7 +280,7 @@ PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (l
   - runs in the cloud
   - offers several suggestions
   - can provide quick analysis of the entire game
-- [Tiltak (local)](https://github.com/MortenLohne/tiltak)
+- [Tiltak (local)](https://www.npmjs.com/package/tiltak-wasm)
   - runs on your device
   - offers a single suggestion, updated in realtime
   - provides continual analysis of the current position
