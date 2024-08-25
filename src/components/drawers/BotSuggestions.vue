@@ -796,6 +796,7 @@ export default {
         time: null,
         nps: null,
         depth: null,
+        seldepth: null,
         score: null,
         nodes: null,
       };
@@ -814,7 +815,15 @@ export default {
       } else if (result.startsWith("info")) {
         // Parse Results
         this.tiltakInteractive.isLoading = true;
-        const keys = ["pv", "time", "nps", "depth", "score", "nodes"];
+        const keys = [
+          "pv",
+          "time",
+          "nps",
+          "depth",
+          "seldepth",
+          "score",
+          "nodes",
+        ];
         let key = "";
         for (const value of result.split(" ")) {
           if (keys.includes(value)) {
