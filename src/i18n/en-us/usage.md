@@ -263,7 +263,7 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 # Analysis
 
-Thanks in large part to the active [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **bot analysis** and an **opening explorer**.
+Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **bot analysis** and an **opening explorer**.
 
 :::
 
@@ -277,17 +277,20 @@ Thanks in large part to the active [Tak Community](https://discord.gg/2xEt42X), 
 PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (local)**, and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
-  - runs in the cloud
-  - offers several suggestions
   - can provide quick analysis of the entire game
+  - can store evaluations and PVs in PTN
+  - offers several suggestions
+  - runs in the cloud
 - [Tiltak (local)](https://www.npmjs.com/package/tiltak-wasm)
-  - runs on your device
-  - offers a single suggestion, updated in realtime
-  - provides continual analysis of the current position
-- [Topaz (local)](https://github.com/Jakur/topaz-tak)
-  - runs on your device
+  - provides continual evaluation of the current position
+  - updates the evaluation and PV in real time
   - offers a single suggestion
+  - runs on your device
+- [Topaz (local)](https://github.com/Jakur/topaz-tak)
   - can provide deep analysis of the current position
+  - stops early if a forced win/loss is found
+  - offers a single suggestion
+  - runs on your device
 
 :::
 
