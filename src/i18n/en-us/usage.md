@@ -18,10 +18,10 @@ The app is built to work well out of the box on mobile devices and touch screens
 
 PTN Ninja stores your games in a database on your device to allow easy switching between them using the Game Selector. Games you load will be stored until you close them using the Game Selector.
 
-You can load games from your clipboard, files, PTN Ninja links, or PlayTak Game IDs. To load a game from your clipboard, first copy one of the following:
+You can load games (or moves) from your clipboard, files, PTN Ninja links, or PlayTak Game IDs. To load from your clipboard, first copy one of the following:
 
-- Full PTN
 - TPS
+- PTN (full game, or partial moves)
 - A PTN Ninja link
 - [PlayTak game ID](https://www.playtak.com/games)
 - JSON copied from [TakBot's](https://github.com/humanat/takbot) `/info` command
@@ -169,7 +169,7 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 
 ::: tip
 
-You can insert moves with <kbd>Ctrl</kbd><kbd>V</kbd> after copying PTN.
+You can insert moves with <kbd>Ctrl</kbd><kbd>V</kbd> after copying partial PTN.
 
 :::
 
@@ -274,19 +274,19 @@ Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers 
 
 ## Bot Analysis
 
-PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (local)**, and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (wasm)**, and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
   - can provide quick analysis of the entire game
   - can store evaluations and PVs in PTN
   - offers several suggestions
   - runs in the cloud
-- [Tiltak (local)](https://www.npmjs.com/package/tiltak-wasm)
+- [Tiltak (wasm)](https://www.npmjs.com/package/tiltak-wasm)
   - provides continual evaluation of the current position
   - updates the evaluation and PV in real time
   - offers a single suggestion
   - runs on your device
-- [Topaz (local)](https://github.com/Jakur/topaz-tak)
+- [Topaz (wasm)](https://github.com/Jakur/topaz-tak)
   - can provide deep analysis of the current position
   - stops early if a forced win/loss is found
   - offers a single suggestion
