@@ -308,8 +308,12 @@ export default {
       loadingTopazMoves: false,
       progressTopazAnalysis: 0,
       npsTiltakInteractive: null,
-      interactiveTPS: null,
-      nextInteractiveTPS: null,
+      interactive: {
+        tps: null,
+        nextTPS: null,
+        komi: null,
+        size: null,
+      },
       topazTimer: null,
       showBotSettings: false,
       analyzingPly: null,
@@ -699,11 +703,12 @@ export default {
         this.initTiltakInteractive();
         return;
       }
-      if (this.loadingTiltakInteractiveMoves) {
+      if (this.loadingTiltakInteractiveMoves && this.interactive.tps) {
         this.tiltakWorker.postMessage("stop");
         this.npsTiltakInteractive = null;
       }
       if (this.isGameEnd) {
+        this.interactive.nextTPS = null;
         return;
       }
       if (!this.tiltakWorker.isReady) {
@@ -712,15 +717,22 @@ export default {
       }
 
       this.loadingTiltakInteractiveMoves = true;
-      this.tiltakWorker.postMessage(`teinewgame ${this.game.config.size}`);
-      this.tiltakWorker.postMessage(
-        `setoption name HalfKomi value ${this.game.config.komi * 2}`
-      );
-      this.nextInteractiveTPS = this.tps;
-      if (!this.interactiveTPS) {
-        this.interactiveTPS = this.tps;
+      if (
+        this.interactive.size !== this.game.config.size ||
+        this.interactive.komi !== this.game.config.komi
+      ) {
+        this.tiltakWorker.postMessage(`teinewgame ${this.game.config.size}`);
+        this.tiltakWorker.postMessage(
+          `setoption name HalfKomi value ${this.game.config.komi * 2}`
+        );
+        this.interactive.size = this.game.config.size;
+        this.interactive.komi = this.game.config.komi;
       }
-      this.tiltakWorker.postMessage(`position tps ${this.nextInteractiveTPS}`);
+      this.interactive.nextTPS = this.tps;
+      if (!this.interactive.tps) {
+        this.interactive.tps = this.tps;
+      }
+      this.tiltakWorker.postMessage(`position tps ${this.interactive.nextTPS}`);
       this.tiltakWorker.postMessage(`go infinite`);
     },
 
@@ -730,17 +742,17 @@ export default {
         // Check for echoed position
         if (/^bestmove/.test(result)) {
           // Consider following results as responses for new position
-          this.interactiveTPS = this.nextInteractiveTPS;
+          this.interactive.tps = this.interactive.nextTPS;
         } else {
           console.log(result);
         }
         return;
       }
-      if (!this.interactiveTPS) {
-        this.interactiveTPS = this.tps;
+      if (!this.interactive.tps) {
+        this.interactive.tps = this.tps;
       }
       const id = this.hashBotSettings({ bot: "tiltak" });
-      const tps = this.interactiveTPS;
+      const tps = this.interactive.tps;
       let [, depth, , nodes, evaluation, , nps, pv] = resultValues;
       depth = parseInt(depth, 10);
       nodes = parseInt(nodes, 10);
@@ -784,8 +796,8 @@ export default {
           this.tiltakWorker.postMessage("stop");
           this.loadingTiltakInteractiveMoves = false;
           this.npsTiltakInteractive = null;
-          this.interactiveTPS = null;
-          this.nextInteractiveTPS = null;
+          this.interactive.tps = null;
+          this.interactive.nextTPS = null;
         } catch (error) {
           await this.tiltakWorker.terminate();
           this.initTiltakInteractive();
