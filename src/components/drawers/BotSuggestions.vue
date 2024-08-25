@@ -710,17 +710,42 @@ export default {
           this.tiltakWorker = new Worker(
             new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
           );
+
+          // Error handling
+          this.tiltakWorker.onerror = (error) => {
+            console.info(
+              "Tiltak (wasm) worker encountered an error. Restarting...",
+              error.message
+            );
+            this.notifyError(error);
+            if (this.tiltakWorker) {
+              this.tiltakWorker.terminate();
+              this.tiltakWorker = null;
+            }
+            this.tiltakInteractive.isLoading = false;
+            this.tiltakInteractive.time = null;
+            this.tiltakInteractive.nps = null;
+            this.tiltakInteractive.tps = null;
+            this.tiltakInteractive.nextTPS = null;
+            this.tiltakInteractive.komi = null;
+            this.tiltakInteractive.size = null;
+            this.tiltakInteractive.initTPS = null;
+          };
+
+          // Message handling
           this.tiltakWorker.onmessage = ({ data }) => {
             if (data === "teiok" || data === "readyok") {
               this.tiltakWorker.isReady = true;
             }
             this.receiveTiltakInteractiveSuggestions(data);
           };
+
+          // Init
           this.tiltakWorker.postMessage("isready");
           this.bots = uniq(this.bots.concat(["tiltak"])).sort();
           return true;
         } catch (error) {
-          console.error("Failed to load Tiltak (local):", error);
+          console.error("Failed to load Tiltak (wasm):", error);
           return false;
         }
       }
@@ -924,7 +949,7 @@ export default {
           this.bots = uniq(this.bots.concat(["topaz"])).sort();
           return true;
         } catch (error) {
-          console.error("Failed to load Topaz (local):", error);
+          console.error("Failed to load Topaz (wasm):", error);
           return false;
         }
       }
