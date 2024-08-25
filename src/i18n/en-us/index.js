@@ -478,7 +478,8 @@ export default {
     n_games: "1 game | {count} games",
     "No suggested moves": "No suggested moves",
     nodes: "1 node | {count} nodes",
-    nps: "NPS",
+    nps: "nps",
+    seconds_unit: "sec",
     timeBudget: "Seconds to Think",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
@@ -486,8 +487,13 @@ export default {
     wins: "win | wins",
     bots: {
       "tiltak-cloud": "Tiltak (cloud)",
-      tiltak: "Tiltak (local)",
-      topaz: "Topaz (local)",
+      tiltak: "Tiltak (wasm)",
+      topaz: "Topaz (wasm)",
+    },
+    bots_description: {
+      "tiltak-cloud": "Full Game Analysis",
+      tiltak: "Interactive Analysis",
+      topaz: "Deep Analysis",
     },
     database: {
       error: "Failed to load databases",

@@ -284,7 +284,7 @@
       v-if="dbGames"
       v-model="sections.dbGames"
       :label="$t('analysis.Top Games from Position')"
-      icon="board"
+      icon="top_games"
       header-class="bg-accent"
     >
       <smooth-reflow>
