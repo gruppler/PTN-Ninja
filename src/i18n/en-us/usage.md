@@ -281,7 +281,7 @@ PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (w
   - can store evaluations and PVs in PTN
   - offers several suggestions
   - runs in the cloud
-- [Tiltak (wasm)](https://www.npmjs.com/package/tiltak-wasm)
+- [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - provides continual evaluation of the current position
   - updates the evaluation and PV in real time
   - offers a single suggestion
