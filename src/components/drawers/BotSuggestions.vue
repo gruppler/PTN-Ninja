@@ -788,6 +788,11 @@ export default {
     },
 
     receiveTiltakInteractiveSuggestions(result) {
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
       const results = {
         pv: [],
         time: null,
@@ -1045,6 +1050,14 @@ export default {
         }
       } else {
         this.suggestions = [];
+      }
+    },
+    suggestions(suggestions) {
+      const suggestion = suggestions[0];
+      if (suggestion && "evaluation" in suggestion) {
+        this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+      } else {
+        this.$store.dispatch("game/SET_EVAL", null);
       }
     },
     botSettingsHash(hash) {

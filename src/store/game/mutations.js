@@ -189,6 +189,10 @@ export const HOVER_SQUARE = (state, square) => {
   state.hoveredSquare = square;
 };
 
+export const SET_EVAL = (state, evaluation) => {
+  state.evaluation = evaluation;
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {

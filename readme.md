@@ -238,6 +238,10 @@ For example:
 
 - Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
 
+#### `SET_EVAL` (value: `<Number>: [-100, 100]` )
+
+- Show the specified evaluation score on the board.
+
 ## URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.

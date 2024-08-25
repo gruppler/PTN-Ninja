@@ -633,6 +633,10 @@ export const HOVER_SQUARE = function ({ commit }, args) {
   commit("HOVER_SQUARE", args);
 };
 
+export const SET_EVAL = function ({ commit }, args) {
+  commit("SET_EVAL", args);
+};
+
 export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME", true);
