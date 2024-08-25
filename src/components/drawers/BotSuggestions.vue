@@ -163,72 +163,62 @@
             color="primary"
             icon="board"
             :label="$t('analysis.Analyze Position')"
-            :no-caps="loadingTiltakMoves"
             stretch
-          >
-            <template v-slot:loading>
-              <PlyChip
-                v-if="analyzingPly"
-                :ply="allPlies[analyzingPly.id]"
-                @click.stop.capture="goToAnalysisPly"
-                no-branches
-                :done="analyzingPly.isDone"
-              />
-              <q-spinner />
-            </template>
-          </q-btn>
+          />
         </template>
         <template v-else-if="botSettings.bot === 'tiltak'">
           <q-btn
-            @click="requestTiltakInteractiveSuggestions"
-            :loading="loadingTiltakInteractiveMoves"
+            @click="
+              loadingTiltakInteractiveMoves
+                ? terminateTiltakInteractive()
+                : requestTiltakInteractiveSuggestions()
+            "
             class="full-width"
             color="primary"
-            icon="board"
-            :label="$t('analysis.interactiveAnalysis')"
-            :no-caps="loadingTiltakInteractiveMoves"
             stretch
           >
-            <template v-slot:loading>
+            <template v-if="loadingTiltakInteractiveMoves">
               <span v-if="npsTiltakInteractive !== null" class="q-px-md">
                 {{ $n(npsTiltakInteractive, "n0") }} {{ $t("analysis.nps") }}
               </span>
               <q-spinner />
-              <q-btn
-                :label="$t('Cancel')"
-                @click.stop.capture="terminateTiltakInteractive"
-                flat
-              />
+              <span v-if="npsTiltakInteractive !== null" class="q-px-md">
+                {{ $t("Cancel") }}
+              </span>
+            </template>
+            <template v-else>
+              <q-icon name="board" left /><span class="block">{{
+                $t("analysis.interactiveAnalysis")
+              }}</span>
             </template>
           </q-btn>
         </template>
         <template v-else-if="botSettings.bot === 'topaz'">
           <q-btn
             v-if="!botMoves.length && !isGameEnd"
-            @click="requestTopazSuggestions()"
-            :loading="loadingTopazMoves"
+            @click="loadingTopazMoves ? null : requestTopazSuggestions()"
             :percentage="progressTopazAnalysis"
             class="full-width"
             color="primary"
-            icon="board"
-            :label="$t('analysis.Analyze Position')"
-            :no-caps="loadingTopazMoves"
+            :ripple="!loadingTopazMoves"
             stretch
           >
-            <template v-slot:loading>
+            <template v-if="loadingTopazMoves">
               <PlyChip
                 v-if="analyzingPly"
                 :ply="allPlies[analyzingPly.id]"
-                @click.stop.capture="goToAnalysisPly"
+                @click.stop="goToAnalysisPly"
                 no-branches
                 :done="analyzingPly.isDone"
+                style="text-transform: none"
               />
               <q-spinner />
-              <q-btn
-                :label="$t('Cancel')"
-                @click.stop.capture="terminateTopaz"
-                flat
-              />
+              <q-btn :label="$t('Cancel')" @click.stop="terminateTopaz" flat />
+            </template>
+            <template v-else>
+              <q-icon name="board" left /><span class="block">{{
+                $t("analysis.Analyze Position")
+              }}</span>
             </template>
           </q-btn>
         </template>
@@ -515,6 +505,15 @@ export default {
         }
       }
       return null;
+    },
+
+    goToAnalysisPly() {
+      if (this.analyzingPly) {
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: this.analyzingPly.id,
+          isDone: this.analyzingPly.isDone,
+        });
+      }
     },
 
     // MARK: Tiltak Cloud
