@@ -732,10 +732,8 @@ export default {
         return;
       }
 
-      // Send `stop` if necessary
-      if (this.tiltakInteractive.isLoading) {
-        this.tiltakWorker.postMessage("stop");
-      }
+      // Send `stop` even if unnecessary
+      this.tiltakWorker.postMessage("stop");
 
       // Pause if game has ended
       if (this.isGameEnd) {
