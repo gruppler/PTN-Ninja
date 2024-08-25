@@ -305,7 +305,6 @@ const bestMoveEndpoint =
 
 const tiltakResponseRegex =
   /^info depth (\d+) seldepth (\d+) nodes (\d+) score cp (-?\d+) time (\d+) nps (\d+) pv (.+)$/;
-const tiltakNewPositionRegex = /^bestmove/;
 
 export default {
   name: "BotSuggestions",
@@ -319,7 +318,7 @@ export default {
       loadingTopazMoves: false,
       progressTopazAnalysis: 0,
       npsTiltakInteractive: null,
-      InteractiveTPS: null,
+      interactiveTPS: null,
       nextInteractiveTPS: null,
       topazTimer: null,
       showBotSettings: false,
@@ -681,8 +680,12 @@ export default {
             new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
           );
           this.tiltakWorker.onmessage = ({ data }) => {
+            if (data === "teiok" || data === "readyok") {
+              this.tiltakWorker.isReady = true;
+            }
             this.receiveTiltakInteractiveSuggestions(data);
           };
+          this.tiltakWorker.postMessage("isready");
           this.bots = uniq(this.bots.concat(["tiltak"])).sort();
           return true;
         } catch (error) {
@@ -693,18 +696,23 @@ export default {
     },
 
     async requestTiltakInteractiveSuggestions() {
-      if (this.isGameEnd) {
-        return;
-      }
       if (!this.tiltakWorker) {
         this.initTiltakInteractive();
+        return;
       }
       if (this.loadingTiltakInteractiveMoves) {
         this.tiltakWorker.postMessage("stop");
-      } else {
-        this.loadingTiltakInteractiveMoves = true;
+        this.npsTiltakInteractive = null;
+      }
+      if (this.isGameEnd) {
+        return;
+      }
+      if (!this.tiltakWorker.isReady) {
+        console.error("Tiltak worker failed to initialize");
+        return;
       }
 
+      this.loadingTiltakInteractiveMoves = true;
       this.tiltakWorker.postMessage(`teinewgame ${this.game.config.size}`);
       this.tiltakWorker.postMessage(
         `setoption name HalfKomi value ${this.game.config.komi * 2}`
@@ -721,13 +729,16 @@ export default {
       const resultValues = result.match(tiltakResponseRegex);
       if (!resultValues) {
         // Check for echoed position
-        if (tiltakNewPositionRegex.test(result)) {
+        if (/^bestmove/.test(result)) {
           // Consider following results as responses for new position
           this.interactiveTPS = this.nextInteractiveTPS;
         } else {
           console.log(result);
         }
         return;
+      }
+      if (!this.interactiveTPS) {
+        this.interactiveTPS = this.tps;
       }
       const id = this.hashBotSettings({ bot: "tiltak" });
       const tps = this.interactiveTPS;
@@ -774,6 +785,8 @@ export default {
           this.tiltakWorker.postMessage("stop");
           this.loadingTiltakInteractiveMoves = false;
           this.npsTiltakInteractive = null;
+          this.interactiveTPS = null;
+          this.nextInteractiveTPS = null;
         } catch (error) {
           await this.tiltakWorker.terminate();
           this.initTiltakInteractive();
@@ -802,11 +815,8 @@ export default {
 
     async requestTopazSuggestions() {
       if (!this.topazWorker) {
-        try {
-          await this.initTopaz();
-        } catch (error) {
-          return;
-        }
+        this.initTopaz();
+        return;
       }
       if (this.loadingTopazMoves) {
         return;
