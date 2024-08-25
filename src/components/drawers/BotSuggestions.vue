@@ -326,6 +326,7 @@ export default {
         nextTPS: null,
         komi: null,
         size: null,
+        initTPS: null,
       },
       topazTimer: null,
       showBotSettings: false,
@@ -381,6 +382,18 @@ export default {
     },
     tps() {
       return this.$store.state.game.position.tps;
+    },
+    teiPosition() {
+      return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
+    },
+    teiMoves() {
+      return this.game.ptn.branchPlies
+        .slice(
+          0,
+          1 + this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+        )
+        .map((ply) => ply.text)
+        .join(" ");
     },
     isGameEnd() {
       return (
@@ -741,7 +754,8 @@ export default {
       // Send `teinewgame` if necessary
       if (
         this.tiltakInteractive.size !== this.game.config.size ||
-        this.tiltakInteractive.komi !== this.game.config.komi
+        this.tiltakInteractive.komi !== this.game.config.komi ||
+        this.tiltakInteractive.initTPS !== this.teiPosition
       ) {
         this.tiltakWorker.postMessage(`teinewgame ${this.game.config.size}`);
         this.tiltakWorker.postMessage(
@@ -749,6 +763,7 @@ export default {
         );
         this.tiltakInteractive.size = this.game.config.size;
         this.tiltakInteractive.komi = this.game.config.komi;
+        this.tiltakInteractive.initTPS = this.teiPosition;
       }
 
       // Queue current position for pairing with future response
@@ -758,11 +773,17 @@ export default {
       }
 
       // Send current position
-      this.tiltakWorker.postMessage(
-        `position tps ${this.tiltakInteractive.nextTPS}`
-      );
+      let posMessage = "position";
+      if (this.tiltakInteractive.initTPS) {
+        posMessage += " tps " + this.tiltakInteractive.initTPS;
+      } else {
+        posMessage += " startpos";
+      }
+      if (this.teiMoves) {
+        posMessage += " moves " + this.teiMoves;
+      }
+      this.tiltakWorker.postMessage(posMessage);
       this.tiltakWorker.postMessage(`go infinite`);
-
       this.tiltakInteractive.isLoading = true;
     },
 
