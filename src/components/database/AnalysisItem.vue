@@ -26,10 +26,13 @@
         <q-item-label>
           <span class="player-numbers">
             <span
-              class="player1"
+              class="player1 first"
               v-if="player1Number !== null"
               :class="{
-                single: player2Number === null && middleNumber === null,
+                single:
+                  player2Number === null &&
+                  middleNumber === null &&
+                  depth === null,
               }"
               >{{ player1Number }}</span
             >
@@ -37,9 +40,12 @@
               class="middle"
               v-if="middleNumber !== null"
               :class="{
-                single: player1Number === null && player2Number === null,
+                single:
+                  player1Number === null &&
+                  player2Number === null &&
+                  depth === null,
                 first: player1Number === null,
-                last: player2Number === null,
+                last: player2Number === null && depth === null,
               }"
               >{{ middleNumber }}</span
             >
@@ -47,9 +53,25 @@
               class="player2"
               v-if="player2Number !== null"
               :class="{
-                single: player1Number === null && middleNumber === null,
+                single:
+                  player1Number === null &&
+                  middleNumber === null &&
+                  depth === null,
+                first: player1Number === null && middleNumber === null,
+                last: depth == null,
               }"
               >{{ player2Number }}</span
+            >
+            <span
+              class="depth last"
+              v-if="depth !== null"
+              :class="{
+                single:
+                  player1Number === null &&
+                  player2Number === null &&
+                  middleNumber === null,
+              }"
+              >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
             >
             <tooltip v-if="playerNumbersTooltip">
               <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
@@ -98,6 +120,10 @@ export default {
     ply: Object,
     evaluation: Number,
     count: {
+      type: Number,
+      default: null,
+    },
+    depth: {
       type: Number,
       default: null,
     },
@@ -159,6 +185,9 @@ export default {
   .evaluation {
     position: absolute;
     height: 100%;
+    will-change: width, background-color;
+    transition: width $generic-hover-transition,
+      background-color $generic-hover-transition;
   }
 
   .player-numbers {
@@ -171,16 +200,13 @@ export default {
 
     .player1,
     .middle,
-    .player2 {
+    .player2,
+    .depth {
       padding: 2px 6px;
       position: relative;
-      &.single {
-        border-radius: 4px !important;
-      }
     }
 
     .player1 {
-      border-radius: 4px 0 0 4px;
       background-color: $player1;
       background-color: var(--q-color-player1);
       color: $textDark;
@@ -190,20 +216,15 @@ export default {
         color: var(--q-color-textLight);
       }
     }
-    .middle {
+    .middle,
+    .player2,
+    .depth {
       background-color: $dim;
       body.body--light & {
         background-color: $highlight;
       }
-      &.first {
-        border-radius: 4px 0 0 4px;
-      }
-      &.last {
-        border-radius: 0 4px 4px 0;
-      }
     }
     .player2 {
-      border-radius: 0 4px 4px 0;
       background-color: $player2;
       background-color: var(--q-color-player2);
       color: $textDark;
@@ -212,6 +233,16 @@ export default {
         color: $textLight;
         color: var(--q-color-textLight);
       }
+    }
+
+    .first {
+      border-radius: 4px 0 0 4px;
+    }
+    .last {
+      border-radius: 0 4px 4px 0;
+    }
+    .single {
+      border-radius: 4px !important;
     }
   }
 }

@@ -92,7 +92,7 @@ For example:
 
 #### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
 
-- Execute a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies
+- Insert a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
 
 #### `DELETE_BRANCH` (value: `<String>`)
 
@@ -186,23 +186,23 @@ For example:
 
 - Abort any in-progress piece movement interaction
 
-#### `NOTIFY` (value: `<Object>`)
+#### `NOTIFY` (value: `<String>|<Object>`)
 
 - Issue a notification
 
-#### `NOTIFY_ERROR` (value: `<Object>`)
+#### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
 - Issue an error notification
 
-#### `NOTIFY_SUCCESS` (value: `<Object>`)
+#### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
 - Issue a success notification
 
-#### `NOTIFY_WARNING` (value: `<Object>`)
+#### `NOTIFY_WARNING` (value: `<String>|<Object>`)
 
 - Issue a warning notification
 
-#### `NOTIFY_HINT` (value: `<Object>`)
+#### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
 - Issue a hint notification
 
@@ -237,6 +237,10 @@ For example:
 #### `HIGHLIGHT_SQUARES` (value: `<Array>: [ <String> ]` )
 
 - Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
+
+#### `SET_EVAL` (value: `<Number>: [-100, 100]` )
+
+- Show the specified evaluation score on the board.
 
 ## URLs
 

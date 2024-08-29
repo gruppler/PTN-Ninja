@@ -18,10 +18,10 @@ The app is built to work well out of the box on mobile devices and touch screens
 
 PTN Ninja stores your games in a database on your device to allow easy switching between them using the Game Selector. Games you load will be stored until you close them using the Game Selector.
 
-You can load games from your clipboard, files, PTN Ninja links, or PlayTak Game IDs. To load a game from your clipboard, first copy one of the following:
+You can load games (or moves) from your clipboard, files, PTN Ninja links, or PlayTak Game IDs. To load from your clipboard, first copy one of the following:
 
-- Full PTN
 - TPS
+- PTN (full game, or partial moves)
 - A PTN Ninja link
 - [PlayTak game ID](https://www.playtak.com/games)
 - JSON copied from [TakBot's](https://github.com/humanat/takbot) `/info` command
@@ -36,7 +36,7 @@ Press <kbd>E</kbd> or **Right-click** the Game Selector's 'info' icon to edit th
 
 - To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, to open the Load Game dialog.
   - To quickly load one or more games from files, press <kbd>Ctrl</kbd><kbd>O</kbd>.
-  - To quickly load a game from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying PTN, TPS, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
+  - To quickly load a game or branch from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying TPS, full or partial PTN, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
 - To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, then select the New Game tab.
   - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
@@ -167,6 +167,12 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 
 [PTN](https://ustak.org/portable-tak-notation/) is the notation that describes the moves of the game. PTN Ninja reads and writes information using this notation.
 
+::: tip
+
+You can insert moves with <kbd>Ctrl</kbd><kbd>V</kbd> after copying partial PTN.
+
+:::
+
 :::
 
 - To toggle display of the full PTN, use the leftmost button in the header toolbar, or press <kbd>Q</kbd>.
@@ -257,7 +263,7 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 # Analysis
 
-Thanks in large part to the active [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **bot analysis** and an **opening explorer**.
+Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **bot analysis** and an **opening explorer**.
 
 :::
 
@@ -268,16 +274,23 @@ Thanks in large part to the active [Tak Community](https://discord.gg/2xEt42X), 
 
 ## Bot Analysis
 
-PTN Ninja currently offers access to two bots: **Tiltak** and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja currently offers access to three bots: **Tiltak (cloud)**, **Tiltak (wasm)**, and **Topaz**. Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
 
-- [Tiltak](https://github.com/MortenLohne/tiltak)
-  - runs in the cloud
-  - offers several suggestions
+- [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
   - can provide quick analysis of the entire game
-- [Topaz](https://github.com/Jakur/topaz-tak)
-  - runs on your device
+  - can store evaluations and PVs in PTN
+  - offers several suggestions
+  - runs in the cloud
+- [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
+  - provides continual evaluation of the current position
+  - updates the evaluation and PV in real time
   - offers a single suggestion
+  - runs on your device
+- [Topaz (wasm)](https://github.com/Jakur/topaz-tak)
   - can provide deep analysis of the current position
+  - stops early if a forced win/loss is found
+  - offers a single suggestion
+  - runs on your device
 
 :::
 
@@ -289,7 +302,7 @@ PTN Ninja currently offers access to two bots: **Tiltak** and **Topaz**. Due to 
 
 ::: info Note
 
-When using Tiltak's "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, these buttons will be hidden.
+When using Tiltak (cloud)'s "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, these buttons will be hidden.
 
 After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes and annotation marks.
 

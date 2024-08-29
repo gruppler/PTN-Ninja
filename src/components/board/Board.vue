@@ -221,9 +221,15 @@ export default {
       return this.$store.state.game.ptn;
     },
     evaluation() {
-      return this.position.boardPly
-        ? this.$store.state.game.comments.evaluations[this.position.boardPly.id]
-        : null;
+      if (this.$store.state.game.evaluation) {
+        return this.$store.state.game.evaluation;
+      } else if (this.position.boardPly) {
+        return this.$store.state.game.comments.evaluations[
+          this.position.boardPly.id
+        ];
+      } else {
+        return null;
+      }
     },
     evaluationText() {
       let evaluation = this.position.boardPly

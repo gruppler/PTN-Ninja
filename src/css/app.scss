@@ -245,6 +245,9 @@ kbd {
   }
 }
 
+.q-field__control.text-negative > .q-field__prepend {
+  color: $negative;
+}
 .q-dialog {
   .q-expansion-item .q-list {
     overflow-x: hidden;
