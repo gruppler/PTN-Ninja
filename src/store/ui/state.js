@@ -21,7 +21,7 @@ let defaults = {
     maxDate: null,
   },
   botSettings: {
-    bot: "tiltak",
+    bot: "tiltak-cloud",
     maxSuggestedMoves: 8,
     depth: 12,
     timeBudget: 30,

@@ -2,6 +2,8 @@ import Vue from "vue";
 import { cloneDeep } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";
+import Linenum from "../../Game/PTN/Linenum";
+import Nop from "../../Game/PTN/Nop";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -187,6 +189,10 @@ export const HOVER_SQUARE = (state, square) => {
   state.hoveredSquare = square;
 };
 
+export const SET_EVAL = (state, evaluation) => {
+  state.evaluation = evaluation;
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -238,6 +244,24 @@ export const INSERT_PLY = (state, ply) => {
 export const INSERT_PLIES = (state, { plies, prev }) => {
   const game = Vue.prototype.$game;
   if (game) {
+    if (Linenum.test(plies[0])) {
+      // Move to specified line
+      const linenum = new Linenum(plies.shift());
+      let player = 1;
+      if (Nop.test(plies[0])) {
+        player = 2;
+        plies.shift();
+      }
+      const plyID = game.plies.findIndex(
+        (ply) => ply.linenum.number === linenum.number && ply.player === player
+      );
+      if (plyID >= 0) {
+        game.board.goToPly(plyID);
+        prev = plies.length - 2;
+      } else {
+        throw "Invalid line number";
+      }
+    }
     game.insertPlies(plies, prev);
     postMessage("INSERT_PLIES", plies, prev);
   }

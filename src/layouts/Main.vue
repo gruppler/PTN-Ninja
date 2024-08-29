@@ -684,7 +684,7 @@ export default {
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
-        case "game/ADD_GAME_FROM_CLIPBOARD":
+        case "game/IMPORT_FROM_CLIPBOARD":
         case "game/UNDO":
         case "game/REDO":
         case "ui/OPEN":

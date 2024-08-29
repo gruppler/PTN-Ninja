@@ -38,7 +38,7 @@
                 v-ripple
               >
                 <q-item-section avatar>
-                  <q-icon name="local" />
+                  <q-icon name="browse_fs" />
                 </q-item-section>
                 <q-item-section>{{ $t("Files") }}</q-item-section>
               </q-item>
@@ -209,9 +209,7 @@ export default {
       this.$refs.dialog.hide();
     },
     async clipboard() {
-      const success = await this.$store.dispatch(
-        "game/ADD_GAME_FROM_CLIPBOARD"
-      );
+      const success = await this.$store.dispatch("game/IMPORT_FROM_CLIPBOARD");
       if (success) {
         this.close();
       }

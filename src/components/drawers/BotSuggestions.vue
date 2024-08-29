@@ -14,6 +14,18 @@
             $t(`analysis.bots.${botSettings.bot}`)
           }}</q-item-label>
         </q-item-section>
+        <q-item-section
+          v-if="
+            !sections.botSuggestions &&
+            (loadingTiltakMoves ||
+              tiltakInteractive.isLoading ||
+              loadingTiltakAnalysis ||
+              loadingTopazMoves)
+          "
+          side
+        >
+          <q-spinner size="sm" />
+        </q-item-section>
         <q-item-section side>
           <q-btn
             @click.stop="toggleBotSettings"
@@ -26,12 +38,13 @@
         </q-item-section>
       </template>
 
+      <!-- Settings -->
       <smooth-reflow class="bg-ui">
         <template v-if="showBotSettings">
           <!-- Bot -->
           <q-select
             v-model="botSettings.bot"
-            :options="bots"
+            :options="botOptions"
             :label="$t('Bot')"
             behavior="menu"
             transition-show="none"
@@ -41,12 +54,35 @@
             item-aligned
             filled
           >
-            <template v-slot:prepend>
-              <q-icon name="bot" />
+            <template v-slot:selected-item="scope">
+              <q-item-section class="fg-inherit" side>
+                <q-icon :name="scope.opt.icon" class="fg-inherit" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ scope.opt.label }}</q-item-label>
+              </q-item-section>
+            </template>
+            <template v-slot:option="scope">
+              <q-item
+                :option="scope.opt"
+                :key="scope.opt.value"
+                v-bind="scope.itemProps"
+                v-on="scope.itemEvents"
+              >
+                <q-item-section class="fg-inherit" side>
+                  <q-icon :name="scope.opt.icon" class="fg-inherit" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.label }}</q-item-label>
+                  <q-item-label class="fg-inherit" caption>{{
+                    scope.opt.description
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
             </template>
           </q-select>
 
-          <template v-if="botSettings.bot === 'tiltak'">
+          <template v-if="botSettings.bot === 'tiltak-cloud'">
             <!-- Max Suggestions -->
             <q-input
               v-model.number="botSettings.maxSuggestedMoves"
@@ -99,8 +135,10 @@
         </template>
       </smooth-reflow>
 
+      <!-- Controls -->
       <smooth-reflow>
-        <template v-if="botSettings.bot === 'tiltak'">
+        <!-- Tiltak Cloud -->
+        <template v-if="botSettings.bot === 'tiltak-cloud'">
           <q-btn
             v-if="!isFullyAnalyzed && plies.length"
             @click="analyzeGameTiltak()"
@@ -124,63 +162,84 @@
             }}
           </q-btn>
           <q-btn
-            v-if="!botMoves.length && !isGameEnd"
+            v-if="!suggestions.length && !isGameEnd"
             @click="analyzePositionTilTak(botThinkBudgetInSeconds.short)"
             :loading="loadingTiltakMoves"
             class="full-width"
             color="primary"
             icon="board"
             :label="$t('analysis.Analyze Position')"
-            :no-caps="loadingTiltakMoves"
             stretch
-          >
-            <template v-slot:loading>
-              <PlyChip
-                v-if="analyzingPly"
-                :ply="allPlies[analyzingPly.id]"
-                @click.stop.capture="goToAnalysisPly"
-                no-branches
-                :done="analyzingPly.isDone"
-              />
-              <q-spinner />
-            </template>
-          </q-btn>
+          />
         </template>
+
+        <!-- Tiltak Interactive -->
+        <template v-else-if="botSettings.bot === 'tiltak'">
+          <q-item class="interactive-control" tag="label" clickable v-ripple>
+            <q-item-section avatar>
+              <q-spinner v-if="tiltakInteractive.isLoading" size="sm" />
+              <q-icon v-else name="int_analysis" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{
+                $t("analysis.interactiveAnalysis")
+              }}</q-item-label>
+            </q-item-section>
+            <q-item-section v-if="tiltakInteractive.isEnabled" side>
+              <div class="text-caption">
+                {{ $n((tiltakInteractive.time || 0) / 1e3, "n0") }}
+                {{ $t("analysis.seconds_unit") }}
+              </div>
+              <div class="text-caption">
+                {{ $n(tiltakInteractive.nps || 0, "n0") }}
+                {{ $t("analysis.nps") }}
+              </div>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="tiltakInteractive.isEnabled" />
+            </q-item-section>
+          </q-item>
+        </template>
+
+        <!-- Topaz -->
         <template v-else-if="botSettings.bot === 'topaz'">
           <q-btn
-            v-if="!botMoves.length && !isGameEnd"
-            @click="requestTopazSuggestions()"
-            :loading="loadingTopazMoves"
+            v-if="!suggestions.length && !isGameEnd"
+            @click="loadingTopazMoves ? null : requestTopazSuggestions()"
             :percentage="progressTopazAnalysis"
             class="full-width"
             color="primary"
-            icon="board"
-            :label="$t('analysis.Analyze Position')"
-            :no-caps="loadingTopazMoves"
+            :ripple="!loadingTopazMoves"
             stretch
           >
-            <template v-slot:loading>
+            <template v-if="loadingTopazMoves">
               <PlyChip
                 v-if="analyzingPly"
                 :ply="allPlies[analyzingPly.id]"
-                @click.stop.capture="goToAnalysisPly"
+                @click.stop="goToAnalysisPly"
                 no-branches
                 :done="analyzingPly.isDone"
+                style="text-transform: none"
               />
               <q-spinner />
-              <q-btn
-                :label="$t('Cancel')"
-                @click.stop.capture="terminateTopaz"
-                flat
-              />
+              <q-btn :label="$t('Cancel')" @click.stop="terminateTopaz" flat />
+            </template>
+            <template v-else>
+              <q-icon name="board" left /><span class="block">{{
+                $t("analysis.Analyze Position")
+              }}</span>
             </template>
           </q-btn>
         </template>
       </smooth-reflow>
 
+      <!-- Results -->
       <smooth-reflow>
         <AnalysisItem
-          v-for="(move, i) in botMoves.slice(0, botSettings.maxSuggestedMoves)"
+          v-for="(move, i) in suggestions.slice(
+            0,
+            botSettings.maxSuggestedMoves
+          )"
           :key="i"
           :ply="move.ply"
           :evaluation="'evaluation' in move ? move.evaluation : null"
@@ -205,9 +264,7 @@
               ? formatEvaluation(move.evaluation)
               : null
           "
-          :middle-number="
-            'depth' in move ? `${$t('analysis.depth')} ${move.depth}` : null
-          "
+          :depth="move.depth || null"
         />
 
         <q-item v-if="isGameEnd" class="flex-center">
@@ -215,12 +272,13 @@
         </q-item>
       </smooth-reflow>
 
+      <!-- Secondary Controls -->
       <smooth-reflow>
         <q-btn
           v-if="
-            botSettings.bot === 'tiltak' &&
-            botMoves.length &&
-            botMoves.every(
+            botSettings.bot === 'tiltak-cloud' &&
+            suggestions.length &&
+            suggestions.every(
               ({ secondsToThink }) =>
                 secondsToThink < botThinkBudgetInSeconds.long
             )
@@ -239,12 +297,12 @@
 </template>
 
 <script>
-import AnalysisItem from "../database/AnalysisItem";
-import PlyChip from "../PTN/Ply.vue";
-import Ply from "../../Game/PTN/Ply";
-import { deepFreeze } from "../../utilities";
 import { pick, uniq } from "lodash";
 import asyncPool from "tiny-async-pool";
+import Ply from "../../Game/PTN/Ply";
+import { deepFreeze } from "../../utilities";
+import AnalysisItem from "../database/AnalysisItem";
+import PlyChip from "../PTN/Ply.vue";
 
 const bestMoveEndpoint =
   "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
@@ -259,15 +317,23 @@ export default {
       progressTiltakAnalysis: 0,
       loadingTopazMoves: false,
       progressTopazAnalysis: 0,
+      tiltakInteractive: {
+        isEnabled: false,
+        isLoading: false,
+        time: null,
+        nps: null,
+        tps: null,
+        nextTPS: null,
+        komi: null,
+        size: null,
+        initTPS: null,
+      },
       topazTimer: null,
       showBotSettings: false,
       analyzingPly: null,
-      botPositions: {},
-      botMoves: [],
-      bots: ["tiltak", "topaz"].map((value) => ({
-        value,
-        label: this.$t(`analysis.bots.${value}`),
-      })),
+      positions: {},
+      suggestions: [],
+      bots: ["tiltak-cloud"],
       botSettings: { ...this.$store.state.ui.botSettings },
       botThinkBudgetInSeconds: {
         short: 5,
@@ -275,9 +341,19 @@ export default {
       },
       botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
       sections: { ...this.$store.state.ui.analysisSections },
+      tiltakWorker: null,
+      topazWorker: null,
     };
   },
   computed: {
+    botOptions() {
+      return this.bots.map((value) => ({
+        value,
+        label: this.$t(`analysis.bots.${value}`),
+        description: this.$t(`analysis.bots_description.${value}`),
+        icon: value.endsWith("-cloud") ? "online" : "local",
+      }));
+    },
     isOffline() {
       return this.$store.state.ui.offline;
     },
@@ -307,6 +383,18 @@ export default {
     tps() {
       return this.$store.state.game.position.tps;
     },
+    teiPosition() {
+      return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
+    },
+    teiMoves() {
+      return this.game.ptn.branchPlies
+        .slice(
+          0,
+          1 + this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+        )
+        .map((ply) => ply.text)
+        .join(" ");
+    },
     isGameEnd() {
       return (
         this.$store.state.game.position.isGameEnd &&
@@ -314,7 +402,7 @@ export default {
       );
     },
     botPosition() {
-      return this.botPositions[this.tps] || null;
+      return this.positions[this.tps] || null;
     },
   },
   methods: {
@@ -325,9 +413,12 @@ export default {
         this.sections.botSuggestions = true;
       }
     },
+
     hashBotSettings(settings) {
-      if (settings.bot === "tiltak") {
+      if (settings.bot === "tiltak-cloud") {
         return Object.values(pick(settings, ["bot"])).join(",");
+      } else if (settings.bot === "tiltak") {
+        return settings.bot;
       } else {
         return Object.values(
           pick(settings, ["bot", "depth", "timeBudget"])
@@ -343,7 +434,7 @@ export default {
     },
 
     formatEvaluation(v) {
-      return `+${this.$n(Math.abs(v), "n2")}%`;
+      return `+${this.$n(Math.abs(v), "n0")}%`;
     },
 
     plyHasEvalComment(ply) {
@@ -354,18 +445,11 @@ export default {
         )
       );
     },
-    plyHasPVComment(ply, pv = null) {
-      return (
-        ply.id in this.game.comments.notes &&
-        this.game.comments.notes[ply.id].some((comment) =>
-          pv === null ? comment.pv : comment.message === pv
-        )
-      );
-    },
+
     getEvalComments(ply, settingsHash) {
       let comments = [];
-      let positionBefore = this.botPositions[ply.tpsBefore];
-      let positionAfter = this.botPositions[ply.tpsAfter];
+      let positionBefore = this.positions[ply.tpsBefore];
+      let positionAfter = this.positions[ply.tpsAfter];
       let evaluationBefore = null;
       let evaluationAfter = null;
 
@@ -399,7 +483,22 @@ export default {
                 ? evaluationAfter
                 : positionAfter[settingsHash][0].evaluation)
           ) / 1e4;
-        comments.push(`${evaluationAfter >= 0 ? "+" : ""}${evaluationAfter}`);
+        let evaluationComment = `${
+          evaluationAfter >= 0 ? "+" : ""
+        }${evaluationAfter}`;
+
+        if (positionBefore && settingsHash in positionBefore) {
+          let position = positionBefore[settingsHash][0];
+          if (position && position.ply) {
+            let pv = [position.ply, ...position.followingPlies]
+              .slice(0, 3)
+              .map((ply) => ply.ptn);
+            evaluationComment += `, pv ${pv.join(" ")}`;
+          }
+        }
+
+        comments.push(evaluationComment);
+
         if (
           evaluationBefore !== null ||
           (positionBefore && settingsHash in positionBefore)
@@ -430,19 +529,17 @@ export default {
       }
       return comments;
     },
-    getPVComment(ply, settingsHash) {
-      let positionBefore = this.botPositions[ply.tpsBefore];
-      if (positionBefore && settingsHash in positionBefore) {
-        let position = positionBefore[settingsHash][0];
-        if (position && position.ply) {
-          let pv = [position.ply, ...position.followingPlies]
-            .slice(0, 3)
-            .map((ply) => ply.ptn);
-          return `pv ${pv.join(" ")}`;
-        }
+
+    goToAnalysisPly() {
+      if (this.analyzingPly) {
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: this.analyzingPly.id,
+          isDone: this.analyzingPly.isDone,
+        });
       }
-      return null;
     },
+
+    // MARK: Tiltak Cloud
 
     async analyzeGameTiltak() {
       if (this.isOffline || !this.game.ptn.branchPlies.length) {
@@ -452,7 +549,7 @@ export default {
       try {
         this.loadingTiltakAnalysis = true;
         this.progressTiltakAnalysis = 0;
-        const concurrency = 10; // TODO: determine ideal value
+        const concurrency = 10;
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
         const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
@@ -465,8 +562,7 @@ export default {
         });
         positions = uniq(positions).filter(
           (tps) =>
-            !(tps in this.botPositions) ||
-            !(settingsHash in this.botPositions[tps])
+            !(tps in this.positions) || !(settingsHash in this.positions[tps])
         );
         let total = positions.length;
         let completed = 0;
@@ -496,10 +592,6 @@ export default {
           if (evaluations.length) {
             notes.push(...evaluations);
           }
-          let pv = this.getPVComment(ply, settingsHash);
-          if (pv !== null && !this.plyHasPVComment(ply, pv)) {
-            notes.push(pv);
-          }
           messages[ply.id] = notes;
         });
         this.$store.dispatch("game/ADD_NOTES", messages);
@@ -509,10 +601,8 @@ export default {
         this.loadingTiltakAnalysis = false;
       }
     },
+
     async analyzePositionTilTak(secondsToThink) {
-      if (this.isGameEnd) {
-        return;
-      }
       try {
         this.loadingTiltakMoves = true;
         this.analyzingPly = this.$store.state.game.position.boardPly;
@@ -530,6 +620,7 @@ export default {
         this.loadingTiltakMoves = false;
       }
     },
+
     async queryBotSuggestionsTiltak(
       secondsToThink,
       tps,
@@ -592,20 +683,270 @@ export default {
         }
       );
       deepFreeze(result);
-      this.$set(this.botPositions, tps, {
-        ...(this.botPositions[tps] || {}),
+      this.$set(this.positions, tps, {
+        ...(this.positions[tps] || {}),
         [settingsHash]: result,
       });
       return result;
     },
 
-    async requestTopazSuggestions() {
-      if (!this.topazWorker) {
+    // MARK: Tiltak WASM
+
+    initTiltakInteractive(force = false) {
+      if (force || !this.tiltakWorker) {
         try {
-          await this.init();
+          this.tiltakWorker = new Worker(
+            new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url)
+          );
+
+          // Error handling
+          this.tiltakWorker.onerror = (error) => {
+            console.info(
+              "Tiltak (wasm) worker encountered an error. Restarting...",
+              error.message
+            );
+            this.notifyError(error);
+            if (this.tiltakWorker) {
+              this.tiltakWorker.terminate();
+              this.tiltakWorker = null;
+            }
+            this.tiltakInteractive.isLoading = false;
+            this.tiltakInteractive.time = null;
+            this.tiltakInteractive.nps = null;
+            this.tiltakInteractive.tps = null;
+            this.tiltakInteractive.nextTPS = null;
+            this.tiltakInteractive.komi = null;
+            this.tiltakInteractive.size = null;
+            this.tiltakInteractive.initTPS = null;
+          };
+
+          // Message handling
+          this.tiltakWorker.onmessage = ({ data }) => {
+            if (data === "teiok" || data === "readyok") {
+              this.tiltakWorker.isReady = true;
+            }
+            this.receiveTiltakInteractiveSuggestions(data);
+          };
+
+          // Init
+          this.tiltakWorker.postMessage("isready");
+          this.bots = uniq(this.bots.concat(["tiltak"])).sort();
+          return true;
         } catch (error) {
+          console.error("Failed to load Tiltak (wasm):", error);
+          return false;
+        }
+      }
+    },
+
+    async requestTiltakInteractiveSuggestions() {
+      if (!this.tiltakWorker) {
+        this.initTiltakInteractive();
+        return;
+      }
+
+      // Send `stop` even if unnecessary
+      this.tiltakWorker.postMessage("stop");
+
+      // Pause if game has ended
+      if (this.isGameEnd) {
+        this.tiltakInteractive.time = 0;
+        this.tiltakInteractive.nps = 0;
+        this.tiltakInteractive.nextTPS = null;
+        return;
+      }
+
+      // Abort if worker is not responding
+      if (!this.tiltakWorker.isReady) {
+        console.error("Tiltak worker failed to initialize");
+        return;
+      }
+
+      // Send `teinewgame` if necessary
+      if (
+        this.tiltakInteractive.size !== this.game.config.size ||
+        this.tiltakInteractive.komi !== this.game.config.komi ||
+        this.tiltakInteractive.initTPS !== this.teiPosition
+      ) {
+        this.tiltakWorker.postMessage(`teinewgame ${this.game.config.size}`);
+        this.tiltakWorker.postMessage(
+          `setoption name HalfKomi value ${this.game.config.komi * 2}`
+        );
+        this.tiltakInteractive.size = this.game.config.size;
+        this.tiltakInteractive.komi = this.game.config.komi;
+        this.tiltakInteractive.initTPS = this.teiPosition;
+      }
+
+      // Queue current position for pairing with future response
+      this.tiltakInteractive.nextTPS = this.tps;
+      if (!this.tiltakInteractive.tps) {
+        this.tiltakInteractive.tps = this.tiltakInteractive.nextTPS;
+      }
+
+      // Send current position
+      let posMessage = "position";
+      if (this.tiltakInteractive.initTPS) {
+        posMessage += " tps " + this.tiltakInteractive.initTPS;
+      } else {
+        posMessage += " startpos";
+      }
+      if (this.teiMoves) {
+        posMessage += " moves " + this.teiMoves;
+      }
+      this.tiltakWorker.postMessage(posMessage);
+      this.tiltakWorker.postMessage(`go infinite`);
+      this.tiltakInteractive.isLoading = true;
+    },
+
+    receiveTiltakInteractiveSuggestions(result) {
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const results = {
+        pv: [],
+        time: null,
+        nps: null,
+        depth: null,
+        seldepth: null,
+        score: null,
+        nodes: null,
+      };
+      if (result.startsWith("bestmove")) {
+        // Search ended
+        this.tiltakInteractive.isLoading = false;
+        this.tiltakInteractive.nps = 0;
+        if (this.tiltakInteractive.tps === this.tiltakInteractive.nextTPS) {
+          // No position queued
+          this.tiltakInteractive.tps = null;
+          this.tiltakInteractive.nextTPS = null;
+        } else {
+          this.tiltakInteractive.tps = this.tiltakInteractive.nextTPS;
+        }
+        return;
+      } else if (result.startsWith("info")) {
+        // Parse Results
+        this.tiltakInteractive.isLoading = true;
+        const keys = [
+          "pv",
+          "time",
+          "nps",
+          "depth",
+          "seldepth",
+          "score",
+          "nodes",
+        ];
+        let key = "";
+        for (const value of result.split(" ")) {
+          if (keys.includes(value)) {
+            key = value;
+          } else {
+            if (key === "pv") {
+              results.pv.push(value);
+            } else {
+              results[key] = Number(value);
+            }
+          }
+        }
+        // Ignore other `info` messages
+        if (!results.pv.length) {
           return;
         }
+      } else {
+        // Ignore all other messages
+        return;
+      }
+
+      if (!this.tiltakInteractive.tps) {
+        this.tiltakInteractive.tps = this.tps;
+      }
+      const id = this.hashBotSettings({ bot: "tiltak" });
+      const tps = this.tiltakInteractive.tps;
+
+      // Update time and nps
+      if (!this.isGameEnd) {
+        this.tiltakInteractive.time = results.time;
+        this.tiltakInteractive.nps = results.nps;
+      }
+
+      // Determine ply colors
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      let player = initialPlayer;
+      let color = initialColor;
+      const ply = new Ply(results.pv.splice(0, 1)[0], {
+        id: null,
+        player,
+        color,
+      });
+      const followingPlies = results.pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      const evaluation = results.score * (initialPlayer === 1 ? 1 : -1);
+      const depth = results.depth;
+      const nodes = results.nodes;
+      const suggestions = [{ ply, followingPlies, evaluation, depth, nodes }];
+      deepFreeze(suggestions);
+      if (
+        !this.positions[tps] ||
+        !this.positions[tps][id] ||
+        this.positions[tps][id][0].depth < suggestions[0].depth
+      ) {
+        // Don't overwrite deeper searches for this position
+        this.$set(this.positions, tps, {
+          ...(this.positions[tps] || {}),
+          [id]: suggestions,
+        });
+        return suggestions;
+      }
+    },
+
+    async terminateTiltakInteractive() {
+      if (this.tiltakWorker && this.tiltakInteractive.isLoading) {
+        try {
+          this.tiltakWorker.postMessage("stop");
+          this.tiltakInteractive.isLoading = false;
+          this.tiltakInteractive.nps = null;
+          this.tiltakInteractive.tps = null;
+          this.tiltakInteractive.nextTPS = null;
+        } catch (error) {
+          await this.tiltakWorker.terminate();
+          this.initTiltakInteractive();
+        }
+      }
+    },
+
+    // MARK: Topaz
+
+    initTopaz(force = false) {
+      if (force || !this.topazWorker) {
+        try {
+          this.topazWorker = new Worker(
+            new URL("/topaz/topaz.worker.js", import.meta.url)
+          );
+          this.topazWorker.onmessage = ({ data }) => {
+            this.receiveTopazSuggestions(data);
+          };
+          this.bots = uniq(this.bots.concat(["topaz"])).sort();
+          return true;
+        } catch (error) {
+          console.error("Failed to load Topaz (wasm):", error);
+          return false;
+        }
+      }
+    },
+
+    async requestTopazSuggestions() {
+      if (!this.topazWorker) {
+        this.initTopaz();
+        return;
       }
       if (this.loadingTopazMoves) {
         return;
@@ -627,6 +968,7 @@ export default {
         id: this.botSettingsHash,
       });
     },
+
     receiveTopazSuggestions(result) {
       this.loadingTopazMoves = false;
       clearInterval(this.topazTimer);
@@ -647,27 +989,22 @@ export default {
           : initialPlayer;
       let player = initialPlayer;
       let color = initialColor;
-      let ply = new Ply(pv.splice(0, 1)[0], { id: null, player, color });
-      let followingPlies = pv.map((ply) => {
+      const ply = new Ply(pv.splice(0, 1)[0], {
+        id: null,
+        player,
+        color,
+      });
+      const followingPlies = pv.map((ply) => {
         ({ player, color } = this.nextPly(player, color));
         return new Ply(ply, { id: null, player, color });
       });
-      let botMoves = [{ ply, followingPlies, depth, score, nodes }];
-      deepFreeze(botMoves);
-      this.$set(this.botPositions, tps, {
-        ...(this.botPositions[tps] || {}),
-        [id]: botMoves,
+      const suggestions = [{ ply, followingPlies, depth, score, nodes }];
+      deepFreeze(suggestions);
+      this.$set(this.positions, tps, {
+        ...(this.positions[tps] || {}),
+        [id]: suggestions,
       });
-      return botMoves;
-    },
-
-    goToAnalysisPly() {
-      if (this.analyzingPly) {
-        this.$store.dispatch("game/GO_TO_PLY", {
-          plyID: this.analyzingPly.id,
-          isDone: this.analyzingPly.isDone,
-        });
-      }
+      return suggestions;
     },
 
     async terminateTopaz() {
@@ -679,69 +1016,75 @@ export default {
           this.topazTimer = null;
           this.analyzingPly = null;
           this.topazWorker = null;
-          this.init();
+          this.initTopaz();
         } catch (error) {
           this.notifyError(error);
         }
       }
     },
 
-    async init() {
+    // MARK: Init
+
+    init() {
       // Load wasm bots
-      try {
-        if (!this.topazWorker) {
-          try {
-            this.topazWorker = new Worker(
-              new URL("/topaz/topaz.worker.js", import.meta.url)
-            );
-            this.topazWorker.onmessage = ({ data }) => {
-              this.receiveTopazSuggestions(data);
-            };
-          } catch (error) {
-            this.notifyError("Bot unavailable");
-          }
-        }
-      } catch (error) {
-        this.notifyError(error);
-      }
+      this.initTiltakInteractive();
+      this.initTopaz();
     },
   },
 
-  async mounted() {
-    await this.init();
+  mounted() {
+    return this.init();
   },
 
   watch: {
     async isOffline(isOffline) {
       if (!isOffline && this.isPanelVisible) {
-        if (!this.topazWorker) {
-          await this.init();
+        if (!this.topazWorker || !this.tiltakWorker) {
+          this.init();
         }
       }
     },
     async isPanelVisible(isPanelVisible) {
       if (isPanelVisible) {
-        if (!this.topazWorker) {
-          await this.init();
-        }
+        this.init();
+      }
+    },
+    "tiltakInteractive.isEnabled"(isEnabled) {
+      if (isEnabled) {
+        this.requestTiltakInteractiveSuggestions();
+      } else {
+        this.terminateTiltakInteractive();
+      }
+    },
+    tps() {
+      if (this.tiltakInteractive.isEnabled) {
+        this.requestTiltakInteractiveSuggestions();
       }
     },
     botPosition(position) {
       if (position) {
         if (this.botSettingsHash in position) {
-          this.botMoves = position[this.botSettingsHash] || [];
+          this.suggestions = position[this.botSettingsHash] || [];
         } else {
-          this.botMoves = [];
+          this.suggestions = [];
         }
       } else {
-        this.botMoves = [];
+        this.suggestions = [];
+      }
+    },
+    suggestions(suggestions) {
+      const suggestion = suggestions[0];
+      if (suggestion && "evaluation" in suggestion) {
+        this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+      } else {
+        this.$store.dispatch("game/SET_EVAL", null);
       }
     },
     botSettingsHash(hash) {
       if (this.botPosition && hash in this.botPosition) {
-        this.botMoves = this.botPosition[hash] || [];
+        this.suggestions = this.botPosition[hash] || [];
       } else {
-        this.botMoves = [];
+        this.suggestions = [];
       }
     },
     sections: {
@@ -754,9 +1097,21 @@ export default {
       handler(settings) {
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
         this.botSettingsHash = this.hashBotSettings(settings);
+        if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {
+          this.tiltakInteractive.isEnabled = false;
+        }
       },
       deep: true,
     },
   },
 };
 </script>
+
+<style lang="scss">
+.interactive-control {
+  background-color: $dim;
+  body.body--light & {
+    background-color: $highlight;
+  }
+}
+</style>

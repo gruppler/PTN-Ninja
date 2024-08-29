@@ -92,6 +92,7 @@ export default {
         case "REMOVE_NOTE":
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
+        case "SET_EVAL":
           this.$store.dispatch("game/" + data.action, data.value);
           break;
         case "TRIM_BRANCHES":

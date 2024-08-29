@@ -1,0 +1,12 @@
+{
+  "name": "tiltak-wasm",
+  "version": "0.0.5",
+  "license": "GPL-3.0-only",
+  "files": [
+    "tiltak_wasm_bg.wasm",
+    "tiltak_wasm.js",
+    "tiltak_wasm.d.ts"
+  ],
+  "browser": "tiltak_wasm.js",
+  "types": "tiltak_wasm.d.ts"
+}

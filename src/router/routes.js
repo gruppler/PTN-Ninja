@@ -17,7 +17,7 @@ export function parseURLparams(route) {
     for (let i = 0; i < stateRaw.length; i++) {
       let item = stateRaw[i].split("=");
       if (/^(true|false)$/.test(item[1])) {
-        item[1] = eval(item[1]);
+        item[1] = JSON.parse(item[1]);
       }
       state[item[0]] = item[1];
     }
