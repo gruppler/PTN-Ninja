@@ -23,6 +23,7 @@
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:functions": "firebase deploy --only functions",
     "emulate": "firebase emulators:start --import ./db --export-on-exit",
+    "emulate:kill": "kill-port 4000; kill-port 4998; kill-port 4999; kill-port 5000; kill-port 5002",
     "backup:db": "gcloud config set project ptn-ninja && gsutil -m rm -r gs://ptn-ninja-backup/db && gcloud firestore export gs://ptn-ninja-backup/db",
     "download:db": "gsutil -m cp -r gs://ptn-ninja-backup/db .",
     "download:indexes": "firebase firestore:indexes > firestore.indexes.json"
@@ -74,6 +75,7 @@
     "eslint-plugin-vue": "^7.2.0",
     "firebase-admin": "^10.0.1",
     "firebase-tools": "^13.11.2",
+    "kill-port": "^2.0.1",
     "prettier": "^2.5.1",
     "webpack": "^5.10.1",
     "workbox-webpack-plugin": "^5.0.0"
