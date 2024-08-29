@@ -909,7 +909,7 @@ export default {
       if (
         !this.positions[tps] ||
         !this.positions[tps][id] ||
-        this.positions[tps][id][0].nodes < suggestions[0].nodes
+        this.positions[tps][id][0].depth < suggestions[0].depth
       ) {
         // Don't overwrite deeper searches for this position
         this.$set(this.positions, tps, {
