@@ -446,15 +446,6 @@ export default {
       );
     },
 
-    plyHasPVComment(ply, pv = null) {
-      return (
-        ply.id in this.game.comments.notes &&
-        this.game.comments.notes[ply.id].some((comment) =>
-          pv === null ? comment.pv : comment.message === pv
-        )
-      );
-    },
-
     getEvalComments(ply, settingsHash) {
       let comments = [];
       let positionBefore = this.positions[ply.tpsBefore];
@@ -492,7 +483,22 @@ export default {
                 ? evaluationAfter
                 : positionAfter[settingsHash][0].evaluation)
           ) / 1e4;
-        comments.push(`${evaluationAfter >= 0 ? "+" : ""}${evaluationAfter}`);
+        let evaluationComment = `${
+          evaluationAfter >= 0 ? "+" : ""
+        }${evaluationAfter}`;
+
+        if (positionBefore && settingsHash in positionBefore) {
+          let position = positionBefore[settingsHash][0];
+          if (position && position.ply) {
+            let pv = [position.ply, ...position.followingPlies]
+              .slice(0, 3)
+              .map((ply) => ply.ptn);
+            evaluationComment += `, pv ${pv.join(" ")}`;
+          }
+        }
+
+        comments.push(evaluationComment);
+
         if (
           evaluationBefore !== null ||
           (positionBefore && settingsHash in positionBefore)
@@ -522,20 +528,6 @@ export default {
         }
       }
       return comments;
-    },
-
-    getPVComment(ply, settingsHash) {
-      let positionBefore = this.positions[ply.tpsBefore];
-      if (positionBefore && settingsHash in positionBefore) {
-        let position = positionBefore[settingsHash][0];
-        if (position && position.ply) {
-          let pv = [position.ply, ...position.followingPlies]
-            .slice(0, 3)
-            .map((ply) => ply.ptn);
-          return `pv ${pv.join(" ")}`;
-        }
-      }
-      return null;
     },
 
     goToAnalysisPly() {
@@ -599,10 +591,6 @@ export default {
           let evaluations = this.getEvalComments(ply, settingsHash);
           if (evaluations.length) {
             notes.push(...evaluations);
-          }
-          let pv = this.getPVComment(ply, settingsHash);
-          if (pv !== null && !this.plyHasPVComment(ply, pv)) {
-            notes.push(pv);
           }
           messages[ply.id] = notes;
         });
