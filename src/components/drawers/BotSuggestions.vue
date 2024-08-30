@@ -1095,8 +1095,13 @@ export default {
     },
     botSettings: {
       handler(settings) {
+        // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
+
+        // Update current position/bot hash
         this.botSettingsHash = this.hashBotSettings(settings);
+
+        // Stop interactive analysis when switching bots
         if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {
           this.tiltakInteractive.isEnabled = false;
         }
