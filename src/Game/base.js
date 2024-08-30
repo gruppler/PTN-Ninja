@@ -79,6 +79,7 @@ export default class GameBase {
     return params;
   }
 
+  // #region Init
   init({
     ptn,
     name,
@@ -146,8 +147,10 @@ export default class GameBase {
     this.notes = {};
     this.warnings = [];
 
-    // Parse HEAD
+    //#region Parse HEAD
+
     try {
+      // Parse tags from PTN
       if (ptn) {
         let item, key;
 
@@ -175,6 +178,7 @@ export default class GameBase {
         }
       }
 
+      // Parse tags from JSON
       if (tags) {
         each(tags, (value, key) => {
           if (value) {
@@ -196,6 +200,7 @@ export default class GameBase {
         });
       }
 
+      // Parse datetime
       if (this.tags.date) {
         this.datetime = Tag.toDate(
           this.tags.date.value,
@@ -205,17 +210,21 @@ export default class GameBase {
         this.datetime = new Date();
       }
 
+      // Get size
       if (this.tags.size) {
         this.size = this.tags.size.value;
       } else {
         if (this.tags.tps) {
+          // Derive from TPS
           this.size = this.tags.tps.value.size;
           this.tags.size = Tag.parse(`[Size "${this.size}"]`);
         } else {
           let error = "Missing board size";
           if (ptn) {
+            // Fail if initializing from PTN
             throw new Error(error);
           } else {
+            // Use default size otherwise
             console.warn(error);
             this.warnings.push(error);
             this.size = this.defaultSize;
@@ -224,10 +233,12 @@ export default class GameBase {
         }
       }
 
+      // Sanitize opening
       if (!this.tags.opening) {
         this.tags.opening = Tag.parse('[Opening "swap"]');
       }
 
+      // Parse TPS
       if (this.tags.tps) {
         this.hasTPS = true;
         this.firstMoveNumber = this.tags.tps.value.linenum;
@@ -272,8 +283,10 @@ export default class GameBase {
       this.updateConfig();
       this.board = new Board(this, null, this.board ? this.board.output : null);
 
-      // Parse BODY
+      //#region Parse BODY
+
       if (ptn) {
+        // Parse moves from PTN
         let item, ply;
         let branch = null;
         let move = new Move({
@@ -423,6 +436,7 @@ export default class GameBase {
           delete item.ptn;
         }
       } else if (moves) {
+        // Parse moves from JSON
         if (comments) {
           this.parseJSONComments(comments, -1);
         }
@@ -431,6 +445,8 @@ export default class GameBase {
     } catch (error) {
       return handleError(error);
     }
+
+    //#region Init Game
 
     if (!this.moves[0]) {
       this.moves[0] = new Move({
@@ -452,6 +468,7 @@ export default class GameBase {
       this.name = this.generateName();
     }
 
+    // Init TPS
     if (this.tags.tps || this.editingTPS) {
       this.board.doTPS(this.editingTPS);
     }
@@ -518,6 +535,8 @@ export default class GameBase {
       this.onInit(this);
     }
   }
+
+  //#region Methods
 
   get minState() {
     return this.board.minState;
@@ -735,6 +754,8 @@ export default class GameBase {
       update();
     }
   }
+
+  //#region Output
 
   toString(options) {
     options = Object.assign(
