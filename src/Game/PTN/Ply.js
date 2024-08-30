@@ -43,12 +43,16 @@ export default class Ply extends Ptn {
     notation,
     {
       id = 0,
+      dataID = null,
       player = 1,
       color = 1,
       evaluation = null,
       result = null,
       branches = [],
       children = [],
+      uid = null,
+      createdAt = null,
+      updatedAt = null,
     }
   ) {
     super(notation);
@@ -71,6 +75,7 @@ export default class Ply extends Ptn {
       this.minPieceCount = this.pieceCount === "1" ? "" : this.pieceCount;
     }
     this.id = id;
+    this.dataID = dataID;
     this.linenum = null;
     this.player = player;
     this.color = color;
@@ -78,6 +83,9 @@ export default class Ply extends Ptn {
     this.result = result;
     this.branches = branches;
     this.children = children;
+    this.uid = uid;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.branch = "";
     this.squares = [this.column + this.row];
     this.tpsBefore = "";
@@ -228,12 +236,45 @@ export default class Ply extends Ptn {
     return false;
   }
 
+  get branchPlies() {
+    if (!this.game) {
+      return [];
+    }
+    const branch = this.branch;
+    const plies = [];
+    let ply = this.game.branches[this.branch];
+    do {
+      plies.push(ply);
+      ply = this.game.plies[ply.id + 1];
+    } while (ply && ply.branch === branch);
+    return plies;
+  }
+
+  get notes() {
+    return this.game ? this.game.notes[this.id] : [];
+  }
+
   isEqual(ply) {
     return isEqual(this.min, ply.min);
   }
 
   get text() {
     return this.toString(true);
+  }
+
+  get data() {
+    return {
+      linenum: this.linenum.number,
+      ptn: this.text,
+      notes: this.notes,
+      uid: this.uid,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
+  }
+
+  set data(json) {
+    // TODO:
   }
 
   toString(plyOnly = false) {

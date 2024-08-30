@@ -24,7 +24,8 @@ export default class GameOnline {
     return this.config.players ? this.config.players.indexOf(null) + 1 : 1;
   }
 
-  get json() {
+  // Data
+  get data() {
     return {
       name: this.name,
       tags: this.JSONTags,
@@ -37,16 +38,18 @@ export default class GameOnline {
     };
   }
 
-  set json(json) {
+  set data(json) {
     this.init(json);
   }
 
-  get JSONConfig() {
+  // Config
+  get jsonConfig() {
     const config = Object.assign({}, this.config);
     return config;
   }
 
-  get JSONState() {
+  // State
+  get jsonState() {
     return {
       hasEnded: this.hasEnded,
       branch: this.board.branch,
@@ -57,7 +60,8 @@ export default class GameOnline {
     };
   }
 
-  get JSONTags() {
+  // Tags
+  get jsonTags() {
     let tags = zipObject(
       Object.keys(this.tags),
       map(this.tags, (tag) => tag.output.text || tag.output)
@@ -69,7 +73,7 @@ export default class GameOnline {
     return tags;
   }
 
-  parseJSONTags(json, removeMissing = false) {
+  set jsonTags(json) {
     json = { ...json };
     if (json.date) {
       const date = new Date(
@@ -78,122 +82,81 @@ export default class GameOnline {
       json.time = Tag.timeFromDate(date);
       json.date = Tag.dateFromDate(date);
     }
-    if (removeMissing) {
-      this.tags = {};
-    }
+    let tags = {};
     each(json, (value, key) => {
       const tag = new Tag(false, key, value);
-      this.tags[tag.key.toLowerCase()] = tag;
+      tags[tag.key.toLowerCase()] = tag;
     });
+    this.tags = tags;
   }
 
-  get JSONMoves() {
-    return this.moves.map((move) => {
-      const comments = this.getMoveComments(move);
-      return {
-        branch: move.branch,
-        number: move.number,
-        ply1: this.JSONPly(move.ply1),
-        ply2: this.JSONPly(move.ply2),
-        comments1: this.JSONComments(comments[0]),
-        comments2: this.JSONComments(comments[1]),
-      };
-    });
+  // Branches
+  get jsonBranches() {
+    return map(this.branches, (ply, name) => ({
+      parent: ply.branches.parent ? ply.branches.parent.dataID : null,
+      name,
+      player: ply.player,
+      plies: ply.branchPlies.map((ply) => ply.data),
+      uid: ply.uid,
+      createdAt: ply.createdAt,
+      updatedAt: ply.updatedAt,
+    }));
   }
 
-  parseJSONMoves(json) {
-    json.forEach((moveParams) => {
-      const move = new Move({
-        game: this,
-        id: this.moves.length,
-        linenum: Linenum.parse(
-          moveParams.number + ".",
-          this,
-          moveParams.branch
-        ),
-        ply1: this.parseJSONPly(
-          moveParams.ply1,
-          1,
-          moveParams.number === 1 && !this.hasTPS ? 2 : 1,
-          moveParams.branch
-        ),
-        ply2: this.parseJSONPly(
-          moveParams.ply2,
-          2,
-          moveParams.number === 1 && !this.hasTPS ? 1 : 2,
-          moveParams.branch
-        ),
-      });
-
-      if (moveParams.comments1.length && move.ply1) {
-        this.parseJSONComments(moveParams.comments1, move.ply1.id);
-      }
-      if (moveParams.comments2.length && move.ply2) {
-        this.parseJSONComments(moveParams.comments2, move.ply2.id);
-      }
-
-      this.moves.push(move);
-    });
+  set jsonBranches(branches) {
+    // TODO:
   }
 
-  JSONPly(ply) {
-    if (!ply) {
-      return null;
-    } else if (ply.isNop) {
-      return {
-        isNop: true,
-      };
-    } else {
-      let json = {
-        text: ply.toString(true),
-      };
-      if (ply.evaluation) {
-        json.evaluation = ply.evaluation.text;
-      }
-      if (ply.result) {
-        json.result = ply.result.text;
-      }
-      return json;
-    }
+  // parseJSONPly(ply, player, color, branch) {
+  //   if (!ply) {
+  //     return null;
+  //   } else if (ply.isNop) {
+  //     return new Nop();
+  //   } else if (Ply.test(ply.text)) {
+  //     ply = Ply.parse(ply.text, {
+  //       id: this.plies.length,
+  //       player,
+  //       color,
+  //       evaluation: ply.evaluation
+  //         ? Evaluation.parse(ply.evaluation)
+  //         : undefined,
+  //       result: ply.result ? Result.parse(ply.result) : undefined,
+  //     });
+  //     this.plies.push(ply);
+  //     if (!(branch in this.branches)) {
+  //       this.branches[branch] = ply;
+  //     }
+  //     return ply;
+  //   } else {
+  //     throw new Error("Invalid PTN format");
+  //   }
+  // }
+
+  // Chat
+  get jsonPlayerChat() {
+    // TODO:
   }
 
-  parseJSONPly(ply, player, color, branch) {
-    if (!ply) {
-      return null;
-    } else if (ply.isNop) {
-      return new Nop();
-    } else if (Ply.test(ply.text)) {
-      ply = Ply.parse(ply.text, {
-        id: this.plies.length,
-        player,
-        color,
-        evaluation: ply.evaluation
-          ? Evaluation.parse(ply.evaluation)
-          : undefined,
-        result: ply.result ? Result.parse(ply.result) : undefined,
-      });
-      this.plies.push(ply);
-      if (!(branch in this.branches)) {
-        this.branches[branch] = ply;
-      }
-      return ply;
-    } else {
-      throw new Error("Invalid PTN format");
-    }
+  set jsonPlayerChat(comments) {
+    // TODO:
   }
 
-  JSONComments(comments) {
-    return comments ? comments.map((comment) => comment.contents) : [];
+  get jsonSpectatorChat() {
+    // TODO:
   }
 
-  parseJSONComments(comments, plyID) {
-    comments.forEach((comment) => {
-      comment = Comment.parse(`{${comment}}`);
-      const log = comment.player === null ? "notes" : "chatlog";
-      if (!this[log][plyID]) {
-        this[log][plyID] = [];
-      }
-      this[log][plyID].push(comment);
-    });
+  set jsonSpectatorChat(comments) {
+    // TODO:
   }
+
+  // parseJSONComments(comments, plyID) {
+  //   comments.forEach((comment) => {
+  //     comment = Comment.parse(`{${comment}}`);
+  //     const log = comment.player === null ? "notes" : "chatlog";
+  //     if (!this[log][plyID]) {
+  //       this[log][plyID] = [];
+  //     }
+  //     this[log][plyID].push(comment);
+  //   });
+  // }
 }
