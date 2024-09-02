@@ -543,7 +543,7 @@ export default {
       }
     },
 
-    // MARK: Tiltak Cloud
+    //#region Tiltak Cloud
 
     async analyzeGameTiltak() {
       if (this.isOffline || !this.game.ptn.branchPlies.length) {
@@ -694,7 +694,7 @@ export default {
       return result;
     },
 
-    // MARK: Tiltak WASM
+    //#region Tiltak WASM
 
     initTiltakInteractive(force = false) {
       if (force || !this.tiltakWorker) {
@@ -927,7 +927,7 @@ export default {
       }
     },
 
-    // MARK: Topaz
+    //#region Topaz
 
     initTopaz(force = false) {
       if (force || !this.topazWorker) {
@@ -1027,7 +1027,7 @@ export default {
       }
     },
 
-    // MARK: Init
+    //#region Init
 
     init() {
       // Load wasm bots
