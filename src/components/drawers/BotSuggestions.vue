@@ -202,35 +202,39 @@
         </template>
 
         <!-- Topaz -->
-        <template v-else-if="botSettings.bot === 'topaz'">
+        <div v-else-if="botSettings.bot === 'topaz'" class="relative-position">
           <q-btn
             v-if="!suggestions.length && !isGameEnd"
             @click="loadingTopazMoves ? null : requestTopazSuggestions()"
             :percentage="progressTopazAnalysis"
             class="full-width"
             color="primary"
+            icon="board"
+            :label="$t('analysis.Analyze Position')"
+            :loading="loadingTopazMoves"
             :ripple="!loadingTopazMoves"
             stretch
-          >
-            <template v-if="loadingTopazMoves">
-              <PlyChip
-                v-if="analyzingPly"
-                :ply="allPlies[analyzingPly.id]"
-                @click.stop="goToAnalysisPly"
-                no-branches
-                :done="analyzingPly.isDone"
-                style="text-transform: none"
-              />
-              <q-spinner />
-              <q-btn :label="$t('Cancel')" @click.stop="terminateTopaz" flat />
-            </template>
-            <template v-else>
-              <q-icon name="board" left /><span class="block">{{
-                $t("analysis.Analyze Position")
-              }}</span>
-            </template>
-          </q-btn>
-        </template>
+          />
+          <PlyChip
+            v-if="loadingTopazMoves && analyzingPly"
+            :ply="allPlies[analyzingPly.id]"
+            @click.stop="goToAnalysisPly"
+            no-branches
+            :done="analyzingPly.isDone"
+            class="absolute-left"
+          />
+          <q-btn
+            v-if="loadingTopazMoves"
+            :label="$t('Cancel')"
+            @click.stop="terminateTopaz"
+            class="absolute-right"
+            :text-color="
+              $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+            "
+            stretch
+            flat
+          />
+        </div>
       </smooth-reflow>
 
       <!-- Results -->
