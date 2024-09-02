@@ -7,7 +7,7 @@ import Ply from "./PTN/Ply";
 import Result from "./PTN/Result";
 import Tag from "./PTN/Tag";
 
-import { each, map, zipObject } from "lodash";
+import { each, map, pick, zipObject } from "lodash";
 
 export const getPlayer = (game, uid) => {
   return game && game.config && game.config.players
@@ -28,13 +28,10 @@ export default class GameOnline {
   get data() {
     return {
       name: this.name,
-      tags: this.JSONTags,
-      config: this.JSONConfig,
-      state: this.JSONState,
-      comments: this.JSONComments(
-        (this.notes[-1] || []).concat(this.chatlog[-1] || [])
-      ),
-      moves: this.JSONMoves,
+      tags: this.jsonTags,
+      config: this.jsonConfig,
+      state: this.jsonState,
+      notes: this.jsonNotes,
     };
   }
 
@@ -44,7 +41,29 @@ export default class GameOnline {
 
   // Config
   get jsonConfig() {
-    const config = Object.assign({}, this.config);
+    const config = pick(this.config, [
+      "size",
+      "komi",
+      "opening",
+      "openingSwap",
+      "pieceCounts",
+      "isOnline",
+
+      // Online only:
+      "id",
+      "isOpen",
+      "isPrivate",
+      "players",
+      "player",
+      "type",
+      "scratchboard",
+      "showRoads",
+      "flatCounts",
+      "stackCounts",
+    ]);
+    if (!this.config.hasCustomPieceCount) {
+      config.pieceCounts = null;
+    }
     return config;
   }
 
@@ -57,6 +76,7 @@ export default class GameOnline {
       plyIsDone: this.board.plyIsDone,
       tps: this.board.tps,
       ply: this.board.ply ? this.board.ply.toString(true) : null,
+      undoRequest: this.board.undoRequest,
     };
   }
 
@@ -105,6 +125,32 @@ export default class GameOnline {
 
   set jsonBranches(branches) {
     // TODO:
+  }
+
+  get jsonBranch() {
+    const name = this.board.branch;
+    const ply = this.branches[name];
+    return {
+      parent: ply.branches.parent ? ply.branches.parent.dataID : null,
+      name,
+      player: ply.player,
+      plies: ply.branchPlies.map((ply) => ply.data),
+      uid: ply.uid,
+      createdAt: ply.createdAt,
+      updatedAt: ply.updatedAt,
+    };
+  }
+
+  set jsonBranch(branches) {
+    // TODO:
+  }
+
+  get jsonNotes() {
+    return (this.notes[-1] || []).map((note) => note.contents);
+  }
+
+  set jsonNotes(notes) {
+    return this.addNotes({ "-1": notes });
   }
 
   // parseJSONPly(ply, player, color, branch) {

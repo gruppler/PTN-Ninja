@@ -86,8 +86,6 @@ export default class GameBase {
     state,
     config,
     tags,
-    moves,
-    comments,
     history,
     historyIndex,
     defaultSize,
@@ -95,6 +93,14 @@ export default class GameBase {
     onInit,
     onError,
     onInsertPly,
+    branches,
+    notes,
+    playerChat,
+    spectatorChat,
+    createdAt,
+    updatedAt,
+    createdBy,
+    updatedBy,
   }) {
     // Set up init handler
     if (isFunction(onInit)) {
@@ -254,31 +260,35 @@ export default class GameBase {
         1: cloneDeep(pieceCounts[this.size]),
         2: cloneDeep(pieceCounts[this.size]),
       };
-      this.pieceCounts = cloneDeep(this.defaultPieceCounts);
-      if (this.tags.flats) {
-        this.pieceCounts[1].flat = this.tags.flats.value;
-        this.pieceCounts[2].flat = this.tags.flats.value;
+      if (config && config.pieceCounts) {
+        this.pieceCounts = config.pieceCounts;
+      } else {
+        this.pieceCounts = cloneDeep(this.defaultPieceCounts);
+        if (this.tags.flats) {
+          this.pieceCounts[1].flat = this.tags.flats.value;
+          this.pieceCounts[2].flat = this.tags.flats.value;
+        }
+        if (this.tags.caps) {
+          this.pieceCounts[1].cap = this.tags.caps.value;
+          this.pieceCounts[2].cap = this.tags.caps.value;
+        }
+        if (this.tags.flats1) {
+          this.pieceCounts[1].flat = this.tags.flats1.value;
+        }
+        if (this.tags.caps1) {
+          this.pieceCounts[1].cap = this.tags.caps1.value;
+        }
+        if (this.tags.flats2) {
+          this.pieceCounts[2].flat = this.tags.flats2.value;
+        }
+        if (this.tags.caps2) {
+          this.pieceCounts[2].cap = this.tags.caps2.value;
+        }
+        this.pieceCounts[1].total =
+          this.pieceCounts[1].flat + this.pieceCounts[1].cap;
+        this.pieceCounts[2].total =
+          this.pieceCounts[2].flat + this.pieceCounts[2].cap;
       }
-      if (this.tags.caps) {
-        this.pieceCounts[1].cap = this.tags.caps.value;
-        this.pieceCounts[2].cap = this.tags.caps.value;
-      }
-      if (this.tags.flats1) {
-        this.pieceCounts[1].flat = this.tags.flats1.value;
-      }
-      if (this.tags.caps1) {
-        this.pieceCounts[1].cap = this.tags.caps1.value;
-      }
-      if (this.tags.flats2) {
-        this.pieceCounts[2].flat = this.tags.flats2.value;
-      }
-      if (this.tags.caps2) {
-        this.pieceCounts[2].cap = this.tags.caps2.value;
-      }
-      this.pieceCounts[1].total =
-        this.pieceCounts[1].flat + this.pieceCounts[1].cap;
-      this.pieceCounts[2].total =
-        this.pieceCounts[2].flat + this.pieceCounts[2].cap;
       Object.freeze(this.pieceCounts);
       this.updateConfig();
       this.board = new Board(this, null, this.board ? this.board.output : null);
@@ -435,12 +445,12 @@ export default class GameBase {
           isDoubleBreak = startsWithDoubleBreak.test(ptn);
           delete item.ptn;
         }
-      } else if (moves) {
-        // Parse moves from JSON
-        if (comments) {
-          this.parseJSONComments(comments, -1);
+      } else if (branches) {
+        // Parse from JSON
+        if (notes) {
+          this.jsonNotes = notes;
         }
-        this.parseJSONMoves(moves);
+        this.jsonBranches = branches;
       }
     } catch (error) {
       return handleError(error);
@@ -611,6 +621,10 @@ export default class GameBase {
       Object.keys(this.tags),
       Object.values(this.tags).map((tag) => tag.output)
     );
+  }
+
+  get hasEnded() {
+    return this.plies.findIndex((ply) => !ply.branch && ply.result) >= 0;
   }
 
   setTags(tags, recordChange = true, updatePTN = true) {

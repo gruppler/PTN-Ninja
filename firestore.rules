@@ -43,7 +43,7 @@ service cloud.firestore {
 
     match /gamesPublic/{game} {
     	allow read: if isSignedIn();
-      allow write: if false;
+      allow create, update: if false;
       allow delete: if isUser(existingData().createdBy) &&
         existingData().config.isOpen == true;
 

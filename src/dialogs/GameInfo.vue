@@ -391,7 +391,7 @@ export default {
         : true;
     },
     isDuplicable() {
-      return !(this.game.config.isOnline && this.game.config.isOngoing);
+      return !this.game.config.isOnline || this.game.config.hasEnded;
     },
     icon() {
       return this.$store.state.ui.embed

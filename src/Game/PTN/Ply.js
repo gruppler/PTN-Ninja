@@ -251,7 +251,7 @@ export default class Ply extends Ptn {
   }
 
   get notes() {
-    return this.game ? this.game.notes[this.id] : [];
+    return this.game ? this.game.notes[this.id] || [] : [];
   }
 
   isEqual(ply) {
@@ -266,7 +266,7 @@ export default class Ply extends Ptn {
     return {
       linenum: this.linenum.number,
       ptn: this.text,
-      notes: this.notes,
+      notes: this.notes.map((note) => note.contents),
       uid: this.uid,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,

@@ -38,6 +38,7 @@ export default class Board extends Aggregation(
       plyID: -1,
       plyIsDone: false,
       targetBranch: "",
+      undoRequest: null,
     });
 
     this.output = {

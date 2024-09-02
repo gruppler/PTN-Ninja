@@ -120,7 +120,7 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
 
 const gameConverter = {
   toFirestore(game) {
-    game.config = omit(game.config, ["isOnline", "id", "player", "type"]);
+    game.config = omit(game.config, ["isOnline", "id", "player", "collection"]);
     return game.json;
   },
   fromFirestore(snapshot, options) {
@@ -232,7 +232,7 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
         }
 
         games.push(game);
-        console.log(game);
+        console.log(game, new Game(game));
 
         // Load moves
         // let moveDocs = await gameDoc.collection("branches").get();
