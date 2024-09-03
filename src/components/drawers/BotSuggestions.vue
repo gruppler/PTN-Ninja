@@ -202,35 +202,39 @@
         </template>
 
         <!-- Topaz -->
-        <template v-else-if="botSettings.bot === 'topaz'">
+        <div v-else-if="botSettings.bot === 'topaz'" class="relative-position">
           <q-btn
             v-if="!suggestions.length && !isGameEnd"
             @click="loadingTopazMoves ? null : requestTopazSuggestions()"
             :percentage="progressTopazAnalysis"
             class="full-width"
             color="primary"
+            icon="board"
+            :label="$t('analysis.Analyze Position')"
+            :loading="loadingTopazMoves"
             :ripple="!loadingTopazMoves"
             stretch
-          >
-            <template v-if="loadingTopazMoves">
-              <PlyChip
-                v-if="analyzingPly"
-                :ply="allPlies[analyzingPly.id]"
-                @click.stop="goToAnalysisPly"
-                no-branches
-                :done="analyzingPly.isDone"
-                style="text-transform: none"
-              />
-              <q-spinner />
-              <q-btn :label="$t('Cancel')" @click.stop="terminateTopaz" flat />
-            </template>
-            <template v-else>
-              <q-icon name="board" left /><span class="block">{{
-                $t("analysis.Analyze Position")
-              }}</span>
-            </template>
-          </q-btn>
-        </template>
+          />
+          <PlyChip
+            v-if="loadingTopazMoves && analyzingPly"
+            :ply="allPlies[analyzingPly.id]"
+            @click.stop="goToAnalysisPly"
+            no-branches
+            :done="analyzingPly.isDone"
+            class="absolute-left"
+          />
+          <q-btn
+            v-if="loadingTopazMoves"
+            :label="$t('Cancel')"
+            @click.stop="terminateTopaz"
+            class="absolute-right"
+            :text-color="
+              $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+            "
+            stretch
+            flat
+          />
+        </div>
       </smooth-reflow>
 
       <!-- Results -->
@@ -539,7 +543,7 @@ export default {
       }
     },
 
-    // MARK: Tiltak Cloud
+    //#region Tiltak Cloud
 
     async analyzeGameTiltak() {
       if (this.isOffline || !this.game.ptn.branchPlies.length) {
@@ -690,7 +694,7 @@ export default {
       return result;
     },
 
-    // MARK: Tiltak WASM
+    //#region Tiltak WASM
 
     initTiltakInteractive(force = false) {
       if (force || !this.tiltakWorker) {
@@ -923,7 +927,7 @@ export default {
       }
     },
 
-    // MARK: Topaz
+    //#region Topaz
 
     initTopaz(force = false) {
       if (force || !this.topazWorker) {
@@ -1023,7 +1027,7 @@ export default {
       }
     },
 
-    // MARK: Init
+    //#region Init
 
     init() {
       // Load wasm bots
@@ -1095,8 +1099,13 @@ export default {
     },
     botSettings: {
       handler(settings) {
+        // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
+
+        // Update current position/bot hash
         this.botSettingsHash = this.hashBotSettings(settings);
+
+        // Stop interactive analysis when switching bots
         if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {
           this.tiltakInteractive.isEnabled = false;
         }

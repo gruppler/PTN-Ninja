@@ -79,6 +79,13 @@ export default class GameBase {
     return params;
   }
 
+  // Split multi-game PTN into separate games
+  static split(ptn) {
+    return ptn.match(
+      /^\s*(\[\w+\s"[^"]*"\]\s*)+((\{[^}]*\})*[/.\s\da-hCFRS!?"'><+-]+)+/gm
+    );
+  }
+
   // #region Init
   init({
     ptn,
