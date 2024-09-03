@@ -444,9 +444,39 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
         resolve;
       }
     };
+
     const onInit = (game) => {
       games.push(game);
       finish();
+    };
+
+    const parseGame = (ptn, name) => {
+      const onError = (error, plyID) => {
+        console.warn(
+          `Encountered an error in "${name}" at plyID:`,
+          plyID,
+          error
+        );
+        notifyError(`${name}: ${error.message}`);
+        finish();
+      };
+
+      const index = state.list.findIndex((g) => g.name === name);
+      if (index < 0 || this.state.ui.openDuplicate !== "replace") {
+        try {
+          new Game({
+            ptn,
+            name,
+            onError,
+            onInit,
+          });
+        } catch (error) {
+          console.error("Invalid game:", name, error);
+        }
+      } else {
+        dispatch("REPLACE_GAME", { index, ptn });
+        finish();
+      }
     };
 
     files = Array.from(files);
@@ -462,32 +492,10 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
         let reader = new FileReader();
         reader.onload = (event) => {
           const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
-          const index = state.list.findIndex((g) => g.name === name);
-          const ptn = event.target.result;
-          const onError = (error, plyID) => {
-            console.warn(
-              `Encountered an error in "${name}" at plyID:`,
-              plyID,
-              error
-            );
-            notifyError(`${name}: ${error.message}`);
-            finish();
-          };
-          if (index < 0 || this.state.ui.openDuplicate !== "replace") {
-            try {
-              new Game({
-                ptn,
-                name,
-                onError,
-                onInit,
-              });
-            } catch (error) {
-              console.error("Invalid game:", name, error);
-            }
-          } else {
-            dispatch("REPLACE_GAME", { index, ptn });
-            finish();
-          }
+          const games = Game.split(event.target.result);
+          games.forEach((ptn, i) => {
+            parseGame(ptn, `${name} - Game ${i + 1}`);
+          });
         };
         reader.onerror = notifyError;
         reader.readAsText(file);
