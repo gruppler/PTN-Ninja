@@ -36,8 +36,7 @@ export const formats = {
   flats: /^\d+$/,
   flats1: /^\d+$/,
   flats2: /^\d+$/,
-  clock:
-    /^\d+min(\+\d+sec)$|^((((\d\s+)?\d\d?:)?\d\d?:)?\d\d?\s*)?(\+(((\d\s+)?\d\d?:)?\d\d?:)?\d\d?)?$/,
+  clock: /^[^"]+$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
   komi: /^-?\d*(\.5)?$/,
