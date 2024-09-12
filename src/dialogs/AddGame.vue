@@ -215,16 +215,31 @@ export default {
       }
     },
     async clipboardCreate(ptn) {
-      let game;
-      try {
-        game = new Game({ ptn });
-      } catch (error) {
-        console.error(error);
+      const games = Game.split(ptn);
+
+      const _createGame = (ptn, i) => {
+        try {
+          const game = new Game({ ptn });
+          game.warnings.forEach((warning) => {
+            console.log(i, warning);
+            this.notifyWarning(warning);
+          });
+          if (games.length > 1) {
+            game.name += " - " + this.$tc("Game x", i + 1);
+          }
+          games[i] = game;
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      if (games) {
+        games.forEach(_createGame);
+      } else {
+        _createGame(ptn);
       }
 
-      game.warnings.forEach((warning) => this.notifyWarning(warning));
-
-      await this.$store.dispatch("game/ADD_GAME", game);
+      await this.$store.dispatch("game/ADD_GAMES", { games });
       this.close();
     },
     playTak() {

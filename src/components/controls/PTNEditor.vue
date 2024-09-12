@@ -30,7 +30,11 @@ export default {
       header: "",
       rules: [
         (moves) => {
-          const result = Game.validate(this.header + moves);
+          const result = Game.validate(
+            this.header + moves,
+            false,
+            this.isNewGame
+          );
           if (result === true) {
             this.$emit("error", "");
             return true;
