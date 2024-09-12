@@ -13,31 +13,45 @@ export default class Game extends Aggregation(
   GameMutations,
   GameUndo
 ) {
-  static validate(ptn, silent = false) {
-    let result = true;
-    let game;
-    try {
-      // Parse the game
-      game = new Game({
-        ptn,
-        state: { plyIndex: 0 },
-        onError: (error, plyID) => {
-          result = error.message || error;
-          if (!silent) {
-            console.warn("Encountered an error at plyID:", plyID);
-            console.warn(error);
-          }
-        },
-      });
+  static validate(ptn, silent = false, multiple = false) {
+    const games = multiple ? Game.split(ptn) : [ptn];
+    let isValid = true;
 
-      // Navigate through each branch
-      Object.values(game.branches).forEach((ply) => {
-        if (result === true) {
-          game.board.goToPly(ply.id, true);
-          game.board.last();
-        }
-      });
-    } catch (error) {}
-    return result;
+    const _validate = (ptn, i) => {
+      let game;
+      try {
+        // Parse the game
+        game = new Game({
+          ptn,
+          state: { plyIndex: 0 },
+          onError: (error, plyID) => {
+            isValid = isValid && (error.message || error);
+            if (!silent) {
+              console.warn(
+                `Encountered an error at ${
+                  games.length > 1 ? "Game " + (i + 1) + ", " : ""
+                }plyID: ${plyID}`
+              );
+              console.warn(error);
+            }
+          },
+        });
+
+        // Navigate through each branch
+        Object.values(game.branches).forEach((ply) => {
+          if (isValid === true) {
+            game.board.goToPly(ply.id, true);
+            game.board.last();
+          }
+        });
+      } catch (error) {}
+    };
+
+    if (games) {
+      games.forEach(_validate);
+    } else {
+      _validate(ptn);
+    }
+    return isValid;
   }
 }

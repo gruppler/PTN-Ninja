@@ -81,6 +81,7 @@ export default {
   "From Center": "From Center",
   "Full Link": "Full Link",
   Fullscreen: "Fullscreen",
+  "Game x": "Game {count}",
   "Game Info": "Game Info",
   "Game Notifications": "Game Notifications",
   "Game x closed": 'Closed "{game}"',
