@@ -120,7 +120,7 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
   } catch (error) {
     console.error(error);
   }
-  let game;
+  let games = [];
   if (ptn) {
     if (/^\d+$/.test(ptn)) {
       // PlayTak game ID
@@ -151,7 +151,7 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
         if (!isEmpty(route.params)) {
           try {
             const params = parseURLparams(route);
-            game = new Game(params);
+            games[0] = new Game(params);
             await dispatch("ADD_GAME", game);
             return true;
           } catch (error) {
@@ -160,9 +160,16 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
           }
         }
       }
-    } else if (Game.validate(ptn, true) === true) {
+    } else if (Game.validate(ptn, true, true) === true) {
       // PTN
-      game = new Game({ ptn });
+      games = Game.split(ptn);
+      games = games.map((ptn, i) => {
+        const game = new Game({ ptn });
+        if (games.length > 1) {
+          game.name += " - " + i18n.tc("Game x", i + 1);
+        }
+        return game;
+      });
     } else if (Ply.test(ptn) || Linenum.test(ptn)) {
       // Plies
       dispatch("INSERT_PLIES", { plies: ptn });
@@ -172,18 +179,18 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
       let tps = new TPS(ptn);
       if (tps.isValid) {
         tps = tps.text;
-        game = new Game({ tags: { tps } });
+        games[0] = new Game({ tags: { tps } });
       } else {
         // JSON
         try {
           let tags = JSON.parse(ptn);
-          game = new Game({ tags });
+          games[0] = new Game({ tags });
         } catch (error) {}
       }
     }
   }
-  if (ptn && game) {
-    await dispatch("ADD_GAME", game);
+  if (ptn && games && games.length) {
+    await dispatch("ADD_GAMES", { games });
     return true;
   } else {
     router.push({ name: "add", params: { tab: "load", type: "ptn" } });
@@ -494,7 +501,10 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
           const name = file.name.replace(/(\.ptn|\.txt)+$/, "");
           const games = Game.split(event.target.result);
           games.forEach((ptn, i) => {
-            parseGame(ptn, `${name} - Game ${i + 1}`);
+            parseGame(
+              ptn,
+              games.length > 1 ? name + " - " + i18n.t("Game x", i + 1) : name
+            );
           });
         };
         reader.onerror = notifyError;

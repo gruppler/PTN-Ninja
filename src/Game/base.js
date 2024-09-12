@@ -119,7 +119,7 @@ export default class GameBase {
 
     const handleError = (error) => {
       if (this.onError) {
-        this.onError(error, this.plies.length - 1);
+        this.onError(error, this.plies.length);
       } else {
         throw error;
       }
