@@ -665,7 +665,7 @@ export default {
             console.error("Failed to query position", {
               tps,
               komi,
-              secondsToThink,
+              secondsToThinkPerPly,
               error,
             });
           })
