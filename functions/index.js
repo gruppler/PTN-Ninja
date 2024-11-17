@@ -136,22 +136,24 @@ exports.png = functions.https.onRequest(async (request, response) => {
 });
 
 // HTTP => GIF
-exports.gif = functions.https.onRequest(async (request, response) => {
-  const { TPStoGIF } = await import("tps-ninja");
+exports.gif = functions
+  .runWith({ timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    const { TPStoGIF } = await import("tps-ninja");
 
-  try {
-    response.set("Access-Control-Allow-Origin", "*");
-    response.set("Content-Type", "image/gif");
-    response.set(
-      "Content-Disposition",
-      `attachment; filename="${request.query.name || "takboard.gif"}"`
-    );
-    TPStoGIF({ ...request.query, font: "Roboto" }, response);
-  } catch (error) {
-    response.status(400).send({ message: error.message });
-    console.error(error);
-  }
-});
+    try {
+      response.set("Access-Control-Allow-Origin", "*");
+      response.set("Content-Type", "image/gif");
+      response.set(
+        "Content-Disposition",
+        `attachment; filename="${request.query.name || "takboard.gif"}"`
+      );
+      TPStoGIF({ ...request.query, font: "Roboto" }, response);
+    } catch (error) {
+      response.status(400).send({ message: error.message });
+      console.error(error);
+    }
+  });
 
 //#region Gameplay
 
