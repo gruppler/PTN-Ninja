@@ -49,12 +49,19 @@ export default class GameComments {
 
   addComments(type, messages) {
     const isEvaluation = /^[?!'"]+$/;
+    const isReplacement = /^!r(\d+):/;
     for (const plyID in messages) {
       messages[plyID].forEach((message) => {
         if (isEvaluation.test(message)) {
           this._setEvaluation(plyID, message);
         } else {
-          this._addComment(type, message, plyID);
+          if (isReplacement.test(message)) {
+            let index = message.match(isReplacement)[1];
+            message = message.substring(index.length + 3);
+            this._replaceComment(type, plyID, index, message);
+          } else {
+            this._addComment(type, message, plyID);
+          }
         }
       });
     }
@@ -64,11 +71,18 @@ export default class GameComments {
     this.board.updatePositionOutput();
   }
 
-  editComment(type, plyID, index, message) {
+  _replaceComment(type, plyID, index, message) {
     if (this[type][plyID] && this[type][plyID][index]) {
       this[type][plyID][index].message = message;
-      this._updatePTN(true);
       this.board.dirtyComment(type, plyID);
+      return true;
+    }
+    return false;
+  }
+
+  editComment(type, plyID, index, message) {
+    if (this._replaceComment(type, plyID, index, message)) {
+      this._updatePTN(true);
       this.board.updateCommentsOutput();
       return this[type][plyID][index];
     }
