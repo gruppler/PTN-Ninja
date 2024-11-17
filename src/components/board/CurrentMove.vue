@@ -1,13 +1,11 @@
 <template>
-  <div
-    v-show="position.ply && !$store.state.ui.showPTN"
-    class="board-move-container no-pointer-events"
-  >
+  <div v-show="position.ply" class="board-move-container no-pointer-events">
     <div class="board-move" :class="{ collapsed }">
       <q-btn
         @click="toggle"
         :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
+        :class="{ hidden: this.$store.state.ui.showPTN }"
         :ripple="false"
         :color="btnColor"
         dense
@@ -34,7 +32,7 @@ export default {
   computed: {
     collapsed: {
       get() {
-        return !this.$store.state.ui.showMove;
+        return !this.$store.state.ui.showMove || this.$store.state.ui.showPTN;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showMove", !value]);

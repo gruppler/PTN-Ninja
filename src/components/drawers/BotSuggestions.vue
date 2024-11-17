@@ -82,10 +82,11 @@
             </template>
           </q-select>
 
+          <!-- Tiltak Cloud -->
           <template v-if="botSettings.bot === 'tiltak-cloud'">
             <!-- Max Suggestions -->
             <q-input
-              v-model.number="botSettings.maxSuggestedMoves"
+              v-model.number="botSettings[botSettings.bot].maxSuggestedMoves"
               :label="$t('analysis.maxSuggestedMoves')"
               type="number"
               min="1"
@@ -99,10 +100,12 @@
               </template>
             </q-input>
           </template>
+
+          <!-- Topaz -->
           <template v-if="botSettings.bot === 'topaz'">
             <!-- Depth -->
             <q-input
-              v-model.number="botSettings.depth"
+              v-model.number="botSettings[botSettings.bot].depth"
               :label="$t('analysis.Depth')"
               type="number"
               min="2"
@@ -118,7 +121,7 @@
 
             <!-- Time Budget -->
             <q-input
-              v-model.number="botSettings.timeBudget"
+              v-model.number="botSettings[botSettings.bot].timeBudget"
               :label="$t('analysis.timeBudget')"
               type="number"
               min="1"
@@ -188,7 +191,7 @@
             <q-item-section v-if="tiltakInteractive.isEnabled" side>
               <div class="text-caption">
                 {{ $n((tiltakInteractive.time || 0) / 1e3, "n0") }}
-                {{ $t("analysis.seconds_unit") }}
+                {{ $t("analysis.secondsUnit") }}
               </div>
               <div class="text-caption">
                 {{ $n(tiltakInteractive.nps || 0, "n0") }}
@@ -242,7 +245,7 @@
         <AnalysisItem
           v-for="(move, i) in suggestions.slice(
             0,
-            botSettings.maxSuggestedMoves
+            botSettings[botSettings.bot].maxSuggestedMoves
           )"
           :key="i"
           :ply="move.ply"
@@ -278,6 +281,7 @@
 
       <!-- Secondary Controls -->
       <smooth-reflow>
+        <!-- Think Harder -->
         <q-btn
           v-if="
             botSettings.bot === 'tiltak-cloud' &&
@@ -295,13 +299,35 @@
         >
           {{ $t("analysis.Think Harder") }}
         </q-btn>
+
+        <!-- Save Comments -->
+        <div class="row no-wrap">
+          <q-btn
+            @click="saveEvalComments(botSettings[botSettings.bot].pvLimit)"
+            class="full-width"
+            color="primary"
+            icon="notes"
+            :label="$t('Save to Notes')"
+            stretch
+          />
+          <q-input
+            type="number"
+            v-model.number="botSettings[botSettings.bot].pvLimit"
+            :label="$t('analysis.pvLimit')"
+            :min="0"
+            :max="20"
+            item-align
+            filled
+            dense
+          />
+        </div>
       </smooth-reflow>
     </q-expansion-item>
   </div>
 </template>
 
 <script>
-import { pick, uniq } from "lodash";
+import { cloneDeep, uniq } from "lodash";
 import asyncPool from "tiny-async-pool";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze } from "../../utilities";
@@ -338,13 +364,13 @@ export default {
       positions: {},
       suggestions: [],
       bots: ["tiltak-cloud"],
-      botSettings: { ...this.$store.state.ui.botSettings },
+      botSettings: cloneDeep(this.$store.state.ui.botSettings),
       botThinkBudgetInSeconds: {
         short: 5,
         long: 10,
       },
-      botSettingsHash: this.hashBotSettings(this.$store.state.ui.botSettings),
-      sections: { ...this.$store.state.ui.analysisSections },
+      botSettingsKey: this.getBotSettingsKey(this.$store.state.ui.botSettings),
+      sections: cloneDeep(this.$store.state.ui.analysisSections),
       tiltakWorker: null,
       topazWorker: null,
     };
@@ -418,15 +444,17 @@ export default {
       }
     },
 
-    hashBotSettings(settings) {
-      if (settings.bot === "tiltak-cloud") {
-        return Object.values(pick(settings, ["bot"])).join(",");
-      } else if (settings.bot === "tiltak") {
-        return settings.bot;
-      } else {
-        return Object.values(
-          pick(settings, ["bot", "depth", "timeBudget"])
-        ).join(",");
+    getBotSettingsKey(settings) {
+      // List only the properties that affect analysis
+      switch (settings.bot) {
+        case "topaz":
+          return Object.values([
+            settings.bot,
+            settings.topaz.depth,
+            settings.topaz.timeBudget,
+          ]).join(",");
+        default:
+          return settings.bot;
       }
     },
 
@@ -450,7 +478,7 @@ export default {
       );
     },
 
-    getEvalComments(ply, settingsHash) {
+    getEvalComments(ply, settingsKey, pvLimit = 0) {
       let comments = [];
       let positionBefore = this.positions[ply.tpsBefore];
       let positionAfter = this.positions[ply.tpsAfter];
@@ -464,7 +492,7 @@ export default {
           : 100 * (ply.result.winner === 1 ? 1 : -1);
       }
 
-      // Get evaulationBefore from existing eval comment of previous ply
+      // Get evaluationBefore from existing eval comment of previous ply
       let prevPly = this.plies.find(
         (prevPly) => prevPly.tpsAfter === ply.tpsBefore
       );
@@ -476,43 +504,49 @@ export default {
         }
       }
 
+      // Evaluation
       if (
         evaluationAfter !== null ||
-        (positionAfter && settingsHash in positionAfter)
+        (positionAfter && settingsKey in positionAfter)
       ) {
+        let evaluationComment = "";
+
         evaluationAfter =
           Math.round(
             100 *
               (evaluationAfter !== null
                 ? evaluationAfter
-                : positionAfter[settingsHash][0].evaluation)
+                : positionAfter[settingsKey][0].evaluation)
           ) / 1e4;
-        let evaluationComment = `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
+        if (!isNaN(evaluationAfter)) {
+          evaluationComment += `${
+            evaluationAfter >= 0 ? "+" : ""
+          }${evaluationAfter}`;
 
-        if (positionBefore && settingsHash in positionBefore) {
-          let position = positionBefore[settingsHash][0];
-          if (position && position.ply) {
-            let pv = [position.ply, ...position.followingPlies]
-              .slice(0, 3)
-              .map((ply) => ply.ptn);
-            evaluationComment += `, pv ${pv.join(" ")}`;
+          // Find existing eval comment index
+          if (ply.id in this.game.comments.notes) {
+            const index = this.game.comments.notes[ply.id].findIndex(
+              (comment) => comment.evaluation !== null
+            );
+            if (index >= 0) {
+              evaluationComment = `!r${index}:${evaluationComment}`;
+            }
           }
+
+          comments.push(evaluationComment);
         }
 
-        comments.push(evaluationComment);
-
+        // Annotation marks
         if (
           evaluationBefore !== null ||
-          (positionBefore && settingsHash in positionBefore)
+          (positionBefore && settingsKey in positionBefore)
         ) {
           evaluationBefore =
             Math.round(
               100 *
                 (evaluationBefore !== null
                   ? evaluationBefore
-                  : positionBefore[settingsHash][0].evaluation)
+                  : positionBefore[settingsKey][0].evaluation)
             ) / 1e4;
           const scoreLoss =
             (ply.player === 1
@@ -531,7 +565,57 @@ export default {
           }
         }
       }
+
+      // PV
+      if (positionBefore && settingsKey in positionBefore) {
+        let position = positionBefore[settingsKey][0];
+        if (position && position.ply) {
+          let pv = [position.ply, ...position.followingPlies];
+          if (pvLimit) {
+            pv = pv.slice(0, pvLimit);
+          }
+          pv = pv.map((ply) => ply.ptn);
+          let pvComment = `pv ${pv.join(" ")}`;
+
+          // Find existing pv comment index
+          if (ply.id in this.game.comments.notes) {
+            const index = this.game.comments.notes[ply.id].findIndex(
+              (comment) =>
+                comment.pv !== null &&
+                comment.pv.every(
+                  (cpv) =>
+                    cpv.every((ply, i) => ply === pv[i]) ||
+                    pv.every((ply, i) => ply === cpv[i])
+                )
+            );
+            if (index >= 0) {
+              pvComment = `!r${index}:${pvComment}`;
+            }
+          }
+
+          comments.push(pvComment);
+        }
+      }
       return comments;
+    },
+
+    saveEvalComments(
+      pvLimit = 0,
+      plies = this.plies,
+      settingsKey = this.botSettingsKey
+    ) {
+      const messages = {};
+      plies.forEach((ply) => {
+        const notes = [];
+        const evaluations = this.getEvalComments(ply, settingsKey, pvLimit);
+        if (evaluations.length) {
+          notes.push(...evaluations);
+        }
+        if (notes.length) {
+          messages[ply.id] = notes;
+        }
+      });
+      this.$store.dispatch("game/ADD_NOTES", messages);
     },
 
     goToAnalysisPly() {
@@ -557,7 +641,7 @@ export default {
         const komi = this.game.config.komi;
         const secondsToThinkPerPly = this.botThinkBudgetInSeconds.short;
         const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-        const settingsHash = this.botSettingsHash;
+        const settingsKey = this.botSettingsKey;
         let positions = plies.map((ply) => ply.tpsBefore);
         plies.forEach((ply) => {
           if (!ply.result || ply.result.type === "1") {
@@ -566,7 +650,7 @@ export default {
         });
         positions = uniq(positions).filter(
           (tps) =>
-            !(tps in this.positions) || !(settingsHash in this.positions[tps])
+            !(tps in this.positions) || !(settingsKey in this.positions[tps])
         );
         let total = positions.length;
         let completed = 0;
@@ -576,12 +660,12 @@ export default {
             secondsToThinkPerPly,
             tps,
             komi,
-            settingsHash
+            settingsKey
           ).catch((error) => {
             console.error("Failed to query position", {
               tps,
               komi,
-              secondsToThink,
+              secondsToThinkPerPly,
               error,
             });
           })
@@ -589,16 +673,11 @@ export default {
           this.progressTiltakAnalysis = (100 * ++completed) / total;
         }
         // Insert comments
-        let messages = {};
-        plies.forEach((ply) => {
-          let notes = [];
-          let evaluations = this.getEvalComments(ply, settingsHash);
-          if (evaluations.length) {
-            notes.push(...evaluations);
-          }
-          messages[ply.id] = notes;
-        });
-        this.$store.dispatch("game/ADD_NOTES", messages);
+        this.saveEvalComments(
+          this.botSettings["tiltak-cloud"].pvLimit,
+          plies,
+          settingsKey
+        );
       } catch (error) {
         this.notifyError(error);
       } finally {
@@ -629,7 +708,7 @@ export default {
       secondsToThink,
       tps,
       komi,
-      settingsHash = this.botSettingsHash
+      settingsKey = this.botSettingsKey
     ) {
       if (this.isOffline) {
         this.notifyError("Offline");
@@ -689,7 +768,7 @@ export default {
       deepFreeze(result);
       this.$set(this.positions, tps, {
         ...(this.positions[tps] || {}),
-        [settingsHash]: result,
+        [settingsKey]: result,
       });
       return result;
     },
@@ -865,7 +944,7 @@ export default {
       if (!this.tiltakInteractive.tps) {
         this.tiltakInteractive.tps = this.tps;
       }
-      const id = this.hashBotSettings({ bot: "tiltak" });
+      const id = this.getBotSettingsKey({ bot: "tiltak" });
       const tps = this.tiltakInteractive.tps;
 
       // Update time and nps
@@ -959,17 +1038,17 @@ export default {
       this.loadingTopazMoves = true;
       this.progressTopazAnalysis = 0;
       const startTime = new Date().getTime();
-      const timeBudget = this.botSettings.timeBudget * 10;
+      const timeBudget = this.botSettings.topaz.timeBudget * 10;
       this.topazTimer = setInterval(() => {
         this.progressTopazAnalysis =
           (new Date().getTime() - startTime) / timeBudget;
       }, 1000);
       this.topazWorker.postMessage({
-        ...this.botSettings,
+        ...this.botSettings.topaz,
         size: this.game.config.size,
         komi: this.game.config.komi,
         tps: this.tps,
-        id: this.botSettingsHash,
+        id: this.botSettingsKey,
       });
     },
 
@@ -1067,8 +1146,8 @@ export default {
     },
     botPosition(position) {
       if (position) {
-        if (this.botSettingsHash in position) {
-          this.suggestions = position[this.botSettingsHash] || [];
+        if (this.botSettingsKey in position) {
+          this.suggestions = position[this.botSettingsKey] || [];
         } else {
           this.suggestions = [];
         }
@@ -1084,9 +1163,9 @@ export default {
         this.$store.dispatch("game/SET_EVAL", null);
       }
     },
-    botSettingsHash(hash) {
-      if (this.botPosition && hash in this.botPosition) {
-        this.suggestions = this.botPosition[hash] || [];
+    botSettingsKey(key) {
+      if (this.botPosition && key in this.botPosition) {
+        this.suggestions = this.botPosition[key] || [];
       } else {
         this.suggestions = [];
       }
@@ -1102,8 +1181,8 @@ export default {
         // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
 
-        // Update current position/bot hash
-        this.botSettingsHash = this.hashBotSettings(settings);
+        // Update current position/bot key
+        this.botSettingsKey = this.getBotSettingsKey(settings);
 
         // Stop interactive analysis when switching bots
         if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {
