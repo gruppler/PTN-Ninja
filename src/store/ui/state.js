@@ -1,5 +1,5 @@
 import { LocalStorage, Platform } from "quasar";
-import { pick } from "lodash";
+import { cloneDeep, pick } from "lodash";
 import { THEMES } from "../../themes";
 
 let defaults = {
@@ -22,9 +22,18 @@ let defaults = {
   },
   botSettings: {
     bot: "tiltak-cloud",
-    maxSuggestedMoves: 8,
-    depth: 12,
-    timeBudget: 30,
+    tiltak: {
+      pvLimit: 5,
+    },
+    "tiltak-cloud": {
+      maxSuggestedMoves: 8,
+      pvLimit: 3,
+    },
+    topaz: {
+      depth: 12,
+      timeBudget: 30,
+      pvLimit: 3,
+    },
   },
   animateBoard: true,
   animateScrub: false,
@@ -163,9 +172,10 @@ let state = {
   thumbnails: {},
   shortLinks: {},
   defaults,
-  ...defaults,
+  ...cloneDeep(defaults),
 };
 
+// Load from LocalStorage
 const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
@@ -173,6 +183,24 @@ if (!state.embed && !LocalStorage.isEmpty()) {
   for (let key in defaults) {
     state[key] = load(key, state[key]);
   }
+}
+
+// Backward compatibility
+if (
+  !(state.botSettings.bot in state.botSettings) &&
+  state.botSettings.bot in defaults.botSettings
+) {
+  const botSettings = cloneDeep(defaults.botSettings);
+  for (const bot in botSettings) {
+    if (bot === "bot") {
+      continue;
+    }
+    Object.assign(
+      botSettings[bot],
+      pick(state.botSettings, Object.keys(botSettings[bot]))
+    );
+  }
+  state.botSettings = botSettings;
 }
 
 export default state;

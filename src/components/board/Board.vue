@@ -221,7 +221,7 @@ export default {
       return this.$store.state.game.ptn;
     },
     evaluation() {
-      if (this.$store.state.game.evaluation) {
+      if (this.$store.state.game.evaluation !== null) {
         return this.$store.state.game.evaluation;
       } else if (this.position.boardPly) {
         return this.$store.state.game.comments.evaluations[

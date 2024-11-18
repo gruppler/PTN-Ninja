@@ -117,10 +117,16 @@
           active-color="primary"
           indicator-color="primary"
           align="justify"
+          inline-label
         >
-          <q-tab name="notes">{{ $t("Notes") }}</q-tab>
-          <q-tab name="analysis">{{ $tc("Analysis") }}</q-tab>
-          <q-tab v-if="hasChat" name="chat">{{ $t("Chat") }}</q-tab>
+          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
+          <q-tab
+            v-if="hasAnalysis"
+            name="analysis"
+            icon="analysis"
+            :label="$t('Analysis')"
+          />
+          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
         </q-tabs>
         <q-tab-panels
           class="col-grow bg-transparent"
@@ -131,11 +137,11 @@
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
+          <q-tab-panel name="analysis">
+            <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
-          </q-tab-panel>
-          <q-tab-panel name="analysis">
-            <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -249,6 +255,20 @@ export default {
     },
     gameExists() {
       return Boolean(this.$store.state.game.name);
+    },
+    isOnline() {
+      return this.gameExists ? this.$store.state.game.config.isOnline : false;
+    },
+    hasAnalysis() {
+      return !this.isOnline;
+      // TODO: Allow for ended games and spectators? And online analyses.
+    },
+    hasChat() {
+      return (
+        this.isOnline ||
+        (this.$store.state.game.comments &&
+          Object.keys(this.$store.state.game.comments.chatlog).length)
+      );
     },
     showPTN: {
       get() {
