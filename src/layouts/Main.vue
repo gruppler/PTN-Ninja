@@ -124,7 +124,7 @@
             v-if="hasAnalysis"
             name="analysis"
             icon="analysis"
-            :label="$t('Analysis')"
+            :label="$tc('Analysis')"
           />
           <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
         </q-tabs>
@@ -285,11 +285,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showText", value]);
       },
-    },
-    hasChat() {
-      return (
-        this.$store.state.game.config && this.$store.state.game.config.isOnline
-      );
     },
     textTab: {
       get() {
