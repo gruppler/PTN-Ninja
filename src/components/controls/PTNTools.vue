@@ -14,15 +14,15 @@
       <q-btn
         @click="$router.push({ name: 'edit' })"
         icon="edit"
-        :disabled="!isLocal"
+        :disabled="isDisabled"
       >
         <hint>{{ $t("Edit PTN") }}</hint>
       </q-btn>
 
-      <q-btn icon="trim" class="no-border-radius" :disabled="!isLocal">
+      <q-btn icon="trim" class="no-border-radius" :disabled="isDisabled">
         <hint>{{ $t("Trim") }}</hint>
         <q-menu
-          v-if="isLocal"
+          v-if="!isDisabled"
           transition-show="none"
           transition-hide="none"
           auto-close
@@ -67,8 +67,11 @@ export default {
     };
   },
   computed: {
-    isLocal() {
-      return !this.$store.state.game.config.isOnline;
+    isDisabled() {
+      return (
+        this.$store.state.game.config.isOnline &&
+        this.$store.state.game.config.isOngoing
+      );
     },
     showAllBranches: {
       get() {

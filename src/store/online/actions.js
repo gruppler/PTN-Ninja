@@ -1,10 +1,12 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
-import { omit } from "lodash";
-
 import Game from "../../Game";
-import { toDate } from "../../Game/PTN/Tag";
-import { call } from "../../utilities";
+import {
+  call,
+  gameConverter,
+  analysisConverter,
+  puzzleConverter,
+} from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
 export const INIT = ({ commit, dispatch, state }) => {
@@ -71,7 +73,7 @@ export const LOG_IN = async (context, { email, password }) => {
 };
 
 export const LOG_OUT = async ({ dispatch }) => {
-  dispatch("UNLISTEN_CURRENT_GAME");
+  // dispatch("UNLISTEN_CURRENT_GAME");
   await auth.signOut();
   return dispatch("ANONYMOUS");
 };
@@ -117,46 +119,6 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
 };
 
 // GAMES
-
-const gameConverter = {
-  toFirestore(game) {
-    game.config = omit(game.config, ["isOnline", "id", "player", "collection"]);
-    return game.json;
-  },
-  fromFirestore(snapshot, options) {
-    const data = snapshot.data(options);
-    data.config.isOnline = true;
-    data.config.id = snapshot.id;
-    data.config.collection = snapshot.ref.parent.id;
-    data.config.player = data.config.players
-      ? data.config.players.indexOf(auth.currentUser.uid) + 1
-      : 0;
-    if (data.tags.date) data.tags.date = toDate(data.tags.date);
-    if (data.createdAt) data.createdAt = toDate(data.createdAt);
-    if (data.updatedAt) data.updatedAt = toDate(data.updatedAt);
-    return data;
-  },
-};
-
-const analysisConverter = {
-  toFirestore(game) {
-    return game.json;
-  },
-  fromFirestore(snapshot, options) {
-    const data = snapshot.data(options);
-    return new Game(snapshot.id, data);
-  },
-};
-
-const puzzleConverter = {
-  toFirestore(game) {
-    return game.json;
-  },
-  fromFirestore(snapshot, options) {
-    const data = snapshot.data(options);
-    return new Game(snapshot.id, data);
-  },
-};
 
 export const CREATE_GAME = async (context, { game, config }) => {
   if (!game || !(game instanceof Game)) {
@@ -233,16 +195,11 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
 
         games.push(game);
         console.log(game, new Game(game));
-
-        // Load moves
-        // let moveDocs = await gameDoc.collection("branches").get();
-        // gameJSON.moves = [];
-        // moveDocs.forEach((move) => (gameJSON.moves[move.id] = move.data()));
       })
     );
 
     // Add games
-    // this.dispatch("game/ADD_GAMES", games);
+    this.dispatch("game/ADD_GAMES", { games });
 
     Loading.hide();
     return games;
@@ -252,14 +209,77 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
   }
 };
 
+export const LISTEN_CURRENT_GAME = async function ({ dispatch, state }) {
+  // TODO: Handle different types of online games
+  const listeners = [];
+  const converter = gameConverter;
+  const game = this.state.game;
+  const stateKey = game.config.collection;
+  const path = `${game.config.path}/branches`;
+
+  // Root branch
+  listeners.push(
+    await dispatch("LISTEN_DOC", {
+      converter,
+      path: `${path}/root`,
+      stateKey,
+      listenerPath: "current-root",
+      // next,
+      // error,
+      unlisten: true,
+    })
+  );
+
+  // Player branches
+  listeners.push(
+    await dispatch("LISTEN_COLLECTION", {
+      converter,
+      path,
+      stateKey,
+      listenerPath: "current-branches",
+      where: ["uid", "==", state.user.uid],
+      // next,
+      // error,
+      unlisten: true,
+    })
+  );
+
+  return listeners;
+};
+
+export const UNLISTEN_CURRENT_GAME = ({ dispatch }) => {
+  return Promise.all([
+    dispatch("UNLISTEN", "current-root"),
+    dispatch("UNLISTEN", "current-branches"),
+  ]);
+};
+
+// export const LISTEN_PLAYER_GAMES = async function (
+//   { dispatch },
+//   { next, error }
+// ) {
+//   const converter = gameConverter;
+//   return dispatch("LISTEN_COLLECTION", {
+//     converter,
+//     path,
+//     stateKey: "playerGames",
+//     listenerPath: "current-game",
+//     where,
+//     limit,
+//     pagination,
+//     next,
+//     error,
+//     unlisten: true,
+//   });
+// };
+
 export const LISTEN_PUBLIC_GAMES = async function (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error, unlisten }
+  { listenerPath, where, limit, pagination, next, error }
 ) {
   const converter = gameConverter;
   const path = "gamesPublic";
   const stateKey = "gamesPublic";
-  await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -270,18 +290,17 @@ export const LISTEN_PUBLIC_GAMES = async function (
     pagination,
     next,
     error,
-    unlisten,
+    unlisten: true,
   });
 };
 
 export const LISTEN_PRIVATE_GAMES = async function (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error, unlisten }
+  { listenerPath, where, limit, pagination, next, error }
 ) {
   const converter = gameConverter;
   const path = "gamesPrivate";
   const stateKey = "gamesPrivate";
-  await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -292,18 +311,17 @@ export const LISTEN_PRIVATE_GAMES = async function (
     pagination,
     next,
     error,
-    unlisten,
+    unlisten: true,
   });
 };
 
 export const LISTEN_ANALYSES = async (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error, unlisten }
+  { listenerPath, where, limit, pagination, next, error }
 ) => {
   const converter = analysisConverter;
   const path = "analyses";
   const stateKey = "analyses";
-  await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -314,18 +332,17 @@ export const LISTEN_ANALYSES = async (
     pagination,
     next,
     error,
-    unlisten,
+    unlisten: true,
   });
 };
 
 export const LISTEN_PUZZLES = async (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error, unlisten }
+  { listenerPath, where, limit, pagination, next, error }
 ) => {
   const converter = puzzleConverter;
   const path = "puzzles";
   const stateKey = "puzzles";
-  await dispatch("UNLISTEN", path);
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -336,7 +353,7 @@ export const LISTEN_PUZZLES = async (
     pagination,
     next,
     error,
-    unlisten,
+    unlisten: true,
   });
 };
 

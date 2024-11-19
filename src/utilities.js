@@ -2,6 +2,7 @@ import store from "./store";
 import { db, functions } from "./boot/firebase.js";
 import { i18n } from "./boot/i18n";
 import { toDate } from "date-fns";
+import { omit } from "lodash";
 import { isArray, isFunction, isObject, isString } from "lodash";
 import Vue from "vue";
 import { Dialog, Notify } from "quasar";
@@ -82,6 +83,8 @@ export const prompt = ({
   }
   return dialog;
 };
+
+//#region Notifications
 
 export const notify = (options) => {
   let fg = store.state.ui.theme.isDark ? "textLight" : "textDark";
@@ -209,6 +212,57 @@ export const formatHint = (hint) => {
       return hint;
     }
   }
+};
+
+//#region Online Games
+
+export const gameConverter = {
+  toFirestore(game) {
+    game.config = omit(game.config, [
+      "id",
+      "collection",
+      "path",
+      "isOnline",
+      "player",
+      "size",
+    ]);
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    data.config.isOnline = true;
+    data.config.id = snapshot.id;
+    data.config.collection = snapshot.ref.parent.id;
+    data.config.path = snapshot.ref.path;
+    data.config.player = data.config.players
+      ? data.config.players.indexOf(auth.currentUser.uid) + 1
+      : 0;
+    data.config.size = data.tags.size;
+    if (data.tags.date) data.tags.date = timestampToDate(data.tags.date);
+    if (data.createdAt) data.createdAt = timestampToDate(data.createdAt);
+    if (data.updatedAt) data.updatedAt = timestampToDate(data.updatedAt);
+    return data;
+  },
+};
+
+export const analysisConverter = {
+  toFirestore(game) {
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    return new Game(snapshot.id, data);
+  },
+};
+
+export const puzzleConverter = {
+  toFirestore(game) {
+    return game.json;
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+    return new Game(snapshot.id, data);
+  },
 };
 
 export const timestampToDate = (date) => {

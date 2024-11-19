@@ -691,7 +691,6 @@ export default class GameBase {
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
       pieceCounts: this.pieceCounts,
-      isOnline: false,
       hasCustomPieceCount: !(
         this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
         this.defaultPieceCounts[1].cap === this.pieceCounts[1].cap &&

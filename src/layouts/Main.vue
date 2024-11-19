@@ -744,8 +744,8 @@ export default {
         this.isOnline &&
         user &&
         (!oldUser || user.uid !== oldUser.uid) &&
-        !this.$store.getters["online/playerFromUID"](user.uid) &&
-        this.$store.getters["online/openPlayer"]
+        !this.$game.config.player &&
+        this.$game.openPlayer
       ) {
         this.$router.push({ name: "join" });
       }

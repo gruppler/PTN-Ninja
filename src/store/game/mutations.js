@@ -66,7 +66,7 @@ export const SET_GAME = (state, game) => {
 
 export const ADD_GAME = (state, game) => {
   state.list.unshift({
-    ptn: game.ptn,
+    ptn: game.ptn || undefined,
     name: game.name,
     state: game.minState || game.state,
     config: game.config,
@@ -81,7 +81,7 @@ export const ADD_GAMES = (state, { games, index }) => {
     index,
     0,
     ...games.map((game) => ({
-      ptn: game.ptn,
+      ptn: game.ptn || undefined,
       name: game.name,
       state: game.minState || game.state,
       config: game.config,

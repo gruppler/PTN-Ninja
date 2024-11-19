@@ -58,3 +58,11 @@ export const currentBranchIndex = (state) => {
   );
   return index >= 0 ? index : 0;
 };
+
+export const openPlayer = (state) => {
+  if (state.config.isOnline) {
+    return state.config.players ? state.config.players.indexOf(null) + 1 : 1;
+  } else {
+    return null;
+  }
+};

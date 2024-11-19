@@ -31,6 +31,12 @@ export const INIT = function ({ commit }) {
 export const SET_GAME = function ({ commit }, game) {
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
+  if (game.config.isOnline) {
+    this.dispatch("online/LISTEN_CURRENT_GAME");
+    console.log(game);
+  } else {
+    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+  }
   setTimeout(() => (document.title = title), 200);
 };
 
@@ -43,6 +49,9 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   }
   if (game.config) {
     newGame.config = game.config;
+    if (game.config.isOnline) {
+      delete newGame.ptn;
+    }
   }
   if (game.history) {
     newGame.history = game.history;
@@ -89,6 +98,9 @@ export const ADD_GAMES = async function (
     }
     if (game.config) {
       newGame.config = game.config;
+      if (game.config.isOnline) {
+        delete newGame.ptn;
+      }
     }
     if (game.history) {
       newGame.history = game.history;

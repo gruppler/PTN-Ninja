@@ -1,4 +1,3 @@
-import Vue from "vue";
 import { LocalStorage } from "quasar";
 
 export const playerName =

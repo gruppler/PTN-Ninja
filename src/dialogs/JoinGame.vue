@@ -47,11 +47,10 @@ export default {
   },
   computed: {
     openPlayer() {
-      return this.$store.getters["online/openPlayer"];
+      return this.$store.getters["game/openPlayer"];
     },
     player() {
-      const user = this.$store.state.online.user;
-      return user ? this.$store.getters["online/playerFromUID"](user.uid) : 0;
+      return this.$store.state.game.config.player;
     },
     isLocal() {
       return !this.$store.state.game.config.isOnline;
