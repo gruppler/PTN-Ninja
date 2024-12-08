@@ -1,4 +1,5 @@
 import { LocalStorage } from "quasar";
+import { getPlayer } from "../../Game/online";
 
 export const playerName =
   (state) =>
@@ -9,6 +10,10 @@ export const playerName =
     }
     return isPrivate ? LocalStorage.getItem("playerName") || name : name;
   };
+
+export const player = (state) => {
+  return state.user ? getPlayer(this, state.user.uid) : 0;
+};
 
 export const canEdit = (state) => (game) => {
   // TODO: Actually check permissions

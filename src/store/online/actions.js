@@ -17,7 +17,7 @@ export const INIT = ({ commit, dispatch, state }) => {
     auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
-        // dispatch("LISTEN_CURRENT_GAME");
+        dispatch("LISTEN_CURRENT_GAME");
         commit("INIT");
         resolve();
       } else {
@@ -128,7 +128,6 @@ export const CREATE_GAME = async (context, { game, config }) => {
   const tags = game.JSONTags;
   try {
     const response = await call("createGame", { config, state, tags });
-    console.log(response);
     // TODO: Open game and listen for changes
     return response;
   } catch (error) {
@@ -193,8 +192,7 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
           throw new Error(`Failed to get game ${collection}/${id}`);
         }
 
-        games.push(game);
-        console.log(game, new Game(game));
+        games.push(new Game(game));
       })
     );
 
@@ -216,6 +214,10 @@ export const LISTEN_CURRENT_GAME = async function ({ dispatch, state }) {
   const game = this.state.game;
   const stateKey = game.config.collection;
   const path = `${game.config.path}/branches`;
+
+  if (!game || !game.config.isOnline) {
+    return dispatch("UNLISTEN_CURRENT_GAME");
+  }
 
   // Root branch
   listeners.push(

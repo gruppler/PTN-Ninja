@@ -14,7 +14,7 @@ import { parseURLparams } from "../../router/routes";
 
 let gamesDB;
 
-export const INIT = function ({ commit }) {
+export const INIT = function ({ commit, state }) {
   if (!Platform.within.iframe) {
     openLocalDB()
       .then(async (db) => {
@@ -33,7 +33,6 @@ export const SET_GAME = function ({ commit }, game) {
   commit("SET_GAME", game);
   if (game.config.isOnline) {
     this.dispatch("online/LISTEN_CURRENT_GAME");
-    console.log(game);
   } else {
     this.dispatch("online/UNLISTEN_CURRENT_GAME");
   }

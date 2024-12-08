@@ -855,10 +855,7 @@ export default {
       return result ? result.label : "";
     },
     player() {
-      const user = this.$store.state.online
-        ? this.$store.state.online.user
-        : false;
-      return user ? this.game.getPlayerFromUID(user.uid) : 0;
+      return this.$store.getters["online/player"];
     },
     date: {
       get() {

@@ -231,6 +231,10 @@ export default class GameBase {
           // Derive from TPS
           this.size = this.tags.tps.value.size;
           this.tags.size = Tag.parse(`[Size "${this.size}"]`);
+        } else if (config.size) {
+          // Derive from config
+          this.size = config.size;
+          this.tags.size = Tag.parse(`[Size "${this.size}"]`);
         } else {
           let error = "Missing board size";
           if (ptn) {
@@ -267,7 +271,7 @@ export default class GameBase {
         1: cloneDeep(pieceCounts[this.size]),
         2: cloneDeep(pieceCounts[this.size]),
       };
-      if (config && config.pieceCounts) {
+      if (config.pieceCounts) {
         this.pieceCounts = config.pieceCounts;
       } else {
         this.pieceCounts = cloneDeep(this.defaultPieceCounts);

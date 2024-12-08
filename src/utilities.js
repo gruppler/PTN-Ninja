@@ -1,5 +1,5 @@
 import store from "./store";
-import { db, functions } from "./boot/firebase.js";
+import { auth, db, functions } from "./boot/firebase.js";
 import { i18n } from "./boot/i18n";
 import { toDate } from "date-fns";
 import { omit } from "lodash";
