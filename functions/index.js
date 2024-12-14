@@ -137,7 +137,7 @@ exports.png = functions.https.onRequest(async (request, response) => {
 
 // HTTP => GIF
 exports.gif = functions
-  .runWith({ timeoutSeconds: 300 })
+  .runWith({ timeoutSeconds: 300, memory: "512MB" })
   .https.onRequest(async (request, response) => {
     const { TPStoGIF } = await import("tps-ninja");
 
