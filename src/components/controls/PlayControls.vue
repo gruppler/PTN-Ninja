@@ -110,7 +110,7 @@
         flat
         :ripple="false"
         :disable="branches.length < 2 || plyInProgress"
-        :color="hasBranches ? 'primary' : fg"
+        :color="isRoot ? fg : 'primary'"
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
@@ -183,8 +183,8 @@ export default {
     plyInProgress() {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
-    hasBranches() {
-      return !!(this.position.ply && this.position.ply.branches.length > 1);
+    isRoot() {
+      return !this.position.ply || !this.position.ply.branch;
     },
     branchIndex() {
       return this.$store.getters["game/currentBranchIndex"];

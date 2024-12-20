@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.4.22",
+  "version": "3.4.23",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
-    "@quasar/extras": "^1.16.7",
+    "@quasar/extras": "^1.16.15",
     "@vueuse/core": "^10.11.0",
     "aggregation": "^1.2.6",
     "aws-sdk": "^2.885.0",
@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@quasar/app": "^2.4.2",
-    "@quasar/cli": "^2.2.3",
+    "@quasar/cli": "^2.4.1",
     "@quasar/quasar-app-extension-qmarkdown": "^1.4.4",
     "@vue/eslint-config-prettier": "^7.0.0",
     "babel-eslint": "^10.1.0",
