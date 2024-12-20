@@ -10,7 +10,7 @@ This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org
 
 ### Prerequisites
 
-- Quasar: https://quasar.dev/quasar-cli/installation
+- Quasar: https://v1.quasar.dev/quasar-cli/installation
 - Firebase: https://firebase.google.com/docs/emulator-suite/install_and_configure
 
 ### Install the client-side dependencies
