@@ -114,7 +114,6 @@
       >
         <q-icon name="branch" class="rotate-180" />
         <BranchMenu
-          v-if="$store.state.ui.showControls"
           ref="branchMenu"
           v-model="branchMenu"
           @select="selectBranch"
