@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
-    "@quasar/extras": "^1.16.15",
+    "@quasar/extras": "^1.16.17",
     "@vueuse/core": "^10.11.0",
     "aggregation": "^1.2.6",
     "aws-sdk": "^2.885.0",
