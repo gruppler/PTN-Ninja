@@ -19,6 +19,7 @@
             !sections.botSuggestions &&
             (loadingTiltakMoves ||
               tiltakInteractive.isLoading ||
+              teiBot.isLoading ||
               loadingTiltakAnalysis ||
               loadingTopazMoves)
           "
@@ -135,6 +136,54 @@
               </template>
             </q-input>
           </template>
+
+          <!-- TEI -->
+          <template v-if="botSettings.bot === 'tei'">
+            <q-item class="row q-gutter-x-sm">
+              <div class="col">
+                <!-- Address -->
+                <q-input
+                  v-model.number="botSettings.tei.address"
+                  :label="$t('tei.address')"
+                  prefix="ws://"
+                  filled
+                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                />
+              </div>
+
+              <div class="col">
+                <!-- Port -->
+                <q-input
+                  v-model.number="botSettings.tei.port"
+                  :label="$t('tei.port')"
+                  type="number"
+                  min="0"
+                  max="65535"
+                  step="1"
+                  prefix=":"
+                  filled
+                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                />
+              </div>
+            </q-item>
+            <q-item tag="label" clickable v-ripple>
+              <q-item-section side>
+                <q-checkbox v-model="botSettings.tei.log" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("tei.log") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-btn
+              v-if="teiBot.isConnected"
+              @click="disconnectTei"
+              icon="disconnect"
+              :label="$t('tei.disconnect')"
+              class="full-width"
+              color="primary"
+              stretch
+            />
+          </template>
         </template>
       </smooth-reflow>
 
@@ -238,6 +287,57 @@
             flat
           />
         </div>
+
+        <!-- TEI -->
+        <template v-else-if="botSettings.bot === 'tei'">
+          <q-item
+            v-if="teiBot.isConnected"
+            class="interactive-control"
+            tag="label"
+            clickable
+            v-ripple
+          >
+            <q-item-section avatar>
+              <q-spinner v-if="teiBot.isLoading" size="sm" />
+              <q-icon v-else name="int_analysis" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>
+                {{ $t("tei.run") }}
+                <template v-if="teiBot.name">{{ teiBot.name }}</template>
+              </q-item-label>
+              <q-item-label v-if="teiBot.author" caption>
+                {{ $t("tei.by") }} {{ teiBot.author }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section v-if="teiBot.isEnabled" side>
+              <div class="text-caption">
+                {{ $n((teiBot.time || 0) / 1e3, "n0") }}
+                {{ $t("analysis.secondsUnit") }}
+              </div>
+              <div class="text-caption">
+                {{ $n(teiBot.nps || 0, "n0") }}
+                {{ $t("analysis.nps") }}
+              </div>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="teiBot.isEnabled" />
+            </q-item-section>
+          </q-item>
+          <q-btn
+            v-else
+            @click="initTei"
+            :loading="teiBot.isConnecting"
+            :disabled="
+              !botSettings.tei.address || botSettings.tei.port === null
+            "
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width"
+            color="primary"
+            stretch
+          />
+        </template>
       </smooth-reflow>
 
       <!-- Results -->
@@ -272,6 +372,7 @@
               : null
           "
           :depth="move.depth || null"
+          :animate="['tiltak', 'tei'].includes(botSettings.bot)"
         />
 
         <q-item v-if="isGameEnd" class="flex-center">
@@ -350,6 +451,7 @@ export default {
       tiltakInteractive: {
         isEnabled: false,
         isLoading: false,
+        isReady: false,
         time: null,
         nps: null,
         tps: null,
@@ -357,6 +459,22 @@ export default {
         komi: null,
         size: null,
         initTPS: null,
+      },
+      teiBot: {
+        isConnecting: false,
+        isConnected: false,
+        isEnabled: false,
+        isLoading: false,
+        isReady: false,
+        time: null,
+        nps: null,
+        tps: null,
+        nextTPS: null,
+        komi: null,
+        size: null,
+        initTPS: null,
+        name: null,
+        author: null,
       },
       topazTimer: null,
       showBotSettings: false,
@@ -373,15 +491,21 @@ export default {
       sections: cloneDeep(this.$store.state.ui.analysisSections),
       tiltakWorker: null,
       topazWorker: null,
+      teiSocket: null,
     };
   },
   computed: {
     botOptions() {
-      return this.bots.map((value) => ({
+      return this.bots.concat(["tei"]).map((value) => ({
         value,
         label: this.$t(`analysis.bots.${value}`),
         description: this.$t(`analysis.bots_description.${value}`),
-        icon: value.endsWith("-cloud") ? "online" : "local",
+        icon:
+          value === "tei"
+            ? "tei"
+            : value.endsWith("-cloud")
+            ? "online"
+            : "local",
       }));
     },
     isOffline() {
@@ -794,6 +918,7 @@ export default {
               this.tiltakWorker = null;
             }
             this.tiltakInteractive.isLoading = false;
+            this.tiltakInteractive.isReady = false;
             this.tiltakInteractive.time = null;
             this.tiltakInteractive.nps = null;
             this.tiltakInteractive.tps = null;
@@ -806,7 +931,7 @@ export default {
           // Message handling
           this.tiltakWorker.onmessage = ({ data }) => {
             if (data === "teiok" || data === "readyok") {
-              this.tiltakWorker.isReady = true;
+              this.tiltakInteractive.isReady = true;
             }
             this.receiveTiltakInteractiveSuggestions(data);
           };
@@ -840,7 +965,7 @@ export default {
       }
 
       // Abort if worker is not responding
-      if (!this.tiltakWorker.isReady) {
+      if (!this.tiltakInteractive.isReady) {
         console.error("Tiltak worker failed to initialize");
         return;
       }
@@ -1006,6 +1131,287 @@ export default {
       }
     },
 
+    //#region TEI
+
+    async initTei(force = false) {
+      if (force || !this.teiBot.isConnected) {
+        try {
+          return await new Promise((resolve, reject) => {
+            const url = `ws://${this.botSettings.tei.address}:${this.botSettings.tei.port}/`;
+            this.teiBot.isConnecting = true;
+            this.teiSocket = new WebSocket(url);
+            this.teiSocket.onopen = () => {
+              this.teiBot.isConnecting = false;
+              this.teiBot.isConnected = true;
+              console.info(`Connected to ${url}`);
+              this.sendTei("tei");
+              resolve(true);
+            };
+            this.teiSocket.onclose = () => {
+              console.info(`Disconnected from ${url}`);
+              this.teiBot.isEnabled = false;
+              this.teiBot.isConnecting = false;
+              this.teiBot.isConnected = false;
+              this.teiBot.isLoading = false;
+              this.teiBot.isReady = false;
+              this.teiBot.time = null;
+              this.teiBot.nps = null;
+              this.teiBot.tps = null;
+              this.teiBot.nextTPS = null;
+              this.teiBot.komi = null;
+              this.teiBot.size = null;
+              this.teiBot.initTPS = null;
+              this.teiBot.name = null;
+              this.teiBot.author = null;
+            };
+
+            // Error handling
+            this.teiSocket.onerror = (error) => {
+              this.teiBot.isEnabled = false;
+              this.teiBot.isConnecting = false;
+              this.teiBot.isConnected = false;
+              this.teiBot.isLoading = false;
+              this.teiBot.isReady = false;
+              this.teiBot.time = null;
+              this.teiBot.nps = null;
+              this.teiBot.tps = null;
+              this.teiBot.nextTPS = null;
+              this.teiBot.komi = null;
+              this.teiBot.size = null;
+              this.teiBot.initTPS = null;
+              this.teiBot.name = null;
+              this.teiBot.author = null;
+              reject(error);
+            };
+
+            // Message handling
+            this.teiSocket.onmessage = ({ data }) => {
+              if (this.botSettings.tei.log) {
+                console.info(`ws>: ${data}`);
+              }
+              if (data === "teiok" || data === "readyok") {
+                this.teiBot.isReady = true;
+                if (this.teiBot.isEnabled) {
+                  this.requestTeiSuggestions();
+                }
+              }
+              if (data.startsWith("id name ")) {
+                this.teiBot.name = data.substr(8);
+              }
+              if (data.startsWith("id author ")) {
+                this.teiBot.author = data.substr(10);
+              }
+              this.receiveTeiSuggestions(data);
+            };
+          });
+        } catch (error) {
+          return false;
+        }
+      }
+    },
+
+    sendTei(message) {
+      if (this.teiSocket) {
+        if (this.botSettings.tei.log) {
+          console.info(`>ws: ${message}`);
+        }
+        this.teiSocket.send(message);
+      }
+    },
+
+    async requestTeiSuggestions() {
+      if (!this.teiSocket) {
+        this.initTei();
+        return;
+      }
+
+      // Send `stop` even if unnecessary
+      this.sendTei("stop");
+
+      // Pause if game has ended
+      if (this.isGameEnd) {
+        this.teiBot.time = 0;
+        this.teiBot.nps = 0;
+        this.teiBot.nextTPS = null;
+        return;
+      }
+
+      // Abort if worker is not responding
+      if (!this.teiBot.isReady) {
+        console.error("TEI bot is not ready");
+        return;
+      }
+
+      // Send `teinewgame` if necessary
+      if (
+        this.teiBot.size !== this.game.config.size ||
+        this.teiBot.komi !== this.game.config.komi ||
+        this.teiBot.initTPS !== this.teiPosition
+      ) {
+        this.sendTei(`teinewgame ${this.game.config.size}`);
+        this.sendTei(
+          `setoption name HalfKomi value ${this.game.config.komi * 2}`
+        );
+        this.teiBot.size = this.game.config.size;
+        this.teiBot.komi = this.game.config.komi;
+        this.teiBot.initTPS = this.teiPosition;
+      }
+
+      // Queue current position for pairing with future response
+      this.teiBot.nextTPS = this.tps;
+      if (!this.teiBot.tps) {
+        this.teiBot.tps = this.teiBot.nextTPS;
+      }
+
+      // Send current position
+      let posMessage = "position";
+      if (this.teiBot.initTPS) {
+        posMessage += " tps " + this.teiBot.initTPS;
+      } else {
+        posMessage += " startpos moves ";
+      }
+      if (this.teiMoves) {
+        posMessage += this.teiMoves;
+      }
+      this.sendTei(posMessage);
+      this.sendTei(`go infinite`);
+      this.teiBot.isLoading = true;
+    },
+
+    receiveTeiSuggestions(result) {
+      if (result.error) {
+        this.notifyError(result.error);
+        return;
+      }
+
+      const results = {
+        pv: [],
+        time: null,
+        nps: null,
+        depth: null,
+        seldepth: null,
+        score: null,
+        nodes: null,
+      };
+      if (result.startsWith("bestmove")) {
+        // Search ended
+        this.teiBot.isLoading = false;
+        this.teiBot.nps = 0;
+        if (this.teiBot.tps === this.teiBot.nextTPS) {
+          // No position queued
+          this.teiBot.tps = null;
+          this.teiBot.nextTPS = null;
+        } else {
+          this.teiBot.tps = this.teiBot.nextTPS;
+        }
+        return;
+      } else if (result.startsWith("info")) {
+        // Parse Results
+        this.teiBot.isLoading = true;
+        const keys = [
+          "pv",
+          "time",
+          "nps",
+          "depth",
+          "seldepth",
+          "score",
+          "nodes",
+        ];
+        let key = "";
+        for (const value of result.split(" ")) {
+          if (keys.includes(value)) {
+            key = value;
+          } else {
+            if (key === "pv") {
+              results.pv.push(value);
+            } else {
+              results[key] = Number(value);
+            }
+          }
+        }
+        // Ignore other `info` messages
+        if (!results.pv.length) {
+          return;
+        }
+      } else {
+        // Ignore all other messages
+        return;
+      }
+
+      if (!this.teiBot.tps) {
+        this.teiBot.tps = this.tps;
+      }
+      const id = this.getBotSettingsKey({ bot: "tei" });
+      const tps = this.teiBot.tps;
+
+      // Update time and nps
+      if (!this.isGameEnd) {
+        this.teiBot.time = results.time;
+        this.teiBot.nps = results.nps;
+      }
+
+      // Determine ply colors
+      const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+      const initialColor =
+        this.game.config.openingSwap && moveNumber === 1
+          ? initialPlayer == 1
+            ? 2
+            : 1
+          : initialPlayer;
+      let player = initialPlayer;
+      let color = initialColor;
+      const ply = new Ply(results.pv.splice(0, 1)[0], {
+        id: null,
+        player,
+        color,
+      });
+      const followingPlies = results.pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      const evaluation = results.score * (initialPlayer === 1 ? 1 : -1);
+      const depth = results.depth;
+      const nodes = results.nodes;
+      const suggestions = [{ ply, followingPlies, evaluation, depth, nodes }];
+      deepFreeze(suggestions);
+      if (
+        !this.positions[tps] ||
+        !this.positions[tps][id] ||
+        this.positions[tps][id][0].depth < suggestions[0].depth
+      ) {
+        // Don't overwrite deeper searches for this position
+        this.$set(this.positions, tps, {
+          ...(this.positions[tps] || {}),
+          [id]: suggestions,
+        });
+        return suggestions;
+      }
+    },
+
+    async terminateTei() {
+      if (this.teiSocket) {
+        try {
+          if (this.teiBot.isConnected) {
+            this.sendTei("stop");
+          }
+          this.teiBot.isLoading = false;
+          this.teiBot.nps = null;
+          this.teiBot.tps = null;
+          this.teiBot.nextTPS = null;
+        } catch (error) {
+          await this.teiSocket.close();
+          this.initTei();
+        }
+      }
+    },
+
+    disconnectTei() {
+      if (this.teiSocket && this.teiBot.isConnected) {
+        this.teiSocket.close();
+        this.teiSocket = null;
+      }
+    },
+
     //#region Topaz
 
     initTopaz(force = false) {
@@ -1112,6 +1518,9 @@ export default {
       // Load wasm bots
       this.initTiltakInteractive();
       this.initTopaz();
+
+      // Try to connect to TEI bot
+      this.initTei();
     },
   },
 
@@ -1139,9 +1548,19 @@ export default {
         this.terminateTiltakInteractive();
       }
     },
+    "teiBot.isEnabled"(isEnabled) {
+      if (isEnabled) {
+        this.requestTeiSuggestions();
+      } else {
+        this.terminateTei();
+      }
+    },
     tps() {
       if (this.tiltakInteractive.isEnabled) {
         this.requestTiltakInteractiveSuggestions();
+      }
+      if (this.teiBot.isEnabled) {
+        this.requestTeiSuggestions();
       }
     },
     botPosition(position) {
