@@ -145,7 +145,7 @@
                 <q-input
                   v-model.number="botSettings.tei.address"
                   :label="$t('tei.address')"
-                  prefix="ws://"
+                  :prefix="wsProtocol"
                   filled
                   :disable="teiBot.isConnected || teiBot.isConnecting"
                 />
@@ -328,9 +328,7 @@
             v-else
             @click="initTei"
             :loading="teiBot.isConnecting"
-            :disabled="
-              !botSettings.tei.address || botSettings.tei.port === null
-            "
+            :disabled="!botSettings.tei.address"
             icon="connect"
             :label="$t('tei.connect')"
             class="full-width"
@@ -557,6 +555,9 @@ export default {
     },
     botPosition() {
       return this.positions[this.tps] || null;
+    },
+    wsProtocol() {
+      return window.location.protocol.includes("s") ? "wss://" : "ws://";
     },
   },
   methods: {
@@ -1137,7 +1138,7 @@ export default {
       if (force || !this.teiBot.isConnected) {
         try {
           return await new Promise((resolve, reject) => {
-            const url = `ws://${this.botSettings.tei.address}:${this.botSettings.tei.port}/`;
+            const url = `${this.wsProtocol}${this.botSettings.tei.address}:${this.botSettings.tei.port}/`;
             this.teiBot.isConnecting = true;
             this.teiSocket = new WebSocket(url);
             this.teiSocket.onopen = () => {
