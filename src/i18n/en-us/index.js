@@ -521,6 +521,7 @@ export default {
     log: "Log messages",
     port: "Port",
     run: "Run",
+    ssl: "Use SSL",
   },
 
   format: {

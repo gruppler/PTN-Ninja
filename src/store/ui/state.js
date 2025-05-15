@@ -36,6 +36,7 @@ let defaults = {
     },
     tei: {
       log: false,
+      ssl: window.location.protocol.includes("s"),
       address: "localhost",
       port: 7731,
       pvLimit: 3,

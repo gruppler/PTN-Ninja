@@ -166,6 +166,26 @@
                 />
               </div>
             </q-item>
+
+            <!-- Use SSL -->
+            <q-item
+              tag="label"
+              :disable="teiBot.isConnected || teiBot.isConnecting"
+              clickable
+              v-ripple
+            >
+              <q-item-section side>
+                <q-checkbox
+                  v-model="botSettings.tei.ssl"
+                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <!-- Log messages -->
             <q-item tag="label" clickable v-ripple>
               <q-item-section side>
                 <q-checkbox v-model="botSettings.tei.log" />
@@ -174,6 +194,8 @@
                 <q-item-label>{{ $t("tei.log") }}</q-item-label>
               </q-item-section>
             </q-item>
+
+            <!-- Disconnect -->
             <q-btn
               v-if="teiBot.isConnected"
               @click="disconnectTei"
@@ -557,7 +579,7 @@ export default {
       return this.positions[this.tps] || null;
     },
     wsProtocol() {
-      return window.location.protocol.includes("s") ? "wss://" : "ws://";
+      return this.botSettings.tei.ssl ? "wss://" : "ws://";
     },
   },
   methods: {
