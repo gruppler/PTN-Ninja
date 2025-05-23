@@ -209,7 +209,7 @@ export default class BoardIX {
         count === null &&
         piece.ply &&
         this.ply === piece.ply &&
-        this.number !== 1123
+        this.number !== 1
       ) {
         // Cycle through F, S, C
         move.type =

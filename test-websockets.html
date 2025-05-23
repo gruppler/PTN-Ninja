@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<pre id="log"></pre>
+<br />
+<form id="form">
+  <input id="input" type="text" />
+  <input type="submit" />
+</form>
+<br />
+<button onclick="connect()">Reconnect</button>
+<button onclick="clearLog()">Clear</button>
+<script>
+  let ws;
+  const $log = document.getElementById("log");
+  const $form = document.getElementById("form");
+  const $input = document.getElementById("input");
+
+  function log(msg) {
+    $log.textContent += msg + "\n";
+  }
+
+  function send(event) {
+    event.preventDefault();
+    ws.send($input.value);
+    $input.value.split("\n").forEach((line) => log("COMMAND: " + line));
+    $input.value = "";
+  }
+
+  function connect() {
+    ws = new WebSocket("ws://localhost:7731/");
+    ws.onopen = function () {
+      log("CONNECT");
+    };
+    ws.onclose = function () {
+      log("DISCONNECT");
+    };
+    ws.onmessage = function (event) {
+      log("MESSAGE: " + event.data);
+    };
+  }
+
+  function clearLog() {
+    $log.textContent = "";
+  }
+
+  $form.addEventListener("submit", send);
+  connect();
+</script>

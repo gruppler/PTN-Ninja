@@ -515,11 +515,13 @@ export default {
       "tiltak-cloud": "Tiltak (cloud)",
       tiltak: "Tiltak (wasm)",
       topaz: "Topaz (wasm)",
+      tei: "TEI",
     },
     bots_description: {
       "tiltak-cloud": "Full Game Analysis",
       tiltak: "Interactive Analysis",
       topaz: "Deep Analysis",
+      tei: "Connect to a TEI bot via websockets",
     },
     database: {
       error: "Failed to load databases",
@@ -532,6 +534,17 @@ export default {
       exclude: "Non-Tournament",
       only: "Tournament",
     },
+  },
+
+  tei: {
+    address: "Address",
+    by: "by",
+    connect: "Connect",
+    disconnect: "Disconnect",
+    log: "Log messages",
+    port: "Port",
+    run: "Run",
+    ssl: "Use SSL",
   },
 
   format: {
