@@ -23,7 +23,7 @@ let defaults = {
   botSettings: {
     bot: "tiltak-cloud",
     tiltak: {
-      pvLimit: 5,
+      pvLimit: 3,
     },
     "tiltak-cloud": {
       maxSuggestedMoves: 8,
@@ -32,6 +32,13 @@ let defaults = {
     topaz: {
       depth: 12,
       timeBudget: 30,
+      pvLimit: 3,
+    },
+    tei: {
+      log: false,
+      ssl: window.location.protocol.includes("s"),
+      address: "localhost",
+      port: 7731,
       pvLimit: 3,
     },
   },

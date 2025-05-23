@@ -1,5 +1,5 @@
 <template>
-  <div class="analysis-item">
+  <div class="analysis-item" :class="{ animate }">
     <div
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
@@ -142,6 +142,7 @@ export default {
     },
     playerNumbersTooltip: String,
     followingPlies: Array,
+    animate: Boolean,
   },
   computed: {
     tps() {
@@ -186,6 +187,9 @@ export default {
     position: absolute;
     height: 100%;
     will-change: width, background-color;
+  }
+
+  &.animate .evaluation {
     transition: width $generic-hover-transition,
       background-color $generic-hover-transition;
   }

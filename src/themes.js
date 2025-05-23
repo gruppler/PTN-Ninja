@@ -461,7 +461,7 @@ export const THEMES = [
     rings: 0,
     vars: { "piece-border-width": 2 },
     colors: {
-      primary: "#f0b132",
+      primary: "#d1a362",
       secondary: "#313338",
       ui: "#292b2f",
       accent: "#202225",
