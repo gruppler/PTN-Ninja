@@ -1395,14 +1395,20 @@ export default {
       const evaluation = results.score * (initialPlayer === 1 ? 1 : -1);
       const depth = results.depth;
       const nodes = results.nodes;
-      const suggestions = [{ ply, followingPlies, evaluation, depth, nodes }];
+      const name = this.teiBot.name;
+      const author = this.teiBot.author;
+      const suggestions = [
+        { ply, followingPlies, evaluation, depth, nodes, name, author },
+      ];
       deepFreeze(suggestions);
       if (
         !this.positions[tps] ||
         !this.positions[tps][id] ||
-        this.positions[tps][id][0].depth < suggestions[0].depth
+        this.positions[tps][id][0].depth < suggestions[0].depth ||
+        this.positions[tps][id][0].name !== name ||
+        this.positions[tps][id][0].author !== author
       ) {
-        // Don't overwrite deeper searches for this position
+        // Don't overwrite deeper searches for this position unless it's a different bot
         this.$set(this.positions, tps, {
           ...(this.positions[tps] || {}),
           [id]: suggestions,
