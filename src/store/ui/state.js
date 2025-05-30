@@ -82,7 +82,7 @@ let defaults = {
   showAllBranches: false,
   showBoardPrefsBtn: false,
   showControls: true,
-  showPlayButton: true,
+  showPlayButton: false,
   showEval: true,
   showHints: true,
   showMove: true,
