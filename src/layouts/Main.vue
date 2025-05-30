@@ -476,6 +476,7 @@ export default {
     },
     clickNotification(event) {
       if (
+        event.target.matches(".q-notification.note") ||
         event.target.matches(".q-notification.note .q-notification__message")
       ) {
         this.textTab = "notes";
