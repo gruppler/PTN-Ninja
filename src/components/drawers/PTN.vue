@@ -70,7 +70,9 @@ export default {
         : null;
       const index = editingBranch
         ? editingBranch.move.id
-        : this.position.move.id;
+        : this.$store.state.ui.showAllBranches
+        ? this.position.move.id
+        : this.position.move.index;
       if (index >= 0) {
         this.$refs.scroll.scrollTo(index, "center-force");
       }
