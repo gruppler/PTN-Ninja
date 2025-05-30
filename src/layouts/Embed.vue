@@ -60,6 +60,7 @@
           ref="gameNotificationContainer"
           position="top-right"
           :offset="[0, 0]"
+          @click="clickNotification"
         />
       </q-page>
     </q-page-container>
@@ -242,6 +243,14 @@ export default {
       }
       this.$store.dispatch("game/SET_GAME", game);
       this.$router.replace("/");
+    },
+    clickNotification(event) {
+      if (
+        event.target.matches(".q-notification.note") ||
+        event.target.matches(".q-notification.note .q-notification__message")
+      ) {
+        this.showText = true;
+      }
     },
     info() {
       this.$router.push({ name: "info-view" });
