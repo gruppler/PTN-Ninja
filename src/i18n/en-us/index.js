@@ -121,7 +121,6 @@ export default {
   "Make Main": "Make Main",
   "Manage Games": "Manage Games",
   "Manual Mode": "Manual Mode",
-  Menu: "Menu",
   Message: "Message",
   "Minimum Rating": "Minimum Rating",
   More: "More",

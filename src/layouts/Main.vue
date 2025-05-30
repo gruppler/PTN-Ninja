@@ -19,7 +19,6 @@
               @click.right.prevent.stop
               class="q-field__focusable-action q-mr-sm"
             >
-              <hint>{{ $t("Menu") }}</hint>
               <q-menu
                 transition-show="none"
                 transition-hide="none"
