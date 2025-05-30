@@ -115,13 +115,13 @@
           align="justify"
           inline-label
         >
-          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
           <q-tab
             v-if="hasAnalysis"
             name="analysis"
             icon="analysis"
             :label="$t('Analysis')"
           />
+          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
           <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
         </q-tabs>
         <q-tab-panels
@@ -130,11 +130,11 @@
           keep-alive
           animated
         >
-          <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" recess />
-          </q-tab-panel>
           <q-tab-panel name="analysis">
             <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          </q-tab-panel>
+          <q-tab-panel name="notes">
+            <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
@@ -284,7 +284,14 @@ export default {
     },
     textTab: {
       get() {
-        return this.$store.state.ui.textTab;
+        let tab = this.$store.state.ui.textTab;
+        if (tab === "chat" && !this.hasChat) {
+          tab = "analysis";
+        }
+        if (tab === "analysis" && !this.hasAnalysis) {
+          tab = this.hasChat ? "chat" : "notes";
+        }
+        return tab;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["textTab", value]);
@@ -299,14 +306,16 @@ export default {
       },
     },
     textPanelIcon() {
-      if (this.textTab === "notes") {
-        return this.notifyNotes ? "notes" : "notes_off";
-      } else if (this.textTab === "chat") {
-        return "chat";
-      } else if (this.textTab === "analysis") {
-        return "analysis";
+      switch (this.textTab) {
+        case "notes":
+          return this.notifyNotes ? "notes" : "notes_off";
+        case "chat":
+          return "chat";
+        case "analysis":
+          return "analysis";
+        default:
+          return "";
       }
-      return "";
     },
     textPanelHint() {
       if (this.textTab === "notes") {
@@ -687,9 +696,9 @@ export default {
           }
           break;
         case "toggleText":
-          let tabs = ["notes", "analysis"];
+          let tabs = ["analysis", "notes"];
           if (this.hasChat) {
-            tabs.push("chat");
+            tabs.unshift("chat");
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;

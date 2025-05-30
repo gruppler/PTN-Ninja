@@ -92,7 +92,7 @@ let defaults = {
   showText: false,
   size: "6",
   stackCounts: false,
-  textTab: "notes",
+  textTab: "analysis",
   themeID: "classic",
   theme: THEMES.find((t) => t.id === "classic"),
   themes: [],
