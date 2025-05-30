@@ -35,6 +35,7 @@
           dense
           flat
         >
+          <hint>{{ $t("Manage Games") }}</hint>
           <q-menu
             transition-show="none"
             transition-hide="none"

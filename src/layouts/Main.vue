@@ -14,12 +14,88 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              name="info"
-              @click.stop.prevent="info"
-              @click.right.prevent.stop="edit"
+              name="menu_vertical"
+              @click.stop.prevent
+              @click.right.prevent.stop
               class="q-field__focusable-action q-mr-sm"
             >
-              <hint>{{ $t("View Game Info") }}</hint>
+              <hint>{{ $t("Menu") }}</hint>
+              <q-menu
+                transition-show="none"
+                transition-hide="none"
+                auto-close
+                square
+              >
+                <q-list>
+                  <!-- Info -->
+                  <q-item @click="info" clickable>
+                    <q-item-section side>
+                      <q-icon name="info" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("View Game Info") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Edit -->
+                  <q-item @click="edit" clickable>
+                    <q-item-section side>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Edit Game") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Duplicate -->
+                  <q-item @click="duplicate" clickable>
+                    <q-item-section side>
+                      <q-icon name="copy" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Duplicate") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-separator />
+                  <!-- Share -->
+                  <q-item @click="share" clickable>
+                    <q-item-section side>
+                      <q-icon name="share" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Share") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- UI Preferences -->
+                  <q-item @click="settings" clickable>
+                    <q-item-section side>
+                      <q-icon name="settings" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("UI Preferences") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Help -->
+                  <q-item @click="help" clickable>
+                    <q-item-section side>
+                      <q-icon name="help" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Help") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-icon>
           </GameSelector>
         </q-toolbar-title>
@@ -60,7 +136,17 @@
           <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu @input="menuAction" @click.right.prevent="switchGame" />
+          <q-fab
+            color="primary"
+            :text-color="
+              $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+            "
+            icon="add"
+            @click="addGame"
+            @click.right.prevent="switchGame"
+          >
+          </q-fab>
+          <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
         <q-page-sticky
           ref="gameNotificationContainer"
@@ -204,7 +290,6 @@ import ShareButton from "../components/controls/ShareButton";
 import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
-import Menu from "../components/controls/Menu";
 import Chat from "../components/drawers/Chat";
 
 import Game from "../Game";
@@ -234,7 +319,6 @@ export default {
     GameSelector,
     Highlighter,
     PieceSelector,
-    Menu,
   },
   props: ["ptn", "state", "name", "gameID"],
   data() {
@@ -493,32 +577,6 @@ export default {
     redo() {
       return this.$store.dispatch("game/REDO");
     },
-    menuAction(action) {
-      switch (action) {
-        case "help":
-          this.$router.push({ name: "help" });
-          break;
-        case "account":
-          if (this.isAnonymous) {
-            this.$router.push({ name: "login" });
-          } else {
-            this.$router.push({ name: "account" });
-          }
-          break;
-        case "settings":
-          this.$router.push({ name: "preferences" });
-          break;
-        case "share":
-          this.share();
-          break;
-        case "add":
-          this.$router.push({ name: "add", params: { tab: "load" } });
-          break;
-      }
-    },
-    share() {
-      this.$refs.shareButton.share();
-    },
     uiShortkey({ srcKey }) {
       if (!this.disabledOptions.includes(srcKey)) {
         this.$store.dispatch("ui/TOGGLE_UI", srcKey);
@@ -719,11 +777,33 @@ export default {
           break;
       }
     },
+    addGame() {
+      this.$router.push({ name: "add", params: { tab: "load" } });
+    },
+    account() {
+      if (this.isAnonymous) {
+        this.$router.push({ name: "login" });
+      } else {
+        this.$router.push({ name: "account" });
+      }
+    },
     info() {
       this.$router.push({ name: "info-view" });
     },
     edit() {
       this.$router.push({ name: "info-edit" });
+    },
+    duplicate() {
+      this.$store.dispatch("game/ADD_GAME", this.$game);
+    },
+    share() {
+      this.$refs.shareButton.share();
+    },
+    settings() {
+      this.$router.push({ name: "preferences" });
+    },
+    help() {
+      this.$router.push({ name: "help" });
     },
     switchGame(event) {
       if (
