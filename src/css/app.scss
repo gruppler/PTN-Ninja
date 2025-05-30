@@ -285,6 +285,7 @@ kbd {
     }
   }
   &.note {
+    cursor: pointer;
     white-space: pre-line;
     .q-notification__message {
       text-overflow: ellipsis;

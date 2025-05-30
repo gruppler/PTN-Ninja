@@ -36,6 +36,7 @@ export default {
         message: note.message,
         classes: "note",
         color: "primary",
+        actions: [],
         textColor: this.$store.state.ui.theme.primaryDark
           ? "textLight"
           : "textDark",

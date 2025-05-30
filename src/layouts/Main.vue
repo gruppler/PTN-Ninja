@@ -66,6 +66,7 @@
           ref="gameNotificationContainer"
           position="top-right"
           :offset="[0, 0]"
+          @click="clickNotification"
         />
       </q-page>
     </q-page-container>
@@ -387,6 +388,14 @@ export default {
           list.classList.remove("fixed");
           this.$refs.gameNotificationContainer.$el.appendChild(list);
         }
+      }
+    },
+    clickNotification(event) {
+      if (
+        event.target.matches(".q-notification.note .q-notification__message")
+      ) {
+        this.textTab = "notes";
+        this.showText = true;
       }
     },
     newGame() {
