@@ -23,7 +23,6 @@ export default class TopazWasm extends Bot {
         worker.onmessage = ({ data }) => {
           this.parseResponse(data);
         };
-        this.bots = uniq(this.bots.concat(["topaz"])).sort();
         return super.init(true);
       } catch (error) {
         console.error("Failed to load Topaz (wasm):", error);
@@ -54,47 +53,27 @@ export default class TopazWasm extends Bot {
       size: this.size,
       komi: this.komi,
       tps: this.tps,
-      id: this.botSettingsKey,
+      hash: this.settingsHash,
     });
   }
 
   //#region parseResponse
   parseResponse(response) {
-    this.status.isRunning = false;
-    clearInterval(this.status.timer);
-    this.status.timer = null;
-
     if (response.error) {
       this.handleError(response.error);
       return;
     }
 
-    const { tps, depth, score, nodes, pv, id } = response;
-    const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
-    const initialColor =
-      this.openingSwap && moveNumber === 1
-        ? initialPlayer == 1
-          ? 2
-          : 1
-        : initialPlayer;
-    let player = initialPlayer;
-    let color = initialColor;
-    const ply = new Ply(pv.splice(0, 1)[0], {
-      id: null,
-      player,
-      color,
+    const { tps, depth, score, nodes, pv, hash } = response;
+
+    return super.handleResults({
+      hash,
+      tps,
+      pv,
+      depth,
+      score,
+      nodes,
     });
-    const followingPlies = pv.map((ply) => {
-      ({ player, color } = this.nextPly(player, color));
-      return new Ply(ply, { id: null, player, color });
-    });
-    const suggestions = [{ ply, followingPlies, depth, score, nodes }];
-    deepFreeze(suggestions);
-    this.$set(this.positions, tps, {
-      ...(this.positions[tps] || {}),
-      [id]: suggestions,
-    });
-    return suggestions;
   }
 
   //#region terminate

@@ -1,6 +1,10 @@
-import store from "./store";
+import Vue from "vue";
+import store from "../store";
 import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
+
+import hashObject from "object-hash";
+import { isFunction, omit } from "lodash";
 
 export default class Bot {
   constructor({
@@ -21,7 +25,6 @@ export default class Bot {
     this.label = label;
     this.description = description;
     this.isInteractive = isInteractive;
-    this.settings = store.state.ui.botSettings[id];
 
     // Callbacks
     this.onInit = onInit;
@@ -50,13 +53,17 @@ export default class Bot {
       initTPS: null,
     };
 
-    this.analyzedPositions = {};
+    this.positions = {};
 
-    Object.freeze(this);
+    this.init();
+  }
+
+  get settings() {
+    return store.state.ui.botSettings[this.id];
   }
 
   get game() {
-    return this.game;
+    return store.state.game;
   }
 
   get size() {
@@ -112,16 +119,78 @@ export default class Bot {
 
   init(success) {
     if (success && isFunction(this.onInit)) {
-      this.onInit();
+      this.onInit(this);
     }
     return success;
   }
 
-  analyzePosition() {}
+  getSettingsHash() {
+    return hashObject(omit(this.settings, "pvLimit"));
+  }
 
-  analyzeGame() {}
+  handleResults({
+    tps = this.status.tps,
+    hash = this.getSettingsHash(),
+    pv = [],
+    time = null,
+    nps = null,
+    depth = null,
+    score = null,
+    nodes = null,
+  }) {
+    if (!this.isInteractive) {
+      this.status.isRunning = false;
+      clearInterval(this.status.timer);
+      this.status.timer = null;
+    }
 
-  terminate() {}
+    // Determine ply colors
+    const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+    const initialColor =
+      this.openingSwap && moveNumber === 1
+        ? initialPlayer == 1
+          ? 2
+          : 1
+        : initialPlayer;
+    let player = initialPlayer;
+    let color = initialColor;
+    const ply = new Ply(pv.splice(0, 1)[0], {
+      id: null,
+      player,
+      color,
+    });
+    const followingPlies = pv.map((ply) => {
+      ({ player, color } = this.nextPly(player, color));
+      return new Ply(ply, { id: null, player, color });
+    });
+    score * (initialPlayer === 1 ? 1 : -1);
+    depth;
+    nodes;
+    const suggestions = [
+      { ply, followingPlies, evaluation, depth, nodes, hash },
+    ];
+    deepFreeze(suggestions);
+
+    if (!this.status.tps) {
+      this.status.tps = this.tps;
+    }
+
+    // Update time and nps
+    if (!this.isGameEnd) {
+      this.status.time = time;
+      this.status.nps = nps;
+    }
+
+    // Don't overwrite deeper searches for this position unless settings have changed
+    if (
+      !this.positions[tps] ||
+      this.positions[tps][0].depth < suggestions[0].depth ||
+      this.positions[tps][0].hash !== hash
+    ) {
+      Vue.set(this.positions, tps, suggestions);
+      return suggestions;
+    }
+  }
 
   handleError(error) {
     if (isFunction(this.onError)) {
@@ -130,4 +199,10 @@ export default class Bot {
       console.error(error);
     }
   }
+
+  analyzePosition() {}
+
+  analyzeGame() {}
+
+  terminate() {}
 }

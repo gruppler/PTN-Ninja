@@ -72,7 +72,7 @@ export default class TiltakWasm extends Bot {
     worker.postMessage("stop");
 
     // Pause if game has ended
-    if (isGameEnd) {
+    if (this.isGameEnd) {
       this.isRunning = false;
       this.status.nextTPS = null;
       return;
@@ -99,7 +99,7 @@ export default class TiltakWasm extends Bot {
     }
 
     // Queue current position for pairing with future response
-    this.status.nextTPS = tps;
+    this.status.nextTPS = this.status.tps;
     if (!this.status.tps) {
       this.status.tps = this.status.nextTPS;
     }
@@ -127,18 +127,9 @@ export default class TiltakWasm extends Bot {
       return;
     }
 
-    const results = {
-      pv: [],
-      time: null,
-      nps: null,
-      depth: null,
-      seldepth: null,
-      score: null,
-      nodes: null,
-    };
     if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isRunning = false;
+      this.status.isLoading = false;
       if (this.status.tps === this.status.nextTPS) {
         // No position queued
         this.status.tps = null;
@@ -149,7 +140,18 @@ export default class TiltakWasm extends Bot {
       return;
     } else if (response.startsWith("info")) {
       // Parse Results
-      this.status.isRunning = true;
+
+      const results = {
+        pv: [],
+        time: null,
+        nps: null,
+        depth: null,
+        seldepth: null,
+        score: null,
+        nodes: null,
+      };
+
+      this.status.isLoading = true;
       const keys = ["pv", "time", "nps", "depth", "seldepth", "score", "nodes"];
       let key = "";
       for (const value of response.split(" ")) {
@@ -163,62 +165,9 @@ export default class TiltakWasm extends Bot {
           }
         }
       }
-      // Ignore other `info` messages
-      if (!results.pv.length) {
-        return;
+      if (results.pv.length) {
+        return super.handleResults(results);
       }
-    } else {
-      // Ignore all other messages
-      return;
-    }
-
-    if (!this.status.tps) {
-      this.status.tps = this.tps;
-    }
-    const id = this.getBotSettingsKey({ bot: "tiltak" });
-    const tps = this.status.tps;
-
-    // Update time and nps
-    if (!this.isGameEnd) {
-      this.status.time = results.time;
-      this.status.nps = results.nps;
-    }
-
-    // Determine ply colors
-    const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
-    const initialColor =
-      this.openingSwap && moveNumber === 1
-        ? initialPlayer == 1
-          ? 2
-          : 1
-        : initialPlayer;
-    let player = initialPlayer;
-    let color = initialColor;
-    const ply = new Ply(results.pv.splice(0, 1)[0], {
-      id: null,
-      player,
-      color,
-    });
-    const followingPlies = results.pv.map((ply) => {
-      ({ player, color } = this.nextPly(player, color));
-      return new Ply(ply, { id: null, player, color });
-    });
-    const evaluation = results.score * (initialPlayer === 1 ? 1 : -1);
-    const depth = results.depth;
-    const nodes = results.nodes;
-    const suggestions = [{ ply, followingPlies, evaluation, depth, nodes }];
-    deepFreeze(suggestions);
-    if (
-      !this.positions[tps] ||
-      !this.positions[tps][id] ||
-      this.positions[tps][id][0].depth < suggestions[0].depth
-    ) {
-      // Don't overwrite deeper searches for this position
-      this.$set(this.positions, tps, {
-        ...(this.positions[tps] || {}),
-        [id]: suggestions,
-      });
-      return suggestions;
     }
   }
 

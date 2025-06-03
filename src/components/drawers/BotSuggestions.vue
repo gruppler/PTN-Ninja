@@ -15,14 +15,7 @@
           }}</q-item-label>
         </q-item-section>
         <q-item-section
-          v-if="
-            !sections.botSuggestions &&
-            (loadingTiltakMoves ||
-              tiltakInteractive.isLoading ||
-              teiBot.isLoading ||
-              loadingTiltakAnalysis ||
-              loadingTopazMoves)
-          "
+          v-if="!sections.botSuggestions && bot.status.isLoading"
           side
         >
           <q-spinner size="sm" />
@@ -138,16 +131,16 @@
           </template>
 
           <!-- TEI -->
-          <template v-if="botSettings.bot === 'tei'">
+          <template v-if="bot && botSettings.bot === 'tei'">
             <q-item class="row q-gutter-x-sm">
               <div class="col">
                 <!-- Address -->
                 <q-input
                   v-model.number="botSettings.tei.address"
                   :label="$t('tei.address')"
-                  :prefix="wsProtocol"
+                  :prefix="bot.protocol"
                   filled
-                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                  :disable="bot.status.isConnected || bot.status.isConnecting"
                 />
               </div>
 
@@ -163,7 +156,7 @@
                   prefix=":"
                   filled
                   clearable
-                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                  :disable="bot.status.isConnected || bot.status.isConnecting"
                 />
               </div>
             </q-item>
@@ -171,14 +164,14 @@
             <!-- Use SSL -->
             <q-item
               tag="label"
-              :disable="teiBot.isConnected || teiBot.isConnecting"
+              :disable="bot.status.isConnected || bot.status.isConnecting"
               clickable
               v-ripple
             >
               <q-item-section side>
                 <q-checkbox
                   v-model="botSettings.tei.ssl"
-                  :disable="teiBot.isConnected || teiBot.isConnecting"
+                  :disable="bot.status.isConnected || bot.status.isConnecting"
                 />
               </q-item-section>
               <q-item-section>
@@ -198,8 +191,8 @@
 
             <!-- Disconnect -->
             <q-btn
-              v-if="teiBot.isConnected"
-              @click="disconnectTei"
+              v-if="bot.status.isConnected"
+              @click="bot.disconnect()"
               icon="disconnect"
               :label="$t('tei.disconnect')"
               class="full-width"
@@ -212,8 +205,57 @@
 
       <!-- Controls -->
       <smooth-reflow>
+        <!-- TEI -->
+        <template v-if="bot && bot.id === 'tei'">
+          <q-item
+            v-if="bot.status.isConnected"
+            class="interactive-control"
+            tag="label"
+            clickable
+            v-ripple
+          >
+            <q-item-section avatar>
+              <q-spinner v-if="bot.status.isLoading" size="sm" />
+              <q-icon v-else name="int_analysis" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>
+                {{ $t("tei.run") }}
+                <template v-if="bot.meta.name">{{ bot.meta.name }}</template>
+              </q-item-label>
+              <q-item-label v-if="bot.meta.author" caption>
+                {{ $t("tei.by") }} {{ bot.meta.author }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section v-if="bot.status.isEnabled" side>
+              <div class="text-caption">
+                {{ $n((bot.status.time || 0) / 1e3, "n0") }}
+                {{ $t("analysis.secondsUnit") }}
+              </div>
+              <div class="text-caption">
+                {{ $n(bot.status.nps || 0, "n0") }}
+                {{ $t("analysis.nps") }}
+              </div>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="bot.status.isEnabled" />
+            </q-item-section>
+          </q-item>
+          <q-btn
+            v-else
+            @click="bot.connect()"
+            :loading="bot.status.isConnecting"
+            :disabled="!botSettings.tei.address"
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width"
+            color="primary"
+            stretch
+          />
+        </template>
+
         <!-- Tiltak Cloud -->
-        <template v-if="botSettings.bot === 'tiltak-cloud'">
+        <template v-else-if="botSettings.bot === 'tiltak-cloud'">
           <q-btn
             v-if="!isFullyAnalyzed && plies.length"
             @click="analyzeGameTiltak()"
@@ -248,11 +290,11 @@
           />
         </template>
 
-        <!-- Tiltak Interactive -->
-        <template v-else-if="botSettings.bot === 'tiltak'">
+        <!-- Generic Interactive -->
+        <template v-else-if="bot && bot.isInteractive">
           <q-item class="interactive-control" tag="label" clickable v-ripple>
             <q-item-section avatar>
-              <q-spinner v-if="tiltakInteractive.isLoading" size="sm" />
+              <q-spinner v-if="bot.status.isLoading" size="sm" />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -260,46 +302,46 @@
                 $t("analysis.interactiveAnalysis")
               }}</q-item-label>
             </q-item-section>
-            <q-item-section v-if="tiltakInteractive.isEnabled" side>
+            <q-item-section v-if="bot.status.isEnabled" side>
               <div class="text-caption">
-                {{ $n((tiltakInteractive.time || 0) / 1e3, "n0") }}
+                {{ $n((bot.status.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
               </div>
               <div class="text-caption">
-                {{ $n(tiltakInteractive.nps || 0, "n0") }}
+                {{ $n(bot.status.nps || 0, "n0") }}
                 {{ $t("analysis.nps") }}
               </div>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="tiltakInteractive.isEnabled" />
+              <q-toggle v-model="bot.status.isEnabled" />
             </q-item-section>
           </q-item>
         </template>
 
-        <!-- Topaz -->
-        <div v-else-if="botSettings.bot === 'topaz'" class="relative-position">
+        <!-- Generic Non-Interactive -->
+        <div v-else-if="bot" class="relative-position">
           <q-btn
             v-if="!suggestions.length && !isGameEnd"
-            @click="loadingTopazMoves ? null : requestTopazSuggestions()"
-            :percentage="progressTopazAnalysis"
+            @click="bot.status.isLoading ? null : bot.analyzePosition()"
+            :percentage="bot.status.progress"
             class="full-width"
             color="primary"
             icon="board"
             :label="$t('analysis.Analyze Position')"
-            :loading="loadingTopazMoves"
-            :ripple="!loadingTopazMoves"
+            :loading="bot.status.isLoading"
+            :ripple="!bot.status.isLoading"
             stretch
           />
           <PlyChip
-            v-if="loadingTopazMoves && analyzingPly"
-            :ply="allPlies[analyzingPly.id]"
+            v-if="bot.status.isLoading && bot.status.analyzingPly"
+            :ply="allPlies[bot.status.analyzingPly.id]"
             @click.stop="goToAnalysisPly"
             no-branches
-            :done="analyzingPly.isDone"
+            :done="bot.status.analyzingPly.isDone"
             class="absolute-left"
           />
           <q-btn
-            v-if="loadingTopazMoves"
+            v-if="bot.status.isLoading"
             :label="$t('Cancel')"
             @click.stop="terminateTopaz"
             class="absolute-right"
@@ -310,55 +352,6 @@
             flat
           />
         </div>
-
-        <!-- TEI -->
-        <template v-else-if="botSettings.bot === 'tei'">
-          <q-item
-            v-if="teiBot.isConnected"
-            class="interactive-control"
-            tag="label"
-            clickable
-            v-ripple
-          >
-            <q-item-section avatar>
-              <q-spinner v-if="teiBot.isLoading" size="sm" />
-              <q-icon v-else name="int_analysis" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>
-                {{ $t("tei.run") }}
-                <template v-if="teiBot.name">{{ teiBot.name }}</template>
-              </q-item-label>
-              <q-item-label v-if="teiBot.author" caption>
-                {{ $t("tei.by") }} {{ teiBot.author }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section v-if="teiBot.isEnabled" side>
-              <div class="text-caption">
-                {{ $n((teiBot.time || 0) / 1e3, "n0") }}
-                {{ $t("analysis.secondsUnit") }}
-              </div>
-              <div class="text-caption">
-                {{ $n(teiBot.nps || 0, "n0") }}
-                {{ $t("analysis.nps") }}
-              </div>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="teiBot.isEnabled" />
-            </q-item-section>
-          </q-item>
-          <q-btn
-            v-else
-            @click="initTei"
-            :loading="teiBot.isConnecting"
-            :disabled="!botSettings.tei.address"
-            icon="connect"
-            :label="$t('tei.connect')"
-            class="full-width"
-            color="primary"
-            stretch
-          />
-        </template>
       </smooth-reflow>
 
       <!-- Results -->
@@ -452,6 +445,10 @@
 import { cloneDeep } from "lodash";
 import AnalysisItem from "../database/AnalysisItem";
 import PlyChip from "../PTN/Ply.vue";
+import TiltakCloud from "../../bots/tiltak-cloud";
+import TiltakWasm from "../../bots/tiltak-wasm";
+import TopazWasm from "../../bots/topaz-wasm";
+import TeiBot from "../../bots/tei";
 
 export default {
   name: "BotSuggestions",
@@ -459,27 +456,21 @@ export default {
   data() {
     return {
       showBotSettings: false,
-      positions: {},
-      suggestions: [],
-      bots: ["tiltak-cloud"],
+      bots: {},
+      botOptions: [],
       botSettings: cloneDeep(this.$store.state.ui.botSettings),
-      botSettingsKey: this.getBotSettingsKey(this.$store.state.ui.botSettings),
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
   },
   computed: {
-    botOptions() {
-      return this.bots.concat(["tei"]).map((value) => ({
-        value,
-        label: this.$t(`analysis.bots.${value}`),
-        description: this.$t(`analysis.bots_description.${value}`),
-        icon:
-          value === "tei"
-            ? "tei"
-            : value.endsWith("-cloud")
-            ? "online"
-            : "local",
-      }));
+    bot() {
+      return this.bots[this.botSettings.bot];
+    },
+    positions() {
+      return this.bot ? this.bot.positions : {};
+    },
+    suggestions() {
+      return this.positions[this.tps] || [];
     },
     isOffline() {
       return this.$store.state.ui.offline;
@@ -493,41 +484,42 @@ export default {
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
     },
+    game() {
+      return this.$store.state.game;
+    },
     allPlies() {
-      return this.$store.state.game.ptn.allPlies;
+      return this.game.ptn.allPlies;
     },
     plies() {
-      return this.$store.state.game.ptn[
-        [this.showAllBranches ? "allPlies" : "branchPlies"]
-      ];
+      return this.game.ptn[[this.showAllBranches ? "allPlies" : "branchPlies"]];
+    },
+    isGameEnd() {
+      return (
+        this.game.position.isGameEnd && !this.game.position.isGameEndDefault
+      );
     },
     isFullyAnalyzed() {
       return this.plies.every((ply) => this.plyHasEvalComment(ply));
     },
-    botPosition() {
-      return this.positions[this.tps] || null;
-    },
   },
   methods: {
+    addBot(bot) {
+      if (this.botOptions.find((b) => b.id === bot.id)) {
+        return;
+      }
+      this.botOptions.push({
+        value: bot.id,
+        label: this.$t(bot.label),
+        description: this.$t(bot.description),
+        icon: bot.icon,
+      });
+    },
+
     toggleBotSettings() {
       this.showBotSettings = !this.showBotSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showBotSettings) {
         this.sections.botSuggestions = true;
-      }
-    },
-
-    getBotSettingsKey(settings) {
-      // List only the properties that affect analysis
-      switch (settings.bot) {
-        case "topaz":
-          return Object.values([
-            settings.bot,
-            settings.topaz.depth,
-            settings.topaz.timeBudget,
-          ]).join(",");
-        default:
-          return settings.bot;
       }
     },
 
@@ -544,7 +536,7 @@ export default {
       );
     },
 
-    getEvalComments(ply, settingsKey, pvLimit = 0) {
+    getEvalComments(ply, pvLimit = 0) {
       let comments = [];
       let positionBefore = this.positions[ply.tpsBefore];
       let positionAfter = this.positions[ply.tpsAfter];
@@ -571,10 +563,7 @@ export default {
       }
 
       // Evaluation
-      if (
-        evaluationAfter !== null ||
-        (positionAfter && settingsKey in positionAfter)
-      ) {
+      if (evaluationAfter !== null || positionAfter) {
         let evaluationComment = "";
 
         evaluationAfter =
@@ -582,7 +571,7 @@ export default {
             100 *
               (evaluationAfter !== null
                 ? evaluationAfter
-                : positionAfter[settingsKey][0].evaluation)
+                : positionAfter[0].evaluation)
           ) / 1e4;
         if (!isNaN(evaluationAfter)) {
           evaluationComment += `${
@@ -603,16 +592,13 @@ export default {
         }
 
         // Annotation marks
-        if (
-          evaluationBefore !== null ||
-          (positionBefore && settingsKey in positionBefore)
-        ) {
+        if (evaluationBefore !== null || positionBefore) {
           evaluationBefore =
             Math.round(
               100 *
                 (evaluationBefore !== null
                   ? evaluationBefore
-                  : positionBefore[settingsKey][0].evaluation)
+                  : positionBefore[0].evaluation)
             ) / 1e4;
           const scoreLoss =
             (ply.player === 1
@@ -633,8 +619,8 @@ export default {
       }
 
       // PV
-      if (positionBefore && settingsKey in positionBefore) {
-        let position = positionBefore[settingsKey][0];
+      if (positionBefore) {
+        let position = positionBefore[0];
         if (position && position.ply) {
           let pv = [position.ply, ...position.followingPlies];
           if (pvLimit) {
@@ -665,15 +651,11 @@ export default {
       return comments;
     },
 
-    saveEvalComments(
-      pvLimit = 0,
-      plies = this.plies,
-      settingsKey = this.botSettingsKey
-    ) {
+    saveEvalComments(pvLimit = 0, plies = this.plies) {
       const messages = {};
       plies.forEach((ply) => {
         const notes = [];
-        const evaluations = this.getEvalComments(ply, settingsKey, pvLimit);
+        const evaluations = this.getEvalComments(ply, pvLimit);
         if (evaluations.length) {
           notes.push(...evaluations);
         }
@@ -685,72 +667,56 @@ export default {
     },
 
     goToAnalysisPly() {
-      if (this.analyzingPly) {
+      if (this.bot && this.bot.status.analyzingPly) {
         this.$store.dispatch("game/GO_TO_PLY", {
-          plyID: this.analyzingPly.id,
-          isDone: this.analyzingPly.isDone,
+          plyID: this.bot.status.analyzingPly.id,
+          isDone: this.bot.status.analyzingPly.isDone,
         });
       }
-    },
-
-    init() {
-      // Load wasm bots
-      this.initTiltakInteractive();
-      this.initTopaz();
-
-      // Try to connect to TEI bot
-      this.initTei();
     },
   },
 
   mounted() {
-    return this.init();
+    let bot;
+
+    bot = new TiltakCloud({
+      onInit: this.addBot,
+      onError: this.notifyError,
+    });
+    this.$set(this.bots, bot.id, bot);
+
+    bot = new TiltakWasm({
+      onInit: this.addBot,
+      onError: this.notifyError,
+    });
+    this.$set(this.bots, bot.id, bot);
+
+    bot = new TopazWasm({
+      onInit: this.addBot,
+      onError: this.notifyError,
+    });
+    this.$set(this.bots, bot.id, bot);
+
+    bot = new TeiBot({
+      onInit: this.addBot,
+      onError: this.notifyError,
+    });
+    this.$set(this.bots, bot.id, bot);
   },
 
   watch: {
-    async isOffline(isOffline) {
-      if (!isOffline && this.isPanelVisible) {
-        if (!this.topazWorker || !this.tiltakWorker) {
-          this.init();
+    "bot.status.isEnabled"(isEnabled) {
+      if (this.bot.isInteractive) {
+        if (isEnabled) {
+          this.bot.analyzePosition();
+        } else {
+          this.bot.terminate();
         }
-      }
-    },
-    async isPanelVisible(isPanelVisible) {
-      if (isPanelVisible) {
-        this.init();
-      }
-    },
-    "tiltakInteractive.isEnabled"(isEnabled) {
-      if (isEnabled) {
-        this.requestTiltakInteractiveSuggestions();
-      } else {
-        this.terminateTiltakInteractive();
-      }
-    },
-    "teiBot.isEnabled"(isEnabled) {
-      if (isEnabled) {
-        this.requestTeiSuggestions();
-      } else {
-        this.terminateTei();
       }
     },
     tps() {
-      if (this.tiltakInteractive.isEnabled) {
-        this.requestTiltakInteractiveSuggestions();
-      }
-      if (this.teiBot.isEnabled) {
-        this.requestTeiSuggestions();
-      }
-    },
-    botPosition(position) {
-      if (position) {
-        if (this.botSettingsKey in position) {
-          this.suggestions = position[this.botSettingsKey] || [];
-        } else {
-          this.suggestions = [];
-        }
-      } else {
-        this.suggestions = [];
+      if (this.bot.isInteractive && this.bot.status.isEnabled) {
+        this.bot.analyzePosition();
       }
     },
     suggestions(suggestions) {
@@ -759,13 +725,6 @@ export default {
         this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
       } else {
         this.$store.dispatch("game/SET_EVAL", null);
-      }
-    },
-    botSettingsKey(key) {
-      if (this.botPosition && key in this.botPosition) {
-        this.suggestions = this.botPosition[key] || [];
-      } else {
-        this.suggestions = [];
       }
     },
     sections: {
@@ -778,9 +737,6 @@ export default {
       handler(settings) {
         // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-
-        // Update current position/bot key
-        this.botSettingsKey = this.getBotSettingsKey(settings);
 
         // Stop interactive analysis when switching bots
         if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {

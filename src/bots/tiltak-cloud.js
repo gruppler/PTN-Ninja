@@ -1,5 +1,5 @@
 import Bot from "./bot";
-import store from "./store";
+import store from "../store";
 import asyncPool from "tiny-async-pool";
 import { uniq } from "lodash";
 

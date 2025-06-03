@@ -1,4 +1,5 @@
 import Bot from "./bot";
+import hashObject from "object-hash";
 
 let socket = null;
 
@@ -21,20 +22,27 @@ export default class TeiBot extends Bot {
 
   send(message) {
     if (socket) {
-      if (this.settings.tei.log) {
+      if (this.settings.log) {
         console.info(`>ws: ${message}`);
       }
       socket.send(message);
     }
   }
 
-  get url() {
-    const protocol = this.settings.ssl ? "wss://" : "ws://";
-    return `${protocol}${this.settings.address}:${this.settings.port}/`;
+  get protocol() {
+    return this.settings.ssl ? "wss://" : "ws://";
   }
 
-  //#region init
-  async init(force = false) {
+  get url() {
+    return `${this.protocol}${this.settings.address}:${this.settings.port}/`;
+  }
+
+  init() {
+    super.init(true);
+  }
+
+  //#region connect
+  async connect(force = false) {
     if (force || !this.status.isConnected) {
       try {
         return await new Promise((resolve, reject) => {
@@ -88,7 +96,7 @@ export default class TeiBot extends Bot {
 
           // Message handling
           socket.onmessage = ({ data }) => {
-            if (this.settings.tei.log) {
+            if (this.settings.log) {
               console.info(`ws>: ${data}`);
             }
             if (data === "teiok" || data === "readyok") {
@@ -106,18 +114,25 @@ export default class TeiBot extends Bot {
             // TODO: Handle options
             this.parseResponse(data);
           };
-          return super.init(true);
+          return true;
         });
       } catch (error) {
-        return super.init(false);
+        console.error(error);
       }
     }
+  }
+
+  getSettingsHash() {
+    return hashObject({
+      name: this.meta.name,
+      author: this.meta.author,
+    });
   }
 
   //#region analyzePosition
   analyzePosition() {
     if (!socket) {
-      this.initTei();
+      this.init();
       return;
     }
 
@@ -153,7 +168,7 @@ export default class TeiBot extends Bot {
     }
 
     // Queue current position for pairing with future response
-    this.status.nextTPS = tps;
+    this.status.nextTPS = this.status.tps;
     if (!this.status.tps) {
       this.status.tps = this.status.nextTPS;
     }
@@ -181,19 +196,9 @@ export default class TeiBot extends Bot {
       return;
     }
 
-    const results = {
-      pv: [],
-      time: null,
-      nps: null,
-      depth: null,
-      seldepth: null,
-      score: null,
-      nodes: null,
-    };
     if (response.startsWith("bestmove")) {
       // Search ended
       this.status.isLoading = false;
-      this.status.nps = 0;
       if (this.status.tps === this.status.nextTPS) {
         // No position queued
         this.status.tps = null;
@@ -204,6 +209,17 @@ export default class TeiBot extends Bot {
       return;
     } else if (response.startsWith("info")) {
       // Parse Results
+
+      const results = {
+        pv: [],
+        time: null,
+        nps: null,
+        depth: null,
+        seldepth: null,
+        score: null,
+        nodes: null,
+      };
+
       this.status.isLoading = true;
       const keys = ["pv", "time", "nps", "depth", "seldepth", "score", "nodes"];
       let key = "";
@@ -218,68 +234,9 @@ export default class TeiBot extends Bot {
           }
         }
       }
-      // Ignore other `info` messages
-      if (!results.pv.length) {
-        return;
+      if (results.pv.length) {
+        return super.handleResults(results);
       }
-    } else {
-      // Ignore all other messages
-      return;
-    }
-
-    if (!this.status.tps) {
-      this.status.tps = this.tps;
-    }
-    const id = this.getBotSettingsKey({ bot: "tei" });
-    const tps = this.status.tps;
-
-    // Update time and nps
-    if (!this.isGameEnd) {
-      this.status.time = results.time;
-      this.status.nps = results.nps;
-    }
-
-    // Determine ply colors
-    const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
-    const initialColor =
-      this.openingSwap && moveNumber === 1
-        ? initialPlayer == 1
-          ? 2
-          : 1
-        : initialPlayer;
-    let player = initialPlayer;
-    let color = initialColor;
-    const ply = new Ply(results.pv.splice(0, 1)[0], {
-      id: null,
-      player,
-      color,
-    });
-    const followingPlies = results.pv.map((ply) => {
-      ({ player, color } = this.nextPly(player, color));
-      return new Ply(ply, { id: null, player, color });
-    });
-    const evaluation = results.score * (initialPlayer === 1 ? 1 : -1);
-    const depth = results.depth;
-    const nodes = results.nodes;
-    const name = this.status.name;
-    const author = this.status.author;
-    const suggestions = [
-      { ply, followingPlies, evaluation, depth, nodes, name, author },
-    ];
-    deepFreeze(suggestions);
-    if (
-      !this.positions[tps] ||
-      !this.positions[tps][id] ||
-      this.positions[tps][id][0].depth < suggestions[0].depth ||
-      this.positions[tps][id][0].name !== name ||
-      this.positions[tps][id][0].author !== author
-    ) {
-      // Don't overwrite deeper searches for this position unless it's a different bot
-      this.$set(this.positions, tps, {
-        ...(this.positions[tps] || {}),
-        [id]: suggestions,
-      });
-      return suggestions;
     }
   }
 
@@ -288,7 +245,7 @@ export default class TeiBot extends Bot {
     if (socket) {
       try {
         if (this.status.isConnected) {
-          this.sendTei("stop");
+          this.send("stop");
         }
         this.status.isLoading = false;
         this.status.nps = null;
@@ -296,7 +253,7 @@ export default class TeiBot extends Bot {
         this.status.nextTPS = null;
       } catch (error) {
         await socket.close();
-        this.initTei();
+        this.init();
       }
     }
   }
