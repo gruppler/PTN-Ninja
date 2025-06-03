@@ -135,7 +135,7 @@
           <BoardToggles v-if="!isDialogShowing" />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <q-fab
+          <q-btn
             color="primary"
             :text-color="
               $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
@@ -143,8 +143,8 @@
             icon="add"
             @click="addGame"
             @click.right.prevent="switchGame"
-          >
-          </q-fab>
+            fab
+          />
           <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
         <q-page-sticky
