@@ -5,7 +5,7 @@ import { uniq } from "lodash";
 
 const url = "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
 
-const botThinkBudgetInSeconds = Object.freeze({
+const secondsToThink = Object.freeze({
   short: 5,
   long: 10,
 });
@@ -20,6 +20,8 @@ export default class TiltakCloud extends Bot {
       isInteractive: false,
       ...options,
     });
+
+    this.secondsToThink = secondsToThink;
   }
 
   get isOffline() {
@@ -28,7 +30,7 @@ export default class TiltakCloud extends Bot {
 
   //#region init
   init() {
-    super.init(!this.isOffline);
+    super.init(true);
   }
 
   //#region analyzePosition
@@ -58,59 +60,45 @@ export default class TiltakCloud extends Bot {
       return;
     }
     try {
-      this.loadingTiltakAnalysis = true;
-      this.progressTiltakAnalysis = 0;
+      this.status.isRunning = true;
+      this.status.progress = 0;
       const concurrency = 10;
       const komi = this.komi;
-      const secondsToThinkPerPly = botThinkBudgetInSeconds.short;
+      const secondsToThink = this.secondsToThink.short;
       const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      const settingsKey = this.botSettingsKey;
       let positions = plies.map((ply) => ply.tpsBefore);
       plies.forEach((ply) => {
         if (!ply.result || ply.result.type === "1") {
           positions.push(ply.tpsAfter);
         }
       });
-      positions = uniq(positions).filter(
-        (tps) =>
-          !(tps in this.positions) || !(settingsKey in this.positions[tps])
-      );
+      positions = uniq(positions).filter((tps) => !(tps in this.positions));
       let total = positions.length;
       let completed = 0;
 
       for await (const result of asyncPool(concurrency, positions, (tps) =>
-        this.requestSuggestions(
-          secondsToThinkPerPly,
-          tps,
-          komi,
-          settingsKey
-        ).catch((error) => {
+        this.requestSuggestions(secondsToThink, tps, komi).catch((error) => {
           console.error("Failed to query position", {
             tps,
             komi,
-            secondsToThinkPerPly,
+            secondsToThink,
             error,
           });
         })
       )) {
-        this.progressTiltakAnalysis = (100 * ++completed) / total;
+        this.status.progress = (100 * ++completed) / total;
       }
       // Insert comments
-      this.saveEvalComments(this.settings.pvLimit, plies, settingsKey);
+      this.saveEvalComments();
     } catch (error) {
       this.handleError(error);
     } finally {
-      this.loadingTiltakAnalysis = false;
+      this.status.isRunning = false;
     }
   }
 
   //#region requestSuggestions
-  async requestSuggestions(
-    secondsToThink,
-    tps,
-    komi,
-    settingsKey = this.botSettingsKey
-  ) {
+  async requestSuggestions(secondsToThink, tps, komi) {
     if (this.isOffline) {
       this.handleError("Offline");
       return;

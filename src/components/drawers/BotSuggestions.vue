@@ -15,7 +15,7 @@
           }}</q-item-label>
         </q-item-section>
         <q-item-section
-          v-if="!sections.botSuggestions && bot.status.isLoading"
+          v-if="!sections.botSuggestions && bot.status.isRunning"
           side
         >
           <q-spinner size="sm" />
@@ -215,7 +215,7 @@
             v-ripple
           >
             <q-item-section avatar>
-              <q-spinner v-if="bot.status.isLoading" size="sm" />
+              <q-spinner v-if="bot.status.isRunning" size="sm" />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -228,11 +228,11 @@
               </q-item-label>
             </q-item-section>
             <q-item-section v-if="bot.status.isEnabled" side>
-              <div class="text-caption">
+              <div v-if="bot.status.time !== null" class="text-caption">
                 {{ $n((bot.status.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
               </div>
-              <div class="text-caption">
+              <div v-if="bot.status.nps !== null" class="text-caption">
                 {{ $n(bot.status.nps || 0, "n0") }}
                 {{ $t("analysis.nps") }}
               </div>
@@ -257,10 +257,10 @@
         <!-- Tiltak Cloud -->
         <template v-else-if="botSettings.bot === 'tiltak-cloud'">
           <q-btn
-            v-if="!isFullyAnalyzed && plies.length"
-            @click="analyzeGameTiltak()"
-            :loading="loadingTiltakAnalysis"
-            :percentage="progressTiltakAnalysis"
+            v-if="!bot.isFullyAnalyzed && plies.length"
+            @click="bot.analyzeGame()"
+            :loading="bot.status.isRunning"
+            :percentage="bot.status.progress"
             class="full-width"
             color="primary"
             stretch
@@ -280,8 +280,8 @@
           </q-btn>
           <q-btn
             v-if="!suggestions.length && !isGameEnd"
-            @click="analyzePositionTilTak(botThinkBudgetInSeconds.short)"
-            :loading="loadingTiltakMoves"
+            @click="bot.analyzePosition(bot.secondsToThink.short)"
+            :loading="bot.status.isRunning"
             class="full-width"
             color="primary"
             icon="board"
@@ -294,7 +294,7 @@
         <template v-else-if="bot && bot.isInteractive">
           <q-item class="interactive-control" tag="label" clickable v-ripple>
             <q-item-section avatar>
-              <q-spinner v-if="bot.status.isLoading" size="sm" />
+              <q-spinner v-if="bot.status.isRunning" size="sm" />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -303,11 +303,11 @@
               }}</q-item-label>
             </q-item-section>
             <q-item-section v-if="bot.status.isEnabled" side>
-              <div class="text-caption">
+              <div v-if="bot.status.time !== null" class="text-caption">
                 {{ $n((bot.status.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
               </div>
-              <div class="text-caption">
+              <div v-if="bot.status.nps !== null" class="text-caption">
                 {{ $n(bot.status.nps || 0, "n0") }}
                 {{ $t("analysis.nps") }}
               </div>
@@ -321,19 +321,23 @@
         <!-- Generic Non-Interactive -->
         <div v-else-if="bot" class="relative-position">
           <q-btn
-            v-if="!suggestions.length && !isGameEnd"
-            @click="bot.status.isLoading ? null : bot.analyzePosition()"
+            v-if="
+              !isGameEnd &&
+              (!suggestions.length ||
+                bot.getSettingsHash() !== suggestions[0].hash)
+            "
+            @click="bot.status.isRunning ? null : bot.analyzePosition()"
             :percentage="bot.status.progress"
             class="full-width"
             color="primary"
             icon="board"
             :label="$t('analysis.Analyze Position')"
-            :loading="bot.status.isLoading"
-            :ripple="!bot.status.isLoading"
+            :loading="bot.status.isRunning"
+            :ripple="!bot.status.isRunning"
             stretch
           />
           <PlyChip
-            v-if="bot.status.isLoading && bot.status.analyzingPly"
+            v-if="bot.status.isRunning && bot.status.analyzingPly"
             :ply="allPlies[bot.status.analyzingPly.id]"
             @click.stop="goToAnalysisPly"
             no-branches
@@ -341,9 +345,9 @@
             class="absolute-left"
           />
           <q-btn
-            v-if="bot.status.isLoading"
+            v-if="bot.status.isRunning"
             :label="$t('Cancel')"
-            @click.stop="terminateTopaz"
+            @click.stop="bot.terminate()"
             class="absolute-right"
             :text-color="
               $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
@@ -357,35 +361,41 @@
       <!-- Results -->
       <smooth-reflow>
         <AnalysisItem
-          v-for="(move, i) in suggestions.slice(
+          v-for="(suggestion, i) in suggestions.slice(
             0,
             botSettings[botSettings.bot].maxSuggestedMoves
           )"
           :key="i"
-          :ply="move.ply"
-          :evaluation="'evaluation' in move ? move.evaluation : null"
-          :following-plies="move.followingPlies"
+          :ply="suggestion.ply"
+          :evaluation="
+            'evaluation' in suggestion ? suggestion.evaluation : null
+          "
+          :following-plies="suggestion.followingPlies"
           :count="
-            'visits' in move ? move.visits : 'nodes' in move ? move.nodes : null
+            'visits' in suggestion
+              ? suggestion.visits
+              : 'nodes' in suggestion
+              ? suggestion.nodes
+              : null
           "
           :count-label="
-            'visits' in move
+            'visits' in suggestion
               ? 'analysis.visits'
-              : 'nodes' in move
+              : 'nodes' in suggestion
               ? 'analysis.nodes'
               : null
           "
           :player1-number="
-            'evaluation' in move && move.evaluation >= 0
-              ? formatEvaluation(move.evaluation)
+            'evaluation' in suggestion && suggestion.evaluation >= 0
+              ? bot.formatEvaluation(suggestion.evaluation)
               : null
           "
           :player2-number="
-            'evaluation' in move && move.evaluation < 0
-              ? formatEvaluation(move.evaluation)
+            'evaluation' in suggestion && suggestion.evaluation < 0
+              ? bot.formatEvaluation(suggestion.evaluation)
               : null
           "
-          :depth="move.depth || null"
+          :depth="suggestion.depth || null"
           :animate="['tiltak', 'tei'].includes(botSettings.bot)"
         />
 
@@ -399,15 +409,15 @@
         <!-- Think Harder -->
         <q-btn
           v-if="
-            botSettings.bot === 'tiltak-cloud' &&
+            bot &&
+            bot.id === 'tiltak-cloud' &&
             suggestions.length &&
             suggestions.every(
-              ({ secondsToThink }) =>
-                secondsToThink < botThinkBudgetInSeconds.long
+              ({ secondsToThink }) => secondsToThink < bot.secondsToThink.long
             )
           "
-          @click="analyzePositionTilTak(botThinkBudgetInSeconds.long)"
-          :loading="loadingTiltakMoves"
+          @click="bot.analyzePosition(bot.secondsToThink.long)"
+          :loading="bot.status.isRunning"
           class="full-width"
           color="primary"
           stretch
@@ -418,7 +428,7 @@
         <!-- Save Comments -->
         <div class="row no-wrap">
           <q-btn
-            @click="saveEvalComments(botSettings[botSettings.bot].pvLimit)"
+            @click="bot.saveEvalComments()"
             class="full-width"
             color="primary"
             icon="notes"
@@ -445,10 +455,7 @@
 import { cloneDeep } from "lodash";
 import AnalysisItem from "../database/AnalysisItem";
 import PlyChip from "../PTN/Ply.vue";
-import TiltakCloud from "../../bots/tiltak-cloud";
-import TiltakWasm from "../../bots/tiltak-wasm";
-import TopazWasm from "../../bots/topaz-wasm";
-import TeiBot from "../../bots/tei";
+import { bots, botOptions } from "../../bots";
 
 export default {
   name: "BotSuggestions",
@@ -456,22 +463,13 @@ export default {
   data() {
     return {
       showBotSettings: false,
-      bots: {},
-      botOptions: [],
+      bots,
+      botOptions,
       botSettings: cloneDeep(this.$store.state.ui.botSettings),
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
   },
   computed: {
-    bot() {
-      return this.bots[this.botSettings.bot];
-    },
-    positions() {
-      return this.bot ? this.bot.positions : {};
-    },
-    suggestions() {
-      return this.positions[this.tps] || [];
-    },
     isOffline() {
       return this.$store.state.ui.offline;
     },
@@ -487,6 +485,9 @@ export default {
     game() {
       return this.$store.state.game;
     },
+    tps() {
+      return this.game.position.tps;
+    },
     allPlies() {
       return this.game.ptn.allPlies;
     },
@@ -498,172 +499,23 @@ export default {
         this.game.position.isGameEnd && !this.game.position.isGameEndDefault
       );
     },
-    isFullyAnalyzed() {
-      return this.plies.every((ply) => this.plyHasEvalComment(ply));
+    bot() {
+      return this.bots[this.botSettings.bot];
+    },
+    positions() {
+      return this.bot ? this.bot.positions : {};
+    },
+    suggestions() {
+      return this.positions[this.tps] || [];
     },
   },
   methods: {
-    addBot(bot) {
-      if (this.botOptions.find((b) => b.id === bot.id)) {
-        return;
-      }
-      this.botOptions.push({
-        value: bot.id,
-        label: this.$t(bot.label),
-        description: this.$t(bot.description),
-        icon: bot.icon,
-      });
-    },
-
     toggleBotSettings() {
       this.showBotSettings = !this.showBotSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showBotSettings) {
         this.sections.botSuggestions = true;
       }
-    },
-
-    formatEvaluation(v) {
-      return `+${this.$n(Math.abs(v), "n0")}%`;
-    },
-
-    plyHasEvalComment(ply) {
-      return (
-        ply.id in this.game.comments.notes &&
-        this.game.comments.notes[ply.id].some(
-          (comment) => comment.evaluation !== null
-        )
-      );
-    },
-
-    getEvalComments(ply, pvLimit = 0) {
-      let comments = [];
-      let positionBefore = this.positions[ply.tpsBefore];
-      let positionAfter = this.positions[ply.tpsAfter];
-      let evaluationBefore = null;
-      let evaluationAfter = null;
-
-      // Assume evaluationAfter from game result
-      if (ply.result && ply.result.type !== "1") {
-        evaluationAfter = ply.result.isTie
-          ? 0
-          : 100 * (ply.result.winner === 1 ? 1 : -1);
-      }
-
-      // Get evaluationBefore from existing eval comment of previous ply
-      let prevPly = this.plies.find(
-        (prevPly) => prevPly.tpsAfter === ply.tpsBefore
-      );
-      if (prevPly && prevPly.id in this.game.comments.notes) {
-        for (let i = 0; i < this.game.comments.notes[prevPly.id].length; i++) {
-          evaluationBefore = this.game.comments.notes[prevPly.id][i].evaluation;
-          if (evaluationBefore !== null);
-          break;
-        }
-      }
-
-      // Evaluation
-      if (evaluationAfter !== null || positionAfter) {
-        let evaluationComment = "";
-
-        evaluationAfter =
-          Math.round(
-            100 *
-              (evaluationAfter !== null
-                ? evaluationAfter
-                : positionAfter[0].evaluation)
-          ) / 1e4;
-        if (!isNaN(evaluationAfter)) {
-          evaluationComment += `${
-            evaluationAfter >= 0 ? "+" : ""
-          }${evaluationAfter}`;
-
-          // Find existing eval comment index
-          if (ply.id in this.game.comments.notes) {
-            const index = this.game.comments.notes[ply.id].findIndex(
-              (comment) => comment.evaluation !== null
-            );
-            if (index >= 0) {
-              evaluationComment = `!r${index}:${evaluationComment}`;
-            }
-          }
-
-          comments.push(evaluationComment);
-        }
-
-        // Annotation marks
-        if (evaluationBefore !== null || positionBefore) {
-          evaluationBefore =
-            Math.round(
-              100 *
-                (evaluationBefore !== null
-                  ? evaluationBefore
-                  : positionBefore[0].evaluation)
-            ) / 1e4;
-          const scoreLoss =
-            (ply.player === 1
-              ? evaluationAfter - evaluationBefore
-              : evaluationBefore - evaluationAfter) / 2;
-          if (scoreLoss > 0.06) {
-            comments.push("!!");
-          } else if (scoreLoss > 0.03) {
-            comments.push("!");
-          } else if (scoreLoss > -0.1) {
-            // Do nothing
-          } else if (scoreLoss > -0.25) {
-            comments.push("?");
-          } else {
-            comments.push("??");
-          }
-        }
-      }
-
-      // PV
-      if (positionBefore) {
-        let position = positionBefore[0];
-        if (position && position.ply) {
-          let pv = [position.ply, ...position.followingPlies];
-          if (pvLimit) {
-            pv = pv.slice(0, pvLimit);
-          }
-          pv = pv.map((ply) => ply.ptn);
-          let pvComment = `pv ${pv.join(" ")}`;
-
-          // Find existing pv comment index
-          if (ply.id in this.game.comments.notes) {
-            const index = this.game.comments.notes[ply.id].findIndex(
-              (comment) =>
-                comment.pv !== null &&
-                comment.pv.every(
-                  (cpv) =>
-                    cpv.every((ply, i) => ply === pv[i]) ||
-                    pv.every((ply, i) => ply === cpv[i])
-                )
-            );
-            if (index >= 0) {
-              pvComment = `!r${index}:${pvComment}`;
-            }
-          }
-
-          comments.push(pvComment);
-        }
-      }
-      return comments;
-    },
-
-    saveEvalComments(pvLimit = 0, plies = this.plies) {
-      const messages = {};
-      plies.forEach((ply) => {
-        const notes = [];
-        const evaluations = this.getEvalComments(ply, pvLimit);
-        if (evaluations.length) {
-          notes.push(...evaluations);
-        }
-        if (notes.length) {
-          messages[ply.id] = notes;
-        }
-      });
-      this.$store.dispatch("game/ADD_NOTES", messages);
     },
 
     goToAnalysisPly() {
@@ -674,34 +526,6 @@ export default {
         });
       }
     },
-  },
-
-  mounted() {
-    let bot;
-
-    bot = new TiltakCloud({
-      onInit: this.addBot,
-      onError: this.notifyError,
-    });
-    this.$set(this.bots, bot.id, bot);
-
-    bot = new TiltakWasm({
-      onInit: this.addBot,
-      onError: this.notifyError,
-    });
-    this.$set(this.bots, bot.id, bot);
-
-    bot = new TopazWasm({
-      onInit: this.addBot,
-      onError: this.notifyError,
-    });
-    this.$set(this.bots, bot.id, bot);
-
-    bot = new TeiBot({
-      onInit: this.addBot,
-      onError: this.notifyError,
-    });
-    this.$set(this.bots, bot.id, bot);
   },
 
   watch: {
@@ -737,13 +561,17 @@ export default {
       handler(settings) {
         // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-
-        // Stop interactive analysis when switching bots
-        if (settings.bot !== "tiltak" && this.tiltakInteractive.isEnabled) {
-          this.tiltakInteractive.isEnabled = false;
-        }
       },
       deep: true,
+    },
+    bot(newBot, oldBot) {
+      if (oldBot && oldBot.id !== newBot.id) {
+        // Stop interactive analysis when switching bots
+        if (oldBot.isInteractive && oldBot.status.isEnabled) {
+          oldBot.status.isEnabled = false;
+          oldBot.terminate();
+        }
+      }
     },
   },
 };

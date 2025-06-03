@@ -21,7 +21,7 @@ export default class TopazWasm extends Bot {
       try {
         worker = new Worker(url);
         worker.onmessage = ({ data }) => {
-          this.parseResponse(data);
+          this.handleResponse(data);
         };
         return super.init(true);
       } catch (error) {
@@ -32,7 +32,7 @@ export default class TopazWasm extends Bot {
   }
 
   //#region analyzePosition
-  analyzePosition() {
+  analyzePosition(tps = this.tps) {
     if (!worker) {
       this.init();
       return;
@@ -50,15 +50,15 @@ export default class TopazWasm extends Bot {
     }, 1000);
     worker.postMessage({
       ...this.settings,
+      tps,
       size: this.size,
       komi: this.komi,
-      tps: this.tps,
       hash: this.settingsHash,
     });
   }
 
-  //#region parseResponse
-  parseResponse(response) {
+  //#region handleResponse
+  handleResponse(response) {
     if (response.error) {
       this.handleError(response.error);
       return;
@@ -66,13 +66,16 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
+    // const initialPlayer = Number(tps.split(" ")[1]);
+    // const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
+
     return super.handleResults({
       hash,
       tps,
       pv,
       depth,
-      score,
       nodes,
+      evaluation: null,
     });
   }
 

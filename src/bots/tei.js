@@ -38,6 +38,7 @@ export default class TeiBot extends Bot {
   }
 
   init() {
+    this.connect();
     super.init(true);
   }
 
@@ -62,7 +63,7 @@ export default class TeiBot extends Bot {
             this.status.isEnabled = false;
             this.status.isConnecting = false;
             this.status.isConnected = false;
-            this.status.isLoading = false;
+            this.status.isRunning = false;
             this.status.isReady = false;
             this.status.time = null;
             this.status.nps = null;
@@ -80,7 +81,7 @@ export default class TeiBot extends Bot {
             this.status.isEnabled = false;
             this.status.isConnecting = false;
             this.status.isConnected = false;
-            this.status.isLoading = false;
+            this.status.isRunning = false;
             this.status.isReady = false;
             this.status.time = null;
             this.status.nps = null;
@@ -112,7 +113,7 @@ export default class TeiBot extends Bot {
               this.meta.author = data.substr(10);
             }
             // TODO: Handle options
-            this.parseResponse(data);
+            this.handleResponse(data);
           };
           return true;
         });
@@ -130,7 +131,7 @@ export default class TeiBot extends Bot {
   }
 
   //#region analyzePosition
-  analyzePosition() {
+  analyzePosition(tps = this.tps) {
     if (!socket) {
       this.init();
       return;
@@ -168,7 +169,7 @@ export default class TeiBot extends Bot {
     }
 
     // Queue current position for pairing with future response
-    this.status.nextTPS = this.status.tps;
+    this.status.nextTPS = tps;
     if (!this.status.tps) {
       this.status.tps = this.status.nextTPS;
     }
@@ -186,19 +187,21 @@ export default class TeiBot extends Bot {
     }
     this.send(posMessage);
     this.send(`go infinite`);
-    this.status.isLoading = true;
+    this.status.isRunning = true;
   }
 
-  //#region parseResponse
-  parseResponse(response) {
+  //#region handleResponse
+  handleResponse(response) {
     if (response.error) {
       this.handleError(response.error);
       return;
     }
 
+    const tps = this.status.tps;
+
     if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isLoading = false;
+      this.status.isRunning = false;
       if (this.status.tps === this.status.nextTPS) {
         // No position queued
         this.status.tps = null;
@@ -207,10 +210,10 @@ export default class TeiBot extends Bot {
         this.status.tps = this.status.nextTPS;
       }
       return;
-    } else if (response.startsWith("info")) {
+    } else if (response.startsWith("info") && tps) {
       // Parse Results
-
       const results = {
+        tps,
         pv: [],
         time: null,
         nps: null,
@@ -220,19 +223,26 @@ export default class TeiBot extends Bot {
         nodes: null,
       };
 
-      this.status.isLoading = true;
-      const keys = ["pv", "time", "nps", "depth", "seldepth", "score", "nodes"];
+      this.status.isRunning = true;
+      const keys = /^(pv|time|nps|depth|seldepth|score|nodes)$/i;
       let key = "";
       for (const value of response.split(" ")) {
-        if (keys.includes(value)) {
-          key = value;
+        if (keys.test(value)) {
+          key = value.toLowerCase();
         } else {
-          if (key === "pv") {
+          if (key === "pv" && value) {
             results.pv.push(value);
-          } else {
+          } else if (key === "score" && value === "cp") {
+            continue;
+          } else if (results[key] === null) {
             results[key] = Number(value);
           }
         }
+      }
+      if (tps && results.score !== null) {
+        const initialPlayer = Number(tps.split(" ")[1]);
+        results.evaluation =
+          Number(results.score) * (initialPlayer === 1 ? 1 : -1);
       }
       if (results.pv.length) {
         return super.handleResults(results);
@@ -247,9 +257,8 @@ export default class TeiBot extends Bot {
         if (this.status.isConnected) {
           this.send("stop");
         }
-        this.status.isLoading = false;
+        this.status.isRunning = false;
         this.status.nps = null;
-        this.status.tps = null;
         this.status.nextTPS = null;
       } catch (error) {
         await socket.close();

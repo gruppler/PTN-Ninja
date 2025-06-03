@@ -1,6 +1,7 @@
 <template>
   <div class="analysis-item" :class="{ animate }">
     <div
+      v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"

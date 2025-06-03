@@ -328,6 +328,7 @@ import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit } from "lodash";
 import Fuse from "fuse.js";
+import hashObject from "object-hash";
 
 const apiUrl = "https://openings.exegames.de/api/v1";
 // const apiUrl = `http://127.0.0.1:5000/api/v1`;
@@ -461,7 +462,7 @@ export default {
       }
     },
     hashDBSettings(settings) {
-      return Object.values(omit(settings, "maxSuggestedMoves")).join(",");
+      return hashObject(omit(settings, "maxSuggestedMoves"));
     },
 
     winsTooltip(move) {

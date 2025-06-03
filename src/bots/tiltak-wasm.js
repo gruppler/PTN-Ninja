@@ -48,7 +48,7 @@ export default class TiltakWasm extends Bot {
           if (data === "teiok" || data === "readyok") {
             this.status.isReady = true;
           }
-          this.parseResponse(data);
+          this.handleResponse(data);
         };
 
         // Init
@@ -62,7 +62,7 @@ export default class TiltakWasm extends Bot {
   }
 
   //#region analyzePosition
-  analyzePosition() {
+  analyzePosition(tps = this.tps) {
     if (!worker) {
       this.init();
       return;
@@ -99,7 +99,7 @@ export default class TiltakWasm extends Bot {
     }
 
     // Queue current position for pairing with future response
-    this.status.nextTPS = this.status.tps;
+    this.status.nextTPS = tps;
     if (!this.status.tps) {
       this.status.tps = this.status.nextTPS;
     }
@@ -120,12 +120,14 @@ export default class TiltakWasm extends Bot {
     this.status.isRunning = true;
   }
 
-  //#region parseResponse
-  parseResponse(response) {
+  //#region handleResponse
+  handleResponse(response) {
     if (response.error) {
       this.handleError(response.error);
       return;
     }
+
+    const tps = this.status.tps;
 
     if (response.startsWith("bestmove")) {
       // Search ended
@@ -138,10 +140,10 @@ export default class TiltakWasm extends Bot {
         this.status.tps = this.status.nextTPS;
       }
       return;
-    } else if (response.startsWith("info")) {
+    } else if (response.startsWith("info") && tps) {
       // Parse Results
-
       const results = {
+        tps,
         pv: [],
         time: null,
         nps: null,
@@ -160,10 +162,17 @@ export default class TiltakWasm extends Bot {
         } else {
           if (key === "pv") {
             results.pv.push(value);
+          } else if (key === "score" && value === "cp") {
+            continue;
           } else {
             results[key] = Number(value);
           }
         }
+      }
+      if (tps && results.score !== null) {
+        const initialPlayer = Number(tps.split(" ")[1]);
+        results.evaluation =
+          Number(results.score) * (initialPlayer === 1 ? 1 : -1);
       }
       if (results.pv.length) {
         return super.handleResults(results);
@@ -177,7 +186,6 @@ export default class TiltakWasm extends Bot {
       try {
         worker.postMessage("stop");
         this.status.isRunning = false;
-        this.status.tps = null;
         this.status.nextTPS = null;
       } catch (error) {
         await worker.terminate();
