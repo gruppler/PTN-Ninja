@@ -132,7 +132,15 @@
           <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
         <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles v-if="!isDialogShowing" />
+          <!-- Notifications -->
+        </q-page-sticky>
+        <q-page-sticky position="top" :offset="[0, 6]">
+          <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
+        </q-page-sticky>
+        <q-page-sticky position="right" :offset="[6, 0]">
+          <BoardToggles
+            v-if="!$store.state.ui.isPortrait && !isDialogShowing"
+          />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <q-btn
