@@ -71,21 +71,6 @@
         filled
       />
 
-      <q-item>
-        <q-item-section>
-          {{ $t("Play Speed") }}
-          <q-slider
-            v-model="config.ui.playSpeed"
-            :min="30"
-            :max="160"
-            :label-value="config.ui.playSpeed + ' ' + $t('FPM')"
-            :step="10"
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
-
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Start from Current Position") }}</q-item-label>
@@ -94,6 +79,70 @@
           <q-toggle v-model="config.state" />
         </q-item-section>
       </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Disable Board") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.disableBoard" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Disable Navigation") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.disableNavigation" />
+        </q-item-section>
+      </q-item>
+
+      <smooth-reflow>
+        <q-item v-show="!config.ui.disableNavigation" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Play Controls") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showControls" />
+          </q-item-section>
+        </q-item>
+
+        <smooth-reflow v-show="!config.ui.disableNavigation">
+          <q-item v-show="config.ui.showControls" tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("Play Button") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="config.ui.showPlayButton" />
+            </q-item-section>
+          </q-item>
+
+          <q-item v-show="config.ui.showControls && config.ui.showPlayButton">
+            <q-item-section>
+              {{ $t("Play Speed") }}
+              <q-slider
+                v-model="config.ui.playSpeed"
+                :min="30"
+                :max="160"
+                :label-value="config.ui.playSpeed + ' ' + $t('FPM')"
+                :step="10"
+                snap
+                label
+              />
+            </q-item-section>
+          </q-item>
+        </smooth-reflow>
+
+        <q-item v-show="!config.ui.disableNavigation" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showScrubber" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -136,6 +185,15 @@
 
         <q-item v-show="!config.ui.disablePTN" tag="label" v-ripple>
           <q-item-section>
+            <q-item-label>{{ $t("Current Move") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showMove" />
+          </q-item-section>
+        </q-item>
+
+        <q-item v-show="!config.ui.disablePTN" tag="label" v-ripple>
+          <q-item-section>
             <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -172,7 +230,7 @@
       </q-item>
 
       <smooth-reflow>
-        <div v-if="config.ui.turnIndicator">
+        <div v-show="config.ui.turnIndicator">
           <q-item tag="label" v-ripple>
             <q-item-section>
               <q-item-label>{{ $t("Player Names") }}</q-item-label>
@@ -221,64 +279,32 @@
       </q-item>
 
       <smooth-reflow>
-        <template v-if="config.ui.turnIndicator && config.ui.unplayedPieces">
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.ui.evalText" />
-            </q-item-section>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Move Number") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.ui.moveNumber" />
-            </q-item-section>
-          </q-item>
-        </template>
-      </smooth-reflow>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Current Move") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.ui.showMove" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Play Controls") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.ui.showControls" />
-        </q-item-section>
-      </q-item>
-
-      <smooth-reflow>
-        <q-item v-if="config.ui.showControls" tag="label" v-ripple>
+        <q-item
+          v-show="config.ui.turnIndicator && config.ui.unplayedPieces"
+          tag="label"
+          v-ripple
+        >
           <q-item-section>
-            <q-item-label>{{ $t("Play Button") }}</q-item-label>
+            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
           </q-item-section>
           <q-item-section side>
-            <q-toggle v-model="config.ui.showPlayButton" />
+            <q-toggle v-model="config.ui.evalText" />
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          v-show="config.ui.turnIndicator && config.ui.unplayedPieces"
+          tag="label"
+          v-ripple
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Move Number") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.moveNumber" />
           </q-item-section>
         </q-item>
       </smooth-reflow>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.ui.showScrubber" />
-        </q-item-section>
-      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>

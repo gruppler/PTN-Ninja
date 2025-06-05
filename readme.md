@@ -335,6 +335,14 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show unplayed pieces
 
+#### `disableBoard` (default: `false`)
+
+- Disable board interactions
+
+#### `disableNavigation` (default: `false`)
+
+- Disable game navigation, undo/redo, and ply deletion
+
 ## Legal
 
 &copy; 2022 Craig Laparo

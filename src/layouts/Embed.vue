@@ -98,7 +98,13 @@
           <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <UndoButtons spread stretch flat unelevated />
+          <UndoButtons
+            v-if="!$store.state.ui.disableNavigation"
+            spread
+            stretch
+            flat
+            unelevated
+          />
           <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
@@ -119,7 +125,7 @@
       <Notes ref="notes" class="fit" />
     </q-drawer>
 
-    <q-footer class="bg-ui">
+    <q-footer v-if="!$store.state.ui.disableNavigation" class="bg-ui">
       <Scrubber />
       <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
         <PlayControls ref="playControls" />
@@ -319,7 +325,9 @@ export default {
       switch (srcKey) {
         case "game/UNDO":
         case "game/REDO":
-          this.$store.dispatch(srcKey);
+          if (!this.$store.state.ui.disableNavigation) {
+            this.$store.dispatch(srcKey);
+          }
           break;
       }
     },
