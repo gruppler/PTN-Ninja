@@ -51,6 +51,8 @@ export default {
   DateTime: "Date/Time",
   Delete: "Delete",
   "Delete Ply": "Delete Ply",
+  "Disable Notes": "Disable Notes",
+  "Disable PTN": "Disable PTN",
   Dismiss: "Dismiss",
   Download: "Download",
   Duplicate: "Duplicate",

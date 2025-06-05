@@ -311,6 +311,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the PTN panel
 
+#### `disablePTN` (default: `false`)
+
+- Remove the PTN panel
+
 #### `showRoads` (default: `true`)
 
 - Show road connections
@@ -322,6 +326,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `showText` (default: `true`)
 
 - Show the Notes panel
+
+#### `disableText` (default: `false`)
+
+- Remove the Notes panel
 
 #### `unplayedPieces` (default: `true`)
 

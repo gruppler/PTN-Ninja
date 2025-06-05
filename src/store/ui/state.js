@@ -49,6 +49,8 @@ let defaults = {
   boardRotation: [0, 0.65],
   boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
+  disablePTN: false,
+  disableText: false,
   editingBranch: "",
   editHeader: false,
   firstMoveNumber: 1,

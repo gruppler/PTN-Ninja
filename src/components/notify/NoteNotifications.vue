@@ -11,6 +11,7 @@ export default {
   computed: {
     show() {
       return (
+        !this.$store.state.ui.disableText &&
         this.$store.state.ui.notifyNotes &&
         (!this.$store.state.ui.showText ||
           this.$store.state.ui.textTab !== "notes")

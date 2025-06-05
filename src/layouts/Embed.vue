@@ -3,6 +3,7 @@
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
+          v-if="!$store.state.ui.disablePTN"
           icon="moves"
           @click="showPTN = !showPTN"
           :color="showPTN ? 'primary' : ''"
@@ -11,7 +12,11 @@
         >
           <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
         </q-btn>
-        <q-toolbar-title id="title" class="ellipsis-2-lines">
+        <q-toolbar-title
+          id="title"
+          class="ellipsis-2-lines"
+          :class="{ 'q-ml-md': $store.state.ui.disablePTN }"
+        >
           {{ title }}
         </q-toolbar-title>
         <q-btn icon="info" @click.prevent="info" stretch flat>
@@ -21,6 +26,7 @@
           <hint>{{ $t("app_title") }}</hint>
         </q-btn>
         <q-btn
+          v-if="!$store.state.ui.disableText"
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
@@ -62,7 +68,7 @@
           />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove />
+          <CurrentMove v-if="!$store.state.ui.disablePTN" />
         </q-page-sticky>
         <q-page-sticky
           ref="gameNotificationContainer"
@@ -74,6 +80,7 @@
     </q-page-container>
 
     <q-drawer
+      v-if="!$store.state.ui.disablePTN"
       id="left-drawer"
       v-model="showPTN"
       side="left"
@@ -99,6 +106,7 @@
     </q-drawer>
 
     <q-drawer
+      v-if="!$store.state.ui.disableText"
       id="right-drawer"
       v-model="showText"
       side="right"

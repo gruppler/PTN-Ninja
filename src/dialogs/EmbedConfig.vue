@@ -97,30 +97,52 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Show Notes") }}</q-item-label>
+          <q-item-label>{{ $t("Disable Notes") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.showText" />
+          <q-toggle v-model="config.ui.disableText" />
         </q-item-section>
       </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Show PTN") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.ui.showPTN" />
-        </q-item-section>
-      </q-item>
+      <smooth-reflow>
+        <q-item v-show="!config.ui.disableText" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Show Notes") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showText" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
+          <q-item-label>{{ $t("Disable PTN") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="config.ui.showAllBranches" />
+          <q-toggle v-model="config.ui.disablePTN" />
         </q-item-section>
       </q-item>
+
+      <smooth-reflow>
+        <q-item v-show="!config.ui.disablePTN" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Show PTN") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showPTN" />
+          </q-item-section>
+        </q-item>
+
+        <q-item v-show="!config.ui.disablePTN" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.showAllBranches" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
