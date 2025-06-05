@@ -19,7 +19,7 @@ import {
 import { THEMES } from "../../themes";
 import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
-import { cloneDeep, isArray, isFunction, isString } from "lodash";
+import { cloneDeep, isArray, isFunction, isObject, isString } from "lodash";
 import { TPStoPNG } from "tps-ninja";
 import hashObject from "object-hash";
 
@@ -87,19 +87,43 @@ export const NOTIFY = (context, options) => {
 };
 
 export const NOTIFY_ERROR = (context, error) => {
-  return notifyError(error);
+  let args = error;
+  if (isObject(args) && args.message) {
+    args = [args.message, args.timeout];
+  } else {
+    args = [args];
+  }
+  return notifyError(...args);
 };
 
 export const NOTIFY_SUCCESS = (context, success) => {
-  return notifySuccess(success);
+  let args = success;
+  if (isObject(args) && args.message) {
+    args = [args.message, args.timeout];
+  } else {
+    args = [args];
+  }
+  return notifySuccess(...args);
 };
 
 export const NOTIFY_WARNING = (context, warning) => {
-  return notifyWarning(warning);
+  let args = warning;
+  if (isObject(args) && args.message) {
+    args = [args.message, args.timeout];
+  } else {
+    args = [args];
+  }
+  return notifyWarning(...args);
 };
 
 export const NOTIFY_HINT = (context, hint) => {
-  return notifyHint(hint);
+  let args = hint;
+  if (isObject(args) && args.message) {
+    args = [args.message, args.timeout];
+  } else {
+    args = [args];
+  }
+  return notifyHint(...args);
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {

@@ -192,19 +192,19 @@ For example:
 
 #### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
-- Issue an error notification
+- Issue an error notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
 
 #### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
-- Issue a success notification
+- Issue a success notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
 
 #### `NOTIFY_WARNING` (value: `<String>|<Object>`)
 
-- Issue a warning notification
+- Issue a warning notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
 
 #### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
-- Issue a hint notification
+- Issue a hint notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
 
 #### `ROTATE_180`
 
