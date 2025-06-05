@@ -192,19 +192,19 @@ For example:
 
 #### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
-- Issue an error notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
+- Issue an error notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
-- Issue a success notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
+- Issue a success notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_WARNING` (value: `<String>|<Object>`)
 
-- Issue a warning notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
+- Issue a warning notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
-- Issue a hint notification, specifying either the message directly, or a `message` string and `timeout` in milliseconds
+- Issue a hint notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `ROTATE_180`
 

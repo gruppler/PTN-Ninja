@@ -56,9 +56,6 @@
         >
           <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
-        <q-page-sticky position="top-right" :offset="[6, 6]">
-          <!-- Notifications -->
-        </q-page-sticky>
         <q-page-sticky position="top" :offset="[0, 6]">
           <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
         </q-page-sticky>
@@ -71,9 +68,33 @@
           <CurrentMove v-if="!$store.state.ui.disablePTN" />
         </q-page-sticky>
         <q-page-sticky
-          ref="gameNotificationContainer"
+          ref="notificationContainerTopLeft"
+          position="top-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerTopRight"
           position="top-right"
-          :offset="[0, 0]"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomLeft"
+          position="bottom-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomRight"
+          position="bottom-right"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerLeft"
+          position="left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerRight"
+          position="right"
           @click="clickNotification"
         />
       </q-page>
@@ -353,12 +374,40 @@ export default {
   },
   mounted() {
     const lists = document.querySelectorAll(
-      ".q-notifications .q-notifications__list--top"
+      ".q-notifications .q-notifications__list"
     );
     for (const list of lists) {
-      list.style.display = "flex";
-      list.classList.remove("fixed");
-      this.$refs.gameNotificationContainer.$el.appendChild(list);
+      if (list.classList.contains("q-notifications__list--top")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerTopLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerTopRight.$el.appendChild(list);
+        }
+      } else if (list.classList.contains("q-notifications__list--bottom")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerBottomLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerBottomRight.$el.appendChild(list);
+        }
+      } else if (list.classList.contains("q-notifications__list--center")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerRight.$el.appendChild(list);
+        }
+      }
     }
   },
 };
