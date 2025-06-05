@@ -156,8 +156,8 @@
     <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
-    <GameNotifications />
-    <NoteNotifications />
+    <GameNotifications ref="gameNotifications" />
+    <NoteNotifications ref="noteNotifications" />
   </q-layout>
   <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
@@ -293,6 +293,11 @@ export default {
         event.target.matches(".q-notification.note .q-notification__message")
       ) {
         this.showText = true;
+      } else if (
+        event.target.matches(".q-notification.game") ||
+        event.target.matches(".q-notification.game .q-notification__message")
+      ) {
+        this.$refs.gameNotifications.$refs.notifications.hide();
       }
     },
     info() {

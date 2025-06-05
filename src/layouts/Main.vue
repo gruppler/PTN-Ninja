@@ -282,8 +282,8 @@
     <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
-    <GameNotifications />
-    <NoteNotifications />
+    <GameNotifications ref="gameNotifications" />
+    <NoteNotifications ref="noteNotifications" />
   </q-layout>
   <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
     No Game
@@ -537,6 +537,11 @@ export default {
       ) {
         this.textTab = "notes";
         this.showText = true;
+      } else if (
+        event.target.matches(".q-notification.game") ||
+        event.target.matches(".q-notification.game .q-notification__message")
+      ) {
+        this.$refs.gameNotifications.$refs.notifications.hide();
       }
     },
     newGame() {
