@@ -97,6 +97,7 @@ export const ADD_GAMES = async function (
     if (game.editingTPS !== undefined) {
       newGame.editingTPS = game.editingTPS;
     }
+
     try {
       await gamesDB.add("games", newGame);
     } catch (error) {
@@ -105,15 +106,17 @@ export const ADD_GAMES = async function (
       break;
     }
   }
-  commit("ADD_GAMES", { games, index });
-  if (!index) {
-    this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-      dispatch("SET_GAME", state.list[0]);
-    });
+  if (games.length) {
+    commit("ADD_GAMES", { games, index });
+    if (!index) {
+      this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
+        dispatch("SET_GAME", state.list[0]);
+      });
+    }
   }
 };
 
-export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
+export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch, getters }) {
   let ptn;
   try {
     ptn = await this.dispatch("ui/PASTE");
@@ -168,6 +171,7 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch }) {
         if (games.length > 1) {
           game.name += " - " + i18n.tc("Game x", i + 1);
         }
+        game.name = getters.uniqueName(game.name);
         return game;
       });
     } else if (Ply.test(ptn) || Linenum.test(ptn)) {

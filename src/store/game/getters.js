@@ -4,6 +4,7 @@ export const uniqueName =
   (state) =>
   (name, ignoreFirst = false) => {
     const names = state.list.slice(1 * ignoreFirst).map((game) => game.name);
+    console.log({ name, names });
     while (names.includes(name)) {
       if (/\(\d+\)$/.test(name)) {
         name = name.replace(/\((\d+)\)$/, (match, number) => {
@@ -14,6 +15,7 @@ export const uniqueName =
         name += " (1)";
       }
     }
+    console.log({ uniqueName: name });
     return name;
   };
 
