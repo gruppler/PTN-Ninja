@@ -172,9 +172,9 @@ export default class Ply extends Ptn {
   }
 
   hasBranch(branch) {
-    return (
+    return Boolean(
       this.branches.length &&
-      this.branches.find((ply) => ply.isInBranch(branch))
+        this.branches.find((ply) => ply.isInBranch(branch))
     );
   }
 
