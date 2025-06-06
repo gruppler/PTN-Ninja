@@ -1,5 +1,10 @@
 <template>
-  <Notifications v-if="show" :notifications="notifications" color="primary" />
+  <Notifications
+    v-if="show"
+    ref="notifications"
+    :notifications="notifications"
+    color="primary"
+  />
 </template>
 
 <script>
@@ -11,6 +16,7 @@ export default {
   computed: {
     show() {
       return (
+        !this.$store.state.ui.disableText &&
         this.$store.state.ui.notifyNotes &&
         (!this.$store.state.ui.showText ||
           this.$store.state.ui.textTab !== "notes")
@@ -34,8 +40,9 @@ export default {
       }
       return notes.map((note) => ({
         message: note.message,
-        classes: "note",
+        classes: "note cursor-pointer",
         color: "primary",
+        actions: [],
         textColor: this.$store.state.ui.theme.primaryDark
           ? "textLight"
           : "textDark",

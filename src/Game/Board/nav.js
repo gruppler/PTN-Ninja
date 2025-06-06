@@ -39,14 +39,8 @@ export default class BoardNavigation {
       } else if (ply.index === this.plies.length - 1) {
         this.checkGameEnd();
       }
-      if (this.isGameEnd || (this.nextPly && this.nextPly.branches.length)) {
-        this.game.saveBoardState();
-      }
     } else {
       this.setRoads(null);
-      if (ply.branches.length) {
-        this.game.saveBoardState();
-      }
     }
   }
 
@@ -271,61 +265,34 @@ export default class BoardNavigation {
         number: targetPly.move.number,
       };
 
-      const boardPly = this.game.plies[this.boardPly.id];
-
-      // Load a board state?
-      if (!boardPly.isInBranch(target.branch)) {
-        let parentPly = this.game.branches[target.branch];
-        while (parentPly && !(parentPly.id in this.game.boardStates)) {
-          // Find the closest branch that has a saved board state
-          parentPly = this.game.branches[parentPly.branches[0].branch];
-        }
-        if (
-          parentPly &&
-          parentPly.id in this.game.boardStates &&
-          "false" in this.game.boardStates[parentPly.id]
-        ) {
-          // Load the board state
-          this.setBoard(
-            this.game.boardStates[parentPly.id].false,
-            parentPly.id,
-            false
-          );
-        } else {
-          // Failed to find a close board state, so go to the beginning
-          // (This should theoretically never happen)
-          this.setBoard(this.game.boardStates[0].false, 0, false);
-        }
-      } else if (
-        plyID in this.game.boardStates &&
-        Math.abs(targetPly.index - this.ply.index) > this.size * this.size
-      ) {
-        // Load board state if it exists and is far enough away
-        if (!(isDone in this.game.boardStates[plyID])) {
-          isDone = !isDone;
-        }
-        this.setBoard(this.game.boardStates[plyID][isDone], plyID, isDone);
-      }
-
       // Set targetBranch if target is outside of it
       if (!targetPly.isInBranch(this.targetBranch)) {
         this.targetBranch = target.branch;
       }
 
-      if (this.ply.branches.includes(targetPly)) {
-        // Switch to the target branch if we're on a sibling
-        if (this.plyIsDone) {
-          this._undoPly(true);
+      // Go back until we're on a common branch or the first ply
+      while (this.ply.index > 0 && !targetPly.isInBranch(this.ply.branch)) {
+        this._undoPly();
+      }
+
+      // Switch branches
+      if (!targetPly.isInBranch(this.ply.branch)) {
+        let ply = this.ply.getBranch(this.targetBranch);
+        if (!ply) {
+          throw new Error("Could not find a path to the target ply");
         }
-        this._setPly(targetPly.id, false);
+        if (this.plyIsDone) {
+          this._undoPly();
+        }
+        this._setPly(ply.id, false);
       }
 
       if (this.ply.index < targetPly.index) {
-        while (this.ply.index < targetPly.index && this._doPly(true)) {
+        while (this.ply.index < targetPly.index && this._doPly()) {
           // Go forward until we reach the target ply
         }
       } else if (this.ply.index > targetPly.index) {
-        while (this.ply.index > targetPly.index && this._undoPly(true)) {
+        while (this.ply.index > targetPly.index && this._undoPly()) {
           // Go backward until we reach the target ply
         }
       }
@@ -333,9 +300,9 @@ export default class BoardNavigation {
       // Do or undo the target ply
       if (target.plyIsDone !== this.plyIsDone) {
         if (target.plyIsDone) {
-          this._doPly(true);
+          this._doPly();
         } else {
-          this._undoPly(true);
+          this._undoPly();
         }
       }
 

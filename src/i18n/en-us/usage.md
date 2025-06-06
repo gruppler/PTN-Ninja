@@ -28,19 +28,19 @@ You can load games (or moves) from your clipboard, files, PTN Ninja links, or Pl
 
 ::: tip
 
-Press <kbd>E</kbd> or **Right-click** the Game Selector's 'info' icon to edit the game metadata directly.
+Press <kbd>E</kbd> to edit the game metadata directly.
 
 :::
 
 :::
 
-- To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the main menu, to open the Load Game dialog.
+- To load an existing game, press <kbd>L</kbd>, or **click** the **+** button in the lower-right corner, to open the Load Game dialog.
   - To quickly load one or more games from files, press <kbd>Ctrl</kbd><kbd>O</kbd>.
   - To quickly load a game or branch from your clipboard, press <kbd>Ctrl</kbd><kbd>V</kbd> after copying TPS, full or partial PTN, a PTN Ninja link, a PlayTak game ID, or game JSON from TakBot.
-- To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the main menu, then select the New Game tab.
+- To create a new game, press <kbd>N</kbd>, or **click** the **+** button in the lower-right corner, then select the New Game tab.
   - Or, **drag** one or more **.ptn** or **.txt** files into the window.
 - Use the Game Selector in the top toolbar, or hotkeys, to switch between games.
-  - To quickly switch to the previous game, press <kbd>Alt</kbd><kbd>\\</kbd>, or **Right-click** the Floating Action Button.
+  - To quickly switch to the previous game, press <kbd>Alt</kbd><kbd>\\</kbd>, or **Right-click** the **+** button in the lower-right corner.
   - Press <kbd>/</kbd> to quickly search your games.
   - **Click** the game count to automatically close or download multiple games.
 
@@ -112,7 +112,7 @@ PTN Ninja enables you to navigate the timeline of a game freely.
 
 ::: tip
 
-The Play/Pause button can be hidden via **UI Preferences**.
+The Play/Pause button is hidden by default and can be shown via **UI Preferences**.
 
 :::
 
@@ -247,7 +247,7 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 ::: tip
 
-**Right-click** the Notes button in the header toolbar to toggle note notifications.
+**Right-click** the right-most button in the header toolbar to toggle note notifications.
 
 :::
 
@@ -267,8 +267,7 @@ Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers 
 
 :::
 
-- To find the Analysis panel, open the Notes panel (press <kbd>W</kbd>) and select the Analysis tab.
-- To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>.
+To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>.
 
 :::
 

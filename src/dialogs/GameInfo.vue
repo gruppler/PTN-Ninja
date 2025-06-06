@@ -5,7 +5,7 @@
         <template v-if="!$store.state.ui.embed" v-slot:buttons>
           <q-btn
             v-if="isDuplicable"
-            icon="open_in_new"
+            icon="copy"
             @click="duplicate"
             v-close-popup
             dense

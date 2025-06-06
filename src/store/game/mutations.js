@@ -4,6 +4,7 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Ply from "../../Game/PTN/Ply";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -263,7 +264,13 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
       }
     }
     game.insertPlies(plies, prev);
-    postMessage("INSERT_PLIES", plies, prev);
+    postMessage(
+      "INSERT_PLIES",
+      plies.map((ply) =>
+        ply.constructor === Ply ? ply.text : new Ply(ply, {}).text
+      ),
+      prev
+    );
   }
 };
 

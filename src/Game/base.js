@@ -153,7 +153,6 @@ export default class GameBase {
     this.editingTPS = editingTPS;
     this.defaultSize = defaultSize || 6;
     this.moves = [];
-    this.boardStates = {};
     this.branches = {};
     this.plies = [];
     this.chatlog = {};
@@ -495,7 +494,6 @@ export default class GameBase {
     }
 
     this.board.updateOutput();
-    this.saveBoardState();
 
     // Validate and generate TPS for each ply, set initial position
     try {
@@ -705,60 +703,6 @@ export default class GameBase {
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
       this.board.updateBoardOutput();
-    }
-  }
-
-  _saveBoardState(board, plyID, plyIsDone) {
-    if (!(plyID in this.boardStates)) {
-      this.boardStates[plyID] = { [plyIsDone]: Object.freeze(board) };
-    } else if (!(plyIsDone in this.boardStates[plyID])) {
-      this.boardStates[plyID][plyIsDone] = Object.freeze(board);
-    }
-  }
-
-  saveBoardState() {
-    let ply = this.board.ply;
-    // Save board state if it's not already saved
-    if (
-      ply &&
-      ply.id in this.boardStates &&
-      this.board.plyIsDone in this.boardStates[ply.id]
-    ) {
-      return;
-    }
-
-    const board = this.board.snapshot;
-    this._saveBoardState(board, ply ? ply.id : 0, this.board.plyIsDone);
-
-    if (!ply) {
-      return;
-    }
-
-    // Set aliases too
-    if (!this.board.plyIsDone) {
-      if (ply.branches.length) {
-        // Siblings
-        ply.branches.forEach((ply) =>
-          this._saveBoardState(board, ply.id, false)
-        );
-      }
-      // Previous ply
-      ply = this.board.prevPly;
-      if (ply) {
-        this._saveBoardState(board, ply.id, true);
-      }
-    } else {
-      // Next ply, plus all its siblings
-      ply = this.board.nextPly;
-      if (ply) {
-        if (ply.branches.length) {
-          ply.branches.forEach((ply) => {
-            this._saveBoardState(board, ply.id, false);
-          });
-        } else {
-          this._saveBoardState(board, ply.id, false);
-        }
-      }
     }
   }
 

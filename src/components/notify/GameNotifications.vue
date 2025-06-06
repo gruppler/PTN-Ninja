@@ -1,5 +1,9 @@
 <template>
-  <Notifications v-if="show" :notifications="notifications" />
+  <Notifications
+    ref="notifications"
+    v-if="show"
+    :notifications="notifications"
+  />
 </template>
 
 <script>
@@ -46,8 +50,10 @@ export default {
       }
       return alerts.map((alert) => ({
         message: alert.message,
+        classes: "game cursor-pointer",
         color: "player" + alert.player,
         icon: this.$store.getters["ui/playerIcon"](alert.player || "tie"),
+        actions: [],
         textColor: this.$store.state.ui.theme[`player${alert.player}Dark`]
           ? "textLight"
           : "textDark",

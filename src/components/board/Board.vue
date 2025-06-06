@@ -292,10 +292,7 @@ export default {
     },
     isPortrait() {
       return (
-        this.size &&
-        this.space &&
-        Math.abs(this.size.width - this.space.width) <
-          Math.abs(this.size.height - this.space.height)
+        this.size && this.space && this.space.width - this.size.width < 136
       );
     },
     highlighterEnabled() {

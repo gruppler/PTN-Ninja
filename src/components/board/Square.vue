@@ -250,8 +250,9 @@ export default {
     },
     checkValid() {
       this.valid =
-        this.isEditingTPS ||
-        this.$store.getters["game/isValidSquare"](this.square);
+        !this.$store.state.ui.disableBoard &&
+        (this.isEditingTPS ||
+          this.$store.getters["game/isValidSquare"](this.square));
     },
     select(alt = false) {
       // Highlighter

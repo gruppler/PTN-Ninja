@@ -222,6 +222,13 @@ export const url =
         delete options.ui.themeID;
         options.ui.theme = compressToEncodedURIComponent(theme);
       }
+      if (options.disableText) {
+        delete options.showText;
+      }
+      if (options.disablePTN) {
+        delete options.showPTN;
+        delete options.showAllBranches;
+      }
       Object.keys(options.ui).forEach((key) => {
         const value = options.ui[key];
         if (key in state.defaults && value !== state.defaults[key]) {
