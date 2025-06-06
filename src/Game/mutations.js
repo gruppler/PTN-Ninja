@@ -755,6 +755,8 @@ export default class GameMutations {
         if (isFunction(this.onInsertPly)) {
           if (ply.constructor === Ply) {
             ply = ply.text;
+          } else {
+            ply = new Ply(ply, {}).text;
           }
           this.onInsertPly(this, ply);
         }

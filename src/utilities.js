@@ -86,52 +86,61 @@ export const notify = (options) => {
     textColor: fg,
     position: "bottom",
     timeout: 0,
+    progress: true,
     actions: [{ icon: "close", color: fg }],
     ...options,
   });
 };
 
-export const notifyError = (error) => {
+export const notifyError = (error, options = {}) => {
   Notify.create({
     message: formatError(error),
     type: "negative",
     timeout: 0,
+    progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
+    ...options,
   });
 };
 
-export const notifySuccess = (success) => {
+export const notifySuccess = (success, options = {}) => {
   return Notify.create({
     message: formatSuccess(success),
     type: "positive",
     timeout: 0,
-    position: "top-right",
+    progress: true,
+    position: "bottom",
     multiLine: false,
     actions: [{ icon: "close", color: "textLight" }],
+    ...options,
   });
 };
 
-export const notifyWarning = (warning) => {
+export const notifyWarning = (warning, options = {}) => {
   return Notify.create({
     message: formatWarning(warning),
     type: "warning",
     icon: "warning",
     timeout: 0,
-    position: "top-right",
+    progress: true,
+    position: "bottom",
     multiLine: false,
     actions: [{ icon: "close", color: "textDark" }],
+    ...options,
   });
 };
 
-export const notifyHint = (hint) => {
+export const notifyHint = (hint, options = {}) => {
   return Notify.create({
     message: formatHint(hint),
     type: "info",
     timeout: 0,
-    position: "top-right",
+    progress: true,
+    position: "bottom",
     multiLine: false,
     actions: [{ icon: "close", color: "textLight" }],
+    ...options,
   });
 };
 

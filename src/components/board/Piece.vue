@@ -63,6 +63,7 @@ export default {
     selectable() {
       return (
         !this.square &&
+        !this.$store.state.ui.disableBoard &&
         (this.$store.state.game.editingTPS !== undefined ||
           this.piece.color ===
             this.game.position[
