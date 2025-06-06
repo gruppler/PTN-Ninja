@@ -192,19 +192,19 @@ For example:
 
 #### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
-- Issue an error notification
+- Issue an error notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
-- Issue a success notification
+- Issue a success notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_WARNING` (value: `<String>|<Object>`)
 
-- Issue a warning notification
+- Issue a warning notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
-- Issue a hint notification
+- Issue a hint notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `ROTATE_180`
 
@@ -311,6 +311,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the PTN panel
 
+#### `disablePTN` (default: `false`)
+
+- Remove the PTN panel
+
 #### `showRoads` (default: `true`)
 
 - Show road connections
@@ -323,9 +327,21 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the Notes panel
 
+#### `disableText` (default: `false`)
+
+- Remove the Notes panel
+
 #### `unplayedPieces` (default: `true`)
 
 - Show unplayed pieces
+
+#### `disableBoard` (default: `false`)
+
+- Disable board interactions
+
+#### `disableNavigation` (default: `false`)
+
+- Disable game navigation, undo/redo, and ply deletion
 
 ## Legal
 

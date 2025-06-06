@@ -3,6 +3,7 @@
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
+          v-if="!$store.state.ui.disablePTN"
           icon="moves"
           @click="showPTN = !showPTN"
           :color="showPTN ? 'primary' : ''"
@@ -11,7 +12,11 @@
         >
           <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
         </q-btn>
-        <q-toolbar-title id="title" class="ellipsis-2-lines">
+        <q-toolbar-title
+          id="title"
+          class="ellipsis-2-lines"
+          :class="{ 'q-ml-md': $store.state.ui.disablePTN }"
+        >
           {{ title }}
         </q-toolbar-title>
         <q-btn icon="info" @click.prevent="info" stretch flat>
@@ -21,6 +26,7 @@
           <hint>{{ $t("app_title") }}</hint>
         </q-btn>
         <q-btn
+          v-if="!$store.state.ui.disableText"
           :icon="notifyNotes ? 'notes' : 'notes_off'"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
@@ -50,21 +56,52 @@
         >
           <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
-        <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles v-if="!isDialogShowing" />
+        <q-page-sticky position="top" :offset="[0, 6]">
+          <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
+        </q-page-sticky>
+        <q-page-sticky position="right" :offset="[6, 0]">
+          <BoardToggles
+            v-if="!$store.state.ui.isPortrait && !isDialogShowing"
+          />
         </q-page-sticky>
         <q-page-sticky position="bottom" :offset="[0, 0]">
-          <CurrentMove />
+          <CurrentMove v-if="!$store.state.ui.disablePTN" />
         </q-page-sticky>
         <q-page-sticky
-          ref="gameNotificationContainer"
+          ref="notificationContainerTopLeft"
+          position="top-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerTopRight"
           position="top-right"
-          :offset="[0, 0]"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomLeft"
+          position="bottom-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomRight"
+          position="bottom-right"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerLeft"
+          position="left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerRight"
+          position="right"
+          @click="clickNotification"
         />
       </q-page>
     </q-page-container>
 
     <q-drawer
+      v-if="!$store.state.ui.disablePTN"
       id="left-drawer"
       v-model="showPTN"
       side="left"
@@ -82,7 +119,13 @@
           <PTN class="absolute-fit" />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <UndoButtons spread stretch flat unelevated />
+          <UndoButtons
+            v-if="!$store.state.ui.disableNavigation"
+            spread
+            stretch
+            flat
+            unelevated
+          />
           <EvalButtons class="full-width" spread stretch flat unelevated />
         </q-toolbar>
       </div>
@@ -90,6 +133,7 @@
     </q-drawer>
 
     <q-drawer
+      v-if="!$store.state.ui.disableText"
       id="right-drawer"
       v-model="showText"
       side="right"
@@ -102,7 +146,7 @@
       <Notes ref="notes" class="fit" />
     </q-drawer>
 
-    <q-footer class="bg-ui">
+    <q-footer v-if="!$store.state.ui.disableNavigation" class="bg-ui">
       <Scrubber />
       <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
         <PlayControls ref="playControls" />
@@ -112,8 +156,8 @@
     <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
-    <GameNotifications />
-    <NoteNotifications />
+    <GameNotifications ref="gameNotifications" />
+    <NoteNotifications ref="noteNotifications" />
   </q-layout>
   <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
@@ -243,6 +287,19 @@ export default {
       this.$store.dispatch("game/SET_GAME", game);
       this.$router.replace("/");
     },
+    clickNotification(event) {
+      if (
+        event.target.matches(".q-notification.note") ||
+        event.target.matches(".q-notification.note .q-notification__message")
+      ) {
+        this.showText = true;
+      } else if (
+        event.target.matches(".q-notification.game") ||
+        event.target.matches(".q-notification.game .q-notification__message")
+      ) {
+        this.$refs.gameNotifications.$refs.notifications.hide();
+      }
+    },
     info() {
       this.$router.push({ name: "info-view" });
     },
@@ -294,7 +351,9 @@ export default {
       switch (srcKey) {
         case "game/UNDO":
         case "game/REDO":
-          this.$store.dispatch(srcKey);
+          if (!this.$store.state.ui.disableNavigation) {
+            this.$store.dispatch(srcKey);
+          }
           break;
       }
     },
@@ -320,12 +379,40 @@ export default {
   },
   mounted() {
     const lists = document.querySelectorAll(
-      ".q-notifications .q-notifications__list--top"
+      ".q-notifications .q-notifications__list"
     );
     for (const list of lists) {
-      list.style.display = "flex";
-      list.classList.remove("fixed");
-      this.$refs.gameNotificationContainer.$el.appendChild(list);
+      if (list.classList.contains("q-notifications__list--top")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerTopLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerTopRight.$el.appendChild(list);
+        }
+      } else if (list.classList.contains("q-notifications__list--bottom")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerBottomLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerBottomRight.$el.appendChild(list);
+        }
+      } else if (list.classList.contains("q-notifications__list--center")) {
+        if (list.classList.contains("items-start")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerLeft.$el.appendChild(list);
+        } else if (list.classList.contains("items-end")) {
+          list.style.display = "flex";
+          list.classList.remove("fixed");
+          this.$refs.notificationContainerRight.$el.appendChild(list);
+        }
+      }
     }
   },
 };

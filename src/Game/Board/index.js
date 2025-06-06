@@ -103,10 +103,6 @@ export default class Board extends Aggregation(
     Object.defineProperty(this, "number", {
       get: memoize(this._getNumber, () => this.plyID),
     });
-    Object.defineProperty(this, "snapshot", {
-      get: memoize(this._getSnapshot, () => JSON.stringify(this.boardPly)),
-      set: this.setBoard,
-    });
     Object.defineProperty(this, "tps", {
       get: memoize(this.getTPS, () => JSON.stringify(this.boardPly)),
     });
@@ -232,10 +228,9 @@ export default class Board extends Aggregation(
 
   branchKey() {
     if (this.ply) {
-      return (
-        `${this.targetBranch}${this.game.plies.length}` +
+      return `${this.targetBranch}//${this.game.plies.length}//${Number(
         this.ply.isInBranch(this.targetBranch)
-      );
+      )}//${Number(this.ply.hasBranch(this.targetBranch))}`;
     } else {
       return this.plyID;
     }
@@ -668,19 +663,6 @@ export default class Board extends Aggregation(
     this.pieces.played[2].cap.length = 0;
   }
 
-  _getSnapshot() {
-    return {
-      1: {
-        flat: this.pieces.played[1].flat.map((piece) => piece.state),
-        cap: this.pieces.played[1].cap.map((piece) => piece.state),
-      },
-      2: {
-        flat: this.pieces.played[2].flat.map((piece) => piece.state),
-        cap: this.pieces.played[2].cap.map((piece) => piece.state),
-      },
-    };
-  }
-
   getTPS(player = this.turn, number = null) {
     const grid = this.squares
       .map((row) =>
@@ -707,24 +689,6 @@ export default class Board extends Aggregation(
     }
 
     return `${grid} ${player} ${number}`;
-  }
-
-  setBoard(pieces, plyID, plyIsDone) {
-    this.clearBoard();
-    [1, 2].forEach((color) =>
-      ["flat", "cap"].forEach((type) => {
-        pieces[color][type].forEach((state) => {
-          this.playPiece(color, state.type, state, true);
-        });
-      })
-    );
-    this.plyID = plyID;
-    this.plyIsDone = plyIsDone;
-    const ply = this.ply;
-    this.updateSquareConnections();
-    this.setRoads(ply && ply.result ? ply.result.roads : null);
-    this.updateBoardOutput();
-    this.updatePositionOutput();
   }
 
   get boardPly() {

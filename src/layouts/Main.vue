@@ -14,12 +14,87 @@
         <q-toolbar-title class="q-pa-none">
           <GameSelector ref="gameSelector">
             <q-icon
-              name="info"
-              @click.stop.prevent="info"
-              @click.right.prevent.stop="edit"
+              name="menu_vertical"
+              @click.stop.prevent
+              @click.right.prevent.stop
               class="q-field__focusable-action q-mr-sm"
             >
-              <hint>{{ $t("View Game Info") }}</hint>
+              <q-menu
+                transition-show="none"
+                transition-hide="none"
+                auto-close
+                square
+              >
+                <q-list>
+                  <!-- Info -->
+                  <q-item @click="info" clickable>
+                    <q-item-section side>
+                      <q-icon name="info" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("View Game Info") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Edit -->
+                  <q-item @click="edit" clickable>
+                    <q-item-section side>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Edit Game") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Duplicate -->
+                  <q-item @click="duplicate" clickable>
+                    <q-item-section side>
+                      <q-icon name="copy" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Duplicate") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-separator />
+                  <!-- Share -->
+                  <q-item @click="share" clickable>
+                    <q-item-section side>
+                      <q-icon name="share" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Share") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- UI Preferences -->
+                  <q-item @click="settings" clickable>
+                    <q-item-section side>
+                      <q-icon name="settings" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("UI Preferences") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <!-- Help -->
+                  <q-item @click="help" clickable>
+                    <q-item-section side>
+                      <q-icon name="help" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("Help") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-icon>
           </GameSelector>
         </q-toolbar-title>
@@ -56,16 +131,56 @@
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
-        <q-page-sticky position="top-right" :offset="[6, 6]">
-          <BoardToggles v-if="!isDialogShowing" />
+        <q-page-sticky position="top" :offset="[0, 6]">
+          <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
+        </q-page-sticky>
+        <q-page-sticky position="right" :offset="[6, 0]">
+          <BoardToggles
+            v-if="!$store.state.ui.isPortrait && !isDialogShowing"
+          />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <Menu @input="menuAction" @click.right.prevent="switchGame" />
+          <q-btn
+            color="primary"
+            :text-color="
+              $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+            "
+            icon="add"
+            @click="addGame"
+            @click.right.prevent="switchGame"
+            fab
+          />
+          <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
         <q-page-sticky
-          ref="gameNotificationContainer"
+          ref="notificationContainerTopLeft"
+          position="top-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerTopRight"
           position="top-right"
-          :offset="[0, 0]"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomLeft"
+          position="bottom-left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerBottomRight"
+          position="bottom-right"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerLeft"
+          position="left"
+          @click="clickNotification"
+        />
+        <q-page-sticky
+          ref="notificationContainerRight"
+          position="right"
+          @click="clickNotification"
         />
       </q-page>
     </q-page-container>
@@ -115,13 +230,13 @@
           align="justify"
           inline-label
         >
-          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
           <q-tab
             v-if="hasAnalysis"
             name="analysis"
             icon="analysis"
             :label="$t('Analysis')"
           />
+          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
           <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
         </q-tabs>
         <q-tab-panels
@@ -130,11 +245,11 @@
           keep-alive
           animated
         >
-          <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" recess />
-          </q-tab-panel>
           <q-tab-panel name="analysis">
             <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          </q-tab-panel>
+          <q-tab-panel name="notes">
+            <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
@@ -167,8 +282,8 @@
     <router-view ref="dialog" go-back no-route-dismiss />
 
     <ErrorNotifications :errors="errors" />
-    <GameNotifications />
-    <NoteNotifications />
+    <GameNotifications ref="gameNotifications" />
+    <NoteNotifications ref="noteNotifications" />
   </q-layout>
   <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
     No Game
@@ -203,7 +318,6 @@ import ShareButton from "../components/controls/ShareButton";
 import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
-import Menu from "../components/controls/Menu";
 import Chat from "../components/drawers/Chat";
 
 import Game from "../Game";
@@ -233,7 +347,6 @@ export default {
     GameSelector,
     Highlighter,
     PieceSelector,
-    Menu,
   },
   props: ["ptn", "state", "name", "gameID"],
   data() {
@@ -284,7 +397,14 @@ export default {
     },
     textTab: {
       get() {
-        return this.$store.state.ui.textTab;
+        let tab = this.$store.state.ui.textTab;
+        if (tab === "chat" && !this.hasChat) {
+          tab = "analysis";
+        }
+        if (tab === "analysis" && !this.hasAnalysis) {
+          tab = this.hasChat ? "chat" : "notes";
+        }
+        return tab;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["textTab", value]);
@@ -299,14 +419,16 @@ export default {
       },
     },
     textPanelIcon() {
-      if (this.textTab === "notes") {
-        return this.notifyNotes ? "notes" : "notes_off";
-      } else if (this.textTab === "chat") {
-        return "chat";
-      } else if (this.textTab === "analysis") {
-        return "analysis";
+      switch (this.textTab) {
+        case "notes":
+          return this.notifyNotes ? "notes" : "notes_off";
+        case "chat":
+          return "chat";
+        case "analysis":
+          return "analysis";
+        default:
+          return "";
       }
-      return "";
     },
     textPanelHint() {
       if (this.textTab === "notes") {
@@ -371,13 +493,55 @@ export default {
         }
 
         const lists = document.querySelectorAll(
-          ".q-notifications .q-notifications__list--top"
+          ".q-notifications .q-notifications__list"
         );
         for (const list of lists) {
-          list.style.display = "flex";
-          list.classList.remove("fixed");
-          this.$refs.gameNotificationContainer.$el.appendChild(list);
+          if (list.classList.contains("q-notifications__list--top")) {
+            if (list.classList.contains("items-start")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerTopLeft.$el.appendChild(list);
+            } else if (list.classList.contains("items-end")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerTopRight.$el.appendChild(list);
+            }
+          } else if (list.classList.contains("q-notifications__list--bottom")) {
+            if (list.classList.contains("items-start")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerBottomLeft.$el.appendChild(list);
+            } else if (list.classList.contains("items-end")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerBottomRight.$el.appendChild(list);
+            }
+          } else if (list.classList.contains("q-notifications__list--center")) {
+            if (list.classList.contains("items-start")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerLeft.$el.appendChild(list);
+            } else if (list.classList.contains("items-end")) {
+              list.style.display = "flex";
+              list.classList.remove("fixed");
+              this.$refs.notificationContainerRight.$el.appendChild(list);
+            }
+          }
         }
+      }
+    },
+    clickNotification(event) {
+      if (
+        event.target.matches(".q-notification.note") ||
+        event.target.matches(".q-notification.note .q-notification__message")
+      ) {
+        this.textTab = "notes";
+        this.showText = true;
+      } else if (
+        event.target.matches(".q-notification.game") ||
+        event.target.matches(".q-notification.game .q-notification__message")
+      ) {
+        this.$refs.gameNotifications.$refs.notifications.hide();
       }
     },
     newGame() {
@@ -474,32 +638,6 @@ export default {
     },
     redo() {
       return this.$store.dispatch("game/REDO");
-    },
-    menuAction(action) {
-      switch (action) {
-        case "help":
-          this.$router.push({ name: "help" });
-          break;
-        case "account":
-          if (this.isAnonymous) {
-            this.$router.push({ name: "login" });
-          } else {
-            this.$router.push({ name: "account" });
-          }
-          break;
-        case "settings":
-          this.$router.push({ name: "preferences" });
-          break;
-        case "share":
-          this.share();
-          break;
-        case "add":
-          this.$router.push({ name: "add", params: { tab: "load" } });
-          break;
-      }
-    },
-    share() {
-      this.$refs.shareButton.share();
     },
     uiShortkey({ srcKey }) {
       if (!this.disabledOptions.includes(srcKey)) {
@@ -687,9 +825,9 @@ export default {
           }
           break;
         case "toggleText":
-          let tabs = ["notes", "analysis"];
+          let tabs = ["analysis", "notes"];
           if (this.hasChat) {
-            tabs.push("chat");
+            tabs.unshift("chat");
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
@@ -701,11 +839,33 @@ export default {
           break;
       }
     },
+    addGame() {
+      this.$router.push({ name: "add", params: { tab: "load" } });
+    },
+    account() {
+      if (this.isAnonymous) {
+        this.$router.push({ name: "login" });
+      } else {
+        this.$router.push({ name: "account" });
+      }
+    },
     info() {
       this.$router.push({ name: "info-view" });
     },
     edit() {
       this.$router.push({ name: "info-edit" });
+    },
+    duplicate() {
+      this.$store.dispatch("game/ADD_GAME", this.$game);
+    },
+    share() {
+      this.$refs.shareButton.share();
+    },
+    settings() {
+      this.$router.push({ name: "preferences" });
+    },
+    help() {
+      this.$router.push({ name: "help" });
     },
     switchGame(event) {
       if (
