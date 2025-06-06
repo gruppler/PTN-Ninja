@@ -33,6 +33,7 @@ export default class TiltakWasm extends Bot {
             worker = null;
           }
           this.status.isRunning = false;
+          this.status.isInteractiveRunning = false;
           this.status.isReady = false;
           this.status.time = null;
           this.status.nps = null;
@@ -74,6 +75,7 @@ export default class TiltakWasm extends Bot {
     // Pause if game has ended
     if (this.isGameEnd) {
       this.isRunning = false;
+      this.isInteractiveRunning = false;
       this.status.nextTPS = null;
       return;
     }
@@ -118,6 +120,7 @@ export default class TiltakWasm extends Bot {
     worker.postMessage(posMessage);
     worker.postMessage("go infinite");
     this.status.isRunning = true;
+    this.status.isInteractiveRunning = true;
   }
 
   //#region handleResponse
@@ -175,7 +178,7 @@ export default class TiltakWasm extends Bot {
           Number(results.score) * (initialPlayer === 1 ? 1 : -1);
       }
       if (results.pv.length) {
-        return super.handleResults(results);
+        return super.storeResults(results);
       }
     }
   }
@@ -186,6 +189,7 @@ export default class TiltakWasm extends Bot {
       try {
         worker.postMessage("stop");
         this.status.isRunning = false;
+        this.status.isInteractiveRunning = false;
         this.status.nextTPS = null;
       } catch (error) {
         await worker.terminate();

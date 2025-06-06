@@ -40,7 +40,10 @@ export default class Bot {
 
     this.status = {
       isReady: false,
-      isEnabled: false,
+      isInteractiveEnabled: false,
+      isInteractiveRunning: false,
+      isAnalyzingPosition: false,
+      isAnalyzingGame: false,
       isRunning: false,
       progress: 0,
       analyzingPly: null,
@@ -55,9 +58,31 @@ export default class Bot {
     };
 
     this.positions = {};
+    this.unwatchPosition = null;
 
     this.isInitialized = false;
     this.init();
+  }
+
+  get isInteractiveEnabled() {
+    return this.status.isInteractiveEnabled;
+  }
+  set isInteractiveEnabled(value) {
+    if (!this.isInteractive || this.status.isInteractiveEnabled === value) {
+      return;
+    }
+    if (value) {
+      this.unwatchPosition = store.watch(
+        (state) => state.game.position.tps,
+        (tps) => this.analyzePosition()
+      );
+      this.analyzePosition();
+    } else if (this.unwatchPosition) {
+      this.terminate();
+      this.unwatchPosition();
+      this.unwatchPosition = null;
+    }
+    this.status.isInteractiveEnabled = value;
   }
 
   get settings() {
@@ -156,7 +181,7 @@ export default class Bot {
     return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
   }
 
-  handleResults({
+  storeResults({
     hash = this.getSettingsHash(),
     tps,
     pv = [],

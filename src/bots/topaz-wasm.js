@@ -69,7 +69,7 @@ export default class TopazWasm extends Bot {
     // const initialPlayer = Number(tps.split(" ")[1]);
     // const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
 
-    return super.handleResults({
+    return super.storeResults({
       hash,
       tps,
       pv,

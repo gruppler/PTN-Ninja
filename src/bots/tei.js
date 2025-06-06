@@ -60,7 +60,8 @@ export default class TeiBot extends Bot {
           };
           socket.onclose = () => {
             console.info(`Disconnected from ${url}`);
-            this.status.isEnabled = false;
+            this.isInteractiveEnabled = false;
+            this.status.isInteractiveRunning = false;
             this.status.isConnecting = false;
             this.status.isConnected = false;
             this.status.isRunning = false;
@@ -78,7 +79,8 @@ export default class TeiBot extends Bot {
 
           // Error handling
           socket.onerror = (error) => {
-            this.status.isEnabled = false;
+            this.isInteractiveEnabled = false;
+            this.status.isInteractiveRunning = false;
             this.status.isConnecting = false;
             this.status.isConnected = false;
             this.status.isRunning = false;
@@ -102,7 +104,7 @@ export default class TeiBot extends Bot {
             }
             if (data === "teiok" || data === "readyok") {
               this.status.isReady = true;
-              if (this.status.isEnabled) {
+              if (this.isInteractiveEnabled) {
                 this.requestTeiSuggestions();
               }
             }
@@ -187,7 +189,7 @@ export default class TeiBot extends Bot {
     }
     this.send(posMessage);
     this.send(`go infinite`);
-    this.status.isRunning = true;
+    this.status.isInteractiveRunning = true;
   }
 
   //#region handleResponse
@@ -201,7 +203,7 @@ export default class TeiBot extends Bot {
 
     if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isRunning = false;
+      this.status.isInteractiveRunning = false;
       if (this.status.tps === this.status.nextTPS) {
         // No position queued
         this.status.tps = null;
@@ -223,7 +225,7 @@ export default class TeiBot extends Bot {
         nodes: null,
       };
 
-      this.status.isRunning = true;
+      this.status.isInteractiveRunning = true;
       const keys = /^(pv|time|nps|depth|seldepth|score|nodes)$/i;
       let key = "";
       for (const value of response.split(" ")) {
@@ -245,7 +247,7 @@ export default class TeiBot extends Bot {
           Number(results.score) * (initialPlayer === 1 ? 1 : -1);
       }
       if (results.pv.length) {
-        return super.handleResults(results);
+        return super.storeResults(results);
       }
     }
   }
@@ -257,6 +259,7 @@ export default class TeiBot extends Bot {
         if (this.status.isConnected) {
           this.send("stop");
         }
+        this.status.isInteractiveRunning = false;
         this.status.isRunning = false;
         this.status.nps = null;
         this.status.nextTPS = null;

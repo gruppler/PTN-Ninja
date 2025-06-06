@@ -215,7 +215,7 @@
             v-ripple
           >
             <q-item-section avatar>
-              <q-spinner v-if="bot.status.isRunning" size="sm" />
+              <q-spinner v-if="bot.status.isInteractiveRunning" size="sm" />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -227,7 +227,7 @@
                 {{ $t("tei.by") }} {{ bot.meta.author }}
               </q-item-label>
             </q-item-section>
-            <q-item-section v-if="bot.status.isEnabled" side>
+            <q-item-section v-if="bot.isInteractiveEnabled" side>
               <div v-if="bot.status.time !== null" class="text-caption">
                 {{ $n((bot.status.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
@@ -238,7 +238,7 @@
               </div>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="bot.status.isEnabled" />
+              <q-toggle v-model="bot.isInteractiveEnabled" />
             </q-item-section>
           </q-item>
           <q-btn
@@ -259,7 +259,7 @@
           <q-btn
             v-if="!bot.isFullyAnalyzed && plies.length"
             @click="bot.analyzeGame()"
-            :loading="bot.status.isRunning"
+            :loading="bot.status.isAnalyzingGame"
             :percentage="bot.status.progress"
             class="full-width"
             color="primary"
@@ -281,7 +281,7 @@
           <q-btn
             v-if="!suggestions.length && !isGameEnd"
             @click="bot.analyzePosition(bot.secondsToThink.short)"
-            :loading="bot.status.isRunning"
+            :loading="bot.status.isAnalyzingPosition"
             class="full-width"
             color="primary"
             icon="board"
@@ -294,7 +294,7 @@
         <template v-else-if="bot && bot.isInteractive">
           <q-item class="interactive-control" tag="label" clickable v-ripple>
             <q-item-section avatar>
-              <q-spinner v-if="bot.status.isRunning" size="sm" />
+              <q-spinner v-if="bot.status.isInteractiveRunning" size="sm" />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -302,7 +302,7 @@
                 $t("analysis.interactiveAnalysis")
               }}</q-item-label>
             </q-item-section>
-            <q-item-section v-if="bot.status.isEnabled" side>
+            <q-item-section v-if="bot.isInteractiveEnabled" side>
               <div v-if="bot.status.time !== null" class="text-caption">
                 {{ $n((bot.status.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
@@ -313,7 +313,7 @@
               </div>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="bot.status.isEnabled" />
+              <q-toggle v-model="bot.isInteractiveEnabled" />
             </q-item-section>
           </q-item>
         </template>
@@ -326,18 +326,20 @@
               (!suggestions.length ||
                 bot.getSettingsHash() !== suggestions[0].hash)
             "
-            @click="bot.status.isRunning ? null : bot.analyzePosition()"
+            @click="
+              bot.status.isAnalyzingPosition ? null : bot.analyzePosition()
+            "
             :percentage="bot.status.progress"
             class="full-width"
             color="primary"
             icon="board"
             :label="$t('analysis.Analyze Position')"
-            :loading="bot.status.isRunning"
-            :ripple="!bot.status.isRunning"
+            :loading="bot.status.isAnalyzingPosition"
+            :ripple="!bot.status.isAnalyzingPosition"
             stretch
           />
           <PlyChip
-            v-if="bot.status.isRunning && bot.status.analyzingPly"
+            v-if="bot.status.isAnalyzingPosition && bot.status.analyzingPly"
             :ply="allPlies[bot.status.analyzingPly.id]"
             @click.stop="goToAnalysisPly"
             no-branches
@@ -345,7 +347,7 @@
             class="absolute-left"
           />
           <q-btn
-            v-if="bot.status.isRunning"
+            v-if="bot.status.isAnalyzingPosition"
             :label="$t('Cancel')"
             @click.stop="bot.terminate()"
             class="absolute-right"
@@ -417,7 +419,7 @@
             )
           "
           @click="bot.analyzePosition(bot.secondsToThink.long)"
-          :loading="bot.status.isRunning"
+          :loading="bot.status.isAnalyzingPosition"
           class="full-width"
           color="primary"
           stretch
@@ -529,20 +531,6 @@ export default {
   },
 
   watch: {
-    "bot.status.isEnabled"(isEnabled) {
-      if (this.bot.isInteractive) {
-        if (isEnabled) {
-          this.bot.analyzePosition();
-        } else {
-          this.bot.terminate();
-        }
-      }
-    },
-    tps() {
-      if (this.bot.isInteractive && this.bot.status.isEnabled) {
-        this.bot.analyzePosition();
-      }
-    },
     suggestions(suggestions) {
       const suggestion = suggestions[0];
       if (suggestion && "evaluation" in suggestion) {
@@ -567,9 +555,8 @@ export default {
     bot(newBot, oldBot) {
       if (oldBot && oldBot.id !== newBot.id) {
         // Stop interactive analysis when switching bots
-        if (oldBot.isInteractive && oldBot.status.isEnabled) {
-          oldBot.status.isEnabled = false;
-          oldBot.terminate();
+        if (oldBot.isInteractive && oldBot.isInteractiveEnabled) {
+          oldBot.isInteractiveEnabled = false;
         }
       }
     },

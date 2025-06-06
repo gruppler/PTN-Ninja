@@ -36,7 +36,8 @@ export default class TiltakCloud extends Bot {
   //#region analyzePosition
   async analyzePosition(secondsToThink) {
     try {
-      this.loadingTiltakMoves = true;
+      this.status.isRunning = true;
+      this.status.isAnalyzingPosition = true;
       this.analyzingPly = this.ply;
       const tps = this.tps;
       const komi = this.komi;
@@ -49,7 +50,8 @@ export default class TiltakCloud extends Bot {
         error,
       });
     } finally {
-      this.loadingTiltakMoves = false;
+      this.status.isRunning = false;
+      this.status.isAnalyzingPosition = false;
     }
   }
 
@@ -61,6 +63,7 @@ export default class TiltakCloud extends Bot {
     }
     try {
       this.status.isRunning = true;
+      this.status.isAnalyzingGame = true;
       this.status.progress = 0;
       const concurrency = 10;
       const komi = this.komi;
@@ -94,6 +97,7 @@ export default class TiltakCloud extends Bot {
       this.handleError(error);
     } finally {
       this.status.isRunning = false;
+      this.status.isAnalyzingGame = false;
     }
   }
 
