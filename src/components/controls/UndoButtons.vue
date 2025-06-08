@@ -28,13 +28,16 @@ export default {
     };
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     canUndo() {
-      return this.$store.state.game.historyIndex > 0;
+      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
     },
     canRedo() {
       return (
         this.$store.state.game.historyIndex <
-        this.$store.state.game.history.length
+          this.$store.state.game.history.length && !this.isBoardDisabled
       );
     },
   },
