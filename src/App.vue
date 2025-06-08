@@ -62,7 +62,6 @@ export default {
             this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
           });
           break;
-        case "TOGGLE_UI":
         case "SHOW_NAMES":
           this.$refs.layout.showNames = data.value;
           break;
@@ -101,6 +100,7 @@ export default {
         case "CANCEL_MOVE":
           this.$store.dispatch("game/" + data.action);
           break;
+        case "TOGGLE_UI":
         case "NOTIFY":
         case "NOTIFY_ERROR":
         case "NOTIFY_SUCCESS":
