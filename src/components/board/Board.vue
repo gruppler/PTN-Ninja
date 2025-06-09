@@ -183,6 +183,7 @@ export default {
         this.isDialogOpen ||
         this.isHighlighting ||
         this.isEditingTPS ||
+        this.$store.state.ui.disableBoard ||
         ($gameSelector &&
           $gameSelector.$refs.select &&
           $gameSelector.$refs.select.menu)
