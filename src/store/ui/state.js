@@ -47,6 +47,7 @@ let defaults = {
   axisLabels: true,
   board3D: false,
   boardRotation: [0, 0.65],
+  boardSize: { width: 0, height: 0 },
   boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
   disableBoard: false,
