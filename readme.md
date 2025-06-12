@@ -82,6 +82,10 @@ For example:
 
 - Replace the current game with the provided PTN
 
+#### `SET_PLAYER` (value: `1|2`)
+
+- Set the user as player 1 or 2, disabling input during the opponent's turn.
+
 #### `DELETE_PLY` (value: `<Number>`)
 
 - Delete the ply specified by ID

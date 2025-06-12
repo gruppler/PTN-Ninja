@@ -12,7 +12,12 @@
         flat
         :color="fg"
         :ripple="false"
-        :disable="!position.ply || plyInProgress || isBoardDisabled"
+        :disable="
+          !position.ply ||
+          plyInProgress ||
+          isBoardDisabled ||
+          (player && position.ply.player !== player)
+        "
         icon="backspace"
       >
         <hint v-if="position.ply && !plyInProgress">
@@ -158,6 +163,9 @@ export default {
     };
   },
   computed: {
+    player() {
+      return this.$store.state.game.config.player;
+    },
     position() {
       return this.$store.state.game.position;
     },

@@ -67,6 +67,7 @@ export default {
           break;
         case "SET_GAME":
         case "SET_CURRENT_PTN":
+        case "SET_PLAYER":
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
         case "DELETE_PLY":

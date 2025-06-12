@@ -620,6 +620,15 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
   });
 };
 
+export const SET_PLAYER = function ({ commit }, player) {
+  const game = Vue.prototype.$game;
+  player = Number(player) || null;
+  commit("SAVE_CONFIG", {
+    game,
+    config: { ...game.config, player },
+  });
+};
+
 export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("APPLY_TRANSFORM", transform);
