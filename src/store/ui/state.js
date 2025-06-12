@@ -54,6 +54,7 @@ let defaults = {
   disableNavigation: false,
   disablePTN: false,
   disableText: false,
+  disableUndo: false,
   editingBranch: "",
   editHeader: false,
   firstMoveNumber: 1,

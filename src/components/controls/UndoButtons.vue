@@ -3,14 +3,14 @@
     <q-btn
       @click="$store.dispatch('game/UNDO')"
       icon="undo"
-      :disabled="!canUndo"
+      :disable="!canUndo"
     >
       <hint v-if="canUndo">{{ $t("Undo") }}</hint>
     </q-btn>
     <q-btn
       @click="$store.dispatch('game/REDO')"
       icon="redo"
-      :disabled="!canRedo"
+      :disable="!canRedo"
     >
       <hint v-if="canRedo">{{ $t("Redo") }}</hint>
     </q-btn>

@@ -710,7 +710,7 @@ export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
 };
 
 export const UNDO = function ({ commit, dispatch }) {
-  if (this.state.ui.disableBoard) {
+  if (this.state.ui.disableUndo || this.state.ui.disableBoard) {
     return;
   }
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
@@ -720,7 +720,7 @@ export const UNDO = function ({ commit, dispatch }) {
 };
 
 export const REDO = function ({ commit, dispatch }) {
-  if (this.state.ui.disableBoard) {
+  if (this.state.ui.disableUndo || this.state.ui.disableBoard) {
     return;
   }
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {

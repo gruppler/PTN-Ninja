@@ -113,7 +113,9 @@
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <UndoButtons
-            v-if="!$store.state.ui.disableNavigation"
+            v-if="
+              !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
+            "
             spread
             stretch
             flat
