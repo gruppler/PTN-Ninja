@@ -101,6 +101,15 @@
       <smooth-reflow>
         <q-item v-show="!config.ui.disableNavigation" tag="label" v-ripple>
           <q-item-section>
+            <q-item-label>{{ $t("Disable Undo") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.disableUndo" />
+          </q-item-section>
+        </q-item>
+
+        <q-item v-show="!config.ui.disableNavigation" tag="label" v-ripple>
+          <q-item-section>
             <q-item-label>{{ $t("Play Controls") }}</q-item-label>
           </q-item-section>
           <q-item-section side>

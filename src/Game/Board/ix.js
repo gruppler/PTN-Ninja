@@ -8,6 +8,7 @@ export default class BoardIX {
     const piece = square.piece;
 
     if (this.selected.pieces.length) {
+      // Piece selected
       if (
         this.selected.pieces.length === 1 &&
         !this.selected.pieces[0].square
@@ -63,6 +64,7 @@ export default class BoardIX {
         }
       }
     } else if (!this.isGameEnd || this.isGameEndDefault) {
+      // Ongoing game (or ended by default)
       if (this.turn === this.player) {
         // It's the user's turn
         if (!piece) {
@@ -86,7 +88,7 @@ export default class BoardIX {
         this.ply &&
         piece &&
         piece.ply === this.ply &&
-        (!this.game.config.isOnline || piece.ply.player === this.player) &&
+        (!this.game.config.player || piece.ply.player === this.player) &&
         this.number !== 1
       ) {
         // Piece just placed; valid for stone cycling

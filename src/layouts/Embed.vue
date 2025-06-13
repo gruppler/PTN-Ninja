@@ -56,14 +56,7 @@
         >
           <Board ref="board" class="col-grow" :hide-names="!showNames" />
         </div>
-        <q-page-sticky position="top" :offset="[0, 6]">
-          <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
-        </q-page-sticky>
-        <q-page-sticky position="right" :offset="[6, 0]">
-          <BoardToggles
-            v-if="!$store.state.ui.isPortrait && !isDialogShowing"
-          />
-        </q-page-sticky>
+        <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove v-if="!$store.state.ui.disablePTN" />
         </q-page-sticky>
@@ -120,7 +113,9 @@
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <UndoButtons
-            v-if="!$store.state.ui.disableNavigation"
+            v-if="
+              !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
+            "
             spread
             stretch
             flat
