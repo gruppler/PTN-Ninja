@@ -152,7 +152,7 @@ export const SAVE_STATE = (state, { game, gameState }) => {
 };
 
 export const SAVE_CONFIG = (state, { game, config }) => {
-  game.config = { ...config };
+  Object.assign(game.config, config);
   let stateGame = state.list.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.config = { ...config };
@@ -284,16 +284,14 @@ export const DELETE_BRANCH = (state, branch) => {
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
-  if (game && !state.isEditingTPS) {
-    game.undo();
+  if (game && !state.isEditingTPS && game.undo()) {
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
-  if (game && !state.isEditingTPS) {
-    game.redo();
+  if (game && !state.isEditingTPS && game.redo()) {
     postMessage("REDO");
   }
 };

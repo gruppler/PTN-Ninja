@@ -82,7 +82,7 @@ export default class GameBase {
   // Split multi-game PTN into separate games
   static split(ptn) {
     return ptn.match(
-      /^\s*(\[\w+\s"[^"]*"\]\s*)+((\{[^}]*\})*[/.\s\da-hCFRS!?"'><+-]+)+/gm
+      /^\s*(\[\w+\s"[^"]*"\]\s*)+((\{[^}]*\})*[*/.\s\da-hCFRS!?"'><+-]+(\{[^}]*\})*)+/gm
     );
   }
 

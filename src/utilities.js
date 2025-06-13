@@ -130,7 +130,6 @@ export const notifySuccess = (success, options = {}) => {
     timeout: 0,
     progress: true,
     position: "bottom",
-    multiLine: false,
     actions: [{ icon: "close", color: "textLight" }],
     ...options,
   });
@@ -144,7 +143,6 @@ export const notifyWarning = (warning, options = {}) => {
     timeout: 0,
     progress: true,
     position: "bottom",
-    multiLine: false,
     actions: [{ icon: "close", color: "textDark" }],
     ...options,
   });
@@ -157,7 +155,6 @@ export const notifyHint = (hint, options = {}) => {
     timeout: 0,
     progress: true,
     position: "bottom",
-    multiLine: false,
     actions: [{ icon: "close", color: "textLight" }],
     ...options,
   });

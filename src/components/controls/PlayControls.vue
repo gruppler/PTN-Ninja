@@ -12,7 +12,12 @@
         flat
         :color="fg"
         :ripple="false"
-        :disable="!position.ply || plyInProgress"
+        :disable="
+          !position.ply ||
+          plyInProgress ||
+          isBoardDisabled ||
+          (player && position.ply.player !== player)
+        "
         icon="backspace"
       >
         <hint v-if="position.ply && !plyInProgress">
@@ -158,11 +163,17 @@ export default {
     };
   },
   computed: {
+    player() {
+      return this.$store.state.game.config.player;
+    },
     position() {
       return this.$store.state.game.position;
     },
     branches() {
       return this.$store.state.game.ptn.branchMenu;
+    },
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
     },
     fg() {
       return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
@@ -201,7 +212,7 @@ export default {
   },
   methods: {
     deletePly() {
-      if (this.position.ply && !this.plyInProgress) {
+      if (this.position.ply && !this.plyInProgress && !this.isBoardDisabled) {
         this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
       }
     },

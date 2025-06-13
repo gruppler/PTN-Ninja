@@ -800,11 +800,7 @@ export default class Board extends Aggregation(
   }
 
   get player() {
-    if (this.game.config.isOnline) {
-      return this.game.config.player;
-    } else {
-      return this.turn;
-    }
+    return this.game.config.player || this.turn;
   }
 
   get color() {

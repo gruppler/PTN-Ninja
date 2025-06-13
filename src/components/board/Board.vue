@@ -183,6 +183,7 @@ export default {
         this.isDialogOpen ||
         this.isHighlighting ||
         this.isEditingTPS ||
+        this.$store.state.ui.disableBoard ||
         ($gameSelector &&
           $gameSelector.$refs.select &&
           $gameSelector.$refs.select.menu)
@@ -299,6 +300,7 @@ export default {
       return this.$store.state.ui.highlighterEnabled;
     },
     ratio() {
+      // Round to prevent jitter at some dimensions
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
     width() {
@@ -311,7 +313,7 @@ export default {
         return (
           Math.max(
             100,
-            Math.min(this.space.width, this.space.height * this.ratio)
+            Math.min(this.space.width, this.space.height * this.ratio - 40)
           ) -
           this.padding +
           "px"
@@ -437,6 +439,7 @@ export default {
     },
     resizeBoard(size) {
       this.size = size;
+      this.$store.commit("ui/SET_UI", ["boardSize", size]);
     },
     resizeSpace(size) {
       this.space = size;

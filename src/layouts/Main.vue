@@ -151,16 +151,9 @@
         >
           <Board class="col-grow" />
         </div>
+        <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove style="margin-right: 65px" />
-        </q-page-sticky>
-        <q-page-sticky position="top" :offset="[0, 6]">
-          <BoardToggles v-if="$store.state.ui.isPortrait && !isDialogShowing" />
-        </q-page-sticky>
-        <q-page-sticky position="right" :offset="[6, 0]">
-          <BoardToggles
-            v-if="!$store.state.ui.isPortrait && !isDialogShowing"
-          />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <q-btn
