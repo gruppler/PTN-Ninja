@@ -82,6 +82,10 @@ For example:
 
 - Replace the current game with the provided PTN
 
+#### `SET_PLAYER` (value: `1|2`)
+
+- Set the user as player 1 or 2, disabling input during the opponent's turn.
+
 #### `DELETE_PLY` (value: `<Number>`)
 
 - Delete the ply specified by ID
@@ -188,23 +192,33 @@ For example:
 
 #### `NOTIFY` (value: `<String>|<Object>`)
 
-- Issue a notification
-
 #### `NOTIFY_ERROR` (value: `<String>|<Object>`)
-
-- Issue an error notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
-- Issue a success notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
-
 #### `NOTIFY_WARNING` (value: `<String>|<Object>`)
-
-- Issue a warning notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
 
 #### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
-- Issue a hint notification, specifying either the message directly, or a `message` string, optional `timeout` in milliseconds, and optional `position` string with one of the following values: `top-right` `top-left` `bottom-right` `bottom-left` `top` `right` `bottom` `left` `center`
+- Issue a notification, specifying either the message directly, or an object with the following structure:
+  - `message` (`<String>`): Message to be displayed
+  - `caption` (`<String>`): Optional message to be displayed in smaller text below `message`
+  - `timeout` (`<Number>`): Optional milliseconds before automatic dismissal
+  - `position` (`<String>`): Optional location in which to display the notification. Must be one of the following values (default `bottom`):
+    - `top-right`
+    - `top-left`
+    - `bottom-right`
+    - `bottom-left`
+    - `top`
+    - `right`
+    - `bottom`
+    - `left`
+    - `center`
+  - `actions` (`<Array>`): Optional list of buttons to display after the message, specified as `Object`s with the following structure:
+    - `label` (`<String>`): Text to display as the button label
+    - `message` (`<String>`): Message to send to the opening or parent window when the button is clicked
+    - `color` (`<String>`): Optional color name (default: `primary`)
+  - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
 
 #### `ROTATE_180`
 
@@ -342,6 +356,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `disableNavigation` (default: `false`)
 
 - Disable game navigation, undo/redo, and ply deletion
+
+#### `disableUndo` (default: `false`)
+
+- Disable undo/redo
 
 ## Legal
 

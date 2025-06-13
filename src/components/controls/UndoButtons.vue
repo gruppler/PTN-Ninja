@@ -3,14 +3,14 @@
     <q-btn
       @click="$store.dispatch('game/UNDO')"
       icon="undo"
-      :disabled="!canUndo"
+      :disable="!canUndo"
     >
       <hint v-if="canUndo">{{ $t("Undo") }}</hint>
     </q-btn>
     <q-btn
       @click="$store.dispatch('game/REDO')"
       icon="redo"
-      :disabled="!canRedo"
+      :disable="!canRedo"
     >
       <hint v-if="canRedo">{{ $t("Redo") }}</hint>
     </q-btn>
@@ -28,13 +28,16 @@ export default {
     };
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     canUndo() {
-      return this.$store.state.game.historyIndex > 0;
+      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
     },
     canRedo() {
       return (
         this.$store.state.game.historyIndex <
-        this.$store.state.game.history.length
+          this.$store.state.game.history.length && !this.isBoardDisabled
       );
     },
   },

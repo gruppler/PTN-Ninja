@@ -1,5 +1,6 @@
 import Vue from "vue";
 import JSZip from "jszip";
+import { postMessage } from "../../utilities";
 
 import {
   copyToClipboard,
@@ -86,51 +87,97 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
 };
 
 export const PROMPT = (context, options) => {
+  if (options.actions) {
+    options.actions.forEach((action) => {
+      if (!action.handler && action.message) {
+        action.handler = () => postMessage(action.message);
+      }
+    });
+  }
   return prompt(options);
 };
 
 export const NOTIFY = (context, options) => {
+  if (isString(options)) {
+    options = { message: options };
+  }
   return notify(options);
 };
 
-export const NOTIFY_ERROR = (context, error) => {
-  let args = error;
-  if (isObject(args) && args.message) {
-    args = [args.message, pick(args, ["timeout", "position"])];
+export const NOTIFY_ERROR = (context, options) => {
+  if (isObject(options) && options.message) {
+    options = [
+      options.message,
+      pick(options, ["timeout", "position", "actions", "group", "caption"]),
+    ];
+    if (options[1].actions) {
+      options[1].actions.forEach((action) => {
+        if (!action.handler && action.message) {
+          action.handler = () => postMessage(action.message);
+        }
+      });
+    }
   } else {
-    args = [args];
+    options = [options];
   }
-  return notifyError(...args);
+  return notifyError(...options);
 };
 
-export const NOTIFY_SUCCESS = (context, success) => {
-  let args = success;
-  if (isObject(args) && args.message) {
-    args = [args.message, pick(args, ["timeout", "position"])];
+export const NOTIFY_SUCCESS = (context, options) => {
+  if (isObject(options) && options.message) {
+    options = [
+      options.message,
+      pick(options, ["timeout", "position", "actions", "group", "caption"]),
+    ];
+    if (options[1].actions) {
+      options[1].actions.forEach((action) => {
+        if (!action.handler && action.message) {
+          action.handler = () => postMessage(action.message);
+        }
+      });
+    }
   } else {
-    args = [args];
+    options = [options];
   }
-  return notifySuccess(...args);
+  return notifySuccess(...options);
 };
 
-export const NOTIFY_WARNING = (context, warning) => {
-  let args = warning;
-  if (isObject(args) && args.message) {
-    args = [args.message, pick(args, ["timeout", "position"])];
+export const NOTIFY_WARNING = (context, options) => {
+  if (isObject(options) && options.message) {
+    options = [
+      options.message,
+      pick(options, ["timeout", "position", "actions", "group", "caption"]),
+    ];
+    if (options[1].actions) {
+      options[1].actions.forEach((action) => {
+        if (!action.handler && action.message) {
+          action.handler = () => postMessage(action.message);
+        }
+      });
+    }
   } else {
-    args = [args];
+    options = [options];
   }
-  return notifyWarning(...args);
+  return notifyWarning(...options);
 };
 
-export const NOTIFY_HINT = (context, hint) => {
-  let args = hint;
-  if (isObject(args) && args.message) {
-    args = [args.message, pick(args, ["timeout", "position"])];
+export const NOTIFY_HINT = (context, options) => {
+  if (isObject(options) && options.message) {
+    options = [
+      options.message,
+      pick(options, ["timeout", "position", "actions", "group", "caption"]),
+    ];
+    if (options[1].actions) {
+      options[1].actions.forEach((action) => {
+        if (!action.handler && action.message) {
+          action.handler = () => postMessage(action.message);
+        }
+      });
+    }
   } else {
-    args = [args];
+    options = [options];
   }
-  return notifyHint(...args);
+  return notifyHint(...options);
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {

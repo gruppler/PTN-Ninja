@@ -25,6 +25,7 @@ export default {
         color: "negative",
         icon: "error",
         textColor: "textLight",
+        position: "bottom",
       }));
     },
     currentError() {

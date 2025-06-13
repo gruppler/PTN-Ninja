@@ -3,6 +3,7 @@
     <q-btn
       :label="$t('Tak')"
       :class="{ active: isTak }"
+      :disable="disable"
       @click="toggle('tak')"
       @shortkey="toggle('tak')"
       v-shortkey="hotkeys.tak"
@@ -10,6 +11,7 @@
     <q-btn
       :label="$t('Tinue')"
       :class="{ active: isTinue }"
+      :disable="disable"
       @click="toggle('tinue')"
       @shortkey="toggle('tinue')"
       v-shortkey="hotkeys.tinue"
@@ -17,6 +19,7 @@
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
       :class="{ active: isQ, double: isDoubleQ }"
+      :disable="disable"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
       @shortkey="toggle('?', $event.srcKey === 'double')"
@@ -29,6 +32,7 @@
     <q-btn
       :label="isDoubleBang ? '!!' : '!'"
       :class="{ active: isBang, double: isDoubleBang }"
+      :disable="disable"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
       @shortkey="toggle('!', $event.srcKey === 'double')"
@@ -56,6 +60,10 @@ export default {
       return this.$store.state.game
         ? this.$store.state.game.position.ply
         : null;
+    },
+    disable() {
+      const player = this.$store.state.game.config.player;
+      return !this.ply || (player && player !== this.ply.player);
     },
     evaluation() {
       return this.ply ? this.ply.evaluation : null;

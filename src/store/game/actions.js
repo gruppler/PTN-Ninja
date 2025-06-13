@@ -620,6 +620,15 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
   });
 };
 
+export const SET_PLAYER = function ({ commit }, player) {
+  const game = Vue.prototype.$game;
+  player = Number(player) || null;
+  commit("SAVE_CONFIG", {
+    game,
+    config: { ...game.config, player },
+  });
+};
+
 export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("APPLY_TRANSFORM", transform);
@@ -701,6 +710,9 @@ export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
 };
 
 export const UNDO = function ({ commit, dispatch }) {
+  if (this.state.ui.disableUndo || this.state.ui.disableBoard) {
+    return;
+  }
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");
     dispatch("SAVE_CURRENT_GAME", true);
@@ -708,6 +720,9 @@ export const UNDO = function ({ commit, dispatch }) {
 };
 
 export const REDO = function ({ commit, dispatch }) {
+  if (this.state.ui.disableUndo || this.state.ui.disableBoard) {
+    return;
+  }
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("REDO");
     dispatch("SAVE_CURRENT_GAME", true);
