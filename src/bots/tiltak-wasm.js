@@ -32,8 +32,8 @@ export default class TiltakWasm extends Bot {
             worker.terminate();
             worker = null;
           }
-          this.status.isRunning = false;
           this.status.isInteractiveRunning = false;
+          this.status.isRunning = false;
           this.status.isReady = false;
           this.status.time = null;
           this.status.nps = null;
@@ -46,9 +46,6 @@ export default class TiltakWasm extends Bot {
 
         // Message handling
         worker.onmessage = ({ data }) => {
-          if (data === "teiok" || data === "readyok") {
-            this.status.isReady = true;
-          }
           this.handleResponse(data);
         };
 
@@ -74,8 +71,8 @@ export default class TiltakWasm extends Bot {
 
     // Pause if game has ended
     if (this.isGameEnd) {
-      this.isRunning = false;
       this.isInteractiveRunning = false;
+      this.isRunning = false;
       this.status.nextTPS = null;
       return;
     }
@@ -119,8 +116,8 @@ export default class TiltakWasm extends Bot {
     }
     worker.postMessage(posMessage);
     worker.postMessage("go infinite");
-    this.status.isRunning = true;
     this.status.isInteractiveRunning = true;
+    this.status.isRunning = true;
   }
 
   //#region handleResponse
@@ -132,7 +129,9 @@ export default class TiltakWasm extends Bot {
 
     const tps = this.status.tps;
 
-    if (response.startsWith("bestmove")) {
+    if (response === "teiok" || response === "readyok") {
+      this.status.isReady = true;
+    } else if (response.startsWith("bestmove")) {
       // Search ended
       this.status.isLoading = false;
       if (this.status.tps === this.status.nextTPS) {
@@ -188,8 +187,8 @@ export default class TiltakWasm extends Bot {
     if (worker && this.status.isRunning) {
       try {
         worker.postMessage("stop");
-        this.status.isRunning = false;
         this.status.isInteractiveRunning = false;
+        this.status.isRunning = false;
         this.status.nextTPS = null;
       } catch (error) {
         await worker.terminate();

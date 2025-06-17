@@ -40,6 +40,7 @@ let defaults = {
       address: "localhost",
       port: 7731,
       pvLimit: 3,
+      options: {},
     },
   },
   animateBoard: true,

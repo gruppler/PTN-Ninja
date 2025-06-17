@@ -252,6 +252,79 @@
             color="primary"
             stretch
           />
+
+          <!-- TEI Options -->
+          <smooth-reflow>
+            <template v-if="bot.hasOptions">
+              <q-separator />
+              <template v-for="(option, name) in bot.meta.options">
+                <q-item
+                  v-if="option.type === 'check'"
+                  :key="name"
+                  type="label"
+                  :disable="bot.status.isRunning"
+                  clickable
+                  v-ripple
+                >
+                  <q-item-section side>
+                    <q-checkbox
+                      v-model="option.value"
+                      @input="bot.setOption(name, $event)"
+                      :disable="bot.status.isRunning"
+                    />
+                    <q-item-section>
+                      <q-item-label>{{ name }}</q-item-label>
+                    </q-item-section>
+                  </q-item-section>
+                </q-item>
+                <q-input
+                  v-if="option.type === 'spin'"
+                  type="number"
+                  :key="name"
+                  v-model.number="option.value"
+                  @input="bot.setOption(name, $event)"
+                  :label="name"
+                  :min="option.min"
+                  :max="option.max"
+                  :disable="bot.status.isRunning"
+                  filled
+                  item-aligned
+                />
+                <q-select
+                  v-if="option.type === 'combo'"
+                  :key="name"
+                  v-model="option.value"
+                  @input="bot.setOption(name, $event)"
+                  :options="option.vars"
+                  :label="name"
+                  :disable="bot.status.isRunning"
+                  filled
+                  item-aligned
+                />
+                <q-btn
+                  v-if="option.type === 'button'"
+                  :key="name"
+                  :label="name"
+                  @click="bot.send(name)"
+                  :disable="bot.status.isRunning"
+                  class="full-width"
+                  color="primary"
+                  stretch
+                />
+                <q-input
+                  v-if="option.type === 'string'"
+                  :key="name"
+                  v-model="option.value"
+                  @input="bot.setOption(name, $event)"
+                  :label="name"
+                  :disable="bot.status.isRunning"
+                  filled
+                  item-aligned
+                />
+              </template>
+              <q-separator />
+            </template>
+          </smooth-reflow>
         </template>
 
         <!-- Tiltak Cloud -->
@@ -549,6 +622,25 @@ export default {
       handler(settings) {
         // Save preferences
         this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
+      },
+      deep: true,
+    },
+    "bot.meta.options": {
+      handler(options) {
+        // Save TEI options
+        if (this.botSettings.bot === "tei") {
+          let optionValues = { ...(this.botSettings.tei.options || {}) };
+          Object.keys(options).forEach((key) => {
+            if (
+              "value" in options[key] &&
+              (!("default" in options[key]) ||
+                options[key].value !== options[key].default)
+            ) {
+              optionValues[key] = options[key].value;
+            }
+          });
+          this.$set(this.botSettings.tei, "options", optionValues);
+        }
       },
       deep: true,
     },

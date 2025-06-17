@@ -34,7 +34,7 @@ export default class Bot {
     this.meta = {
       name: name,
       author: author,
-      options: options,
+      options: options || {},
       sizes: sizes,
     };
 
