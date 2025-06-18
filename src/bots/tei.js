@@ -131,8 +131,10 @@ export default class TeiBot extends Bot {
       return;
     }
 
-    // Send `stop` even if unnecessary
-    this.send("stop");
+    // Send `stop` if necessary
+    if (this.status.isRunning) {
+      this.send("stop");
+    }
 
     // Pause if game has ended
     if (this.isGameEnd) {

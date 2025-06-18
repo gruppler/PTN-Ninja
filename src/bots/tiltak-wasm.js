@@ -66,8 +66,10 @@ export default class TiltakWasm extends Bot {
       return;
     }
 
-    // Send `stop` even if unnecessary
-    worker.postMessage("stop");
+    // Send `stop` if necessary
+    if (this.status.isRunning) {
+      worker.postMessage("stop");
+    }
 
     // Pause if game has ended
     if (this.isGameEnd) {
