@@ -12,7 +12,7 @@ export const bots = {};
 export const botOptions = [];
 
 const onInit = (bot) => {
-  if (botOptions.find((b) => b.id === bot.id)) {
+  if (botOptions.find((b) => b.value === bot.id)) {
     return;
   }
   botOptions.push({
