@@ -53,20 +53,20 @@
             <smooth-reflow>
               <q-item v-if="board3D" tag="label" v-ripple>
                 <q-item-section>
-                  <q-item-label>{{ $t("Orthogonal Board") }}</q-item-label>
+                  <q-item-label>{{ $t("Orthographic") }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
                   <q-toggle
-                    v-model="orthogonal"
-                    :disabled="isDisabled('orthogonal')"
+                    v-model="orthographic"
+                    :disable="isDisabled('orthographic')"
                   />
                 </q-item-section>
-                <hint v-if="hotkeys.UI.orthogonal">
-                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.orthogonal }}
+                <hint v-if="hotkeys.UI.orthographic">
+                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.orthographic }}
                 </hint>
               </q-item>
 
-              <q-item v-if="board3D && !orthogonal">
+              <q-item v-if="board3D && !orthographic">
                 <q-item-section>
                   {{ $t("Perspective") }}
                   <q-slider
@@ -385,7 +385,7 @@ const props = [
   "highlightSquares",
   "evalText",
   "moveNumber",
-  "orthogonal",
+  "orthographic",
   "perspective",
   "showEval",
   "showRoads",

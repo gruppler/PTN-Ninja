@@ -75,7 +75,7 @@ let defaults = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
-  orthogonal: false,
+  orthographic: false,
   perspective: 5,
   playSpeed: 60, //FPM
   player1: "",
