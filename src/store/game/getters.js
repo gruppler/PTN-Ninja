@@ -1,4 +1,6 @@
 import Vue from "vue";
+import { parseURLparams } from "../../router/routes";
+import router from "../../router";
 
 export const uniqueName =
   (state) =>
@@ -19,7 +21,7 @@ export const uniqueName =
 
 export const disabledOptions = (state) => {
   const game = Vue.prototype.$game;
-  const disabled = [];
+  const disabled = Object.keys(parseURLparams(router.currentRoute).state);
   if (game.config.disableFlatCounts) {
     disabled.push("flatCounts");
   }

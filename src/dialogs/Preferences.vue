@@ -33,7 +33,7 @@
           <q-item-label>{{ $t("UI Hints") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="showHints" :disabled="isDisabled('showHints')" />
+          <q-toggle v-model="showHints" :disable="isDisabled('showHints')" />
         </q-item-section>
         <hint v-if="hotkeys.showHints">
           {{ $t("Hotkey") }}: {{ hotkeys.showHints }}
@@ -47,7 +47,7 @@
         <q-item-section side>
           <q-toggle
             v-model="nativeSharing"
-            :disabled="isDisabled('nativeSharing')"
+            :disable="isDisabled('nativeSharing')"
           />
         </q-item-section>
         <hint v-if="hotkeys.nativeSharing">
@@ -62,7 +62,7 @@
         <q-item-section side>
           <q-toggle
             v-model="animateBoard"
-            :disabled="isDisabled('animateBoard')"
+            :disable="isDisabled('animateBoard')"
           />
         </q-item-section>
         <hint v-if="hotkeys.animateBoard">
@@ -78,7 +78,7 @@
           <q-item-section side>
             <q-toggle
               v-model="animateScrub"
-              :disabled="isDisabled('animateScrub')"
+              :disable="isDisabled('animateScrub')"
             />
           </q-item-section>
           <hint v-if="hotkeys.animateScrub">
@@ -92,7 +92,7 @@
           <q-item-label>{{ $t("Current Move") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="showMove" :disabled="isDisabled('showMove')" />
+          <q-toggle v-model="showMove" :disable="isDisabled('showMove')" />
         </q-item-section>
         <hint v-if="hotkeys.showMove">
           {{ $t("Hotkey") }}: {{ hotkeys.showMove }}
@@ -106,7 +106,7 @@
         <q-item-section side>
           <q-toggle
             v-model="showAllBranches"
-            :disabled="isDisabled('showAllBranches')"
+            :disable="isDisabled('showAllBranches')"
           />
         </q-item-section>
         <hint v-if="hotkeys.showAllBranches">
@@ -119,7 +119,7 @@
           <q-item-label>{{ $t("Game Notifications") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-toggle v-model="notifyGame" :disabled="isDisabled('notifyGame')" />
+          <q-toggle v-model="notifyGame" :disable="isDisabled('notifyGame')" />
         </q-item-section>
         <hint v-if="hotkeys.notifyGame">
           {{ $t("Hotkey") }}: {{ hotkeys.notifyGame }}
@@ -133,7 +133,7 @@
         <q-item-section side>
           <q-toggle
             v-model="notifyNotes"
-            :disabled="isDisabled('notifyNotes')"
+            :disable="isDisabled('notifyNotes')"
           />
         </q-item-section>
         <hint v-if="hotkeys.notifyNotes">
@@ -148,7 +148,7 @@
         <q-item-section side>
           <q-toggle
             v-model="showControls"
-            :disabled="isDisabled('showControls')"
+            :disable="isDisabled('showControls')"
           />
         </q-item-section>
         <hint v-if="hotkeys.showControls">
@@ -164,7 +164,7 @@
           <q-item-section side>
             <q-toggle
               v-model="showPlayButton"
-              :disabled="isDisabled('showPlayButton')"
+              :disable="isDisabled('showPlayButton')"
             />
           </q-item-section>
           <hint v-if="hotkeys.showPlayButton">
@@ -195,7 +195,7 @@
         <q-item-section side>
           <q-toggle
             v-model="showScrubber"
-            :disabled="isDisabled('showScrubber')"
+            :disable="isDisabled('showScrubber')"
           />
         </q-item-section>
         <hint v-if="hotkeys.showScrubber">
@@ -210,7 +210,7 @@
         <q-item-section side>
           <q-toggle
             v-model="scrollScrubbing"
-            :disabled="isDisabled('scrollScrubbing')"
+            :disable="isDisabled('scrollScrubbing')"
           />
         </q-item-section>
         <hint v-if="hotkeys.scrollScrubbing">

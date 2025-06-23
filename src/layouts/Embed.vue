@@ -243,6 +243,9 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
+    disabledOptions() {
+      return this.$store.getters["game/disabledOptions"];
+    },
     isDialogShowing() {
       return !["local", "game"].includes(this.$route.name);
     },
@@ -315,7 +318,9 @@ export default {
       return $store.dispatch("game/REDO");
     },
     uiShortkey({ srcKey }) {
-      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      if (!this.disabledOptions.includes(srcKey)) {
+        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      }
     },
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
