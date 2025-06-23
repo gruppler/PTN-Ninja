@@ -1,6 +1,6 @@
 <template>
   <q-layout v-if="gameExists" class="non-selectable" view="lHh LpR lFr">
-    <q-header elevated class="bg-ui">
+    <q-header v-if="$store.state.ui.showHeader" elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           v-if="!$store.state.ui.disablePTN"
@@ -325,24 +325,21 @@ export default {
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
         case "gameInfo":
-          if (this.$route.name !== "info-view") {
-            this.$router.push({ name: "info-view" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
+          if (this.$store.state.ui.showHeader) {
+            if (this.$route.name !== "info-view") {
+              this.$router.push({ name: "info-view" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
           }
           break;
         case "editPTN":
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "qrCode":
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
+          if (!this.$store.state.ui.disablePTN) {
+            if (this.$route.name !== "edit") {
+              this.$router.push({ name: "edit" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
           }
           break;
       }

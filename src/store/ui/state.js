@@ -90,6 +90,7 @@ let defaults = {
   showControls: true,
   showPlayButton: false,
   showEval: true,
+  showHeader: true,
   showHints: true,
   showMove: true,
   showPTN: true,
@@ -184,6 +185,8 @@ if (!state.embed && !LocalStorage.isEmpty()) {
   for (let key in defaults) {
     state[key] = load(key, state[key]);
   }
+} else if (!LocalStorage.isEmpty()) {
+  state.theme = load("theme", state.theme);
 }
 
 // Backward compatibility
