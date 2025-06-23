@@ -1,6 +1,6 @@
 <template>
   <q-btn
-    v-if="$q.fullscreen.isCapable"
+    v-if="isEnabled"
     v-bind="$attrs"
     @click="toggle"
     @shortkey="toggle"
@@ -23,6 +23,9 @@ export default {
     };
   },
   computed: {
+    isEnabled() {
+      return this.$q.fullscreen.isCapable && document.fullscreenEnabled;
+    },
     isActive() {
       if (this.target) {
         return this.$q.fullscreen.activeEl === this.target;
