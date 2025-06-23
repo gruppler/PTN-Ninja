@@ -78,10 +78,6 @@ export default {
         case "GO_TO_PLY":
         case "PREV":
         case "NEXT":
-        case "FIRST":
-        case "LAST":
-        case "UNDO":
-        case "REDO":
         case "PROMOTE_BRANCH":
         case "MAKE_BRANCH_MAIN":
         case "RENAME_BRANCH":
@@ -93,8 +89,12 @@ export default {
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
         case "SET_EVAL":
-          this.$store.dispatch("game/" + data.action, data.value);
+          this.$store.dispatch("game/" + data.action, data.value || {});
           break;
+        case "FIRST":
+        case "LAST":
+        case "UNDO":
+        case "REDO":
         case "TRIM_BRANCHES":
         case "TRIM_TO_BOARD":
         case "TRIM_TO_PLY":
