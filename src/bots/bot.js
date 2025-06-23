@@ -74,9 +74,9 @@ export default class Bot {
     if (value) {
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
-        (tps) => this.analyzePosition()
+        () => this.analyzeInteractive()
       );
-      this.analyzePosition();
+      this.analyzeInteractive();
     } else if (this.unwatchPosition) {
       this.terminate();
       this.unwatchPosition();
@@ -136,18 +136,28 @@ export default class Bot {
     );
   }
 
-  getTeiPosition() {
+  getInitTPS() {
     return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
   }
 
-  getTeiMoves() {
-    return this.game.ptn.branchPlies
-      .slice(
-        0,
-        1 + this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
-      )
+  getTeiPosition(
+    plyIndex = this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+  ) {
+    let posMessage = "position";
+    const initTPS = this.getInitTPS();
+    if (initTPS) {
+      posMessage += " tps " + initTPS;
+    } else {
+      posMessage += " startpos moves";
+    }
+    const plies = this.game.ptn.branchPlies
+      .slice(0, 1 + plyIndex)
       .map((ply) => ply.text)
       .join(" ");
+    if (plies) {
+      posMessage += " " + plies;
+    }
+    return posMessage;
   }
 
   nextPly(player, color) {
@@ -177,10 +187,104 @@ export default class Bot {
     return hashObject(omit(this.settings, "pvLimit"));
   }
 
-  formatEvaluation(value) {
-    return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+  queryPosition(timeBudget, tps, plyIndex) {}
+
+  //#region analyzeInteractive
+  analyzeInteractive() {
+    if (!this.isInteractive) {
+      return false;
+    }
+
+    if (this.status.isRunning) {
+      this.send("stop");
+    }
+
+    if (this.isGameEnd) {
+      this.isInteractiveRunning = false;
+      this.isRunning = false;
+      this.status.time = 0;
+      this.status.nps = 0;
+      this.status.nextTPS = null;
+      return;
+    }
+
+    // Queue current position for pairing with future response
+    const tps = this.tps;
+    this.status.nextTPS = tps;
+    if (!this.status.tps) {
+      this.status.tps = this.status.nextTPS;
+    }
+
+    this.status.analyzingPly = this.ply;
+    this.status.isRunning = true;
+    this.status.isInteractiveRunning = true;
+
+    this.queryPosition(1e8, tps);
+
+    return true;
   }
 
+  //#region analyzePosition
+  analyzePosition(timeBudget = this.settings.timeBudget) {
+    if (this.status.isRunning || this.isGameEnd) {
+      return false;
+    }
+
+    this.status.tps = this.tps;
+    this.status.analyzingPly = this.ply;
+    this.status.isRunning = true;
+    this.status.isAnalyzingPosition = true;
+    this.status.progress = 0;
+    const startTime = new Date().getTime();
+    this.status.timer = setInterval(() => {
+      this.status.progress =
+        (new Date().getTime() - startTime) / (timeBudget * 10);
+    }, 1000);
+
+    this.queryPosition(timeBudget, this.tps);
+
+    return true;
+  }
+
+  //#region analyzeGame
+  async analyzeGame() {
+    if (this.status.isRunning) {
+      return false;
+    }
+
+    try {
+      this.status.isRunning = true;
+      this.status.isAnalyzingGame = true;
+      this.status.progress = 0;
+      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+      let positions = plies.map((ply) => ply.tpsBefore);
+      plies.forEach((ply) => {
+        if (!ply.result || ply.result.type === "1") {
+          positions.push(ply.tpsAfter);
+        }
+      });
+      positions = uniq(positions).filter(
+        (tps) =>
+          !(tps in this.positions) || !(settingsKey in this.positions[tps])
+      );
+      const total = positions.length;
+      let completed = 0;
+
+      positions.forEach((tps) => {
+        this.queryPosition(tps, this.settings.timeBudget);
+        this.status.progress = (100 * ++completed) / total;
+      });
+      // Insert comments
+      this.saveEvalComments();
+    } catch (error) {
+      this.handleError(error);
+    } finally {
+      this.status.isRunning = false;
+      this.status.isAnalyzingGame = false;
+    }
+  }
+
+  //#region storeResults
   storeResults({
     hash = this.getSettingsHash(),
     tps,
@@ -191,8 +295,10 @@ export default class Bot {
     evaluation = null,
     nodes = null,
   }) {
-    if (!this.isInteractive) {
+    if (this.status.isAnalyzingPosition) {
+      this.status.isAnalyzingPosition = false;
       this.status.isRunning = false;
+      this.status.analyzingPly = null;
       clearInterval(this.status.timer);
       this.status.timer = null;
     }
@@ -242,6 +348,13 @@ export default class Bot {
       Vue.set(this.positions, tps, suggestions);
       return suggestions;
     }
+  }
+
+  terminate() {}
+
+  //#region Formatting
+  formatEvaluation(value) {
+    return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
   }
 
   formatEvalComments(ply, pvLimit = 0) {
@@ -380,39 +493,4 @@ export default class Bot {
     });
     store.dispatch("game/ADD_NOTES", messages);
   }
-
-  analyzePosition() {}
-
-  async analyzeGame() {
-    try {
-      this.status.isRunning = true;
-      this.status.progress = 0;
-      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      let positions = plies.map((ply) => ply.tpsBefore);
-      plies.forEach((ply) => {
-        if (!ply.result || ply.result.type === "1") {
-          positions.push(ply.tpsAfter);
-        }
-      });
-      positions = uniq(positions).filter(
-        (tps) =>
-          !(tps in this.positions) || !(settingsKey in this.positions[tps])
-      );
-      const total = positions.length;
-      let completed = 0;
-
-      positions.forEach((tps) => {
-        this.analyzePosition(secondsToThink, tps, komi);
-        this.status.progress = (100 * ++completed) / total;
-      });
-      // Insert comments
-      this.saveEvalComments();
-    } catch (error) {
-      this.handleError(error);
-    } finally {
-      this.status.isRunning = false;
-    }
-  }
-
-  terminate() {}
 }

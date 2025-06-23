@@ -34,18 +34,16 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region analyzePosition
-  async analyzePosition(secondsToThink) {
+  async analyzePosition(tps = this.tps, secondsToThink) {
     try {
       this.status.isRunning = true;
       this.status.isAnalyzingPosition = true;
       this.analyzingPly = this.ply;
       const tps = this.tps;
-      const komi = this.komi;
-      await this.requestSuggestions(secondsToThink, tps, komi);
+      await this.queryPosition(tps, secondsToThink);
     } catch (error) {
       this.console.error("Failed to query position", {
         tps,
-        komi,
         secondsToThink,
         error,
       });
@@ -66,7 +64,6 @@ export default class TiltakCloud extends Bot {
       this.status.isAnalyzingGame = true;
       this.status.progress = 0;
       const concurrency = 10;
-      const komi = this.komi;
       const secondsToThink = this.secondsToThink.short;
       const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
       let positions = plies.map((ply) => ply.tpsBefore);
@@ -80,10 +77,9 @@ export default class TiltakCloud extends Bot {
       let completed = 0;
 
       for await (const result of asyncPool(concurrency, positions, (tps) =>
-        this.requestSuggestions(secondsToThink, tps, komi).catch((error) => {
+        this.queryPosition(tps, secondsToThink).catch((error) => {
           console.error("Failed to query position", {
             tps,
-            komi,
             secondsToThink,
             error,
           });
@@ -101,8 +97,8 @@ export default class TiltakCloud extends Bot {
     }
   }
 
-  //#region requestSuggestions
-  async requestSuggestions(secondsToThink, tps, komi) {
+  //#region queryPosition
+  async queryPosition(tps, secondsToThink) {
     if (this.isOffline) {
       this.handleError("Offline");
       return;
@@ -123,7 +119,7 @@ export default class TiltakCloud extends Bot {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        komi: komi,
+        komi: this.komi,
         size: this.size,
         tps,
         moves: [],

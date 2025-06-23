@@ -489,7 +489,7 @@ export default {
     nps: "nps",
     pvLimit: "Plies",
     secondsUnit: "sec",
-    timeBudget: "Seconds to Think",
+    timeBudget: "Seconds",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
     visits: "1 visit | {count} visits",

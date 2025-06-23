@@ -15,6 +15,12 @@ export default class TopazWasm extends Bot {
     });
   }
 
+  send(message) {
+    if (worker) {
+      worker.postMessage(message);
+    }
+  }
+
   //#region init
   init(force = false) {
     if (force || !worker) {
@@ -37,18 +43,12 @@ export default class TopazWasm extends Bot {
       this.init();
       return;
     }
-    if (this.status.isRunning) {
+
+    if (!super.analyzePosition(tps, false)) {
       return;
     }
-    this.status.analyzingPly = this.ply;
-    this.status.isRunning = true;
-    this.status.progress = 0;
-    const startTime = new Date().getTime();
-    const timeBudget = this.settings.timeBudget * 10;
-    this.status.timer = setInterval(() => {
-      this.status.progress = (new Date().getTime() - startTime) / timeBudget;
-    }, 1000);
-    worker.postMessage({
+
+    this.send({
       ...this.settings,
       tps,
       size: this.size,
@@ -86,6 +86,7 @@ export default class TopazWasm extends Bot {
         await worker.terminate();
         clearInterval(this.status.timer);
         this.status.isRunning = false;
+        this.status.isAnalyzingPosition = false;
         this.status.timer = null;
         this.status.analyzingPly = null;
         worker = null;

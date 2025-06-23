@@ -23,6 +23,7 @@ let defaults = {
   botSettings: {
     bot: "tiltak-cloud",
     tiltak: {
+      timeBudget: 5,
       pvLimit: 3,
     },
     "tiltak-cloud": {
@@ -31,7 +32,7 @@ let defaults = {
     },
     topaz: {
       depth: 12,
-      timeBudget: 30,
+      timeBudget: 5,
       pvLimit: 3,
     },
     tei: {
@@ -39,6 +40,7 @@ let defaults = {
       ssl: window.location.protocol.includes("s"),
       address: "localhost",
       port: 7731,
+      timeBudget: 5,
       pvLimit: 3,
       options: {},
     },

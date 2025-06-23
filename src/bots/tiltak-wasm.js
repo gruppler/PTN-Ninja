@@ -15,6 +15,12 @@ export default class TiltakWasm extends Bot {
     });
   }
 
+  send(message) {
+    if (worker) {
+      worker.postMessage(message);
+    }
+  }
+
   //#region init
   init(force = false) {
     if (force || !worker) {
@@ -50,7 +56,7 @@ export default class TiltakWasm extends Bot {
         };
 
         // Init
-        worker.postMessage("isready");
+        this.send("isready");
         return super.init(true);
       } catch (error) {
         console.error("Failed to load Tiltak (wasm):", error);
@@ -59,23 +65,30 @@ export default class TiltakWasm extends Bot {
     }
   }
 
-  //#region analyzePosition
-  analyzePosition(tps = this.tps) {
+  //#region queryPosition
+  queryPosition(timeBudget, tps, plyIndex) {
+    // Send `teinewgame` if necessary
+    const initTPS = this.getInitTPS();
+    if (
+      this.status.size !== this.size ||
+      this.status.komi !== this.komi ||
+      this.status.initTPS !== initTPS
+    ) {
+      this.send(`teinewgame ${this.size}`);
+      this.send(`setoption name HalfKomi value ${this.komi * 2}`);
+      this.status.size = this.size;
+      this.status.komi = this.komi;
+      this.status.initTPS = initTPS;
+    }
+
+    this.send(this.getTeiPosition(plyIndex));
+    this.send(`go movetime ${timeBudget * 1e3}`);
+  }
+
+  //#region analyzeInteractive
+  analyzeInteractive() {
     if (!worker) {
       this.init();
-      return;
-    }
-
-    // Send `stop` if necessary
-    if (this.status.isRunning) {
-      worker.postMessage("stop");
-    }
-
-    // Pause if game has ended
-    if (this.isGameEnd) {
-      this.isInteractiveRunning = false;
-      this.isRunning = false;
-      this.status.nextTPS = null;
       return;
     }
 
@@ -85,41 +98,23 @@ export default class TiltakWasm extends Bot {
       return;
     }
 
-    // Send `teinewgame` if necessary
-    const teiPosition = this.getTeiPosition();
-    if (
-      this.status.size !== this.size ||
-      this.status.komi !== this.komi ||
-      this.status.initTPS !== teiPosition
-    ) {
-      worker.postMessage(`teinewgame ${this.size}`);
-      worker.postMessage(`setoption name HalfKomi value ${this.komi * 2}`);
-      this.status.size = this.size;
-      this.status.komi = this.komi;
-      this.status.initTPS = teiPosition;
+    return super.analyzeInteractive();
+  }
+
+  //#region analyzePosition
+  analyzePosition(timeBudget) {
+    if (!worker) {
+      this.init();
+      return;
     }
 
-    // Queue current position for pairing with future response
-    this.status.nextTPS = tps;
-    if (!this.status.tps) {
-      this.status.tps = this.status.nextTPS;
+    // Abort if worker is not responding
+    if (!this.status.isReady) {
+      console.error("Tiltak worker failed to initialize");
+      return;
     }
 
-    // Send current position
-    let posMessage = "position";
-    if (this.status.initTPS) {
-      posMessage += " tps " + this.status.initTPS;
-    } else {
-      posMessage += " startpos";
-    }
-    const teiMoves = this.getTeiMoves();
-    if (teiMoves) {
-      posMessage += " moves " + teiMoves;
-    }
-    worker.postMessage(posMessage);
-    worker.postMessage("go infinite");
-    this.status.isInteractiveRunning = true;
-    this.status.isRunning = true;
+    super.analyzePosition(timeBudget);
   }
 
   //#region handleResponse
@@ -188,7 +183,7 @@ export default class TiltakWasm extends Bot {
   async terminate() {
     if (worker && this.status.isRunning) {
       try {
-        worker.postMessage("stop");
+        this.send("stop");
         this.status.isInteractiveRunning = false;
         this.status.isRunning = false;
         this.status.nextTPS = null;

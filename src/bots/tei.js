@@ -124,32 +124,8 @@ export default class TeiBot extends Bot {
     });
   }
 
-  //#region analyzePosition
-  analyzePosition(tps = this.tps) {
-    if (!socket) {
-      this.init();
-      return;
-    }
-
-    // Send `stop` if necessary
-    if (this.status.isRunning) {
-      this.send("stop");
-    }
-
-    // Pause if game has ended
-    if (this.isGameEnd) {
-      this.status.time = 0;
-      this.status.nps = 0;
-      this.status.nextTPS = null;
-      return;
-    }
-
-    // Abort if worker is not responding
-    if (!this.status.isReady) {
-      console.error("TEI bot is not ready");
-      return;
-    }
-
+  //#region queryPosition
+  queryPosition(timeBudget, tps, plyIndex) {
     // Send `teinewgame` if necessary
     const optionHalfKomi = this.meta.options.HalfKomi;
     let halfKomi = this.komi * 2;
@@ -170,11 +146,11 @@ export default class TeiBot extends Bot {
       halfKomi = null;
     }
 
-    const teiPosition = this.getTeiPosition();
+    const initTPS = this.getInitTPS();
     if (
       this.status.size !== this.size ||
       this.status.komi !== halfKomi ||
-      this.status.initTPS !== teiPosition
+      this.status.initTPS !== initTPS
     ) {
       Object.keys(this.meta.options).forEach((name) => {
         if (name.toLowerCase() !== "halfkomi") {
@@ -189,30 +165,43 @@ export default class TeiBot extends Bot {
         this.send(`setoption name HalfKomi value ${halfKomi}`);
       }
       this.status.komi = halfKomi;
-      this.status.initTPS = teiPosition;
+      this.status.initTPS = initTPS;
     }
 
-    // Queue current position for pairing with future response
-    this.status.nextTPS = tps;
-    if (!this.status.tps) {
-      this.status.tps = this.status.nextTPS;
+    this.send(this.getTeiPosition(plyIndex));
+    this.send(`go movetime ${timeBudget * 1e3}`);
+  }
+
+  //#region analyzeInteractive
+  analyzeInteractive() {
+    if (!socket) {
+      this.init();
+      return;
     }
 
-    // Send current position
-    let posMessage = "position";
-    if (this.status.initTPS) {
-      posMessage += " tps " + this.status.initTPS;
-    } else {
-      posMessage += " startpos moves ";
+    // Abort if worker is not responding
+    if (!this.status.isReady) {
+      console.error("TEI bot is not ready");
+      return;
     }
-    const teiMoves = this.getTeiMoves();
-    if (teiMoves) {
-      posMessage += teiMoves;
+
+    super.analyzeInteractive();
+  }
+
+  //#region analyzePosition
+  analyzePosition(timeBudget) {
+    if (!socket) {
+      this.init();
+      return;
     }
-    this.send(posMessage);
-    this.send(`go movetime 100000000`);
-    this.status.isInteractiveRunning = true;
-    this.status.isRunning = true;
+
+    // Abort if worker is not responding
+    if (!this.status.isReady) {
+      console.error("TEI bot is not ready");
+      return;
+    }
+
+    super.analyzePosition(timeBudget);
   }
 
   //#region handleResponse
@@ -265,16 +254,23 @@ export default class TeiBot extends Bot {
       Vue.set(this.meta.options, name, option);
     } else if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isInteractiveRunning = false;
       this.status.isRunning = false;
-      if (this.status.tps === this.status.nextTPS) {
-        // No position queued
-        this.status.tps = null;
-        this.status.nextTPS = null;
+      if (this.status.isInteractiveRunning) {
+        if (this.status.tps === this.status.nextTPS) {
+          // No position queued
+          this.status.tps = null;
+          this.status.nextTPS = null;
+        } else {
+          this.status.tps = this.status.nextTPS;
+        }
+        this.status.isInteractiveRunning = false;
       } else {
-        this.status.tps = this.status.nextTPS;
+        this.status.isAnalyzingPosition = false;
+        return super.storeResults({
+          tps,
+          pv: [response.slice(9)],
+        });
       }
-      return;
     } else if (response.startsWith("info") && tps) {
       // Parse Results
       const results = {
@@ -322,6 +318,7 @@ export default class TeiBot extends Bot {
           this.send("stop");
         }
         this.status.isInteractiveRunning = false;
+        this.status.isAnalyzingPosition = false;
         this.status.isRunning = false;
         this.status.nps = null;
         this.status.nextTPS = null;
