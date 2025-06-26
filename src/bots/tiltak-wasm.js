@@ -38,6 +38,7 @@ export default class TiltakWasm extends Bot {
             worker.terminate();
             worker = null;
           }
+          this.status.isAnalyzingGame = false;
           this.status.isInteractiveRunning = false;
           this.status.isRunning = false;
           this.status.isReady = false;
@@ -66,7 +67,7 @@ export default class TiltakWasm extends Bot {
   }
 
   //#region queryPosition
-  queryPosition(timeBudget, tps, plyIndex) {
+  queryPosition(tps, plyIndex) {
     // Send `teinewgame` if necessary
     const initTPS = this.getInitTPS();
     if (
@@ -81,8 +82,23 @@ export default class TiltakWasm extends Bot {
       this.status.initTPS = initTPS;
     }
 
-    this.send(this.getTeiPosition(plyIndex));
-    this.send(`go movetime ${timeBudget * 1e3}`);
+    // Set position
+    this.send(this.getTeiPosition(tps, plyIndex));
+
+    // Go
+    if (this.status.isInteractiveRunning) {
+      this.send(`go infinite`);
+    } else {
+      if (!this.settings.limitType || this.settings.limitType === "movetime") {
+        this.send(`go movetime ${this.settings.secondsToThink * 1e3}`);
+      } else {
+        this.send(
+          `go ${this.settings.limitType} ${
+            this.settings[this.settings.limitType]
+          }`
+        );
+      }
+    }
   }
 
   //#region analyzeInteractive
@@ -101,8 +117,8 @@ export default class TiltakWasm extends Bot {
     return super.analyzeInteractive();
   }
 
-  //#region analyzePosition
-  analyzePosition(timeBudget) {
+  //#region analyzeCurrentPosition
+  analyzeCurrentPosition() {
     if (!worker) {
       this.init();
       return;
@@ -114,7 +130,7 @@ export default class TiltakWasm extends Bot {
       return;
     }
 
-    super.analyzePosition(timeBudget);
+    super.analyzeCurrentPosition();
   }
 
   //#region handleResponse
@@ -130,20 +146,32 @@ export default class TiltakWasm extends Bot {
       this.status.isReady = true;
     } else if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isLoading = false;
-      if (this.status.tps === this.status.nextTPS) {
-        // No position queued
-        this.status.tps = null;
-        this.status.nextTPS = null;
+      this.status.isRunning = false;
+      if (this.status.isInteractiveRunning) {
+        if (this.status.tps === this.status.nextTPS) {
+          // No position queued
+          this.status.tps = null;
+          this.status.nextTPS = null;
+        } else {
+          this.status.tps = this.status.nextTPS;
+        }
       } else {
-        this.status.tps = this.status.nextTPS;
+        super.storeResults({
+          tps,
+          pvs: [[response.slice(9)]],
+        });
+        if (this.status.isAnalyzingGame) {
+          this.status.onComplete();
+        } else if (this.status.isAnalyzingPosition) {
+          this.status.isAnalyzingPosition = false;
+        }
       }
-      return;
     } else if (response.startsWith("info") && tps) {
       // Parse Results
+      this.status.isRunning = true;
       const results = {
         tps,
-        pv: [],
+        pvs: [[]],
         time: null,
         nps: null,
         depth: null,
@@ -152,7 +180,6 @@ export default class TiltakWasm extends Bot {
         nodes: null,
       };
 
-      this.status.isLoading = true;
       const keys = ["pv", "time", "nps", "depth", "seldepth", "score", "nodes"];
       let key = "";
       for (const value of response.split(" ")) {
@@ -160,7 +187,7 @@ export default class TiltakWasm extends Bot {
           key = value;
         } else {
           if (key === "pv") {
-            results.pv.push(value);
+            results.pvs[0].push(value);
           } else if (key === "score" && value === "cp") {
             continue;
           } else {
@@ -173,7 +200,7 @@ export default class TiltakWasm extends Bot {
         results.evaluation =
           Number(results.score) * (initialPlayer === 1 ? 1 : -1);
       }
-      if (results.pv.length) {
+      if (results.pvs[0].length) {
         return super.storeResults(results);
       }
     }
@@ -184,9 +211,7 @@ export default class TiltakWasm extends Bot {
     if (worker && this.status.isRunning) {
       try {
         this.send("stop");
-        this.status.isInteractiveRunning = false;
-        this.status.isRunning = false;
-        this.status.nextTPS = null;
+        super.terminate();
       } catch (error) {
         await worker.terminate();
         this.init();

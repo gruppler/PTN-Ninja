@@ -29,6 +29,7 @@ export default class TopazWasm extends Bot {
         worker.onmessage = ({ data }) => {
           this.handleResponse(data);
         };
+        this.status.isReady = true;
         return super.init(true);
       } catch (error) {
         console.error("Failed to load Topaz (wasm):", error);
@@ -37,17 +38,8 @@ export default class TopazWasm extends Bot {
     }
   }
 
-  //#region analyzePosition
-  analyzePosition(tps = this.tps) {
-    if (!worker) {
-      this.init();
-      return;
-    }
-
-    if (!super.analyzePosition(tps, false)) {
-      return;
-    }
-
+  //#region queryPosition
+  queryPosition(tps) {
     this.send({
       ...this.settings,
       tps,
@@ -55,6 +47,20 @@ export default class TopazWasm extends Bot {
       komi: this.komi,
       hash: this.settingsHash,
     });
+  }
+
+  //#region analyzeCurrentPosition
+  analyzeCurrentPosition() {
+    if (!worker) {
+      this.init();
+      return;
+    }
+
+    if (!super.analyzeCurrentPosition()) {
+      return;
+    }
+
+    this.queryPosition(this.tps);
   }
 
   //#region handleResponse
@@ -69,14 +75,18 @@ export default class TopazWasm extends Bot {
     // const initialPlayer = Number(tps.split(" ")[1]);
     // const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
 
-    return super.storeResults({
+    super.storeResults({
       hash,
       tps,
-      pv,
+      pvs: [pv],
       depth,
       nodes,
       evaluation: null,
     });
+
+    if (this.status.onComplete) {
+      this.status.onComplete();
+    }
   }
 
   //#region terminate
@@ -84,11 +94,7 @@ export default class TopazWasm extends Bot {
     if (worker && this.status.isRunning) {
       try {
         await worker.terminate();
-        clearInterval(this.status.timer);
-        this.status.isRunning = false;
-        this.status.isAnalyzingPosition = false;
-        this.status.timer = null;
-        this.status.analyzingPly = null;
+        super.terminate();
         worker = null;
         this.init();
       } catch (error) {

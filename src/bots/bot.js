@@ -5,7 +5,7 @@ import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
 
 import hashObject from "object-hash";
-import { isFunction, omit, uniq } from "lodash";
+import { isFunction, isNumber, uniq } from "lodash";
 
 export default class Bot {
   constructor({
@@ -39,6 +39,7 @@ export default class Bot {
     };
 
     this.status = {
+      isInitialized: false,
       isReady: false,
       isInteractiveEnabled: false,
       isInteractiveRunning: false,
@@ -46,6 +47,7 @@ export default class Bot {
       isAnalyzingGame: false,
       isRunning: false,
       progress: 0,
+      onComplete: null,
       analyzingPly: null,
       timer: null,
       time: null,
@@ -60,7 +62,6 @@ export default class Bot {
     this.positions = {};
     this.unwatchPosition = null;
 
-    this.isInitialized = false;
     this.init();
   }
 
@@ -140,22 +141,25 @@ export default class Bot {
     return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
   }
 
-  getTeiPosition(
-    plyIndex = this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
-  ) {
+  getTeiPosition(tps, plyIndex) {
     let posMessage = "position";
-    const initTPS = this.getInitTPS();
-    if (initTPS) {
-      posMessage += " tps " + initTPS;
+    if (isNumber(plyIndex)) {
+      tps = this.getInitTPS();
+      if (tps) {
+        posMessage += " tps " + tps;
+      } else {
+        posMessage += " startpos";
+      }
+      posMessage += " moves";
+      const plies = this.game.ptn.branchPlies
+        .slice(0, 1 + plyIndex)
+        .map((ply) => ply.text)
+        .join(" ");
+      if (plies) {
+        posMessage += " " + plies;
+      }
     } else {
-      posMessage += " startpos moves";
-    }
-    const plies = this.game.ptn.branchPlies
-      .slice(0, 1 + plyIndex)
-      .map((ply) => ply.text)
-      .join(" ");
-    if (plies) {
-      posMessage += " " + plies;
+      posMessage += " tps " + tps;
     }
     return posMessage;
   }
@@ -168,7 +172,8 @@ export default class Bot {
   }
 
   init(success) {
-    this.isInitialized = success;
+    success = Boolean(success);
+    this.status.isInitialized = success;
     if (success && isFunction(this.onInit)) {
       this.onInit(this);
     }
@@ -184,10 +189,10 @@ export default class Bot {
   }
 
   getSettingsHash() {
-    return hashObject(omit(this.settings, "pvLimit"));
+    return hashObject(this.settings);
   }
 
-  queryPosition(timeBudget, tps, plyIndex) {}
+  queryPosition(tps, plyIndex) {}
 
   //#region analyzeInteractive
   analyzeInteractive() {
@@ -195,7 +200,7 @@ export default class Bot {
       return false;
     }
 
-    if (this.status.isRunning) {
+    if (this.status.isRunning || this.isGameEnd) {
       this.send("stop");
     }
 
@@ -219,13 +224,16 @@ export default class Bot {
     this.status.isRunning = true;
     this.status.isInteractiveRunning = true;
 
-    this.queryPosition(1e8, tps);
+    this.queryPosition(
+      tps,
+      this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+    );
 
     return true;
   }
 
-  //#region analyzePosition
-  analyzePosition(timeBudget = this.settings.timeBudget) {
+  //#region analyzeCurrentPosition
+  analyzeCurrentPosition() {
     if (this.status.isRunning || this.isGameEnd) {
       return false;
     }
@@ -235,13 +243,22 @@ export default class Bot {
     this.status.isRunning = true;
     this.status.isAnalyzingPosition = true;
     this.status.progress = 0;
-    const startTime = new Date().getTime();
-    this.status.timer = setInterval(() => {
-      this.status.progress =
-        (new Date().getTime() - startTime) / (timeBudget * 10);
-    }, 1000);
+    if (
+      this.settings.secondsToThink &&
+      (!this.settings.limitType || this.settings.limitType === "secondsToThink")
+    ) {
+      const secondsToThink = this.settings.secondsToThink;
+      const startTime = new Date().getTime();
+      this.status.timer = setInterval(() => {
+        this.status.progress =
+          (new Date().getTime() - startTime) / (secondsToThink * 10);
+      }, 1000);
+    }
 
-    this.queryPosition(timeBudget, this.tps);
+    this.queryPosition(
+      this.tps,
+      this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+    );
 
     return true;
   }
@@ -263,22 +280,29 @@ export default class Bot {
           positions.push(ply.tpsAfter);
         }
       });
-      positions = uniq(positions).filter(
-        (tps) =>
-          !(tps in this.positions) || !(settingsKey in this.positions[tps])
-      );
+      positions = uniq(positions).filter((tps) => !(tps in this.positions));
       const total = positions.length;
       let completed = 0;
-
-      positions.forEach((tps) => {
-        this.queryPosition(tps, this.settings.timeBudget);
+      let tps = positions[0];
+      this.status.onComplete = () => {
         this.status.progress = (100 * ++completed) / total;
-      });
-      // Insert comments
-      this.saveEvalComments();
+        if (completed < total) {
+          // Proceed to next position
+          tps = positions[completed];
+          this.status.tps = tps;
+          this.queryPosition(tps);
+        } else {
+          // Analysis complete
+          this.status.onComplete = null;
+          this.status.isRunning = false;
+          this.status.isAnalyzingGame = false;
+          this.saveEvalComments();
+        }
+      };
+      this.status.tps = tps;
+      this.queryPosition(tps);
     } catch (error) {
       this.handleError(error);
-    } finally {
       this.status.isRunning = false;
       this.status.isAnalyzingGame = false;
     }
@@ -288,14 +312,18 @@ export default class Bot {
   storeResults({
     hash = this.getSettingsHash(),
     tps,
-    pv = [],
+    pvs = [],
     time = null,
     nps = null,
     depth = null,
     evaluation = null,
     nodes = null,
   }) {
-    if (this.status.isAnalyzingPosition) {
+    if (!tps) {
+      return;
+    }
+
+    if (this.status.isAnalyzingPosition && !this.isInteractive) {
       this.status.isAnalyzingPosition = false;
       this.status.isRunning = false;
       this.status.analyzingPly = null;
@@ -311,25 +339,34 @@ export default class Bot {
           ? 2
           : 1
         : initialPlayer;
-    let player = initialPlayer;
-    let color = initialColor;
-    const ply = new Ply(pv.splice(0, 1)[0], {
-      id: null,
-      player,
-      color,
+    const suggestions = [];
+    pvs.forEach((pv) => {
+      let player = initialPlayer;
+      let color = initialColor;
+      const ply = new Ply(pv.splice(0, 1)[0], {
+        id: null,
+        player,
+        color,
+      });
+      const followingPlies = pv.map((ply) => {
+        ({ player, color } = this.nextPly(player, color));
+        return new Ply(ply, { id: null, player, color });
+      });
+      depth;
+      nodes;
+      suggestions.push({
+        ply,
+        followingPlies,
+        evaluation,
+        depth,
+        nodes,
+        time,
+        hash,
+      });
     });
-    const followingPlies = pv.map((ply) => {
-      ({ player, color } = this.nextPly(player, color));
-      return new Ply(ply, { id: null, player, color });
-    });
-    depth;
-    nodes;
-    const suggestions = [
-      { ply, followingPlies, evaluation, depth, nodes, hash },
-    ];
     deepFreeze(suggestions);
 
-    if (!this.status.tps) {
+    if (this.isInteractiveEnabled && !this.status.tps) {
       this.status.tps = this.tps;
     }
 
@@ -342,15 +379,28 @@ export default class Bot {
     // Don't overwrite deeper searches for this position unless settings have changed
     if (
       !this.positions[tps] ||
+      this.positions[tps][0].hash !== hash ||
+      this.positions[tps][0].nodes < suggestions[0].nodes ||
       this.positions[tps][0].depth < suggestions[0].depth ||
-      this.positions[tps][0].hash !== hash
+      this.positions[tps][0].time < suggestions[0].time
     ) {
       Vue.set(this.positions, tps, suggestions);
-      return suggestions;
     }
   }
 
-  terminate() {}
+  terminate() {
+    this.status.isInteractiveRunning = false;
+    this.status.isAnalyzingPosition = false;
+    this.status.isAnalyzingGame = false;
+    this.status.isRunning = false;
+    this.status.nps = null;
+    this.status.nextTPS = null;
+    this.status.onComplete = null;
+    if (this.status.timer) {
+      clearInterval(this.status.timer);
+      this.status.timer = null;
+    }
+  }
 
   //#region Formatting
   formatEvaluation(value) {
@@ -418,16 +468,14 @@ export default class Bot {
 
       // Annotation marks
       if (
-        evaluationBefore !== null ||
-        (positionBefore && positionBefore[0].evaluation !== null)
+        evaluationBefore === null &&
+        positionBefore &&
+        positionBefore[0].evaluation !== null
       ) {
-        evaluationBefore =
-          Math.round(
-            100 *
-              (evaluationBefore !== null
-                ? evaluationBefore
-                : positionBefore[0].evaluation)
-          ) / 1e4;
+        evaluationBefore = positionBefore[0].evaluation;
+      }
+      if (evaluationBefore !== null) {
+        evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
         const scoreLoss =
           (ply.player === 1
             ? evaluationAfter - evaluationBefore
@@ -479,7 +527,10 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(pvLimit = this.settings.pvLimit, plies = this.plies) {
+  saveEvalComments(
+    pvLimit = store.state.ui.botSettings.pvLimit,
+    plies = this.plies
+  ) {
     const messages = {};
     plies.forEach((ply) => {
       const notes = [];

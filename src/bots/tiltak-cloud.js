@@ -30,11 +30,12 @@ export default class TiltakCloud extends Bot {
 
   //#region init
   init() {
+    this.status.isReady = true;
     super.init(true);
   }
 
-  //#region analyzePosition
-  async analyzePosition(tps = this.tps, secondsToThink) {
+  //#region analyzeCurrentPosition
+  async analyzeCurrentPosition(tps = this.tps, secondsToThink) {
     try {
       this.status.isRunning = true;
       this.status.isAnalyzingPosition = true;
@@ -98,7 +99,7 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region queryPosition
-  async queryPosition(tps, secondsToThink) {
+  async queryPosition(secondsToThink, plyIndex, tps) {
     if (this.isOffline) {
       this.handleError("Offline");
       return;
@@ -163,5 +164,7 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region terminate
-  terminate() {}
+  terminate() {
+    super.terminate();
+  }
 }

@@ -39,12 +39,13 @@ export default class TeiBot extends Bot {
   }
 
   init() {
-    this.connect();
     super.init(true);
+    this.connect();
   }
 
   reset() {
     this.isInteractiveEnabled = false;
+    this.status.isAnalyzingGame = false;
     this.status.isInteractiveRunning = false;
     this.status.isConnecting = false;
     this.status.isConnected = false;
@@ -125,7 +126,7 @@ export default class TeiBot extends Bot {
   }
 
   //#region queryPosition
-  queryPosition(timeBudget, tps, plyIndex) {
+  queryPosition(tps, plyIndex) {
     // Send `teinewgame` if necessary
     const optionHalfKomi = this.meta.options.HalfKomi;
     let halfKomi = this.komi * 2;
@@ -152,13 +153,7 @@ export default class TeiBot extends Bot {
       this.status.komi !== halfKomi ||
       this.status.initTPS !== initTPS
     ) {
-      Object.keys(this.meta.options).forEach((name) => {
-        if (name.toLowerCase() !== "halfkomi") {
-          this.send(
-            `setoption name ${name} value ${this.meta.options[name].value}`
-          );
-        }
-      });
+      // New game
       this.send(`teinewgame ${this.size}`);
       this.status.size = this.size;
       if (halfKomi !== null) {
@@ -168,8 +163,23 @@ export default class TeiBot extends Bot {
       this.status.initTPS = initTPS;
     }
 
-    this.send(this.getTeiPosition(plyIndex));
-    this.send(`go movetime ${timeBudget * 1e3}`);
+    // Set position
+    this.send(this.getTeiPosition(tps, plyIndex));
+
+    // Go
+    if (this.status.isInteractiveRunning) {
+      this.send(`go infinite`);
+    } else {
+      if (!this.settings.limitType || this.settings.limitType === "movetime") {
+        this.send(`go movetime ${this.settings.secondsToThink * 1e3}`);
+      } else {
+        this.send(
+          `go ${this.settings.limitType} ${
+            this.settings[this.settings.limitType]
+          }`
+        );
+      }
+    }
   }
 
   //#region analyzeInteractive
@@ -188,8 +198,8 @@ export default class TeiBot extends Bot {
     super.analyzeInteractive();
   }
 
-  //#region analyzePosition
-  analyzePosition(timeBudget) {
+  //#region analyzeCurrentPosition
+  analyzeCurrentPosition() {
     if (!socket) {
       this.init();
       return;
@@ -201,7 +211,7 @@ export default class TeiBot extends Bot {
       return;
     }
 
-    super.analyzePosition(timeBudget);
+    super.analyzeCurrentPosition();
   }
 
   //#region handleResponse
@@ -213,11 +223,17 @@ export default class TeiBot extends Bot {
 
     const tps = this.status.tps;
 
-    if (response === "teiok" || response === "readyok") {
+    if (response === "teiok") {
+      Object.keys(this.meta.options).forEach((name) => {
+        if (name.toLowerCase() !== "halfkomi") {
+          this.send(
+            `setoption name ${name} value ${this.meta.options[name].value}`
+          );
+        }
+      });
+      this.send(`isready`);
+    } else if (response === "readyok") {
       this.status.isReady = true;
-      if (this.isInteractiveEnabled) {
-        this.requestTeiSuggestions();
-      }
     } else if (response.startsWith("id name ")) {
       this.meta.name = response.substr(8);
     } else if (response.startsWith("id author ")) {
@@ -263,19 +279,23 @@ export default class TeiBot extends Bot {
         } else {
           this.status.tps = this.status.nextTPS;
         }
-        this.status.isInteractiveRunning = false;
       } else {
-        this.status.isAnalyzingPosition = false;
-        return super.storeResults({
+        super.storeResults({
           tps,
-          pv: [response.slice(9)],
+          pvs: [[response.slice(9)]],
         });
+        if (this.status.isAnalyzingGame) {
+          this.status.onComplete();
+        } else if (this.status.isAnalyzingPosition) {
+          this.status.isAnalyzingPosition = false;
+        }
       }
     } else if (response.startsWith("info") && tps) {
       // Parse Results
+      this.status.isRunning = true;
       const results = {
         tps,
-        pv: [],
+        pvs: [[]],
         time: null,
         nps: null,
         depth: null,
@@ -286,25 +306,37 @@ export default class TeiBot extends Bot {
 
       const keys = /^(pv|time|nps|depth|seldepth|score|nodes)$/i;
       let key = "";
+      let scoreType = "";
+      const initialPlayer = Number(tps.split(" ")[1]);
       for (const value of response.split(" ")) {
         if (keys.test(value)) {
           key = value.toLowerCase();
         } else {
           if (key === "pv" && value) {
-            results.pv.push(value);
-          } else if (key === "score" && value === "cp") {
-            continue;
+            results.pvs[0].push(value);
+          } else if (key === "score") {
+            switch (scoreType) {
+              case "cp":
+              case "lowerbound":
+              case "upperbound":
+                results.evaluation =
+                  Number(value) * (initialPlayer === 1 ? 1 : -1);
+                break;
+              case "mate":
+                results.evaluation =
+                  100 *
+                  (Number(value) > 0 ? 1 : -1) *
+                  (initialPlayer === 1 ? 1 : -1);
+                break;
+              default:
+                scoreType = value;
+            }
           } else if (results[key] === null) {
             results[key] = Number(value);
           }
         }
       }
-      if (tps && results.score !== null) {
-        const initialPlayer = Number(tps.split(" ")[1]);
-        results.evaluation =
-          Number(results.score) * (initialPlayer === 1 ? 1 : -1);
-      }
-      if (results.pv.length) {
+      if (results.pvs[0].length) {
         return super.storeResults(results);
       }
     }
@@ -314,14 +346,10 @@ export default class TeiBot extends Bot {
   async terminate() {
     if (socket) {
       try {
-        if (this.status.isConnected) {
+        if (this.status.isRunning) {
           this.send("stop");
         }
-        this.status.isInteractiveRunning = false;
-        this.status.isAnalyzingPosition = false;
-        this.status.isRunning = false;
-        this.status.nps = null;
-        this.status.nextTPS = null;
+        super.terminate();
       } catch (error) {
         await socket.close();
         this.init();
@@ -334,6 +362,7 @@ export default class TeiBot extends Bot {
     if (socket && this.status.isConnected) {
       socket.close();
       socket = null;
+      this.reset();
     }
   }
 }
