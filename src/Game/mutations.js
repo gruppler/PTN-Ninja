@@ -520,6 +520,7 @@ export default class GameMutations {
 
   _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     let boardPly = this.board.ply;
+    const tps = this.board.tps;
 
     if (ply.constructor !== Ply) {
       if (Linenum.test(ply)) {
@@ -534,8 +535,12 @@ export default class GameMutations {
             : this.plies.length,
         color: replaceCurrent && boardPly ? boardPly.color : this.board.color,
         player: replaceCurrent && boardPly ? boardPly.player : this.board.turn,
+        beforeTPS: tps,
       });
+    } else {
+      ply.beforeTPS = tps;
     }
+    ply.tpsBefore = this.board.tps;
 
     // Validate
     if (
@@ -741,6 +746,7 @@ export default class GameMutations {
       this.board.dirtyPly(ply.id);
       this.board.setRoads(ply.result.roads || null);
     }
+    ply.tpsAfter = this.board.tps;
 
     return true;
   }
