@@ -47,7 +47,7 @@
       <div class="w" :class="{ ew }" />
       <div class="center" />
     </div>
-    <div class="stack-count" v-show="stackCount">
+    <div class="stack-count" v-if="!disableStackCounts" v-show="stackCount">
       <span
         :style="{
           backgroundColor:
@@ -179,11 +179,17 @@ export default {
         !(this.game.config.openingSwap && this.game.position.isFirstMove)
       );
     },
+    disabled() {
+      return this.$store.getters["game/disabledOptions"];
+    },
     showRoads() {
       return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
     },
     stackCounts() {
-      return !this.game.config.disableRoads && this.$store.state.ui.stackCounts;
+      return this.$store.state.ui.stackCounts;
+    },
+    disableStackCounts() {
+      return this.disabled && this.disabled.includes("stackCounts");
     },
     stackCount() {
       if (

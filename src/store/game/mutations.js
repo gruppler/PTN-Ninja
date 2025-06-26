@@ -152,7 +152,6 @@ export const SAVE_STATE = (state, { game, gameState }) => {
 };
 
 export const SAVE_CONFIG = (state, { game, config }) => {
-  Object.assign(game.config, config);
   let stateGame = state.list.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.config = { ...config };

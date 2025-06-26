@@ -78,7 +78,7 @@ const defaultState = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
-  orthogonal: false,
+  orthographic: false,
   perspective: 5,
   playSpeed: 60, //FPM
   player1: "",
@@ -93,6 +93,7 @@ const defaultState = {
   showControls: true,
   showPlayButton: false,
   showEval: true,
+  showHeader: true,
   showHints: true,
   showMove: true,
   showPTN: true,
@@ -187,6 +188,8 @@ if (!state.embed && !LocalStorage.isEmpty()) {
   for (let key in defaultState) {
     state[key] = load(key, state[key]);
   }
+} else if (!LocalStorage.isEmpty()) {
+  state.theme = load("theme", state.theme);
 }
 
 // Backward compatibility
