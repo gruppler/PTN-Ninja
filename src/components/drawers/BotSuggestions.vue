@@ -99,8 +99,26 @@
             </template>
           </q-input>
 
+          <!-- Tiltak Cloud -->
+          <!-- Max Suggestions -->
+          <q-input
+            v-if="botSettings.bot === 'tiltak-cloud'"
+            v-model.number="botSettings[botSettings.bot].maxSuggestedMoves"
+            :label="$t('analysis.maxSuggestedMoves')"
+            type="number"
+            min="1"
+            max="20"
+            step="1"
+            item-aligned
+            filled
+          >
+            <template v-slot:prepend>
+              <q-icon name="moves" />
+            </template>
+          </q-input>
+
           <!-- Limit Type -->
-          <q-item>
+          <q-item v-if="hasLimitSettings">
             <q-item-section v-if="'limitType' in bot.settings">
               <q-select
                 v-model="botSettings[botSettings.bot].limitType"
@@ -113,7 +131,6 @@
                 emit-value
                 map-options
                 filled
-                class="q-mr-sm"
               />
             </q-item-section>
 
@@ -177,94 +194,87 @@
           </q-item>
 
           <!-- Other Bot Options -->
-          <template v-for="(option, name) in bot.meta.options">
-            <q-item
-              v-if="option.type === 'check'"
-              :key="name"
-              type="label"
-              :disable="isBotRunning"
-              clickable
-              v-ripple
-            >
-              <q-item-section side>
-                <q-checkbox
-                  v-model="option.value"
-                  @input="bot.setOption(name, $event)"
-                  :disable="isBotRunning"
-                />
-                <q-item-section>
-                  <q-item-label>{{ name }}</q-item-label>
+          <template v-if="bot && bot.hasOptions">
+            <q-separator />
+
+            <template v-for="(option, name) in bot.meta.options">
+              <q-item
+                v-if="option.type === 'check'"
+                :key="name"
+                type="label"
+                :disable="isBotRunning"
+                clickable
+                v-ripple
+              >
+                <q-item-section side>
+                  <q-checkbox
+                    v-model="botMetaOptions[name]"
+                    :disable="isBotRunning"
+                  />
+                  <q-item-section>
+                    <q-item-label>{{ name }}</q-item-label>
+                  </q-item-section>
                 </q-item-section>
-              </q-item-section>
-            </q-item>
-            <q-input
-              v-if="option.type === 'spin'"
-              type="number"
-              :key="name"
-              v-model.number="option.value"
-              @input="bot.setOption(name, $event)"
-              :label="name"
-              :min="option.min"
-              :max="option.max"
-              :disable="isBotRunning"
-              filled
-              item-aligned
-            />
-            <q-select
-              v-if="option.type === 'combo'"
-              :key="name"
-              v-model="option.value"
-              @input="bot.setOption(name, $event)"
-              :options="option.vars"
-              :label="name"
-              :disable="isBotRunning"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              filled
-              item-aligned
-            />
+              </q-item>
+              <q-input
+                v-if="option.type === 'spin'"
+                type="number"
+                :key="name"
+                v-model.number="botMetaOptions[name]"
+                :label="name"
+                :min="option.min"
+                :max="option.max"
+                :disable="isBotRunning"
+                filled
+                item-aligned
+              />
+              <q-select
+                v-if="option.type === 'combo'"
+                :key="name"
+                v-model="botMetaOptions[name]"
+                :options="option.vars"
+                :label="name"
+                :disable="isBotRunning"
+                behavior="menu"
+                transition-show="none"
+                transition-hide="none"
+                filled
+                item-aligned
+              />
+              <q-btn
+                v-if="option.type === 'button'"
+                :key="name"
+                :label="name"
+                @click="bot.sendAction(name)"
+                :disable="isBotRunning"
+                class="full-width"
+                color="primary"
+                stretch
+              />
+              <q-input
+                v-if="option.type === 'string'"
+                :key="name"
+                v-model="botMetaOptions[name]"
+                :label="name"
+                :disable="isBotRunning"
+                filled
+                item-aligned
+              />
+            </template>
+
             <q-btn
-              v-if="option.type === 'button'"
-              :key="name"
-              :label="name"
-              @click="bot.send(name)"
-              :disable="isBotRunning"
+              @click="bot.setOptions(botMetaOptions)"
+              icon="apply"
+              :label="$t('analysis.Apply Options')"
+              :loading="bot.status.isApplyingOptions"
               class="full-width"
               color="primary"
+              :flat="areMetaOptionsApplied"
               stretch
-            />
-            <q-input
-              v-if="option.type === 'string'"
-              :key="name"
-              v-model="option.value"
-              @input="bot.setOption(name, $event)"
-              :label="name"
-              :disable="isBotRunning"
-              filled
-              item-aligned
             />
           </template>
 
-          <!-- Tiltak Cloud -->
-          <!-- Max Suggestions -->
-          <q-input
-            v-if="botSettings.bot === 'tiltak-cloud'"
-            v-model.number="botSettings[botSettings.bot].maxSuggestedMoves"
-            :label="$t('analysis.maxSuggestedMoves')"
-            type="number"
-            min="1"
-            max="20"
-            step="1"
-            item-aligned
-            filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="moves" />
-            </template>
-          </q-input>
-
-          <!-- TEI -->
+          <!-- TEI Connection Settings -->
           <template v-if="bot && botSettings.bot === 'tei'">
             <q-separator />
             <q-expansion-item
@@ -363,6 +373,20 @@
             :disabled="!botSettings.tei.address"
             icon="connect"
             :label="$t('tei.connect')"
+            class="full-width"
+            color="primary"
+            stretch
+          />
+          <q-btn
+            v-else-if="
+              botSettings.bot === 'tei' &&
+              bot.status.isConnected &&
+              !bot.status.isReady
+            "
+            @click="bot.setOptions(botMetaOptions)"
+            icon="apply"
+            :label="$t('analysis.init')"
+            :loading="bot.status.isApplyingOptions"
             class="full-width"
             color="primary"
             stretch
@@ -493,7 +517,8 @@
           :showing="
             bot &&
             (bot.status.isConnected || !bot.connect) &&
-            !bot.status.isReady
+            !bot.status.isReady &&
+            !bot.status.isTeiOk
           "
         />
       </smooth-reflow>
@@ -582,10 +607,10 @@
 </template>
 
 <script>
-import { cloneDeep } from "lodash";
 import AnalysisItem from "../database/AnalysisItem";
 import PlyChip from "../PTN/Ply.vue";
 import { bots, botOptions } from "../../bots";
+import { cloneDeep, forEach, isEqual } from "lodash";
 
 export default {
   name: "BotSuggestions",
@@ -595,6 +620,7 @@ export default {
       showBotSettings: false,
       bots,
       botOptions,
+      botMetaOptions: this.bot ? this.bot.getOptions() : {},
       botSettings: cloneDeep(this.$store.state.ui.botSettings),
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
@@ -659,6 +685,18 @@ export default {
       }
       return types;
     },
+    hasLimitSettings() {
+      return (
+        this.bot &&
+        ("limitType" in this.bot.settings ||
+          "secondsToThink" in this.bot.settings ||
+          "depth" in this.bot.settings ||
+          "nodes" in this.bot.settings)
+      );
+    },
+    areMetaOptionsApplied() {
+      return this.bot && isEqual(this.botMetaOptions, this.bot.getOptions());
+    },
   },
   methods: {
     toggleBotSettings() {
@@ -703,16 +741,20 @@ export default {
     },
     "bot.meta.options": {
       handler(options) {
+        // Reset the buffer
+        this.botMetaOptions = this.bot.getOptions();
+
         // Save TEI options
         if (this.botSettings.bot === "tei") {
           let optionValues = { ...(this.botSettings.tei.options || {}) };
-          Object.keys(options).forEach((key) => {
-            if (
-              "value" in options[key] &&
-              (!("default" in options[key]) ||
-                options[key].value !== options[key].default)
-            ) {
-              optionValues[key] = options[key].value;
+          forEach(options, (option, name) => {
+            if (!("value" in option)) {
+              return;
+            }
+            if (!("default" in option) || option.value !== option.default) {
+              optionValues[name] = option.value;
+            } else {
+              delete optionValues[name];
             }
           });
           this.$set(this.botSettings.tei, "options", optionValues);

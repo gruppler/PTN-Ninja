@@ -13,6 +13,10 @@ export default class TiltakWasm extends Bot {
       isInteractive: true,
       ...options,
     });
+
+    Object.assign(this.status, {
+      isTeiOk: false,
+    });
   }
 
   send(message) {
@@ -71,15 +75,24 @@ export default class TiltakWasm extends Bot {
     // Send `teinewgame` if necessary
     const initTPS = this.getInitTPS();
     if (
+      this.status.gameID !== this.game.name ||
       this.status.size !== this.size ||
       this.status.komi !== this.komi ||
       this.status.initTPS !== initTPS
     ) {
-      this.send(`teinewgame ${this.size}`);
       this.send(`setoption name HalfKomi value ${this.komi * 2}`);
+      this.send(`teinewgame ${this.size}`);
+      this.status.gameID = this.game.name;
       this.status.size = this.size;
       this.status.komi = this.komi;
       this.status.initTPS = initTPS;
+      this.status.isReady = false;
+      this.send(`isready`);
+      this.onReady = () => {
+        this.onReady = null;
+        this.queryPosition(tps, plyIndex);
+      };
+      return;
     }
 
     // Set position
@@ -142,8 +155,14 @@ export default class TiltakWasm extends Bot {
 
     const tps = this.status.tps;
 
-    if (response === "teiok" || response === "readyok") {
+    if (response === "teiok") {
+      this.status.isTeiOk = true;
+      this.send("isready");
+    } else if (response === "readyok") {
       this.status.isReady = true;
+      if (this.onReady) {
+        this.onReady();
+      }
     } else if (response.startsWith("bestmove")) {
       // Search ended
       this.status.isRunning = false;
@@ -160,8 +179,8 @@ export default class TiltakWasm extends Bot {
           tps,
           pvs: [[response.slice(9)]],
         });
-        if (this.status.isAnalyzingGame) {
-          this.status.onComplete();
+        if (this.status.isAnalyzingGame && this.onComplete) {
+          this.onComplete();
         } else if (this.status.isAnalyzingPosition) {
           this.status.isAnalyzingPosition = false;
         }

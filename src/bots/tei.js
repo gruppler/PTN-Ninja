@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Bot from "./bot";
 import hashObject from "object-hash";
+import { forEach } from "lodash";
 
 let socket = null;
 
@@ -18,6 +19,8 @@ export default class TeiBot extends Bot {
     Object.assign(this.status, {
       isConnecting: false,
       isConnected: false,
+      isTeiOk: false,
+      isApplyingOptions: false,
     });
   }
 
@@ -30,12 +33,20 @@ export default class TeiBot extends Bot {
     }
   }
 
+  sendAction(name) {
+    this.send(`setoption name ${name}`);
+  }
+
   get protocol() {
     return this.settings.ssl ? "wss://" : "ws://";
   }
 
   get url() {
-    return `${this.protocol}${this.settings.address}:${this.settings.port}/`;
+    let url = `${this.protocol}${this.settings.address}`;
+    if (this.settings.port) {
+      url += `:${this.settings.port}`;
+    }
+    return url;
   }
 
   init() {
@@ -49,8 +60,10 @@ export default class TeiBot extends Bot {
     this.status.isInteractiveRunning = false;
     this.status.isConnecting = false;
     this.status.isConnected = false;
-    this.status.isRunning = false;
+    this.status.isTeiOk = false;
+    this.status.isApplyingOptions = false;
     this.status.isReady = false;
+    this.status.isRunning = false;
     this.status.time = null;
     this.status.nps = null;
     this.status.tps = null;
@@ -63,17 +76,15 @@ export default class TeiBot extends Bot {
     this.meta.options = {};
   }
 
-  get hasOptions() {
-    return Object.keys(this.meta.options).length > 0;
-  }
-
-  setOption(name, value) {
-    if (name in this.meta.options) {
-      this.meta.options[name].value = value;
-      this.send(`setoption name ${name} value ${value}`);
-    } else {
-      console.error(`Invalid option ${name}`);
-    }
+  applyOptions() {
+    forEach(this.meta.options, ({ value }, name) => {
+      if (name.toLowerCase() !== "halfkomi") {
+        this.send(`setoption name ${name} value ${value}`);
+      }
+    });
+    this.status.isApplyingOptions = true;
+    this.status.isReady = false;
+    this.send(`isready`);
   }
 
   //#region connect
@@ -149,18 +160,28 @@ export default class TeiBot extends Bot {
 
     const initTPS = this.getInitTPS();
     if (
+      this.status.gameID !== this.game.name ||
       this.status.size !== this.size ||
       this.status.komi !== halfKomi ||
       this.status.initTPS !== initTPS
     ) {
       // New game
-      this.send(`teinewgame ${this.size}`);
-      this.status.size = this.size;
       if (halfKomi !== null) {
         this.send(`setoption name HalfKomi value ${halfKomi}`);
       }
+      this.send(`teinewgame ${this.size}`);
+      this.status.gameID = this.game.name;
+      this.status.size = this.size;
       this.status.komi = halfKomi;
       this.status.initTPS = initTPS;
+      this.status.isApplyingOptions = true;
+      this.status.isReady = false;
+      this.send(`isready`);
+      this.onReady = () => {
+        this.onReady = null;
+        this.queryPosition(tps, plyIndex);
+      };
+      return;
     }
 
     // Set position
@@ -224,16 +245,16 @@ export default class TeiBot extends Bot {
     const tps = this.status.tps;
 
     if (response === "teiok") {
-      Object.keys(this.meta.options).forEach((name) => {
-        if (name.toLowerCase() !== "halfkomi") {
-          this.send(
-            `setoption name ${name} value ${this.meta.options[name].value}`
-          );
-        }
-      });
-      this.send(`isready`);
+      this.status.isTeiOk = true;
+      if (!this.hasNonKomiOptions) {
+        this.applyOptions();
+      }
     } else if (response === "readyok") {
+      this.status.isApplyingOptions = false;
       this.status.isReady = true;
+      if (this.onReady) {
+        this.onReady();
+      }
     } else if (response.startsWith("id name ")) {
       this.meta.name = response.substr(8);
     } else if (response.startsWith("id author ")) {
@@ -243,22 +264,31 @@ export default class TeiBot extends Bot {
       let key = "";
       let name = "";
       let option = { value: null };
-      for (let value of response.substr(7).split(" ")) {
-        if (keys.test(value)) {
-          key = value.toLowerCase();
+      let tokens = response.substr(7).trim().split(/\s+/);
+      let token;
+      while ((token = tokens.shift())) {
+        if (keys.test(token)) {
+          key = token.toLowerCase();
         } else {
-          if (key === "name" && value) {
-            name = value;
-          } else if (key === "var" && value) {
+          if (key === "name") {
+            if (!name) {
+              name = token;
+            } else {
+              name += " " + token;
+            }
+          } else if (key === "var") {
             if (!option.vars) {
               option.vars = [];
             }
-            option.vars.push(value);
+            while (tokens[0] !== "var" && !keys.test(tokens[0])) {
+              token += " " + tokens.shift();
+            }
+            option.vars.push(token);
           } else if (name && key) {
             if (option.type === "spin") {
-              value = Number(value);
+              token = Number(token);
             }
-            option[key] = value;
+            option[key] = token;
           }
         }
       }
@@ -282,10 +312,10 @@ export default class TeiBot extends Bot {
       } else {
         super.storeResults({
           tps,
-          pvs: [[response.slice(9)]],
+          pvs: [[response.substr(9)]],
         });
-        if (this.status.isAnalyzingGame) {
-          this.status.onComplete();
+        if (this.status.isAnalyzingGame && this.onComplete) {
+          this.onComplete();
         } else if (this.status.isAnalyzingPosition) {
           this.status.isAnalyzingPosition = false;
         }
@@ -302,37 +332,49 @@ export default class TeiBot extends Bot {
         seldepth: null,
         score: null,
         nodes: null,
+        string: "",
+        error: "",
       };
 
-      const keys = /^(pv|time|nps|depth|seldepth|score|nodes)$/i;
+      const keys = /^(pv|time|nps|depth|seldepth|score|nodes|string|error)$/i;
       let key = "";
+      let multipv = 0;
       let scoreType = "";
       const initialPlayer = Number(tps.split(" ")[1]);
-      for (const value of response.split(" ")) {
-        if (keys.test(value)) {
-          key = value.toLowerCase();
+      let tokens = response.substr(5).trim().split(/\s+/);
+      let token;
+      while ((token = tokens.shift())) {
+        if (keys.test(token)) {
+          key = token.toLowerCase();
+          if (key === "string" || key === "error") {
+            results[key] = tokens.join(" ");
+            break;
+          }
         } else {
-          if (key === "pv" && value) {
-            results.pvs[0].push(value);
+          if (key === "pv") {
+            if (multipv && results.pvs.length < multipv) {
+              results.pvs.push([]);
+            }
+            results.pvs[multipv ? multipv - 1 : 0].push(token);
           } else if (key === "score") {
             switch (scoreType) {
               case "cp":
               case "lowerbound":
               case "upperbound":
                 results.evaluation =
-                  Number(value) * (initialPlayer === 1 ? 1 : -1);
+                  Number(token) * (initialPlayer === 1 ? 1 : -1);
                 break;
               case "mate":
                 results.evaluation =
                   100 *
-                  (Number(value) > 0 ? 1 : -1) *
+                  (Number(token) > 0 ? 1 : -1) *
                   (initialPlayer === 1 ? 1 : -1);
                 break;
               default:
-                scoreType = value;
+                scoreType = token;
             }
           } else if (results[key] === null) {
-            results[key] = Number(value);
+            results[key] = Number(token);
           }
         }
       }

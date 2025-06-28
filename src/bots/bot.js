@@ -5,7 +5,7 @@ import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
 
 import hashObject from "object-hash";
-import { isFunction, isNumber, uniq } from "lodash";
+import { forEach, isFunction, isNumber, uniq } from "lodash";
 
 export default class Bot {
   constructor({
@@ -30,6 +30,8 @@ export default class Bot {
     // Callbacks
     this.onInit = onInit;
     this.onError = onError;
+    this.onReady = null;
+    this.onComplete = null;
 
     this.meta = {
       name: name,
@@ -47,7 +49,7 @@ export default class Bot {
       isAnalyzingGame: false,
       isRunning: false,
       progress: 0,
-      onComplete: null,
+      gameID: null,
       analyzingPly: null,
       timer: null,
       time: null,
@@ -126,6 +128,41 @@ export default class Bot {
 
   get isFullyAnalyzed() {
     return this.plies.every((ply) => this.plyHasEvalComment(ply));
+  }
+
+  get hasOptions() {
+    return Object.keys(this.meta.options).length > 0;
+  }
+
+  get hasNonKomiOptions() {
+    const keys = Object.keys(this.meta.options);
+    return (
+      keys.length > 2 ||
+      (keys.length === 1 && !keys[0].toLowerCase().endsWith("komi"))
+    );
+  }
+
+  sendAction(name) {}
+
+  setOptions(options) {
+    forEach(options, (value, name) => {
+      if (name in this.meta.options) {
+        this.meta.options[name].value = value;
+      } else {
+        console.error(`Invalid option ${name}`);
+      }
+    });
+    this.applyOptions();
+  }
+
+  getOptions() {
+    const optionValues = {};
+    forEach(this.meta.options, (option, name) => {
+      if ("value" in option || "default" in option) {
+        optionValues[name] = option.value || option.default;
+      }
+    });
+    return optionValues;
   }
 
   plyHasEvalComment(ply) {
@@ -284,7 +321,7 @@ export default class Bot {
       const total = positions.length;
       let completed = 0;
       let tps = positions[0];
-      this.status.onComplete = () => {
+      this.onComplete = () => {
         this.status.progress = (100 * ++completed) / total;
         if (completed < total) {
           // Proceed to next position
@@ -293,7 +330,7 @@ export default class Bot {
           this.queryPosition(tps);
         } else {
           // Analysis complete
-          this.status.onComplete = null;
+          this.onComplete = null;
           this.status.isRunning = false;
           this.status.isAnalyzingGame = false;
           this.saveEvalComments();
@@ -395,7 +432,8 @@ export default class Bot {
     this.status.isRunning = false;
     this.status.nps = null;
     this.status.nextTPS = null;
-    this.status.onComplete = null;
+    this.onReady = null;
+    this.onComplete = null;
     if (this.status.timer) {
       clearInterval(this.status.timer);
       this.status.timer = null;
