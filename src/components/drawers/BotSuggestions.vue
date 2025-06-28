@@ -95,7 +95,7 @@
             filled
           >
             <template v-slot:prepend>
-              <q-icon name="ply" />
+              <q-icon name="notes" />
             </template>
           </q-input>
 
@@ -124,7 +124,7 @@
                 v-model="botSettings[botSettings.bot].limitType"
                 :options="limitTypes"
                 :label="$t('analysis.limitType')"
-                :disable="isBotRunning"
+                :disable="isBotRunning && !bot.isInteractiveEnabled"
                 behavior="menu"
                 transition-show="none"
                 transition-hide="none"
@@ -144,7 +144,7 @@
             >
               <q-input
                 v-model.number="botSettings[botSettings.bot].secondsToThink"
-                :disable="isBotRunning"
+                :disable="isBotRunning && !bot.isInteractiveEnabled"
                 :label="$t('analysis.secondsToThink')"
                 type="number"
                 min="1"
@@ -163,7 +163,7 @@
             >
               <q-input
                 v-model.number="botSettings[botSettings.bot].depth"
-                :disable="isBotRunning"
+                :disable="isBotRunning && !bot.isInteractiveEnabled"
                 :label="$t('analysis.Depth')"
                 type="number"
                 min="2"
@@ -182,7 +182,7 @@
             >
               <q-input
                 v-model.number="botSettings[botSettings.bot].nodes"
-                :disable="isBotRunning"
+                :disable="isBotRunning && !bot.isInteractiveEnabled"
                 :label="$t('analysis.Nodes')"
                 type="number"
                 min="1"
@@ -266,7 +266,7 @@
               @click="bot.setOptions(botMetaOptions)"
               icon="apply"
               :label="$t('analysis.Apply Options')"
-              :loading="bot.status.isApplyingOptions"
+              :loading="bot.status.isReadying"
               class="full-width"
               color="primary"
               :flat="areMetaOptionsApplied"
@@ -363,7 +363,7 @@
       </smooth-reflow>
 
       <!-- Controls -->
-      <smooth-reflow>
+      <smooth-reflow class="relative-position">
         <template v-if="bot">
           <!-- Connect -->
           <q-btn
@@ -386,21 +386,19 @@
             @click="bot.setOptions(botMetaOptions)"
             icon="apply"
             :label="$t('analysis.init')"
-            :loading="bot.status.isApplyingOptions"
+            :loading="bot.status.isReadying"
             class="full-width"
             color="primary"
             stretch
           />
 
           <!-- Full-Game/Branch Analysis -->
-          <div
-            v-if="bot.status.isReady && !bot.isFullyAnalyzed && plies.length"
-            class="relative-position"
-          >
+          <div class="relative-position">
             <q-btn
               @click="bot.analyzeGame()"
               :loading="bot.status.isAnalyzingGame"
               :percentage="bot.status.progress"
+              :disable="!bot.isAnalyzeGameAvailable"
               class="full-width"
               color="primary"
               stretch
@@ -440,23 +438,20 @@
           </div>
 
           <!-- Generic Non-Interactive -->
-          <div
-            v-if="!isGameEnd && bot.status.isReady"
-            class="relative-position"
-          >
+          <div class="relative-position">
             <q-btn
               @click="
                 bot.status.isAnalyzingPosition
                   ? null
                   : bot.analyzeCurrentPosition()
               "
+              :loading="bot.status.isAnalyzingPosition"
               :percentage="bot.status.progress"
+              :disable="!bot.isAnalyzePositionAvailable"
               class="full-width"
               color="primary"
               icon="board"
               :label="$t('analysis.Analyze Position')"
-              :loading="bot.status.isAnalyzingPosition"
-              :ripple="!bot.status.isAnalyzingPosition"
               stretch
             />
             <PlyChip
@@ -482,14 +477,18 @@
 
           <!-- Generic Interactive -->
           <q-item
-            v-if="bot.isInteractive && bot.status.isReady"
+            v-if="bot.isInteractive"
             class="interactive-control"
             tag="label"
-            clickable
-            v-ripple
+            :disabled="!bot.isInteractiveAvailable"
+            :clickable="bot.isInteractiveAvailable"
+            v-ripple="bot.isInteractiveAvailable"
           >
             <q-item-section avatar>
-              <q-spinner v-if="bot.status.isInteractiveRunning" size="sm" />
+              <q-spinner
+                v-if="bot.isInteractiveEnabled && bot.status.isRunning"
+                size="sm"
+              />
               <q-icon v-else name="int_analysis" />
             </q-item-section>
             <q-item-section>
@@ -508,7 +507,14 @@
               </div>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="bot.isInteractiveEnabled" />
+              <q-toggle
+                v-model="bot.isInteractiveEnabled"
+                :disable="
+                  !bot.status.isReady ||
+                  bot.status.isAnalyzingGame ||
+                  bot.status.isAnalyzingPosition
+                "
+              />
             </q-item-section>
           </q-item>
         </template>
@@ -517,8 +523,8 @@
           :showing="
             bot &&
             (bot.status.isConnected || !bot.connect) &&
-            !bot.status.isReady &&
-            !bot.status.isTeiOk
+            !bot.status.isTeiOk &&
+            !bot.status.isReady
           "
         />
       </smooth-reflow>
@@ -660,8 +666,7 @@ export default {
     },
     isBotRunning() {
       return (
-        this.bot &&
-        (this.bot.status.isRunning || this.bot.status.isInteractiveEnabled)
+        this.bot && (this.bot.status.isRunning || this.bot.isInteractiveEnabled)
       );
     },
     positions() {

@@ -20,10 +20,31 @@ export default class TeiBot extends Bot {
       isConnecting: false,
       isConnected: false,
       isTeiOk: false,
-      isApplyingOptions: false,
     });
   }
 
+  //#region Getters
+  get protocol() {
+    return this.settings.ssl ? "wss://" : "ws://";
+  }
+
+  get url() {
+    let url = `${this.protocol}${this.settings.address}`;
+    if (this.settings.port) {
+      url += `:${this.settings.port}`;
+    }
+    return url;
+  }
+
+  get hasNonKomiOptions() {
+    const keys = Object.keys(this.meta.options);
+    return (
+      keys.length > 1 ||
+      (keys.length === 1 && !keys[0].toLowerCase().endsWith("komi"))
+    );
+  }
+
+  //#region send
   send(message) {
     if (socket) {
       if (this.settings.log) {
@@ -37,43 +58,35 @@ export default class TeiBot extends Bot {
     this.send(`setoption name ${name}`);
   }
 
-  get protocol() {
-    return this.settings.ssl ? "wss://" : "ws://";
-  }
-
-  get url() {
-    let url = `${this.protocol}${this.settings.address}`;
-    if (this.settings.port) {
-      url += `:${this.settings.port}`;
-    }
-    return url;
-  }
-
+  //#region init
   init() {
     super.init(true);
     this.connect();
   }
 
   reset() {
-    this.isInteractiveEnabled = false;
-    this.status.isAnalyzingGame = false;
-    this.status.isInteractiveRunning = false;
-    this.status.isConnecting = false;
-    this.status.isConnected = false;
-    this.status.isTeiOk = false;
-    this.status.isApplyingOptions = false;
-    this.status.isReady = false;
-    this.status.isRunning = false;
-    this.status.time = null;
-    this.status.nps = null;
-    this.status.tps = null;
-    this.status.nextTPS = null;
-    this.status.komi = null;
-    this.status.size = null;
-    this.status.initTPS = null;
     this.meta.name = null;
     this.meta.author = null;
     this.meta.options = {};
+    this.status.isTeiOk = false;
+    this.status.isConnecting = false;
+    this.status.isConnected = false;
+    super.reset();
+  }
+
+  //#region terminate
+  async terminate() {
+    if (socket) {
+      try {
+        if (this.status.isRunning && !this.isInteractiveEnabled) {
+          this.send("stop");
+        }
+        super.terminate();
+      } catch (error) {
+        await socket.close();
+        this.init();
+      }
+    }
   }
 
   applyOptions() {
@@ -82,7 +95,7 @@ export default class TeiBot extends Bot {
         this.send(`setoption name ${name} value ${value}`);
       }
     });
-    this.status.isApplyingOptions = true;
+    this.status.isReadying = true;
     this.status.isReady = false;
     this.send(`isready`);
   }
@@ -105,11 +118,13 @@ export default class TeiBot extends Bot {
           };
           socket.onclose = () => {
             console.info(`Disconnected from ${url}`);
+            this.terminate();
             this.reset();
           };
 
           // Error handling
           socket.onerror = (error) => {
+            this.terminate();
             this.reset();
             reject(error);
           };
@@ -126,6 +141,16 @@ export default class TeiBot extends Bot {
       } catch (error) {
         console.error(error);
       }
+    }
+  }
+
+  //#region disconnect
+  disconnect() {
+    if (socket && this.status.isConnected) {
+      this.terminate();
+      this.reset();
+      socket.close();
+      socket = null;
     }
   }
 
@@ -174,7 +199,7 @@ export default class TeiBot extends Bot {
       this.status.size = this.size;
       this.status.komi = halfKomi;
       this.status.initTPS = initTPS;
-      this.status.isApplyingOptions = true;
+      this.status.isReadying = true;
       this.status.isReady = false;
       this.send(`isready`);
       this.onReady = () => {
@@ -188,7 +213,7 @@ export default class TeiBot extends Bot {
     this.send(this.getTeiPosition(tps, plyIndex));
 
     // Go
-    if (this.status.isInteractiveRunning) {
+    if (this.status.isInteractiveEnabled) {
       this.send(`go infinite`);
     } else {
       if (!this.settings.limitType || this.settings.limitType === "movetime") {
@@ -250,7 +275,7 @@ export default class TeiBot extends Bot {
         this.applyOptions();
       }
     } else if (response === "readyok") {
-      this.status.isApplyingOptions = false;
+      this.status.isReadying = false;
       this.status.isReady = true;
       if (this.onReady) {
         this.onReady();
@@ -280,7 +305,7 @@ export default class TeiBot extends Bot {
             if (!option.vars) {
               option.vars = [];
             }
-            while (tokens[0] !== "var" && !keys.test(tokens[0])) {
+            while (tokens[0] && tokens[0] !== "var" && !keys.test(tokens[0])) {
               token += " " + tokens.shift();
             }
             option.vars.push(token);
@@ -301,7 +326,8 @@ export default class TeiBot extends Bot {
     } else if (response.startsWith("bestmove")) {
       // Search ended
       this.status.isRunning = false;
-      if (this.status.isInteractiveRunning) {
+      this.status.isReady = true;
+      if (this.status.isInteractiveEnabled) {
         if (this.status.tps === this.status.nextTPS) {
           // No position queued
           this.status.tps = null;
@@ -314,10 +340,8 @@ export default class TeiBot extends Bot {
           tps,
           pvs: [[response.substr(9)]],
         });
-        if (this.status.isAnalyzingGame && this.onComplete) {
+        if (this.onComplete) {
           this.onComplete();
-        } else if (this.status.isAnalyzingPosition) {
-          this.status.isAnalyzingPosition = false;
         }
       }
     } else if (response.startsWith("info") && tps) {
@@ -381,30 +405,6 @@ export default class TeiBot extends Bot {
       if (results.pvs[0].length) {
         return super.storeResults(results);
       }
-    }
-  }
-
-  //#region terminate
-  async terminate() {
-    if (socket) {
-      try {
-        if (this.status.isRunning) {
-          this.send("stop");
-        }
-        super.terminate();
-      } catch (error) {
-        await socket.close();
-        this.init();
-      }
-    }
-  }
-
-  //#region disconnect
-  disconnect() {
-    if (socket && this.status.isConnected) {
-      socket.close();
-      socket = null;
-      this.reset();
     }
   }
 }

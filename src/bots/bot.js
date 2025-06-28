@@ -17,7 +17,8 @@ export default class Bot {
     name,
     author,
     options,
-    sizes,
+    sizes, // Array of supported sizes
+    halfkomis, // Map of sizes to arrays of halfkomis
     onInit,
     onError,
   }) {
@@ -38,24 +39,27 @@ export default class Bot {
       author: author,
       options: options || {},
       sizes: sizes,
+      halfkomis: halfkomis,
     };
 
     this.status = {
       isInitialized: false,
+      isReadying: false,
       isReady: false,
+
       isInteractiveEnabled: false,
-      isInteractiveRunning: false,
       isAnalyzingPosition: false,
       isAnalyzingGame: false,
       isRunning: false,
       progress: 0,
-      gameID: null,
       analyzingPly: null,
       timer: null,
       time: null,
       nps: null,
       tps: null,
       nextTPS: null,
+
+      gameID: null,
       komi: null,
       size: null,
       initTPS: null,
@@ -67,26 +71,7 @@ export default class Bot {
     this.init();
   }
 
-  get isInteractiveEnabled() {
-    return this.status.isInteractiveEnabled;
-  }
-  set isInteractiveEnabled(value) {
-    if (!this.isInteractive || this.status.isInteractiveEnabled === value) {
-      return;
-    }
-    if (value) {
-      this.unwatchPosition = store.watch(
-        (state) => state.game.position.tps,
-        () => this.analyzeInteractive()
-      );
-      this.analyzeInteractive();
-    } else if (this.unwatchPosition) {
-      this.terminate();
-      this.unwatchPosition();
-      this.unwatchPosition = null;
-    }
-    this.status.isInteractiveEnabled = value;
-  }
+  //#region Getters
 
   get settings() {
     return store.state.ui.botSettings[this.id];
@@ -126,51 +111,32 @@ export default class Bot {
     return this.game.position.isGameEnd && !this.game.position.isGameEndDefault;
   }
 
-  get isFullyAnalyzed() {
-    return this.plies.every((ply) => this.plyHasEvalComment(ply));
-  }
-
-  get hasOptions() {
-    return Object.keys(this.meta.options).length > 0;
-  }
-
-  get hasNonKomiOptions() {
-    const keys = Object.keys(this.meta.options);
+  get isAnalyzeGameAvailable() {
     return (
-      keys.length > 2 ||
-      (keys.length === 1 && !keys[0].toLowerCase().endsWith("komi"))
+      this.status.isReady &&
+      !this.status.isAnalyzingPosition &&
+      !this.status.isInteractiveEnabled
     );
   }
 
-  sendAction(name) {}
-
-  setOptions(options) {
-    forEach(options, (value, name) => {
-      if (name in this.meta.options) {
-        this.meta.options[name].value = value;
-      } else {
-        console.error(`Invalid option ${name}`);
-      }
-    });
-    this.applyOptions();
-  }
-
-  getOptions() {
-    const optionValues = {};
-    forEach(this.meta.options, (option, name) => {
-      if ("value" in option || "default" in option) {
-        optionValues[name] = option.value || option.default;
-      }
-    });
-    return optionValues;
-  }
-
-  plyHasEvalComment(ply) {
+  get isAnalyzePositionAvailable() {
     return (
-      ply.id in this.game.comments.notes &&
-      this.game.comments.notes[ply.id].some(
-        (comment) => comment.evaluation !== null
-      )
+      !this.isGameEnd &&
+      !this.isFullyAnalyzed &&
+      this.plies.length &&
+      this.status.isReady &&
+      !this.status.isAnalyzingGame &&
+      !this.status.isInteractiveEnabled
+    );
+  }
+
+  get isInteractiveAvailable() {
+    return (
+      this.isInteractive &&
+      !this.isGameEnd &&
+      this.status.isReady &&
+      !this.status.isAnalyzingGame &&
+      !this.status.isAnalyzingPosition
     );
   }
 
@@ -208,6 +174,40 @@ export default class Bot {
     return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
   }
 
+  getSettingsHash() {
+    return hashObject(this.settings);
+  }
+
+  //#region Options
+
+  get hasOptions() {
+    return Object.keys(this.meta.options).length > 0;
+  }
+
+  sendAction(name) {}
+
+  setOptions(options) {
+    forEach(options, (value, name) => {
+      if (name in this.meta.options) {
+        this.meta.options[name].value = value;
+      } else {
+        console.error(`Invalid option ${name}`);
+      }
+    });
+    this.applyOptions();
+  }
+
+  getOptions() {
+    const optionValues = {};
+    forEach(this.meta.options, (option, name) => {
+      if ("value" in option || "default" in option) {
+        optionValues[name] = option.value || option.default;
+      }
+    });
+    return optionValues;
+  }
+
+  //#region init
   init(success) {
     success = Boolean(success);
     this.status.isInitialized = success;
@@ -225,11 +225,62 @@ export default class Bot {
     }
   }
 
-  getSettingsHash() {
-    return hashObject(this.settings);
+  //#region reset
+  // Reset status
+  reset() {
+    this.status.isReadying = false;
+    this.status.isReady = false;
+    this.onReady = null;
+    this.status.gameID = null;
+    this.status.size = null;
+    this.status.komi = null;
+    this.status.initTPS = null;
+  }
+
+  //#region terminate
+  // Stop searching
+  terminate() {
+    this.isInteractiveEnabled = false;
+    this.status.isAnalyzingPosition = false;
+    this.status.isAnalyzingGame = false;
+    this.status.isRunning = false;
+    this.status.progress = 0;
+    this.status.analyzingPly = null;
+    this.status.time = 0;
+    this.status.nps = 0;
+    this.status.nps = null;
+    this.status.nextTPS = null;
+    this.onReady = null;
+    this.onComplete = null;
+    if (this.status.timer) {
+      clearInterval(this.status.timer);
+      this.status.timer = null;
+    }
   }
 
   queryPosition(tps, plyIndex) {}
+
+  //#region isInteractiveEnabled
+  get isInteractiveEnabled() {
+    return this.status.isInteractiveEnabled;
+  }
+  set isInteractiveEnabled(value) {
+    if (!this.isInteractive || this.status.isInteractiveEnabled === value) {
+      return;
+    }
+    if (value) {
+      this.unwatchPosition = store.watch(
+        (state) => state.game.position.tps,
+        () => this.analyzeInteractive()
+      );
+      this.analyzeInteractive();
+    } else if (this.unwatchPosition) {
+      this.unwatchPosition();
+      this.unwatchPosition = null;
+      this.terminate();
+    }
+    this.status.isInteractiveEnabled = value;
+  }
 
   //#region analyzeInteractive
   analyzeInteractive() {
@@ -242,7 +293,6 @@ export default class Bot {
     }
 
     if (this.isGameEnd) {
-      this.isInteractiveRunning = false;
       this.isRunning = false;
       this.status.time = 0;
       this.status.nps = 0;
@@ -259,7 +309,6 @@ export default class Bot {
 
     this.status.analyzingPly = this.ply;
     this.status.isRunning = true;
-    this.status.isInteractiveRunning = true;
 
     this.queryPosition(
       tps,
@@ -291,6 +340,17 @@ export default class Bot {
           (new Date().getTime() - startTime) / (secondsToThink * 10);
       }, 1000);
     }
+
+    this.onComplete = () => {
+      this.status.isAnalyzingPosition = false;
+      this.status.isRunning = false;
+      this.status.analyzingPly = null;
+      if (this.status.timer) {
+        clearInterval(this.status.timer);
+        this.status.timer = null;
+      }
+      this.onComplete = null;
+    };
 
     this.queryPosition(
       this.tps,
@@ -425,22 +485,21 @@ export default class Bot {
     }
   }
 
-  terminate() {
-    this.status.isInteractiveRunning = false;
-    this.status.isAnalyzingPosition = false;
-    this.status.isAnalyzingGame = false;
-    this.status.isRunning = false;
-    this.status.nps = null;
-    this.status.nextTPS = null;
-    this.onReady = null;
-    this.onComplete = null;
-    if (this.status.timer) {
-      clearInterval(this.status.timer);
-      this.status.timer = null;
-    }
+  //#region Formatting
+
+  get isFullyAnalyzed() {
+    return this.plies.every((ply) => this.plyHasEvalComment(ply));
   }
 
-  //#region Formatting
+  plyHasEvalComment(ply) {
+    return (
+      ply.id in this.game.comments.notes &&
+      this.game.comments.notes[ply.id].some(
+        (comment) => comment.evaluation !== null
+      )
+    );
+  }
+
   formatEvaluation(value) {
     return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
   }

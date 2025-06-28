@@ -11,6 +11,8 @@ export default class TiltakWasm extends Bot {
       label: "analysis.bots.tiltak",
       description: "analysis.bots_description.tiltak",
       isInteractive: true,
+      sizes: [5, 6],
+      halfkomis: { 5: [0, 4], 6: [0, 4] },
       ...options,
     });
 
@@ -19,6 +21,7 @@ export default class TiltakWasm extends Bot {
     });
   }
 
+  //#region send
   send(message) {
     if (worker) {
       worker.postMessage(message);
@@ -43,7 +46,7 @@ export default class TiltakWasm extends Bot {
             worker = null;
           }
           this.status.isAnalyzingGame = false;
-          this.status.isInteractiveRunning = false;
+          this.status.isInteractiveEnabled = false;
           this.status.isRunning = false;
           this.status.isReady = false;
           this.status.time = null;
@@ -66,6 +69,19 @@ export default class TiltakWasm extends Bot {
       } catch (error) {
         console.error("Failed to load Tiltak (wasm):", error);
         return super.init(false);
+      }
+    }
+  }
+
+  //#region terminate
+  async terminate() {
+    if (worker && this.status.isRunning) {
+      try {
+        this.send("stop");
+        super.terminate();
+      } catch (error) {
+        await worker.terminate();
+        this.init();
       }
     }
   }
@@ -99,7 +115,7 @@ export default class TiltakWasm extends Bot {
     this.send(this.getTeiPosition(tps, plyIndex));
 
     // Go
-    if (this.status.isInteractiveRunning) {
+    if (this.status.isInteractiveEnabled) {
       this.send(`go infinite`);
     } else {
       if (!this.settings.limitType || this.settings.limitType === "movetime") {
@@ -166,7 +182,7 @@ export default class TiltakWasm extends Bot {
     } else if (response.startsWith("bestmove")) {
       // Search ended
       this.status.isRunning = false;
-      if (this.status.isInteractiveRunning) {
+      if (this.status.isInteractiveEnabled) {
         if (this.status.tps === this.status.nextTPS) {
           // No position queued
           this.status.tps = null;
@@ -179,10 +195,8 @@ export default class TiltakWasm extends Bot {
           tps,
           pvs: [[response.slice(9)]],
         });
-        if (this.status.isAnalyzingGame && this.onComplete) {
+        if (this.onComplete) {
           this.onComplete();
-        } else if (this.status.isAnalyzingPosition) {
-          this.status.isAnalyzingPosition = false;
         }
       }
     } else if (response.startsWith("info") && tps) {
@@ -221,19 +235,6 @@ export default class TiltakWasm extends Bot {
       }
       if (results.pvs[0].length) {
         return super.storeResults(results);
-      }
-    }
-  }
-
-  //#region terminate
-  async terminate() {
-    if (worker && this.status.isRunning) {
-      try {
-        this.send("stop");
-        super.terminate();
-      } catch (error) {
-        await worker.terminate();
-        this.init();
       }
     }
   }

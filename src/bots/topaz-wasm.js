@@ -38,6 +38,12 @@ export default class TopazWasm extends Bot {
     }
   }
 
+  //#region reset
+  reset() {
+    this.status.isReady = false;
+    super.reset();
+  }
+
   //#region queryPosition
   queryPosition(tps) {
     this.send({
@@ -61,6 +67,16 @@ export default class TopazWasm extends Bot {
     }
 
     this.queryPosition(this.tps);
+  }
+
+  //#region analyzeGame
+  analyzeGame() {
+    if (!worker) {
+      this.init();
+      return;
+    }
+
+    super.analyzeGame();
   }
 
   //#region handleResponse
