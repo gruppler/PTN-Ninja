@@ -262,12 +262,10 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
         throw "Invalid line number";
       }
     }
-    game.insertPlies(plies, prev);
+    plies = game.insertPlies(plies, prev);
     postMessage(
       "INSERT_PLIES",
-      plies.map((ply) =>
-        ply.constructor === Ply ? ply.text : new Ply(ply, {}).text
-      ),
+      plies.map((ply) => ply.text),
       prev
     );
   }

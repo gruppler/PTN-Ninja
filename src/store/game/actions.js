@@ -191,6 +191,7 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch, getters }) {
           games[0] = new Game({ tags });
         } catch (error) {}
       }
+      games[0].name = getters.uniqueName(games[0].name);
     }
   }
   if (ptn && games && games.length) {

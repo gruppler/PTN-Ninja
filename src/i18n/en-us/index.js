@@ -20,6 +20,7 @@ export default {
   Board: "Board",
   "Board Preferences": "Board Preferences",
   "Board Preferences Button": "Board Preferences Button",
+  "Board Transform Button": "Board Transform Button",
   "Board Style": "Board Style",
   Bot: "Bot",
   Branches: "Branches",
