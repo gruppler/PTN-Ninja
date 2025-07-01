@@ -87,6 +87,7 @@ let defaults = {
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: false,
   showBoardPrefsBtn: false,
+  showBoardTransformBtn: false,
   showControls: true,
   showPlayButton: false,
   showEval: true,

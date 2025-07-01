@@ -3,8 +3,6 @@
     <div
       class="board-toggles q-gutter-sm"
       :class="{ 'row reverse': isPortrait, column: !isPortrait }"
-      v-shortkey="hotkeys.TRANSFORMS"
-      @shortkey="shortkey"
     >
       <FullscreenToggle
         @contextmenu.prevent
@@ -297,6 +295,7 @@
       </q-btn>
 
       <q-btn
+        v-if="!isEmbedded || $store.state.ui.showBoardTransformBtn"
         @contextmenu.prevent="resetTransform"
         :direction="isPortrait ? 'down' : 'left'"
         icon="rotate_180"
@@ -306,6 +305,8 @@
         :size="size"
         flat
         round
+        v-shortkey="hotkeys.TRANSFORMS"
+        @shortkey="shortkey"
       >
         <hint>{{ $t("Transform Board") }}</hint>
 
