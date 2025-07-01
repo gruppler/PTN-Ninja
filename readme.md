@@ -256,6 +256,10 @@ For example:
 
 - Show the specified evaluation score on the board.
 
+#### `GET_THEMES`
+
+- Return an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
+
 ## URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.

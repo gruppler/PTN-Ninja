@@ -117,6 +117,9 @@ export default {
         case "RESET_TRANSFORM":
           this.$store.dispatch("ui/" + data.action);
           break;
+        case "GET_THEMES":
+          postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
+          break;
         default:
           if (data.action) {
             throw `Invalid action: "${data.action}"`;
