@@ -11,7 +11,7 @@ async function init_wasm_in_worker() {
       // console.log("Analyzing position", options);
       let result = evaluate(
         options.depth,
-        options.secondsToThink,
+        options.movetime / 1e3,
         options.size,
         options.komi,
         options.tps

@@ -1,11 +1,10 @@
-import Vue from "vue";
 import store from "../store";
 import { i18n } from "../boot/i18n";
 import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
 
 import hashObject from "object-hash";
-import { forEach, isFunction, isNumber, uniq } from "lodash";
+import { cloneDeep, forEach, isFunction, isNumber, uniqBy } from "lodash";
 
 export default class Bot {
   constructor({
@@ -13,12 +12,14 @@ export default class Bot {
     icon,
     label,
     description,
-    isInteractive,
+    isInteractive = false,
     name,
     author,
-    options,
-    sizes, // Array of supported sizes
-    halfkomis, // Map of sizes to arrays of halfkomis
+    meta = {},
+    options = {},
+    sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
+    state = {},
+    settings = {},
     onInit,
     onError,
   }) {
@@ -33,16 +34,22 @@ export default class Bot {
     this.onError = onError;
     this.onReady = null;
     this.onComplete = null;
+    this.unwatchPosition = null;
 
     this.meta = {
       name: name,
       author: author,
-      options: options || {},
-      sizes: sizes,
-      halfkomis: halfkomis,
+      options: options,
+      sizeHalfKomis: sizeHalfKomis,
+      limitTypes: ["depth", "movetime", "nodes"],
+      ...meta,
     };
 
-    this.status = {
+    this.settings = { ...settings };
+    // After initialization of the store,
+    // this.settings will be overwritten with the stored version
+
+    this.state = {
       isInitialized: false,
       isReadying: false,
       isReady: false,
@@ -63,19 +70,58 @@ export default class Bot {
       komi: null,
       size: null,
       initTPS: null,
+      ...state,
     };
 
     this.positions = {};
-    this.unwatchPosition = null;
 
     this.init();
   }
 
-  //#region Getters
-
-  get settings() {
-    return store.state.ui.botSettings[this.id];
+  //#region init
+  init(success) {
+    success = Boolean(success);
+    this.state.isInitialized = success;
+    if (success && isFunction(this.onInit)) {
+      this.onInit(this);
+    }
+    return success;
   }
+
+  handleError(error) {
+    if (isFunction(this.onError)) {
+      this.onError(error);
+    } else {
+      console.error(error);
+    }
+  }
+
+  //#region Setters
+  setMeta(key, value) {
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/SET_BOT_META", [key, value]);
+    } else {
+      this.meta[key] = value;
+    }
+  }
+
+  setState(key, value) {
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/SET_BOT_STATE", [key, value]);
+    } else {
+      this.state[key] = value;
+    }
+  }
+
+  setPosition(tps, suggestions) {
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/SET_BOT_POSITION", [tps, suggestions]);
+    } else {
+      this.positions[tps] = suggestions;
+    }
+  }
+
+  //#region Getters
 
   get game() {
     return store.state.game;
@@ -113,9 +159,9 @@ export default class Bot {
 
   get isAnalyzeGameAvailable() {
     return (
-      this.status.isReady &&
-      !this.status.isAnalyzingPosition &&
-      !this.status.isInteractiveEnabled
+      this.state.isReady &&
+      !this.state.isAnalyzingPosition &&
+      !this.state.isInteractiveEnabled
     );
   }
 
@@ -124,19 +170,20 @@ export default class Bot {
       !this.isGameEnd &&
       !this.isFullyAnalyzed &&
       this.plies.length &&
-      this.status.isReady &&
-      !this.status.isAnalyzingGame &&
-      !this.status.isInteractiveEnabled
+      this.state.isReady &&
+      !this.state.isAnalyzingGame &&
+      !this.state.isInteractiveEnabled
     );
   }
 
   get isInteractiveAvailable() {
     return (
-      this.isInteractive &&
-      !this.isGameEnd &&
-      this.status.isReady &&
-      !this.status.isAnalyzingGame &&
-      !this.status.isAnalyzingPosition
+      this.state.isInteractiveEnabled ||
+      (this.isInteractive &&
+        !this.isGameEnd &&
+        this.state.isReady &&
+        !this.state.isAnalyzingGame &&
+        !this.state.isAnalyzingPosition)
     );
   }
 
@@ -186,75 +233,59 @@ export default class Bot {
 
   sendAction(name) {}
 
-  setOptions(options) {
-    forEach(options, (value, name) => {
-      if (name in this.meta.options) {
-        this.meta.options[name].value = value;
-      } else {
-        console.error(`Invalid option ${name}`);
-      }
-    });
-    this.applyOptions();
-  }
+  applyOptions() {}
 
   getOptions() {
     const optionValues = {};
     forEach(this.meta.options, (option, name) => {
-      if ("value" in option || "default" in option) {
-        optionValues[name] = option.value || option.default;
+      if (this.settings.options && name in this.settings.options) {
+        optionValues[name] = this.settings.options[name];
+      } else if ("default" in option) {
+        optionValues[name] = option.default;
       }
     });
     return optionValues;
   }
 
-  //#region init
-  init(success) {
-    success = Boolean(success);
-    this.status.isInitialized = success;
-    if (success && isFunction(this.onInit)) {
-      this.onInit(this);
-    }
-    return success;
-  }
-
-  handleError(error) {
-    if (isFunction(this.onError)) {
-      this.onError(error);
-    } else {
-      console.error(error);
-    }
+  async setOptions(options) {
+    const botSettings = cloneDeep(store.state.analysis.botSettings);
+    botSettings[this.id].options = {
+      ...(this.settings.options || {}),
+      ...options,
+    };
+    return store.dispatch("analysis/SET", ["botSettings", botSettings]);
   }
 
   //#region reset
   // Reset status
   reset() {
-    this.status.isReadying = false;
-    this.status.isReady = false;
     this.onReady = null;
-    this.status.gameID = null;
-    this.status.size = null;
-    this.status.komi = null;
-    this.status.initTPS = null;
+    this.setState("isReadying", false);
+    this.setState("isReady", false);
+    this.setState("gameID", null);
+    this.setState("size", null);
+    this.setState("komi", null);
+    this.setState("initTPS", null);
   }
 
   //#region terminate
   // Stop searching
   terminate() {
     this.isInteractiveEnabled = false;
-    this.status.isAnalyzingPosition = false;
-    this.status.isAnalyzingGame = false;
-    this.status.isRunning = false;
-    this.status.progress = 0;
-    this.status.analyzingPly = null;
-    this.status.time = 0;
-    this.status.nps = 0;
-    this.status.nps = null;
-    this.status.nextTPS = null;
+    this.setState("isAnalyzingPosition", false);
+    this.setState("isAnalyzingGame", false);
+    this.setState("isRunning", false);
+    this.setState("progress", 0);
+    this.setState("analyzingPly", null);
+    this.setState("time", 0);
+    this.setState("nps", 0);
+    this.setState("tps", null);
+    this.setState("nextTPS", null);
     this.onReady = null;
     this.onComplete = null;
-    if (this.status.timer) {
-      clearInterval(this.status.timer);
-      this.status.timer = null;
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+      this.setState("timer", null);
     }
   }
 
@@ -262,10 +293,10 @@ export default class Bot {
 
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
-    return this.status.isInteractiveEnabled;
+    return this.state.isInteractiveEnabled;
   }
   set isInteractiveEnabled(value) {
-    if (!this.isInteractive || this.status.isInteractiveEnabled === value) {
+    if (!this.isInteractive || this.state.isInteractiveEnabled === value) {
       return;
     }
     if (value) {
@@ -279,7 +310,7 @@ export default class Bot {
       this.unwatchPosition = null;
       this.terminate();
     }
-    this.status.isInteractiveEnabled = value;
+    this.setState("isInteractiveEnabled", value);
   }
 
   //#region analyzeInteractive
@@ -288,27 +319,27 @@ export default class Bot {
       return false;
     }
 
-    if (this.status.isRunning || this.isGameEnd) {
+    if (this.state.isRunning || this.isGameEnd) {
       this.send("stop");
     }
 
     if (this.isGameEnd) {
       this.isRunning = false;
-      this.status.time = 0;
-      this.status.nps = 0;
-      this.status.nextTPS = null;
+      this.setState("time", 0);
+      this.setState("nps", 0);
+      this.setState("nextTPS", null);
       return;
     }
 
     // Queue current position for pairing with future response
     const tps = this.tps;
-    this.status.nextTPS = tps;
-    if (!this.status.tps) {
-      this.status.tps = this.status.nextTPS;
+    this.setState("nextTPS", tps);
+    if (!this.state.tps) {
+      this.setState("tps", this.state.nextTPS);
     }
 
-    this.status.analyzingPly = this.ply;
-    this.status.isRunning = true;
+    this.setState("analyzingPly", this.ply);
+    this.setState("isRunning", true);
 
     this.queryPosition(
       tps,
@@ -320,34 +351,40 @@ export default class Bot {
 
   //#region analyzeCurrentPosition
   analyzeCurrentPosition() {
-    if (this.status.isRunning || this.isGameEnd) {
+    if (this.state.isRunning || this.isGameEnd) {
       return false;
     }
 
-    this.status.tps = this.tps;
-    this.status.analyzingPly = this.ply;
-    this.status.isRunning = true;
-    this.status.isAnalyzingPosition = true;
-    this.status.progress = 0;
+    this.setState("tps", this.tps);
+    this.setState("analyzingPly", this.ply);
+    this.setState("isRunning", true);
+    this.setState("isAnalyzingPosition", true);
+    this.setState("progress", 0);
     if (
-      this.settings.secondsToThink &&
-      (!this.settings.limitType || this.settings.limitType === "secondsToThink")
+      this.settings.movetime &&
+      (!this.settings.limitTypes ||
+        this.settings.limitTypes.includes("movetime"))
     ) {
-      const secondsToThink = this.settings.secondsToThink;
+      const movetime = this.settings.movetime;
       const startTime = new Date().getTime();
-      this.status.timer = setInterval(() => {
-        this.status.progress =
-          (new Date().getTime() - startTime) / (secondsToThink * 10);
-      }, 1000);
+      this.setState(
+        "timer",
+        setInterval(() => {
+          this.setState(
+            "progress",
+            (100 * (new Date().getTime() - startTime)) / movetime
+          );
+        }, 500)
+      );
     }
 
     this.onComplete = () => {
-      this.status.isAnalyzingPosition = false;
-      this.status.isRunning = false;
-      this.status.analyzingPly = null;
-      if (this.status.timer) {
-        clearInterval(this.status.timer);
-        this.status.timer = null;
+      this.setState("isAnalyzingPosition", false);
+      this.setState("isRunning", false);
+      this.setState("analyzingPly", null);
+      if (this.state.timer) {
+        clearInterval(this.state.timer);
+        this.setState("timer", null);
       }
       this.onComplete = null;
     };
@@ -362,46 +399,58 @@ export default class Bot {
 
   //#region analyzeGame
   async analyzeGame() {
-    if (this.status.isRunning) {
+    if (this.state.isRunning) {
       return false;
     }
 
     try {
-      this.status.isRunning = true;
-      this.status.isAnalyzingGame = true;
-      this.status.progress = 0;
       const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      let positions = plies.map((ply) => ply.tpsBefore);
+      let positions = plies.map((ply) => ({
+        tps: ply.tpsBefore,
+        plyID: ply.id,
+      }));
       plies.forEach((ply) => {
         if (!ply.result || ply.result.type === "1") {
-          positions.push(ply.tpsAfter);
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
         }
       });
-      positions = uniq(positions).filter((tps) => !(tps in this.positions));
+      positions = uniqBy(positions, (p) => p.tps).filter(
+        (p) =>
+          !(p.tps in this.positions) ||
+          this.positions[p.tps][0].nodes < this.settings.nodes ||
+          this.positions[p.tps][0].depth < this.settings.depth ||
+          this.positions[p.tps][0].time < this.settings.time
+      );
       const total = positions.length;
       let completed = 0;
-      let tps = positions[0];
+      let position = positions[0];
       this.onComplete = () => {
-        this.status.progress = (100 * ++completed) / total;
+        this.setState("progress", (100 * ++completed) / total);
         if (completed < total) {
           // Proceed to next position
-          tps = positions[completed];
-          this.status.tps = tps;
-          this.queryPosition(tps);
+          position = positions[completed];
+          this.setState("tps", position.tps);
+          this.setState("analyzingPly", this.game.ptn.allPlies[position.plyID]);
+          this.setState("isRunning", true);
+          this.queryPosition(position.tps);
         } else {
           // Analysis complete
           this.onComplete = null;
-          this.status.isRunning = false;
-          this.status.isAnalyzingGame = false;
+          this.setState("isRunning", false);
+          this.setState("isAnalyzingGame", false);
           this.saveEvalComments();
         }
       };
-      this.status.tps = tps;
-      this.queryPosition(tps);
+      this.setState("isRunning", true);
+      this.setState("isAnalyzingGame", true);
+      this.setState("progress", 0);
+      this.setState("tps", position.tps);
+      this.setState("analyzingPly", this.game.ptn.allPlies[position.plyID]);
+      this.queryPosition(position.tps);
     } catch (error) {
       this.handleError(error);
-      this.status.isRunning = false;
-      this.status.isAnalyzingGame = false;
+      this.setState("isRunning", false);
+      this.setState("isAnalyzingGame", false);
     }
   }
 
@@ -420,12 +469,12 @@ export default class Bot {
       return;
     }
 
-    if (this.status.isAnalyzingPosition && !this.isInteractive) {
-      this.status.isAnalyzingPosition = false;
-      this.status.isRunning = false;
-      this.status.analyzingPly = null;
-      clearInterval(this.status.timer);
-      this.status.timer = null;
+    if (this.state.isAnalyzingPosition && !this.isInteractive) {
+      this.setState("isAnalyzingPosition", false);
+      this.setState("isRunning", false);
+      this.setState("analyzingPly", null);
+      clearInterval(this.state.timer);
+      this.setState("timer", null);
     }
 
     // Determine ply colors
@@ -463,14 +512,14 @@ export default class Bot {
     });
     deepFreeze(suggestions);
 
-    if (this.isInteractiveEnabled && !this.status.tps) {
-      this.status.tps = this.tps;
+    if (this.isInteractiveEnabled && !this.state.tps) {
+      this.setState("tps", this.tps);
     }
 
     // Update time and nps
     if (!this.isGameEnd) {
-      this.status.time = time;
-      this.status.nps = nps;
+      this.setState("time", time);
+      this.setState("nps", nps);
     }
 
     // Don't overwrite deeper searches for this position unless settings have changed
@@ -481,7 +530,7 @@ export default class Bot {
       this.positions[tps][0].depth < suggestions[0].depth ||
       this.positions[tps][0].time < suggestions[0].time
     ) {
-      Vue.set(this.positions, tps, suggestions);
+      this.setPosition(tps, suggestions);
     }
   }
 

@@ -4,20 +4,24 @@ const url = new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url);
 let worker = null;
 
 export default class TiltakWasm extends Bot {
-  constructor(options) {
+  constructor(options = {}) {
     super({
       id: "tiltak",
       icon: "local",
       label: "analysis.bots.tiltak",
       description: "analysis.bots_description.tiltak",
       isInteractive: true,
-      sizes: [5, 6],
-      halfkomis: { 5: [0, 4], 6: [0, 4] },
+      sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
+      state: {
+        isTeiOk: false,
+      },
+      settings: {
+        movetime: 5000,
+      },
+      meta: {
+        limitTypes: ["movetime"],
+      },
       ...options,
-    });
-
-    Object.assign(this.status, {
-      isTeiOk: false,
     });
   }
 
@@ -45,17 +49,17 @@ export default class TiltakWasm extends Bot {
             worker.terminate();
             worker = null;
           }
-          this.status.isAnalyzingGame = false;
-          this.status.isInteractiveEnabled = false;
-          this.status.isRunning = false;
-          this.status.isReady = false;
-          this.status.time = null;
-          this.status.nps = null;
-          this.status.tps = null;
-          this.status.nextTPS = null;
-          this.status.komi = null;
-          this.status.size = null;
-          this.status.initTPS = null;
+          this.isInteractiveEnabled = false;
+          this.setState("isAnalyzingGame", false);
+          this.setState("isRunning", false);
+          this.setState("isReady", false);
+          this.setState("time", null);
+          this.setState("nps", null);
+          this.setState("tps", null);
+          this.setState("nextTPS", null);
+          this.setState("komi", null);
+          this.setState("size", null);
+          this.setState("initTPS", null);
         };
 
         // Message handling
@@ -75,7 +79,7 @@ export default class TiltakWasm extends Bot {
 
   //#region terminate
   async terminate() {
-    if (worker && this.status.isRunning) {
+    if (worker && this.state.isRunning) {
       try {
         this.send("stop");
         super.terminate();
@@ -91,19 +95,19 @@ export default class TiltakWasm extends Bot {
     // Send `teinewgame` if necessary
     const initTPS = this.getInitTPS();
     if (
-      this.status.gameID !== this.game.name ||
-      this.status.size !== this.size ||
-      this.status.komi !== this.komi ||
-      this.status.initTPS !== initTPS
+      this.state.gameID !== this.game.name ||
+      this.state.size !== this.size ||
+      this.state.komi !== this.komi ||
+      this.state.initTPS !== initTPS
     ) {
       this.send(`setoption name HalfKomi value ${this.komi * 2}`);
       this.send(`teinewgame ${this.size}`);
-      this.status.gameID = this.game.name;
-      this.status.size = this.size;
-      this.status.komi = this.komi;
-      this.status.initTPS = initTPS;
-      this.status.isReady = false;
-      this.send(`isready`);
+      this.setState("gameID", this.game.name);
+      this.setState("size", this.size);
+      this.setState("komi", this.komi);
+      this.setState("initTPS", initTPS);
+      this.setState("isReady", false);
+      this.send("isready");
       this.onReady = () => {
         this.onReady = null;
         this.queryPosition(tps, plyIndex);
@@ -115,18 +119,10 @@ export default class TiltakWasm extends Bot {
     this.send(this.getTeiPosition(tps, plyIndex));
 
     // Go
-    if (this.status.isInteractiveEnabled) {
+    if (this.state.isInteractiveEnabled) {
       this.send(`go infinite`);
     } else {
-      if (!this.settings.limitType || this.settings.limitType === "movetime") {
-        this.send(`go movetime ${this.settings.secondsToThink * 1e3}`);
-      } else {
-        this.send(
-          `go ${this.settings.limitType} ${
-            this.settings[this.settings.limitType]
-          }`
-        );
-      }
+      this.send(`go movetime ${this.settings.movetime}`);
     }
   }
 
@@ -138,7 +134,7 @@ export default class TiltakWasm extends Bot {
     }
 
     // Abort if worker is not responding
-    if (!this.status.isReady) {
+    if (!this.state.isReady) {
       console.error("Tiltak worker failed to initialize");
       return;
     }
@@ -154,7 +150,7 @@ export default class TiltakWasm extends Bot {
     }
 
     // Abort if worker is not responding
-    if (!this.status.isReady) {
+    if (!this.state.isReady) {
       console.error("Tiltak worker failed to initialize");
       return;
     }
@@ -169,26 +165,26 @@ export default class TiltakWasm extends Bot {
       return;
     }
 
-    const tps = this.status.tps;
+    const tps = this.state.tps;
 
     if (response === "teiok") {
-      this.status.isTeiOk = true;
+      this.setState("isTeiOk", true);
       this.send("isready");
     } else if (response === "readyok") {
-      this.status.isReady = true;
+      this.setState("isReady", true);
       if (this.onReady) {
         this.onReady();
       }
     } else if (response.startsWith("bestmove")) {
       // Search ended
-      this.status.isRunning = false;
-      if (this.status.isInteractiveEnabled) {
-        if (this.status.tps === this.status.nextTPS) {
+      this.setState("isRunning", false);
+      if (this.state.isInteractiveEnabled) {
+        if (this.state.tps === this.state.nextTPS) {
           // No position queued
-          this.status.tps = null;
-          this.status.nextTPS = null;
+          this.setState("tps", null);
+          this.setState("nextTPS", null);
         } else {
-          this.status.tps = this.status.nextTPS;
+          this.setState("tps", this.state.nextTPS);
         }
       } else {
         super.storeResults({
@@ -201,7 +197,7 @@ export default class TiltakWasm extends Bot {
       }
     } else if (response.startsWith("info") && tps) {
       // Parse Results
-      this.status.isRunning = true;
+      this.setState("isRunning", true);
       const results = {
         tps,
         pvs: [[]],

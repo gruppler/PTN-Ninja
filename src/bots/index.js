@@ -11,22 +11,15 @@ const constructors = [TiltakCloud, TiltakWasm, TopazWasm, TeiBot];
 export const bots = {};
 export const botOptions = [];
 
-const onInit = (bot) => {
-  if (botOptions.find((b) => b.value === bot.id)) {
-    return;
-  }
+constructors.forEach((Bot) => {
+  const bot = new Bot({
+    onError: notifyError,
+  });
+  bots[bot.id] = bot;
   botOptions.push({
     value: bot.id,
     label: i18n.t(bot.label),
     description: i18n.t(bot.description),
     icon: bot.icon,
   });
-};
-
-constructors.forEach((Bot) => {
-  const bot = new Bot({
-    onInit,
-    onError: notifyError,
-  });
-  bots[bot.id] = bot;
 });

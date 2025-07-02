@@ -9,3 +9,5 @@ export const PNG_URL = process.env.DEV
 export const SHORTENER_SERVICE = process.env.DEV
   ? `http://localhost:5001/${process.env.projectId}/us-central1/short`
   : "https://us-central1-ptn-ninja.cloudfunctions.net/short";
+
+export const OPENING_DB_API = "https://openings.exegames.de/api/v1";

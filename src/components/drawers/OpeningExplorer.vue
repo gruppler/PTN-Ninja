@@ -321,8 +321,8 @@
 </template>
 
 <script>
-import AnalysisItem from "../database/AnalysisItem";
-import DatabaseGame from "../database/DatabaseGame";
+import AnalysisItem from "../analysis/AnalysisItem";
+import DatabaseGame from "../analysis/DatabaseGame";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
@@ -330,11 +330,10 @@ import { isArray, omit } from "lodash";
 import Fuse from "fuse.js";
 import hashObject from "object-hash";
 
-const apiUrl = "https://openings.exegames.de/api/v1";
-// const apiUrl = `http://127.0.0.1:5000/api/v1`;
-const openingsEndpoint = `${apiUrl}/opening`;
-const usernamesEndpoint = `${apiUrl}/players`;
-const databasesEndpoint = `${apiUrl}/databases`;
+import { OPENING_DB_API } from "../../constants";
+const openingsEndpoint = `${OPENING_DB_API}/opening`;
+const usernamesEndpoint = `${OPENING_DB_API}/players`;
+const databasesEndpoint = `${OPENING_DB_API}/databases`;
 
 export default {
   name: "OpeningExplorer",
@@ -372,8 +371,10 @@ export default {
         { label: this.$t("analysis.tournamentOptions.only"), value: true },
       ],
       dbMinRating: 0,
-      dbSettings: { ...this.$store.state.ui.dbSettings },
-      dbSettingsHash: this.hashDBSettings(this.$store.state.ui.dbSettings),
+      dbSettings: { ...this.$store.state.analysis.dbSettings },
+      dbSettingsHash: this.hashDBSettings(
+        this.$store.state.analysis.dbSettings
+      ),
       sections: { ...this.$store.state.ui.analysisSections },
     };
   },
@@ -701,7 +702,7 @@ export default {
     },
     dbSettings: {
       handler(settings) {
-        this.$store.dispatch("ui/SET_UI", ["dbSettings", settings]);
+        this.$store.dispatch("analysis/SET", ["dbSettings", settings]);
         this.dbSettingsHash = this.hashDBSettings(settings);
         if (!this.isOffline) {
           this.queryDBPosition();

@@ -10,7 +10,7 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
-          <q-item-label v-if="botSettings.bot" caption>
+          <q-item-label v-if="botID" caption>
             <template v-if="bot.meta.name">
               <span class="text-bold">{{ bot.meta.name }}</span>
               <template v-if="bot.meta.author">
@@ -18,12 +18,12 @@
               </template>
             </template>
             <template v-else>
-              {{ $t(`analysis.bots.${botSettings.bot}`) }}
+              {{ $t(`analysis.bots.${botID}`) }}
             </template>
           </q-item-label>
         </q-item-section>
         <q-item-section
-          v-if="!sections.botSuggestions && bot.status.isRunning"
+          v-if="!sections.botSuggestions && bot.state.isRunning"
           side
         >
           <q-spinner size="sm" />
@@ -45,8 +45,8 @@
         <template v-if="showBotSettings">
           <!-- Bot -->
           <q-select
-            v-model="botSettings.bot"
-            :options="botOptions"
+            v-model="botID"
+            :options="bots"
             :label="$t('Bot')"
             behavior="menu"
             transition-show="none"
@@ -84,26 +84,24 @@
             </template>
           </q-select>
 
+          <q-separator />
+
           <!-- PV Limit -->
           <q-input
             type="number"
-            v-model.number="botSettings.pvLimit"
+            v-model.number="pvLimit"
             :label="$t('analysis.pvLimit')"
             :min="0"
             :max="20"
             item-aligned
             filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="notes" />
-            </template>
-          </q-input>
+          />
 
           <!-- Tiltak Cloud -->
           <!-- Max Suggestions -->
           <q-input
-            v-if="botSettings.bot === 'tiltak-cloud'"
-            v-model.number="botSettings[botSettings.bot].maxSuggestedMoves"
+            v-if="botID === 'tiltak-cloud'"
+            v-model.number="botSettings[botID].maxSuggestedMoves"
             :label="$t('analysis.maxSuggestedMoves')"
             type="number"
             min="1"
@@ -111,196 +109,100 @@
             step="1"
             item-aligned
             filled
-          >
-            <template v-slot:prepend>
-              <q-icon name="moves" />
-            </template>
-          </q-input>
+          />
 
           <!-- Limit Type -->
-          <q-item v-if="hasLimitSettings">
-            <q-item-section v-if="'limitType' in bot.settings">
-              <q-select
-                v-model="botSettings[botSettings.bot].limitType"
-                :options="limitTypes"
-                :label="$t('analysis.limitType')"
-                :disable="isBotRunning && !bot.isInteractiveEnabled"
-                behavior="menu"
-                transition-show="none"
-                transition-hide="none"
-                emit-value
-                map-options
-                filled
-              />
-            </q-item-section>
-
-            <!-- Seconds to Think -->
-            <q-item-section
-              v-if="
-                'secondsToThink' in bot.settings &&
-                (!bot.settings.limitType ||
-                  bot.settings.limitType === 'movetime')
-              "
-            >
-              <q-input
-                v-model.number="botSettings[botSettings.bot].secondsToThink"
-                :disable="isBotRunning && !bot.isInteractiveEnabled"
-                :label="$t('analysis.secondsToThink')"
-                type="number"
-                min="1"
-                max="999"
-                step="1"
-                filled
-              />
-            </q-item-section>
-
-            <!-- Depth -->
-            <q-item-section
-              v-if="
-                'depth' in bot.settings &&
-                (!bot.settings.limitType || bot.settings.limitType === 'depth')
-              "
-            >
-              <q-input
-                v-model.number="botSettings[botSettings.bot].depth"
-                :disable="isBotRunning && !bot.isInteractiveEnabled"
-                :label="$t('analysis.Depth')"
-                type="number"
-                min="2"
-                max="99"
-                step="1"
-                filled
-              />
-            </q-item-section>
-
-            <!-- Nodes -->
-            <q-item-section
-              v-if="
-                'nodes' in bot.settings &&
-                (!bot.settings.limitType || bot.settings.limitType === 'nodes')
-              "
-            >
-              <q-input
-                v-model.number="botSettings[botSettings.bot].nodes"
-                :disable="isBotRunning && !bot.isInteractiveEnabled"
-                :label="$t('analysis.Nodes')"
-                type="number"
-                min="1"
-                max="999999999"
-                step="1"
-                filled
-              />
-            </q-item-section>
-          </q-item>
+          <template v-if="bot.meta.limitTypes.length > 1">
+            <q-item v-for="type in limitTypes" :key="type.value">
+              <q-item-section>
+                <BotLimitInput
+                  v-model.number="botSettings[botID][type.value]"
+                  :label="type.label"
+                  :type="type.value"
+                  :disable="
+                    bot.state.isRunning ||
+                    !botSettings[botID].limitTypes.includes(type.value)
+                  "
+                  filled
+                />
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="botSettings[botID].limitTypes"
+                  :val="type.value"
+                  :disable="
+                    bot.state.isRunning ||
+                    (botSettings[botID].limitTypes.includes(type.value) &&
+                      botSettings[botID].limitTypes.length === 1)
+                  "
+                  filled
+                />
+              </q-item-section>
+            </q-item>
+          </template>
+          <BotLimitInput
+            v-else-if="limitTypes[0]"
+            v-model="botSettings[botID][limitTypes[0].value]"
+            :type="limitTypes[0].value"
+            :label="limitTypes[0].label"
+            :disable="bot.state.isRunning"
+            filled
+            item-aligned
+          />
 
           <!-- Other Bot Options -->
           <template v-if="bot && bot.hasOptions">
             <q-separator />
 
-            <template v-for="(option, name) in bot.meta.options">
-              <q-item
-                v-if="option.type === 'check'"
-                :key="name"
-                type="label"
-                :disable="isBotRunning"
-                clickable
-                v-ripple
-              >
-                <q-item-section side>
-                  <q-checkbox
-                    v-model="botMetaOptions[name]"
-                    :disable="isBotRunning"
-                  />
-                  <q-item-section>
-                    <q-item-label>{{ name }}</q-item-label>
-                  </q-item-section>
-                </q-item-section>
-              </q-item>
-              <q-input
-                v-if="option.type === 'spin'"
-                type="number"
-                :key="name"
-                v-model.number="botMetaOptions[name]"
-                :label="name"
-                :min="option.min"
-                :max="option.max"
-                :disable="isBotRunning"
-                filled
-                item-aligned
-              />
-              <q-select
-                v-if="option.type === 'combo'"
-                :key="name"
-                v-model="botMetaOptions[name]"
-                :options="option.vars"
-                :label="name"
-                :disable="isBotRunning"
-                behavior="menu"
-                transition-show="none"
-                transition-hide="none"
-                filled
-                item-aligned
-              />
-              <q-btn
-                v-if="option.type === 'button'"
-                :key="name"
-                :label="name"
-                @click="bot.sendAction(name)"
-                :disable="isBotRunning"
-                class="full-width"
-                color="primary"
-                stretch
-              />
-              <q-input
-                v-if="option.type === 'string'"
-                :key="name"
-                v-model="botMetaOptions[name]"
-                :label="name"
-                :disable="isBotRunning"
-                filled
-                item-aligned
-              />
-            </template>
+            <BotOptionInput
+              v-for="(option, name) in bot.meta.options"
+              :key="name"
+              v-model="botOptions[name]"
+              :option="option"
+              :name="name"
+              :disable="bot.state.isRunning || bot.isInteractiveEnabled"
+              @action="bot.sendAction"
+              filled
+              item-aligned
+            />
 
             <q-btn
-              @click="bot.setOptions(botMetaOptions)"
+              @click="setBotOptions"
               icon="apply"
               :label="$t('analysis.Apply Options')"
-              :loading="bot.status.isReadying"
+              :loading="bot.state.isReadying"
               class="full-width"
               color="primary"
-              :flat="areMetaOptionsApplied"
+              :flat="areBotOptionsApplied"
               stretch
             />
           </template>
 
           <!-- TEI Connection Settings -->
-          <template v-if="bot && botSettings.bot === 'tei'">
+          <template v-if="bot && botID === 'tei'">
             <q-separator />
             <q-expansion-item
               icon="connect"
               :label="$t('Connection Settings')"
-              :default-opened="!bot.status.isConnected"
+              :default-opened="!bot.state.isConnected"
             >
               <q-list>
                 <q-item class="row q-gutter-x-sm">
                   <div class="col">
                     <!-- Address -->
                     <q-input
-                      v-model.number="botSettings.tei.address"
+                      v-model.number="botSettings[botID].address"
                       :label="$t('tei.address')"
                       :prefix="bot.protocol"
                       filled
-                      :disable="
-                        bot.status.isConnected || bot.status.isConnecting
-                      "
+                      :disable="bot.state.isConnected || bot.state.isConnecting"
                     />
                   </div>
 
                   <div class="col">
                     <!-- Port -->
                     <q-input
-                      v-model.number="botSettings.tei.port"
+                      v-model.number="botSettings[botID].port"
                       :label="$t('tei.port')"
                       type="number"
                       min="0"
@@ -309,9 +211,7 @@
                       prefix=":"
                       filled
                       clearable
-                      :disable="
-                        bot.status.isConnected || bot.status.isConnecting
-                      "
+                      :disable="bot.state.isConnected || bot.state.isConnecting"
                     />
                   </div>
                 </q-item>
@@ -319,16 +219,14 @@
                 <!-- Use SSL -->
                 <q-item
                   tag="label"
-                  :disable="bot.status.isConnected || bot.status.isConnecting"
+                  :disable="bot.state.isConnected || bot.state.isConnecting"
                   clickable
                   v-ripple
                 >
                   <q-item-section side>
                     <q-checkbox
-                      v-model="botSettings.tei.ssl"
-                      :disable="
-                        bot.status.isConnected || bot.status.isConnecting
-                      "
+                      v-model="botSettings[botID].ssl"
+                      :disable="bot.state.isConnected || bot.state.isConnecting"
                     />
                   </q-item-section>
                   <q-item-section>
@@ -339,7 +237,7 @@
                 <!-- Log messages -->
                 <q-item tag="label" clickable v-ripple>
                   <q-item-section side>
-                    <q-checkbox v-model="botSettings.tei.log" />
+                    <q-checkbox v-model="botSettings[botID].log" />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>{{ $t("tei.log") }}</q-item-label>
@@ -350,7 +248,7 @@
 
             <!-- Disconnect -->
             <q-btn
-              v-if="bot.status.isConnected"
+              v-if="bot.state.isConnected"
               @click="bot.disconnect()"
               icon="disconnect"
               :label="$t('tei.disconnect')"
@@ -367,10 +265,10 @@
         <template v-if="bot">
           <!-- Connect -->
           <q-btn
-            v-if="botSettings.bot === 'tei' && !bot.status.isConnected"
+            v-if="botID === 'tei' && !bot.state.isConnected"
             @click="bot.connect()"
-            :loading="bot.status.isConnecting"
-            :disabled="!botSettings.tei.address"
+            :loading="bot.state.isConnecting"
+            :disabled="!botSettings[botID].address"
             icon="connect"
             :label="$t('tei.connect')"
             class="full-width"
@@ -379,25 +277,23 @@
           />
           <q-btn
             v-else-if="
-              botSettings.bot === 'tei' &&
-              bot.status.isConnected &&
-              !bot.status.isReady
+              botID === 'tei' && bot.state.isConnected && !bot.state.isReady
             "
-            @click="bot.setOptions(botMetaOptions)"
+            @click="bot.applyOptions()"
             icon="apply"
             :label="$t('analysis.init')"
-            :loading="bot.status.isReadying"
+            :loading="bot.state.isReadying"
             class="full-width"
             color="primary"
             stretch
           />
 
-          <!-- Full-Game/Branch Analysis -->
+          <!-- Analyze Full-Game/Branch -->
           <div class="relative-position">
             <q-btn
               @click="bot.analyzeGame()"
-              :loading="bot.status.isAnalyzingGame"
-              :percentage="bot.status.progress"
+              :loading="bot.state.isAnalyzingGame"
+              :percentage="bot.state.progress"
               :disable="!bot.isAnalyzeGameAvailable"
               class="full-width"
               color="primary"
@@ -417,15 +313,15 @@
               }}
             </q-btn>
             <PlyChip
-              v-if="bot.status.isAnalyzingGame && bot.status.analyzingPly"
-              :ply="allPlies[bot.status.analyzingPly.id]"
+              v-if="bot.state.isAnalyzingGame && bot.state.analyzingPly"
+              :ply="bot.state.analyzingPly"
               @click.stop="goToAnalysisPly"
               no-branches
-              :done="bot.status.analyzingPly.isDone"
+              :done="bot.state.tps === bot.state.analyzingPly.afterTPS"
               class="absolute-left"
             />
             <q-btn
-              v-if="bot.status.isAnalyzingGame"
+              v-if="bot.state.isAnalyzingGame"
               :label="$t('Cancel')"
               @click.stop="bot.terminate()"
               class="absolute-right"
@@ -437,16 +333,16 @@
             />
           </div>
 
-          <!-- Generic Non-Interactive -->
+          <!-- Analyze Position -->
           <div class="relative-position">
             <q-btn
               @click="
-                bot.status.isAnalyzingPosition
+                bot.state.isAnalyzingPosition
                   ? null
                   : bot.analyzeCurrentPosition()
               "
-              :loading="bot.status.isAnalyzingPosition"
-              :percentage="bot.status.progress"
+              :loading="bot.state.isAnalyzingPosition"
+              :percentage="bot.state.progress"
               :disable="!bot.isAnalyzePositionAvailable"
               class="full-width"
               color="primary"
@@ -455,15 +351,15 @@
               stretch
             />
             <PlyChip
-              v-if="bot.status.isAnalyzingPosition && bot.status.analyzingPly"
-              :ply="allPlies[bot.status.analyzingPly.id]"
+              v-if="bot.state.isAnalyzingPosition && bot.state.analyzingPly"
+              :ply="allPlies[bot.state.analyzingPly.id]"
               @click.stop="goToAnalysisPly"
               no-branches
-              :done="bot.status.analyzingPly.isDone"
+              :done="bot.state.tps === bot.state.analyzingPly.afterTPS"
               class="absolute-left"
             />
             <q-btn
-              v-if="bot.status.isAnalyzingPosition"
+              v-if="bot.state.isAnalyzingPosition"
               :label="$t('Cancel')"
               @click.stop="bot.terminate()"
               class="absolute-right"
@@ -475,7 +371,7 @@
             />
           </div>
 
-          <!-- Generic Interactive -->
+          <!-- Interactive Analysis -->
           <q-item
             v-if="bot.isInteractive"
             class="interactive-control"
@@ -486,7 +382,7 @@
           >
             <q-item-section avatar>
               <q-spinner
-                v-if="bot.isInteractiveEnabled && bot.status.isRunning"
+                v-if="bot.isInteractiveEnabled && bot.state.isRunning"
                 size="sm"
               />
               <q-icon v-else name="int_analysis" />
@@ -497,23 +393,19 @@
               }}</q-item-label>
             </q-item-section>
             <q-item-section v-if="bot.isInteractiveEnabled" side>
-              <div v-if="bot.status.time !== null" class="text-caption">
-                {{ $n((bot.status.time || 0) / 1e3, "n0") }}
+              <div v-if="bot.state.time !== null" class="text-caption">
+                {{ $n((bot.state.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
               </div>
-              <div v-if="bot.status.nps !== null" class="text-caption">
-                {{ $n(bot.status.nps || 0, "n0") }}
+              <div v-if="bot.state.nps !== null" class="text-caption">
+                {{ $n(bot.state.nps || 0, "n0") }}
                 {{ $t("analysis.nps") }}
               </div>
             </q-item-section>
             <q-item-section side>
               <q-toggle
                 v-model="bot.isInteractiveEnabled"
-                :disable="
-                  !bot.status.isReady ||
-                  bot.status.isAnalyzingGame ||
-                  bot.status.isAnalyzingPosition
-                "
+                :disable="!bot.isInteractiveAvailable"
               />
             </q-item-section>
           </q-item>
@@ -522,9 +414,9 @@
         <q-inner-loading
           :showing="
             bot &&
-            (bot.status.isConnected || !bot.connect) &&
-            !bot.status.isTeiOk &&
-            !bot.status.isReady
+            (bot.state.isConnected || !bot.connect) &&
+            !bot.state.isTeiOk &&
+            !bot.state.isReady
           "
         />
       </smooth-reflow>
@@ -534,7 +426,7 @@
         <AnalysisItem
           v-for="(suggestion, i) in suggestions.slice(
             0,
-            botSettings[botSettings.bot].maxSuggestedMoves
+            botSettings[botID].maxSuggestedMoves
           )"
           :key="i"
           :ply="suggestion.ply"
@@ -567,7 +459,7 @@
               : null
           "
           :depth="suggestion.depth || null"
-          :animate="['tiltak', 'tei'].includes(botSettings.bot)"
+          :animate="bot.isInteractiveEnabled"
         />
 
         <q-item v-if="isGameEnd" class="flex-center">
@@ -583,12 +475,10 @@
             bot &&
             bot.id === 'tiltak-cloud' &&
             suggestions.length &&
-            suggestions.every(
-              ({ secondsToThink }) => secondsToThink < bot.secondsToThink.long
-            )
+            suggestions.every(({ movetime }) => movetime < bot.movetime.long)
           "
-          @click="bot.analyzeCurrentPosition(bot.secondsToThink.long)"
-          :loading="bot.status.isAnalyzingPosition"
+          @click="bot.analyzeCurrentPosition(bot.movetime.long)"
+          :loading="bot.state.isAnalyzingPosition"
           class="full-width"
           color="primary"
           stretch
@@ -613,21 +503,20 @@
 </template>
 
 <script>
-import AnalysisItem from "../database/AnalysisItem";
+import AnalysisItem from "../analysis/AnalysisItem";
+import BotLimitInput from "../analysis/BotLimitInput";
+import BotOptionInput from "../analysis/BotOptionInput";
 import PlyChip from "../PTN/Ply.vue";
-import { bots, botOptions } from "../../bots";
-import { cloneDeep, forEach, isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 export default {
   name: "BotSuggestions",
-  components: { AnalysisItem, PlyChip },
+  components: { AnalysisItem, BotLimitInput, BotOptionInput, PlyChip },
   data() {
     return {
       showBotSettings: false,
-      bots,
-      botOptions,
-      botMetaOptions: this.bot ? this.bot.getOptions() : {},
-      botSettings: cloneDeep(this.$store.state.ui.botSettings),
+      botSettings: cloneDeep(this.$store.state.analysis.botSettings),
+      botOptions: this.bot ? this.bot.getOptions() : {},
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
   },
@@ -661,46 +550,54 @@ export default {
         this.game.position.isGameEnd && !this.game.position.isGameEndDefault
       );
     },
-    bot() {
-      return this.bots[this.botSettings.bot];
+    botID: {
+      get() {
+        return this.$store.state.analysis.botID;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["botID", value]);
+      },
     },
-    isBotRunning() {
-      return (
-        this.bot && (this.bot.status.isRunning || this.bot.isInteractiveEnabled)
-      );
+    bots() {
+      return this.$store.state.analysis.bots;
+    },
+    bot() {
+      return this.$store.getters["analysis/bot"];
     },
     positions() {
-      return this.bot ? this.bot.positions : {};
+      return this.$store.state.analysis.botPositions;
     },
     suggestions() {
       return this.positions[this.tps] || [];
     },
+    pvLimit: {
+      get() {
+        return this.$store.state.analysis.pvLimit;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["pvLimit", value]);
+      },
+    },
     limitTypes() {
       const types = [];
       if (this.bot) {
-        if ("depth" in this.bot.settings) {
+        if (this.bot.meta.limitTypes.includes("depth")) {
           types.push({ label: this.$t("analysis.Depth"), value: "depth" });
         }
-        if ("nodes" in this.bot.settings) {
-          types.push({ label: this.$t("analysis.Nodes"), value: "nodes" });
+        if (this.bot.meta.limitTypes.includes("movetime")) {
+          types.push({
+            label: this.$t("analysis.movetime"),
+            value: "movetime",
+          });
         }
-        if ("secondsToThink" in this.bot.settings) {
-          types.push({ label: this.$t("Time"), value: "movetime" });
+        if (this.bot.meta.limitTypes.includes("nodes")) {
+          types.push({ label: this.$t("analysis.Nodes"), value: "nodes" });
         }
       }
       return types;
     },
-    hasLimitSettings() {
-      return (
-        this.bot &&
-        ("limitType" in this.bot.settings ||
-          "secondsToThink" in this.bot.settings ||
-          "depth" in this.bot.settings ||
-          "nodes" in this.bot.settings)
-      );
-    },
-    areMetaOptionsApplied() {
-      return this.bot && isEqual(this.botMetaOptions, this.bot.getOptions());
+    areBotOptionsApplied() {
+      return this.bot && isEqual(this.botOptions, this.bot.getOptions());
     },
   },
   methods: {
@@ -711,12 +608,15 @@ export default {
         this.sections.botSuggestions = true;
       }
     },
-
+    async setBotOptions() {
+      await this.bot.setOptions(this.botOptions);
+      this.bot.applyOptions();
+    },
     goToAnalysisPly() {
-      if (this.bot && this.bot.status.analyzingPly) {
+      if (this.bot && this.bot.state.analyzingPly) {
         this.$store.dispatch("game/GO_TO_PLY", {
-          plyID: this.bot.status.analyzingPly.id,
-          isDone: this.bot.status.analyzingPly.isDone,
+          plyID: this.bot.state.analyzingPly.id,
+          isDone: this.bot.state.analyzingPly.isDone,
         });
       }
     },
@@ -737,36 +637,6 @@ export default {
       },
       deep: true,
     },
-    botSettings: {
-      handler(settings) {
-        // Save preferences
-        this.$store.dispatch("ui/SET_UI", ["botSettings", settings]);
-      },
-      deep: true,
-    },
-    "bot.meta.options": {
-      handler(options) {
-        // Reset the buffer
-        this.botMetaOptions = this.bot.getOptions();
-
-        // Save TEI options
-        if (this.botSettings.bot === "tei") {
-          let optionValues = { ...(this.botSettings.tei.options || {}) };
-          forEach(options, (option, name) => {
-            if (!("value" in option)) {
-              return;
-            }
-            if (!("default" in option) || option.value !== option.default) {
-              optionValues[name] = option.value;
-            } else {
-              delete optionValues[name];
-            }
-          });
-          this.$set(this.botSettings.tei, "options", optionValues);
-        }
-      },
-      deep: true,
-    },
     bot(newBot, oldBot) {
       if (oldBot && oldBot.id !== newBot.id) {
         // Stop interactive analysis when switching bots
@@ -774,6 +644,35 @@ export default {
           oldBot.isInteractiveEnabled = false;
         }
       }
+    },
+    botSettings: {
+      handler(settings) {
+        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+      },
+      deep: true,
+    },
+    "bot.meta.options": {
+      handler() {
+        // Reset the buffer
+        this.botOptions = this.bot.getOptions();
+
+        // // Save TEI options
+        // if (this.botID === "tei") {
+        //   let optionValues = { ...(this.botSettings.options || {}) };
+        //   forEach(options, (option, name) => {
+        //     if (!("value" in option)) {
+        //       return;
+        //     }
+        //     if (!("default" in option) || option.value !== option.default) {
+        //       optionValues[name] = option.value;
+        //     } else {
+        //       delete optionValues[name];
+        //     }
+        //   });
+        //   this.$set(this.botSettings.tei, "options", optionValues);
+        // }
+      },
+      deep: true,
     },
   },
 };

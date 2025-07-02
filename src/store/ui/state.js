@@ -9,42 +9,6 @@ const defaultState = {
     dbMoves: false,
     dbGames: false,
   },
-  dbSettings: {
-    includeBotGames: false,
-    player1: [],
-    player2: [],
-    minRating: null,
-    komi: [],
-    maxSuggestedMoves: 8,
-    tournament: null,
-    minDate: null,
-    maxDate: null,
-  },
-  botSettings: {
-    bot: "tiltak-cloud",
-    pvLimit: 3,
-    tiltak: {
-      secondsToThink: 5,
-    },
-    "tiltak-cloud": {
-      maxSuggestedMoves: 8,
-    },
-    topaz: {
-      depth: 12,
-      secondsToThink: 5,
-    },
-    tei: {
-      log: false,
-      ssl: false,
-      address: "localhost",
-      port: 7731,
-      limitType: "movetime",
-      depth: 12,
-      nodes: 100000,
-      secondsToThink: 5,
-      options: {},
-    },
-  },
   animateBoard: true,
   animateScrub: false,
   axisLabels: true,
@@ -172,7 +136,7 @@ defaultState.pngConfig = {
   ...pick(defaultState, imgUIOptions),
 };
 
-let state = {
+const state = {
   embed: Platform.within.iframe,
   scrubbing: false,
   thumbnails: {},

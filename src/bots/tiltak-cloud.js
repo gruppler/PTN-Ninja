@@ -5,23 +5,25 @@ import { uniq } from "lodash";
 
 const url = "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
 
-const secondsToThink = Object.freeze({
-  short: 5,
-  long: 10,
-});
-
 export default class TiltakCloud extends Bot {
-  constructor(options) {
+  constructor(options = {}) {
     super({
       id: "tiltak-cloud",
       icon: "online",
       label: "analysis.bots.tiltak-cloud",
       description: "analysis.bots_description.tiltak-cloud",
       isInteractive: false,
+      settings: {
+        maxSuggestedMoves: 5,
+        nodes: 1e5,
+        movetime: 5e3,
+        limitTypes: ["movetime"],
+      },
+      meta: {
+        limitTypes: ["movetime", "nodes"],
+      },
       ...options,
     });
-
-    this.secondsToThink = secondsToThink;
   }
 
   get isOffline() {
@@ -30,27 +32,27 @@ export default class TiltakCloud extends Bot {
 
   //#region init
   init() {
-    this.status.isReady = true;
+    this.setState("isReady", true);
     super.init(true);
   }
 
   //#region analyzeCurrentPosition
-  async analyzeCurrentPosition(tps = this.tps, secondsToThink) {
+  async analyzeCurrentPosition(tps = this.tps, movetime) {
     try {
-      this.status.isRunning = true;
-      this.status.isAnalyzingPosition = true;
+      this.setState("isRunning", true);
+      this.setState("isAnalyzingPosition", true);
       this.analyzingPly = this.ply;
       const tps = this.tps;
-      await this.queryPosition(tps, secondsToThink);
+      await this.queryPosition(tps, movetime);
     } catch (error) {
       this.console.error("Failed to query position", {
         tps,
-        secondsToThink,
+        movetime,
         error,
       });
     } finally {
-      this.status.isRunning = false;
-      this.status.isAnalyzingPosition = false;
+      this.setState("isRunning", false);
+      this.setState("isAnalyzingPosition", false);
     }
   }
 
@@ -61,11 +63,11 @@ export default class TiltakCloud extends Bot {
       return;
     }
     try {
-      this.status.isRunning = true;
-      this.status.isAnalyzingGame = true;
-      this.status.progress = 0;
+      this.setState("isRunning", true);
+      this.setState("isAnalyzingGame", true);
+      this.setState("progress", 0);
       const concurrency = 10;
-      const secondsToThink = this.secondsToThink.short;
+      const movetime = this.movetime.short;
       const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
       let positions = plies.map((ply) => ply.tpsBefore);
       plies.forEach((ply) => {
@@ -78,28 +80,28 @@ export default class TiltakCloud extends Bot {
       let completed = 0;
 
       for await (const result of asyncPool(concurrency, positions, (tps) =>
-        this.queryPosition(tps, secondsToThink).catch((error) => {
+        this.queryPosition(tps, movetime).catch((error) => {
           console.error("Failed to query position", {
             tps,
-            secondsToThink,
+            movetime,
             error,
           });
         })
       )) {
-        this.status.progress = (100 * ++completed) / total;
+        this.setState("progress", (100 * ++completed) / total);
       }
       // Insert comments
       this.saveEvalComments();
     } catch (error) {
       this.handleError(error);
     } finally {
-      this.status.isRunning = false;
-      this.status.isAnalyzingGame = false;
+      this.setState("isRunning", false);
+      this.setState("isAnalyzingGame", false);
     }
   }
 
   //#region queryPosition
-  async queryPosition(secondsToThink, plyIndex, tps) {
+  async queryPosition(movetime, plyIndex, tps) {
     if (this.isOffline) {
       this.handleError("Offline");
       return;
@@ -127,7 +129,7 @@ export default class TiltakCloud extends Bot {
         time_control: {
           // FixedNodes: 100000, // can be used instead of `Time`
           Time: [
-            { secs: secondsToThink, nanos: 0 }, // time budget for endpoint
+            { secs: movetime / 1e3, nanos: 0 }, // time budget for endpoint
             { secs: 0, nanos: 0 }, // increment, ignored
           ],
         },
@@ -152,7 +154,7 @@ export default class TiltakCloud extends Bot {
           return new Ply(ply, { id: null, player, color });
         });
         let evaluation = 200 * (winning_probability - 0.5);
-        return { ply, followingPlies, visits, evaluation, secondsToThink };
+        return { ply, followingPlies, visits, evaluation, movetime };
       }
     );
     deepFreeze(result);

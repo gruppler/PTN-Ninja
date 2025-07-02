@@ -4,13 +4,21 @@ const url = new URL("/topaz/topaz.worker.js", import.meta.url);
 let worker = null;
 
 export default class TopazWasm extends Bot {
-  constructor(options) {
+  constructor(options = {}) {
     super({
       id: "topaz",
       icon: "local",
       label: "analysis.bots.topaz",
       description: "analysis.bots_description.topaz",
       isInteractive: false,
+      settings: {
+        limitTypes: ["depth", "movetime"],
+        movetime: 5000,
+        depth: 12,
+      },
+      meta: {
+        limitTypes: ["depth", "movetime"],
+      },
       ...options,
     });
   }
@@ -29,7 +37,7 @@ export default class TopazWasm extends Bot {
         worker.onmessage = ({ data }) => {
           this.handleResponse(data);
         };
-        this.status.isReady = true;
+        this.setState("isReady", true);
         return super.init(true);
       } catch (error) {
         console.error("Failed to load Topaz (wasm):", error);
@@ -40,19 +48,24 @@ export default class TopazWasm extends Bot {
 
   //#region reset
   reset() {
-    this.status.isReady = false;
+    this.setState("isReady", false);
     super.reset();
   }
 
   //#region queryPosition
   queryPosition(tps) {
-    this.send({
-      ...this.settings,
+    const query = {
+      movetime: 1e8,
+      depth: 100,
       tps,
       size: this.size,
       komi: this.komi,
       hash: this.settingsHash,
+    };
+    this.settings.limitTypes.forEach((type) => {
+      query[type] = this.settings[type];
     });
+    this.send(query);
   }
 
   //#region analyzeCurrentPosition
@@ -100,14 +113,14 @@ export default class TopazWasm extends Bot {
       evaluation: null,
     });
 
-    if (this.status.onComplete) {
-      this.status.onComplete();
+    if (this.state.onComplete) {
+      this.state.onComplete();
     }
   }
 
   //#region terminate
   async terminate() {
-    if (worker && this.status.isRunning) {
+    if (worker && this.state.isRunning) {
       try {
         await worker.terminate();
         super.terminate();
