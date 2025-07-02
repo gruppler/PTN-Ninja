@@ -14,14 +14,13 @@ export default class TiltakCloud extends Bot {
       description: "analysis.bots_description.tiltak-cloud",
       isInteractive: false,
       settings: {
+        log: false,
         maxSuggestedMoves: 5,
         nodes: 1e5,
         movetime: 5e3,
         limitTypes: ["movetime"],
       },
-      meta: {
-        limitTypes: ["movetime", "nodes"],
-      },
+      limitTypes: ["movetime", "nodes"],
       ...options,
     });
   }
@@ -36,74 +35,15 @@ export default class TiltakCloud extends Bot {
     super.init(true);
   }
 
-  //#region analyzeCurrentPosition
-  async analyzeCurrentPosition(tps = this.tps, movetime) {
-    try {
-      this.setState("isRunning", true);
-      this.setState("isAnalyzingPosition", true);
-      this.analyzingPly = this.ply;
-      const tps = this.tps;
-      await this.queryPosition(tps, movetime);
-    } catch (error) {
-      this.console.error("Failed to query position", {
-        tps,
-        movetime,
-        error,
-      });
-    } finally {
-      this.setState("isRunning", false);
-      this.setState("isAnalyzingPosition", false);
-    }
-  }
-
-  //#region analyzeGame
-  async analyzeGame() {
-    if (this.isOffline) {
-      this.handleError("Offline");
-      return;
-    }
-    try {
-      this.setState("isRunning", true);
-      this.setState("isAnalyzingGame", true);
-      this.setState("progress", 0);
-      const concurrency = 10;
-      const movetime = this.movetime.short;
-      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      let positions = plies.map((ply) => ply.tpsBefore);
-      plies.forEach((ply) => {
-        if (!ply.result || ply.result.type === "1") {
-          positions.push(ply.tpsAfter);
-        }
-      });
-      positions = uniq(positions).filter((tps) => !(tps in this.positions));
-      let total = positions.length;
-      let completed = 0;
-
-      for await (const result of asyncPool(concurrency, positions, (tps) =>
-        this.queryPosition(tps, movetime).catch((error) => {
-          console.error("Failed to query position", {
-            tps,
-            movetime,
-            error,
-          });
-        })
-      )) {
-        this.setState("progress", (100 * ++completed) / total);
-      }
-      // Insert comments
-      this.saveEvalComments();
-    } catch (error) {
-      this.handleError(error);
-    } finally {
-      this.setState("isRunning", false);
-      this.setState("isAnalyzingGame", false);
-    }
-  }
-
   //#region queryPosition
-  async queryPosition(movetime, plyIndex, tps) {
+  async queryPosition(tps, plyIndex) {
+    // Validate size/komi
+    if (!super.queryPosition(tps, plyIndex)) {
+      return false;
+    }
+
     if (this.isOffline) {
-      this.handleError("Offline");
+      this.onError("Offline");
       return;
     }
     if (!tps) {
@@ -139,7 +79,7 @@ export default class TiltakCloud extends Bot {
       }),
     });
     if (!response.ok) {
-      return this.handleError("HTTP-Error: " + response.status);
+      return this.onError("HTTP-Error: " + response.status);
     }
     const data = await response.json();
     const { SuggestMoves: suggestedMoves } = data;
@@ -163,6 +103,68 @@ export default class TiltakCloud extends Bot {
       [settingsKey]: result,
     });
     return result;
+  }
+
+  //#region analyzeCurrentPosition
+  async analyzeCurrentPosition(tps = this.tps) {
+    try {
+      this.setState("isRunning", true);
+      this.setState("isAnalyzingPosition", true);
+      this.analyzingPly = this.ply;
+      const tps = this.tps;
+      await this.queryPosition(tps);
+    } catch (error) {
+      this.console.error("Failed to query position", {
+        tps,
+        error,
+      });
+    } finally {
+      this.setState("isRunning", false);
+      this.setState("isAnalyzingPosition", false);
+    }
+  }
+
+  //#region analyzeGame
+  async analyzeGame() {
+    if (this.isOffline) {
+      this.onError("Offline");
+      return;
+    }
+    try {
+      this.setState("isRunning", true);
+      this.setState("isAnalyzingGame", true);
+      this.setState("progress", 0);
+      const concurrency = 10;
+      const movetime = this.settings.movetime;
+      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+      let positions = plies.map((ply) => ply.tpsBefore);
+      plies.forEach((ply) => {
+        if (!ply.result || ply.result.type === "1") {
+          positions.push(ply.tpsAfter);
+        }
+      });
+      positions = uniq(positions).filter(
+        (tps) =>
+          !(tps in this.positions) || this.positions[tps][0].time < movetime
+      );
+      let total = positions.length;
+      let completed = 0;
+
+      for await (const result of asyncPool(concurrency, positions, (tps) =>
+        this.queryPosition(tps).catch((error) => {
+          console.error("Failed to query position", { tps, error });
+        })
+      )) {
+        this.setState("progress", (100 * ++completed) / total);
+      }
+      // Insert comments
+      this.saveEvalComments();
+    } catch (error) {
+      this.onError(error);
+    } finally {
+      this.setState("isRunning", false);
+      this.setState("isAnalyzingGame", false);
+    }
   }
 
   //#region terminate

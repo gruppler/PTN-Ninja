@@ -4,7 +4,11 @@ import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
 
 import hashObject from "object-hash";
-import { cloneDeep, forEach, isFunction, isNumber, uniqBy } from "lodash";
+import { cloneDeep, forEach, isEmpty, isFunction, uniqBy } from "lodash";
+
+export function formatEvaluation(value) {
+  return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+}
 
 export default class Bot {
   constructor({
@@ -15,13 +19,17 @@ export default class Bot {
     isInteractive = false,
     name,
     author,
-    meta = {},
+    version,
+    limitTypes = ["depth", "movetime", "nodes"],
     options = {},
     sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
     state = {},
     settings = {},
+    meta = {},
     onInit,
     onError,
+    onInfo,
+    onWarning,
   }) {
     this.id = id;
     this.icon = icon;
@@ -31,17 +39,20 @@ export default class Bot {
 
     // Callbacks
     this.onInit = onInit;
-    this.onError = onError;
+    this.onError = onError || ((e) => console.error(e));
+    this.onInfo = onInfo || ((i) => console.info(i));
+    this.onWarning = onWarning || ((w) => console.warn(w));
     this.onReady = null;
     this.onComplete = null;
     this.unwatchPosition = null;
 
     this.meta = {
-      name: name,
-      author: author,
-      options: options,
-      sizeHalfKomis: sizeHalfKomis,
-      limitTypes: ["depth", "movetime", "nodes"],
+      name,
+      author,
+      version,
+      options,
+      sizeHalfKomis,
+      limitTypes,
       ...meta,
     };
 
@@ -67,7 +78,7 @@ export default class Bot {
       nextTPS: null,
 
       gameID: null,
-      komi: null,
+      halfKomi: null,
       size: null,
       initTPS: null,
       ...state,
@@ -86,14 +97,6 @@ export default class Bot {
       this.onInit(this);
     }
     return success;
-  }
-
-  handleError(error) {
-    if (isFunction(this.onError)) {
-      this.onError(error);
-    } else {
-      console.error(error);
-    }
   }
 
   //#region Setters
@@ -135,6 +138,10 @@ export default class Bot {
     return this.game.config.komi;
   }
 
+  get halfKomi() {
+    return this.game.config.komi * 2;
+  }
+
   get openingSwap() {
     return this.game.config.openingSwap;
   }
@@ -144,7 +151,7 @@ export default class Bot {
   }
 
   get ply() {
-    return this.game.position.boardPly;
+    return this.game.ptn.allPlies[this.game.position.boardPly.id];
   }
 
   get plies() {
@@ -159,6 +166,7 @@ export default class Bot {
 
   get isAnalyzeGameAvailable() {
     return (
+      !this.isFullyAnalyzed &&
       this.state.isReady &&
       !this.state.isAnalyzingPosition &&
       !this.state.isInteractiveEnabled
@@ -168,7 +176,6 @@ export default class Bot {
   get isAnalyzePositionAvailable() {
     return (
       !this.isGameEnd &&
-      !this.isFullyAnalyzed &&
       this.plies.length &&
       this.state.isReady &&
       !this.state.isAnalyzingGame &&
@@ -189,29 +196,6 @@ export default class Bot {
 
   getInitTPS() {
     return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
-  }
-
-  getTeiPosition(tps, plyIndex) {
-    let posMessage = "position";
-    if (isNumber(plyIndex)) {
-      tps = this.getInitTPS();
-      if (tps) {
-        posMessage += " tps " + tps;
-      } else {
-        posMessage += " startpos";
-      }
-      posMessage += " moves";
-      const plies = this.game.ptn.branchPlies
-        .slice(0, 1 + plyIndex)
-        .map((ply) => ply.text)
-        .join(" ");
-      if (plies) {
-        posMessage += " " + plies;
-      }
-    } else {
-      posMessage += " tps " + tps;
-    }
-    return posMessage;
   }
 
   nextPly(player, color) {
@@ -264,7 +248,7 @@ export default class Bot {
     this.setState("isReady", false);
     this.setState("gameID", null);
     this.setState("size", null);
-    this.setState("komi", null);
+    this.setState("halfKomi", null);
     this.setState("initTPS", null);
   }
 
@@ -289,7 +273,32 @@ export default class Bot {
     }
   }
 
-  queryPosition(tps, plyIndex) {}
+  queryPosition(tps, plyIndex) {
+    let success = true;
+    if (!isEmpty(this.meta.sizeHalfKomis)) {
+      if (!(this.size in this.meta.sizeHalfKomis)) {
+        if (this.onError) {
+          this.onError("Unsupported size");
+        } else {
+          throw new Error("Unsupported size");
+        }
+        success = false;
+      } else if (!this.meta.sizeHalfKomis[this.size].includes(this.halfKomi)) {
+        if (this.onError) {
+          this.onError("Unsupported komi");
+        } else {
+          throw new Error("Unsupported komi");
+        }
+        success = false;
+      }
+    }
+
+    if (!success) {
+      this.terminate();
+    }
+
+    return success;
+  }
 
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
@@ -300,6 +309,7 @@ export default class Bot {
       return;
     }
     if (value) {
+      this.setState("isInteractiveEnabled", value);
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
         () => this.analyzeInteractive()
@@ -309,8 +319,8 @@ export default class Bot {
       this.unwatchPosition();
       this.unwatchPosition = null;
       this.terminate();
+      this.setState("isInteractiveEnabled", value);
     }
-    this.setState("isInteractiveEnabled", value);
   }
 
   //#region analyzeInteractive
@@ -414,13 +424,19 @@ export default class Bot {
           positions.push({ tps: ply.tpsAfter, plyID: ply.id });
         }
       });
-      positions = uniqBy(positions, (p) => p.tps).filter(
-        (p) =>
+      const hash = this.getSettingsHash();
+      positions = uniqBy(positions, (p) => p.tps).filter((p) => {
+        return (
           !(p.tps in this.positions) ||
-          this.positions[p.tps][0].nodes < this.settings.nodes ||
-          this.positions[p.tps][0].depth < this.settings.depth ||
-          this.positions[p.tps][0].time < this.settings.time
-      );
+          this.positions[p.tps][0].hash !== hash ||
+          (this.settings.nodes &&
+            this.positions[p.tps][0].nodes < this.settings.nodes) ||
+          (this.settings.depth &&
+            this.positions[p.tps][0].depth < this.settings.depth) ||
+          (this.settings.movetime &&
+            this.positions[p.tps][0].time < this.settings.movetime * 0.7)
+        );
+      });
       const total = positions.length;
       let completed = 0;
       let position = positions[0];
@@ -448,7 +464,7 @@ export default class Bot {
       this.setState("analyzingPly", this.game.ptn.allPlies[position.plyID]);
       this.queryPosition(position.tps);
     } catch (error) {
-      this.handleError(error);
+      this.onError(error);
       this.setState("isRunning", false);
       this.setState("isAnalyzingGame", false);
     }
@@ -464,7 +480,16 @@ export default class Bot {
     depth = null,
     evaluation = null,
     nodes = null,
+    string = "",
+    error = "",
   }) {
+    if (string) {
+      this.onInfo(string);
+    }
+    if (error) {
+      this.onError(error);
+    }
+
     if (!tps) {
       return;
     }
@@ -550,7 +575,7 @@ export default class Bot {
   }
 
   formatEvaluation(value) {
-    return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+    formatEvaluation(value);
   }
 
   formatEvalComments(ply, pvLimit = 0) {
@@ -673,10 +698,7 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(
-    pvLimit = store.state.ui.botSettings.pvLimit,
-    plies = this.plies
-  ) {
+  saveEvalComments(pvLimit = store.state.analysis.pvLimit, plies = this.plies) {
     const messages = {};
     plies.forEach((ply) => {
       const notes = [];

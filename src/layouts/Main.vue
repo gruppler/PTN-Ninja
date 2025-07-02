@@ -254,6 +254,14 @@
 
     <q-footer class="bg-ui">
       <Scrubber />
+
+      <smooth-reflow>
+        <BotAnalysisItem
+          v-if="hasAnalysis && $q.screen.width <= singleWidth && botSuggestion"
+          :suggestion="botSuggestion"
+        />
+      </smooth-reflow>
+
       <q-toolbar
         v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
         class="footer-toolbar"
@@ -270,60 +278,6 @@
         />
         <PlayControls ref="playControls" v-else />
       </q-toolbar>
-
-      <!-- Interactive Analysis -->
-      <smooth-reflow>
-        <div
-          v-if="hasAnalysis && $q.screen.width <= singleWidth && botSuggestions"
-          style="height: 50%"
-        >
-          <AnalysisItem
-            v-for="(suggestion, i) in botSuggestions.slice(
-              0,
-              $bot.settings.maxSuggestedMoves
-            )"
-            :key="i"
-            :ply="suggestion.ply"
-            :evaluation="
-              'evaluation' in suggestion ? suggestion.evaluation : null
-            "
-            :following-plies="suggestion.followingPlies"
-            :count="
-              'visits' in suggestion
-                ? suggestion.visits
-                : 'nodes' in suggestion
-                ? suggestion.nodes
-                : null
-            "
-            :count-label="
-              'visits' in suggestion
-                ? 'analysis.visits'
-                : 'nodes' in suggestion
-                ? 'analysis.nodes'
-                : null
-            "
-            :player1-number="
-              'evaluation' in suggestion && suggestion.evaluation >= 0
-                ? $bot.formatEvaluation(suggestion.evaluation)
-                : null
-            "
-            :player2-number="
-              'evaluation' in suggestion && suggestion.evaluation < 0
-                ? $bot.formatEvaluation(suggestion.evaluation)
-                : null
-            "
-            :depth="suggestion.depth || null"
-            :animate="$bot.isInteractive"
-          />
-
-          <q-item
-            v-if="$store.state.game.position.isGameEnd"
-            class="flex-center"
-          >
-            {{ $t("analysis.gameOver") }}
-          </q-item>
-        </div>
-      </smooth-reflow>
     </q-footer>
 
     <router-view ref="dialog" go-back no-route-dismiss />
@@ -367,7 +321,7 @@ import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
-import AnalysisItem from "../components/analysis/AnalysisItem";
+import BotAnalysisItem from "../components/analysis/BotAnalysisItem";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -393,7 +347,7 @@ export default {
     BoardToggles,
     ShareButton,
     Chat,
-    AnalysisItem,
+    BotAnalysisItem,
     GameSelector,
     Highlighter,
     PieceSelector,
@@ -514,10 +468,12 @@ export default {
         ? this.$store.getters["online/playerFromUID"](this.user.uid)
         : 0;
     },
-    botSuggestions() {
-      return this.$store.state.analysis.botPositions[
-        this.$store.state.game.position.tps
-      ];
+    botSuggestion() {
+      const suggestions =
+        this.$store.state.analysis.botPositions[
+          this.$store.state.game.position.tps
+        ];
+      return suggestions ? suggestions[0] : null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;

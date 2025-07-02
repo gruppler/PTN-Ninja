@@ -1,9 +1,9 @@
-import Bot from "./bot";
+import TeiBot from "./tei";
 
 const url = new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url);
 let worker = null;
 
-export default class TiltakWasm extends Bot {
+export default class TiltakWasm extends TeiBot {
   constructor(options = {}) {
     super({
       id: "tiltak",
@@ -16,18 +16,27 @@ export default class TiltakWasm extends Bot {
         isTeiOk: false,
       },
       settings: {
+        log: false,
         movetime: 5000,
       },
-      meta: {
-        limitTypes: ["movetime"],
-      },
+      limitTypes: ["movetime"],
       ...options,
     });
   }
 
+  // Freeze meta
+  setMeta() {}
+
+  // Disable non-applicable inherited methods
+  connect() {}
+  disconnect() {}
+
   //#region send
   send(message) {
     if (worker) {
+      if (this.settings.log) {
+        console.info(">>", message);
+      }
       worker.postMessage(message);
     }
   }
@@ -44,7 +53,7 @@ export default class TiltakWasm extends Bot {
             "Tiltak (wasm) worker encountered an error. Restarting...",
             error.message
           );
-          this.handleError(error);
+          this.onError(error);
           if (worker) {
             worker.terminate();
             worker = null;
@@ -57,13 +66,16 @@ export default class TiltakWasm extends Bot {
           this.setState("nps", null);
           this.setState("tps", null);
           this.setState("nextTPS", null);
-          this.setState("komi", null);
+          this.setState("halfkomi", null);
           this.setState("size", null);
           this.setState("initTPS", null);
         };
 
         // Message handling
         worker.onmessage = ({ data }) => {
+          if (this.settings.log) {
+            console.info("<<", data);
+          }
           this.handleResponse(data);
         };
 
@@ -81,48 +93,11 @@ export default class TiltakWasm extends Bot {
   async terminate() {
     if (worker && this.state.isRunning) {
       try {
-        this.send("stop");
         super.terminate();
       } catch (error) {
         await worker.terminate();
         this.init();
       }
-    }
-  }
-
-  //#region queryPosition
-  queryPosition(tps, plyIndex) {
-    // Send `teinewgame` if necessary
-    const initTPS = this.getInitTPS();
-    if (
-      this.state.gameID !== this.game.name ||
-      this.state.size !== this.size ||
-      this.state.komi !== this.komi ||
-      this.state.initTPS !== initTPS
-    ) {
-      this.send(`setoption name HalfKomi value ${this.komi * 2}`);
-      this.send(`teinewgame ${this.size}`);
-      this.setState("gameID", this.game.name);
-      this.setState("size", this.size);
-      this.setState("komi", this.komi);
-      this.setState("initTPS", initTPS);
-      this.setState("isReady", false);
-      this.send("isready");
-      this.onReady = () => {
-        this.onReady = null;
-        this.queryPosition(tps, plyIndex);
-      };
-      return;
-    }
-
-    // Set position
-    this.send(this.getTeiPosition(tps, plyIndex));
-
-    // Go
-    if (this.state.isInteractiveEnabled) {
-      this.send(`go infinite`);
-    } else {
-      this.send(`go movetime ${this.settings.movetime}`);
     }
   }
 
@@ -156,82 +131,5 @@ export default class TiltakWasm extends Bot {
     }
 
     super.analyzeCurrentPosition();
-  }
-
-  //#region handleResponse
-  handleResponse(response) {
-    if (response.error) {
-      this.handleError(response.error);
-      return;
-    }
-
-    const tps = this.state.tps;
-
-    if (response === "teiok") {
-      this.setState("isTeiOk", true);
-      this.send("isready");
-    } else if (response === "readyok") {
-      this.setState("isReady", true);
-      if (this.onReady) {
-        this.onReady();
-      }
-    } else if (response.startsWith("bestmove")) {
-      // Search ended
-      this.setState("isRunning", false);
-      if (this.state.isInteractiveEnabled) {
-        if (this.state.tps === this.state.nextTPS) {
-          // No position queued
-          this.setState("tps", null);
-          this.setState("nextTPS", null);
-        } else {
-          this.setState("tps", this.state.nextTPS);
-        }
-      } else {
-        super.storeResults({
-          tps,
-          pvs: [[response.slice(9)]],
-        });
-        if (this.onComplete) {
-          this.onComplete();
-        }
-      }
-    } else if (response.startsWith("info") && tps) {
-      // Parse Results
-      this.setState("isRunning", true);
-      const results = {
-        tps,
-        pvs: [[]],
-        time: null,
-        nps: null,
-        depth: null,
-        seldepth: null,
-        score: null,
-        nodes: null,
-      };
-
-      const keys = ["pv", "time", "nps", "depth", "seldepth", "score", "nodes"];
-      let key = "";
-      for (const value of response.split(" ")) {
-        if (keys.includes(value)) {
-          key = value;
-        } else {
-          if (key === "pv") {
-            results.pvs[0].push(value);
-          } else if (key === "score" && value === "cp") {
-            continue;
-          } else {
-            results[key] = Number(value);
-          }
-        }
-      }
-      if (tps && results.score !== null) {
-        const initialPlayer = Number(tps.split(" ")[1]);
-        results.evaluation =
-          Number(results.score) * (initialPlayer === 1 ? 1 : -1);
-      }
-      if (results.pvs[0].length) {
-        return super.storeResults(results);
-      }
-    }
   }
 }

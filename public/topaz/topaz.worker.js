@@ -8,7 +8,9 @@ async function init_wasm_in_worker() {
   self.onmessage = async ({ data: options }) => {
     try {
       // Evaluate
-      // console.log("Analyzing position", options);
+      if (options.log) {
+        console.log(">>", options);
+      }
       let result = evaluate(
         options.depth,
         options.movetime / 1e3,
@@ -16,7 +18,9 @@ async function init_wasm_in_worker() {
         options.komi,
         options.tps
       );
-      // console.log(result);
+      if (options.log) {
+        console.log("<<", result);
+      }
 
       // Check result for errors
       let matches = result.match(

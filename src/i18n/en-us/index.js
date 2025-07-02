@@ -474,6 +474,7 @@ export default {
     "Apply Options": "Apply Options",
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
+    "Bot Options": "Bot Options",
     "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",
@@ -483,7 +484,9 @@ export default {
     includeBotGames: "Include Bot Games",
     init: "Initialize",
     interactiveAnalysis: "Interactive Analysis",
+    limit: "Search Limit",
     limitType: "Limit Type",
+    logMessages: "Log messages",
     maxDate: "Before",
     maxSuggestedMoves: "Max. Suggestions",
     movetime: "Milliseconds to Think",
@@ -526,10 +529,9 @@ export default {
 
   tei: {
     address: "Address",
-    by: "by",
+    by: "by", // BotName by AuthorName
     connect: "Connect",
     disconnect: "Disconnect",
-    log: "Log messages",
     port: "Port",
     run: "Run",
     ssl: "Use SSL",

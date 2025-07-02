@@ -1,5 +1,5 @@
 import { i18n } from "../boot/i18n";
-import { notifyError } from "../utilities";
+import { notifyError, notifyHint, notifyWarning } from "../utilities";
 
 import TiltakCloud from "./tiltak-cloud";
 import TiltakWasm from "./tiltak-wasm";
@@ -14,6 +14,8 @@ export const botOptions = [];
 constructors.forEach((Bot) => {
   const bot = new Bot({
     onError: notifyError,
+    onInfo: notifyHint,
+    onWarning: notifyWarning,
   });
   bots[bot.id] = bot;
   botOptions.push({

@@ -12,13 +12,12 @@ export default class TopazWasm extends Bot {
       description: "analysis.bots_description.topaz",
       isInteractive: false,
       settings: {
+        log: false,
         limitTypes: ["depth", "movetime"],
         movetime: 5000,
         depth: 12,
       },
-      meta: {
-        limitTypes: ["depth", "movetime"],
-      },
+      limitTypes: ["depth", "movetime"],
       ...options,
     });
   }
@@ -54,13 +53,19 @@ export default class TopazWasm extends Bot {
 
   //#region queryPosition
   queryPosition(tps) {
+    // Validate size/komi
+    if (!super.queryPosition(tps, plyIndex)) {
+      return false;
+    }
+
     const query = {
       movetime: 1e8,
       depth: 100,
       tps,
       size: this.size,
       komi: this.komi,
-      hash: this.settingsHash,
+      hash: this.getSettingsHash(),
+      log: this.settings.log,
     };
     this.settings.limitTypes.forEach((type) => {
       query[type] = this.settings[type];
@@ -75,11 +80,7 @@ export default class TopazWasm extends Bot {
       return;
     }
 
-    if (!super.analyzeCurrentPosition()) {
-      return;
-    }
-
-    this.queryPosition(this.tps);
+    super.analyzeCurrentPosition();
   }
 
   //#region analyzeGame
@@ -95,7 +96,7 @@ export default class TopazWasm extends Bot {
   //#region handleResponse
   handleResponse(response) {
     if (response.error) {
-      this.handleError(response.error);
+      this.onError(response.error);
       return;
     }
 
@@ -113,8 +114,8 @@ export default class TopazWasm extends Bot {
       evaluation: null,
     });
 
-    if (this.state.onComplete) {
-      this.state.onComplete();
+    if (this.onComplete) {
+      this.onComplete();
     }
   }
 
@@ -127,7 +128,7 @@ export default class TopazWasm extends Bot {
         worker = null;
         this.init();
       } catch (error) {
-        this.handleError(error);
+        this.onError(error);
       }
     }
   }

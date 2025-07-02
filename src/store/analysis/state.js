@@ -1,5 +1,5 @@
 import { LocalStorage } from "quasar";
-import { cloneDeep, defaultsDeep, forEach } from "lodash";
+import { cloneDeep, defaults, forEach } from "lodash";
 import { bots, botOptions } from "../../bots";
 
 const defaultBotID = "tiltak-cloud";
@@ -54,6 +54,11 @@ forEach(bots, (bot, id) => {
 });
 
 // Backward compatibility
-defaultsDeep(state, defaultState);
+defaults(state, defaultState);
+defaults(state.dbSettings, defaultState.dbSettings);
+defaults(state.botSettings, defaultState.botSettings);
+Object.keys(defaultState.botSettings).forEach((bot) => {
+  defaults(state.botSettings[bot], defaultState.botSettings[bot]);
+});
 
 export default state;

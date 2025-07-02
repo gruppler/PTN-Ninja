@@ -7,6 +7,7 @@
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
       @click.right.stop.prevent
+      @touchstart.stop.prevent
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
