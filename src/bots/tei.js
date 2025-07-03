@@ -383,7 +383,8 @@ export default class TeiBot extends Bot {
           }
         } else if (
           option.type === "combo" &&
-          !option.vars.includes(halfKomi.toString())
+          option.vars &&
+          option.vars.length
         ) {
           halfKomis = option.vars;
         }

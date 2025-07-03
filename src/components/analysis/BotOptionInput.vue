@@ -70,7 +70,9 @@
 export default {
   name: "BotOptionInput",
   props: {
-    value: [Boolean, Number, String],
+    value: {
+      required: true,
+    },
     name: String,
     option: Object,
     disable: Boolean,
