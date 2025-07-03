@@ -416,7 +416,7 @@ export default class TeiBot extends Bot {
       } else {
         super.storeResults({
           tps,
-          pvs: [[response.substr(9)]],
+          suggestions: [{ pv: [response.substr(9)] }],
         });
         if (this.onComplete) {
           this.onComplete();
@@ -427,19 +427,25 @@ export default class TeiBot extends Bot {
       this.setState("isRunning", true);
       const results = {
         tps,
-        pvs: [[]],
-        time: null,
         nps: null,
-        depth: null,
-        seldepth: null,
-        score: null,
-        nodes: null,
         string: "",
         error: "",
+        suggestions: [
+          {
+            pv: [],
+            time: null,
+            depth: null,
+            seldepth: null,
+            evaluation: null,
+            nodes: null,
+          },
+        ],
       };
 
-      const keys = /^(pv|time|nps|depth|seldepth|score|nodes|string|error)$/i;
+      const keys =
+        /^(pv|multipv|time|depth|seldepth|score|nodes|nps|string|error)$/i;
       let key = "";
+      let i = 0;
       let multipv = 0;
       let scoreType = "";
       const initialPlayer = Number(tps.split(" ")[1]);
@@ -453,42 +459,69 @@ export default class TeiBot extends Bot {
             break;
           }
         } else {
-          if (key === "pv") {
-            if (multipv && results.pvs.length < multipv) {
-              results.pvs.push([]);
+          if (key === "multipv") {
+            multipv = Number(token);
+          } else if (key === "pv") {
+            if (multipv && results.suggestions.length < multipv) {
+              i = results.suggestions.length - 1;
+              results.suggestions.push({
+                pv: [],
+                time: null,
+                depth: null,
+                seldepth: null,
+                evaluation: null,
+                nodes: null,
+              });
             }
-            results.pvs[multipv ? multipv - 1 : 0].push(token);
+            results.suggestions[i].pv.push(token);
           } else if (key === "score") {
             switch (scoreType) {
               case "cp":
-              case "win":
-                results.evaluation =
+                results.suggestions[i].evaluation =
                   Number(token) * (initialPlayer === 1 ? 1 : -1);
                 break;
+              case "win":
+                results.suggestions[i].evaluation =
+                  (Number(token) * 2 - 100) * (initialPlayer === 1 ? 1 : -1);
+                break;
               case "mate":
-                results.evaluation =
+                results.suggestions[i].evaluation =
                   100 *
                   (Number(token) > 0 ? 1 : -1) *
                   (initialPlayer === 1 ? 1 : -1);
                 break;
               case "forced":
                 if (token === "draw") {
-                  results.evaluation = 0;
+                  results.suggestions[i].evaluation = 0;
                 } else if (token === "win") {
-                  results.evaluation = 100 * (initialPlayer === 1 ? 1 : -1);
+                  results.suggestions[i].evaluation =
+                    100 * (initialPlayer === 1 ? 1 : -1);
                 } else if (token === "loss") {
-                  results.evaluation = 100 * (initialPlayer === 1 ? -1 : 1);
+                  results.suggestions[i].evaluation =
+                    100 * (initialPlayer === 1 ? -1 : 1);
                 }
                 break;
               default:
                 scoreType = token;
             }
-          } else if (results[key] === null) {
-            results[key] = Number(token);
+          } else {
+            switch (key) {
+              case "nps":
+              case "string":
+              case "error":
+                if (results[key] === null) {
+                  results[key] = Number(token);
+                }
+                break;
+              default:
+                if (results.suggestions[i][key] === null) {
+                  results.suggestions[i][key] = Number(token);
+                }
+            }
           }
         }
       }
-      if (results.pvs[0].length) {
+      if (results.suggestions[0].pv.length) {
         return super.storeResults(results);
       }
     }

@@ -5,7 +5,7 @@
     v-model.number="model"
     type="number"
     :min="500"
-    :max="1e6"
+    :max="3e4"
     :step="500"
     filled
     v-bind="$attrs"

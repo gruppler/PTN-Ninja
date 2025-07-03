@@ -4,7 +4,14 @@ import Ply from "../Game/PTN/Ply";
 import { deepFreeze } from "../utilities";
 
 import hashObject from "object-hash";
-import { cloneDeep, forEach, isEmpty, isFunction, uniqBy } from "lodash";
+import {
+  cloneDeep,
+  forEach,
+  isEmpty,
+  isFunction,
+  isNumber,
+  uniqBy,
+} from "lodash";
 
 export function formatEvaluation(value) {
   return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
@@ -275,20 +282,14 @@ export default class Bot {
 
   queryPosition(tps, plyIndex) {
     let success = true;
-    if (!isEmpty(this.meta.sizeHalfKomis)) {
+    if (!tps && isNumber(plyIndex)) {
+      success = false;
+    } else if (!isEmpty(this.meta.sizeHalfKomis)) {
       if (!(this.size in this.meta.sizeHalfKomis)) {
-        if (this.onError) {
-          this.onError("Unsupported size");
-        } else {
-          throw new Error("Unsupported size");
-        }
+        this.onError("Unsupported size");
         success = false;
       } else if (!this.meta.sizeHalfKomis[this.size].includes(this.halfKomi)) {
-        if (this.onError) {
-          this.onError("Unsupported komi");
-        } else {
-          throw new Error("Unsupported komi");
-        }
+        this.onError("Unsupported komi");
         success = false;
       }
     }
@@ -296,7 +297,6 @@ export default class Bot {
     if (!success) {
       this.terminate();
     }
-
     return success;
   }
 
@@ -474,14 +474,17 @@ export default class Bot {
   storeResults({
     hash = this.getSettingsHash(),
     tps,
-    pvs = [],
-    time = null,
     nps = null,
-    depth = null,
-    evaluation = null,
-    nodes = null,
     string = "",
     error = "",
+    suggestions = [],
+    // suggestion: {
+    //   pv,
+    //   time = null,
+    //   depth = null,
+    //   evaluation = null,
+    //   nodes = null,
+    // },
   }) {
     if (string) {
       this.onInfo(string);
@@ -510,32 +513,47 @@ export default class Bot {
           ? 2
           : 1
         : initialPlayer;
-    const suggestions = [];
-    pvs.forEach((pv) => {
-      let player = initialPlayer;
-      let color = initialColor;
-      const ply = new Ply(pv.splice(0, 1)[0], {
-        id: null,
-        player,
-        color,
-      });
-      const followingPlies = pv.map((ply) => {
-        ({ player, color } = this.nextPly(player, color));
-        return new Ply(ply, { id: null, player, color });
-      });
-      depth;
-      nodes;
-      suggestions.push({
-        ply,
-        followingPlies,
-        evaluation,
-        depth,
-        nodes,
-        time,
-        hash,
-      });
-    });
-    deepFreeze(suggestions);
+    const results = [];
+    suggestions.forEach(
+      ({
+        pv,
+        time = null,
+        depth = null,
+        evaluation = null,
+        nodes = null,
+        visits = null,
+      }) => {
+        let player = initialPlayer;
+        let color = initialColor;
+        const ply = new Ply(pv.splice(0, 1)[0], {
+          id: null,
+          player,
+          color,
+        });
+        const followingPlies = pv.map((ply) => {
+          ({ player, color } = this.nextPly(player, color));
+          return new Ply(ply, { id: null, player, color });
+        });
+        const result = {
+          ply,
+          followingPlies,
+          evaluation,
+          time,
+          hash,
+        };
+        if (depth !== null) {
+          result.depth = depth;
+        }
+        if (nodes !== null) {
+          result.nodes = nodes;
+        }
+        if (visits !== null) {
+          result.visits = visits;
+        }
+        results.push(result);
+      }
+    );
+    deepFreeze(results);
 
     if (this.isInteractiveEnabled && !this.state.tps) {
       this.setState("tps", this.tps);
@@ -543,7 +561,7 @@ export default class Bot {
 
     // Update time and nps
     if (!this.isGameEnd) {
-      this.setState("time", time);
+      this.setState("time", results[0].time);
       this.setState("nps", nps);
     }
 
@@ -551,11 +569,11 @@ export default class Bot {
     if (
       !this.positions[tps] ||
       this.positions[tps][0].hash !== hash ||
-      this.positions[tps][0].nodes < suggestions[0].nodes ||
-      this.positions[tps][0].depth < suggestions[0].depth ||
-      this.positions[tps][0].time < suggestions[0].time
+      this.positions[tps][0].nodes < results[0].nodes ||
+      this.positions[tps][0].depth < results[0].depth ||
+      this.positions[tps][0].time < results[0].time
     ) {
-      this.setPosition(tps, suggestions);
+      this.setPosition(tps, results);
     }
   }
 

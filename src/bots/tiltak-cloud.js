@@ -13,6 +13,7 @@ export default class TiltakCloud extends Bot {
       label: "analysis.bots.tiltak-cloud",
       description: "analysis.bots_description.tiltak-cloud",
       isInteractive: false,
+      sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
       settings: {
         log: false,
         maxSuggestedMoves: 5,
@@ -36,9 +37,9 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region queryPosition
-  async queryPosition(tps, plyIndex) {
+  async queryPosition(tps) {
     // Validate size/komi
-    if (!super.queryPosition(tps, plyIndex)) {
+    if (!super.queryPosition(tps)) {
       return false;
     }
 
@@ -46,81 +47,67 @@ export default class TiltakCloud extends Bot {
       this.onError("Offline");
       return;
     }
-    if (!tps) {
-      throw new Error("Missing TPS");
-    }
-    const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
-    const initialColor =
-      this.openingSwap && moveNumber === 1
-        ? initialPlayer == 1
-          ? 2
-          : 1
-        : initialPlayer;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+
+    const movetime = this.settings.movetime;
+
+    const request = {
+      komi: this.komi,
+      size: this.size,
+      tps,
+      moves: [],
+      time_control: {
+        // FixedNodes: 100000, // can be used instead of `Time`
+        Time: [
+          { secs: movetime / 1e3, nanos: 0 }, // time budget for endpoint
+          { secs: 0, nanos: 0 }, // increment, ignored
+        ],
       },
-      body: JSON.stringify({
-        komi: this.komi,
-        size: this.size,
-        tps,
-        moves: [],
-        time_control: {
-          // FixedNodes: 100000, // can be used instead of `Time`
-          Time: [
-            { secs: movetime / 1e3, nanos: 0 }, // time budget for endpoint
-            { secs: 0, nanos: 0 }, // increment, ignored
-          ],
+      rollout_depth: 0,
+      rollout_temperature: 0.25,
+      action: "SuggestMoves",
+    };
+    if (this.settings.log) {
+      console.log(">>", request);
+    }
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        rollout_depth: 0,
-        rollout_temperature: 0.25,
-        action: "SuggestMoves",
-      }),
-    });
+        body: JSON.stringify(request),
+      });
+      if (this.settings.log) {
+        console.log("<<", response);
+      }
+    } catch (error) {
+      this.onError(error);
+      this.terminate();
+      return;
+    }
     if (!response.ok) {
+      this.terminate();
       return this.onError("HTTP-Error: " + response.status);
     }
     const data = await response.json();
+    if (this.settings.log) {
+      console.log("<<", data);
+    }
     const { SuggestMoves: suggestedMoves } = data;
 
-    const result = suggestedMoves.map(
-      ({ mv: ptn, visits, winning_probability, pv }) => {
-        let player = initialPlayer;
-        let color = initialColor;
-        let ply = new Ply(ptn, { id: null, player, color });
-        let followingPlies = pv.map((ply) => {
-          ({ player, color } = this.nextPly(player, color));
-          return new Ply(ply, { id: null, player, color });
-        });
-        let evaluation = 200 * (winning_probability - 0.5);
-        return { ply, followingPlies, visits, evaluation, movetime };
-      }
-    );
-    deepFreeze(result);
-    this.$set(this.positions, tps, {
-      ...(this.positions[tps] || {}),
-      [settingsKey]: result,
-    });
-    return result;
-  }
-
-  //#region analyzeCurrentPosition
-  async analyzeCurrentPosition(tps = this.tps) {
-    try {
-      this.setState("isRunning", true);
-      this.setState("isAnalyzingPosition", true);
-      this.analyzingPly = this.ply;
-      const tps = this.tps;
-      await this.queryPosition(tps);
-    } catch (error) {
-      this.console.error("Failed to query position", {
-        tps,
-        error,
-      });
-    } finally {
-      this.setState("isRunning", false);
-      this.setState("isAnalyzingPosition", false);
+    const results = {
+      tps,
+      suggestions: suggestedMoves.map(
+        ({ mv, visits, winning_probability, pv }) => {
+          pv.unshift(mv);
+          const evaluation = 200 * (winning_probability - 0.5);
+          return { pv, visits, evaluation, time: movetime };
+        }
+      ),
+    };
+    if (results.suggestions[0].pv.length) {
+      return super.storeResults(results);
     }
   }
 
@@ -150,15 +137,17 @@ export default class TiltakCloud extends Bot {
       let total = positions.length;
       let completed = 0;
 
-      for await (const result of asyncPool(concurrency, positions, (tps) =>
-        this.queryPosition(tps).catch((error) => {
-          console.error("Failed to query position", { tps, error });
-        })
-      )) {
+      for await (const result of asyncPool(concurrency, positions, (tps) => {
+        if (this.state.isAnalyzingGame) {
+          this.queryPosition(tps);
+        }
+      })) {
         this.setState("progress", (100 * ++completed) / total);
       }
-      // Insert comments
-      this.saveEvalComments();
+      // Insert comments if successful
+      if (this.state.isAnalyzingGame) {
+        this.saveEvalComments();
+      }
     } catch (error) {
       this.onError(error);
     } finally {

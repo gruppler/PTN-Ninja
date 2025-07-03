@@ -108,10 +108,14 @@ export default class TopazWasm extends Bot {
     super.storeResults({
       hash,
       tps,
-      pvs: [pv],
-      depth,
-      nodes,
-      evaluation: null,
+      suggestions: [
+        {
+          pv,
+          depth,
+          nodes,
+          evaluation: null,
+        },
+      ],
     });
 
     if (this.onComplete) {
