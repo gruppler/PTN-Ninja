@@ -68,7 +68,6 @@ export default class TiltakWasm extends TeiBot {
           this.setState("nextTPS", null);
           this.setState("halfkomi", null);
           this.setState("size", null);
-          this.setState("initTPS", null);
         };
 
         // Message handling

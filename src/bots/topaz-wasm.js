@@ -11,6 +11,7 @@ export default class TopazWasm extends Bot {
       label: "analysis.bots.topaz",
       description: "analysis.bots_description.topaz",
       isInteractive: false,
+      sizeHalfKomis: { 6: [0] },
       settings: {
         log: false,
         limitTypes: ["depth", "movetime"],
@@ -54,7 +55,8 @@ export default class TopazWasm extends Bot {
   //#region queryPosition
   queryPosition(tps) {
     // Validate size/komi
-    if (!super.queryPosition(tps, plyIndex)) {
+    const init = super.queryPosition(tps);
+    if (!init) {
       return false;
     }
 
@@ -63,7 +65,7 @@ export default class TopazWasm extends Bot {
       depth: 100,
       tps,
       size: this.size,
-      komi: this.komi,
+      komi: init.halfKomi / 2,
       hash: this.getSettingsHash(),
       log: this.settings.log,
     };

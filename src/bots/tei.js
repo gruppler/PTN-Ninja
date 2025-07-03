@@ -190,19 +190,14 @@ export default class TeiBot extends Bot {
   //#region queryPosition
   queryPosition(tps, plyIndex) {
     // Validate size/komi
-    if (!super.queryPosition(tps, plyIndex)) {
+    const init = super.queryPosition(tps, plyIndex);
+    if (!init) {
       return false;
     }
 
     // Send `teinewgame` if necessary
-    const initTPS = this.getInitTPS();
-    const halfKomi = this.halfKomi;
-    if (
-      this.state.gameID !== this.game.name ||
-      this.state.size !== this.size ||
-      this.state.halfKomi !== halfKomi ||
-      this.state.initTPS !== initTPS
-    ) {
+    const halfKomi = init.halfKomi;
+    if (init.isNewGame) {
       // New game
       if (this.meta.teiVersion > 0) {
         this.send(`teinewgame size ${this.size} halfkomi ${halfKomi}`);
@@ -210,10 +205,6 @@ export default class TeiBot extends Bot {
         this.send(`setoption name HalfKomi value ${halfKomi}`);
         this.send(`teinewgame ${this.size}`);
       }
-      this.setState("gameID", this.game.name);
-      this.setState("size", this.size);
-      this.setState("halfKomi", halfKomi);
-      this.setState("initTPS", initTPS);
       this.setState("isReadying", true);
       this.setState("isReady", false);
       this.send("isready");
@@ -386,7 +377,7 @@ export default class TeiBot extends Bot {
           option.vars &&
           option.vars.length
         ) {
-          halfKomis = option.vars;
+          halfKomis = option.vars.map(Number);
         }
         if (halfKomis.length) {
           for (let size of [3, 4, 5, 6, 7, 8]) {
@@ -404,7 +395,6 @@ export default class TeiBot extends Bot {
       }
     } else if (response.startsWith("bestmove")) {
       // Search ended
-      this.setState("isRunning", false);
       this.setState("isReady", true);
       if (this.isInteractiveEnabled) {
         if (this.state.tps === this.state.nextTPS) {
@@ -422,6 +412,9 @@ export default class TeiBot extends Bot {
         if (this.onComplete) {
           this.onComplete();
         }
+      }
+      if (!this.isInteractiveEnabled && !this.state.isAnalyzingGame) {
+        this.setState("isRunning", false);
       }
     } else if (response.startsWith("info") && tps) {
       // Parse Results

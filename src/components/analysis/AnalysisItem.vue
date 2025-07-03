@@ -79,8 +79,18 @@
             </tooltip>
           </span>
         </q-item-label>
-        <q-item-label v-if="count !== null && countLabel">
-          {{ $tc(countLabel, $n(count, "n0")) }}
+        <q-item-label
+          v-if="(count !== null && countLabel) || seconds !== null"
+          caption
+        >
+          <template v-if="count !== null && countLabel">{{
+            $tc(countLabel, $n(count, "n0"))
+          }}</template>
+          <template v-if="count !== null && seconds !== null"> / </template>
+          <template v-if="seconds !== null">
+            {{ $n(seconds, "n0") }}
+            {{ $t("analysis.secondsUnit") }}
+          </template>
         </q-item-label>
       </q-item-section>
     </q-item>
@@ -125,6 +135,10 @@ export default {
       default: null,
     },
     depth: {
+      type: Number,
+      default: null,
+    },
+    seconds: {
       type: Number,
       default: null,
     },

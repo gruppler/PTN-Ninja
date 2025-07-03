@@ -87,7 +87,6 @@ export default class Bot {
       gameID: null,
       halfKomi: null,
       size: null,
-      initTPS: null,
       ...state,
     };
 
@@ -147,6 +146,23 @@ export default class Bot {
 
   get halfKomi() {
     return this.game.config.komi * 2;
+  }
+
+  //#region getSupportedHalfKomi
+  getSupportedHalfKomi() {
+    const size = this.size;
+    const halfKomi = this.halfKomi;
+    if (
+      size in this.meta.sizeHalfKomis &&
+      !this.meta.sizeHalfKomis[size].includes(halfKomi)
+    ) {
+      return this.meta.sizeHalfKomis[size].reduce((prev, curr) => {
+        return Math.abs(curr - halfKomi) < Math.abs(prev - halfKomi)
+          ? curr
+          : prev;
+      }, 0);
+    }
+    return halfKomi;
   }
 
   get openingSwap() {
@@ -256,7 +272,8 @@ export default class Bot {
     this.setState("gameID", null);
     this.setState("size", null);
     this.setState("halfKomi", null);
-    this.setState("initTPS", null);
+    this.setState("nextTPS", null);
+    this.setState("tps", null);
   }
 
   //#region terminate
@@ -268,9 +285,6 @@ export default class Bot {
     this.setState("isRunning", false);
     this.setState("progress", 0);
     this.setState("analyzingPly", null);
-    this.setState("time", 0);
-    this.setState("nps", 0);
-    this.setState("tps", null);
     this.setState("nextTPS", null);
     this.onReady = null;
     this.onComplete = null;
@@ -280,17 +294,54 @@ export default class Bot {
     }
   }
 
+  //#region clearResults
+  clearResults() {
+    store.commit("analysis/CLEAR_BOT_POSITIONS");
+    this.setState("time", 0);
+    this.setState("nps", 0);
+  }
+
+  //#region queryPosition
   queryPosition(tps, plyIndex) {
-    let success = true;
+    let success = {
+      isNewGame: false,
+      halfKomi: this.halfKomi,
+    };
+
     if (!tps && isNumber(plyIndex)) {
+      // Validate arguments
       success = false;
-    } else if (!isEmpty(this.meta.sizeHalfKomis)) {
-      if (!(this.size in this.meta.sizeHalfKomis)) {
-        this.onError("Unsupported size");
-        success = false;
-      } else if (!this.meta.sizeHalfKomis[this.size].includes(this.halfKomi)) {
-        this.onError("Unsupported komi");
-        success = false;
+    } else if (
+      // Validate board size
+      !isEmpty(this.meta.sizeHalfKomis) &&
+      !(this.size in this.meta.sizeHalfKomis)
+    ) {
+      this.onError("Unsupported size");
+      success = false;
+    } else {
+      // Get closest supported komi
+      const halfKomi = this.halfKomi;
+      const usingHalfKomi = this.getSupportedHalfKomi();
+      success.halfKomi = usingHalfKomi;
+      if (
+        this.state.gameID !== this.game.name ||
+        this.state.size !== this.size ||
+        this.state.halfKomi !== halfKomi
+      ) {
+        // This is a new game
+        success.isNewGame = true;
+        this.setState("gameID", this.game.name);
+        this.setState("size", this.size);
+        this.setState("halfKomi", halfKomi);
+
+        if (halfKomi !== usingHalfKomi) {
+          this.onWarning(
+            i18n.t("warning.unsupportedKomi", {
+              komi: this.komi,
+              usingKomi: usingHalfKomi / 2,
+            })
+          );
+        }
       }
     }
 
@@ -309,6 +360,8 @@ export default class Bot {
       return;
     }
     if (value) {
+      this.setState("tps", null);
+      this.setState("nextTPS", null);
       this.setState("isInteractiveEnabled", value);
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
@@ -335,8 +388,6 @@ export default class Bot {
 
     if (this.isGameEnd) {
       this.isRunning = false;
-      this.setState("time", 0);
-      this.setState("nps", 0);
       this.setState("nextTPS", null);
       return;
     }
@@ -384,7 +435,7 @@ export default class Bot {
             "progress",
             (100 * (new Date().getTime() - startTime)) / movetime
           );
-        }, 500)
+        }, 250)
       );
     }
 
@@ -447,7 +498,6 @@ export default class Bot {
           position = positions[completed];
           this.setState("tps", position.tps);
           this.setState("analyzingPly", this.game.ptn.allPlies[position.plyID]);
-          this.setState("isRunning", true);
           this.queryPosition(position.tps);
         } else {
           // Analysis complete
@@ -482,8 +532,9 @@ export default class Bot {
     //   pv,
     //   time = null,
     //   depth = null,
-    //   evaluation = null,
     //   nodes = null,
+    //   visits = null,
+    //   evaluation = null,
     // },
   }) {
     if (string) {
@@ -519,9 +570,9 @@ export default class Bot {
         pv,
         time = null,
         depth = null,
-        evaluation = null,
         nodes = null,
         visits = null,
+        evaluation = null,
       }) => {
         let player = initialPlayer;
         let color = initialColor;
@@ -560,8 +611,10 @@ export default class Bot {
     }
 
     // Update time and nps
-    if (!this.isGameEnd) {
+    if (results[0].time !== null) {
       this.setState("time", results[0].time);
+    }
+    if (nps !== null) {
       this.setState("nps", nps);
     }
 

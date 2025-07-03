@@ -17,6 +17,7 @@
         ? 'analysis.nodes'
         : null
     "
+    :seconds="suggestion.time !== null ? suggestion.time / 1e3 : null"
     :player1-number="
       'evaluation' in suggestion && suggestion.evaluation >= 0
         ? formatEvaluation(suggestion.evaluation)
@@ -28,7 +29,7 @@
         : null
     "
     :depth="suggestion.depth || null"
-    :animate="animate"
+    animate
   />
 </template>
 
@@ -45,12 +46,6 @@ export default {
   computed: {
     botState() {
       return this.$store.state.analysis.botState;
-    },
-    animate() {
-      return (
-        this.botState.isRunning &&
-        this.botState.tps === this.$store.state.game.position.tps
-      );
     },
   },
   methods: { formatEvaluation },

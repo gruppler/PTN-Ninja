@@ -256,10 +256,16 @@
       <Scrubber />
 
       <smooth-reflow>
-        <BotAnalysisItem
+        <div
+          class="relative-position"
           v-if="hasAnalysis && $q.screen.width <= singleWidth && botSuggestion"
-          :suggestion="botSuggestion"
-        />
+        >
+          <BotAnalysisItem :suggestion="botSuggestion" />
+          <q-linear-progress
+            size="1px"
+            :indeterminate="$store.state.analysis.botState.isRunning"
+          />
+        </div>
       </smooth-reflow>
 
       <q-toolbar

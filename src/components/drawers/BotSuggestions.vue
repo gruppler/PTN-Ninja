@@ -268,30 +268,33 @@
       <!-- Controls -->
       <smooth-reflow class="relative-position">
         <template v-if="bot">
-          <!-- Connect -->
-          <q-btn
-            v-if="botID === 'tei' && !botState.isConnected"
-            @click="bot.connect()"
-            :loading="botState.isConnecting"
-            :disabled="!botSettings[botID].address"
-            icon="connect"
-            :label="$t('tei.connect')"
-            class="full-width"
-            color="primary"
-            stretch
-          />
-          <q-btn
-            v-else-if="
-              botID === 'tei' && botState.isConnected && !botState.isReady
-            "
-            @click="bot.applyOptions()"
-            icon="apply"
-            :label="$t('analysis.init')"
-            :loading="botState.isReadying"
-            class="full-width"
-            color="primary"
-            stretch
-          />
+          <smooth-reflow>
+            <!-- Connect -->
+            <q-btn
+              v-if="botID === 'tei' && !botState.isConnected"
+              @click="bot.connect()"
+              :loading="botState.isConnecting"
+              :disabled="!botSettings[botID].address"
+              icon="connect"
+              :label="$t('tei.connect')"
+              class="full-width"
+              color="primary"
+              stretch
+            />
+            <!-- Initialize -->
+            <q-btn
+              v-else-if="
+                botID === 'tei' && botState.isConnected && !botState.isReady
+              "
+              @click="bot.applyOptions()"
+              icon="apply"
+              :label="$t('analysis.init')"
+              :loading="botState.isReadying"
+              class="full-width"
+              color="primary"
+              stretch
+            />
+          </smooth-reflow>
 
           <!-- Analyze Full-Game/Branch -->
           <div class="relative-position">
@@ -405,7 +408,10 @@
                 $t("analysis.interactiveAnalysis")
               }}</q-item-label>
             </q-item-section>
-            <q-item-section v-if="bot.isInteractiveEnabled" side>
+            <q-item-section
+              v-if="botState.time !== null || botState.nps !== null"
+              side
+            >
               <div v-if="botState.time !== null" class="text-caption">
                 {{ $n((botState.time || 0) / 1e3, "n0") }}
                 {{ $t("analysis.secondsUnit") }}
@@ -450,16 +456,26 @@
       </smooth-reflow>
 
       <!-- Save Comments -->
-      <div class="row no-wrap">
-        <q-btn
-          @click="bot.saveEvalComments()"
-          class="full-width"
-          color="primary"
-          icon="notes"
-          :label="$t('Save to Notes')"
-          stretch
-        />
-      </div>
+      <q-btn
+        @click="bot.saveEvalComments()"
+        class="full-width"
+        color="primary"
+        icon="notes"
+        :label="$t('Save to Notes')"
+        :disable="!hasResults"
+        stretch
+      />
+
+      <!-- Clear Rersults -->
+      <q-btn
+        @click="clearResults"
+        class="full-width"
+        color="primary"
+        icon="delete"
+        :label="$t('analysis.Clear Results')"
+        :disable="!hasResults"
+        stretch
+      />
     </q-expansion-item>
   </div>
 </template>
@@ -470,7 +486,7 @@ import BotLimitInput from "../analysis/BotLimitInput";
 import BotOptionInput from "../analysis/BotOptionInput";
 import Linenum from "../PTN/Linenum.vue";
 import PlyChip from "../PTN/Ply.vue";
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEmpty, isEqual } from "lodash";
 
 export default {
   name: "BotSuggestions",
@@ -542,6 +558,9 @@ export default {
     positions() {
       return this.$store.state.analysis.botPositions;
     },
+    hasResults() {
+      return !isEmpty(this.positions);
+    },
     suggestions() {
       return this.positions[this.tps] || [];
     },
@@ -586,6 +605,15 @@ export default {
     async setBotOptions() {
       await this.bot.setOptions(this.botOptions);
       this.bot.applyOptions();
+    },
+    clearResults() {
+      this.prompt({
+        title: this.$t("Confirm"),
+        message: this.$tc("confirm.clearBotResults"),
+        success: () => {
+          this.bot.clearResults();
+        },
+      });
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {

@@ -34,3 +34,9 @@ export const SET_BOT_STATE = (state, [key, value]) => {
 export const SET_BOT_POSITION = (state, [tps, suggestions]) => {
   Vue.set(state.botPositions, tps, suggestions);
 };
+
+export const CLEAR_BOT_POSITIONS = (state) => {
+  const bot = Vue.prototype.$bot;
+  bot.positions = {};
+  state.botPositions = bot.positions;
+};

@@ -39,7 +39,8 @@ export default class TiltakCloud extends Bot {
   //#region queryPosition
   async queryPosition(tps) {
     // Validate size/komi
-    if (!super.queryPosition(tps)) {
+    const init = super.queryPosition(tps);
+    if (!init) {
       return false;
     }
 
@@ -51,7 +52,7 @@ export default class TiltakCloud extends Bot {
     const movetime = this.settings.movetime;
 
     const request = {
-      komi: this.komi,
+      komi: init.halfKomi / 2,
       size: this.size,
       tps,
       moves: [],

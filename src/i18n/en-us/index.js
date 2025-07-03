@@ -343,6 +343,7 @@ export default {
   confirm: {
     abandonChanges: "Abandon unsaved changes?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
+    clearBotResults: "Are you sure you want to clear this bot's results?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
@@ -426,6 +427,8 @@ export default {
   warning: {
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
+    unsupportedKomi:
+      "Komi {komi} is not supported; using komi {usingKomi} instead.",
   },
 
   hint: {
@@ -475,6 +478,7 @@ export default {
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Bot Options": "Bot Options",
+    "Clear Results": "Clear Results",
     "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",
