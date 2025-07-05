@@ -70,7 +70,7 @@ module.exports = function (ctx) {
       workboxPluginMode: "GenerateSW",
       workboxOptions: {
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
       },
       manifest: {

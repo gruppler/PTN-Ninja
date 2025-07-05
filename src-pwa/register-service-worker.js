@@ -1,5 +1,5 @@
 import { i18n } from "../src/boot/i18n";
-import { Notify, openURL } from "quasar";
+import { Notify, openURL, Platform } from "quasar";
 import { register } from "register-service-worker";
 import store from "../src/store";
 
@@ -39,7 +39,7 @@ register(process.env.SERVICE_WORKER_FILE, {
   },
 
   updated(/* registration */) {
-    if (!process.env.DEV) {
+    if (!process.env.DEV && !Platform.within.iframe) {
       Notify.create({
         message: i18n.t("success.updateAvailable"),
         icon: "update",
