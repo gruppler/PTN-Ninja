@@ -262,6 +262,7 @@
               hasAnalysis && $q.screen.width <= singleWidth && botSuggestion
             "
             :suggestion="botSuggestion"
+            limit-continuation
           />
         </smooth-reflow>
         <q-linear-progress

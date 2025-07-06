@@ -102,7 +102,10 @@
       @click="insertFollowingPlies()"
       clickable
     >
-      <q-item-label class="small">
+      <q-item-label
+        class="continuation small"
+        :class="{ limited: limitContinuation }"
+      >
         <Ply
           v-for="(fPly, i) in followingPlies"
           :key="i"
@@ -156,6 +159,7 @@ export default {
       default: null,
     },
     playerNumbersTooltip: String,
+    limitContinuation: Boolean,
     followingPlies: Array,
     animate: Boolean,
   },
@@ -207,6 +211,13 @@ export default {
   &.animate .evaluation {
     transition: width $generic-hover-transition,
       background-color $generic-hover-transition;
+  }
+
+  .continuation {
+    &.limited {
+      overflow: hidden;
+      height: 2em;
+    }
   }
 
   .player-numbers {

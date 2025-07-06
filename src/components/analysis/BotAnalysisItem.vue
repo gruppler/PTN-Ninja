@@ -30,6 +30,8 @@
     "
     :depth="suggestion.depth || null"
     animate
+    v-bind="$attrs"
+    v-on="$listeners"
   />
 </template>
 
