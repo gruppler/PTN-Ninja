@@ -252,25 +252,31 @@
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer class="bg-ui">
+    <q-footer class="bg-panel">
       <Scrubber />
 
-      <smooth-reflow>
-        <div
-          class="relative-position"
-          v-if="hasAnalysis && $q.screen.width <= singleWidth && botSuggestion"
-        >
-          <BotAnalysisItem :suggestion="botSuggestion" />
-          <q-linear-progress
-            size="1px"
-            :indeterminate="$store.state.analysis.botState.isRunning"
+      <div class="relative-position">
+        <smooth-reflow>
+          <BotAnalysisItem
+            v-if="
+              hasAnalysis && $q.screen.width <= singleWidth && botSuggestion
+            "
+            :suggestion="botSuggestion"
           />
-        </div>
-      </smooth-reflow>
+        </smooth-reflow>
+        <q-linear-progress
+          v-if="hasAnalysis && $q.screen.width <= singleWidth"
+          class="absolute-position"
+          style="bottom: 0"
+          size="1px"
+          :indeterminate="$store.state.analysis.botState.isRunning"
+        />
+        <q-separator v-else />
+      </div>
 
       <q-toolbar
         v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
-        class="footer-toolbar"
+        class="footer-toolbar bg-ui"
       >
         <Highlighter
           v-if="isHighlighting"

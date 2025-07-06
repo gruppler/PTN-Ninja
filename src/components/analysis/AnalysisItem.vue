@@ -236,7 +236,6 @@ export default {
       }
     }
     .middle,
-    .player2,
     .depth {
       background-color: $dim;
       body.body--light & {
