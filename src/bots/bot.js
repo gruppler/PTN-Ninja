@@ -174,7 +174,9 @@ export default class Bot {
   }
 
   get ply() {
-    return this.game.ptn.allPlies[this.game.position.boardPly.id];
+    return this.game.position.boardPly
+      ? this.game.ptn.allPlies[this.game.position.boardPly.id]
+      : null;
   }
 
   get plies() {
