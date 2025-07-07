@@ -253,51 +253,58 @@
     </q-drawer>
 
     <q-footer class="bg-panel">
-      <Scrubber />
-
-      <div class="relative-position">
-        <smooth-reflow>
+      <smooth-reflow class="relative-position">
+        <template
+          v-if="
+            hasAnalysis &&
+            $q.screen.width <= singleWidth &&
+            (botState.isRunning || botSuggestion)
+          "
+        >
+          <q-linear-progress
+            v-show="botState.isRunning"
+            class="analysis-linear-progress"
+            size="2px"
+            :value="botState.progress / 100"
+            :indeterminate="botState.isInteractiveEnabled"
+          />
           <BotAnalysisItem
-            v-if="
-              hasAnalysis && $q.screen.width <= singleWidth && botSuggestion
-            "
+            v-if="botSuggestion"
             :suggestion="botSuggestion"
             limit-continuation
           />
           <AnalysisItemPlaceholder
             v-else-if="
-              hasAnalysis &&
-              $q.screen.width <= singleWidth &&
-              $store.state.analysis.botState.isInteractiveEnabled
+              botState.isInteractiveEnabled ||
+              botState.isAnalyzingGame ||
+              botState.tps === this.tps
             "
           />
-        </smooth-reflow>
-        <q-linear-progress
-          v-if="hasAnalysis && $q.screen.width <= singleWidth"
-          class="absolute-position"
-          style="bottom: 0"
-          size="1px"
-          :indeterminate="$store.state.analysis.botState.isRunning"
-        />
-        <q-separator v-else />
-      </div>
+        </template>
+      </smooth-reflow>
 
-      <q-toolbar
-        v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
-        class="footer-toolbar bg-ui"
-      >
-        <Highlighter
-          v-if="isHighlighting"
-          class="justify-around items-center"
-          style="width: 100%; max-width: 500px; margin: 0 auto"
-        />
-        <PieceSelector
-          v-else-if="isEditingTPS"
-          class="justify-around items-center"
-          style="width: 100%; max-width: 500px; margin: 0 auto"
-        />
-        <PlayControls ref="playControls" v-else />
-      </q-toolbar>
+      <div class="relative-position">
+        <Scrubber />
+
+        <q-toolbar
+          v-show="
+            isHighlighting || isEditingTPS || $store.state.ui.showControls
+          "
+          class="footer-toolbar bg-ui"
+        >
+          <Highlighter
+            v-if="isHighlighting"
+            class="justify-around items-center"
+            style="width: 100%; max-width: 500px; margin: 0 auto"
+          />
+          <PieceSelector
+            v-else-if="isEditingTPS"
+            class="justify-around items-center"
+            style="width: 100%; max-width: 500px; margin: 0 auto"
+          />
+          <PlayControls ref="playControls" v-else />
+        </q-toolbar>
+      </div>
     </q-footer>
 
     <router-view ref="dialog" go-back no-route-dismiss />
@@ -490,11 +497,14 @@ export default {
         ? this.$store.getters["online/playerFromUID"](this.user.uid)
         : 0;
     },
+    tps() {
+      return this.$store.state.game.position.tps;
+    },
+    botState() {
+      return this.$store.state.analysis.botState;
+    },
     botSuggestion() {
-      const suggestions =
-        this.$store.state.analysis.botPositions[
-          this.$store.state.game.position.tps
-        ];
+      const suggestions = this.$store.state.analysis.botPositions[this.tps];
       return suggestions ? suggestions[0] : null;
     },
     isAnonymous() {
@@ -1027,5 +1037,11 @@ export default {
   .q-tab-panel {
     padding: 0;
   }
+}
+
+.analysis-linear-progress {
+  position: absolute;
+  top: 0;
+  z-index: 1;
 }
 </style>

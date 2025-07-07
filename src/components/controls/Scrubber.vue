@@ -77,5 +77,9 @@ export default {
     height: 2px;
     top: -2px;
   }
+
+  .q-slider__track {
+    border-radius: 0;
+  }
 }
 </style>
