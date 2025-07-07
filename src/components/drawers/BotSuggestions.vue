@@ -626,14 +626,14 @@ export default {
   },
 
   watch: {
-    suggestions(suggestions) {
-      const suggestion = suggestions[0];
-      if (suggestion && "evaluation" in suggestion) {
-        this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-      } else {
-        this.$store.dispatch("game/SET_EVAL", null);
-      }
-    },
+    // suggestions(suggestions) {
+    //   const suggestion = suggestions[0];
+    //   if (suggestion && "evaluation" in suggestion) {
+    //     this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+    //   } else {
+    //     this.$store.dispatch("game/SET_EVAL", null);
+    //   }
+    // },
     sections: {
       handler(value) {
         this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
