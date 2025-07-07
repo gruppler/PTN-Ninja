@@ -252,11 +252,39 @@
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer class="bg-ui">
+    <q-footer class="bg-panel">
       <Scrubber />
+
+      <div class="relative-position">
+        <smooth-reflow>
+          <BotAnalysisItem
+            v-if="
+              hasAnalysis && $q.screen.width <= singleWidth && botSuggestion
+            "
+            :suggestion="botSuggestion"
+            limit-continuation
+          />
+          <AnalysisItemPlaceholder
+            v-else-if="
+              hasAnalysis &&
+              $q.screen.width <= singleWidth &&
+              $store.state.analysis.botState.isInteractiveEnabled
+            "
+          />
+        </smooth-reflow>
+        <q-linear-progress
+          v-if="hasAnalysis && $q.screen.width <= singleWidth"
+          class="absolute-position"
+          style="bottom: 0"
+          size="1px"
+          :indeterminate="$store.state.analysis.botState.isRunning"
+        />
+        <q-separator v-else />
+      </div>
+
       <q-toolbar
         v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
-        class="footer-toolbar"
+        class="footer-toolbar bg-ui"
       >
         <Highlighter
           v-if="isHighlighting"
@@ -308,10 +336,13 @@ import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
 // import onlineStore from "../store/online";
+import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
+import BotAnalysisItem from "../components/analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../components/analysis/AnalysisItemPlaceholder";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -337,6 +368,8 @@ export default {
     BoardToggles,
     ShareButton,
     Chat,
+    BotAnalysisItem,
+    AnalysisItemPlaceholder,
     GameSelector,
     Highlighter,
     PieceSelector,
@@ -456,6 +489,13 @@ export default {
       return this.user
         ? this.$store.getters["online/playerFromUID"](this.user.uid)
         : 0;
+    },
+    botSuggestion() {
+      const suggestions =
+        this.$store.state.analysis.botPositions[
+          this.$store.state.game.position.tps
+        ];
+      return suggestions ? suggestions[0] : null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -910,6 +950,13 @@ export default {
     //   this.$store.unregisterModule("online");
     // }
     // this.$store.registerModule("online", onlineStore);
+
+    // Load analysis functionality
+    if (process.env.DEV && this.$store.state.analysis) {
+      this.$store.unregisterModule("analysis");
+    }
+    this.$store.registerModule("analysis", analysisStore);
+    this.$store.commit("analysis/SET_BOT", this.$store.state.analysis.botID);
 
     // Redirect hash URLs
     if (location.hash.length && !this.$q.platform.is.electron) {

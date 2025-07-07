@@ -1,46 +1,13 @@
 import { LocalStorage, Platform } from "quasar";
-import { cloneDeep, pick } from "lodash";
+import { cloneDeep, defaultsDeep, pick } from "lodash";
 import { THEMES } from "../../themes";
 
-let defaults = {
+const defaultState = {
   offline: !navigator.onLine,
   analysisSections: {
     botSuggestions: false,
     dbMoves: false,
     dbGames: false,
-  },
-  dbSettings: {
-    includeBotGames: false,
-    player1: [],
-    player2: [],
-    minRating: null,
-    komi: [],
-    maxSuggestedMoves: 8,
-    tournament: null,
-    minDate: null,
-    maxDate: null,
-  },
-  botSettings: {
-    bot: "tiltak-cloud",
-    tiltak: {
-      pvLimit: 3,
-    },
-    "tiltak-cloud": {
-      maxSuggestedMoves: 8,
-      pvLimit: 3,
-    },
-    topaz: {
-      depth: 12,
-      timeBudget: 30,
-      pvLimit: 3,
-    },
-    tei: {
-      log: false,
-      ssl: window.location.protocol.includes("s"),
-      address: "localhost",
-      port: 7731,
-      pvLimit: 3,
-    },
   },
   animateBoard: true,
   animateScrub: false,
@@ -129,12 +96,12 @@ export const embedUIOptions = [
   "unplayedPieces",
 ];
 
-defaults.embedConfig = {
+defaultState.embedConfig = {
   width: "100%",
   height: "600px",
   includeNames: false,
   state: true,
-  ui: pick(defaults, embedUIOptions),
+  ui: pick(defaultState, embedUIOptions),
 };
 
 export const imgUIOptions = [
@@ -150,7 +117,7 @@ export const imgUIOptions = [
   "unplayedPieces",
 ];
 
-defaults.gifConfig = {
+defaultState.gifConfig = {
   plyRange: { min: 0, max: 4 },
   playSpeed: 60, //FPM
   imageSize: "md",
@@ -158,24 +125,24 @@ defaults.gifConfig = {
   includeNames: true,
   padding: true,
   transparent: false,
-  ...pick(defaults, imgUIOptions),
+  ...pick(defaultState, imgUIOptions),
 };
-defaults.pngConfig = {
+defaultState.pngConfig = {
   imageSize: "md",
   textSize: "md",
   includeNames: true,
   padding: true,
   bgAlpha: 1,
-  ...pick(defaults, imgUIOptions),
+  ...pick(defaultState, imgUIOptions),
 };
 
-let state = {
+const state = {
   embed: Platform.within.iframe,
   scrubbing: false,
   thumbnails: {},
   shortLinks: {},
-  defaults,
-  ...cloneDeep(defaults),
+  defaults: defaultState,
+  ...cloneDeep(defaultState),
 };
 
 // Load from LocalStorage
@@ -183,7 +150,7 @@ const load = (key, initial) =>
   LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
 
 if (!state.embed && !LocalStorage.isEmpty()) {
-  for (let key in defaults) {
+  for (let key in defaultState) {
     state[key] = load(key, state[key]);
   }
 } else if (!LocalStorage.isEmpty()) {
@@ -191,21 +158,6 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 }
 
 // Backward compatibility
-if (
-  !(state.botSettings.bot in state.botSettings) &&
-  state.botSettings.bot in defaults.botSettings
-) {
-  const botSettings = cloneDeep(defaults.botSettings);
-  for (const bot in botSettings) {
-    if (bot === "bot") {
-      continue;
-    }
-    Object.assign(
-      botSettings[bot],
-      pick(state.botSettings, Object.keys(botSettings[bot]))
-    );
-  }
-  state.botSettings = botSettings;
-}
+defaultsDeep(state, defaultState);
 
 export default state;

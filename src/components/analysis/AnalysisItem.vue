@@ -1,6 +1,7 @@
 <template>
   <div class="analysis-item" :class="{ animate }">
     <div
+      v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: Math.abs(evaluation) + '%' }"
@@ -10,6 +11,7 @@
       @mouseout="unhighlight"
       @click="insertPly"
       clickable
+      style="height: 60px"
     >
       <q-item-section>
         <q-item-label>
@@ -78,8 +80,18 @@
             </tooltip>
           </span>
         </q-item-label>
-        <q-item-label v-if="count !== null && countLabel">
-          {{ $tc(countLabel, $n(count, "n0")) }}
+        <q-item-label
+          v-if="(count !== null && countLabel) || seconds !== null"
+          caption
+        >
+          <template v-if="count !== null && countLabel">{{
+            $tc(countLabel, $n(count, "n0"))
+          }}</template>
+          <template v-if="count !== null && seconds !== null"> / </template>
+          <template v-if="seconds !== null">
+            {{ $n(seconds, "n0") }}
+            {{ $t("analysis.secondsUnit") }}
+          </template>
         </q-item-label>
       </q-item-section>
     </q-item>
@@ -91,7 +103,10 @@
       @click="insertFollowingPlies()"
       clickable
     >
-      <q-item-label class="small">
+      <q-item-label
+        class="continuation small"
+        :class="{ limited: limitContinuation }"
+      >
         <Ply
           v-for="(fPly, i) in followingPlies"
           :key="i"
@@ -127,6 +142,10 @@ export default {
       type: Number,
       default: null,
     },
+    seconds: {
+      type: Number,
+      default: null,
+    },
     countLabel: String,
     player1Number: {
       type: [Number, String],
@@ -141,6 +160,7 @@ export default {
       default: null,
     },
     playerNumbersTooltip: String,
+    limitContinuation: Boolean,
     followingPlies: Array,
     animate: Boolean,
   },
@@ -194,6 +214,13 @@ export default {
       background-color $generic-hover-transition;
   }
 
+  .continuation {
+    &.limited {
+      overflow: hidden;
+      height: 2em;
+    }
+  }
+
   .player-numbers {
     white-space: nowrap;
     font-weight: bold;
@@ -221,7 +248,6 @@ export default {
       }
     }
     .middle,
-    .player2,
     .depth {
       background-color: $dim;
       body.body--light & {

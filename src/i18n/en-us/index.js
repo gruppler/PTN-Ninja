@@ -43,6 +43,7 @@ export default {
   "Configure GIF": "Configure GIF",
   "Configure PNG": "Configure PNG",
   Confirm: "Confirm",
+  "Connection Settings": "Connection Settings",
   Copy: "Copy",
   "Copy URL": "Copy URL",
   "Create Online Game": "Create Online Game",
@@ -342,6 +343,7 @@ export default {
   confirm: {
     abandonChanges: "Abandon unsaved changes?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
+    clearBotResults: "Are you sure you want to clear this bot's results?",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
@@ -425,6 +427,8 @@ export default {
   warning: {
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
+    unsupportedKomi:
+      "Komi {komi} is not supported; using komi {usingKomi} instead.",
   },
 
   hint: {
@@ -470,8 +474,11 @@ export default {
     "Analyze Branch": "Analyze Branch",
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
+    "Apply Options": "Apply Options",
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
+    "Bot Options": "Bot Options",
+    "Clear Results": "Clear Results",
     "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",
@@ -479,17 +486,22 @@ export default {
     gameOver: "The game has ended",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
+    init: "Initialize",
     interactiveAnalysis: "Interactive Analysis",
+    limit: "Search Limit",
+    limitType: "Limit Type",
+    logMessages: "Log messages",
     maxDate: "Before",
     maxSuggestedMoves: "Max. Suggestions",
+    movetime: "Milliseconds to Think",
     minDate: "After",
     n_games: "1 game | {count} games",
     "No suggested moves": "No suggested moves",
     nodes: "1 node | {count} nodes",
+    Nodes: "Nodes",
     nps: "nps",
-    pvLimit: "Plies",
+    pvLimit: "Plies to Save",
     secondsUnit: "sec",
-    timeBudget: "Seconds to Think",
     "Top Games from Position": "Top Games from Position",
     tournamentGame: "Tournament Game",
     visits: "1 visit | {count} visits",
@@ -521,10 +533,9 @@ export default {
 
   tei: {
     address: "Address",
-    by: "by",
+    by: "by", // BotName by AuthorName
     connect: "Connect",
     disconnect: "Disconnect",
-    log: "Log messages",
     port: "Port",
     run: "Run",
     ssl: "Use SSL",
