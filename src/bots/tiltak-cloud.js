@@ -140,7 +140,7 @@ export default class TiltakCloud extends Bot {
 
       for await (const result of asyncPool(concurrency, positions, (tps) => {
         if (this.state.isAnalyzingGame) {
-          this.queryPosition(tps);
+          return this.queryPosition(tps);
         }
       })) {
         this.setState("progress", (100 * ++completed) / total);
