@@ -264,6 +264,13 @@
             :suggestion="botSuggestion"
             limit-continuation
           />
+          <AnalysisItemPlaceholder
+            v-else-if="
+              hasAnalysis &&
+              $q.screen.width <= singleWidth &&
+              $store.state.analysis.botState.isInteractiveEnabled
+            "
+          />
         </smooth-reflow>
         <q-linear-progress
           v-if="hasAnalysis && $q.screen.width <= singleWidth"
@@ -335,6 +342,7 @@ import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
 import BotAnalysisItem from "../components/analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../components/analysis/AnalysisItemPlaceholder";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -361,6 +369,7 @@ export default {
     ShareButton,
     Chat,
     BotAnalysisItem,
+    AnalysisItemPlaceholder,
     GameSelector,
     Highlighter,
     PieceSelector,

@@ -11,6 +11,7 @@
       @mouseout="unhighlight"
       @click="insertPly"
       clickable
+      style="height: 60px"
     >
       <q-item-section>
         <q-item-label>
