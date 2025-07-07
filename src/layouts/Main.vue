@@ -584,7 +584,8 @@ export default {
         this.showText = true;
       } else if (
         event.target.matches(".q-notification.game") ||
-        event.target.matches(".q-notification.game .q-notification__message")
+        event.target.matches(".q-notification.game .q-notification__message") ||
+        event.target.matches(".q-notification.game .q-notification__icon")
       ) {
         this.$refs.gameNotifications.$refs.notifications.hide();
       }
