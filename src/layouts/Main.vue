@@ -257,7 +257,9 @@
         <template
           v-if="
             hasAnalysis &&
-            $q.screen.width <= singleWidth &&
+            ($q.screen.width <= singleWidth ||
+              !showText ||
+              textTab !== 'analysis') &&
             (botState.isRunning || botSuggestion)
           "
         >
