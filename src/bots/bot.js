@@ -1,7 +1,6 @@
 import store from "../store";
 import { i18n } from "../boot/i18n";
-import Ply from "../Game/PTN/Ply";
-import { deepFreeze } from "../utilities";
+import { deepFreeze, parsePV } from "../utilities";
 
 import hashObject from "object-hash";
 import {
@@ -243,13 +242,6 @@ export default class Bot {
 
   getInitTPS() {
     return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
-  }
-
-  nextPly(player, color) {
-    if (player === 2 && color === 1) {
-      return { player: 1, color: 1 };
-    }
-    return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
   }
 
   getSettingsHash() {
@@ -604,15 +596,9 @@ export default class Bot {
       }) => {
         let player = initialPlayer;
         let color = initialColor;
-        const ply = new Ply(pv.splice(0, 1)[0], {
-          id: null,
-          player,
-          color,
-        });
-        const followingPlies = pv.map((ply) => {
-          ({ player, color } = this.nextPly(player, color));
-          return new Ply(ply, { id: null, player, color });
-        });
+        pv = parsePV(player, color, pv);
+        const ply = pv.splice(0, 1)[0];
+        const followingPlies = pv;
         const result = {
           ply,
           followingPlies,

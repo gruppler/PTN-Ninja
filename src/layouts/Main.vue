@@ -254,15 +254,7 @@
 
     <q-footer class="bg-panel">
       <smooth-reflow class="relative-position">
-        <template
-          v-if="
-            hasAnalysis &&
-            ($q.screen.width <= singleWidth ||
-              !showText ||
-              textTab !== 'analysis') &&
-            (botState.isRunning || botSuggestion)
-          "
-        >
+        <template v-if="hasAnalysis && (botState.isRunning || botSuggestion)">
           <q-linear-progress
             v-show="botState.isRunning"
             class="analysis-linear-progress"
@@ -355,6 +347,7 @@ import AnalysisItemPlaceholder from "../components/analysis/AnalysisItemPlacehol
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
+import { parsePV } from "../utilities";
 
 import { Platform } from "quasar";
 
@@ -507,7 +500,46 @@ export default {
     },
     botSuggestion() {
       const suggestions = this.$store.state.analysis.botPositions[this.tps];
-      return suggestions ? suggestions[0] : null;
+      if (suggestions) {
+        return suggestions[0];
+      }
+
+      // Get suggestion from notes
+      const game = this.$store.state.game;
+      const boardPly = game.position.boardPly;
+      if (boardPly) {
+        const plyID = boardPly.id + 1 * boardPly.isDone;
+        let notes = game.comments.notes[plyID];
+        const ply = game.ptn.allPlies[plyID];
+        const suggestion = {
+          evaluation: null,
+          ply: null,
+          followingPlies: [],
+          time: null,
+        };
+        if (notes) {
+          notes.forEach((note) => {
+            if (suggestion.ply === null && note.pv !== null) {
+              const pv = parsePV(ply.player, ply.color, note.pv[0]);
+              suggestion.ply = pv.splice(0, 1)[0];
+              suggestion.followingPlies = pv;
+            }
+          });
+          notes = game.comments.notes[boardPly.id];
+          if (notes) {
+            notes.forEach((note) => {
+              if (suggestion.evaluation === null && note.evaluation !== null) {
+                suggestion.evaluation = note.evaluation;
+              }
+            });
+          }
+          if (suggestion.ply) {
+            return suggestion;
+          }
+        }
+      }
+
+      return null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;

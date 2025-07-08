@@ -1,5 +1,6 @@
 import store from "./store";
 import { i18n } from "./boot/i18n";
+import Ply from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
 import { isString, isObject } from "lodash";
 import { Dialog, Notify } from "quasar";
@@ -29,6 +30,22 @@ export function deepFreeze(object) {
   }
 
   return Object.freeze(object);
+}
+
+function nextPly(player, color) {
+  if (player === 2 && color === 1) {
+    return { player: 1, color: 1 };
+  }
+  return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
+}
+
+export function parsePV(player, color, pv) {
+  return pv.map((ply, i) => {
+    if (i) {
+      ({ player, color } = nextPly(player, color));
+    }
+    return new Ply(ply, { id: null, player, color });
+  });
 }
 
 export const prompt = ({
