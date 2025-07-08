@@ -67,11 +67,13 @@ export default class TopazWasm extends Bot {
       size: this.size,
       komi: init.halfKomi / 2,
       hash: this.getSettingsHash(),
-      log: this.settings.log,
     };
     this.settings.limitTypes.forEach((type) => {
       query[type] = this.settings[type];
     });
+    if (this.settings.log) {
+      this.logMessage(query);
+    }
     this.send(query);
   }
 
@@ -100,6 +102,10 @@ export default class TopazWasm extends Bot {
     if (response.error) {
       this.onError(response.error);
       return;
+    }
+
+    if (this.settings.log) {
+      this.logMessage(response, true);
     }
 
     const { tps, depth, score, nodes, pv, hash } = response;

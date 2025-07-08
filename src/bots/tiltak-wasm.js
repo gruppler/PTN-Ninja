@@ -35,7 +35,7 @@ export default class TiltakWasm extends TeiBot {
   send(message) {
     if (worker) {
       if (this.settings.log) {
-        console.info(">>", message);
+        this.logMessage(message);
       }
       worker.postMessage(message);
     }
@@ -73,7 +73,7 @@ export default class TiltakWasm extends TeiBot {
         // Message handling
         worker.onmessage = ({ data }) => {
           if (this.settings.log) {
-            console.info("<<", data);
+            this.logMessage(data, true);
           }
           this.handleResponse(data);
         };

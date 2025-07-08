@@ -9,6 +9,7 @@ import {
   forEach,
   isEmpty,
   isFunction,
+  isObject,
   isNumber,
   uniqBy,
 } from "lodash";
@@ -42,7 +43,6 @@ export default class Bot {
     this.icon = icon;
     this.label = label;
     this.description = description;
-    this.isInteractive = isInteractive;
 
     // Callbacks
     this.onInit = onInit;
@@ -57,6 +57,7 @@ export default class Bot {
       name,
       author,
       version,
+      isInteractive,
       options,
       sizeHalfKomis,
       limitTypes,
@@ -91,6 +92,7 @@ export default class Bot {
     };
 
     this.positions = {};
+    this.log = [];
 
     this.init();
   }
@@ -127,6 +129,26 @@ export default class Bot {
       store.commit("analysis/SET_BOT_POSITION", [tps, suggestions]);
     } else {
       this.positions[tps] = suggestions;
+    }
+  }
+
+  logMessage(message, received = false) {
+    if (isObject(message)) {
+      message = JSON.stringify(message);
+    }
+    message = { message, received };
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/BOT_LOG", message);
+    } else {
+      this.log.push(message);
+    }
+  }
+
+  clearLog() {
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/CLEAR_BOT_LOG");
+    } else {
+      this.log = [];
     }
   }
 
@@ -211,7 +233,7 @@ export default class Bot {
   get isInteractiveAvailable() {
     return (
       this.state.isInteractiveEnabled ||
-      (this.isInteractive &&
+      (this.meta.isInteractive &&
         !this.isGameEnd &&
         this.state.isReady &&
         !this.state.isAnalyzingGame &&
@@ -298,7 +320,11 @@ export default class Bot {
 
   //#region clearResults
   clearResults() {
-    store.commit("analysis/CLEAR_BOT_POSITIONS");
+    if (store.state.analysis && store.state.analysis.botID === this.id) {
+      store.commit("analysis/CLEAR_BOT_POSITIONS");
+    } else {
+      this.positions = {};
+    }
     this.setState("time", 0);
     this.setState("nps", 0);
   }
@@ -358,7 +384,7 @@ export default class Bot {
     return this.state.isInteractiveEnabled;
   }
   set isInteractiveEnabled(value) {
-    if (!this.isInteractive || this.state.isInteractiveEnabled === value) {
+    if (!this.meta.isInteractive || this.state.isInteractiveEnabled === value) {
       return;
     }
     if (value) {
@@ -380,7 +406,7 @@ export default class Bot {
 
   //#region analyzeInteractive
   analyzeInteractive() {
-    if (!this.isInteractive) {
+    if (!this.meta.isInteractive) {
       return false;
     }
 
@@ -550,7 +576,7 @@ export default class Bot {
       return;
     }
 
-    if (this.state.isAnalyzingPosition && !this.isInteractive) {
+    if (this.state.isAnalyzingPosition && !this.meta.isInteractive) {
       this.setState("isAnalyzingPosition", false);
       this.setState("isRunning", false);
       this.setState("analyzingPly", null);

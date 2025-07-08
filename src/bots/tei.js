@@ -75,7 +75,7 @@ export default class TeiBot extends Bot {
   send(message) {
     if (socket) {
       if (this.settings.log) {
-        console.info(">>", message);
+        this.logMessage(message);
       }
       socket.send(message);
     }
@@ -158,7 +158,7 @@ export default class TeiBot extends Bot {
           // Message handling
           socket.onmessage = ({ data }) => {
             if (this.settings.log) {
-              console.info("<<", data);
+              this.logMessage(data, true);
             }
             this.handleResponse(data);
           };

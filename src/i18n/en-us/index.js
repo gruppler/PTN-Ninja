@@ -478,6 +478,7 @@ export default {
     "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Bot Options": "Bot Options",
+    "Clear Log": "Clear Log",
     "Clear Results": "Clear Results",
     "Database Moves": "PlayTak Openings",
     depth: "depth",

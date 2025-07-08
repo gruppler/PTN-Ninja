@@ -68,7 +68,7 @@ export default class TiltakCloud extends Bot {
       action: "SuggestMoves",
     };
     if (this.settings.log) {
-      console.log(">>", request);
+      this.logMessage(request);
     }
     let response;
     try {
@@ -80,7 +80,7 @@ export default class TiltakCloud extends Bot {
         body: JSON.stringify(request),
       });
       if (this.settings.log) {
-        console.log("<<", response);
+        this.logMessage(response, true);
       }
     } catch (error) {
       this.onError(error);
@@ -93,7 +93,7 @@ export default class TiltakCloud extends Bot {
     }
     const data = await response.json();
     if (this.settings.log) {
-      console.log("<<", data);
+      this.logMessage(data, true);
     }
     const { SuggestMoves: suggestedMoves } = data;
 

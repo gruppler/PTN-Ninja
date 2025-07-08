@@ -89,11 +89,11 @@
 
           <!-- Log messages -->
           <q-item v-if="'log' in bot.settings" tag="label" clickable v-ripple>
-            <q-item-section side>
-              <q-checkbox v-model="botSettings[botID].log" />
-            </q-item-section>
             <q-item-section>
               <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="botSettings[botID].log" />
             </q-item-section>
           </q-item>
 
@@ -238,14 +238,14 @@
                   clickable
                   v-ripple
                 >
+                  <q-item-section>
+                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+                  </q-item-section>
                   <q-item-section side>
-                    <q-checkbox
+                    <q-toggle
                       v-model="botSettings[botID].ssl"
                       :disable="botState.isConnected || botState.isConnecting"
                     />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -387,47 +387,69 @@
             />
           </div>
 
-          <!-- Interactive Analysis -->
-          <q-item
-            v-if="bot.isInteractive"
-            class="interactive-control"
-            tag="label"
-            :disabled="!bot.isInteractiveAvailable"
-            :clickable="bot.isInteractiveAvailable"
-            v-ripple="bot.isInteractiveAvailable"
-          >
-            <q-item-section avatar>
-              <q-spinner
-                v-if="bot.isInteractiveEnabled && botState.isRunning"
-                size="sm"
-              />
-              <q-icon v-else name="int_analysis" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{
-                $t("analysis.interactiveAnalysis")
-              }}</q-item-label>
-            </q-item-section>
-            <q-item-section
-              v-if="botState.time !== null || botState.nps !== null"
-              side
+          <smooth-reflow>
+            <!-- Interactive Analysis -->
+            <q-item
+              v-if="botMeta.isInteractive"
+              class="interactive-control"
+              tag="label"
+              :disabled="!bot.isInteractiveAvailable"
+              :clickable="bot.isInteractiveAvailable"
+              v-ripple="bot.isInteractiveAvailable"
             >
-              <div v-if="botState.time !== null" class="text-caption">
-                {{ $n((botState.time || 0) / 1e3, "n0") }}
-                {{ $t("analysis.secondsUnit") }}
+              <q-item-section avatar>
+                <q-spinner
+                  v-if="bot.isInteractiveEnabled && botState.isRunning"
+                  size="sm"
+                />
+                <q-icon v-else name="int_analysis" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.interactiveAnalysis")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section
+                v-if="botState.time !== null || botState.nps !== null"
+                side
+              >
+                <div v-if="botState.time !== null" class="text-caption">
+                  {{ $n((botState.time || 0) / 1e3, "n0") }}
+                  {{ $t("analysis.secondsUnit") }}
+                </div>
+                <div v-if="botState.nps !== null" class="text-caption">
+                  {{ $n(botState.nps || 0, "n0") }}
+                  {{ $t("analysis.nps") }}
+                </div>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="bot.isInteractiveEnabled"
+                  :disable="!bot.isInteractiveAvailable"
+                />
+              </q-item-section>
+            </q-item>
+
+            <recess v-if="botSettings[botID].log">
+              <div ref="botLog" class="bot-log text-selectable bg-ui q-pa-sm">
+                <div
+                  v-for="(log, i) in botLog"
+                  :key="i"
+                  :class="{ sent: !log.received, received: log.received }"
+                >
+                  {{ log.message }}
+                </div>
               </div>
-              <div v-if="botState.nps !== null" class="text-caption">
-                {{ $n(botState.nps || 0, "n0") }}
-                {{ $t("analysis.nps") }}
-              </div>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                v-model="bot.isInteractiveEnabled"
-                :disable="!bot.isInteractiveAvailable"
+              <q-btn
+                @click="bot.clearLog()"
+                icon="delete"
+                :label="$t('analysis.Clear Log')"
+                class="full-width"
+                color="ui"
+                stretch
               />
-            </q-item-section>
-          </q-item>
+            </recess>
+          </smooth-reflow>
         </template>
 
         <q-inner-loading
@@ -549,6 +571,9 @@ export default {
     bot() {
       return this.$store.getters["analysis/bot"];
     },
+    botLog() {
+      return this.$store.state.analysis.botLog;
+    },
     botMeta() {
       return this.$store.state.analysis.botMeta;
     },
@@ -606,6 +631,15 @@ export default {
       await this.bot.setOptions(this.botOptions);
       this.bot.applyOptions();
     },
+    async scrollLog(instant) {
+      await this.$nextTick();
+      if (this.$refs.botLog && this.bot.settings.log) {
+        this.$refs.botLog.scrollTo({
+          top: this.$refs.botLog.scrollHeight,
+          behavior: instant ? "instant" : "smooth",
+        });
+      }
+    },
     clearResults() {
       this.prompt({
         title: this.$t("Confirm"),
@@ -643,7 +677,7 @@ export default {
     bot(newBot, oldBot) {
       if (oldBot && oldBot.id !== newBot.id) {
         // Stop interactive analysis when switching bots
-        if (oldBot.isInteractive && oldBot.isInteractiveEnabled) {
+        if (oldBot.meta.isInteractive && oldBot.isInteractiveEnabled) {
           oldBot.isInteractiveEnabled = false;
         }
       }
@@ -651,8 +685,14 @@ export default {
     botSettings: {
       handler(settings) {
         this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        if (settings[this.botID].log) {
+          this.scrollLog(true);
+        }
       },
       deep: true,
+    },
+    botLog() {
+      this.scrollLog();
     },
     "botMeta.options": {
       handler() {
@@ -686,6 +726,34 @@ export default {
   background-color: $dim;
   body.body--light & {
     background-color: $highlight;
+  }
+}
+
+.bot-log {
+  font-family: "Source Code Pro";
+  font-size: 0.8em;
+  min-height: 10em;
+  height: 20vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  direction: rtl;
+
+  div {
+    direction: ltr;
+    position: relative;
+    padding-left: 2em;
+    word-break: break-all;
+
+    &.sent::before {
+      content: ">> ";
+      position: absolute;
+      left: 0;
+    }
+    &.received::before {
+      content: "<< ";
+      position: absolute;
+      left: 0;
+    }
   }
 }
 </style>

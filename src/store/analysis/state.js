@@ -7,6 +7,7 @@ const defaultBotID = "tiltak-cloud";
 const defaultState = {
   bots: botOptions,
   botID: defaultBotID,
+  botLog: [],
   botMeta: {},
   botPositions: {},
   botSettings: {},

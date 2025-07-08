@@ -18,9 +18,20 @@ export const SET_BOT = (state, botID) => {
   const bot = bots[botID];
   Vue.prototype.$bot = bot;
   state.botID = botID;
+  state.botLog = bot.log;
   state.botMeta = bot.meta;
   state.botState = bot.state;
   state.botPositions = bot.positions;
+};
+
+export const BOT_LOG = (state, message) => {
+  state.botLog.push(message);
+};
+
+export const CLEAR_BOT_LOG = (state) => {
+  const bot = Vue.prototype.$bot;
+  bot.log = [];
+  state.botLog = bot.log;
 };
 
 export const SET_BOT_META = (state, [key, value]) => {
