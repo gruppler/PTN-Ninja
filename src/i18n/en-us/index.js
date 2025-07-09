@@ -247,7 +247,6 @@ export default {
   Tinue: "Tinuë",
   today: "today",
   tomorrow: "tomorrow",
-  "Toolbar Analysis": "Analysis Below Board",
   "Transform Board": "Transform Board",
   "Transparent Background": "Transparent Background",
   Trim: "Trim",

@@ -253,12 +253,26 @@
     </q-drawer>
 
     <q-footer class="bg-panel">
+      <q-btn
+        v-if="
+          hasAnalysis &&
+          $q.screen.height >= singleWidth &&
+          (botState.isRunning || botSuggestion)
+        "
+        @click="showToolbarAnalysis = !showToolbarAnalysis"
+        :icon="showToolbarAnalysis ? 'down' : 'up'"
+        class="toolbar-analysis-toggle dimmed-btn absolute"
+        :ripple="false"
+        :color="$store.state.ui.theme.secondaryDark ? 'textLight' : 'textDark'"
+        dense
+        flat
+      />
       <smooth-reflow class="relative-position">
         <template
           v-if="
-            $store.state.ui.showToolbarAnalysis &&
+            showToolbarAnalysis &&
             hasAnalysis &&
-            $q.screen.height > singleWidth &&
+            $q.screen.height >= singleWidth &&
             (botState.isRunning || botSuggestion)
           "
         >
@@ -428,6 +442,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showText", value]);
+      },
+    },
+    showToolbarAnalysis: {
+      get() {
+        return this.$store.state.ui.showToolbarAnalysis;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", value]);
       },
     },
     textTab: {
@@ -1084,6 +1106,12 @@ export default {
 .analysis-linear-progress {
   position: absolute;
   top: 0;
+  z-index: 1;
+}
+
+.toolbar-analysis-toggle {
+  top: -32px;
+  right: 86px;
   z-index: 1;
 }
 </style>

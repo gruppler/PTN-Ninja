@@ -57,21 +57,6 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Toolbar Analysis") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="showToolbarAnalysis"
-            :disable="isDisabled('showToolbarAnalysis')"
-          />
-        </q-item-section>
-        <hint v-if="hotkeys.showToolbarAnalysis">
-          {{ $t("Hotkey") }}: {{ hotkeys.showToolbarAnalysis }}
-        </hint>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
           <q-item-label>{{ $t("Animate Board") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -279,7 +264,6 @@ const props = [
   "showHints",
   "showMove",
   "showScrubber",
-  "showToolbarAnalysis",
   "themeID",
 ];
 
