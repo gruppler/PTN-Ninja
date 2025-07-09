@@ -254,7 +254,13 @@
 
     <q-footer class="bg-panel">
       <smooth-reflow class="relative-position">
-        <template v-if="hasAnalysis && (botState.isRunning || botSuggestion)">
+        <template
+          v-if="
+            hasAnalysis &&
+            $q.screen.height > singleWidth &&
+            (botState.isRunning || botSuggestion)
+          "
+        >
           <q-linear-progress
             v-show="botState.isRunning"
             class="analysis-linear-progress"
