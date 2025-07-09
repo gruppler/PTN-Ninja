@@ -256,6 +256,7 @@
       <smooth-reflow class="relative-position">
         <template
           v-if="
+            $store.state.ui.showToolbarAnalysis &&
             hasAnalysis &&
             $q.screen.height > singleWidth &&
             (botState.isRunning || botSuggestion)

@@ -64,6 +64,7 @@ const defaultState = {
   showPTN: true,
   showRoads: true,
   showScrubber: false,
+  showToolbarAnalysis: true,
   showText: false,
   size: "6",
   stackCounts: false,
