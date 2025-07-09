@@ -30,6 +30,22 @@ export default class TiltakCloud extends Bot {
     return store.state.ui.offline;
   }
 
+  getPositionsToAnalyze() {
+    const movetime = this.settings.movetime;
+    const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+    let positions = plies.map((ply) => ply.tpsBefore);
+    plies.forEach((ply) => {
+      if (!ply.result || ply.result.type === "1") {
+        positions.push(ply.tpsAfter);
+      }
+    });
+    positions = uniq(positions).filter(
+      (tps) =>
+        !(tps in this.positions) || this.positions[tps][0].time < movetime
+    );
+    return positions;
+  }
+
   //#region init
   init() {
     this.setState("isReady", true);
@@ -123,18 +139,7 @@ export default class TiltakCloud extends Bot {
       this.setState("isAnalyzingGame", true);
       this.setState("progress", 0);
       const concurrency = 10;
-      const movetime = this.settings.movetime;
-      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      let positions = plies.map((ply) => ply.tpsBefore);
-      plies.forEach((ply) => {
-        if (!ply.result || ply.result.type === "1") {
-          positions.push(ply.tpsAfter);
-        }
-      });
-      positions = uniq(positions).filter(
-        (tps) =>
-          !(tps in this.positions) || this.positions[tps][0].time < movetime
-      );
+      const positions = this.getPositionsToAnalyze();
       let total = positions.length;
       let completed = 0;
 

@@ -164,35 +164,6 @@
             item-aligned
           />
 
-          <!-- Other Bot Options -->
-          <template v-if="bot && bot.hasOptions">
-            <q-separator />
-            <q-item-label header>{{ $t("analysis.Bot Options") }}</q-item-label>
-
-            <BotOptionInput
-              v-for="(option, name) in botMeta.options"
-              :key="name"
-              v-model="botOptions[name]"
-              :option="option"
-              :name="name"
-              :disable="botState.isRunning || bot.isInteractiveEnabled"
-              @action="bot.sendAction"
-              filled
-              item-aligned
-            />
-
-            <q-btn
-              @click="setBotOptions"
-              icon="apply"
-              :label="$t('analysis.Apply Options')"
-              :loading="botState.isReadying"
-              class="full-width"
-              color="primary"
-              :flat="areBotOptionsApplied"
-              stretch
-            />
-          </template>
-
           <!-- TEI Connection Settings -->
           <template v-if="bot && botID === 'tei'">
             <q-separator />
@@ -260,6 +231,7 @@
               class="full-width"
               color="primary"
               stretch
+              flat
             />
           </template>
         </template>
@@ -281,19 +253,34 @@
               color="primary"
               stretch
             />
-            <!-- Initialize -->
-            <q-btn
-              v-else-if="
-                botID === 'tei' && botState.isConnected && !botState.isReady
-              "
-              @click="bot.applyOptions()"
-              icon="apply"
-              :label="$t('analysis.init')"
-              :loading="botState.isReadying"
-              class="full-width"
-              color="primary"
-              stretch
-            />
+
+            <!-- Other Bot Options -->
+            <div v-else-if="bot.hasOptions" class="bg-ui">
+              <q-separator />
+
+              <BotOptionInput
+                v-for="(option, name) in botMeta.options"
+                :key="name"
+                v-model="botOptions[name]"
+                :option="option"
+                :name="name"
+                :disable="botState.isRunning || bot.isInteractiveEnabled"
+                @action="bot.sendAction"
+                filled
+                item-aligned
+              />
+
+              <q-btn
+                @click="setBotOptions"
+                icon="apply"
+                :label="$t('analysis.Apply Options')"
+                :loading="botState.isReadying"
+                class="full-width"
+                color="primary"
+                :flat="areBotOptionsApplied && botState.isReady"
+                stretch
+              />
+            </div>
           </smooth-reflow>
 
           <!-- Analyze Full-Game/Branch -->

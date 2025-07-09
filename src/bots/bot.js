@@ -169,6 +169,34 @@ export default class Bot {
     return this.game.config.komi * 2;
   }
 
+  getPositionsToAnalyze() {
+    const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+    let positions = plies.map((ply) => ({
+      tps: ply.tpsBefore,
+      plyID: ply.id,
+    }));
+    plies.forEach((ply) => {
+      if (!ply.result || ply.result.type === "1") {
+        positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+      }
+    });
+    const hash = this.getSettingsHash();
+    positions = uniqBy(positions, (p) => p.tps).filter((p) => {
+      return (
+        !(p.tps in this.positions) ||
+        this.positions[p.tps][0].hash !== hash ||
+        (this.settings.nodes &&
+          this.positions[p.tps][0].nodes < this.settings.nodes) ||
+        (this.settings.depth &&
+          this.positions[p.tps][0].depth < this.settings.depth) ||
+        (this.settings.movetime &&
+          this.positions[p.tps][0].time < this.settings.movetime * 0.7)
+      );
+    });
+
+    return positions;
+  }
+
   //#region getSupportedHalfKomi
   getSupportedHalfKomi() {
     const size = this.size;
@@ -476,29 +504,7 @@ export default class Bot {
     }
 
     try {
-      const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-      let positions = plies.map((ply) => ({
-        tps: ply.tpsBefore,
-        plyID: ply.id,
-      }));
-      plies.forEach((ply) => {
-        if (!ply.result || ply.result.type === "1") {
-          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
-        }
-      });
-      const hash = this.getSettingsHash();
-      positions = uniqBy(positions, (p) => p.tps).filter((p) => {
-        return (
-          !(p.tps in this.positions) ||
-          this.positions[p.tps][0].hash !== hash ||
-          (this.settings.nodes &&
-            this.positions[p.tps][0].nodes < this.settings.nodes) ||
-          (this.settings.depth &&
-            this.positions[p.tps][0].depth < this.settings.depth) ||
-          (this.settings.movetime &&
-            this.positions[p.tps][0].time < this.settings.movetime * 0.7)
-        );
-      });
+      const positions = this.getPositionsToAnalyze();
       const total = positions.length;
       let completed = 0;
       let position = positions[0];
@@ -638,7 +644,7 @@ export default class Bot {
   //#region Formatting
 
   get isFullyAnalyzed() {
-    return this.plies.every((ply) => this.plyHasEvalComment(ply));
+    return !this.getPositionsToAnalyze().length;
   }
 
   plyHasEvalComment(ply) {

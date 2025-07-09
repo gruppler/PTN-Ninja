@@ -88,7 +88,6 @@ export default class TeiBot extends Bot {
   //#region init
   init() {
     super.init(true);
-    this.connect();
   }
 
   reset() {
