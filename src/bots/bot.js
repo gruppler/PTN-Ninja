@@ -250,7 +250,6 @@ export default class Bot {
   get isAnalyzePositionAvailable() {
     return (
       !this.isGameEnd &&
-      this.plies.length &&
       this.state.isReady &&
       !this.state.isAnalyzingGame &&
       !this.state.isInteractiveEnabled
