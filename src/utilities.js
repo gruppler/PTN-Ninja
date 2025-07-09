@@ -113,7 +113,7 @@ export const notifyError = (error, options = {}) => {
   Notify.create({
     message: formatError(error),
     type: "negative",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
@@ -125,7 +125,7 @@ export const notifySuccess = (success, options = {}) => {
   return Notify.create({
     message: formatSuccess(success),
     type: "positive",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
@@ -138,7 +138,7 @@ export const notifyWarning = (warning, options = {}) => {
     message: formatWarning(warning),
     type: "warning",
     icon: "warning",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textDark" }],
@@ -150,7 +150,7 @@ export const notifyHint = (hint, options = {}) => {
   return Notify.create({
     message: formatHint(hint),
     type: "info",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],

@@ -203,7 +203,7 @@ For example:
 - Issue a notification, specifying either the message directly, or an object with the following structure:
   - `message` (`<String>`): Message to be displayed
   - `caption` (`<String>`): Optional message to be displayed in smaller text below `message`
-  - `timeout` (`<Number>`): Optional milliseconds before automatic dismissal
+  - `timeout` (`<Number>`): Optional milliseconds before automatic dismissal (default 5000). Set to zero to disable timeout.
   - `position` (`<String>`): Optional location in which to display the notification. Must be one of the following values (default `bottom`):
     - `top-right`
     - `top-left`
