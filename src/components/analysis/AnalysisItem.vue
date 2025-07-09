@@ -24,7 +24,7 @@
           </Ply>
         </q-item-label>
       </q-item-section>
-      <q-item-section side>
+      <q-item-section top side>
         <q-item-label>
           <span class="player-numbers">
             <span
@@ -96,16 +96,20 @@
       </q-item-section>
     </q-item>
     <q-item
-      v-if="followingPlies && followingPlies.length"
+      v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
       class="q-pt-none"
       @mouseover="highlight"
       @mouseout="unhighlight"
-      @click="insertFollowingPlies()"
-      clickable
+      @click="
+        followingPlies && followingPlies.length > 0
+          ? insertFollowingPlies()
+          : null
+      "
+      :clickable="followingPlies && followingPlies.length > 0"
     >
       <q-item-label
         class="continuation small"
-        :class="{ limited: limitContinuation }"
+        :class="{ limited: fixedHeight }"
       >
         <Ply
           v-for="(fPly, i) in followingPlies"
@@ -159,8 +163,8 @@ export default {
       type: [Number, String],
       default: null,
     },
+    fixedHeight: Boolean,
     playerNumbersTooltip: String,
-    limitContinuation: Boolean,
     followingPlies: Array,
     animate: Boolean,
   },

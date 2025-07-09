@@ -265,7 +265,7 @@
           <BotAnalysisItem
             v-if="botSuggestion"
             :suggestion="botSuggestion"
-            limit-continuation
+            fixed-height
           />
           <AnalysisItemPlaceholder
             v-else-if="
