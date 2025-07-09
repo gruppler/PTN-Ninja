@@ -627,8 +627,11 @@ export default {
         this.sections.botSuggestions = true;
       }
     },
-    async setBotOptions() {
-      await this.bot.setOptions(this.botOptions);
+    setBotOptions() {
+      this.botSettings[this.botID].options = {
+        ...this.botSettings[this.botID].options,
+        ...this.botOptions,
+      };
       this.bot.applyOptions();
     },
     async scrollLog(instant) {
@@ -696,24 +699,7 @@ export default {
     },
     "botMeta.options": {
       handler() {
-        // Reset the buffer
         this.botOptions = this.bot.getOptions();
-
-        // // Save TEI options
-        // if (this.botID === "tei") {
-        //   let optionValues = { ...(this.botSettings.options || {}) };
-        //   forEach(options, (option, name) => {
-        //     if (!("value" in option)) {
-        //       return;
-        //     }
-        //     if (!("default" in option) || option.value !== option.default) {
-        //       optionValues[name] = option.value;
-        //     } else {
-        //       delete optionValues[name];
-        //     }
-        //   });
-        //   this.$set(this.botSettings.tei, "options", optionValues);
-        // }
       },
       deep: true,
     },

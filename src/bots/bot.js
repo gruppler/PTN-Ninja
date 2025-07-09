@@ -270,15 +270,6 @@ export default class Bot {
     return optionValues;
   }
 
-  async setOptions(options) {
-    const botSettings = cloneDeep(store.state.analysis.botSettings);
-    botSettings[this.id].options = {
-      ...(this.settings.options || {}),
-      ...options,
-    };
-    return store.dispatch("analysis/SET", ["botSettings", botSettings]);
-  }
-
   //#region reset
   // Reset status
   reset() {
