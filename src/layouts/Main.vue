@@ -537,9 +537,11 @@ export default {
       const game = this.$store.state.game;
       const boardPly = game.position.boardPly;
       if (boardPly) {
-        const plyID = boardPly.id + 1 * boardPly.isDone;
-        let notes = game.comments.notes[plyID];
-        const ply = game.ptn.allPlies[plyID];
+        const ply = boardPly.isDone ? game.position.nextPly : game.position.ply;
+        if (!ply) {
+          return null;
+        }
+        let notes = game.comments.notes[ply.id];
         const suggestion = {
           evaluation: null,
           ply: null,
