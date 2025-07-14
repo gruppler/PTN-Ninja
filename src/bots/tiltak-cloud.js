@@ -21,7 +21,7 @@ export default class TiltakCloud extends Bot {
       },
       limitTypes: {
         movetime: { min: 1e3, max: 1e4, step: 1e3 },
-        nodes: {},
+        nodes: { max: 1e6 },
       },
       state: {
         isReady: true,
@@ -47,20 +47,24 @@ export default class TiltakCloud extends Bot {
       return false;
     }
 
+    const time_control = {};
     const movetime = this.settings.movetime;
+    if (this.settings.limitTypes.includes("nodes")) {
+      time_control.FixedNodes = this.settings.nodes;
+    }
+    if (this.settings.limitTypes.includes("movetime")) {
+      time_control.Time = [
+        { secs: movetime / 1e3, nanos: 0 },
+        { secs: 0, nanos: 0 }, // increment, ignored
+      ];
+    }
 
     const request = {
       komi: init.halfKomi / 2,
       size: this.size,
       tps,
       moves: [],
-      time_control: {
-        // FixedNodes: 100000, // can be used instead of `Time`
-        Time: [
-          { secs: movetime / 1e3, nanos: 0 }, // time budget for endpoint
-          { secs: 0, nanos: 0 }, // increment, ignored
-        ],
-      },
+      time_control,
       rollout_depth: 0,
       rollout_temperature: 0.25,
       action: "SuggestMoves",
@@ -94,7 +98,14 @@ export default class TiltakCloud extends Bot {
         ({ mv, visits, winning_probability, pv }) => {
           pv.unshift(mv);
           const evaluation = 200 * (winning_probability - 0.5);
-          return { pv, visits, evaluation, time: movetime };
+          const suggestion = { pv, visits, evaluation };
+          if (time_control.FixedNodes) {
+            suggestion.nodes = time_control.FixedNodes;
+          }
+          if (time_control.Time) {
+            suggestion.nodes = movetime;
+          }
+          return suggestion;
         }
       ),
     };
