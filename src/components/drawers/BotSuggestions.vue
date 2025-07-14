@@ -13,7 +13,9 @@
           <q-item-label v-if="botID" caption>
             <template v-if="botMeta.name">
               <span class="text-bold">{{ botMeta.name }}</span>
-              <template v-if="botMeta.version">{{ botMeta.version }}</template>
+              <template v-if="botMeta.version">
+                {{ botMeta.version }}
+              </template>
               <template v-if="botMeta.author">
                 {{ $t("tei.by") }} {{ botMeta.author }}
               </template>
@@ -47,7 +49,7 @@
           <!-- Bot -->
           <q-select
             v-model="botID"
-            :options="bots"
+            :options="botList"
             :label="$t('Bot')"
             behavior="menu"
             transition-show="none"
@@ -83,12 +85,24 @@
                 </q-item-section>
               </q-item>
             </template>
+            <template v-if="botMeta.isCustom" v-slot:append>
+              <q-icon
+                name="edit"
+                class="field__focusable"
+                @click.stop.prevent="$router.push({ name: 'bot' })"
+              />
+            </template>
           </q-select>
 
           <q-separator />
 
           <!-- Log messages -->
-          <q-item v-if="'log' in bot.settings" tag="label" clickable v-ripple>
+          <q-item
+            v-if="'log' in botSettings[botID]"
+            tag="label"
+            clickable
+            v-ripple
+          >
             <q-item-section>
               <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
             </q-item-section>
@@ -126,43 +140,36 @@
           <q-separator />
           <q-item-label header>{{ $t("analysis.limit") }}</q-item-label>
 
-          <template v-if="botMeta.limitTypes.length > 1">
-            <q-item v-for="type in limitTypes" :key="type.value">
-              <q-item-section>
-                <BotLimitInput
-                  v-model.number="botSettings[botID][type.value]"
-                  :label="type.label"
-                  :type="type.value"
-                  :disable="
-                    botState.isRunning ||
-                    !botSettings[botID].limitTypes.includes(type.value)
-                  "
-                  filled
-                />
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="botSettings[botID].limitTypes"
-                  :val="type.value"
-                  :disable="
-                    botState.isRunning ||
-                    (botSettings[botID].limitTypes.includes(type.value) &&
-                      botSettings[botID].limitTypes.length === 1)
-                  "
-                  filled
-                />
-              </q-item-section>
-            </q-item>
-          </template>
           <BotLimitInput
-            v-else-if="limitTypes[0]"
-            v-model.number="botSettings[botID][limitTypes[0].value]"
-            :type="limitTypes[0].value"
-            :label="limitTypes[0].label"
-            :disable="botState.isRunning"
+            v-for="type in limitTypes"
+            :key="type.value"
+            v-model.number="botSettings[botID][type.value]"
+            :label="type.label"
+            :type="type.value"
+            :min="type.min"
+            :max="type.max"
+            :step="type.step"
+            :disable="
+              botState.isRunning ||
+              (botSettings[botID].limitTypes &&
+                !botSettings[botID].limitTypes.includes(type.value))
+            "
             filled
             item-aligned
-          />
+          >
+            <template v-if="limitTypes.length > 1" v-slot:after>
+              <q-toggle
+                v-model="botSettings[botID].limitTypes"
+                :val="type.value"
+                :disable="
+                  botState.isRunning ||
+                  (botSettings[botID].limitTypes &&
+                    botSettings[botID].limitTypes.includes(type.value) &&
+                    botSettings[botID].limitTypes.length === 1)
+                "
+              />
+            </template>
+          </BotLimitInput>
 
           <!-- TEI Connection Settings -->
           <template v-if="bot && botID === 'tei'">
@@ -173,23 +180,21 @@
               :default-opened="!botState.isConnected"
             >
               <q-list>
-                <q-item class="row q-gutter-x-sm">
-                  <div class="col">
-                    <!-- Address -->
-                    <q-input
-                      v-model.number="botSettings[botID].address"
-                      :label="$t('tei.address')"
-                      :prefix="bot.protocol"
-                      filled
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </div>
-
-                  <div class="col">
+                <!-- Address -->
+                <q-input
+                  v-model.number="botSettings[botID].address"
+                  :label="$t('tei.address')"
+                  :prefix="bot.protocol"
+                  filled
+                  :disable="botState.isConnected || botState.isConnecting"
+                  item-aligned
+                >
+                  <template v-slot:after>
                     <!-- Port -->
                     <q-input
                       v-model.number="botSettings[botID].port"
                       :label="$t('tei.port')"
+                      style="width: 9em"
                       type="number"
                       min="0"
                       max="65535"
@@ -199,8 +204,8 @@
                       clearable
                       :disable="botState.isConnected || botState.isConnecting"
                     />
-                  </div>
-                </q-item>
+                  </template>
+                </q-input>
 
                 <!-- Use SSL -->
                 <q-item
@@ -219,21 +224,32 @@
                     />
                   </q-item-section>
                 </q-item>
+
+                <!-- Save Bot -->
+                <q-btn
+                  v-if="botState.isConnected"
+                  :to="{ name: 'bot' }"
+                  icon="bot"
+                  :label="$t('tei.Save Bot')"
+                  class="full-width"
+                  color="primary"
+                  stretch
+                  flat
+                />
               </q-list>
             </q-expansion-item>
-
-            <!-- Disconnect -->
-            <q-btn
-              v-if="botState.isConnected"
-              @click="bot.disconnect()"
-              icon="disconnect"
-              :label="$t('tei.disconnect')"
-              class="full-width"
-              color="primary"
-              stretch
-              flat
-            />
           </template>
+          <!-- Disconnect -->
+          <q-btn
+            v-if="botMeta.requiresConnect && botState.isConnected"
+            @click="bot.disconnect()"
+            icon="disconnect"
+            :label="$t('tei.disconnect')"
+            class="full-width"
+            color="primary"
+            stretch
+            flat
+          />
         </template>
       </smooth-reflow>
 
@@ -243,10 +259,9 @@
           <smooth-reflow>
             <!-- Connect -->
             <q-btn
-              v-if="botID === 'tei' && !botState.isConnected"
+              v-if="botMeta.requiresConnect && !botState.isConnected"
               @click="bot.connect()"
               :loading="botState.isConnecting"
-              :disabled="!botSettings[botID].address"
               icon="connect"
               :label="$t('tei.connect')"
               class="full-width"
@@ -264,7 +279,7 @@
                 v-model="botOptions[name]"
                 :option="option"
                 :name="name"
-                :disable="botState.isRunning || bot.isInteractiveEnabled"
+                :disable="botState.isRunning || botState.isInteractiveEnabled"
                 @action="bot.sendAction"
                 filled
                 item-aligned
@@ -386,7 +401,7 @@
             >
               <q-item-section avatar>
                 <q-spinner
-                  v-if="bot.isInteractiveEnabled && botState.isRunning"
+                  v-if="botState.isInteractiveEnabled && botState.isRunning"
                   size="sm"
                 />
                 <q-icon v-else name="int_analysis" />
@@ -418,7 +433,11 @@
             </q-item>
 
             <recess v-if="botSettings[botID].log">
-              <div ref="botLog" class="bot-log text-selectable bg-ui q-pa-sm">
+              <div
+                ref="botLog"
+                class="bot-log text-selectable bg-ui q-pa-sm"
+                @scroll="handleLogScroll"
+              >
                 <div
                   v-for="(log, i) in botLog"
                   :key="i"
@@ -427,14 +446,17 @@
                   {{ log.message }}
                 </div>
               </div>
-              <q-btn
-                @click="bot.clearLog()"
-                icon="delete"
-                :label="$t('analysis.Clear Log')"
-                class="full-width"
-                color="ui"
-                stretch
-              />
+              <q-btn-group spread stretch>
+                <q-btn @click="clearLog()" icon="delete" color="ui" />
+                <q-btn
+                  @click="
+                    autoScrollLog = true;
+                    scrollLog(true);
+                  "
+                  icon="to_bottom"
+                  color="ui"
+                />
+              </q-btn-group>
             </recess>
           </smooth-reflow>
         </template>
@@ -442,7 +464,7 @@
         <q-inner-loading
           :showing="
             bot &&
-            (botState.isConnected || !bot.connect) &&
+            (botState.isConnected || !botMeta.requiresConnect) &&
             !botState.isTeiOk &&
             !botState.isReady
           "
@@ -511,6 +533,8 @@ export default {
       showBotSettings: false,
       botSettings: cloneDeep(this.$store.state.analysis.botSettings),
       botOptions: this.bot ? this.bot.getOptions() : {},
+      autoScrollLog: true,
+      logScrollTop: 0,
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
   },
@@ -552,8 +576,8 @@ export default {
         this.$store.dispatch("analysis/SET", ["botID", value]);
       },
     },
-    bots() {
-      return this.$store.state.analysis.bots;
+    botList() {
+      return this.$store.state.analysis.botList;
     },
     bot() {
       return this.$store.getters["analysis/bot"];
@@ -587,17 +611,26 @@ export default {
     limitTypes() {
       const types = [];
       if (this.bot) {
-        if (this.botMeta.limitTypes.includes("depth")) {
-          types.push({ label: this.$t("analysis.Depth"), value: "depth" });
+        if ("depth" in this.botMeta.limitTypes) {
+          types.push({
+            label: this.$t("analysis.Depth"),
+            value: "depth",
+            ...this.botMeta.limitTypes.depth,
+          });
         }
-        if (this.botMeta.limitTypes.includes("movetime")) {
+        if ("nodes" in this.botMeta.limitTypes) {
+          types.push({
+            label: this.$t("analysis.Nodes"),
+            value: "nodes",
+            ...this.botMeta.limitTypes.nodes,
+          });
+        }
+        if ("movetime" in this.botMeta.limitTypes) {
           types.push({
             label: this.$t("analysis.movetime"),
             value: "movetime",
+            ...this.botMeta.limitTypes.movetime,
           });
-        }
-        if (this.botMeta.limitTypes.includes("nodes")) {
-          types.push({ label: this.$t("analysis.Nodes"), value: "nodes" });
         }
       }
       return types;
@@ -623,12 +656,27 @@ export default {
     },
     async scrollLog(instant) {
       await this.$nextTick();
-      if (this.$refs.botLog && this.bot.settings.log) {
+      if (this.$refs.botLog && this.botSettings[this.botID].log) {
         this.$refs.botLog.scrollTo({
           top: this.$refs.botLog.scrollHeight,
           behavior: instant ? "instant" : "smooth",
         });
       }
+    },
+    handleLogScroll() {
+      if (
+        this.autoScrollLog &&
+        this.logScrollTop > this.$refs.botLog.scrollTop
+      ) {
+        this.autoScrollLog = false;
+      } else {
+        this.logScrollTop = this.$refs.botLog.scrollTop;
+      }
+    },
+    clearLog() {
+      this.bot.clearLog();
+      this.logScrollTop = 0;
+      this.autoScrollLog = true;
     },
     clearResults() {
       this.prompt({
@@ -650,14 +698,6 @@ export default {
   },
 
   watch: {
-    // suggestions(suggestions) {
-    //   const suggestion = suggestions[0];
-    //   if (suggestion && "evaluation" in suggestion) {
-    //     this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-    //   } else {
-    //     this.$store.dispatch("game/SET_EVAL", null);
-    //   }
-    // },
     sections: {
       handler(value) {
         this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
@@ -672,8 +712,11 @@ export default {
         }
       }
     },
+    botList() {
+      this.botSettings = cloneDeep(this.$store.state.analysis.botSettings);
+    },
     botSettings: {
-      handler(settings) {
+      handler(settings, oldSettings) {
         this.$store.dispatch("analysis/SET", ["botSettings", settings]);
         if (settings[this.botID].log) {
           this.scrollLog(true);
@@ -682,7 +725,9 @@ export default {
       deep: true,
     },
     botLog() {
-      this.scrollLog();
+      if (this.autoScrollLog) {
+        this.scrollLog();
+      }
     },
     "botMeta.options": {
       handler() {

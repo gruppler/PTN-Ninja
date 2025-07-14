@@ -1,42 +1,20 @@
 <template>
-  <!-- Seconds to Think -->
   <q-input
-    v-if="type === 'movetime'"
     v-model.number="model"
     type="number"
-    :min="500"
-    :max="3e4"
-    :step="500"
+    :min="min"
+    :max="max"
+    :step="step"
+    :rules="[isValid]"
+    hide-bottom-space
     filled
     v-bind="$attrs"
     v-on="$listeners"
-  />
-
-  <!-- Depth -->
-  <q-input
-    v-else-if="type === 'depth'"
-    v-model.number="model"
-    type="number"
-    :min="1"
-    :max="99"
-    :step="1"
-    filled
-    v-bind="$attrs"
-    v-on="$listeners"
-  />
-
-  <!-- Nodes -->
-  <q-input
-    v-else-if="type === 'nodes'"
-    v-model.number="model"
-    type="number"
-    :min="1"
-    :max="1e9"
-    :step="1000"
-    filled
-    v-bind="$attrs"
-    v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.after" v-slot:after>
+      <slot name="after" />
+    </template>
+  </q-input>
 </template>
 
 <script>
@@ -45,6 +23,9 @@ export default {
   props: {
     value: Number,
     type: String,
+    min: Number,
+    max: Number,
+    step: Number,
   },
   computed: {
     model: {
@@ -54,6 +35,11 @@ export default {
       set(value) {
         this.$emit("input", value);
       },
+    },
+  },
+  methods: {
+    isValid(n) {
+      return n >= this.min && n <= this.max;
     },
   },
 };

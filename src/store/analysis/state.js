@@ -1,11 +1,15 @@
 import { LocalStorage } from "quasar";
-import { cloneDeep, defaults, forEach } from "lodash";
-import { bots, botOptions } from "../../bots";
+import { cloneDeep, defaults, forEach, sortBy } from "lodash";
+import { bots, botListOptions } from "../../bots";
+import CustomTeiBot from "../../bots/custom-tei";
 
 const defaultBotID = "tiltak-cloud";
 
+const botList = [...botListOptions];
+
 const defaultState = {
-  bots: botOptions,
+  botList,
+  customBots: {},
   botID: defaultBotID,
   botLog: [],
   botMeta: {},
@@ -43,6 +47,26 @@ if (!LocalStorage.isEmpty()) {
   for (let key in defaultState) {
     state[key] = load(key, state[key]);
   }
+}
+
+// Create custom bots
+Object.values(state.customBots).forEach((bot) => {
+  bots[bot.id] = new CustomTeiBot(bot.id, bot.meta);
+  if (!(bot.id in state.botSettings)) {
+    state.botSettings[bot.id] = cloneDeep(bots[bot.id].settings);
+  } else {
+    defaults(state.botSettings[bot.id], bots[bot.id].settings);
+  }
+});
+// Add to botList
+sortBy(
+  Object.values(state.customBots).map(({ id }) => bots[id]),
+  "created"
+).forEach((bot) => state.botList.push(bot.listOption));
+
+// Fall back to default bot if selected doesn't exist
+if (!bots[state.botID]) {
+  state.botID = defaultBotID;
 }
 
 // Overwrite default bot settings

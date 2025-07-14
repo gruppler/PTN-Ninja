@@ -4,7 +4,7 @@
       v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-      :style="{ width: Math.abs(evaluation) + '%' }"
+      :style="{ width: evalPercent + '%' }"
     />
     <q-item
       @mouseover="highlight"
@@ -171,6 +171,9 @@ export default {
   computed: {
     tps() {
       return this.$store.state.game.position.tps;
+    },
+    evalPercent() {
+      return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
     },
   },
   methods: {

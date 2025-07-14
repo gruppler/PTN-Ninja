@@ -11,6 +11,7 @@ export default class TiltakWasm extends TeiBot {
       label: "analysis.bots.tiltak",
       description: "analysis.bots_description.tiltak",
       isInteractive: true,
+      requiresConnect: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
       state: {
         isTeiOk: false,
@@ -19,26 +20,31 @@ export default class TiltakWasm extends TeiBot {
         log: false,
         movetime: 5000,
       },
-      limitTypes: ["movetime"],
+      limitTypes: {
+        movetime: {},
+      },
       ...options,
     });
+
+    this.connect = null;
+    this.disconnect = null;
+
+    this.init();
   }
 
   // Freeze meta
   setMeta() {}
 
-  // Disable non-applicable inherited methods
-  connect() {}
-  disconnect() {}
-
-  //#region send
+  //#region send/receive
   send(message) {
     if (worker) {
-      if (this.settings.log) {
-        this.logMessage(message);
-      }
       worker.postMessage(message);
+      super.onSend(message);
     }
+  }
+  receive(message) {
+    this.handleResponse(message);
+    super.onReceive(message);
   }
 
   //#region init
@@ -59,15 +65,17 @@ export default class TiltakWasm extends TeiBot {
             worker = null;
           }
           this.isInteractiveEnabled = false;
-          this.setState("isAnalyzingGame", false);
-          this.setState("isRunning", false);
-          this.setState("isReady", false);
-          this.setState("time", null);
-          this.setState("nps", null);
-          this.setState("tps", null);
-          this.setState("nextTPS", null);
-          this.setState("halfkomi", null);
-          this.setState("size", null);
+          this.setState({
+            isAnalyzingGame: false,
+            isRunning: false,
+            isReady: false,
+            time: null,
+            nps: null,
+            tps: null,
+            nextTPS: null,
+            halfkomi: null,
+            size: null,
+          });
         };
 
         // Message handling
@@ -75,15 +83,15 @@ export default class TiltakWasm extends TeiBot {
           if (this.settings.log) {
             this.logMessage(data, true);
           }
-          this.handleResponse(data);
+          this.receive(data);
         };
 
         // Init
         this.send("isready");
-        return super.init(true);
+        return true;
       } catch (error) {
         console.error("Failed to load Tiltak (wasm):", error);
-        return super.init(false);
+        return false;
       }
     }
   }
@@ -98,37 +106,5 @@ export default class TiltakWasm extends TeiBot {
         this.init();
       }
     }
-  }
-
-  //#region analyzeInteractive
-  analyzeInteractive() {
-    if (!worker) {
-      this.init();
-      return;
-    }
-
-    // Abort if worker is not responding
-    if (!this.state.isReady) {
-      console.error("Tiltak worker failed to initialize");
-      return;
-    }
-
-    return super.analyzeInteractive();
-  }
-
-  //#region analyzeCurrentPosition
-  analyzeCurrentPosition() {
-    if (!worker) {
-      this.init();
-      return;
-    }
-
-    // Abort if worker is not responding
-    if (!this.state.isReady) {
-      console.error("Tiltak worker failed to initialize");
-      return;
-    }
-
-    super.analyzeCurrentPosition();
   }
 }

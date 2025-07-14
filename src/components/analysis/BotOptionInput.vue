@@ -7,12 +7,14 @@
     clickable
     v-ripple
   >
+    <slot name="before" />
     <q-item-section side>
       <q-checkbox v-model="model" :disable="disable" />
       <q-item-section>
         <q-item-label>{{ name }}</q-item-label>
       </q-item-section>
     </q-item-section>
+    <slot name="after" />
   </q-item>
 
   <!-- Number -->
@@ -26,7 +28,14 @@
     :disable="disable"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-if="$slots.after" v-slot:after>
+      <slot name="after" />
+    </template>
+  </q-input>
 
   <!-- Select List -->
   <q-select
@@ -40,7 +49,14 @@
     transition-hide="none"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-if="$slots.after" v-slot:after>
+      <slot name="after" />
+    </template>
+  </q-select>
 
   <!-- Button -->
   <q-btn
@@ -63,7 +79,14 @@
     :disable="disable"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-if="$slots.after" v-slot:after>
+      <slot name="after" />
+    </template>
+  </q-input>
 </template>
 
 <script>

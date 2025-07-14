@@ -18,15 +18,26 @@ export default class TopazWasm extends Bot {
         movetime: 5000,
         depth: 12,
       },
-      limitTypes: ["depth", "movetime"],
+      limitTypes: {
+        movetime: {},
+        depth: {},
+      },
       ...options,
     });
+
+    this.init();
   }
 
+  //#region send/receive
   send(message) {
     if (worker) {
       worker.postMessage(message);
+      super.onSend(message);
     }
+  }
+  receive(message) {
+    this.handleResponse(message);
+    super.onReceive(message);
   }
 
   //#region init
@@ -35,77 +46,57 @@ export default class TopazWasm extends Bot {
       try {
         worker = new Worker(url);
         worker.onmessage = ({ data }) => {
-          this.handleResponse(data);
+          this.receive(data);
         };
-        this.setState("isReady", true);
-        return super.init(true);
+        this.setState({ isReady: true });
+        return true;
       } catch (error) {
         console.error("Failed to load Topaz (wasm):", error);
-        return super.init(false);
+        return false;
       }
     }
   }
 
   //#region reset
   reset() {
-    this.setState("isReady", false);
+    this.setState({ isReady: false });
     super.reset();
   }
 
   //#region queryPosition
-  queryPosition(tps) {
-    // Validate size/komi
-    const init = super.queryPosition(tps);
-    if (!init) {
-      return false;
-    }
+  async queryPosition(tps) {
+    return new Promise((resolve, reject) => {
+      // Validate size/komi
+      const init = super.validatePosition(tps);
+      if (!init) {
+        reject();
+        return false;
+      }
+      this.onComplete = (results) => {
+        this.onComplete = null;
+        resolve(results);
+      };
 
-    const query = {
-      movetime: 1e8,
-      depth: 100,
-      tps,
-      size: this.size,
-      komi: init.halfKomi / 2,
-      hash: this.getSettingsHash(),
-    };
-    this.settings.limitTypes.forEach((type) => {
-      query[type] = this.settings[type];
+      const query = {
+        movetime: 1e8,
+        depth: 100,
+        tps,
+        size: this.size,
+        komi: init.halfKomi / 2,
+        hash: this.getSettingsHash(),
+      };
+      this.settings.limitTypes.forEach((type) => {
+        query[type] = this.settings[type];
+      });
+      this.send(query);
     });
-    if (this.settings.log) {
-      this.logMessage(query);
-    }
-    this.send(query);
-  }
-
-  //#region analyzeCurrentPosition
-  analyzeCurrentPosition() {
-    if (!worker) {
-      this.init();
-      return;
-    }
-
-    super.analyzeCurrentPosition();
-  }
-
-  //#region analyzeGame
-  analyzeGame() {
-    if (!worker) {
-      this.init();
-      return;
-    }
-
-    super.analyzeGame();
   }
 
   //#region handleResponse
   handleResponse(response) {
     if (response.error) {
       this.onError(response.error);
-      return;
-    }
-
-    if (this.settings.log) {
-      this.logMessage(response, true);
+      return false;
     }
 
     const { tps, depth, score, nodes, pv, hash } = response;
@@ -113,7 +104,7 @@ export default class TopazWasm extends Bot {
     // const initialPlayer = Number(tps.split(" ")[1]);
     // const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
 
-    super.storeResults({
+    const results = {
       hash,
       tps,
       suggestions: [
@@ -124,10 +115,11 @@ export default class TopazWasm extends Bot {
           evaluation: null,
         },
       ],
-    });
+    };
+    super.storeResults(results);
 
     if (this.onComplete) {
-      this.onComplete();
+      this.onComplete(results);
     }
   }
 

@@ -1,7 +1,5 @@
 import Bot from "./bot";
 import store from "../store";
-import asyncPool from "tiny-async-pool";
-import { uniq } from "lodash";
 
 const url = "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
 
@@ -12,6 +10,7 @@ export default class TiltakCloud extends Bot {
       icon: "online",
       label: "analysis.bots.tiltak-cloud",
       description: "analysis.bots_description.tiltak-cloud",
+      concurrency: 10,
       isInteractive: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
       settings: {
@@ -21,7 +20,13 @@ export default class TiltakCloud extends Bot {
         movetime: 5e3,
         limitTypes: ["movetime"],
       },
-      limitTypes: ["movetime", "nodes"],
+      limitTypes: {
+        movetime: { min: 1e3, max: 1e4, step: 1e3 },
+        nodes: {},
+      },
+      state: {
+        isReady: true,
+      },
       ...options,
     });
   }
@@ -30,39 +35,17 @@ export default class TiltakCloud extends Bot {
     return store.state.ui.offline;
   }
 
-  getPositionsToAnalyze() {
-    const movetime = this.settings.movetime;
-    const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-    let positions = plies.map((ply) => ply.tpsBefore);
-    plies.forEach((ply) => {
-      if (!ply.result || ply.result.type === "1") {
-        positions.push(ply.tpsAfter);
-      }
-    });
-    positions = uniq(positions).filter(
-      (tps) =>
-        !(tps in this.positions) || this.positions[tps][0].time < movetime
-    );
-    return positions;
-  }
-
-  //#region init
-  init() {
-    this.setState("isReady", true);
-    super.init(true);
-  }
-
   //#region queryPosition
   async queryPosition(tps) {
     // Validate size/komi
-    const init = super.queryPosition(tps);
+    const init = super.validatePosition(tps);
     if (!init) {
       return false;
     }
 
     if (this.isOffline) {
       this.onError("Offline");
-      return;
+      return false;
     }
 
     const movetime = this.settings.movetime;
@@ -83,9 +66,7 @@ export default class TiltakCloud extends Bot {
       rollout_temperature: 0.25,
       action: "SuggestMoves",
     };
-    if (this.settings.log) {
-      this.logMessage(request);
-    }
+    super.onSend(request);
     let response;
     try {
       response = await fetch(url, {
@@ -95,22 +76,17 @@ export default class TiltakCloud extends Bot {
         },
         body: JSON.stringify(request),
       });
-      if (this.settings.log) {
-        this.logMessage(response, true);
-      }
     } catch (error) {
       this.onError(error);
       this.terminate();
-      return;
+      return false;
     }
     if (!response.ok) {
       this.terminate();
       return this.onError("HTTP-Error: " + response.status);
     }
     const data = await response.json();
-    if (this.settings.log) {
-      this.logMessage(data, true);
-    }
+    super.onReceive(data);
     const { SuggestMoves: suggestedMoves } = data;
 
     const results = {
@@ -126,44 +102,5 @@ export default class TiltakCloud extends Bot {
     if (results.suggestions[0].pv.length) {
       return super.storeResults(results);
     }
-  }
-
-  //#region analyzeGame
-  async analyzeGame() {
-    if (this.isOffline) {
-      this.onError("Offline");
-      return;
-    }
-    try {
-      this.setState("isRunning", true);
-      this.setState("isAnalyzingGame", true);
-      this.setState("progress", 0);
-      const concurrency = 10;
-      const positions = this.getPositionsToAnalyze();
-      let total = positions.length;
-      let completed = 0;
-
-      for await (const result of asyncPool(concurrency, positions, (tps) => {
-        if (this.state.isAnalyzingGame) {
-          return this.queryPosition(tps);
-        }
-      })) {
-        this.setState("progress", (100 * ++completed) / total);
-      }
-      // Insert comments if successful
-      if (this.state.isAnalyzingGame) {
-        this.saveEvalComments();
-      }
-    } catch (error) {
-      this.onError(error);
-    } finally {
-      this.setState("isRunning", false);
-      this.setState("isAnalyzingGame", false);
-    }
-  }
-
-  //#region terminate
-  terminate() {
-    super.terminate();
   }
 }
