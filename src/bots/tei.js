@@ -265,6 +265,7 @@ export default class TeiBot extends Bot {
 
     const tps = this.state.tps;
 
+    response = response.trim();
     if (response === "teiok") {
       this.setState({ isTeiOk: true });
       if (!this.hasOptions) {
@@ -286,7 +287,7 @@ export default class TeiBot extends Bot {
       const sizeHalfKomis = { ...this.meta.sizeHalfKomis };
       let sizes = [];
       let halfKomis = [];
-      let tokens = response.trim().split(/\s+/);
+      let tokens = response.split(/\s+/);
       let token;
       while ((token = tokens.shift())) {
         if (token === "size") {
