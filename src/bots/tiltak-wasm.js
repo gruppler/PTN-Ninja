@@ -17,7 +17,6 @@ export default class TiltakWasm extends TeiBot {
         isTeiOk: false,
       },
       settings: {
-        log: false,
         movetime: 5000,
       },
       limitTypes: {

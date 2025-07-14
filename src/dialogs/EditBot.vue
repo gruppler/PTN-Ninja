@@ -164,6 +164,19 @@
           </template>
         </q-select>
 
+        <q-separator />
+        <!-- Formatting -->
+        <q-item tag="label" clickable v-ripple>
+          <q-item-section side>
+            <q-toggle v-model="buffer.meta.normalizeEvaluation" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{
+              $t("analysis.normalizeEvaluation")
+            }}</q-item-label>
+          </q-item-section>
+        </q-item>
+
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
           <!-- Bot Options -->
@@ -298,15 +311,18 @@ export default {
         "version",
         "connection",
         "isInteractive",
+        "normalizeEvaluation",
         "sizeHalfKomis",
         "limitTypes",
       ]);
-      if (!this.buffer.meta.connection) {
+      if (this.isNew) {
         this.buffer.meta.connection = pick(this.bot.settings, [
           "address",
           "port",
           "ssl",
         ]);
+        this.buffer.meta.normalizeEvaluation =
+          this.bot.settings.normalizeEvaluation;
       }
       this.options = Object.keys(this.botMeta.presetOptions || {});
       this.buffer.meta.presetOptions = {

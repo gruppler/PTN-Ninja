@@ -86,7 +86,11 @@ export default class Bot {
       ...meta,
     };
 
-    this.settings = { ...settings };
+    this.settings = {
+      log: false,
+      insertEvalMarks: true,
+      ...settings,
+    };
     // After initialization of the store,
     // this.settings will be overwritten with the stored version
 
@@ -656,6 +660,7 @@ export default class Bot {
         let player = initialPlayer;
         let color = initialColor;
         pv = parsePV(player, color, pv);
+        evaluation = this.normalizeEvaluation(evaluation);
         const ply = pv.splice(0, 1)[0];
         const followingPlies = pv;
         const result = {
@@ -722,6 +727,10 @@ export default class Bot {
     );
   }
 
+  normalizeEvaluation(value) {
+    return value;
+  }
+
   formatEvaluation(value) {
     formatEvaluation(value);
   }
@@ -785,30 +794,32 @@ export default class Bot {
         comments.push(evaluationComment);
       }
 
-      // Annotation marks
-      if (
-        evaluationBefore === null &&
-        positionBefore &&
-        positionBefore[0].evaluation !== null
-      ) {
-        evaluationBefore = positionBefore[0].evaluation;
-      }
-      if (evaluationBefore !== null) {
-        evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
-        const scoreLoss =
-          (ply.player === 1
-            ? evaluationAfter - evaluationBefore
-            : evaluationBefore - evaluationAfter) / 2;
-        if (scoreLoss > 0.06) {
-          comments.push("!!");
-        } else if (scoreLoss > 0.03) {
-          comments.push("!");
-        } else if (scoreLoss > -0.1) {
-          // Do nothing
-        } else if (scoreLoss > -0.25) {
-          comments.push("?");
-        } else {
-          comments.push("??");
+      // Evaluation marks
+      if (this.settings.insertEvalMarks) {
+        if (
+          evaluationBefore === null &&
+          positionBefore &&
+          positionBefore[0].evaluation !== null
+        ) {
+          evaluationBefore = positionBefore[0].evaluation;
+        }
+        if (evaluationBefore !== null) {
+          evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
+          const scoreLoss =
+            (ply.player === 1
+              ? evaluationAfter - evaluationBefore
+              : evaluationBefore - evaluationAfter) / 2;
+          if (scoreLoss > 0.06) {
+            comments.push("!!");
+          } else if (scoreLoss > 0.03) {
+            comments.push("!");
+          } else if (scoreLoss > -0.1) {
+            // Do nothing
+          } else if (scoreLoss > -0.25) {
+            comments.push("?");
+          } else {
+            comments.push("??");
+          }
         }
       }
     }

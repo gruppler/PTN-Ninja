@@ -111,6 +111,33 @@
             </q-item-section>
           </q-item>
 
+          <!-- Insert Evaluation Marks -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="botSettings[botID].insertEvalMarks" />
+            </q-item-section>
+          </q-item>
+
+          <!-- Normalize Evaluation -->
+          <q-item
+            v-if="'normalizeEvaluation' in botSettings[botID]"
+            tag="label"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{
+                $t("analysis.normalizeEvaluation")
+              }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="botSettings[botID].normalizeEvaluation" />
+            </q-item-section>
+          </q-item>
+
           <!-- PV Limit -->
           <q-input
             type="number"

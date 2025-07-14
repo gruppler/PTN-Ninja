@@ -14,7 +14,6 @@ export default class TiltakCloud extends Bot {
       isInteractive: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
       settings: {
-        log: false,
         maxSuggestedMoves: 5,
         nodes: 1e5,
         movetime: 5e3,

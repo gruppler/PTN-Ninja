@@ -19,10 +19,11 @@ export default class TeiBot extends Bot {
         isTeiOk: false,
       },
       settings: {
-        log: false,
         ssl: false,
         address: "localhost",
         port: 7731,
+        insertEvalMarks: false,
+        normalizeEvaluation: false,
         limitTypes: ["movetime"],
         depth: 10,
         nodes: 1000,
@@ -254,6 +255,13 @@ export default class TeiBot extends Bot {
       this.send("stop");
     }
     return super.analyzeInteractive();
+  }
+
+  normalizeEvaluation(value) {
+    if (this.settings.normalizeEvaluation) {
+      return 100 * Math.tanh(value / 1000);
+    }
+    return value;
   }
 
   //#region handleResponse

@@ -13,7 +13,6 @@ const FIXED_META_KEYS = [
 export default class CustomTeiBot extends TeiBot {
   constructor(id, meta) {
     const settings = {
-      log: false,
       limitTypes: [Object.keys(meta.limitTypes)[0]],
     };
     if (meta.limitTypes.depth) {

@@ -13,7 +13,7 @@ export default class TopazWasm extends Bot {
       isInteractive: false,
       sizeHalfKomis: { 6: [0] },
       settings: {
-        log: false,
+        insertEvalMarks: false,
         limitTypes: ["depth", "movetime"],
         movetime: 5000,
         depth: 12,
@@ -92,6 +92,11 @@ export default class TopazWasm extends Bot {
     });
   }
 
+  //#region normalizeEvaluation
+  normalizeEvaluation(value) {
+    return 100 * Math.tanh(value / 1000);
+  }
+
   //#region handleResponse
   handleResponse(response) {
     if (response.error) {
@@ -101,8 +106,8 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
-    // const initialPlayer = Number(tps.split(" ")[1]);
-    // const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
+    const initialPlayer = Number(tps.split(" ")[1]);
+    const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
 
     const results = {
       hash,
@@ -112,7 +117,7 @@ export default class TopazWasm extends Bot {
           pv,
           depth,
           nodes,
-          evaluation: null,
+          evaluation,
         },
       ],
     };
