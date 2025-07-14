@@ -16,8 +16,8 @@ export function formatEvaluation(value) {
 }
 
 export const defaultLimitTypes = deepFreeze({
-  depth: { min: 1, max: 99, step: 1 },
-  nodes: { min: 1, max: 999999, step: 1000 },
+  depth: { min: 1, max: 100, step: 1 },
+  nodes: { min: 1e3, max: 1e6, step: 1e3 },
   movetime: { min: 100, max: 6e4, step: 100 },
 });
 
