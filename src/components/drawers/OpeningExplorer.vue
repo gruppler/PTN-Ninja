@@ -5,6 +5,7 @@
       v-if="dbMoves"
       v-model="sections.dbMoves"
       header-class="bg-accent"
+      expand-icon-class="fg-inherit"
     >
       <template v-slot:header>
         <q-item-section avatar>
@@ -12,7 +13,7 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
-          <q-item-label v-if="hasDBSettings" caption>
+          <q-item-label v-if="hasDBSettings" class="fg-inherit" caption>
             <div class="q-gutter-xs">
               <q-icon v-if="dbSettings.includeBotGames" name="bot">
                 <tooltip>{{ $t("analysis.includeBotGames") }}</tooltip>
@@ -76,7 +77,7 @@
             </div>
           </q-item-label>
         </q-item-section>
-        <q-item-section side>
+        <q-item-section class="fg-inherit" side>
           <q-btn
             @click.stop="toggleDBSettings"
             icon="settings"
@@ -286,6 +287,7 @@
       :label="$t('analysis.Top Games from Position')"
       icon="top_games"
       header-class="bg-accent"
+      expand-icon-class="fg-inherit"
     >
       <smooth-reflow>
         <q-item v-if="!databases" class="flex-center bg-negative" dark>

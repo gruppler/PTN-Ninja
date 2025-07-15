@@ -4,7 +4,7 @@
       <dialog-header icon="bot" :title="$t(isNew ? 'New Bot' : 'Edit Bot')" />
     </template>
 
-    <q-list v-if="hasReset">
+    <q-list v-if="buffer">
       <q-form ref="form" @submit="submit" greedy>
         <!-- Meta -->
 
@@ -82,6 +82,7 @@
               :label="$t('analysis.min')"
               type="number"
               v-model.number="buffer.meta.limitTypes[type.value].min"
+              :suffix="type.suffix"
               :min="1"
               :max="1e9"
               :disable="!limitTypes.includes(type.value)"
@@ -93,6 +94,7 @@
               :label="$t('analysis.max')"
               type="number"
               v-model.number="buffer.meta.limitTypes[type.value].max"
+              :suffix="type.suffix"
               :min="1"
               :max="1e9"
               :disable="!limitTypes.includes(type.value)"
@@ -104,6 +106,7 @@
               :label="$t('analysis.step')"
               type="number"
               v-model.number="buffer.meta.limitTypes[type.value].step"
+              :suffix="type.suffix"
               :min="1"
               :max="1e9"
               :disable="!limitTypes.includes(type.value)"
@@ -242,11 +245,7 @@ export default {
   components: { BotOptionInput },
   data() {
     return {
-      hasReset: false,
-      buffer: {
-        id: null,
-        meta: {},
-      },
+      buffer: null,
       error: "",
       allSizes: [3, 4, 5, 6, 7, 8],
       limitTypes: [],
@@ -272,7 +271,7 @@ export default {
       return [
         { label: this.$t("analysis.Depth"), value: "depth" },
         { label: this.$t("analysis.Nodes"), value: "nodes" },
-        { label: this.$t("Time"), value: "movetime" },
+        { label: this.$t("Time"), value: "movetime", suffix: "ms" },
       ];
     },
   },
@@ -304,49 +303,59 @@ export default {
       if (this.isNew && !this.botState.isConnected) {
         this.close();
       }
-      this.buffer.id = this.isNew ? uid() : this.bot.id;
-      this.buffer.meta = pick(cloneDeep(this.botMeta), [
-        "name",
-        "author",
-        "version",
-        "connection",
-        "isInteractive",
-        "normalizeEvaluation",
-        "sizeHalfKomis",
-        "limitTypes",
-      ]);
+      const buffer = {
+        id: this.isNew ? uid() : this.bot.id,
+        meta: pick(cloneDeep(this.botMeta), [
+          "name",
+          "author",
+          "version",
+          "connection",
+          "isInteractive",
+          "normalizeEvaluation",
+          "sizeHalfKomis",
+          "limitTypes",
+        ]),
+      };
+
+      // Connection
       if (this.isNew) {
-        this.buffer.meta.connection = pick(this.bot.settings, [
+        buffer.meta.connection = pick(this.bot.settings, [
           "address",
           "port",
           "ssl",
         ]);
-        this.buffer.meta.normalizeEvaluation =
-          this.bot.settings.normalizeEvaluation;
+        buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
       }
+
+      // Limit Types
+      this.limitTypes = Object.keys(buffer.meta.limitTypes);
+      forEach(defaultLimitTypes, (params, type) => {
+        if (!(type in buffer.meta.limitTypes)) {
+          buffer.meta.limitTypes[type] = { ...params };
+        }
+      });
+
+      // Sizes/HalfKomi
+      this.sizes = Object.keys(buffer.meta.sizeHalfKomis).map(Number);
+      this.allSizes.forEach((size) => {
+        if (!(size in buffer.meta.sizeHalfKomis)) {
+          buffer.meta.sizeHalfKomis[size] = [];
+        }
+      });
+
+      // Bot Options
       this.options = Object.keys(this.botMeta.presetOptions || {});
-      this.buffer.meta.presetOptions = {
+      buffer.meta.presetOptions = {
         ...this.botMeta.options,
         ...this.botMeta.presetOptions,
       };
       forEach(this.bot.getOptions(), (value, key) => {
-        if (!("value" in this.buffer.meta.presetOptions[key])) {
-          this.buffer.meta.presetOptions[key].value = value;
+        if (!("value" in buffer.meta.presetOptions[key])) {
+          buffer.meta.presetOptions[key].value = value;
         }
       });
-      this.limitTypes = Object.keys(this.buffer.meta.limitTypes);
-      forEach(defaultLimitTypes, (params, type) => {
-        if (!(type in this.buffer.meta.limitTypes)) {
-          this.buffer.meta.limitTypes[type] = { ...params };
-        }
-      });
-      this.sizes = Object.keys(this.buffer.meta.sizeHalfKomis).map(Number);
-      this.allSizes.forEach((size) => {
-        if (!(size in this.buffer.meta.sizeHalfKomis)) {
-          this.buffer.meta.sizeHalfKomis[size] = [];
-        }
-      });
-      this.hasReset = true;
+
+      this.buffer = buffer;
     },
     async submit() {
       // Validate

@@ -3,6 +3,7 @@
     <q-expansion-item
       v-model="sections.botSuggestions"
       header-class="bg-accent"
+      expand-icon-class="fg-inherit"
     >
       <template v-slot:header>
         <q-item-section avatar>
@@ -10,7 +11,7 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
-          <q-item-label v-if="botID" caption>
+          <q-item-label v-if="botID" class="fg-inherit" caption>
             <template v-if="botMeta.name">
               <span class="text-bold">{{ botMeta.name }}</span>
               <template v-if="botMeta.version">
@@ -31,7 +32,7 @@
         >
           <q-spinner size="sm" />
         </q-item-section>
-        <q-item-section side>
+        <q-item-section class="fg-inherit" side>
           <q-btn
             @click.stop="toggleBotSettings"
             icon="settings"
@@ -251,20 +252,20 @@
                     />
                   </q-item-section>
                 </q-item>
-
-                <!-- Save Bot -->
-                <q-btn
-                  v-if="botState.isConnected"
-                  :to="{ name: 'bot' }"
-                  icon="bot"
-                  :label="$t('tei.Save Bot')"
-                  class="full-width"
-                  color="primary"
-                  stretch
-                  flat
-                />
               </q-list>
             </q-expansion-item>
+
+            <!-- Save Bot -->
+            <q-btn
+              v-if="botState.isConnected"
+              :to="{ name: 'bot' }"
+              icon="bot"
+              :label="$t('tei.Save Bot')"
+              class="full-width"
+              color="primary"
+              stretch
+              flat
+            />
           </template>
           <!-- Disconnect -->
           <q-btn
@@ -351,12 +352,16 @@
             </q-btn>
             <span
               v-if="botState.isAnalyzingGame && botState.analyzingPly"
-              class="absolute-left q-ml-sm"
+              @click.stop="goToAnalysisPly"
+              class="absolute-left q-pl-sm cursor-pointer"
+              :class="{
+                highlight: $store.state.ui.theme.primaryDark,
+                dim: !$store.state.ui.theme.primaryDark,
+              }"
             >
               <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
               <PlyChip
                 :ply="botState.analyzingPly"
-                @click.stop="goToAnalysisPly"
                 no-branches
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
@@ -393,12 +398,16 @@
             />
             <span
               v-if="botState.isAnalyzingPosition && botState.analyzingPly"
-              class="absolute-left q-ml-sm"
+              @click.stop="goToAnalysisPly"
+              class="absolute-left q-pl-sm cursor-pointer"
+              :class="{
+                highlight: $store.state.ui.theme.primaryDark,
+                dim: !$store.state.ui.theme.primaryDark,
+              }"
             >
               <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
               <PlyChip
                 :ply="botState.analyzingPly"
-                @click.stop="goToAnalysisPly"
                 no-branches
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
@@ -478,7 +487,7 @@
                 <q-btn
                   @click="
                     autoScrollLog = true;
-                    scrollLog(true);
+                    scrollLog();
                   "
                   icon="to_bottom"
                   color="ui"
@@ -681,12 +690,12 @@ export default {
       };
       this.bot.applyOptions();
     },
-    async scrollLog(instant) {
+    async scrollLog() {
       await this.$nextTick();
       if (this.$refs.botLog && this.botSettings[this.botID].log) {
         this.$refs.botLog.scrollTo({
           top: this.$refs.botLog.scrollHeight,
-          behavior: instant ? "instant" : "smooth",
+          behavior: "instant",
         });
       }
     },
@@ -743,10 +752,10 @@ export default {
       this.botSettings = cloneDeep(this.$store.state.analysis.botSettings);
     },
     botSettings: {
-      handler(settings, oldSettings) {
+      handler(settings) {
         this.$store.dispatch("analysis/SET", ["botSettings", settings]);
         if (settings[this.botID].log) {
-          this.scrollLog(true);
+          this.scrollLog();
         }
       },
       deep: true,
