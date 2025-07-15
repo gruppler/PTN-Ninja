@@ -109,8 +109,10 @@ export default class TiltakCloud extends Bot {
         }
       ),
     };
-    if (results.suggestions[0].pv.length) {
-      return super.storeResults(results);
+
+    if (this.onComplete) {
+      this.onComplete(results);
     }
+    return results;
   }
 }

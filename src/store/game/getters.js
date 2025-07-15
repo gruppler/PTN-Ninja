@@ -19,7 +19,7 @@ export const uniqueName =
     return name;
   };
 
-export const disabledOptions = (state) => {
+export const disabledOptions = () => {
   const game = Vue.prototype.$game;
   const disabled = Object.keys(parseURLparams(router.currentRoute).state);
   if (game.config.disableFlatCounts) {
@@ -40,3 +40,18 @@ export const isValidSquare = () => (square) => {
     return game.board.isValidSquare(square);
   }
 };
+
+export const precedingPlies =
+  (state) =>
+  (plyID, isDone = false) => {
+    const game = Vue.prototype.$game;
+    const ply = game.plies[plyID];
+    if (!ply) {
+      return [];
+    }
+    const branch = ply.branch;
+    return game.plies
+      .slice(0, plyID + 1 * isDone)
+      .filter((p) => p && p.isInBranch(branch))
+      .map((p) => state.ptn.allPlies[p.id]);
+  };

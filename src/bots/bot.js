@@ -274,6 +274,10 @@ export default class Bot {
       : this.game.ptn.branchPlies;
   }
 
+  getPrecedingPlies(plyID, isDone) {
+    return store.getters["game/precedingPlies"](plyID, isDone);
+  }
+
   get isGameEnd() {
     return this.game.position.isGameEnd && !this.game.position.isGameEndDefault;
   }
@@ -384,13 +388,13 @@ export default class Bot {
   }
 
   //#region validatePosition
-  validatePosition(tps, plyIndex) {
+  validatePosition(tps, plyID) {
     let success = {
       isNewGame: false,
       halfKomi: this.halfKomi,
     };
 
-    if (!tps && isNumber(plyIndex)) {
+    if ((!tps && !isNumber(plyID)) || !(plyID in this.game.ptn.allPlies)) {
       // Validate arguments
       success = false;
     } else if (
@@ -490,7 +494,7 @@ export default class Bot {
 
     return this.queryPosition(
       tps,
-      this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+      this.game.position.boardPly ? this.game.position.boardPly.id : null
     );
   }
 
@@ -502,9 +506,11 @@ export default class Bot {
         return false;
       }
 
+      const tps = this.tps;
+      const ply = this.ply;
       const state = {
-        tps: this.tps,
-        analyzingPly: this.ply,
+        tps,
+        analyzingPly: ply,
         isRunning: true,
         isAnalyzingPosition: true,
         progress: 0,
@@ -539,10 +545,11 @@ export default class Bot {
       };
 
       const results = await this.queryPosition(
-        this.tps,
-        this.game.position.plyIndex - 1 * !this.game.position.plyIsDone
+        tps,
+        this.game.position.boardPly ? this.game.position.boardPly.id : null
       );
       if (results) {
+        this.storeResults(results);
         resolve(results);
       } else {
         reject();
@@ -569,14 +576,20 @@ export default class Bot {
         for await (const result of asyncPool(
           concurrency,
           positions,
-          (position) => {
+          async (position) => {
             if (this.state.isAnalyzingGame) {
               const state = { tps: position.tps };
               if (concurrency === 1) {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
               }
               this.setState(state);
-              return this.queryPosition(position.tps);
+              const results = await this.queryPosition(
+                position.tps,
+                position.plyID
+              );
+              if (results) {
+                this.storeResults(results);
+              }
             }
           }
         )) {

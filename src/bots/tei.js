@@ -50,18 +50,20 @@ export default class TeiBot extends Bot {
     return url;
   }
 
-  getTeiPosition(tps, plyIndex) {
+  getTeiPosition(tps, plyID) {
     let posMessage = "position";
-    if (isNumber(plyIndex)) {
-      tps = this.getInitTPS();
-      if (tps) {
-        posMessage += " tps " + tps;
+    if (isNumber(plyID)) {
+      const initTPS = this.getInitTPS();
+      if (initTPS) {
+        posMessage += " tps " + initTPS;
       } else {
         posMessage += " startpos";
       }
       posMessage += " moves ";
-      const plies = this.game.ptn.branchPlies
-        .slice(0, 1 + plyIndex)
+      const plies = this.getPrecedingPlies(
+        plyID,
+        tps === this.game.ptn.allPlies[plyID].tpsAfter
+      )
         .map((ply) => ply.text)
         .join(" ");
       if (plies) {
@@ -192,10 +194,10 @@ export default class TeiBot extends Bot {
   }
 
   //#region queryPosition
-  async queryPosition(tps, plyIndex) {
+  async queryPosition(tps, plyID) {
     return new Promise((resolve, reject) => {
       // Validate size/komi
-      const init = super.validatePosition(tps, plyIndex);
+      const init = super.validatePosition(tps, plyID);
       if (!init) {
         reject();
         return false;
@@ -221,13 +223,13 @@ export default class TeiBot extends Bot {
         this.send("isready");
         this.onReady = () => {
           this.onReady = null;
-          this.queryPosition(tps, plyIndex);
+          this.queryPosition(tps, plyID);
         };
         return true;
       }
 
       // Set position
-      this.send(this.getTeiPosition(tps, plyIndex));
+      this.send(this.getTeiPosition(tps, plyID));
 
       // Go
       if (this.isInteractiveEnabled) {
@@ -392,6 +394,10 @@ export default class TeiBot extends Bot {
     } else if (response.startsWith("bestmove")) {
       // Search ended
       const state = { isReady: true };
+      const results = {
+        tps,
+        suggestions: [{ pv: [response.substr(9)] }],
+      };
       if (this.isInteractiveEnabled) {
         if (this.state.tps === this.state.nextTPS) {
           // No position queued
@@ -400,19 +406,15 @@ export default class TeiBot extends Bot {
         } else {
           state.tps = this.state.nextTPS;
         }
-      } else {
-        super.storeResults({
-          tps,
-          suggestions: [{ pv: [response.substr(9)] }],
-        });
       }
       if (!this.isInteractiveEnabled && !this.state.isAnalyzingGame) {
         state.isRunning = false;
       }
-      if (this.onComplete) {
-        this.onComplete();
-      }
       this.setState(state);
+      if (this.onComplete) {
+        this.onComplete(results);
+      }
+      return results;
     } else if (response.startsWith("info") && tps) {
       // Parse Results
       this.setState({ isRunning: true });
@@ -481,7 +483,7 @@ export default class TeiBot extends Bot {
                   (Number(token) > 0 ? 1 : -1) *
                   (initialPlayer === 1 ? 1 : -1);
                 break;
-              case "forced":
+              case "solved":
                 if (token === "draw") {
                   results.suggestions[i].evaluation = 0;
                 } else if (token === "win") {

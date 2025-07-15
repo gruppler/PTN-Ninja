@@ -121,11 +121,11 @@ export default class TopazWasm extends Bot {
         },
       ],
     };
-    super.storeResults(results);
 
     if (this.onComplete) {
       this.onComplete(results);
     }
+    return results;
   }
 
   //#region terminate
