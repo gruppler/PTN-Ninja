@@ -237,6 +237,9 @@ export const DELETE_PLY = (state, plyID) => {
 export const INSERT_PLY = (state, ply) => {
   const game = Vue.prototype.$game;
   if (game) {
+    if (state.selected.moveset.length) {
+      game.board.cancelMove();
+    }
     game.insertPly(ply, false, false);
   }
 };
@@ -261,6 +264,9 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
       } else {
         throw "Invalid line number";
       }
+    }
+    if (state.selected.moveset.length) {
+      game.board.cancelMove();
     }
     plies = game.insertPlies(plies, prev);
     postMessage(
