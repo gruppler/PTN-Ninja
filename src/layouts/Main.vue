@@ -252,24 +252,74 @@
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
-    <q-footer class="bg-ui">
-      <Scrubber />
-      <q-toolbar
-        v-show="isHighlighting || isEditingTPS || $store.state.ui.showControls"
-        class="footer-toolbar"
-      >
-        <Highlighter
-          v-if="isHighlighting"
-          class="justify-around items-center"
-          style="width: 100%; max-width: 500px; margin: 0 auto"
-        />
-        <PieceSelector
-          v-else-if="isEditingTPS"
-          class="justify-around items-center"
-          style="width: 100%; max-width: 500px; margin: 0 auto"
-        />
-        <PlayControls ref="playControls" v-else />
-      </q-toolbar>
+    <q-footer class="bg-panel">
+      <q-btn
+        v-if="
+          hasAnalysis &&
+          $q.screen.height >= singleWidth &&
+          (botState.isRunning || botSuggestion)
+        "
+        @click="showToolbarAnalysis = !showToolbarAnalysis"
+        :icon="showToolbarAnalysis ? 'down' : 'up'"
+        class="toolbar-analysis-toggle dimmed-btn absolute"
+        :ripple="false"
+        :color="$store.state.ui.theme.secondaryDark ? 'textLight' : 'textDark'"
+        dense
+        flat
+      />
+      <smooth-reflow class="relative-position">
+        <template
+          v-if="
+            showToolbarAnalysis &&
+            hasAnalysis &&
+            $q.screen.height >= singleWidth &&
+            (botState.isRunning || botSuggestion)
+          "
+        >
+          <q-linear-progress
+            v-show="botState.isRunning"
+            class="analysis-linear-progress"
+            size="2px"
+            :value="botState.progress / 100"
+            :indeterminate="botState.isInteractiveEnabled"
+          />
+          <BotAnalysisItem
+            v-if="botSuggestion"
+            :suggestion="botSuggestion"
+            fixed-height
+          />
+          <AnalysisItemPlaceholder
+            v-else-if="
+              botState.isInteractiveEnabled ||
+              botState.isAnalyzingGame ||
+              botState.tps === this.tps
+            "
+          />
+        </template>
+      </smooth-reflow>
+
+      <div class="relative-position">
+        <Scrubber />
+
+        <q-toolbar
+          v-show="
+            isHighlighting || isEditingTPS || $store.state.ui.showControls
+          "
+          class="footer-toolbar bg-ui"
+        >
+          <Highlighter
+            v-if="isHighlighting"
+            class="justify-around items-center"
+            style="width: 100%; max-width: 500px; margin: 0 auto"
+          />
+          <PieceSelector
+            v-else-if="isEditingTPS"
+            class="justify-around items-center"
+            style="width: 100%; max-width: 500px; margin: 0 auto"
+          />
+          <PlayControls ref="playControls" v-else />
+        </q-toolbar>
+      </div>
     </q-footer>
 
     <router-view ref="dialog" go-back no-route-dismiss />
@@ -308,13 +358,17 @@ import ShareButton from "../components/controls/ShareButton";
 
 // Excluded from Embed layout:
 // import onlineStore from "../store/online";
+import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
+import BotAnalysisItem from "../components/analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../components/analysis/AnalysisItemPlaceholder";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
+import { parsePV } from "../utilities";
 
 import { Platform } from "quasar";
 
@@ -337,6 +391,8 @@ export default {
     BoardToggles,
     ShareButton,
     Chat,
+    BotAnalysisItem,
+    AnalysisItemPlaceholder,
     GameSelector,
     Highlighter,
     PieceSelector,
@@ -386,6 +442,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showText", value]);
+      },
+    },
+    showToolbarAnalysis: {
+      get() {
+        return this.$store.state.ui.showToolbarAnalysis;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", value]);
       },
     },
     textTab: {
@@ -456,6 +520,57 @@ export default {
       return this.user
         ? this.$store.getters["online/playerFromUID"](this.user.uid)
         : 0;
+    },
+    tps() {
+      return this.$store.state.game.position.tps;
+    },
+    botState() {
+      return this.$store.state.analysis.botState;
+    },
+    botSuggestion() {
+      const suggestions = this.$store.state.analysis.botPositions[this.tps];
+      if (suggestions) {
+        return suggestions[0];
+      }
+
+      // Get suggestion from notes
+      const game = this.$store.state.game;
+      const boardPly = game.position.boardPly;
+      if (boardPly) {
+        const ply = boardPly.isDone ? game.position.nextPly : game.position.ply;
+        if (!ply) {
+          return null;
+        }
+        let notes = game.comments.notes[ply.id];
+        const suggestion = {
+          evaluation: null,
+          ply: null,
+          followingPlies: [],
+          time: null,
+        };
+        if (notes) {
+          notes.forEach((note) => {
+            if (suggestion.ply === null && note.pv !== null) {
+              const pv = parsePV(ply.player, ply.color, note.pv[0]);
+              suggestion.ply = pv.splice(0, 1)[0];
+              suggestion.followingPlies = pv;
+            }
+          });
+          notes = game.comments.notes[boardPly.id];
+          if (notes) {
+            notes.forEach((note) => {
+              if (suggestion.evaluation === null && note.evaluation !== null) {
+                suggestion.evaluation = note.evaluation;
+              }
+            });
+          }
+          if (suggestion.ply) {
+            return suggestion;
+          }
+        }
+      }
+
+      return null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -532,7 +647,8 @@ export default {
         this.showText = true;
       } else if (
         event.target.matches(".q-notification.game") ||
-        event.target.matches(".q-notification.game .q-notification__message")
+        event.target.matches(".q-notification.game .q-notification__message") ||
+        event.target.matches(".q-notification.game .q-notification__icon")
       ) {
         this.$refs.gameNotifications.$refs.notifications.hide();
       }
@@ -911,6 +1027,13 @@ export default {
     // }
     // this.$store.registerModule("online", onlineStore);
 
+    // Load analysis functionality
+    if (process.env.DEV && this.$store.state.analysis) {
+      this.$store.unregisterModule("analysis");
+    }
+    this.$store.registerModule("analysis", analysisStore);
+    this.$store.commit("analysis/SET_BOT", this.$store.state.analysis.botID);
+
     // Redirect hash URLs
     if (location.hash.length && !this.$q.platform.is.electron) {
       const url = location.hash.substring(1);
@@ -980,5 +1103,17 @@ export default {
   .q-tab-panel {
     padding: 0;
   }
+}
+
+.analysis-linear-progress {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.toolbar-analysis-toggle {
+  top: -32px;
+  right: 86px;
+  z-index: 1;
 }
 </style>

@@ -152,7 +152,6 @@ export const SAVE_STATE = (state, { game, gameState }) => {
 };
 
 export const SAVE_CONFIG = (state, { game, config }) => {
-  Object.assign(game.config, config);
   let stateGame = state.list.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.config = { ...config };
@@ -238,6 +237,9 @@ export const DELETE_PLY = (state, plyID) => {
 export const INSERT_PLY = (state, ply) => {
   const game = Vue.prototype.$game;
   if (game) {
+    if (state.selected.moveset.length) {
+      game.board.cancelMove();
+    }
     game.insertPly(ply, false, false);
   }
 };
@@ -263,12 +265,13 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
         throw "Invalid line number";
       }
     }
-    game.insertPlies(plies, prev);
+    if (state.selected.moveset.length) {
+      game.board.cancelMove();
+    }
+    plies = game.insertPlies(plies, prev);
     postMessage(
       "INSERT_PLIES",
-      plies.map((ply) =>
-        ply.constructor === Ply ? ply.text : new Ply(ply, {}).text
-      ),
+      plies.map((ply) => ply.text),
       prev
     );
   }

@@ -75,7 +75,7 @@ import Move from "../PTN/Move";
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
 import PlyPreview from "../controls/PlyPreview";
-import PlyClass from "../../Game/PTN/Ply";
+import { parsePV } from "../../utilities";
 
 export default {
   name: "NoteItem",
@@ -126,21 +126,8 @@ export default {
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
     },
-    nextPly(player, color) {
-      if (player === 2 && color === 1) {
-        return { player: 1, color: 1 };
-      }
-      return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
-    },
     formatPV(pv) {
-      let player = this.ply.player;
-      let color = this.ply.color;
-      return pv.map((ply, i) => {
-        if (i) {
-          ({ player, color } = this.nextPly(player, color));
-        }
-        return new PlyClass(ply, { id: null, player, color });
-      });
+      return parsePV(this.ply.player, this.ply.color, pv);
     },
     highlight(pv) {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", pv[0].squares);

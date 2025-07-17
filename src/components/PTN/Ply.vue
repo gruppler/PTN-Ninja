@@ -7,6 +7,7 @@
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
       @click.right.stop.prevent
+      @touchstart.stop.prevent
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
@@ -115,13 +116,15 @@ export default {
   },
   methods: {
     select(ply, isDone = this.position.plyIsDone) {
-      if (this.noClick) {
+      if (this.noClick || this.$store.state.ui.disableNavigation) {
         return;
       }
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
     },
     selectBranch(ply) {
-      this.$store.dispatch("game/SET_TARGET", ply);
+      if (!this.$store.state.ui.disableNavigation) {
+        this.$store.dispatch("game/SET_TARGET", ply);
+      }
     },
   },
 };

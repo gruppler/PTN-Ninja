@@ -1,4 +1,5 @@
 import Linenum from "./PTN/Linenum";
+import Result from "./PTN/Result";
 import Move from "./PTN/Move";
 import Nop from "./PTN/Nop";
 import Ply from "./PTN/Ply";
@@ -520,10 +521,11 @@ export default class GameMutations {
 
   _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     let boardPly = this.board.ply;
+    const tps = this.board.tps;
 
     if (ply.constructor !== Ply) {
-      if (Linenum.test(ply)) {
-        // Silently ignore line numbers
+      if (Linenum.test(ply) || Result.test(ply)) {
+        // Silently ignore line numbers and results
         return;
       }
 
@@ -534,8 +536,12 @@ export default class GameMutations {
             : this.plies.length,
         color: replaceCurrent && boardPly ? boardPly.color : this.board.color,
         player: replaceCurrent && boardPly ? boardPly.player : this.board.turn,
+        beforeTPS: tps,
       });
+    } else {
+      ply.beforeTPS = tps;
     }
+    ply.tpsBefore = this.board.tps;
 
     // Validate
     if (
@@ -741,8 +747,9 @@ export default class GameMutations {
       this.board.dirtyPly(ply.id);
       this.board.setRoads(ply.result.roads || null);
     }
+    ply.tpsAfter = this.board.tps;
 
-    return true;
+    return ply;
   }
 
   insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
@@ -766,10 +773,14 @@ export default class GameMutations {
   }
 
   insertPlies(plies, prev = 0) {
+    const returnedPlies = [];
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
-          this._insertPly(plies[i]);
+          const ply = this._insertPly(plies[i]);
+          if (ply) {
+            returnedPlies.push(ply);
+          }
         } catch (error) {
           console.error(error);
           break;
@@ -782,7 +793,7 @@ export default class GameMutations {
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
       this.board.updateBoardOutput();
-      return true;
+      return returnedPlies;
     });
   }
 

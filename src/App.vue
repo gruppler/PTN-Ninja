@@ -8,6 +8,7 @@
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString, omit } from "lodash";
+import Result from "./Game/PTN/Result";
 
 export default {
   name: "App",
@@ -78,10 +79,6 @@ export default {
         case "GO_TO_PLY":
         case "PREV":
         case "NEXT":
-        case "FIRST":
-        case "LAST":
-        case "UNDO":
-        case "REDO":
         case "PROMOTE_BRANCH":
         case "MAKE_BRANCH_MAIN":
         case "RENAME_BRANCH":
@@ -93,8 +90,12 @@ export default {
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
         case "SET_EVAL":
-          this.$store.dispatch("game/" + data.action, data.value);
+          this.$store.dispatch("game/" + data.action, data.value || {});
           break;
+        case "FIRST":
+        case "LAST":
+        case "UNDO":
+        case "REDO":
         case "TRIM_BRANCHES":
         case "TRIM_TO_BOARD":
         case "TRIM_TO_PLY":
@@ -116,6 +117,9 @@ export default {
         case "FLIP_VERTICAL":
         case "RESET_TRANSFORM":
           this.$store.dispatch("ui/" + data.action);
+          break;
+        case "GET_THEMES":
+          postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
           break;
         default:
           if (data.action) {
@@ -143,16 +147,40 @@ export default {
         if (!position) {
           return;
         }
+
+        let result = null;
+        if (position.ply && position.ply.result) {
+          result = omit(position.ply.result, "roads");
+        } else if (position.isGameEnd) {
+          let resultText;
+          if (position.isGameEndFlats) {
+            if (this.$game.board.flats[0] == this.$game.board.flats[1]) {
+              resultText = "1/2-1/2";
+            } else if (this.$game.board.flats[0] > this.$game.board.flats[1]) {
+              resultText = "F-0";
+            } else {
+              resultText = "0-F";
+            }
+          } else if (this.$game.board.roads && this.$game.board.roads.length) {
+            if (
+              this.$game.board.roads[1].length &&
+              this.$game.board.roads[2].length
+            ) {
+              resultText = position.turn === 1 ? "0-R" : "R-0";
+            } else {
+              resultText = this.$game.board.roads[1].length ? "R-0" : "0-R";
+            }
+          }
+          result = omit(new Result(resultText).output, "roads");
+        }
+
         position = {
           ...position,
           move: position.move ? position.move.linenum.number : null,
           ply: position.ply ? position.ply.text : null,
           prevPly: position.prevPly ? position.prevPly.text : null,
           nextPly: position.nextPly ? position.nextPly.text : null,
-          result:
-            position.ply && position.ply.result
-              ? omit(position.ply.result, "roads")
-              : null,
+          result,
         };
         postMessage("GAME_STATE", position);
       },
