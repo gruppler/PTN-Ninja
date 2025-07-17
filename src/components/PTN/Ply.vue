@@ -116,13 +116,15 @@ export default {
   },
   methods: {
     select(ply, isDone = this.position.plyIsDone) {
-      if (this.noClick) {
+      if (this.noClick || this.$store.state.ui.disableNavigation) {
         return;
       }
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
     },
     selectBranch(ply) {
-      this.$store.dispatch("game/SET_TARGET", ply);
+      if (!this.$store.state.ui.disableNavigation) {
+        this.$store.dispatch("game/SET_TARGET", ply);
+      }
     },
   },
 };
