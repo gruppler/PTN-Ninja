@@ -394,7 +394,11 @@ export default class Bot {
       halfKomi: this.halfKomi,
     };
 
-    if ((!tps && !isNumber(plyID)) || !(plyID in this.game.ptn.allPlies)) {
+    if (
+      !tps ||
+      (this.game.ptn.allPlies.length &&
+        (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
+    ) {
       // Validate arguments
       success = false;
     } else if (
@@ -508,7 +512,7 @@ export default class Bot {
 
       const tps = this.tps;
       const ply = this.ply;
-      const state = {
+      let state = {
         tps,
         analyzingPly: ply,
         isRunning: true,
@@ -530,8 +534,13 @@ export default class Bot {
       }
       this.setState(state);
 
-      this.onComplete = () => {
-        const state = {
+      const results = await this.queryPosition(
+        tps,
+        this.game.position.boardPly ? this.game.position.boardPly.id : null
+      );
+
+      if (results) {
+        state = {
           isAnalyzingPosition: false,
           isRunning: false,
           analyzingPly: null,
@@ -541,14 +550,6 @@ export default class Bot {
           state.timer = null;
         }
         this.setState(state);
-        this.onComplete = null;
-      };
-
-      const results = await this.queryPosition(
-        tps,
-        this.game.position.boardPly ? this.game.position.boardPly.id : null
-      );
-      if (results) {
         this.storeResults(results);
         resolve(results);
       } else {

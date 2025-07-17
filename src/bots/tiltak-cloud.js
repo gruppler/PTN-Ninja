@@ -35,9 +35,9 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region queryPosition
-  async queryPosition(tps) {
+  async queryPosition(tps, plyID) {
     // Validate size/komi
-    const init = super.validatePosition(tps);
+    const init = super.validatePosition(tps, plyID);
     if (!init) {
       return false;
     }

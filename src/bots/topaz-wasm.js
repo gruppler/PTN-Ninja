@@ -64,10 +64,10 @@ export default class TopazWasm extends Bot {
   }
 
   //#region queryPosition
-  async queryPosition(tps) {
+  async queryPosition(tps, plyID) {
     return new Promise((resolve, reject) => {
       // Validate size/komi
-      const init = super.validatePosition(tps);
+      const init = super.validatePosition(tps, plyID);
       if (!init) {
         reject();
         return false;
