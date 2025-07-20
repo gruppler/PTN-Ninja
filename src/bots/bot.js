@@ -69,6 +69,7 @@ export default class Bot {
     this.onReady = null;
     this.onComplete = null;
     this.unwatchPosition = null;
+    this.unwatchScrubbing = null;
 
     forEach(limitTypes, (params, type) => {
       defaults(params, defaultLimitTypes[type]);
@@ -363,7 +364,6 @@ export default class Bot {
   }
 
   onTerminate() {
-    this.isInteractiveEnabled = false;
     const state = {
       isAnalyzingPosition: false,
       isAnalyzingGame: false,
@@ -463,14 +463,36 @@ export default class Bot {
       });
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
-        () => this.analyzeInteractive()
+        () => {
+          if (!store.state.ui.scrubbing) {
+            this.analyzeInteractive();
+          }
+        }
+      );
+      this.unwatchScrubbing = store.watch(
+        (state) => state.ui.scrubbing,
+        (isScrubbing) => {
+          if (isScrubbing) {
+            console.log("Scrubbing started");
+            this.terminate();
+          } else if (this.isInteractiveEnabled) {
+            console.log("Scrubbing ended");
+            this.analyzeInteractive();
+          }
+        }
       );
       if (!this.analyzeInteractive()) {
         this.isInteractiveEnabled = false;
       }
-    } else if (this.unwatchPosition) {
-      this.unwatchPosition();
-      this.unwatchPosition = null;
+    } else {
+      if (this.unwatchPosition) {
+        this.unwatchPosition();
+        this.unwatchPosition = null;
+      }
+      if (this.unwatchScrubbing) {
+        this.unwatchScrubbing();
+        this.unwatchScrubbing = null;
+      }
       this.terminate();
       this.setState({ isInteractiveEnabled: value });
     }
