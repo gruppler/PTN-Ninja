@@ -254,11 +254,7 @@
 
     <q-footer class="bg-panel">
       <q-btn
-        v-if="
-          hasAnalysis &&
-          $q.screen.height >= singleWidth &&
-          (botState.isRunning || botSuggestion)
-        "
+        v-if="hasAnalysis && $q.screen.height >= singleWidth"
         @click="showToolbarAnalysis = !showToolbarAnalysis"
         :icon="showToolbarAnalysis ? 'down' : 'up'"
         class="toolbar-analysis-toggle dimmed-btn absolute"
@@ -272,12 +268,11 @@
           v-if="
             showToolbarAnalysis &&
             hasAnalysis &&
-            $q.screen.height >= singleWidth &&
-            (botState.isRunning || botSuggestion)
+            $q.screen.height >= singleWidth
           "
         >
           <q-linear-progress
-            v-show="botState.isRunning"
+            v-if="botState.isRunning"
             class="analysis-linear-progress"
             size="2px"
             :value="botState.progress / 100"
@@ -287,6 +282,7 @@
             v-if="botSuggestion"
             :suggestion="botSuggestion"
             fixed-height
+            class="toolbar-analysis-height"
           />
           <AnalysisItemPlaceholder
             v-else-if="
@@ -294,6 +290,36 @@
               botState.isAnalyzingGame ||
               botState.tps === this.tps
             "
+            class="toolbar-analysis-height"
+          />
+          <q-item
+            v-else-if="isGameEnd"
+            class="flex-center toolbar-analysis-height"
+          >
+            {{ $t("analysis.gameOver") }}
+          </q-item>
+          <q-btn
+            v-else-if="botMeta.requiresConnect && !botState.isConnected"
+            @click="bot.connect()"
+            :loading="botState.isConnecting"
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width toolbar-analysis-height"
+            color="primary"
+            stretch
+          />
+          <q-btn
+            v-else
+            @click="
+              botState.isAnalyzingPosition ? null : bot.analyzeCurrentPosition()
+            "
+            :loading="botState.isAnalyzingPosition"
+            :disable="!bot.isAnalyzePositionAvailable"
+            class="full-width toolbar-analysis-height"
+            color="primary"
+            icon="board"
+            :label="$t('analysis.Analyze Position')"
+            stretch
           />
         </template>
       </smooth-reflow>
@@ -524,6 +550,18 @@ export default {
     tps() {
       return this.$store.state.game.position.tps;
     },
+    isGameEnd() {
+      return (
+        this.$store.state.game.position.isGameEnd &&
+        !this.$store.state.game.position.isGameEndDefault
+      );
+    },
+    bot() {
+      return this.$store.getters["analysis/bot"];
+    },
+    botMeta() {
+      return this.$store.state.analysis.botMeta;
+    },
     botState() {
       return this.$store.state.analysis.botState;
     },
@@ -535,42 +573,35 @@ export default {
 
       // Get suggestion from notes
       const game = this.$store.state.game;
-      const boardPly = game.position.boardPly;
-      if (boardPly) {
-        const ply = boardPly.isDone ? game.position.nextPly : game.position.ply;
-        if (!ply) {
-          return null;
-        }
-        let notes = game.comments.notes[ply.id];
-        const suggestion = {
-          evaluation: null,
-          ply: null,
-          followingPlies: [],
-          time: null,
-        };
-        if (notes) {
-          notes.forEach((note) => {
-            if (suggestion.ply === null && note.pv !== null) {
-              const pv = parsePV(ply.player, ply.color, note.pv[0]);
-              suggestion.ply = pv.splice(0, 1)[0];
-              suggestion.followingPlies = pv;
-            }
-          });
-          notes = game.comments.notes[boardPly.id];
-          if (notes) {
-            notes.forEach((note) => {
-              if (suggestion.evaluation === null && note.evaluation !== null) {
-                suggestion.evaluation = note.evaluation;
-              }
-            });
+      const tps = this.tps;
+      const suggestion = {
+        evaluation: null,
+        ply: null,
+        followingPlies: [],
+        time: null,
+      };
+      let notes;
+      let note;
+      let ply;
+      for (let id in game.comments.notes) {
+        notes = game.comments.notes[id];
+        ply = game.ptn.allPlies[id];
+        if (suggestion.ply === null && ply.tpsBefore === tps) {
+          note = notes.find((n) => n.pv !== null);
+          if (note) {
+            const pv = parsePV(ply.player, ply.color, note.pv[0]);
+            suggestion.ply = pv.splice(0, 1)[0];
+            suggestion.followingPlies = pv;
           }
-          if (suggestion.ply) {
-            return suggestion;
+        } else if (suggestion.evaluation === null && ply.tpsAfter === tps) {
+          note = notes.find((n) => n.evaluation !== null);
+          if (note) {
+            suggestion.evaluation = note.evaluation;
           }
         }
       }
 
-      return null;
+      return suggestion.ply ? suggestion : null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
@@ -1115,5 +1146,8 @@ export default {
   top: -32px;
   right: 86px;
   z-index: 1;
+}
+.toolbar-analysis-height {
+  height: 108px;
 }
 </style>
