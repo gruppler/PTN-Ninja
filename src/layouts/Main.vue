@@ -254,11 +254,7 @@
 
     <q-footer class="bg-panel">
       <q-btn
-        v-if="
-          hasAnalysis &&
-          $q.screen.height >= singleWidth &&
-          (botState.isRunning || botSuggestion)
-        "
+        v-if="hasAnalysis && $q.screen.height >= singleWidth"
         @click="showToolbarAnalysis = !showToolbarAnalysis"
         :icon="showToolbarAnalysis ? 'down' : 'up'"
         class="toolbar-analysis-toggle dimmed-btn absolute"
@@ -268,32 +264,64 @@
         flat
       />
       <smooth-reflow class="relative-position">
-        <template
-          v-if="
-            showToolbarAnalysis &&
-            hasAnalysis &&
-            $q.screen.height >= singleWidth &&
-            (botState.isRunning || botSuggestion)
-          "
-        >
-          <q-linear-progress
-            v-show="botState.isRunning"
-            class="analysis-linear-progress"
-            size="2px"
-            :value="botState.progress / 100"
-            :indeterminate="botState.isInteractiveEnabled"
-          />
-          <BotAnalysisItem
-            v-if="botSuggestion"
-            :suggestion="botSuggestion"
-            fixed-height
-          />
-          <AnalysisItemPlaceholder
-            v-else-if="
-              botState.isInteractiveEnabled ||
-              botState.isAnalyzingGame ||
-              botState.tps === this.tps
+        <template v-if="showToolbarAnalysis">
+          <template
+            v-if="
+              hasAnalysis &&
+              $q.screen.height >= singleWidth &&
+              (botState.isRunning || botSuggestion)
             "
+          >
+            <q-linear-progress
+              v-show="botState.isRunning"
+              class="analysis-linear-progress"
+              size="2px"
+              :value="botState.progress / 100"
+              :indeterminate="botState.isInteractiveEnabled"
+            />
+            <BotAnalysisItem
+              v-if="botSuggestion"
+              :suggestion="botSuggestion"
+              fixed-height
+              class="toolbar-analysis-height"
+            />
+            <AnalysisItemPlaceholder
+              v-else-if="
+                botState.isInteractiveEnabled ||
+                botState.isAnalyzingGame ||
+                botState.tps === this.tps
+              "
+              class="toolbar-analysis-height"
+            />
+          </template>
+          <q-item
+            v-else-if="isGameEnd"
+            class="flex-center toolbar-analysis-height"
+          >
+            {{ $t("analysis.gameOver") }}
+          </q-item>
+          <q-btn
+            v-else-if="botMeta.requiresConnect && !botState.isConnected"
+            @click="bot.connect()"
+            :loading="botState.isConnecting"
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width toolbar-analysis-height"
+            color="primary"
+            stretch
+          />
+          <q-btn
+            v-else
+            @click="
+              botState.isAnalyzingPosition ? null : bot.analyzeCurrentPosition()
+            "
+            :loading="botState.isAnalyzingPosition"
+            :disable="!bot.isAnalyzePositionAvailable"
+            class="full-width toolbar-analysis-height"
+            color="primary"
+            icon="board"
+            :label="$t('analysis.Analyze Position')"
+            stretch
           />
         </template>
       </smooth-reflow>
@@ -523,6 +551,18 @@ export default {
     },
     tps() {
       return this.$store.state.game.position.tps;
+    },
+    isGameEnd() {
+      return (
+        this.$store.state.game.position.isGameEnd &&
+        !this.$store.state.game.position.isGameEndDefault
+      );
+    },
+    bot() {
+      return this.$store.getters["analysis/bot"];
+    },
+    botMeta() {
+      return this.$store.state.analysis.botMeta;
     },
     botState() {
       return this.$store.state.analysis.botState;
@@ -1115,5 +1155,8 @@ export default {
   top: -32px;
   right: 86px;
   z-index: 1;
+}
+.toolbar-analysis-height {
+  height: 108px;
 }
 </style>
