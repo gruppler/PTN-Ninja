@@ -4,7 +4,6 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
-import Ply from "../../Game/PTN/Ply";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -63,6 +62,12 @@ export const SET_GAME = (state, game) => {
   state.ptn = game.board.output.ptn;
   state.selected = game.board.output.selected;
   state.editingTPS = editingTPS;
+
+  // Stop full-game analysis if running
+  const bot = Vue.prototype.$bot;
+  if (bot && bot.state.isAnalyzingGame) {
+    bot.terminate();
+  }
 };
 
 export const ADD_GAME = (state, game) => {
