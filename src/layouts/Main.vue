@@ -264,36 +264,34 @@
         flat
       />
       <smooth-reflow class="relative-position">
-        <template v-if="showToolbarAnalysis">
-          <template
-            v-if="
-              hasAnalysis &&
-              $q.screen.height >= singleWidth &&
-              (botState.isRunning || botSuggestion)
+        <template
+          v-if="
+            showToolbarAnalysis &&
+            hasAnalysis &&
+            $q.screen.height >= singleWidth
+          "
+        >
+          <q-linear-progress
+            v-if="botState.isRunning"
+            class="analysis-linear-progress"
+            size="2px"
+            :value="botState.progress / 100"
+            :indeterminate="botState.isInteractiveEnabled"
+          />
+          <BotAnalysisItem
+            v-if="botSuggestion"
+            :suggestion="botSuggestion"
+            fixed-height
+            class="toolbar-analysis-height"
+          />
+          <AnalysisItemPlaceholder
+            v-else-if="
+              botState.isInteractiveEnabled ||
+              botState.isAnalyzingGame ||
+              botState.tps === this.tps
             "
-          >
-            <q-linear-progress
-              v-show="botState.isRunning"
-              class="analysis-linear-progress"
-              size="2px"
-              :value="botState.progress / 100"
-              :indeterminate="botState.isInteractiveEnabled"
-            />
-            <BotAnalysisItem
-              v-if="botSuggestion"
-              :suggestion="botSuggestion"
-              fixed-height
-              class="toolbar-analysis-height"
-            />
-            <AnalysisItemPlaceholder
-              v-else-if="
-                botState.isInteractiveEnabled ||
-                botState.isAnalyzingGame ||
-                botState.tps === this.tps
-              "
-              class="toolbar-analysis-height"
-            />
-          </template>
+            class="toolbar-analysis-height"
+          />
           <q-item
             v-else-if="isGameEnd"
             class="flex-center toolbar-analysis-height"
@@ -575,7 +573,7 @@ export default {
 
       // Get suggestion from notes
       const game = this.$store.state.game;
-      const tps = game.position.tps;
+      const tps = this.tps;
       const suggestion = {
         evaluation: null,
         ply: null,
