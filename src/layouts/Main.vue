@@ -575,42 +575,35 @@ export default {
 
       // Get suggestion from notes
       const game = this.$store.state.game;
-      const boardPly = game.position.boardPly;
-      if (boardPly) {
-        const ply = boardPly.isDone ? game.position.nextPly : game.position.ply;
-        if (!ply) {
-          return null;
-        }
-        let notes = game.comments.notes[ply.id];
-        const suggestion = {
-          evaluation: null,
-          ply: null,
-          followingPlies: [],
-          time: null,
-        };
-        if (notes) {
-          notes.forEach((note) => {
-            if (suggestion.ply === null && note.pv !== null) {
-              const pv = parsePV(ply.player, ply.color, note.pv[0]);
-              suggestion.ply = pv.splice(0, 1)[0];
-              suggestion.followingPlies = pv;
-            }
-          });
-          notes = game.comments.notes[boardPly.id];
-          if (notes) {
-            notes.forEach((note) => {
-              if (suggestion.evaluation === null && note.evaluation !== null) {
-                suggestion.evaluation = note.evaluation;
-              }
-            });
+      const tps = game.position.tps;
+      const suggestion = {
+        evaluation: null,
+        ply: null,
+        followingPlies: [],
+        time: null,
+      };
+      let notes;
+      let note;
+      let ply;
+      for (let id in game.comments.notes) {
+        notes = game.comments.notes[id];
+        ply = game.ptn.allPlies[id];
+        if (suggestion.ply === null && ply.tpsBefore === tps) {
+          note = notes.find((n) => n.pv !== null);
+          if (note) {
+            const pv = parsePV(ply.player, ply.color, note.pv[0]);
+            suggestion.ply = pv.splice(0, 1)[0];
+            suggestion.followingPlies = pv;
           }
-          if (suggestion.ply) {
-            return suggestion;
+        } else if (suggestion.evaluation === null && ply.tpsAfter === tps) {
+          note = notes.find((n) => n.evaluation !== null);
+          if (note) {
+            suggestion.evaluation = note.evaluation;
           }
         }
       }
 
-      return null;
+      return suggestion.ply ? suggestion : null;
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
