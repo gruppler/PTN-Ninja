@@ -359,6 +359,10 @@ export default class Bot {
   //#region terminate
   // Stop searching
   terminate() {
+    this.onTerminate();
+  }
+
+  onTerminate() {
     this.isInteractiveEnabled = false;
     const state = {
       isAnalyzingPosition: false,

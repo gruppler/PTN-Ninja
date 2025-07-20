@@ -119,7 +119,7 @@ export default class TeiBot extends Bot {
         if (this.state.isRunning) {
           this.send("stop");
         }
-        super.terminate();
+        super.onTerminate();
       } catch (error) {
         await socket.close();
         this.init();

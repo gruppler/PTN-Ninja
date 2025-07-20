@@ -133,7 +133,7 @@ export default class TopazWasm extends Bot {
     if (worker && this.state.isRunning) {
       try {
         await worker.terminate();
-        super.terminate();
+        super.onTerminate();
         worker = null;
         this.init();
       } catch (error) {

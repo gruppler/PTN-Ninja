@@ -79,9 +79,6 @@ export default class TiltakWasm extends TeiBot {
 
         // Message handling
         worker.onmessage = ({ data }) => {
-          if (this.settings.log) {
-            this.logMessage(data, true);
-          }
           this.receive(data);
         };
 
@@ -99,7 +96,10 @@ export default class TiltakWasm extends TeiBot {
   async terminate() {
     if (worker && this.state.isRunning) {
       try {
-        super.terminate();
+        if (this.state.isRunning) {
+          this.send("stop");
+        }
+        super.onTerminate();
       } catch (error) {
         await worker.terminate();
         this.init();
