@@ -78,13 +78,13 @@ export default class TeiBot extends Bot {
   //#region send/receive
   send(message) {
     if (socket) {
-      socket.send(message);
       super.onSend(message);
+      socket.send(message);
     }
   }
   receive(message) {
-    this.handleResponse(message);
     super.onReceive(message);
+    this.handleResponse(message);
   }
 
   sendAction(name) {
