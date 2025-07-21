@@ -345,6 +345,7 @@ export default class Bot {
   //#region reset
   // Reset status
   reset() {
+    this.isInteractiveEnabled = false;
     this.onReady = null;
     this.setState({
       isReadying: false,
