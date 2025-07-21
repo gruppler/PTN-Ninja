@@ -89,6 +89,17 @@
         </q-item-section>
       </q-item>
 
+      <smooth-reflow>
+        <q-item v-show="!config.ui.disableBoard" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Disable Stone Cycling") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.disableStoneCycling" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Disable Navigation") }}</q-item-label>
@@ -207,6 +218,15 @@
           </q-item-section>
           <q-item-section side>
             <q-toggle v-model="config.ui.showAllBranches" />
+          </q-item-section>
+        </q-item>
+
+        <q-item v-show="!config.ui.disablePTN" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Disable PTN Tools") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.disablePTNTools" />
           </q-item-section>
         </q-item>
       </smooth-reflow>

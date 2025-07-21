@@ -1,5 +1,5 @@
 <template>
-  <recess>
+  <component :is="recess ? 'recess' : 'div'" class="col-grow relative-position">
     <q-scroll-area
       id="ptn-scroll-area"
       class="full-ptn absolute-fit non-selectable"
@@ -35,7 +35,7 @@
       </q-virtual-scroll>
     </q-scroll-area>
     <q-resize-observer @resize="scroll" />
-  </recess>
+  </component>
 </template>
 
 <script>
@@ -47,6 +47,9 @@ import { throttle } from "lodash";
 export default {
   name: "PTN",
   components: { Move, PlyPreview },
+  props: {
+    recess: Boolean,
+  },
   computed: {
     gameExists() {
       return Boolean(this.ptn);
