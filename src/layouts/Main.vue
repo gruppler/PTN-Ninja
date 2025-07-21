@@ -276,7 +276,7 @@
               botSuggestion ||
               botState.isInteractiveEnabled ||
               botState.isAnalyzingGame ||
-              botState.tps === this.tps
+              (botState.isRunning && botState.tps === this.tps)
             "
           >
             <q-linear-progress
