@@ -549,7 +549,7 @@ export default class Bot {
       const timeLimit =
         !this.settings.limitTypes ||
         this.settings.limitTypes.includes("movetime")
-          ? this.settings.moveTime || false
+          ? this.settings.movetime || false
           : false;
       const nodeLimit =
         this.meta.isInteractive &&
@@ -560,13 +560,12 @@ export default class Bot {
 
       if (timeLimit || nodeLimit) {
         const startTime = new Date().getTime();
-
         state.timer = setInterval(() => {
           const timeDelta = new Date().getTime() - startTime;
           let timeProgress = 0;
           let nodeProgress = 0;
           if (timeLimit) {
-            timeProgress = (100 * timeDelta) / movetime;
+            timeProgress = (100 * timeDelta) / timeLimit;
           }
           if (nodeLimit && this.state.nps) {
             nodeProgress = timeDelta / ((10 * nodeLimit) / this.state.nps);
