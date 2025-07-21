@@ -284,7 +284,9 @@
               class="analysis-linear-progress"
               size="2px"
               :value="botState.progress / 100"
-              :indeterminate="botState.isInteractiveEnabled"
+              :indeterminate="
+                botState.isInteractiveEnabled || !botState.progress
+              "
             />
             <BotAnalysisItem
               v-if="botSuggestion"
