@@ -1,6 +1,7 @@
 import store from "./store";
 import { auth, db, functions } from "./boot/firebase.js";
 import { i18n } from "./boot/i18n";
+import Ply from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
 import { omit } from "lodash";
 import { isArray, isFunction, isObject, isString } from "lodash";
@@ -46,6 +47,22 @@ export function deepFreeze(object) {
   }
 
   return Object.freeze(object);
+}
+
+function nextPly(player, color) {
+  if (player === 2 && color === 1) {
+    return { player: 1, color: 1 };
+  }
+  return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
+}
+
+export function parsePV(player, color, pv) {
+  return pv.map((ply, i) => {
+    if (i) {
+      ({ player, color } = nextPly(player, color));
+    }
+    return new Ply(ply, { id: null, player, color });
+  });
 }
 
 export const prompt = ({
@@ -115,7 +132,7 @@ export const notifyError = (error, options = {}) => {
   Notify.create({
     message: formatError(error),
     type: "negative",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
@@ -127,7 +144,7 @@ export const notifySuccess = (success, options = {}) => {
   return Notify.create({
     message: formatSuccess(success),
     type: "positive",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
@@ -140,7 +157,7 @@ export const notifyWarning = (warning, options = {}) => {
     message: formatWarning(warning),
     type: "warning",
     icon: "warning",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textDark" }],
@@ -152,7 +169,7 @@ export const notifyHint = (hint, options = {}) => {
   return Notify.create({
     message: formatHint(hint),
     type: "info",
-    timeout: 0,
+    timeout: 5e3,
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],

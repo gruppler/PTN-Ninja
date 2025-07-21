@@ -1,15 +1,17 @@
 <template>
   <div class="analysis-item" :class="{ animate }">
     <div
+      v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-      :style="{ width: Math.abs(evaluation) + '%' }"
+      :style="{ width: evalPercent + '%' }"
     />
     <q-item
       @mouseover="highlight"
       @mouseout="unhighlight"
       @click="insertPly"
       clickable
+      style="height: 60px"
     >
       <q-item-section>
         <q-item-label>
@@ -22,7 +24,7 @@
           </Ply>
         </q-item-label>
       </q-item-section>
-      <q-item-section side>
+      <q-item-section top side>
         <q-item-label>
           <span class="player-numbers">
             <span
@@ -78,20 +80,37 @@
             </tooltip>
           </span>
         </q-item-label>
-        <q-item-label v-if="count !== null && countLabel">
-          {{ $tc(countLabel, $n(count, "n0")) }}
+        <q-item-label
+          v-if="(count !== null && countLabel) || seconds !== null"
+          caption
+        >
+          <template v-if="count !== null && countLabel">{{
+            $tc(countLabel, $n(count, "n0"))
+          }}</template>
+          <template v-if="count !== null && seconds !== null"> / </template>
+          <template v-if="seconds !== null">
+            {{ $n(seconds, "n0") }}
+            {{ $t("analysis.secondsUnit") }}
+          </template>
         </q-item-label>
       </q-item-section>
     </q-item>
     <q-item
-      v-if="followingPlies && followingPlies.length"
+      v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
       class="q-pt-none"
       @mouseover="highlight"
       @mouseout="unhighlight"
-      @click="insertFollowingPlies()"
-      clickable
+      @click="
+        followingPlies && followingPlies.length > 0
+          ? insertFollowingPlies()
+          : null
+      "
+      :clickable="followingPlies && followingPlies.length > 0"
     >
-      <q-item-label class="small">
+      <q-item-label
+        class="continuation small"
+        :class="{ limited: fixedHeight }"
+      >
         <Ply
           v-for="(fPly, i) in followingPlies"
           :key="i"
@@ -127,6 +146,10 @@ export default {
       type: Number,
       default: null,
     },
+    seconds: {
+      type: Number,
+      default: null,
+    },
     countLabel: String,
     player1Number: {
       type: [Number, String],
@@ -140,6 +163,7 @@ export default {
       type: [Number, String],
       default: null,
     },
+    fixedHeight: Boolean,
     playerNumbersTooltip: String,
     followingPlies: Array,
     animate: Boolean,
@@ -147,6 +171,9 @@ export default {
   computed: {
     tps() {
       return this.$store.state.game.position.tps;
+    },
+    evalPercent() {
+      return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
     },
   },
   methods: {
@@ -194,6 +221,13 @@ export default {
       background-color $generic-hover-transition;
   }
 
+  .continuation {
+    &.limited {
+      overflow: hidden;
+      height: 2em;
+    }
+  }
+
   .player-numbers {
     white-space: nowrap;
     font-weight: bold;
@@ -221,7 +255,6 @@ export default {
       }
     }
     .middle,
-    .player2,
     .depth {
       background-color: $dim;
       body.body--light & {

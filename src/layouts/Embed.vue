@@ -1,6 +1,6 @@
 <template>
   <q-layout v-if="gameExists" class="non-selectable" view="lHh LpR lFr">
-    <q-header elevated class="bg-ui">
+    <q-header v-if="$store.state.ui.showHeader" elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
           v-if="!$store.state.ui.disablePTN"
@@ -243,6 +243,12 @@ export default {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
     },
+    disabledOptions() {
+      return this.$store.getters["game/disabledOptions"];
+    },
+    isDialogShowing() {
+      return !["local", "game"].includes(this.$route.name);
+    },
     panelWidth() {
       const largeWidth = 1600;
       let width = 300;
@@ -312,29 +318,28 @@ export default {
       return $store.dispatch("game/REDO");
     },
     uiShortkey({ srcKey }) {
-      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      if (!this.disabledOptions.includes(srcKey)) {
+        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      }
     },
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
         case "gameInfo":
-          if (this.$route.name !== "info-view") {
-            this.$router.push({ name: "info-view" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
+          if (this.$store.state.ui.showHeader) {
+            if (this.$route.name !== "info-view") {
+              this.$router.push({ name: "info-view" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
           }
           break;
         case "editPTN":
-          if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "qrCode":
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
+          if (!this.$store.state.ui.disablePTN) {
+            if (this.$route.name !== "edit") {
+              this.$router.push({ name: "edit" });
+            } else {
+              this.$refs.dialog.$children[0].hide();
+            }
           }
           break;
       }

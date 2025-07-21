@@ -151,6 +151,11 @@ const routes = [
         component: () => import("../dialogs/AddGame"),
       },
       {
+        name: "bot",
+        path: "/bot",
+        component: () => import("../dialogs/EditBot"),
+      },
+      {
         name: "close",
         path: "/close",
         component: () => import("../dialogs/CloseGames"),

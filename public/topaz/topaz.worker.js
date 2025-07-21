@@ -8,18 +8,16 @@ async function init_wasm_in_worker() {
   self.onmessage = async ({ data: options }) => {
     try {
       // Evaluate
-      // console.log("Analyzing position", options);
-      let result = evaluate(
+      const result = evaluate(
         options.depth,
-        options.timeBudget,
+        options.movetime / 1e3,
         options.size,
         options.komi,
         options.tps
       );
-      // console.log(result);
 
       // Check result for errors
-      let matches = result.match(
+      const matches = result.match(
         /info depth (\d+) score cp (-?\d+) nodes (\d+) pv (.+)/
       );
       if (!matches) {
@@ -27,7 +25,7 @@ async function init_wasm_in_worker() {
       }
 
       // Format result
-      let [, depth, score, nodes, pv] = matches;
+      const [, depth, score, nodes, pv] = matches;
       const output = {
         ...options,
         depth: Number(depth),

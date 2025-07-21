@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
-import { isEmpty, isString, throttle } from "lodash";
+import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
@@ -202,6 +202,7 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch, getters }) {
           games[0] = new Game({ tags });
         } catch (error) {}
       }
+      games[0].name = getters.uniqueName(games[0].name);
     }
   }
   if (ptn && games && games.length) {
@@ -637,10 +638,11 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
 export const SET_PLAYER = function ({ commit }, player) {
   const game = Vue.prototype.$game;
   player = Number(player) || null;
-  commit("SAVE_CONFIG", {
-    game,
-    config: { ...game.config, player },
-  });
+  const config = { ...game.config, player };
+  Object.assign(game.config, config);
+  if (!this.state.ui.embed) {
+    commit("SAVE_CONFIG", { game, config });
+  }
 };
 
 export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {
@@ -714,6 +716,7 @@ export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
+  plies = compact(plies);
   commit("INSERT_PLIES", { plies, prev });
   dispatch("SAVE_CURRENT_GAME", true);
 };
