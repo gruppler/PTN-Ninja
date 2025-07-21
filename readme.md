@@ -353,6 +353,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show unplayed pieces
 
+#### `disableStoneCycling` (default: `false`)
+
+- Disable selecting the last placed stone to cycle its type
+
 #### `disableBoard` (default: `false`)
 
 - Disable board interactions

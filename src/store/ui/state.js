@@ -18,6 +18,7 @@ const defaultState = {
   boardSpace: { width: 0, height: 0 },
   boardTransform: [0, 0],
   disableBoard: false,
+  disableStoneCycling: false,
   disableNavigation: false,
   disablePTN: false,
   disableText: false,

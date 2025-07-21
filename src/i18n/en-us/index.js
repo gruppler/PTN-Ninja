@@ -58,6 +58,7 @@ export default {
   "Disable Navigation": "Disable Navigation",
   "Disable Notes": "Disable Notes",
   "Disable PTN": "Disable PTN",
+  "Disable Stone Cycling": "Disable Stone Cycling",
   "Disable Undo": "Disable Undo",
   Dismiss: "Dismiss",
   Download: "Download",
