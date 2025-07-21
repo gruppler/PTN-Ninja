@@ -1,3 +1,4 @@
+import Vue from "vue";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit, sortBy } from "lodash";
 import { THEMES, boardOnly } from "../../themes";
@@ -19,6 +20,13 @@ export const theme = (state, getters) => (id) => {
     id = state.theme;
   }
   return getters.themes.find((theme) => theme.id === id);
+};
+
+export const isValidSquare = (state) => (square) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    return game.board.isValidSquare(square, false, state.disableStoneCycling);
+  }
 };
 
 export const playerIcon =

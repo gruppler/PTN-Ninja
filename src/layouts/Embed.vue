@@ -1,5 +1,5 @@
 <template>
-  <q-layout v-if="gameExists" class="non-selectable" view="lHh LpR lFr">
+  <q-layout v-if="gameExists" class="non-selectable" :view="viewLayout">
     <q-header v-if="$store.state.ui.showHeader" elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -105,23 +105,41 @@
       persistent
     >
       <div class="absolute-fit column">
-        <PTN-Tools ref="tools">
+        <PTN-Tools v-if="!$store.state.ui.disablePTNTools" ref="tools">
           <ShareButton flat stretch no-menu />
         </PTN-Tools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" />
+          <PTN
+            class="absolute-fit"
+            :recess="!$store.state.ui.disablePTNTools"
+          />
         </div>
-        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
+        <q-toolbar
+          v-if="
+            (!$store.state.ui.disableUndo &&
+              !$store.state.ui.disableNavigation) ||
+            !$store.state.ui.disablePTNTools
+          "
+          class="footer-toolbar bg-ui q-pa-none"
+        >
           <UndoButtons
             v-if="
               !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
             "
+            :class="{ 'full-width': $store.state.ui.disablePTNTools }"
             spread
             stretch
             flat
             unelevated
           />
-          <EvalButtons class="full-width" spread stretch flat unelevated />
+          <EvalButtons
+            v-if="!$store.state.ui.disablePTNTools"
+            class="full-width"
+            spread
+            stretch
+            flat
+            unelevated
+          />
         </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
@@ -216,6 +234,11 @@ export default {
     };
   },
   computed: {
+    viewLayout() {
+      return this.$store.state.ui.disablePTNTools
+        ? "hHh LpR lFr"
+        : "lHh LpR lFr";
+    },
     gameExists() {
       return Boolean(this.$store.state.game.name);
     },

@@ -3,7 +3,7 @@ import Ply from "../PTN/Ply";
 import { isString, last } from "lodash";
 
 export default class BoardIX {
-  isValidSquare(square, assumeSoloCap = false) {
+  isValidSquare(square, assumeSoloCap = false, disableStoneCycling = false) {
     square = this.getSquare(square);
     const piece = square.piece;
 
@@ -85,6 +85,7 @@ export default class BoardIX {
       }
 
       if (
+        !disableStoneCycling &&
         this.ply &&
         piece &&
         piece.ply === this.ply &&
