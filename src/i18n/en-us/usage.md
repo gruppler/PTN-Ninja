@@ -297,9 +297,15 @@ PTN Ninja currently offers access to three built-in bots: **Tiltak (cloud)**, **
   - can take full advantage of your hardware
   - facilitates bot development
 
+::: info Note
+
+A TEI connection can be saved as custom bot. This enables quick switching between different connection settings and allows you to specify supported size/komi and search limit types, as well as predefine any bot options specified by the TEI protocol.
+
 :::
 
-- To switch between bots and change their settings, **click** the 'cog' icon in the Bot Suggestions section.
+:::
+
+- To change a bot's settings, **click** the 'cog' icon in the Bot Suggestions section.
 - To analyze the current branch, disable "Show All Branches," then **click** "Analyze Branch" button
 - To analyze the entire game (including all branches), enable "Show All Branches," then **click** "Analyze Game" button
 
@@ -309,11 +315,11 @@ PTN Ninja currently offers access to three built-in bots: **Tiltak (cloud)**, **
 
 When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, this button will be disabled.
 
-After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes and annotation marks. The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
+After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes (and evaluation marks, if enabled). The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
 
 The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
 
-The annotation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
+The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
 
 :::
 
