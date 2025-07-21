@@ -232,7 +232,7 @@
 import BotOptionInput from "../components/analysis/BotOptionInput";
 
 import { uid } from "quasar";
-import { cloneDeep, difference, forEach, omit, pick } from "lodash";
+import { cloneDeep, difference, forEach, isEqual, omit, pick } from "lodash";
 import { defaultLimitTypes } from "../bots/bot";
 
 const halfKomis = [];
@@ -370,6 +370,7 @@ export default {
       }
 
       // Sanitize
+      this.$store.dispatch;
       forEach(this.buffer.meta.sizeHalfKomis, (komi, size) => {
         if (this.sizes.includes(Number(size)) && komi.length === 0) {
           komi.push(0);
@@ -381,6 +382,29 @@ export default {
       buffer.meta.sizeHalfKomis = pick(buffer.meta.sizeHalfKomis, this.sizes);
       buffer.meta.options = omit(buffer.meta.presetOptions, this.options);
       buffer.meta.presetOptions = pick(buffer.meta.presetOptions, this.options);
+
+      // Sanitize Limit Types
+      if (this.$store.state.analysis.botSettings[buffer.id]) {
+        let limitTypesEnabled;
+        if (this.limitTypes.length > 1) {
+          limitTypesEnabled = this.bot.settings.limiTypes.filter(
+            (type) => type in buffer.meta.limitTypes
+          );
+          if (limitTypesEnabled.length === 0) {
+            limitTypesEnabled = this.limitTypes[0];
+          }
+        } else {
+          limitTypesEnabled = this.limitTypes;
+        }
+        const settings = cloneDeep(this.$store.state.analysis.botSettings);
+        if (
+          settings[buffer.id] &&
+          !isEqual(this.bot.settings.limitTypes, limitTypesEnabled)
+        ) {
+          settings[buffer.id].limitTypes = limitTypesEnabled;
+          this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        }
+      }
 
       if (this.isNew) {
         buffer.created = new Date().getTime();

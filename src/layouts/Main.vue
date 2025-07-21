@@ -271,27 +271,29 @@
             $q.screen.height >= singleWidth
           "
         >
-          <q-linear-progress
-            v-if="botState.isRunning"
-            class="analysis-linear-progress"
-            size="2px"
-            :value="botState.progress / 100"
-            :indeterminate="botState.isInteractiveEnabled"
-          />
-          <BotAnalysisItem
-            v-if="botSuggestion"
-            :suggestion="botSuggestion"
-            fixed-height
-            class="toolbar-analysis-height"
-          />
-          <AnalysisItemPlaceholder
-            v-else-if="
+          <template
+            v-if="
+              botSuggestion ||
               botState.isInteractiveEnabled ||
               botState.isAnalyzingGame ||
-              botState.tps === this.tps
+              (botState.isRunning && botState.tps === this.tps)
             "
-            class="toolbar-analysis-height"
-          />
+          >
+            <q-linear-progress
+              v-if="botState.isRunning"
+              class="analysis-linear-progress"
+              size="2px"
+              :value="botState.progress / 100"
+              :indeterminate="botState.isInteractiveEnabled"
+            />
+            <BotAnalysisItem
+              v-if="botSuggestion"
+              :suggestion="botSuggestion"
+              fixed-height
+              class="toolbar-analysis-height"
+            />
+            <AnalysisItemPlaceholder v-else class="toolbar-analysis-height" />
+          </template>
           <q-item
             v-else-if="isGameEnd"
             class="flex-center toolbar-analysis-height"
@@ -308,19 +310,41 @@
             color="primary"
             stretch
           />
-          <q-btn
-            v-else
-            @click="
-              botState.isAnalyzingPosition ? null : bot.analyzeCurrentPosition()
-            "
-            :loading="botState.isAnalyzingPosition"
-            :disable="!bot.isAnalyzePositionAvailable"
-            class="full-width toolbar-analysis-height"
-            color="primary"
-            icon="board"
-            :label="$t('analysis.Analyze Position')"
-            stretch
-          />
+          <q-btn-group v-else spread stretch>
+            <q-btn
+              @click="
+                botState.isAnalyzingPosition
+                  ? null
+                  : bot.analyzeCurrentPosition()
+              "
+              :loading="botState.isAnalyzingPosition"
+              :disable="!bot.isAnalyzePositionAvailable"
+              class="full-width toolbar-analysis-height"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+            />
+            <q-btn
+              @click="bot.analyzeGame()"
+              :loading="botState.isAnalyzingGame"
+              :disable="!bot.isAnalyzeGameAvailable"
+              class="full-width"
+              color="primary"
+            >
+              <q-icon
+                :name="showAllBranches ? 'moves' : 'branch'"
+                :class="{ 'rotate-180': !showAllBranches }"
+                left
+              />
+              {{
+                $t(
+                  showAllBranches
+                    ? "analysis.Analyze Game"
+                    : "analysis.Analyze Branch"
+                )
+              }}
+            </q-btn>
+          </q-btn-group>
         </template>
       </smooth-reflow>
 
@@ -555,6 +579,9 @@ export default {
         this.$store.state.game.position.isGameEnd &&
         !this.$store.state.game.position.isGameEndDefault
       );
+    },
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
     },
     bot() {
       return this.$store.getters["analysis/bot"];

@@ -545,16 +545,34 @@ export default class Bot {
         isAnalyzingPosition: true,
         progress: 0,
       };
-      if (
-        this.settings.movetime &&
+
+      const timeLimit =
+        !this.settings.limitTypes ||
+        this.settings.limitTypes.includes("movetime")
+          ? this.settings.moveTime || false
+          : false;
+      const nodeLimit =
+        this.meta.isInteractive &&
         (!this.settings.limitTypes ||
-          this.settings.limitTypes.includes("movetime"))
-      ) {
-        const movetime = this.settings.movetime;
+          this.settings.limitTypes.includes("nodes"))
+          ? this.settings.nodes || false
+          : false;
+
+      if (timeLimit || nodeLimit) {
         const startTime = new Date().getTime();
+
         state.timer = setInterval(() => {
+          const timeDelta = new Date().getTime() - startTime;
+          let timeProgress = 0;
+          let nodeProgress = 0;
+          if (timeLimit) {
+            timeProgress = (100 * timeDelta) / movetime;
+          }
+          if (nodeLimit && this.state.nps) {
+            nodeProgress = timeDelta / ((10 * nodeLimit) / this.state.nps);
+          }
           this.setState({
-            progress: (100 * (new Date().getTime() - startTime)) / movetime,
+            progress: Math.max(timeProgress, nodeProgress),
           });
         }, 250);
       }
