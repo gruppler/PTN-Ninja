@@ -387,7 +387,7 @@ export default {
       if (this.$store.state.analysis.botSettings[buffer.id]) {
         let limitTypesEnabled;
         if (this.limitTypes.length > 1) {
-          limitTypesEnabled = this.bot.settings.limiTypes.filter(
+          limitTypesEnabled = this.bot.settings.limitTypes.filter(
             (type) => type in buffer.meta.limitTypes
           );
           if (limitTypesEnabled.length === 0) {

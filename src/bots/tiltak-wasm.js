@@ -37,13 +37,13 @@ export default class TiltakWasm extends TeiBot {
   //#region send/receive
   send(message) {
     if (worker) {
-      worker.postMessage(message);
       super.onSend(message);
+      worker.postMessage(message);
     }
   }
   receive(message) {
-    this.handleResponse(message);
     super.onReceive(message);
+    this.handleResponse(message);
   }
 
   //#region init
