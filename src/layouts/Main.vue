@@ -246,6 +246,7 @@
           align="justify"
           inline-label
         >
+          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
           <q-tab
             v-if="hasAnalysis"
             name="analysis"
@@ -253,7 +254,6 @@
             :label="$tc('Analysis')"
           />
           <q-tab name="notes" icon="notes" :label="$t('Notes')" />
-          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
         </q-tabs>
         <q-tab-panels
           class="col-grow bg-transparent"
@@ -261,14 +261,14 @@
           keep-alive
           animated
         >
+          <q-tab-panel v-if="hasChat" name="chat">
+            <Chat ref="chat" class="fit" recess />
+          </q-tab-panel>
           <q-tab-panel name="analysis">
             <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
-          </q-tab-panel>
-          <q-tab-panel v-if="hasChat" name="chat">
-            <Chat ref="chat" class="fit" recess />
           </q-tab-panel>
         </q-tab-panels>
       </div>
