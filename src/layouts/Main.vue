@@ -622,11 +622,18 @@ export default {
             suggestion.ply = pv.splice(0, 1)[0];
             suggestion.followingPlies = pv;
           }
-        } else if (suggestion.evaluation === null && ply.tpsAfter === tps) {
+        }
+        if (
+          suggestion.evaluation === null &&
+          (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps))
+        ) {
           note = notes.find((n) => n.evaluation !== null);
           if (note) {
             suggestion.evaluation = note.evaluation;
           }
+        }
+        if (suggestion.ply && suggestion.evaluation) {
+          break;
         }
       }
 
