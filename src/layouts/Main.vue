@@ -582,7 +582,9 @@ export default {
       return this.$store.getters["game/disabledOptions"];
     },
     isDialogShowing() {
-      return !["local", "game"].includes(this.$route.name);
+      return !["localGame", "publicGame", "privateGame"].includes(
+        this.$route.name
+      );
     },
     games() {
       return this.$store.state.game.list;

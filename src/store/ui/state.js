@@ -143,11 +143,11 @@ export const onlineUIOptions = [
   "showRoads",
   "stackCounts",
 ];
-defaults.onlineConfig = {
+defaultState.onlineConfig = {
   isPrivate: true,
   playerSeat: "random",
   scratchboard: true,
-  ...pick(defaults, onlineUIOptions),
+  ...pick(defaultState, onlineUIOptions),
 };
 
 const state = {
