@@ -270,7 +270,7 @@ export default class GameBase {
         1: cloneDeep(pieceCounts[this.size]),
         2: cloneDeep(pieceCounts[this.size]),
       };
-      if (config.pieceCounts) {
+      if (this.config.pieceCounts) {
         this.pieceCounts = config.pieceCounts;
       } else {
         this.pieceCounts = cloneDeep(this.defaultPieceCounts);
