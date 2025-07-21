@@ -11,20 +11,6 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
-          <q-item-label v-if="botID" class="fg-inherit" caption>
-            <template v-if="botMeta.name">
-              <span class="text-bold">{{ botMeta.name }}</span>
-              <template v-if="botMeta.version">
-                {{ botMeta.version }}
-              </template>
-              <template v-if="botMeta.author">
-                {{ $t("tei.by") }} {{ botMeta.author }}
-              </template>
-            </template>
-            <template v-else>
-              {{ $t(`analysis.bots.${botID}`) }}
-            </template>
-          </q-item-label>
         </q-item-section>
         <q-item-section
           v-if="!sections.botSuggestions && botState.isRunning"
@@ -44,57 +30,61 @@
         </q-item-section>
       </template>
 
+      <!-- Bot -->
+      <q-select
+        class="bg-ui"
+        v-model="botID"
+        :options="botList"
+        :label="$t('Bot')"
+        behavior="menu"
+        transition-show="none"
+        transition-hide="none"
+        emit-value
+        map-options
+        item-aligned
+        filled
+      >
+        <template v-slot:selected-item="scope">
+          <q-item-section class="fg-inherit" side>
+            <q-icon :name="scope.opt.icon" class="fg-inherit" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{ scope.opt.label }}</q-item-label>
+            <q-item-label class="fg-inherit" caption>{{
+              scope.opt.description
+            }}</q-item-label>
+          </q-item-section>
+        </template>
+        <template v-slot:option="scope">
+          <q-item
+            :option="scope.opt"
+            :key="scope.opt.value"
+            v-bind="scope.itemProps"
+            v-on="scope.itemEvents"
+          >
+            <q-item-section class="fg-inherit" side>
+              <q-icon :name="scope.opt.icon" class="fg-inherit" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ scope.opt.label }}</q-item-label>
+              <q-item-label class="fg-inherit" caption>{{
+                scope.opt.description
+              }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
+        <template v-if="botMeta.isCustom" v-slot:append>
+          <q-icon
+            name="edit"
+            class="field__focusable"
+            @click.stop.prevent="$router.push({ name: 'bot' })"
+          />
+        </template>
+      </q-select>
+
       <!-- Settings -->
       <smooth-reflow class="bg-ui">
         <template v-if="showBotSettings">
-          <!-- Bot -->
-          <q-select
-            v-model="botID"
-            :options="botList"
-            :label="$t('Bot')"
-            behavior="menu"
-            transition-show="none"
-            transition-hide="none"
-            emit-value
-            map-options
-            item-aligned
-            filled
-          >
-            <template v-slot:selected-item="scope">
-              <q-item-section class="fg-inherit" side>
-                <q-icon :name="scope.opt.icon" class="fg-inherit" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ scope.opt.label }}</q-item-label>
-              </q-item-section>
-            </template>
-            <template v-slot:option="scope">
-              <q-item
-                :option="scope.opt"
-                :key="scope.opt.value"
-                v-bind="scope.itemProps"
-                v-on="scope.itemEvents"
-              >
-                <q-item-section class="fg-inherit" side>
-                  <q-icon :name="scope.opt.icon" class="fg-inherit" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ scope.opt.label }}</q-item-label>
-                  <q-item-label class="fg-inherit" caption>{{
-                    scope.opt.description
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
-            <template v-if="botMeta.isCustom" v-slot:append>
-              <q-icon
-                name="edit"
-                class="field__focusable"
-                @click.stop.prevent="$router.push({ name: 'bot' })"
-              />
-            </template>
-          </q-select>
-
           <q-separator />
 
           <!-- Log messages -->
