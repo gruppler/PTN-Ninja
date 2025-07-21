@@ -333,6 +333,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Remove the PTN panel
 
+#### `disablePTNTools` (default: `false`)
+
+- Remove the PTN panel toolbars
+
 #### `showRoads` (default: `true`)
 
 - Show road connections

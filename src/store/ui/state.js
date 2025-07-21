@@ -21,6 +21,7 @@ const defaultState = {
   disableStoneCycling: false,
   disableNavigation: false,
   disablePTN: false,
+  disablePTNTools: false,
   disableText: false,
   disableUndo: false,
   editingBranch: "",
