@@ -69,6 +69,9 @@ export default {
     board() {
       return this.$store.state.game.board;
     },
+    position() {
+      return this.$store.state.game.position;
+    },
     boardPly() {
       return this.board.ply;
     },
@@ -82,7 +85,7 @@ export default {
       return this.$store.state.ui.flatCounts;
     },
     flats() {
-      return this.board.flats;
+      return this.position.flatsWithoutKomi;
     },
     minNameWidth() {
       return 100 / this.$store.state.game.config.size;
@@ -97,11 +100,7 @@ export default {
     },
     counts() {
       if (this.showFlatCounts) {
-        return [
-          this.komi < 0 ? this.flats[0] + this.komi : this.flats[0],
-          this.komi > 0 ? this.flats[1] - this.komi : this.flats[1],
-          this.formatKomi(Math.abs(this.komi)),
-        ];
+        return [...this.flats, this.formatKomi(Math.abs(this.komi))];
       } else {
         return [
           this.komi < 0 ? "+" + this.formatKomi(-this.komi) : "",

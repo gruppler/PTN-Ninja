@@ -7,7 +7,7 @@ import BoardNavigation from "./nav";
 
 import Piece from "./Piece";
 import Square from "./Square";
-
+import Result from "../PTN/Result";
 import { atoi } from "../PTN/Ply";
 
 import {
@@ -295,7 +295,6 @@ export default class Board extends Aggregation(
 
     return Object.assign(this.output.board, {
       ply: { ...this.boardPly },
-      flats: this.flats.concat(),
     });
   }
 
@@ -458,7 +457,7 @@ export default class Board extends Aggregation(
   }
 
   updatePositionOutput() {
-    return Object.assign(
+    const position = Object.assign(
       this.output.position,
       pick(
         this,
@@ -484,8 +483,37 @@ export default class Board extends Aggregation(
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
         isGameEndDefault: this.isGameEndDefault,
+        flats: this.flats,
+        flatsWithoutKomi: this.flatsWithoutKomi,
+        result: null,
       }
     );
+
+    let result = null;
+    if (position.ply && position.ply.result) {
+      result = omit(position.ply.result, "roads");
+    } else if (position.isGameEnd) {
+      let resultText;
+      if (position.isGameEndFlats) {
+        if (this.flats[0] == this.flats[1]) {
+          resultText = "1/2-1/2";
+        } else if (this.flats[0] > this.flats[1]) {
+          resultText = "F-0";
+        } else {
+          resultText = "0-F";
+        }
+      } else if (this.roads && this.roads.length) {
+        if (this.roads[1].length && this.roads[2].length) {
+          resultText = position.turn === 1 ? "0-R" : "R-0";
+        } else {
+          resultText = this.roads[1].length ? "R-0" : "0-R";
+        }
+      }
+      result = omit(new Result(resultText).output, "roads");
+    }
+    position.result = result;
+
+    return position;
   }
 
   updateSelectedOutput() {
@@ -830,13 +858,18 @@ export default class Board extends Aggregation(
       : null;
   }
 
-  get flats() {
+  get flatsWithoutKomi() {
     let flats = [0, 0];
     this.forEachSquare((square) => {
       if (square.color && square.piece.isFlat) {
         flats[square.color - 1]++;
       }
     });
+    return flats;
+  }
+
+  get flats() {
+    let flats = this.flatsWithoutKomi;
     const komi = this.game.config.komi;
     if (komi) {
       flats[1 * (komi > 0)] += Math.abs(komi);

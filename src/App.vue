@@ -7,8 +7,7 @@
 <script>
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
-import { isString, omit } from "lodash";
-import Result from "./Game/PTN/Result";
+import { isString } from "lodash";
 
 export default {
   name: "App",
@@ -148,39 +147,12 @@ export default {
           return;
         }
 
-        let result = null;
-        if (position.ply && position.ply.result) {
-          result = omit(position.ply.result, "roads");
-        } else if (position.isGameEnd) {
-          let resultText;
-          if (position.isGameEndFlats) {
-            if (this.$game.board.flats[0] == this.$game.board.flats[1]) {
-              resultText = "1/2-1/2";
-            } else if (this.$game.board.flats[0] > this.$game.board.flats[1]) {
-              resultText = "F-0";
-            } else {
-              resultText = "0-F";
-            }
-          } else if (this.$game.board.roads && this.$game.board.roads.length) {
-            if (
-              this.$game.board.roads[1].length &&
-              this.$game.board.roads[2].length
-            ) {
-              resultText = position.turn === 1 ? "0-R" : "R-0";
-            } else {
-              resultText = this.$game.board.roads[1].length ? "R-0" : "0-R";
-            }
-          }
-          result = omit(new Result(resultText).output, "roads");
-        }
-
         position = {
           ...position,
           move: position.move ? position.move.linenum.number : null,
           ply: position.ply ? position.ply.text : null,
           prevPly: position.prevPly ? position.prevPly.text : null,
           nextPly: position.nextPly ? position.nextPly.text : null,
-          result,
         };
         postMessage("GAME_STATE", position);
       },
