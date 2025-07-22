@@ -15,7 +15,7 @@ export default class TopazWasm extends Bot {
       settings: {
         insertEvalMarks: false,
         limitTypes: ["depth", "movetime"],
-        movetime: 5000,
+        movetime: 5e3,
         depth: 12,
       },
       limitTypes: {

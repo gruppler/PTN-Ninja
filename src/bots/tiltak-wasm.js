@@ -17,10 +17,13 @@ export default class TiltakWasm extends TeiBot {
         isTeiOk: false,
       },
       settings: {
-        movetime: 5000,
+        limitTypes: ["nodes"],
+        movetime: 5e3,
+        nodes: 1e5,
       },
       limitTypes: {
         movetime: {},
+        nodes: {},
       },
       ...options,
     });
