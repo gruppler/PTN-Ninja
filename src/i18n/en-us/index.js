@@ -291,6 +291,7 @@ export default {
 
   theme: {
     // Names
+    aaron: "Aaron",
     aer: "Aer",
     aether: "Aether",
     aqua: "Aqua",
@@ -299,6 +300,7 @@ export default {
     bubbletron: "BubbleTron",
     classic: "Classic",
     discord: "Discord",
+    essence: "Essence",
     fresh: "Fresh",
     ignis: "Ignis",
     luna: "Luna",
