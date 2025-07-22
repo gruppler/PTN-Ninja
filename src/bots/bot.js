@@ -227,11 +227,9 @@ export default class Bot {
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
         (this.settings.nodes &&
-          this.positions[p.tps][0].nodes < this.settings.nodes) ||
-        (this.settings.depth &&
-          this.positions[p.tps][0].depth < this.settings.depth) ||
+          this.positions[p.tps][0].nodes < this.settings.nodes * 0.9) ||
         (this.settings.movetime &&
-          this.positions[p.tps][0].time < this.settings.movetime * 0.7)
+          this.positions[p.tps][0].time < this.settings.movetime * 0.9)
       );
     });
 
@@ -762,9 +760,7 @@ export default class Bot {
     if (
       !this.positions[tps] ||
       this.positions[tps][0].hash !== hash ||
-      this.positions[tps][0].nodes < results[0].nodes ||
-      this.positions[tps][0].depth < results[0].depth ||
-      this.positions[tps][0].time < results[0].time
+      this.positions[tps][0].nodes < results[0].nodes
     ) {
       this.setPosition(tps, results);
     }
