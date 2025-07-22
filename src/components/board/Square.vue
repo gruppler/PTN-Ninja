@@ -183,7 +183,11 @@ export default {
       return this.$store.getters["game/disabledOptions"];
     },
     showRoads() {
-      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
+      return (
+        !this.game.config.disableRoads &&
+        this.$store.state.ui.showRoads &&
+        !this.game.position.isGameEndFlats
+      );
     },
     stackCounts() {
       return this.$store.state.ui.stackCounts;
@@ -532,6 +536,7 @@ export default {
     opacity: 0.35;
   }
   &.flatwin .hl.player {
+    transition: none;
     opacity: 0.4;
   }
   &.eog.p1 .hl.player {
