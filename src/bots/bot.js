@@ -667,14 +667,14 @@ export default class Bot {
       try {
         const concurrency = this.concurrency;
         const positions = this.getPositionsToAnalyze();
-        const total = positions.length;
-        let completed = 0;
+        const total = this.plies.length;
+        let completed = total - positions.length;
 
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: true,
           startTime: new Date().getTime(),
-          progress: 0,
+          progress: (100 * completed) / total,
           nodes: 0,
           nps: 0,
         });
