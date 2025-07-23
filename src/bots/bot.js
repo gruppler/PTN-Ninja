@@ -584,7 +584,7 @@ export default class Bot {
   }
 
   //#region analyzeInteractive
-  analyzeInteractive() {
+  async analyzeInteractive() {
     if (!this.meta.isInteractive) {
       return false;
     }
@@ -607,10 +607,14 @@ export default class Bot {
     }
     this.onSearchStart(state);
 
-    return this.searchPosition(
-      tps,
-      this.game.position.boardPly ? this.game.position.boardPly.id : null
-    );
+    if (
+      !(await this.searchPosition(
+        tps,
+        this.game.position.boardPly ? this.game.position.boardPly.id : null
+      ))
+    ) {
+      this.onSearchEnd({ isInteractiveEnabled: false });
+    }
   }
 
   //#region analyzeCurrentPosition
@@ -638,16 +642,17 @@ export default class Bot {
         this.game.position.boardPly ? this.game.position.boardPly.id : null
       );
 
-      if (results) {
-        this.storeResults(results);
-        resolve(results);
-      } else {
-        reject();
-      }
       this.onSearchEnd({
         isAnalyzingPosition: false,
       });
-      return results;
+      if (results) {
+        this.storeResults(results);
+        resolve(results);
+        return results;
+      } else {
+        reject();
+        return false;
+      }
     });
   }
 
@@ -704,10 +709,10 @@ export default class Bot {
           reject();
         }
       } catch (error) {
-        reject(error);
-        this.setState("isRunning", false);
-        this.setState("isAnalyzingGame", false);
-        this.onError(error);
+        if (error) {
+          this.onError(error);
+        }
+        reject();
       } finally {
         this.onSearchEnd({ isAnalyzingGame: false });
       }
