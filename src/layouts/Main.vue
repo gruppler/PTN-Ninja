@@ -312,41 +312,50 @@
             color="primary"
             stretch
           />
-          <q-btn-group v-else spread stretch>
-            <q-btn
-              @click="
-                botState.isAnalyzingPosition
-                  ? null
-                  : bot.analyzeCurrentPosition()
-              "
-              :loading="botState.isAnalyzingPosition"
-              :disable="!bot.isAnalyzePositionAvailable"
-              class="full-width toolbar-analysis-height"
-              color="primary"
-              icon="board"
-              :label="$t('analysis.Analyze Position')"
-            />
-            <q-btn
-              @click="bot.analyzeGame()"
-              :loading="botState.isAnalyzingGame"
-              :disable="!bot.isAnalyzeGameAvailable"
-              class="full-width"
-              color="primary"
-            >
-              <q-icon
-                :name="showAllBranches ? 'moves' : 'branch'"
-                :class="{ 'rotate-180': !showAllBranches }"
-                left
+          <div class="position-relative" v-else>
+            <q-btn-group spread stretch>
+              <q-btn
+                @click="
+                  botState.isAnalyzingPosition
+                    ? null
+                    : bot.analyzeCurrentPosition()
+                "
+                :loading="botState.isAnalyzingPosition"
+                :disable="!bot.isAnalyzePositionAvailable"
+                class="full-width toolbar-analysis-height"
+                color="primary"
+                icon="board"
+                :label="$t('analysis.Analyze Position')"
               />
-              {{
-                $t(
-                  showAllBranches
-                    ? "analysis.Analyze Game"
-                    : "analysis.Analyze Branch"
-                )
-              }}
-            </q-btn>
-          </q-btn-group>
+              <q-btn
+                @click="bot.analyzeGame()"
+                :loading="botState.isAnalyzingGame"
+                :disable="!bot.isAnalyzeGameAvailable"
+                class="full-width"
+                color="primary"
+              >
+                <q-icon
+                  :name="showAllBranches ? 'moves' : 'branch'"
+                  :class="{ 'rotate-180': !showAllBranches }"
+                  left
+                />
+                {{
+                  $t(
+                    showAllBranches
+                      ? "analysis.Analyze Game"
+                      : "analysis.Analyze Branch"
+                  )
+                }}
+              </q-btn>
+            </q-btn-group>
+            <q-inner-loading
+              :showing="
+                (botState.isConnected || !botMeta.requiresConnect) &&
+                !botState.isTeiOk &&
+                !botState.isReady
+              "
+            />
+          </div>
         </template>
       </smooth-reflow>
 
