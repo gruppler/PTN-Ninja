@@ -518,6 +518,7 @@ export default {
     "Preset Bot Options": "Preset Bot Options",
     pvLimit: "Plies to Save",
     secondsUnit: "sec",
+    sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",
     step: "step",
     "Top Games from Position": "Top Games from Position",

@@ -80,11 +80,4 @@ export default class CustomTeiBot extends TeiBot {
     );
     return options;
   }
-
-  normalizeEvaluation(value) {
-    if (this.meta.normalizeEvaluation) {
-      return this.sigmoid(value);
-    }
-    return value;
-  }
 }

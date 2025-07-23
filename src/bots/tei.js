@@ -24,6 +24,7 @@ export default class TeiBot extends Bot {
         port: 7731,
         insertEvalMarks: false,
         normalizeEvaluation: false,
+        sigma: 100,
         limitTypes: ["movetime"],
         depth: 10,
         nodes: 1000,
@@ -252,13 +253,6 @@ export default class TeiBot extends Bot {
       this.send("stop");
     }
     return super.analyzeInteractive();
-  }
-
-  normalizeEvaluation(value) {
-    if (this.settings.normalizeEvaluation) {
-      return this.sigmoid(value);
-    }
-    return value;
   }
 
   //#region handleResponse

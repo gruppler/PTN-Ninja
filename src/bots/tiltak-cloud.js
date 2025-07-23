@@ -34,11 +34,6 @@ export default class TiltakCloud extends Bot {
     return store.state.ui.offline;
   }
 
-  // Bypass eval normalization
-  normalizeEvaluation(value) {
-    return value;
-  }
-
   //#region searchPosition
   async searchPosition(tps, plyID) {
     // Validate size/komi

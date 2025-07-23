@@ -129,6 +129,24 @@
             </q-item-section>
           </q-item>
 
+          <smooth-reflow>
+            <q-input
+              v-if="
+                botSettings[botID].normalizeEvaluation &&
+                'sigma' in botSettings[botID]
+              "
+              type="number"
+              v-model.number="botSettings[botID].sigma"
+              :label="$t('analysis.sigma')"
+              :min="1"
+              :max="1e4"
+              :rules="[(s) => s > 0]"
+              hide-bottom-space
+              filled
+              item-aligned
+            />
+          </smooth-reflow>
+
           <!-- PV Limit -->
           <q-input
             type="number"
