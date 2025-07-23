@@ -37,6 +37,11 @@ export default class TiltakWasm extends TeiBot {
   // Freeze meta
   setMeta() {}
 
+  // Bypass eval normalization
+  normalizeEvaluation(value) {
+    return value;
+  }
+
   //#region send/receive
   send(message) {
     if (worker) {

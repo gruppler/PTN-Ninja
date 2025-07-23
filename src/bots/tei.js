@@ -193,8 +193,8 @@ export default class TeiBot extends Bot {
     });
   }
 
-  //#region queryPosition
-  async queryPosition(tps, plyID) {
+  //#region searchPosition
+  async searchPosition(tps, plyID) {
     return new Promise((resolve, reject) => {
       // Validate size/komi
       const init = super.validatePosition(tps, plyID);
@@ -223,7 +223,7 @@ export default class TeiBot extends Bot {
         this.send("isready");
         this.onReady = () => {
           this.onReady = null;
-          this.queryPosition(tps, plyID);
+          this.searchPosition(tps, plyID);
         };
         return true;
       }
@@ -261,7 +261,7 @@ export default class TeiBot extends Bot {
 
   normalizeEvaluation(value) {
     if (this.settings.normalizeEvaluation) {
-      return 100 * Math.tanh(value / 1000);
+      return this.sigmoid(value);
     }
     return value;
   }
@@ -417,7 +417,6 @@ export default class TeiBot extends Bot {
       return results;
     } else if (response.startsWith("info") && tps) {
       // Parse Results
-      this.setState({ isRunning: true });
       const results = {
         tps,
         nps: null,

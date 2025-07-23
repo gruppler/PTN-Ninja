@@ -63,8 +63,8 @@ export default class TopazWasm extends Bot {
     super.reset();
   }
 
-  //#region queryPosition
-  async queryPosition(tps, plyID) {
+  //#region searchPosition
+  async searchPosition(tps, plyID) {
     return new Promise((resolve, reject) => {
       // Validate size/komi
       const init = super.validatePosition(tps, plyID);
@@ -90,11 +90,6 @@ export default class TopazWasm extends Bot {
       });
       this.send(query);
     });
-  }
-
-  //#region normalizeEvaluation
-  normalizeEvaluation(value) {
-    return 100 * Math.tanh(value / 1000);
   }
 
   //#region handleResponse

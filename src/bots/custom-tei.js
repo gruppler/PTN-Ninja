@@ -83,7 +83,7 @@ export default class CustomTeiBot extends TeiBot {
 
   normalizeEvaluation(value) {
     if (this.meta.normalizeEvaluation) {
-      return 100 * Math.tanh(value / 1000);
+      return this.sigmoid(value);
     }
     return value;
   }
