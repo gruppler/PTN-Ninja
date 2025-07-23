@@ -422,8 +422,6 @@ export default {
       }
 
       if (this.isNew) {
-        buffer.created = new Date().getTime();
-
         reconnect = this.bot.state.isConnected;
         this.bot.disconnect();
       }
