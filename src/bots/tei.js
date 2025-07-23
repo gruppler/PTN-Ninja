@@ -78,22 +78,17 @@ export default class TeiBot extends Bot {
   //#region send/receive
   send(message) {
     if (socket) {
-      super.onSend(message);
+      this.onSend(message);
       socket.send(message);
     }
   }
   receive(message) {
-    super.onReceive(message);
+    this.onReceive(message);
     this.handleResponse(message);
   }
 
   sendAction(name) {
     this.send(`setoption name ${name}`);
-  }
-
-  //#region init
-  init() {
-    super.init(true);
   }
 
   reset() {
@@ -113,13 +108,13 @@ export default class TeiBot extends Bot {
   }
 
   //#region terminate
-  async terminate() {
+  async terminate(state) {
     if (socket) {
       try {
         if (this.state.isRunning) {
           this.send("stop");
         }
-        super.onTerminate();
+        this.onTerminate(state);
       } catch (error) {
         await socket.close();
         this.init();

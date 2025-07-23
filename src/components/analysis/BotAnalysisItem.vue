@@ -17,7 +17,7 @@
         ? 'analysis.nodes'
         : null
     "
-    :seconds="suggestion.time !== null ? suggestion.time / 1e3 : null"
+    :seconds="seconds"
     :player1-number="
       'evaluation' in suggestion && suggestion.evaluation >= 0
         ? formatEvaluation(suggestion.evaluation)
@@ -38,6 +38,7 @@
 <script>
 import AnalysisItem from "./AnalysisItem";
 import { formatEvaluation } from "../../bots/bot";
+import { isNumber } from "lodash";
 
 export default {
   name: "BotAnalysisItem",
@@ -48,6 +49,9 @@ export default {
   computed: {
     botState() {
       return this.$store.state.analysis.botState;
+    },
+    seconds() {
+      return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
     },
   },
   methods: { formatEvaluation },

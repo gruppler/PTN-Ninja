@@ -31,12 +31,12 @@ export default class TopazWasm extends Bot {
   //#region send/receive
   send(message) {
     if (worker) {
-      super.onSend(message);
+      this.onSend(message);
       worker.postMessage(message);
     }
   }
   receive(message) {
-    super.onReceive(message);
+    this.onReceive(message);
     this.handleResponse(message);
   }
 
@@ -101,9 +101,6 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
-    const initialPlayer = Number(tps.split(" ")[1]);
-    const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
-
     const results = {
       hash,
       tps,
@@ -112,7 +109,7 @@ export default class TopazWasm extends Bot {
           pv,
           depth,
           nodes,
-          evaluation,
+          // evaluation: Number(score),
         },
       ],
     };
@@ -124,11 +121,11 @@ export default class TopazWasm extends Bot {
   }
 
   //#region terminate
-  async terminate() {
+  async terminate(state) {
     if (worker && this.state.isRunning) {
       try {
         await worker.terminate();
-        super.onTerminate();
+        this.onTerminate(state);
         worker = null;
         this.init();
       } catch (error) {

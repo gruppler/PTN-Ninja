@@ -17,7 +17,7 @@ export function formatEvaluation(value) {
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
-  nodes: { min: 1e3, max: 1e6, step: 1e3 },
+  nodes: { min: 1e3, max: 1e9, step: 1e3 },
   movetime: { min: 100, max: 6e4, step: 100 },
 });
 
@@ -370,24 +370,19 @@ export default class Bot {
 
   //#region terminate
   // Stop searching
-  terminate() {
-    this.onTerminate();
+  terminate(state) {
+    this.onTerminate(state);
   }
 
-  onTerminate() {
-    const state = {
-      isAnalyzingPosition: false,
+  onTerminate(state = {}) {
+    state = {
+      ...state,
       isAnalyzingGame: false,
-      isRunning: false,
+      isAnalyzingPosition: false,
       progress: null,
-      analyzingPly: null,
       nextTPS: null,
     };
-    if (this.state.timer) {
-      clearInterval(this.state.timer);
-      state.timer = null;
-    }
-    this.setState(state);
+    this.onSearchEnd(state);
     this.onReady = null;
     this.onComplete = null;
   }
@@ -429,6 +424,9 @@ export default class Bot {
       }
     }
 
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+    }
     state.timer = setInterval(() => {
       const state = {
         time: new Date().getTime() - this.state.startTime,
@@ -537,7 +535,6 @@ export default class Bot {
         isInteractiveEnabled,
         tps: null,
         nextTPS: null,
-        startTime: new Date().getTime(),
         progress: null,
         nodes: 0,
         nps: 0,
@@ -556,10 +553,8 @@ export default class Bot {
         (state) => state.ui.scrubbing,
         (isScrubbing) => {
           if (isScrubbing) {
-            console.log("Scrubbing started");
             this.terminate();
           } else if (this.isInteractiveEnabled) {
-            console.log("Scrubbing ended");
             this.analyzeInteractive();
           }
         }
@@ -578,8 +573,7 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
-      this.terminate();
-      this.onSearchEnd({ isInteractiveEnabled });
+      this.terminate({ isInteractiveEnabled });
     }
   }
 
@@ -598,6 +592,7 @@ export default class Bot {
     // Queue current position for pairing with future response
     const tps = this.tps;
     const state = {
+      startTime: new Date().getTime(),
       nextTPS: tps,
       analyzingPly: this.ply,
       isRunning: true,
@@ -806,8 +801,8 @@ export default class Bot {
     if (results[0].nodes !== null) {
       state.nodes = results[0].nodes;
     }
-    if (nps === null && state.nodes) {
-      nps = state.nodes / (ms / 1000);
+    if (nps === null && state.nodes && results[0].time) {
+      nps = state.nodes / (results[0].time / 1000);
     }
     if (nps !== null) {
       state.nps = nps;

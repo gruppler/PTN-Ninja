@@ -74,7 +74,7 @@ export default class TiltakCloud extends Bot {
       rollout_temperature: 0.25,
       action: "SuggestMoves",
     };
-    super.onSend(request);
+    this.onSend(request);
     let response;
     try {
       response = await fetch(url, {
@@ -94,7 +94,7 @@ export default class TiltakCloud extends Bot {
       return this.onError("HTTP-Error: " + response.status);
     }
     const data = await response.json();
-    super.onReceive(data);
+    this.onReceive(data);
     const { SuggestMoves: suggestedMoves } = data;
 
     const results = {

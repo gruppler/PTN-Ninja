@@ -45,12 +45,12 @@ export default class TiltakWasm extends TeiBot {
   //#region send/receive
   send(message) {
     if (worker) {
-      super.onSend(message);
+      this.onSend(message);
       worker.postMessage(message);
     }
   }
   receive(message) {
-    super.onReceive(message);
+    this.onReceive(message);
     this.handleResponse(message);
   }
 
@@ -101,13 +101,13 @@ export default class TiltakWasm extends TeiBot {
   }
 
   //#region terminate
-  async terminate() {
+  async terminate(state) {
     if (worker && this.state.isRunning) {
       try {
         if (this.state.isRunning) {
           this.send("stop");
         }
-        super.onTerminate();
+        this.onTerminate(state);
       } catch (error) {
         await worker.terminate();
         this.init();
