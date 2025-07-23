@@ -213,12 +213,16 @@ export default {
   .evaluation {
     position: absolute;
     height: 100%;
-    will-change: width, background-color;
+    will-change: width, background-color, opacity;
+    &:not(.p1):not(.p2) {
+      opacity: 0.3;
+    }
   }
 
   &.animate .evaluation {
     transition: width $generic-hover-transition,
-      background-color $generic-hover-transition;
+      background-color $generic-hover-transition,
+      opacity $generic-hover-transition;
   }
 
   .continuation {
