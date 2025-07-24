@@ -268,19 +268,19 @@ export default class TeiBot extends Bot {
     if (response === "teiok") {
       this.setState({ isTeiOk: true });
       if (!this.hasOptions) {
-        this.applyOptions();
+        return this.applyOptions();
       }
     } else if (response === "readyok") {
       this.setState({ isReadying: false, isReady: true });
       if (this.onReady) {
-        this.onReady();
+        return this.onReady();
       }
     } else if (response.startsWith("id name ")) {
-      this.setMeta({ name: response.substr(8) });
+      return this.setMeta({ name: response.substr(8) });
     } else if (response.startsWith("id author ")) {
-      this.setMeta({ author: response.substr(10) });
+      return this.setMeta({ author: response.substr(10) });
     } else if (response.startsWith("id version ")) {
-      this.setMeta({ version: response.substr(11) });
+      return this.setMeta({ version: response.substr(11) });
     } else if (response.startsWith("size ")) {
       // Supported sizes and komi
       const sizeHalfKomis = { ...this.meta.sizeHalfKomis };
@@ -310,7 +310,7 @@ export default class TeiBot extends Bot {
       if (this.meta.teiVersion < 1) {
         meta.teiVersion = 1;
       }
-      this.setMeta(meta);
+      return this.setMeta(meta);
     } else if (response.startsWith("option ")) {
       // Bot options
       const keys = /^(name|type|default|min|max|var)$/i;
@@ -380,6 +380,7 @@ export default class TeiBot extends Bot {
       } else {
         this.setMeta({ options: { ...this.meta.options, [name]: option } });
       }
+      return;
     } else if (response.startsWith("bestmove")) {
       // Search ended
       const state = { isReady: true };

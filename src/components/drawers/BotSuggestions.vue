@@ -722,11 +722,10 @@ export default {
         this.sections.botSuggestions = true;
       }
     },
-    setBotOptions() {
-      this.botSettings[this.botID].options = {
-        ...this.botSettings[this.botID].options,
-        ...this.botOptions,
-      };
+    async setBotOptions() {
+      const settings = cloneDeep(this.botSettings);
+      Object.assign(settings[this.botID].options, this.botOptions);
+      await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
       this.bot.applyOptions();
     },
     saveLog() {
