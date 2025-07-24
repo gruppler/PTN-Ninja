@@ -234,7 +234,34 @@ export const url =
       }
       if (options.disablePTN) {
         delete options.showPTN;
+        delete options.showMove;
         delete options.showAllBranches;
+        delete options.disablePTNTools;
+      }
+      if (options.disableBoard) {
+        delete options.disableStoneCycling;
+      }
+      if (options.disableNavigation) {
+        delete options.disableUndo;
+        delete options.showControls;
+        delete options.showPlayButton;
+        delete options.playSpeed;
+        delete options.showScrubber;
+      }
+      if (!options.showControls) {
+        delete options.showPlayButton;
+        delete options.playSpeed;
+      }
+      if (!options.turnIndicator) {
+        delete options.includeNames;
+        delete options.flatCounts;
+          delete options.evalText;
+          delete options.moveNumber;
+      }
+      if (!options.unplayedPieces) {
+          delete options.evalText;
+          delete options.moveNumber;
+        }
       }
       Object.keys(options.ui).forEach((key) => {
         const value = options.ui[key];
