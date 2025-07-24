@@ -143,7 +143,7 @@ export default class Bot {
     if (isObject(message)) {
       message = JSON.stringify(message);
     }
-    message = { message, received };
+    message = Object.freeze({ message, received });
     if (store.state.analysis && store.state.analysis.botID === this.id) {
       store.commit("analysis/BOT_LOG", message);
     } else {

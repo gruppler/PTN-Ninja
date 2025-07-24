@@ -476,30 +476,43 @@
               </q-item-section>
             </q-item>
 
+            <!-- Log -->
             <recess v-if="botSettings[botID].log">
-              <div
+              <q-virtual-scroll
                 ref="botLog"
-                class="bot-log text-selectable bg-ui q-pa-sm"
-                @scroll="handleLogScroll"
+                class="bot-log text-selectable bg-ui q-px-sm"
+                :items="botLog"
+                :virtual-scroll-item-size="16.8"
+                :virtual-scroll-slice-ratio-before="0.5"
+                :virtual-scroll-slice-ratio-after="0.5"
               >
-                <div
-                  v-for="(log, i) in botLog"
-                  :key="i"
-                  :class="{ sent: !log.received, received: log.received }"
-                >
-                  {{ log.message }}
-                </div>
-              </div>
+                <template v-slot="{ item }">
+                  <div
+                    class="log-message"
+                    :class="{ sent: !item.received, received: item.received }"
+                  >
+                    {{ item.message }}
+                  </div>
+                </template>
+              </q-virtual-scroll>
               <q-btn-group spread stretch>
-                <q-btn @click="clearLog()" icon="delete" color="ui" />
+                <q-btn @click="clearLog" icon="delete" color="ui">
+                  <hint>{{ $t("analysis.logClear") }}</hint>
+                </q-btn>
                 <q-btn
-                  @click="
-                    autoScrollLog = true;
-                    scrollLog();
-                  "
-                  icon="to_bottom"
+                  @click="toggleLogScroll"
+                  :icon="autoScrollLog ? 'pause' : 'play'"
                   color="ui"
-                />
+                >
+                  <hint>{{
+                    $t(
+                      autoScrollLog ? "analysis.logPause" : "analysis.logResume"
+                    )
+                  }}</hint>
+                </q-btn>
+                <q-btn @click="saveLog" icon="file" color="ui">
+                  <hint>{{ $t("analysis.logSave") }}</hint>
+                </q-btn>
               </q-btn-group>
             </recess>
           </smooth-reflow>
@@ -562,6 +575,7 @@ import BotOptionInput from "../analysis/BotOptionInput";
 import Linenum from "../PTN/Linenum.vue";
 import PlyChip from "../PTN/Ply.vue";
 import { cloneDeep, isEmpty, isEqual } from "lodash";
+import { exportFile } from "quasar";
 
 export default {
   name: "BotSuggestions",
@@ -578,7 +592,6 @@ export default {
       botSettings: cloneDeep(this.$store.state.analysis.botSettings),
       botOptions: this.bot ? this.bot.getOptions() : {},
       autoScrollLog: true,
-      logScrollTop: 0,
       sections: cloneDeep(this.$store.state.ui.analysisSections),
     };
   },
@@ -698,28 +711,32 @@ export default {
       };
       this.bot.applyOptions();
     },
-    async scrollLog() {
-      await this.$nextTick();
+    saveLog() {
+      const file = new File(
+        [
+          this.botLog
+            .map((l) => `${l.received ? "<<" : ">>"} ${l.message}`)
+            .join("\n"),
+        ],
+        `${this.bot.label}.txt`,
+        {
+          type: "text/plain",
+        }
+      );
+      exportFile(file.name, file);
+    },
+    scrollLog() {
       if (this.$refs.botLog && this.botSettings[this.botID].log) {
-        this.$refs.botLog.scrollTo({
-          top: this.$refs.botLog.scrollHeight,
-          behavior: "instant",
-        });
+        this.$refs.botLog.scrollTo(this.botLog.length, "end-force");
       }
     },
-    handleLogScroll() {
-      if (
-        this.autoScrollLog &&
-        this.logScrollTop > this.$refs.botLog.scrollTop
-      ) {
-        this.autoScrollLog = false;
-      } else {
-        this.logScrollTop = this.$refs.botLog.scrollTop;
+    toggleLogScroll() {
+      if ((this.autoScrollLog = !this.autoScrollLog)) {
+        this.scrollLog();
       }
     },
     clearLog() {
       this.bot.clearLog();
-      this.logScrollTop = 0;
       this.autoScrollLog = true;
     },
     clearResults() {
@@ -768,9 +785,11 @@ export default {
       },
       deep: true,
     },
-    botLog() {
-      if (this.autoScrollLog) {
-        this.scrollLog();
+    botLog(log) {
+      if (this.$refs.botLog) {
+        this.$refs.botLog.refresh(
+          this.autoScrollLog ? log.length - 1 : undefined
+        );
       }
     },
     "botMeta.options": {
@@ -800,7 +819,7 @@ export default {
   overflow-y: scroll;
   direction: rtl;
 
-  div {
+  .log-message {
     direction: ltr;
     position: relative;
     padding-left: 2em;
