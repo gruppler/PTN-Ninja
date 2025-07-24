@@ -85,6 +85,100 @@
       <!-- Settings -->
       <smooth-reflow class="bg-ui">
         <template v-if="showBotSettings">
+          <!-- TEI Connection Settings -->
+          <template v-if="bot && botID === 'tei'">
+            <q-separator />
+            <q-expansion-item
+              icon="connect"
+              :label="$t('Connection Settings')"
+              :default-opened="!botState.isConnected"
+            >
+              <q-list>
+                <!-- Address -->
+                <q-input
+                  v-model.number="botSettings[botID].address"
+                  :label="$t('tei.address')"
+                  :prefix="bot.protocol"
+                  filled
+                  :disable="botState.isConnected || botState.isConnecting"
+                  item-aligned
+                >
+                  <template v-slot:after>
+                    <!-- Port -->
+                    <q-input
+                      v-model.number="botSettings[botID].port"
+                      :label="$t('tei.port')"
+                      style="width: 9em"
+                      type="number"
+                      min="0"
+                      max="65535"
+                      step="1"
+                      prefix=":"
+                      filled
+                      clearable
+                      :disable="botState.isConnected || botState.isConnecting"
+                    />
+                  </template>
+                </q-input>
+
+                <!-- Use SSL -->
+                <q-item
+                  tag="label"
+                  :disable="botState.isConnected || botState.isConnecting"
+                  clickable
+                  v-ripple
+                >
+                  <q-item-section>
+                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle
+                      v-model="botSettings[botID].ssl"
+                      :disable="botState.isConnected || botState.isConnecting"
+                    />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-expansion-item>
+          </template>
+
+          <!-- Connect -->
+          <q-btn
+            v-if="botMeta.requiresConnect && !botState.isConnected"
+            @click="bot.connect()"
+            :loading="botState.isConnecting"
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width"
+            color="primary"
+            stretch
+          />
+
+          <!-- Disconnect -->
+          <q-btn
+            v-if="botMeta.requiresConnect && botState.isConnected"
+            @click="bot.disconnect()"
+            icon="disconnect"
+            :label="$t('tei.disconnect')"
+            class="full-width"
+            color="primary"
+            stretch
+            flat
+          />
+
+          <!-- Save Bot -->
+          <q-btn
+            v-if="botID === 'tei'"
+            :to="{ name: 'bot' }"
+            icon="bot"
+            :label="$t('tei.Save Bot')"
+            :disable="!botState.isConnected"
+            class="full-width"
+            color="primary"
+            stretch
+            flat
+          />
+
           <q-separator />
 
           <!-- Log messages -->
@@ -206,86 +300,6 @@
               />
             </template>
           </BotLimitInput>
-
-          <!-- TEI Connection Settings -->
-          <template v-if="bot && botID === 'tei'">
-            <q-separator />
-            <q-expansion-item
-              icon="connect"
-              :label="$t('Connection Settings')"
-              :default-opened="!botState.isConnected"
-            >
-              <q-list>
-                <!-- Address -->
-                <q-input
-                  v-model.number="botSettings[botID].address"
-                  :label="$t('tei.address')"
-                  :prefix="bot.protocol"
-                  filled
-                  :disable="botState.isConnected || botState.isConnecting"
-                  item-aligned
-                >
-                  <template v-slot:after>
-                    <!-- Port -->
-                    <q-input
-                      v-model.number="botSettings[botID].port"
-                      :label="$t('tei.port')"
-                      style="width: 9em"
-                      type="number"
-                      min="0"
-                      max="65535"
-                      step="1"
-                      prefix=":"
-                      filled
-                      clearable
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </template>
-                </q-input>
-
-                <!-- Use SSL -->
-                <q-item
-                  tag="label"
-                  :disable="botState.isConnected || botState.isConnecting"
-                  clickable
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="botSettings[botID].ssl"
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-expansion-item>
-
-            <!-- Save Bot -->
-            <q-btn
-              v-if="botState.isConnected"
-              :to="{ name: 'bot' }"
-              icon="bot"
-              :label="$t('tei.Save Bot')"
-              class="full-width"
-              color="primary"
-              stretch
-              flat
-            />
-          </template>
-          <!-- Disconnect -->
-          <q-btn
-            v-if="botMeta.requiresConnect && botState.isConnected"
-            @click="bot.disconnect()"
-            icon="disconnect"
-            :label="$t('tei.disconnect')"
-            class="full-width"
-            color="primary"
-            stretch
-            flat
-          />
         </template>
       </smooth-reflow>
 
@@ -295,7 +309,11 @@
           <smooth-reflow>
             <!-- Connect -->
             <q-btn
-              v-if="botMeta.requiresConnect && !botState.isConnected"
+              v-if="
+                botMeta.requiresConnect &&
+                !botState.isConnected &&
+                !showBotSettings
+              "
               @click="bot.connect()"
               :loading="botState.isConnecting"
               icon="connect"
