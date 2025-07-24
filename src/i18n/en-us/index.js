@@ -268,6 +268,8 @@ export default {
   Usage: "Usage",
   "Verify Email Address": "Verify Email Address",
   Version: "Version",
+  "Vertical Layout": "Vertical Layout",
+  "Vertical Layout Auto": "Auto Layout",
   "View Game Info": "View Game Info",
   Walls: "Walls",
   Width: "Width",

@@ -308,8 +308,34 @@
       </q-item>
 
       <smooth-reflow>
+        <q-item v-show="config.ui.unplayedPieces" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.verticalLayout" />
+          </q-item-section>
+        </q-item>
         <q-item
-          v-show="config.ui.turnIndicator && config.ui.unplayedPieces"
+          v-show="config.ui.unplayedPieces && config.ui.verticalLayout"
+          tag="label"
+          v-ripple
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.verticalLayoutAuto" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
+
+      <smooth-reflow>
+        <q-item
+          v-show="
+            config.ui.verticalLayout ||
+            (config.ui.turnIndicator && config.ui.unplayedPieces)
+          "
           tag="label"
           v-ripple
         >
@@ -322,7 +348,10 @@
         </q-item>
 
         <q-item
-          v-show="config.ui.turnIndicator && config.ui.unplayedPieces"
+          v-show="
+            config.ui.verticalLayout ||
+            (config.ui.turnIndicator && config.ui.unplayedPieces)
+          "
           tag="label"
           v-ripple
         >

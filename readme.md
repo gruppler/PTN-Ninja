@@ -369,6 +369,14 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show unplayed pieces
 
+#### `verticalLayout` (default: `true`)
+
+- Enable the vertical layout for the board (unplayed pieces below, move number above)
+
+#### `verticalLayoutAuto` (default: `true`)
+
+- Automatically switch between horizontal and vertical layouts
+
 #### `disableStoneCycling` (default: `false`)
 
 - Disable selecting the last placed stone to cycle its type

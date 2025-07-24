@@ -255,13 +255,21 @@ export const url =
       if (!options.turnIndicator) {
         delete options.includeNames;
         delete options.flatCounts;
-          delete options.evalText;
-          delete options.moveNumber;
-      }
-      if (!options.unplayedPieces) {
+        if (!options.verticalLayout) {
           delete options.evalText;
           delete options.moveNumber;
         }
+      }
+      if (!options.unplayedPieces) {
+        delete options.verticalLayout;
+        delete options.verticalLayoutAuto;
+        if (!options.verticalLayout) {
+          delete options.evalText;
+          delete options.moveNumber;
+        }
+      }
+      if (!options.verticalLayout) {
+        delete options.verticalLayoutAuto;
       }
       Object.keys(options.ui).forEach((key) => {
         const value = options.ui[key];

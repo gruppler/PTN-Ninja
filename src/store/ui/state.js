@@ -35,6 +35,7 @@ const defaultState = {
   highlighterSquares: {},
   highlightSquares: true,
   isPortrait: false,
+  isVertical: false,
   komi: 0,
   moveNumber: true,
   nativeSharing:
@@ -76,6 +77,8 @@ const defaultState = {
   themes: [],
   turnIndicator: true,
   unplayedPieces: true,
+  verticalLayout: true,
+  verticalLayoutAuto: true,
 };
 
 export const embedUIOptions = [
@@ -106,6 +109,8 @@ export const embedUIOptions = [
   "themeID",
   "turnIndicator",
   "unplayedPieces",
+  "verticalLayout",
+  "verticalLayoutAuto",
 ];
 
 defaultState.embedConfig = {
