@@ -317,9 +317,21 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show all branches
 
+#### `showBoardPrefsBtn` (default: `false`)
+
+- Show the Preferences button on the board
+
+#### `showBoardTransformBtn` (default: `false`)
+
+- Show the Transform button on the board
+
 #### `showControls` (default: `true`)
 
 - Show playback controls
+
+#### `showPlayButton` (default: `false`)
+
+- Show the "Play" button in the playback controls
 
 #### `showMove` (default: `true`)
 
