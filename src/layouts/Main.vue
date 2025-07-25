@@ -1,5 +1,11 @@
 <template>
-  <q-layout v-if="gameExists" class="non-selectable" view="lHr LpR lFr">
+  <q-layout
+    v-if="gameExists"
+    class="non-selectable"
+    view="lHr LpR lFr"
+    v-shortkey="hotkeys.MISC"
+    @shortkey="miscShortkey"
+  >
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -121,13 +127,7 @@
         @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
-        <div
-          class="column absolute-fit"
-          v-shortkey="hotkeys.MISC"
-          @shortkey="miscShortkey"
-        >
-          <Board class="col-grow" />
-        </div>
+        <Board />
         <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove style="margin-right: 65px" />

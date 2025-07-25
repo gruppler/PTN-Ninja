@@ -1,8 +1,12 @@
 <template>
   <div
-    class="board-wrapper flex flex-center"
+    class="board-space absolute-fit"
     :class="{ 'board-3D': board3D, orthographic }"
-    :style="{ perspective }"
+    :style="{
+      perspective,
+      '--board-size': config.size,
+      '--board-size-grid': config.size + 'fr',
+    }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
     @wheel="scroll"
@@ -29,6 +33,8 @@
         flip: transform[1] === 1,
         scrubbing,
         rotating,
+        horizontal: !isVertical,
+        vertical: isVertical,
       }"
       :style="{ width, fontSize, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
@@ -38,8 +44,10 @@
     >
       <TurnIndicator :hide-names="hideNames" />
 
-      <div v-if="$store.state.ui.unplayedPieces" class="move-number">
-        <template v-if="showMoveNumber">{{ moveNumber }}.&nbsp;</template>
+      <div v-if="showMoveNumber" class="move-number-container">
+        <template v-if="showMoveNumber"
+          >&nbsp;&nbsp;{{ moveNumber }}.&nbsp;</template
+        >
         <span
           v-if="$store.state.ui.evalText && evaluationText"
           class="eval-text"
@@ -48,54 +56,51 @@
         >
       </div>
 
-      <div class="board-row row no-wrap no-pointer-events">
+      <div
+        class="unplayed-bg all-pointer-events"
+        :class="{ vertical: isVertical, horizontal: !isVertical }"
+        @click.self="dropPiece"
+        @click.right.prevent
+        @touchstart.stop
+        @mousedown.stop
+      >
         <div
-          v-if="$store.state.ui.axisLabels"
-          class="y-axis column reverse no-pointer-events"
-        >
-          <div v-for="y in yAxis" :key="y">
-            {{ y }}
-          </div>
-        </div>
-
-        <div
-          class="board relative-position all-pointer-events"
-          @touchstart.stop
-          @mousedown.stop
-          @pointerdown="highlightStart"
-          @pointermove="highlightMove"
-        >
-          <div class="squares absolute-fit row reverse-wrap">
-            <Square
-              v-for="(square, coord) in board.squares"
-              :key="coord"
-              :coord="coord"
-            />
-          </div>
-          <div class="pieces absolute-fit no-pointer-events">
-            <Piece
-              v-for="(piece, id) in board.pieces"
-              :key="id"
-              :ref="id"
-              :id="id"
-            />
-          </div>
-        </div>
-
-        <div
-          class="unplayed-bg all-pointer-events"
+          v-show="$store.state.ui.showEval"
           @click.self="dropPiece"
-          @click.right.prevent
-          @touchstart.stop
-          @mousedown.stop
-        >
-          <div
-            v-show="$store.state.ui.showEval"
-            @click.self="dropPiece"
-            class="evaluation"
-            :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-            :style="{ height: Math.abs(evaluation || 0) + '%' }"
+          class="evaluation"
+          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+          :style="{
+            [isVertical ? 'width' : 'height']: Math.abs(evaluation || 0) + '%',
+          }"
+        />
+      </div>
+
+      <div
+        class="board relative-position all-pointer-events"
+        @touchstart.stop
+        @mousedown.stop
+        @pointerdown="highlightStart"
+        @pointermove="highlightMove"
+      >
+        <div class="squares absolute-fit column reverse-wrap">
+          <Square v-for="coord in squares" :key="coord" :coord="coord" />
+        </div>
+        <div class="pieces absolute-fit no-pointer-events">
+          <Piece
+            v-for="(piece, id) in board.pieces"
+            :key="id"
+            :ref="id"
+            :id="id"
           />
+        </div>
+      </div>
+
+      <div
+        v-if="$store.state.ui.axisLabels"
+        class="y-axis column reverse no-pointer-events"
+      >
+        <div v-for="y in yAxis" :key="y">
+          {{ y }}
         </div>
       </div>
 
@@ -107,7 +112,11 @@
         <div v-for="x in xAxis" :key="x">{{ x }}</div>
       </div>
 
-      <q-resize-observer @resize="resizeBoard" :debounce="20" />
+      <q-resize-observer
+        class="absolute-fit"
+        @resize="resizeBoard"
+        :debounce="20"
+      />
     </div>
     <q-resize-observer @resize="resizeSpace" :debounce="20" />
   </div>
@@ -155,6 +164,9 @@ export default {
   computed: {
     board() {
       return this.$store.state.game.board;
+    },
+    squares() {
+      return Object.keys(this.$store.state.game.board.squares).sort().reverse();
     },
     config() {
       return this.$store.state.game.config;
@@ -256,11 +268,7 @@ export default {
       }
     },
     showMoveNumber() {
-      return (
-        this.$store.state.ui.moveNumber &&
-        this.$store.state.ui.turnIndicator &&
-        this.$store.state.ui.unplayedPieces
-      );
+      return this.$store.state.ui.moveNumber;
     },
     turn() {
       return this.$store.state.game.editingTPS !== undefined
@@ -288,12 +296,19 @@ export default {
       if (min <= 400) {
         return min * 0.1;
       } else {
-        return min * 0.1 + (min - 400) * 0.2;
+        return min * 0.1 + (min - 400) * (this.isVertical ? 0 : 0.2);
       }
     },
     isPortrait() {
       return (
         this.size && this.space && this.space.width - this.size.width < 136
+      );
+    },
+    isVertical() {
+      return (
+        this.$store.state.ui.verticalLayout &&
+        (!this.$store.state.ui.verticalLayoutAuto ||
+          (this.space && this.space.width < this.space.height))
       );
     },
     highlighterEnabled() {
@@ -306,18 +321,26 @@ export default {
     width() {
       if (this.$el && this.$el.style.width && this.isInputFocused()) {
         return this.$el.style.width;
-      }
-      if (!this.space || !this.size) {
-        return "80%";
+      } else if (this.space && this.size) {
+        const spaceAspect = this.space.width / this.space.height;
+        const boardAspect = this.ratio;
+        const widthBound = this.space.width;
+        const heightBound = this.space.height * boardAspect;
+        const hysteresis = 0.05; // Prevent jitter at some dimensions
+        let size;
+        if (spaceAspect < boardAspect - hysteresis) {
+          // Clearly width-constrained
+          size = widthBound;
+        } else if (boardAspect < spaceAspect - hysteresis) {
+          // Clearly height-constrained
+          size = heightBound;
+        } else {
+          // In the dead zone
+          size = heightBound;
+        }
+        return size - this.padding + "px";
       } else {
-        return (
-          Math.max(
-            100,
-            Math.min(this.space.width, this.space.height * this.ratio - 40)
-          ) -
-          this.padding +
-          "px"
-        );
+        return "80%";
       }
     },
     fontSize() {
@@ -440,6 +463,9 @@ export default {
     resizeBoard(size) {
       this.size = size;
       this.$store.commit("ui/SET_UI", ["boardSize", size]);
+      if (this.$store.state.ui.isVertical !== this.isVertical) {
+        this.$store.commit("ui/SET_UI", ["isVertical", this.isVertical]);
+      }
     },
     resizeSpace(size) {
       this.space = size;
@@ -657,6 +683,11 @@ export default {
         this.$store.commit("ui/SET_UI", ["isPortrait", isPortrait]);
       }
     },
+    isVertical(isVertical) {
+      if (isVertical !== this.$store.state.ui.isVertical) {
+        this.$store.commit("ui/SET_UI", ["isVertical", isVertical]);
+      }
+    },
     boardPly: "zoomFitAfterTransition",
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
@@ -671,7 +702,12 @@ export default {
 $axis-size: 1.5em;
 $radius: 0.35em;
 
-.board-wrapper {
+.board-space {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
   &:not(.board-3D),
   &.orthographic {
     perspective: none !important;
@@ -683,8 +719,7 @@ $radius: 0.35em;
     }
     .board,
     .board-row,
-    .squares,
-    .squares > div {
+    .squares {
       transform-style: preserve-3d;
     }
   }
@@ -692,11 +727,20 @@ $radius: 0.35em;
 
 .board-container {
   position: relative;
-  width: 100%;
-  will-change: width, font-size;
-  text-align: center;
   z-index: 0;
   transition: transform $generic-hover-transition;
+  text-align: center;
+
+  display: grid;
+  gap: 0;
+  grid-template-columns: auto var(--board-size-grid) auto;
+  grid-template-rows: auto auto var(--board-size-grid) auto auto;
+  &.show-unplayed-pieces.horizontal {
+    grid-template-columns: auto var(--board-size-grid) 1.75fr;
+  }
+  &.show-unplayed-pieces.vertical {
+    grid-template-rows: auto auto var(--board-size-grid) 1fr auto;
+  }
 
   &.rotating {
     transition: none !important;
@@ -744,6 +788,18 @@ $radius: 0.35em;
   &.flip.rotate-3 .squares {
     transform: scaleX(-1) rotateZ(270deg);
   }
+}
+
+.move-number-container {
+  position: relative;
+  height: 2.25em;
+  grid-column-start: 3;
+  grid-row-start: 2;
+  .board-container.vertical &,
+  .board-container:not(.show-unplayed-pieces) & {
+    grid-column-start: 2;
+    grid-row-start: 1;
+  }
 
   .move-number {
     position: absolute;
@@ -751,27 +807,18 @@ $radius: 0.35em;
     right: 0;
     height: 1.75em;
     line-height: 1.75;
-    background: transparent;
+  }
+
+  .eval-text {
+    font-weight: bold;
+    color: $primary;
+    color: var(--q-color-primary);
   }
 }
 
-.turn-indicator,
-.x-axis {
-  width: 100%;
-  will-change: width;
-  .board-container.axis-labels & {
-    margin-left: $axis-size;
-    width: calc(100% - #{$axis-size});
-  }
-  @for $i from 1 through 8 {
-    $size: 100% * $i / ($i + 1.75);
-    .board-container.show-unplayed-pieces.size-#{$i} & {
-      width: $size;
-    }
-    .board-container.axis-labels.show-unplayed-pieces.size-#{$i} & {
-      width: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
-    }
-  }
+.turn-indicator {
+  grid-column-start: 2;
+  grid-row-start: 2;
 }
 
 .x-axis,
@@ -789,86 +836,60 @@ $radius: 0.35em;
     text-shadow: 0 0.05em 0.1em $textDark;
     text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
   }
-
-  .eval-text {
-    font-weight: bold;
-    color: $primary;
-    color: var(--q-color-primary);
-  }
 }
 .x-axis {
+  z-index: 1;
+  grid-column-start: 2;
+  grid-row-start: 5;
   align-items: flex-end;
   height: $axis-size;
   .board-container:not(.axis-labels) & {
     height: 0;
     opacity: 0;
-    transform: translateY(-100%);
   }
 }
 
 .y-axis {
+  grid-column-start: 1;
+  grid-row-start: 3;
   align-items: flex-start;
   width: $axis-size;
 }
 
 .board {
+  grid-column-start: 2;
+  grid-row-start: 3;
+  grid-row-start: 3;
   background: $board1;
   background: var(--q-color-board1);
   z-index: 1;
   width: 100%;
-  padding-bottom: 100%;
-  will-change: width, padding-bottom;
-  .board-container.axis-labels & {
-    width: calc(100% - #{$axis-size});
-    padding-bottom: calc(100% - #{$axis-size});
-  }
-  @for $i from 1 through 8 {
-    $size: 100% * $i / ($i + 1.75);
-    .board-container.show-unplayed-pieces.size-#{$i} & {
-      width: $size;
-      padding-bottom: $size;
-    }
-    .board-container.axis-labels.show-unplayed-pieces.size-#{$i} & {
-      width: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
-      padding-bottom: calc(#{$size} - #{$axis-size * $i / ($i + 1.75)});
-    }
+  aspect-ratio: 1;
 
-    .board-container.size-#{$i} & {
-      .square,
-      .piece {
-        $size: 100% / $i;
-        width: $size;
-        height: $size;
-      }
-    }
+  .square,
+  .piece {
+    aspect-ratio: 1;
+    width: calc(100% / var(--board-size));
   }
   .pieces {
     transform-style: preserve-3d;
+    z-index: 1;
   }
 }
 
 .unplayed-bg,
 .move-number {
-  border-radius: 0 $radius $radius 0;
-  background-color: $board3;
-  background-color: var(--q-color-board3);
   will-change: width;
   pointer-events: all;
   .board-container:not(.show-unplayed-pieces) & {
     width: 0 !important;
-  }
-  @for $i from 1 through 8 {
-    $size: 175% / ($i + 1.75);
-    .board-container.size-#{$i} & {
-      width: $size;
-    }
-    .board-container.axis-labels.size-#{$i} & {
-      width: calc(#{$size} - #{$axis-size * 1.75 / ($i + 1.75)});
-    }
+    height: 0 !important;
   }
 }
 
 .unplayed-bg {
+  background-color: $board3;
+  background-color: var(--q-color-board3);
   overflow: hidden;
   position: relative;
 
@@ -876,11 +897,31 @@ $radius: 0.35em;
     position: absolute;
     opacity: 0.5 !important;
     left: 0;
-    right: 0;
     bottom: 0;
-    will-change: height, background-color;
-    transition: height $generic-hover-transition,
-      background-color $generic-hover-transition;
+  }
+
+  &.horizontal {
+    grid-column-start: 3;
+    grid-row-start: 3;
+    border-radius: 0 $radius $radius 0;
+    .evaluation {
+      right: 0;
+      will-change: height, background-color;
+      transition: height $generic-hover-transition,
+        background-color $generic-hover-transition;
+    }
+  }
+
+  &.vertical {
+    grid-column-start: 2;
+    grid-row-start: 4;
+    border-radius: 0 0 $radius $radius;
+    .evaluation {
+      top: 0;
+      will-change: width, background-color;
+      transition: width $generic-hover-transition,
+        background-color $generic-hover-transition;
+    }
   }
 }
 </style>

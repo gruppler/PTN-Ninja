@@ -282,6 +282,26 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Move Number") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.moveNumber" />
+        </q-item-section>
+      </q-item>
+
+      <smooth-reflow>
+        <q-item v-show="config.ui.moveNumber" tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.ui.evalText" />
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -326,40 +346,6 @@
           </q-item-section>
           <q-item-section side>
             <q-toggle v-model="config.ui.verticalLayoutAuto" />
-          </q-item-section>
-        </q-item>
-      </smooth-reflow>
-
-      <smooth-reflow>
-        <q-item
-          v-show="
-            config.ui.verticalLayout ||
-            (config.ui.turnIndicator && config.ui.unplayedPieces)
-          "
-          tag="label"
-          v-ripple
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.evalText" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          v-show="
-            config.ui.verticalLayout ||
-            (config.ui.turnIndicator && config.ui.unplayedPieces)
-          "
-          tag="label"
-          v-ripple
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Move Number") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.moveNumber" />
           </q-item-section>
         </q-item>
       </smooth-reflow>

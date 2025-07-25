@@ -41,10 +41,10 @@
       :style="{ backgroundColor: highlighterColor }"
     />
     <div class="road" v-if="showRoads">
-      <div v-if="en" class="n" />
-      <div v-if="ee" class="e" />
-      <div class="s" :class="{ es }" />
-      <div class="w" :class="{ ew }" />
+      <div v-if="es" class="s" />
+      <div v-if="ew" class="w" />
+      <div class="n" :class="{ en }" />
+      <div class="e" :class="{ ee }" />
       <div class="center" />
     </div>
     <div class="stack-count" v-if="!disableStackCounts" v-show="stackCount">
@@ -220,31 +220,31 @@ export default {
       return this.square.static.edges.W;
     },
     n() {
-      return this.en && this.square.connected.N;
+      return this.square.connected.N;
     },
     s() {
-      return this.square.connected.S;
+      return this.es && this.square.connected.S;
     },
     e() {
-      return this.ee && this.square.connected.E;
+      return this.square.connected.E;
     },
     w() {
-      return this.square.connected.W;
+      return this.ew && this.square.connected.W;
     },
     connected() {
       return this.square.connected.length > 0;
     },
     rn() {
-      return this.en && this.square.roads.N;
+      return this.square.roads.N;
     },
     rs() {
-      return this.square.roads.S;
+      return this.es && this.square.roads.S;
     },
     re() {
-      return this.ee && this.square.roads.E;
+      return this.square.roads.E;
     },
     rw() {
-      return this.square.roads.W;
+      return this.ew && this.square.roads.W;
     },
     road() {
       return this.square.roads.length > 0;
@@ -586,26 +586,26 @@ export default {
         bottom: 33.33%;
       }
       &.n {
-        top: 0;
+        top: -33.33%;
         bottom: 66.67%;
+        &.en {
+          top: 0;
+        }
       }
       &.s {
         top: 66.67%;
-        bottom: -33.33%;
-        &.es {
-          bottom: 0;
-        }
+        bottom: 0;
       }
       &.e {
         left: 66.67%;
-        right: 0;
+        right: -33.33%;
+        &.ee {
+          right: 0;
+        }
       }
       &.w {
-        left: -33.33%;
+        left: 0;
         right: 66.67%;
-        &.ew {
-          left: 0;
-        }
       }
     }
   }

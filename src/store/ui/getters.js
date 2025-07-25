@@ -263,10 +263,9 @@ export const url =
       if (!options.unplayedPieces) {
         delete options.verticalLayout;
         delete options.verticalLayoutAuto;
-        if (!options.verticalLayout) {
-          delete options.evalText;
-          delete options.moveNumber;
-        }
+      }
+      if (!options.moveNumber) {
+        delete options.evalText;
       }
       if (!options.verticalLayout) {
         delete options.verticalLayoutAuto;

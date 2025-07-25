@@ -49,13 +49,12 @@
         @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
-        <div
-          class="column absolute-fit"
+        <Board
+          ref="board"
+          :hide-names="!showNames"
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
-        >
-          <Board ref="board" class="col-grow" :hide-names="!showNames" />
-        </div>
+        />
         <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove v-if="!$store.state.ui.disablePTN" />

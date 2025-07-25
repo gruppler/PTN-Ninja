@@ -1,8 +1,8 @@
 <template>
   <q-page-sticky :position="position" :offset="offset">
     <div
-      class="board-toggles q-gutter-sm"
-      :class="{ 'row reverse': isPortrait, column: !isPortrait }"
+      class="board-toggles q-gutter-sm q-pl-sm"
+      :class="{ row: isPortrait, column: !isPortrait }"
     >
       <FullscreenToggle
         @contextmenu.prevent
@@ -211,46 +211,44 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <template v-if="turnIndicator && unplayedPieces">
-                <q-item
-                  v-if="!isEmbedded || !isDisabled('evalText')"
-                  tag="label"
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="evalText"
-                      :disable="isDisabled('evalText')"
-                    />
-                  </q-item-section>
-                  <hint v-if="hotkeys.UI.evalText">
-                    {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
-                  </hint>
-                </q-item>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('moveNumber')"
+              tag="label"
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Move Number") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="moveNumber"
+                  :disable="isDisabled('moveNumber')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.moveNumber">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
+              </hint>
+            </q-item>
 
-                <q-item
-                  v-if="!isEmbedded || !isDisabled('moveNumber')"
-                  tag="label"
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("Move Number") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="moveNumber"
-                      :disable="isDisabled('moveNumber')"
-                    />
-                  </q-item-section>
-                  <hint v-if="hotkeys.UI.moveNumber">
-                    {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
-                  </hint>
-                </q-item>
-              </template>
+            <smooth-reflow>
+              <q-item
+                v-if="moveNumber && (!isEmbedded || !isDisabled('evalText'))"
+                tag="label"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="evalText"
+                    :disable="isDisabled('evalText')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.UI.evalText">
+                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
+                </hint>
+              </q-item>
             </smooth-reflow>
 
             <q-item
@@ -290,6 +288,53 @@
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.unplayedPieces }}
               </hint>
             </q-item>
+
+            <smooth-reflow>
+              <q-item
+                v-if="
+                  unplayedPieces &&
+                  (!isEmbedded || !isDisabled('verticalLayout'))
+                "
+                tag="label"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="verticalLayout"
+                    :disable="isDisabled('verticalLayout')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.UI.verticalLayout">
+                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
+                </hint>
+              </q-item>
+              <q-item
+                v-if="
+                  unplayedPieces &&
+                  verticalLayout &&
+                  (!isEmbedded || !isDisabled('verticalLayoutAuto'))
+                "
+                tag="label"
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="verticalLayoutAuto"
+                    :disable="isDisabled('verticalLayoutAuto')"
+                  />
+                </q-item-section>
+                <hint v-if="hotkeys.UI.verticalLayoutAuto">
+                  {{ $t("Hotkey") }}:
+                  {{ hotkeysFormatted.UI.verticalLayoutAuto }}
+                </hint>
+              </q-item>
+            </smooth-reflow>
           </q-list>
         </q-menu>
       </q-btn>
@@ -450,6 +495,8 @@ const props = [
   "themeID",
   "turnIndicator",
   "unplayedPieces",
+  "verticalLayout",
+  "verticalLayoutAuto",
 ];
 
 export default {
@@ -505,6 +552,10 @@ export default {
     size() {
       if (
         (this.isPortrait &&
+          (this.$store.state.ui.isVertical
+            ? !this.$store.state.ui.moveNumber
+            : !this.$store.state.ui.moveNumber ||
+              this.$store.state.ui.turnIndicator) &&
           this.boardSpace.height - this.boardSize.height < 80) ||
         (!this.isPortrait && this.boardSpace.height < 280)
       ) {
@@ -513,11 +564,13 @@ export default {
       return "md";
     },
     position() {
-      return this.isPortrait
-        ? "top"
-        : this.boardSpace.height > 350
-        ? "right"
-        : "top-right";
+      if (this.isPortrait) {
+        return "top-left";
+      } else if (this.boardSpace.height > 350) {
+        return "right";
+      } else {
+        return "top-right";
+      }
     },
     offset() {
       return this.isPortrait

@@ -21,6 +21,7 @@
 
 <script>
 const SELECTED_GAP = 3;
+const SPACING = 7;
 
 export default {
   name: "Piece",
@@ -87,6 +88,9 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
+    isVertical() {
+      return this.$store.state.ui.isVertical;
+    },
     transform() {
       return this.$store.state.ui.boardTransform;
     },
@@ -112,58 +116,132 @@ export default {
       return col;
     },
     x() {
-      let x = 100;
+      let x;
       if (this.square) {
-        x *= this.col;
+        // Played piece
+        x = 100 * this.col;
       } else {
-        x *= this.config.size + 0.75 * (this.stackColor === 2);
+        // Unplayed piece
+        return this.unplayedX;
+      }
+      return x;
+    },
+    unplayedX() {
+      let x;
+      if (this.isVertical) {
+        // Vertical Layout
+        const buffer = 0.25;
+        x = this.config.size / 2 - 0.5 - buffer;
+        if (this.board3D) {
+          // 3D
+          if (!this.piece.isCapstone) {
+            // TODO: Fix spacing
+
+            // Calculate the group index for this piece type
+            const groupIndex = Math.floor(
+              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+                (this.config.size * 2)
+            );
+
+            // Calculate the group size (subtract 1 if there's a capstone and uneven flats)
+            const groupSize = this.config.size;
+
+            const hasCap =
+              this.pieceCounts.cap && this.pieceCounts.flat % this.config.size;
+
+            // Calculate the total number of groups for flat pieces
+            const totalGroups =
+              Math.floor(this.pieceCounts.flat / groupSize) - 1 - 1 * !hasCap;
+
+            // Calculate the scaling factor for x position
+            const scale = 1;
+
+            // Scale x by the ratio of groupIndex to totalGroups and the scale factor
+            x *= (groupIndex * scale) / totalGroups;
+          }
+        } else {
+          // 2D
+          if (this.piece.isCapstone) {
+            x *= this.pieceCounts.total - this.piece.index - 1;
+          } else {
+            x *=
+              this.pieceCounts.total -
+              this.piece.index -
+              this.pieceCounts.cap -
+              1;
+          }
+          x /= this.pieceCounts.total - 1;
+        }
+        if (this.stackColor === 1) {
+          x = this.config.size / 2 - x - 0.75 - buffer / 4;
+        } else {
+          x = this.config.size / 2 + x - 0.25 + buffer / 4;
+        }
+        x *= 100;
+      } else {
+        // Horizontal Layout
+        x = 100 * this.config.size + 75 * (this.stackColor === 2);
       }
       return x;
     },
     y() {
-      let y = 100;
-      let spacing = 7;
+      let y;
       if (this.square) {
         // Played piece
-        y *= this.row;
+        y = 100 * this.row;
         if (!this.board3D) {
           // 2D
           const pieces = this.square.pieces;
-          y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
+          y += SPACING * (this.piece.z + this.isSelected * SELECTED_GAP);
           if (
             pieces.length > this.config.size &&
             this.piece.z >= pieces.length - this.config.size
           ) {
-            y -= spacing * (pieces.length - this.config.size);
+            y -= SPACING * (pieces.length - this.config.size);
           }
           if (this.piece.isStanding && pieces.length > 1) {
-            y -= spacing;
+            y -= SPACING;
           }
           if (this.piece.isImmovable) {
-            y -= spacing * this.overflow;
+            y -= SPACING * this.overflow;
           }
         }
       } else {
         // Unplayed piece
-        y = this.config.size - 1;
+        return this.unplayedY;
+      }
+      return -y;
+    },
+    unplayedY() {
+      let y;
+      if (this.isVertical) {
+        // Vertical Layout
+        y = 100;
+        if (!this.board3D && this.isSelected) {
+          y -= SPACING * SELECTED_GAP;
+        }
+      } else {
+        // Horizontal Layout
+        y = 1 - this.config.size;
         if (this.board3D) {
           // 3D
           if (!this.piece.isCapstone) {
-            y *=
-              Math.floor(
-                (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
-                  this.config.size
-              ) /
-              Math.floor(
-                this.pieceCounts.flat /
-                  (this.config.size -
-                    1 *
-                      !!(
-                        this.pieceCounts.cap &&
-                        this.pieceCounts.flat % this.config.size
-                      ))
-              );
+            // Calculate the group index for this piece type
+            const groupIndex = Math.floor(
+              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+                this.config.size
+            );
+
+            // Calculate the total number of groups for flat pieces
+            const hasCap =
+              this.pieceCounts.cap && this.pieceCounts.flat % this.config.size;
+            const groupSize = this.config.size - (hasCap ? 1 : 0);
+            const totalGroups = Math.floor(this.pieceCounts.flat / groupSize);
+
+            // Scale y by the ratio of groupIndex to totalGroups
+            y *= groupIndex / totalGroups;
           }
+          y *= 100;
         } else {
           // 2D
           if (this.piece.isCapstone) {
@@ -176,11 +254,11 @@ export default {
               1;
           }
           y /= this.pieceCounts.total - 1;
+          y *= 100;
           if (this.isSelected) {
-            y += (spacing * SELECTED_GAP) / 100;
+            y -= SPACING * SELECTED_GAP;
           }
         }
-        y *= 100;
       }
       return y;
     },
@@ -196,33 +274,45 @@ export default {
         }
       } else {
         // Unplayed piece
-        if (this.board3D) {
-          // 3D
-          z =
-            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
-            this.config.size;
-        } else {
-          // 2D
-          z =
-            (this.pieceCounts.total - this.piece.index) /
-            this.pieceCounts.total;
-          if (this.piece.type !== "cap") {
-            z -= this.pieceCounts.cap;
-          }
-          if (this.stackColor === 1) {
-            z += 1;
-          } else {
-            z += this.config.size - 1;
-          }
-        }
-        if (this.isSelected) {
-          z += SELECTED_GAP;
-        }
+        return this.unplayedZ;
       }
       return z || 0.001;
     },
+    unplayedZ() {
+      let z;
+      if (this.board3D) {
+        // 3D
+        if (this.isVertical) {
+          // Vertical Layout
+          z =
+            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            (this.config.size * 2);
+        } else {
+          // Horizontal Layout
+          z =
+            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            this.config.size;
+        }
+      } else {
+        // 2D
+        z =
+          (this.pieceCounts.total - this.piece.index) / this.pieceCounts.total;
+        if (this.piece.type !== "cap") {
+          z -= this.pieceCounts.cap;
+        }
+        if (this.stackColor === 1) {
+          z += 1;
+        } else {
+          z += this.config.size - 1;
+        }
+      }
+      if (this.isSelected) {
+        z += SELECTED_GAP;
+      }
+      return z;
+    },
     CSSTransform() {
-      return `translate3d(${this.x}%, -${this.y}%, ${this.z}em)`;
+      return `translate3d(${this.x}%, ${this.y}%, ${this.z}em)`;
     },
   },
   methods: {
@@ -340,7 +430,7 @@ export default {
       }
     }
 
-    .board-wrapper:not(.board-3D) &.immovable {
+    .board-space:not(.board-3D) &.immovable {
       bottom: 0;
       left: 50%;
       width: 15%;
@@ -348,7 +438,7 @@ export default {
       border-radius: 15%/30%;
     }
 
-    .board-wrapper.board-3D &.immovable {
+    .board-space.board-3D &.immovable {
       opacity: 0.35;
     }
 
@@ -359,6 +449,7 @@ export default {
 
     &.unplayed {
       .board-container:not(.show-unplayed-pieces) & {
+        pointer-events: none;
         opacity: 0;
       }
     }
