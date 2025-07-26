@@ -86,7 +86,7 @@ export default {
       opacity: 0;
       pointer-events: none;
     }
-    transform: translateY(calc(100% - 16px));
+    transform: translateY(calc(100% - 14px));
   }
 }
 </style>
