@@ -97,7 +97,7 @@ export default {
       right: 0;
       pointer-events: none;
       background-color: rgba(0, 0, 0, 0);
-      transition: background-color $generic-hover-transition;
+      transition: background-color $transition;
     }
   }
   .result-R {

@@ -297,6 +297,9 @@ export default {
 </script>
 
 <style lang="scss">
+$transition-easing-road-in: cubic-bezier(1, 0, 0.5, 0);
+$transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
+
 .square {
   position: relative;
 
@@ -378,8 +381,9 @@ export default {
     left: 0;
     right: 0;
     opacity: 0;
-    transition: background-color $generic-hover-transition,
-      opacity $generic-hover-transition;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: background-color, opacity;
   }
 
   .hl.ring {
@@ -454,8 +458,9 @@ export default {
       height: 1.5em;
       line-height: 1.5em;
       border-radius: 50%;
-      transition: background-color $generic-hover-transition,
-        color $generic-hover-transition;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing;
+      transition-property: background-color, color;
     }
   }
   &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
@@ -564,8 +569,9 @@ export default {
     > div {
       opacity: 0;
       position: absolute;
-      transition: opacity $half-time $easing-reverse,
-        background-color $half-time $easing-reverse;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing-road-out;
+      transition-property: opacity, background-color;
       &.center {
         top: 33.33%;
         bottom: 33.33%;
@@ -612,8 +618,9 @@ export default {
   &.s .road .s,
   &.w .road .w {
     opacity: 0.2;
-    transition: opacity $half-time $easing $half-time,
-      background-color $half-time $easing $half-time;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing-road-in;
+    transition-property: opacity, background-color;
   }
   &.road .road .center,
   &.rn .road .n,

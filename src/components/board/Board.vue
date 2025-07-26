@@ -703,7 +703,7 @@ $radius: 0.35em;
 .board-container {
   position: relative;
   z-index: 0;
-  transition: transform $generic-hover-transition;
+  transition: transform $transition;
   text-align: center;
 
   display: grid;

@@ -170,7 +170,9 @@ $radius: 0.35em;
     .player2 {
       width: 50%;
       will-change: width;
-      transition: width $generic-hover-transition;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing;
+      transition-property: width;
       .content {
         white-space: nowrap;
       }
@@ -251,7 +253,9 @@ $radius: 0.35em;
       opacity: 0.13;
       background: #000;
       will-change: width;
-      transition: width $generic-hover-transition;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing;
+      transition-property: width;
       z-index: 1;
       &.dark {
         background: #fff;
@@ -277,7 +281,9 @@ $radius: 0.35em;
       bottom: 0;
       background: $primary;
       background: var(--q-color-primary);
-      transition: opacity $generic-hover-transition;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing;
+      transition-property: opacity;
       .board-container.eog & {
         opacity: 0 !important;
       }

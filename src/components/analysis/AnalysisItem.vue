@@ -220,9 +220,9 @@ export default {
   }
 
   &.animate .evaluation {
-    transition: width $generic-hover-transition,
-      background-color $generic-hover-transition,
-      opacity $generic-hover-transition;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: width, background-color, opacity;
   }
 
   .continuation {

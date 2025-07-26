@@ -343,8 +343,9 @@ export default {
   bottom: 0;
   left: 0;
   will-change: transform;
-  transition: transform $generic-hover-transition,
-    opacity $generic-hover-transition;
+  transition-duration: $transition-duration;
+  transition-timing-function: $transition-easing;
+  transition-property: transform, opacity;
 
   .stone {
     position: absolute;
@@ -359,12 +360,10 @@ export default {
     border-style: solid;
     border-radius: 10%;
     will-change: transform, width, height, border-radius, box-shadow;
-    transition: opacity $generic-hover-transition,
-      transform $generic-hover-transition, width $generic-hover-transition,
-      height $generic-hover-transition, left $generic-hover-transition,
-      border-radius $generic-hover-transition,
-      background-color $generic-hover-transition,
-      box-shadow $generic-hover-transition;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: opacity, transform, width, height, left, border-radius,
+      background-color, box-shadow;
 
     box-shadow: 0 0.2vmin 0.4vmin $umbra;
     box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
