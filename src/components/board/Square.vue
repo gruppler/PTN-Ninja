@@ -380,7 +380,6 @@ export default {
     opacity: 0;
     transition: background-color $generic-hover-transition,
       opacity $generic-hover-transition;
-    will-change: background-color, opacity;
   }
 
   .hl.ring {
@@ -457,7 +456,6 @@ export default {
       border-radius: 50%;
       transition: background-color $generic-hover-transition,
         color $generic-hover-transition;
-      will-change: background-color, color;
     }
   }
   &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
@@ -566,7 +564,6 @@ export default {
     > div {
       opacity: 0;
       position: absolute;
-      will-change: opacity, top, bottom, left, right;
       transition: opacity $half-time $easing-reverse,
         background-color $half-time $easing-reverse;
       &.center {

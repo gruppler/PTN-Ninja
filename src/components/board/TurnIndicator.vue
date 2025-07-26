@@ -6,6 +6,12 @@
         :style="{ width: showFlatCounts ? widths[1] : '50%' }"
       >
         <div class="content absolute-fit">
+          <div
+            v-if="showFlatCounts && komi < 0"
+            class="komi"
+            :class="{ dark: komiDark }"
+            :style="{ width: komiWidth }"
+          />
           <div class="name absolute-left q-px-sm">
             {{ hideNames ? "" : player1 }}
           </div>
@@ -22,6 +28,12 @@
         :style="{ width: showFlatCounts ? widths[2] : '50%' }"
       >
         <div class="content absolute-fit row no-wrap">
+          <div
+            v-if="showFlatCounts && komi > 0"
+            class="komi"
+            :class="{ dark: komiDark }"
+            :style="{ width: komiWidth }"
+          />
           <div class="flats q-px-sm">
             {{ counts[1] }}
             <span v-if="komi > 0 && counts[2]" class="komi-count">
@@ -33,12 +45,6 @@
           </div>
         </div>
       </div>
-      <div
-        v-if="komi !== 0 && showFlatCounts"
-        class="komi"
-        :class="{ dark: komiDark }"
-        :style="{ width: widths.komiWidth, left: widths.komiLeft }"
-      />
     </div>
     <div class="indicator">
       <div class="player1" />
@@ -85,6 +91,9 @@ export default {
       return this.$store.state.ui.flatCounts;
     },
     flats() {
+      return this.position.flats;
+    },
+    flatsflatsWithoutKomi() {
       return this.position.flatsWithoutKomi;
     },
     minNameWidth() {
@@ -100,7 +109,10 @@ export default {
     },
     counts() {
       if (this.showFlatCounts) {
-        return [...this.flats, this.formatKomi(Math.abs(this.komi))];
+        return [
+          ...this.flatsflatsWithoutKomi,
+          this.formatKomi(Math.abs(this.komi)),
+        ];
       } else {
         return [
           this.komi < 0 ? "+" + this.formatKomi(-this.komi) : "",
@@ -117,18 +129,15 @@ export default {
           ).toPrecision(4)
         : 50;
       const player2width = 100 - player1width;
-      const komiWidth = (
-        this.komi < 0
-          ? player1width * (-this.komi / this.flats[0])
-          : player2width * (this.komi / this.flats[1])
-      ).toPrecision(4);
-      const komiLeft = this.komi < 0 ? player1width - komiWidth : player1width;
       return {
         1: player1width + "%",
         2: player2width + "%",
-        komiWidth: komiWidth + "%",
-        komiLeft: komiLeft + "%",
       };
+    },
+    komiWidth() {
+      return `calc(${100 * Math.abs(this.komi)}% / ${
+        this.komi < 0 ? this.flats[0] : this.flats[1]
+      })`;
     },
   },
   methods: {
@@ -238,14 +247,18 @@ $radius: 0.35em;
       position: absolute;
       top: 0;
       bottom: 0;
+      left: 0;
       opacity: 0.13;
       background: #000;
-      will-change: width, left;
-      transition: width $generic-hover-transition,
-        left $generic-hover-transition;
+      will-change: width;
+      transition: width $generic-hover-transition;
       z-index: 1;
       &.dark {
         background: #fff;
+      }
+      .player1 & {
+        left: auto;
+        right: 0;
       }
     }
   }
@@ -264,7 +277,6 @@ $radius: 0.35em;
       bottom: 0;
       background: $primary;
       background: var(--q-color-primary);
-      will-change: opacity;
       transition: opacity $generic-hover-transition;
       .board-container.eog & {
         opacity: 0 !important;

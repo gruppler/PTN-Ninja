@@ -342,7 +342,7 @@ export default {
   position: absolute;
   bottom: 0;
   left: 0;
-  will-change: transform, opacity;
+  will-change: transform;
   transition: transform $generic-hover-transition,
     opacity $generic-hover-transition;
 
@@ -358,8 +358,7 @@ export default {
     border-width: calc(var(--piece-border-width) * 0.15vmin);
     border-style: solid;
     border-radius: 10%;
-    will-change: opacity, transform, width, height, left, border-radius,
-      background-color, box-shadow;
+    will-change: transform, width, height, border-radius, box-shadow;
     transition: opacity $generic-hover-transition,
       transform $generic-hover-transition, width $generic-hover-transition,
       height $generic-hover-transition, left $generic-hover-transition,
