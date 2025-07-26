@@ -348,7 +348,7 @@ export default {
       const scale = this.scale;
       const translate = `${this.x}px, ${this.y}px`;
 
-      const rotateZ = -x * y * MAX_ANGLE * 0.75 + "deg";
+      const rotateZ = -x * y * MAX_ANGLE * 1.5 + "deg";
 
       const rotate3d = [y, x, 0, magnitude * MAX_ANGLE + "deg"].join(",");
 
