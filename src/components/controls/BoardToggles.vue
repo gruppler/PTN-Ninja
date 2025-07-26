@@ -150,28 +150,25 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <q-item
-                v-if="
-                  turnIndicator && (!isEmbedded || !isDisabled('flatCounts'))
-                "
-                tag="label"
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    v-model="flatCounts"
-                    :disable="isDisabled('flatCounts')"
-                  />
-                </q-item-section>
-              </q-item>
-              <hint v-if="hotkeys.UI.flatCounts">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatCounts }}
-              </hint>
-            </smooth-reflow>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('flatCounts')"
+              tag="label"
+              :disable="!turnIndicator"
+              :ripple="Boolean(turnIndicator)"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="flatCounts"
+                  :disable="!turnIndicator || isDisabled('flatCounts')"
+                />
+              </q-item-section>
+            </q-item>
+            <hint v-if="hotkeys.UI.flatCounts">
+              {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatCounts }}
+            </hint>
 
             <q-item
               v-if="!isEmbedded || !isDisabled('stackCounts')"
@@ -230,26 +227,25 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <q-item
-                v-if="moveNumber && (!isEmbedded || !isDisabled('evalText'))"
-                tag="label"
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    v-model="evalText"
-                    :disable="isDisabled('evalText')"
-                  />
-                </q-item-section>
-                <hint v-if="hotkeys.UI.evalText">
-                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
-                </hint>
-              </q-item>
-            </smooth-reflow>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('evalText')"
+              tag="label"
+              :disable="!moveNumber"
+              :ripple="Boolean(moveNumber)"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="evalText"
+                  :disable="!moveNumber || isDisabled('evalText')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.evalText">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
+              </hint>
+            </q-item>
 
             <q-item
               v-if="!isEmbedded || !isDisabled('highlightSquares')"
@@ -289,52 +285,49 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <q-item
-                v-if="
-                  unplayedPieces &&
-                  (!isEmbedded || !isDisabled('verticalLayout'))
-                "
-                tag="label"
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    v-model="verticalLayout"
-                    :disable="isDisabled('verticalLayout')"
-                  />
-                </q-item-section>
-                <hint v-if="hotkeys.UI.verticalLayout">
-                  {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
-                </hint>
-              </q-item>
-              <q-item
-                v-if="
-                  unplayedPieces &&
-                  verticalLayout &&
-                  (!isEmbedded || !isDisabled('verticalLayoutAuto'))
-                "
-                tag="label"
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    v-model="verticalLayoutAuto"
-                    :disable="isDisabled('verticalLayoutAuto')"
-                  />
-                </q-item-section>
-                <hint v-if="hotkeys.UI.verticalLayoutAuto">
-                  {{ $t("Hotkey") }}:
-                  {{ hotkeysFormatted.UI.verticalLayoutAuto }}
-                </hint>
-              </q-item>
-            </smooth-reflow>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayout')"
+              tag="label"
+              :disable="!unplayedPieces"
+              :ripple="Boolean(unplayedPieces)"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayout"
+                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayout">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
+              </hint>
+            </q-item>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
+              tag="label"
+              :disable="!unplayedPieces || !verticalLayout"
+              :ripple="Boolean(unplayedPieces)"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayoutAuto"
+                  :disable="
+                    !unplayedPieces ||
+                    !verticalLayout ||
+                    isDisabled('verticalLayoutAuto')
+                  "
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayoutAuto">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
+              </hint>
+            </q-item>
           </q-list>
         </q-menu>
       </q-btn>

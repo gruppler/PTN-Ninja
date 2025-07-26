@@ -112,27 +112,37 @@
         </q-item-section>
       </q-item>
 
-      <smooth-reflow>
-        <div v-show="config.turnIndicator">
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Player Names") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.includeNames" />
-            </q-item-section>
-          </q-item>
+      <q-item
+        tag="label"
+        :disable="!config.turnIndicator"
+        :ripple="config.turnIndicator"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Player Names") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.includeNames"
+            :disable="config.turnIndicator"
+          />
+        </q-item-section>
+      </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.flatCounts" />
-            </q-item-section>
-          </q-item>
-        </div>
-      </smooth-reflow>
+      <q-item
+        tag="label"
+        :disable="!config.turnIndicator"
+        :ripple="config.turnIndicator"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.flatCounts"
+            :disable="config.turnIndicator"
+          />
+        </q-item-section>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -143,27 +153,37 @@
         </q-item-section>
       </q-item>
 
-      <smooth-reflow>
-        <template v-if="config.turnIndicator && config.unplayedPieces">
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.evalText" />
-            </q-item-section>
-          </q-item>
+      <q-item
+        tag="label"
+        :disable="!config.turnIndicator || !config.unplayedPieces"
+        :ripple="config.turnIndicator && config.unplayedPieces"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Move Number") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.moveNumber"
+            :disable="!config.turnIndicator || !config.unplayedPieces"
+          />
+        </q-item-section>
+      </q-item>
 
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("Move Number") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.moveNumber" />
-            </q-item-section>
-          </q-item>
-        </template>
-      </smooth-reflow>
+      <q-item
+        tag="label"
+        :disable="!config.turnIndicator || !config.unplayedPieces"
+        :ripple="config.turnIndicator && config.unplayedPieces"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.evalText"
+            :disable="!config.turnIndicator || !config.unplayedPieces"
+          />
+        </q-item-section>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
