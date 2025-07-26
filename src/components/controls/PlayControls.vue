@@ -136,7 +136,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { omit, pick, throttle, zipObject } from "lodash";
+import { omit, pick, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -155,8 +155,6 @@ export default {
       isPlaying: false,
       timer: null,
       timestamp: null,
-      next: null,
-      prev: null,
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
@@ -240,7 +238,7 @@ export default {
         this.$store.dispatch("game/FIRST");
       }
     },
-    _prev(event) {
+    prev(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
@@ -257,7 +255,7 @@ export default {
         }
       });
     },
-    _next(event) {
+    next(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
@@ -348,10 +346,6 @@ export default {
         }
       }
     },
-  },
-  created() {
-    this.next = throttle(this._next, 250);
-    this.prev = throttle(this._prev, 250);
   },
 };
 </script>
