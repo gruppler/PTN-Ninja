@@ -7,45 +7,42 @@
     transition-show="none"
     transition-hide="none"
     auto-close
-    cover
   >
     <q-list class="branch-menu" dense>
-      <q-item
-        v-for="(ply, i) in branches"
-        :key="i"
-        ref="items"
-        @click="select(ply)"
-        clickable
-      >
-        <q-item-label class="row no-wrap overflow-hidden items-center">
-          <span class="fade">
-            <q-badge
-              class="option-number text-subtitle2 q-pa-sm"
-              :class="{ selected: selected === i }"
-              :label="i"
+      <template v-for="(ply, i) in branches">
+        <q-separator :key="i" v-if="showSeparator(i)" />
+        <q-item :key="i" ref="items" @click="select(ply)" clickable>
+          <q-item-label class="row no-wrap overflow-hidden items-center">
+            <span class="fade">
+              <div
+                class="option-number text-subtitle2 q-pa-sm"
+                :class="{ 'bg-primary': selected === i }"
+              >
+                {{ i }}
+              </div>
+            </span>
+            <Linenum
+              :linenum="ply.linenum"
+              :active-ply="ply"
+              class="branch-container col-shrink"
             />
-          </span>
-          <Linenum
-            :linenum="ply.linenum"
-            :active-ply="ply"
-            class="col-shrink"
-          />
-          <Ply :ply="ply" no-branches no-click>
-            <PlyPreview
-              :tps="ply.tpsAfter"
-              :hl="ply.text"
-              :options="$store.state.game.config"
-            />
-          </Ply>
-        </q-item-label>
-      </q-item>
+            <Ply :ply="ply" no-branches no-click>
+              <PlyPreview
+                :tps="ply.tpsAfter"
+                :hl="ply.text"
+                :options="$store.state.game.config"
+              />
+            </Ply>
+          </q-item-label>
+        </q-item>
+      </template>
     </q-list>
   </q-menu>
 </template>
 
 <script>
 import PlyPreview from "../controls/PlyPreview";
-import { findLastIndex } from "lodash";
+import { compact, findLastIndex } from "lodash";
 
 export default {
   name: "BranchMenu",
@@ -77,6 +74,19 @@ export default {
     },
   },
   methods: {
+    showSeparator(i) {
+      if (!i) {
+        return false;
+      }
+      const ply = this.branches[i];
+      const prevPly = this.branches[i - 1];
+      if (ply.index !== prevPly.index) {
+        return true;
+      }
+      const branchParts = compact(ply.branch.split("/"));
+      const prevBranchParts = compact(prevPly.branch.split("/"));
+      return prevBranchParts.some((part, index) => branchParts[index] !== part);
+    },
     select(ply) {
       this.isClosing = true;
       this.$emit("select", ply);
@@ -115,7 +125,13 @@ export default {
   background: var(--q-color-panelOpaque) !important;
 
   .option-number {
-    line-height: 1em;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1.3em;
+    padding: 4px 0;
+    width: 2em;
+    flex-shrink: 0;
+    text-align: center;
     border-radius: $generic-border-radius;
     background-color: $bg;
     background-color: var(--q-color-bg);
@@ -138,6 +154,10 @@ export default {
 
   .linenum {
     z-index: 1;
+  }
+
+  .branch-container {
+    max-width: 20em;
   }
 
   $fadeWidth: 1em;

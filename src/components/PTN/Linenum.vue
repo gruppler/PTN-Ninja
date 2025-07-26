@@ -1,7 +1,7 @@
 <template>
   <span class="ptn linenum justify-end">
     <span
-      v-if="showBranch"
+      v-if="branch && (showBranch || onlyBranch)"
       class="branch row no-wrap justify-end"
       :class="{ selected: isSelected, only: onlyBranch }"
       @click.left="selectBranch(ply)"
@@ -42,7 +42,7 @@
         </q-list>
       </q-menu>
       <q-btn
-        v-if="onlyBranch"
+        v-if="onlyBranch && !noMenu"
         @click.stop
         icon="arrow_drop_down"
         size="md"
@@ -74,6 +74,7 @@ export default {
     linenum: Object,
     noEdit: Boolean,
     noBranch: Boolean,
+    noMenu: Boolean,
     onlyBranch: Boolean,
     activePly: Object,
     unselected: Boolean,
