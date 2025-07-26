@@ -165,10 +165,10 @@
                   :disable="!turnIndicator || isDisabled('flatCounts')"
                 />
               </q-item-section>
+              <hint v-if="hotkeys.UI.flatCounts">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatCounts }}
+              </hint>
             </q-item>
-            <hint v-if="hotkeys.UI.flatCounts">
-              {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatCounts }}
-            </hint>
 
             <q-item
               v-if="!isEmbedded || !isDisabled('stackCounts')"
