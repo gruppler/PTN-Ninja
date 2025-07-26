@@ -102,13 +102,9 @@
         <div v-for="x in xAxis" :key="x">{{ x }}</div>
       </div>
 
-      <q-resize-observer
-        class="absolute-fit"
-        @resize="resizeBoard"
-        :debounce="20"
-      />
+      <q-resize-observer class="absolute-fit" @resize="resizeBoard" />
     </div>
-    <q-resize-observer @resize="resizeSpace" :debounce="20" />
+    <q-resize-observer @resize="resizeSpace" />
   </div>
 </template>
 
