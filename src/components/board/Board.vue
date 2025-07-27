@@ -5,7 +5,7 @@
     :style="{
       perspective,
       '--board-size': config.size,
-      '--square-size': squareSize,
+      '--square-size': `calc(${squareSize || 100}px / ${config.size})`,
       '--board-size-grid': config.size + 'fr',
     }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
@@ -415,9 +415,9 @@ export default {
     },
     resizeSquare(size) {
       // Prevent jitter at some dimensions
-      this.squareSize = `calc(${2 * Math.round(size.width / 2) || 100}px / ${
-        this.config.size
-      })`;
+      if (Math.abs(size.width - this.squareSize) > 1) {
+        this.squareSize = size.width;
+      }
     },
     resizeBoard(size) {
       this.size = size;
