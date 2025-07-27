@@ -265,12 +265,6 @@ export default {
       const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
-    padding() {
-      if (!this.space) {
-        return 0;
-      }
-      return Math.min(this.space.width, this.space.height) * 0.12;
-    },
     isPortrait() {
       return (
         this.size && this.space && this.space.width - this.size.width < 136
@@ -310,7 +304,7 @@ export default {
           // In the dead zone
           size = heightBound;
         }
-        return Math.max(size - this.padding, 10) + "px";
+        return Math.max(size * 0.9, 10) + "px";
       } else {
         return "80%";
       }
@@ -573,9 +567,10 @@ export default {
       const boardBB = this.getBounds(nodes);
       const spaceBB = this.$refs.wrapper.getBoundingClientRect();
 
-      const halfPad = this.padding / 2;
-      spaceBB.width -= this.padding;
-      spaceBB.height -= this.padding;
+      const padding = Math.min(this.space.width, this.space.height) * 0.1;
+      const halfPad = padding / 2;
+      spaceBB.width -= padding;
+      spaceBB.height -= padding;
       spaceBB.x += halfPad;
       spaceBB.y += halfPad;
 
