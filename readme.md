@@ -320,7 +320,7 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Title of the game
 
-#### `notifyAnalysisNotes` (default: `true`)
+#### `notifyAnalysisNotes` (default: `false`)
 
 - Show analysis note notifications
 

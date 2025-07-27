@@ -44,7 +44,7 @@ const defaultState = {
     navigator.canShare && !Platform.is.desktop
       ? navigator.canShare({ text: "test", url: location.href })
       : false,
-  notifyAnalysisNotes: true,
+  notifyAnalysisNotes: false,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
