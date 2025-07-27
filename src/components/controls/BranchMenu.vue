@@ -10,7 +10,7 @@
   >
     <q-list class="branch-menu" dense>
       <template v-for="(ply, i) in branches">
-        <q-separator :key="i" v-if="showSeparator(i)" />
+        <q-separator :key="'separator-' + i" v-if="showSeparator(i)" />
         <q-item :key="i" ref="items" @click="select(ply)" clickable>
           <q-item-label class="row no-wrap overflow-hidden items-center">
             <span class="fade">

@@ -6,8 +6,7 @@
   >
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
-      @click.right.stop.prevent
-      @touchstart.stop.prevent
+      @click.right.stop.prevent.native
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
@@ -60,7 +59,7 @@
       clickable
     />
 
-    <slot />
+    <slot v-if="!menu" />
   </span>
 </template>
 
@@ -125,6 +124,9 @@ export default {
       if (!this.$store.state.ui.disableNavigation) {
         this.$store.dispatch("game/SET_TARGET", ply);
       }
+    },
+    captureFocus(event) {
+      console.log(event);
     },
   },
 };
