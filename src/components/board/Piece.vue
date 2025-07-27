@@ -388,27 +388,34 @@ export default {
       left: 15%;
       border-radius: 27%/10%;
 
+      --offset-factor: 0.78;
       &.p1 {
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        box-shadow: calc(var(--shadow-y) * -1) calc(var(--shadow-y))
-          var(--shadow-blur) var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
+          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+          var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: calc(var(--shadow-y) * -1) calc(var(--shadow-y))
-              var(--shadow-blur) var(--q-color-umbra),
-            calc(var(--shadow-y-selected) * -1) calc(var(--shadow-y-selected))
+          box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
+              calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+              var(--q-color-umbra),
+            calc(var(--shadow-y-selected) * -1 * var(--offset-factor))
+              calc(var(--shadow-y-selected) * var(--offset-factor))
               var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
       &.p2 {
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        box-shadow: calc(var(--shadow-y) / 2) calc(var(--shadow-y) / 2)
-          var(--shadow-blur) var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) * var(--offset-factor))
+          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+          var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: calc(var(--shadow-y) / 2) calc(var(--shadow-y) / 2)
-              var(--shadow-blur) var(--q-color-umbra),
-            calc(var(--shadow-y-selected)) calc(var(--shadow-y-selected))
+          box-shadow: calc(var(--shadow-y) * var(--offset-factor))
+              calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+              var(--q-color-umbra),
+            calc(var(--shadow-y-selected) * var(--offset-factor))
+              calc(var(--shadow-y-selected) * var(--offset-factor))
               var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
