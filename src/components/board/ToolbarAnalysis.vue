@@ -47,6 +47,16 @@
           color="primary"
           stretch
         />
+        <q-btn
+          v-else-if="bot.hasOptions && !botState.isReady"
+          @click="bot.applyOptions()"
+          icon="apply"
+          :label="$t('analysis.init')"
+          :loading="botState.isReadying"
+          class="full-width toolbar-analysis"
+          color="primary"
+          stretch
+        />
         <div class="position-relative" v-else>
           <q-btn-group spread stretch>
             <q-btn
