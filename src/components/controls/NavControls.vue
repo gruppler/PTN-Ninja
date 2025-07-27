@@ -338,7 +338,7 @@ export default {
     },
     vibrate() {
       if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
-        navigator.vibrate(1);
+        navigator.vibrate(2);
       }
     },
   },
