@@ -12,6 +12,7 @@ const defaultState = {
   animateBoard: true,
   animateScrub: false,
   axisLabels: true,
+  axisLabelsSmall: false,
   board3D: false,
   boardRotation: [0, 0.65],
   boardSize: { width: 0, height: 0 },
@@ -84,6 +85,7 @@ const defaultState = {
 
 export const embedUIOptions = [
   "axisLabels",
+  "axisLabelsSmall",
   "disableBoard",
   "disableNavigation",
   "disablePTN",

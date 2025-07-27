@@ -15,6 +15,7 @@ export default {
   Author: "Author",
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
+  "Axis Labels Small": "Small Axis Labels",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",
   "Backward Half-Step": "Backward Half-Step",

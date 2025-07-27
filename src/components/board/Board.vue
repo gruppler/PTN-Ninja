@@ -20,7 +20,6 @@
         ['size-' + config.size]: true,
         ['turn-' + turn]: true,
         'no-animations': disableAnimations,
-        'axis-labels': $store.state.ui.axisLabels,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: highlighterEnabled,
@@ -88,7 +87,7 @@
       </div>
 
       <div
-        v-if="$store.state.ui.axisLabels"
+        v-if="$store.state.ui.axisLabels && !$store.state.ui.axisLabelsSmall"
         class="y-axis column reverse no-pointer-events"
       >
         <div v-for="y in yAxis" :key="y">
@@ -97,7 +96,7 @@
       </div>
 
       <div
-        v-if="$store.state.ui.axisLabels"
+        v-if="$store.state.ui.axisLabels && !$store.state.ui.axisLabelsSmall"
         class="x-axis row items-end no-pointer-events"
         @click.right.prevent
       >
@@ -799,10 +798,6 @@ $radius: 0.35em;
   grid-row-start: 5;
   align-items: flex-end;
   height: $axis-size;
-  .board-container:not(.axis-labels) & {
-    height: 0;
-    opacity: 0;
-  }
 }
 
 .y-axis {

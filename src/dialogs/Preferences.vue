@@ -40,7 +40,11 @@
         </hint>
       </q-item>
 
-      <q-item tag="label" v-ripple>
+      <q-item
+        tag="label"
+        :disable="isDisabled('nativeSharing')"
+        :ripple="!isDisabled('nativeSharing')"
+      >
         <q-item-section>
           <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
         </q-item-section>

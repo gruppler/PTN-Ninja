@@ -17,6 +17,7 @@
       valid,
       connected,
       highlighted: isHighlighted,
+      '--highlighter-color': highlighterColor,
       highlighterDark,
       n,
       e,
@@ -47,14 +48,13 @@
       <div class="e" :class="{ ee }" />
       <div class="center" />
     </div>
-    <div class="stack-count" v-if="!disableStackCounts" v-show="stackCount">
-      <span
-        :style="{
-          backgroundColor:
-            highlighterEnabled && isHighlighted ? highlighterColor : '',
-        }"
-        >{{ stackCount }}</span
-      >
+    <div class="numbers">
+      <span v-if="showAxisLabels && (es || ew)" class="axis-label">{{
+        coord
+      }}</span>
+      <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
+        stackCount
+      }}</span>
     </div>
   </div>
 </template>
@@ -181,6 +181,11 @@ export default {
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
+    },
+    showAxisLabels() {
+      return (
+        this.$store.state.ui.axisLabels && this.$store.state.ui.axisLabelsSmall
+      );
     },
     showRoads() {
       return (
@@ -309,10 +314,8 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   .board-container.grid1 &,
   .board-container.grid2 &,
   .board-container.grid3 & {
-    background: $board2;
     background: var(--q-color-board2);
     &:before {
-      background: $board1;
       background: var(--q-color-board1);
       content: "";
       position: absolute;
@@ -324,7 +327,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     body.boardChecker &.dark {
       background: transparent;
       &:before {
-        background: $board2;
         background: var(--q-color-board2);
       }
     }
@@ -369,7 +371,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
   body.boardChecker .board-container.blank & {
     &.dark {
-      background: $board2;
       background: var(--q-color-board2);
     }
   }
@@ -387,7 +388,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
 
   .hl.ring {
-    opacity: $rings-opacity;
     opacity: var(--rings-opacity);
   }
   .hl.ring1 {
@@ -404,7 +404,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
 
   .hl.current {
-    background-color: $primary;
     background-color: var(--q-color-primary);
   }
   .board-container.highlight-squares &.current {
@@ -426,17 +425,16 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     .hl.highlighter {
       opacity: 0.75;
     }
-    .stack-count span {
-      color: $textDark !important;
+    .numbers span {
+      background-color: var(----highlighter-color) !important;
       color: var(--q-color-textDark) !important;
     }
-    &.highlighterDark .stack-count span {
-      color: $textLight !important;
+    &.highlighterDark .numbers span {
       color: var(--q-color-textLight) !important;
     }
   }
 
-  .stack-count {
+  .numbers {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -446,9 +444,7 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     line-height: 1em;
     pointer-events: none;
     span {
-      color: $textDark;
       color: var(--q-color-textDark);
-      background-color: $board2;
       background-color: var(--q-color-board2);
       display: block;
       position: absolute;
@@ -463,69 +459,56 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       transition-property: background-color, color;
     }
   }
-  &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
+  .axis-label {
+    right: auto;
+    left: 0;
+    text-shadow: none !important;
+  }
+  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
     display: none;
   }
-  body.boardChecker.board2Dark &.light .stack-count span {
-    color: $textLight;
+  body.boardChecker.board2Dark &.light .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board2;
     background-color: var(--q-color-board2);
   }
-  body.boardChecker.board1Dark &.dark .stack-count span {
-    color: $textLight;
+  body.boardChecker.board1Dark &.dark .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board1;
     background-color: var(--q-color-board1);
   }
-  body:not(.boardChecker).board2Dark & .stack-count span {
-    color: $textLight;
+  body:not(.boardChecker).board2Dark & .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board2;
     background-color: var(--q-color-board2);
   }
-  body.primaryDark
-    .board-container.highlight-squares
-    &.current
-    .stack-count
-    span {
-    color: $textLight;
+  body.primaryDark .board-container.highlight-squares &.current .numbers span {
     color: var(--q-color-textLight);
-    background-color: $primary;
     background-color: var(--q-color-primary);
   }
   body:not(.primaryDark)
     .board-container.highlight-squares
     &.current
-    .stack-count
+    .numbers
     span {
-    color: $textDark;
     color: var(--q-color-textDark);
-    background-color: $primary;
     background-color: var(--q-color-primary);
   }
 
   .board-container.turn-1 & {
     .hl.player {
-      background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
   }
   .board-container.turn-1:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
-      background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2 & {
     .hl.player {
-      background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
-      background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
   }
@@ -543,11 +526,9 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     opacity: 0.4;
   }
   &.eog.p1 .hl.player {
-    background-color: $player1road;
     background-color: var(--q-color-player1road);
   }
   &.eog.p2 .hl.player {
-    background-color: $player2road;
     background-color: var(--q-color-player2road);
   }
   @media (pointer: fine) {
@@ -630,11 +611,9 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     opacity: 0.8;
   }
   &.p1 .road > div {
-    background-color: $player1road;
     background-color: var(--q-color-player1road);
   }
   &.p2 .road > div {
-    background-color: $player2road;
     background-color: var(--q-color-player2road);
   }
 

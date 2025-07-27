@@ -276,6 +276,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show axis labels
 
+#### `axisLabelsSmall` (default: `false`)
+
+- Show axis labels inside the board
+
 #### `disableBoard` (default: `false`)
 
 - Disable board interactions
