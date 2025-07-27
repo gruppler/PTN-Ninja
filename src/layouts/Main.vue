@@ -239,12 +239,7 @@
           animated
         >
           <q-tab-panel name="analysis">
-            <Analysis
-              v-if="hasAnalysis && $q.screen.height >= singleWidth"
-              ref="analysis"
-              class="fit"
-              recess
-            />
+            <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
@@ -258,7 +253,7 @@
     </q-drawer>
 
     <q-footer class="bg-panel">
-      <ToolbarAnalysis />
+      <ToolbarAnalysis v-if="hasAnalysis && $q.screen.height >= singleWidth" />
 
       <div class="relative-position">
         <Scrubber />
