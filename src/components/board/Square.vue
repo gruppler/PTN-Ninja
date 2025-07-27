@@ -442,7 +442,7 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     bottom: 0;
     left: 0;
     right: 0;
-    font-size: 0.6em;
+    font-size: min(0.15em, 15px);
     line-height: 1em;
     pointer-events: none;
     span {

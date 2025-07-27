@@ -5,6 +5,7 @@
     :style="{
       perspective,
       '--board-size': config.size,
+      '--square-size': squareSize,
       '--board-size-grid': config.size + 'fr',
     }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
@@ -36,7 +37,7 @@
         horizontal: !isVertical,
         vertical: isVertical,
       }"
-      :style="{ width, fontSize, transform: CSS3DTransform }"
+      :style="{ width, transform: CSS3DTransform }"
       @click.right.self.prevent="resetBoardRotation"
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
@@ -83,6 +84,7 @@
             :id="id"
           />
         </div>
+        <q-resize-observer class="absolute-fit" @resize="resizeSquare" />
       </div>
 
       <div
@@ -116,7 +118,6 @@ import { HOTKEYS } from "../../keymap";
 
 import { forEach, throttle } from "lodash";
 
-const FONT_RATIO = 1 / 30;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
 
@@ -134,6 +135,7 @@ export default {
     return {
       size: null,
       space: null,
+      squareSize: null,
       scale: 1,
       x: 0,
       y: 0,
@@ -267,7 +269,7 @@ export default {
       if (!this.space) {
         return 0;
       }
-      return Math.min(this.space.width, this.space.height) * 0.1;
+      return Math.min(this.space.width, this.space.height) * 0.12;
     },
     isPortrait() {
       return (
@@ -308,28 +310,9 @@ export default {
           // In the dead zone
           size = heightBound;
         }
-        return size - this.padding + "px";
+        return Math.max(size - this.padding, 10) + "px";
       } else {
         return "80%";
-      }
-    },
-    fontSize() {
-      if (this.$el && this.$el.style.fontSize && this.isInputFocused()) {
-        return this.$el.style.fontSize;
-      }
-      if (!this.space || !this.size) {
-        return "3vmin";
-      } else {
-        return (
-          Math.max(
-            8,
-            Math.min(
-              22,
-              this.space.width * FONT_RATIO,
-              this.space.height * FONT_RATIO
-            )
-          ) + "px"
-        );
       }
     },
     CSS3DTransform() {
@@ -429,6 +412,9 @@ export default {
     isInputFocused() {
       const active = document.activeElement;
       return active && /TEXT|INPUT/.test(active.tagName);
+    },
+    resizeSquare(size) {
+      this.squareSize = `calc(${size.width || 100}px / ${this.config.size})`;
     },
     resizeBoard(size) {
       this.size = size;
@@ -696,6 +682,10 @@ $radius: 0.35em;
 }
 
 .board-container {
+  font-size: min(
+    30px,
+    calc(var(--square-size) * 0.21875 * var(--board-size) / 5)
+  );
   position: relative;
   z-index: 0;
   transition: transform $generic-hover-transition;
@@ -838,6 +828,7 @@ $radius: 0.35em;
   .piece {
     aspect-ratio: 1;
     width: calc(100% / var(--board-size));
+    font-size: var(--square-size);
   }
   .pieces {
     transform-style: preserve-3d;

@@ -1,5 +1,5 @@
 <template>
-  <div class="piece" :style="{ transform: CSSTransform }">
+  <div class="piece" :style="{ '--x': x, '--y': y, '--z': z }">
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
@@ -124,7 +124,7 @@ export default {
         // Unplayed piece
         return this.unplayedX;
       }
-      return x;
+      return x + "%";
     },
     unplayedX() {
       let x;
@@ -182,7 +182,7 @@ export default {
         // Horizontal Layout
         x = 100 * this.config.size + 75 * (this.stackColor === 2);
       }
-      return x;
+      return x + "%";
     },
     y() {
       let y;
@@ -210,7 +210,7 @@ export default {
         // Unplayed piece
         return this.unplayedY;
       }
-      return -y;
+      return -y + "%";
     },
     unplayedY() {
       let y;
@@ -260,7 +260,7 @@ export default {
           }
         }
       }
-      return y;
+      return y + "%";
     },
     z() {
       let z;
@@ -276,7 +276,7 @@ export default {
         // Unplayed piece
         return this.unplayedZ;
       }
-      return z || 0.001;
+      return (z / 5 || 0.0001) + "em";
     },
     unplayedZ() {
       let z;
@@ -309,10 +309,7 @@ export default {
       if (this.isSelected) {
         z += SELECTED_GAP;
       }
-      return z;
-    },
-    CSSTransform() {
-      return `translate3d(${this.x}%, ${this.y}%, ${this.z}em)`;
+      return z / 5 + "em";
     },
   },
   methods: {
@@ -343,11 +340,17 @@ export default {
   bottom: 0;
   left: 0;
   will-change: transform;
+  transform: translate3d(var(--x), var(--y), var(--z));
   transition-duration: $transition-duration;
   transition-timing-function: $transition-easing;
   transition-property: transform, opacity;
 
   .stone {
+    --stroke-width: calc(var(--piece-border-width) * 0.013em);
+    --shadow-y: calc(var(--stroke-width) / 2 + 0.02em);
+    --shadow-blur: calc(var(--stroke-width) + 0.03em);
+    --shadow-y-selected: 0.2em;
+    --shadow-blur-selected: 0.1em;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -355,34 +358,28 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border-width: ($piece-border-width * 0.15vmin);
-    border-width: calc(var(--piece-border-width) * 0.15vmin);
+    border-width: var(--stroke-width);
     border-style: solid;
     border-radius: 10%;
-    will-change: transform, width, height, border-radius, box-shadow;
+    will-change: transform, box-shadow;
     transition-duration: $transition-duration;
     transition-timing-function: $transition-easing;
     transition-property: opacity, transform, width, height, left, border-radius,
       background-color, box-shadow;
 
-    box-shadow: 0 0.2vmin 0.4vmin $umbra;
-    box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
+    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
     &.firstSelected {
-      box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
-      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
-        0 2.8vmin 1.5vmin var(--q-color-umbra);
+      box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra),
+        0 var(--shadow-y-selected) var(--shadow-blur-selected)
+          var(--q-color-umbra);
     }
 
     &.p1 {
-      background-color: $player1flat;
       background-color: var(--q-color-player1flat);
-      border-color: $player1border;
       border-color: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: $player2flat;
       background-color: var(--q-color-player2flat);
-      border-color: $player2border;
       border-color: var(--q-color-player2border);
     }
 
@@ -392,38 +389,36 @@ export default {
       border-radius: 27%/10%;
 
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        box-shadow: -1px 1px 2px $umbra;
-        box-shadow: -1px 1px 2px var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) * -1) calc(var(--shadow-y))
+          var(--shadow-blur) var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
-          box-shadow: -1px 1px 2px var(--q-color-umbra),
-            -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          box-shadow: calc(var(--shadow-y) * -1) calc(var(--shadow-y))
+              var(--shadow-blur) var(--q-color-umbra),
+            calc(var(--shadow-y-selected) * -1) calc(var(--shadow-y-selected))
+              var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        box-shadow: 1px 1px 2px $umbra;
-        box-shadow: 1px 1px 2px var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) / 2) calc(var(--shadow-y) / 2)
+          var(--shadow-blur) var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
-          box-shadow: 1px 1px 2px var(--q-color-umbra),
-            1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          box-shadow: calc(var(--shadow-y) / 2) calc(var(--shadow-y) / 2)
+              var(--shadow-blur) var(--q-color-umbra),
+            calc(var(--shadow-y-selected)) calc(var(--shadow-y-selected))
+              var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
     }
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
       }
     }
