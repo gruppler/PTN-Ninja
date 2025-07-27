@@ -592,7 +592,8 @@ export default {
             : !this.$store.state.ui.moveNumber ||
               this.$store.state.ui.turnIndicator) &&
           this.boardSpace.height - this.boardSize.height < 80) ||
-        (!this.isPortrait && this.boardSpace.height < 280)
+        !this.isPortrait ||
+        this.boardSpace.height < 260
       ) {
         return "sm";
       }

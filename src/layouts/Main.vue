@@ -141,7 +141,9 @@
             icon="add"
             @click="addGame"
             @click.right.prevent="switchGame"
-            fab
+            :fab="fabLarge"
+            :round="!fabLarge"
+            :dense="fabSmall"
           />
           <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
@@ -477,6 +479,26 @@ export default {
         width += (this.$q.screen.width - largeWidth) / 4;
       }
       return Math.min(width, 400);
+    },
+    fabLarge() {
+      const boardSpace = this.$store.state.ui.boardSpace;
+      const boardSize = this.$store.state.ui.boardSize;
+      return (
+        Math.min(this.$q.screen.width, this.$q.screen.height) >=
+          this.$q.screen.sizes.sm ||
+        (boardSpace.width - boardSize.width >= 50 &&
+          boardSpace.height - boardSize.height >= 50)
+      );
+    },
+    fabSmall() {
+      const boardSpace = this.$store.state.ui.boardSpace;
+      const boardSize = this.$store.state.ui.boardSize;
+      return (
+        Math.min(this.$q.screen.width, this.$q.screen.height) <
+          this.$q.screen.sizes.sm &&
+        boardSpace.width - boardSize.width < 50 &&
+        boardSpace.height - boardSize.height < 50
+      );
     },
   },
   methods: {
@@ -871,11 +893,8 @@ export default {
     help() {
       this.$router.push({ name: "help" });
     },
-    switchGame(event) {
-      if (
-        this.$store.state.game.list.length > 1 &&
-        !event.currentTarget.classList.contains("q-fab--opened")
-      ) {
+    switchGame() {
+      if (this.$store.state.game.list.length > 1) {
         this.$refs.gameSelector.select(1);
       }
     },
