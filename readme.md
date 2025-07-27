@@ -66,102 +66,6 @@ For example:
 
 ### Actions
 
-#### `SET_NAME` (value: `<String>`)
-
-- Set the game title
-
-#### `SET_UI` (value: `<Object>`)
-
-- Set one or more UI parameters
-
-#### `TOGGLE_UI` (value: `<String>`)
-
-- Toggle the specified UI parameter
-
-#### `SET_CURRENT_PTN` (value: `<String>`)
-
-- Replace the current game with the provided PTN
-
-#### `SET_PLAYER` (value: `1|2`)
-
-- Set the user as player 1 or 2, disabling input during the opponent's turn.
-
-#### `DELETE_PLY` (value: `<Number>`)
-
-- Delete the ply specified by ID
-
-#### `INSERT_PLY` (value: `<String>`)
-
-- Execute a single ply specified as a string in PTN (e.g. `Sb4`)
-
-#### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
-
-- Insert a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
-
-#### `DELETE_BRANCH` (value: `<String>`)
-
-- Delete the specified branch
-
-#### `GO_TO_PLY` (value: `<Object>: { plyID, isDone }`)
-
-- Navigate to the specified ply
-
-#### `PLAY`
-
-- Begin stepping through plies from current position
-
-#### `PAUSE`
-
-- Stop stepping through plies
-
-#### `PLAY_PAUSE`
-
-- Toggle between PLAY and PAUSE
-
-#### `PREV`
-
-- Navigate backward
-
-#### `NEXT`
-
-- Navigate forward
-
-#### `FIRST`
-
-- Navigate to the beginning
-
-#### `LAST`
-
-- Navigate to the end
-
-#### `UNDO`
-
-- Undo
-
-#### `REDO`
-
-- Redo
-
-#### `PROMOTE_BRANCH` (value: `<String>`)
-
-- Promote a branch specified by its name
-
-#### `MAKE_BRANCH_MAIN` (value: `<String>`)
-
-- Swap a branch with its main line, specified by branch name
-
-#### `RENAME_BRANCH` (value: `<Object>: { oldName, newName }`)
-
-- Rename a branch
-
-#### `TOGGLE_EVALUATION` (value: `<Object>: { type, double }`)
-
-- Toggle evaluation notation on the current ply
-
-#### `EDIT_NOTE` (value: `<Object>: { plyID, index, message }`)
-
-- Replace the specified comment
-
 #### `ADD_NOTE` (value: `<Object>: { message, plyID }`)
 
 - Add a comment to the specified ply, or the current ply if not specified
@@ -170,35 +74,79 @@ For example:
 
 - Add the comments to the specified plies
 
-#### `REMOVE_NOTE` (value: `<Object>: { plyID, index }`)
+#### `APPLY_TRANSFORM` (value: `<Array>: [ int a, int b ]` )
 
-- Remove the specified comment
-
-#### `TRIM_BRANCHES`
-
-- Remove non-active branches
-
-#### `TRIM_TO_BOARD`
-
-- Remove plies, preserving the board state
-
-#### `TRIM_TO_PLY`
-
-- Remove all plies preceding the current ply
+- Apply the specified board transformation `[int a, int b]` where `a` is the number of clockwise rotations [0, 3], and `b` is the number of horizontal flips [0, 1].
 
 #### `CANCEL_MOVE`
 
 - Abort any in-progress piece movement interaction
 
+#### `DELETE_BRANCH` (value: `<String>`)
+
+- Delete the specified branch
+
+#### `DELETE_PLY` (value: `<Number>`)
+
+- Delete the ply specified by ID
+
+#### `EDIT_NOTE` (value: `<Object>: { plyID, index, message }`)
+
+- Replace the specified comment
+
+#### `FIRST`
+
+- Navigate to the beginning
+
+#### `FLIP_HORIZONTAL`
+
+- Flip the board horizontally
+
+#### `FLIP_VERTICAL`
+
+- Flip the board vertically
+
+#### `GET_THEMES`
+
+- Return an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
+
+#### `GO_TO_PLY` (value: `<Object>: { plyID, isDone }`)
+
+- Navigate to the specified ply
+
+#### `HIGHLIGHT_SQUARES` (value: `<Array>: [ <String> ]` )
+
+- Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
+
+#### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
+
+- Insert a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
+
+#### `INSERT_PLY` (value: `<String>`)
+
+- Execute a single ply specified as a string in PTN (e.g. `Sb4`)
+
+#### `LAST`
+
+- Navigate to the end
+
+#### `MAKE_BRANCH_MAIN` (value: `<String>`)
+
+- Swap a branch with its main line, specified by branch name
+
+#### `NEXT`
+
+- Navigate forward
+
 #### `NOTIFY` (value: `<String>|<Object>`)
 
 #### `NOTIFY_ERROR` (value: `<String>|<Object>`)
 
+#### `NOTIFY_HINT` (value: `<String>|<Object>`)
+
 #### `NOTIFY_SUCCESS` (value: `<String>|<Object>`)
 
 #### `NOTIFY_WARNING` (value: `<String>|<Object>`)
-
-#### `NOTIFY_HINT` (value: `<String>|<Object>`)
 
 - Issue a notification, specifying either the message directly, or an object with the following structure:
   - `message` (`<String>`): Message to be displayed
@@ -220,6 +168,42 @@ For example:
     - `color` (`<String>`): Optional color name (default: `primary`)
   - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
 
+#### `PAUSE`
+
+- Stop stepping through plies
+
+#### `PLAY`
+
+- Begin stepping through plies from current position
+
+#### `PLAY_PAUSE`
+
+- Toggle between PLAY and PAUSE
+
+#### `PREV`
+
+- Navigate backward
+
+#### `PROMOTE_BRANCH` (value: `<String>`)
+
+- Promote a branch specified by its name
+
+#### `REDO`
+
+- Redo
+
+#### `REMOVE_NOTE` (value: `<Object>: { plyID, index }`)
+
+- Remove the specified comment
+
+#### `RENAME_BRANCH` (value: `<Object>: { oldName, newName }`)
+
+- Rename a branch
+
+#### `RESET_TRANSFORM`
+
+- Reset any board transformation
+
 #### `ROTATE_180`
 
 - Rotate the board 180 degrees
@@ -232,33 +216,49 @@ For example:
 
 - Rotate the board right 90 degrees
 
-#### `FLIP_HORIZONTAL`
+#### `SET_CURRENT_PTN` (value: `<String>`)
 
-- Flip the board horizontally
-
-#### `FLIP_VERTICAL`
-
-- Flip the board vertically
-
-#### `RESET_TRANSFORM`
-
-- Reset any board transformation
-
-#### `APPLY_TRANSFORM` (value: `<Array>: [ int a, int b ]` )
-
-- Apply the specified board transformation `[int a, int b]` where `a` is the number of clockwise rotations [0, 3], and `b` is the number of horizontal flips [0, 1].
-
-#### `HIGHLIGHT_SQUARES` (value: `<Array>: [ <String> ]` )
-
-- Highlight the squares specified as an array of string coordinates (e.g. 'a1'). If no squares are provided, the most recent ply is highlighted.
+- Replace the current game with the provided PTN
 
 #### `SET_EVAL` (value: `<Number>: [-100, 100]` )
 
 - Show the specified evaluation score on the board.
 
-#### `GET_THEMES`
+#### `SET_NAME` (value: `<String>`)
 
-- Return an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
+- Set the game title
+
+#### `SET_PLAYER` (value: `1|2`)
+
+- Set the user as player 1 or 2, disabling input during the opponent's turn.
+
+#### `SET_UI` (value: `<Object>`)
+
+- Set one or more UI parameters
+
+#### `TOGGLE_EVALUATION` (value: `<Object>: { type, double }`)
+
+- Toggle evaluation notation on the current ply
+
+#### `TOGGLE_UI` (value: `<String>`)
+
+- Toggle the specified UI parameter
+
+#### `TRIM_BRANCHES`
+
+- Remove non-active branches
+
+#### `TRIM_TO_BOARD`
+
+- Remove plies, preserving the board state
+
+#### `TRIM_TO_PLY`
+
+- Remove all plies preceding the current ply
+
+#### `UNDO`
+
+- Undo
 
 ## URLs
 
@@ -272,46 +272,70 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 ### URL Parameters
 
-#### `name`
-
-- Title of the game
-
-#### `ply`
-
-- Index of the current ply
-- Ending with `!` means `plyIsDone == true`
-
-#### `targetBranch`
-
-- Name of the current branch
-
-#### `theme`
-
-- ID or JSON of the theme to be used
-
 #### `axisLabels` (default: `true`)
 
 - Show axis labels
+
+#### `disableBoard` (default: `false`)
+
+- Disable board interactions
+
+#### `disableNavigation` (default: `false`)
+
+- Disable game navigation, undo/redo, and ply deletion
+
+#### `disablePTN` (default: `false`)
+
+- Remove the PTN panel
+
+#### `disablePTNTools` (default: `false`)
+
+- Remove the PTN panel toolbars
+
+#### `disableStoneCycling` (default: `false`)
+
+- Disable selecting the last placed stone to cycle its type
+
+#### `disableText` (default: `false`)
+
+- Remove the Notes panel
+
+#### `disableUndo` (default: `false`)
+
+- Disable undo/redo
 
 #### `flatCounts` (default: `true`)
 
 - Show flat counts
 
-#### `stackCounts` (default: `true`)
-
-- Show stack counts
-
-#### `turnIndicator` (default: `true`)
-
-- Show turn indicator
-
 #### `highlightSquares` (default: `true`)
 
 - Show square highlights
 
+#### `name`
+
+- Title of the game
+
+#### `notifyAnalysisNotes` (default: `true`)
+
+- Show analysis note notifications
+
+#### `notifyGame` (default: `true`)
+
+- Show game notifications
+
+#### `notifyNotes` (default: `true`)
+
+- Show note notifications
+
 #### `playSpeed` (default: `60`)
 
 - Steps per minute to be used for playback
+
+#### `ply`
+
+- Index of the current ply
+- Ending with `!` means `plyIsDone == true`
 
 #### `showAllBranches` (default: `false`)
 
@@ -329,10 +353,6 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show playback controls
 
-#### `showPlayButton` (default: `false`)
-
-- Show the "Play" button in the playback controls
-
 #### `showMove` (default: `true`)
 
 - Show the current move
@@ -341,13 +361,9 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the PTN panel
 
-#### `disablePTN` (default: `false`)
+#### `showPlayButton` (default: `false`)
 
-- Remove the PTN panel
-
-#### `disablePTNTools` (default: `false`)
-
-- Remove the PTN panel toolbars
+- Show the "Play" button in the playback controls
 
 #### `showRoads` (default: `true`)
 
@@ -361,9 +377,21 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the Notes panel
 
-#### `disableText` (default: `false`)
+#### `stackCounts` (default: `true`)
 
-- Remove the Notes panel
+- Show stack counts
+
+#### `targetBranch`
+
+- Name of the current branch
+
+#### `theme`
+
+- ID or JSON of the theme to be used
+
+#### `turnIndicator` (default: `true`)
+
+- Show turn indicator
 
 #### `unplayedPieces` (default: `true`)
 
@@ -376,22 +404,6 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `verticalLayoutAuto` (default: `true`)
 
 - Automatically switch between horizontal and vertical layouts
-
-#### `disableStoneCycling` (default: `false`)
-
-- Disable selecting the last placed stone to cycle its type
-
-#### `disableBoard` (default: `false`)
-
-- Disable board interactions
-
-#### `disableNavigation` (default: `false`)
-
-- Disable game navigation, undo/redo, and ply deletion
-
-#### `disableUndo` (default: `false`)
-
-- Disable undo/redo
 
 ## Legal
 

@@ -42,6 +42,7 @@ const defaultState = {
     navigator.canShare && !Platform.is.desktop
       ? navigator.canShare({ text: "test", url: location.href })
       : false,
+  notifyAnalysisNotes: true,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
@@ -94,6 +95,9 @@ export const embedUIOptions = [
   "flatCounts",
   "highlightSquares",
   "moveNumber",
+  "notifyAnalysisNotes",
+  "notifyGame",
+  "notifyNotes",
   "playSpeed",
   "showAllBranches",
   "showBoardPrefsBtn",

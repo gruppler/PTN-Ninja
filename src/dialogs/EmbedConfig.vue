@@ -192,7 +192,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableNavigation"
-        :ripple="config.ui.disableNavigation"
+        :ripple="!config.ui.disableNavigation"
       >
         <q-item-section>
           <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
@@ -213,10 +213,11 @@
           <q-toggle v-model="config.ui.disableText" />
         </q-item-section>
       </q-item>
+
       <q-item
         tag="label"
         :disable="config.ui.disableText"
-        :ripple="config.ui.disableText"
+        :ripple="!config.ui.disableText"
       >
         <q-item-section>
           <q-item-label>{{ $t("Show Notes") }}</q-item-label>
@@ -225,6 +226,40 @@
           <q-toggle
             v-model="config.ui.showText"
             :disable="config.ui.disableText"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Game Notifications") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.notifyGame" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.ui.notifyNotes" />
+        </q-item-section>
+      </q-item>
+
+      <q-item
+        tag="label"
+        :disable="!config.ui.notifyNotes"
+        :ripple="config.ui.notifyNotes"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.ui.notifyAnalysisNotes"
+            :disable="!config.ui.notifyNotes"
           />
         </q-item-section>
       </q-item>

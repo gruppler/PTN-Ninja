@@ -7,6 +7,7 @@ export default {
   Action: "Action",
   "Add Game": "Load/Create Game",
   Analysis: "Analysis",
+  "Analysis Note Notifications": "Analysis Note Notifications",
   "Animate Board": "Animate Board",
   "Animate While Scrubbing": "Animate While Scrubbing",
   Apply: "Apply",
