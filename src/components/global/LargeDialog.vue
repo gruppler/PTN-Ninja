@@ -88,7 +88,7 @@ export default {
 <style lang="scss">
 .large-dialog {
   .q-layout-container {
-    transition: height $transition;
+    transition: height $generic-hover-transition;
   }
 }
 </style>

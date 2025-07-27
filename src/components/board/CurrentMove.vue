@@ -75,9 +75,9 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    transition: transform $transition;
+    transition: transform $generic-hover-transition;
     .move {
-      transition: opacity $transition;
+      transition: opacity $generic-hover-transition;
     }
   }
 

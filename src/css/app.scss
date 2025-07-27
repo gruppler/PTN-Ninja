@@ -285,7 +285,8 @@ kbd {
 }
 
 .q-notification {
-  transition: transform $transition, opacity $transition;
+  transition: $generic-hover-transition;
+  transition-property: transform, opacity;
   @media (min-width: $breakpoint-sm-min) {
     & {
       max-width: 45vw;
