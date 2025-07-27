@@ -10,7 +10,7 @@
       flat
     />
     <smooth-reflow class="relative-position">
-      <template v-if="collapsed">
+      <template v-if="!collapsed">
         <template
           v-if="
             botSuggestion ||
@@ -110,10 +110,10 @@ export default {
   computed: {
     collapsed: {
       get() {
-        return this.$store.state.ui.showToolbarAnalysis;
+        return !this.$store.state.ui.showToolbarAnalysis;
       },
       set(value) {
-        this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", value]);
+        this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", !value]);
       },
     },
     icon() {
