@@ -438,6 +438,7 @@ export default {
   },
 
   warning: {
+    fullyAnalyzed: "There's nothing to analyze.",
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
     unsupportedKomi:
@@ -482,16 +483,14 @@ export default {
   },
 
   analysis: {
-    "analyzed positions":
-      "No analyzed positions | 1 analyzed position | {count} analyzed positions",
     "Analyze Branch": "Analyze Branch",
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
     "Apply Options": "Apply Options",
-    "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Bot Options": "Bot Options",
     "Clear Results": "Clear Results",
+    "Clear Saved Results": "Clear Saved Results",
     "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",

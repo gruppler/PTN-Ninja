@@ -669,6 +669,23 @@ export default class Bot {
         const total = this.plies.length;
         let completed = total - positions.length;
 
+        if (!positions.length) {
+          // Abort and notify
+          this.onWarning("fullyAnalyzed", {
+            actions: [
+              {
+                label: i18n.t("analysis.Clear Saved Results"),
+                color: "textDark",
+                handler: () => {
+                  store.dispatch("game/REMOVE_ANALYSIS_NOTES");
+                },
+              },
+              { icon: "close", color: "textDark" },
+            ],
+          });
+          return;
+        }
+
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: true,

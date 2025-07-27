@@ -412,3 +412,9 @@ export const REMOVE_NOTE = (state, { plyID, index }) => {
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
 };
+
+export const REMOVE_ANALYSIS_NOTES = () => {
+  Vue.prototype.$game.removeNotes(
+    (note) => note.output.evaluation !== null || note.output.pv !== null
+  );
+};

@@ -854,3 +854,8 @@ export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
   dispatch("SAVE_CURRENT_GAME", true);
 };
+
+export const REMOVE_ANALYSIS_NOTES = function ({ commit, dispatch }) {
+  commit("REMOVE_ANALYSIS_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
