@@ -78,14 +78,10 @@ export default {
       if (!i) {
         return false;
       }
-      const ply = this.branches[i];
-      const prevPly = this.branches[i - 1];
-      if (ply.index !== prevPly.index) {
-        return true;
-      }
-      const branchParts = compact(ply.branch.split("/"));
-      const prevBranchParts = compact(prevPly.branch.split("/"));
-      return prevBranchParts.some((part, index) => branchParts[index] !== part);
+      return (
+        !this.branches[i].branch ||
+        this.branches[i].index !== this.branches[i - 1].index
+      );
     },
     select(ply) {
       this.isClosing = true;
