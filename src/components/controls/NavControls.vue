@@ -2,6 +2,7 @@
   <div class="play-controls absolute-fit justify-center">
     <div class="row no-wrap justify-around items-center full-height">
       <q-btn
+        @touchstart="vibrate"
         @click="deletePly"
         @shortkey="deletePly"
         v-shortkey="{
@@ -11,7 +12,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="
           !position.ply ||
           plyInProgress ||
@@ -25,13 +26,14 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="first"
         @shortkey="first"
         v-shortkey="hotkeys.first"
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
       >
@@ -40,6 +42,7 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="prev"
         @click.right.prevent="prev(true)"
         @shortkey="prev"
@@ -50,7 +53,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
       >
@@ -60,11 +63,12 @@
       </q-btn>
       <q-btn
         v-if="showPlayButton"
+        @touchstart="vibrate"
         @click="playpause"
         @shortkey="playpause"
         v-shortkey="hotkeys.playpause"
         round
-        :ripple="false"
+        v-ripple="false"
         color="primary"
         :text-color="primaryFG"
         :disable="!position.ply || plyInProgress"
@@ -75,6 +79,7 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="next"
         @click.right.prevent="next(true)"
         @shortkey="next"
@@ -85,7 +90,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
       >
@@ -94,13 +99,14 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="last"
         @shortkey="last"
         v-shortkey="hotkeys.last"
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
       >
@@ -113,7 +119,7 @@
         @shortkey="branchKey"
         stretch
         flat
-        :ripple="false"
+        v-ripple="false"
         :disable="branches.length < 2 || plyInProgress"
         :color="isRoot ? fg : 'primary'"
       >
@@ -328,6 +334,11 @@ export default {
     lastBranch() {
       if (this.branches.length) {
         this.selectBranch(this.branches[this.branches.length - 1]);
+      }
+    },
+    vibrate() {
+      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
+        navigator.vibrate(1);
       }
     },
   },

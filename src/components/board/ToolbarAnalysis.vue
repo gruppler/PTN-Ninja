@@ -4,7 +4,7 @@
       @click="toggle"
       :icon="icon"
       class="toolbar-analysis-toggle dimmed-btn absolute"
-      :ripple="false"
+      v-ripple="false"
       :color="btnColor"
       dense
       flat

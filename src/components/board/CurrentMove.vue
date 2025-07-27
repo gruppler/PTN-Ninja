@@ -6,7 +6,7 @@
         :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
         :class="{ hidden: this.$store.state.ui.showPTN }"
-        :ripple="false"
+        v-ripple="false"
         :color="btnColor"
         dense
         flat

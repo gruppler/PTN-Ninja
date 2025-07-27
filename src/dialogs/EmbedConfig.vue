@@ -92,7 +92,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableBoard"
-        :ripple="!config.ui.disableBoard"
+        v-ripple="!config.ui.disableBoard"
       >
         <q-item-section>
           <q-item-label>{{ $t("Disable Stone Cycling") }}</q-item-label>
@@ -117,7 +117,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableNavigation"
-        :ripple="!config.ui.disableNavigation"
+        v-ripple="!config.ui.disableNavigation"
       >
         <q-item-section>
           <q-item-label>{{ $t("Disable Undo") }}</q-item-label>
@@ -149,7 +149,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableNavigation || !config.ui.showControls"
-        :ripple="!config.ui.disableNavigation && config.ui.showControls"
+        v-ripple="!config.ui.disableNavigation && config.ui.showControls"
       >
         <q-item-section>
           <q-item-label>{{ $t("Play Button") }}</q-item-label>
@@ -169,7 +169,7 @@
           !config.ui.showControls ||
           !config.ui.showPlayButton
         "
-        :ripple="
+        v-ripple="
           !config.ui.disableNavigation &&
           config.ui.showControls &&
           config.ui.showPlayButton
@@ -192,7 +192,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableNavigation"
-        :ripple="!config.ui.disableNavigation"
+        v-ripple="!config.ui.disableNavigation"
       >
         <q-item-section>
           <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
@@ -217,7 +217,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disableText"
-        :ripple="!config.ui.disableText"
+        v-ripple="!config.ui.disableText"
       >
         <q-item-section>
           <q-item-label>{{ $t("Show Notes") }}</q-item-label>
@@ -251,7 +251,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.notifyNotes"
-        :ripple="config.ui.notifyNotes"
+        v-ripple="config.ui.notifyNotes"
       >
         <q-item-section>
           <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
@@ -276,7 +276,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disablePTN"
-        :ripple="!config.ui.disablePTN"
+        v-ripple="!config.ui.disablePTN"
       >
         <q-item-section>
           <q-item-label>{{ $t("Show PTN") }}</q-item-label>
@@ -292,7 +292,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disablePTN"
-        :ripple="!config.ui.disablePTN"
+        v-ripple="!config.ui.disablePTN"
       >
         <q-item-section>
           <q-item-label>{{ $t("Current Move") }}</q-item-label>
@@ -308,7 +308,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disablePTN"
-        :ripple="!config.ui.disablePTN"
+        v-ripple="!config.ui.disablePTN"
       >
         <q-item-section>
           <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
@@ -324,7 +324,7 @@
       <q-item
         tag="label"
         :disable="config.ui.disablePTN"
-        :ripple="!config.ui.disablePTN"
+        v-ripple="!config.ui.disablePTN"
       >
         <q-item-section>
           <q-item-label>{{ $t("Disable PTN Tools") }}</q-item-label>
@@ -367,7 +367,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.turnIndicator"
-        :ripple="config.ui.turnIndicator"
+        v-ripple="config.ui.turnIndicator"
       >
         <q-item-section>
           <q-item-label>{{ $t("Player Names") }}</q-item-label>
@@ -383,7 +383,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.turnIndicator"
-        :ripple="config.ui.turnIndicator"
+        v-ripple="config.ui.turnIndicator"
       >
         <q-item-section>
           <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
@@ -408,7 +408,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.moveNumber"
-        :ripple="config.ui.moveNumber"
+        v-ripple="config.ui.moveNumber"
       >
         <q-item-section>
           <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
@@ -451,7 +451,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.unplayedPieces"
-        :ripple="config.ui.unplayedPieces"
+        v-ripple="config.ui.unplayedPieces"
       >
         <q-item-section>
           <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
@@ -466,7 +466,7 @@
       <q-item
         tag="label"
         :disable="!config.ui.unplayedPieces || !config.ui.verticalLayout"
-        :ripple="config.ui.unplayedPieces"
+        v-ripple="config.ui.unplayedPieces"
       >
         <q-item-section>
           <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>

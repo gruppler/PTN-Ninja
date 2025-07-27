@@ -11,7 +11,7 @@
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
       :clickable="!noClick"
-      :ripple="false"
+      v-ripple="false"
       :key="ply.id"
       square
       dense

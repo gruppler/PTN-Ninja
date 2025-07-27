@@ -42,7 +42,7 @@
                   :toggle-color="playerBGColor"
                   :toggle-text-color="playerTextColor"
                   :options="players"
-                  :ripple="false"
+                  v-ripple="false"
                   spread
                   dense
                   stack

@@ -154,7 +154,7 @@
       <q-item
         tag="label"
         :disable="!config.turnIndicator"
-        :ripple="config.turnIndicator"
+        v-ripple="config.turnIndicator"
       >
         <q-item-section>
           <q-item-label>{{ $t("Player Names") }}</q-item-label>
@@ -170,7 +170,7 @@
       <q-item
         tag="label"
         :disable="!config.turnIndicator"
-        :ripple="config.turnIndicator"
+        v-ripple="config.turnIndicator"
       >
         <q-item-section>
           <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
@@ -195,7 +195,7 @@
       <q-item
         tag="label"
         :disable="!config.turnIndicator || !config.unplayedPieces"
-        :ripple="config.turnIndicator && config.unplayedPieces"
+        v-ripple="config.turnIndicator && config.unplayedPieces"
       >
         <q-item-section>
           <q-item-label>{{ $t("Move Number") }}</q-item-label>
@@ -211,7 +211,7 @@
       <q-item
         tag="label"
         :disable="!config.turnIndicator || !config.unplayedPieces"
-        :ripple="config.turnIndicator && config.unplayedPieces"
+        v-ripple="config.turnIndicator && config.unplayedPieces"
       >
         <q-item-section>
           <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>

@@ -8,7 +8,7 @@
         @contextmenu.prevent
         :target="fullscreenTarget"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -20,7 +20,7 @@
         @contextmenu.prevent
         icon="settings"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -40,7 +40,7 @@
               v-if="!isEmbedded || !isDisabled('board3D')"
               tag="label"
               :disable="isDisabled('board3D')"
-              :ripple="!isDisabled('board3D')"
+              v-ripple="!isDisabled('board3D')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("3D Board") }}</q-item-label>
@@ -58,7 +58,7 @@
                 v-if="board3D && (!isEmbedded || !isDisabled('orthographic'))"
                 tag="label"
                 :disable="isDisabled('orthographic')"
-                :ripple="!isDisabled('orthographic')"
+                v-ripple="!isDisabled('orthographic')"
               >
                 <q-item-section>
                   <q-item-label>{{ $t("Orthographic") }}</q-item-label>
@@ -81,7 +81,7 @@
                   (!isEmbedded || !isDisabled('perspective'))
                 "
                 :disable="isDisabled('perspective')"
-                :ripple="!isDisabled('perspective')"
+                v-ripple="!isDisabled('perspective')"
               >
                 <q-item-section>
                   {{ $t("Perspective") }}
@@ -101,7 +101,7 @@
               v-if="!isEmbedded || !isDisabled('axisLabels')"
               tag="label"
               :disable="isDisabled('axisLabels')"
-              :ripple="!isDisabled('axisLabels')"
+              v-ripple="!isDisabled('axisLabels')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -121,7 +121,7 @@
               v-if="!isEmbedded || !isDisabled('axisLabelsSmall')"
               tag="label"
               :disable="!axisLabels || isDisabled('axisLabelsSmall')"
-              :ripple="axisLabels && !isDisabled('axisLabelsSmall')"
+              v-ripple="axisLabels && !isDisabled('axisLabelsSmall')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
@@ -141,7 +141,7 @@
               v-if="!isEmbedded || !isDisabled('showRoads')"
               tag="label"
               :disable="isDisabled('showRoads')"
-              :ripple="!isDisabled('showRoads')"
+              v-ripple="!isDisabled('showRoads')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -161,7 +161,7 @@
               v-if="!isEmbedded || !isDisabled('turnIndicator')"
               tag="label"
               :disable="isDisabled('turnIndicator')"
-              :ripple="!isDisabled('turnIndicator')"
+              v-ripple="!isDisabled('turnIndicator')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
@@ -181,7 +181,7 @@
               v-if="!isEmbedded || !isDisabled('flatCounts')"
               tag="label"
               :disable="!turnIndicator || isDisabled('flatCounts')"
-              :ripple="Boolean(turnIndicator) && !isDisabled('flatCounts')"
+              v-ripple="Boolean(turnIndicator) && !isDisabled('flatCounts')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
@@ -201,7 +201,7 @@
               v-if="!isEmbedded || !isDisabled('stackCounts')"
               tag="label"
               :disable="isDisabled('stackCounts')"
-              :ripple="!isDisabled('stackCounts')"
+              v-ripple="!isDisabled('stackCounts')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
@@ -221,7 +221,7 @@
               v-if="!isEmbedded || !isDisabled('showEval')"
               tag="label"
               :disable="isDisabled('showEval')"
-              :ripple="!isDisabled('showEval')"
+              v-ripple="!isDisabled('showEval')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Evaluation Bars") }}</q-item-label>
@@ -241,7 +241,7 @@
               v-if="!isEmbedded || !isDisabled('moveNumber')"
               tag="label"
               :disable="isDisabled('moveNumber')"
-              :ripple="!isDisabled('moveNumber')"
+              v-ripple="!isDisabled('moveNumber')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Move Number") }}</q-item-label>
@@ -261,7 +261,7 @@
               v-if="!isEmbedded || !isDisabled('evalText')"
               tag="label"
               :disable="!moveNumber || isDisabled('evalText')"
-              :ripple="moveNumber && !isDisabled('evalText')"
+              v-ripple="moveNumber && !isDisabled('evalText')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
@@ -281,7 +281,7 @@
               v-if="!isEmbedded || !isDisabled('highlightSquares')"
               tag="label"
               :disable="isDisabled('highlightSquares')"
-              :ripple="!isDisabled('highlightSquares')"
+              v-ripple="!isDisabled('highlightSquares')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -301,7 +301,7 @@
               v-if="!isEmbedded || !isDisabled('unplayedPieces')"
               tag="label"
               :disable="isDisabled('unplayedPieces')"
-              :ripple="!isDisabled('unplayedPieces')"
+              v-ripple="!isDisabled('unplayedPieces')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
@@ -321,7 +321,7 @@
               v-if="!isEmbedded || !isDisabled('verticalLayout')"
               tag="label"
               :disable="!unplayedPieces || isDisabled('verticalLayout')"
-              :ripple="unplayedPieces && !isDisabled('verticalLayout')"
+              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
@@ -345,7 +345,7 @@
                 !verticalLayout ||
                 isDisabled('verticalLayoutAuto')
               "
-              :ripple="
+              v-ripple="
                 unplayedPieces &&
                 verticalLayout &&
                 !isDisabled('verticalLayoutAuto')
@@ -379,7 +379,7 @@
         :direction="isPortrait ? 'down' : 'left'"
         icon="rotate_180"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -494,7 +494,7 @@
         @click="highlighterEnabled = !highlighterEnabled"
         icon="highlighter"
         :class="{ 'dimmed-btn': !highlighterEnabled }"
-        :ripple="false"
+        v-ripple="false"
         :color="highlighterEnabled ? '' : fg"
         :style="{ color: highlighterEnabled ? highlighterColor : '' }"
         :size="size"
