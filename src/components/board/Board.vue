@@ -267,12 +267,7 @@ export default {
       if (!this.space) {
         return 0;
       }
-      const min = Math.min(this.space.width, this.space.height);
-      if (min <= 400) {
-        return min * 0.1;
-      } else {
-        return min * 0.1 + (min - 400) * (this.isVertical ? 0 : 0.2);
-      }
+      return Math.min(this.space.width, this.space.height) * 0.1;
     },
     isPortrait() {
       return (
@@ -703,7 +698,7 @@ $radius: 0.35em;
 .board-container {
   position: relative;
   z-index: 0;
-  transition: transform $transition;
+  transition: transform $generic-hover-transition;
   text-align: center;
 
   display: grid;
