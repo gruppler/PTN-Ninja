@@ -306,7 +306,7 @@ export default {
           z += this.config.size - 1;
         }
       }
-      if (this.isSelected) {
+      if (this.isSelected && !this.isVertical) {
         z += SELECTED_GAP;
       }
       return z / 5 + "em";
