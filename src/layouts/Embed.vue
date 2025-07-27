@@ -161,7 +161,7 @@
     <q-footer v-if="!$store.state.ui.disableNavigation" class="bg-ui">
       <Scrubber />
       <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
-        <PlayControls ref="playControls" />
+        <NavControls ref="playControls" />
       </q-toolbar>
     </q-footer>
 
@@ -187,7 +187,7 @@ import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
-import PlayControls from "../components/controls/PlayControls";
+import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import UndoButtons from "../components/controls/UndoButtons";
@@ -211,7 +211,7 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
-    PlayControls,
+    NavControls,
     Scrubber,
     PTNTools,
     UndoButtons,

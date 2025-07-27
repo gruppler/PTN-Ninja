@@ -99,6 +99,7 @@ export default {
   "Game Notifications": "Game Notifications",
   "Game x closed": 'Closed "{game}"',
   Generate: "Generate",
+  "Haptic Nav Controls": "Haptic Navigation Controls",
   Height: "Height",
   Help: "Help",
   "Hide Analysis": "Hide Analysis",
@@ -144,6 +145,7 @@ export default {
   n_games: "No Games | 1 Game | {count} Games",
   Name: "Name",
   "Native Sharing": "Native Sharing",
+  "Nav Controls": "Navigation Controls",
   Negative: "Negative",
   "New Bot": "New Bot",
   "New Game": "New Game",
@@ -167,7 +169,6 @@ export default {
   Play: "Play",
   "Play/Pause": "Play/Pause",
   "Play Button": "Play Button",
-  "Play Controls": "Play Controls",
   "Play Mode": "Play Mode",
   "Play Online": "Play Online",
   "Play Speed": "Play Speed",
@@ -459,7 +460,7 @@ export default {
   },
 
   hotkeys: {
-    CONTROLS: "Play Controls",
+    CONTROLS: "Navigation Controls",
     DIALOGS: "Dialogs",
     EVAL: "Evaluation",
     HIGHLIGHTER: "Highlighter",

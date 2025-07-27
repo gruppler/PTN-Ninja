@@ -136,7 +136,7 @@
         :rippl="!config.ui.disableNavigation"
       >
         <q-item-section>
-          <q-item-label>{{ $t("Play Controls") }}</q-item-label>
+          <q-item-label>{{ $t("Nav Controls") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle

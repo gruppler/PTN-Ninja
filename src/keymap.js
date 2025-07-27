@@ -218,7 +218,7 @@ export const HOTKEY_NAMES = {
     moveNumber: "Move Number",
     unplayedPieces: "Unplayed Pieces",
     showMove: "Current Move",
-    showControls: "Play Controls",
+    showControls: "Nav Controls",
     showScrubber: "Scrub Bar",
   },
   MISC: {

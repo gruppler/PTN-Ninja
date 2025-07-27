@@ -148,7 +148,7 @@ const BRANCH_KEYS = [
 ];
 
 export default {
-  name: "PlayControls",
+  name: "NavControls",
   components: { BranchMenu },
   data() {
     return {

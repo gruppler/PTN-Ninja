@@ -43,7 +43,7 @@
       <q-item
         tag="label"
         :disable="isDisabled('nativeSharing')"
-        :ripple="!isDisabled('nativeSharing')"
+        v-ripple="!isDisabled('nativeSharing')"
       >
         <q-item-section>
           <q-item-label>{{ $t("Native Sharing") }}</q-item-label>
@@ -74,22 +74,24 @@
         </hint>
       </q-item>
 
-      <smooth-reflow>
-        <q-item v-if="animateBoard" tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Animate While Scrubbing") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="animateScrub"
-              :disable="isDisabled('animateScrub')"
-            />
-          </q-item-section>
-          <hint v-if="hotkeys.animateScrub">
-            {{ $t("Hotkey") }}: {{ hotkeys.animateScrub }}
-          </hint>
-        </q-item>
-      </smooth-reflow>
+      <q-item
+        tag="label"
+        :disable="!animateBoard || isDisabled('animateScrub')"
+        v-ripple="animateBoard && !isDisabled('animateScrub')"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Animate While Scrubbing") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="animateScrub"
+            :disable="!animateBoard || isDisabled('animateScrub')"
+          />
+        </q-item-section>
+        <hint v-if="hotkeys.animateScrub">
+          {{ $t("Hotkey") }}: {{ hotkeys.animateScrub }}
+        </hint>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -118,7 +120,11 @@
         </hint>
       </q-item>
 
-      <q-item tag="label" v-ripple>
+      <q-item
+        tag="label"
+        :disable="!notifyNotes || isDisabled(notifyAnalysisNotes)"
+        v-ripple="notifyNotes && !isDisabled('notifyAnalysisNotes')"
+      >
         <q-item-section>
           <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
         </q-item-section>
@@ -135,7 +141,7 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Play Controls") }}</q-item-label>
+          <q-item-label>{{ $t("Nav Controls") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle
@@ -148,37 +154,59 @@
         </hint>
       </q-item>
 
-      <smooth-reflow>
-        <q-item v-if="showControls" tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Play Button") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="showPlayButton"
-              :disable="isDisabled('showPlayButton')"
-            />
-          </q-item-section>
-          <hint v-if="hotkeys.showPlayButton">
-            {{ $t("Hotkey") }}: {{ hotkeys.showPlayButton }}
-          </hint>
-        </q-item>
+      <q-item
+        tag="label"
+        :disable="!showControls || isDisabled('hapticNavControls')"
+        v-ripple="showControls && !isDisabled('hapticNavControls')"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Haptic Nav Controls") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="hapticNavControls"
+            :disable="!showControls || isDisabled('hapticNavControls')"
+          />
+        </q-item-section>
+        <hint v-if="hotkeys.hapticNavControls">
+          {{ $t("Hotkey") }}: {{ hotkeys.hapticNavControls }}
+        </hint>
+      </q-item>
 
-        <q-item v-if="showControls && showPlayButton">
-          <q-item-section>
-            {{ $t("Play Speed") }}
-            <q-slider
-              v-model="playSpeed"
-              :min="30"
-              :max="160"
-              :label-value="playSpeed + ' ' + $t('FPM')"
-              :step="10"
-              snap
-              label
-            />
-          </q-item-section>
-        </q-item>
-      </smooth-reflow>
+      <q-item
+        tag="label"
+        :disable="!showControls || isDisabled('showPlayButton')"
+        v-ripple="showControls && !isDisabled('showPlayButton')"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Play Button") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="showPlayButton"
+            :disable="!showControls || isDisabled('showPlayButton')"
+          />
+        </q-item-section>
+        <hint v-if="hotkeys.showPlayButton">
+          {{ $t("Hotkey") }}: {{ hotkeys.showPlayButton }}
+        </hint>
+      </q-item>
+
+      <q-item :disable="!showControls || !showPlayButton">
+        <q-item-section>
+          {{ $t("Play Speed") }}
+          <q-slider
+            v-model="playSpeed"
+            :min="30"
+            :max="160"
+            :disable="!showControls || !showPlayButton"
+            :label-value="playSpeed + ' ' + $t('FPM')"
+            :step="10"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -210,38 +238,38 @@
         </hint>
       </q-item>
 
-      <smooth-reflow>
-        <q-item v-if="scrollScrubbing">
-          <q-item-section>
-            <q-item-label class="text-no-wrap">
-              {{ $t("Scroll threshold") }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-input
-              v-model="scrollThreshold"
-              type="number"
-              :min="0"
-              :max="999"
-              suffix="px"
-              clearable
-              filled
-              dense
-            >
-              <template v-slot:before>
-                <q-btn
-                  @click="dialogAutodetect = true"
-                  icon="autofix"
-                  flat
-                  dense
-                >
-                  <hint>{{ $t("Autodetect") }}</hint>
-                </q-btn>
-              </template>
-            </q-input>
-          </q-item-section>
-        </q-item>
-      </smooth-reflow>
+      <q-item>
+        <q-item-section :disable="!scrollScrubbing">
+          <q-item-label class="text-no-wrap">
+            {{ $t("Scroll threshold") }}
+          </q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-input
+            v-model="scrollThreshold"
+            type="number"
+            :min="0"
+            :max="999"
+            :disable="!scrollScrubbing"
+            suffix="px"
+            clearable
+            filled
+            dense
+          >
+            <template v-slot:before>
+              <q-btn
+                @click="dialogAutodetect = true"
+                :disable="!scrollScrubbing"
+                icon="autofix"
+                flat
+                dense
+              >
+                <hint>{{ $t("Autodetect") }}</hint>
+              </q-btn>
+            </template>
+          </q-input>
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>
@@ -270,6 +298,7 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 const props = [
   "animateBoard",
   "animateScrub",
+  "hapticNavControls",
   "nativeSharing",
   "notifyGame",
   "notifyNotes",

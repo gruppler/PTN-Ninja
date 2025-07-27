@@ -274,7 +274,7 @@
             class="justify-around items-center"
             style="width: 100%; max-width: 500px; margin: 0 auto"
           />
-          <PlayControls ref="playControls" v-else />
+          <NavControls ref="playControls" v-else />
         </q-toolbar>
       </div>
     </q-footer>
@@ -305,7 +305,7 @@ import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
-import PlayControls from "../components/controls/PlayControls";
+import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import UndoButtons from "../components/controls/UndoButtons";
@@ -338,7 +338,7 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
-    PlayControls,
+    NavControls,
     Scrubber,
     PTNTools,
     UndoButtons,

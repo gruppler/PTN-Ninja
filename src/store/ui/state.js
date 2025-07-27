@@ -30,6 +30,7 @@ const defaultState = {
   evalText: true,
   firstMoveNumber: 1,
   flatCounts: true,
+  hapticNavControls: true,
   highlighterColor: "",
   highlighterCustomColor: "",
   highlighterEnabled: false,
