@@ -414,7 +414,10 @@ export default {
       return active && /TEXT|INPUT/.test(active.tagName);
     },
     resizeSquare(size) {
-      this.squareSize = `calc(${size.width || 100}px / ${this.config.size})`;
+      // Prevent jitter at some dimensions
+      this.squareSize = `calc(${2 * Math.round(size.width / 2) || 100}px / ${
+        this.config.size
+      })`;
     },
     resizeBoard(size) {
       this.size = size;
