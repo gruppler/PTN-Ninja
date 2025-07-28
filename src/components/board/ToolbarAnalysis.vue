@@ -41,7 +41,9 @@
           {{ $t("analysis.gameOver") }}
         </q-item>
         <q-btn
-          v-else-if="botMeta.requiresConnect && !botState.isConnected"
+          v-else-if="
+            botMeta && botMeta.requiresConnect && !botState.isConnected
+          "
           @click="bot.connect()"
           :loading="botState.isConnecting"
           icon="connect"
