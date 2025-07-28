@@ -130,34 +130,25 @@ export default {
       let x;
       if (this.isVertical) {
         // Vertical Layout
-        const buffer = 0.25;
-        x = this.config.size / 2 - 0.5 - buffer;
+        const spacing = -0.125;
+        x = this.config.size / 2 - 1 - spacing;
         if (this.board3D) {
           // 3D
           if (!this.piece.isCapstone) {
-            // TODO: Fix spacing
-
             // Calculate the group index for this piece type
             const groupIndex = Math.floor(
               (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
                 (this.config.size * 2)
             );
 
-            // Calculate the group size (subtract 1 if there's a capstone and uneven flats)
-            const groupSize = this.config.size;
-
-            const hasCap =
-              this.pieceCounts.cap && this.pieceCounts.flat % this.config.size;
-
             // Calculate the total number of groups for flat pieces
+            const hasCap = this.pieceCounts.cap;
+            const groupSize = this.config.size * 2;
             const totalGroups =
-              Math.floor(this.pieceCounts.flat / groupSize) - 1 - 1 * !hasCap;
-
-            // Calculate the scaling factor for x position
-            const scale = 1;
+              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
 
             // Scale x by the ratio of groupIndex to totalGroups and the scale factor
-            x *= (groupIndex * scale) / totalGroups;
+            x *= groupIndex / totalGroups;
           }
         } else {
           // 2D
@@ -173,9 +164,9 @@ export default {
           x /= this.pieceCounts.total - 1;
         }
         if (this.stackColor === 1) {
-          x = this.config.size / 2 - x - 0.75 - buffer / 4;
+          x = this.config.size / 2 - 1 - x - spacing;
         } else {
-          x = this.config.size / 2 + x - 0.25 + buffer / 4;
+          x = this.config.size / 2 + x + spacing;
         }
         x *= 100;
       } else {
@@ -233,10 +224,10 @@ export default {
             );
 
             // Calculate the total number of groups for flat pieces
-            const hasCap =
-              this.pieceCounts.cap && this.pieceCounts.flat % this.config.size;
-            const groupSize = this.config.size - (hasCap ? 1 : 0);
-            const totalGroups = Math.floor(this.pieceCounts.flat / groupSize);
+            const hasCap = this.pieceCounts.cap;
+            const groupSize = this.config.size;
+            const totalGroups =
+              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
 
             // Scale y by the ratio of groupIndex to totalGroups
             y *= groupIndex / totalGroups;
