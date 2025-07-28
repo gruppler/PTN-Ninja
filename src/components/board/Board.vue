@@ -785,7 +785,6 @@ $radius: 0.35em;
 
   .eval-text {
     font-weight: bold;
-    color: $primary;
     color: var(--q-color-primary);
   }
 }
@@ -798,16 +797,12 @@ $radius: 0.35em;
 .x-axis,
 .y-axis,
 .move-number {
-  color: $textDark;
   color: var(--q-color-textDark);
-  text-shadow: 0 0.05em 0.1em $textLight;
   text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
   justify-content: space-around;
   line-height: 1em;
   body.secondaryDark & {
-    color: $textLight;
     color: var(--q-color-textLight);
-    text-shadow: 0 0.05em 0.1em $textDark;
     text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
   }
 }
@@ -830,7 +825,6 @@ $radius: 0.35em;
   grid-column-start: 2;
   grid-row-start: 3;
   grid-row-start: 3;
-  background: $board1;
   background: var(--q-color-board1);
   z-index: 1;
   width: 100%;
@@ -859,7 +853,6 @@ $radius: 0.35em;
 }
 
 .unplayed-bg {
-  background-color: $board3;
   background-color: var(--q-color-board3);
   overflow: hidden;
   position: relative;

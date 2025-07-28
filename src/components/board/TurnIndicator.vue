@@ -178,19 +178,11 @@ $radius: 0.35em;
       }
     }
     .player1 .content {
-      color: $textDark;
       color: var(--q-color-textDark);
-      background: $player1;
       background: var(--q-color-player1);
       .flats {
         text-align: right;
-        background: $player1;
         background: var(--q-color-player1);
-        background: linear-gradient(
-          to left,
-          $player1 calc(100% - #{$fadeWidth}),
-          $player1clear
-        );
         background: linear-gradient(
           to left,
           var(--q-color-player1) calc(100% - #{$fadeWidth}),
@@ -198,14 +190,11 @@ $radius: 0.35em;
         );
       }
       body.player1Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }
     .player2 .content {
-      color: $textDark;
       color: var(--q-color-textDark);
-      background: $player2;
       background: var(--q-color-player2);
       &::after {
         content: "";
@@ -215,7 +204,6 @@ $radius: 0.35em;
         right: 0;
         width: $fadeWidth;
         text-align: left;
-        background: linear-gradient(to left, $player2 0, $player2clear);
         background: linear-gradient(
           to left,
           var(--q-color-player2) 0,
@@ -223,7 +211,6 @@ $radius: 0.35em;
         );
       }
       body.player2Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }
@@ -279,7 +266,6 @@ $radius: 0.35em;
       position: absolute;
       top: 0;
       bottom: 0;
-      background: $primary;
       background: var(--q-color-primary);
       transition-duration: $transition-duration;
       transition-timing-function: $transition-easing;

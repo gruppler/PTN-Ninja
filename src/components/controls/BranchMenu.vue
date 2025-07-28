@@ -42,7 +42,7 @@
 
 <script>
 import PlyPreview from "../controls/PlyPreview";
-import { compact, findLastIndex } from "lodash";
+import { findLastIndex } from "lodash";
 
 export default {
   name: "BranchMenu",
@@ -117,7 +117,6 @@ export default {
 
 <style lang="scss">
 .branch-menu {
-  background: $panelOpaque !important;
   background: var(--q-color-panelOpaque) !important;
 
   .option-number {
@@ -129,20 +128,15 @@ export default {
     flex-shrink: 0;
     text-align: center;
     border-radius: $generic-border-radius;
-    background-color: $bg;
     background-color: var(--q-color-bg);
-    color: $textDark;
     color: var(--q-color-textDark);
     body.secondaryDark & {
-      color: $textLight;
       color: var(--q-color-textLight);
     }
     &.selected {
-      background-color: $primary !important;
       background-color: var(--q-color-primary) !important;
       color: var(--q-color-textDark) !important;
       body.primaryDark & {
-        color: $textLight !important;
         color: var(--q-color-textLight) !important;
       }
     }
@@ -163,11 +157,6 @@ export default {
     padding-right: $fadeWidth;
     background: linear-gradient(
       90deg,
-      #{$panelOpaque} calc(100% - #{$fadeWidth}),
-      #{$panelClear} 100%
-    );
-    background: linear-gradient(
-      90deg,
       var(--q-color-panelOpaque) calc(100% - #{$fadeWidth}),
       var(--q-color-panelClear) 100%
     );
@@ -177,17 +166,11 @@ export default {
     .fade {
       background: linear-gradient(
         90deg,
-        #{$panelOpaqueHover} calc(100% - #{$fadeWidth}),
-        #{$panelClearHover} 100%
-      );
-      background: linear-gradient(
-        90deg,
         var(--q-color-panelOpaqueHover) calc(100% - #{$fadeWidth}),
         var(--q-color-panelClearHover) 100%
       );
     }
     > .q-focus-helper {
-      background: $panelOpaqueHover !important;
       background: var(--q-color-panelOpaqueHover) !important;
       opacity: 1 !important;
     }
@@ -207,7 +190,6 @@ export default {
     background: transparent;
   }
   .q-branch-menu.scroll::-webkit-scrollbar-thumb {
-    background: $panelOpaqueHover;
     background: var(--q-color-panelOpaqueHover);
   }
 }

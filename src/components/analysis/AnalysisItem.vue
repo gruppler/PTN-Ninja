@@ -249,12 +249,9 @@ export default {
     }
 
     .player1 {
-      background-color: $player1;
       background-color: var(--q-color-player1);
-      color: $textDark;
       color: var(--q-color-textDark);
       body.player1Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }
@@ -266,12 +263,9 @@ export default {
       }
     }
     .player2 {
-      background-color: $player2;
       background-color: var(--q-color-player2);
-      color: $textDark;
       color: var(--q-color-textDark);
       body.player2Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }

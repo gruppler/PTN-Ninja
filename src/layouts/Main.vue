@@ -1002,7 +1002,6 @@ export default {
 #left-drawer,
 #right-drawer {
   .q-drawer {
-    background: $panel;
     background: var(--q-color-panel);
     .q-drawer__content {
       overflow: hidden;

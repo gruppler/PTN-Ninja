@@ -45,7 +45,6 @@
 <style lang="scss">
 .game-selector-option .game-thumbnail {
   border: 1px solid;
-  border-color: $bg;
   border-color: var(--q-color-bg);
 }
 </style>
