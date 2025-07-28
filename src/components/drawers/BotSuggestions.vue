@@ -572,12 +572,23 @@
         stretch
       />
 
-      <!-- Clear Rersults -->
+      <!-- Clear Saved Results -->
+      <q-btn
+        @click="clearSavedResults"
+        class="full-width"
+        color="primary"
+        icon="delete"
+        :label="$t('analysis.Clear Saved Results')"
+        :disable="!hasNotes"
+        stretch
+      />
+
+      <!-- Clear Results -->
       <q-btn
         @click="clearResults"
         class="full-width"
         color="primary"
-        icon="delete"
+        icon="delete_forever"
         :label="$t('analysis.Clear Results')"
         :disable="!hasResults"
         stretch
@@ -669,6 +680,9 @@ export default {
     positions() {
       return this.$store.state.analysis.botPositions;
     },
+    hasNotes() {
+      return !isEmpty(this.$store.state.game.comments.notes);
+    },
     hasResults() {
       return !isEmpty(this.positions);
     },
@@ -755,6 +769,9 @@ export default {
     clearLog() {
       this.bot.clearLog();
       this.autoScrollLog = true;
+    },
+    clearSavedResults() {
+      this.bot.clearSavedResults();
     },
     clearResults() {
       this.prompt({

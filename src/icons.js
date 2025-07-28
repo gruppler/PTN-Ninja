@@ -34,6 +34,7 @@ export default {
   date: "mdi-calendar",
   date_time: "mdi-calendar-clock",
   delete: "mdi-delete",
+  delete_forever: "mdi-delete-forever",
   depth: "mdi-arrow-collapse-down",
   disconnect: "mdi-lan-disconnect",
   down: "mdi-chevron-down",

@@ -357,7 +357,8 @@ export default {
     abandonChanges: "Abandon unsaved changes?",
     deleteBot: "Are you sure you want to delete this bot?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
-    clearBotResults: "Are you sure you want to clear this bot's results?",
+    clearBotResults:
+      "Are you sure you want to clear this bot's results? This cannot be undone.",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",

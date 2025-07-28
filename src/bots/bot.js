@@ -401,6 +401,10 @@ export default class Bot {
     this.setState({ time: 0, nps: 0 });
   }
 
+  clearSavedResults() {
+    store.dispatch("game/REMOVE_ANALYSIS_NOTES");
+  }
+
   async searchPosition() {}
 
   //#region onSearchStart
@@ -677,7 +681,7 @@ export default class Bot {
                 label: i18n.t("analysis.Clear Saved Results"),
                 color: "textDark",
                 handler: () => {
-                  store.dispatch("game/REMOVE_ANALYSIS_NOTES");
+                  this.clearSavedResults();
                 },
               },
               { icon: "close", color: "textDark" },
