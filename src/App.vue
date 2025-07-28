@@ -155,6 +155,7 @@ export default {
           ply: position.ply ? position.ply.text : null,
           prevPly: position.prevPly ? position.prevPly.text : null,
           nextPly: position.nextPly ? position.nextPly.text : null,
+          flats: this.$store.state.game.board.flats,
         };
         postMessage("GAME_STATE", position);
       },

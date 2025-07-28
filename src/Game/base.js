@@ -547,7 +547,7 @@ export default class GameBase {
   }
 
   get openingSwap() {
-    return this.tag("opening") === "swap";
+    return this.tag("opening") !== "no-swap";
   }
 
   plySort(a, b) {
@@ -666,7 +666,7 @@ export default class GameBase {
   }
 
   updateConfig() {
-    const requireBoardUpdate = ["size", "komi"];
+    const requireBoardUpdate = ["size", "komi", "openingSwap"];
     const old = pick(this.config, requireBoardUpdate);
     const config = {
       size: this.tag("size", true),
@@ -684,7 +684,8 @@ export default class GameBase {
     };
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
-      this.board.updateBoardOutput();
+      this._updatePTN();
+      this.init({ ...this.params, ptn: this.ptn });
     }
   }
 

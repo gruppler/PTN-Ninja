@@ -296,6 +296,7 @@ export default class Board extends Aggregation(
 
     return Object.assign(this.output.board, {
       ply: { ...this.boardPly },
+      flats: this.flats.concat(),
     });
   }
 
@@ -485,7 +486,6 @@ export default class Board extends Aggregation(
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
         isGameEndDefault: this.isGameEndDefault,
-        flats: this.flats,
         flatsWithoutKomi: this.flatsWithoutKomi,
         result: null,
       }

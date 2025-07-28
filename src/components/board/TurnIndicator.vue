@@ -91,7 +91,7 @@ export default {
       return this.$store.state.ui.flatCounts;
     },
     flats() {
-      return this.position.flats;
+      return this.board.flats;
     },
     flatsflatsWithoutKomi() {
       return this.position.flatsWithoutKomi;
@@ -135,9 +135,8 @@ export default {
       };
     },
     komiWidth() {
-      return `calc(${100 * Math.abs(this.komi)}% / ${
-        this.komi < 0 ? this.flats[0] : this.flats[1]
-      })`;
+      const total = this.komi < 0 ? this.flats[0] : this.flats[1];
+      return `calc(${100 * Math.abs(this.komi)}% / ${total})`;
     },
   },
   methods: {

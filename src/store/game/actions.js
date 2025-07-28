@@ -552,6 +552,9 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 
 export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {
   const oldName = Vue.prototype.$game.name;
+  if (oldName === newName) {
+    return;
+  }
   commit("RENAME_CURRENT_GAME", newName);
   dispatch("SET_NAME", { oldName, newName });
   setTimeout(() => {
@@ -600,6 +603,9 @@ export const SET_NAME = async function (
   { commit, getters },
   { oldName, newName }
 ) {
+  if (oldName === newName) {
+    return;
+  }
   try {
     const game = await gamesDB.get("games", oldName);
     if (!game) {
