@@ -17,7 +17,6 @@
       valid,
       connected,
       highlighted: isHighlighted,
-      '--highlighter-color': highlighterColor,
       highlighterDark,
       n,
       e,
@@ -28,6 +27,9 @@
       re,
       rs,
       rw,
+    }"
+    :style="{
+      '--highlighter-color': highlighterColor,
     }"
     @mouseover="mouseover"
     @mouseout="mouseout"
@@ -413,6 +415,9 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     &.primary .hl.current {
       opacity: 0.75;
     }
+    .numbers span {
+      background-color: var(--q-color-primary) !important;
+    }
   }
   .board-container.highlighter & .hl {
     pointer-events: none;
@@ -426,7 +431,7 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       opacity: 0.75;
     }
     .numbers span {
-      background-color: var(----highlighter-color) !important;
+      background-color: var(--highlighter-color) !important;
       color: var(--q-color-textDark) !important;
     }
     &.highlighterDark .numbers span {
@@ -481,7 +486,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
   body.primaryDark .board-container.highlight-squares &.current .numbers span {
     color: var(--q-color-textLight);
-    background-color: var(--q-color-primary);
   }
   body:not(.primaryDark)
     .board-container.highlight-squares
@@ -489,7 +493,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     .numbers
     span {
     color: var(--q-color-textDark);
-    background-color: var(--q-color-primary);
   }
 
   .board-container.turn-1 & {
