@@ -22,7 +22,8 @@
         >
           <q-linear-progress
             v-if="
-              (botState && botState.isRunning) || 'progress' in botSuggestion
+              (botState && botState.isRunning) ||
+              (botSuggestion && 'progress' in botSuggestion)
             "
             class="analysis-linear-progress"
             size="2px"
