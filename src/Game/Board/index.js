@@ -56,6 +56,7 @@ export default class Board extends Aggregation(
         pvs: {},
       },
       position: {
+        isAtEndOfMainBranch: false,
         isGameEnd: false,
         isFirstMove: true,
         move: null,
@@ -480,6 +481,7 @@ export default class Board extends Aggregation(
         nextPly: this.nextPly
           ? this.output.ptn.allPlies[this.nextPly.id]
           : null,
+        isAtEndOfMainBranch: this.isAtEndOfMainBranch,
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
         isGameEndDefault: this.isGameEndDefault,
