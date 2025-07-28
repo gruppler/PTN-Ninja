@@ -239,6 +239,13 @@ export const DELETE_PLY = (state, plyID) => {
   }
 };
 
+export const APPEND_PLY = (state, ply) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.appendPly(ply);
+  }
+};
+
 export const INSERT_PLY = (state, ply) => {
   const game = Vue.prototype.$game;
   if (game) {

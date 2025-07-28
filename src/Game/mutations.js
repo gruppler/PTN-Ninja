@@ -772,6 +772,44 @@ export default class GameMutations {
     });
   }
 
+  appendPly(ply) {
+    const wasAtEnd = this.board.isAtEndOfMainBranch;
+    const boardPlyInfo = this.board.boardPly;
+
+    return this.recordChange(() => {
+      if (!wasAtEnd) {
+        this.board.goToEndOfMainBranch();
+      }
+      try {
+        if (this._insertPly(ply)) {
+          this._updatePTN();
+          this.board.updatePTNOutput();
+          this.board.updatePositionOutput();
+          this.board.updateBoardOutput();
+          if (!wasAtEnd) {
+            this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+          }
+          if (isFunction(this.onInsertPly)) {
+            if (ply.constructor === Ply) {
+              ply = ply.text;
+            } else {
+              ply = new Ply(ply, {}).text;
+            }
+            this.onInsertPly(this, ply);
+          }
+          return true;
+        } else if (!wasAtEnd) {
+          this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+        }
+      } catch (error) {
+        console.error(error);
+        if (!wasAtEnd) {
+          this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+        }
+      }
+    });
+  }
+
   insertPlies(plies, prev = 0) {
     const returnedPlies = [];
     return this.recordChange(() => {

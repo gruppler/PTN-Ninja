@@ -74,6 +74,10 @@ For example:
 
 - Add the comments to the specified plies
 
+#### `APPEND_PLY` (value: `<String>`)
+
+- Add a single move specified as a string in PTN (e.g. `Sb4`) to the end of the main branch. If the current position was already the end of the main branch, it will show the new move. Otherwise, the current position will remain unchanged.
+
 #### `APPLY_TRANSFORM` (value: `<Array>: [ int a, int b ]` )
 
 - Apply the specified board transformation `[int a, int b]` where `a` is the number of clockwise rotations [0, 3], and `b` is the number of horizontal flips [0, 1].
@@ -120,11 +124,11 @@ For example:
 
 #### `INSERT_PLIES` (value: `<Object>: { plies, prev }`)
 
-- Insert a series of `plies` specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
+- Insert a series of moves specified as strings in PTN (e.g. `['d5', 'e4']`, or `d5 e4`) and go backward `prev` plies. If a line number is specified in place of the first ply, following plies will be inserted at that location. If the second ply is a NOP, following plies will begin with Player 2.
 
 #### `INSERT_PLY` (value: `<String>`)
 
-- Execute a single ply specified as a string in PTN (e.g. `Sb4`)
+- Execute a single move specified as a string in PTN (e.g. `Sb4`)
 
 #### `LAST`
 

@@ -71,6 +71,7 @@ export default {
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
         case "DELETE_PLY":
+        case "APPEND_PLY":
         case "INSERT_PLY":
         case "INSERT_PLIES":
         case "DELETE_BRANCH":
