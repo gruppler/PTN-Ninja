@@ -369,22 +369,26 @@
               :label="$t('analysis.Analyze Position')"
               stretch
             />
-            <span
+            <q-btn
               v-if="botState.isAnalyzingPosition && botState.analyzingPly"
               @click.stop="goToAnalysisPly"
-              class="absolute-left q-pl-sm cursor-pointer"
+              class="absolute-left q-py-none"
               :class="{
                 highlight: $store.state.ui.theme.primaryDark,
                 dim: !$store.state.ui.theme.primaryDark,
               }"
+              no-caps
+              dense
+              flat
             >
               <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
               <PlyChip
                 :ply="botState.analyzingPly"
+                class="no-pointer-events"
                 no-branches
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
-            </span>
+            </q-btn>
             <q-btn
               v-if="botState.isAnalyzingPosition"
               :label="$t('Cancel')"
@@ -422,22 +426,26 @@
                 )
               }}
             </q-btn>
-            <span
+            <q-btn
               v-if="botState.isAnalyzingGame && botState.analyzingPly"
               @click.stop="goToAnalysisPly"
-              class="absolute-left q-pl-sm cursor-pointer"
+              class="absolute-left q-py-none"
               :class="{
                 highlight: $store.state.ui.theme.primaryDark,
                 dim: !$store.state.ui.theme.primaryDark,
               }"
+              no-caps
+              dense
+              flat
             >
               <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
               <PlyChip
                 :ply="botState.analyzingPly"
+                class="no-pointer-events"
                 no-branches
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
-            </span>
+            </q-btn>
             <q-btn
               v-if="botState.isAnalyzingGame"
               :label="$t('Cancel')"
@@ -579,7 +587,7 @@
         color="primary"
         icon="delete"
         :label="$t('analysis.Clear Saved Results')"
-        :disable="!hasNotes"
+        :disable="!hasAnalysisNotes"
         stretch
       />
 
@@ -680,8 +688,11 @@ export default {
     positions() {
       return this.$store.state.analysis.botPositions;
     },
-    hasNotes() {
-      return !isEmpty(this.$store.state.game.comments.notes);
+    hasAnalysisNotes() {
+      return Object.values(this.$store.state.game.comments.notes).some(
+        (notes) =>
+          notes.some((note) => note.evaluation !== null || note.pv !== null)
+      );
     },
     hasResults() {
       return !isEmpty(this.positions);

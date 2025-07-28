@@ -323,6 +323,11 @@ kbd {
   }
 }
 
+.q-py-none .q-btn__wrapper {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .dimmed-btn {
   opacity: 0.2;
   &.q-fab--opened {
