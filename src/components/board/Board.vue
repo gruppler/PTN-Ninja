@@ -63,7 +63,17 @@
         @click.right.prevent
         @touchstart.stop
         @mousedown.stop
-      />
+      >
+        <div
+          v-if="$store.state.ui.embed"
+          @click.self="dropPiece"
+          class="evaluation"
+          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+          :style="{
+            [isVertical ? 'width' : 'height']: Math.abs(evaluation || 0) + '%',
+          }"
+        />
+      </div>
 
       <div
         class="board relative-position all-pointer-events"
@@ -219,6 +229,13 @@ export default {
     },
     ptn() {
       return this.$store.state.game.ptn;
+    },
+    evaluation() {
+      if (this.$store.state.game.evaluation !== null) {
+        return this.$store.state.game.evaluation;
+      } else {
+        return null;
+      }
     },
     evaluationText() {
       let evaluation = this.position.boardPly
@@ -706,7 +723,8 @@ $radius: 0.35em;
     &,
     .turn-indicator .player1,
     .turn-indicator .player2,
-    .turn-indicator .komi {
+    .turn-indicator .komi,
+    .evaluation {
       transition: none !important;
     }
   }
@@ -717,7 +735,8 @@ $radius: 0.35em;
     .road > div,
     .turn-indicator .player1,
     .turn-indicator .player2,
-    .turn-indicator .komi {
+    .turn-indicator .komi,
+    .evaluation {
       transition: none !important;
     }
   }
@@ -845,16 +864,35 @@ $radius: 0.35em;
   overflow: hidden;
   position: relative;
 
+  .evaluation {
+    position: absolute;
+    opacity: 0.5 !important;
+    left: 0;
+    bottom: 0;
+  }
+
   &.horizontal {
     grid-column-start: 3;
     grid-row-start: 3;
     border-radius: 0 $radius $radius 0;
+    .evaluation {
+      right: 0;
+      will-change: height, background-color;
+      transition: height $generic-hover-transition,
+        background-color $generic-hover-transition;
+    }
   }
 
   &.vertical {
     grid-column-start: 2;
     grid-row-start: 4;
     border-radius: 0 0 $radius $radius;
+    .evaluation {
+      top: 0;
+      will-change: width, background-color;
+      transition: width $generic-hover-transition,
+        background-color $generic-hover-transition;
+    }
   }
 }
 </style>
