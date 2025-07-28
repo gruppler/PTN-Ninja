@@ -179,6 +179,41 @@
             flat
           />
 
+          <!-- Search Limits -->
+          <q-separator />
+          <q-item-label header>{{ $t("analysis.limit") }}</q-item-label>
+
+          <BotLimitInput
+            v-for="type in limitTypes"
+            :key="type.value"
+            v-model.number="botSettings[botID][type.value]"
+            :label="type.label"
+            :type="type.value"
+            :min="type.min"
+            :max="type.max"
+            :step="type.step"
+            :disable="
+              botState.isRunning ||
+              (botSettings[botID].limitTypes &&
+                !botSettings[botID].limitTypes.includes(type.value))
+            "
+            filled
+            item-aligned
+          >
+            <template v-if="limitTypes.length > 1" v-slot:after>
+              <q-toggle
+                v-model="botSettings[botID].limitTypes"
+                :val="type.value"
+                :disable="
+                  botState.isRunning ||
+                  (botSettings[botID].limitTypes &&
+                    botSettings[botID].limitTypes.includes(type.value) &&
+                    botSettings[botID].limitTypes.length === 1)
+                "
+              />
+            </template>
+          </BotLimitInput>
+
           <q-separator />
 
           <!-- Log messages -->
@@ -265,41 +300,6 @@
             item-aligned
             filled
           />
-
-          <!-- Search Limits -->
-          <q-separator />
-          <q-item-label header>{{ $t("analysis.limit") }}</q-item-label>
-
-          <BotLimitInput
-            v-for="type in limitTypes"
-            :key="type.value"
-            v-model.number="botSettings[botID][type.value]"
-            :label="type.label"
-            :type="type.value"
-            :min="type.min"
-            :max="type.max"
-            :step="type.step"
-            :disable="
-              botState.isRunning ||
-              (botSettings[botID].limitTypes &&
-                !botSettings[botID].limitTypes.includes(type.value))
-            "
-            filled
-            item-aligned
-          >
-            <template v-if="limitTypes.length > 1" v-slot:after>
-              <q-toggle
-                v-model="botSettings[botID].limitTypes"
-                :val="type.value"
-                :disable="
-                  botState.isRunning ||
-                  (botSettings[botID].limitTypes &&
-                    botSettings[botID].limitTypes.includes(type.value) &&
-                    botSettings[botID].limitTypes.length === 1)
-                "
-              />
-            </template>
-          </BotLimitInput>
         </template>
       </smooth-reflow>
 
@@ -352,6 +352,52 @@
             </div>
           </smooth-reflow>
 
+          <!-- Analyze Position -->
+          <div class="relative-position">
+            <q-btn
+              @click="
+                botState.isAnalyzingPosition
+                  ? null
+                  : bot.analyzeCurrentPosition()
+              "
+              :loading="botState.isAnalyzingPosition"
+              :percentage="botState.progress"
+              :disable="!bot.isAnalyzePositionAvailable"
+              class="full-width"
+              color="primary"
+              icon="board"
+              :label="$t('analysis.Analyze Position')"
+              stretch
+            />
+            <span
+              v-if="botState.isAnalyzingPosition && botState.analyzingPly"
+              @click.stop="goToAnalysisPly"
+              class="absolute-left q-pl-sm cursor-pointer"
+              :class="{
+                highlight: $store.state.ui.theme.primaryDark,
+                dim: !$store.state.ui.theme.primaryDark,
+              }"
+            >
+              <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
+              <PlyChip
+                :ply="botState.analyzingPly"
+                no-branches
+                :done="botState.tps === botState.analyzingPly.tpsAfter"
+              />
+            </span>
+            <q-btn
+              v-if="botState.isAnalyzingPosition"
+              :label="$t('Cancel')"
+              @click.stop="bot.terminate()"
+              class="absolute-right"
+              :text-color="
+                $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+              "
+              stretch
+              flat
+            />
+          </div>
+
           <!-- Analyze Full-Game/Branch -->
           <div class="relative-position">
             <q-btn
@@ -394,52 +440,6 @@
             </span>
             <q-btn
               v-if="botState.isAnalyzingGame"
-              :label="$t('Cancel')"
-              @click.stop="bot.terminate()"
-              class="absolute-right"
-              :text-color="
-                $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
-              "
-              stretch
-              flat
-            />
-          </div>
-
-          <!-- Analyze Position -->
-          <div class="relative-position">
-            <q-btn
-              @click="
-                botState.isAnalyzingPosition
-                  ? null
-                  : bot.analyzeCurrentPosition()
-              "
-              :loading="botState.isAnalyzingPosition"
-              :percentage="botState.progress"
-              :disable="!bot.isAnalyzePositionAvailable"
-              class="full-width"
-              color="primary"
-              icon="board"
-              :label="$t('analysis.Analyze Position')"
-              stretch
-            />
-            <span
-              v-if="botState.isAnalyzingPosition && botState.analyzingPly"
-              @click.stop="goToAnalysisPly"
-              class="absolute-left q-pl-sm cursor-pointer"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-            >
-              <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
-              <PlyChip
-                :ply="botState.analyzingPly"
-                no-branches
-                :done="botState.tps === botState.analyzingPly.tpsAfter"
-              />
-            </span>
-            <q-btn
-              v-if="botState.isAnalyzingPosition"
               :label="$t('Cancel')"
               @click.stop="bot.terminate()"
               class="absolute-right"
