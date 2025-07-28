@@ -14,17 +14,20 @@
         <template
           v-if="
             botSuggestion ||
-            botState.isInteractiveEnabled ||
-            botState.isAnalyzingGame ||
-            (botState.isRunning && botState.tps === this.tps)
+            (botState &&
+              (botState.isInteractiveEnabled ||
+                botState.isAnalyzingGame ||
+                (botState.isRunning && botState.tps === this.tps)))
           "
         >
           <q-linear-progress
-            v-if="botState.isRunning"
+            v-if="
+              (botState && botState.isRunning) || 'progress' in botSuggestion
+            "
             class="analysis-linear-progress"
             size="2px"
-            :value="botState.progress / 100"
-            :indeterminate="botState.progress === null"
+            :value="progress"
+            :indeterminate="progress === null"
           />
           <BotAnalysisItem
             v-if="botSuggestion"
@@ -48,7 +51,7 @@
           stretch
         />
         <q-btn
-          v-else-if="bot.hasOptions && !botState.isReady"
+          v-else-if="bot && bot.hasOptions && !botState.isReady"
           @click="bot.applyOptions()"
           icon="apply"
           :label="$t('analysis.init')"
@@ -57,7 +60,7 @@
           color="primary"
           stretch
         />
-        <div class="position-relative" v-else>
+        <div class="position-relative" v-else-if="!isEmbedded">
           <q-btn-group spread stretch>
             <q-btn
               @click="
@@ -110,12 +113,21 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import { parsePV } from "../../utilities";
+import { isArray } from "lodash";
+import { mdiProgressAlert } from "@quasar/extras/mdi-v5";
+import { isNumber } from "lodash";
 
 export default {
   name: "ToolbarAnalysis",
   components: {
     BotAnalysisItem,
     AnalysisItemPlaceholder,
+  },
+  props: {
+    analysis: {
+      type: Object,
+      default: null,
+    },
   },
   computed: {
     collapsed: {
@@ -125,6 +137,9 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", !value]);
       },
+    },
+    isEmbedded() {
+      return this.$store.state.ui.embed;
     },
     icon() {
       return this.collapsed ? "up" : "down";
@@ -147,15 +162,39 @@ export default {
       return this.$store.state.ui.showAllBranches;
     },
     bot() {
-      return this.$store.getters["analysis/bot"];
+      return this.isEmbedded ? null : this.$store.getters["analysis/bot"];
     },
     botMeta() {
-      return this.$store.state.analysis.botMeta;
+      return this.isEmbedded ? null : this.$store.state.analysis.botMeta;
     },
     botState() {
-      return this.$store.state.analysis.botState;
+      return this.isEmbedded ? null : this.$store.state.analysis.botState;
     },
     botSuggestion() {
+      if (this.analysis) {
+        if (
+          this.analysis.pv &&
+          (!this.analysis.ply || this.analysis.followingPlies)
+        ) {
+          const pv = parsePV(
+            this.$store.state.game.position.turn,
+            this.$store.state.game.position.color,
+            isArray(this.analysis.pv)
+              ? this.analysis.pv
+              : this.analysis.pv.split(/\s+/)
+          );
+          return {
+            ply: pv.splice(0, 1)[0],
+            followingPlies: pv,
+            ...this.analysis,
+          };
+        } else {
+          return this.analysis;
+        }
+      } else if (this.isEmbedded) {
+        return null;
+      }
+
       const suggestions = this.$store.state.analysis.botPositions[this.tps];
       if (suggestions) {
         return suggestions[0];
@@ -199,6 +238,18 @@ export default {
       }
 
       return suggestion.ply ? suggestion : null;
+    },
+    progress() {
+      if (this.botSuggestion && "progress" in this.botSuggestion) {
+        if (this.botSuggestion.progress === null) {
+          return null;
+        }
+        return this.botSuggestion.progress / 100;
+      } else if (isNumber(this.botState.progress)) {
+        return this.botState.progress / 100;
+      } else {
+        return null;
+      }
     },
   },
   methods: {

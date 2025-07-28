@@ -314,6 +314,7 @@ import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
+import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 // Excluded from Embed layout:
 // import onlineStore from "../store/online";
@@ -322,7 +323,6 @@ import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
-import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";

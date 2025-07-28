@@ -226,7 +226,19 @@ For example:
 
 #### `SET_EVAL` (value: `<Number>: [-100, 100]` )
 
-- Show the specified evaluation score on the board.
+- Show the specified evaluation score on the board, where -100 is a win for Player 2, and 100 is a win for Player 1.
+
+#### `SET_ANALYSIS` (value: `<Object>` )
+
+- Show the specified analysis information below the board. Only the `pv` is required. The object has the following structure:
+  - `tps` (`<String>`): Optional TPS string of the position being analyzed. If omitted, the current position is assumed.
+  - `pv` (`<String>|<Array>`): The principle variation (or a single ply) in PTN, as a string of plies separated by spaces, or an array of strings.
+  - `progress` (`<Null>|<Number>: [0, 100]`): Optional representation of the completion of the current search. If set to `null`, the progress bar will be put into the 'indeterminate' state. If omitted, the progress bar will not be shown.
+  - `evaluation` (`<Number>: [-100, 100]`): Optional evaluation of the current position, where -100 is a win for Player 2, and 100 is a win for Player 1.
+  - `depth` (`<Number>`): Optional current depth of the search.
+  - `nodes` (`<Number>`): Optional number of nodes searched so far.
+  - `time` (`<Number>`): Optional milliseconds since the search began.
+  - `visits` (`<Number>`): Optional number of visits for the pv.
 
 #### `SET_NAME` (value: `<String>`)
 

@@ -90,6 +90,7 @@ export default {
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
         case "SET_EVAL":
+        case "SET_ANALYSIS":
           this.$store.dispatch("game/" + data.action, data.value || {});
           break;
         case "FIRST":

@@ -158,11 +158,20 @@
       <Notes ref="notes" class="fit" />
     </q-drawer>
 
-    <q-footer v-if="!$store.state.ui.disableNavigation" class="bg-ui">
-      <Scrubber />
-      <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
-        <NavControls ref="playControls" />
-      </q-toolbar>
+    <q-footer class="bg-panel">
+      <ToolbarAnalysis v-if="hasAnalysis" :analysis="currentAnalysis" />
+
+      <div class="relative-position">
+        <Scrubber v-if="!$store.state.ui.disableNavigation" />
+
+        <q-toolbar
+          v-if="!$store.state.ui.disableNavigation"
+          v-show="$store.state.ui.showControls"
+          class="footer-toolbar bg-ui"
+        >
+          <NavControls ref="playControls" />
+        </q-toolbar>
+      </div>
     </q-footer>
 
     <router-view ref="dialog" go-back no-route-dismiss />
@@ -194,6 +203,7 @@ import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
+import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -218,6 +228,7 @@ export default {
     EvalButtons,
     BoardToggles,
     ShareButton,
+    ToolbarAnalysis,
   },
   props: ["ptn", "name", "state"],
   data() {
@@ -240,6 +251,16 @@ export default {
     },
     gameExists() {
       return Boolean(this.$store.state.game.name);
+    },
+    hasAnalysis() {
+      return Object.keys(this.$store.state.game.analyzedPositions).length > 0;
+    },
+    currentAnalysis() {
+      return (
+        this.$store.state.game.analyzedPositions[
+          this.$store.state.game.position.tps
+        ] || null
+      );
     },
     showPTN: {
       get() {

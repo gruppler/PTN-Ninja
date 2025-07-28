@@ -198,6 +198,16 @@ export const SET_EVAL = (state, evaluation) => {
   state.evaluation = evaluation;
 };
 
+export const SET_ANALYSIS = (state, analysis) => {
+  if (analysis) {
+    Vue.set(
+      state.analyzedPositions,
+      analysis.tps || state.position.tps,
+      Object.freeze(analysis)
+    );
+  }
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
