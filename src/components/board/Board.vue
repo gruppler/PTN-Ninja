@@ -65,7 +65,7 @@
         @mousedown.stop
       >
         <div
-          v-if="$store.state.ui.embed"
+          v-if="$store.state.ui.showEval"
           @click.self="dropPiece"
           class="evaluation"
           :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
@@ -231,8 +231,15 @@ export default {
       return this.$store.state.game.ptn;
     },
     evaluation() {
-      if (this.$store.state.game.evaluation !== null) {
+      if (
+        this.$store.state.ui.embed &&
+        this.$store.state.game.evaluation !== null
+      ) {
         return this.$store.state.game.evaluation;
+      } else if (this.position.boardPly) {
+        return this.$store.state.game.comments.evaluations[
+          this.position.boardPly.id
+        ];
       } else {
         return null;
       }
