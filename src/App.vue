@@ -16,6 +16,22 @@ export default {
       window.app = this;
     }
 
+    // Handle virtual keyboard
+    if ("visualViewport" in window) {
+      window.visualViewport.addEventListener("resize", (event) => {
+        document.body.style.setProperty(
+          "--vvh",
+          window.visualViewport.height + "px"
+        );
+        this.$nextTick(() => {
+          const selection = window.getSelection();
+          if (selection && selection.focusNode) {
+            selection.focusNode.scrollIntoViewIfNeeded();
+          }
+        });
+      });
+    }
+
     // Initialize local DB
     this.$store.dispatch("game/INIT");
 

@@ -297,6 +297,12 @@ kbd {
   }
 }
 
+.q-drawer,
+.q-dialog__inner,
+.q-dialog .q-layout-container {
+  max-height: var(--vvh, 100dvh) !important;
+}
+
 @media (pointer: fine) {
   ::-webkit-scrollbar-corner {
     background: var(--q-color-ui);

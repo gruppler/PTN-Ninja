@@ -301,9 +301,7 @@ export default {
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
     width() {
-      if (this.$el && this.$el.style.width && this.isInputFocused()) {
-        return this.$el.style.width;
-      } else if (this.space && this.size) {
+      if (this.space && this.size) {
         const spaceAspect = this.space.width / this.space.height;
         const boardAspect = this.ratio;
         const widthBound = this.space.width;
@@ -418,10 +416,6 @@ export default {
           type: this.selected.pieces[0].type,
         });
       }
-    },
-    isInputFocused() {
-      const active = document.activeElement;
-      return active && /TEXT|INPUT/.test(active.tagName);
     },
     resizeSquare(size) {
       // Prevent jitter at some dimensions
