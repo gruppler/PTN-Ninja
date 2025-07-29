@@ -176,6 +176,7 @@ export default {
             message: this.message.trim(),
           });
         }
+        this.$refs.input.blur(); // De-select to enable clearing input on mobile
         this.message = "";
         this.$refs.input.focus();
       }
