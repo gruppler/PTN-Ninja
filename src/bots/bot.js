@@ -302,7 +302,8 @@ export default class Bot {
     return (
       this.state.isReady &&
       !this.state.isAnalyzingPosition &&
-      !this.state.isInteractiveEnabled
+      !this.state.isInteractiveEnabled &&
+      this.plies.length > 0
     );
   }
 
@@ -359,8 +360,15 @@ export default class Bot {
   //#region reset
   // Reset status
   reset() {
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+    }
     this.isInteractiveEnabled = false;
     this.onReady = null;
+    this.onReady = null;
+    this.onComplete = null;
+    this.unwatchPosition = null;
+    this.unwatchScrubbing = null;
     this.setState({
       isReadying: false,
       isReady: false,
@@ -369,6 +377,7 @@ export default class Bot {
       halfKomi: null,
       nextTPS: null,
       tps: null,
+      timer: null,
     });
   }
 
@@ -405,7 +414,59 @@ export default class Bot {
     store.dispatch("game/REMOVE_ANALYSIS_NOTES");
   }
 
-  async searchPosition() {}
+  //#region validatePosition
+  validatePosition(tps, plyID) {
+    let init = {
+      isNewGame: false,
+      halfKomi: this.halfKomi,
+    };
+
+    if (
+      !tps ||
+      (this.game.ptn.allPlies.length &&
+        (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
+    ) {
+      // Validate arguments
+      throw "Invalid search parameters";
+    } else if (
+      // Validate board size
+      !isEmpty(this.meta.sizeHalfKomis) &&
+      !(this.size in this.meta.sizeHalfKomis)
+    ) {
+      throw "Unsupported size";
+    } else {
+      // Get closest supported komi
+      const halfKomi = this.halfKomi;
+      const usingHalfKomi = this.getSupportedHalfKomi();
+      init.halfKomi = usingHalfKomi;
+      if (
+        this.state.gameID !== this.game.name ||
+        this.state.size !== this.size ||
+        this.state.halfKomi !== halfKomi
+      ) {
+        // This is a new game
+        init.isNewGame = true;
+        this.setState({
+          gameID: this.game.name,
+          size: this.size,
+          halfKomi: halfKomi,
+        });
+
+        if (halfKomi !== usingHalfKomi) {
+          this.onWarning(
+            i18n.t("warning.unsupportedKomi", {
+              komi: this.komi,
+              usingKomi: usingHalfKomi / 2,
+            })
+          );
+        }
+      }
+    }
+
+    return init;
+  }
+
+  async searchPosition(size, halfKomi, tps, plyID, isNewGame) {}
 
   //#region onSearchStart
   onSearchStart(state = {}) {
@@ -470,62 +531,6 @@ export default class Bot {
     this.setState(state);
   }
 
-  //#region validatePosition
-  validatePosition(tps, plyID) {
-    let success = {
-      isNewGame: false,
-      halfKomi: this.halfKomi,
-    };
-
-    if (
-      !tps ||
-      (this.game.ptn.allPlies.length &&
-        (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
-    ) {
-      // Validate arguments
-      success = false;
-    } else if (
-      // Validate board size
-      !isEmpty(this.meta.sizeHalfKomis) &&
-      !(this.size in this.meta.sizeHalfKomis)
-    ) {
-      this.onError("Unsupported size");
-      success = false;
-    } else {
-      // Get closest supported komi
-      const halfKomi = this.halfKomi;
-      const usingHalfKomi = this.getSupportedHalfKomi();
-      success.halfKomi = usingHalfKomi;
-      if (
-        this.state.gameID !== this.game.name ||
-        this.state.size !== this.size ||
-        this.state.halfKomi !== halfKomi
-      ) {
-        // This is a new game
-        success.isNewGame = true;
-        this.setState({
-          gameID: this.game.name,
-          size: this.size,
-          halfKomi: halfKomi,
-        });
-
-        if (halfKomi !== usingHalfKomi) {
-          this.onWarning(
-            i18n.t("warning.unsupportedKomi", {
-              komi: this.komi,
-              usingKomi: usingHalfKomi / 2,
-            })
-          );
-        }
-      }
-    }
-
-    if (!success && this.state.isRunning) {
-      this.terminate();
-    }
-    return success;
-  }
-
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
     return this.state.isInteractiveEnabled;
@@ -568,9 +573,7 @@ export default class Bot {
         }
       );
       // Start searching
-      if (!this.analyzeInteractive()) {
-        this.isInteractiveEnabled = false;
-      }
+      this.analyzeInteractive();
     } else {
       // Disable
       if (this.unwatchPosition) {
@@ -587,35 +590,55 @@ export default class Bot {
 
   //#region analyzeInteractive
   async analyzeInteractive() {
-    if (!this.meta.isInteractive) {
-      return false;
-    }
+    try {
+      if (!this.meta.isInteractive) {
+        throw new Error("Interactive mode unsupported");
+      }
 
-    if (this.isGameEnd) {
-      this.isRunning = false;
-      this.setState({ nextTPS: null });
-      return true;
-    }
+      // Stop searching but keep interactive mode enabled
+      if (this.isGameEnd) {
+        this.isRunning = false;
+        this.setState({ nextTPS: null });
+        return true;
+      }
 
-    // Queue current position for pairing with future response
-    const tps = this.tps;
-    const state = {
-      startTime: new Date().getTime(),
-      nextTPS: tps,
-      analyzingPly: this.ply,
-      isRunning: true,
-    };
-    if (!this.state.tps) {
-      state.tps = tps;
-    }
-    this.onSearchStart(state);
+      const tps = this.tps;
+      const plyID = this.game.position.boardPly
+        ? this.game.position.boardPly.id
+        : null;
 
-    if (
-      !(await this.searchPosition(
+      // Validate position
+      const init = this.validatePosition(tps, plyID);
+
+      const state = {
+        startTime: new Date().getTime(),
+        nextTPS: tps,
+        analyzingPly: this.ply,
+        isRunning: true,
+      };
+      if (!this.state.tps) {
+        state.tps = tps;
+      }
+      this.onSearchStart(state);
+      return this.searchPosition(
+        this.size,
+        init.halfKomi,
         tps,
-        this.game.position.boardPly ? this.game.position.boardPly.id : null
-      ))
-    ) {
+        plyID,
+        init.isNewGame
+      );
+    } catch (error) {
+      if (error) {
+        this.onError(error);
+      }
+      if (this.unwatchPosition) {
+        this.unwatchPosition();
+        this.unwatchPosition = null;
+      }
+      if (this.unwatchScrubbing) {
+        this.unwatchScrubbing();
+        this.unwatchScrubbing = null;
+      }
       this.onSearchEnd({ isInteractiveEnabled: false });
     }
   }
@@ -623,38 +646,57 @@ export default class Bot {
   //#region analyzeCurrentPosition
   async analyzeCurrentPosition() {
     return new Promise(async (resolve, reject) => {
-      if (this.state.isRunning || this.isGameEnd) {
-        reject();
-        return false;
-      }
+      try {
+        if (this.state.isRunning) {
+          throw "";
+        }
+        if (this.isGameEnd) {
+          throw "";
+        }
 
-      const tps = this.tps;
-      const ply = this.ply;
-      this.onSearchStart({
-        tps,
-        analyzingPly: ply,
-        isAnalyzingPosition: true,
-        startTime: new Date().getTime(),
-        progress: null,
-        nodes: 0,
-        nps: 0,
-      });
+        const tps = this.tps;
+        const plyID = this.game.position.boardPly
+          ? this.game.position.boardPly.id
+          : null;
 
-      const results = await this.searchPosition(
-        tps,
-        this.game.position.boardPly ? this.game.position.boardPly.id : null
-      );
+        // Validate position
+        const init = this.validatePosition(tps, plyID);
 
-      this.onSearchEnd({
-        isAnalyzingPosition: false,
-      });
-      if (results) {
-        this.storeResults(results);
-        resolve(results);
-        return results;
-      } else {
-        reject();
-        return false;
+        const ply = this.ply;
+        this.onSearchStart({
+          tps,
+          analyzingPly: ply,
+          isAnalyzingPosition: true,
+          startTime: new Date().getTime(),
+          progress: null,
+          nodes: 0,
+          nps: 0,
+        });
+
+        const results = await this.searchPosition(
+          this.size,
+          init.halfKomi,
+          tps,
+          plyID,
+          init.isNewGame
+        );
+
+        this.onSearchEnd({
+          isAnalyzingPosition: false,
+        });
+        if (results) {
+          this.storeResults(results);
+          resolve(results);
+          return results;
+        } else {
+          reject();
+          return false;
+        }
+      } catch (error) {
+        if (error) {
+          this.onError(error);
+        }
+        reject(error);
       }
     });
   }
@@ -662,16 +704,23 @@ export default class Bot {
   //#region analyzeGame
   async analyzeGame() {
     return new Promise(async (resolve, reject) => {
-      if (this.state.isRunning) {
-        reject();
-        return false;
-      }
-
       try {
+        if (this.state.isRunning) {
+          throw "";
+        }
+
+        // Validate
+        const init = this.validatePosition(this.tps, 0);
+
+        const size = this.size;
         const concurrency = this.concurrency;
         const positions = this.getPositionsToAnalyze();
         const total = this.plies.length;
         let completed = total - positions.length;
+
+        if (!total) {
+          return;
+        }
 
         if (!positions.length) {
           // Abort and notify
@@ -710,6 +759,8 @@ export default class Bot {
               }
               this.setState(state);
               const results = await this.searchPosition(
+                size,
+                init.halfKomi,
                 position.tps,
                 position.plyID
               );
@@ -733,7 +784,7 @@ export default class Bot {
         if (error) {
           this.onError(error);
         }
-        reject();
+        reject(error);
       } finally {
         this.onSearchEnd({ isAnalyzingGame: false });
       }

@@ -442,7 +442,7 @@ export default {
   },
 
   warning: {
-    fullyAnalyzed: "There's nothing to analyze.",
+    fullyAnalyzed: "There's nothing left to analyze.",
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
     unsupportedKomi:

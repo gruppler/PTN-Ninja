@@ -35,13 +35,7 @@ export default class TiltakCloud extends Bot {
   }
 
   //#region searchPosition
-  async searchPosition(tps, plyID) {
-    // Validate size/komi
-    const init = super.validatePosition(tps, plyID);
-    if (!init) {
-      return false;
-    }
-
+  async searchPosition(size, halfKomi, tps) {
     if (this.isOffline) {
       this.onError("Offline");
       return false;
@@ -60,8 +54,8 @@ export default class TiltakCloud extends Bot {
     }
 
     const request = {
-      komi: init.halfKomi / 2,
-      size: this.size,
+      komi: halfKomi / 2,
+      size,
       tps,
       moves: [],
       time_control,

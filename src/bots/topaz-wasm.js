@@ -64,31 +64,31 @@ export default class TopazWasm extends Bot {
   }
 
   //#region searchPosition
-  async searchPosition(tps, plyID) {
+  async searchPosition(size, halfKomi, tps) {
     return new Promise((resolve, reject) => {
-      // Validate size/komi
-      const init = super.validatePosition(tps, plyID);
-      if (!init) {
-        reject();
-        return false;
-      }
+      const query = {
+        tps,
+        size,
+        komi: halfKomi / 2,
+        movetime: 1e8,
+        depth: 100,
+        hash: this.getSettingsHash(),
+      };
+      // Set search limits
+      this.settings.limitTypes.forEach((type) => {
+        query[type] = this.settings[type];
+      });
+
       this.onComplete = (results) => {
         this.onComplete = null;
         resolve(results);
       };
 
-      const query = {
-        movetime: 1e8,
-        depth: 100,
-        tps,
-        size: this.size,
-        komi: init.halfKomi / 2,
-        hash: this.getSettingsHash(),
-      };
-      this.settings.limitTypes.forEach((type) => {
-        query[type] = this.settings[type];
-      });
-      this.send(query);
+      try {
+        this.send(query);
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 

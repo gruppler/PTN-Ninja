@@ -190,14 +190,8 @@ export default class TeiBot extends Bot {
   }
 
   //#region searchPosition
-  async searchPosition(tps, plyID) {
+  async searchPosition(size, halfKomi, tps, plyID, isNewGame) {
     return new Promise((resolve, reject) => {
-      // Validate size/komi
-      const init = super.validatePosition(tps, plyID);
-      if (!init) {
-        reject();
-        return false;
-      }
       if (!this.onComplete) {
         this.onComplete = (results) => {
           this.onComplete = null;
@@ -205,46 +199,48 @@ export default class TeiBot extends Bot {
         };
       }
 
-      // Send `teinewgame` if necessary
-      const halfKomi = init.halfKomi;
-      if (init.isNewGame) {
-        // New game
-        if (this.meta.teiVersion > 0) {
-          this.send(`teinewgame size ${this.size} halfkomi ${halfKomi}`);
-        } else {
-          this.send(`setoption name HalfKomi value ${halfKomi}`);
-          this.send(`teinewgame ${this.size}`);
-        }
-        this.setState({ isReadying: true, isReady: false });
-        this.send("isready");
-        this.onReady = () => {
-          this.onReady = null;
-          this.searchPosition(tps, plyID);
-        };
-        return true;
-      }
-
-      // Set position
-      this.send(this.getTeiPosition(tps, plyID));
-
-      // Go
-      if (this.isInteractiveEnabled) {
-        this.send(`go infinite`);
-      } else {
-        let goCommand = "go";
-        Object.keys(this.meta.limitTypes).forEach((type) => {
-          if (
-            (!this.settings.limitTypes ||
-              this.settings.limitTypes.includes(type)) &&
-            this.settings[type]
-          ) {
-            goCommand += ` ${type} ${this.settings[type]}`;
+      try {
+        // Send `teinewgame` if necessary
+        if (isNewGame) {
+          if (this.meta.teiVersion > 0) {
+            this.send(`teinewgame size ${size} halfkomi ${halfKomi}`);
+          } else {
+            this.send(`setoption name HalfKomi value ${halfKomi}`);
+            this.send(`teinewgame ${size}`);
           }
-        });
-        this.send(goCommand);
-      }
+          this.setState({ isReadying: true, isReady: false });
+          this.send("isready");
+          this.onReady = () => {
+            this.onReady = null;
+            this.searchPosition(size, halfKomi, tps, plyID, false);
+          };
+          return true;
+        }
 
-      return true;
+        // Set position
+        this.send(this.getTeiPosition(tps, plyID));
+
+        // Go
+        if (this.isInteractiveEnabled) {
+          this.send(`go infinite`);
+        } else {
+          let goCommand = "go";
+          Object.keys(this.meta.limitTypes).forEach((type) => {
+            if (
+              (!this.settings.limitTypes ||
+                this.settings.limitTypes.includes(type)) &&
+              this.settings[type]
+            ) {
+              goCommand += ` ${type} ${this.settings[type]}`;
+            }
+          });
+          this.send(goCommand);
+        }
+
+        return true;
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 

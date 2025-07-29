@@ -355,11 +355,7 @@
           <!-- Analyze Position -->
           <div class="relative-position">
             <q-btn
-              @click="
-                botState.isAnalyzingPosition
-                  ? null
-                  : bot.analyzeCurrentPosition()
-              "
+              @click="analyzePosition()"
               :loading="botState.isAnalyzingPosition"
               :percentage="botState.progress"
               :disable="!bot.isAnalyzePositionAvailable"
@@ -394,6 +390,10 @@
               :label="$t('Cancel')"
               @click.stop="bot.terminate()"
               class="absolute-right"
+              :class="{
+                highlight: $store.state.ui.theme.primaryDark,
+                dim: !$store.state.ui.theme.primaryDark,
+              }"
               :text-color="
                 $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
               "
@@ -405,7 +405,7 @@
           <!-- Analyze Full-Game/Branch -->
           <div class="relative-position">
             <q-btn
-              @click="bot.analyzeGame()"
+              @click="analyzeGame()"
               :loading="botState.isAnalyzingGame"
               :percentage="botState.progress"
               :disable="!bot.isAnalyzeGameAvailable"
@@ -450,6 +450,10 @@
               v-if="botState.isAnalyzingGame"
               :label="$t('Cancel')"
               @click.stop="bot.terminate()"
+              :class="{
+                highlight: $store.state.ui.theme.primaryDark,
+                dim: !$store.state.ui.theme.primaryDark,
+              }"
               class="absolute-right"
               :text-color="
                 $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
@@ -800,6 +804,18 @@ export default {
           isDone: this.botState.tps === this.botState.analyzingPly.tpsAfter,
         });
       }
+    },
+    analyzePosition() {
+      try {
+        if (!this.botState.isAnalyzingPosition) {
+          this.bot.analyzeCurrentPosition();
+        }
+      } catch (error) {}
+    },
+    analyzeGame() {
+      try {
+        this.bot.analyzeGame();
+      } catch (error) {}
     },
   },
 

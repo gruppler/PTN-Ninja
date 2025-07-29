@@ -62,22 +62,7 @@ export default class TiltakWasm extends TeiBot {
             error.message
           );
           this.onError(error);
-          if (worker) {
-            worker.terminate();
-            worker = null;
-          }
-          this.isInteractiveEnabled = false;
-          this.setState({
-            isAnalyzingGame: false,
-            isRunning: false,
-            isReady: false,
-            time: null,
-            nps: null,
-            tps: null,
-            nextTPS: null,
-            halfkomi: null,
-            size: null,
-          });
+          this.terminate();
         };
 
         // Message handling
