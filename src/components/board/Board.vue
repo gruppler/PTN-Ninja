@@ -45,8 +45,8 @@
       <TurnIndicator :hide-names="hideNames" />
 
       <div v-if="showMoveNumber" class="move-number-container">
-        <template v-if="showMoveNumber"
-          >&nbsp;&nbsp;{{ moveNumber }}.&nbsp;</template
+        <span v-if="showMoveNumber" class="move-number"
+          >&nbsp;&nbsp;{{ moveNumber }}.&nbsp;</span
         >
         <span
           v-if="$store.state.ui.evalText && evaluationText"
@@ -776,9 +776,6 @@ $radius: 0.35em;
   }
 
   .move-number {
-    position: absolute;
-    top: 0;
-    right: 0;
     height: 1.75em;
     line-height: 1.75;
   }
