@@ -508,7 +508,7 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
           games.forEach((ptn, i) => {
             parseGame(
               ptn,
-              games.length > 1 ? name + " - " + i18n.t("Game x", i + 1) : name
+              games.length > 1 ? name + " - " + i18n.tc("Game x", i + 1) : name
             );
           });
         };
