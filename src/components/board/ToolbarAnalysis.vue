@@ -207,10 +207,13 @@ export default {
       const game = this.$store.state.game;
       const tps = this.tps;
       const suggestion = {
-        evaluation: null,
         ply: null,
         followingPlies: [],
+        evaluation: null,
+        depth: null,
+        nodes: null,
         time: null,
+        visits: null,
       };
       let notes;
       let note;
@@ -226,13 +229,22 @@ export default {
             suggestion.followingPlies = pv;
           }
         }
-        if (
-          suggestion.evaluation === null &&
-          (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps))
-        ) {
+        if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
           note = notes.find((n) => n.evaluation !== null);
           if (note) {
             suggestion.evaluation = note.evaluation;
+            if (note.depth !== null) {
+              suggestion.depth = note.depth;
+            }
+            if (note.nodes !== null) {
+              suggestion.nodes = note.nodes;
+            }
+            if (note.visits !== null) {
+              suggestion.visits = note.visits;
+            }
+            if (note.ms !== null) {
+              suggestion.time = note.ms;
+            }
           }
         }
         if (suggestion.ply && suggestion.evaluation) {

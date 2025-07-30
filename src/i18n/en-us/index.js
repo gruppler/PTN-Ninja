@@ -526,6 +526,7 @@ export default {
     nps: "nps",
     "Preset Bot Options": "Preset Bot Options",
     pvLimit: "Plies to Save",
+    saveSearchStats: "Save Search Stats",
     secondsUnit: "sec",
     sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",

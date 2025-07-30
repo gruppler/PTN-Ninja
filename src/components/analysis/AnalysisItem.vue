@@ -26,7 +26,18 @@
       </q-item-section>
       <q-item-section top side>
         <q-item-label>
-          <span class="player-numbers">
+          <span class="visits" v-if="visits !== null">
+            {{ $tc("analysis.visits", $n(visits, "n0")) }}
+          </span>
+          <span
+            class="player-numbers"
+            v-if="
+              middleNumber !== null ||
+              player1Number !== null ||
+              player2Number !== null ||
+              depth !== null
+            "
+          >
             <span
               class="player1 first"
               v-if="player1Number !== null"
@@ -89,7 +100,7 @@
           }}</template>
           <template v-if="count !== null && seconds !== null"> / </template>
           <template v-if="seconds !== null">
-            {{ $n(seconds, "n0") }}
+            {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
             {{ $t("analysis.secondsUnit") }}
           </template>
         </q-item-label>
@@ -137,20 +148,20 @@ export default {
   components: { Ply, PlyPreview },
   props: {
     ply: Object,
+    followingPlies: Array,
     evaluation: Number,
     count: {
       type: Number,
+      default: null,
+    },
+    countLabel: {
+      type: String,
       default: null,
     },
     depth: {
       type: Number,
       default: null,
     },
-    seconds: {
-      type: Number,
-      default: null,
-    },
-    countLabel: String,
     player1Number: {
       type: [Number, String],
       default: null,
@@ -163,10 +174,20 @@ export default {
       type: [Number, String],
       default: null,
     },
-    fixedHeight: Boolean,
-    playerNumbersTooltip: String,
-    followingPlies: Array,
+    playerNumbersTooltip: {
+      type: String,
+      default: null,
+    },
+    seconds: {
+      type: Number,
+      default: null,
+    },
+    visits: {
+      type: Number,
+      default: null,
+    },
     animate: Boolean,
+    fixedHeight: Boolean,
   },
   computed: {
     tps() {
@@ -242,6 +263,10 @@ export default {
       overflow: hidden;
       height: 2em;
     }
+  }
+
+  .visits + .player-numbers {
+    margin-left: 0.5em;
   }
 
   .player-numbers {

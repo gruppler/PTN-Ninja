@@ -1,7 +1,28 @@
 import Ply from "./Ply";
 import { pick } from "lodash";
 
-const outputProps = ["time", "player", "message", "evaluation", "pv"];
+const outputProps = [
+  "time",
+  "player",
+  "message",
+  "depth",
+  "evaluation",
+  "ms",
+  "nodes",
+  "pv",
+  "visits",
+];
+
+export function getDepth(message) {
+  let matches;
+
+  matches = message.match(/(?:\/)([0-9]+)(?:\W|$)/m);
+  if (matches) {
+    return Number(matches[1]);
+  }
+
+  return null;
+}
 
 // Evaluation formats
 const evalFormats = [
@@ -31,6 +52,33 @@ export function getEvaluation(message) {
   return null;
 }
 
+export function getMS(message) {
+  let matches;
+
+  matches = message.match(/(?:\W|^)(([0-9.])+\s*m?s)(?:\W|$)/im);
+  if (matches) {
+    matches = matches[1];
+    let ms = Number(matches.replace(/[^0-9.]+/, ""));
+    if (!/ms$/i.test(matches)) {
+      ms *= 1000;
+    }
+    return ms;
+  }
+
+  return null;
+}
+
+export function getNodes(message) {
+  let matches;
+
+  matches = message.match(/(?:\W|^)(([0-9]+)\s*nodes)(?:\W|$)/im);
+  if (matches) {
+    return Number(matches[2]);
+  }
+
+  return null;
+}
+
 export function getPV(message) {
   let matches;
 
@@ -45,6 +93,17 @@ export function getPV(message) {
         .split(/\s+/)
     );
     return matches;
+  }
+
+  return null;
+}
+
+export function getVisits(message) {
+  let matches;
+
+  matches = message.match(/(?:\W|^)(([0-9]+)\s*visits)(?:\W|$)/im);
+  if (matches) {
+    return Number(matches[2]);
   }
 
   return null;
@@ -72,12 +131,28 @@ export default class Comment {
     }
   }
 
+  get depth() {
+    return getDepth(this.message);
+  }
+
   get evaluation() {
     return getEvaluation(this.message);
   }
 
+  get ms() {
+    return getMS(this.message);
+  }
+
+  get nodes() {
+    return getNodes(this.message);
+  }
+
   get pv() {
     return getPV(this.message);
+  }
+
+  get visits() {
+    return getVisits(this.message);
   }
 
   get output() {

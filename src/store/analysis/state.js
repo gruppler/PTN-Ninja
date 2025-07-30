@@ -17,6 +17,7 @@ const defaultState = {
   botSettings: {},
   botState: {},
   pvLimit: 3,
+  saveSearchStats: true,
   dbSettings: {
     includeBotGames: false,
     player1: [],

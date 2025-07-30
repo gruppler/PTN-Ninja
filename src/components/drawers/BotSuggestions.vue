@@ -231,16 +231,6 @@
             </q-item-section>
           </q-item>
 
-          <!-- Insert Evaluation Marks -->
-          <q-item tag="label" clickable v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="botSettings[botID].insertEvalMarks" />
-            </q-item-section>
-          </q-item>
-
           <!-- Normalize Evaluation -->
           <q-item
             v-if="'normalizeEvaluation' in botSettings[botID]"
@@ -275,6 +265,26 @@
               item-aligned
             />
           </smooth-reflow>
+
+          <!-- Insert Evaluation Marks -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="botSettings[botID].insertEvalMarks" />
+            </q-item-section>
+          </q-item>
+
+          <!-- Save Extra Info -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.saveSearchStats") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle v-model="saveSearchStats" />
+            </q-item-section>
+          </q-item>
 
           <!-- PV Limit -->
           <q-input
@@ -710,6 +720,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("analysis/SET", ["pvLimit", value]);
+      },
+    },
+    saveSearchStats: {
+      get() {
+        return this.$store.state.analysis.saveSearchStats;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["saveSearchStats", value]);
       },
     },
     limitTypes() {

@@ -932,7 +932,7 @@ export default class Bot {
     formatEvaluation(value);
   }
 
-  formatEvalComments(ply, pvLimit = 0) {
+  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
@@ -959,7 +959,7 @@ export default class Bot {
       }
     }
 
-    // Evaluation
+    // Evaluation, search info
     if (
       evaluationAfter !== null ||
       (positionAfter && positionAfter[0].evaluation !== null)
@@ -977,6 +977,36 @@ export default class Bot {
         evaluationComment += `${
           evaluationAfter >= 0 ? "+" : ""
         }${evaluationAfter}`;
+
+        if (saveSearchStats && positionAfter) {
+          if (
+            positionAfter[0].depth !== null &&
+            positionAfter[0].depth !== undefined
+          ) {
+            evaluationComment += `/${positionAfter[0].depth}`;
+          }
+
+          if (
+            positionAfter[0].nodes !== null &&
+            positionAfter[0].nodes !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
+          }
+
+          if (
+            positionAfter[0].visits !== null &&
+            positionAfter[0].visits !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].visits} visits`;
+          }
+
+          if (
+            positionAfter[0].time !== null &&
+            positionAfter[0].time !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].time}ms`;
+          }
+        }
 
         // Find existing eval comment index
         if (ply.id in this.game.comments.notes) {
@@ -1052,11 +1082,17 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(pvLimit = store.state.analysis.pvLimit, plies = this.plies) {
+  saveEvalComments() {
+    const pvLimit = store.state.analysis.pvLimit;
+    const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    plies.forEach((ply) => {
+    this.plies.forEach((ply) => {
       const notes = [];
-      const evaluations = this.formatEvalComments(ply, pvLimit);
+      const evaluations = this.formatEvalComments(
+        ply,
+        pvLimit,
+        saveSearchStats
+      );
       if (evaluations.length) {
         notes.push(...evaluations);
       }

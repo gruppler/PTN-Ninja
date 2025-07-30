@@ -3,20 +3,9 @@
     :ply="suggestion.ply"
     :evaluation="'evaluation' in suggestion ? suggestion.evaluation : null"
     :following-plies="suggestion.followingPlies"
-    :count="
-      'visits' in suggestion
-        ? suggestion.visits
-        : 'nodes' in suggestion
-        ? suggestion.nodes
-        : null
-    "
-    :count-label="
-      'visits' in suggestion
-        ? 'analysis.visits'
-        : 'nodes' in suggestion
-        ? 'analysis.nodes'
-        : null
-    "
+    :count="suggestion.nodes"
+    count-label="analysis.nodes"
+    :visits="suggestion.visits"
     :seconds="seconds"
     :player1-number="
       'evaluation' in suggestion && suggestion.evaluation >= 0
