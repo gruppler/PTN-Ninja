@@ -237,5 +237,13 @@ export default {
   .q-separator {
     opacity: 0.75;
   }
+
+  .q-field ::selection {
+    color: var(--q-color-primary) !important;
+    background: var(--q-color-textDark) !important;
+    body.primaryDark & {
+      background: var(--q-color-textLight) !important;
+    }
+  }
 }
 </style>
