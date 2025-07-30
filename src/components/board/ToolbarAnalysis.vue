@@ -240,7 +240,9 @@ export default {
         }
       }
 
-      return suggestion.ply ? suggestion : null;
+      return suggestion.ply || suggestion.evaluation !== null
+        ? suggestion
+        : null;
     },
     progress() {
       if (this.botSuggestion && "progress" in this.botSuggestion) {

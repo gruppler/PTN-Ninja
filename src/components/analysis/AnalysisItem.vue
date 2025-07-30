@@ -10,11 +10,11 @@
       @mouseover="highlight"
       @mouseout="unhighlight"
       @click="insertPly"
-      clickable
+      :clickable="ply !== null"
       style="height: 60px"
     >
       <q-item-section>
-        <q-item-label>
+        <q-item-label v-if="ply !== null">
           <Ply :ply="ply" no-click done>
             <PlyPreview
               :tps="tps"
@@ -178,16 +178,28 @@ export default {
   },
   methods: {
     insertPly() {
+      if (this.ply === null) {
+        return;
+      }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
     highlight() {
+      if (this.ply === null) {
+        return;
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
     },
     unhighlight() {
+      if (this.ply === null) {
+        return;
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     insertFollowingPlies(index) {
+      if (this.ply === null) {
+        return;
+      }
       let prev = 0;
       if (index === undefined) {
         index = this.followingPlies.length;
