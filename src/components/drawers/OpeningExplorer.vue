@@ -263,19 +263,20 @@
         <q-item v-else-if="!dbMoves.length" class="flex-center">
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
         </q-item>
-        <AnalysisItem
-          v-else
-          v-for="(move, i) in dbMoves.slice(0, dbSettings.maxSuggestedMoves)"
-          :key="i"
-          :ply="move.ply"
-          :evaluation="move.evaluation"
-          :count="move.totalGames"
-          count-label="analysis.n_games"
-          :player1-number="$n(move.wins1, 'n0')"
-          :middle-number="move.draws ? $n(move.draws, 'n0') : null"
-          :player2-number="$n(move.wins2, 'n0')"
-          :player-numbers-tooltip="winsTooltip(move)"
-        />
+        <template v-else>
+          <AnalysisItem
+            v-for="(move, i) in dbMoves.slice(0, dbSettings.maxSuggestedMoves)"
+            :key="i"
+            :ply="move.ply"
+            :evaluation="move.evaluation"
+            :count="move.totalGames"
+            count-label="analysis.n_games"
+            :player1-number="$n(move.wins1, 'n0')"
+            :middle-number="move.draws ? $n(move.draws, 'n0') : null"
+            :player2-number="$n(move.wins2, 'n0')"
+            :player-numbers-tooltip="winsTooltip(move)"
+          />
+        </template>
         <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
       </smooth-reflow>
     </q-expansion-item>
@@ -302,20 +303,21 @@
         <q-item v-else-if="!dbGames.length" class="flex-center">
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
         </q-item>
-        <DatabaseGame
-          v-else
-          v-for="(game, i) in dbGames"
-          :key="i"
-          :playtak-id="game.playtakId"
-          :player1="game.player1"
-          :player2="game.player2"
-          :rating1="game.rating1"
-          :rating2="game.rating2"
-          :result="game.result"
-          :date="game.date"
-          :komi="game.komi"
-          :tournament="game.tournament"
-        />
+        <template v-else>
+          <DatabaseGame
+            v-for="(game, i) in dbGames"
+            :key="i"
+            :playtak-id="game.playtakId"
+            :player1="game.player1"
+            :player2="game.player2"
+            :rating1="game.rating1"
+            :rating2="game.rating2"
+            :result="game.result"
+            :date="game.date"
+            :komi="game.komi"
+            :tournament="game.tournament"
+          />
+        </template>
         <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
       </smooth-reflow>
     </q-expansion-item>
