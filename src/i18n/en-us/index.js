@@ -21,6 +21,7 @@ export default {
   "Backward Half-Step": "Backward Half-Step",
   Beginning: "Beginning",
   Board: "Board",
+  "Board Evaluation Bar": "Board Evaluation Bar",
   "Board Preferences": "Board Preferences",
   "Board Preferences Button": "Board Preferences Button",
   "Board Transform Button": "Board Transform Button",

@@ -65,7 +65,7 @@
         @mousedown.stop
       >
         <div
-          v-if="$store.state.ui.showEval"
+          v-if="showEvaluation"
           @click.self="dropPiece"
           class="evaluation"
           :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
@@ -229,6 +229,12 @@ export default {
     },
     ptn() {
       return this.$store.state.game.ptn;
+    },
+    showEvaluation() {
+      return (
+        this.$store.state.ui.embed ||
+        (this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar)
+      );
     },
     evaluation() {
       if (

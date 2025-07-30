@@ -238,6 +238,26 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('boardEvalBar')"
+              tag="label"
+              :disable="!showEval || isDisabled('boardEvalBar')"
+              v-ripple="showEval && !isDisabled('boardEvalBar')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="boardEvalBar"
+                  :disable="!showEval || isDisabled('boardEvalBar')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.boardEvalBar">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.boardEvalBar }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('moveNumber')"
               tag="label"
               :disable="isDisabled('moveNumber')"
@@ -518,6 +538,7 @@ const props = [
   "axisLabels",
   "axisLabelsSmall",
   "board3D",
+  "boardEvalBar",
   "flatCounts",
   "highlightSquares",
   "evalText",

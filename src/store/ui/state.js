@@ -14,6 +14,7 @@ const defaultState = {
   axisLabels: true,
   axisLabelsSmall: false,
   board3D: false,
+  boardEvalBar: true,
   boardRotation: [0, 0.65],
   boardSize: { width: 0, height: 0 },
   boardSpace: { width: 0, height: 0 },
