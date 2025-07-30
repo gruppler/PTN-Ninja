@@ -525,7 +525,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     opacity: 0.35;
   }
   &.flatwin .hl.player {
-    transition: none;
     opacity: 0.4;
   }
   &.eog.p1 .hl.player {
