@@ -14,6 +14,7 @@
     ref="wrapper"
   >
     <div
+      ref="container"
       class="board-container"
       :class="{
         [style]: true,
@@ -40,7 +41,6 @@
       @click.right.self.prevent="resetBoardRotation"
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
-      ref="container"
     >
       <TurnIndicator :hide-names="hideNames" />
 
@@ -314,21 +314,35 @@ export default {
         const widthBound = this.space.width;
         const heightBound = this.space.height * boardAspect;
         const hysteresis = 0.01; // Prevent jitter at some dimensions
+        let width;
         let padding;
-        let size;
         if (spaceAspect < boardAspect - hysteresis) {
           // Clearly width-constrained
-          size = widthBound;
-          padding = Math.max(32, size * 0.1);
+          width = widthBound;
+          padding = Math.max(32, width * 0.1);
         } else if (boardAspect < spaceAspect - hysteresis) {
           // Clearly height-constrained
-          size = heightBound;
-          padding = Math.max(32 * boardAspect, size * 0.1);
+          width = heightBound;
+          padding = Math.max(32 * boardAspect, width * 0.1);
         } else {
           // Dead zone
-          return this.width;
+          width = parseFloat(this.$refs.container.style.width);
+          let maxWidth;
+          if (spaceAspect < boardAspect) {
+            maxWidth = widthBound;
+            padding = Math.max(32, maxWidth * 0.1);
+          } else {
+            maxWidth = heightBound;
+            padding = Math.max(32 * boardAspect, width * 0.1);
+          }
+          if (!isNaN(width) && width > 10 && width <= maxWidth - padding) {
+            // Keep current width
+            return this.$refs.container.style.width;
+          } else {
+            width = maxWidth;
+          }
         }
-        return Math.max(size - padding, 10) + "px";
+        return Math.max(width - padding, 10) + "px";
       } else {
         return "80%";
       }
