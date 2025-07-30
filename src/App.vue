@@ -173,6 +173,16 @@ export default {
           nextPly: position.nextPly ? position.nextPly.text : null,
           flats: this.$store.state.game.board.flats,
         };
+
+        // Include link if game has ended
+        if (this.$store.state.game.position.isGameEnd) {
+          position.url = this.$store.getters["ui/url"](this.$game, {
+            name: this.title,
+            origin: true,
+            state: true,
+          });
+        }
+
         postMessage("GAME_STATE", position);
       },
       deep: true,
