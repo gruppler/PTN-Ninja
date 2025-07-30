@@ -134,6 +134,7 @@
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <q-btn
+            id="fab"
             color="primary"
             :text-color="
               $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
@@ -141,9 +142,8 @@
             icon="add"
             @click="addGame"
             @click.right.prevent="switchGame"
-            :fab="fabLarge"
-            :round="!fabLarge"
-            :dense="fabSmall"
+            :padding="fabPadding"
+            round
           />
           <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
@@ -480,25 +480,14 @@ export default {
       }
       return Math.min(width, 400);
     },
-    fabLarge() {
+    fabPadding() {
       const boardSpace = this.$store.state.ui.boardSpace;
       const boardSize = this.$store.state.ui.boardSize;
-      return (
-        Math.min(this.$q.screen.width, this.$q.screen.height) >=
-          this.$q.screen.sizes.sm ||
-        (boardSpace.width - boardSize.width >= 50 &&
-          boardSpace.height - boardSize.height >= 50)
-      );
-    },
-    fabSmall() {
-      const boardSpace = this.$store.state.ui.boardSpace;
-      const boardSize = this.$store.state.ui.boardSize;
-      return (
-        Math.min(this.$q.screen.width, this.$q.screen.height) <
-          this.$q.screen.sizes.sm &&
-        boardSpace.width - boardSize.width < 50 &&
-        boardSpace.height - boardSize.height < 50
-      );
+      const marginX = (boardSpace.width - boardSize.width) / 2 - 36;
+      const marginY = (boardSpace.height - boardSize.height) / 2 - 36;
+      const minBoard = Math.min(boardSize.width, boardSize.height);
+      const minPadding = Math.max(0, 32 * (1 - Math.min(1, 250 / minBoard)));
+      return Math.min(32, Math.max(minPadding, marginX, marginY)) / 2 + "px";
     },
   },
   methods: {
@@ -1016,5 +1005,9 @@ export default {
   .q-tab-panel {
     padding: 0;
   }
+}
+
+#fab .q-btn__wrapper {
+  transition: padding $generic-hover-transition;
 }
 </style>
