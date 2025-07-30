@@ -1022,14 +1022,12 @@ export default class Bot {
     }
 
     // PV
-    if (positionBefore) {
+    if (positionBefore && pvLimit > 0) {
       let position = positionBefore[0];
       if (position && position.ply) {
-        let pv = [position.ply, ...position.followingPlies];
-        if (pvLimit) {
-          pv = pv.slice(0, pvLimit);
-        }
-        pv = pv.map((ply) => ply.ptn);
+        const pv = [position.ply, ...position.followingPlies]
+          .slice(0, pvLimit)
+          .map((ply) => ply.ptn);
         let pvComment = `pv ${pv.join(" ")}`;
 
         // Find existing pv comment index
