@@ -25,7 +25,11 @@ export default {
         );
         this.$nextTick(() => {
           const selection = window.getSelection();
-          if (selection && selection.focusNode) {
+          if (
+            selection &&
+            selection.focusNode &&
+            selection.focusNode.scrollIntoViewIfNeeded
+          ) {
             selection.focusNode.scrollIntoViewIfNeeded();
           }
         });
