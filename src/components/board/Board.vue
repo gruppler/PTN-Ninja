@@ -313,19 +313,22 @@ export default {
         const boardAspect = this.ratio;
         const widthBound = this.space.width;
         const heightBound = this.space.height * boardAspect;
-        const hysteresis = 0.05; // Prevent jitter at some dimensions
+        const hysteresis = 0.01; // Prevent jitter at some dimensions
+        let padding;
         let size;
         if (spaceAspect < boardAspect - hysteresis) {
           // Clearly width-constrained
           size = widthBound;
+          padding = Math.max(32, size * 0.1);
         } else if (boardAspect < spaceAspect - hysteresis) {
           // Clearly height-constrained
           size = heightBound;
+          padding = Math.max(32 * boardAspect, size * 0.1);
         } else {
-          // In the dead zone
-          size = heightBound;
+          // Dead zone
+          return this.width;
         }
-        return Math.max(size * 0.9, 10) + "px";
+        return Math.max(size - padding, 10) + "px";
       } else {
         return "80%";
       }
@@ -703,7 +706,8 @@ $radius: 0.35em;
   );
   position: relative;
   z-index: 0;
-  transition: transform $generic-hover-transition;
+  transition: transform $generic-hover-transition,
+    width $generic-hover-transition;
   text-align: center;
 
   display: grid;
