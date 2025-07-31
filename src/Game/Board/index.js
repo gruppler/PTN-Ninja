@@ -762,7 +762,7 @@ export default class Board extends Aggregation(
     if (this.ply) {
       return this.plyIsDone && Boolean(this.ply.result);
     } else if (this.game.hasTPS) {
-      return this.roads.length > 0 || this.isGameEndFlats;
+      return Boolean(this.roads.length > 0 || this.isGameEndFlats);
     }
   }
 
