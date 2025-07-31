@@ -180,20 +180,18 @@
           </q-item-section>
         </q-item>
 
-        <smooth-reflow>
-          <q-input
-            v-if="buffer.meta.normalizeEvaluation"
-            type="number"
-            v-model.number="buffer.meta.sigma"
-            :label="$t('analysis.sigma')"
-            :min="1"
-            :max="1e4"
-            :rules="[(s) => s > 0]"
-            hide-bottom-space
-            filled
-            item-aligned
-          />
-        </smooth-reflow>
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.sigma"
+          :disable="!buffer.meta.normalizeEvaluation"
+          :label="$t('analysis.sigma')"
+          :min="1"
+          :max="1e4"
+          :rules="[(s) => s > 0]"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
 
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
