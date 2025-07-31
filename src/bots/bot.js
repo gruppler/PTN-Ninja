@@ -127,12 +127,12 @@ export default class Bot {
 
   //#region send/receive
   onSend(message) {
-    if (store.state.analysis.enableLogging) {
+    if (store.state.analysis && store.state.analysis.enableLogging) {
       this.logMessage(message);
     }
   }
   onReceive(message) {
-    if (store.state.analysis.enableLogging) {
+    if (store.state.analysis && store.state.analysis.enableLogging) {
       this.logMessage(message, true);
     }
   }

@@ -227,7 +227,17 @@
               <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="enableLogging" />
+              <q-toggle key="enableLogging" v-model="enableLogging" />
+            </q-item-section>
+          </q-item>
+
+          <!-- Insert Evaluation Marks -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle key="insertEvalMarks" v-model="insertEvalMarks" />
             </q-item-section>
           </q-item>
 
@@ -244,7 +254,10 @@
               }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="botSettings[botID].normalizeEvaluation" />
+              <q-toggle
+                key="botSettings"
+                v-model="botSettings[botID].normalizeEvaluation"
+              />
             </q-item-section>
           </q-item>
 
@@ -266,23 +279,13 @@
             />
           </smooth-reflow>
 
-          <!-- Insert Evaluation Marks -->
-          <q-item tag="label" clickable v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="insertEvalMarks" />
-            </q-item-section>
-          </q-item>
-
           <!-- Save Extra Info -->
           <q-item tag="label" clickable v-ripple>
             <q-item-section>
               <q-item-label>{{ $t("analysis.saveSearchStats") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="saveSearchStats" />
+              <q-toggle key="saveSearchStats" v-model="saveSearchStats" />
             </q-item-section>
           </q-item>
 
@@ -334,7 +337,13 @@
             />
 
             <!-- Other Bot Options -->
-            <div v-else-if="bot.hasOptions" class="bg-ui">
+            <div
+              v-if="
+                (!botMeta.requiresConnect || botState.isConnected) &&
+                bot.hasOptions
+              "
+              class="bg-ui"
+            >
               <q-separator />
 
               <BotOptionInput
