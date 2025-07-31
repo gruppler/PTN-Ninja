@@ -117,7 +117,6 @@ import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import { parsePV } from "../../utilities";
 import { isArray } from "lodash";
-import { mdiProgressAlert } from "@quasar/extras/mdi-v5";
 import { isNumber } from "lodash";
 
 export default {

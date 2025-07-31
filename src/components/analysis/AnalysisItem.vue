@@ -10,7 +10,7 @@
       @mouseover="highlight"
       @mouseout="unhighlight"
       @click="insertPly"
-      :clickable="ply !== null"
+      :clickable="!isBoardDisabled && ply !== null"
       style="height: 60px"
     >
       <q-item-section>
@@ -116,7 +116,9 @@
           ? insertFollowingPlies()
           : null
       "
-      :clickable="followingPlies && followingPlies.length > 0"
+      :clickable="
+        !isBoardDisabled && followingPlies && followingPlies.length > 0
+      "
     >
       <q-item-label
         class="continuation small"
@@ -190,6 +192,9 @@ export default {
     fixedHeight: Boolean,
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     tps() {
       return this.$store.state.game.position.tps;
     },
@@ -199,7 +204,7 @@ export default {
   },
   methods: {
     insertPly() {
-      if (this.ply === null) {
+      if (this.ply === null || this.isBoardDisabled) {
         return;
       }
       this.unhighlight();
@@ -218,7 +223,7 @@ export default {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     insertFollowingPlies(index) {
-      if (this.ply === null) {
+      if (this.ply === null || this.isBoardDisabled) {
         return;
       }
       let prev = 0;
