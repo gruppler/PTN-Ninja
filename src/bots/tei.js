@@ -17,6 +17,7 @@ export default class TeiBot extends Bot {
         isConnecting: false,
         isConnected: false,
         isTeiOk: false,
+        isGameInitialized: false,
       },
       settings: {
         ssl: false,
@@ -100,6 +101,7 @@ export default class TeiBot extends Bot {
     };
     const state = {
       isTeiOk: false,
+      isGameInitialized: false,
       isConnecting: false,
       isConnected: false,
     };
@@ -201,7 +203,7 @@ export default class TeiBot extends Bot {
 
       try {
         // Send `teinewgame` if necessary
-        if (isNewGame) {
+        if (isNewGame || !this.state.isGameInitialized) {
           if (this.meta.teiVersion > 0) {
             this.send(`teinewgame size ${size} halfkomi ${halfKomi}`);
           } else {
@@ -212,6 +214,7 @@ export default class TeiBot extends Bot {
           this.send("isready");
           this.onReady = () => {
             this.onReady = null;
+            this.setState({ isGameInitialized: true });
             this.searchPosition(size, halfKomi, tps, plyID, false);
           };
           return true;
