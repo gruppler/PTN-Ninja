@@ -16,6 +16,8 @@ const defaultState = {
   botPositions: {},
   botSettings: {},
   botState: {},
+  enableLogging: false,
+  insertEvalMarks: true,
   pvLimit: 3,
   saveSearchStats: true,
   dbSettings: {

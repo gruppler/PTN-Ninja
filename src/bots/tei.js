@@ -23,7 +23,6 @@ export default class TeiBot extends Bot {
         ssl: false,
         address: "localhost",
         port: 7731,
-        insertEvalMarks: false,
         normalizeEvaluation: false,
         sigma: 100,
         limitTypes: ["movetime"],

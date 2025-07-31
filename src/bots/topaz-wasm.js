@@ -13,7 +13,6 @@ export default class TopazWasm extends Bot {
       isInteractive: false,
       sizeHalfKomis: { 6: [0] },
       settings: {
-        insertEvalMarks: false,
         limitTypes: ["depth", "movetime"],
         movetime: 5e3,
         depth: 12,

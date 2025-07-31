@@ -92,8 +92,6 @@ export default class Bot {
     };
 
     this.settings = {
-      log: false,
-      insertEvalMarks: true,
       ...settings,
     };
     // After initialization of the store,
@@ -129,12 +127,12 @@ export default class Bot {
 
   //#region send/receive
   onSend(message) {
-    if (this.settings.log) {
+    if (store.state.analysis.enableLogging) {
       this.logMessage(message);
     }
   }
   onReceive(message) {
-    if (this.settings.log) {
+    if (store.state.analysis.enableLogging) {
       this.logMessage(message, true);
     }
   }
@@ -1022,7 +1020,7 @@ export default class Bot {
       }
 
       // Evaluation marks
-      if (this.settings.insertEvalMarks) {
+      if (store.state.analysis.insertEvalMarks) {
         if (
           evaluationBefore === null &&
           positionBefore &&

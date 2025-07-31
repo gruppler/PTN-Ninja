@@ -227,7 +227,7 @@
               <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="botSettings[botID].log" />
+              <q-toggle v-model="enableLogging" />
             </q-item-section>
           </q-item>
 
@@ -272,7 +272,7 @@
               <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="botSettings[botID].insertEvalMarks" />
+              <q-toggle v-model="insertEvalMarks" />
             </q-item-section>
           </q-item>
 
@@ -517,7 +517,7 @@
             </q-item>
 
             <!-- Log -->
-            <recess v-if="botSettings[botID].log">
+            <recess v-if="enableLogging">
               <q-virtual-scroll
                 ref="botLog"
                 class="bot-log text-selectable bg-ui q-px-sm"
@@ -713,6 +713,22 @@ export default {
     },
     suggestions() {
       return this.positions[this.tps] || [];
+    },
+    enableLogging: {
+      get() {
+        return this.$store.state.analysis.enableLogging;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["enableLogging", value]);
+      },
+    },
+    insertEvalMarks: {
+      get() {
+        return this.$store.state.analysis.insertEvalMarks;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["insertEvalMarks", value]);
+      },
     },
     pvLimit: {
       get() {
