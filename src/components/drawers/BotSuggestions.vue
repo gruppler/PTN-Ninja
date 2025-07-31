@@ -796,7 +796,10 @@ export default {
     },
     async setBotOptions() {
       const settings = cloneDeep(this.botSettings);
-      Object.assign(settings[this.botID].options, this.botOptions);
+      settings[this.botID].options = Object.assign(
+        settings[this.botID].options || {},
+        this.botOptions
+      );
       await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
       this.bot.applyOptions();
     },
