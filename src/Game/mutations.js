@@ -786,16 +786,16 @@ export default class GameMutations {
           this.board.updatePTNOutput();
           this.board.updatePositionOutput();
           this.board.updateBoardOutput();
-          if (!wasAtEnd) {
-            this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
-          }
-          if (isFunction(this.onInsertPly)) {
+          if (isFunction(this.onAppendPly)) {
             if (ply.constructor === Ply) {
               ply = ply.text;
             } else {
               ply = new Ply(ply, {}).text;
             }
-            this.onInsertPly(this, ply);
+            this.onAppendPly(this, ply);
+          }
+          if (!wasAtEnd) {
+            this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
           }
           return true;
         } else if (!wasAtEnd) {

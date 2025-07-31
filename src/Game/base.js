@@ -100,6 +100,7 @@ export default class GameBase {
     editingTPS,
     onInit,
     onError,
+    onAppendPly,
     onInsertPly,
   }) {
     // Set up init handler
@@ -113,6 +114,9 @@ export default class GameBase {
     }
 
     // Set up other handlers
+    if (isFunction(onAppendPly)) {
+      this.onAppendPly = onAppendPly;
+    }
     if (isFunction(onInsertPly)) {
       this.onInsertPly = onInsertPly;
     }

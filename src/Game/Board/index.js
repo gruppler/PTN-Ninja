@@ -459,6 +459,7 @@ export default class Board extends Aggregation(
   }
 
   updatePositionOutput() {
+    const ply = this.ply;
     const position = Object.assign(
       this.output.position,
       pick(
@@ -473,7 +474,7 @@ export default class Board extends Aggregation(
       ),
       {
         tps: this.getTPS(),
-        ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
+        ply: ply ? this.output.ptn.allPlies[this.plyID] : null,
         boardPly: this.boardPly,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly
@@ -487,33 +488,9 @@ export default class Board extends Aggregation(
         isGameEndFlats: this.isGameEndFlats,
         isGameEndDefault: this.isGameEndDefault,
         flatsWithoutKomi: this.flatsWithoutKomi,
-        result: null,
+        result: ply && ply.result ? ply.result.minimalOutput : null,
       }
     );
-
-    let result = null;
-    if (position.ply && position.ply.result) {
-      result = omit(position.ply.result, "roads");
-    } else if (position.isGameEnd) {
-      let resultText;
-      if (position.isGameEndFlats) {
-        if (this.flats[0] == this.flats[1]) {
-          resultText = "1/2-1/2";
-        } else if (this.flats[0] > this.flats[1]) {
-          resultText = "F-0";
-        } else {
-          resultText = "0-F";
-        }
-      } else if (this.roads && this.roads.length) {
-        if (this.roads[1].length && this.roads[2].length) {
-          resultText = position.turn === 1 ? "0-R" : "R-0";
-        } else {
-          resultText = this.roads[1].length ? "R-0" : "0-R";
-        }
-      }
-      result = omit(new Result(resultText).output, "roads");
-    }
-    position.result = result;
 
     return position;
   }

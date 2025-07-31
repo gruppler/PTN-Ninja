@@ -10,6 +10,15 @@ const outputProps = [
   "roads",
 ];
 
+const minimalOutputProps = [
+  "text",
+  "player1",
+  "player2",
+  "isTie",
+  "winner",
+  "type",
+];
+
 export default class Result {
   constructor(notation) {
     const matchData = notation.match(
@@ -38,6 +47,10 @@ export default class Result {
 
   get output() {
     return Object.freeze(pick(this, outputProps));
+  }
+
+  get minimalOutput() {
+    return Object.freeze(pick(this, minimalOutputProps));
   }
 
   static test(notation) {

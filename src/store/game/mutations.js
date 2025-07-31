@@ -14,7 +14,7 @@ export const INIT = (state, games) => {
   state.init = true;
 };
 
-export const SET_GAME = (state, game) => {
+export const SET_GAME = function (state, game) {
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -22,33 +22,56 @@ export const SET_GAME = (state, game) => {
     console.error(error);
   };
 
+  const onInit = (game) => {
+    SET_GAME(state, game);
+  };
+
+  const handleGameEnd = (game) => {
+    if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
+      const url = this.getters["ui/url"](game, {
+        name: this.title,
+        origin: true,
+        state: true,
+      });
+
+      postMessage("GAME_END", {
+        url,
+        result: game.board.ply.result.minimalOutput,
+      });
+    }
+  };
+
+  const onAppendPly = (game, ply) => {
+    postMessage("APPEND_PLY", ply);
+    handleGameEnd(game);
+  };
+
+  const onInsertPly = (game, ply) => {
+    postMessage("INSERT_PLY", ply);
+    handleGameEnd(game);
+  };
+
+  const onError = (error, plyID) => {
+    handleError(error, plyID);
+  };
+
   state.error = null;
   const editingTPS = game.editingTPS;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
-      onInit: (game) => {
-        SET_GAME(state, game);
-      },
-      onInsertPly: (game, ply) => {
-        postMessage("INSERT_PLY", ply);
-      },
-      onError: (error, plyID) => {
-        handleError(error, plyID);
-      },
+      onInit,
+      onAppendPly,
+      onInsertPly,
+      onError,
     });
   } else {
     game.board.updateOutput();
     if (!game.onInit) {
-      game.onInit = (game) => {
-        SET_GAME(state, game);
-      };
-      game.onInsertPly = (game, ply) => {
-        postMessage("INSERT_PLY", ply);
-      };
-      game.onError = (error, plyID) => {
-        handleError(error, plyID);
-      };
+      game.onInit = onInit;
+      game.onAppendPly = onAppendPly;
+      game.onInsertPly = onInsertPly;
+      game.onError = onError;
     }
   }
   Vue.prototype.$game = game;
