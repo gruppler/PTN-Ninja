@@ -154,6 +154,7 @@ For example:
 
 - Issue a notification, specifying either the message directly, or an object with the following structure:
   - `message` (`<String>`): Message to be displayed
+  - `icon` (`<String>`): Icon to be displayed (only applies to `NOTIFY`)
   - `caption` (`<String>`): Optional message to be displayed in smaller text below `message`
   - `timeout` (`<Number>`): Optional milliseconds before automatic dismissal (default 5000). Set to zero to disable timeout.
   - `position` (`<String>`): Optional location in which to display the notification. Must be one of the following values (default `bottom`):
@@ -167,9 +168,11 @@ For example:
     - `left`
     - `center`
   - `actions` (`<Array>`): Optional list of buttons to display after the message, specified as `Object`s with the following structure:
-    - `label` (`<String>`): Text to display as the button label
-    - `message` (`<String>`): Message to send to the opening or parent window when the button is clicked
+    - `label` (`<String>`): Button label
+    - `icon` (`<String>`): Button icon
     - `color` (`<String>`): Optional color name (default: `primary`)
+    - `action` (`<String>`): `action` message property to send to the opening or parent window when the button is clicked
+    - `value` (`<String>`): `value` message property to send with the `action` to the opening or parent window when the button is clicked
   - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
 
 #### `PAUSE`
@@ -231,7 +234,7 @@ For example:
 #### `SET_ANALYSIS` (value: `<Object>` )
 
 - Show the specified analysis information below the board. Only the `pv` is required. The object has the following structure:
-  - `tps` (`<String>`): Optional TPS string of the position being analyzed. If omitted, the current position is assumed.
+  - `tps` (`<String>`): Optional TPS string of the position being analyzed. If falsy, the current position is assumed.
   - `pv` (`<String>|<Array>`): The principle variation (or a single ply) in PTN, as a string of plies separated by spaces, or an array of strings.
   - `progress` (`<Null>|<Number>: [0, 100]`): Optional representation of the completion of the current search. If set to `null`, the progress bar will be put into the 'indeterminate' state. If omitted, the progress bar will not be shown.
   - `evaluation` (`<Number>: [-100, 100]`): Optional evaluation of the current position, where -100 is a win for Player 2, and 100 is a win for Player 1.
