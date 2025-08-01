@@ -13,6 +13,7 @@
       <template v-if="!collapsed">
         <template
           v-if="
+            isEmbedded ||
             botSuggestion ||
             (botState &&
               (botState.isInteractiveEnabled ||

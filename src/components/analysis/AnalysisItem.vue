@@ -93,6 +93,7 @@
         </q-item-label>
         <q-item-label
           v-if="(count !== null && countLabel) || seconds !== null"
+          class="count"
           caption
         >
           <template v-if="count !== null && countLabel">{{
@@ -128,6 +129,7 @@
           v-for="(fPly, i) in followingPlies"
           :key="i"
           :ply="fPly"
+          :no-click="isBoardDisabled"
           @click.stop.prevent.capture="insertFollowingPlies(i)"
         >
           <PlyPreview
@@ -299,9 +301,11 @@ export default {
     }
     .middle,
     .depth {
-      background-color: $dim;
-      body.body--light & {
-        background-color: $highlight;
+      background-color: $highlight;
+      color: var(--q-color-textDark);
+      body.panelDark & {
+        color: var(--q-color-textLight);
+        background-color: $dim;
       }
     }
     .player2 {
@@ -320,6 +324,13 @@ export default {
     }
     .single {
       border-radius: 4px !important;
+    }
+  }
+
+  .count {
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
     }
   }
 }
