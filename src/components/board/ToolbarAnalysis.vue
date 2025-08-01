@@ -13,7 +13,7 @@
       <template v-if="!collapsed">
         <template
           v-if="
-            isEmbedded ||
+            (isEmbedded && !isGameEnd) ||
             botSuggestion ||
             (botState &&
               (botState.isInteractiveEnabled ||
