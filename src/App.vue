@@ -139,6 +139,9 @@ export default {
         case "RESET_TRANSFORM":
           this.$store.dispatch("ui/" + data.action);
           break;
+        case "GET_THEME":
+          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+          break;
         case "GET_THEMES":
           postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
           break;

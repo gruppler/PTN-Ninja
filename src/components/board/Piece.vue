@@ -27,9 +27,6 @@ export default {
   name: "Piece",
   props: ["id"],
   computed: {
-    theme() {
-      return this.$store.getters["ui/theme"]();
-    },
     game() {
       return this.$store.state.game;
     },

@@ -17,7 +17,7 @@ export const themes = (state) => {
 
 export const theme = (state, getters) => (id) => {
   if (!id) {
-    id = state.theme;
+    id = state.themeID;
   }
   return getters.themes.find((theme) => theme.id === id);
 };

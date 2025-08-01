@@ -110,6 +110,10 @@ For example:
 
 - Flip the board vertically
 
+#### `GET_THEME`
+
+- Return an object defining the current theme, including `id`, `name`, and all the attributes defining the theme.
+
 #### `GET_THEMES`
 
 - Return an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
