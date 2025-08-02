@@ -253,7 +253,11 @@ export default {
       return Boolean(this.$store.state.game.name);
     },
     hasAnalysis() {
-      return Object.keys(this.$store.state.game.analyzedPositions).length > 0;
+      return (
+        Object.keys(this.$store.state.game.analyzedPositions).length > 0 ||
+        Object.keys(this.$store.state.game.comments.evaluations).length > 0 ||
+        Object.keys(this.$store.state.game.comments.pvs).length > 0
+      );
     },
     currentAnalysis() {
       return (
