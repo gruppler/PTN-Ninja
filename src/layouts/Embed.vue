@@ -351,7 +351,7 @@ export default {
     openLink() {
       window.open(
         this.$store.getters["ui/url"](this.$game, {
-          name: this.title,
+          name: this.$game.name,
           origin: true,
           state: true,
         }),

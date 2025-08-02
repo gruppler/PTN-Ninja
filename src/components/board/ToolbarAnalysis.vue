@@ -221,6 +221,9 @@ export default {
       for (let id in game.comments.notes) {
         notes = game.comments.notes[id];
         ply = game.ptn.allPlies[id];
+        if (!ply) {
+          continue;
+        }
         if (suggestion.ply === null && ply.tpsBefore === tps) {
           note = notes.find((n) => n.pv !== null);
           if (note) {

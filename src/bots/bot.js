@@ -595,8 +595,7 @@ export default class Bot {
 
       // Stop searching but keep interactive mode enabled
       if (this.isGameEnd) {
-        this.isRunning = false;
-        this.setState({ nextTPS: null });
+        this.setState({ nextTPS: null, isRunning: false });
         return true;
       }
 

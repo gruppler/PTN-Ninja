@@ -29,7 +29,7 @@ export const SET_GAME = function (state, game) {
   const handleGameEnd = (game) => {
     if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
       const url = this.getters["ui/url"](game, {
-        name: state.name,
+        name: game.name,
         origin: true,
         state: true,
       });
@@ -163,7 +163,7 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
 
 export const SET_NAME = function (state, { oldName, newName }) {
   if (this.state.ui.embed) {
-    state.name = newName;
+    Vue.prototype.$game.name = newName;
   } else {
     let stateGame = state.list.find((g) => g.name === oldName);
     if (stateGame) {
