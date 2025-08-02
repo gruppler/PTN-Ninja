@@ -234,9 +234,18 @@ export const REPLACE_GAME = function (
         message: i18n.t("success.replacedExistingGame"),
         timeout: 1e4,
         progress: true,
-        multiLine: false,
         actions: [
           {
+            icon: "open_in_new",
+            label: i18n.t("Duplicate"),
+            color: "primary",
+            handler: () => {
+              dispatch("UNDO", game);
+              dispatch("ADD_GAME", game);
+            },
+          },
+          {
+            icon: "undo",
             label: i18n.t("Undo"),
             color: "primary",
             handler: () => {
