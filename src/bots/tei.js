@@ -423,7 +423,7 @@ export default class TeiBot extends Bot {
       };
 
       const keys =
-        /^(pv|multipv|time|depth|seldepth|score|nodes|nps|string|error)$/i;
+        /^(pv|multipv|time|depth|seldepth|wdl|score|nodes|nps|string|error)$/i;
       let key = "";
       let i = 0;
       let multipv = 0;
@@ -454,15 +454,23 @@ export default class TeiBot extends Bot {
               });
             }
             results.suggestions[i].pv.push(token);
-          } else if (key === "score") {
+          } else if (key === "wdl") {
+            // Prefer `wdl` over `score`
+            results.suggestions[i].evaluation =
+              Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
+            tokens.shift(); // Discard 'lose' score
+            if (initialPlayer === 2) {
+              results.suggestions[i].evaluation =
+                -results.suggestions[i].evaluation;
+            }
+          } else if (
+            key === "score" &&
+            results.suggestions[i].evaluation === null
+          ) {
             switch (scoreType) {
               case "cp":
                 results.suggestions[i].evaluation =
                   Number(token) * (initialPlayer === 1 ? 1 : -1);
-                break;
-              case "win":
-                results.suggestions[i].evaluation =
-                  (Number(token) * 2 - 100) * (initialPlayer === 1 ? 1 : -1);
                 break;
               case "mate":
                 results.suggestions[i].evaluation =
