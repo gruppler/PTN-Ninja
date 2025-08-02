@@ -11,9 +11,12 @@
     />
     <smooth-reflow class="relative-position">
       <template v-if="!collapsed">
+        <q-item v-if="isGameEnd" class="flex-center toolbar-analysis">
+          {{ $t("analysis.gameOver") }}
+        </q-item>
         <template
-          v-if="
-            (isEmbedded && !isGameEnd) ||
+          v-else-if="
+            isEmbedded ||
             botSuggestion ||
             (botState &&
               (botState.isInteractiveEnabled ||
@@ -39,9 +42,6 @@
           />
           <AnalysisItemPlaceholder v-else class="toolbar-analysis" />
         </template>
-        <q-item v-else-if="isGameEnd" class="flex-center toolbar-analysis">
-          {{ $t("analysis.gameOver") }}
-        </q-item>
         <q-btn
           v-else-if="
             botMeta && botMeta.requiresConnect && !botState.isConnected
