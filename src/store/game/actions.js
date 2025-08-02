@@ -606,16 +606,18 @@ export const SET_NAME = async function (
   if (oldName === newName) {
     return;
   }
-  try {
-    const game = await gamesDB.get("games", oldName);
-    if (!game) {
-      throw new Error("Game not found: " + oldName);
+  if (!this.state.ui.embed) {
+    try {
+      const game = await gamesDB.get("games", oldName);
+      if (!game) {
+        throw new Error("Game not found: " + oldName);
+      }
+      game.name = getters.uniqueName(newName, true);
+      await gamesDB.put("games", game);
+      await gamesDB.delete("games", oldName);
+    } catch (error) {
+      notifyError(error);
     }
-    game.name = getters.uniqueName(newName, true);
-    await gamesDB.put("games", game);
-    await gamesDB.delete("games", oldName);
-  } catch (error) {
-    notifyError(error);
   }
   commit("SET_NAME", { oldName, newName });
 };

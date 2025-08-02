@@ -58,6 +58,7 @@ export default {
       switch (data.action) {
         case "SET_NAME":
           this.$refs.layout.title = data.value;
+          this.$store.dispatch("game/SET_NAME", { newName: data.value });
           break;
         case "PLAY":
           if (this.$refs.layout.$refs.playControls) {

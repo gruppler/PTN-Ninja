@@ -29,7 +29,7 @@ export const SET_GAME = function (state, game) {
   const handleGameEnd = (game) => {
     if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
       const url = this.getters["ui/url"](game, {
-        name: this.title,
+        name: state.name,
         origin: true,
         state: true,
       });
@@ -161,12 +161,16 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
   }
 };
 
-export const SET_NAME = (state, { oldName, newName }) => {
-  let stateGame = state.list.find((g) => g.name === oldName);
-  if (stateGame) {
-    stateGame.name = newName;
+export const SET_NAME = function (state, { oldName, newName }) {
+  if (this.state.ui.embed) {
+    state.name = newName;
   } else {
-    throw new Error("Game not found: " + oldName);
+    let stateGame = state.list.find((g) => g.name === oldName);
+    if (stateGame) {
+      stateGame.name = newName;
+    } else {
+      throw new Error("Game not found: " + oldName);
+    }
   }
 };
 
