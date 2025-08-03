@@ -4,6 +4,7 @@
       @click="toggle"
       :icon="icon"
       class="toolbar-analysis-toggle dimmed-btn absolute"
+      :class="{ embedded: isEmbedded }"
       v-ripple="false"
       :color="btnColor"
       dense
@@ -294,6 +295,9 @@ export default {
     top: -32px;
     right: 86px;
     z-index: 1;
+    &.embedded {
+      right: 18px;
+    }
   }
 
   .toolbar-analysis {
