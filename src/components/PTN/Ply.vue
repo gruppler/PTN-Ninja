@@ -6,13 +6,12 @@
   >
     <q-chip
       @click.left="select(ply, isSelected ? !isDone : true)"
-      @click.right.stop.prevent
-      @touchstart.stop.prevent
+      @click.right.stop.prevent.native
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
       :clickable="!noClick"
-      :ripple="false"
+      v-ripple="false"
       :key="ply.id"
       square
       dense
@@ -60,7 +59,7 @@
       clickable
     />
 
-    <slot />
+    <slot v-if="!menu" />
   </span>
 </template>
 
@@ -126,6 +125,9 @@ export default {
         this.$store.dispatch("game/SET_TARGET", ply);
       }
     },
+    captureFocus(event) {
+      console.log(event);
+    },
   },
 };
 </script>
@@ -143,19 +145,15 @@ export default {
   &:not(.q-chip--outline) {
     border: 1px solid;
     &.bg-player1 {
-      border-color: $player1;
       border-color: var(--q-color-player1);
     }
     &.bg-player2 {
-      border-color: $player2;
       border-color: var(--q-color-player2);
     }
   }
   .ptn.ply.selected & {
-    box-shadow: 0 0 0 2px $primary;
     box-shadow: 0 0 0 2px var(--q-color-primary);
     body.desktop &.q-chip--clickable:focus {
-      box-shadow: $shadow-1, 0 0 0 2px $primary;
       box-shadow: $shadow-1, 0 0 0 2px var(--q-color-primary);
     }
   }
@@ -251,12 +249,10 @@ export default {
       $blur: 0.5em;
       body.player1Dark & .ply.color1 .square,
       body.player2Dark & .ply.color2 .square {
-        text-shadow: 0 0 $blur $textLight;
         text-shadow: 0 0 $blur var(--q-color-textLight);
       }
       body:not(.player1Dark) & .ply.color1 .square,
       body:not(.player2Dark) & .ply.color2 .square {
-        text-shadow: 0 0 $blur $textDark;
         text-shadow: 0 0 $blur var(--q-color-textDark);
       }
     }

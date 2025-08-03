@@ -86,10 +86,15 @@ export default {
       this.$refs.dialog.hide();
     },
     async save({ name, tags, changes }) {
-      this.$store.dispatch("game/RENAME_CURRENT_GAME", name);
-
       if (this.hasChanges) {
-        this.$store.dispatch("game/SET_TAGS", pick(changes, Object.keys(tags)));
+        await this.$store.dispatch(
+          "game/SET_TAGS",
+          pick(changes, Object.keys(tags))
+        );
+      }
+
+      if (name !== this.$game.name) {
+        await this.$store.dispatch("game/RENAME_CURRENT_GAME", name);
       }
 
       // if (this.$game.config.id) {

@@ -119,12 +119,12 @@ The Play/Pause button is hidden by default and can be shown via **UI Preferences
 :::
 
 - Use the Play/Pause button to automatically progress through the game.
-- Move backward and forward through the game history using the **Play Controls** or <kbd>◀/▶</kbd>.
+- Move backward and forward through the game history using the **Navigation Controls** or <kbd>◀/▶</kbd>.
 - **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
 
 :::
 
-To navigate through a game quickly, you can scrub using a **mouse wheel** or the **Scrub Bar**, which is located above the **Play Controls** but disabled by default.
+To navigate through a game quickly, you can scrub using a **mouse wheel** or the **Scrub Bar**, which is located above the **Navigation Controls** but disabled by default.
 
 :::
 

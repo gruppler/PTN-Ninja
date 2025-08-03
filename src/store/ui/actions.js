@@ -87,97 +87,53 @@ export const TOGGLE_UI = ({ state, commit }, key) => {
 };
 
 export const PROMPT = (context, options) => {
-  if (options.actions) {
-    options.actions.forEach((action) => {
-      if (!action.handler && action.message) {
-        action.handler = () => postMessage(action.message);
-      }
-    });
-  }
   return prompt(options);
 };
 
-export const NOTIFY = (context, options) => {
-  if (isString(options)) {
-    options = { message: options };
+function formatNotifyArguments(options) {
+  if (isObject(options)) {
+    options = [
+      options.message || undefined,
+      pick(options, [
+        "timeout",
+        "position",
+        "actions",
+        "group",
+        "caption",
+        "icon",
+      ]),
+    ];
+    if (options[1].actions) {
+      options[1].actions.forEach((action) => {
+        if (!action.handler && action.action) {
+          action.handler = () => postMessage(action.action, action.value);
+        }
+      });
+    }
+  } else {
+    options = [options];
   }
-  return notify(options);
+  return options;
+}
+
+export const NOTIFY = (context, options) => {
+  return notify(...formatNotifyArguments(options));
 };
 
 export const NOTIFY_ERROR = (context, options) => {
-  if (isObject(options) && options.message) {
-    options = [
-      options.message,
-      pick(options, ["timeout", "position", "actions", "group", "caption"]),
-    ];
-    if (options[1].actions) {
-      options[1].actions.forEach((action) => {
-        if (!action.handler && action.message) {
-          action.handler = () => postMessage(action.message);
-        }
-      });
-    }
-  } else {
-    options = [options];
-  }
-  return notifyError(...options);
+  return notifyError(...formatNotifyArguments(options));
 };
 
 export const NOTIFY_SUCCESS = (context, options) => {
-  if (isObject(options) && options.message) {
-    options = [
-      options.message,
-      pick(options, ["timeout", "position", "actions", "group", "caption"]),
-    ];
-    if (options[1].actions) {
-      options[1].actions.forEach((action) => {
-        if (!action.handler && action.message) {
-          action.handler = () => postMessage(action.message);
-        }
-      });
-    }
-  } else {
-    options = [options];
-  }
-  return notifySuccess(...options);
+  return notifySuccess(...formatNotifyArguments(options));
 };
 
 export const NOTIFY_WARNING = (context, options) => {
-  if (isObject(options) && options.message) {
-    options = [
-      options.message,
-      pick(options, ["timeout", "position", "actions", "group", "caption"]),
-    ];
-    if (options[1].actions) {
-      options[1].actions.forEach((action) => {
-        if (!action.handler && action.message) {
-          action.handler = () => postMessage(action.message);
-        }
-      });
-    }
-  } else {
-    options = [options];
-  }
-  return notifyWarning(...options);
+  return notifyWarning(...formatNotifyArguments(options));
 };
 
 export const NOTIFY_HINT = (context, options) => {
-  if (isObject(options) && options.message) {
-    options = [
-      options.message,
-      pick(options, ["timeout", "position", "actions", "group", "caption"]),
-    ];
-    if (options[1].actions) {
-      options[1].actions.forEach((action) => {
-        if (!action.handler && action.message) {
-          action.handler = () => postMessage(action.message);
-        }
-      });
-    }
-  } else {
-    options = [options];
-  }
-  return notifyHint(...options);
+  return notifyHint(...formatNotifyArguments(options));
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {

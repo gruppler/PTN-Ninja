@@ -1,5 +1,11 @@
 <template>
-  <q-layout v-if="gameExists" class="non-selectable" view="lHr LpR lFr">
+  <q-layout
+    v-if="gameExists"
+    class="non-selectable"
+    view="lHr LpR lFr"
+    v-shortkey="hotkeys.MISC"
+    @shortkey="miscShortkey"
+  >
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
         <q-btn
@@ -144,19 +150,14 @@
         @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
-        <div
-          class="column absolute-fit"
-          v-shortkey="hotkeys.MISC"
-          @shortkey="miscShortkey"
-        >
-          <Board class="col-grow" />
-        </div>
+        <Board />
         <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove style="margin-right: 65px" />
         </q-page-sticky>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <q-btn
+            id="fab"
             color="primary"
             :text-color="
               $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
@@ -164,7 +165,8 @@
             icon="add"
             @click="addGame"
             @click.right.prevent="switchGame"
-            fab
+            :padding="fabPadding"
+            round
           />
           <hint>{{ $t("Add Game") }}</hint>
         </q-page-sticky>
@@ -276,102 +278,7 @@
     </q-drawer>
 
     <q-footer class="bg-panel">
-      <q-btn
-        v-if="hasAnalysis && $q.screen.height >= singleWidth"
-        @click="showToolbarAnalysis = !showToolbarAnalysis"
-        :icon="showToolbarAnalysis ? 'down' : 'up'"
-        class="toolbar-analysis-toggle dimmed-btn absolute"
-        :ripple="false"
-        :color="$store.state.ui.theme.secondaryDark ? 'textLight' : 'textDark'"
-        dense
-        flat
-      />
-      <smooth-reflow class="relative-position">
-        <template
-          v-if="
-            showToolbarAnalysis &&
-            hasAnalysis &&
-            $q.screen.height >= singleWidth
-          "
-        >
-          <template
-            v-if="
-              botSuggestion ||
-              botState.isInteractiveEnabled ||
-              botState.isAnalyzingGame ||
-              (botState.isRunning && botState.tps === this.tps)
-            "
-          >
-            <q-linear-progress
-              v-if="botState.isRunning"
-              class="analysis-linear-progress"
-              size="2px"
-              :value="botState.progress / 100"
-              :indeterminate="
-                botState.isInteractiveEnabled || !botState.progress
-              "
-            />
-            <BotAnalysisItem
-              v-if="botSuggestion"
-              :suggestion="botSuggestion"
-              fixed-height
-              class="toolbar-analysis-height"
-            />
-            <AnalysisItemPlaceholder v-else class="toolbar-analysis-height" />
-          </template>
-          <q-item
-            v-else-if="isGameEnd"
-            class="flex-center toolbar-analysis-height"
-          >
-            {{ $t("analysis.gameOver") }}
-          </q-item>
-          <q-btn
-            v-else-if="botMeta.requiresConnect && !botState.isConnected"
-            @click="bot.connect()"
-            :loading="botState.isConnecting"
-            icon="connect"
-            :label="$t('tei.connect')"
-            class="full-width toolbar-analysis-height"
-            color="primary"
-            stretch
-          />
-          <q-btn-group v-else spread stretch>
-            <q-btn
-              @click="
-                botState.isAnalyzingPosition
-                  ? null
-                  : bot.analyzeCurrentPosition()
-              "
-              :loading="botState.isAnalyzingPosition"
-              :disable="!bot.isAnalyzePositionAvailable"
-              class="full-width toolbar-analysis-height"
-              color="primary"
-              icon="board"
-              :label="$t('analysis.Analyze Position')"
-            />
-            <q-btn
-              @click="bot.analyzeGame()"
-              :loading="botState.isAnalyzingGame"
-              :disable="!bot.isAnalyzeGameAvailable"
-              class="full-width"
-              color="primary"
-            >
-              <q-icon
-                :name="showAllBranches ? 'moves' : 'branch'"
-                :class="{ 'rotate-180': !showAllBranches }"
-                left
-              />
-              {{
-                $t(
-                  showAllBranches
-                    ? "analysis.Analyze Game"
-                    : "analysis.Analyze Branch"
-                )
-              }}
-            </q-btn>
-          </q-btn-group>
-        </template>
-      </smooth-reflow>
+      <ToolbarAnalysis v-if="hasAnalysis && $q.screen.height >= singleWidth" />
 
       <div class="relative-position">
         <Scrubber />
@@ -392,7 +299,7 @@
             class="justify-around items-center"
             style="width: 100%; max-width: 500px; margin: 0 auto"
           />
-          <PlayControls ref="playControls" v-else />
+          <NavControls ref="playControls" v-else />
         </q-toolbar>
       </div>
     </q-footer>
@@ -423,13 +330,14 @@ import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
-import PlayControls from "../components/controls/PlayControls";
+import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
+import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 // Excluded from Embed layout:
 import onlineStore from "../store/online";
@@ -438,12 +346,9 @@ import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
-import BotAnalysisItem from "../components/analysis/BotAnalysisItem";
-import AnalysisItemPlaceholder from "../components/analysis/AnalysisItemPlaceholder";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
-import { parsePV } from "../utilities";
 
 import { Platform } from "quasar";
 
@@ -458,7 +363,7 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
-    PlayControls,
+    NavControls,
     Scrubber,
     PTNTools,
     UndoButtons,
@@ -466,8 +371,7 @@ export default {
     BoardToggles,
     ShareButton,
     Chat,
-    BotAnalysisItem,
-    AnalysisItemPlaceholder,
+    ToolbarAnalysis,
     GameSelector,
     Highlighter,
     PieceSelector,
@@ -517,14 +421,6 @@ export default {
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showText", value]);
-      },
-    },
-    showToolbarAnalysis: {
-      get() {
-        return this.$store.state.ui.showToolbarAnalysis;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["showToolbarAnalysis", value]);
       },
     },
     textTab: {
@@ -597,72 +493,6 @@ export default {
         ? this.$store.getters["online/playerFromUID"](this.user.uid)
         : 0;
     },
-    tps() {
-      return this.$store.state.game.position.tps;
-    },
-    isGameEnd() {
-      return (
-        this.$store.state.game.position.isGameEnd &&
-        !this.$store.state.game.position.isGameEndDefault
-      );
-    },
-    showAllBranches() {
-      return this.$store.state.ui.showAllBranches;
-    },
-    bot() {
-      return this.$store.getters["analysis/bot"];
-    },
-    botMeta() {
-      return this.$store.state.analysis.botMeta;
-    },
-    botState() {
-      return this.$store.state.analysis.botState;
-    },
-    botSuggestion() {
-      const suggestions = this.$store.state.analysis.botPositions[this.tps];
-      if (suggestions) {
-        return suggestions[0];
-      }
-
-      // Get suggestion from notes
-      const game = this.$store.state.game;
-      const tps = this.tps;
-      const suggestion = {
-        evaluation: null,
-        ply: null,
-        followingPlies: [],
-        time: null,
-      };
-      let notes;
-      let note;
-      let ply;
-      for (let id in game.comments.notes) {
-        notes = game.comments.notes[id];
-        ply = game.ptn.allPlies[id];
-        if (suggestion.ply === null && ply.tpsBefore === tps) {
-          note = notes.find((n) => n.pv !== null);
-          if (note) {
-            const pv = parsePV(ply.player, ply.color, note.pv[0]);
-            suggestion.ply = pv.splice(0, 1)[0];
-            suggestion.followingPlies = pv;
-          }
-        }
-        if (
-          suggestion.evaluation === null &&
-          (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps))
-        ) {
-          note = notes.find((n) => n.evaluation !== null);
-          if (note) {
-            suggestion.evaluation = note.evaluation;
-          }
-        }
-        if (suggestion.ply && suggestion.evaluation) {
-          break;
-        }
-      }
-
-      return suggestion.ply ? suggestion : null;
-    },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
     },
@@ -673,6 +503,15 @@ export default {
         width += (this.$q.screen.width - largeWidth) / 4;
       }
       return Math.min(width, 400);
+    },
+    fabPadding() {
+      const boardSpace = this.$store.state.ui.boardSpace;
+      const boardSize = this.$store.state.ui.boardSize;
+      const marginX = (boardSpace.width - boardSize.width) / 2 - 36;
+      const marginY = (boardSpace.height - boardSize.height) / 2 - 36;
+      const minBoard = Math.min(boardSize.width, boardSize.height);
+      const minPadding = Math.max(0, 32 * (1 - Math.min(1, 250 / minBoard)));
+      return Math.min(32, Math.max(minPadding, marginX, marginY)) / 2 + "px";
     },
   },
   methods: {
@@ -1080,11 +919,8 @@ export default {
     help() {
       this.$router.push({ name: "help" });
     },
-    switchGame(event) {
-      if (
-        this.$store.state.game.list.length > 1 &&
-        !event.currentTarget.classList.contains("q-fab--opened")
-      ) {
+    switchGame() {
+      if (this.$store.state.game.list.length > 1) {
         this.$refs.gameSelector.select(1);
       }
     },
@@ -1189,7 +1025,6 @@ export default {
 #left-drawer,
 #right-drawer {
   .q-drawer {
-    background: $panel;
     background: var(--q-color-panel);
     .q-drawer__content {
       overflow: hidden;
@@ -1206,18 +1041,7 @@ export default {
   }
 }
 
-.analysis-linear-progress {
-  position: absolute;
-  top: 0;
-  z-index: 1;
-}
-
-.toolbar-analysis-toggle {
-  top: -32px;
-  right: 86px;
-  z-index: 1;
-}
-.toolbar-analysis-height {
-  height: 108px;
+#fab .q-btn__wrapper {
+  transition: padding $generic-hover-transition;
 }
 </style>

@@ -10,11 +10,11 @@
       @mouseover="highlight"
       @mouseout="unhighlight"
       @click="insertPly"
-      clickable
+      :clickable="!isBoardDisabled && ply !== null"
       style="height: 60px"
     >
       <q-item-section>
-        <q-item-label>
+        <q-item-label v-if="ply !== null">
           <Ply :ply="ply" no-click done>
             <PlyPreview
               :tps="tps"
@@ -26,7 +26,18 @@
       </q-item-section>
       <q-item-section top side>
         <q-item-label>
-          <span class="player-numbers">
+          <span class="visits" v-if="visits !== null">
+            {{ $tc("analysis.visits", $n(visits, "n0")) }}
+          </span>
+          <span
+            class="player-numbers"
+            v-if="
+              middleNumber !== null ||
+              player1Number !== null ||
+              player2Number !== null ||
+              depth !== null
+            "
+          >
             <span
               class="player1 first"
               v-if="player1Number !== null"
@@ -82,6 +93,7 @@
         </q-item-label>
         <q-item-label
           v-if="(count !== null && countLabel) || seconds !== null"
+          class="count"
           caption
         >
           <template v-if="count !== null && countLabel">{{
@@ -89,7 +101,7 @@
           }}</template>
           <template v-if="count !== null && seconds !== null"> / </template>
           <template v-if="seconds !== null">
-            {{ $n(seconds, "n0") }}
+            {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
             {{ $t("analysis.secondsUnit") }}
           </template>
         </q-item-label>
@@ -105,7 +117,9 @@
           ? insertFollowingPlies()
           : null
       "
-      :clickable="followingPlies && followingPlies.length > 0"
+      :clickable="
+        !isBoardDisabled && followingPlies && followingPlies.length > 0
+      "
     >
       <q-item-label
         class="continuation small"
@@ -115,6 +129,7 @@
           v-for="(fPly, i) in followingPlies"
           :key="i"
           :ply="fPly"
+          :no-click="isBoardDisabled"
           @click.stop.prevent.capture="insertFollowingPlies(i)"
         >
           <PlyPreview
@@ -137,20 +152,20 @@ export default {
   components: { Ply, PlyPreview },
   props: {
     ply: Object,
+    followingPlies: Array,
     evaluation: Number,
     count: {
       type: Number,
+      default: null,
+    },
+    countLabel: {
+      type: String,
       default: null,
     },
     depth: {
       type: Number,
       default: null,
     },
-    seconds: {
-      type: Number,
-      default: null,
-    },
-    countLabel: String,
     player1Number: {
       type: [Number, String],
       default: null,
@@ -163,12 +178,25 @@ export default {
       type: [Number, String],
       default: null,
     },
-    fixedHeight: Boolean,
-    playerNumbersTooltip: String,
-    followingPlies: Array,
+    playerNumbersTooltip: {
+      type: String,
+      default: null,
+    },
+    seconds: {
+      type: Number,
+      default: null,
+    },
+    visits: {
+      type: Number,
+      default: null,
+    },
     animate: Boolean,
+    fixedHeight: Boolean,
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     tps() {
       return this.$store.state.game.position.tps;
     },
@@ -178,16 +206,28 @@ export default {
   },
   methods: {
     insertPly() {
+      if (this.ply === null || this.isBoardDisabled) {
+        return;
+      }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
     highlight() {
+      if (this.ply === null) {
+        return;
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
     },
     unhighlight() {
+      if (this.ply === null) {
+        return;
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     insertFollowingPlies(index) {
+      if (this.ply === null || this.isBoardDisabled) {
+        return;
+      }
       let prev = 0;
       if (index === undefined) {
         index = this.followingPlies.length;
@@ -213,12 +253,16 @@ export default {
   .evaluation {
     position: absolute;
     height: 100%;
-    will-change: width, background-color;
+    will-change: width, background-color, opacity;
+    &:not(.p1):not(.p2) {
+      opacity: 0.3;
+    }
   }
 
   &.animate .evaluation {
-    transition: width $generic-hover-transition,
-      background-color $generic-hover-transition;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: width, background-color, opacity;
   }
 
   .continuation {
@@ -226,6 +270,10 @@ export default {
       overflow: hidden;
       height: 2em;
     }
+  }
+
+  .visits + .player-numbers {
+    margin-left: 0.5em;
   }
 
   .player-numbers {
@@ -245,29 +293,25 @@ export default {
     }
 
     .player1 {
-      background-color: $player1;
       background-color: var(--q-color-player1);
-      color: $textDark;
       color: var(--q-color-textDark);
       body.player1Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }
     .middle,
     .depth {
-      background-color: $dim;
-      body.body--light & {
-        background-color: $highlight;
+      background-color: $highlight;
+      color: var(--q-color-textDark);
+      body.panelDark & {
+        color: var(--q-color-textLight);
+        background-color: $dim;
       }
     }
     .player2 {
-      background-color: $player2;
       background-color: var(--q-color-player2);
-      color: $textDark;
       color: var(--q-color-textDark);
       body.player2Dark & {
-        color: $textLight;
         color: var(--q-color-textLight);
       }
     }
@@ -280,6 +324,13 @@ export default {
     }
     .single {
       border-radius: 4px !important;
+    }
+  }
+
+  .count {
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
     }
   }
 }

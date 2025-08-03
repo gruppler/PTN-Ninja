@@ -123,30 +123,25 @@ export default {
 
   .player1 {
     border-radius: 4px 0 0 4px;
-    border: 1px solid $player1;
     border: 1px solid var(--q-color-player1);
     border-right-width: 0;
     &.result-tie,
     &.result-1 {
-      color: $player1;
       color: var(--q-color-player1);
     }
   }
   .player2 {
     border-radius: 0 4px 4px 0;
-    border: 1px solid $player2;
     border: 1px solid var(--q-color-player2);
     border-left-width: 0;
     &.result-tie,
     &.result-1 {
-      color: $player2;
       color: var(--q-color-player2);
     }
   }
 
   &.done {
     .player1 {
-      background-color: $player1;
       background-color: var(--q-color-player1);
       &.result-R {
         color: $green-dark;
@@ -159,16 +154,13 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $textDark;
         color: var(--q-color-textDark);
         &.dark {
-          color: $textLight;
           color: var(--q-color-textLight);
         }
       }
     }
     .player2 {
-      background-color: $player2;
       background-color: var(--q-color-player2);
       &.result-R {
         color: $green-light;
@@ -181,10 +173,8 @@ export default {
       }
       &.result-tie,
       &.result-1 {
-        color: $textDark;
         color: var(--q-color-textDark);
         &.dark {
-          color: $textLight;
           color: var(--q-color-textLight);
         }
       }

@@ -15,4 +15,5 @@ export default {
   hlSquares: [],
   hoveredSquare: null,
   evaluation: null,
+  analyzedPositions: {},
 };

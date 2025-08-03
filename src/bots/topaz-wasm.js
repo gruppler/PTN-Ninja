@@ -13,9 +13,8 @@ export default class TopazWasm extends Bot {
       isInteractive: false,
       sizeHalfKomis: { 6: [0] },
       settings: {
-        insertEvalMarks: false,
         limitTypes: ["depth", "movetime"],
-        movetime: 5000,
+        movetime: 5e3,
         depth: 12,
       },
       limitTypes: {
@@ -31,12 +30,12 @@ export default class TopazWasm extends Bot {
   //#region send/receive
   send(message) {
     if (worker) {
-      super.onSend(message);
+      this.onSend(message);
       worker.postMessage(message);
     }
   }
   receive(message) {
-    super.onReceive(message);
+    this.onReceive(message);
     this.handleResponse(message);
   }
 
@@ -63,38 +62,33 @@ export default class TopazWasm extends Bot {
     super.reset();
   }
 
-  //#region queryPosition
-  async queryPosition(tps, plyID) {
+  //#region searchPosition
+  async searchPosition(size, halfKomi, tps) {
     return new Promise((resolve, reject) => {
-      // Validate size/komi
-      const init = super.validatePosition(tps, plyID);
-      if (!init) {
-        reject();
-        return false;
-      }
+      const query = {
+        tps,
+        size,
+        komi: halfKomi / 2,
+        movetime: 1e8,
+        depth: 100,
+        hash: this.getSettingsHash(),
+      };
+      // Set search limits
+      this.settings.limitTypes.forEach((type) => {
+        query[type] = this.settings[type];
+      });
+
       this.onComplete = (results) => {
         this.onComplete = null;
         resolve(results);
       };
 
-      const query = {
-        movetime: 1e8,
-        depth: 100,
-        tps,
-        size: this.size,
-        komi: init.halfKomi / 2,
-        hash: this.getSettingsHash(),
-      };
-      this.settings.limitTypes.forEach((type) => {
-        query[type] = this.settings[type];
-      });
-      this.send(query);
+      try {
+        this.send(query);
+      } catch (error) {
+        reject(error);
+      }
     });
-  }
-
-  //#region normalizeEvaluation
-  normalizeEvaluation(value) {
-    return 100 * Math.tanh(value / 1000);
   }
 
   //#region handleResponse
@@ -106,9 +100,6 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
-    const initialPlayer = Number(tps.split(" ")[1]);
-    const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
-
     const results = {
       hash,
       tps,
@@ -117,7 +108,7 @@ export default class TopazWasm extends Bot {
           pv,
           depth,
           nodes,
-          evaluation,
+          // evaluation: Number(score),
         },
       ],
     };
@@ -129,11 +120,11 @@ export default class TopazWasm extends Bot {
   }
 
   //#region terminate
-  async terminate() {
+  async terminate(state) {
     if (worker && this.state.isRunning) {
       try {
         await worker.terminate();
-        super.onTerminate();
+        this.onTerminate(state);
         worker = null;
         this.init();
       } catch (error) {

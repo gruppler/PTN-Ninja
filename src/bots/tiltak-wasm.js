@@ -17,10 +17,13 @@ export default class TiltakWasm extends TeiBot {
         isTeiOk: false,
       },
       settings: {
-        movetime: 5000,
+        limitTypes: ["nodes"],
+        movetime: 5e3,
+        nodes: 1e5,
       },
       limitTypes: {
         movetime: {},
+        nodes: {},
       },
       ...options,
     });
@@ -37,12 +40,12 @@ export default class TiltakWasm extends TeiBot {
   //#region send/receive
   send(message) {
     if (worker) {
-      super.onSend(message);
+      this.onSend(message);
       worker.postMessage(message);
     }
   }
   receive(message) {
-    super.onReceive(message);
+    this.onReceive(message);
     this.handleResponse(message);
   }
 
@@ -59,22 +62,7 @@ export default class TiltakWasm extends TeiBot {
             error.message
           );
           this.onError(error);
-          if (worker) {
-            worker.terminate();
-            worker = null;
-          }
-          this.isInteractiveEnabled = false;
-          this.setState({
-            isAnalyzingGame: false,
-            isRunning: false,
-            isReady: false,
-            time: null,
-            nps: null,
-            tps: null,
-            nextTPS: null,
-            halfkomi: null,
-            size: null,
-          });
+          this.terminate();
         };
 
         // Message handling
@@ -93,13 +81,13 @@ export default class TiltakWasm extends TeiBot {
   }
 
   //#region terminate
-  async terminate() {
+  async terminate(state) {
     if (worker && this.state.isRunning) {
       try {
         if (this.state.isRunning) {
           this.send("stop");
         }
-        super.onTerminate();
+        this.onTerminate(state);
       } catch (error) {
         await worker.terminate();
         this.init();

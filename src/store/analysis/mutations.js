@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { bots } from "../../bots";
 import CustomTeiBot from "../../bots/custom-tei";
-import { cloneDeep } from "lodash";
+import { cloneDeep, sortBy } from "lodash";
 
 export const SET = (state, [key, value]) => {
   if (key in state.defaults) {
@@ -46,6 +46,7 @@ export const SAVE_BOT = (state, bot) => {
     } else {
       state.botList.splice(listIndex, 1, bot.listOption);
     }
+    state.botList = sortBy(state.botList, ["label", "value"]);
 
     // Update Settings
     Vue.set(state.botSettings, bot.id, cloneDeep(bot.settings));

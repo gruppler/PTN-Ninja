@@ -1,14 +1,14 @@
 <template>
   <q-page-sticky :position="position" :offset="offset">
     <div
-      class="board-toggles q-gutter-sm"
-      :class="{ 'row reverse': isPortrait, column: !isPortrait }"
+      class="board-toggles q-gutter-sm q-pl-sm"
+      :class="{ row: isPortrait, column: !isPortrait }"
     >
       <FullscreenToggle
         @contextmenu.prevent
         :target="fullscreenTarget"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -20,7 +20,7 @@
         @contextmenu.prevent
         icon="settings"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -39,7 +39,8 @@
             <q-item
               v-if="!isEmbedded || !isDisabled('board3D')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('board3D')"
+              v-ripple="!isDisabled('board3D')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("3D Board") }}</q-item-label>
@@ -56,7 +57,8 @@
               <q-item
                 v-if="board3D && (!isEmbedded || !isDisabled('orthographic'))"
                 tag="label"
-                v-ripple
+                :disable="isDisabled('orthographic')"
+                v-ripple="!isDisabled('orthographic')"
               >
                 <q-item-section>
                   <q-item-label>{{ $t("Orthographic") }}</q-item-label>
@@ -78,6 +80,8 @@
                   !orthographic &&
                   (!isEmbedded || !isDisabled('perspective'))
                 "
+                :disable="isDisabled('perspective')"
+                v-ripple="!isDisabled('perspective')"
               >
                 <q-item-section>
                   {{ $t("Perspective") }}
@@ -96,7 +100,8 @@
             <q-item
               v-if="!isEmbedded || !isDisabled('axisLabels')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('axisLabels')"
+              v-ripple="!isDisabled('axisLabels')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
@@ -113,9 +118,30 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('axisLabelsSmall')"
+              tag="label"
+              :disable="!axisLabels || isDisabled('axisLabelsSmall')"
+              v-ripple="axisLabels && !isDisabled('axisLabelsSmall')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="axisLabelsSmall"
+                  :disable="!axisLabels || isDisabled('axisLabelsSmall')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.axisLabelsSmall">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.axisLabelsSmall }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('showRoads')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('showRoads')"
+              v-ripple="!isDisabled('showRoads')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -134,7 +160,8 @@
             <q-item
               v-if="!isEmbedded || !isDisabled('turnIndicator')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('turnIndicator')"
+              v-ripple="!isDisabled('turnIndicator')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
@@ -150,33 +177,31 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <q-item
-                v-if="
-                  turnIndicator && (!isEmbedded || !isDisabled('flatCounts'))
-                "
-                tag="label"
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle
-                    v-model="flatCounts"
-                    :disable="isDisabled('flatCounts')"
-                  />
-                </q-item-section>
-              </q-item>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('flatCounts')"
+              tag="label"
+              :disable="!turnIndicator || isDisabled('flatCounts')"
+              v-ripple="Boolean(turnIndicator) && !isDisabled('flatCounts')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="flatCounts"
+                  :disable="!turnIndicator || isDisabled('flatCounts')"
+                />
+              </q-item-section>
               <hint v-if="hotkeys.UI.flatCounts">
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatCounts }}
               </hint>
-            </smooth-reflow>
+            </q-item>
 
             <q-item
               v-if="!isEmbedded || !isDisabled('stackCounts')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('stackCounts')"
+              v-ripple="!isDisabled('stackCounts')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
@@ -195,7 +220,8 @@
             <q-item
               v-if="!isEmbedded || !isDisabled('showEval')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('showEval')"
+              v-ripple="!isDisabled('showEval')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Evaluation Bars") }}</q-item-label>
@@ -211,52 +237,71 @@
               </hint>
             </q-item>
 
-            <smooth-reflow>
-              <template v-if="turnIndicator && unplayedPieces">
-                <q-item
-                  v-if="!isEmbedded || !isDisabled('evalText')"
-                  tag="label"
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="evalText"
-                      :disable="isDisabled('evalText')"
-                    />
-                  </q-item-section>
-                  <hint v-if="hotkeys.UI.evalText">
-                    {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
-                  </hint>
-                </q-item>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('boardEvalBar')"
+              tag="label"
+              :disable="!showEval || isDisabled('boardEvalBar')"
+              v-ripple="showEval && !isDisabled('boardEvalBar')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="boardEvalBar"
+                  :disable="!showEval || isDisabled('boardEvalBar')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.boardEvalBar">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.boardEvalBar }}
+              </hint>
+            </q-item>
 
-                <q-item
-                  v-if="!isEmbedded || !isDisabled('moveNumber')"
-                  tag="label"
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("Move Number") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="moveNumber"
-                      :disable="isDisabled('moveNumber')"
-                    />
-                  </q-item-section>
-                  <hint v-if="hotkeys.UI.moveNumber">
-                    {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
-                  </hint>
-                </q-item>
-              </template>
-            </smooth-reflow>
+            <q-item
+              v-if="!isEmbedded || !isDisabled('moveNumber')"
+              tag="label"
+              :disable="isDisabled('moveNumber')"
+              v-ripple="!isDisabled('moveNumber')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Move Number") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="moveNumber"
+                  :disable="isDisabled('moveNumber')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.moveNumber">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.moveNumber }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('evalText')"
+              tag="label"
+              :disable="!moveNumber || isDisabled('evalText')"
+              v-ripple="moveNumber && !isDisabled('evalText')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="evalText"
+                  :disable="!moveNumber || isDisabled('evalText')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.evalText">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
+              </hint>
+            </q-item>
 
             <q-item
               v-if="!isEmbedded || !isDisabled('highlightSquares')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('highlightSquares')"
+              v-ripple="!isDisabled('highlightSquares')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -275,7 +320,8 @@
             <q-item
               v-if="!isEmbedded || !isDisabled('unplayedPieces')"
               tag="label"
-              v-ripple
+              :disable="isDisabled('unplayedPieces')"
+              v-ripple="!isDisabled('unplayedPieces')"
             >
               <q-item-section>
                 <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
@@ -290,6 +336,59 @@
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.unplayedPieces }}
               </hint>
             </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayout')"
+              tag="label"
+              :disable="!unplayedPieces || isDisabled('verticalLayout')"
+              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayout"
+                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayout">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
+              tag="label"
+              :disable="
+                !unplayedPieces ||
+                !verticalLayout ||
+                isDisabled('verticalLayoutAuto')
+              "
+              v-ripple="
+                unplayedPieces &&
+                verticalLayout &&
+                !isDisabled('verticalLayoutAuto')
+              "
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayoutAuto"
+                  :disable="
+                    !unplayedPieces ||
+                    !verticalLayout ||
+                    isDisabled('verticalLayoutAuto')
+                  "
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayoutAuto">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
+              </hint>
+            </q-item>
           </q-list>
         </q-menu>
       </q-btn>
@@ -300,7 +399,7 @@
         :direction="isPortrait ? 'down' : 'left'"
         icon="rotate_180"
         class="dimmed-btn"
-        :ripple="false"
+        v-ripple="false"
         :color="fg"
         :size="size"
         flat
@@ -415,7 +514,7 @@
         @click="highlighterEnabled = !highlighterEnabled"
         icon="highlighter"
         :class="{ 'dimmed-btn': !highlighterEnabled }"
-        :ripple="false"
+        v-ripple="false"
         :color="highlighterEnabled ? '' : fg"
         :style="{ color: highlighterEnabled ? highlighterColor : '' }"
         :size="size"
@@ -437,7 +536,9 @@ import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 
 const props = [
   "axisLabels",
+  "axisLabelsSmall",
   "board3D",
+  "boardEvalBar",
   "flatCounts",
   "highlightSquares",
   "evalText",
@@ -450,6 +551,8 @@ const props = [
   "themeID",
   "turnIndicator",
   "unplayedPieces",
+  "verticalLayout",
+  "verticalLayoutAuto",
 ];
 
 export default {
@@ -505,19 +608,25 @@ export default {
     size() {
       if (
         (this.isPortrait &&
+          (this.$store.state.ui.isVertical
+            ? !this.$store.state.ui.moveNumber
+            : !this.$store.state.ui.moveNumber ||
+              this.$store.state.ui.turnIndicator) &&
           this.boardSpace.height - this.boardSize.height < 80) ||
-        (!this.isPortrait && this.boardSpace.height < 280)
+        this.boardSpace.height < 260
       ) {
         return "sm";
       }
       return "md";
     },
     position() {
-      return this.isPortrait
-        ? "top"
-        : this.boardSpace.height > 350
-        ? "right"
-        : "top-right";
+      if (this.isPortrait) {
+        return "top-left";
+      } else if (this.boardSpace.height > 350) {
+        return "right";
+      } else {
+        return "top-right";
+      }
     },
     offset() {
       return this.isPortrait

@@ -16,7 +16,10 @@ const defaultState = {
   botPositions: {},
   botSettings: {},
   botState: {},
+  enableLogging: false,
+  insertEvalMarks: true,
   pvLimit: 3,
+  saveSearchStats: true,
   dbSettings: {
     includeBotGames: false,
     player1: [],
@@ -59,10 +62,11 @@ Object.values(state.customBots).forEach((bot) => {
   }
 });
 // Add to botList
-sortBy(
-  Object.values(state.customBots).map(({ id }) => bots[id]),
-  "created"
-).forEach((bot) => state.botList.push(bot.listOption));
+
+Object.values(state.customBots).forEach(({ id }) =>
+  state.botList.push(bots[id].listOption)
+);
+state.botList = sortBy(state.botList, ["label", "value"]);
 
 // Fall back to default bot if selected doesn't exist
 if (!bots[state.botID]) {

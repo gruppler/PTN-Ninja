@@ -17,7 +17,7 @@ export const themes = (state) => {
 
 export const theme = (state, getters) => (id) => {
   if (!id) {
-    id = state.theme;
+    id = state.themeID;
   }
   return getters.themes.find((theme) => theme.id === id);
 };
@@ -235,7 +235,41 @@ export const url =
       }
       if (options.disablePTN) {
         delete options.showPTN;
+        delete options.showMove;
         delete options.showAllBranches;
+        delete options.disablePTNTools;
+      }
+      if (options.disableBoard) {
+        delete options.disableStoneCycling;
+      }
+      if (options.disableNavigation) {
+        delete options.disableUndo;
+        delete options.showControls;
+        delete options.showPlayButton;
+        delete options.playSpeed;
+        delete options.showScrubber;
+      }
+      if (!options.showControls) {
+        delete options.showPlayButton;
+        delete options.playSpeed;
+      }
+      if (!options.turnIndicator) {
+        delete options.includeNames;
+        delete options.flatCounts;
+        if (!options.verticalLayout) {
+          delete options.evalText;
+          delete options.moveNumber;
+        }
+      }
+      if (!options.unplayedPieces) {
+        delete options.verticalLayout;
+        delete options.verticalLayoutAuto;
+      }
+      if (!options.moveNumber) {
+        delete options.evalText;
+      }
+      if (!options.verticalLayout) {
+        delete options.verticalLayoutAuto;
       }
       Object.keys(options.ui).forEach((key) => {
         const value = options.ui[key];

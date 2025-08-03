@@ -16,17 +16,24 @@
       @show="show"
     >
       <div class="color-picker bg-accent">
-        <q-item
-          v-if="label"
-          class="label bg-accent"
-          v-touch-pan.prevent.mouse="move"
-          style="cursor: move"
-        >
-          <q-item-section class="fg-inherit" side>
+        <q-item v-if="label" class="label bg-accent">
+          <q-item-section
+            class="fg-inherit"
+            v-touch-pan.prevent.mouse="move"
+            style="cursor: move"
+            side
+          >
             <q-icon name="color" />
           </q-item-section>
-          <q-item-section header>
+          <q-item-section
+            v-touch-pan.prevent.mouse="move"
+            style="cursor: move"
+            header
+          >
             <q-item-label class="text-subtitle1">{{ label }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn @click="reset" icon="undo" dense flat />
           </q-item-section>
         </q-item>
         <q-color
@@ -53,6 +60,7 @@ export default {
   data() {
     return {
       position: {},
+      initialColor: null,
       initialPosition: null,
       $menu: null,
     };
@@ -97,6 +105,12 @@ export default {
         this.initialPosition = null;
       }
     },
+    reset() {
+      this.color = this.initialColor;
+    },
+  },
+  mounted() {
+    this.initialColor = this.color;
   },
 };
 </script>
@@ -105,7 +119,6 @@ export default {
 .color-picker {
   position: relative;
   .label {
-    cursor: move;
     position: sticky;
     top: 0;
     z-index: 1;

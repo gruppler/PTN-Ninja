@@ -103,7 +103,11 @@ export const prompt = ({
 
 //#region Notifications
 
-export const notify = (options) => {
+export const notify = (message, options) => {
+  if (isObject(message)) {
+    options = message;
+    message = options.message;
+  }
   let fg = store.state.ui.theme.isDark ? "textLight" : "textDark";
   let bg = "ui";
   if (options.invert) {
@@ -116,7 +120,7 @@ export const notify = (options) => {
       }
     });
   }
-  return Notify.create({
+  options = {
     progressClass: "bg-primary",
     color: bg,
     textColor: fg,
@@ -125,10 +129,21 @@ export const notify = (options) => {
     progress: true,
     actions: [{ icon: "close", color: fg }],
     ...options,
-  });
+  };
+  if (message) {
+    options.message = message;
+  }
+  return Notify.create(options);
 };
 
 export const notifyError = (error, options = {}) => {
+  if (options.actions) {
+    options.actions.forEach((action) => {
+      if (!action.color) {
+        action.color = "text-Light";
+      }
+    });
+  }
   Notify.create({
     message: formatError(error),
     type: "negative",
@@ -141,6 +156,13 @@ export const notifyError = (error, options = {}) => {
 };
 
 export const notifySuccess = (success, options = {}) => {
+  if (options.actions) {
+    options.actions.forEach((action) => {
+      if (!action.color) {
+        action.color = "text-Light";
+      }
+    });
+  }
   return Notify.create({
     message: formatSuccess(success),
     type: "positive",
@@ -153,6 +175,13 @@ export const notifySuccess = (success, options = {}) => {
 };
 
 export const notifyWarning = (warning, options = {}) => {
+  if (options.actions) {
+    options.actions.forEach((action) => {
+      if (!action.color) {
+        action.color = "text-Dark";
+      }
+    });
+  }
   return Notify.create({
     message: formatWarning(warning),
     type: "warning",
@@ -166,6 +195,13 @@ export const notifyWarning = (warning, options = {}) => {
 };
 
 export const notifyHint = (hint, options = {}) => {
+  if (options.actions) {
+    options.actions.forEach((action) => {
+      if (!action.color) {
+        action.color = "text-Light";
+      }
+    });
+  }
   return Notify.create({
     message: formatHint(hint),
     type: "info",
