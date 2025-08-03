@@ -143,8 +143,18 @@ export default {
         case "GET_THEME":
           postMessage("GET_THEME", this.$store.getters["ui/theme"]());
           break;
-        case "GET_THEMES":
-          postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
+        case "GET_THEME":
+          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+          break;
+        case "GET_URL":
+          postMessage(
+            "GET_URL",
+            this.$store.getters["ui/url"](this.$game, {
+              name: this.$game.name,
+              origin: true,
+              state: true,
+            })
+          );
           break;
         default:
           if (data.action) {

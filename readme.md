@@ -112,11 +112,15 @@ For example:
 
 #### `GET_THEME`
 
-- Return an object defining the current theme, including `id`, `name`, and all the attributes defining the theme.
+- Respond with a `GET_THEME` message whose value is an object defining the current theme, including `id`, `name`, and all the attributes defining the theme.
 
 #### `GET_THEMES`
 
-- Return an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
+- Respond with a `GET_THEMES` message whose value is an array of objects defining the built-in themes, including `id`, `name`, and all the attributes defining the theme.
+
+#### `GET_URL`
+
+- Respond with a `GET_URL` message whose value is the URL of the current game.
 
 #### `GO_TO_PLY` (value: `<Object>: { plyID, isDone }`)
 
