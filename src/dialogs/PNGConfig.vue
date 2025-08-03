@@ -94,6 +94,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        tag="label"
+        :disable="!config.axisLabels"
+        v-ripple="config.axisLabels"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.axisLabelsSmall"
+            :disable="!config.axisLabels"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Road Connections") }}</q-item-label>
