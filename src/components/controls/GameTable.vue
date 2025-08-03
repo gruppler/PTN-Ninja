@@ -589,7 +589,6 @@ $header: 64px;
   }
 
   tr.selected * {
-    color: $primary;
     color: var(--q-color-primary);
   }
 
@@ -606,7 +605,6 @@ $header: 64px;
   .q-table__top,
   .q-table__bottom,
   thead tr:first-child th {
-    background-color: $ui;
     background-color: var(--q-color-ui);
   }
 
