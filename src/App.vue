@@ -7,14 +7,33 @@
 <script>
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
-import { isString, omit } from "lodash";
-import Result from "./Game/PTN/Result";
+import { isString } from "lodash";
 
 export default {
   name: "App",
   created() {
     if (process.env.DEV) {
       window.app = this;
+    }
+
+    // Handle virtual keyboard
+    if ("visualViewport" in window) {
+      window.visualViewport.addEventListener("resize", (event) => {
+        document.body.style.setProperty(
+          "--vvh",
+          window.visualViewport.height + "px"
+        );
+        this.$nextTick(() => {
+          const selection = window.getSelection();
+          if (
+            selection &&
+            selection.focusNode &&
+            selection.focusNode.scrollIntoViewIfNeeded
+          ) {
+            selection.focusNode.scrollIntoViewIfNeeded();
+          }
+        });
+      });
     }
 
     // Initialize local DB
@@ -39,6 +58,7 @@ export default {
       switch (data.action) {
         case "SET_NAME":
           this.$refs.layout.title = data.value;
+          this.$store.commit("game/SET_NAME", { newName: data.value });
           break;
         case "PLAY":
           if (this.$refs.layout.$refs.playControls) {
@@ -72,6 +92,7 @@ export default {
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
         case "DELETE_PLY":
+        case "APPEND_PLY":
         case "INSERT_PLY":
         case "INSERT_PLIES":
         case "DELETE_BRANCH":
@@ -90,6 +111,7 @@ export default {
         case "APPLY_TRANSFORM":
         case "HIGHLIGHT_SQUARES":
         case "SET_EVAL":
+        case "SET_ANALYSIS":
           this.$store.dispatch("game/" + data.action, data.value || {});
           break;
         case "FIRST":
@@ -118,8 +140,21 @@ export default {
         case "RESET_TRANSFORM":
           this.$store.dispatch("ui/" + data.action);
           break;
-        case "GET_THEMES":
-          postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
+        case "GET_THEME":
+          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+          break;
+        case "GET_THEME":
+          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+          break;
+        case "GET_URL":
+          postMessage(
+            "GET_URL",
+            this.$store.getters["ui/url"](this.$game, {
+              name: this.$game.name,
+              origin: true,
+              state: true,
+            })
+          );
           break;
         default:
           if (data.action) {
@@ -148,40 +183,15 @@ export default {
           return;
         }
 
-        let result = null;
-        if (position.ply && position.ply.result) {
-          result = omit(position.ply.result, "roads");
-        } else if (position.isGameEnd) {
-          let resultText;
-          if (position.isGameEndFlats) {
-            if (this.$game.board.flats[0] == this.$game.board.flats[1]) {
-              resultText = "1/2-1/2";
-            } else if (this.$game.board.flats[0] > this.$game.board.flats[1]) {
-              resultText = "F-0";
-            } else {
-              resultText = "0-F";
-            }
-          } else if (this.$game.board.roads && this.$game.board.roads.length) {
-            if (
-              this.$game.board.roads[1].length &&
-              this.$game.board.roads[2].length
-            ) {
-              resultText = position.turn === 1 ? "0-R" : "R-0";
-            } else {
-              resultText = this.$game.board.roads[1].length ? "R-0" : "0-R";
-            }
-          }
-          result = omit(new Result(resultText).output, "roads");
-        }
-
         position = {
           ...position,
           move: position.move ? position.move.linenum.number : null,
           ply: position.ply ? position.ply.text : null,
           prevPly: position.prevPly ? position.prevPly.text : null,
           nextPly: position.nextPly ? position.nextPly.text : null,
-          result,
+          flats: this.$store.state.game.board.flats,
         };
+
         postMessage("GAME_STATE", position);
       },
       deep: true,

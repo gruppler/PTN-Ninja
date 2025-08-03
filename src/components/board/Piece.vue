@@ -1,5 +1,5 @@
 <template>
-  <div class="piece" :style="{ transform: CSSTransform }">
+  <div class="piece" :style="{ '--x': x, '--y': y, '--z': z }">
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
@@ -21,14 +21,12 @@
 
 <script>
 const SELECTED_GAP = 3;
+const SPACING = 7;
 
 export default {
   name: "Piece",
   props: ["id"],
   computed: {
-    theme() {
-      return this.$store.getters["ui/theme"]();
-    },
     game() {
       return this.$store.state.game;
     },
@@ -87,6 +85,9 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
+    isVertical() {
+      return this.$store.state.ui.isVertical;
+    },
     transform() {
       return this.$store.state.ui.boardTransform;
     },
@@ -112,58 +113,123 @@ export default {
       return col;
     },
     x() {
-      let x = 100;
-      if (this.square) {
-        x *= this.col;
-      } else {
-        x *= this.config.size + 0.75 * (this.stackColor === 2);
-      }
-      return x;
-    },
-    y() {
-      let y = 100;
-      let spacing = 7;
+      let x;
       if (this.square) {
         // Played piece
-        y *= this.row;
+        x = 100 * this.col;
+      } else {
+        // Unplayed piece
+        return this.unplayedX;
+      }
+      return x + "%";
+    },
+    unplayedX() {
+      let x;
+      if (this.isVertical) {
+        // Vertical Layout
+        const spacing = -0.125;
+        x = this.config.size / 2 - 1 - spacing;
+        if (this.board3D) {
+          // 3D
+          if (!this.piece.isCapstone) {
+            // Calculate the group index for this piece type
+            const groupIndex = Math.floor(
+              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+                (this.config.size * 2)
+            );
+
+            // Calculate the total number of groups for flat pieces
+            const hasCap = this.pieceCounts.cap;
+            const groupSize = this.config.size * 2;
+            const totalGroups =
+              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+
+            // Scale x by the ratio of groupIndex to totalGroups and the scale factor
+            x *= groupIndex / totalGroups;
+          }
+        } else {
+          // 2D
+          if (this.piece.isCapstone) {
+            x *= this.pieceCounts.total - this.piece.index - 1;
+          } else {
+            x *=
+              this.pieceCounts.total -
+              this.piece.index -
+              this.pieceCounts.cap -
+              1;
+          }
+          x /= this.pieceCounts.total - 1;
+        }
+        if (this.stackColor === 1) {
+          x = this.config.size / 2 - 1 - x - spacing;
+        } else {
+          x = this.config.size / 2 + x + spacing;
+        }
+        x *= 100;
+      } else {
+        // Horizontal Layout
+        x = 100 * this.config.size + 75 * (this.stackColor === 2);
+      }
+      return x + "%";
+    },
+    y() {
+      let y;
+      if (this.square) {
+        // Played piece
+        y = 100 * this.row;
         if (!this.board3D) {
           // 2D
           const pieces = this.square.pieces;
-          y += spacing * (this.piece.z + this.isSelected * SELECTED_GAP);
+          y += SPACING * (this.piece.z + this.isSelected * SELECTED_GAP);
           if (
             pieces.length > this.config.size &&
             this.piece.z >= pieces.length - this.config.size
           ) {
-            y -= spacing * (pieces.length - this.config.size);
+            y -= SPACING * (pieces.length - this.config.size);
           }
           if (this.piece.isStanding && pieces.length > 1) {
-            y -= spacing;
+            y -= SPACING;
           }
           if (this.piece.isImmovable) {
-            y -= spacing * this.overflow;
+            y -= SPACING * this.overflow;
           }
         }
       } else {
         // Unplayed piece
-        y = this.config.size - 1;
+        return this.unplayedY;
+      }
+      return -y + "%";
+    },
+    unplayedY() {
+      let y;
+      if (this.isVertical) {
+        // Vertical Layout
+        y = 100;
+        if (!this.board3D && this.isSelected) {
+          y -= SPACING * SELECTED_GAP;
+        }
+      } else {
+        // Horizontal Layout
+        y = 1 - this.config.size;
         if (this.board3D) {
           // 3D
           if (!this.piece.isCapstone) {
-            y *=
-              Math.floor(
-                (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
-                  this.config.size
-              ) /
-              Math.floor(
-                this.pieceCounts.flat /
-                  (this.config.size -
-                    1 *
-                      !!(
-                        this.pieceCounts.cap &&
-                        this.pieceCounts.flat % this.config.size
-                      ))
-              );
+            // Calculate the group index for this piece type
+            const groupIndex = Math.floor(
+              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+                this.config.size
+            );
+
+            // Calculate the total number of groups for flat pieces
+            const hasCap = this.pieceCounts.cap;
+            const groupSize = this.config.size;
+            const totalGroups =
+              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+
+            // Scale y by the ratio of groupIndex to totalGroups
+            y *= groupIndex / totalGroups;
           }
+          y *= 100;
         } else {
           // 2D
           if (this.piece.isCapstone) {
@@ -176,13 +242,13 @@ export default {
               1;
           }
           y /= this.pieceCounts.total - 1;
+          y *= 100;
           if (this.isSelected) {
-            y += (spacing * SELECTED_GAP) / 100;
+            y -= SPACING * SELECTED_GAP;
           }
         }
-        y *= 100;
       }
-      return y;
+      return y + "%";
     },
     z() {
       let z;
@@ -196,33 +262,42 @@ export default {
         }
       } else {
         // Unplayed piece
-        if (this.board3D) {
-          // 3D
+        return this.unplayedZ;
+      }
+      return (z / 5 || 0.0001) + "em";
+    },
+    unplayedZ() {
+      let z;
+      if (this.board3D) {
+        // 3D
+        if (this.isVertical) {
+          // Vertical Layout
+          z =
+            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            (this.config.size * 2);
+        } else {
+          // Horizontal Layout
           z =
             (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
             this.config.size;
-        } else {
-          // 2D
-          z =
-            (this.pieceCounts.total - this.piece.index) /
-            this.pieceCounts.total;
-          if (this.piece.type !== "cap") {
-            z -= this.pieceCounts.cap;
-          }
-          if (this.stackColor === 1) {
-            z += 1;
-          } else {
-            z += this.config.size - 1;
-          }
         }
-        if (this.isSelected) {
-          z += SELECTED_GAP;
+      } else {
+        // 2D
+        z =
+          (this.pieceCounts.total - this.piece.index) / this.pieceCounts.total;
+        if (this.piece.type !== "cap") {
+          z -= this.pieceCounts.cap;
+        }
+        if (this.stackColor === 1) {
+          z += 1;
+        } else {
+          z += this.config.size - 1;
         }
       }
-      return z || 0.001;
-    },
-    CSSTransform() {
-      return `translate3d(${this.x}%, -${this.y}%, ${this.z}em)`;
+      if (this.isSelected && !this.isVertical) {
+        z += SELECTED_GAP;
+      }
+      return z / 5 + "em";
     },
   },
   methods: {
@@ -252,11 +327,18 @@ export default {
   position: absolute;
   bottom: 0;
   left: 0;
-  will-change: transform, opacity;
-  transition: transform $generic-hover-transition,
-    opacity $generic-hover-transition;
+  will-change: transform;
+  transform: translate3d(var(--x), var(--y), var(--z));
+  transition-duration: $transition-duration;
+  transition-timing-function: $transition-easing;
+  transition-property: transform, opacity;
 
   .stone {
+    --stroke-width: calc(var(--piece-border-width) * 0.013em);
+    --shadow-y: calc(var(--stroke-width) / 2 + 0.02em);
+    --shadow-blur: calc(var(--stroke-width) + 0.03em);
+    --shadow-y-selected: 0.2em;
+    --shadow-blur-selected: 0.1em;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -264,37 +346,28 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border-width: ($piece-border-width * 0.15vmin);
-    border-width: calc(var(--piece-border-width) * 0.15vmin);
+    border-width: var(--stroke-width);
     border-style: solid;
     border-radius: 10%;
-    will-change: opacity, transform, width, height, left, border-radius,
+    will-change: transform, box-shadow;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: opacity, transform, width, height, left, border-radius,
       background-color, box-shadow;
-    transition: opacity $generic-hover-transition,
-      transform $generic-hover-transition, width $generic-hover-transition,
-      height $generic-hover-transition, left $generic-hover-transition,
-      border-radius $generic-hover-transition,
-      background-color $generic-hover-transition,
-      box-shadow $generic-hover-transition;
 
-    box-shadow: 0 0.2vmin 0.4vmin $umbra;
-    box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra);
+    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
     &.firstSelected {
-      box-shadow: 0 0.2vmin 0.4vmin $umbra, 0 2.8vmin 1.5vmin $umbra;
-      box-shadow: 0 0.2vmin 0.4vmin var(--q-color-umbra),
-        0 2.8vmin 1.5vmin var(--q-color-umbra);
+      box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra),
+        0 var(--shadow-y-selected) var(--shadow-blur-selected)
+          var(--q-color-umbra);
     }
 
     &.p1 {
-      background-color: $player1flat;
       background-color: var(--q-color-player1flat);
-      border-color: $player1border;
       border-color: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: $player2flat;
       background-color: var(--q-color-player2flat);
-      border-color: $player2border;
       border-color: var(--q-color-player2border);
     }
 
@@ -303,44 +376,49 @@ export default {
       left: 15%;
       border-radius: 27%/10%;
 
+      --offset-factor: 0.78;
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
-        box-shadow: -1px 1px 2px $umbra;
-        box-shadow: -1px 1px 2px var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
+          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+          var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: -1px 1px 2px $umbra, -1.8vmin 1.8vmin 1.5vmin $umbra;
-          box-shadow: -1px 1px 2px var(--q-color-umbra),
-            -1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
+              calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+              var(--q-color-umbra),
+            calc(var(--shadow-y-selected) * -1 * var(--offset-factor))
+              calc(var(--shadow-y-selected) * var(--offset-factor))
+              var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
-        box-shadow: 1px 1px 2px $umbra;
-        box-shadow: 1px 1px 2px var(--q-color-umbra);
+        box-shadow: calc(var(--shadow-y) * var(--offset-factor))
+          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+          var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: 1px 1px 2px $umbra, 1.8vmin 1.8vmin 1.5vmin $umbra;
-          box-shadow: 1px 1px 2px var(--q-color-umbra),
-            1.8vmin 1.8vmin 1.5vmin var(--q-color-umbra);
+          box-shadow: calc(var(--shadow-y) * var(--offset-factor))
+              calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+              var(--q-color-umbra),
+            calc(var(--shadow-y-selected) * var(--offset-factor))
+              calc(var(--shadow-y-selected) * var(--offset-factor))
+              var(--shadow-blur-selected) var(--q-color-umbra);
         }
       }
     }
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
       }
     }
 
-    .board-wrapper:not(.board-3D) &.immovable {
+    .board-space:not(.board-3D) &.immovable {
       bottom: 0;
       left: 50%;
       width: 15%;
@@ -348,7 +426,7 @@ export default {
       border-radius: 15%/30%;
     }
 
-    .board-wrapper.board-3D &.immovable {
+    .board-space.board-3D &.immovable {
       opacity: 0.35;
     }
 
@@ -359,6 +437,7 @@ export default {
 
     &.unplayed {
       .board-container:not(.show-unplayed-pieces) & {
+        pointer-events: none;
         opacity: 0;
       }
     }

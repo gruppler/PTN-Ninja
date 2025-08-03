@@ -34,14 +34,8 @@ export default class TiltakCloud extends Bot {
     return store.state.ui.offline;
   }
 
-  //#region queryPosition
-  async queryPosition(tps, plyID) {
-    // Validate size/komi
-    const init = super.validatePosition(tps, plyID);
-    if (!init) {
-      return false;
-    }
-
+  //#region searchPosition
+  async searchPosition(size, halfKomi, tps) {
     if (this.isOffline) {
       this.onError("Offline");
       return false;
@@ -60,8 +54,8 @@ export default class TiltakCloud extends Bot {
     }
 
     const request = {
-      komi: init.halfKomi / 2,
-      size: this.size,
+      komi: halfKomi / 2,
+      size,
       tps,
       moves: [],
       time_control,
@@ -69,7 +63,7 @@ export default class TiltakCloud extends Bot {
       rollout_temperature: 0.25,
       action: "SuggestMoves",
     };
-    super.onSend(request);
+    this.onSend(request);
     let response;
     try {
       response = await fetch(url, {
@@ -89,7 +83,7 @@ export default class TiltakCloud extends Bot {
       return this.onError("HTTP-Error: " + response.status);
     }
     const data = await response.json();
-    super.onReceive(data);
+    this.onReceive(data);
     const { SuggestMoves: suggestedMoves } = data;
 
     const results = {

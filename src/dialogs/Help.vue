@@ -85,7 +85,7 @@
               ref="fullscreen"
               :target="$refs.help"
               class="dimmed-btn"
-              :ripple="false"
+              v-ripple="false"
               flat
               fab
             />
@@ -94,7 +94,7 @@
             <q-btn
               @click="tocScroll(0)"
               class="dimmed-btn"
-              :ripple="false"
+              v-ripple="false"
               icon="to_top"
               flat
               fab

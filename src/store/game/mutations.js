@@ -14,7 +14,7 @@ export const INIT = (state, games) => {
   state.init = true;
 };
 
-export const SET_GAME = (state, game) => {
+export const SET_GAME = function (state, game) {
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -22,33 +22,56 @@ export const SET_GAME = (state, game) => {
     console.error(error);
   };
 
+  const onInit = (game) => {
+    SET_GAME(state, game);
+  };
+
+  const handleGameEnd = (game) => {
+    if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
+      const url = this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      });
+
+      postMessage("GAME_END", {
+        url,
+        result: game.board.ply.result.minimalOutput,
+      });
+    }
+  };
+
+  const onAppendPly = (game, ply) => {
+    postMessage("APPEND_PLY", ply);
+    handleGameEnd(game);
+  };
+
+  const onInsertPly = (game, ply) => {
+    postMessage("INSERT_PLY", ply);
+    handleGameEnd(game);
+  };
+
+  const onError = (error, plyID) => {
+    handleError(error, plyID);
+  };
+
   state.error = null;
   const editingTPS = game.editingTPS;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
-      onInit: (game) => {
-        SET_GAME(state, game);
-      },
-      onInsertPly: (game, ply) => {
-        postMessage("INSERT_PLY", ply);
-      },
-      onError: (error, plyID) => {
-        handleError(error, plyID);
-      },
+      onInit,
+      onAppendPly,
+      onInsertPly,
+      onError,
     });
   } else {
     game.board.updateOutput();
     if (!game.onInit) {
-      game.onInit = (game) => {
-        SET_GAME(state, game);
-      };
-      game.onInsertPly = (game, ply) => {
-        postMessage("INSERT_PLY", ply);
-      };
-      game.onError = (error, plyID) => {
-        handleError(error, plyID);
-      };
+      game.onInit = onInit;
+      game.onAppendPly = onAppendPly;
+      game.onInsertPly = onInsertPly;
+      game.onError = onError;
     }
   }
   Vue.prototype.$game = game;
@@ -138,12 +161,16 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
   }
 };
 
-export const SET_NAME = (state, { oldName, newName }) => {
-  let stateGame = state.list.find((g) => g.name === oldName);
-  if (stateGame) {
-    stateGame.name = newName;
+export const SET_NAME = function (state, { oldName, newName }) {
+  if (this.state.ui.embed) {
+    Vue.prototype.$game.name = newName;
   } else {
-    throw new Error("Game not found: " + oldName);
+    let stateGame = state.list.find((g) => g.name === oldName);
+    if (stateGame) {
+      stateGame.name = newName;
+    } else {
+      throw new Error("Game not found: " + oldName);
+    }
   }
 };
 
@@ -198,6 +225,16 @@ export const SET_EVAL = (state, evaluation) => {
   state.evaluation = evaluation;
 };
 
+export const SET_ANALYSIS = (state, analysis) => {
+  if (analysis) {
+    Vue.set(
+      state.analyzedPositions,
+      analysis.tps || state.position.tps,
+      Object.freeze(analysis)
+    );
+  }
+};
+
 export const SELECT_SQUARE = (state, { square, alt, selectedPiece }) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -236,6 +273,13 @@ export const DELETE_PLY = (state, plyID) => {
   if (game) {
     game.deletePly(plyID, true, true);
     postMessage("DELETE_PLY", plyID);
+  }
+};
+
+export const APPEND_PLY = (state, ply) => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.appendPly(ply);
   }
 };
 
@@ -411,4 +455,10 @@ export const REMOVE_NOTE = (state, { plyID, index }) => {
 
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
+};
+
+export const REMOVE_ANALYSIS_NOTES = () => {
+  Vue.prototype.$game.removeNotes(
+    (note) => note.output.evaluation !== null || note.output.pv !== null
+  );
 };

@@ -23,7 +23,7 @@ export default {
     this.$smoothReflow(
       defaults(this.options, {
         property: this.heightOnly ? "height" : ["width", "height"],
-        transition: ".3s cubic-bezier(.25, .8, .5, 1)",
+        transition: "0.3s cubic-bezier(.25, .8, .5, 1)",
       })
     );
   },

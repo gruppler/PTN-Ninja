@@ -1,4 +1,5 @@
 import Vue from "vue";
+import { Platform } from "quasar";
 import { parseURLparams } from "../../router/routes";
 import router from "../../router";
 
@@ -22,6 +23,9 @@ export const uniqueName =
 export const disabledOptions = () => {
   const game = Vue.prototype.$game;
   const disabled = Object.keys(parseURLparams(router.currentRoute).state);
+  if (Platform.within.iframe) {
+    disabled.push("highlighterEnabled");
+  }
   if (game.config.disableFlatCounts) {
     disabled.push("flatCounts");
   }

@@ -1,7 +1,7 @@
 <template>
   <span class="ptn linenum justify-end">
     <span
-      v-if="showBranch"
+      v-if="branch && (showBranch || onlyBranch)"
       class="branch row no-wrap justify-end"
       :class="{ selected: isSelected, only: onlyBranch }"
       @click.left="selectBranch(ply)"
@@ -42,7 +42,7 @@
         </q-list>
       </q-menu>
       <q-btn
-        v-if="onlyBranch"
+        v-if="onlyBranch && !noMenu"
         @click.stop
         icon="arrow_drop_down"
         size="md"
@@ -74,6 +74,7 @@ export default {
     linenum: Object,
     noEdit: Boolean,
     noBranch: Boolean,
+    noMenu: Boolean,
     onlyBranch: Boolean,
     activePly: Object,
     unselected: Boolean,
@@ -145,10 +146,8 @@ export default {
   flex-direction: row;
   align-items: center;
   vertical-align: middle;
-  color: $textDark;
   color: var(--q-color-textDark);
   body.panelDark & {
-    color: $textLight;
     color: var(--q-color-textLight);
   }
   .branch {
@@ -159,12 +158,9 @@ export default {
     margin: 0;
     cursor: pointer;
     border-radius: $generic-border-radius;
-    background-color: $bg;
     background-color: var(--q-color-bg);
-    color: $textDark;
     color: var(--q-color-textDark);
     body.secondaryDark & {
-      color: $textLight;
       color: var(--q-color-textLight);
     }
     &:not(.only) > span {
@@ -172,12 +168,9 @@ export default {
       overflow: hidden;
     }
     &.selected {
-      background-color: $primary;
       background-color: var(--q-color-primary);
-      color: $textDark !important;
       color: var(--q-color-textDark) !important;
       body.primaryDark & {
-        color: $textLight !important;
         color: var(--q-color-textLight) !important;
       }
     }

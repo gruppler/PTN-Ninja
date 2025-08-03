@@ -7,6 +7,7 @@ export default {
   Action: "Action",
   "Add Game": "Load/Create Game",
   Analysis: "Analysis",
+  "Analysis Note Notifications": "Analysis Note Notifications",
   "Animate Board": "Animate Board",
   "Animate While Scrubbing": "Animate While Scrubbing",
   Apply: "Apply",
@@ -14,11 +15,13 @@ export default {
   Author: "Author",
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
+  "Axis Labels Small": "Small Axis Labels",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",
   "Backward Half-Step": "Backward Half-Step",
   Beginning: "Beginning",
   Board: "Board",
+  "Board Evaluation Bar": "Board Evaluation Bar",
   "Board Preferences": "Board Preferences",
   "Board Preferences Button": "Board Preferences Button",
   "Board Transform Button": "Board Transform Button",
@@ -97,6 +100,7 @@ export default {
   "Game Notifications": "Game Notifications",
   "Game x closed": 'Closed "{game}"',
   Generate: "Generate",
+  "Haptic Nav Controls": "Haptic Navigation Controls",
   Height: "Height",
   Help: "Help",
   "Hide Analysis": "Hide Analysis",
@@ -142,6 +146,7 @@ export default {
   n_games: "No Games | 1 Game | {count} Games",
   Name: "Name",
   "Native Sharing": "Native Sharing",
+  "Nav Controls": "Navigation Controls",
   Negative: "Negative",
   "New Bot": "New Bot",
   "New Game": "New Game",
@@ -165,7 +170,6 @@ export default {
   Play: "Play",
   "Play/Pause": "Play/Pause",
   "Play Button": "Play Button",
-  "Play Controls": "Play Controls",
   "Play Mode": "Play Mode",
   "Play Online": "Play Online",
   "Play Speed": "Play Speed",
@@ -268,6 +272,8 @@ export default {
   Usage: "Usage",
   "Verify Email Address": "Verify Email Address",
   Version: "Version",
+  "Vertical Layout": "Vertical Layout",
+  "Vertical Layout Auto": "Auto Layout",
   "View Game Info": "View Game Info",
   Walls: "Walls",
   Width: "Width",
@@ -291,6 +297,7 @@ export default {
 
   theme: {
     // Names
+    aaron: "Aaron",
     aer: "Aer",
     aether: "Aether",
     aqua: "Aqua",
@@ -299,6 +306,7 @@ export default {
     bubbletron: "BubbleTron",
     classic: "Classic",
     discord: "Discord",
+    essence: "Essence",
     fresh: "Fresh",
     ignis: "Ignis",
     luna: "Luna",
@@ -350,7 +358,8 @@ export default {
     abandonChanges: "Abandon unsaved changes?",
     deleteBot: "Are you sure you want to delete this bot?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
-    clearBotResults: "Are you sure you want to clear this bot's results?",
+    clearBotResults:
+      "Are you sure you want to clear this bot's results? This cannot be undone.",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
@@ -434,6 +443,7 @@ export default {
   },
 
   warning: {
+    fullyAnalyzed: "There's nothing left to analyze.",
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
     unsupportedKomi:
@@ -452,7 +462,7 @@ export default {
   },
 
   hotkeys: {
-    CONTROLS: "Play Controls",
+    CONTROLS: "Navigation Controls",
     DIALOGS: "Dialogs",
     EVAL: "Evaluation",
     HIGHLIGHTER: "Highlighter",
@@ -478,16 +488,14 @@ export default {
   },
 
   analysis: {
-    "analyzed positions":
-      "No analyzed positions | 1 analyzed position | {count} analyzed positions",
     "Analyze Branch": "Analyze Branch",
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
     "Apply Options": "Apply Options",
-    "Think Harder": "Think Harder",
     "Bot Moves": "Bot Suggestions",
     "Bot Options": "Bot Options",
     "Clear Results": "Clear Results",
+    "Clear Saved Results": "Clear Saved Results",
     "Database Moves": "PlayTak Openings",
     depth: "depth",
     Depth: "Depth",
@@ -500,7 +508,11 @@ export default {
     interactiveAnalysis: "Interactive Analysis",
     limit: "Search Limit",
     limitTypes: "Search Limit Type | Search Limit Types",
-    logMessages: "Log messages",
+    logClear: "Clear Log",
+    logMessages: "Log Messages",
+    logPause: "Pause Scrolling",
+    logResume: "Resume Scrolling",
+    logSave: "Save Log",
     max: "max",
     maxDate: "Before",
     maxSuggestedMoves: "Suggestions to Show",
@@ -515,7 +527,9 @@ export default {
     nps: "nps",
     "Preset Bot Options": "Preset Bot Options",
     pvLimit: "Plies to Save",
+    saveSearchStats: "Save Search Stats",
     secondsUnit: "sec",
+    sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",
     step: "step",
     "Top Games from Position": "Top Games from Position",

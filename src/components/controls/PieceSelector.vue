@@ -188,12 +188,10 @@ export default {
   .square {
     width: 2.25em;
     height: 2.25em;
-    background: $board1;
     background: var(--q-color-board1);
     position: relative;
     border-radius: 3px;
     &.selected {
-      background: $primary;
       background: var(--q-color-primary);
     }
   }
@@ -206,22 +204,17 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    border-width: ($piece-border-width * 0.075vmin);
     border-width: calc(var(--piece-border-width) * 0.075vmin);
     border-style: solid;
     border-radius: 10%;
     box-shadow: $shadow-1;
 
     &.p1 {
-      background-color: $player1flat;
       background-color: var(--q-color-player1flat);
-      border-color: $player1border;
       border-color: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: $player2flat;
       background-color: var(--q-color-player2flat);
-      border-color: $player2border;
       border-color: var(--q-color-player2border);
     }
 
@@ -231,13 +224,11 @@ export default {
       border-radius: 27%/10%;
 
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
         transform: rotate(-45deg);
         box-shadow: -1px 1px 2px rgba(#000, 0.3);
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
         transform: rotate(45deg);
         box-shadow: 1px 1px 2px rgba(#000, 0.3);
@@ -246,11 +237,9 @@ export default {
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: $player1special;
         background-color: var(--q-color-player1special);
       }
       &.p2 {
-        background-color: $player2special;
         background-color: var(--q-color-player2special);
       }
     }

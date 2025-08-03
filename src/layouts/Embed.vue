@@ -49,13 +49,12 @@
         @shortkey="dialogShortkey"
         class="overflow-hidden"
       >
-        <div
-          class="column absolute-fit"
+        <Board
+          ref="board"
+          :hide-names="!showNames"
           v-shortkey="hotkeys.MISC"
           @shortkey="miscShortkey"
-        >
-          <Board ref="board" class="col-grow" :hide-names="!showNames" />
-        </div>
+        />
         <BoardToggles v-if="!isDialogShowing" />
         <q-page-sticky position="bottom" :offset="[0, 0]">
           <CurrentMove v-if="!$store.state.ui.disablePTN" />
@@ -159,11 +158,20 @@
       <Notes ref="notes" class="fit" />
     </q-drawer>
 
-    <q-footer v-if="!$store.state.ui.disableNavigation" class="bg-ui">
-      <Scrubber />
-      <q-toolbar v-show="$store.state.ui.showControls" class="footer-toolbar">
-        <PlayControls ref="playControls" />
-      </q-toolbar>
+    <q-footer class="bg-panel">
+      <ToolbarAnalysis v-if="hasAnalysis" :analysis="currentAnalysis" />
+
+      <div class="relative-position">
+        <Scrubber v-if="!$store.state.ui.disableNavigation" />
+
+        <q-toolbar
+          v-if="!$store.state.ui.disableNavigation"
+          v-show="$store.state.ui.showControls"
+          class="footer-toolbar bg-ui"
+        >
+          <NavControls ref="playControls" />
+        </q-toolbar>
+      </div>
     </q-footer>
 
     <router-view ref="dialog" go-back no-route-dismiss />
@@ -188,13 +196,14 @@ import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
-import PlayControls from "../components/controls/PlayControls";
+import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import UndoButtons from "../components/controls/UndoButtons";
 import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
+import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -212,13 +221,14 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
-    PlayControls,
+    NavControls,
     Scrubber,
     PTNTools,
     UndoButtons,
     EvalButtons,
     BoardToggles,
     ShareButton,
+    ToolbarAnalysis,
   },
   props: ["ptn", "name", "state"],
   data() {
@@ -241,6 +251,20 @@ export default {
     },
     gameExists() {
       return Boolean(this.$store.state.game.name);
+    },
+    hasAnalysis() {
+      return (
+        Object.keys(this.$store.state.game.analyzedPositions).length > 0 ||
+        Object.keys(this.$store.state.game.comments.evaluations).length > 0 ||
+        Object.keys(this.$store.state.game.comments.pvs).length > 0
+      );
+    },
+    currentAnalysis() {
+      return (
+        this.$store.state.game.analyzedPositions[
+          this.$store.state.game.position.tps
+        ] || null
+      );
     },
     showPTN: {
       get() {
@@ -327,7 +351,7 @@ export default {
     openLink() {
       window.open(
         this.$store.getters["ui/url"](this.$game, {
-          name: this.title,
+          name: this.$game.name,
           origin: true,
           state: true,
         }),
@@ -442,7 +466,6 @@ export default {
 #left-drawer,
 #right-drawer {
   .q-drawer {
-    background: $panel;
     background: var(--q-color-panel);
     .q-drawer__content {
       overflow: hidden;

@@ -17,7 +17,7 @@ export function formatEvaluation(value) {
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
-  nodes: { min: 1e3, max: 1e6, step: 1e3 },
+  nodes: { min: 1e3, max: 1e9, step: 1e3 },
   movetime: { min: 100, max: 6e4, step: 100 },
 });
 
@@ -37,6 +37,8 @@ export default class Bot {
     isInteractive = false,
     requiresConnect = false,
     limitTypes = defaultLimitTypes,
+    normalizeEvaluation = false,
+    sigma = 100,
     options = {},
     sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
 
@@ -84,12 +86,12 @@ export default class Bot {
       options,
       sizeHalfKomis,
       limitTypes,
+      normalizeEvaluation,
+      sigma,
       ...meta,
     };
 
     this.settings = {
-      log: false,
-      insertEvalMarks: true,
       ...settings,
     };
     // After initialization of the store,
@@ -103,10 +105,12 @@ export default class Bot {
       isAnalyzingPosition: false,
       isAnalyzingGame: false,
       isRunning: false,
-      progress: 0,
+      startTime: null,
+      progress: null,
       analyzingPly: null,
       timer: null,
       time: null,
+      nodes: null,
       nps: null,
       tps: null,
       nextTPS: null,
@@ -123,12 +127,12 @@ export default class Bot {
 
   //#region send/receive
   onSend(message) {
-    if (this.settings.log) {
+    if (store.state.analysis && store.state.analysis.enableLogging) {
       this.logMessage(message);
     }
   }
   onReceive(message) {
-    if (this.settings.log) {
+    if (store.state.analysis && store.state.analysis.enableLogging) {
       this.logMessage(message, true);
     }
   }
@@ -137,7 +141,7 @@ export default class Bot {
     if (isObject(message)) {
       message = JSON.stringify(message);
     }
-    message = { message, received };
+    message = Object.freeze({ message, received });
     if (store.state.analysis && store.state.analysis.botID === this.id) {
       store.commit("analysis/BOT_LOG", message);
     } else {
@@ -222,18 +226,27 @@ export default class Bot {
       }
     });
     const hash = this.getSettingsHash();
-    positions = uniqBy(positions, (p) => p.tps).filter((p) => {
-      return (
+    let timeLimit = false;
+    let nodeLimit = false;
+    if (
+      !this.settings.limitTypes ||
+      this.settings.limitTypes.includes("movetime")
+    ) {
+      timeLimit = this.settings.movetime || false;
+    }
+    if (
+      !this.settings.limitTypes ||
+      this.settings.limitTypes.includes("nodes")
+    ) {
+      nodeLimit = this.settings.nodes || false;
+    }
+    positions = uniqBy(positions, (p) => p.tps).filter(
+      (p) =>
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
-        (this.settings.nodes &&
-          this.positions[p.tps][0].nodes < this.settings.nodes) ||
-        (this.settings.depth &&
-          this.positions[p.tps][0].depth < this.settings.depth) ||
-        (this.settings.movetime &&
-          this.positions[p.tps][0].time < this.settings.movetime * 0.7)
-      );
-    });
+        (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.9) ||
+        (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.9)
+    );
 
     return positions;
   }
@@ -285,10 +298,10 @@ export default class Bot {
 
   get isAnalyzeGameAvailable() {
     return (
-      !this.isFullyAnalyzed &&
       this.state.isReady &&
       !this.state.isAnalyzingPosition &&
-      !this.state.isInteractiveEnabled
+      !this.state.isInteractiveEnabled &&
+      this.plies.length > 0
     );
   }
 
@@ -345,8 +358,15 @@ export default class Bot {
   //#region reset
   // Reset status
   reset() {
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+    }
     this.isInteractiveEnabled = false;
     this.onReady = null;
+    this.onReady = null;
+    this.onComplete = null;
+    this.unwatchPosition = null;
+    this.unwatchScrubbing = null;
     this.setState({
       isReadying: false,
       isReady: false,
@@ -355,29 +375,25 @@ export default class Bot {
       halfKomi: null,
       nextTPS: null,
       tps: null,
+      timer: null,
     });
   }
 
   //#region terminate
   // Stop searching
-  terminate() {
-    this.onTerminate();
+  terminate(state) {
+    this.onTerminate(state);
   }
 
-  onTerminate() {
-    const state = {
-      isAnalyzingPosition: false,
+  onTerminate(state = {}) {
+    state = {
+      ...state,
       isAnalyzingGame: false,
-      isRunning: false,
-      progress: 0,
-      analyzingPly: null,
+      isAnalyzingPosition: false,
+      progress: null,
       nextTPS: null,
     };
-    if (this.state.timer) {
-      clearInterval(this.state.timer);
-      state.timer = null;
-    }
-    this.setState(state);
+    this.onSearchEnd(state);
     this.onReady = null;
     this.onComplete = null;
   }
@@ -392,9 +408,13 @@ export default class Bot {
     this.setState({ time: 0, nps: 0 });
   }
 
+  clearSavedResults() {
+    store.dispatch("game/REMOVE_ANALYSIS_NOTES");
+  }
+
   //#region validatePosition
   validatePosition(tps, plyID) {
-    let success = {
+    let init = {
       isNewGame: false,
       halfKomi: this.halfKomi,
     };
@@ -405,26 +425,25 @@ export default class Bot {
         (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
     ) {
       // Validate arguments
-      success = false;
+      throw "Invalid search parameters";
     } else if (
       // Validate board size
       !isEmpty(this.meta.sizeHalfKomis) &&
       !(this.size in this.meta.sizeHalfKomis)
     ) {
-      this.onError("Unsupported size");
-      success = false;
+      throw "Unsupported size";
     } else {
       // Get closest supported komi
       const halfKomi = this.halfKomi;
       const usingHalfKomi = this.getSupportedHalfKomi();
-      success.halfKomi = usingHalfKomi;
+      init.halfKomi = usingHalfKomi;
       if (
         this.state.gameID !== this.game.name ||
         this.state.size !== this.size ||
         this.state.halfKomi !== halfKomi
       ) {
         // This is a new game
-        success.isNewGame = true;
+        init.isNewGame = true;
         this.setState({
           gameID: this.game.name,
           size: this.size,
@@ -442,26 +461,96 @@ export default class Bot {
       }
     }
 
-    if (!success && this.state.isRunning) {
-      this.terminate();
+    return init;
+  }
+
+  async searchPosition(size, halfKomi, tps, plyID, isNewGame) {}
+
+  //#region onSearchStart
+  onSearchStart(state = {}) {
+    state = {
+      ...state,
+      isRunning: true,
+      nodes: 0,
+    };
+
+    let timeLimit = false;
+    let nodeLimit = false;
+    if (state.isAnalyzingPosition) {
+      if (
+        !this.settings.limitTypes ||
+        this.settings.limitTypes.includes("movetime")
+      ) {
+        timeLimit = this.settings.movetime || false;
+      }
+      if (
+        !this.settings.limitTypes ||
+        this.settings.limitTypes.includes("nodes")
+      ) {
+        nodeLimit = this.settings.nodes || false;
+      }
     }
-    return success;
+
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+    }
+    state.timer = setInterval(() => {
+      const state = {
+        time: new Date().getTime() - this.state.startTime,
+      };
+      if (timeLimit || nodeLimit) {
+        let timeProgress = 0;
+        let nodeProgress = 0;
+        if (timeLimit) {
+          timeProgress = (100 * state.time) / timeLimit;
+        }
+        if (nodeLimit && this.state.nps) {
+          nodeProgress = state.time / ((10 * nodeLimit) / this.state.nps);
+        }
+        state.progress = Math.max(timeProgress, nodeProgress);
+      }
+      this.setState(state);
+    }, 250);
+
+    this.setState(state);
+  }
+
+  //#region onSearchEnd
+  onSearchEnd(state = {}) {
+    state = {
+      ...state,
+      isRunning: false,
+      analyzingPly: null,
+    };
+    if (this.state.timer) {
+      clearInterval(this.state.timer);
+      state.timer = null;
+    }
+    this.setState(state);
   }
 
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
     return this.state.isInteractiveEnabled;
   }
-  set isInteractiveEnabled(value) {
-    if (!this.meta.isInteractive || this.state.isInteractiveEnabled === value) {
+  set isInteractiveEnabled(isInteractiveEnabled) {
+    if (
+      !this.meta.isInteractive ||
+      this.state.isInteractiveEnabled === isInteractiveEnabled
+    ) {
       return;
     }
-    if (value) {
+    if (isInteractiveEnabled) {
+      // Enable
       this.setState({
+        isInteractiveEnabled,
         tps: null,
         nextTPS: null,
-        isInteractiveEnabled: value,
+        progress: null,
+        nodes: 0,
+        nps: 0,
       });
+      // Restart search when the position changes
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
         () => {
@@ -470,22 +559,21 @@ export default class Bot {
           }
         }
       );
+      // Pause while scrubbing, resume after
       this.unwatchScrubbing = store.watch(
         (state) => state.ui.scrubbing,
         (isScrubbing) => {
           if (isScrubbing) {
-            console.log("Scrubbing started");
             this.terminate();
           } else if (this.isInteractiveEnabled) {
-            console.log("Scrubbing ended");
             this.analyzeInteractive();
           }
         }
       );
-      if (!this.analyzeInteractive()) {
-        this.isInteractiveEnabled = false;
-      }
+      // Start searching
+      this.analyzeInteractive();
     } else {
+      // Disable
       if (this.unwatchPosition) {
         this.unwatchPosition();
         this.unwatchPosition = null;
@@ -494,130 +582,169 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
-      this.terminate();
-      this.setState({ isInteractiveEnabled: value });
+      this.terminate({ isInteractiveEnabled });
     }
   }
 
   //#region analyzeInteractive
-  analyzeInteractive() {
-    if (!this.meta.isInteractive) {
-      return false;
-    }
+  async analyzeInteractive() {
+    try {
+      if (!this.meta.isInteractive) {
+        throw new Error("Interactive mode unsupported");
+      }
 
-    if (this.isGameEnd) {
-      this.isRunning = false;
-      this.setState({ nextTPS: null });
-      return true;
-    }
+      // Stop searching but keep interactive mode enabled
+      if (this.isGameEnd) {
+        this.setState({ nextTPS: null, isRunning: false });
+        return true;
+      }
 
-    // Queue current position for pairing with future response
-    const tps = this.tps;
-    const state = {
-      nextTPS: tps,
-      analyzingPly: this.ply,
-      isRunning: true,
-    };
-    if (!this.state.tps) {
-      state.tps = tps;
-    }
-    this.setState(state);
+      const tps = this.tps;
+      const plyID = this.game.position.boardPly
+        ? this.game.position.boardPly.id
+        : null;
 
-    return this.queryPosition(
-      tps,
-      this.game.position.boardPly ? this.game.position.boardPly.id : null
-    );
+      // Validate position
+      const init = this.validatePosition(tps, plyID);
+
+      const state = {
+        startTime: new Date().getTime(),
+        nextTPS: tps,
+        analyzingPly: this.ply,
+        isRunning: true,
+      };
+      if (!this.state.tps) {
+        state.tps = tps;
+      }
+      this.onSearchStart(state);
+      return this.searchPosition(
+        this.size,
+        init.halfKomi,
+        tps,
+        plyID,
+        init.isNewGame
+      );
+    } catch (error) {
+      if (error) {
+        this.onError(error);
+      }
+      if (this.unwatchPosition) {
+        this.unwatchPosition();
+        this.unwatchPosition = null;
+      }
+      if (this.unwatchScrubbing) {
+        this.unwatchScrubbing();
+        this.unwatchScrubbing = null;
+      }
+      this.onSearchEnd({ isInteractiveEnabled: false });
+    }
   }
 
   //#region analyzeCurrentPosition
   async analyzeCurrentPosition() {
     return new Promise(async (resolve, reject) => {
-      if (this.state.isRunning || this.isGameEnd) {
-        reject();
-        return false;
-      }
-
-      const tps = this.tps;
-      const ply = this.ply;
-      let state = {
-        tps,
-        analyzingPly: ply,
-        isRunning: true,
-        isAnalyzingPosition: true,
-        progress: 0,
-      };
-
-      const timeLimit =
-        !this.settings.limitTypes ||
-        this.settings.limitTypes.includes("movetime")
-          ? this.settings.movetime || false
-          : false;
-      const nodeLimit =
-        this.meta.isInteractive &&
-        (!this.settings.limitTypes ||
-          this.settings.limitTypes.includes("nodes"))
-          ? this.settings.nodes || false
-          : false;
-
-      if (timeLimit || nodeLimit) {
-        const startTime = new Date().getTime();
-        state.timer = setInterval(() => {
-          const timeDelta = new Date().getTime() - startTime;
-          let timeProgress = 0;
-          let nodeProgress = 0;
-          if (timeLimit) {
-            timeProgress = (100 * timeDelta) / timeLimit;
-          }
-          if (nodeLimit && this.state.nps) {
-            nodeProgress = timeDelta / ((10 * nodeLimit) / this.state.nps);
-          }
-          this.setState({
-            progress: Math.max(timeProgress, nodeProgress),
-          });
-        }, 250);
-      }
-      this.setState(state);
-
-      const results = await this.queryPosition(
-        tps,
-        this.game.position.boardPly ? this.game.position.boardPly.id : null
-      );
-
-      if (results) {
-        state = {
-          isAnalyzingPosition: false,
-          isRunning: false,
-          analyzingPly: null,
-        };
-        if (this.state.timer) {
-          clearInterval(this.state.timer);
-          state.timer = null;
+      try {
+        if (this.state.isRunning) {
+          throw "";
         }
-        this.setState(state);
-        this.storeResults(results);
-        resolve(results);
-      } else {
-        reject();
+        if (this.isGameEnd) {
+          throw "";
+        }
+
+        const tps = this.tps;
+        const plyID = this.game.position.boardPly
+          ? this.game.position.boardPly.id
+          : null;
+
+        // Validate position
+        const init = this.validatePosition(tps, plyID);
+
+        const ply = this.ply;
+        this.onSearchStart({
+          tps,
+          analyzingPly: ply,
+          isAnalyzingPosition: true,
+          startTime: new Date().getTime(),
+          progress: null,
+          nodes: 0,
+          nps: 0,
+        });
+
+        const results = await this.searchPosition(
+          this.size,
+          init.halfKomi,
+          tps,
+          plyID,
+          init.isNewGame
+        );
+
+        this.onSearchEnd({
+          isAnalyzingPosition: false,
+        });
+        if (results) {
+          this.storeResults(results);
+          resolve(results);
+          return results;
+        } else {
+          reject();
+          return false;
+        }
+      } catch (error) {
+        if (error) {
+          this.onError(error);
+        }
+        reject(error);
       }
-      return results;
     });
   }
 
   //#region analyzeGame
   async analyzeGame() {
     return new Promise(async (resolve, reject) => {
-      if (this.state.isRunning) {
-        reject();
-        return false;
-      }
-
       try {
+        if (this.state.isRunning) {
+          throw "";
+        }
+
+        // Validate
+        const init = this.validatePosition(this.tps, 0);
+
+        const size = this.size;
         const concurrency = this.concurrency;
         const positions = this.getPositionsToAnalyze();
-        const total = positions.length;
-        let completed = 0;
+        const total = this.plies.length;
+        let completed = total - positions.length;
 
-        this.setState({ isRunning: true, isAnalyzingGame: true, progress: 0 });
+        if (!total) {
+          return;
+        }
+
+        if (!positions.length) {
+          // Abort and notify
+          this.onWarning("fullyAnalyzed", {
+            actions: [
+              {
+                icon: "delete",
+                label: i18n.t("analysis.Clear Saved Results"),
+                color: "textDark",
+                handler: () => {
+                  this.clearSavedResults();
+                },
+              },
+              { icon: "close", color: "textDark" },
+            ],
+          });
+          return;
+        }
+
+        this.onSearchStart({
+          isRunning: true,
+          isAnalyzingGame: true,
+          startTime: new Date().getTime(),
+          progress: (100 * completed) / total,
+          nodes: 0,
+          nps: 0,
+        });
         for await (const result of asyncPool(
           concurrency,
           positions,
@@ -628,7 +755,9 @@ export default class Bot {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
               }
               this.setState(state);
-              const results = await this.queryPosition(
+              const results = await this.searchPosition(
+                size,
+                init.halfKomi,
                 position.tps,
                 position.plyID
               );
@@ -649,19 +778,18 @@ export default class Bot {
           reject();
         }
       } catch (error) {
+        if (error) {
+          this.onError(error);
+        }
         reject(error);
-        this.setState("isRunning", false);
-        this.setState("isAnalyzingGame", false);
-        this.onError(error);
       } finally {
-        this.setState({ isRunning: false, isAnalyzingGame: false });
+        this.onSearchEnd({ isAnalyzingGame: false });
       }
     });
   }
 
   //#region storeResults
   storeResults({
-    hash = this.getSettingsHash(),
     tps,
     nps = null,
     string = "",
@@ -684,18 +812,12 @@ export default class Bot {
     }
 
     if (!tps) {
+      console.warn("Failed to store results: missing tps");
       return;
     }
 
-    if (this.state.isAnalyzingPosition && !this.meta.isInteractive) {
-      clearInterval(this.state.timer);
-      this.setState({
-        isAnalyzingPosition: false,
-        isRunning: false,
-        analyzingPly: null,
-        timer: null,
-      });
-    }
+    const startTime = this.state.startTime;
+    const hash = this.getSettingsHash();
 
     // Determine ply colors
     const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
@@ -705,10 +827,12 @@ export default class Bot {
           ? 2
           : 1
         : initialPlayer;
+
+    // Parse results
     const results = [];
     suggestions.forEach(
       ({
-        pv,
+        pv = null,
         time = null,
         depth = null,
         nodes = null,
@@ -717,17 +841,15 @@ export default class Bot {
       }) => {
         let player = initialPlayer;
         let color = initialColor;
-        pv = parsePV(player, color, pv);
-        evaluation = this.normalizeEvaluation(evaluation);
-        const ply = pv.splice(0, 1)[0];
-        const followingPlies = pv;
-        const result = {
-          ply,
-          followingPlies,
-          evaluation,
-          time,
-          hash,
-        };
+        const result = {};
+        if (pv !== null) {
+          pv = parsePV(player, color, pv);
+          result.ply = pv.splice(0, 1)[0];
+          result.followingPlies = pv;
+        }
+        if (time !== null) {
+          result.time = time;
+        }
         if (depth !== null) {
           result.depth = depth;
         }
@@ -737,19 +859,24 @@ export default class Bot {
         if (visits !== null) {
           result.visits = visits;
         }
-        results.push(result);
+        if (evaluation !== null) {
+          result.evaluation = this.normalizeEvaluation(evaluation);
+        }
+        if (!isEmpty(result)) {
+          result.startTime = startTime;
+          result.hash = hash;
+          results.push(result);
+        }
       }
     );
-    deepFreeze(results);
 
+    // Update nodes and nps
     const state = {};
-    if (this.isInteractiveEnabled && !this.state.tps) {
-      state.tps = this.tps;
+    if (results[0].nodes !== null) {
+      state.nodes = results[0].nodes;
     }
-
-    // Update time and nps
-    if (results[0].time !== null) {
-      state.time = results[0].time;
+    if (nps === null && state.nodes && results[0].time) {
+      nps = state.nodes / (results[0].time / 1000);
     }
     if (nps !== null) {
       state.nps = nps;
@@ -758,23 +885,21 @@ export default class Bot {
       this.setState(state);
     }
 
-    // Don't overwrite deeper searches for this position unless settings have changed
-    if (
+    // Store results
+    if (this.positions[tps] && this.positions[tps].startTime === startTime) {
+      // Merge with previous results
+      this.setPosition(deepFreeze({ ...this.positions[tps], ...results }));
+    } else if (
       !this.positions[tps] ||
       this.positions[tps][0].hash !== hash ||
-      this.positions[tps][0].nodes < results[0].nodes ||
-      this.positions[tps][0].depth < results[0].depth ||
-      this.positions[tps][0].time < results[0].time
+      this.positions[tps][0].nodes < results[0].nodes
     ) {
-      this.setPosition(tps, results);
+      // Don't overwrite deeper searches for this position unless settings have changed
+      this.setPosition(tps, deepFreeze(results));
     }
   }
 
   //#region Formatting
-
-  get isFullyAnalyzed() {
-    return !this.getPositionsToAnalyze().length;
-  }
 
   plyHasEvalComment(ply) {
     return (
@@ -785,7 +910,18 @@ export default class Bot {
     );
   }
 
+  sigmoid(value, sigma = 100) {
+    return 100 * (2 * (1 / (1 + Math.exp(-value / (sigma || 1)))) - 1);
+  }
+
   normalizeEvaluation(value) {
+    if (
+      "normalizeEvaluation" in this.settings
+        ? this.settings.normalizeEvaluation
+        : this.meta.normalizeEvaluation
+    ) {
+      return this.sigmoid(value, this.settings.sigma || this.meta.sigma);
+    }
     return value;
   }
 
@@ -793,7 +929,7 @@ export default class Bot {
     formatEvaluation(value);
   }
 
-  formatEvalComments(ply, pvLimit = 0) {
+  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
@@ -820,7 +956,7 @@ export default class Bot {
       }
     }
 
-    // Evaluation
+    // Evaluation, search info
     if (
       evaluationAfter !== null ||
       (positionAfter && positionAfter[0].evaluation !== null)
@@ -839,6 +975,36 @@ export default class Bot {
           evaluationAfter >= 0 ? "+" : ""
         }${evaluationAfter}`;
 
+        if (saveSearchStats && positionAfter) {
+          if (
+            positionAfter[0].depth !== null &&
+            positionAfter[0].depth !== undefined
+          ) {
+            evaluationComment += `/${positionAfter[0].depth}`;
+          }
+
+          if (
+            positionAfter[0].nodes !== null &&
+            positionAfter[0].nodes !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
+          }
+
+          if (
+            positionAfter[0].visits !== null &&
+            positionAfter[0].visits !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].visits} visits`;
+          }
+
+          if (
+            positionAfter[0].time !== null &&
+            positionAfter[0].time !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].time}ms`;
+          }
+        }
+
         // Find existing eval comment index
         if (ply.id in this.game.comments.notes) {
           const index = this.game.comments.notes[ply.id].findIndex(
@@ -853,7 +1019,7 @@ export default class Bot {
       }
 
       // Evaluation marks
-      if (this.settings.insertEvalMarks) {
+      if (store.state.analysis.insertEvalMarks) {
         if (
           evaluationBefore === null &&
           positionBefore &&
@@ -883,14 +1049,12 @@ export default class Bot {
     }
 
     // PV
-    if (positionBefore) {
+    if (positionBefore && pvLimit > 0) {
       let position = positionBefore[0];
       if (position && position.ply) {
-        let pv = [position.ply, ...position.followingPlies];
-        if (pvLimit) {
-          pv = pv.slice(0, pvLimit);
-        }
-        pv = pv.map((ply) => ply.ptn);
+        const pv = [position.ply, ...position.followingPlies]
+          .slice(0, pvLimit)
+          .map((ply) => ply.ptn);
         let pvComment = `pv ${pv.join(" ")}`;
 
         // Find existing pv comment index
@@ -915,11 +1079,17 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(pvLimit = store.state.analysis.pvLimit, plies = this.plies) {
+  saveEvalComments() {
+    const pvLimit = store.state.analysis.pvLimit;
+    const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    plies.forEach((ply) => {
+    this.plies.forEach((ply) => {
       const notes = [];
-      const evaluations = this.formatEvalComments(ply, pvLimit);
+      const evaluations = this.formatEvalComments(
+        ply,
+        pvLimit,
+        saveSearchStats
+      );
       if (evaluations.length) {
         notes.push(...evaluations);
       }

@@ -16,7 +16,6 @@ export default {
   computed: {
     show() {
       return (
-        !this.$store.state.ui.disableText &&
         this.$store.state.ui.notifyNotes &&
         (!this.$store.state.ui.showText ||
           this.$store.state.ui.textTab !== "notes")
@@ -38,9 +37,15 @@ export default {
       if (ply && ply.id >= 0 && ply.id in this.game.comments.notes) {
         notes = notes.concat(this.game.comments.notes[ply.id]);
       }
+      if (!this.$store.state.ui.notifyAnalysisNotes) {
+        notes = notes.filter(
+          (note) => note.evaluation === null && note.pv === null
+        );
+      }
       return notes.map((note) => ({
         message: note.message,
-        classes: "note cursor-pointer",
+        classes:
+          "note" + (this.$store.state.ui.disableText ? "" : " cursor-pointer"),
         color: "primary",
         actions: [],
         textColor: this.$store.state.ui.theme.primaryDark

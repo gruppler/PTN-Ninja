@@ -34,7 +34,7 @@
     <div class="bg-ui row no-wrap">
       <q-input
         ref="input"
-        @keydown.shift.enter.prevent="send"
+        @keydown.enter="send"
         @keydown.esc="cancelEdit"
         @blur="cancelEdit"
         debounce="50"
@@ -63,7 +63,7 @@
       <q-btn icon="menu_vertical" spread stretch flat dense>
         <q-menu transition-show="none" transition-hide="none" auto-close square>
           <q-list>
-            <q-item clickable @click="$store.dispatch('game/REMOVE_NOTES')">
+            <q-item clickable @click="removeAll">
               <q-item-section side>
                 <q-icon name="delete" />
               </q-item-section>
@@ -157,7 +157,12 @@ export default {
     },
   },
   methods: {
-    send() {
+    send(event) {
+      if (event.shiftKey) {
+        return; // Ignore shift+enter
+      } else {
+        event.preventDefault();
+      }
       if (this.message) {
         if (this.editing) {
           this.$store.dispatch("game/EDIT_NOTE", {
@@ -171,6 +176,7 @@ export default {
             message: this.message.trim(),
           });
         }
+        this.$refs.input.blur(); // De-select to enable clearing input on mobile
         this.message = "";
         this.$refs.input.focus();
       }
@@ -196,6 +202,9 @@ export default {
     },
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+    },
+    removeAll() {
+      this.$store.dispatch("game/REMOVE_NOTES");
     },
     isCurrent(plyID) {
       return (
@@ -227,6 +236,14 @@ export default {
 .notes {
   .q-separator {
     opacity: 0.75;
+  }
+
+  .q-field ::selection {
+    color: var(--q-color-primary) !important;
+    background: var(--q-color-textDark) !important;
+    body.primaryDark & {
+      background: var(--q-color-textLight) !important;
+    }
   }
 }
 </style>

@@ -7,7 +7,7 @@ import BoardNavigation from "./nav";
 
 import Piece from "./Piece";
 import Square from "./Square";
-
+import Result from "../PTN/Result";
 import { atoi } from "../PTN/Ply";
 
 import {
@@ -56,6 +56,7 @@ export default class Board extends Aggregation(
         pvs: {},
       },
       position: {
+        isAtEndOfMainBranch: false,
         isGameEnd: false,
         isFirstMove: true,
         move: null,
@@ -458,7 +459,8 @@ export default class Board extends Aggregation(
   }
 
   updatePositionOutput() {
-    return Object.assign(
+    const ply = this.ply;
+    const position = Object.assign(
       this.output.position,
       pick(
         this,
@@ -472,7 +474,7 @@ export default class Board extends Aggregation(
       ),
       {
         tps: this.getTPS(),
-        ply: this.ply ? this.output.ptn.allPlies[this.plyID] : null,
+        ply: ply ? this.output.ptn.allPlies[this.plyID] : null,
         boardPly: this.boardPly,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
         prevPly: this.prevPly
@@ -481,11 +483,16 @@ export default class Board extends Aggregation(
         nextPly: this.nextPly
           ? this.output.ptn.allPlies[this.nextPly.id]
           : null,
+        isAtEndOfMainBranch: this.isAtEndOfMainBranch,
         isGameEnd: this.isGameEnd,
         isGameEndFlats: this.isGameEndFlats,
         isGameEndDefault: this.isGameEndDefault,
+        flatsWithoutKomi: this.flatsWithoutKomi,
+        result: ply && ply.result ? ply.result.minimalOutput : null,
       }
     );
+
+    return position;
   }
 
   updateSelectedOutput() {
@@ -755,7 +762,7 @@ export default class Board extends Aggregation(
     if (this.ply) {
       return this.plyIsDone && Boolean(this.ply.result);
     } else if (this.game.hasTPS) {
-      return this.roads.length > 0 || this.isGameEndFlats;
+      return Boolean(this.roads.length > 0 || this.isGameEndFlats);
     }
   }
 
@@ -830,13 +837,18 @@ export default class Board extends Aggregation(
       : null;
   }
 
-  get flats() {
+  get flatsWithoutKomi() {
     let flats = [0, 0];
     this.forEachSquare((square) => {
       if (square.color && square.piece.isFlat) {
         flats[square.color - 1]++;
       }
     });
+    return flats;
+  }
+
+  get flats() {
+    let flats = this.flatsWithoutKomi;
     const komi = this.game.config.komi;
     if (komi) {
       flats[1 * (komi > 0)] += Math.abs(komi);

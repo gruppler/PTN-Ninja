@@ -180,6 +180,19 @@
           </q-item-section>
         </q-item>
 
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.sigma"
+          :disable="!buffer.meta.normalizeEvaluation"
+          :label="$t('analysis.sigma')"
+          :min="1"
+          :max="1e4"
+          :rules="[(s) => s > 0]"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
           <!-- Bot Options -->
@@ -312,6 +325,7 @@ export default {
           "connection",
           "isInteractive",
           "normalizeEvaluation",
+          "sigma",
           "sizeHalfKomis",
           "limitTypes",
         ]),
@@ -325,6 +339,7 @@ export default {
           "ssl",
         ]);
         buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
+        buffer.meta.sigma = this.bot.settings.sigma;
       }
 
       // Limit Types
@@ -407,8 +422,6 @@ export default {
       }
 
       if (this.isNew) {
-        buffer.created = new Date().getTime();
-
         reconnect = this.bot.state.isConnected;
         this.bot.disconnect();
       }

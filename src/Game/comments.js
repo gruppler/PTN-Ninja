@@ -1,7 +1,7 @@
 import Comment from "./PTN/Comment";
 import Evaluation from "./PTN/Evaluation";
 
-import { omit } from "lodash";
+import { isFunction, omit } from "lodash";
 
 export default class GameComments {
   getMoveComments(move) {
@@ -20,6 +20,7 @@ export default class GameComments {
   }
 
   _addComment(type, message, plyID) {
+    plyID = Number(plyID);
     message = Comment.parse("{" + message + "}");
     if (plyID === undefined) {
       plyID =
@@ -110,15 +111,34 @@ export default class GameComments {
     }
   }
 
-  removeAllComments(type) {
+  removeAllComments(type, filter) {
     const _remove = (type) => {
       const ids = Object.keys(this[type]);
       if (ids.length) {
-        ids.forEach((id) => {
-          this.board.dirtyComment(type, id);
-        });
-        this[type] = {};
-        return true;
+        if (isFunction(filter)) {
+          let hasRemoved = false;
+          ids.forEach((id) => {
+            let comments = this[type][id];
+            const toRemove = comments.filter(filter);
+            if (toRemove.length) {
+              comments = comments.filter((c) => !toRemove.includes(c));
+              if (comments.length === 0) {
+                this[type] = omit(this[type], id);
+              } else {
+                this[type][id] = comments;
+              }
+              this.board.dirtyComment(type, id);
+              hasRemoved = true;
+            }
+          });
+          return hasRemoved;
+        } else {
+          ids.forEach((id) => {
+            this.board.dirtyComment(type, id);
+          });
+          this[type] = {};
+          return true;
+        }
       }
       return false;
     };
@@ -163,8 +183,8 @@ export default class GameComments {
     return this.removeComment("notes", plyID, index);
   }
 
-  removeNotes() {
-    return this.removeAllComments("notes");
+  removeNotes(filter) {
+    return this.removeAllComments("notes", filter);
   }
 
   _setEvaluation(plyID, notation) {

@@ -2,6 +2,7 @@
   <div class="play-controls absolute-fit justify-center">
     <div class="row no-wrap justify-around items-center full-height">
       <q-btn
+        @touchstart="vibrate"
         @click="deletePly"
         @shortkey="deletePly"
         v-shortkey="{
@@ -11,7 +12,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="
           !position.ply ||
           plyInProgress ||
@@ -25,13 +26,14 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="first"
         @shortkey="first"
         v-shortkey="hotkeys.first"
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isFirst || plyInProgress"
         icon="first"
       >
@@ -40,6 +42,7 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="prev"
         @click.right.prevent="prev(true)"
         @shortkey="prev"
@@ -50,7 +53,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isFirst || plyInProgress"
         icon="backward"
       >
@@ -60,11 +63,12 @@
       </q-btn>
       <q-btn
         v-if="showPlayButton"
+        @touchstart="vibrate"
         @click="playpause"
         @shortkey="playpause"
         v-shortkey="hotkeys.playpause"
         round
-        :ripple="false"
+        v-ripple="false"
         color="primary"
         :text-color="primaryFG"
         :disable="!position.ply || plyInProgress"
@@ -75,6 +79,7 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="next"
         @click.right.prevent="next(true)"
         @shortkey="next"
@@ -85,7 +90,7 @@
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isLast || plyInProgress"
         icon="forward"
       >
@@ -94,13 +99,14 @@
         </hint>
       </q-btn>
       <q-btn
+        @touchstart="vibrate"
         @click="last"
         @shortkey="last"
         v-shortkey="hotkeys.last"
         stretch
         flat
         :color="fg"
-        :ripple="false"
+        v-ripple="false"
         :disable="isLast || plyInProgress"
         icon="last"
       >
@@ -113,7 +119,7 @@
         @shortkey="branchKey"
         stretch
         flat
-        :ripple="false"
+        v-ripple="false"
         :disable="branches.length < 2 || plyInProgress"
         :color="isRoot ? fg : 'primary'"
       >
@@ -136,7 +142,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { omit, pick, throttle, zipObject } from "lodash";
+import { omit, pick, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -148,15 +154,13 @@ const BRANCH_KEYS = [
 ];
 
 export default {
-  name: "PlayControls",
+  name: "NavControls",
   components: { BranchMenu },
   data() {
     return {
       isPlaying: false,
       timer: null,
       timestamp: null,
-      next: null,
-      prev: null,
       branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
@@ -240,7 +244,7 @@ export default {
         this.$store.dispatch("game/FIRST");
       }
     },
-    _prev(event) {
+    prev(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
@@ -257,7 +261,7 @@ export default {
         }
       });
     },
-    _next(event) {
+    next(event) {
       requestAnimationFrame(() => {
         if (this.isPlaying) {
           clearTimeout(this.timer);
@@ -332,6 +336,11 @@ export default {
         this.selectBranch(this.branches[this.branches.length - 1]);
       }
     },
+    vibrate() {
+      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
+        navigator.vibrate(2);
+      }
+    },
   },
   watch: {
     // Make playback speed respond immediately to speed changes
@@ -348,10 +357,6 @@ export default {
         }
       }
     },
-  },
-  created() {
-    this.next = throttle(this._next, 250);
-    this.prev = throttle(this._prev, 250);
   },
 };
 </script>

@@ -28,6 +28,9 @@
       rs,
       rw,
     }"
+    :style="{
+      '--highlighter-color': highlighterColor,
+    }"
     @mouseover="mouseover"
     @mouseout="mouseout"
     @click.left="select()"
@@ -41,20 +44,19 @@
       :style="{ backgroundColor: highlighterColor }"
     />
     <div class="road" v-if="showRoads">
-      <div v-if="en" class="n" />
-      <div v-if="ee" class="e" />
-      <div class="s" :class="{ es }" />
-      <div class="w" :class="{ ew }" />
+      <div v-if="es" class="s" />
+      <div v-if="ew" class="w" />
+      <div class="n" :class="{ en }" />
+      <div class="e" :class="{ ee }" />
       <div class="center" />
     </div>
-    <div class="stack-count" v-if="!disableStackCounts" v-show="stackCount">
-      <span
-        :style="{
-          backgroundColor:
-            highlighterEnabled && isHighlighted ? highlighterColor : '',
-        }"
-        >{{ stackCount }}</span
-      >
+    <div class="numbers">
+      <span v-if="showAxisLabels && (es || ew)" class="axis-label">{{
+        coord
+      }}</span>
+      <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
+        stackCount
+      }}</span>
     </div>
   </div>
 </template>
@@ -182,8 +184,17 @@ export default {
     disabled() {
       return this.$store.getters["game/disabledOptions"];
     },
+    showAxisLabels() {
+      return (
+        this.$store.state.ui.axisLabels && this.$store.state.ui.axisLabelsSmall
+      );
+    },
     showRoads() {
-      return !this.game.config.disableRoads && this.$store.state.ui.showRoads;
+      return (
+        !this.game.config.disableRoads &&
+        this.$store.state.ui.showRoads &&
+        !this.game.position.isGameEndFlats
+      );
     },
     stackCounts() {
       return this.$store.state.ui.stackCounts;
@@ -216,31 +227,31 @@ export default {
       return this.square.static.edges.W;
     },
     n() {
-      return this.en && this.square.connected.N;
+      return this.square.connected.N;
     },
     s() {
-      return this.square.connected.S;
+      return this.es && this.square.connected.S;
     },
     e() {
-      return this.ee && this.square.connected.E;
+      return this.square.connected.E;
     },
     w() {
-      return this.square.connected.W;
+      return this.ew && this.square.connected.W;
     },
     connected() {
       return this.square.connected.length > 0;
     },
     rn() {
-      return this.en && this.square.roads.N;
+      return this.square.roads.N;
     },
     rs() {
-      return this.square.roads.S;
+      return this.es && this.square.roads.S;
     },
     re() {
-      return this.ee && this.square.roads.E;
+      return this.square.roads.E;
     },
     rw() {
-      return this.square.roads.W;
+      return this.ew && this.square.roads.W;
     },
     road() {
       return this.square.roads.length > 0;
@@ -293,6 +304,9 @@ export default {
 </script>
 
 <style lang="scss">
+$transition-easing-road-in: cubic-bezier(1, 0, 0.5, 0);
+$transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
+
 .square {
   position: relative;
 
@@ -302,10 +316,8 @@ export default {
   .board-container.grid1 &,
   .board-container.grid2 &,
   .board-container.grid3 & {
-    background: $board2;
     background: var(--q-color-board2);
     &:before {
-      background: $board1;
       background: var(--q-color-board1);
       content: "";
       position: absolute;
@@ -317,7 +329,6 @@ export default {
     body.boardChecker &.dark {
       background: transparent;
       &:before {
-        background: $board2;
         background: var(--q-color-board2);
       }
     }
@@ -362,7 +373,6 @@ export default {
   }
   body.boardChecker .board-container.blank & {
     &.dark {
-      background: $board2;
       background: var(--q-color-board2);
     }
   }
@@ -374,13 +384,12 @@ export default {
     left: 0;
     right: 0;
     opacity: 0;
-    transition: background-color $generic-hover-transition,
-      opacity $generic-hover-transition;
-    will-change: background-color, opacity;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing;
+    transition-property: background-color, opacity;
   }
 
   .hl.ring {
-    opacity: $rings-opacity;
     opacity: var(--rings-opacity);
   }
   .hl.ring1 {
@@ -397,7 +406,6 @@ export default {
   }
 
   .hl.current {
-    background-color: $primary;
     background-color: var(--q-color-primary);
   }
   .board-container.highlight-squares &.current {
@@ -406,6 +414,9 @@ export default {
     }
     &.primary .hl.current {
       opacity: 0.75;
+    }
+    .numbers span {
+      background-color: var(--q-color-primary) !important;
     }
   }
   .board-container.highlighter & .hl {
@@ -419,29 +430,26 @@ export default {
     .hl.highlighter {
       opacity: 0.75;
     }
-    .stack-count span {
-      color: $textDark !important;
+    .numbers span {
+      background-color: var(--highlighter-color) !important;
       color: var(--q-color-textDark) !important;
     }
-    &.highlighterDark .stack-count span {
-      color: $textLight !important;
+    &.highlighterDark .numbers span {
       color: var(--q-color-textLight) !important;
     }
   }
 
-  .stack-count {
+  .numbers {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    font-size: 0.6em;
+    font-size: min(0.15em, 15px);
     line-height: 1em;
     pointer-events: none;
     span {
-      color: $textDark;
       color: var(--q-color-textDark);
-      background-color: $board2;
       background-color: var(--q-color-board2);
       display: block;
       position: absolute;
@@ -451,74 +459,59 @@ export default {
       height: 1.5em;
       line-height: 1.5em;
       border-radius: 50%;
-      transition: background-color $generic-hover-transition,
-        color $generic-hover-transition;
-      will-change: background-color, color;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing;
+      transition-property: background-color, color;
     }
   }
-  &.no-stack-counts:not(.selected):not(:hover) .stack-count span {
+  .axis-label {
+    right: auto;
+    left: 0;
+    text-shadow: none !important;
+  }
+  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
     display: none;
   }
-  body.boardChecker.board2Dark &.light .stack-count span {
-    color: $textLight;
+  body.boardChecker.board2Dark &.light .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board2;
     background-color: var(--q-color-board2);
   }
-  body.boardChecker.board1Dark &.dark .stack-count span {
-    color: $textLight;
+  body.boardChecker.board1Dark &.dark .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board1;
     background-color: var(--q-color-board1);
   }
-  body:not(.boardChecker).board2Dark & .stack-count span {
-    color: $textLight;
+  body:not(.boardChecker).board2Dark & .numbers span {
     color: var(--q-color-textLight);
-    background-color: $board2;
     background-color: var(--q-color-board2);
   }
-  body.primaryDark
-    .board-container.highlight-squares
-    &.current
-    .stack-count
-    span {
-    color: $textLight;
+  body.primaryDark .board-container.highlight-squares &.current .numbers span {
     color: var(--q-color-textLight);
-    background-color: $primary;
-    background-color: var(--q-color-primary);
   }
   body:not(.primaryDark)
     .board-container.highlight-squares
     &.current
-    .stack-count
+    .numbers
     span {
-    color: $textDark;
     color: var(--q-color-textDark);
-    background-color: $primary;
-    background-color: var(--q-color-primary);
   }
 
   .board-container.turn-1 & {
     .hl.player {
-      background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
   }
   .board-container.turn-1:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
-      background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2 & {
     .hl.player {
-      background-color: $player2road;
       background-color: var(--q-color-player2road);
     }
   }
   .board-container.turn-2:not(.pieces-selected) & {
     &.placed:not(.eog) .hl.player {
-      background-color: $player1road;
       background-color: var(--q-color-player1road);
     }
   }
@@ -535,11 +528,9 @@ export default {
     opacity: 0.4;
   }
   &.eog.p1 .hl.player {
-    background-color: $player1road;
     background-color: var(--q-color-player1road);
   }
   &.eog.p2 .hl.player {
-    background-color: $player2road;
     background-color: var(--q-color-player2road);
   }
   @media (pointer: fine) {
@@ -561,9 +552,9 @@ export default {
     > div {
       opacity: 0;
       position: absolute;
-      will-change: opacity, top, bottom, left, right;
-      transition: opacity $half-time $easing-reverse,
-        background-color $half-time $easing-reverse;
+      transition-duration: $transition-duration;
+      transition-timing-function: $transition-easing-road-out;
+      transition-property: opacity, background-color;
       &.center {
         top: 33.33%;
         bottom: 33.33%;
@@ -581,26 +572,26 @@ export default {
         bottom: 33.33%;
       }
       &.n {
-        top: 0;
+        top: -33.33%;
         bottom: 66.67%;
+        &.en {
+          top: 0;
+        }
       }
       &.s {
         top: 66.67%;
-        bottom: -33.33%;
-        &.es {
-          bottom: 0;
-        }
+        bottom: 0;
       }
       &.e {
         left: 66.67%;
-        right: 0;
+        right: -33.33%;
+        &.ee {
+          right: 0;
+        }
       }
       &.w {
-        left: -33.33%;
+        left: 0;
         right: 66.67%;
-        &.ew {
-          left: 0;
-        }
       }
     }
   }
@@ -610,8 +601,9 @@ export default {
   &.s .road .s,
   &.w .road .w {
     opacity: 0.2;
-    transition: opacity $half-time $easing $half-time,
-      background-color $half-time $easing $half-time;
+    transition-duration: $transition-duration;
+    transition-timing-function: $transition-easing-road-in;
+    transition-property: opacity, background-color;
   }
   &.road .road .center,
   &.rn .road .n,
@@ -621,11 +613,9 @@ export default {
     opacity: 0.8;
   }
   &.p1 .road > div {
-    background-color: $player1road;
     background-color: var(--q-color-player1road);
   }
   &.p2 .road > div {
-    background-color: $player2road;
     background-color: var(--q-color-player2road);
   }
 

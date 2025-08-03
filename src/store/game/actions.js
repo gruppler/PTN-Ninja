@@ -234,9 +234,18 @@ export const REPLACE_GAME = function (
         message: i18n.t("success.replacedExistingGame"),
         timeout: 1e4,
         progress: true,
-        multiLine: false,
         actions: [
           {
+            icon: "open_in_new",
+            label: i18n.t("Duplicate"),
+            color: "primary",
+            handler: () => {
+              dispatch("UNDO", game);
+              dispatch("ADD_GAME", game);
+            },
+          },
+          {
+            icon: "undo",
             label: i18n.t("Undo"),
             color: "primary",
             handler: () => {
@@ -508,7 +517,7 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
           games.forEach((ptn, i) => {
             parseGame(
               ptn,
-              games.length > 1 ? name + " - " + i18n.t("Game x", i + 1) : name
+              games.length > 1 ? name + " - " + i18n.tc("Game x", i + 1) : name
             );
           });
         };
@@ -552,6 +561,9 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 
 export const RENAME_CURRENT_GAME = function ({ commit, dispatch }, newName) {
   const oldName = Vue.prototype.$game.name;
+  if (oldName === newName) {
+    return;
+  }
   commit("RENAME_CURRENT_GAME", newName);
   dispatch("SET_NAME", { oldName, newName });
   setTimeout(() => {
@@ -600,16 +612,21 @@ export const SET_NAME = async function (
   { commit, getters },
   { oldName, newName }
 ) {
-  try {
-    const game = await gamesDB.get("games", oldName);
-    if (!game) {
-      throw new Error("Game not found: " + oldName);
+  if (oldName === newName) {
+    return;
+  }
+  if (!this.state.ui.embed) {
+    try {
+      const game = await gamesDB.get("games", oldName);
+      if (!game) {
+        throw new Error("Game not found: " + oldName);
+      }
+      game.name = getters.uniqueName(newName, true);
+      await gamesDB.put("games", game);
+      await gamesDB.delete("games", oldName);
+    } catch (error) {
+      notifyError(error);
     }
-    game.name = getters.uniqueName(newName, true);
-    await gamesDB.put("games", game);
-    await gamesDB.delete("games", oldName);
-  } catch (error) {
-    notifyError(error);
   }
   commit("SET_NAME", { oldName, newName });
 };
@@ -670,6 +687,10 @@ export const SET_EVAL = function ({ commit }, args) {
   commit("SET_EVAL", args);
 };
 
+export const SET_ANALYSIS = function ({ commit }, args) {
+  commit("SET_ANALYSIS", args);
+};
+
 export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME", true);
@@ -690,6 +711,11 @@ export const CANCEL_MOVE = function ({ commit }) {
 
 export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
   commit("DELETE_PLY", plyID);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const APPEND_PLY = function ({ commit, dispatch }, ply) {
+  commit("APPEND_PLY", ply);
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -852,5 +878,10 @@ export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
 
 export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_ANALYSIS_NOTES = function ({ commit, dispatch }) {
+  commit("REMOVE_ANALYSIS_NOTES");
   dispatch("SAVE_CURRENT_GAME", true);
 };

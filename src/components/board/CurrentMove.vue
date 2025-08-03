@@ -6,7 +6,7 @@
         :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
         :class="{ hidden: this.$store.state.ui.showPTN }"
-        :ripple="false"
+        v-ripple="false"
         :color="btnColor"
         dense
         flat
@@ -86,7 +86,7 @@ export default {
       opacity: 0;
       pointer-events: none;
     }
-    transform: translateY(calc(100% - 16px));
+    transform: translateY(calc(100% - 14px));
   }
 }
 </style>

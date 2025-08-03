@@ -250,6 +250,17 @@ export default class BoardNavigation {
     this.setRoads(this.findRoads());
   }
 
+  get isAtEndOfMainBranch() {
+    return !this.ply || (!this.ply.branch && !this.nextPly && this.plyIsDone);
+  }
+
+  goToEndOfMainBranch() {
+    const lastPly = this.game.plies.findLast((ply) => !ply.branch);
+    if (lastPly) {
+      return this.goToPly(lastPly.id, true);
+    }
+  }
+
   goToPly(plyID, isDone = false) {
     try {
       const targetPly = this.game.plies[plyID];

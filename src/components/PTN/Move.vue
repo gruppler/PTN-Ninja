@@ -198,7 +198,6 @@ export default {
   .nop {
     font-family: "Source Code Pro";
     padding: 4px 8px;
-    color: $player1;
     color: var(--q-color-player1);
     white-space: nowrap;
     display: inline-block;
@@ -214,7 +213,6 @@ export default {
     display: inline-block;
     border-radius: 5px;
     padding: 0 0.5em;
-    background-color: $panel;
     background-color: var(--q-color-panel);
   }
 
