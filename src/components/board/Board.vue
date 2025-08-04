@@ -231,16 +231,10 @@ export default {
       return this.$store.state.game.ptn;
     },
     showEvaluation() {
-      return (
-        this.$store.state.ui.embed ||
-        (this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar)
-      );
+      return this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar;
     },
     evaluation() {
-      if (
-        this.$store.state.ui.embed &&
-        this.$store.state.game.evaluation !== null
-      ) {
+      if (this.$store.state.game.evaluation !== null) {
         return this.$store.state.game.evaluation;
       } else if (this.position.boardPly) {
         return this.$store.state.game.comments.evaluations[
