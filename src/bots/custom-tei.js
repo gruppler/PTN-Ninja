@@ -53,7 +53,10 @@ export default class CustomTeiBot extends TeiBot {
       meta = omit(meta, FIXED_META_KEYS);
     }
     if (meta.options) {
-      meta.options = omit(meta.options, Object.keys(this.meta.presetOptions));
+      meta.options = omit(
+        meta.options,
+        Object.keys(meta.presetOptions || this.meta.presetOptions)
+      );
     }
     if (!isEmpty(meta)) {
       super.setMeta(meta);
