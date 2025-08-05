@@ -44,7 +44,7 @@ export default {
   components: { ColorPicker },
   data() {
     return {
-      hotkeys: HOTKEYS.HIGHLIGHTER,
+      hotkeys: { ...HOTKEYS.HIGHLIGHTER, ...HOTKEYS.CONTROLS },
       colorNames: HOTKEY_NAMES.HIGHLIGHTER,
     };
   },
@@ -97,8 +97,30 @@ export default {
         if (color) {
           this.selectedColor = color;
         }
-      } else if (key === "clear") {
-        this.clear();
+      } else {
+        switch (key) {
+          case "clear":
+            this.clear();
+            break;
+          case "prev":
+            this.$store.dispatch("game/PREV", { half: false });
+            break;
+          case "prevHalf":
+            this.$store.dispatch("game/PREV", { half: true });
+            break;
+          case "next":
+            this.$store.dispatch("game/NEXT", { half: false });
+            break;
+          case "nextHalf":
+            this.$store.dispatch("game/NEXT", { half: true });
+            break;
+          case "first":
+            this.$store.dispatch("game/FIRST");
+            break;
+          case "last":
+            this.$store.dispatch("game/LAST");
+            break;
+        }
       }
     },
   },
