@@ -38,9 +38,6 @@ export default {
     suggestion: Object,
   },
   computed: {
-    botState() {
-      return this.$store.state.analysis.botState;
-    },
     seconds() {
       return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
     },
@@ -54,9 +51,11 @@ export default {
         return null;
       }
 
-      const suggestions = this.$store.state.analysis.botPositions[tps];
-      if (suggestions) {
-        return suggestions[0];
+      if (this.$store.state.analysis) {
+        const suggestions = this.$store.state.analysis.botPositions[tps];
+        if (suggestions) {
+          return suggestions[0];
+        }
       }
 
       return this.$store.getters["game/suggestion"](tps);
