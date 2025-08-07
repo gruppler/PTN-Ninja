@@ -15,7 +15,12 @@
     >
       <q-item-section>
         <q-item-label v-if="ply !== null">
-          <Ply :ply="ply" no-click done>
+          <Ply
+            :ply="ply"
+            no-click
+            :selected="selectedCount > 0"
+            :done="doneCount > 0"
+          >
             <PlyPreview
               :tps="tps"
               :plies="[ply.text]"
@@ -131,6 +136,8 @@
           :ply="fPly"
           :no-click="isBoardDisabled"
           @click.stop.prevent.capture="insertFollowingPlies(i)"
+          :selected="selectedCount > i + 1"
+          :done="doneCount > i + 1"
         >
           <PlyPreview
             :tps="tps"
@@ -189,6 +196,14 @@ export default {
     visits: {
       type: Number,
       default: null,
+    },
+    doneCount: {
+      type: Number,
+      default: 1,
+    },
+    selectedCount: {
+      type: Number,
+      default: 0,
     },
     animate: Boolean,
     fixedHeight: Boolean,

@@ -22,7 +22,7 @@
             (botState &&
               (botState.isInteractiveEnabled ||
                 botState.isAnalyzingGame ||
-                (botState.isRunning && botState.tps === this.tps)))
+                (botState.isRunning && botState.tps === tps)))
           "
         >
           <q-linear-progress
@@ -153,13 +153,15 @@ export default {
         ? "textLight"
         : "textDark";
     },
+    game() {
+      return this.$store.state.game;
+    },
     tps() {
-      return this.$store.state.game.position.tps;
+      return this.game.position.tps;
     },
     isGameEnd() {
       return (
-        this.$store.state.game.position.isGameEnd &&
-        !this.$store.state.game.position.isGameEndDefault
+        this.game.position.isGameEnd && !this.game.position.isGameEndDefault
       );
     },
     showAllBranches() {
@@ -181,8 +183,8 @@ export default {
           (!this.analysis.ply || this.analysis.followingPlies)
         ) {
           const pv = parsePV(
-            this.$store.state.game.position.turn,
-            this.$store.state.game.position.color,
+            this.game.position.turn,
+            this.game.position.color,
             isArray(this.analysis.pv)
               ? this.analysis.pv
               : this.analysis.pv.split(/\s+/)
@@ -204,61 +206,7 @@ export default {
         }
       }
 
-      // Get suggestion from notes
-      const game = this.$store.state.game;
-      const tps = this.tps;
-      const suggestion = {
-        ply: null,
-        followingPlies: [],
-        evaluation: null,
-        depth: null,
-        nodes: null,
-        time: null,
-        visits: null,
-      };
-      let notes;
-      let note;
-      let ply;
-      for (let id in game.comments.notes) {
-        notes = game.comments.notes[id];
-        ply = game.ptn.allPlies[id];
-        if (!ply) {
-          continue;
-        }
-        if (suggestion.ply === null && ply.tpsBefore === tps) {
-          note = notes.find((n) => n.pv !== null);
-          if (note) {
-            const pv = parsePV(ply.player, ply.color, note.pv[0]);
-            suggestion.ply = pv.splice(0, 1)[0];
-            suggestion.followingPlies = pv;
-          }
-        }
-        if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
-          note = notes.find((n) => n.evaluation !== null);
-          if (note) {
-            suggestion.evaluation = note.evaluation;
-            if (note.depth !== null) {
-              suggestion.depth = note.depth;
-            }
-            if (note.nodes !== null) {
-              suggestion.nodes = note.nodes;
-            }
-            if (note.visits !== null) {
-              suggestion.visits = note.visits;
-            }
-            if (note.ms !== null) {
-              suggestion.time = note.ms;
-            }
-          }
-        }
-        if (suggestion.ply && suggestion.evaluation) {
-          break;
-        }
-      }
-
-      return suggestion.ply || suggestion.evaluation !== null
-        ? suggestion
-        : null;
+      return this.$store.getters["game/suggestion"](this.tps);
     },
     progress() {
       if (this.botSuggestion && "progress" in this.botSuggestion) {
