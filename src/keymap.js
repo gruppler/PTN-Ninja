@@ -51,6 +51,7 @@ export const HOTKEYS = {
     color5: ["4"],
     color6: ["5"],
     clear: ["esc"],
+    toggle: ["h"],
   },
   MOVES: {
     selectDropFriendly: ["`"],
@@ -95,7 +96,6 @@ export const HOTKEYS = {
     axisLabelsSmall: ["shift", "x"],
     board3D: ["d"],
     showRoads: ["r"],
-    highlighterEnabled: ["h"],
     highlightSquares: ["shift", "h"],
     turnIndicator: ["t"],
     flatCounts: ["f"],
@@ -170,6 +170,7 @@ export const HOTKEY_NAMES = {
     color5: "Negative",
     color6: "theme.primary",
     clear: "Clear",
+    toggle: "Toggle Highlighter",
   },
   MOVES: {
     selectDropFriendly: "Select/Drop Next Friendly",
@@ -213,7 +214,6 @@ export const HOTKEY_NAMES = {
     axisLabelsSmall: "Axis Labels Small",
     board3D: "3D Board",
     showRoads: "Road Connections",
-    highlighterEnabled: "Highlighter",
     highlightSquares: "Highlight Squares",
     turnIndicator: "Turn Indicator",
     flatCounts: "Flat Counts",

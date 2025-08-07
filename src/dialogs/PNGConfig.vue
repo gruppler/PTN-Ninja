@@ -295,14 +295,14 @@ export default {
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.hlSquares =
-        config.highlightSquares && !this.$store.state.ui.highlighterEnabled;
-      config.transform = this.$store.state.ui.boardTransform;
+        config.highlightSquares && !this.$store.state.game.highlighterEnabled;
+      config.transform = this.$store.state.game.boardTransform;
 
       if (
-        this.$store.state.ui.highlighterEnabled &&
-        Object.keys(this.$store.state.ui.highlighterSquares).length
+        this.$store.state.game.highlighterEnabled &&
+        Object.keys(this.$store.state.game.highlighterSquares).length
       ) {
-        config.highlighter = this.$store.state.ui.highlighterSquares;
+        config.highlighter = this.$store.state.game.highlighterSquares;
       }
 
       const ply = this.game.position.ply;

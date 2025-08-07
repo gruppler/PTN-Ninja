@@ -86,12 +86,12 @@ export default {
         this.piece && !this.piece.typeCode && this.game.position.isGameEndFlats
       );
     },
-    highlighterEnabled() {
-      return this.$store.state.ui.highlighterEnabled;
+    isHighlighting() {
+      return this.$store.state.game.highlighterEnabled;
     },
     highlighterColor() {
       return (
-        this.$store.state.ui.highlighterSquares[this.coord] ||
+        this.$store.state.game.highlighterSquares[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
     },
@@ -99,7 +99,7 @@ export default {
       return this.isHighlighted && isDark(this.highlighterColor);
     },
     isHighlighted() {
-      return this.coord in this.$store.state.ui.highlighterSquares;
+      return this.coord in this.$store.state.game.highlighterSquares;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -139,7 +139,7 @@ export default {
       return ring;
     },
     current() {
-      if (this.highlighterEnabled) {
+      if (this.isHighlighting) {
         return false;
       } else if (this.game.hlSquares.length) {
         return this.game.hlSquares.includes(this.square.static.coord);
@@ -296,7 +296,7 @@ export default {
     },
     select(alt = false) {
       // Highlighter
-      if (this.highlighterEnabled) {
+      if (this.isHighlighting) {
         return;
       }
 

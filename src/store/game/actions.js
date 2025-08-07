@@ -51,6 +51,9 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   if (game.editingTPS !== undefined) {
     newGame.editingTPS = game.editingTPS;
   }
+  if (game.highlighterSquares !== undefined) {
+    newGame.highlighterSquares = game.highlighterSquares;
+  }
 
   try {
     Loading.show();
@@ -400,17 +403,16 @@ export const EXPORT_PNG = function ({ state }) {
     tps: game.position.tps,
     theme: this.getters["ui/theme"](this.state.ui.pngConfig.themeID),
     hlSquares:
-      this.state.ui.pngConfig.highlightSquares &&
-      !this.state.ui.highlighterEnabled,
+      this.state.ui.pngConfig.highlightSquares && !state.highlighterEnabled,
     transform: this.state.ui.boardTransform,
   };
 
   // Highlights
   if (
-    this.state.ui.highlighterEnabled &&
-    Object.keys(this.state.ui.highlighterSquares).length
+    state.highlighterEnabled &&
+    Object.keys(state.highlighterSquares).length
   ) {
-    options.highlighter = this.state.ui.highlighterSquares;
+    options.highlighter = state.highlighterSquares;
   }
 
   const ply = game.position.ply;
@@ -586,6 +588,8 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         state: game.minState,
         config: game.config,
         editingTPS: game.editingTPS,
+        highlighterEnabled: game.highlighterEnabled,
+        highlighterSquares: game.highlighterSquares,
         history: game.history,
         historyIndex: game.historyIndex,
         lastSeen: new Date(),
@@ -660,18 +664,47 @@ export const SELECT_GAME = function (
   { commit, dispatch, state },
   { index, immediate }
 ) {
-  if (immediate) {
-    commit("SELECT_GAME", index);
-  } else {
-    Loading.show();
-    setTimeout(() => {
-      this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
-        commit("SELECT_GAME", index);
-        await dispatch("SET_GAME", state.list[0]);
-        dispatch("SAVE_CURRENT_GAME", false);
-        Loading.hide();
-      });
-    }, 200);
+  try {
+    const game = { ...state.list[index] };
+    game.lastSeen = new Date();
+    if (immediate) {
+      commit("SELECT_GAME", index);
+    } else {
+      Loading.show();
+      setTimeout(() => {
+        this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
+          commit("SELECT_GAME", index);
+          await dispatch("SET_GAME", state.list[0]);
+          dispatch("SAVE_CURRENT_GAME", false);
+          Loading.hide();
+        });
+      }, 200);
+    }
+    return gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+};
+
+export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
+  commit("SET_HIGHLIGHTER_ENABLED", enabled);
+  const game = { ...state.list[0] };
+  try {
+    game.highlighterEnabled = Boolean(enabled);
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+};
+
+export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
+  commit("SET_HIGHLIGHTER_SQUARES", squares);
+  const game = { ...state.list[0] };
+  try {
+    game.highlighterSquares = squares || {};
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
   }
 };
 

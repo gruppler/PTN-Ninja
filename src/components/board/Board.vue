@@ -23,7 +23,7 @@
         'no-animations': disableAnimations,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
-        highlighter: highlighterEnabled,
+        highlighter: isHighlighting,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
@@ -300,9 +300,6 @@ export default {
           (this.space && this.space.width < this.space.height))
       );
     },
-    highlighterEnabled() {
-      return this.$store.state.ui.highlighterEnabled;
-    },
     ratio() {
       // Round to prevent jitter at some dimensions
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
@@ -366,7 +363,7 @@ export default {
       return !["local", "game"].includes(this.$route.name);
     },
     isHighlighting() {
-      return this.$store.state.ui.highlighterEnabled;
+      return this.$store.state.game.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -396,7 +393,7 @@ export default {
         const color =
           this.$store.state.ui.highlighterColor ||
           this.$store.state.ui.theme.colors.primary;
-        const squares = { ...this.$store.state.ui.highlighterSquares };
+        const squares = { ...this.$store.state.game.highlighterSquares };
         this.highlighting =
           !(coord in squares) || squares[coord] !== color ? 1 : 2;
       } else {
@@ -418,16 +415,16 @@ export default {
       const color =
         this.$store.state.ui.highlighterColor ||
         this.$store.state.ui.theme.colors.primary;
-      const squares = { ...this.$store.state.ui.highlighterSquares };
+      const squares = { ...this.$store.state.game.highlighterSquares };
       if (
         this.highlighting === 1 &&
         (!(coord in squares) || squares[coord] !== color)
       ) {
         squares[coord] = color;
-        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
       } else if (this.highlighting > 1 && coord in squares) {
         delete squares[coord];
-        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
       }
     },
     highlightEnd(event) {

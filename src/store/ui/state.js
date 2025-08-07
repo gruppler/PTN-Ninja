@@ -34,8 +34,6 @@ const defaultState = {
   hapticNavControls: true,
   highlighterColor: "",
   highlighterCustomColor: "",
-  highlighterEnabled: false,
-  highlighterSquares: {},
   highlightSquares: true,
   isPortrait: false,
   isVertical: false,
