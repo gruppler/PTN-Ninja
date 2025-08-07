@@ -29,8 +29,18 @@ export const isValidSquare = (state) => (square) => {
   }
 };
 
+export const nextNeighbor = () => () => {
+  const game = Vue.prototype.$game;
+  if (game) {
+    const square = game.board.getNextNeighbor();
+    if (square) {
+      return square.static.coord;
+    }
+  }
+};
+
 export const playerIcon =
-  (state) =>
+  () =>
   (player, isPrivate = false) => {
     switch (player) {
       case 1:

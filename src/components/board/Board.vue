@@ -374,8 +374,11 @@ export default {
       if (srcKey === "cancelMove") {
         this.$store.dispatch("game/CANCEL_MOVE");
       } else {
-        let square = this.$store.state.game.hoveredSquare;
         const count = srcKey.slice(10).toLowerCase();
+        const square =
+          this.$store.state.game.selected.moveset.length > 1
+            ? this.$store.getters["ui/nextNeighbor"]()
+            : this.$store.state.game.hoveredSquare;
         if (square !== null) {
           this.$store.dispatch("game/SELECT_DROP_PIECES", { square, count });
         }
