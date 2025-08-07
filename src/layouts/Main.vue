@@ -446,7 +446,7 @@ export default {
       return "";
     },
     isHighlighting() {
-      return this.$store.state.ui.highlighterEnabled;
+      return this.$store.state.game.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;

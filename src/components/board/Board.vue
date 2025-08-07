@@ -23,7 +23,7 @@
         'no-animations': disableAnimations,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
-        highlighter: highlighterEnabled,
+        highlighter: isHighlighting,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
@@ -231,16 +231,10 @@ export default {
       return this.$store.state.game.ptn;
     },
     showEvaluation() {
-      return (
-        this.$store.state.ui.embed ||
-        (this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar)
-      );
+      return this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar;
     },
     evaluation() {
-      if (
-        this.$store.state.ui.embed &&
-        this.$store.state.game.evaluation !== null
-      ) {
+      if (this.$store.state.game.evaluation !== null) {
         return this.$store.state.game.evaluation;
       } else if (this.position.boardPly) {
         return this.$store.state.game.comments.evaluations[
@@ -306,9 +300,6 @@ export default {
           (this.space && this.space.width < this.space.height))
       );
     },
-    highlighterEnabled() {
-      return this.$store.state.ui.highlighterEnabled;
-    },
     ratio() {
       // Round to prevent jitter at some dimensions
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
@@ -372,7 +363,7 @@ export default {
       return !["local", "game"].includes(this.$route.name);
     },
     isHighlighting() {
-      return this.$store.state.ui.highlighterEnabled;
+      return this.$store.state.game.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -383,8 +374,11 @@ export default {
       if (srcKey === "cancelMove") {
         this.$store.dispatch("game/CANCEL_MOVE");
       } else {
-        let square = this.$store.state.game.hoveredSquare;
         const count = srcKey.slice(10).toLowerCase();
+        const square =
+          this.$store.state.game.selected.moveset.length > 1
+            ? this.$store.getters["ui/nextNeighbor"]()
+            : this.$store.state.game.hoveredSquare;
         if (square !== null) {
           this.$store.dispatch("game/SELECT_DROP_PIECES", { square, count });
         }
@@ -402,7 +396,7 @@ export default {
         const color =
           this.$store.state.ui.highlighterColor ||
           this.$store.state.ui.theme.colors.primary;
-        const squares = { ...this.$store.state.ui.highlighterSquares };
+        const squares = { ...this.$store.state.game.highlighterSquares };
         this.highlighting =
           !(coord in squares) || squares[coord] !== color ? 1 : 2;
       } else {
@@ -424,16 +418,16 @@ export default {
       const color =
         this.$store.state.ui.highlighterColor ||
         this.$store.state.ui.theme.colors.primary;
-      const squares = { ...this.$store.state.ui.highlighterSquares };
+      const squares = { ...this.$store.state.game.highlighterSquares };
       if (
         this.highlighting === 1 &&
         (!(coord in squares) || squares[coord] !== color)
       ) {
         squares[coord] = color;
-        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
       } else if (this.highlighting > 1 && coord in squares) {
         delete squares[coord];
-        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", squares]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
       }
     },
     highlightEnd(event) {

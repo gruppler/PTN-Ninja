@@ -429,6 +429,9 @@ export default {
       if (await this.$store.dispatch("analysis/SAVE_BOT", buffer)) {
         if (reconnect) {
           this.bot.connect();
+        } else if (!this.bot.hasOptions) {
+          // Intialize automatically if no options
+          this.bot.applyOptions();
         }
         this.close();
       }

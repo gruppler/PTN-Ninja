@@ -99,6 +99,21 @@ export default class BoardIX {
     return false;
   }
 
+  getNextNeighbor() {
+    if (this.selected.moveset.length <= 1) {
+      return null;
+    }
+    const currentSquare = this.selected.pieces[0].square;
+    const prevSquare = this.selected.squares[this.selected.squares.length - 2];
+    const direction = { "+": "N", "-": "S", ">": "E", "<": "W" }[
+      Ply.getDirection([
+        currentSquare.static.x - prevSquare.static.x,
+        currentSquare.static.y - prevSquare.static.y,
+      ])
+    ];
+    return currentSquare.static.neighbors[direction] || null;
+  }
+
   selectUnplayedPiece(type, toggleWall = false) {
     if (this.isGameEnd) {
       return false;

@@ -4,7 +4,12 @@
     v-shortkey="isDialogOpen ? null : hotkeys"
     @shortkey="hotkey($event.srcKey)"
   >
-    <ColorPicker v-model="selectedColor" :palette="palette" icon="edit" stretch>
+    <ColorPicker
+      v-model="selectedColor"
+      :palette="pickerPalette"
+      icon="edit"
+      stretch
+    >
       <hint>{{ $t("Edit") }}</hint>
     </ColorPicker>
 
@@ -37,15 +42,16 @@
 import ColorPicker from "./ColorPicker";
 import { colors } from "quasar";
 import { HOTKEYS, HOTKEY_NAMES } from "../../keymap";
-import { isEmpty } from "lodash";
+import { compact, isEmpty, omit, uniq } from "lodash";
 
 export default {
   name: "Highlighter",
   components: { ColorPicker },
   data() {
     return {
-      hotkeys: HOTKEYS.HIGHLIGHTER,
+      hotkeys: { ...omit(HOTKEYS.HIGHLIGHTER, "toggle"), ...HOTKEYS.CONTROLS },
       colorNames: HOTKEY_NAMES.HIGHLIGHTER,
+      recentColors: [],
     };
   },
   computed: {
@@ -64,6 +70,9 @@ export default {
         }
       },
     },
+    usedColors() {
+      return Object.values(this.$store.state.game.highlighterSquares);
+    },
     palette() {
       const themeColors = this.$store.state.ui.theme.colors;
       const palette = [
@@ -76,8 +85,11 @@ export default {
       ];
       return palette;
     },
+    pickerPalette() {
+      return this.palette.slice(1).concat(this.recentColors);
+    },
     isEmpty() {
-      return isEmpty(this.$store.state.ui.highlighterSquares);
+      return isEmpty(this.$store.state.game.highlighterSquares);
     },
     isDialogOpen() {
       return !["local", "game"].includes(this.$route.name);
@@ -86,9 +98,9 @@ export default {
   methods: {
     clear() {
       if (this.isEmpty) {
-        this.$store.dispatch("ui/SET_UI", ["highlighterEnabled", false]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", false);
       } else {
-        this.$store.dispatch("ui/SET_UI", ["highlighterSquares", {}]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", {});
       }
     },
     hotkey(key) {
@@ -97,9 +109,46 @@ export default {
         if (color) {
           this.selectedColor = color;
         }
-      } else if (key === "clear") {
-        this.clear();
+      } else {
+        switch (key) {
+          case "clear":
+            this.clear();
+            break;
+          case "prev":
+            this.$store.dispatch("game/PREV", { half: false });
+            break;
+          case "prevHalf":
+            this.$store.dispatch("game/PREV", { half: true });
+            break;
+          case "next":
+            this.$store.dispatch("game/NEXT", { half: false });
+            break;
+          case "nextHalf":
+            this.$store.dispatch("game/NEXT", { half: true });
+            break;
+          case "first":
+            this.$store.dispatch("game/FIRST");
+            break;
+          case "last":
+            this.$store.dispatch("game/LAST");
+            break;
+        }
       }
+    },
+  },
+  mounted() {
+    this.recentColors = uniq(
+      compact(
+        [this.$store.state.ui.highlighterCustomColor].concat(
+          this.recentColors,
+          this.usedColors
+        )
+      )
+    );
+  },
+  watch: {
+    usedColors(colors) {
+      this.recentColors = uniq(this.recentColors.concat(colors));
     },
   },
 };

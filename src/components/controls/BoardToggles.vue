@@ -405,7 +405,7 @@
         flat
         round
         v-shortkey="hotkeys.TRANSFORMS"
-        @shortkey="shortkey"
+        @shortkey="transformHotkey"
       >
         <hint>{{ $t("Transform Board") }}</hint>
 
@@ -511,7 +511,9 @@
       <q-btn
         v-if="!isEmbedded"
         @contextmenu.prevent
-        @click="highlighterEnabled = !highlighterEnabled"
+        @click="toggleHighlighter"
+        @shortkey="toggleHighlighter"
+        v-shortkey="hotkeys.HIGHLIGHTER.toggle"
         icon="highlighter"
         :class="{ 'dimmed-btn': !highlighterEnabled }"
         v-ripple="false"
@@ -521,7 +523,13 @@
         flat
         round
       >
-        <hint>{{ $t("Highlighter") }}</hint>
+        <hint>
+          {{ $t("Toggle Highlighter") }}
+          <div v-if="hotkeys.TRANSFORMS.applyTransform">
+            {{ $t("Hotkey") }}:
+            {{ hotkeysFormatted.HIGHLIGHTER.toggle }}
+          </div>
+        </hint>
       </q-btn>
     </div>
   </q-page-sticky>
@@ -571,13 +579,10 @@ export default {
     },
     highlighterEnabled: {
       get() {
-        return this.$store.state.ui.highlighterEnabled;
+        return this.$store.state.game.highlighterEnabled;
       },
       set(value) {
-        this.$store.dispatch("ui/SET_UI", [
-          "highlighterEnabled",
-          value || false,
-        ]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", value);
       },
     },
     highlighterColor() {
@@ -674,8 +679,11 @@ export default {
     flipVertical() {
       this.$store.dispatch("ui/FLIP_VERTICAL");
     },
-    shortkey({ srcKey }) {
+    transformHotkey({ srcKey }) {
       this[srcKey]();
+    },
+    toggleHighlighter() {
+      this.highlighterEnabled = !this.highlighterEnabled;
     },
   },
 };

@@ -80,6 +80,10 @@ export default {
       type: Boolean,
       default: null,
     },
+    selected: {
+      type: Boolean,
+      default: null,
+    },
   },
   data() {
     return {
@@ -100,7 +104,9 @@ export default {
       return this.ply.branches.map((id) => this.ptn.allPlies[id]);
     },
     isSelected() {
-      return this.position.plyID === this.ply.id;
+      return isBoolean(this.selected)
+        ? this.selected
+        : this.position.plyID === this.ply.id;
     },
     isInBranch() {
       return this.ptn.branchPlies.includes(this.ply);

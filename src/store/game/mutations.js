@@ -23,7 +23,7 @@ export const SET_GAME = function (state, game) {
   };
 
   const onInit = (game) => {
-    SET_GAME(state, game);
+    this.commit("game/SET_GAME", game);
   };
 
   const handleGameEnd = (game) => {
@@ -56,7 +56,6 @@ export const SET_GAME = function (state, game) {
   };
 
   state.error = null;
-  const editingTPS = game.editingTPS;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
@@ -84,13 +83,9 @@ export const SET_GAME = function (state, game) {
   state.position = game.board.output.position;
   state.ptn = game.board.output.ptn;
   state.selected = game.board.output.selected;
-  state.editingTPS = editingTPS;
-
-  // Stop full-game analysis if running
-  const bot = Vue.prototype.$bot;
-  if (bot && bot.state.isAnalyzingGame) {
-    bot.terminate();
-  }
+  state.editingTPS = game.editingTPS;
+  state.highlighterEnabled = game.highlighterEnabled || false;
+  state.highlighterSquares = game.highlighterSquares;
 };
 
 export const ADD_GAME = (state, game) => {
@@ -102,6 +97,8 @@ export const ADD_GAME = (state, game) => {
     history: game.history,
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
+    highlighterEnabled: game.highlighterEnabled,
+    highlighterSquares: game.highlighterSquares,
   });
 };
 
@@ -117,6 +114,8 @@ export const ADD_GAMES = (state, { games, index }) => {
       history: game.history,
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
+      highlighterEnabled: game.highlighterEnabled,
+      highlighterSquares: game.highlighterSquares,
     }))
   );
 };
@@ -206,6 +205,25 @@ export const APPLY_TRANSFORM = (state, transform) => {
 
 export const SELECT_GAME = (state, index) => {
   state.list.unshift(state.list.splice(index, 1)[0]);
+  state.list[0].lastSeen = new Date();
+};
+
+export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
+  state.highlighterEnabled = Boolean(enabled);
+  state.list[0].highlighterEnabled = state.highlighterEnabled;
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterEnabled = state.highlighterEnabled;
+  }
+};
+
+export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
+  state.highlighterSquares = squares || {};
+  state.list[0].highlighterSquares = state.highlighterSquares;
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterSquares = state.highlighterSquares;
+  }
 };
 
 export const HIGHLIGHT_SQUARES = (state, squares) => {
