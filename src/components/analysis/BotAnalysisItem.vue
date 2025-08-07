@@ -18,8 +18,8 @@
         : null
     "
     :depth="suggestion.depth || null"
-    :done-count="samePrevCount"
-    :selected-count="sameNextCount"
+    :done-count="sameNextCount"
+    :selected-count="samePrevCount"
     animate
     v-bind="$attrs"
     v-on="$listeners"
