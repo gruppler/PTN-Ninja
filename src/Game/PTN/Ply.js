@@ -1,6 +1,6 @@
 import Ptn from "./ptn";
 
-import { pick, isEqual } from "lodash";
+import { pick, isEqual, isString } from "lodash";
 
 const minProps = [
   "column",
@@ -229,7 +229,13 @@ export default class Ply extends Ptn {
   }
 
   isEqual(ply) {
-    return isEqual(this.min, ply.min);
+    ply =
+      ply instanceof Ply
+        ? ply.min
+        : isString(ply)
+        ? new Ply(ply).min
+        : pick(ply, minProps);
+    return isEqual(this.min, ply);
   }
 
   get text() {

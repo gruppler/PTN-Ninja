@@ -76,7 +76,27 @@ export default {
       return count;
     },
     sameNextCount() {
-      return 0;
+      const boardPly = this.$store.state.game.position.boardPly;
+      if (!boardPly) {
+        return 0;
+      }
+      const pv = this.pv;
+      const plyIndex = boardPly.isDone
+        ? this.$store.state.game.ptn.allPlies[boardPly.id].index + 1
+        : 0;
+      const branchPlies =
+        this.$store.state.game.ptn.branchPlies.slice(plyIndex);
+      let count;
+      for (
+        count = 0;
+        count < pv.length && count < branchPlies.length;
+        count++
+      ) {
+        if (!pv[count].isEqual(branchPlies[count])) {
+          break;
+        }
+      }
+      return count;
     },
   },
   methods: { formatEvaluation },
