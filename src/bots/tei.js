@@ -293,7 +293,7 @@ export default class TeiBot extends Bot {
             tokens[0] !== "size" &&
             tokens[0] !== "halfkomi"
           ) {
-            sizes.push(tokens.shift);
+            sizes.push(tokens.shift());
           }
         } else if (token === "halfkomi") {
           while (tokens.length && tokens[0] !== "halfkomi") {
