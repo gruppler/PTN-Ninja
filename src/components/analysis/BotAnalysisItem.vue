@@ -20,7 +20,7 @@
     :depth="suggestion.depth || null"
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
-    animate
+    :animate="$store.state.ui.animateBoard"
     v-bind="$attrs"
     v-on="$listeners"
   />
