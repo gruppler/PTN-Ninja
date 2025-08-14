@@ -97,6 +97,21 @@
               </q-item>
             </smooth-reflow>
 
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="animateBoard"
+                  :disable="isDisabled('animateBoard')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeysFormatted.UI.animateBoard">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.animateBoard }}
+              </hint>
+            </q-item>
+
             <q-item
               v-if="!isEmbedded || !isDisabled('axisLabels')"
               tag="label"
@@ -543,6 +558,7 @@ import { zipObject } from "lodash";
 import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 
 const props = [
+  "animateBoard",
   "axisLabels",
   "axisLabelsSmall",
   "board3D",
