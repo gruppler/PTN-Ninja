@@ -68,7 +68,7 @@ export default {
       const thatPV = this.previousSuggestion.followingPlies;
       let count;
       for (count = 0; count < thisPV.length && count < thatPV.length; count++) {
-        if (!thisPV[count].isEqual(thatPV[count])) {
+        if (thisPV[count] && !thisPV[count].isEqual(thatPV[count])) {
           break;
         }
       }
@@ -91,7 +91,7 @@ export default {
         count < pv.length && count < branchPlies.length;
         count++
       ) {
-        if (!pv[count].isEqual(branchPlies[count])) {
+        if (pv[count] && !pv[count].isEqual(branchPlies[count])) {
           break;
         }
       }
