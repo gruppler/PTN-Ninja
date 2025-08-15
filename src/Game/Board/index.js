@@ -711,7 +711,7 @@ export default class Board extends Aggregation(
     if (!isDone && ply.branches.length) {
       ply = ply.branches[0];
     }
-    return { id: ply.id, isDone, ptn: ply.toString() };
+    return { id: ply.id, isDone, ptn: ply.toString(true) };
   }
 
   get minState() {
