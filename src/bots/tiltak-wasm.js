@@ -82,7 +82,7 @@ export default class TiltakWasm extends TeiBot {
 
   //#region terminate
   async terminate(state) {
-    if (worker && this.state.isRunning) {
+    if (worker) {
       try {
         if (this.state.isRunning) {
           this.send("stop");

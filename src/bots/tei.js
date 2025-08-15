@@ -249,6 +249,7 @@ export default class TeiBot extends Bot {
   analyzeInteractive() {
     if (this.state.isRunning || this.isGameEnd) {
       this.send("stop");
+      this.onSearchEnd();
     } else {
       return super.analyzeInteractive();
     }
