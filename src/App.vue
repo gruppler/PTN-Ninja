@@ -89,17 +89,23 @@ export default {
         case "SET_GAME":
         case "SET_CURRENT_PTN":
         case "SET_PLAYER":
+        case "DELETE_PLY":
+        case "DELETE_BRANCH":
+        case "APPLY_TRANSFORM":
+          this.$store.dispatch("game/" + data.action, data.value);
+          break;
+        case "HIGHLIGHT_SQUARES":
+        case "SET_EVAL":
+        case "SET_ANALYSIS":
         case "SELECT_SQUARE":
         case "SELECT_PIECE":
-        case "DELETE_PLY":
         case "APPEND_PLY":
         case "INSERT_PLY":
         case "INSERT_PLIES":
-        case "DELETE_BRANCH":
-        case "SET_TARGET":
-        case "GO_TO_PLY":
         case "PREV":
         case "NEXT":
+        case "SET_TARGET":
+        case "GO_TO_PLY":
         case "PROMOTE_BRANCH":
         case "MAKE_BRANCH_MAIN":
         case "RENAME_BRANCH":
@@ -108,10 +114,6 @@ export default {
         case "ADD_NOTE":
         case "ADD_NOTES":
         case "REMOVE_NOTE":
-        case "APPLY_TRANSFORM":
-        case "HIGHLIGHT_SQUARES":
-        case "SET_EVAL":
-        case "SET_ANALYSIS":
           this.$store.dispatch("game/" + data.action, data.value || {});
           break;
         case "FIRST":

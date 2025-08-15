@@ -249,8 +249,10 @@ export default class TeiBot extends Bot {
   analyzeInteractive() {
     if (this.state.isRunning || this.isGameEnd) {
       this.send("stop");
+      this.onSearchEnd();
+    } else {
+      return super.analyzeInteractive();
     }
-    return super.analyzeInteractive();
   }
 
   //#region handleResponse
@@ -293,7 +295,7 @@ export default class TeiBot extends Bot {
             tokens[0] !== "size" &&
             tokens[0] !== "halfkomi"
           ) {
-            sizes.push(tokens.shift);
+            sizes.push(tokens.shift());
           }
         } else if (token === "halfkomi") {
           while (tokens.length && tokens[0] !== "halfkomi") {
@@ -395,12 +397,15 @@ export default class TeiBot extends Bot {
           state.tps = this.state.nextTPS;
         }
       }
-      if (!this.isInteractiveEnabled && !this.state.isAnalyzingGame) {
+      if (!this.state.isAnalyzingGame) {
         state.isRunning = false;
       }
       this.setState(state);
       if (this.onComplete) {
         this.onComplete(results);
+      }
+      if (this.isInteractiveEnabled) {
+        this.analyzeInteractive();
       }
       return results;
     } else if (response.startsWith("info") && tps) {

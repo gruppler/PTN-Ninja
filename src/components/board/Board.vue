@@ -755,7 +755,8 @@ $radius: 0.35em;
     .turn-indicator .player1,
     .turn-indicator .player2,
     .turn-indicator .komi,
-    .evaluation {
+    .evaluation,
+    .square .hl {
       transition: none !important;
     }
   }
