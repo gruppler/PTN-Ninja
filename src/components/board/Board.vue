@@ -738,25 +738,18 @@ $radius: 0.35em;
   &.rotating {
     transition: none !important;
   }
-  &.scrubbing {
-    &,
-    .turn-indicator .player1,
-    .turn-indicator .player2,
-    .turn-indicator .komi,
-    .evaluation {
-      transition: none !important;
-    }
-  }
+  &.scrubbing,
   &.no-animations {
     &,
     .piece,
     .stone,
-    .road > div,
     .turn-indicator .player1,
     .turn-indicator .player2,
     .turn-indicator .komi,
     .evaluation,
-    .square .hl {
+    .square .hl,
+    .square .numbers span,
+    .square .road > div {
       transition: none !important;
     }
   }
