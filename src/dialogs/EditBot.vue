@@ -362,7 +362,7 @@ export default {
       this.options = Object.keys(this.botMeta.presetOptions || {});
       buffer.meta.presetOptions = {
         ...this.botMeta.options,
-        ...this.botMeta.presetOptions,
+        ...cloneDeep(this.botMeta.presetOptions),
       };
       forEach(this.bot.getOptions(), (value, key) => {
         if (!("value" in buffer.meta.presetOptions[key])) {
