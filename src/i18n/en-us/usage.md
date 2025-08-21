@@ -333,6 +333,14 @@ The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!
 
 :::
 
+::: info Note
+
+PV plies that are displayed with an outline match the previous position's PV.
+
+PV plies that are displayed as solid match what was actually played in the current branch.
+
+:::
+
 ## Opening Explorer
 
 The **opening explorer** enables you to see the outcomes of [PlayTak games](https://www.playtak.com/games) according to their opening moves. The database is updated daily and accommodates all transpositions of the position. The Top Games from Position section lists the games with highest-rated players that included the current position.
