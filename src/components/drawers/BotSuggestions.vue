@@ -217,12 +217,7 @@
           <q-separator />
 
           <!-- Log messages -->
-          <q-item
-            v-if="'log' in botSettings[botID]"
-            tag="label"
-            clickable
-            v-ripple
-          >
+          <q-item tag="label" clickable v-ripple>
             <q-item-section>
               <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
             </q-item-section>
