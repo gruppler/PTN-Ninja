@@ -32,6 +32,32 @@ export function deepFreeze(object) {
   return Object.freeze(object);
 }
 
+export function countedThrottle(func, wait) {
+  let lastTime = 0;
+  let count = 0;
+  let timer = null;
+  return function (...args) {
+    const now = Date.now();
+    count++;
+    if (now - lastTime >= wait) {
+      lastTime = now;
+      func(count, ...args);
+      count = 0;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    } else if (!timer) {
+      timer = setTimeout(() => {
+        lastTime = now;
+        func(count, ...args);
+        count = 0;
+        timer = null;
+      }, wait - (now - lastTime));
+    }
+  };
+}
+
 function nextPly(player, color) {
   if (player === 2 && color === 1) {
     return { player: 1, color: 1 };
