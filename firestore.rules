@@ -21,35 +21,35 @@ service cloud.firestore {
       return request.auth.uid == uid;
     }
 
-		function isPlayer(gameID, gamesTable) {
-    	return get(
+    function isPlayer(gameID, gamesTable) {
+      return get(
         /databases/$(database)/documents/$(gamesTable)/$(gameID)
       ).data.config.players.hasAny([null, request.auth.uid]);
     }
 
-		function isSpectator(gameID) {
+    function isSpectator(gameID) {
       let game = get(
         /databases/$(database)/documents/games/$(gameID)
       ).data.config;
-    	return game.state.hasEnded || !game.players.hasAny([request.auth.uid]);
+      return game.state.hasEnded || !game.players.hasAny([request.auth.uid]);
     }
 
     match /names/{name} {
-    	allow create: if isSignedIn() && isUser(incomingData().uid);
-    	allow read: if isSignedIn();
-    	allow update: if false;
+      allow create: if isSignedIn() && isUser(incomingData().uid);
+      allow read: if isSignedIn();
+      allow update: if false;
       allow delete: if isUser(existingData().uid);
     }
 
     match /gamesPublic/{game} {
-    	allow read: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update: if false;
       allow delete: if isUser(existingData().createdBy) &&
         existingData().config.isOpen == true;
 
       match /branches/{branch} {
-    	  allow list: if isSignedIn();
-    	  allow get: if existingData().uid == null || isUser(existingData().uid);
+        allow list: if isSignedIn();
+        allow get: if existingData().uid == null || isUser(existingData().uid);
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
       }
@@ -68,13 +68,13 @@ service cloud.firestore {
     }
 
     match /gamesPrivate/{game} {
-    	allow read: if isPlayer(game, "gamesPrivate");
+      allow read: if isPlayer(game, "gamesPrivate");
       allow write: if false;
       allow delete: if isUser(existingData().createdBy) &&
         existingData().config.isOpen == true;
 
       match /branches/{branch} {
-    	  allow read: if isUser(existingData().uid) ||
+        allow read: if isUser(existingData().uid) ||
           existingData().uid == null && isPlayer(game, "gamesPrivate");
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid);
@@ -88,7 +88,7 @@ service cloud.firestore {
     }
 
     match /analyses/{analysis} {
-    	allow read: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if isUser(incomingData().uid);
       allow update, delete: if isUser(existingData().uid) || isAdmin();
 
@@ -100,7 +100,7 @@ service cloud.firestore {
     }
 
     match /puzzles/{puzzle} {
-    	allow read: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if isUser(incomingData().uid);
       allow update, delete: if isUser(existingData().uid) || isAdmin();
 
@@ -111,8 +111,8 @@ service cloud.firestore {
       }
 
       match /solutions/{solution} {
-    	  allow list: if isSignedIn();
-    	  allow get: if existingData().isPublished == true || isUser(existingData().uid);
+        allow list: if isSignedIn();
+        allow get: if existingData().isPublished == true || isUser(existingData().uid);
         allow create: if isUser(incomingData().uid);
         allow update, delete: if isUser(existingData().uid) || isAdmin();
 
