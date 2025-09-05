@@ -880,7 +880,7 @@ export default {
       this.$router.push({ name: "preferences" });
     },
     help() {
-      this.$router.push({ name: "help" });
+      this.$router.push({ name: "help", params: { section: "usage" } });
     },
     switchGame() {
       if (this.$store.state.game.list.length > 1) {

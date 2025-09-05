@@ -44,7 +44,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="prev"
-        @click.right.prevent="prev(true)"
+        @click.right.prevent="prev(1, true)"
         @shortkey="prev"
         v-shortkey="{
           whole: hotkeys.prev,
@@ -81,7 +81,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="next"
-        @click.right.prevent="next(true)"
+        @click.right.prevent="next(1, true)"
         @shortkey="next"
         v-shortkey="{
           whole: hotkeys.next,
@@ -142,6 +142,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
+import { countedThrottle } from "../../utilities";
 import { omit, pick, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
@@ -244,50 +245,48 @@ export default {
         this.$store.dispatch("game/FIRST");
       }
     },
-    prev(event) {
-      requestAnimationFrame(() => {
-        if (this.isPlaying) {
-          clearTimeout(this.timer);
-          this.timer = setTimeout(
-            this.next,
-            6e4 / this.$store.state.ui.playSpeed
-          );
-          this.timestamp = new Date().getTime();
-        }
-        if (!this.isFirst) {
-          this.$store.dispatch("game/PREV", {
-            half: event === true || event.srcKey === "half",
-          });
-        }
-      });
+    prev(times = 1, event) {
+      if (this.isPlaying) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(
+          this.next,
+          6e4 / this.$store.state.ui.playSpeed
+        );
+        this.timestamp = new Date().getTime();
+      }
+      if (!this.isFirst) {
+        this.$store.dispatch("game/PREV", {
+          half: event === true || event.srcKey === "half",
+          times,
+        });
+      }
     },
-    next(event) {
-      requestAnimationFrame(() => {
-        if (this.isPlaying) {
-          clearTimeout(this.timer);
-          this.timer = setTimeout(
-            this.next,
-            6e4 / this.$store.state.ui.playSpeed
-          );
-          this.timestamp = new Date().getTime();
-        }
-        if (this.$store.state.game.error) {
+    next(times = 1, event) {
+      if (this.isPlaying) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(
+          this.next,
+          6e4 / this.$store.state.ui.playSpeed
+        );
+        this.timestamp = new Date().getTime();
+      }
+      if (this.$store.state.game.error) {
+        this.pause();
+        return false;
+      }
+      if (!this.isLast) {
+        this.$store.dispatch("game/NEXT", {
+          half:
+            this.isPlaying ||
+            event === true ||
+            (event && event.srcKey === "half"),
+          times,
+        });
+        this.isPlaying = this.isPlaying;
+        if (this.isLast && this.isPlaying) {
           this.pause();
-          return false;
         }
-        if (!this.isLast) {
-          this.$store.dispatch("game/NEXT", {
-            half:
-              this.isPlaying ||
-              event === true ||
-              (event && event.srcKey === "half"),
-          });
-          this.isPlaying = this.isPlaying;
-          if (this.isLast && this.isPlaying) {
-            this.pause();
-          }
-        }
-      });
+      }
     },
     last() {
       if (!this.isLast) {
@@ -357,6 +356,10 @@ export default {
         }
       }
     },
+  },
+  created() {
+    this.prev = countedThrottle(this.prev.bind(this), 250);
+    this.next = countedThrottle(this.next.bind(this), 250);
   },
 };
 </script>
