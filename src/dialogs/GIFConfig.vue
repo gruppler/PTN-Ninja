@@ -349,10 +349,10 @@ export default {
       options.transform = this.$store.state.ui.boardTransform;
 
       if (
-        this.$store.state.ui.highlighterEnabled &&
-        Object.keys(this.$store.state.ui.highlighterSquares).length
+        this.$store.state.game.highlighterEnabled &&
+        Object.keys(this.$store.state.game.highlighterSquares).length
       ) {
-        options.highlighter = this.$store.state.ui.highlighterSquares;
+        options.highlighter = this.$store.state.game.highlighterSquares;
       }
 
       if (options.plyRange.min > 0) {

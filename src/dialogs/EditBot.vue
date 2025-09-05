@@ -362,7 +362,7 @@ export default {
       this.options = Object.keys(this.botMeta.presetOptions || {});
       buffer.meta.presetOptions = {
         ...this.botMeta.options,
-        ...this.botMeta.presetOptions,
+        ...cloneDeep(this.botMeta.presetOptions),
       };
       forEach(this.bot.getOptions(), (value, key) => {
         if (!("value" in buffer.meta.presetOptions[key])) {
@@ -429,6 +429,9 @@ export default {
       if (await this.$store.dispatch("analysis/SAVE_BOT", buffer)) {
         if (reconnect) {
           this.bot.connect();
+        } else if (!this.bot.hasOptions) {
+          // Intialize automatically if no options
+          this.bot.applyOptions();
         }
         this.close();
       }

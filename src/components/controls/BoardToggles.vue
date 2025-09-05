@@ -97,6 +97,21 @@
               </q-item>
             </smooth-reflow>
 
+            <q-item tag="label" v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("Animate Board") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="animateBoard"
+                  :disable="isDisabled('animateBoard')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeysFormatted.UI.animateBoard">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.animateBoard }}
+              </hint>
+            </q-item>
+
             <q-item
               v-if="!isEmbedded || !isDisabled('axisLabels')"
               tag="label"
@@ -405,7 +420,7 @@
         flat
         round
         v-shortkey="hotkeys.TRANSFORMS"
-        @shortkey="shortkey"
+        @shortkey="transformHotkey"
       >
         <hint>{{ $t("Transform Board") }}</hint>
 
@@ -511,7 +526,9 @@
       <q-btn
         v-if="!isEmbedded"
         @contextmenu.prevent
-        @click="highlighterEnabled = !highlighterEnabled"
+        @click="toggleHighlighter"
+        @shortkey="toggleHighlighter"
+        v-shortkey="hotkeys.HIGHLIGHTER.toggle"
         icon="highlighter"
         :class="{ 'dimmed-btn': !highlighterEnabled }"
         v-ripple="false"
@@ -521,7 +538,13 @@
         flat
         round
       >
-        <hint>{{ $t("Highlighter") }}</hint>
+        <hint>
+          {{ $t("Toggle Highlighter") }}
+          <div v-if="hotkeys.TRANSFORMS.applyTransform">
+            {{ $t("Hotkey") }}:
+            {{ hotkeysFormatted.HIGHLIGHTER.toggle }}
+          </div>
+        </hint>
       </q-btn>
     </div>
   </q-page-sticky>
@@ -535,6 +558,7 @@ import { zipObject } from "lodash";
 import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 
 const props = [
+  "animateBoard",
   "axisLabels",
   "axisLabelsSmall",
   "board3D",
@@ -571,13 +595,10 @@ export default {
     },
     highlighterEnabled: {
       get() {
-        return this.$store.state.ui.highlighterEnabled;
+        return this.$store.state.game.highlighterEnabled;
       },
       set(value) {
-        this.$store.dispatch("ui/SET_UI", [
-          "highlighterEnabled",
-          value || false,
-        ]);
+        this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", value);
       },
     },
     highlighterColor() {
@@ -674,8 +695,11 @@ export default {
     flipVertical() {
       this.$store.dispatch("ui/FLIP_VERTICAL");
     },
-    shortkey({ srcKey }) {
+    transformHotkey({ srcKey }) {
       this[srcKey]();
+    },
+    toggleHighlighter() {
+      this.highlighterEnabled = !this.highlighterEnabled;
     },
   },
 };

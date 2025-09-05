@@ -469,7 +469,7 @@ export default {
       return "";
     },
     isHighlighting() {
-      return this.$store.state.ui.highlighterEnabled;
+      return this.$store.state.game.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -917,7 +917,7 @@ export default {
       this.$router.push({ name: "preferences" });
     },
     help() {
-      this.$router.push({ name: "help" });
+      this.$router.push({ name: "help", params: { section: "usage" } });
     },
     switchGame() {
       if (this.$store.state.game.list.length > 1) {

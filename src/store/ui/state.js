@@ -35,8 +35,6 @@ const defaultState = {
   hasChat: false,
   highlighterColor: "",
   highlighterCustomColor: "",
-  highlighterEnabled: false,
-  highlighterSquares: {},
   highlightSquares: true,
   isPortrait: false,
   isVertical: false,

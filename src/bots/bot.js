@@ -263,7 +263,7 @@ export default class Bot {
         return Math.abs(curr - halfKomi) < Math.abs(prev - halfKomi)
           ? curr
           : prev;
-      }, 0);
+      }, this.meta.sizeHalfKomis[size][0]);
     }
     return halfKomi;
   }
@@ -595,7 +595,7 @@ export default class Bot {
 
       // Stop searching but keep interactive mode enabled
       if (this.isGameEnd) {
-        this.setState({ nextTPS: null, isRunning: false });
+        this.onSearchEnd({ nextTPS: null });
         return true;
       }
 

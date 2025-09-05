@@ -97,6 +97,8 @@ export default class GameBase {
     historyIndex,
     defaultSize,
     editingTPS,
+    highlighterEnabled,
+    highlighterSquares,
     onInit,
     onError,
     onAppendPly,
@@ -155,6 +157,8 @@ export default class GameBase {
     this.config = config ? { ...config } : {};
     this.tags = {};
     this.editingTPS = editingTPS;
+    this.highlighterEnabled = Boolean(highlighterEnabled);
+    this.highlighterSquares = highlighterSquares || {};
     this.defaultSize = defaultSize || 6;
     this.moves = [];
     this.branches = {};

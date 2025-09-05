@@ -20,7 +20,6 @@ export default class GameComments {
   }
 
   _addComment(type, message, plyID) {
-    plyID = Number(plyID);
     message = Comment.parse("{" + message + "}");
     if (plyID === undefined) {
       plyID =

@@ -92,7 +92,7 @@ Moving a stone or stack of stones is fairly straightforward:
   - Or, **right-click** a square to select pieces from the **top** of the stack.
 - Then, **click** further squares to drop pieces.
   - Or, **right-click** a square to pick up dropped pieces, or drop the remaining stack if there are none.
-- To cancel the move, **click** the initial square.
+- To cancel the move, **click** the initial square or press <kbd>Esc</kbd>.
 
 :::
 
@@ -101,8 +101,9 @@ If you're using a keyboard and mouse, you can move stacks more efficiently:
 :::
 
 - You can press <kbd>Enter</kbd> while hovering a square to pick up or drop as many stones as possible.
+- You can also use <kbd>1-8</kbd> to pick up or drop specific numbers of pieces.
 - To dynamically select or drop pieces such that your piece remains on top, press <kbd>\`</kbd>.
-- To cancel the move, press <kbd>Esc</kbd>.
+- Once a direction is defined by hovering over an adjacent square and dropping one or more pieces, further hotkeys will drop pieces in neighboring squares without regard to the mouse position.
 
 :::
 
@@ -329,6 +330,14 @@ The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!
 - **Hover** over a ply within a PV to preview the board state after that ply.
 - **Click** a ply within a PV to insert and navigate to that ply.
 - **Click** the row containing the PV to insert the entire PV and navigate to the first ply of the PV.
+
+:::
+
+::: info Note
+
+PV plies that are displayed with an outline match the previous position's PV.
+
+PV plies that are displayed as solid match what was actually played in the current branch.
 
 :::
 

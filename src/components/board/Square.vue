@@ -51,9 +51,7 @@
       <div class="center" />
     </div>
     <div class="numbers">
-      <span v-if="showAxisLabels && (es || ew)" class="axis-label">{{
-        coord
-      }}</span>
+      <span v-if="showAxisLabels" class="axis-label">{{ coord }}</span>
       <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
         stackCount
       }}</span>
@@ -88,12 +86,12 @@ export default {
         this.piece && !this.piece.typeCode && this.game.position.isGameEndFlats
       );
     },
-    highlighterEnabled() {
-      return this.$store.state.ui.highlighterEnabled;
+    isHighlighting() {
+      return this.$store.state.game.highlighterEnabled;
     },
     highlighterColor() {
       return (
-        this.$store.state.ui.highlighterSquares[this.coord] ||
+        this.$store.state.game.highlighterSquares[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
     },
@@ -101,7 +99,7 @@ export default {
       return this.isHighlighted && isDark(this.highlighterColor);
     },
     isHighlighted() {
-      return this.coord in this.$store.state.ui.highlighterSquares;
+      return this.coord in this.$store.state.game.highlighterSquares;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -141,7 +139,7 @@ export default {
       return ring;
     },
     current() {
-      if (this.highlighterEnabled) {
+      if (this.isHighlighting) {
         return false;
       } else if (this.game.hlSquares.length) {
         return this.game.hlSquares.includes(this.square.static.coord);
@@ -185,9 +183,34 @@ export default {
       return this.$store.getters["game/disabledOptions"];
     },
     showAxisLabels() {
-      return (
-        this.$store.state.ui.axisLabels && this.$store.state.ui.axisLabelsSmall
-      );
+      if (
+        this.$store.state.ui.axisLabels &&
+        this.$store.state.ui.axisLabelsSmall
+      ) {
+        switch (this.$store.state.ui.boardTransform[0]) {
+          case 0:
+            return (
+              this.es ||
+              (this.$store.state.ui.boardTransform[1] ? this.ee : this.ew)
+            );
+          case 1:
+            return (
+              this.ee ||
+              (this.$store.state.ui.boardTransform[1] ? this.en : this.es)
+            );
+          case 2:
+            return (
+              this.en ||
+              (this.$store.state.ui.boardTransform[1] ? this.ew : this.ee)
+            );
+          case 3:
+            return (
+              this.ew ||
+              (this.$store.state.ui.boardTransform[1] ? this.es : this.en)
+            );
+        }
+      }
+      return false;
     },
     showRoads() {
       return (
@@ -273,7 +296,7 @@ export default {
     },
     select(alt = false) {
       // Highlighter
-      if (this.highlighterEnabled) {
+      if (this.isHighlighting) {
         return;
       }
 
@@ -619,25 +642,25 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     background-color: var(--q-color-player2road);
   }
 
-  .board-container.rotate-1 & .stack-count {
+  .board-container.rotate-1 & .numbers {
     transform: rotateZ(270deg);
   }
-  .board-container.rotate-2 & .stack-count {
+  .board-container.rotate-2 & .numbers {
     transform: rotateZ(180deg);
   }
-  .board-container.rotate-3 & .stack-count {
+  .board-container.rotate-3 & .numbers {
     transform: rotateZ(90deg);
   }
-  .board-container.flip & .stack-count {
+  .board-container.flip & .numbers {
     transform: scaleX(-1);
   }
-  .board-container.flip.rotate-1 & .stack-count {
+  .board-container.flip.rotate-1 & .numbers {
     transform: scaleX(-1) rotateZ(90deg);
   }
-  .board-container.flip.rotate-2 & .stack-count {
+  .board-container.flip.rotate-2 & .numbers {
     transform: scaleX(-1) rotateZ(180deg);
   }
-  .board-container.flip.rotate-3 & .stack-count {
+  .board-container.flip.rotate-3 & .numbers {
     transform: scaleX(-1) rotateZ(270deg);
   }
 }

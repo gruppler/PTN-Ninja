@@ -12,6 +12,8 @@ export default {
   ptn: null,
   selected: null,
   editingTPS: undefined,
+  highlighterEnabled: false,
+  highlighterSquares: {},
   hlSquares: [],
   hoveredSquare: null,
   evaluation: null,
