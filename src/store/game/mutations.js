@@ -315,21 +315,38 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
   const game = Vue.prototype.$game;
   if (game) {
     if (Linenum.test(plies[0])) {
-      // Move to specified line
+      // Navigate to the specified line number within the current branch
       const linenum = new Linenum(plies.shift());
       let player = 1;
       if (Nop.test(plies[0])) {
         player = 2;
         plies.shift();
       }
-      const plyID = game.plies.findIndex(
-        (ply) => ply.linenum.number === linenum.number && ply.player === player
+
+      // Get the current branch context
+      const currentBranch = game.board.targetBranch || "";
+
+      // Find the target ply within the current branch or its continuation
+      const targetPly = game.plies.find(
+        (ply) =>
+          ply.linenum.number === linenum.number &&
+          ply.player === player &&
+          ply.isInBranch(currentBranch)
       );
-      if (plyID >= 0) {
-        game.board.goToPly(plyID);
-        prev = plies.length - 2;
+
+      if (targetPly) {
+        // Navigate to the target position within the current branch
+        game.board.goToPly(targetPly.id, false);
       } else {
-        throw "Invalid line number";
+        // Line number not found in current branch - find the last ply in the branch
+        const pliesInBranch = game.plies.filter((ply) =>
+          ply.isInBranch(currentBranch)
+        );
+        if (pliesInBranch.length > 0) {
+          const lastPly = pliesInBranch[pliesInBranch.length - 1];
+          // Go to the end of the current branch
+          game.board.goToPly(lastPly.id, true);
+        }
       }
     }
     if (state.selected.moveset.length) {
