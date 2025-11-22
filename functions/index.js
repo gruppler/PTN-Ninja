@@ -271,13 +271,13 @@ exports.joinGame = functions.https.onCall(
     if (!gameSnapshot.exists) {
       return httpError("invalid-argument", "Game does not exist");
     }
+    const game = gameSnapshot.data();
 
     // Player already joined
     if (game.config.players.indexOf(uid)) {
       return httpError("invalid-argument", "Already joined");
     }
 
-    const game = gameSnapshot.data();
     const player = game.config.players
       ? game.config.players.indexOf(null) + 1
       : 1;
