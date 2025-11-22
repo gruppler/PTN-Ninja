@@ -37,6 +37,7 @@ export default class BoardNavigation {
         }
         this.setRoads(ply.result.roads);
       } else if (ply.index === this.plies.length - 1) {
+        this.updateSquareConnections();
         this.checkGameEnd();
       }
     } else {
