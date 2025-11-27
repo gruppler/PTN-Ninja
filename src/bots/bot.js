@@ -933,6 +933,16 @@ export default class Bot {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
+    const hasPositionBeforeEval =
+      positionBefore &&
+      positionBefore[0] &&
+      positionBefore[0].evaluation !== null &&
+      positionBefore[0].evaluation !== undefined;
+    const hasPositionAfterEval =
+      positionAfter &&
+      positionAfter[0] &&
+      positionAfter[0].evaluation !== null &&
+      positionAfter[0].evaluation !== undefined;
     let evaluationBefore = null;
     let evaluationAfter = null;
 
@@ -957,9 +967,12 @@ export default class Bot {
     }
 
     // Evaluation, search info
+    const canInsertEvalComments = hasPositionBeforeEval && hasPositionAfterEval;
+
     if (
-      evaluationAfter !== null ||
-      (positionAfter && positionAfter[0].evaluation !== null)
+      canInsertEvalComments &&
+      (evaluationAfter !== null ||
+        (positionAfter && positionAfter[0].evaluation !== null))
     ) {
       let evaluationComment = "";
 
