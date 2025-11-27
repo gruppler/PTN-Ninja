@@ -65,7 +65,7 @@
             @click="send"
             icon="send"
             :color="player === 1 ? 'player2' : 'player1'"
-            :disabled="!message.length"
+            :disable="!message.length"
             flat
             dense
             round

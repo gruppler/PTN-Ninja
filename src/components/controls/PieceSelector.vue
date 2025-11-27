@@ -14,7 +14,7 @@
 
     <q-btn
       @click="select('F')"
-      :disabled="!available.includes('F')"
+      :disable="!available.includes('F')"
       flat
       :dense="$q.screen.lt.sm"
       stretch
@@ -26,7 +26,7 @@
 
     <q-btn
       @click="select('S')"
-      :disabled="!available.includes('S')"
+      :disable="!available.includes('S')"
       flat
       :dense="$q.screen.lt.sm"
       stretch
@@ -38,7 +38,7 @@
 
     <q-btn
       @click="select('C')"
-      :disabled="!available.includes('C')"
+      :disable="!available.includes('C')"
       flat
       :dense="$q.screen.lt.sm"
       stretch

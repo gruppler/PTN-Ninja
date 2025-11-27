@@ -25,7 +25,7 @@
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
           :label="$t('OK')"
-          :disabled="$refs.input && $refs.input.hasError"
+          :disable="$refs.input && $refs.input.hasError"
           @click="save"
           color="primary"
           flat

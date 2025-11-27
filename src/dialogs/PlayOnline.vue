@@ -158,7 +158,7 @@
         <q-btn
           @click="submit"
           :label="$t('Create')"
-          :disabled="!isValid"
+          :disable="!isValid"
           :loading="loading"
           color="primary"
           flat

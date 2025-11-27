@@ -53,7 +53,7 @@
           <q-btn
             @click="send"
             :icon="editing ? 'edit' : 'add_note'"
-            :disabled="!message.trim().length"
+            :disable="!message.trim().length"
             flat
             dense
             round

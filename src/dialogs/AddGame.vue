@@ -87,7 +87,7 @@
         <q-btn
           :label="$t('OK')"
           @click="ok"
-          :disabled="tab === 'load'"
+          :disable="tab === 'load'"
           color="primary"
           flat
         />

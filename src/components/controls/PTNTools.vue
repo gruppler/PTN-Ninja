@@ -14,12 +14,12 @@
       <q-btn
         @click="$router.push({ name: 'edit' })"
         icon="edit"
-        :disabled="isDisabled"
+        :disable="isDisabled"
       >
         <hint>{{ $t("Edit PTN") }}</hint>
       </q-btn>
 
-      <q-btn icon="trim" class="no-border-radius" :disabled="isDisabled">
+      <q-btn icon="trim" class="no-border-radius" :disable="isDisabled">
         <hint>{{ $t("Trim") }}</hint>
         <q-menu
           v-if="!isDisabled"

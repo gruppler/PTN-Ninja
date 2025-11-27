@@ -42,7 +42,7 @@
               @click="ok"
               :label="$t('OK')"
               :loading="loading"
-              :disabled="!selectedGames.length"
+              :disable="!selectedGames.length"
               :flat="!selectedGames.length"
               color="primary"
             />
@@ -66,7 +66,7 @@
           @click="ok"
           :label="$t('OK')"
           :loading="loading"
-          :disabled="!selectedGames.length"
+          :disable="!selectedGames.length"
           :flat="!selectedGames.length"
           color="primary"
         />

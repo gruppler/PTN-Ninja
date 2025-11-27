@@ -35,7 +35,7 @@
         <q-btn
           @click="create"
           :label="$t('Create')"
-          :disabled="!isPlayerValid || !isOpponentValid"
+          :disable="!isPlayerValid || !isOpponentValid"
           :loading="loading"
           color="primary"
           flat

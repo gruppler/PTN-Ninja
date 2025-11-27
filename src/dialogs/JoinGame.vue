@@ -23,7 +23,7 @@
         <q-btn :label="$t('Spectate')" @click="spectate" color="primary" flat />
         <q-btn
           :label="$t('Play')"
-          :disabled="!validatePlay()"
+          :disable="!validatePlay()"
           @click="play"
           color="primary"
           flat

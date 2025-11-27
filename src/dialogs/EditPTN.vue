@@ -55,7 +55,7 @@
         <q-btn
           :label="$t(isNewGame ? 'OK' : 'Save')"
           @click="$refs.editor.save()"
-          :disabled="Boolean(error)"
+          :disable="Boolean(error)"
           :flat="!hasChanges"
           color="primary"
         />

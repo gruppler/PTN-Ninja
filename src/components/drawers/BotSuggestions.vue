@@ -483,7 +483,7 @@
               v-if="botMeta.isInteractive"
               class="interactive-control"
               tag="label"
-              :disabled="!bot.isInteractiveAvailable"
+              :disable="!bot.isInteractiveAvailable"
               :clickable="bot.isInteractiveAvailable"
               v-ripple="bot.isInteractiveAvailable"
             >
