@@ -46,7 +46,7 @@
           :label="$t('Save')"
           @click="$refs.gameInfo.submit()"
           :loading="loading"
-          :disable="$refs.gameInfo && $refs.gameInfo.hasError"
+          :disable="$refs.gameInfo && !$refs.gameInfo.isValid"
           :flat="!hasChanges"
           color="primary"
         />

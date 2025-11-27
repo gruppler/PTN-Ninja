@@ -17,135 +17,156 @@
     </template>
 
     <q-card style="width: 350px; max-width: 100%">
-      <smooth-reflow tag="recess" class="col">
-        <q-list>
-          <q-item tag="label" :active="config.isPrivate" v-ripple>
-            <q-item-section class="fg-inherit" side>
-              <q-icon name="online_private" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ $t("Private Game") }}</q-item-label>
-              <q-item-label class="text-primary" caption>
-                {{
-                  $t(
-                    "hint." + (config.isPrivate ? "privateGame" : "publicGame")
-                  )
-                }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="config.isPrivate" />
-            </q-item-section>
-          </q-item>
-
-          <q-item>
-            <q-item-section>
-              <PlayerName
-                v-model="config.playerName"
-                :player="config.playerSeat"
-                :is-private="config.isPrivate"
-                @validate="isPlayerValid = $event"
-              />
-            </q-item-section>
-          </q-item>
-
-          <q-item>
-            <q-item-section>
-              <OpponentName
-                v-model="opponentName"
-                :player="opponent"
-                :is-private="config.isPrivate"
-                @validate="isOpponentValid = $event"
-                :error="!isOpponentValid"
-                :error-message="$t('error[\'Invalid opponent name\']')"
-              />
-            </q-item-section>
-          </q-item>
-
-          <q-item>
-            <q-item-section>
-              <q-btn-toggle
-                class="highlight"
-                v-model="config.playerSeat"
-                :options="players"
-                :ripple="false"
-                spread
-                dense
-                stack
-              />
-            </q-item-section>
-          </q-item>
-
-          <!-- Game Info -->
-          <q-expansion-item
-            group="options"
-            v-model="showGameOptions"
-            icon="board"
-            :label="$t('Game Options')"
-            expand-separator
-          >
-            <div>
-              <GameInfo
-                ref="gameInfo"
-                class="q-pa-md"
-                :values="tags"
-                :show-all="showAll"
-                @submit="create"
-                @validate="isGameInfoValid = $event"
-                tps-current-btn
-                hide-missing
-              />
-            </div>
-          </q-expansion-item>
-
-          <!-- UI Options -->
-          <q-expansion-item group="options" expand-separator>
-            <template v-slot:header>
-              <q-item-section avatar>
-                <q-icon name="ui" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ $t("UI Options") }}</q-item-label>
-              </q-item-section>
-              <q-item-section v-if="uiOptionsEnabled.length" side>
-                <div class="row justify-end q-gutter-xs fg-inherit">
-                  <q-icon
-                    v-for="o in uiOptionsEnabled"
-                    :key="o.key"
-                    :name="o.icon"
-                    color="primary"
-                    size="sm"
-                  >
-                    <hint>{{ $t(o.label) }}</hint>
-                  </q-icon>
-                </div>
-              </q-item-section>
-            </template>
-            <q-item
-              v-for="option in uiOptions"
-              :key="option.key"
-              :class="{ 'text-primary': config[option.key] }"
-              tag="label"
-              v-ripple
-            >
+      <q-form ref="form" @submit="submit" greedy>
+        <smooth-reflow tag="recess" class="col">
+          <q-list>
+            <q-item tag="label" :active="config.isPrivate" v-ripple>
               <q-item-section class="fg-inherit" side>
-                <q-icon :name="option.icon" />
+                <q-icon name="online_private" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>{{ $t(option.label) }}</q-item-label>
-                <q-item-label v-if="option.hint" class="fg-inherit" caption>{{
-                  $t(option.hint)
-                }}</q-item-label>
+                <q-item-label>{{ $t("Private Game") }}</q-item-label>
+                <q-item-label class="text-primary" caption>
+                  {{
+                    $t(
+                      "hint." +
+                        (config.isPrivate ? "privateGame" : "publicGame")
+                    )
+                  }}
+                </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="config[option.key]" />
+                <q-toggle v-model="config.isPrivate" />
               </q-item-section>
             </q-item>
-          </q-expansion-item>
-        </q-list>
 
-        <q-inner-loading :showing="loading" />
-      </smooth-reflow>
+            <q-item>
+              <q-item-section>
+                <PlayerName
+                  v-model="config.playerName"
+                  :player="config.playerSeat"
+                  :is-private="config.isPrivate"
+                  @validate="isPlayerValid = $event"
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item>
+              <q-item-section>
+                <OpponentName
+                  v-model="opponentName"
+                  :player="opponent"
+                  :is-private="config.isPrivate"
+                  @validate="isOpponentValid = $event"
+                  :error="!isOpponentValid"
+                  :error-message="$t('error[\'Invalid opponent name\']')"
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item>
+              <q-item-section>
+                <q-btn-toggle
+                  class="highlight"
+                  v-model="config.playerSeat"
+                  :options="players"
+                  :ripple="false"
+                  spread
+                  dense
+                  stack
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Game Info -->
+            <q-expansion-item
+              group="options"
+              v-model="showGameOptions"
+              :header-class="isGameInfoValid ? '' : 'text-negative'"
+              expand-separator
+            >
+              <template v-slot:header>
+                <q-item-section avatar>
+                  <q-icon name="board" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Game Options") }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <div class="row justify-end q-gutter-xs fg-inherit">
+                    <span v-if="tags && tags.komi" class="q-mr-xs">
+                      <q-icon name="komi" />
+                      {{ tags.komi }}
+                    </span>
+                    <span class="text-bold">
+                      {{ tags.size }}x{{ tags.size }}
+                    </span>
+                  </div>
+                </q-item-section>
+              </template>
+              <div>
+                <GameInfo
+                  ref="gameInfo"
+                  class="q-pa-md"
+                  :values="tags"
+                  :show-all="showAll"
+                  @validate="isGameInfoValid = $event"
+                  @submit="submit"
+                  tps-current-btn
+                  hide-missing
+                />
+              </div>
+            </q-expansion-item>
+
+            <!-- UI Options -->
+            <q-expansion-item group="options" expand-separator>
+              <template v-slot:header>
+                <q-item-section avatar>
+                  <q-icon name="ui" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("UI Options") }}</q-item-label>
+                </q-item-section>
+                <q-item-section v-if="uiOptionsEnabled.length" side>
+                  <div class="row justify-end q-gutter-xs fg-inherit">
+                    <q-icon
+                      v-for="o in uiOptionsEnabled"
+                      :key="o.key"
+                      :name="o.icon"
+                      color="primary"
+                      size="sm"
+                    >
+                      <hint>{{ $t(o.label) }}</hint>
+                    </q-icon>
+                  </div>
+                </q-item-section>
+              </template>
+              <q-item
+                v-for="option in uiOptions"
+                :key="option.key"
+                :class="{ 'text-primary': config[option.key] }"
+                tag="label"
+                v-ripple
+              >
+                <q-item-section class="fg-inherit" side>
+                  <q-icon :name="option.icon" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t(option.label) }}</q-item-label>
+                  <q-item-label v-if="option.hint" class="fg-inherit" caption>{{
+                    $t(option.hint)
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="config[option.key]" />
+                </q-item-section>
+              </q-item>
+            </q-expansion-item>
+          </q-list>
+
+          <q-inner-loading :showing="loading" />
+        </smooth-reflow>
+      </q-form>
     </q-card>
 
     <template v-slot:footer>
@@ -156,12 +177,11 @@
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          @click="submit"
+          @click="create"
           :label="$t('Create')"
-          :disable="!isValid"
           :loading="loading"
           color="primary"
-          flat
+          :flat="!isValid"
         />
       </q-card-actions>
     </template>
@@ -219,7 +239,7 @@ export default {
       isOpponentValid: false,
       isGameInfoValid: false,
       opponentName: "",
-      showGameOptions: true,
+      showGameOptions: false,
       showAll: false,
       loading: false,
     };
@@ -263,10 +283,12 @@ export default {
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },
-    submit() {
-      this.$refs.gameInfo.submit();
+    create() {
+      if (this.$refs.gameInfo) {
+        this.$refs.gameInfo.submit();
+      }
     },
-    async create({ tags }) {
+    async submit({ tags }) {
       if (!this.isValid) {
         return;
       }

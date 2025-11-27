@@ -174,8 +174,38 @@ export const JOIN_GAME = async (context, game) => {
   }
 };
 
-export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
+// Helper function to load a single game document
+const loadGameDocument = async (id, isPrivate) => {
   const collection = isPrivate ? "gamesPrivate" : "gamesPublic";
+
+  const ref = db.collection(collection).doc(id).withConverter(gameConverter);
+  const gameDoc = await ref.get();
+  const gameData = gameDoc.data();
+
+  if (!gameData) {
+    throw new Error(`Failed to get game ${collection}/${id}`);
+  }
+
+  return new Game(gameData);
+};
+
+export const LOAD_GAME = async function ({ state }, { id, isPrivate }) {
+  try {
+    Loading.show();
+    const game = await loadGameDocument(id, isPrivate);
+
+    // Add the single game to the store
+    this.dispatch("game/ADD_GAMES", { games: [game] });
+
+    Loading.hide();
+    return game;
+  } catch (error) {
+    Loading.hide();
+    throw error;
+  }
+};
+
+export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
   const games = [];
 
   try {
@@ -184,17 +214,8 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
     // Fetch games
     await Promise.all(
       gameIDs.map(async (id) => {
-        const ref = db
-          .collection(collection)
-          .doc(id)
-          .withConverter(gameConverter);
-        const game = (await ref.get()).data();
-
-        if (!game) {
-          throw new Error(`Failed to get game ${collection}/${id}`);
-        }
-
-        games.push(new Game(game));
+        const game = await loadGameDocument(id, isPrivate);
+        games.push(game);
       })
     );
 

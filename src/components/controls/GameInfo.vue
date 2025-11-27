@@ -896,7 +896,8 @@ export default {
       return this.$el.getElementsByClassName("q-field--error").length > 0;
     },
     submit(editTPS = false) {
-      if (this.hasErrors()) {
+      this.validate();
+      if (!this.isValid) {
         return false;
       }
       // Trim
@@ -981,22 +982,55 @@ export default {
       const tags = this.tags;
       const rules = [];
       if (tag === "tps") {
-        rules[0] = (tps) =>
-          !tps ||
-          ((tps = TPS.parse(tps)) &&
-            !!(tps && tps.isValid && tps.size === 1 * tags.size));
+        rules[0] = (tps) => {
+          if (!tps) return true;
+          const parsed = TPS.parse(tps);
+          if (!parsed || !parsed.isValid) {
+            console.warn("Invalid TPS");
+            return false;
+          }
+          if (parsed.size !== 1 * tags.size) {
+            console.warn("TPS size doesn't match");
+            return false;
+          }
+          return true;
+        };
       } else if (tag.startsWith("caps")) {
-        rules[0] = (caps) => !caps || 1 * caps <= 1 * tags.size;
+        rules[0] = (caps) => {
+          if (!caps || 1 * caps <= 1 * tags.size) return true;
+          console.warn("Caps cannot exceed board size");
+          return false;
+        };
       } else if (tag === "komi") {
-        rules[0] = (value) => value >= KOMI_MIN && value <= KOMI_MAX;
-        rules[1] = (value) => !value || formats[tag].test(value);
-      } else {
-        rules[0] = (value) => !value || formats[tag].test(value);
+        rules[0] = (value) => {
+          if (!value || (value >= KOMI_MIN && value <= KOMI_MAX)) return true;
+          console.warn(`Komi must be between ${KOMI_MIN} and ${KOMI_MAX}`);
+          return false;
+        };
+        rules[1] = (value) => {
+          if (!value || formats[tag].test(value)) return true;
+          console.warn("Invalid komi format");
+          return false;
+        };
+      } else if (formats[tag]) {
+        rules[0] = (value) => {
+          if (!value || formats[tag].test(value)) return true;
+          console.warn(`Invalid ${tag}`);
+          return false;
+        };
       }
       return rules;
     },
     validate() {
-      return (this.isValid = !this.hasErrors());
+      // Check all input refs for errors
+      const hasError = this.$el
+        ? this.$el.getElementsByClassName("q-field--error").length > 0
+        : false;
+      const newIsValid = !hasError;
+      if (this.isValid !== newIsValid) {
+        this.isValid = newIsValid;
+      }
+      return this.isValid;
     },
     isVisible() {
       const tags = [...arguments];
@@ -1021,7 +1055,7 @@ export default {
     init() {
       this.updateTags();
       this.name = this.game ? this.game.name : this.generatedName;
-      this.validate();
+      this.$nextTick(() => this.validate());
     },
   },
   mounted() {
@@ -1056,8 +1090,11 @@ export default {
     },
     tags: {
       handler: throttle(function (tags) {
+        // Always validate after tags change
+        this.$nextTick(() => this.validate());
+
         if (!this.game) {
-          this.return;
+          return;
         }
         const changes = {};
         // Trim
@@ -1079,9 +1116,6 @@ export default {
         }
         const hasChanges = Object.values(changes).length > 0;
         this.changes = changes;
-        if (this.hasChanges) {
-          this.validate();
-        }
         if (this.hasChanges !== hasChanges) {
           this.hasChanges = hasChanges;
           this.$emit("hasChanges", hasChanges);
@@ -1089,8 +1123,11 @@ export default {
       }, 100),
       deep: true,
     },
-    isValid(isValid) {
-      this.$emit("validate", isValid);
+    isValid: {
+      handler(isValid) {
+        this.$emit("validate", isValid);
+      },
+      immediate: true,
     },
   },
 };
