@@ -280,7 +280,24 @@ export default class Ply extends Ptn {
   }
 
   set data(json) {
-    // TODO:
+    if (!json) return;
+
+    // Deserialize ply data from Firestore format
+    if (json.linenum !== undefined) {
+      this.linenum.number = json.linenum;
+    }
+    if (json.notes && Array.isArray(json.notes)) {
+      // Notes will be handled by the Game class
+    }
+    if (json.uid !== undefined) {
+      this.uid = json.uid;
+    }
+    if (json.createdAt !== undefined) {
+      this.createdAt = json.createdAt;
+    }
+    if (json.updatedAt !== undefined) {
+      this.updatedAt = json.updatedAt;
+    }
   }
 
   toString(plyOnly = false) {

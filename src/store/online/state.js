@@ -5,7 +5,10 @@ export default function () {
     playerGames: {},
     gamesPrivate: {},
     gamesPublic: {},
+    gamesPrivate_branches: {},
+    gamesPublic_branches: {},
     analyses: {},
+    analyses_branches: {},
     puzzles: {},
     user: null,
   };

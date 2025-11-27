@@ -4,8 +4,10 @@ import Game from "../../Game";
 import {
   call,
   gameConverter,
+  branchConverter,
   analysisConverter,
   puzzleConverter,
+  commentConverter,
 } from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
@@ -208,43 +210,41 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
 };
 
 export const LISTEN_CURRENT_GAME = async function ({ dispatch, state }) {
-  // TODO: Handle different types of online games
   const listeners = [];
-  const converter = gameConverter;
   const game = this.state.game;
-  const stateKey = game.config.collection;
-  const path = `${game.config.path}/branches`;
 
   if (!game || !game.config.isOnline) {
     return dispatch("UNLISTEN_CURRENT_GAME");
   }
 
-  // Root branch
+  const path = `${game.config.path}/branches`;
+  const stateKey = `${game.config.collection}_branches`;
+
+  // Root branch - contains the main game moves
   listeners.push(
     await dispatch("LISTEN_DOC", {
-      converter,
+      converter: branchConverter,
       path: `${path}/root`,
       stateKey,
       listenerPath: "current-root",
-      // next,
-      // error,
       unlisten: true,
     })
   );
 
-  // Player branches
-  listeners.push(
-    await dispatch("LISTEN_COLLECTION", {
-      converter,
-      path,
-      stateKey,
-      listenerPath: "current-branches",
-      where: ["uid", "==", state.user.uid],
-      // next,
-      // error,
-      unlisten: true,
-    })
-  );
+  // Player-specific branches (for analyses and variations)
+  // Only load branches created by the current user
+  if (state.user && state.user.uid) {
+    listeners.push(
+      await dispatch("LISTEN_COLLECTION", {
+        converter: branchConverter,
+        path,
+        stateKey,
+        listenerPath: "current-branches",
+        where: ["uid", "==", state.user.uid],
+        unlisten: true,
+      })
+    );
+  }
 
   return listeners;
 };

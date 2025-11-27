@@ -303,18 +303,36 @@ export const formatHint = (hint) => {
 
 export const gameConverter = {
   toFirestore(game) {
-    game.config = omit(game.config, [
-      "id",
-      "collection",
-      "path",
-      "isOnline",
-      "player",
-      "size",
-    ]);
-    return game.json;
+    // Convert Game object to Firestore document format
+    // Note: Branches are stored in a subcollection, not in the main document
+    const data = {
+      name: game.name || "",
+      config: omit(game.jsonConfig, [
+        "id",
+        "collection",
+        "path",
+        "isOnline",
+        "player",
+      ]),
+      tags: game.jsonTags,
+      state: game.jsonState,
+      notes: game.jsonNotes || [],
+    };
+
+    // Add metadata if available
+    if (game.createdBy) data.createdBy = game.createdBy;
+    if (game.createdAt) data.createdAt = game.createdAt;
+    if (game.updatedBy) data.updatedBy = game.updatedBy;
+    if (game.updatedAt) data.updatedAt = game.updatedAt;
+
+    return data;
   },
   fromFirestore(snapshot, options) {
+    // Convert Firestore document to Game-compatible data
     const data = snapshot.data(options);
+
+    // Add online-specific config
+    data.config = data.config || {};
     data.config.isOnline = true;
     data.config.id = snapshot.id;
     data.config.collection = snapshot.ref.parent.id;
@@ -322,31 +340,154 @@ export const gameConverter = {
     data.config.player = data.config.players
       ? data.config.players.indexOf(auth.currentUser.uid) + 1
       : 0;
-    data.config.size = data.tags.size;
-    if (data.tags.date) data.tags.date = timestampToDate(data.tags.date);
-    if (data.createdAt) data.createdAt = timestampToDate(data.createdAt);
-    if (data.updatedAt) data.updatedAt = timestampToDate(data.updatedAt);
+    data.config.size = (data.tags && data.tags.size) || 6;
+
+    // Convert timestamps
+    if (data.tags && data.tags.date) {
+      data.tags.date = timestampToDate(data.tags.date);
+    }
+    if (data.createdAt) {
+      data.createdAt = timestampToDate(data.createdAt);
+    }
+    if (data.updatedAt) {
+      data.updatedAt = timestampToDate(data.updatedAt);
+    }
+
+    // Note: Branches are loaded separately via LISTEN_CURRENT_GAME
+    // They are not included in the main game document
+
     return data;
   },
 };
 
+export const branchConverter = {
+  toFirestore(branch) {
+    // Convert branch data to Firestore format
+    return {
+      parent: branch.parent || null,
+      name: branch.name || "",
+      player: branch.player || 1,
+      plies: branch.plies || [],
+      uid: branch.uid || null,
+      createdAt: branch.createdAt || new Date(),
+      updatedAt: branch.updatedAt || new Date(),
+    };
+  },
+  fromFirestore(snapshot, options) {
+    // Convert Firestore branch document to usable format
+    const data = snapshot.data(options);
+
+    // Convert timestamps
+    if (data.createdAt) {
+      data.createdAt = timestampToDate(data.createdAt);
+    }
+    if (data.updatedAt) {
+      data.updatedAt = timestampToDate(data.updatedAt);
+    }
+
+    // Add document ID
+    data.id = snapshot.id;
+    data.path = snapshot.ref.path;
+
+    return data;
+  },
+  getStateID(path) {
+    // Extract branch ID from path for state management
+    // Path format: gamesPublic/{gameID}/branches/{branchID}
+    const parts = path.split("/");
+    return parts[parts.length - 1];
+  },
+};
+
 export const analysisConverter = {
-  toFirestore(game) {
-    return game.json;
+  toFirestore(analysis) {
+    // Convert analysis to Firestore format
+    return {
+      gameID: analysis.gameID || "",
+      title: analysis.title || "",
+      tags: analysis.tags || [],
+      uid: analysis.uid || null,
+      createdAt: analysis.createdAt || new Date(),
+      updatedAt: analysis.updatedAt || new Date(),
+    };
   },
   fromFirestore(snapshot, options) {
     const data = snapshot.data(options);
-    return new Game(snapshot.id, data);
+
+    // Convert timestamps
+    if (data.createdAt) {
+      data.createdAt = timestampToDate(data.createdAt);
+    }
+    if (data.updatedAt) {
+      data.updatedAt = timestampToDate(data.updatedAt);
+    }
+
+    // Add document ID
+    data.id = snapshot.id;
+    data.path = snapshot.ref.path;
+
+    return data;
   },
 };
 
 export const puzzleConverter = {
-  toFirestore(game) {
-    return game.json;
+  toFirestore(puzzle) {
+    // Convert puzzle to Firestore format
+    return {
+      name: puzzle.name || "",
+      type: puzzle.type || "",
+      tags: puzzle.tags || [],
+      uid: puzzle.uid || null,
+      createdAt: puzzle.createdAt || new Date(),
+      updatedAt: puzzle.updatedAt || new Date(),
+    };
   },
   fromFirestore(snapshot, options) {
     const data = snapshot.data(options);
-    return new Game(snapshot.id, data);
+
+    // Convert timestamps
+    if (data.createdAt) {
+      data.createdAt = timestampToDate(data.createdAt);
+    }
+    if (data.updatedAt) {
+      data.updatedAt = timestampToDate(data.updatedAt);
+    }
+
+    // Add document ID
+    data.id = snapshot.id;
+    data.path = snapshot.ref.path;
+
+    return data;
+  },
+};
+
+export const commentConverter = {
+  toFirestore(comment) {
+    // Convert comment to Firestore format
+    return {
+      text: comment.text || "",
+      replyTo: comment.replyTo || null,
+      uid: comment.uid || null,
+      createdAt: comment.createdAt || new Date(),
+      updatedAt: comment.updatedAt || new Date(),
+    };
+  },
+  fromFirestore(snapshot, options) {
+    const data = snapshot.data(options);
+
+    // Convert timestamps
+    if (data.createdAt) {
+      data.createdAt = timestampToDate(data.createdAt);
+    }
+    if (data.updatedAt) {
+      data.updatedAt = timestampToDate(data.updatedAt);
+    }
+
+    // Add document ID
+    data.id = snapshot.id;
+    data.path = snapshot.ref.path;
+
+    return data;
   },
 };
 

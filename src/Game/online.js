@@ -39,6 +39,15 @@ export default class GameOnline {
     this.init(json);
   }
 
+  // Uppercase versions for consistency with CREATE_GAME action
+  get JSONState() {
+    return this.jsonState;
+  }
+
+  get JSONTags() {
+    return this.jsonTags;
+  }
+
   // Config
   get jsonConfig() {
     const config = pick(this.config, [
@@ -124,7 +133,19 @@ export default class GameOnline {
   }
 
   set jsonBranches(branches) {
-    // TODO:
+    if (!branches || !Array.isArray(branches)) {
+      return;
+    }
+    // Parse branches from Firestore format
+    // Each branch has: { parent, name, player, plies, uid, createdAt, updatedAt }
+    branches.forEach((branchData) => {
+      if (!branchData.plies || !Array.isArray(branchData.plies)) {
+        return;
+      }
+      // TODO: Reconstruct branch tree and plies
+      // This requires parsing each ply and linking to parent branches
+      // Will be completed when implementing full branch management
+    });
   }
 
   get jsonBranch() {
@@ -141,8 +162,13 @@ export default class GameOnline {
     };
   }
 
-  set jsonBranch(branches) {
-    // TODO:
+  set jsonBranch(branch) {
+    if (!branch || !branch.plies) {
+      return;
+    }
+    // Parse single branch from Firestore format
+    // TODO: Implement ply parsing and branch reconstruction
+    // This will be completed when implementing full branch management
   }
 
   get jsonNotes() {
@@ -150,7 +176,7 @@ export default class GameOnline {
   }
 
   set jsonNotes(notes) {
-    return this.addNotes({ "-1": notes });
+    this.addNotes({ "-1": notes });
   }
 
   // parseJSONPly(ply, player, color, branch) {
@@ -180,19 +206,48 @@ export default class GameOnline {
 
   // Chat
   get jsonPlayerChat() {
-    // TODO:
+    // Return player chat messages for current ply
+    const plyID = (this.board && this.board.ply && this.board.ply.id) || -1;
+    return (this.chatlog[plyID] || [])
+      .filter((comment) => comment.player !== null)
+      .map((comment) => ({
+        text: comment.text,
+        player: comment.player,
+        uid: comment.uid,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      }));
   }
 
-  set jsonPlayerChat(comments) {
-    // TODO:
+  set jsonPlayerChat(messages) {
+    if (!messages || !Array.isArray(messages)) {
+      return;
+    }
+    // Parse player chat messages from Firestore
+    // Messages have: { text, uid, createdAt, updatedAt }
+    // TODO: Convert to Comment objects and add to chatlog
   }
 
   get jsonSpectatorChat() {
-    // TODO:
+    // Return spectator chat messages (player === null)
+    const plyID = (this.board && this.board.ply && this.board.ply.id) || -1;
+    return (this.chatlog[plyID] || [])
+      .filter((comment) => comment.player === null)
+      .map((comment) => ({
+        text: comment.text,
+        uid: comment.uid,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+      }));
   }
 
-  set jsonSpectatorChat(comments) {
-    // TODO:
+  set jsonSpectatorChat(messages) {
+    if (!messages || !Array.isArray(messages)) {
+      return;
+    }
+    // Parse spectator chat messages from Firestore
+    // Messages have: { text, uid, createdAt, updatedAt }
+    // TODO: Convert to Comment objects and add to chatlog
   }
 
   // parseJSONComments(comments, plyID) {
