@@ -3,7 +3,7 @@ import { cloneDeep, defaults, forEach, sortBy } from "lodash";
 import { bots, botListOptions } from "../../bots";
 import CustomTeiBot from "../../bots/custom-tei";
 
-const defaultBotID = "tiltak-cloud";
+const defaultBotID = "tiltak";
 
 const botList = [...botListOptions];
 

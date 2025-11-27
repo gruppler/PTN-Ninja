@@ -247,12 +247,18 @@ export default class TeiBot extends Bot {
   }
 
   analyzeInteractive() {
-    if (this.state.isRunning || this.isGameEnd) {
+    if (this.state.isRunning) {
+      // Engine is running; update nextTPS and send stop.
+      // handleResponse will start the new search when bestmove is received.
+      this.setState({ nextTPS: this.isGameEnd ? null : this.tps });
       this.send("stop");
-      this.onSearchEnd();
-    } else {
-      return super.analyzeInteractive();
+      return;
     }
+    if (this.isGameEnd) {
+      this.onSearchEnd({ nextTPS: null });
+      return;
+    }
+    return super.analyzeInteractive();
   }
 
   //#region handleResponse
