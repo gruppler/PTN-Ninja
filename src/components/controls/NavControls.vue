@@ -1,6 +1,9 @@
 <template>
   <div class="play-controls absolute-fit justify-center">
-    <div class="row no-wrap justify-around items-center full-height">
+    <div
+      class="row no-wrap items-center full-height"
+      :class="compact ? 'full-width' : 'justify-center'"
+    >
       <q-btn
         @touchstart="vibrate"
         @click="deletePly"
@@ -11,6 +14,7 @@
         }"
         stretch
         flat
+        :class="{ col: compact }"
         :color="fg"
         v-ripple="false"
         :disable="
@@ -32,6 +36,7 @@
         v-shortkey="hotkeys.first"
         stretch
         flat
+        :class="{ col: compact }"
         :color="fg"
         v-ripple="false"
         :disable="isFirst || plyInProgress"
@@ -52,6 +57,7 @@
         }"
         stretch
         flat
+        :class="{ col: compact }"
         :color="fg"
         v-ripple="false"
         :disable="isFirst || plyInProgress"
@@ -89,6 +95,7 @@
         }"
         stretch
         flat
+        :class="{ col: compact }"
         :color="fg"
         v-ripple="false"
         :disable="isLast || plyInProgress"
@@ -105,6 +112,7 @@
         v-shortkey="hotkeys.last"
         stretch
         flat
+        :class="{ col: compact }"
         :color="fg"
         v-ripple="false"
         :disable="isLast || plyInProgress"
@@ -114,34 +122,24 @@
           {{ $t("End") }}
         </hint>
       </q-btn>
-      <q-btn
+      <BranchMenuButton
         v-if="!hideBranchMenu"
-        v-shortkey="{ ...options, ...branchControls }"
-        @shortkey="branchKey"
-        stretch
-        flat
-        v-ripple="false"
-        :disable="branches.length < 2 || plyInProgress"
-        :color="isRoot ? fg : 'primary'"
-      >
-        <q-icon name="branch" class="rotate-180" />
-        <BranchMenu
-          ref="branchMenu"
-          v-model="branchMenu"
-          @select="selectBranch"
-          :branches="branches"
-          selected-played
-        />
-        <hint v-if="branches.length >= 2 && !plyInProgress">
-          {{ $tc("Branches", branches.length) }}
-        </hint>
-      </q-btn>
+        ref="branchMenuButton"
+        :class="{ col: compact }"
+        :color="fg"
+      />
     </div>
+    <!-- Branch hotkeys handler (always active) -->
+    <div
+      v-shortkey="{ ...options, ...branchControls }"
+      @shortkey="branchKey"
+      class="hidden"
+    />
   </div>
 </template>
 
 <script>
-import BranchMenu from "./BranchMenu";
+import BranchMenuButton from "./BranchMenuButton";
 
 import { countedThrottle } from "../../utilities";
 import { omit, pick, zipObject } from "lodash";
@@ -157,13 +155,18 @@ const BRANCH_KEYS = [
 
 export default {
   name: "NavControls",
-  components: { BranchMenu },
+  components: { BranchMenuButton },
+  props: {
+    compact: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       isPlaying: false,
       timer: null,
       timestamp: null,
-      branchMenu: false,
       hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
@@ -199,12 +202,6 @@ export default {
     plyInProgress() {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
-    isRoot() {
-      return !this.position.ply || !this.position.ply.branch;
-    },
-    branchIndex() {
-      return this.$store.getters["game/currentBranchIndex"];
-    },
     options() {
       const keys = Object.keys(this.branches);
       return zipObject(
@@ -213,7 +210,7 @@ export default {
       );
     },
     showPlayButton() {
-      return this.$store.state.ui.showPlayButton;
+      return !this.compact && this.$store.state.ui.showPlayButton;
     },
     isOngoingOnlineGame() {
       return (
@@ -232,9 +229,7 @@ export default {
       );
     },
     hideBranchMenu() {
-      return (
-        this.isOngoingOnlineGame && this.isPlayer && !this.scratchboardEnabled
-      );
+      return this.isOngoingOnlineGame && this.isPlayer;
     },
   },
   methods: {
@@ -318,43 +313,9 @@ export default {
         }
       }
     },
-    selectBranch(ply) {
-      this.$store.dispatch("game/SET_TARGET", ply);
-      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
-    },
-    branchKey({ srcKey }) {
-      switch (srcKey) {
-        case "branchMenu":
-          if (this.branches.length) {
-            this.branchMenu = !this.branchMenu;
-          }
-          break;
-        case "prevBranch":
-        case "nextBranch":
-        case "firstBranch":
-        case "lastBranch":
-          this[srcKey]();
-          break;
-      }
-    },
-    prevBranch() {
-      if (this.branches.length && this.branchIndex > 0) {
-        this.selectBranch(this.branches[this.branchIndex - 1]);
-      }
-    },
-    nextBranch() {
-      if (this.branches.length && this.branchIndex < this.branches.length - 1) {
-        this.selectBranch(this.branches[this.branchIndex + 1]);
-      }
-    },
-    firstBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[0]);
-      }
-    },
-    lastBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[this.branches.length - 1]);
+    branchKey(event) {
+      if (this.$refs.branchMenuButton) {
+        this.$refs.branchMenuButton.branchKey(event);
       }
     },
     vibrate() {

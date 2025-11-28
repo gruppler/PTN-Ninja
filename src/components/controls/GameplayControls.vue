@@ -1,6 +1,6 @@
 <template>
   <div class="gameplay-controls absolute-fit justify-center">
-    <div class="row no-wrap justify-around items-center full-height">
+    <div class="row no-wrap justify-evenly items-center full-height">
       <q-btn-group class="evaluation-buttons" stretch flat>
         <!-- Undo Button -->
         <q-btn
@@ -30,34 +30,57 @@
           </hint>
         </q-btn>
 
-        <EvalButtons v-if="scratchboardEnabled" :disable="!isMyTurn" />
+        <q-separator vertical />
 
-        <!-- Submit Move Button (for scratchboard games) -->
-        <q-btn
-          v-if="scratchboardEnabled"
-          @touchstart="vibrate"
-          @click="submitPendingMove"
-          v-ripple="false"
-          :disable="!pendingMove || !isMyTurn"
-          icon="send"
-        >
-          <hint v-if="pendingMove && isMyTurn">
-            {{ $t("Submit Move") }}
-          </hint>
-        </q-btn>
+        <EvalButtons :disable="!isMyTurn" :compact="$q.screen.lt.md" />
+
+        <template v-if="scratchboardEnabled">
+          <q-separator vertical />
+
+          <!-- Submit Move Button (for scratchboard games) -->
+          <q-btn
+            @touchstart="vibrate"
+            @click="submitPendingMove"
+            v-ripple="false"
+            :disable="!pendingMove || !isMyTurn"
+            icon="send"
+          >
+            <hint v-if="pendingMove && isMyTurn">
+              {{ $t("Submit Move") }}
+            </hint>
+          </q-btn>
+
+          <q-separator vertical />
+
+          <!-- Branch Menu Button (for scratchboard games) -->
+          <BranchMenuButton v-if="scratchboardEnabled" ref="branchMenuButton" />
+        </template>
       </q-btn-group>
     </div>
+    <!-- Branch hotkeys handler (always active) -->
+    <div v-shortkey="branchControls" @shortkey="branchKey" class="hidden" />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from "vuex";
+import { pick } from "lodash";
 import { HOTKEYS } from "../../keymap";
+import BranchMenuButton from "./BranchMenuButton";
 import EvalButtons from "./EvalButtons.vue";
+
+const BRANCH_KEYS = [
+  "branchMenu",
+  "prevBranch",
+  "nextBranch",
+  "firstBranch",
+  "lastBranch",
+];
 
 export default {
   name: "GameplayControls",
   components: {
+    BranchMenuButton,
     EvalButtons,
   },
   data() {
@@ -66,6 +89,7 @@ export default {
       hotkeys: {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
+      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
@@ -101,6 +125,11 @@ export default {
     undo() {
       if (this.canUndo) {
         this.$store.dispatch("game/DELETE_PLY");
+      }
+    },
+    branchKey(event) {
+      if (this.$refs.branchMenuButton) {
+        this.$refs.branchMenuButton.branchKey(event);
       }
     },
     resign() {

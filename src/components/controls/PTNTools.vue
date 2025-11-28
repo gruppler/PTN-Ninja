@@ -92,7 +92,7 @@ export default {
     isDisabled() {
       return (
         this.$store.state.game.config.isOnline &&
-        this.$store.state.game.config.isOngoing
+        !this.$store.state.game.config.hasEnded
       );
     },
     showAllBranches: {

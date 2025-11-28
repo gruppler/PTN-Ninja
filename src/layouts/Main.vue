@@ -220,15 +220,18 @@
         <div class="col-grow relative-position">
           <PTN class="absolute-fit" recess />
         </div>
-        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <template v-if="isOnlinePlayer">
-            <NavControls class="full-width" />
-          </template>
-          <template v-else>
-            <UndoButtons spread stretch flat unelevated />
-            <EvalButtons class="full-width" spread stretch flat unelevated />
-          </template>
-        </q-toolbar>
+        <div class="relative-position">
+          <Scrubber v-if="isOnlinePlayer" />
+          <q-toolbar class="footer-toolbar bg-ui q-pa-none">
+            <template v-if="isOnlinePlayer">
+              <NavControls class="full-width" compact />
+            </template>
+            <template v-else>
+              <UndoButtons spread stretch flat unelevated />
+              <EvalButtons class="full-width" spread stretch flat unelevated />
+            </template>
+          </q-toolbar>
+        </div>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -286,7 +289,7 @@
       <ToolbarAnalysis v-if="hasAnalysis && $q.screen.height >= singleWidth" />
 
       <div class="relative-position">
-        <Scrubber />
+        <Scrubber v-if="!isOnlinePlayer" />
 
         <q-toolbar
           v-show="
