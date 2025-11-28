@@ -103,6 +103,7 @@ export default {
   recent: "mdi-backup-restore",
   redo: "mdi-redo",
   refresh: "mdi-refresh",
+  resign: "mdi-flag",
   result: "mdi-gavel",
   ring1: "mdi-square-outline",
   ring2: "mdi-square-medium-outline",

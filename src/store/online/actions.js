@@ -157,18 +157,49 @@ export const INSERT_PLY = async (context, { gameId, ply, isPrivate }) => {
   }
 };
 
+export const RESIGN = async (context) => {
+  try {
+    const game = context.state.currentGame;
+    if (!game) {
+      throw new Error("No active game");
+    }
+
+    // TODO: Implement resign cloud function
+    // For now, just update the game state locally
+    const updatedGame = {
+      ...game,
+      hasEnded: true,
+      result: context.getters.player === 1 ? "0-1" : "1-0", // Opponent wins by resignation
+    };
+
+    context.commit("SET_CURRENT_GAME", updatedGame);
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to resign");
+  }
+};
+
 export const REMOVE_GAME = async ({ commit }, game) => {
   if (!game || !game.config || !game.config.id) {
     throw new Error("Invalid game");
   }
-  const gameDoc = db
-    .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
-    .doc(game.config.id);
-  await gameDoc.delete();
-  commit(
-    game.config.isPrivate ? "REMOVE_PLAYER_GAME" : "REMOVE_PUBLIC_GAME",
-    game.config.id
-  );
+
+  try {
+    // Delete the game document - cloud function will automatically delete subcollections
+    const gameDoc = db
+      .collection(game.config.isPrivate ? "gamesPrivate" : "gamesPublic")
+      .doc(game.config.id);
+    await gameDoc.delete();
+
+    // Remove from local store
+    commit(
+      game.config.isPrivate ? "REMOVE_PLAYER_GAME" : "REMOVE_PUBLIC_GAME",
+      game.config.id
+    );
+  } catch (error) {
+    console.error("Failed to delete game:", error);
+    throw error;
+  }
 };
 
 export const JOIN_GAME = async (context, game) => {
