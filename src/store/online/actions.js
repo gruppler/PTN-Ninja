@@ -128,7 +128,11 @@ export const CREATE_GAME = async (context, { game, config }) => {
   }
   const state = game.JSONState;
   const tags = game.JSONTags;
+
   try {
+    // Clean up any existing online game listener before creating a new one
+    await context.dispatch("UNLISTEN_CURRENT_GAME");
+
     const gameId = await call("createGame", { config, state, tags });
 
     // Load the created game
@@ -142,7 +146,7 @@ export const CREATE_GAME = async (context, { game, config }) => {
 
     return gameId;
   } catch (error) {
-    console.error(error);
+    console.error("CREATE_GAME error:", error);
     throw new Error("Failed to create game");
   }
 };
@@ -239,13 +243,20 @@ const loadGameDocument = async (id, isPrivate) => {
   return new Game(gameData);
 };
 
-export const LOAD_GAME = async function ({ state }, { id, isPrivate }) {
+export const LOAD_GAME = async function ({ state, commit }, { id, isPrivate }) {
   try {
     Loading.show();
     const game = await loadGameDocument(id, isPrivate);
 
-    // Add the single game to the store
-    this.dispatch("game/ADD_GAMES", { games: [game] });
+    // Add the single game to the local game store
+    this.dispatch("game/ADD_GAME", game);
+
+    // Also add to the online store for the GameTable
+    if (isPrivate) {
+      commit("SET_PLAYER_GAME", game);
+    } else {
+      commit("SET_PUBLIC_GAME", game);
+    }
 
     Loading.hide();
     return game;

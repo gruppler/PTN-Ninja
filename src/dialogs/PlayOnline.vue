@@ -304,10 +304,6 @@ export default {
             opponentName: this.opponentName,
           },
         });
-        await this.$store.dispatch("online/LOAD_GAME", {
-          id,
-          isPrivate: this.config.isPrivate,
-        });
         this.close();
       } catch (error) {
         this.$store.dispatch("ui/NOTIFY_ERROR", error);
