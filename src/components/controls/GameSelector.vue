@@ -76,7 +76,7 @@
 
       <template v-slot:option="scope">
         <GameSelectorOption
-          :key="scope.opt.label"
+          :key="scope.opt.key"
           :option="scope.opt"
           :show-icon="hasOnlineGames"
           :show-close="games.length > 1"
@@ -137,6 +137,7 @@ export default {
     },
     games() {
       return this.$store.state.game.list.map((game, index) => ({
+        key: (game.config && game.config.id) || game.name,
         label: game.name,
         value: index,
         config: game.config,

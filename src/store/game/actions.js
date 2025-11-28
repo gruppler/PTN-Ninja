@@ -4,7 +4,7 @@ import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
-import { openLocalDB } from "./db";
+import { openLocalDB, getGameKey } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
 import Ply from "../../Game/PTN/Ply";
@@ -63,9 +63,18 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
     newGame.highlighterSquares = game.highlighterSquares;
   }
 
+  // Set database key (online id or name)
+  newGame.key = getGameKey(newGame);
+
   try {
     Loading.show();
-    await gamesDB.add("games", newGame);
+    // For online games, use put() to overwrite any existing entry with the same ID
+    // For local games, use add() to detect duplicates
+    if (newGame.config && newGame.config.isOnline) {
+      await gamesDB.put("games", newGame);
+    } else {
+      await gamesDB.add("games", newGame);
+    }
   } catch (error) {
     Loading.hide();
     notifyError(error);
@@ -111,6 +120,9 @@ export const ADD_GAMES = async function (
     if (game.editingTPS !== undefined) {
       newGame.editingTPS = game.editingTPS;
     }
+
+    // Set database key (online id or name)
+    newGame.key = getGameKey(newGame);
 
     try {
       await gamesDB.add("games", newGame);
@@ -286,8 +298,14 @@ export const REMOVE_GAME = async function (
   if (!game) {
     new Error(`Invalid index: ${index}`);
   }
+
+  // If removing an online game, unlisten from it
+  if (game.config && game.config.isOnline) {
+    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+  }
+
   try {
-    await gamesDB.delete("games", game.name);
+    await gamesDB.delete("games", getGameKey(game));
   } catch (error) {
     notifyError(error);
   }
@@ -352,9 +370,22 @@ export const REMOVE_MULTIPLE_GAMES = async function (
   { start, count }
 ) {
   const games = state.list.slice(start, start + count);
-  const names = games.map((game) => game.name);
+  const keys = games.map((game) => getGameKey(game));
+
+  // Check if any of the games being removed are online games
+  // and if the current game (index 0) is among them
+  const currentGame = state.list[0];
+  if (
+    currentGame &&
+    games.includes(currentGame) &&
+    currentGame.config &&
+    currentGame.config.isOnline
+  ) {
+    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+  }
+
   try {
-    await Promise.all(names.map((name) => gamesDB.delete("games", name)));
+    await Promise.all(keys.map((key) => gamesDB.delete("games", key)));
   } catch (error) {
     notifyError(error);
   }
@@ -597,6 +628,7 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
   if (game && !this.state.ui.embed) {
     try {
       gamesDB.put("games", {
+        key: getGameKey(game),
         name: game.name,
         ptn: game.ptn,
         state: game.minState,
@@ -635,13 +667,24 @@ export const SET_NAME = async function (
   }
   if (!this.state.ui.embed) {
     try {
-      const game = await gamesDB.get("games", oldName);
+      const currentGame = Vue.prototype.$game;
+      const oldKey =
+        currentGame.config && currentGame.config.id
+          ? currentGame.config.id
+          : oldName;
+      const game = await gamesDB.get("games", oldKey);
       if (!game) {
-        throw new Error("Game not found: " + oldName);
+        throw new Error("Game not found: " + oldKey);
       }
       game.name = getters.uniqueName(newName, true);
-      await gamesDB.put("games", game);
-      await gamesDB.delete("games", oldName);
+      // For local games, key changes with name; for online games, key stays the same
+      if (!game.config || !game.config.id) {
+        game.key = game.name;
+        await gamesDB.put("games", game);
+        await gamesDB.delete("games", oldKey);
+      } else {
+        await gamesDB.put("games", game);
+      }
     } catch (error) {
       notifyError(error);
     }
@@ -681,6 +724,9 @@ export const SELECT_GAME = function (
   try {
     const game = { ...state.list[index] };
     game.lastSeen = new Date();
+    // Add the key for IndexedDB
+    game.key = getGameKey(game);
+
     if (immediate) {
       commit("SELECT_GAME", index);
     } else {
@@ -705,6 +751,7 @@ export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
   const game = { ...state.list[0] };
   try {
     game.highlighterEnabled = Boolean(enabled);
+    game.key = getGameKey(game);
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
@@ -716,6 +763,7 @@ export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
   const game = { ...state.list[0] };
   try {
     game.highlighterSquares = squares || {};
+    game.key = getGameKey(game);
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
@@ -863,6 +911,7 @@ export const EDIT_TPS = async function ({ commit, state }, tps) {
   const game = { ...state.list[0] };
   try {
     game.editingTPS = tps;
+    game.key = getGameKey(game);
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
