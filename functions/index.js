@@ -184,7 +184,6 @@ exports.createGame = functions.https.onCall(
       delete tags.date;
       delete tags.time;
       config.players = [];
-      config.hasEnded = !state.hasEnded;
       if (config.isPrivate) {
         // Private game
         tags[`player${playerSeat}`] = config.playerName;

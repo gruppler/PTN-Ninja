@@ -76,10 +76,16 @@ export default class GameOnline {
     return config;
   }
 
+  // Whether the official game (root branch) has ended with a result
+  // This is different from hasEnded which checks any branch
+  get isGameOver() {
+    return this.plies.findIndex((ply) => !ply.branch && ply.result) >= 0;
+  }
+
   // State
   get jsonState() {
     return {
-      hasEnded: this.hasEnded,
+      hasEnded: this.isGameOver, // Use isGameOver for online state
       branch: this.board.branch,
       plyIndex: this.board.ply ? this.board.ply.index : 0,
       plyIsDone: this.board.plyIsDone,
