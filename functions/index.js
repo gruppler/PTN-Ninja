@@ -160,7 +160,7 @@ exports.gif = functions
 // Start a game
 exports.createGame = functions.https.onCall(
   async ({ config, state, tags }, context) => {
-    const { Board } = await import("./node_modules/tps-ninja/src/Board.js");
+    const { Board, parseTPS } = await import("tps-ninja/src/Board.js");
     const uid = context.auth ? context.auth.uid : false;
 
     // Abort if unauthenticated
@@ -240,7 +240,62 @@ exports.createGame = functions.https.onCall(
         .collection(config.isPrivate ? "gamesPrivate" : "gamesPublic")
         .add(game);
 
-      // TODO: Add branches/plies
+      // Add branches/plies if game has existing moves
+      if (state.ply || state.plyIndex > 0) {
+        // Create root branch with existing plies
+        const plies = [];
+
+        // For now, we'll handle the basic case where we have the current ply
+        // In a full implementation, we'd need to reconstruct all plies up to plyIndex
+        if (state.ply) {
+          plies.push({
+            index: state.plyIndex,
+            ply: state.ply,
+            uid: uid,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          });
+        }
+
+        // Use TPS to determine which player moves next
+        let nextPlayer = 1;
+        if (state.tps) {
+          const tps = parseTPS(state.tps);
+          nextPlayer = tps.player;
+        }
+
+        // Create root branch document
+        await db
+          .collection(config.isPrivate ? "gamesPrivate" : "gamesPublic")
+          .doc(gameDoc.id)
+          .collection("branches")
+          .doc("root")
+          .set({
+            parent: null,
+            name: "root",
+            player: nextPlayer,
+            plies: plies,
+            uid: uid,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          });
+      } else {
+        // Create empty root branch for new games - player 1 starts
+        await db
+          .collection(config.isPrivate ? "gamesPrivate" : "gamesPublic")
+          .doc(gameDoc.id)
+          .collection("branches")
+          .doc("root")
+          .set({
+            parent: null,
+            name: "root",
+            player: 1,
+            plies: [],
+            uid: uid,
+            createdAt: createdAt,
+            updatedAt: createdAt,
+          });
+      }
 
       if (!state.hasEnded && opponentUID) {
         // TODO: Notify opponent if specified
@@ -274,7 +329,7 @@ exports.joinGame = functions.https.onCall(
     const game = gameSnapshot.data();
 
     // Player already joined
-    if (game.config.players.indexOf(uid)) {
+    if (game.config.players.indexOf(uid) !== -1) {
       return httpError("invalid-argument", "Already joined");
     }
 
@@ -301,23 +356,105 @@ exports.joinGame = functions.https.onCall(
 );
 
 // Make a move
-exports.insertPly = functions.https.onCall((data, context) => {
-  const uid = context.auth.uid;
+exports.insertPly = functions.https.onCall(
+  async ({ gameId, ply, isPrivate }, context) => {
+    const { Board, parseTPS } = await import("tps-ninja/src/Board.js");
+    const uid = context.auth ? context.auth.uid : false;
 
-  // Get game
+    // Abort if unauthenticated
+    if (!uid) {
+      return httpError("unauthenticated");
+    }
 
-  // Validate user
+    // Get game
+    const gameRef = db
+      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
+      .doc(gameId);
+    const gameSnapshot = await gameRef.get();
+    if (!gameSnapshot.exists) {
+      return httpError("invalid-argument", "Game does not exist");
+    }
+    const game = gameSnapshot.data();
 
-  // Validate ply
+    // Validate user is a player in the game
+    if (!game.config.players.includes(uid)) {
+      return httpError("permission-denied", "Not a player in this game");
+    }
 
-  // Add ply to the main branch
+    // Get current branch to determine turn
+    const branchRef = gameRef.collection("branches").doc("root");
+    const branchSnapshot = await branchRef.get();
+    if (!branchSnapshot.exists) {
+      return httpError("invalid-argument", "Game branch not found");
+    }
+    const branch = branchSnapshot.data();
 
-  // Update game state
+    // Validate it's the user's turn
+    const playerIndex = game.config.players.indexOf(uid);
+    const playerNumber = playerIndex + 1;
 
-  // Notify opponent
+    // Use game state TPS to determine current turn
+    const currentTPS = parseTPS(game.state.tps);
+    if (currentTPS.player !== playerNumber) {
+      return httpError("permission-denied", "Not your turn");
+    }
 
-  return true;
-});
+    // Validate the ply is legal
+    try {
+      // Create board with current state
+      const board = new Board({
+        ...game.config,
+        ...game.tags,
+        tps: game.state.tps,
+      });
+
+      // Execute the ply to get updated game state
+      board.doPly(ply);
+
+      // Add ply to the branch
+      const updatedAt = new Date();
+      const newPly = {
+        index: branch.plies.length,
+        ply: ply,
+        uid: uid,
+        createdAt: updatedAt,
+        updatedAt: updatedAt,
+      };
+
+      await branchRef.update({
+        plies: [...branch.plies, newPly],
+        player: playerNumber === 1 ? 2 : 1, // Switch turn
+        updatedAt: updatedAt,
+      });
+
+      // Update game state with board's new state after executing ply
+      const newState = {
+        ...game.state,
+        plyIndex: game.state.plyIndex + 1,
+        ply: ply,
+        plyIsDone: true,
+        tps: board.getTPS(), // Updated TPS after move
+      };
+
+      await gameRef.update({
+        state: newState,
+        updatedBy: uid,
+        updatedAt: updatedAt,
+      });
+
+      // TODO: Notify opponent via push notifications
+
+      return {
+        success: true,
+        plyIndex: newPly.index,
+        tps: newState.tps,
+        nextPlayer: playerNumber === 1 ? 2 : 1,
+      };
+    } catch (error) {
+      return httpError("invalid-argument", `Invalid ply: ${error.message}`);
+    }
+  }
+);
 
 //#region Users
 

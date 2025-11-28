@@ -129,12 +129,31 @@ export const CREATE_GAME = async (context, { game, config }) => {
   const state = game.JSONState;
   const tags = game.JSONTags;
   try {
-    const response = await call("createGame", { config, state, tags });
-    // TODO: Open game and listen for changes
-    return response;
+    const gameId = await call("createGame", { config, state, tags });
+
+    // Load the created game
+    const createdGame = await context.dispatch("LOAD_GAME", {
+      id: gameId,
+      isPrivate: config.isPrivate,
+    });
+
+    // Set up real-time listeners for the game
+    await context.dispatch("LISTEN_CURRENT_GAME");
+
+    return gameId;
   } catch (error) {
     console.error(error);
     throw new Error("Failed to create game");
+  }
+};
+
+export const INSERT_PLY = async (context, { gameId, ply, isPrivate }) => {
+  try {
+    const response = await call("insertPly", { gameId, ply, isPrivate });
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to make move");
   }
 };
 
