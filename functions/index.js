@@ -457,7 +457,46 @@ exports.insertPly = functions.https.onCall(
 
 //#region Users
 
-// Delete inactive guest accounts periodically
+// Helper function to delete all subcollections of a game document
+async function deleteGameSubcollections(snap, gameId) {
+  console.log(`Deleting subcollections for game: ${gameId}`);
+
+  // Delete all subcollections
+  const subcollections = ["branches"];
+  await Promise.all(
+    subcollections.map(async (subcollection) => {
+      const subcollectionRef = snap.ref.collection(subcollection);
+      const snapshot = await subcollectionRef.get();
+
+      // Delete all documents in the subcollection
+      if (snapshot.size > 0) {
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        console.log(`Deleted ${snapshot.size} documents from ${subcollection}`);
+      }
+    })
+  );
+}
+
+// Automatically delete subcollections when a public game document is deleted
+exports.deleteGameSubcollections = functions.firestore
+  .document("gamesPublic/{gameId}")
+  .onDelete(async (snap, context) => {
+    const gameId = context.params.gameId;
+    await deleteGameSubcollections(snap, gameId);
+  });
+
+// Automatically delete subcollections when a private game document is deleted
+exports.deletePrivateGameSubcollections = functions.firestore
+  .document("gamesPrivate/{gameId}")
+  .onDelete(async (snap, context) => {
+    const gameId = context.params.gameId;
+    await deleteGameSubcollections(snap, gameId);
+  });
+
 exports.accountcleanup = functions.pubsub
   .schedule("every day 00:10")
   .onRun(async () => {
