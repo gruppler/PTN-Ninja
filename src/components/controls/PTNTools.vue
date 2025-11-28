@@ -4,6 +4,7 @@
       <q-btn
         @click="showAllBranches = !showAllBranches"
         :text-color="showAllBranches ? 'primary' : ''"
+        :disable="disableBranchButton"
       >
         <q-icon name="branch" class="rotate-180" />
         <hint>{{
@@ -67,6 +68,27 @@ export default {
     };
   },
   computed: {
+    isOngoingOnlineGame() {
+      return (
+        this.$store.state.game.config &&
+        this.$store.state.game.config.isOnline &&
+        !this.$store.state.game.config.hasEnded
+      );
+    },
+    scratchboardEnabled() {
+      return (
+        this.$store.state.game.config &&
+        this.$store.state.game.config.scratchboard
+      );
+    },
+    isPlayer() {
+      return this.$store.getters["online/isPlayer"];
+    },
+    disableBranchButton() {
+      return (
+        this.isOngoingOnlineGame && this.isPlayer && !this.scratchboardEnabled
+      );
+    },
     isDisabled() {
       return (
         this.$store.state.game.config.isOnline &&

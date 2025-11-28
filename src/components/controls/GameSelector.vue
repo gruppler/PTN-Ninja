@@ -149,7 +149,7 @@ export default {
       return this.$store.state.game.list.map((g) => g.name);
     },
     hasOnlineGames() {
-      return this.games.some((game) => game.config.id);
+      return this.games.some((game) => game.config && game.config.id);
     },
     icon() {
       if (this.config.isOnline) {

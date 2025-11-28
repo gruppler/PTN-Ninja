@@ -221,8 +221,13 @@
           <PTN class="absolute-fit" recess />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <UndoButtons spread stretch flat unelevated />
-          <EvalButtons class="full-width" spread stretch flat unelevated />
+          <template v-if="isOnlinePlayer">
+            <NavControls class="full-width" />
+          </template>
+          <template v-else>
+            <UndoButtons spread stretch flat unelevated />
+            <EvalButtons class="full-width" spread stretch flat unelevated />
+          </template>
         </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
@@ -299,7 +304,8 @@
             class="justify-around items-center"
             style="width: 100%; max-width: 500px; margin: 0 auto"
           />
-          <NavControls ref="playControls" v-else />
+          <GameplayControls v-else-if="isOnlinePlayer" ref="playControls" />
+          <NavControls v-else ref="playControls" />
         </q-toolbar>
       </div>
     </q-footer>
@@ -331,6 +337,7 @@ import NoteNotifications from "../components/notify/NoteNotifications";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
+import GameplayControls from "../components/controls/GameplayControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import UndoButtons from "../components/controls/UndoButtons";
@@ -364,6 +371,7 @@ export default {
     GameNotifications,
     NoteNotifications,
     NavControls,
+    GameplayControls,
     Scrubber,
     PTNTools,
     UndoButtons,
@@ -395,6 +403,13 @@ export default {
     },
     isOnline() {
       return this.gameExists ? this.$store.state.game.config.isOnline : false;
+    },
+    isOnlinePlayer() {
+      return (
+        this.isOnline &&
+        !this.$store.state.game.config.hasEnded &&
+        this.$store.getters["online/isPlayer"] === true
+      );
     },
     hasAnalysis() {
       return !this.isOnline;

@@ -218,6 +218,12 @@ kbd {
   }
 }
 
+.q-bottom-sheet .q-focusable.disabled {
+  .q-focus-helper {
+    display: none;
+  }
+}
+
 .q-field__control.text-negative > .q-field__prepend {
   color: $negative;
 }

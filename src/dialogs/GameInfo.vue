@@ -126,7 +126,14 @@
         <template v-if="tags.tps">
           <q-item-section align="right">
             <q-item-label>
-              <q-btn icon="copy" :label="$t('TPS')" @click="copyTPS" dense flat>
+              <q-btn
+                icon="copy"
+                :label="$t('TPS')"
+                @click="copyTPS"
+                dense
+                flat
+                :disable="isOnlineGame"
+              >
                 <tooltip>{{ tags.tps.text }}</tooltip>
               </q-btn>
             </q-item-label>
@@ -385,6 +392,14 @@ export default {
     },
   },
   computed: {
+    isOnlineGame() {
+      return (
+        this.game &&
+        this.game.config &&
+        this.game.config.isOnline &&
+        !this.game.config.hasEnded
+      );
+    },
     isEditable() {
       return this.game.config.isOnline
         ? this.$store.getters["online/canEdit"](this.game)

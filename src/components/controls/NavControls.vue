@@ -115,6 +115,7 @@
         </hint>
       </q-btn>
       <q-btn
+        v-if="!hideBranchMenu"
         v-shortkey="{ ...options, ...branchControls }"
         @shortkey="branchKey"
         stretch
@@ -213,6 +214,27 @@ export default {
     },
     showPlayButton() {
       return this.$store.state.ui.showPlayButton;
+    },
+    isOngoingOnlineGame() {
+      return (
+        this.$store.state.game.config &&
+        this.$store.state.game.config.isOnline &&
+        !this.$store.state.game.config.hasEnded
+      );
+    },
+    isPlayer() {
+      return this.$store.getters["online/isPlayer"];
+    },
+    scratchboardEnabled() {
+      return (
+        this.$store.state.game.config &&
+        this.$store.state.game.config.scratchboard
+      );
+    },
+    hideBranchMenu() {
+      return (
+        this.isOngoingOnlineGame && this.isPlayer && !this.scratchboardEnabled
+      );
     },
   },
   methods: {

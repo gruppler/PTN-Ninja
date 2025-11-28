@@ -39,8 +39,9 @@
                   <q-item
                     v-else
                     clickable
-                    @click="child.action"
+                    @click="child.disable ? null : child.action"
                     :key="child.id"
+                    :disable="child.disable"
                   >
                     <q-item-section side>
                       <q-icon :name="child.icon" />
@@ -77,6 +78,30 @@ export default {
     isTextSelected() {
       return Boolean(selection.text.value);
     },
+    isOngoingOnlineGame() {
+      return (
+        this.$store.state.game.config &&
+        this.$store.state.game.config.isOnline &&
+        !this.$store.state.game.config.hasEnded
+      );
+    },
+    bottomSheetActions() {
+      return this.actions.map((action) => {
+        if (!action.children) {
+          return {
+            ...action,
+            classes: action.disable ? "text-grey-6 disabled" : undefined,
+          };
+        }
+        // For parent actions with children, keep all children but mark disabled ones
+        const styledChildren = action.children.map((child) => ({
+          ...child,
+          classes: child.disable ? "text-grey-6 disabled" : undefined,
+        }));
+        action.children = styledChildren;
+        return action;
+      });
+    },
     actions() {
       const actions = [];
 
@@ -109,24 +134,28 @@ export default {
           });
         }
 
+        // Disable copying TPS, Moves, or PTN during ongoing online games
         actions.push(
           {
             id: "tps",
             label: this.$t("TPS"),
             icon: "board",
             action: async () => await this.shareText("tps"),
+            disable: this.isOngoingOnlineGame,
           },
           {
             id: "moves",
             label: this.$t("Moves"),
             icon: "moves",
             action: async () => await this.shareText("moves"),
+            disable: this.isOngoingOnlineGame,
           },
           {
             id: "ptn",
             label: this.$t("PTN"),
             icon: "text",
             action: async () => await this.shareText("ptn"),
+            disable: this.isOngoingOnlineGame,
           }
         );
       };
@@ -334,7 +363,11 @@ export default {
               message: label || this.$t("Share"),
               actions,
             })
-            .onOk(({ action }) => action())
+            .onOk((item) => {
+              if (!item.disable && item.action) {
+                item.action();
+              }
+            })
             .onDismiss(() => (this.bottomSheet = false));
         }
       } else if (this.bottomSheet) {
@@ -346,9 +379,13 @@ export default {
             grid: true,
             class: "non-selectable",
             message: this.$t("Share"),
-            actions: this.actions,
+            actions: this.bottomSheetActions,
           })
-          .onOk(({ action }) => action())
+          .onOk((item) => {
+            if (!item.disable && item.action) {
+              item.action();
+            }
+          })
           .onDismiss(() => (this.bottomSheet = false));
       }
     },
