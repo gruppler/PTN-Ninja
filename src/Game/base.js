@@ -33,15 +33,23 @@ export const pieceCounts = Object.freeze({
   8: Object.freeze({ flat: 50, cap: 2 }),
 });
 
-export const generateName = (tags = {}, game) => {
+export const generateName = (tags = {}, game, createdAt = null) => {
   const tag = (key) =>
     (key in tags ? tags[key] : game ? game.tag(key) : "") || "";
   const player1 = tag("player1");
   const player2 = tag("player2");
   let result = tag("result");
-  const date = tag("date");
-  const time = tag("time").replace(/\D/g, ".");
+  let date = tag("date");
+  let time = tag("time").replace(/\D/g, ".");
   const size = tag("size");
+
+  // For online games, use createdAt if no date/time tags exist
+  if (createdAt && !date) {
+    const d = createdAt instanceof Date ? createdAt : new Date(createdAt);
+    date = Tag.dateFromDate(d);
+    time = Tag.timeFromDate(d).replace(/:/g, ".");
+  }
+
   if (result && !isString(result)) {
     result = result.text;
   }
@@ -166,6 +174,7 @@ export default class GameBase {
     this.chatlog = {};
     this.notes = {};
     this.warnings = [];
+    this.createdAt = createdAt || null;
 
     //#region Parse HEAD
 
@@ -616,7 +625,7 @@ export default class GameBase {
   }
 
   generateName(tags) {
-    return generateName(tags || this.tagOutput);
+    return generateName(tags || this.tagOutput, null, this.createdAt);
   }
 
   get isDefaultName() {
