@@ -1,15 +1,53 @@
 # Online Gameplay Implementation Plan
 
-## Current State
-- ✅ Firebase authentication working (anonymous + email/password)
-- ✅ User registration with unique display names
-- ✅ Basic game creation (CREATE_GAME action)
-- ✅ Game listing (LISTEN_PUBLIC_GAMES, LISTEN_PRIVATE_GAMES)
-- ✅ Firestore rules defined for all game types
-- ⚠️ JOIN_GAME partially implemented but not working
-- ❌ No actual gameplay (move submission/synchronization)
-- ❌ JSON converters don't match new database schema
-- ❌ Can't create games with existing moves
+## Current State (Updated Nov 28, 2025)
+
+### Completed ✅
+- Firebase authentication working (anonymous + email/password)
+- User registration with unique display names
+- Basic game creation (CREATE_GAME action)
+- Game listing (LISTEN_PUBLIC_GAMES, LISTEN_PRIVATE_GAMES)
+- Firestore rules defined for all game types
+- Game deletion with subcollection cleanup (onDelete triggers)
+- `isGameOver` getter to distinguish official game ended state
+- GameTable updated to handle both Game instances and plain objects
+- Online game visibility bug fixed (hasEnded was incorrectly set to true)
+- Game duplication bug fixed (removed redundant LOAD_GAME call)
+
+### UI/UX Improvements ✅
+- **GameplayControls.vue**: New component for online gameplay with:
+  - Undo button
+  - Resign button (with confirmation dialog)
+  - EvalButtons (compact mode with context menu on right-click for small screens)
+  - Submit Move button (for scratchboard games)
+  - Branch menu button (for scratchboard games)
+- **BranchMenuButton.vue**: New reusable component encapsulating branch menu logic
+  - Extracted from NavControls and GameplayControls to avoid duplication
+  - Contains all branch navigation methods and computed properties
+- **NavControls.vue**: Added compact mode prop
+  - Hides play button in compact mode
+  - Buttons stretch to fill width in compact mode
+- **EvalButtons.vue**: Added compact mode
+  - Shows Tak button with context menu for Tinue, ?, ! on right-click
+  - Hotkeys still work in compact mode
+- **Main.vue**: Scrubber moved to PTN drawer in gameplay mode
+- Branch menu hotkeys work regardless of which component displays the button
+
+### In Progress ⚠️
+- Testing JOIN_GAME flow (cloud function fixed, action updated)
+- Testing INSERT_PLY flow (cloud function exists, needs end-to-end testing)
+
+### Recently Completed ✅
+- JOIN_GAME action now loads game and sets up listeners after joining
+- RESIGN cloud function implemented
+- RESIGN action updated to use cloud function
+
+### Not Started ❌
+- Server-side move validation
+- Real-time move synchronization
+- Chat system
+- Puzzles and analyses
+- Time controls
 
 ## Database Schema (from diagram)
 
@@ -434,11 +472,6 @@ puzzles/{puzzleID}
 
 ## Key Issues to Address
 
-### Current Bugs
-1. **Line 276 in functions/index.js**: `game` used before declaration in `joinGame`
-2. **Missing methods**: `JSONState` and `JSONTags` getters in Game class
-3. **Incomplete TODO items**: Multiple TODO comments in online.js and actions.js
-
 ### Missing Features
 1. **Move validation**: Server-side move legality checking
 2. **Turn management**: Enforce turn order
@@ -526,9 +559,61 @@ puzzles/{puzzleID}
 
 ---
 
-## Next Steps
+## Next Steps (Priority Order)
 
-1. Start with Phase 1 (converters) - this unblocks everything else
-2. Quick fix for Phase 3 (join game bug) - easy win
-3. Implement Phase 4 (gameplay) - highest value
-4. Continue with remaining phases based on priority
+### Immediate (Current Sprint)
+1. ~~**Test and fix JOIN_GAME**~~ ✅ Completed
+   - ~~Fix bug in `joinGame` cloud function (line 276)~~
+   - ~~After successful join, load the game and set up listeners~~
+   - Navigate to game view (handled by existing UI)
+
+2. **Test INSERT_PLY flow** - Core gameplay functionality
+   - Verify cloud function validates moves correctly
+   - Test real-time synchronization between players
+   - Handle move rejection gracefully
+
+3. ~~**Implement RESIGN cloud function**~~ ✅ Completed
+   - ~~Create `resign` cloud function in `functions/index.js`~~
+   - ~~Update game state in Firestore (hasEnded, result)~~
+   - Notify opponent (TODO)
+
+### Short-term
+4. **Real-time move listeners** - Watch for opponent moves
+   - Listen to branches/root for move updates
+   - Update local game state when opponent moves
+   - Show notifications for opponent moves
+
+5. **Game end handling**
+   - Detect game end conditions (road, flat win, draw)
+   - Update game state properly
+   - Show game over UI
+   - Allow post-game analysis
+
+### Medium-term
+6. **Branch management for ended games/spectators**
+7. **Chat system**
+8. **Puzzles and analyses**
+
+---
+
+## Recent Changes Log
+
+### Nov 28, 2025 (Evening)
+- Fixed JOIN_GAME action to load game and set up listeners after joining
+- Created `resign` cloud function in `functions/index.js`
+- Updated RESIGN action to use the cloud function instead of local state
+
+### Nov 28, 2025 (Morning)
+- Created `BranchMenuButton.vue` to consolidate branch menu logic
+- Added compact mode to `NavControls.vue` and `EvalButtons.vue`
+- Moved Scrubber to PTN drawer in gameplay mode
+- Fixed branch menu hotkeys to work in both NavControls and GameplayControls
+- Added context menu for eval buttons (Tinue, ?, !) on right-click in compact mode
+
+### Previous Session
+- Fixed online game visibility bug (hasEnded incorrectly set to true)
+- Fixed game duplication bug (removed redundant LOAD_GAME call)
+- Implemented game deletion with subcollection cleanup (onDelete triggers)
+- Added `isGameOver` getter to Game class
+- Updated GameTable to handle both Game instances and plain objects
+- Created GameplayControls component with undo, resign, eval, submit, branch buttons

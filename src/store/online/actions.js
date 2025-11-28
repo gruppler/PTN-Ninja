@@ -161,25 +161,26 @@ export const INSERT_PLY = async (context, { gameId, ply, isPrivate }) => {
   }
 };
 
-export const RESIGN = async (context) => {
+export const RESIGN = async function (context) {
+  const game = this.state.game;
+
+  if (!game || !game.config || !game.config.id) {
+    throw new Error("No active game");
+  }
+
+  if (game.config.hasEnded) {
+    throw new Error("Game has already ended");
+  }
+
   try {
-    const game = context.state.currentGame;
-    if (!game) {
-      throw new Error("No active game");
-    }
-
-    // TODO: Implement resign cloud function
-    // For now, just update the game state locally
-    const updatedGame = {
-      ...game,
-      hasEnded: true,
-      result: context.getters.player === 1 ? "0-1" : "1-0", // Opponent wins by resignation
-    };
-
-    context.commit("SET_CURRENT_GAME", updatedGame);
+    const response = await call("resign", {
+      gameId: game.config.id,
+      isPrivate: game.config.isPrivate,
+    });
+    return response;
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to resign");
+    console.error("Failed to resign:", error);
+    throw error;
   }
 };
 
@@ -206,23 +207,33 @@ export const REMOVE_GAME = async ({ commit }, game) => {
   }
 };
 
-export const JOIN_GAME = async (context, game) => {
+export const JOIN_GAME = async function (context, game) {
   if (!game || !game.config || !game.config.id) {
     throw new Error("Invalid game");
   }
 
   try {
     Loading.show();
-    const response = await call("joinGame", {
+
+    // Call cloud function to join the game
+    await call("joinGame", {
       id: game.config.id,
       isPrivate: game.config.isPrivate,
     });
-    console.log(response);
-    // TODO: Open game and listen for changes
-    return response;
+
+    // Load the game after successfully joining
+    const loadedGame = await context.dispatch("LOAD_GAME", {
+      id: game.config.id,
+      isPrivate: game.config.isPrivate,
+    });
+
+    // Set up real-time listeners for the game
+    await context.dispatch("LISTEN_CURRENT_GAME");
+
+    return loadedGame;
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to join game");
+    console.error("Failed to join game:", error);
+    throw error;
   } finally {
     Loading.hide();
   }
