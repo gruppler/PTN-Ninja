@@ -3,7 +3,7 @@
     <q-btn
       :label="$t('Tak')"
       :class="{ active: isTak }"
-      :disable="disable"
+      :disable="isDisabled"
       @click="toggle('tak')"
       @shortkey="toggle('tak')"
       v-shortkey="hotkeys.tak"
@@ -11,7 +11,7 @@
     <q-btn
       :label="$t('Tinue')"
       :class="{ active: isTinue }"
-      :disable="disable"
+      :disable="isDisabled"
       @click="toggle('tinue')"
       @shortkey="toggle('tinue')"
       v-shortkey="hotkeys.tinue"
@@ -19,7 +19,7 @@
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
       :class="{ active: isQ, double: isDoubleQ }"
-      :disable="disable"
+      :disable="isDisabled"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
       @shortkey="toggle('?', $event.srcKey === 'double')"
@@ -32,7 +32,7 @@
     <q-btn
       :label="isDoubleBang ? '!!' : '!'"
       :class="{ active: isBang, double: isDoubleBang }"
-      :disable="disable"
+      :disable="isDisabled"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
       @shortkey="toggle('!', $event.srcKey === 'double')"
@@ -50,6 +50,12 @@ import { HOTKEYS } from "../../keymap";
 
 export default {
   name: "EvalButtons",
+  props: {
+    disable: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       hotkeys: HOTKEYS.EVAL,
@@ -61,7 +67,7 @@ export default {
         ? this.$store.state.game.position.ply
         : null;
     },
-    disable() {
+    isDisabled() {
       const player = this.$store.state.game.config.player;
       return !this.ply || (player && player !== this.ply.player);
     },
@@ -97,11 +103,14 @@ export default {
 
 <style lang="scss">
 .evaluation-buttons {
-  .q-btn.active {
-    background-color: $orange-light;
-    color: var(--q-color-textDark);
-    &.double {
-      background-color: $red-light;
+  .q-btn {
+    min-width: 3em;
+    &.active {
+      background-color: $orange-light;
+      color: var(--q-color-textDark);
+      &.double {
+        background-color: $red-light;
+      }
     }
   }
 }
