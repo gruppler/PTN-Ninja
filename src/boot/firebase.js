@@ -35,6 +35,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
 });
 
 if (process.env.DEV) {
+  auth.useEmulator("http://localhost:9099");
   db.useEmulator("localhost", 4999);
   functions.useEmulator("localhost", 5001);
   window.auth = auth;
