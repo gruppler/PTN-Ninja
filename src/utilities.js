@@ -337,9 +337,10 @@ export const gameConverter = {
     data.config.id = snapshot.id;
     data.config.collection = snapshot.ref.parent.id;
     data.config.path = snapshot.ref.path;
-    data.config.player = data.config.players
-      ? data.config.players.indexOf(auth.currentUser.uid) + 1
-      : 0;
+    data.config.player =
+      data.config.players && auth.currentUser
+        ? data.config.players.indexOf(auth.currentUser.uid) + 1
+        : 0;
     data.config.size = (data.tags && data.tags.size) || 6;
 
     // Convert timestamps

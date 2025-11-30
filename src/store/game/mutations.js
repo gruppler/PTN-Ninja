@@ -9,6 +9,27 @@ export const SET_ERROR = (state, error) => {
   state.error = error;
 };
 
+export const UPDATE_ONLINE_PLAYERS = (state, uid) => {
+  // Update the player for all online games based on the current user
+  state.list.forEach((game) => {
+    if (game.config && game.config.isOnline && game.config.players) {
+      game.config.player = uid ? game.config.players.indexOf(uid) + 1 : 0;
+    }
+  });
+  // Also update the current game if it's online
+  const currentGame = Vue.prototype.$game;
+  if (
+    currentGame &&
+    currentGame.config &&
+    currentGame.config.isOnline &&
+    currentGame.config.players
+  ) {
+    currentGame.config.player = uid
+      ? currentGame.config.players.indexOf(uid) + 1
+      : 0;
+  }
+};
+
 export const INIT = (state, games) => {
   state.list = games;
   state.init = true;

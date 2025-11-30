@@ -19,10 +19,14 @@ export const INIT = ({ commit, dispatch, state }) => {
     auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
+        // Update player status for all online games
+        commit("game/UPDATE_ONLINE_PLAYERS", user.uid, { root: true });
         dispatch("LISTEN_CURRENT_GAME");
         commit("INIT");
         resolve();
       } else {
+        // Update player status for all online games (no user = spectator)
+        commit("game/UPDATE_ONLINE_PLAYERS", null, { root: true });
         // commit("UNLISTEN_CURRENT_GAME");
         dispatch("ANONYMOUS")
           .then(() => {

@@ -150,7 +150,7 @@ export default {
     },
     isDisabled() {
       const player = this.$store.state.game.config.player;
-      return !this.ply || (player && player !== this.ply.player);
+      return Boolean(!this.ply || (player && player !== this.ply.player));
     },
     evaluation() {
       return this.ply ? this.ply.evaluation : null;

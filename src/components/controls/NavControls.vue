@@ -21,7 +21,7 @@
           !position.ply ||
           plyInProgress ||
           isBoardDisabled ||
-          (player && position.ply.player !== player)
+          Boolean(player && position.ply.player !== player)
         "
         icon="backspace"
       >
