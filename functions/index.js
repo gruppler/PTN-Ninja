@@ -463,57 +463,59 @@ exports.insertPly = functions.https.onCall(
 );
 
 // Resign from a game
-exports.resign = functions.https.onCall(async ({ gameId, isPrivate }, context) => {
-  const uid = context.auth ? context.auth.uid : false;
+exports.resign = functions.https.onCall(
+  async ({ gameId, isPrivate }, context) => {
+    const uid = context.auth ? context.auth.uid : false;
 
-  // Abort if unauthenticated
-  if (!uid) {
-    return httpError("unauthenticated");
+    // Abort if unauthenticated
+    if (!uid) {
+      return httpError("unauthenticated");
+    }
+
+    // Get game
+    const gameRef = db
+      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
+      .doc(gameId);
+    const gameSnapshot = await gameRef.get();
+    if (!gameSnapshot.exists) {
+      return httpError("invalid-argument", "Game does not exist");
+    }
+    const game = gameSnapshot.data();
+
+    // Validate user is a player in the game
+    if (!game.config.players.includes(uid)) {
+      return httpError("permission-denied", "Not a player in this game");
+    }
+
+    // Check game hasn't already ended
+    if (game.state.hasEnded) {
+      return httpError("invalid-argument", "Game has already ended");
+    }
+
+    // Determine result based on who resigned
+    const playerIndex = game.config.players.indexOf(uid);
+    const playerNumber = playerIndex + 1;
+    const result = playerNumber === 1 ? "0-R" : "R-0"; // R indicates resignation
+
+    const updatedAt = new Date();
+
+    // Update game state
+    await gameRef.update({
+      "state.hasEnded": true,
+      "state.result": result,
+      "tags.result": result,
+      updatedBy: uid,
+      updatedAt: updatedAt,
+    });
+
+    // TODO: Notify opponent via push notifications
+
+    return {
+      success: true,
+      result: result,
+    };
   }
-
-  // Get game
-  const gameRef = db
-    .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
-    .doc(gameId);
-  const gameSnapshot = await gameRef.get();
-  if (!gameSnapshot.exists) {
-    return httpError("invalid-argument", "Game does not exist");
-  }
-  const game = gameSnapshot.data();
-
-  // Validate user is a player in the game
-  if (!game.config.players.includes(uid)) {
-    return httpError("permission-denied", "Not a player in this game");
-  }
-
-  // Check game hasn't already ended
-  if (game.state.hasEnded) {
-    return httpError("invalid-argument", "Game has already ended");
-  }
-
-  // Determine result based on who resigned
-  const playerIndex = game.config.players.indexOf(uid);
-  const playerNumber = playerIndex + 1;
-  const result = playerNumber === 1 ? "0-R" : "R-0"; // R indicates resignation
-
-  const updatedAt = new Date();
-
-  // Update game state
-  await gameRef.update({
-    "state.hasEnded": true,
-    "state.result": result,
-    "tags.result": result,
-    updatedBy: uid,
-    updatedAt: updatedAt,
-  });
-
-  // TODO: Notify opponent via push notifications
-
-  return {
-    success: true,
-    result: result,
-  };
-});
+);
 
 //#region Users
 
