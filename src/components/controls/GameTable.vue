@@ -338,7 +338,7 @@ export default {
   computed: {
     filter: {
       get() {
-        return this.$route.params.filter || "recent";
+        return this.$route.params.filter || "open";
       },
       set(filter) {
         this.$router.replace({
