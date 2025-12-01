@@ -50,6 +50,10 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
     newGame.config = game.config;
     if (game.config.isOnline) {
       delete newGame.ptn;
+      // For online games, copy tags since there's no PTN
+      if (game.tags) {
+        newGame.tags = game.jsonTags || game.tags;
+      }
     }
   }
   if (game.history) {
