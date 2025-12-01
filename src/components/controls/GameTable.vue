@@ -92,8 +92,7 @@
         @click="select(props.row)"
         class="non-selectable"
         :class="{
-          'text-accent': props.row.isActive,
-          'cursor-pointer': !props.row.isActive,
+          active: props.row.isActive,
         }"
         :no-hover="props.row.isActive"
         :key="props.row.id"
@@ -588,6 +587,7 @@ $header: 64px;
     display: none;
   }
 
+  tr.active *,
   tr.selected * {
     color: var(--q-color-primary);
   }
