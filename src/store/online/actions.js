@@ -188,7 +188,7 @@ export const RESIGN = async function (context) {
   }
 };
 
-export const REMOVE_GAME = async ({ commit }, game) => {
+export const REMOVE_GAME = async function ({ commit, dispatch }, game) {
   if (!game || !game.config || !game.config.id) {
     throw new Error("Invalid game");
   }
@@ -200,11 +200,14 @@ export const REMOVE_GAME = async ({ commit }, game) => {
       .doc(game.config.id);
     await gameDoc.delete();
 
-    // Remove from local store
+    // Remove from local online store
     commit(
       game.config.isPrivate ? "REMOVE_PLAYER_GAME" : "REMOVE_PUBLIC_GAME",
       game.config.id
     );
+
+    // Also close the game from the game selector if it's open
+    await dispatch("game/CLOSE_GAME_BY_ID", game.config.id, { root: true });
   } catch (error) {
     console.error("Failed to delete game:", error);
     throw error;

@@ -365,6 +365,38 @@ export const REMOVE_GAME = async function (
   }
 };
 
+// Close a game by its online ID without showing undo notification
+export const CLOSE_GAME_BY_ID = async function (
+  { commit, dispatch, state },
+  gameId
+) {
+  const index = state.list.findIndex((g) => g.config && g.config.id === gameId);
+
+  if (index < 0) {
+    return; // Game not found in list, nothing to close
+  }
+
+  const game = state.list[index];
+
+  // If closing an online game, unlisten from it
+  if (game.config && game.config.isOnline) {
+    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+  }
+
+  try {
+    await gamesDB.delete("games", getGameKey(game));
+  } catch (error) {
+    // Ignore errors when deleting from local DB
+  }
+
+  commit("REMOVE_GAME", index);
+  Vue.nextTick(() => {
+    if (index === 0) {
+      dispatch("SET_GAME", state.list[0]);
+    }
+  });
+};
+
 export const REMOVE_MULTIPLE_GAMES = async function (
   { commit, dispatch, state },
   { start, count }
