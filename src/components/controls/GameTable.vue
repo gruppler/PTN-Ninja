@@ -23,6 +23,11 @@
     <template v-slot:top>
       <div class="column fit overflow-hidden relative-position">
         <q-toolbar class="q-px-none">
+          <!-- Account -->
+          <AccountBtn :login-text="$t('Guest')" stretch flat />
+
+          <q-space />
+
           <!-- View Options -->
           <q-btn
             @click="fullscreen = !fullscreen"
@@ -32,11 +37,6 @@
           >
             <hint>{{ $t(fullscreen ? "List View" : "Table View") }}</hint>
           </q-btn>
-
-          <q-space />
-
-          <!-- Account -->
-          <AccountBtn :login-text="$t('Guest')" stretch flat />
 
           <template v-if="fullscreen">
             <slot name="fullscreen-header" />
