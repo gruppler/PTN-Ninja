@@ -1,5 +1,6 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
+import Vue from "vue";
 import Game from "../../Game";
 import {
   call,
@@ -228,21 +229,47 @@ export const JOIN_GAME = async function (context, game) {
       isPrivate: game.config.isPrivate,
     });
 
-    // Load the game after successfully joining
-    const loadedGame = await context.dispatch("LOAD_GAME", {
+    // Reload the game document to get updated data (player names, isOpen, etc.)
+    const updatedGame = await loadGameDocument(
+      game.config.id,
+      game.config.isPrivate
+    );
+
+    // Update the current game's config and tags
+    const $game = Vue.prototype.$game;
+    $game.config = updatedGame.config;
+    $game.setTags(updatedGame.jsonTags, false, true);
+    $game.setName(); // Regenerate name from updated tags
+
+    // Update the game store state
+    this.commit("game/SET_CONFIG", updatedGame.config);
+    this.commit("game/SET_NAME", {
       id: game.config.id,
-      isPrivate: game.config.isPrivate,
+      newName: $game.name,
     });
+
+    // Update the online store for the GameTable (needs plain data object)
+    const gameData = {
+      config: updatedGame.config,
+      tags: updatedGame.jsonTags,
+      state: updatedGame.jsonState,
+      name: $game.name,
+    };
+    if (game.config.isPrivate) {
+      context.commit("SET_PLAYER_GAME", gameData);
+    } else {
+      context.commit("SET_PUBLIC_GAME", gameData);
+    }
 
     // Set up real-time listeners for the game
     await context.dispatch("LISTEN_CURRENT_GAME");
 
-    return loadedGame;
+    Loading.hide();
+    return updatedGame;
   } catch (error) {
     console.error("Failed to join game:", error);
-    throw error;
-  } finally {
     Loading.hide();
+    throw error;
   }
 };
 

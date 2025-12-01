@@ -346,6 +346,13 @@ exports.joinGame = functions.https.onCall(
       [`config.players.${player - 1}`]: uid,
     };
 
+    // Check if this fills the last seat
+    const otherPlayer = player === 1 ? 2 : 1;
+    if (game.config.players[otherPlayer - 1]) {
+      // Both seats are now filled, game is no longer open
+      changes["config.isOpen"] = false;
+    }
+
     await gameRef.update(changes);
 
     // TODO: Notify other player

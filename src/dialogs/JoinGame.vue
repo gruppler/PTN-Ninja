@@ -84,7 +84,18 @@ export default {
       this.close();
     },
     validatePlay() {
-      return !this.player && this.openPlayer && this.playerName && this.isValid;
+      if (this.player || !this.openPlayer) {
+        return false;
+      }
+      // Private games require a player name
+      if (this.isPrivate) {
+        return this.playerName && this.isValid;
+      } else {
+        return (
+          this.$store.state.online.user &&
+          !this.$store.state.online.user.isAnonymous
+        );
+      }
     },
   },
   watch: {
@@ -98,6 +109,11 @@ export default {
         this.close();
       }
     },
+  },
+  mounted() {
+    if (this.player || this.isLocal) {
+      this.close();
+    }
   },
 };
 </script>

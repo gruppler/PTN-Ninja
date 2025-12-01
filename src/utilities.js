@@ -337,6 +337,14 @@ export const gameConverter = {
     data.config.id = snapshot.id;
     data.config.collection = snapshot.ref.parent.id;
     data.config.path = snapshot.ref.path;
+
+    // Convert players object back to array if needed
+    // Firestore stores sparse arrays (with nulls) as objects
+    if (data.config.players && !Array.isArray(data.config.players)) {
+      const playersObj = data.config.players;
+      data.config.players = [playersObj[0] || null, playersObj[1] || null];
+    }
+
     data.config.player =
       data.config.players && auth.currentUser
         ? data.config.players.indexOf(auth.currentUser.uid) + 1

@@ -404,6 +404,11 @@ export default {
     gameExists() {
       return Boolean(this.$store.state.game.name);
     },
+    currentGameId() {
+      return this.$store.state.game.config
+        ? this.$store.state.game.config.id
+        : null;
+    },
     isOnline() {
       return this.gameExists ? this.$store.state.game.config.isOnline : false;
     },
@@ -957,6 +962,12 @@ export default {
   watch: {
     gamesInitialized() {
       this.init();
+    },
+    currentGameId() {
+      // Show join dialog when opening an online game that can be joined
+      if (this.isOnline && !this.$game.config.player && this.$game.openPlayer) {
+        this.$router.push({ name: "join" });
+      }
     },
     user(user, oldUser) {
       if (

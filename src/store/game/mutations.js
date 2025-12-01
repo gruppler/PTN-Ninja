@@ -183,11 +183,13 @@ export const SAVE_CURRENT_GAME_STATE = (state) => {
   }
 };
 
-export const SET_NAME = function (state, { oldName, newName }) {
+export const SET_NAME = function (state, { id, oldName, newName }) {
   if (this.state.ui.embed) {
     Vue.prototype.$game.name = newName;
   } else {
-    let stateGame = state.list.find((g) => g.name === oldName);
+    let stateGame = state.list.find((g) =>
+      id ? g.config.id === id : g.name === oldName
+    );
     if (stateGame) {
       stateGame.name = newName;
     } else {
@@ -211,6 +213,15 @@ export const SAVE_CONFIG = (state, { game, config }) => {
     stateGame.config = { ...config };
   } else {
     throw new Error("Game not found: " + game.name);
+  }
+};
+
+export const SET_CONFIG = (state, config) => {
+  // Update the current game's config in the store state
+  state.config = { ...config };
+  // Also update the first game in the list (current game)
+  if (state.list[0]) {
+    state.list[0].config = { ...config };
   }
 };
 

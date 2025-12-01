@@ -22,39 +22,32 @@ export const canEdit = (state) => (game) => {
 };
 
 export const isPlayer = (state, getters, rootState, rootGetters) => {
-  const currentGame = Vue.prototype.$game;
-  if (!currentGame) {
-    return false;
-  }
-  if (!currentGame.config) {
-    return false;
-  }
-  if (!currentGame.config.players) {
+  const config = rootState.game.config;
+  if (!config || !config.players) {
     return false;
   }
 
   const userUid = state.user && state.user.uid;
-  return currentGame.config.players.includes(userUid);
+  return config.players.includes(userUid);
 };
 
 export const isMyTurn = (state, getters, rootState, rootGetters) => {
-  const currentGame = Vue.prototype.$game;
-  if (!currentGame || !currentGame.state) {
+  const config = rootState.game.config;
+  const gameState = rootState.game.position;
+  if (!config || !config.players) {
     return false;
   }
 
-  const playerIndex = currentGame.config.players.indexOf(
-    state.user && state.user.uid
-  );
+  const playerIndex = config.players.indexOf(state.user && state.user.uid);
   if (playerIndex === -1) {
     return false; // Not a player
   }
 
   const playerNumber = playerIndex + 1;
 
-  // Use TPS to determine current turn
-  if (currentGame.state.tps) {
-    const tpsMatch = currentGame.state.tps.match(/(\d+)\s+(\d+)\s+(\d+)$/);
+  // Use TPS from position to determine current turn
+  if (gameState && gameState.tps) {
+    const tpsMatch = gameState.tps.match(/(\d+)\s+(\d+)\s+(\d+)$/);
     if (tpsMatch) {
       return parseInt(tpsMatch[2]) === playerNumber;
     }
