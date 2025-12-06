@@ -113,7 +113,7 @@ export default {
     isSelected() {
       return (
         !this.unselected &&
-        this.$store.state.game.ptn.branchPlies.includes(this.ply)
+        this.$store.state.game.ptn.branchPlies.some((p) => p.id === this.ply.id)
       );
     },
   },

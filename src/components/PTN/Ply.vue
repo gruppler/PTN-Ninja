@@ -109,7 +109,7 @@ export default {
         : this.position.plyID === this.ply.id;
     },
     isInBranch() {
-      return this.ptn.branchPlies.includes(this.ply);
+      return this.ptn.branchPlies.some((p) => p.id === this.ply.id);
     },
     isDone() {
       return isBoolean(this.done)

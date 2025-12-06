@@ -167,7 +167,7 @@ export default {
             ply = plyID in this.plies ? this.plies[plyID] : null;
             if (
               ply &&
-              this.branchPlies.includes(ply) &&
+              this.game.ptn.branchPlies.some((p) => p.id === ply.id) &&
               ply.index < this.game.position.ply.index
             ) {
               return plyID;

@@ -115,7 +115,8 @@ export default {
         : Object.freeze(
             pickBy(
               this.game.comments.notes,
-              (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
+              (notes, id) =>
+                id < 0 || this.branchPlies.some((p) => p.id === 1 * id)
             )
           );
     },
@@ -144,7 +145,7 @@ export default {
             ply = plyID in this.plies ? this.plies[plyID] : null;
             if (
               ply &&
-              this.branchPlies.includes(ply) &&
+              this.branchPlies.some((p) => p.id === ply.id) &&
               ply.index < this.game.position.ply.index
             ) {
               return plyID;
