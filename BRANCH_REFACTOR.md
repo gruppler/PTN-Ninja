@@ -159,9 +159,8 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 
 **Notes:**
 
-- Position restoration after promotion attempted but not working yet
-- Will be properly addressed in Phase 4-5 when navigation uses tree structure
-- Multiple approaches tried (plyIndex, move number, ply ID) - all failed due to `init()` recreating all objects
+- Position restoration after promotion now WORKING using `getSerializablePath()` and `findPlyFromPath()`
+- The key insight: use move numbers and branch indices (stable across promotion) instead of ply IDs or object references
 
 **Phase 3 Progress:**
 
@@ -177,5 +176,32 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 - [x] Add `depth` getter to Ply
 - [x] Add `getSerializablePath()` method to Ply (survives init())
 - [x] Add `findPlyFromPath()` method to Game (restores position from path)
-- [ ] Replace existing navigation with tree-based navigation
-- [ ] Track position by `currentPly` reference
+- [x] Position restoration working in `makeBranchMain`
+- [x] Position restoration working in `promoteBranch`
+- [ ] Replace existing navigation with tree-based navigation (optional - current nav works)
+- [ ] Track position by `currentPly` reference (optional - path-based approach works)
+
+---
+
+### Session 1 Summary
+
+**Bug Fixed:**
+
+- Position is now preserved after branch promotion (both `makeBranchMain` and `promoteBranch`)
+
+**Key Implementation:**
+
+- `Ply.getSerializablePath()` - captures position as move numbers + branch indices
+- `Game.findPlyFromPath()` - restores position after `init()` recreates ply objects
+
+**Tree Structure Foundation:**
+
+- `parent` property added to all plies during parsing
+- Tree traversal helpers added (`getPath`, `depth`, `nextPly`, `prevPly`, `siblings`)
+- Debug methods added (`verifyParentRelationships`, `getPliesFromTree`)
+
+**Remaining (Optional Future Work):**
+
+- Phase 5: Simplify mutations using tree structure (not needed - current approach works)
+- Phase 6: Serialization improvements (PCN inline branches)
+- Phase 7: Remove legacy code (would require extensive testing)
