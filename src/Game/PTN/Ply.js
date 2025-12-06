@@ -49,6 +49,7 @@ export default class Ply extends Ptn {
       result = null,
       branches = [],
       children = [],
+      parent = null,
     }
   ) {
     super(notation);
@@ -78,6 +79,7 @@ export default class Ply extends Ptn {
     this.result = result;
     this.branches = branches;
     this.children = children;
+    this.parent = parent; // Reference to parent ply in tree structure
     this.branch = "";
     this.squares = [this.column + this.row];
     this.tpsBefore = "";
@@ -187,6 +189,8 @@ export default class Ply extends Ptn {
     }
     this.branches.push(ply);
     ply.branches = this.branches;
+    // Set tree parent - branch ply's parent is the ply before the branch point
+    ply.parent = this.parent;
   }
 
   removeBranch(ply) {
@@ -240,6 +244,30 @@ export default class Ply extends Ptn {
 
   get text() {
     return this.toString(true);
+  }
+
+  // Tree traversal helpers
+  get nextPly() {
+    // Next ply is the first child (main continuation)
+    if (this.id + 1 < this.game.plies.length) {
+      const next = this.game.plies[this.id + 1];
+      if (next && next.parent === this) {
+        return next;
+      }
+    }
+    // Fall back to legacy lookup
+    return this.game.plies[this.id + 1] || null;
+  }
+
+  get prevPly() {
+    // Previous ply is our parent
+    return this.parent;
+  }
+
+  get siblings() {
+    // Other plies that share the same parent (branch alternatives)
+    if (!this.branches.length) return [];
+    return this.branches.filter((p) => p !== this);
   }
 
   toString(plyOnly = false) {

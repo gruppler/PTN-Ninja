@@ -136,5 +136,12 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 **Phase 1 Progress:**
 
 - [x] Add `parent` parameter to Ply constructor
-- [ ] Set `parent` when creating plies during parsing
-- [ ] Update `addBranch` to set parent on branch plies
+- [x] Set `parent` when creating plies during parsing (in `Move.setPly`)
+- [x] Update `addBranch` to set parent on branch plies
+
+**Phase 2 Progress:**
+
+- [x] Set `parent` in `Move.setPly` for sequential plies
+- [x] Set `parent` in `Ply.addBranch` for branch plies
+- [ ] Verify parent relationships are correct during game play
+- [ ] Add helper methods for tree traversal (optional)
