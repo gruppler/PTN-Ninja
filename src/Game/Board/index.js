@@ -827,6 +827,11 @@ export default class Board extends Aggregation(
       : null;
   }
 
+  // Get previous ply using tree parent reference
+  getPrevPlyFromTree() {
+    return this.ply ? this.ply.parent : null;
+  }
+
   get nextPly() {
     return this.getNextPly();
   }
@@ -835,6 +840,17 @@ export default class Board extends Aggregation(
     return this.ply && this.ply.index < this.plies.length - 1
       ? this.plies[Math.min(this.plies.length - 1, this.ply.index + times)]
       : null;
+  }
+
+  // Get next ply using tree - finds the next ply in the current branch
+  getNextPlyFromTree() {
+    if (!this.ply) return null;
+    // Find the next ply that has this ply as its parent and is in the target branch
+    return (
+      this.game.plies.find(
+        (p) => p.parent === this.ply && p.isInBranch(this.targetBranch)
+      ) || null
+    );
   }
 
   get flatsWithoutKomi() {

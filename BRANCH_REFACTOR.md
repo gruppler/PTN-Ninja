@@ -63,28 +63,33 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 
 ### Phase 1: New Ply Structure
 
-- [ ] Add `parent` property to Ply
+- [x] Add `parent` property to Ply
 - [ ] Refactor `children` to be direct child plies (not branch points)
-- [ ] Keep `branches` array for backward compatibility during transition
-- [ ] Update Ply constructor and `addBranch`/`removeBranch` methods
+- [x] Keep `branches` array for backward compatibility during transition
+- [x] Update Ply constructor and `addBranch`/`removeBranch` methods
 
 **Files:** `src/Game/PTN/Ply.js`
 
 ### Phase 2: Tree Building During Parse
-- [ ] Build parent/children relationships during PTN parsing
-- [ ] Set `parent` when creating plies
+
+- [x] Build parent/children relationships during PTN parsing
+- [x] Set `parent` when creating plies
 - [ ] Populate `children` array instead of relying on ID arithmetic
 
 **Files:** `src/Game/PTN/index.js`, `src/Game/PTN/Move.js`
 
 ### Phase 3: Computed Legacy Properties
+
 - [ ] Add `get plies()` that flattens tree and assigns IDs
 - [ ] Add `get branches()` that computes branch name map
+- [x] Add `rootPly` getter and `getPliesFromTree()` method
+- [x] Add `verifyParentRelationships()` debug method
 - [ ] Ensure existing code continues to work
 
 **Files:** `src/Game/base.js`
 
 ### Phase 4: Navigation Refactor
+
 - [ ] Navigate via `parent`/`children` instead of ID arithmetic
 - [ ] Track position by `currentPly` reference
 - [ ] Update `goToPly`, `next`, `prev`, `first`, `last`
@@ -92,6 +97,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 **Files:** `src/Game/Board/nav.js`, `src/Game/Board/index.js`
 
 ### Phase 5: Mutation Simplification
+
 - [ ] Simplify `promoteBranch` - just reorder children
 - [ ] Simplify `_makeBranchMain` - swap children positions
 - [ ] Simplify `deleteBranch` - remove from parent's children
@@ -100,6 +106,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 **Files:** `src/Game/mutations.js`
 
 ### Phase 6: Serialization
+
 - [ ] Update `toString()` to traverse tree
 - [ ] Generate branch names from tree structure
 - [ ] Support PCN inline branch syntax (optional)
@@ -107,6 +114,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 **Files:** `src/Game/base.js`
 
 ### Phase 7: Cleanup
+
 - [ ] Remove legacy `this.plies` array storage
 - [ ] Remove ID renumbering code
 - [ ] Remove `ply.branches` shared array pattern
@@ -118,6 +126,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 ### Session 1 - Dec 6, 2025
 
 **Completed:**
+
 - Fixed the immediate `promoteBranch`/`_makeBranchMain` bug:
   - Fixed `getDescendents` to handle non-contiguous plies
   - Fixed branch ply filtering to use correct branch name after rename
@@ -125,6 +134,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
   - Sorted all `branches` arrays after ID changes
 
 **Current State:**
+
 - Branch promotion works correctly (PTN is valid, no errors)
 - Position is not preserved after promotion (minor UX issue)
 - Ready to begin tree structure refactor
@@ -143,5 +153,29 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 
 - [x] Set `parent` in `Move.setPly` for sequential plies
 - [x] Set `parent` in `Ply.addBranch` for branch plies
+- [x] Add `verifyParentRelationships()` debug method to Game class
+- [x] Add tree traversal helpers to Ply class (`nextPly`, `prevPly`, `siblings`)
 - [ ] Verify parent relationships are correct during game play
-- [ ] Add helper methods for tree traversal (optional)
+
+**Notes:**
+
+- Position restoration after promotion attempted but not working yet
+- Will be properly addressed in Phase 4-5 when navigation uses tree structure
+- Multiple approaches tried (plyIndex, move number, ply ID) - all failed due to `init()` recreating all objects
+
+**Phase 3 Progress:**
+
+- [x] Add `rootPly` getter
+- [x] Add `getPliesFromTree()` method
+- [x] Add `verifyParentRelationships()` debug method
+
+**Phase 4 Progress:**
+
+- [x] Add `getPrevPlyFromTree()` method to Board
+- [x] Add `getNextPlyFromTree()` method to Board
+- [x] Add `getPath()` method to Ply (returns array of plies from root)
+- [x] Add `depth` getter to Ply
+- [x] Add `getSerializablePath()` method to Ply (survives init())
+- [x] Add `findPlyFromPath()` method to Game (restores position from path)
+- [ ] Replace existing navigation with tree-based navigation
+- [ ] Track position by `currentPly` reference

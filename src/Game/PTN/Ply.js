@@ -270,6 +270,54 @@ export default class Ply extends Ptn {
     return this.branches.filter((p) => p !== this);
   }
 
+  // Get the path from root to this ply as an array of plies
+  getPath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      path.unshift(current);
+      current = current.parent;
+    }
+    return path;
+  }
+
+  // Get the depth of this ply in the tree (0 = root)
+  get depth() {
+    let depth = 0;
+    let current = this.parent;
+    while (current) {
+      depth++;
+      current = current.parent;
+    }
+    return depth;
+  }
+
+  // Get a serializable path representation that survives init()
+  // Returns array of {moveNumber, player, branchIndex} for each branch point
+  getSerializablePath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      if (current.branches.length > 1) {
+        // This is a branch point - record which branch we're on
+        const branchIndex = current.branches.indexOf(current);
+        path.unshift({
+          moveNumber: current.move.number,
+          player: current.player,
+          branchIndex: branchIndex,
+        });
+      }
+      current = current.parent;
+    }
+    // Add final position
+    path.push({
+      moveNumber: this.move.number,
+      player: this.player,
+      branchIndex: -1, // -1 means this is the target, not a branch choice
+    });
+    return path;
+  }
+
   toString(plyOnly = false) {
     return (
       (this.minPieceCount || "") +

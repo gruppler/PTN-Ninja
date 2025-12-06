@@ -246,10 +246,24 @@ export default class GameMutations {
 
   makeBranchMain(branch, recursively = false) {
     this.recordChange(() => {
+      // Save position using serializable path (survives init)
+      const currentPly = this.board.ply;
+      const plyIsDone = this.board.plyIsDone;
+      const path = currentPly ? currentPly.getSerializablePath() : null;
+
       if (this._makeBranchMain(branch, recursively)) {
         this._updatePTN();
       }
+
       this.init({ ...this.params, ptn: this.ptn });
+
+      // Restore position using the path
+      if (path) {
+        const targetPly = this.findPlyFromPath(path);
+        if (targetPly) {
+          this.board.goToPly(targetPly.id, plyIsDone);
+        }
+      }
     });
   }
 
