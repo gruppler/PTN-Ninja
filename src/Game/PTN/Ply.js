@@ -49,6 +49,7 @@ export default class Ply extends Ptn {
       result = null,
       branches = [],
       children = [],
+      parent = null,
     }
   ) {
     super(notation);
@@ -78,6 +79,7 @@ export default class Ply extends Ptn {
     this.result = result;
     this.branches = branches;
     this.children = children;
+    this.parent = parent; // Reference to parent ply in tree structure
     this.branch = "";
     this.squares = [this.column + this.row];
     this.tpsBefore = "";
@@ -187,6 +189,8 @@ export default class Ply extends Ptn {
     }
     this.branches.push(ply);
     ply.branches = this.branches;
+    // Set tree parent - branch ply's parent is the ply before the branch point
+    ply.parent = this.parent;
   }
 
   removeBranch(ply) {
@@ -240,6 +244,78 @@ export default class Ply extends Ptn {
 
   get text() {
     return this.toString(true);
+  }
+
+  // Tree traversal helpers
+  get nextPly() {
+    // Next ply is the first child (main continuation)
+    if (this.id + 1 < this.game.plies.length) {
+      const next = this.game.plies[this.id + 1];
+      if (next && next.parent === this) {
+        return next;
+      }
+    }
+    // Fall back to legacy lookup
+    return this.game.plies[this.id + 1] || null;
+  }
+
+  get prevPly() {
+    // Previous ply is our parent
+    return this.parent;
+  }
+
+  get siblings() {
+    // Other plies that share the same parent (branch alternatives)
+    if (!this.branches.length) return [];
+    return this.branches.filter((p) => p !== this);
+  }
+
+  // Get the path from root to this ply as an array of plies
+  getPath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      path.unshift(current);
+      current = current.parent;
+    }
+    return path;
+  }
+
+  // Get the depth of this ply in the tree (0 = root)
+  get depth() {
+    let depth = 0;
+    let current = this.parent;
+    while (current) {
+      depth++;
+      current = current.parent;
+    }
+    return depth;
+  }
+
+  // Get a serializable path representation that survives init()
+  // Returns array of {moveNumber, player, branchIndex} for each branch point
+  getSerializablePath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      if (current.branches.length > 1) {
+        // This is a branch point - record which branch we're on
+        const branchIndex = current.branches.indexOf(current);
+        path.unshift({
+          moveNumber: current.move.number,
+          player: current.player,
+          branchIndex: branchIndex,
+        });
+      }
+      current = current.parent;
+    }
+    // Add final position
+    path.push({
+      moveNumber: this.move.number,
+      player: this.player,
+      branchIndex: -1, // -1 means this is the target, not a branch choice
+    });
+    return path;
   }
 
   toString(plyOnly = false) {
