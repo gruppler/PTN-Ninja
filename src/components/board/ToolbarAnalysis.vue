@@ -72,7 +72,8 @@
             isEmbedded ||
             botSuggestion ||
             (botState &&
-              (botState.isAnalyzingGame ||
+              (botState.isInteractiveEnabled ||
+                botState.isAnalyzingGame ||
                 (botState.isRunning && botState.tps === tps)))
           "
         >
