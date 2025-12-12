@@ -167,6 +167,34 @@ export default class Bot {
   }
 
   setState(state) {
+    // Auto-advance logic for game analysis
+    if (state.analyzingPly && this.state.analyzingPly !== state.analyzingPly) {
+      const currentTPS = store.state.game.position.tps;
+      // Use tpsBefore since we show the position before the ply is done (isDone: false)
+      const previousAnalyzingTPS =
+        this.state.analyzingPly && this.state.analyzingPly.tpsBefore;
+      const newAnalyzingTPS = state.analyzingPly.tpsBefore;
+
+      // Check if current position matches the previous analyzing position
+      // (or if there's no previous position, like on the first ply)
+      // and we're moving forward in the analysis
+      if (
+        (previousAnalyzingTPS === currentTPS ||
+          previousAnalyzingTPS === null) &&
+        this.state.isAnalyzingGame &&
+        state.analyzingPly.id >
+          (this.state.analyzingPly && this.state.analyzingPly.id
+            ? this.state.analyzingPly.id
+            : -1)
+      ) {
+        // Auto-advance to the next ply
+        store.dispatch("game/GO_TO_PLY", {
+          plyID: state.analyzingPly.id,
+          isDone: false,
+        });
+      }
+    }
+
     if (store.state.analysis && store.state.analysis.botID === this.id) {
       store.commit("analysis/SET_BOT_STATE", state);
     } else {
