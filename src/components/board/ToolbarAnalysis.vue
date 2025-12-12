@@ -12,23 +12,22 @@
     />
     <q-btn
       v-if="
-        botMeta &&
-        botMeta.isInteractive &&
         !isEmbedded &&
         !showBigButtons &&
-        (!botMeta.requiresConnect || botState.isConnected) &&
-        bot
+        bot &&
+        botMeta &&
+        botMeta.isInteractive &&
+        bot.isInteractiveAvailable &&
+        (!botMeta.requiresConnect || botState.isConnected)
       "
       @click="toggleInteractiveAnalysis"
       :class="[
         'interactive-analysis-toggle',
-        'dimmed-btn',
         'absolute',
-        { embedded: isEmbedded },
+        { 'dimmed-btn': !bot.isInteractiveEnabled },
       ]"
       v-ripple="false"
       :color="bot.isInteractiveEnabled ? 'primary' : btnColor"
-      :disable="!bot.isInteractiveAvailable"
       dense
       flat
     >
@@ -40,27 +39,39 @@
     </q-btn>
     <q-btn
       v-else-if="
-        botMeta &&
-        botMeta.requiresConnect &&
         !isEmbedded &&
         !showBigButtons &&
-        !botState.isConnected &&
-        bot
+        bot &&
+        botMeta &&
+        botMeta.requiresConnect &&
+        !botState.isConnected
       "
       @click="bot.connect()"
       :loading="botState.isConnecting"
-      :class="[
-        'connect-toggle',
-        'dimmed-btn',
-        'absolute',
-        { embedded: isEmbedded },
-      ]"
+      :class="['connect-toggle', 'dimmed-btn', 'absolute']"
       v-ripple="false"
       :color="btnColor"
       dense
       flat
     >
       <q-icon name="connect" />
+    </q-btn>
+    <q-btn
+      v-if="
+        !isEmbedded &&
+        !showBigButtons &&
+        bot &&
+        botState &&
+        (botState.isAnalyzingPosition || botState.isAnalyzingGame)
+      "
+      @click="bot.terminate()"
+      :class="['cancel-analysis-toggle', 'absolute']"
+      v-ripple="false"
+      color="primary"
+      dense
+      flat
+    >
+      <q-spinner size="sm" />
     </q-btn>
     <smooth-reflow class="relative-position">
       <template v-if="!collapsed">
@@ -336,30 +347,19 @@ export default {
     z-index: 1;
   }
 
-  .toolbar-analysis-toggle {
-    top: -32px;
-    right: 86px;
-    z-index: 1;
-    &.embedded {
-      right: 18px;
-    }
-  }
-
-  .interactive-analysis-toggle {
-    top: -32px;
-    right: 130px;
-    z-index: 1;
-    &.embedded {
-      right: -18px;
-    }
-  }
-
+  .toolbar-analysis-toggle,
+  .cancel-analysis-toggle,
+  .interactive-analysis-toggle,
   .connect-toggle {
     top: -32px;
     right: 130px;
     z-index: 1;
+  }
+
+  .toolbar-analysis-toggle {
+    right: 86px;
     &.embedded {
-      right: -18px;
+      right: 18px;
     }
   }
 
