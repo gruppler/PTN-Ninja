@@ -236,6 +236,53 @@
             </q-item-section>
           </q-item>
 
+          <!-- Evaluation Mark Thresholds -->
+          <smooth-reflow>
+            <template
+              v-if="insertEvalMarks && botSettings[botID].evalMarkThresholds"
+            >
+              <q-item-label header>{{
+                $t("analysis.evalMarkThresholds")
+              }}</q-item-label>
+              <q-input
+                type="number"
+                v-model.number="botSettings[botID].evalMarkThresholds.brilliant"
+                :label="$t('analysis.thresholds.brilliant')"
+                :step="0.01"
+                hide-bottom-space
+                filled
+                item-aligned
+              />
+              <q-input
+                type="number"
+                v-model.number="botSettings[botID].evalMarkThresholds.good"
+                :label="$t('analysis.thresholds.good')"
+                :step="0.01"
+                hide-bottom-space
+                filled
+                item-aligned
+              />
+              <q-input
+                type="number"
+                v-model.number="botSettings[botID].evalMarkThresholds.bad"
+                :label="$t('analysis.thresholds.bad')"
+                :step="0.01"
+                hide-bottom-space
+                filled
+                item-aligned
+              />
+              <q-input
+                type="number"
+                v-model.number="botSettings[botID].evalMarkThresholds.blunder"
+                :label="$t('analysis.thresholds.blunder')"
+                :step="0.01"
+                hide-bottom-space
+                filled
+                item-aligned
+              />
+            </template>
+          </smooth-reflow>
+
           <!-- Normalize Evaluation -->
           <q-item
             v-if="'normalizeEvaluation' in botSettings[botID]"

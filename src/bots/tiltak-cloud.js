@@ -1,4 +1,4 @@
-import Bot from "./bot";
+import Bot, { defaultEvalMarkThresholds } from "./bot";
 import store from "../store";
 
 const url = "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
@@ -18,6 +18,7 @@ export default class TiltakCloud extends Bot {
         nodes: 1e5,
         movetime: 5e3,
         limitTypes: ["movetime"],
+        evalMarkThresholds: { ...defaultEvalMarkThresholds },
       },
       limitTypes: {
         movetime: { min: 1e3, max: 1e4, step: 1e3 },

@@ -21,6 +21,13 @@ export const defaultLimitTypes = deepFreeze({
   movetime: { min: 100, max: 6e4, step: 100 },
 });
 
+export const defaultEvalMarkThresholds = deepFreeze({
+  brilliant: 0.06,
+  good: 0.03,
+  bad: -0.1,
+  blunder: -0.25,
+});
+
 export default class Bot {
   constructor({
     // ID:
@@ -1074,13 +1081,15 @@ export default class Bot {
             (ply.player === 1
               ? evaluationAfter - evaluationBefore
               : evaluationBefore - evaluationAfter) / 2;
-          if (scoreLoss > 0.06) {
+          const thresholds =
+            this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
+          if (scoreLoss > thresholds.brilliant) {
             comments.push("!!");
-          } else if (scoreLoss > 0.03) {
+          } else if (scoreLoss > thresholds.good) {
             comments.push("!");
-          } else if (scoreLoss > -0.1) {
+          } else if (scoreLoss > thresholds.bad) {
             // Do nothing
-          } else if (scoreLoss > -0.25) {
+          } else if (scoreLoss > thresholds.blunder) {
             comments.push("?");
           } else {
             comments.push("??");

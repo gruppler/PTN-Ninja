@@ -1,4 +1,5 @@
 import TeiBot from "./tei";
+import { defaultEvalMarkThresholds } from "./bot";
 
 const url = new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url);
 let worker = null;
@@ -20,6 +21,7 @@ export default class TiltakWasm extends TeiBot {
         limitTypes: ["nodes"],
         movetime: 5e3,
         nodes: 1e5,
+        evalMarkThresholds: { ...defaultEvalMarkThresholds },
       },
       limitTypes: {
         movetime: {},
