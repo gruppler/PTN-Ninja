@@ -9,7 +9,9 @@
       :color="btnColor"
       dense
       flat
-    />
+    >
+      <hint>{{ collapsed ? $t("Show Analysis") : $t("Hide Analysis") }}</hint>
+    </q-btn>
     <q-btn
       v-if="
         !isEmbedded &&
@@ -36,6 +38,7 @@
         size="sm"
       />
       <q-icon v-else name="int_analysis" />
+      <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
     </q-btn>
     <q-btn
       v-else-if="
@@ -55,6 +58,7 @@
       flat
     >
       <q-icon name="connect" />
+      <hint>{{ $t("tei.connect") }}</hint>
     </q-btn>
     <q-btn
       v-if="
@@ -72,6 +76,7 @@
       flat
     >
       <q-spinner size="sm" />
+      <hint>{{ $t("Cancel") }} {{ $t("Analysis") }}</hint>
     </q-btn>
     <smooth-reflow class="relative-position">
       <template v-if="!collapsed">
