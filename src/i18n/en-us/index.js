@@ -512,6 +512,13 @@ export default {
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
     insertEvalMarks: "Insert Evaluation Marks",
+    evalMarkThresholds: "Evaluation Mark Thresholds",
+    thresholds: {
+      brilliant: "Brilliant (!!)",
+      good: "Good (!)",
+      bad: "Bad (?)",
+      blunder: "Blunder (??)",
+    },
     init: "Initialize",
     interactiveAnalysis: "Interactive Analysis",
     limit: "Search Limit",

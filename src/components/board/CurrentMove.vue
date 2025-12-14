@@ -5,7 +5,6 @@
         @click="toggle"
         :icon="icon"
         class="collapse dimmed-btn all-pointer-events"
-        :class="{ hidden: this.$store.state.ui.showPTN }"
         v-ripple="false"
         :color="btnColor"
         dense
@@ -32,7 +31,7 @@ export default {
   computed: {
     collapsed: {
       get() {
-        return !this.$store.state.ui.showMove || this.$store.state.ui.showPTN;
+        return !this.$store.state.ui.showMove;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showMove", !value]);

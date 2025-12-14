@@ -109,6 +109,9 @@
             {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
             {{ $t("analysis.secondsUnit") }}
           </template>
+          <tooltip v-if="count !== null && seconds">
+            {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
+          </tooltip>
         </q-item-label>
       </q-item-section>
     </q-item>

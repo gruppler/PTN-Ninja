@@ -193,6 +193,48 @@
           item-aligned
         />
 
+        <q-separator />
+        <!-- Evaluation Mark Thresholds -->
+        <q-item-label header>{{
+          $t("analysis.evalMarkThresholds")
+        }}</q-item-label>
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.brilliant"
+          :label="$t('analysis.thresholds.brilliant')"
+          :step="0.01"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.good"
+          :label="$t('analysis.thresholds.good')"
+          :step="0.01"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.bad"
+          :label="$t('analysis.thresholds.bad')"
+          :step="0.01"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.blunder"
+          :label="$t('analysis.thresholds.blunder')"
+          :step="0.01"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
           <!-- Bot Options -->
@@ -246,7 +288,7 @@ import BotOptionInput from "../components/analysis/BotOptionInput";
 
 import { uid } from "quasar";
 import { cloneDeep, difference, forEach, isEqual, omit, pick } from "lodash";
-import { defaultLimitTypes } from "../bots/bot";
+import { defaultLimitTypes, defaultEvalMarkThresholds } from "../bots/bot";
 
 const halfKomis = [];
 for (let k = -9; k <= 9; k++) {
@@ -328,6 +370,7 @@ export default {
           "sigma",
           "sizeHalfKomis",
           "limitTypes",
+          "evalMarkThresholds",
         ]),
       };
 
@@ -340,6 +383,9 @@ export default {
         ]);
         buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
         buffer.meta.sigma = this.bot.settings.sigma;
+        buffer.meta.evalMarkThresholds = cloneDeep(
+          this.bot.settings.evalMarkThresholds || defaultEvalMarkThresholds
+        );
       }
 
       // Limit Types
@@ -349,6 +395,11 @@ export default {
           buffer.meta.limitTypes[type] = { ...params };
         }
       });
+
+      // Eval Mark Thresholds
+      if (!buffer.meta.evalMarkThresholds) {
+        buffer.meta.evalMarkThresholds = { ...defaultEvalMarkThresholds };
+      }
 
       // Sizes/HalfKomi
       this.sizes = Object.keys(buffer.meta.sizeHalfKomis).map(Number);

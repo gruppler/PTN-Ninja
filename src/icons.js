@@ -59,7 +59,7 @@ export default {
   help: "mdi-help-circle",
   highlighter: "mdi-format-color-highlight",
   info: "mdi-information",
-  int_analysis: "mdi-refresh",
+  int_analysis: "mdi-repeat",
   invert: "mdi-select-inverse",
   json: "mdi-code-json",
   keyboard: "mdi-keyboard-variant",

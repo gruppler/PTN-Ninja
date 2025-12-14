@@ -333,6 +333,10 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
 .square {
   position: relative;
 
+  .board-space.board-3D & {
+    transform: translateZ(0.001px);
+  }
+
   .board-container.diamonds1 &,
   .board-container.diamonds2 &,
   .board-container.diamonds3 &,

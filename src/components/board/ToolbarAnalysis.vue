@@ -9,7 +9,75 @@
       :color="btnColor"
       dense
       flat
-    />
+    >
+      <hint>{{ collapsed ? $t("Show Analysis") : $t("Hide Analysis") }}</hint>
+    </q-btn>
+    <q-btn
+      v-if="
+        !isEmbedded &&
+        !showBigButtons &&
+        bot &&
+        botMeta &&
+        botMeta.isInteractive &&
+        bot.isInteractiveAvailable &&
+        (!botMeta.requiresConnect || botState.isConnected)
+      "
+      @click="toggleInteractiveAnalysis"
+      :class="[
+        'interactive-analysis-toggle',
+        'absolute',
+        { 'dimmed-btn': !bot.isInteractiveEnabled },
+      ]"
+      v-ripple="false"
+      :color="bot.isInteractiveEnabled ? 'primary' : btnColor"
+      dense
+      flat
+    >
+      <q-spinner-cube
+        v-if="botState.isInteractiveEnabled && botState.isRunning"
+        size="sm"
+      />
+      <q-icon v-else name="int_analysis" />
+      <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
+    </q-btn>
+    <q-btn
+      v-else-if="
+        !isEmbedded &&
+        !showBigButtons &&
+        bot &&
+        botMeta &&
+        botMeta.requiresConnect &&
+        !botState.isConnected
+      "
+      @click="bot.connect()"
+      :loading="botState.isConnecting"
+      :class="['connect-toggle', 'dimmed-btn', 'absolute']"
+      v-ripple="false"
+      :color="btnColor"
+      dense
+      flat
+    >
+      <q-icon name="connect" />
+      <hint>{{ $t("tei.connect") }}</hint>
+    </q-btn>
+    <q-btn
+      v-if="
+        !isEmbedded &&
+        !showBigButtons &&
+        bot &&
+        botState &&
+        (botState.isAnalyzingPosition || botState.isAnalyzingGame)
+      "
+      @click="bot.terminate()"
+      :class="['cancel-analysis-toggle', 'absolute']"
+      v-ripple="false"
+      color="primary"
+      dense
+      flat
+    >
+      <q-spinner size="sm" />
+      <hint>{{ $t("Cancel") }} {{ $t("Analysis") }}</hint>
+    </q-btn>
     <smooth-reflow class="relative-position">
       <template v-if="!collapsed">
         <q-item v-if="isGameEnd" class="flex-center toolbar-analysis">
@@ -77,9 +145,13 @@
               :disable="!bot.isAnalyzePositionAvailable"
               class="full-width toolbar-analysis"
               color="primary"
-              icon="board"
-              :label="$t('analysis.Analyze Position')"
-            />
+            >
+              <q-icon name="board" left />
+              <template v-if="$q.screen.gt.sm">
+                {{ $t("analysis.Analyze Position") }}
+              </template>
+              <hint v-else>{{ $t("analysis.Analyze Position") }}</hint>
+            </q-btn>
             <q-btn
               @click="bot.analyzeGame()"
               :loading="botState.isAnalyzingGame"
@@ -92,13 +164,35 @@
                 :class="{ 'rotate-180': !showAllBranches }"
                 left
               />
-              {{
+              <template v-if="$q.screen.gt.sm">
+                {{
+                  $t(
+                    showAllBranches
+                      ? "analysis.Analyze Game"
+                      : "analysis.Analyze Branch"
+                  )
+                }}
+              </template>
+              <hint v-else>{{
                 $t(
                   showAllBranches
                     ? "analysis.Analyze Game"
                     : "analysis.Analyze Branch"
                 )
-              }}
+              }}</hint>
+            </q-btn>
+            <q-btn
+              v-if="botMeta && botMeta.isInteractive"
+              @click="toggleInteractiveAnalysis"
+              color="primary"
+              :disable="!bot.isInteractiveAvailable"
+              class="full-width"
+            >
+              <q-icon name="int_analysis" left />
+              <template v-if="$q.screen.gt.sm">
+                {{ $t("analysis.interactiveAnalysis") }}
+              </template>
+              <hint v-else>{{ $t("analysis.interactiveAnalysis") }}</hint>
             </q-btn>
           </q-btn-group>
           <q-inner-loading
@@ -176,6 +270,9 @@ export default {
     botState() {
       return this.isEmbedded ? null : this.$store.state.analysis.botState;
     },
+    botID() {
+      return this.isEmbedded ? null : this.$store.state.analysis.botID;
+    },
     botSuggestion() {
       if (this.analysis) {
         if (
@@ -220,10 +317,26 @@ export default {
         return null;
       }
     },
+    showBigButtons() {
+      return (
+        !this.isEmbedded &&
+        !this.isGameEnd &&
+        !this.botSuggestion &&
+        (!this.botState ||
+          (!this.botState.isInteractiveEnabled &&
+            !this.botState.isAnalyzingGame &&
+            !(this.botState.isRunning && this.botState.tps === this.tps)))
+      );
+    },
   },
   methods: {
     toggle() {
       this.collapsed = !this.collapsed;
+    },
+    toggleInteractiveAnalysis() {
+      if (this.bot && this.bot.isInteractiveAvailable) {
+        this.bot.isInteractiveEnabled = !this.bot.isInteractiveEnabled;
+      }
     },
   },
 };
@@ -239,10 +352,17 @@ export default {
     z-index: 1;
   }
 
-  .toolbar-analysis-toggle {
+  .toolbar-analysis-toggle,
+  .cancel-analysis-toggle,
+  .interactive-analysis-toggle,
+  .connect-toggle {
     top: -32px;
-    right: 86px;
+    right: 130px;
     z-index: 1;
+  }
+
+  .toolbar-analysis-toggle {
+    right: 86px;
     &.embedded {
       right: 18px;
     }
@@ -250,6 +370,19 @@ export default {
 
   .toolbar-analysis {
     height: 108px;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 </style>

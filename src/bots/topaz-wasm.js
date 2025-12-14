@@ -1,4 +1,4 @@
-import Bot from "./bot";
+import Bot, { defaultEvalMarkThresholds } from "./bot";
 
 const url = new URL("/topaz/topaz.worker.js", import.meta.url);
 let worker = null;
@@ -16,6 +16,7 @@ export default class TopazWasm extends Bot {
         limitTypes: ["depth", "movetime"],
         movetime: 5e3,
         depth: 12,
+        evalMarkThresholds: { ...defaultEvalMarkThresholds },
       },
       limitTypes: {
         movetime: {},
