@@ -14,6 +14,22 @@ export default {
   created() {
     if (process.env.DEV) {
       window.app = this;
+
+      const install = () =>
+        import("./dev/branchPromotionRunner").then(
+          ({ installBranchPromotionRunner }) => {
+            installBranchPromotionRunner();
+          }
+        );
+
+      window.installBranchPromotionRunner = install;
+      install();
+
+      if (module && module.hot) {
+        module.hot.accept("./dev/branchPromotionRunner", () => {
+          install();
+        });
+      }
     }
 
     // Handle virtual keyboard
