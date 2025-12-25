@@ -149,11 +149,11 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     The total number of nodes searched since the last `go` command.
   - `hashfull <n>`:
     How full the hash table is in parts per thousand.
-  - `pv <moves>`
+  - `pv <moves>`:
     The best line found.
-  - `multipv <n> <moves>`:
-    When sending multiple variations, include `multipv 1` in the command string to identify the pv,
-    `multipv 2` for the next best variation, and so on, within the same command string.
+  - `multipv <n>`:
+    When sending multiple variations, include `multipv 1` in the info line to identify the primary pv,
+    `multipv 2` for the next best variation, and so on. Each variation is sent as a separate `info` line.
   - `wdl <winchance> <drawchance> <losschance>`:
     The win/draw/lose probabilities [0, 1000] from the engine's perspective.
   - `score`

@@ -865,53 +865,60 @@ export default class Bot {
 
     // Parse results
     const results = [];
-    suggestions.forEach(
-      ({
+    suggestions.forEach((suggestion) => {
+      // Null suggestions are placeholders for slots that shouldn't be updated
+      if (suggestion === null) {
+        results.push(null);
+        return;
+      }
+      let {
         pv = null,
         time = null,
         depth = null,
         nodes = null,
         visits = null,
         evaluation = null,
-      }) => {
-        let player = initialPlayer;
-        let color = initialColor;
-        const result = {};
-        if (pv !== null) {
-          pv = parsePV(player, color, pv);
-          result.ply = pv.splice(0, 1)[0];
-          result.followingPlies = pv;
-        }
-        if (time !== null) {
-          result.time = time;
-        }
-        if (depth !== null) {
-          result.depth = depth;
-        }
-        if (nodes !== null) {
-          result.nodes = nodes;
-        }
-        if (visits !== null) {
-          result.visits = visits;
-        }
-        if (evaluation !== null) {
-          result.evaluation = this.normalizeEvaluation(evaluation);
-        }
-        if (!isEmpty(result)) {
-          result.startTime = startTime;
-          result.hash = hash;
-          results.push(result);
-        }
+      } = suggestion;
+      let player = initialPlayer;
+      let color = initialColor;
+      const result = {};
+      if (pv !== null) {
+        pv = parsePV(player, color, pv);
+        result.ply = pv.splice(0, 1)[0];
+        result.followingPlies = pv;
       }
-    );
+      if (time !== null) {
+        result.time = time;
+      }
+      if (depth !== null) {
+        result.depth = depth;
+      }
+      if (nodes !== null) {
+        result.nodes = nodes;
+      }
+      if (visits !== null) {
+        result.visits = visits;
+      }
+      if (evaluation !== null) {
+        result.evaluation = this.normalizeEvaluation(evaluation);
+      }
+      if (!isEmpty(result)) {
+        result.startTime = startTime;
+        result.hash = hash;
+        results.push(result);
+      } else {
+        results.push(null);
+      }
+    });
 
     // Update nodes and nps
     const state = {};
-    if (results[0].nodes !== null) {
-      state.nodes = results[0].nodes;
+    const firstResult = results.find((r) => r !== null);
+    if (firstResult && firstResult.nodes !== null) {
+      state.nodes = firstResult.nodes;
     }
-    if (nps === null && state.nodes && results[0].time) {
-      nps = state.nodes / (results[0].time / 1000);
+    if (nps === null && state.nodes && firstResult && firstResult.time) {
+      nps = state.nodes / (firstResult.time / 1000);
     }
     if (nps !== null) {
       state.nps = nps;
@@ -921,16 +928,41 @@ export default class Bot {
     }
 
     // Store results
-    if (this.positions[tps] && this.positions[tps].startTime === startTime) {
-      // Merge with previous results
-      this.setPosition(deepFreeze({ ...this.positions[tps], ...results }));
-    } else if (
-      !this.positions[tps] ||
-      this.positions[tps][0].hash !== hash ||
-      this.positions[tps][0].nodes < results[0].nodes
-    ) {
-      // Don't overwrite deeper searches for this position unless settings have changed
-      this.setPosition(tps, deepFreeze(results));
+    const existingResults = this.positions[tps];
+    const isSameSearch =
+      existingResults && existingResults[0].startTime === startTime;
+
+    if (isSameSearch) {
+      // Merge by slot index - each result updates its corresponding slot
+      // Non-multipv results update slot 0, multipv N updates slot N-1
+      // Null results are skipped (preserve existing at that slot)
+      const merged = [...existingResults];
+      results.forEach((result, i) => {
+        if (result === null) {
+          // Skip null slots - keep existing
+          return;
+        }
+        // Skip if new result is less detailed than existing (e.g., bestmove vs full info)
+        if (i < merged.length && merged[i].depth && !result.depth) {
+          return;
+        }
+        if (i < merged.length) {
+          merged[i] = result;
+        } else {
+          merged.push(result);
+        }
+      });
+      this.setPosition(tps, deepFreeze(merged));
+    } else {
+      const firstResult = results.find((r) => r !== null);
+      if (
+        !this.positions[tps] ||
+        this.positions[tps][0].hash !== hash ||
+        (firstResult && this.positions[tps][0].nodes < firstResult.nodes)
+      ) {
+        // Don't overwrite deeper searches for this position unless settings have changed
+        this.setPosition(tps, deepFreeze(results));
+      }
     }
   }
 
