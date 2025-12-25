@@ -644,6 +644,9 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
 
 export const SET_PLAYER = function ({ commit }, player) {
   const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
   player = Number(player) || null;
   const config = { ...game.config, player };
   Object.assign(game.config, config);
