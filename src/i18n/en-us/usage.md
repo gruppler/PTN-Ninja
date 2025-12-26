@@ -1,4 +1,4 @@
-# This App
+`# This App
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org/portable-tak-notation/). Originally built for transcription of live games, it has become a fully-featured analysis tool for the game [Tak](https://ustak.org/play-beautiful-game-tak/).
 
@@ -206,7 +206,7 @@ You can perform several actions on branches by **right-clicking** the branch nam
 - To show all branches (or hide other branches) in the PTN panel, **click** the "branch" icon in the header toolbar, or press <kbd>Shift</kbd><kbd>B</kbd>.
 - Click the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
 - Use <kbd>▲/▼</kbd> to navigate between branches.
-- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
+- **Right-click** a branch to **promote**, **rename**, or **delete** it.
 
 :::
 

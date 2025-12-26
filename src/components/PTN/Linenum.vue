@@ -14,32 +14,7 @@
         context-menu
         auto-close
       >
-        <q-list class="bg-ui">
-          <q-item @click="promoteBranch" clickable>
-            <q-item-section side>
-              <q-icon name="promote" />
-            </q-item-section>
-            <q-item-section>{{ $t("Promote") }}</q-item-section>
-          </q-item>
-          <q-item @click="makeBranchMain" clickable>
-            <q-item-section side>
-              <q-icon name="make_main" />
-            </q-item-section>
-            <q-item-section>{{ $t("Make Main") }}</q-item-section>
-          </q-item>
-          <q-item @click="renameBranch" clickable>
-            <q-item-section side>
-              <q-icon name="edit" />
-            </q-item-section>
-            <q-item-section>{{ $t("Rename") }}</q-item-section>
-          </q-item>
-          <q-item @click="deleteBranch" clickable>
-            <q-item-section side>
-              <q-icon name="delete" />
-            </q-item-section>
-            <q-item-section>{{ $t("Delete") }}</q-item-section>
-          </q-item>
-        </q-list>
+        <BranchContextMenu :branch="linenum.branch" />
       </q-menu>
       <q-btn
         v-if="onlyBranch && !noMenu"
@@ -64,12 +39,13 @@
 
 <script>
 import BranchMenu from "../controls/BranchMenu";
+import BranchContextMenu from "../controls/BranchContextMenu";
 
 import { isNumber } from "lodash";
 
 export default {
   name: "Linenum",
-  components: { BranchMenu },
+  components: { BranchMenu, BranchContextMenu },
   props: {
     linenum: Object,
     noEdit: Boolean,
@@ -120,21 +96,6 @@ export default {
   methods: {
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
-    },
-    promoteBranch() {
-      this.$store.dispatch("game/PROMOTE_BRANCH", this.linenum.branch);
-    },
-    makeBranchMain() {
-      this.$store.dispatch("game/MAKE_BRANCH_MAIN", this.linenum.branch);
-    },
-    renameBranch() {
-      this.$router.push({
-        name: "rename-branch",
-        params: { branch: this.linenum.branch },
-      });
-    },
-    deleteBranch() {
-      this.$store.dispatch("game/DELETE_BRANCH", this.linenum.branch);
     },
   },
 };

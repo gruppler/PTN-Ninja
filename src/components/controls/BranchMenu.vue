@@ -25,6 +25,7 @@
               :linenum="ply.linenum"
               :active-ply="ply"
               class="branch-container col-shrink"
+              no-edit
             />
             <Ply :ply="ply" no-branches no-click>
               <PlyPreview
@@ -34,6 +35,16 @@
               />
             </Ply>
           </q-item-label>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            separate-close-popup
+            context-menu
+            touch-position
+          >
+            <BranchContextMenu :branch="ply.branch" />
+          </q-menu>
         </q-item>
       </template>
     </q-list>
@@ -42,6 +53,7 @@
 
 <script>
 import PlyPreview from "../controls/PlyPreview";
+import BranchContextMenu from "../controls/BranchContextMenu";
 import { findLastIndex } from "lodash";
 
 export default {
@@ -50,6 +62,7 @@ export default {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply"),
     PlyPreview,
+    BranchContextMenu,
   },
   props: {
     value: Boolean,
