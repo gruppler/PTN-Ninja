@@ -1,12 +1,24 @@
 <template>
-  <span class="ptn linenum justify-end">
-    <span
+  <div
+    class="ptn linenum"
+    :class="{
+      'justify-end': !fullWidth,
+      'q-px-sm': fullWidth,
+      fullWidth,
+      noBranch,
+      selected: isSelected && fullWidth,
+    }"
+  >
+    <div
       v-if="branch && (showBranch || onlyBranch)"
-      class="branch row no-wrap justify-end"
-      :class="{ selected: isSelected, only: onlyBranch }"
+      class="branch row no-wrap"
+      :class="{
+        only: onlyBranch,
+        noBranch,
+      }"
       @click.left="selectBranch(ply)"
     >
-      <span v-html="branch" />
+      <span class="branch-text" v-html="branch" />
       <q-menu
         v-if="!noEdit"
         transition-show="none"
@@ -16,25 +28,37 @@
       >
         <BranchContextMenu :branch="linenum.branch" />
       </q-menu>
-      <q-btn
-        v-if="onlyBranch && !noMenu"
-        @click.stop
-        icon="arrow_drop_down"
-        size="md"
-        flat
-        dense
-      >
-        <BranchMenu
-          @select="selectBranch"
-          :branches="branches"
-          v-model="menu"
+      <div class="branch-actions row no-wrap items-center">
+        <q-btn
+          v-if="onlyBranch && !noMenu"
+          @click.stop
+          icon="arrow_drop_down"
+          size="md"
+          flat
+          dense
+        >
+          <BranchMenu
+            @select="selectBranch"
+            :branches="branches"
+            v-model="menu"
+          />
+        </q-btn>
+        <q-btn
+          v-if="fullWidth && branchUI && branchPointPly"
+          @click.stop="collapseBranch"
+          icon="close"
+          size="md"
+          dense
+          flat
         />
-      </q-btn>
-    </span>
+      </div>
+    </div>
     <span class="number" v-if="!onlyBranch"
       >{{ this.linenum.number }}.&nbsp;</span
     >
-  </span>
+
+    <slot />
+  </div>
 </template>
 
 <script>
@@ -46,12 +70,16 @@ import { isNumber } from "lodash";
 export default {
   name: "Linenum",
   components: { BranchMenu, BranchContextMenu },
+  inject: {
+    branchUI: { default: null },
+  },
   props: {
     linenum: Object,
     noEdit: Boolean,
     noBranch: Boolean,
     noMenu: Boolean,
     onlyBranch: Boolean,
+    fullWidth: Boolean,
     activePly: Object,
     unselected: Boolean,
   },
@@ -92,10 +120,26 @@ export default {
         this.$store.state.game.ptn.branchPlies.some((p) => p.id === this.ply.id)
       );
     },
+    branchPointPly() {
+      if (!this.ply || !this.ply.branches || this.ply.branches.length <= 1) {
+        return null;
+      }
+      const first = this.ply.branches[0];
+      const parentId = isNumber(first) ? first : first && first.id;
+      return parentId != null && this.plies && this.plies[parentId]
+        ? this.plies[parentId]
+        : null;
+    },
   },
   methods: {
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
+    },
+    collapseBranch() {
+      if (!this.branchUI || !this.branchUI.toggle || !this.branchPointPly) {
+        return;
+      }
+      this.branchUI.toggle(this.branchPointPly);
     },
   },
 };
@@ -111,7 +155,41 @@ export default {
   body.panelDark & {
     color: var(--q-color-textLight);
   }
+  &.fullWidth {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    flex: 1 1 auto;
+    .branch {
+      border-radius: 0;
+    }
+  }
+  &.fullWidth,
   .branch {
+    background-color: var(--q-color-bg);
+    color: var(--q-color-textDark);
+    body.secondaryDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+  &.noBranch {
+    justify-content: flex-start;
+  }
+  &.selected .branch,
+  &.fullWidth.selected {
+    background-color: var(--q-color-primary);
+    color: var(--q-color-textDark) !important;
+    body.primaryDark & {
+      color: var(--q-color-textLight) !important;
+    }
+  }
+  &:not(.fullWidth) {
+    .branch.only {
+      margin-bottom: 0.25em;
+    }
+  }
+  .branch {
+    flex: 1 1 auto;
     font-weight: bold;
     font-size: 0.9em;
     line-height: 1.3em;
@@ -119,29 +197,25 @@ export default {
     margin: 0;
     cursor: pointer;
     border-radius: $generic-border-radius;
-    background-color: var(--q-color-bg);
-    color: var(--q-color-textDark);
-    body.secondaryDark & {
-      color: var(--q-color-textLight);
-    }
     &:not(.only) > span {
       white-space: nowrap;
       overflow: hidden;
     }
-    &.selected {
-      background-color: var(--q-color-primary);
-      color: var(--q-color-textDark) !important;
-      body.primaryDark & {
-        color: var(--q-color-textLight) !important;
-      }
-    }
     &.only {
-      margin-top: 0.25em;
-      margin-bottom: 0.25em;
       > span {
         word-break: break-word;
       }
     }
+
+    .branch-text {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .branch-actions {
+      flex: 0 0 auto;
+    }
+
     .space {
       width: 0;
       display: inline-block;

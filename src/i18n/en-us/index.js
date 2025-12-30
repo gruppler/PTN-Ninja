@@ -113,6 +113,7 @@ export default {
   Hotkey: "Hotkey",
   Hotkeys: "Hotkeys",
   "Image Size": "Image Size",
+  "Inline Branches": "Inline Branches",
   Import: "Import",
   "Import from Clipboard": "Import from Clipboard",
   "Player Names": "Player Names",

@@ -8,6 +8,7 @@ export default {
   apply: "mdi-check",
   arrow_back: "mdi-arrow-left",
   arrow_drop_down: "mdi-menu-down",
+  arrow_drop_up: "mdi-menu-up",
   autofix: "mdi-auto-fix",
   backspace: "mdi-backspace",
   backward: "mdi-chevron-left",

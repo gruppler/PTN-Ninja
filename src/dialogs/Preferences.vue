@@ -173,6 +173,18 @@
         </hint>
       </q-item>
 
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Inline Branches") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="inlineBranches"
+            :disable="isDisabled('inlineBranches')"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item
         tag="label"
         :disable="!showControls || isDisabled('showPlayButton')"
@@ -307,6 +319,7 @@ const props = [
   "playSpeed",
   "scrollScrubbing",
   "scrollThreshold",
+  "inlineBranches",
   "showAllBranches",
   "showControls",
   "showPlayButton",
