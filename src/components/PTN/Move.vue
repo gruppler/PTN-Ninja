@@ -32,7 +32,7 @@
       :linenum="move.linenum"
       :unselected="currentOnly"
       only-branch
-      :no-menu="inlineBranches"
+      :no-menu-btn="noMenuBtn"
       :full-width="inlineBranches"
       class="relative-position"
       :class="{
@@ -49,6 +49,7 @@
           paddingLeft: (fixedLinenumberWidth ? 1.5 : 0) + 'em',
           width: fixedLinenumberWidth ? '3em' : 'auto',
         }"
+        :no-menu-btn="noMenuBtn"
       />
       <template v-if="!player || player === 1">
         <span v-if="splitPly === 'split2'" class="ptn nop">--</span>
@@ -95,6 +96,7 @@ export default {
     currentOnly: Boolean,
     standalone: Boolean,
     noDecoration: Boolean,
+    noMenuBtn: Boolean,
     inlineBranches: Boolean,
     separateBranch: Boolean,
     fixedLinenumberWidth: Boolean,

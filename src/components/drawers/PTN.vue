@@ -29,6 +29,7 @@
             :inline-branches="inlineBranches"
             fixed-linenumber-width
             separate-branch
+            no-menu-btn
             show-eval
           >
             <template v-slot:plyTooltip="ply">

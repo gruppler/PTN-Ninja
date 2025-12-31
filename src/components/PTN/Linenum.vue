@@ -6,7 +6,7 @@
       'q-px-sm': fullWidth,
       fullWidth,
       noBranch,
-      selected: isSelected && fullWidth,
+      selected: isSelected,
     }"
   >
     <div
@@ -30,7 +30,21 @@
       </q-menu>
       <div class="branch-actions row no-wrap items-center">
         <q-btn
-          v-if="onlyBranch && !noMenu"
+          v-if="onlyBranch && !noContextMenuBtn"
+          ref="menu"
+          icon="menu_vertical"
+          size="md"
+          dense
+          flat
+          @click.stop
+        >
+          <q-menu transition-show="none" transition-hide="none" auto-close>
+            <BranchContextMenu :branch="linenum.branch" />
+          </q-menu>
+        </q-btn>
+
+        <q-btn
+          v-if="onlyBranch && !noMenuBtn"
           @click.stop
           icon="arrow_drop_down"
           size="md"
@@ -43,6 +57,7 @@
             v-model="menu"
           />
         </q-btn>
+
         <q-btn
           v-if="fullWidth && branchUI && branchPointPly"
           @click.stop="collapseBranch"
@@ -77,7 +92,8 @@ export default {
     linenum: Object,
     noEdit: Boolean,
     noBranch: Boolean,
-    noMenu: Boolean,
+    noMenuBtn: Boolean,
+    noContextMenuBtn: Boolean,
     onlyBranch: Boolean,
     fullWidth: Boolean,
     activePly: Object,
@@ -171,6 +187,10 @@ export default {
     body.secondaryDark & {
       color: var(--q-color-textLight);
     }
+
+    .q-btn + .q-btn {
+      margin-left: 4px;
+    }
   }
   &.noBranch {
     justify-content: flex-start;
@@ -221,7 +241,7 @@ export default {
       display: inline-block;
     }
     .q-btn {
-      margin: -0.5em -0.26em;
+      margin: -0.5em -0.26em -0.5em 0;
     }
 
     + .number {
