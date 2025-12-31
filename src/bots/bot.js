@@ -1196,11 +1196,65 @@ export default class Bot {
     const messages = {};
 
     if (isString(tps) && tps.length) {
+      const getEvalReplacementPrefix = (ply) => {
+        if (!ply || !(ply.id in this.game.comments.notes)) {
+          return "";
+        }
+        const index = this.game.comments.notes[ply.id].findIndex(
+          (comment) => comment.evaluation !== null
+        );
+        return index >= 0 ? `!r${index}:` : "";
+      };
+
+      const buildEvalCommentFromPosition = (position) => {
+        if (!position || !position[0]) {
+          return null;
+        }
+        if (
+          position[0].evaluation === null ||
+          position[0].evaluation === undefined
+        ) {
+          return null;
+        }
+
+        const evaluationAfter = Math.round(100 * position[0].evaluation) / 1e4;
+        if (evaluationAfter === null || isNaN(evaluationAfter)) {
+          return null;
+        }
+
+        let evaluationComment = `${
+          evaluationAfter >= 0 ? "+" : ""
+        }${evaluationAfter}`;
+
+        if (saveSearchStats) {
+          if (position[0].depth !== null && position[0].depth !== undefined) {
+            evaluationComment += `/${position[0].depth}`;
+          }
+          if (position[0].nodes !== null && position[0].nodes !== undefined) {
+            evaluationComment += ` ${position[0].nodes} nodes`;
+          }
+          if (position[0].visits !== null && position[0].visits !== undefined) {
+            evaluationComment += ` ${position[0].visits} visits`;
+          }
+          if (position[0].time !== null && position[0].time !== undefined) {
+            evaluationComment += ` ${position[0].time}ms`;
+          }
+        }
+
+        return evaluationComment;
+      };
+
       // The current TPS corresponds to:
       // - the *positionAfter* of the previous ply (evaluation belongs there)
       // - the *positionBefore* of the next ply (pv belongs there)
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
+
+      // For the initial position there is no previous ply. In that case we still
+      // attach the evaluation to ply 0 (consistent with getters that allow
+      // ply.id === 0 && ply.tpsBefore === tps).
+      const evalPly =
+        prevPly || this.plies.find((p) => p.id === 0 && p.tpsBefore === tps);
 
       if (prevPly) {
         const notes = this.formatEvalComments(
@@ -1210,6 +1264,18 @@ export default class Bot {
         ).filter((n) => !getPV(n));
         if (notes.length) {
           messages[prevPly.id] = notes;
+        }
+      }
+
+      // If we have analysis for the current TPS but couldn't generate an eval
+      // comment (often because positionBefore isn't analyzed), synthesize an
+      // evaluation comment directly from the current position.
+      if (evalPly && !(evalPly.id in messages)) {
+        const fallbackEval = buildEvalCommentFromPosition(this.positions[tps]);
+        if (fallbackEval) {
+          messages[evalPly.id] = [
+            getEvalReplacementPrefix(evalPly) + fallbackEval,
+          ];
         }
       }
 

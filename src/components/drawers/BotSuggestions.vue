@@ -966,20 +966,7 @@ export default {
       if (!this.hasCurrentPositionSavedResults) {
         return;
       }
-      const tps = this.tps;
-      // Find the previous ply (has evaluation for this position)
-      const prevPly = this.allPlies.find((p) => p.tpsAfter === tps);
-      // Find the next ply (has PV for this position)
-      const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
-
-      // Remove evaluation from previous ply
-      if (prevPly) {
-        this.$store.commit("game/REMOVE_PLY_ANALYSIS_NOTES", prevPly.id);
-      }
-      // Remove PV from next ply
-      if (nextPly) {
-        this.$store.commit("game/REMOVE_PLY_ANALYSIS_NOTES", nextPly.id);
-      }
+      this.$store.commit("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {

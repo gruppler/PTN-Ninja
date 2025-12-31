@@ -498,11 +498,27 @@ export const REMOVE_ANALYSIS_NOTES = () => {
   );
 };
 
-export const REMOVE_PLY_ANALYSIS_NOTES = (state, targetPlyID) => {
+export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !allPlies || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies.find((p) => p && p.tpsBefore === tps);
+  const evalPly =
+    prevPly || allPlies.find((p) => p && p.id === 0 && p.tpsBefore === tps);
+
+  const evalPlyID = evalPly ? String(evalPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
   Vue.prototype.$game.removeNotes((note, plyID) => {
-    return (
-      plyID === String(targetPlyID) &&
-      (note.evaluation !== null || note.pv !== null)
-    );
+    if (evalPlyID && plyID === evalPlyID) {
+      return note.evaluation !== null;
+    }
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.pv !== null;
+    }
+    return false;
   });
 };
