@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="analysis-item"
-    :class="{ animate, separator: followingPlies && followingPlies.length > 0 }"
-  >
+  <div class="analysis-item" :class="{ animate }">
     <div
       v-if="evaluation !== null"
       class="evaluation"
@@ -271,7 +268,7 @@ export default {
 .analysis-item {
   position: relative;
 
-  + .analysis-item.separator {
+  + .analysis-item {
     border-top: 1px solid $separator-color;
     body.panelDark & {
       border-top-color: $separator-dark-color;

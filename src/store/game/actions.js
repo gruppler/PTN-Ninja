@@ -530,31 +530,54 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
   });
 };
 
+export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
+  const response = await fetch(
+    `https://api.playtak.com/v1/games-history/ptn/${id}`
+    // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+  );
+  if (response && response.ok) {
+    const ptn = await response.text();
+    console.log(ptn);
+    let game = new Game({ ptn, state });
+    return game;
+  } else {
+    if (response) {
+      if (response.status === 404) {
+        throw "Game does not exist";
+      } else {
+        response = await response.json();
+        console.log(response);
+        throw response && response.message ? response.message : "unknown";
+      }
+    } else {
+      throw "unknown";
+    }
+  }
+}
+
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
-    const response = await fetch(
-      `https://api.playtak.com/v1/games-history/ptn/${id}`
-      // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
+  try {
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    window.open(
+      this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      }),
+      "_blank"
     );
-    if (response && response.ok) {
-      const ptn = await response.text();
-      console.log(ptn);
-      let game = new Game({ ptn, state });
-      game.warnings.forEach((warning) => notifyWarning(warning));
-      return dispatch("ADD_GAME", game);
-    } else {
-      if (response) {
-        if (response.status === 404) {
-          throw "Game does not exist";
-        } else {
-          response = await response.json();
-          console.log(response);
-          throw response && response.message ? response.message : "unknown";
-        }
-      } else {
-        throw "unknown";
-      }
-    }
   } catch (error) {
     notifyError(error);
     throw error;
