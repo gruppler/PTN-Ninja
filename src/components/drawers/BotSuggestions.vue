@@ -359,7 +359,7 @@
       </smooth-reflow>
 
       <!-- Controls -->
-      <smooth-reflow class="relative-position">
+      <div class="relative-position">
         <template v-if="bot">
           <!-- Connect -->
           <q-btn
@@ -422,7 +422,6 @@
             <q-btn
               @click="analyzePosition()"
               :loading="botState.isAnalyzingPosition"
-              :percentage="botState.progress"
               :disable="!bot.isAnalyzePositionAvailable"
               color="primary"
               icon="board"
@@ -433,7 +432,6 @@
             <q-btn
               @click="bot.analyzeBranch()"
               :loading="botState.isAnalyzingBranch"
-              :percentage="botState.progress"
               :disable="!bot.isAnalyzeGameAvailable"
               color="primary"
               icon="branch"
@@ -444,7 +442,6 @@
             <q-btn
               @click="bot.analyzeGame()"
               :loading="botState.isAnalyzingGame"
-              :percentage="botState.progress"
               :disable="!bot.isAnalyzeGameAvailable"
               color="primary"
               icon="branches_all"
@@ -468,82 +465,122 @@
             </q-btn>
           </q-btn-group>
 
-          <!-- Progress indicators for analysis -->
+          <!-- Live Stats -->
           <div
-            v-if="
-              botState.isAnalyzingPosition ||
-              botState.isAnalyzingGame ||
-              botState.isAnalyzingBranch
-            "
-            class="relative-position"
+            v-if="botState.time !== null || botState.nps !== null"
+            class="bg-ui relative-position"
+            style="padding-top: 2px"
           >
-            <q-btn
-              v-if="botState.analyzingPly"
-              @click.stop="goToAnalysisPly"
-              class="absolute-left q-py-none"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-              no-caps
-              dense
-              flat
+            <div class="text-caption text-center q-pa-sm">
+              <span v-if="botState.time !== null">
+                {{ $n((botState.time || 0) / 1e3, "n0") }}
+                {{ $t("analysis.secondsUnit") }}
+              </span>
+              <span v-if="botState.time !== null && botState.nps !== null">
+                •
+              </span>
+              <span v-if="botState.nps !== null">
+                {{ $n(botState.nps || 0, "n0") }} {{ $t("analysis.nps") }}
+              </span>
+            </div>
+
+            <!-- Progress indicators for analysis -->
+            <div
+              v-if="
+                botState.isAnalyzingPosition ||
+                botState.isAnalyzingGame ||
+                botState.isAnalyzingBranch
+              "
+              class="absolute-position"
             >
-              <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
-              <PlyChip
-                :ply="botState.analyzingPly"
-                class="no-pointer-events q-ma-none"
-                no-branches
-                :done="botState.tps === botState.analyzingPly.tpsAfter"
+              <q-btn
+                v-if="botState.analyzingPly"
+                @click.stop="goToAnalysisPly"
+                class="absolute-left q-py-none"
+                :class="{
+                  highlight: $store.state.ui.theme.primaryDark,
+                  dim: !$store.state.ui.theme.primaryDark,
+                }"
+                no-caps
+                dense
+                flat
+              >
+                <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
+                <PlyChip
+                  :ply="botState.analyzingPly"
+                  class="no-pointer-events q-ma-none"
+                  no-branches
+                  :done="botState.tps === botState.analyzingPly.tpsAfter"
+                />
+              </q-btn>
+              <q-btn
+                :label="$t('Cancel')"
+                @click.stop="bot.terminate()"
+                color="primary"
+                class="absolute-right"
+                stretch
+                flat
               />
-            </q-btn>
-            <q-btn
-              :label="$t('Cancel')"
-              @click.stop="bot.terminate()"
-              color="primary"
-              class="absolute-right"
-              stretch
-              flat
+            </div>
+
+            <q-linear-progress
+              v-if="botState && botState.isRunning"
+              class="absolute-position"
+              style="bottom: -2px"
+              size="2px"
+              :value="botState.progress / 100"
+              :indeterminate="
+                botState.isInteractiveEnabled && botState.isRunning
+              "
+            />
+            <div
+              v-else
+              class="absolute-position"
+              style="bottom: -2px; height: 2px"
             />
           </div>
 
           <!-- Log -->
-          <recess v-if="enableLogging">
-            <q-virtual-scroll
-              ref="botLog"
-              class="bot-log text-selectable bg-ui q-px-sm"
-              :items="botLog"
-              :virtual-scroll-item-size="16.8"
-              :virtual-scroll-slice-ratio-before="0.5"
-              :virtual-scroll-slice-ratio-after="0.5"
-            >
-              <template v-slot="{ item }">
-                <div
-                  class="log-message"
-                  :class="{ sent: !item.received, received: item.received }"
-                >
-                  {{ item.message }}
-                </div>
-              </template>
-            </q-virtual-scroll>
-            <q-btn-group spread stretch>
-              <q-btn @click="clearLog" icon="delete" color="ui">
-                <hint>{{ $t("analysis.logClear") }}</hint>
-              </q-btn>
-              <q-btn
-                @click="toggleLogScroll"
-                :icon="autoScrollLog ? 'pause' : 'play'"
-                color="ui"
+          <q-slide-transition>
+            <recess v-if="enableLogging">
+              <q-virtual-scroll
+                ref="botLog"
+                class="bot-log text-selectable bg-ui q-px-sm"
+                :items="botLog"
+                :virtual-scroll-item-size="16.8"
+                :virtual-scroll-slice-ratio-before="0.5"
+                :virtual-scroll-slice-ratio-after="0.5"
               >
-                <hint>{{
-                  $t(autoScrollLog ? "analysis.logPause" : "analysis.logResume")
-                }}</hint>
-              </q-btn>
-              <q-btn @click="saveLog" icon="file" color="ui">
-                <hint>{{ $t("analysis.logSave") }}</hint>
-              </q-btn>
-            </q-btn-group>
-          </recess>
+                <template v-slot="{ item }">
+                  <div
+                    class="log-message"
+                    :class="{ sent: !item.received, received: item.received }"
+                  >
+                    {{ item.message }}
+                  </div>
+                </template>
+              </q-virtual-scroll>
+              <q-btn-group spread stretch>
+                <q-btn @click="clearLog" icon="delete" color="ui">
+                  <hint>{{ $t("analysis.logClear") }}</hint>
+                </q-btn>
+                <q-btn
+                  @click="toggleLogScroll"
+                  :icon="autoScrollLog ? 'pause' : 'play'"
+                  color="ui"
+                >
+                  <hint>{{
+                    $t(
+                      autoScrollLog ? "analysis.logPause" : "analysis.logResume"
+                    )
+                  }}</hint>
+                </q-btn>
+                <q-btn @click="saveLog" icon="file" color="ui">
+                  <hint>{{ $t("analysis.logSave") }}</hint>
+                </q-btn>
+              </q-btn-group>
+            </recess>
+          </q-slide-transition>
         </template>
 
         <q-inner-loading
@@ -554,26 +591,7 @@
             !botState.isReady
           "
         />
-
-        <!-- Live Stats -->
-        <div
-          v-if="botState.time !== null || botState.nps !== null"
-          class="bg-ui q-pa-sm"
-        >
-          <div class="text-caption text-center">
-            <span v-if="botState.time !== null">
-              {{ $n((botState.time || 0) / 1e3, "n0") }}
-              {{ $t("analysis.secondsUnit") }}
-            </span>
-            <span v-if="botState.time !== null && botState.nps !== null">
-              •
-            </span>
-            <span v-if="botState.nps !== null">
-              {{ $n(botState.nps || 0, "n0") }} {{ $t("analysis.nps") }}
-            </span>
-          </div>
-        </div>
-      </smooth-reflow>
+      </div>
 
       <!-- Results -->
       <smooth-reflow>
