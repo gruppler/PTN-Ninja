@@ -408,6 +408,50 @@ export default {
     "position.tps"() {
       this.$nextTick(() => this.scroll());
     },
+    "$store.state.ui.collapseBranchRequest"(request) {
+      if (!request || !request.plyID) {
+        return;
+      }
+      if (!this.inlineBranches) {
+        return;
+      }
+
+      const ply =
+        this.ptn && this.ptn.allPlies ? this.ptn.allPlies[request.plyID] : null;
+      if (ply) {
+        if (this.isBranchExpanded(ply)) {
+          this.toggleBranchExpanded(ply);
+        } else if (this.ptn && this.ptn.allPlies) {
+          if (!ply.branch) {
+            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
+            return;
+          }
+          const parentBranch = String(ply.branch || "")
+            .split("/")
+            .slice(0, -1)
+            .join("/");
+          if (parentBranch === ply.branch) {
+            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
+            return;
+          }
+          const parentBranchPlies = this.ptn.allPlies.filter(
+            (p) => p && p.branch === parentBranch && p.index < ply.index
+          );
+          const parentPly = parentBranchPlies.sort(
+            (a, b) => b.index - a.index || b.id - a.id
+          )[0];
+
+          if (parentPly) {
+            this.$store.dispatch("game/SET_TARGET", parentPly);
+            this.$store.dispatch("game/GO_TO_PLY", {
+              plyID: parentPly.id,
+              isDone: true,
+            });
+          }
+        }
+      }
+      this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
+    },
     "position.targetBranch"() {
       const targetBranch = this.position.targetBranch;
       if (targetBranch && !this.seenTargetBranches.includes(targetBranch)) {

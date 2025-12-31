@@ -109,6 +109,7 @@
         </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN
+            ref="ptn"
             class="absolute-fit"
             :recess="!$store.state.ui.disablePTNTools"
           />

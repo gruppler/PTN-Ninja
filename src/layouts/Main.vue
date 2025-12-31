@@ -195,7 +195,7 @@
           <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" recess />
+          <PTN ref="ptn" class="absolute-fit" recess />
         </div>
         <q-toolbar class="footer-toolbar bg-ui q-pa-none">
           <UndoButtons spread stretch flat unelevated />

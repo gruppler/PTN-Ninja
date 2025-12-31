@@ -216,6 +216,32 @@ export default {
     },
   },
   methods: {
+    getPTNPanel() {
+      const layout = this.$root && this.$root.$refs && this.$root.$refs.layout;
+      const direct = layout && layout.$refs && layout.$refs.ptn;
+      if (direct) {
+        return direct;
+      }
+
+      const visit = (vm) => {
+        if (!vm) {
+          return null;
+        }
+        if (vm.$options && vm.$options.name === "PTN") {
+          return vm;
+        }
+        const children = vm.$children || [];
+        for (let i = 0; i < children.length; i++) {
+          const found = visit(children[i]);
+          if (found) {
+            return found;
+          }
+        }
+        return null;
+      };
+
+      return visit(layout);
+    },
     deletePly() {
       if (this.position.ply && !this.plyInProgress && !this.isBoardDisabled) {
         this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
@@ -325,8 +351,26 @@ export default {
           !currentPly.branch || currentPly.index !== targetPly.index;
 
         if (!this.branchMenu && hasSeparator) {
+          // Inline branches: when a separator blocks moving up, collapse the current parent ply
+          const isInlineBranches =
+            this.$store.state.ui.inlineBranches &&
+            this.$store.state.ui.showAllBranches;
+          const canCollapse =
+            isInlineBranches &&
+            currentPly.branches &&
+            currentPly.branches.length > 1;
+
+          if (canCollapse) {
+            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", {
+              plyID: currentPly.id,
+              nonce: Date.now(),
+            });
+            return;
+          }
+
           return;
         }
+
         this.selectBranch(targetPly);
       }
     },
