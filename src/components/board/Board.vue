@@ -788,7 +788,8 @@ $radius: 0.35em;
     grid-row-start: 1;
   }
 
-  .move-number {
+  .move-number,
+  .eval-text {
     height: 1.75em;
     line-height: 1.75;
   }
