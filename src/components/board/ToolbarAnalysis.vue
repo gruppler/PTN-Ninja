@@ -66,7 +66,9 @@
         !showBigButtons &&
         bot &&
         botState &&
-        (botState.isAnalyzingPosition || botState.isAnalyzingGame)
+        (botState.isAnalyzingPosition ||
+          botState.isAnalyzingGame ||
+          botState.isAnalyzingBranch)
       "
       @click="bot.terminate()"
       :class="['cancel-analysis-toggle', 'absolute']"
@@ -90,6 +92,7 @@
             (botState &&
               (botState.isInteractiveEnabled ||
                 botState.isAnalyzingGame ||
+                botState.isAnalyzingBranch ||
                 (botState.isRunning && botState.tps === tps)))
           "
         >
@@ -153,33 +156,30 @@
               <hint v-else>{{ $t("analysis.Analyze Position") }}</hint>
             </q-btn>
             <q-btn
+              @click="bot.analyzeBranch()"
+              :loading="botState.isAnalyzingBranch"
+              :disable="!bot.isAnalyzeGameAvailable"
+              class="full-width"
+              color="primary"
+            >
+              <q-icon name="branch" left />
+              <template v-if="$q.screen.gt.sm">
+                {{ $t("analysis.Analyze Branch") }}
+              </template>
+              <hint v-else>{{ $t("analysis.Analyze Branch") }}</hint>
+            </q-btn>
+            <q-btn
               @click="bot.analyzeGame()"
               :loading="botState.isAnalyzingGame"
               :disable="!bot.isAnalyzeGameAvailable"
               class="full-width"
               color="primary"
             >
-              <q-icon
-                :name="showAllBranches ? 'moves' : 'branch'"
-                :class="{ 'rotate-180': !showAllBranches }"
-                left
-              />
+              <q-icon name="branches_all" left />
               <template v-if="$q.screen.gt.sm">
-                {{
-                  $t(
-                    showAllBranches
-                      ? "analysis.Analyze Game"
-                      : "analysis.Analyze Branch"
-                  )
-                }}
+                {{ $t("analysis.Analyze Game") }}
               </template>
-              <hint v-else>{{
-                $t(
-                  showAllBranches
-                    ? "analysis.Analyze Game"
-                    : "analysis.Analyze Branch"
-                )
-              }}</hint>
+              <hint v-else>{{ $t("analysis.Analyze Game") }}</hint>
             </q-btn>
             <q-btn
               v-if="botMeta && botMeta.isInteractive"
@@ -325,6 +325,7 @@ export default {
         (!this.botState ||
           (!this.botState.isInteractiveEnabled &&
             !this.botState.isAnalyzingGame &&
+            !this.botState.isAnalyzingBranch &&
             !(this.botState.isRunning && this.botState.tps === this.tps)))
       );
     },

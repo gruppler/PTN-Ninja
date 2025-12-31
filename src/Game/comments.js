@@ -118,7 +118,7 @@ export default class GameComments {
           let hasRemoved = false;
           ids.forEach((id) => {
             let comments = this[type][id];
-            const toRemove = comments.filter(filter);
+            const toRemove = comments.filter((comment) => filter(comment, id));
             if (toRemove.length) {
               comments = comments.filter((c) => !toRemove.includes(c));
               if (comments.length === 0) {

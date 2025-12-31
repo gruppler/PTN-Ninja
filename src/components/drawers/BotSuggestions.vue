@@ -429,26 +429,27 @@
             >
               <hint>{{ $t("analysis.Analyze Position") }}</hint>
             </q-btn>
-            <!-- Analyze Full-Game/Branch -->
+            <!-- Analyze Branch -->
             <q-btn
-              @click="analyzeGame()"
+              @click="bot.analyzeBranch()"
+              :loading="botState.isAnalyzingBranch"
+              :percentage="botState.progress"
+              :disable="!bot.isAnalyzeGameAvailable"
+              color="primary"
+              icon="branch"
+            >
+              <hint>{{ $t("analysis.Analyze Branch") }}</hint>
+            </q-btn>
+            <!-- Analyze Game -->
+            <q-btn
+              @click="bot.analyzeGame()"
               :loading="botState.isAnalyzingGame"
               :percentage="botState.progress"
               :disable="!bot.isAnalyzeGameAvailable"
               color="primary"
+              icon="branches_all"
             >
-              <q-icon
-                :name="showAllBranches ? 'moves' : 'branch'"
-                :class="{ 'rotate-180': !showAllBranches }"
-                size="sm"
-              />
-              <hint>{{
-                $t(
-                  showAllBranches
-                    ? "analysis.Analyze Game"
-                    : "analysis.Analyze Branch"
-                )
-              }}</hint>
+              <hint>{{ $t("analysis.Analyze Game") }}</hint>
             </q-btn>
             <!-- Interactive Analysis -->
             <q-btn
@@ -469,7 +470,11 @@
 
           <!-- Progress indicators for analysis -->
           <div
-            v-if="botState.isAnalyzingPosition || botState.isAnalyzingGame"
+            v-if="
+              botState.isAnalyzingPosition ||
+              botState.isAnalyzingGame ||
+              botState.isAnalyzingBranch
+            "
             class="relative-position"
           >
             <q-btn
@@ -586,30 +591,115 @@
       </smooth-reflow>
 
       <!-- Action Buttons -->
-      <q-btn-group spread stretch>
+      <q-btn-group class="bg-ui" spread stretch>
         <q-btn
-          @click="bot.saveEvalComments()"
-          color="primary"
-          icon="notes"
+          icon="save"
+          spread
+          stretch
+          @click.right.stop="saveAllResultsToNotes"
           :disable="!hasResults"
         >
           <hint>{{ $t("Save to Notes") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="saveCurrentPositionToNotes"
+                :disable="!suggestions.length"
+              >
+                <q-item-section avatar>
+                  <q-icon name="save" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable @click="saveAllResultsToNotes">
+                <q-item-section avatar>
+                  <q-icon name="save_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save All") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
+
         <q-btn
-          @click="clearSavedResults"
-          color="primary"
           icon="delete"
-          :disable="!hasAnalysisNotes"
+          spread
+          stretch
+          @click.right.stop="clearUnsavedResults"
+          :disable="!hasResults && !hasAnalysisNotes"
         >
-          <hint>{{ $t("analysis.Clear Saved Results") }}</hint>
-        </q-btn>
-        <q-btn
-          @click="clearResults"
-          color="primary"
-          icon="delete_forever"
-          :disable="!hasResults"
-        >
-          <hint>{{ $t("analysis.Clear Results") }}</hint>
+          <hint>{{ $t("Delete") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="clearCurrentPositionResults"
+                :disable="!suggestions.length"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    {{ $t("analysis.Clear Positions Unsaved Results") }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="clearCurrentPositionSavedResults"
+                :disable="!hasCurrentPositionSavedResults"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    {{ $t("analysis.Delete Positions Saved Results") }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable @click="clearUnsavedResults">
+                <q-item-section avatar>
+                  <q-icon name="delete_all_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear All Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="clearSavedResults"
+                :disable="!hasAnalysisNotes"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    {{ $t("analysis.Delete All Saved Results") }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </q-btn-group>
     </q-expansion-item>
@@ -704,6 +794,26 @@ export default {
         (notes) =>
           notes.some((note) => note.evaluation !== null || note.pv !== null)
       );
+    },
+    hasCurrentPositionSavedResults() {
+      const tps = this.tps;
+      // Check previous ply for evaluation
+      const prevPly = this.allPlies.find((p) => p.tpsAfter === tps);
+      if (prevPly) {
+        const prevNotes = this.$store.state.game.comments.notes[prevPly.id];
+        if (prevNotes && prevNotes.some((note) => note.evaluation !== null)) {
+          return true;
+        }
+      }
+      // Check next ply for PV
+      const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
+      if (nextPly) {
+        const nextNotes = this.$store.state.game.comments.notes[nextPly.id];
+        if (nextNotes && nextNotes.some((note) => note.pv !== null)) {
+          return true;
+        }
+      }
+      return false;
     },
     hasResults() {
       return !isEmpty(this.positions);
@@ -819,10 +929,25 @@ export default {
       this.bot.clearLog();
       this.autoScrollLog = true;
     },
+    saveAllResultsToNotes() {
+      this.bot.saveEvalComments();
+    },
+    saveCurrentPositionToNotes() {
+      if (!this.bot) {
+        return;
+      }
+      this.bot.saveEvalComments(this.tps);
+    },
     clearSavedResults() {
+      if (!this.hasResults) {
+        return;
+      }
       this.bot.clearSavedResults();
     },
-    clearResults() {
+    clearUnsavedResults() {
+      if (!this.hasResults) {
+        return;
+      }
       this.prompt({
         title: this.$t("Confirm"),
         message: this.$tc("confirm.clearBotResults"),
@@ -830,6 +955,31 @@ export default {
           this.bot.clearResults();
         },
       });
+    },
+    clearCurrentPositionResults() {
+      if (!this.hasResults || !this.suggestions.length) {
+        return;
+      }
+      this.$store.commit("analysis/DELETE_BOT_POSITION", this.tps);
+    },
+    clearCurrentPositionSavedResults() {
+      if (!this.hasCurrentPositionSavedResults) {
+        return;
+      }
+      const tps = this.tps;
+      // Find the previous ply (has evaluation for this position)
+      const prevPly = this.allPlies.find((p) => p.tpsAfter === tps);
+      // Find the next ply (has PV for this position)
+      const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
+
+      // Remove evaluation from previous ply
+      if (prevPly) {
+        this.$store.commit("game/REMOVE_PLY_ANALYSIS_NOTES", prevPly.id);
+      }
+      // Remove PV from next ply
+      if (nextPly) {
+        this.$store.commit("game/REMOVE_PLY_ANALYSIS_NOTES", nextPly.id);
+      }
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {

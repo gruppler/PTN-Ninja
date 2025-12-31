@@ -486,7 +486,7 @@ export default class TeiBot extends Bot {
           state.tps = this.state.nextTPS;
         }
       }
-      if (!this.state.isAnalyzingGame) {
+      if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
         state.isRunning = false;
       }
       this.setState(state);

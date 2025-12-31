@@ -7,9 +7,18 @@ import {
   notifyWarning,
   parsePV,
 } from "../utilities";
-import { defaults, forEach, isEmpty, isObject, isNumber, uniqBy } from "lodash";
+import {
+  defaults,
+  forEach,
+  isEmpty,
+  isObject,
+  isNumber,
+  uniqBy,
+  isString,
+} from "lodash";
 import hashObject from "object-hash";
 import asyncPool from "tiny-async-pool";
+import { getPV } from "../Game/PTN/Comment";
 
 export function formatEvaluation(value) {
   return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
@@ -111,6 +120,7 @@ export default class Bot {
       isInteractiveEnabled: false,
       isAnalyzingPosition: false,
       isAnalyzingGame: false,
+      isAnalyzingBranch: false,
       isRunning: false,
       startTime: null,
       progress: null,
@@ -249,8 +259,12 @@ export default class Bot {
     return this.game.config.komi * 2;
   }
 
+  getPlies(all = true) {
+    return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
+  }
+
   getPositionsToAnalyze() {
-    const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
+    const plies = this.getPlies().filter((ply) => !this.plyHasEvalComment(ply));
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
       plyID: ply.id,
@@ -335,6 +349,8 @@ export default class Bot {
     return (
       this.state.isReady &&
       !this.state.isAnalyzingPosition &&
+      !this.state.isAnalyzingGame &&
+      !this.state.isAnalyzingBranch &&
       !this.state.isInteractiveEnabled &&
       this.plies.length > 0
     );
@@ -345,6 +361,7 @@ export default class Bot {
       !this.isGameEnd &&
       this.state.isReady &&
       !this.state.isAnalyzingGame &&
+      !this.state.isAnalyzingBranch &&
       !this.state.isInteractiveEnabled
     );
   }
@@ -356,6 +373,7 @@ export default class Bot {
         !this.isGameEnd &&
         this.state.isReady &&
         !this.state.isAnalyzingGame &&
+        !this.state.isAnalyzingBranch &&
         !this.state.isAnalyzingPosition)
     );
   }
@@ -424,6 +442,7 @@ export default class Bot {
     state = {
       ...state,
       isAnalyzingGame: false,
+      isAnalyzingBranch: false,
       isAnalyzingPosition: false,
       progress: null,
       nextTPS: null,
@@ -735,6 +754,14 @@ export default class Bot {
 
   //#region analyzeGame
   async analyzeGame() {
+    return this._analyze(true);
+  }
+
+  async analyzeBranch() {
+    return this._analyze(false);
+  }
+
+  async _analyze(all) {
     return new Promise(async (resolve, reject) => {
       try {
         if (this.state.isRunning) {
@@ -747,7 +774,8 @@ export default class Bot {
         const size = this.size;
         const concurrency = this.concurrency;
         const positions = this.getPositionsToAnalyze();
-        const total = this.plies.length;
+        const plies = this.getPlies(all);
+        const total = plies.length;
         let completed = total - positions.length;
 
         if (!total) {
@@ -774,7 +802,8 @@ export default class Bot {
 
         this.onSearchStart({
           isRunning: true,
-          isAnalyzingGame: true,
+          isAnalyzingGame: all,
+          isAnalyzingBranch: !all,
           startTime: new Date().getTime(),
           progress: (100 * completed) / total,
           nodes: 0,
@@ -784,7 +813,7 @@ export default class Bot {
           concurrency,
           positions,
           async (position) => {
-            if (this.state.isAnalyzingGame) {
+            if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
               const state = { tps: position.tps };
               if (concurrency === 1) {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
@@ -806,7 +835,7 @@ export default class Bot {
         }
 
         // Insert comments if successful
-        if (this.state.isAnalyzingGame) {
+        if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
           this.saveEvalComments();
           resolve();
         } else {
@@ -818,7 +847,7 @@ export default class Bot {
         }
         reject(error);
       } finally {
-        this.onSearchEnd({ isAnalyzingGame: false });
+        this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
       }
     });
   }
@@ -1161,24 +1190,58 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments() {
+  saveEvalComments(tps = null) {
     const pvLimit = store.state.analysis.pvLimit;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    this.plies.forEach((ply) => {
-      const notes = [];
-      const evaluations = this.formatEvalComments(
-        ply,
-        pvLimit,
-        saveSearchStats
-      );
-      if (evaluations.length) {
-        notes.push(...evaluations);
+
+    if (isString(tps) && tps.length) {
+      // The current TPS corresponds to:
+      // - the *positionAfter* of the previous ply (evaluation belongs there)
+      // - the *positionBefore* of the next ply (pv belongs there)
+      const prevPly = this.plies.find((p) => p.tpsAfter === tps);
+      const nextPly = this.plies.find((p) => p.tpsBefore === tps);
+
+      if (prevPly) {
+        const notes = this.formatEvalComments(
+          prevPly,
+          pvLimit,
+          saveSearchStats
+        ).filter((n) => !getPV(n));
+        if (notes.length) {
+          messages[prevPly.id] = notes;
+        }
       }
-      if (notes.length) {
-        messages[ply.id] = notes;
+
+      if (nextPly) {
+        const notes = this.formatEvalComments(
+          nextPly,
+          pvLimit,
+          saveSearchStats
+        ).filter((n) => getPV(n));
+        if (notes.length) {
+          messages[nextPly.id] = notes;
+        }
       }
-    });
-    store.dispatch("game/ADD_NOTES", messages);
+    } else {
+      this.plies.forEach((ply) => {
+        const notes = [];
+        const evaluations = this.formatEvalComments(
+          ply,
+          pvLimit,
+          saveSearchStats
+        );
+        if (evaluations.length) {
+          notes.push(...evaluations);
+        }
+        if (notes.length) {
+          messages[ply.id] = notes;
+        }
+      });
+    }
+
+    if (Object.keys(messages).length) {
+      store.dispatch("game/ADD_NOTES", messages);
+    }
   }
 }
