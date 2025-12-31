@@ -661,7 +661,11 @@
                 </q-item-section>
               </q-item>
 
-              <q-item clickable @click="clearUnsavedResults">
+              <q-item
+                clickable
+                @click="clearUnsavedResults"
+                :disable="!hasResults"
+              >
                 <q-item-section avatar>
                   <q-icon name="delete_all_outline" />
                 </q-item-section>

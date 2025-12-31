@@ -798,8 +798,8 @@ export default class Bot {
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
-                icon: "delete",
-                label: i18n.t("analysis.Clear Saved Results"),
+                icon: "delete_all",
+                label: i18n.t("analysis.Delete All Saved Results"),
                 color: "textDark",
                 handler: () => {
                   this.clearSavedResults();
