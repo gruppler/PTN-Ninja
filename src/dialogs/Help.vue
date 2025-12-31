@@ -35,7 +35,7 @@
         </q-tab-panel>
 
         <q-tab-panel name="usage">
-          <ul class="toc" v-if="toc && width < 1200">
+          <ul class="toc" v-if="toc">
             <li v-for="parent in toc" :key="parent.id">
               <a
                 :href="$route.path + '#' + parent.id"
@@ -53,26 +53,6 @@
               </ul>
             </li>
           </ul>
-          <q-page-sticky position="top-left" v-else-if="toc" :offset="[6, 6]">
-            <ul class="toc" v-if="toc">
-              <li v-for="parent in toc" :key="parent.id">
-                <a
-                  :href="$route.path + '#' + parent.id"
-                  @click.prevent="tocScroll(parent.id)"
-                  >{{ parent.label }}</a
-                >
-                <ul v-if="parent.children.length">
-                  <li v-for="child in parent.children" :key="child.id">
-                    <a
-                      :href="$route.path + '#' + child.id"
-                      @click.prevent="tocScroll(child.id)"
-                      >{{ child.label }}</a
-                    >
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </q-page-sticky>
           <q-markdown
             ref="markdown"
             :src="usage"
@@ -145,6 +125,9 @@ export default {
       set(section) {
         this.$router.replace({ params: { section } });
       },
+    },
+    fullscreen() {
+      return this.isFullscreen();
     },
   },
   methods: {
@@ -244,6 +227,18 @@ export default {
 
     ul {
       font-weight: normal;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    &:fullscreen .toc,
+    &:-webkit-full-screen .toc {
+      position: fixed;
+      float: none;
+      top: 1.2em;
+      left: 50%;
+      transform: translateX(calc(-5.5em - 450px - 50%));
+      margin-left: 0;
     }
   }
 
