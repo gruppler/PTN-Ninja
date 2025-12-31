@@ -166,6 +166,14 @@ export default {
 .note-item {
   position: relative;
 
+  + .note-item {
+    border-top: 1px solid $separator-color;
+
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
+
   &.current {
     background-color: $dim;
     body.panelDark & {
