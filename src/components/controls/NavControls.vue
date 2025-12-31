@@ -122,8 +122,8 @@
         v-ripple="false"
         :disable="branches.length < 2 || plyInProgress"
         :color="isRoot ? fg : 'primary'"
+        icon="branch"
       >
-        <q-icon name="branch" class="rotate-180" />
         <BranchMenu
           ref="branchMenu"
           v-model="branchMenu"
@@ -301,12 +301,11 @@ export default {
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
     },
     branchKey({ srcKey }) {
+      if (srcKey === "branchMenu") {
+        this.branchMenu = !this.branchMenu;
+        return;
+      }
       switch (srcKey) {
-        case "branchMenu":
-          if (this.branches.length) {
-            this.branchMenu = !this.branchMenu;
-          }
-          break;
         case "prevBranch":
         case "nextBranch":
         case "firstBranch":
@@ -317,12 +316,35 @@ export default {
     },
     prevBranch() {
       if (this.branches.length && this.branchIndex > 0) {
-        this.selectBranch(this.branches[this.branchIndex - 1]);
+        const targetPly = this.branches[this.branchIndex - 1];
+        const currentPly = this.branches[this.branchIndex];
+
+        // Match BranchMenu.showSeparator(i): separator is determined by the current row (i)
+        // compared to the previous row (i - 1).
+        const hasSeparator =
+          !currentPly.branch || currentPly.index !== targetPly.index;
+
+        if (!this.branchMenu && hasSeparator) {
+          return;
+        }
+        this.selectBranch(targetPly);
       }
     },
     nextBranch() {
       if (this.branches.length && this.branchIndex < this.branches.length - 1) {
-        this.selectBranch(this.branches[this.branchIndex + 1]);
+        const targetPly = this.branches[this.branchIndex + 1];
+        const currentPly = this.branches[this.branchIndex];
+
+        // Check if there should be a separator between these branches (different parent ply)
+        // unless branch menu is open
+        const hasSeparator =
+          !targetPly.branch || targetPly.index !== currentPly.index;
+
+        if (!this.branchMenu && hasSeparator) {
+          return; // Cancel navigation if there's a separator and menu isn't open
+        }
+
+        this.selectBranch(targetPly);
       }
     },
     firstBranch() {
