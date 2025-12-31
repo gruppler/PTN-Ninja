@@ -108,6 +108,12 @@ export const SET_BOT_POSITION = (state, [tps, suggestions]) => {
   Vue.set(state.botPositions, tps, suggestions);
 };
 
+export const SET_BOT_POSITIONS = (state, positions) => {
+  const bot = bots[state.botID];
+  bot.positions = positions || {};
+  state.botPositions = bot.positions;
+};
+
 export const DELETE_BOT_POSITION = (state, tps) => {
   Vue.delete(state.botPositions, tps);
 };

@@ -660,6 +660,20 @@
                   </q-item-label>
                 </q-item-section>
               </q-item>
+
+              <q-item clickable @click="clearUnsavedResults">
+                <q-item-section avatar>
+                  <q-icon name="delete_all_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear All Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
               <q-item
                 clickable
                 @click="clearCurrentPositionSavedResults"
@@ -674,16 +688,7 @@
                   </q-item-label>
                 </q-item-section>
               </q-item>
-              <q-item clickable @click="clearUnsavedResults">
-                <q-item-section avatar>
-                  <q-icon name="delete_all_outline" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Clear All Unsaved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
+
               <q-item
                 clickable
                 @click="clearSavedResults"
@@ -948,19 +953,48 @@ export default {
       if (!this.hasResults) {
         return;
       }
-      this.prompt({
-        title: this.$t("Confirm"),
-        message: this.$tc("confirm.clearBotResults"),
-        success: () => {
-          this.bot.clearResults();
-        },
+      const before = cloneDeep(this.positions);
+      this.bot.clearResults();
+      this.notify({
+        icon: "delete_all_outline",
+        message: this.$t("analysis.Clear All Unsaved Results"),
+        timeout: 5000,
+        progress: true,
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "primary",
+            handler: () => {
+              this.$store.commit("analysis/SET_BOT_POSITIONS", before);
+            },
+          },
+        ],
       });
     },
     clearCurrentPositionResults() {
       if (!this.hasResults || !this.suggestions.length) {
         return;
       }
+      const tps = this.tps;
+      const before = cloneDeep(this.positions[tps]);
       this.$store.commit("analysis/DELETE_BOT_POSITION", this.tps);
+      this.notify({
+        icon: "delete",
+        message: this.$t("analysis.Clear Positions Unsaved Results"),
+        timeout: 5000,
+        progress: true,
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "primary",
+            handler: () => {
+              if (before) {
+                this.$store.commit("analysis/SET_BOT_POSITION", [tps, before]);
+              }
+            },
+          },
+        ],
+      });
     },
     clearCurrentPositionSavedResults() {
       if (!this.hasCurrentPositionSavedResults) {

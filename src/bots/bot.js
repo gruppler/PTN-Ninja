@@ -198,7 +198,7 @@ export default class Bot {
       if (
         (previousAnalyzingTPS === currentTPS ||
           previousAnalyzingTPS === null) &&
-        this.state.isAnalyzingGame &&
+        (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
         state.analyzingPly.id >
           (this.state.analyzingPly && this.state.analyzingPly.id
             ? this.state.analyzingPly.id
@@ -263,8 +263,9 @@ export default class Bot {
     return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
   }
 
-  getPositionsToAnalyze() {
-    const plies = this.getPlies().filter((ply) => !this.plyHasEvalComment(ply));
+  getPositionsToAnalyze(all = true, pliesOverride = null) {
+    const pliesSource = pliesOverride || this.getPlies(all);
+    const plies = pliesSource.filter((ply) => !this.plyHasEvalComment(ply));
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
       plyID: ply.id,
@@ -773,9 +774,19 @@ export default class Bot {
 
         const size = this.size;
         const concurrency = this.concurrency;
-        const positions = this.getPositionsToAnalyze();
+
         const plies = this.getPlies(all);
-        const total = plies.length;
+        const analysisPlies = !all
+          ? plies.filter((ply) => {
+              const currentIndex = this.game.position.ply
+                ? this.game.position.ply.index
+                : 0;
+              return ply && ply.index >= currentIndex;
+            })
+          : plies;
+
+        const positions = this.getPositionsToAnalyze(all, analysisPlies);
+        const total = analysisPlies.length;
         let completed = total - positions.length;
 
         if (!total) {
