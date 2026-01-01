@@ -466,77 +466,89 @@
           </q-btn-group>
 
           <!-- Live Stats -->
-          <div
-            v-if="botState.time !== null || botState.nps !== null"
-            class="bg-ui relative-position"
-            style="padding-top: 2px"
-          >
+          <div class="bg-ui relative-position" style="height: 36px">
             <div class="text-caption text-center q-pa-sm">
-              <span v-if="botState.time !== null">
-                {{ $n((botState.time || 0) / 1e3, "n0") }}
-                {{ $t("analysis.secondsUnit") }}
-              </span>
-              <span v-if="botState.time !== null && botState.nps !== null">
-                •
-              </span>
-              <span v-if="botState.nps !== null">
-                {{ $n(botState.nps || 0, "n0") }} {{ $t("analysis.nps") }}
+              <template v-if="botState.time !== null || botState.nps !== null">
+                <span v-if="botState.time !== null">
+                  {{ $n((botState.time || 0) / 1e3, "n0") }}
+                  {{ $t("analysis.secondsUnit") }}
+                </span>
+                <span v-if="botState.time !== null && botState.nps !== null">
+                  •
+                </span>
+                <span v-if="botState.nps !== null">
+                  {{ $n(botState.nps / 1e3 || 0, "n0") }}
+                  {{ $t("analysis.knps") }}
+                </span>
+              </template>
+              <span v-else>
+                {{ $t("analysis.notRunning") }}
               </span>
             </div>
 
             <!-- Progress indicators for analysis -->
             <div
-              v-if="
-                botState.isAnalyzingPosition ||
-                botState.isAnalyzingGame ||
-                botState.isAnalyzingBranch
-              "
-              class="absolute-position"
+              class="absolute-top full-width full-height row no-wrap justify-end"
             >
+              <div
+                v-if="
+                  botState.isAnalyzingPosition ||
+                  botState.isAnalyzingGame ||
+                  botState.isAnalyzingBranch
+                "
+                class="full-width relative-position"
+              >
+                <q-btn
+                  v-if="botState.analyzingPly"
+                  @click.stop="goToAnalysisPly"
+                  class="absolute-left q-py-none"
+                  :class="{
+                    highlight: $store.state.ui.theme.primaryDark,
+                    dim: !$store.state.ui.theme.primaryDark,
+                  }"
+                  no-caps
+                  dense
+                  flat
+                >
+                  <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
+                  <PlyChip
+                    :ply="botState.analyzingPly"
+                    class="no-pointer-events q-ma-none"
+                    no-branches
+                    :done="botState.tps === botState.analyzingPly.tpsAfter"
+                  />
+                </q-btn>
+                <q-btn
+                  :label="$t('Cancel')"
+                  @click.stop="bot.terminate()"
+                  color="primary"
+                  class="absolute-right"
+                  stretch
+                  flat
+                />
+              </div>
+
               <q-btn
-                v-if="botState.analyzingPly"
-                @click.stop="goToAnalysisPly"
-                class="absolute-left q-py-none"
-                :class="{
-                  highlight: $store.state.ui.theme.primaryDark,
-                  dim: !$store.state.ui.theme.primaryDark,
-                }"
-                no-caps
+                @click.stop="enableLogging = !enableLogging"
+                icon="logs"
+                :color="enableLogging ? 'primary' : ''"
+                stretch
                 dense
                 flat
               >
-                <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
-                <PlyChip
-                  :ply="botState.analyzingPly"
-                  class="no-pointer-events q-ma-none"
-                  no-branches
-                  :done="botState.tps === botState.analyzingPly.tpsAfter"
-                />
+                <hint>{{ $t("analysis.logMessages") }}</hint>
               </q-btn>
-              <q-btn
-                :label="$t('Cancel')"
-                @click.stop="bot.terminate()"
-                color="primary"
-                class="absolute-right"
-                stretch
-                flat
-              />
             </div>
 
             <q-linear-progress
               v-if="botState && botState.isRunning"
               class="absolute-position"
-              style="bottom: -2px"
+              style="bottom: 0; z-index: 1"
               size="2px"
               :value="botState.progress / 100"
               :indeterminate="
                 botState.isInteractiveEnabled && botState.isRunning
               "
-            />
-            <div
-              v-else
-              class="absolute-position"
-              style="bottom: -2px; height: 2px"
             />
           </div>
 
@@ -561,8 +573,8 @@
                 </template>
               </q-virtual-scroll>
               <q-btn-group spread stretch>
-                <q-btn @click="clearLog" icon="delete" color="ui">
-                  <hint>{{ $t("analysis.logClear") }}</hint>
+                <q-btn @click="saveLog" icon="save" color="ui">
+                  <hint>{{ $t("analysis.logSave") }}</hint>
                 </q-btn>
                 <q-btn
                   @click="toggleLogScroll"
@@ -575,8 +587,8 @@
                     )
                   }}</hint>
                 </q-btn>
-                <q-btn @click="saveLog" icon="file" color="ui">
-                  <hint>{{ $t("analysis.logSave") }}</hint>
+                <q-btn @click="clearLog" icon="delete" color="ui">
+                  <hint>{{ $t("analysis.logClear") }}</hint>
                 </q-btn>
               </q-btn-group>
             </recess>
@@ -608,15 +620,11 @@
         </q-item>
       </smooth-reflow>
 
+      <q-separator v-if="!suggestions.length" />
+
       <!-- Action Buttons -->
       <q-btn-group class="bg-ui" spread stretch>
-        <q-btn
-          icon="save"
-          spread
-          stretch
-          @click.right.stop="saveAllResultsToNotes"
-          :disable="!hasResults"
-        >
+        <q-btn icon="save" spread stretch :disable="!hasResults">
           <hint>{{ $t("Save to Notes") }}</hint>
           <q-menu
             transition-show="none"
@@ -653,7 +661,6 @@
           icon="delete"
           spread
           stretch
-          @click.right.stop="clearUnsavedResults"
           :disable="!hasResults && !hasAnalysisNotes"
         >
           <hint>{{ $t("Delete") }}</hint>
@@ -935,7 +942,7 @@ export default {
             .map((l) => `${l.received ? "<<" : ">>"} ${l.message}`)
             .join("\n"),
         ],
-        `${this.bot.label}.txt`,
+        `${this.bot.label}_${new Date().toISOString()}.txt`,
         {
           type: "text/plain",
         }

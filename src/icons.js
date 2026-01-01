@@ -72,6 +72,7 @@ export default {
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",
   local: "mdi-monitor-cellphone",
+  logs: "mdi-console",
   make_main: "mdi-arrow-collapse-up",
   menu_horizontal: "mdi-dots-horizontal",
   menu_vertical: "mdi-dots-vertical",
