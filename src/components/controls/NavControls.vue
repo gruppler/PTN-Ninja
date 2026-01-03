@@ -150,8 +150,9 @@ const BRANCH_KEYS = [
   "branchMenu",
   "prevBranch",
   "nextBranch",
-  "firstBranch",
-  "lastBranch",
+  "parentBranch",
+  "lastChildBranch",
+  "parentMainBranch",
 ];
 
 export default {
@@ -334,71 +335,256 @@ export default {
       switch (srcKey) {
         case "prevBranch":
         case "nextBranch":
-        case "firstBranch":
-        case "lastBranch":
+        case "parentBranch":
+        case "lastChildBranch":
+        case "parentMainBranch":
           this[srcKey]();
           break;
       }
     },
-    prevBranch() {
-      if (this.branches.length && this.branchIndex > 0) {
-        const targetPly = this.branches[this.branchIndex - 1];
-        const currentPly = this.branches[this.branchIndex];
+    parentBranch() {
+      const ptn = this.$store.state.game && this.$store.state.game.ptn;
+      const positionPly = this.position && this.position.ply;
+      if (!ptn || !ptn.allPlies || !positionPly || !positionPly.branch) {
+        return;
+      }
 
-        // Match BranchMenu.showSeparator(i): separator is determined by the current row (i)
-        // compared to the previous row (i - 1).
-        const hasSeparator =
-          !currentPly.branch || currentPly.index !== targetPly.index;
+      const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+      const parentID =
+        branchRoot && branchRoot.branches && branchRoot.branches.length
+          ? branchRoot.branches[0]
+          : null;
+      const parentPly = parentID != null ? ptn.allPlies[parentID] : null;
+      if (parentPly) {
+        this.selectBranch(parentPly);
+      }
+    },
+    lastChildBranch() {
+      const ptn = this.$store.state.game && this.$store.state.game.ptn;
+      const positionPly = this.position && this.position.ply;
+      if (!ptn || !ptn.allPlies || !positionPly) {
+        return;
+      }
 
-        if (!this.branchMenu && hasSeparator) {
-          // Inline branches: when a separator blocks moving up, collapse the current parent ply
-          const isInlineBranches =
-            this.$store.state.ui.inlineBranches &&
-            this.$store.state.ui.showAllBranches;
-          const canCollapse =
-            isInlineBranches &&
-            currentPly.branches &&
-            currentPly.branches.length > 1;
+      const isParentPly =
+        positionPly.branches &&
+        positionPly.branches.length > 1 &&
+        positionPly.branches[0] === positionPly.id;
+      if (!isParentPly) {
+        return;
+      }
 
-          if (canCollapse) {
-            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", {
-              plyID: currentPly.id,
-              nonce: Date.now(),
-            });
-            return;
-          }
+      const childID = positionPly.branches[positionPly.branches.length - 1];
+      const childPly = childID != null ? ptn.allPlies[childID] : null;
+      if (!childPly) {
+        return;
+      }
 
+      const canExpand =
+        this.$store.state.ui.showPTN &&
+        this.$store.state.ui.inlineBranches &&
+        this.$store.state.ui.showAllBranches;
+      if (canExpand) {
+        const currentOverrides =
+          (this.$store.state.game.ptnUI &&
+            this.$store.state.game.ptnUI.branchPointOverrides) ||
+          {};
+        if (currentOverrides[positionPly.id] !== true) {
+          this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
+            ...currentOverrides,
+            [positionPly.id]: true,
+          });
+        }
+      }
+
+      this.selectBranch(childPly);
+    },
+    parentMainBranch() {
+      const ptn = this.$store.state.game && this.$store.state.game.ptn;
+      const positionPly = this.position && this.position.ply;
+      if (!ptn || !ptn.allPlies || !positionPly || !positionPly.branch) {
+        return;
+      }
+
+      let current = positionPly;
+      while (current && current.branch) {
+        const branchRoot = ptn.branches && ptn.branches[current.branch];
+        const parentID =
+          branchRoot && branchRoot.branches && branchRoot.branches.length
+            ? branchRoot.branches[0]
+            : null;
+        const parentPly = parentID != null ? ptn.allPlies[parentID] : null;
+        if (!parentPly) {
           return;
         }
-
+        if (!parentPly.branch) {
+          this.selectBranch(parentPly);
+          return;
+        }
+        current = parentPly;
+      }
+    },
+    prevBranch() {
+      // When branch menu is open, use the full branch list navigation
+      if (this.branchMenu && this.branches.length && this.branchIndex > 0) {
+        const targetPly = this.branches[this.branchIndex - 1];
         this.selectBranch(targetPly);
+        return;
+      }
+
+      const ptn = this.$store.state.game && this.$store.state.game.ptn;
+      const positionPly = this.position && this.position.ply;
+      if (!ptn || !ptn.allPlies || !positionPly) {
+        return;
+      }
+
+      // Check if current ply is a branch point (has child branches)
+      const isParentPly =
+        positionPly.branches &&
+        positionPly.branches.length > 1 &&
+        positionPly.branches[0] === positionPly.id;
+
+      if (isParentPly) {
+        // On parent ply - collapse in inline mode only
+        const canCollapse =
+          this.$store.state.ui.showPTN &&
+          this.$store.state.ui.inlineBranches &&
+          this.$store.state.ui.showAllBranches;
+        if (canCollapse) {
+          this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", {
+            plyID: positionPly.id,
+            nonce: Date.now(),
+          });
+          return;
+        }
+      }
+
+      // Only navigate siblings/parent when at the first ply of the branch
+      // Get branch root (first ply of current branch) to find siblings
+      if (!positionPly.branch) {
+        return; // Main line, no branch
+      }
+
+      const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+      if (!branchRoot) {
+        return; // Branch not found in branches map
+      }
+
+      if (positionPly.id !== branchRoot.id) {
+        return; // Not at first ply of branch
+      }
+
+      const siblings = branchRoot.branches;
+      const hasSiblings = siblings && siblings.length > 1;
+
+      if (hasSiblings) {
+        // Find current branch's index in siblings (branchRoot.id, not positionPly.id)
+        const currentIndex = siblings.indexOf(branchRoot.id);
+        if (currentIndex > 1) {
+          // Navigate to previous sibling (skip index 0 which is the branch point)
+          const prevSiblingPly = ptn.allPlies[siblings[currentIndex - 1]];
+          if (prevSiblingPly) {
+            this.selectBranch(prevSiblingPly);
+            return;
+          }
+        } else if (currentIndex >= 0) {
+          // At first sibling or on branch point - go to branch point (parent)
+          const branchPointPly = ptn.allPlies[siblings[0]];
+          if (branchPointPly) {
+            this.selectBranch(branchPointPly);
+            return;
+          }
+        }
+      }
+
+      // No siblings - compute parent branch from branch name and go to its branch point
+      if (positionPly.branch) {
+        const parentBranchName = positionPly.branch
+          .split("/")
+          .slice(0, -1)
+          .join("/");
+        const parentBranchRoot = ptn.branches && ptn.branches[parentBranchName];
+        const parentSiblings = parentBranchRoot && parentBranchRoot.branches;
+        if (parentSiblings && parentSiblings.length > 0) {
+          const parentBranchPointPly = ptn.allPlies[parentSiblings[0]];
+          if (parentBranchPointPly) {
+            this.selectBranch(parentBranchPointPly);
+            return;
+          }
+        }
       }
     },
     nextBranch() {
-      if (this.branches.length && this.branchIndex < this.branches.length - 1) {
+      // When branch menu is open, use the full branch list navigation
+      if (
+        this.branchMenu &&
+        this.branches.length &&
+        this.branchIndex < this.branches.length - 1
+      ) {
         const targetPly = this.branches[this.branchIndex + 1];
-        const currentPly = this.branches[this.branchIndex];
-
-        // Check if there should be a separator between these branches (different parent ply)
-        // unless branch menu is open
-        const hasSeparator =
-          !targetPly.branch || targetPly.index !== currentPly.index;
-
-        if (!this.branchMenu && hasSeparator) {
-          return; // Cancel navigation if there's a separator and menu isn't open
-        }
-
         this.selectBranch(targetPly);
+        return;
       }
-    },
-    firstBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[0]);
+
+      const ptn = this.$store.state.game && this.$store.state.game.ptn;
+      const positionPly = this.position && this.position.ply;
+      if (!ptn || !ptn.allPlies || !positionPly) {
+        return;
       }
-    },
-    lastBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[this.branches.length - 1]);
+
+      // Check if current ply is a branch point (has child branches)
+      const isParentPly =
+        positionPly.branches &&
+        positionPly.branches.length > 1 &&
+        positionPly.branches[0] === positionPly.id;
+
+      if (isParentPly) {
+        // On parent ply - select first child branch
+        const firstChildPly = ptn.allPlies[positionPly.branches[1]];
+        if (firstChildPly) {
+          const canExpand =
+            this.$store.state.ui.showPTN &&
+            this.$store.state.ui.inlineBranches &&
+            this.$store.state.ui.showAllBranches;
+          if (canExpand) {
+            const currentOverrides =
+              (this.$store.state.game.ptnUI &&
+                this.$store.state.game.ptnUI.branchPointOverrides) ||
+              {};
+            if (currentOverrides[positionPly.id] !== true) {
+              this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
+                ...currentOverrides,
+                [positionPly.id]: true,
+              });
+            }
+          }
+          this.selectBranch(firstChildPly);
+          return;
+        }
+      }
+
+      // Get branch root (first ply of current branch) to find siblings
+      const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+
+      // Only navigate siblings when at the first ply of the branch
+      if (!branchRoot || positionPly.id !== branchRoot.id) {
+        return;
+      }
+
+      const siblings = branchRoot.branches;
+      const hasSiblings = siblings && siblings.length > 1;
+
+      if (hasSiblings) {
+        // Find current branch's index in siblings
+        const currentIndex = siblings.indexOf(branchRoot.id);
+        if (currentIndex >= 0 && currentIndex < siblings.length - 1) {
+          // Navigate to next sibling
+          const nextSiblingPly = ptn.allPlies[siblings[currentIndex + 1]];
+          if (nextSiblingPly) {
+            this.selectBranch(nextSiblingPly);
+            return;
+          }
+        }
       }
     },
     vibrate() {

@@ -14,8 +14,9 @@ export const HOTKEYS = {
     branchMenu: ["b"],
     prevBranch: ["arrowup"],
     nextBranch: ["arrowdown"],
-    firstBranch: ["ctrl", "arrowup"],
-    lastBranch: ["ctrl", "arrowdown"],
+    parentBranch: ["shift", "arrowup"],
+    lastChildBranch: ["shift", "arrowdown"],
+    parentMainBranch: ["ctrl", "arrowup"],
   },
   DIALOGS: {
     // account: ["ctrl", "shift", "a"],
@@ -140,8 +141,9 @@ export const HOTKEY_NAMES = {
     branchMenu: "Show Branch Menu",
     prevBranch: "Previous Branch",
     nextBranch: "Next Branch",
-    firstBranch: "First Branch",
-    lastBranch: "Last Branch",
+    parentBranch: "Parent Branch",
+    lastChildBranch: "Last Child Branch",
+    parentMainBranch: "Parent Main Branch",
   },
   DIALOGS: {
     // account: "Account",
