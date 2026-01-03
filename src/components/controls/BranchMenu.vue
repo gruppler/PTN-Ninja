@@ -27,13 +27,7 @@
               class="branch-container col-shrink"
               no-edit
             />
-            <Ply :ply="ply" no-branches no-click>
-              <PlyPreview
-                :tps="ply.tpsAfter"
-                :hl="ply.text"
-                :options="$store.state.game.config"
-              />
-            </Ply>
+            <Ply :ply="ply" no-branches no-click />
           </q-item-label>
           <q-menu
             transition-show="none"
@@ -52,7 +46,6 @@
 </template>
 
 <script>
-import PlyPreview from "../controls/PlyPreview";
 import BranchContextMenu from "../controls/BranchContextMenu";
 import { findLastIndex } from "lodash";
 
@@ -61,7 +54,6 @@ export default {
   components: {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply"),
-    PlyPreview,
     BranchContextMenu,
   },
   props: {

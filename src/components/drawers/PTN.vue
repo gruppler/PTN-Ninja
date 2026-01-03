@@ -32,15 +32,7 @@
             no-menu-btn
             branch-bar
             show-eval
-          >
-            <template v-slot:plyTooltip="ply">
-              <PlyPreview
-                :tps="ply.tpsAfter"
-                :hl="ply.text"
-                :options="$store.state.game.config"
-              />
-            </template>
-          </Move>
+          />
         </template>
       </q-virtual-scroll>
     </q-scroll-area>
@@ -50,14 +42,13 @@
 
 <script>
 import Move from "../PTN/Move";
-import PlyPreview from "../controls/PlyPreview";
 import InlineMovesBuilder from "../../Game/PTN/InlineMovesBuilder";
 
 import { throttle } from "lodash";
 
 export default {
   name: "PTN",
-  components: { Move, PlyPreview },
+  components: { Move },
   props: {
     recess: Boolean,
   },
@@ -364,5 +355,15 @@ export default {
   .ptn.ply.other {
     opacity: 0.5;
   }
+}
+
+.ply-preview-tooltip {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+  background-color: rgba(#000, 0.8);
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 </style>

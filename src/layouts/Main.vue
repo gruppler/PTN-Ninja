@@ -286,6 +286,7 @@
     <ErrorNotifications :errors="errors" />
     <GameNotifications ref="gameNotifications" />
     <NoteNotifications ref="noteNotifications" />
+    <PlyTooltipProvider />
   </q-layout>
   <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
     No Game
@@ -305,6 +306,7 @@ import Analysis from "../components/drawers/Analysis";
 import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
+import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
@@ -337,6 +339,7 @@ export default {
     PTN,
     Notes,
     Analysis,
+    PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,

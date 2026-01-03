@@ -58,9 +58,7 @@
           :key="ply1.id"
           :ply="ply1"
           :inline-branches="inlineBranches"
-        >
-          <slot name="plyTooltip" v-bind="ply1" />
-        </Ply>
+        />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
         <span v-if="splitPly === 'split1'" class="ptn nop">--</span>
@@ -69,9 +67,7 @@
           :key="ply2.id"
           :ply="ply2"
           :inline-branches="inlineBranches"
-        >
-          <slot name="plyTooltip" v-bind="ply2" />
-        </Ply>
+        />
       </template>
     </div>
 

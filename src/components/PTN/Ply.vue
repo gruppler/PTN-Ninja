@@ -3,6 +3,11 @@
     class="ptn ply"
     :class="{ selected: isSelected, other: !isInBranch }"
     v-if="ply"
+    :data-ply-id="ply.id"
+    :data-tps-after="tpsAfterValue || undefined"
+    :data-tps="tps || undefined"
+    :data-plies="pliesJson || undefined"
+    :data-ply-text="ply.text"
   >
     <q-chip
       @click="select(ply, isSelected ? !isDone : true)"
@@ -33,7 +38,7 @@
           ply.evaluation.text
         }}</span>
 
-        <slot v-if="!menu" />
+        <slot />
       </span>
       <q-btn
         v-if="!noBranches && showBranchButton"
@@ -87,6 +92,18 @@ export default {
     inlineBranches: Boolean,
     noBranches: Boolean,
     noClick: Boolean,
+    tpsAfter: {
+      type: String,
+      default: null,
+    },
+    tps: {
+      type: String,
+      default: null,
+    },
+    plies: {
+      type: Array,
+      default: null,
+    },
     done: {
       type: Boolean,
       default: null,
@@ -102,6 +119,12 @@ export default {
     };
   },
   computed: {
+    tpsAfterValue() {
+      return this.tpsAfter || this.ply.tpsAfter;
+    },
+    pliesJson() {
+      return this.plies ? JSON.stringify(this.plies) : null;
+    },
     theme() {
       return this.$store.state.ui.theme;
     },

@@ -21,15 +21,7 @@
         separate-branch
         no-decoration
         class="q-px-md"
-      >
-        <template v-slot:plyTooltip>
-          <PlyPreview
-            :tps="ply.tpsAfter"
-            :hl="ply.text"
-            :options="$store.state.game.config"
-          />
-        </template>
-      </Move>
+      />
       <q-item
         v-for="(pv, i) in pvs"
         :key="i"
@@ -45,13 +37,9 @@
             :key="j"
             :ply="pvPly"
             @click.stop.prevent.capture="insertPV(i, j)"
-          >
-            <PlyPreview
-              :tps="ply.tpsBefore"
-              :plies="pv.slice(0, j + 1).map((p) => p.ptn)"
-              :options="$store.state.game.config"
-            />
-          </Ply>
+            :tps="pvTps"
+            :plies="pv.slice(0, j + 1).map((p) => p.text)"
+          />
         </q-item-label>
       </q-item>
     </div>
@@ -74,12 +62,11 @@ import Note from "./Note";
 import Move from "../PTN/Move";
 import Linenum from "../PTN/Linenum";
 import Ply from "../PTN/Ply";
-import PlyPreview from "../controls/PlyPreview";
 import { parsePV } from "../../utilities";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move, Linenum, Ply, PlyPreview },
+  components: { Note, Move, Linenum, Ply },
   props: {
     plyID: Number,
     notes: Array,
@@ -121,6 +108,9 @@ export default {
       }
       return null;
     },
+    pvTps() {
+      return this.ply?.tpsBefore || null;
+    },
   },
   methods: {
     remove({ plyID, index }) {
@@ -134,6 +124,9 @@ export default {
     },
     unhighlight() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+    },
+    getPVPlies(pv, index) {
+      return pv.slice(0, index + 1).map((p) => p.text);
     },
     insertPV(pvIndex, plyIndex) {
       if (!this.pvs || !this.pvs[pvIndex]) {
