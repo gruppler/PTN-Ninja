@@ -206,8 +206,14 @@ You can perform several actions on branches by **right-clicking** the branch nam
 - To change how branches are displayed in the PTN panel, **click** the leftmost button in the header toolbar.
   - To toggle quickly between "All Branches" and the previous mode, **right-click** this button.
 - Click the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+  - This button is highlighted when not on the main branch.
 - Use <kbd>▲/▼</kbd> to navigate between branches.
-- **Right-click** a branch to **promote**, **rename**, or **delete** it.
+  - When the branch menu (<kbd>B</kbd>) is open, <kbd>▲/▼</kbd> navigates between all branches.
+  - When the branch menu is closed, <kbd>▲/▼</kbd> will not allow jumps between unrelated branches.
+  - <kbd>Shift</kbd><kbd>▲/▼</kbd> jumps to the first or last branch within related branches.
+  - <kbd>Ctrl</kbd><kbd>▲</kbd> jumps to the main branch.
+  - In "Inline Branches" mode, <kbd>▲</kbd> can also be used to collapse the current branch at its parent ply.
+- **Right-click** a branch or use the menu button to **promote**, **rename**, or **delete** it.
 
 :::
 
