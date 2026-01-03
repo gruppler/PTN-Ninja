@@ -610,6 +610,7 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         ptn: game.ptn,
         state: game.minState,
         config: game.config,
+        ptnUI: this.state.game.ptnUI,
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
         highlighterSquares: game.highlighterSquares,
@@ -623,6 +624,35 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
   }
   if (rebuildState) {
     commit("SAVE_CURRENT_GAME");
+  }
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = async function (
+  { commit, state, dispatch },
+  overrides
+) {
+  commit("SET_BRANCH_POINT_OVERRIDES", overrides);
+  if (this.state.ui.embed) {
+    return;
+  }
+  const game = { ...state.list[0] };
+  try {
+    game.ptnUI = {
+      ...(game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+  // Ensure ptnUI is saved to the main game object as well
+  dispatch("SAVE_CURRENT_GAME", false);
+  // Also update the in-memory Game object's ptnUI
+  if (Vue.prototype.$game) {
+    Vue.prototype.$game.ptnUI = {
+      ...(Vue.prototype.$game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
   }
 };
 

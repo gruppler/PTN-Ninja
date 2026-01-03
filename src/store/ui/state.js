@@ -165,6 +165,7 @@ defaultState.pngConfig = {
 const state = {
   embed: Platform.within.iframe,
   collapseBranchRequest: null,
+  expandBranchRequest: null,
   scrubbing: false,
   thumbnails: {},
   shortLinks: {},

@@ -15,6 +15,8 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
+
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -59,6 +61,7 @@ export const SET_GAME = function (state, game) {
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
+      ptnUI: loadedPTNUI,
       onInit,
       onAppendPly,
       onInsertPly,
@@ -71,6 +74,10 @@ export const SET_GAME = function (state, game) {
       game.onAppendPly = onAppendPly;
       game.onInsertPly = onInsertPly;
       game.onError = onError;
+    }
+    // Ensure the Game object has the latest ptnUI
+    if (loadedPTNUI) {
+      game.ptnUI = loadedPTNUI;
     }
   }
   Vue.prototype.$game = game;
@@ -86,6 +93,7 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
+  state.ptnUI = loadedPTNUI || { branchPointOverrides: {} };
 };
 
 export const ADD_GAME = (state, game) => {
@@ -94,6 +102,11 @@ export const ADD_GAME = (state, game) => {
     name: game.name,
     state: game.minState || game.state,
     config: game.config,
+    ptnUI: cloneDeep(
+      game.ptnUI && game.ptnUI.branchPointOverrides
+        ? game.ptnUI
+        : { branchPointOverrides: {} }
+    ),
     history: game.history,
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
@@ -111,6 +124,11 @@ export const ADD_GAMES = (state, { games, index }) => {
       name: game.name,
       state: game.minState || game.state,
       config: game.config,
+      ptnUI: cloneDeep(
+        game.ptnUI && game.ptnUI.branchPointOverrides
+          ? game.ptnUI
+          : { branchPointOverrides: {} }
+      ),
       history: game.history,
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
@@ -118,6 +136,16 @@ export const ADD_GAMES = (state, { games, index }) => {
       highlighterSquares: game.highlighterSquares,
     }))
   );
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = (state, overrides) => {
+  state.ptnUI = {
+    ...(state.ptnUI || { branchPointOverrides: {} }),
+    branchPointOverrides: cloneDeep(overrides || {}),
+  };
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = cloneDeep(state.ptnUI);
+  }
 };
 
 export const REMOVE_GAME = (state, index) => {
@@ -204,8 +232,15 @@ export const APPLY_TRANSFORM = (state, transform) => {
 };
 
 export const SELECT_GAME = (state, index) => {
-  state.list.unshift(state.list.splice(index, 1)[0]);
-  state.list[0].lastSeen = new Date();
+  const game = state.list.splice(index, 1)[0];
+  game.lastSeen = new Date();
+  state.list.unshift(game);
+  // Ensure ptnUI is preserved when switching games
+  if (game.ptnUI && game.ptnUI.branchPointOverrides) {
+    state.ptnUI = cloneDeep(game.ptnUI);
+  } else {
+    state.ptnUI = { branchPointOverrides: {} };
+  }
 };
 
 export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
