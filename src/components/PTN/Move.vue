@@ -2,12 +2,12 @@
   <div
     class="move"
     :class="{
+      'current-move': isCurrentMove,
       linebreak: linebreakRow,
       separator: separatorRowClass,
       'current-only': currentOnly,
       standalone: standalone,
     }"
-    :style="rowStyle"
   >
     <div
       v-if="showEvalRow && $store.state.ui.showEval && evaluationsForRow.length"
@@ -175,19 +175,6 @@ export default {
           : this.position.move.index === this.move.index)
       );
     },
-    rowStyle() {
-      if (this.currentOnly || this.noDecoration) {
-        return null;
-      }
-      const depth = this.depth + (this.isCurrentMove ? 3 : 0);
-      return depth
-        ? {
-            background: `rgba(${
-              this.$store.state.ui.theme.panelDark ? "255,255,255" : "0,0,0"
-            },${depth * 2 * 0.0333})`,
-          }
-        : null;
-    },
     linebreak() {
       if (this.branchBar) {
         return false;
@@ -245,6 +232,13 @@ export default {
 <style lang="scss">
 .move {
   position: relative;
+
+  &.current-move {
+    background-color: $dim;
+    body.panelDark & {
+      background-color: $highlight;
+    }
+  }
 
   &.linebreak {
     margin-bottom: 0.5em;
