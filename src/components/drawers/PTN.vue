@@ -30,6 +30,7 @@
             fixed-linenumber-width
             separate-branch
             no-menu-btn
+            branch-bar
             show-eval
           >
             <template v-slot:plyTooltip="ply">
@@ -50,6 +51,7 @@
 <script>
 import Move from "../PTN/Move";
 import PlyPreview from "../controls/PlyPreview";
+import InlineMovesBuilder from "../../Game/PTN/InlineMovesBuilder";
 
 import { throttle } from "lodash";
 
@@ -61,7 +63,6 @@ export default {
   },
   data() {
     return {
-      branchOverrides: {},
       seenTargetBranches: [],
     };
   },
@@ -95,12 +96,41 @@ export default {
         this.$store.state.ui.showAllBranches
       );
     },
+    branchOverrides() {
+      return this.$store.state.game.ptnUI &&
+        this.$store.state.game.ptnUI.branchPointOverrides
+        ? this.$store.state.game.ptnUI.branchPointOverrides
+        : {};
+    },
     moves() {
       if (this.$store.state.ui.showAllBranches) {
         if (this.$store.state.ui.inlineBranches) {
           return Object.freeze(this.buildInlineMoves());
         }
-        return Object.freeze(this.ptn.sortedMoves);
+
+        const getMoveDepth = (move) => {
+          if (!move) {
+            return 0;
+          }
+          let ply = null;
+          if (move.ply1 && !move.ply1.isNop) {
+            ply = move.ply1;
+          } else if (move.ply2 && !move.ply2.isNop) {
+            ply = move.ply2;
+          } else {
+            ply = move.firstPly;
+          }
+          return ply && ply.depth != null ? ply.depth : 0;
+        };
+
+        return Object.freeze(
+          this.ptn.sortedMoves.map((move) => ({
+            ...move,
+            move,
+            depth: getMoveDepth(move),
+            id: move.id,
+          }))
+        );
       }
       return Object.freeze(this.ptn.branchMoves);
     },
@@ -122,11 +152,8 @@ export default {
     },
     getDefaultExpandedBranches(ply) {
       const targetBranch = this.position.targetBranch || "";
-      const targets = this.seenTargetBranches.length
-        ? this.seenTargetBranches
-        : targetBranch
-        ? [targetBranch]
-        : [];
+      const targets = targetBranch ? [targetBranch] : [];
+      const allowSiblingExpansion = targetBranch.includes("/");
 
       if (
         !targets.length ||
@@ -142,9 +169,31 @@ export default {
         .map((id) => this.ptn.allPlies[id])
         .filter(Boolean);
 
-      return branches.filter((branchPly) =>
-        this.isBranchPrefixOfAnyTarget(branchPly.branch, targets)
-      );
+      // Expand branches that are in the path to target OR siblings of the current branch
+      return branches.filter((branchPly) => {
+        // Always expand if it's in the path to target
+        if (this.isBranchPrefixOfAnyTarget(branchPly.branch, targets)) {
+          return true;
+        }
+
+        // Also expand siblings of the current branch
+        // A sibling has the same parent branch as the target
+        if (!allowSiblingExpansion) {
+          return false;
+        }
+        for (const target of targets) {
+          const targetParent = target.split("/").slice(0, -1).join("/");
+          const branchParent = branchPly.branch
+            .split("/")
+            .slice(0, -1)
+            .join("/");
+          if (targetParent === branchParent) {
+            return true;
+          }
+        }
+
+        return false;
+      });
     },
     getBranchesToShow(ply) {
       const override = this.branchOverrides[ply.id];
@@ -209,181 +258,21 @@ export default {
 
       if (nextExpanded === defaultExpanded) {
         const { [ply.id]: _removed, ...rest } = this.branchOverrides;
-        this.branchOverrides = rest;
+        this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", rest);
       } else {
-        this.branchOverrides = {
+        this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
           ...this.branchOverrides,
           [ply.id]: nextExpanded,
-        };
+        });
       }
     },
     buildInlineMoves() {
-      const result = [];
-      const allMoves = this.ptn.allMoves;
-      const visitedBranches = new Set();
-      let separatorCounter = 0;
-
-      const safeBranchId = (branchName) =>
-        String(branchName || "root").replaceAll("/", "_");
-
-      const makeBranchSeparator = (branchName, depth, position) => {
-        separatorCounter += 1;
-        return {
-          type: "branch-separator",
-          position,
-          branch: branchName,
-          depth,
-          id: `branch-separator-${position}-${safeBranchId(
-            branchName
-          )}-${depth}-${separatorCounter}`,
-        };
-      };
-
-      const makeId = (move, depth, splitPly) => {
-        const depthSuffix = depth ? "-d" + depth : "";
-        const splitSuffix = splitPly ? "-" + splitPly : "";
-        return move.id + depthSuffix + splitSuffix;
-      };
-
-      const makeItem = (move, depth, splitPly) => {
-        const item = {
-          ...move,
-          move,
-          depth,
-          id: makeId(move, depth, splitPly),
-        };
-        if (splitPly) {
-          item.splitPly = splitPly;
-        }
-        return item;
-      };
-
-      const getBranchesForPly = (ply) => {
-        if (!ply || !ply.branches || ply.branches.length <= 1) {
-          return [];
-        }
-
-        // In the UI PTN output, ply.branches is an array of ply IDs.
-        // Branch child plies share the same branches array, so only the branch parent
-        // (branches[0]) should be treated as the branch point.
-        if (ply.branches[0] !== ply.id) {
-          return [];
-        }
-
-        return this.getBranchesToShow(ply);
-      };
-
-      const shouldSplitMove = (move) => {
-        if (!move || !move.ply1 || !move.ply2 || move.ply2.isNop) {
-          return false;
-        }
-
-        return getBranchesForPly(move.ply1).length > 0;
-      };
-
-      const getMovesForBranch = (branchName) =>
-        allMoves
-          .filter((m) => m && m.branch === branchName)
-          .sort((a, b) => a.index - b.index || a.id - b.id);
-
-      const rootMoves = getMovesForBranch("");
-
-      const addBranchMoves = (branchName, depth) => {
-        if (visitedBranches.has(branchName)) {
-          return;
-        }
-        visitedBranches.add(branchName);
-
-        const moves = getMovesForBranch(branchName);
-        if (moves.length) {
-          result.push(makeBranchSeparator(branchName, depth, "start"));
-        }
-        moves.forEach((move) => {
-          if (shouldSplitMove(move)) {
-            result.push(makeItem(move, depth, "split1"));
-
-            const branchesToShow = getBranchesForPly(move.ply1);
-            branchesToShow.forEach((branchPly) => {
-              if (branchPly && branchPly.branch) {
-                addBranchMoves(branchPly.branch, depth + 1);
-              }
-            });
-
-            result.push(makeItem(move, depth, "split2"));
-
-            const branchesToShow2 = getBranchesForPly(move.ply2);
-            branchesToShow2.forEach((branchPly) => {
-              if (branchPly && branchPly.branch) {
-                addBranchMoves(branchPly.branch, depth + 1);
-              }
-            });
-          } else {
-            result.push({ ...move, move, depth, id: makeId(move, depth) });
-
-            const ply1 = move.ply1;
-            const ply2 = move.ply2;
-            [ply1, ply2].forEach((ply) => {
-              const branchesToShow = getBranchesForPly(ply);
-              branchesToShow.forEach((branchPly) => {
-                if (branchPly && branchPly.branch) {
-                  addBranchMoves(branchPly.branch, depth + 1);
-                }
-              });
-            });
-          }
-        });
-
-        if (moves.length) {
-          result.push(makeBranchSeparator(branchName, depth, "end"));
-        }
-      };
-
-      rootMoves.forEach((move) => {
-        if (shouldSplitMove(move)) {
-          result.push(makeItem(move, 0, "split1"));
-
-          const branchesToShow = getBranchesForPly(move.ply1);
-          branchesToShow.forEach((branchPly) => {
-            if (branchPly && branchPly.branch) {
-              addBranchMoves(branchPly.branch, 1);
-            }
-          });
-
-          result.push(makeItem(move, 0, "split2"));
-
-          const branchesToShow2 = getBranchesForPly(move.ply2);
-          branchesToShow2.forEach((branchPly) => {
-            if (branchPly && branchPly.branch) {
-              addBranchMoves(branchPly.branch, 1);
-            }
-          });
-        } else {
-          result.push(move);
-          const ply1 = move.ply1;
-          const ply2 = move.ply2;
-          [ply1, ply2].forEach((ply) => {
-            const branchesToShow = getBranchesForPly(ply);
-            branchesToShow.forEach((branchPly) => {
-              if (branchPly && branchPly.branch) {
-                addBranchMoves(branchPly.branch, 1);
-              }
-            });
-          });
-        }
+      const builder = new InlineMovesBuilder({
+        allMoves: this.ptn.allMoves,
+        allPlies: this.ptn.allPlies,
+        getBranchesToShow: (ply) => this.getBranchesToShow(ply),
       });
-
-      const compacted = [];
-      result.forEach((item) => {
-        if (item && item.type === "branch-separator") {
-          const prev = compacted[compacted.length - 1];
-          if (prev && prev.type === "branch-separator") {
-            return;
-          }
-        }
-        compacted.push(item);
-      });
-
-      return compacted;
+      return builder.build();
     },
     scroll: throttle(function () {
       const editingBranch = this.$store.state.ui.editingBranch
@@ -408,8 +297,26 @@ export default {
     "position.tps"() {
       this.$nextTick(() => this.scroll());
     },
+    "$store.state.ui.expandBranchRequest"(request) {
+      if (!request || !request.plyID || !this.ptn || !this.ptn.allPlies) {
+        return;
+      }
+      if (!this.inlineBranches) {
+        return;
+      }
+
+      const ply = this.ptn.allPlies[request.plyID];
+      if (ply && this.branchOverrides[ply.id] !== true) {
+        this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
+          ...this.branchOverrides,
+          [ply.id]: true,
+        });
+      }
+
+      this.$store.commit("ui/SET_EXPAND_BRANCH_REQUEST", null);
+    },
     "$store.state.ui.collapseBranchRequest"(request) {
-      if (!request || !request.plyID) {
+      if (!request || !request.plyID || !this.ptn || !this.ptn.allPlies) {
         return;
       }
       if (!this.inlineBranches) {
@@ -421,33 +328,9 @@ export default {
       if (ply) {
         if (this.isBranchExpanded(ply)) {
           this.toggleBranchExpanded(ply);
-        } else if (this.ptn && this.ptn.allPlies) {
-          if (!ply.branch) {
-            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
-            return;
-          }
-          const parentBranch = String(ply.branch || "")
-            .split("/")
-            .slice(0, -1)
-            .join("/");
-          if (parentBranch === ply.branch) {
-            this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
-            return;
-          }
-          const parentBranchPlies = this.ptn.allPlies.filter(
-            (p) => p && p.branch === parentBranch && p.index < ply.index
-          );
-          const parentPly = parentBranchPlies.sort(
-            (a, b) => b.index - a.index || b.id - a.id
-          )[0];
-
-          if (parentPly) {
-            this.$store.dispatch("game/SET_TARGET", parentPly);
-            this.$store.dispatch("game/GO_TO_PLY", {
-              plyID: parentPly.id,
-              isDone: true,
-            });
-          }
+        } else {
+          this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
+          return;
         }
       }
       this.$store.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", null);
@@ -458,38 +341,19 @@ export default {
         this.seenTargetBranches = [...this.seenTargetBranches, targetBranch];
       }
 
-      if (
-        targetBranch &&
-        this.$store.state.ui.inlineBranches &&
-        this.$store.state.ui.showAllBranches &&
-        this.ptn &&
-        this.ptn.branches &&
-        this.ptn.allPlies
-      ) {
-        const segments = String(targetBranch).split("/").filter(Boolean);
-        const overrides = { ...this.branchOverrides };
-        let prefix = "";
-        segments.forEach((seg) => {
-          prefix = prefix ? `${prefix}/${seg}` : seg;
-          const branchPly = this.ptn.branches[prefix];
-          if (
-            branchPly &&
-            branchPly.branches &&
-            branchPly.branches.length > 1
-          ) {
-            const branchPointId = branchPly.branches[0];
-            if (branchPointId != null) {
-              overrides[branchPointId] = true;
-            }
-          }
-        });
-        this.branchOverrides = overrides;
-      }
-
       this.$nextTick(() => this.scroll());
     },
     "$store.state.ui.showAllBranches"() {
-      this.$nextTick(() => this.scroll());
+      // Wait for moves computed to update, then for DOM to render
+      this.$nextTick(() => {
+        this.$nextTick(() => this.scroll());
+      });
+    },
+    "$store.state.ui.inlineBranches"() {
+      // Wait for moves computed to update, then for DOM to render
+      this.$nextTick(() => {
+        this.$nextTick(() => this.scroll());
+      });
     },
   },
 };

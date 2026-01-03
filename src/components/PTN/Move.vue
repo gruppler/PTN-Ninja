@@ -2,17 +2,12 @@
   <div
     class="move"
     :class="{
-      'current-move': isCurrentMove,
       linebreak: linebreakRow,
       separator: separatorRowClass,
       'current-only': currentOnly,
       standalone: standalone,
     }"
-    :style="{
-      background: `rgba(${
-        $store.state.ui.theme.panelDark ? '255,255,255' : '0,0,0'
-      },${Math.min(depth || 0, 4) * 0.05})`,
-    }"
+    :style="rowStyle"
   >
     <div
       v-if="showEvalRow && $store.state.ui.showEval && evaluationsForRow.length"
@@ -33,14 +28,16 @@
       :unselected="currentOnly"
       only-branch
       :no-menu-btn="noMenuBtn"
-      :full-width="inlineBranches"
+      :full-width="branchBar"
       class="relative-position"
       :class="{
-        'q-ml-sm': !inlineBranches && !currentOnly && fixedLinenumberWidth,
+        'q-ml-sm': !branchBar && !currentOnly && fixedLinenumberWidth,
       }"
     />
     <div class="move-wrapper">
-      <div class="depth-indicator" v-for="i in depth" :key="i" />
+      <template v-if="!noDecoration && !currentOnly">
+        <div class="depth-indicator" v-for="i in depth" :key="i" />
+      </template>
       <Linenum
         v-if="move.linenum"
         :linenum="move.linenum"
@@ -97,6 +94,7 @@ export default {
     standalone: Boolean,
     noDecoration: Boolean,
     noMenuBtn: Boolean,
+    branchBar: Boolean,
     inlineBranches: Boolean,
     separateBranch: Boolean,
     fixedLinenumberWidth: Boolean,
@@ -181,8 +179,21 @@ export default {
           : this.position.move.index === this.move.index)
       );
     },
+    rowStyle() {
+      if (this.currentOnly || this.noDecoration) {
+        return null;
+      }
+      const depth = this.depth + (this.isCurrentMove ? 3 : 0);
+      return depth
+        ? {
+            background: `rgba(${
+              this.$store.state.ui.theme.panelDark ? "255,255,255" : "0,0,0"
+            },${depth * 2 * 0.0333})`,
+          }
+        : null;
+    },
     linebreak() {
-      if (this.inlineBranches) {
+      if (this.branchBar) {
         return false;
       }
       return (
@@ -238,13 +249,6 @@ export default {
 <style lang="scss">
 .move {
   position: relative;
-
-  &.current-move {
-    background-color: $dim;
-    body.panelDark & {
-      background-color: $highlight;
-    }
-  }
 
   &.linebreak {
     margin-bottom: 0.5em;
