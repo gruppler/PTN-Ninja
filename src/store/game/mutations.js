@@ -93,7 +93,7 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
-  state.ptnUI = loadedPTNUI || { branchPointOverrides: {} };
+  state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 };
 
 export const ADD_GAME = (state, game) => {
@@ -139,12 +139,11 @@ export const ADD_GAMES = (state, { games, index }) => {
 };
 
 export const SET_BRANCH_POINT_OVERRIDES = (state, overrides) => {
-  state.ptnUI = {
-    ...(state.ptnUI || { branchPointOverrides: {} }),
-    branchPointOverrides: cloneDeep(overrides || {}),
-  };
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze({ ...overrides } || {}),
+  });
   if (state.list && state.list[0]) {
-    state.list[0].ptnUI = cloneDeep(state.ptnUI);
+    state.list[0].ptnUI = state.ptnUI;
   }
 };
 
@@ -237,9 +236,13 @@ export const SELECT_GAME = (state, index) => {
   state.list.unshift(game);
   // Ensure ptnUI is preserved when switching games
   if (game.ptnUI && game.ptnUI.branchPointOverrides) {
-    state.ptnUI = cloneDeep(game.ptnUI);
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...game.ptnUI.branchPointOverrides,
+      }),
+    });
   } else {
-    state.ptnUI = { branchPointOverrides: {} };
+    state.ptnUI = Object.freeze({ branchPointOverrides: Object.freeze({}) });
   }
 };
 
@@ -406,18 +409,28 @@ export const DELETE_BRANCH = (state, branch) => {
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
-  const savedPtnUI = cloneDeep(state.ptnUI);
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.undo()) {
-    state.ptnUI = savedPtnUI;
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
-  const savedPtnUI = cloneDeep(state.ptnUI);
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.redo()) {
-    state.ptnUI = savedPtnUI;
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("REDO");
   }
 };
