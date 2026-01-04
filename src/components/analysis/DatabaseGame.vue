@@ -1,6 +1,10 @@
 <template>
-  <q-item clickable @click="loadGame">
-    <q-item-section>
+  <q-item
+    class="database-game q-pr-none q-py-none"
+    clickable
+    @click="loadGame()"
+  >
+    <q-item-section class="q-py-sm">
       <q-item-label>
         <q-icon name="player1" left />
         {{ player1 }} <em>({{ rating1 }})</em>
@@ -14,7 +18,7 @@
         <relative-time :value="date" />
       </q-item-label>
     </q-item-section>
-    <q-item-section side>
+    <q-item-section class="q-mr-md q-py-sm" side>
       <Result :result="result" />
       <div class="q-mt-xs q-gutter-x-sm">
         <q-icon v-if="tournament" name="event">
@@ -27,6 +31,8 @@
         </span>
       </div>
     </q-item-section>
+    <q-separator vertical />
+    <q-btn icon="open_in_new" @click.stop="loadGame(true)" stretch flat />
     <q-inner-loading :showing="loading" />
   </q-item>
 </template>
@@ -59,16 +65,19 @@ export default {
     },
   },
   methods: {
-    loadGame() {
+    loadGame(inNewTab = false) {
       this.loading = true;
       this.$store
-        .dispatch("game/ADD_PLAYTAK_GAME", {
-          id: this.playtakId,
-          state: {
-            plyIndex: this.$store.state.game.position.plyIndex,
-            plyIsDone: this.$store.state.game.position.plyIsDone,
-          },
-        })
+        .dispatch(
+          inNewTab ? "game/OPEN_PLAYTAK_GAME" : "game/ADD_PLAYTAK_GAME",
+          {
+            id: this.playtakId,
+            state: {
+              plyIndex: this.$store.state.game.position.plyIndex,
+              plyIsDone: this.$store.state.game.position.plyIsDone,
+            },
+          }
+        )
         .catch()
         .finally(() => {
           this.loading = false;
@@ -77,3 +86,14 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.database-game {
+  + .database-game {
+    border-top: 1px solid $separator-color;
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
+}
+</style>

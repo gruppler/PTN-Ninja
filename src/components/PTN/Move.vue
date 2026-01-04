@@ -3,18 +3,18 @@
     class="move"
     :class="{
       'current-move': isCurrentMove,
-      linebreak,
-      separator,
+      linebreak: linebreakRow,
+      separator: separatorRowClass,
       'current-only': currentOnly,
       standalone: standalone,
     }"
   >
     <div
-      v-if="showEval && $store.state.ui.showEval && evaluations.length"
+      v-if="showEvalRow && $store.state.ui.showEval && evaluationsForRow.length"
       class="evaluations column"
     >
       <div
-        v-for="(evaluation, i) in evaluations"
+        v-for="(evaluation, i) in evaluationsForRow"
         class="evaluation col"
         :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
         :style="{ width: Math.abs(evaluation) + '%' }"
@@ -23,32 +23,55 @@
     </div>
 
     <Linenum
-      v-if="showSeparateBranch"
+      v-if="showSeparateBranchRow"
       :linenum="move.linenum"
       :unselected="currentOnly"
       only-branch
+      :no-menu-btn="noMenuBtn"
+      :full-width="branchBar"
       class="relative-position"
+      :class="{
+        'q-ml-sm': !branchBar && !currentOnly && fixedLinenumberWidth,
+      }"
     />
     <div class="move-wrapper">
+      <template v-if="!noDecoration && !currentOnly">
+        <div class="depth-indicator" v-for="i in depth" :key="i" />
+      </template>
       <Linenum
         v-if="move.linenum"
         :linenum="move.linenum"
         :no-branch="noBranch || separateBranch"
+        :style="{
+          paddingLeft: (fixedLinenumberWidth ? 1.5 : 0) + 'em',
+          width: fixedLinenumberWidth ? '3em' : 'auto',
+        }"
+        :no-menu-btn="noMenuBtn"
       />
       <template v-if="!player || player === 1">
-        <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1">
-          <slot name="plyTooltip" v-bind="ply1" />
-        </Ply>
+        <span v-if="splitPly === 'split2'" class="ptn nop">--</span>
+        <span v-else-if="ply1 && ply1.isNop" class="ptn nop">{{
+          ply1.text
+        }}</span>
+        <Ply
+          v-else-if="ply1"
+          :key="ply1.id"
+          :ply="ply1"
+          :inline-branches="inlineBranches"
+        />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :ply="ply2">
-          <slot name="plyTooltip" v-bind="ply2" />
-        </Ply>
+        <span v-if="splitPly === 'split1'" class="ptn nop">--</span>
+        <Ply
+          v-else
+          :key="ply2.id"
+          :ply="ply2"
+          :inline-branches="inlineBranches"
+        />
       </template>
     </div>
 
-    <q-separator v-if="separator" class="fullwidth-padded-md" />
+    <q-separator v-if="separatorRow" class="fullwidth-padded-md" />
   </div>
 </template>
 
@@ -62,12 +85,18 @@ export default {
   props: {
     move: Object,
     player: Number,
+    depth: Number,
     currentOnly: Boolean,
     standalone: Boolean,
     noDecoration: Boolean,
+    noMenuBtn: Boolean,
+    branchBar: Boolean,
+    inlineBranches: Boolean,
     separateBranch: Boolean,
+    fixedLinenumberWidth: Boolean,
     noBranch: Boolean,
     showEval: Boolean,
+    splitPly: String,
   },
   computed: {
     showAllBranches() {
@@ -99,13 +128,31 @@ export default {
       let eval2 = this.ply2
         ? this.$store.state.game.comments.evaluations[this.ply2.id]
         : null;
-      if (eval1 !== null) {
+      if (eval1 != null) {
         evaluations.push(eval1);
       }
-      if (eval2 !== null) {
+      if (eval2 != null) {
         evaluations.push(eval2);
       }
       return evaluations;
+    },
+    evaluationsForRow() {
+      if (!this.splitPly) {
+        return this.evaluations;
+      }
+      if (this.splitPly === "split1") {
+        const eval1 = this.ply1
+          ? this.$store.state.game.comments.evaluations[this.ply1.id]
+          : null;
+        return eval1 != null ? [eval1] : [];
+      }
+      if (this.splitPly === "split2") {
+        const eval2 = this.ply2
+          ? this.$store.state.game.comments.evaluations[this.ply2.id]
+          : null;
+        return eval2 != null ? [eval2] : [];
+      }
+      return [];
     },
     index() {
       return this.ptn.sortedMoves.findIndex((move) => move === this.move);
@@ -129,6 +176,9 @@ export default {
       );
     },
     linebreak() {
+      if (this.branchBar) {
+        return false;
+      }
       return (
         this.showAllBranches &&
         !this.noDecoration &&
@@ -137,13 +187,32 @@ export default {
         this.nextMove.branch != this.move.branch
       );
     },
+    linebreakRow() {
+      return this.linebreak && (!this.splitPly || this.splitPly === "split2");
+    },
     separator() {
       return (
         this.linebreak &&
+        this.separateBranch &&
         (!this.move.branch ||
           // Next move's branch originates from root
           !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
+    },
+    showEvalRow() {
+      return this.showEval;
+    },
+    showSeparateBranchRow() {
+      return (
+        this.showSeparateBranch &&
+        (!this.splitPly || this.splitPly === "split1")
+      );
+    },
+    separatorRow() {
+      return this.separator && (!this.splitPly || this.splitPly === "split2");
+    },
+    separatorRowClass() {
+      return this.separatorRow;
     },
     showSeparateBranch() {
       return !!(
@@ -172,17 +241,17 @@ export default {
   }
 
   &.linebreak {
-    margin-bottom: 0.75em;
+    margin-bottom: 0.5em;
     + .move {
-      margin-top: 0.75em;
+      margin-top: 0.5em;
     }
   }
 
   &.linebreak.separator {
-    padding-bottom: 0.75em;
+    padding-bottom: 0.5em;
     margin-bottom: 1px;
     + .move {
-      padding-top: 0.75em;
+      padding-top: 0.5em;
       margin-top: 0;
     }
   }
@@ -219,6 +288,22 @@ export default {
   .move-wrapper {
     min-height: 35px;
     position: relative;
+
+    .depth-indicator {
+      display: inline-block;
+      position: relative;
+      vertical-align: middle;
+      opacity: 0.5;
+      width: 2em;
+      margin-right: -1.5em;
+      height: 2.55em;
+      border-width: 0 2px 0 0;
+      border-style: solid;
+      border-color: var(--q-color-text-light);
+      body.panel-dark & {
+        border-color: var(--q-color-text-dark);
+      }
+    }
   }
 }
 </style>

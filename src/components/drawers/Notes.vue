@@ -31,6 +31,41 @@
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </component>
+    <q-toolbar class="bg-ui q-pa-none">
+      <q-btn-group class="full-width" spread stretch flat unelevated>
+        <q-btn @click="scrollToTop" icon="to_top" flat spread stretch>
+          <hint>{{ $t("Top") }}</hint>
+        </q-btn>
+        <q-btn @click="jumpToCurrent" icon="to_current" flat spread stretch>
+          <hint>{{ $t("Current") }}</hint>
+        </q-btn>
+        <q-btn @click="scrollToBottom" icon="to_bottom" flat spread stretch>
+          <hint>{{ $t("Bottom") }}</hint>
+        </q-btn>
+        <q-separator vertical />
+        <q-btn
+          @click="removeCurrentPosition"
+          icon="delete_outline"
+          :disable="!hasCurrentPositionNotes"
+          flat
+          spread
+          stretch
+        >
+          <hint>{{ $t("Remove Current Positions Notes") }}</hint>
+        </q-btn>
+        <q-btn
+          @click="removeAll"
+          icon="delete_all"
+          :disable="!hasAnyNotes"
+          flat
+          spread
+          stretch
+        >
+          <hint>{{ $t("Remove All") }}</hint>
+        </q-btn>
+      </q-btn-group>
+    </q-toolbar>
+    <q-separator />
     <div class="bg-ui row no-wrap">
       <q-input
         ref="input"
@@ -60,18 +95,6 @@
           />
         </template>
       </q-input>
-      <q-btn icon="menu_vertical" spread stretch flat dense>
-        <q-menu transition-show="none" transition-hide="none" auto-close square>
-          <q-list>
-            <q-item clickable @click="removeAll">
-              <q-item-section side>
-                <q-icon name="delete" />
-              </q-item-section>
-              <q-item-section>{{ $t("Remove All") }}</q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
-      </q-btn>
     </div>
   </div>
 </template>
@@ -156,8 +179,31 @@ export default {
       }
       return null;
     },
+    positionPlyID() {
+      const pos = this.game.position;
+      if (!pos.ply || (!pos.ply.index && !pos.plyIsDone)) {
+        return -1;
+      }
+      return pos.plyID;
+    },
+    hasCurrentPositionNotes() {
+      const plyID = this.positionPlyID;
+      return plyID in this.game.comments.notes;
+    },
+    hasAnyNotes() {
+      return Object.keys(this.game.comments.notes).length > 0;
+    },
   },
   methods: {
+    scrollToTop() {
+      this.$refs.scroll.scrollTo(0);
+    },
+    scrollToBottom() {
+      this.$refs.scroll.scrollTo(this.plyIDs.length - 1);
+    },
+    jumpToCurrent() {
+      this.$nextTick(() => this.scroll());
+    },
     send(event) {
       if (event.shiftKey) {
         return; // Ignore shift+enter
@@ -204,8 +250,55 @@ export default {
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
     },
+    removeCurrentPosition() {
+      const plyID = this.positionPlyID;
+      const notes = this.game.comments.notes[plyID];
+      if (notes && notes.length) {
+        this.$store.dispatch("game/REMOVE_POSITION_NOTES", plyID);
+
+        // Show undo notification
+        this.notify({
+          message: this.$t("success.removedAurrentPositionsNotes"),
+          timeout: 5000,
+          progress: true,
+          multiLine: false,
+          actions: [
+            {
+              label: this.$t("Undo"),
+              color: "primary",
+              handler: () => {
+                this.$store.dispatch("game/UNDO");
+              },
+            },
+            { icon: "close", color: "textLight" },
+          ],
+        });
+      }
+    },
     removeAll() {
-      this.$store.dispatch("game/REMOVE_NOTES");
+      const hasNotes = Object.keys(this.game.comments.notes).length > 0;
+
+      if (hasNotes) {
+        this.$store.dispatch("game/REMOVE_NOTES");
+
+        // Show undo notification
+        this.notify({
+          message: this.$t("success.removedAllNotes"),
+          timeout: 5000,
+          progress: true,
+          multiLine: false,
+          actions: [
+            {
+              label: this.$t("Undo"),
+              color: "primary",
+              handler: () => {
+                this.$store.dispatch("game/UNDO");
+              },
+            },
+            { icon: "close", color: "textLight" },
+          ],
+        });
+      }
     },
     isCurrent(plyID) {
       return (

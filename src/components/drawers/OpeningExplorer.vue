@@ -110,6 +110,7 @@
 
           <!-- Player 1 -->
           <q-select
+            ref="player1"
             v-model="dbSettings.player1"
             :options="player1Names"
             :loading="!player1Index"
@@ -123,6 +124,7 @@
             multiple
             use-input
             @filter="searchPlayer1"
+            @input="$refs.player1.updateInputValue('')"
             hide-dropdown-icon
           >
             <template v-slot:prepend>
@@ -132,6 +134,7 @@
 
           <!-- Player 2 -->
           <q-select
+            ref="player2"
             v-model="dbSettings.player2"
             :options="player2Names"
             :loading="!player2Index"
@@ -145,6 +148,7 @@
             multiple
             use-input
             @filter="searchPlayer2"
+            @input="$refs.player2.updateInputValue('')"
             hide-dropdown-icon
           >
             <template v-slot:prepend>

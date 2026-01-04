@@ -23,10 +23,10 @@ export const uniqueName =
 export const disabledOptions = () => {
   const game = Vue.prototype.$game;
   const disabled = Object.keys(parseURLparams(router.currentRoute).state);
-  if (game.config.disableFlatCounts) {
+  if (game && game.config.disableFlatCounts) {
     disabled.push("flatCounts");
   }
-  if (game.config.disableShowRoads) {
+  if (game && game.config.disableShowRoads) {
     disabled.push("showRoads");
   }
   if (!navigator.canShare) {
@@ -39,6 +39,9 @@ export const precedingPlies =
   (state) =>
   (plyID, isDone = false) => {
     const game = Vue.prototype.$game;
+    if (!game) {
+      return [];
+    }
     const ply = game.plies[plyID];
     if (!ply) {
       return [];

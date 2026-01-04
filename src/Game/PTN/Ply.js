@@ -154,6 +154,14 @@ export default class Ply extends Ptn {
   get output() {
     const output = pick(this, outputProps);
     output.branches = this.branches.map((ply) => ply.id);
+    // Compute depth from branch name (e.g., "14b1/15b1" has depth 2)
+    output.depth = this.branch ? this.branch.split("/").length : 0;
+    output.branchPoint =
+      this.branches.parent &&
+      this.branches.parent.branches &&
+      this.branches.parent.branches[0]
+        ? this.branches.parent.branches[0].id
+        : null;
     output.evaluation = this.evaluation ? this.evaluation.output : null;
     output.result = this.result ? this.result.output : null;
     output.linenum = this.linenum.output;

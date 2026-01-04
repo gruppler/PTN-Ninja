@@ -5,6 +5,7 @@ export default {
   board: null,
   comments: null,
   config: null,
+  ptnUI: { branchPointOverrides: {} },
   history: null,
   historyIndex: 0,
   list: [],

@@ -35,6 +35,7 @@ const defaultState = {
   highlighterColor: "",
   highlighterCustomColor: "",
   highlightSquares: true,
+  inlineBranches: true,
   isPortrait: false,
   isVertical: false,
   komi: 0,
@@ -96,6 +97,7 @@ export const embedUIOptions = [
   "evalText",
   "flatCounts",
   "highlightSquares",
+  "inlineBranches",
   "moveNumber",
   "notifyAnalysisNotes",
   "notifyGame",
@@ -162,6 +164,8 @@ defaultState.pngConfig = {
 
 const state = {
   embed: Platform.within.iframe,
+  collapseBranchRequest: null,
+  expandBranchRequest: null,
   scrubbing: false,
   thumbnails: {},
   shortLinks: {},

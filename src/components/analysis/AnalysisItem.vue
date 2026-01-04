@@ -20,13 +20,9 @@
             no-click
             :selected="selectedCount > 0"
             :done="doneCount > 0"
-          >
-            <PlyPreview
-              :tps="tps"
-              :plies="[ply.text]"
-              :options="$store.state.game.config"
-            />
-          </Ply>
+            :tps="tps"
+            :plies="ply && ply.text ? [ply.text] : null"
+          />
         </q-item-label>
       </q-item-section>
       <q-item-section top side>
@@ -141,13 +137,9 @@
           @click.stop.prevent.capture="insertFollowingPlies(i)"
           :selected="selectedCount > i + 1"
           :done="doneCount > i + 1"
-        >
-          <PlyPreview
-            :tps="tps"
-            :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
-            :options="$store.state.game.config"
-          />
-        </Ply>
+          :tps="tps"
+          :plies="tps ? getPlySequence(i) : null"
+        />
       </q-item-label>
     </q-item>
   </div>
@@ -155,11 +147,10 @@
 
 <script>
 import Ply from "../PTN/Ply";
-import PlyPreview from "../controls/PlyPreview";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply, PlyPreview },
+  components: { Ply },
   props: {
     ply: Object,
     followingPlies: Array,
@@ -216,7 +207,8 @@ export default {
       return this.$store.state.ui.disableBoard;
     },
     tps() {
-      return this.$store.state.game.position.tps;
+      const position = this.$store.state.game.position;
+      return position ? position.tps : null;
     },
     evalPercent() {
       return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
@@ -260,6 +252,12 @@ export default {
         prev,
       });
     },
+    getPlySequence(index) {
+      return [
+        this.ply.text,
+        ...this.followingPlies.slice(0, index + 1).map((p) => p.text),
+      ];
+    },
   },
 };
 </script>
@@ -267,6 +265,13 @@ export default {
 <style lang="scss">
 .analysis-item {
   position: relative;
+
+  + .analysis-item {
+    border-top: 1px solid $separator-color;
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
 
   .evaluation {
     position: absolute;

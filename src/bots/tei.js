@@ -1,6 +1,6 @@
 import Bot, { defaultEvalMarkThresholds } from "./bot";
 import hashObject from "object-hash";
-import { forEach, isEmpty, isNumber } from "lodash";
+import { forEach, isEmpty, isNumber, throttle } from "lodash";
 
 let socket = null;
 
@@ -36,6 +36,71 @@ export default class TeiBot extends Bot {
         teiVersion: 0,
       },
       ...options,
+    });
+
+    this._bufferedResults = {};
+    this._lastSearchTPS = null;
+    this._flushBufferedResultsThrottled = throttle(
+      () => this.flushBufferedResults(),
+      150,
+      { leading: false, trailing: true }
+    );
+  }
+
+  bufferResults(results) {
+    if (!results || !results.tps) {
+      return;
+    }
+
+    const tps = results.tps;
+    const existing = this._bufferedResults[tps];
+    if (!existing) {
+      this._bufferedResults[tps] = {
+        ...results,
+        suggestions: results.suggestions ? [...results.suggestions] : [],
+      };
+      return;
+    }
+
+    if (results.nps !== null && results.nps !== undefined) {
+      existing.nps = results.nps;
+    }
+    if (results.string) {
+      existing.string = results.string;
+    }
+    if (results.error) {
+      existing.error = results.error;
+    }
+
+    if (results.suggestions && results.suggestions.length) {
+      if (!existing.suggestions) {
+        existing.suggestions = [];
+      }
+      while (existing.suggestions.length < results.suggestions.length) {
+        existing.suggestions.push(null);
+      }
+      results.suggestions.forEach((suggestion, i) => {
+        if (suggestion !== null && suggestion !== undefined) {
+          existing.suggestions[i] = suggestion;
+        }
+      });
+    }
+  }
+
+  flushBufferedResults() {
+    if (!this._bufferedResults || !Object.keys(this._bufferedResults).length) {
+      return;
+    }
+
+    const buffered = this._bufferedResults;
+    this._bufferedResults = {};
+
+    const storeResults = (results) => super.storeResults(results);
+    Object.keys(buffered).forEach((tps) => {
+      const results = buffered[tps];
+      if (results && results.tps) {
+        storeResults(results);
+      }
     });
   }
 
@@ -94,6 +159,11 @@ export default class TeiBot extends Bot {
   }
 
   reset() {
+    if (this._flushBufferedResultsThrottled) {
+      this._flushBufferedResultsThrottled.cancel();
+    }
+    this._bufferedResults = {};
+
     const meta = {
       name: null,
       author: null,
@@ -114,6 +184,11 @@ export default class TeiBot extends Bot {
   async terminate(state) {
     if (socket) {
       try {
+        if (this._flushBufferedResultsThrottled) {
+          this._flushBufferedResultsThrottled.flush();
+        }
+        this.flushBufferedResults();
+
         if (this.state.isRunning) {
           this.send("stop");
         }
@@ -221,6 +296,7 @@ export default class TeiBot extends Bot {
         }
 
         // Set position
+        this._lastSearchTPS = tps;
         this.send(this.getTeiPosition(tps, plyID));
 
         // Go
@@ -389,10 +465,16 @@ export default class TeiBot extends Bot {
       }
       return;
     } else if (response.startsWith("bestmove")) {
+      if (this._flushBufferedResultsThrottled) {
+        this._flushBufferedResultsThrottled.flush();
+      }
+      this.flushBufferedResults();
+
       // Search ended
       const state = { isReady: true };
+      const bestmoveTps = tps || this._lastSearchTPS;
       const results = {
-        tps,
+        tps: bestmoveTps,
         suggestions: [{ pv: [response.substr(9)] }],
       };
       if (this.isInteractiveEnabled) {
@@ -404,7 +486,7 @@ export default class TeiBot extends Bot {
           state.tps = this.state.nextTPS;
         }
       }
-      if (!this.state.isAnalyzingGame) {
+      if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
         state.isRunning = false;
       }
       this.setState(state);
@@ -416,6 +498,24 @@ export default class TeiBot extends Bot {
       }
       return results;
     } else if (response.startsWith("info") && tps) {
+      // Check if this line has multipv
+      const hasMultipv = response.includes(" multipv ");
+
+      const bufferedForTps = this._bufferedResults[tps];
+      const bufferedHasMultipv =
+        bufferedForTps &&
+        bufferedForTps.suggestions &&
+        bufferedForTps.suggestions.filter((s) => s !== null).length > 1;
+
+      // Skip non-multipv lines if we already have multiple results for this position
+      if (
+        !hasMultipv &&
+        ((this.positions[tps] && this.positions[tps].length > 1) ||
+          bufferedHasMultipv)
+      ) {
+        return;
+      }
+
       // Parse Results
       const results = {
         tps,
@@ -435,14 +535,15 @@ export default class TeiBot extends Bot {
       };
 
       const keys =
-        /^(pv|multipv|time|depth|seldepth|wdl|score|nodes|nps|string|error)$/i;
+        /^(pv|multipv|time|depth|seldepth|wdl|score|nodes|nps|hashfull|string|error)$/i;
       let key = "";
       let i = 0;
-      let multipv = 0;
       let scoreType = "";
       const initialPlayer = Number(tps.split(" ")[1]);
       let tokens = response.substr(5).trim().split(/\s+/);
       let token;
+      // Properties before multipv need to be applied to the correct suggestion index
+      const propsBeforeMultipv = {};
       while ((token = tokens.shift())) {
         if (keys.test(token)) {
           key = token.toLowerCase();
@@ -452,10 +553,10 @@ export default class TeiBot extends Bot {
           }
         } else {
           if (key === "multipv") {
-            multipv = Number(token);
-          } else if (key === "pv") {
-            if (multipv && results.suggestions.length < multipv) {
-              i = results.suggestions.length - 1;
+            // multipv is 1-indexed; use it to determine suggestion index
+            i = Number(token) - 1;
+            // Ensure suggestions array has enough entries
+            while (results.suggestions.length <= i) {
               results.suggestions.push({
                 pv: [],
                 time: null,
@@ -465,6 +566,13 @@ export default class TeiBot extends Bot {
                 nodes: null,
               });
             }
+            // Apply properties that appeared before multipv to this suggestion
+            Object.keys(propsBeforeMultipv).forEach((prop) => {
+              if (results.suggestions[i][prop] === null) {
+                results.suggestions[i][prop] = propsBeforeMultipv[prop];
+              }
+            });
+          } else if (key === "pv") {
             results.suggestions[i].pv.push(token);
           } else if (key === "wdl") {
             // Prefer `wdl` over `score`
@@ -514,6 +622,11 @@ export default class TeiBot extends Bot {
                 }
                 break;
               default:
+                // If we haven't seen multipv yet, save for later
+                if (i === 0 && results.suggestions[0].pv.length === 0) {
+                  propsBeforeMultipv[key] = Number(token);
+                }
+                // Always store on current suggestion
                 if (results.suggestions[i][key] === null) {
                   results.suggestions[i][key] = Number(token);
                 }
@@ -521,8 +634,20 @@ export default class TeiBot extends Bot {
           }
         }
       }
-      if (results.suggestions[0].pv.length) {
-        return super.storeResults(results);
+      // Store if any suggestions have PV data
+      // Keep empty slots as null so storeResults knows which indices to update
+      const hasValidSuggestion = results.suggestions.some((s) => s.pv.length);
+      if (hasValidSuggestion) {
+        // Replace empty suggestions with null to preserve index positions
+        results.suggestions = results.suggestions.map((s) =>
+          s.pv.length ? s : null
+        );
+
+        this.bufferResults(results);
+        if (this._flushBufferedResultsThrottled) {
+          this._flushBufferedResultsThrottled();
+        }
+        return true;
       }
     }
   }

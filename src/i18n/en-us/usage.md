@@ -193,7 +193,7 @@ Though the UI should provide for most of your PTN editing needs, PTN Ninja also 
 
 ## Branches
 
-PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the 'branch' button in the PTN panel's header toolbar.
+PTN Ninja records multiple lines of play, called "branches." Branches outside the Current Branch of play are hidden by default. You can display branches by **clicking** the 'branch' button in the PTN panel's header toolbar.
 
 ::: tip
 
@@ -203,10 +203,17 @@ You can perform several actions on branches by **right-clicking** the branch nam
 
 :::
 
-- To show all branches (or hide other branches) in the PTN panel, **click** the "branch" icon in the header toolbar, or press <kbd>Shift</kbd><kbd>B</kbd>.
+- To change how branches are displayed in the PTN panel, **click** the leftmost button in the header toolbar.
+  - To toggle quickly between "All Branches" and the previous mode, **right-click** this button.
 - Click the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+  - This button is highlighted when not on the main branch.
 - Use <kbd>▲/▼</kbd> to navigate between branches.
-- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
+  - When the branch menu (<kbd>B</kbd>) is open, <kbd>▲/▼</kbd> navigates between all branches.
+  - When the branch menu is closed, <kbd>▲/▼</kbd> will not allow jumps between unrelated branches.
+  - <kbd>Shift</kbd><kbd>▲/▼</kbd> jumps to the first or last branch within related branches.
+  - <kbd>Ctrl</kbd><kbd>▲</kbd> jumps to the main branch.
+  - In "Inline Branches" mode, <kbd>▲</kbd> can also be used to collapse the current branch at its parent ply.
+- **Right-click** a branch or use the menu button to **promote**, **rename**, or **delete** it.
 
 :::
 
@@ -302,8 +309,6 @@ A TEI connection can be saved as custom bot. This enables quick switching betwee
 :::
 
 - To change a bot's settings, **click** the 'cog' icon in the Bot Suggestions section.
-- To analyze the current branch, disable "Show All Branches," then **click** "Analyze Branch" button
-- To analyze the entire game (including all branches), enable "Show All Branches," then **click** "Analyze Game" button
 
 :::
 

@@ -530,31 +530,54 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
   });
 };
 
+export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
+  const response = await fetch(
+    `https://api.playtak.com/v1/games-history/ptn/${id}`
+    // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+  );
+  if (response && response.ok) {
+    const ptn = await response.text();
+    console.log(ptn);
+    let game = new Game({ ptn, state });
+    return game;
+  } else {
+    if (response) {
+      if (response.status === 404) {
+        throw "Game does not exist";
+      } else {
+        response = await response.json();
+        console.log(response);
+        throw response && response.message ? response.message : "unknown";
+      }
+    } else {
+      throw "unknown";
+    }
+  }
+}
+
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
-    const response = await fetch(
-      `https://api.playtak.com/v1/games-history/ptn/${id}`
-      // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
+  try {
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    window.open(
+      this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      }),
+      "_blank"
     );
-    if (response && response.ok) {
-      const ptn = await response.text();
-      console.log(ptn);
-      let game = new Game({ ptn, state });
-      game.warnings.forEach((warning) => notifyWarning(warning));
-      return dispatch("ADD_GAME", game);
-    } else {
-      if (response) {
-        if (response.status === 404) {
-          throw "Game does not exist";
-        } else {
-          response = await response.json();
-          console.log(response);
-          throw response && response.message ? response.message : "unknown";
-        }
-      } else {
-        throw "unknown";
-      }
-    }
   } catch (error) {
     notifyError(error);
     throw error;
@@ -587,6 +610,7 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         ptn: game.ptn,
         state: game.minState,
         config: game.config,
+        ptnUI: this.state.game.ptnUI,
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
         highlighterSquares: game.highlighterSquares,
@@ -600,6 +624,35 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
   }
   if (rebuildState) {
     commit("SAVE_CURRENT_GAME");
+  }
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = async function (
+  { commit, state, dispatch },
+  overrides
+) {
+  commit("SET_BRANCH_POINT_OVERRIDES", overrides);
+  if (this.state.ui.embed) {
+    return;
+  }
+  const game = { ...state.list[0] };
+  try {
+    game.ptnUI = {
+      ...(game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+  // Ensure ptnUI is saved to the main game object as well
+  dispatch("SAVE_CURRENT_GAME", false);
+  // Also update the in-memory Game object's ptnUI
+  if (Vue.prototype.$game) {
+    Vue.prototype.$game.ptnUI = {
+      ...(Vue.prototype.$game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
   }
 };
 
@@ -644,6 +697,9 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
 
 export const SET_PLAYER = function ({ commit }, player) {
   const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
   player = Number(player) || null;
   const config = { ...game.config, player };
   Object.assign(game.config, config);
@@ -903,6 +959,11 @@ export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REMOVE_POSITION_NOTES = ({ commit, dispatch }, plyID) => {
+  commit("REMOVE_POSITION_NOTES", plyID);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
   dispatch("SAVE_CURRENT_GAME", true);
@@ -910,5 +971,13 @@ export const REMOVE_NOTES = function ({ commit, dispatch }) {
 
 export const REMOVE_ANALYSIS_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_ANALYSIS_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  tps
+) {
+  commit("REMOVE_POSITION_ANALYSIS_NOTES", tps);
   dispatch("SAVE_CURRENT_GAME", true);
 };

@@ -30,6 +30,14 @@ export const SET_UI = (state, [key, value]) => {
   }
 };
 
+export const SET_COLLAPSE_BRANCH_REQUEST = (state, request) => {
+  state.collapseBranchRequest = cloneDeep(request);
+};
+
+export const SET_EXPAND_BRANCH_REQUEST = (state, request) => {
+  state.expandBranchRequest = cloneDeep(request);
+};
+
 export const SET_EMBED_GAME = (state) => {
   state.embed = true;
 };

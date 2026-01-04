@@ -15,6 +15,8 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
+
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -59,6 +61,7 @@ export const SET_GAME = function (state, game) {
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
+      ptnUI: loadedPTNUI,
       onInit,
       onAppendPly,
       onInsertPly,
@@ -71,6 +74,10 @@ export const SET_GAME = function (state, game) {
       game.onAppendPly = onAppendPly;
       game.onInsertPly = onInsertPly;
       game.onError = onError;
+    }
+    // Ensure the Game object has the latest ptnUI
+    if (loadedPTNUI) {
+      game.ptnUI = loadedPTNUI;
     }
   }
   Vue.prototype.$game = game;
@@ -86,6 +93,7 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
+  state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 };
 
 export const ADD_GAME = (state, game) => {
@@ -94,6 +102,11 @@ export const ADD_GAME = (state, game) => {
     name: game.name,
     state: game.minState || game.state,
     config: game.config,
+    ptnUI: cloneDeep(
+      game.ptnUI && game.ptnUI.branchPointOverrides
+        ? game.ptnUI
+        : { branchPointOverrides: {} }
+    ),
     history: game.history,
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
@@ -111,6 +124,11 @@ export const ADD_GAMES = (state, { games, index }) => {
       name: game.name,
       state: game.minState || game.state,
       config: game.config,
+      ptnUI: cloneDeep(
+        game.ptnUI && game.ptnUI.branchPointOverrides
+          ? game.ptnUI
+          : { branchPointOverrides: {} }
+      ),
       history: game.history,
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
@@ -118,6 +136,15 @@ export const ADD_GAMES = (state, { games, index }) => {
       highlighterSquares: game.highlighterSquares,
     }))
   );
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = (state, overrides) => {
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze({ ...overrides } || {}),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const REMOVE_GAME = (state, index) => {
@@ -204,8 +231,19 @@ export const APPLY_TRANSFORM = (state, transform) => {
 };
 
 export const SELECT_GAME = (state, index) => {
-  state.list.unshift(state.list.splice(index, 1)[0]);
-  state.list[0].lastSeen = new Date();
+  const game = state.list.splice(index, 1)[0];
+  game.lastSeen = new Date();
+  state.list.unshift(game);
+  // Ensure ptnUI is preserved when switching games
+  if (game.ptnUI && game.ptnUI.branchPointOverrides) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...game.ptnUI.branchPointOverrides,
+      }),
+    });
+  } else {
+    state.ptnUI = Object.freeze({ branchPointOverrides: Object.freeze({}) });
+  }
 };
 
 export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
@@ -371,14 +409,28 @@ export const DELETE_BRANCH = (state, branch) => {
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.undo()) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.redo()) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("REDO");
   }
 };
@@ -488,12 +540,43 @@ export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
 };
 
+export const REMOVE_POSITION_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) => notePlyID === String(plyID)
+  );
+};
+
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
 };
 
 export const REMOVE_ANALYSIS_NOTES = () => {
   Vue.prototype.$game.removeNotes(
-    (note) => note.output.evaluation !== null || note.output.pv !== null
+    (note, plyID) => note.output.evaluation !== null || note.output.pv !== null
   );
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !allPlies || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies.find((p) => p && p.tpsBefore === tps);
+  const evalPly =
+    prevPly || allPlies.find((p) => p && p.id === 0 && p.tpsBefore === tps);
+
+  const evalPlyID = evalPly ? String(evalPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    if (evalPlyID && plyID === evalPlyID) {
+      return note.evaluation !== null || note.pv !== null;
+    }
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.evaluation !== null || note.pv !== null;
+    }
+    return false;
+  });
 };
