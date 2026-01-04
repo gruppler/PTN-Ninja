@@ -1,8 +1,11 @@
 <template>
-  <component :is="recess ? 'recess' : 'div'" class="col-grow relative-position">
+  <component
+    :is="recess ? 'recess' : 'div'"
+    class="col-grow relative-position column no-wrap"
+  >
     <q-scroll-area
       id="ptn-scroll-area"
-      class="full-ptn absolute-fit non-selectable"
+      class="full-ptn col-grow non-selectable"
     >
       <q-virtual-scroll
         v-if="gameExists"
@@ -36,6 +39,36 @@
         </template>
       </q-virtual-scroll>
     </q-scroll-area>
+    <q-toolbar class="bg-ui q-pa-none">
+      <q-btn-group class="full-width" spread stretch flat unelevated>
+        <q-btn @click="scrollToTop" icon="to_top" flat spread stretch>
+          <hint>{{ $t("Top") }}</hint>
+        </q-btn>
+        <q-btn @click="jumpToCurrent" icon="to_current" flat spread stretch>
+          <hint>{{ $t("Current") }}</hint>
+        </q-btn>
+        <q-btn @click="scrollToBottom" icon="to_bottom" flat spread stretch>
+          <hint>{{ $t("Bottom") }}</hint>
+        </q-btn>
+        <template v-if="inlineBranches">
+          <q-separator vertical />
+          <q-btn @click="collapseAllBranches" icon="less" flat spread stretch>
+            <hint>{{ $t("Collapse All") }}</hint>
+          </q-btn>
+          <q-btn
+            v-if="inlineBranches"
+            @click="expandAllBranches"
+            icon="more"
+            flat
+            spread
+            stretch
+          >
+            <hint>{{ $t("Expand All") }}</hint>
+          </q-btn>
+        </template>
+      </q-btn-group>
+    </q-toolbar>
+    <q-separator />
     <q-resize-observer @resize="scroll" />
   </component>
 </template>
@@ -55,6 +88,7 @@ export default {
   data() {
     return {
       seenTargetBranches: [],
+      collapsedToCurrentBranch: false,
     };
   },
   created() {
@@ -133,6 +167,12 @@ export default {
       }
       return targetBranch === branch || targetBranch.startsWith(branch + "/");
     },
+    getBranchParent(branch) {
+      if (!branch || !branch.includes("/")) {
+        return "";
+      }
+      return branch.split("/").slice(0, -1).join("/");
+    },
     isBranchPrefixOfAnyTarget(branch, targetBranches) {
       if (!branch || !targetBranches || !targetBranches.length) {
         return false;
@@ -141,10 +181,73 @@ export default {
         this.isBranchPrefixOfTarget(branch, targetBranch)
       );
     },
+    getBranchPointPlies() {
+      if (!this.ptn || !this.ptn.allPlies) {
+        return [];
+      }
+      return Object.values(this.ptn.allPlies).filter(
+        (ply) =>
+          ply &&
+          ply.branches &&
+          ply.branches.length > 1 &&
+          ply.branches[0] === ply.id
+      );
+    },
+    scrollToTop() {
+      this.$refs.scroll.scrollTo(0);
+    },
+    scrollToBottom() {
+      this.$refs.scroll.scrollTo(this.moves.length - 1);
+    },
+    jumpToCurrent() {
+      this.$nextTick(() => this.scroll());
+    },
+    expandAllBranches() {
+      this.collapsedToCurrentBranch = false;
+
+      const branchPoints = this.getBranchPointPlies();
+      const overrides = {};
+      branchPoints.forEach((ply) => {
+        overrides[ply.id] = true;
+      });
+
+      this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", overrides);
+    },
+    collapseAllBranches() {
+      this.collapsedToCurrentBranch = false;
+
+      const branchPoints = this.getBranchPointPlies();
+      const targetBranch = (this.position && this.position.targetBranch) || "";
+      const targetParent = this.getBranchParent(targetBranch);
+      const overrides = {};
+      branchPoints.forEach((ply) => {
+        const branchPlies = ply.branches
+          .slice(1)
+          .map((id) => this.ptn.allPlies[id])
+          .filter(Boolean);
+
+        const isOnPath = branchPlies.some((branchPly) =>
+          this.isBranchPrefixOfTarget(branchPly.branch, targetBranch)
+        );
+        const hasSibling =
+          Boolean(targetParent) &&
+          branchPlies.some(
+            (branchPly) =>
+              this.getBranchParent(branchPly.branch) === targetParent
+          );
+
+        if (!isOnPath && !hasSibling) {
+          overrides[ply.id] = false;
+        }
+      });
+
+      this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", overrides);
+    },
     getDefaultExpandedBranches(ply) {
       const targetBranch = this.position.targetBranch || "";
       const targets = targetBranch ? [targetBranch] : [];
-      const allowSiblingExpansion = targetBranch.includes("/");
+      const allowSiblingExpansion =
+        targetBranch.includes("/") && !this.collapsedToCurrentBranch;
 
       if (
         !targets.length ||
@@ -173,11 +276,8 @@ export default {
           return false;
         }
         for (const target of targets) {
-          const targetParent = target.split("/").slice(0, -1).join("/");
-          const branchParent = branchPly.branch
-            .split("/")
-            .slice(0, -1)
-            .join("/");
+          const targetParent = this.getBranchParent(target);
+          const branchParent = this.getBranchParent(branchPly.branch);
           if (targetParent === branchParent) {
             return true;
           }

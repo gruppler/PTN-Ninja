@@ -126,6 +126,7 @@ export default {
   tei: "mdi-console-network-outline",
   text: "mdi-text",
   time: "mdi-clock-outline",
+  to_current: "mdi-arrow-collapse-vertical",
   to_bottom: "mdi-arrow-collapse-down",
   to_top: "mdi-arrow-collapse-up",
   top_games: "mdi-trophy",

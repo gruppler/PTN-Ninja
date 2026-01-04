@@ -406,14 +406,18 @@ export const DELETE_BRANCH = (state, branch) => {
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedPtnUI = cloneDeep(state.ptnUI);
   if (game && !state.isEditingTPS && game.undo()) {
+    state.ptnUI = savedPtnUI;
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedPtnUI = cloneDeep(state.ptnUI);
   if (game && !state.isEditingTPS && game.redo()) {
+    state.ptnUI = savedPtnUI;
     postMessage("REDO");
   }
 };
@@ -523,6 +527,12 @@ export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
 };
 
+export const REMOVE_POSITION_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) => notePlyID === String(plyID)
+  );
+};
+
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
 };
@@ -549,10 +559,10 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
 
   Vue.prototype.$game.removeNotes((note, plyID) => {
     if (evalPlyID && plyID === evalPlyID) {
-      return note.evaluation !== null;
+      return note.evaluation !== null || note.pv !== null;
     }
     if (nextPlyID && plyID === nextPlyID) {
-      return note.pv !== null;
+      return note.evaluation !== null || note.pv !== null;
     }
     return false;
   });

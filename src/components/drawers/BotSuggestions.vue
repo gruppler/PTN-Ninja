@@ -972,12 +972,6 @@ export default {
       }
       this.bot.saveEvalComments(this.tps);
     },
-    clearSavedResults() {
-      if (!this.hasResults) {
-        return;
-      }
-      this.bot.clearSavedResults();
-    },
     clearUnsavedResults() {
       if (!this.hasResults) {
         return;
@@ -989,6 +983,7 @@ export default {
         message: this.$t("analysis.Clear All Unsaved Results"),
         timeout: 5000,
         progress: true,
+        multiLine: false,
         actions: [
           {
             label: this.$t("Undo"),
@@ -1012,6 +1007,7 @@ export default {
         message: this.$t("analysis.Clear Positions Unsaved Results"),
         timeout: 5000,
         progress: true,
+        multiline: false,
         actions: [
           {
             label: this.$t("Undo"),
@@ -1025,11 +1021,49 @@ export default {
         ],
       });
     },
+    clearSavedResults() {
+      if (!this.hasResults) {
+        return;
+      }
+      this.bot.clearSavedResults();
+      this.notify({
+        icon: "delete_all",
+        message: this.$t("analysis.Delete All Saved Results"),
+        timeout: 5000,
+        progress: true,
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "primary",
+            multiLine: false,
+            handler: () => {
+              this.$store.dispatch("game/UNDO");
+            },
+          },
+        ],
+      });
+    },
     clearCurrentPositionSavedResults() {
       if (!this.hasCurrentPositionSavedResults) {
         return;
       }
-      this.$store.commit("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
+      this.$store.dispatch("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
+      this.notify({
+        icon: "delete",
+        message: this.$t("analysis.Delete Positions Saved Results"),
+        timeout: 5000,
+        progress: true,
+        multiline: false,
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "primary",
+            handler: () => {
+              this.$store.dispatch("game/UNDO");
+            },
+          },
+        ],
+      });
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {

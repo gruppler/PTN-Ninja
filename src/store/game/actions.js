@@ -959,6 +959,11 @@ export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REMOVE_POSITION_NOTES = ({ commit, dispatch }, plyID) => {
+  commit("REMOVE_POSITION_NOTES", plyID);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
   dispatch("SAVE_CURRENT_GAME", true);
@@ -966,5 +971,13 @@ export const REMOVE_NOTES = function ({ commit, dispatch }) {
 
 export const REMOVE_ANALYSIS_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_ANALYSIS_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  tps
+) {
+  commit("REMOVE_POSITION_ANALYSIS_NOTES", tps);
   dispatch("SAVE_CURRENT_GAME", true);
 };

@@ -21,6 +21,7 @@ export default class GameUndo {
         ...this.params,
         ptn: history.beforePTN,
         state: history.state,
+        ptnUI: this.ptnUI,
       });
     }
     this.board.updateOutput();
@@ -37,6 +38,7 @@ export default class GameUndo {
         ...this.params,
         ptn: history.afterPTN,
         state: history.afterState || history.state,
+        ptnUI: this.ptnUI,
       });
     }
     this.board.updateOutput();
