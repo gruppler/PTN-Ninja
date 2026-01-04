@@ -31,6 +31,46 @@ import {
 import { TPStoPNG } from "tps-ninja";
 import hashObject from "object-hash";
 
+// Thumbnail generation queue for batched/deferred rendering
+let thumbnailQueue = [];
+let thumbnailProcessing = false;
+const THUMBNAIL_BATCH_DELAY = 10; // ms between batches
+
+function processThumbnailQueue() {
+  if (thumbnailProcessing || thumbnailQueue.length === 0) return;
+
+  thumbnailProcessing = true;
+
+  // Use requestIdleCallback if available, otherwise requestAnimationFrame
+  const scheduleWork =
+    typeof requestIdleCallback !== "undefined"
+      ? (cb) => requestIdleCallback(cb, { timeout: 100 })
+      : requestAnimationFrame;
+
+  scheduleWork(() => {
+    const batch = thumbnailQueue.splice(0, 3); // Process up to 3 at a time
+
+    batch.forEach(({ options, id, commit, resolve, reject }) => {
+      try {
+        TPStoPNG(options).toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          commit("SET_THUMBNAIL", { id, options, url });
+          resolve(url);
+        }, "image/png");
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    thumbnailProcessing = false;
+
+    // Continue processing if more items in queue
+    if (thumbnailQueue.length > 0) {
+      setTimeout(processThumbnailQueue, THUMBNAIL_BATCH_DELAY);
+    }
+  });
+}
+
 export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
     theme = getters.theme(theme);
@@ -310,18 +350,12 @@ export const GET_THUMBNAIL = ({ commit, state }, options) => {
     const existing = state.thumbnails[id];
     if (existing) {
       resolve(existing.url);
-    } else {
-      // Generate thumbnail
-      try {
-        TPStoPNG(options).toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          commit("SET_THUMBNAIL", { id, options, url });
-          resolve(url);
-        }, "image/png");
-      } catch (error) {
-        reject(error);
-      }
+      return;
     }
+
+    // Queue the thumbnail for deferred rendering
+    thumbnailQueue.push({ options, id, commit, resolve, reject });
+    processThumbnailQueue();
   });
 };
 
