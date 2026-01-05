@@ -818,39 +818,38 @@ export default class Board extends Aggregation(
   }
 
   get prevPly() {
-    return this.getPrevPly();
-  }
-
-  getPrevPly(times = 1) {
-    return this.ply && this.ply.index > 0
-      ? this.plies[Math.max(0, this.ply.index - times)]
-      : null;
-  }
-
-  // Get previous ply using tree parent reference
-  getPrevPlyFromTree() {
+    // Use tree parent for previous ply
     return this.ply ? this.ply.parent : null;
   }
 
+  getPrevPly(times = 1) {
+    // Walk up the tree 'times' steps
+    let current = this.ply;
+    for (let i = 0; i < times && current; i++) {
+      current = current.parent;
+    }
+    return current;
+  }
+
   get nextPly() {
-    return this.getNextPly();
+    // Use tree children for next ply, preferring target branch
+    if (!this.ply || !this.ply.children.length) return null;
+    const inBranch = this.ply.children.find((c) =>
+      c.isInBranch(this.targetBranch)
+    );
+    return inBranch || this.ply.children[0];
   }
 
   getNextPly(times = 1) {
-    return this.ply && this.ply.index < this.plies.length - 1
-      ? this.plies[Math.min(this.plies.length - 1, this.ply.index + times)]
-      : null;
-  }
-
-  // Get next ply using tree - finds the next ply in the current branch
-  getNextPlyFromTree() {
-    if (!this.ply) return null;
-    // Find the next ply that has this ply as its parent and is in the target branch
-    return (
-      this.game.plies.find(
-        (p) => p.parent === this.ply && p.isInBranch(this.targetBranch)
-      ) || null
-    );
+    // Walk down the tree 'times' steps, following target branch
+    let current = this.ply;
+    for (let i = 0; i < times && current && current.children.length; i++) {
+      const inBranch = current.children.find((c) =>
+        c.isInBranch(this.targetBranch)
+      );
+      current = inBranch || current.children[0];
+    }
+    return current !== this.ply ? current : null;
   }
 
   get flatsWithoutKomi() {

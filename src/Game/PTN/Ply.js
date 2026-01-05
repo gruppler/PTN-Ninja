@@ -199,10 +199,18 @@ export default class Ply extends Ptn {
     ply.branches = this.branches;
     // Set tree parent - branch ply's parent is the ply before the branch point
     ply.parent = this.parent;
+    // Add to parent's children array (branch alternatives come after main continuation)
+    if (ply.parent && !ply.parent.children.includes(ply)) {
+      ply.parent.children.push(ply);
+    }
   }
 
   removeBranch(ply) {
     delete this.game.branches[ply.branch];
+    // Remove from parent's children array
+    if (ply.parent && ply.parent.children.includes(ply)) {
+      ply.parent.children.splice(ply.parent.children.indexOf(ply), 1);
+    }
     if (this.branches.length === 2) {
       // Remove our last branch
       this.branches.parent.children.splice(
@@ -257,14 +265,7 @@ export default class Ply extends Ptn {
   // Tree traversal helpers
   get nextPly() {
     // Next ply is the first child (main continuation)
-    if (this.id + 1 < this.game.plies.length) {
-      const next = this.game.plies[this.id + 1];
-      if (next && next.parent === this) {
-        return next;
-      }
-    }
-    // Fall back to legacy lookup
-    return this.game.plies[this.id + 1] || null;
+    return this.children.length > 0 ? this.children[0] : null;
   }
 
   get prevPly() {

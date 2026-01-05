@@ -64,7 +64,7 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 ### Phase 1: New Ply Structure
 
 - [x] Add `parent` property to Ply
-- [ ] Refactor `children` to be direct child plies (not branch points)
+- [x] Add `children` array to Ply constructor
 - [x] Keep `branches` array for backward compatibility during transition
 - [x] Update Ply constructor and `addBranch`/`removeBranch` methods
 
@@ -74,27 +74,37 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 
 - [x] Build parent/children relationships during PTN parsing
 - [x] Set `parent` when creating plies
-- [ ] Populate `children` array instead of relying on ID arithmetic
+- [x] Populate `children` array when setting parent (bidirectional link)
+- [x] Update `children` in `addBranch` for branch plies
+- [x] Update `removeBranch` to remove from parent's children
 
-**Files:** `src/Game/PTN/index.js`, `src/Game/PTN/Move.js`
+**Files:** `src/Game/PTN/index.js`, `src/Game/PTN/Move.js`, `src/Game/PTN/Ply.js`
 
 ### Phase 3: Computed Legacy Properties
 
 - [ ] Add `get plies()` that flattens tree and assigns IDs
 - [ ] Add `get branches()` that computes branch name map
-- [x] Add `rootPly` getter and `getPliesFromTree()` method
+- [x] Add `rootPly` getter and `getPliesFromTree()` method (now uses children)
 - [x] Add `verifyParentRelationships()` debug method
+- [x] Add `verifyChildrenRelationships()` debug method
 - [ ] Ensure existing code continues to work
 
 **Files:** `src/Game/base.js`
 
 ### Phase 4: Navigation Refactor
 
-- [ ] Navigate via `parent`/`children` instead of ID arithmetic
-- [ ] Track position by `currentPly` reference
-- [ ] Update `goToPly`, `next`, `prev`, `first`, `last`
+- [x] Add `getPrevPlyFromTree()` method to Board (now integrated into main getter)
+- [x] Add `getNextPlyFromTree()` method to Board (now integrated into main getter)
+- [x] Add `getPath()` method to Ply (returns array of plies from root)
+- [x] Add `depth` getter to Ply
+- [x] Add `getSerializablePath()` method to Ply (survives init())
+- [x] Add `findPlyFromPath()` method to Game (restores position from path)
+- [x] Update `nextPly` getter on Ply to use children array
+- [x] Update Board `prevPly`/`nextPly` getters to use tree traversal
+- [x] Update Board `getPrevPly(times)`/`getNextPly(times)` to walk tree
+- [ ] Track position by `currentPly` reference (optional - plyID still works)
 
-**Files:** `src/Game/Board/nav.js`, `src/Game/Board/index.js`
+**Files:** `src/Game/Board/nav.js`, `src/Game/Board/index.js`, `src/Game/PTN/Ply.js`
 
 ### Phase 5: Mutation Simplification
 
@@ -179,6 +189,37 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 - [x] Add `findPlyFromPath()` method to Game (restores position from path)
 - [ ] Replace existing navigation with tree-based navigation
 - [ ] Track position by `currentPly` reference
+
+---
+
+### Session 2 - Jan 5, 2026
+
+**Completed:**
+
+- Implemented bidirectional parent-children links:
+  - `Move.setPly` now adds ply to parent's `children` array when setting parent
+  - `Ply.addBranch` adds branch plies to parent's children
+  - `Ply.removeBranch` removes from parent's children
+- Updated tree traversal to use `children` array:
+  - `Ply.nextPly` getter now returns `children[0]` (main continuation)
+  - `getPliesFromTree()` traverses via children (depth-first)
+  - Board `prevPly`/`nextPly` getters now use tree parent/children
+  - Board `getPrevPly(times)`/`getNextPly(times)` walk tree structure
+- Added `verifyChildrenRelationships()` debug method
+
+**Current State:**
+
+Phase 1-2 complete. Phase 4 navigation refactor complete:
+
+- Tree structure is now fully bidirectional (parent ↔ children)
+- `children[0]` = main continuation, `children[1+]` = branch alternatives
+- All navigation now uses tree traversal (parent for prev, children for next)
+- `goToPly` still uses index comparison but `_doPly`/`_undoPly` use tree
+
+**Next Steps:**
+
+1. Test tree integrity with branch promotion in browser
+2. Simplify mutation code (Phase 5) to use children array for reordering
 
 ---
 
