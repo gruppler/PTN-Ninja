@@ -12,7 +12,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:8080",
+    baseURL: "http://localhost:8081",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -26,7 +26,7 @@ module.exports = defineConfig({
 
   webServer: {
     command: "yarn dev",
-    url: "http://localhost:8080",
+    url: "http://localhost:8081",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     cwd: "..",
