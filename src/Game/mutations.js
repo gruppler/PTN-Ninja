@@ -112,13 +112,20 @@ export default class GameMutations {
     const getDescendents = (startPly, excludeBranch, includeSiblings) => {
       const branch = startPly.branch;
       const descendents = [];
+      const isInExcludedSubtree = (ply) => {
+        if (!excludeBranch) return false;
+        return (
+          ply.branch === excludeBranch ||
+          ply.branch.startsWith(excludeBranch + "/")
+        );
+      };
       // Iterate through all plies to find ones in this branch (they may not be contiguous)
       for (let i = startPly.id; i < this.plies.length; i++) {
         const ply = this.plies[i];
         if (!ply) continue;
         // Check if this ply is in the target branch or a child of it
         if (ply.branch === branch || ply.branch.startsWith(branch + "/")) {
-          if (!ply.isInBranch(excludeBranch)) {
+          if (!isInExcludedSubtree(ply)) {
             // Only include plies directly in this branch, or child branches if includeSiblings
             if (ply.branch === branch) {
               descendents.push(ply);

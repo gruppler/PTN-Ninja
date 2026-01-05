@@ -300,19 +300,19 @@ export default class Ply extends Ptn {
     return depth;
   }
 
-  // Get a serializable path representation that survives init()
-  // Returns array of {moveNumber, player, branchIndex} for each branch point
+  // Get a serializable path representation that survives init() and promotion
+  // Returns array of {moveNumber, player, moveText} for each branch point
+  // Uses moveText instead of branchIndex since indices change during promotion
   getSerializablePath() {
     const path = [];
     let current = this;
     while (current) {
       if (current.branches.length > 1) {
-        // This is a branch point - record which branch we're on
-        const branchIndex = current.branches.indexOf(current);
+        // This is a branch point - record the move text to identify which branch
         path.unshift({
           moveNumber: current.move.number,
           player: current.player,
-          branchIndex: branchIndex,
+          moveText: current.toString(true), // Use move text as stable identifier
         });
       }
       current = current.parent;
@@ -321,7 +321,7 @@ export default class Ply extends Ptn {
     path.push({
       moveNumber: this.move.number,
       player: this.player,
-      branchIndex: -1, // -1 means this is the target, not a branch choice
+      moveText: this.toString(true),
     });
     return path;
   }
