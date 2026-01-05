@@ -223,6 +223,31 @@ export default class Ply extends Ptn {
     }
   }
 
+  // Promote this ply to be the main continuation (first child of parent)
+  promoteToMainChild() {
+    if (!this.parent) return false;
+    const children = this.parent.children;
+    const index = children.indexOf(this);
+    if (index <= 0) return false; // Already main or not found
+    // Remove from current position and insert at front
+    children.splice(index, 1);
+    children.unshift(this);
+    return true;
+  }
+
+  // Swap position with another sibling in parent's children array
+  swapWithSibling(sibling) {
+    if (!this.parent || this.parent !== sibling.parent) return false;
+    const children = this.parent.children;
+    const myIndex = children.indexOf(this);
+    const siblingIndex = children.indexOf(sibling);
+    if (myIndex < 0 || siblingIndex < 0) return false;
+    // Swap positions
+    children[myIndex] = sibling;
+    children[siblingIndex] = this;
+    return true;
+  }
+
   isInBranch(branch) {
     if (!(branch in this.game.branches)) {
       // Nonexistent branch
