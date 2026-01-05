@@ -508,30 +508,46 @@ export const SAVE_TPS = function (state, tps) {
   Vue.prototype.$game.setEditingTPS();
 };
 
-// Helper to save branch point overrides using stable keys before init()
-const saveBranchPointOverrides = (game, currentOverrides) => {
+// Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points
+// This preserves the visual state regardless of what the new default would be
+// Uses sorted sibling move texts as a stable key that survives promotion
+const saveBranchPointStates = (game, currentOverrides) => {
   const saved = {};
-  Object.entries(currentOverrides || {}).forEach(([plyID, expanded]) => {
-    const ply = game.plies[parseInt(plyID, 10)];
-    if (ply && ply.branches && ply.branches.length > 1) {
-      // Use move number, player, and parent info as a stable key
-      const parent = ply.parent;
+  // Find all branch points and save their effective state
+  // Note: in game.plies, branches[0] is a ply object, not an ID
+  for (const ply of game.plies) {
+    if (
+      ply &&
+      ply.branches &&
+      ply.branches.length > 1 &&
+      ply.branches[0] === ply
+    ) {
+      const override = currentOverrides[ply.id];
+      // Use all sibling move texts (sorted) as a stable key
+      // This survives promotion because the siblings remain the same
+      const siblingMoveTexts = ply.branches
+        .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
+        .filter(Boolean)
+        .sort()
+        .join("|");
       const key = JSON.stringify({
         moveNumber: ply.move.number,
         player: ply.player,
-        parentMoveNumber: parent ? parent.move.number : null,
-        parentPlayer: parent ? parent.player : null,
+        siblings: siblingMoveTexts,
       });
-      saved[key] = expanded;
+      // Save explicit overrides only - undefined means use default behavior
+      if (override !== undefined) {
+        saved[key] = override;
+      }
     }
-  });
+  }
   return saved;
 };
 
 // Helper to restore branch point overrides after init()
-const restoreBranchPointOverrides = (game, savedOverrides) => {
+const restoreBranchPointStates = (game, savedStates) => {
   const newOverrides = {};
-  Object.entries(savedOverrides).forEach(([key, expanded]) => {
+  Object.entries(savedStates).forEach(([key, expanded]) => {
     let parsed;
     try {
       parsed = JSON.parse(key);
@@ -539,22 +555,22 @@ const restoreBranchPointOverrides = (game, savedOverrides) => {
       return;
     }
     // Find the branch point ply matching this key
+    // Note: in game.plies, branches[0] is a ply object, not an ID
     for (const ply of game.plies) {
       if (
         ply.move.number === parsed.moveNumber &&
         ply.player === parsed.player &&
         ply.branches &&
         ply.branches.length > 1 &&
-        ply.branches[0] === ply.id
+        ply.branches[0] === ply
       ) {
-        const parent = ply.parent;
-        const parentMatches =
-          parsed.parentMoveNumber === null
-            ? !parent
-            : parent &&
-              parent.move.number === parsed.parentMoveNumber &&
-              parent.player === parsed.parentPlayer;
-        if (parentMatches) {
+        // Build the sibling key for this branch point
+        const siblingMoveTexts = ply.branches
+          .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
+          .filter(Boolean)
+          .sort()
+          .join("|");
+        if (siblingMoveTexts === parsed.siblings) {
           newOverrides[ply.id] = expanded;
           break;
         }
@@ -567,11 +583,11 @@ const restoreBranchPointOverrides = (game, savedOverrides) => {
 export const PROMOTE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
   const currentOverrides = state.ptnUI?.branchPointOverrides || {};
-  const savedOverrides = saveBranchPointOverrides(game, currentOverrides);
+  const savedStates = saveBranchPointStates(game, currentOverrides);
 
   game.promoteBranch(branch);
 
-  const newOverrides = restoreBranchPointOverrides(game, savedOverrides);
+  const newOverrides = restoreBranchPointStates(game, savedStates);
   state.ptnUI = Object.freeze({
     branchPointOverrides: Object.freeze(newOverrides),
   });
@@ -583,11 +599,11 @@ export const PROMOTE_BRANCH = (state, branch) => {
 export const MAKE_BRANCH_MAIN = (state, branch) => {
   const game = Vue.prototype.$game;
   const currentOverrides = state.ptnUI?.branchPointOverrides || {};
-  const savedOverrides = saveBranchPointOverrides(game, currentOverrides);
+  const savedStates = saveBranchPointStates(game, currentOverrides);
 
   game.makeBranchMain(branch, true);
 
-  const newOverrides = restoreBranchPointOverrides(game, savedOverrides);
+  const newOverrides = restoreBranchPointStates(game, savedStates);
   state.ptnUI = Object.freeze({
     branchPointOverrides: Object.freeze(newOverrides),
   });

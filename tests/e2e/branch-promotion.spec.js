@@ -739,5 +739,102 @@ test.describe("Branch Promotion Tests", () => {
     expect(after.ptn).toContain("c2");
     expect(after.ptn).toContain("d1");
   });
-});
 
+  test("T13: Collapsed branch state preserved after promotion", async ({
+    page,
+  }) => {
+    // Use a PTN with multiple branch points
+    await loadPTN(page, PTN_FIXTURES.T2);
+
+    // Get the branch point info before any changes
+    // Note: in game.plies, branches[0] is a ply object, not an ID
+    const branchPointsBefore = await page.evaluate(() => {
+      const game = window.app.$game;
+      return game.plies
+        .filter(
+          (ply) =>
+            ply.branches &&
+            ply.branches.length > 1 &&
+            ply.branches[0] === ply
+        )
+        .map((ply) => ({
+          id: ply.id,
+          moveNumber: ply.move.number,
+          player: ply.player,
+          moveText: ply.toString(true),
+          siblings: ply.branches
+            .map((siblingPly) => siblingPly?.toString(true))
+            .filter(Boolean)
+            .sort()
+            .join("|"),
+        }));
+    });
+
+    // Collapse all branch points (set override to false)
+    if (branchPointsBefore.length > 0) {
+      await page.evaluate((branchPoints) => {
+        const overrides = {};
+        branchPoints.forEach((bp) => {
+          overrides[bp.id] = false; // Collapsed
+        });
+        window.app.$store.dispatch(
+          "game/SET_BRANCH_POINT_OVERRIDES",
+          overrides
+        );
+      }, branchPointsBefore);
+    }
+
+    // Verify overrides are set
+    const overridesBefore = await page.evaluate(() => {
+      return window.app.$store.state.game.ptnUI?.branchPointOverrides || {};
+    });
+
+    // Perform promotion
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("game/PROMOTE_BRANCH", "3w2");
+    });
+
+    // Get overrides after promotion
+    const overridesAfter = await page.evaluate(() => {
+      return window.app.$store.state.game.ptnUI?.branchPointOverrides || {};
+    });
+
+    // Get the branch point info after promotion
+    // Note: in game.plies, branches[0] is a ply object, not an ID
+    const branchPointsAfter = await page.evaluate(() => {
+      const game = window.app.$game;
+      return game.plies
+        .filter(
+          (ply) =>
+            ply.branches &&
+            ply.branches.length > 1 &&
+            ply.branches[0] === ply
+        )
+        .map((ply) => ({
+          id: ply.id,
+          moveNumber: ply.move.number,
+          player: ply.player,
+          moveText: ply.toString(true),
+          siblings: ply.branches
+            .map((siblingPly) => siblingPly?.toString(true))
+            .filter(Boolean)
+            .sort()
+            .join("|"),
+        }));
+    });
+
+    // Verify that the number of branch points is preserved
+    expect(branchPointsAfter.length).toBe(branchPointsBefore.length);
+
+    // Verify that the collapsed state is preserved for each branch point
+    // (the override should be false for each branch point after promotion)
+    const collapsedCountAfter = Object.values(overridesAfter).filter(
+      (v) => v === false
+    ).length;
+    const collapsedCountBefore = Object.values(overridesBefore).filter(
+      (v) => v === false
+    ).length;
+
+    expect(collapsedCountAfter).toBe(collapsedCountBefore);
+  });
+});
