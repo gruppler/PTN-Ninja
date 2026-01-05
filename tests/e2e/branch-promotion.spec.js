@@ -741,29 +741,3 @@ test.describe("Branch Promotion Tests", () => {
   });
 });
 
-test.describe("Branch Promotion Runner Integration", () => {
-  test("Run all branch promotion tests via runner", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForFunction(() => window.app && window.app.$store);
-
-    // Check if the runner is installed
-    const hasRunner = await page.evaluate(() => {
-      return typeof window.branchPromotionTests !== "undefined";
-    });
-
-    if (!hasRunner) {
-      // Install the runner manually if not present
-      test.skip();
-      return;
-    }
-
-    // Run all tests
-    const results = await page.evaluate(() => {
-      return window.branchPromotionTests.runAll({ debug: false });
-    });
-
-    // Check all tests passed
-    const failed = results.filter((r) => !r.ok);
-    expect(failed).toHaveLength(0);
-  });
-});

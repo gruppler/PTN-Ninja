@@ -645,15 +645,19 @@ export default class GameBase {
   }
 
   // Find a ply from a serializable path (from Ply.getSerializablePath())
+  // Uses moveText to identify branch choices (stable across promotion)
   findPlyFromPath(path) {
     if (!path || !path.length) return null;
 
     const target = path[path.length - 1];
     const branchChoices = path.slice(0, -1);
 
-    // Find all plies matching the target move number and player
+    // Find all plies matching the target move number, player, and move text
     const candidates = this.plies.filter(
-      (p) => p.move.number === target.moveNumber && p.player === target.player
+      (p) =>
+        p.move.number === target.moveNumber &&
+        p.player === target.player &&
+        p.toString(true) === target.moveText
     );
 
     if (candidates.length === 0) return null;
@@ -664,7 +668,7 @@ export default class GameBase {
       let matches = true;
       let current = candidate;
 
-      // Walk up the tree and check branch choices
+      // Walk up the tree and check branch choices by move text
       for (let i = branchChoices.length - 1; i >= 0 && matches; i--) {
         const choice = branchChoices[i];
         // Find the branch point for this choice
@@ -674,9 +678,8 @@ export default class GameBase {
             current.move.number === choice.moveNumber &&
             current.player === choice.player
           ) {
-            // Check if the branch index matches
-            const actualIndex = current.branches.indexOf(current);
-            if (actualIndex !== choice.branchIndex) {
+            // Check if the move text matches
+            if (current.toString(true) !== choice.moveText) {
               matches = false;
             }
             break;
