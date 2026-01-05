@@ -9,6 +9,10 @@
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
     "icons": "icongenie g -i app-icon.png --quality 12 --theme-color 607d8b --skip-trim",
+    "test": "cd tests && npm test",
+    "test:install": "cd tests && npm install && npx playwright install chromium",
+    "test:ui": "cd tests && npm run test:ui",
+    "test:headed": "cd tests && npm run test:headed",
     "dev": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m spa",
     "dev:pwa": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m pwa",
     "dev:electron": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m electron",
