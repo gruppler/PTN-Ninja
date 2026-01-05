@@ -167,6 +167,7 @@ const state = {
   collapseBranchRequest: null,
   expandBranchRequest: null,
   scrubbing: false,
+  plyPreviewActive: false,
   thumbnails: {},
   shortLinks: {},
   defaults: defaultState,
