@@ -43,6 +43,7 @@ export default {
       tooltipPosition: { x: 0, y: 0 },
       isMoving: false,
       isTouchActive: false,
+      touchStartedOnPly: false,
     };
   },
   computed: {
@@ -84,7 +85,10 @@ export default {
     document.addEventListener("mouseover", this.onMouseOver, true);
     document.addEventListener("mouseout", this.onMouseOut, true);
     document.addEventListener("touchstart", this.onTouchStart, true);
-    document.addEventListener("touchmove", this.onTouchMove, true);
+    document.addEventListener("touchmove", this.onTouchMove, {
+      passive: false,
+      capture: true,
+    });
     document.addEventListener("touchend", this.onTouchEnd, true);
     document.addEventListener("touchcancel", this.onTouchEnd, true);
     document.addEventListener("visibilitychange", this.onVisibilityChange);
@@ -93,7 +97,10 @@ export default {
     document.removeEventListener("mouseover", this.onMouseOver, true);
     document.removeEventListener("mouseout", this.onMouseOut, true);
     document.removeEventListener("touchstart", this.onTouchStart, true);
-    document.removeEventListener("touchmove", this.onTouchMove, true);
+    document.removeEventListener("touchmove", this.onTouchMove, {
+      passive: false,
+      capture: true,
+    });
     document.removeEventListener("touchend", this.onTouchEnd, true);
     document.removeEventListener("touchcancel", this.onTouchEnd, true);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
@@ -201,10 +208,13 @@ export default {
     onTouchStart(event) {
       const plyEl = this.findPlyElement(event.target);
       if (!plyEl) {
+        this.touchStartedOnPly = false;
         this.hidePlyTooltip();
         return;
       }
 
+      this.touchStartedOnPly = true;
+      this.$store.state.ui.plyPreviewActive = true;
       this.clearTouchTimer();
       this.touchTimer = setTimeout(() => {
         this.isTouchActive = true;
@@ -212,6 +222,11 @@ export default {
       }, LONG_PRESS_DELAY);
     },
     onTouchMove(event) {
+      if (!this.touchStartedOnPly) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
       if (!this.isTouchActive) {
         return;
       }
@@ -229,6 +244,8 @@ export default {
     onTouchEnd() {
       this.clearTouchTimer();
       this.isTouchActive = false;
+      this.touchStartedOnPly = false;
+      this.$store.state.ui.plyPreviewActive = false;
       this.hidePlyTooltip();
     },
     onVisibilityChange() {

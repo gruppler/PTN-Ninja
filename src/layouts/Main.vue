@@ -187,7 +187,7 @@
       :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -212,7 +212,7 @@
       :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
