@@ -42,6 +42,7 @@ export default {
       hideTimer: null,
       tooltipPosition: { x: 0, y: 0 },
       isMoving: false,
+      isTouchActive: false,
     };
   },
   computed: {
@@ -83,6 +84,7 @@ export default {
     document.addEventListener("mouseover", this.onMouseOver, true);
     document.addEventListener("mouseout", this.onMouseOut, true);
     document.addEventListener("touchstart", this.onTouchStart, true);
+    document.addEventListener("touchmove", this.onTouchMove, true);
     document.addEventListener("touchend", this.onTouchEnd, true);
     document.addEventListener("touchcancel", this.onTouchEnd, true);
     document.addEventListener("visibilitychange", this.onVisibilityChange);
@@ -91,6 +93,7 @@ export default {
     document.removeEventListener("mouseover", this.onMouseOver, true);
     document.removeEventListener("mouseout", this.onMouseOut, true);
     document.removeEventListener("touchstart", this.onTouchStart, true);
+    document.removeEventListener("touchmove", this.onTouchMove, true);
     document.removeEventListener("touchend", this.onTouchEnd, true);
     document.removeEventListener("touchcancel", this.onTouchEnd, true);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
@@ -204,11 +207,28 @@ export default {
 
       this.clearTouchTimer();
       this.touchTimer = setTimeout(() => {
+        this.isTouchActive = true;
         this.showPlyTooltip(plyEl);
       }, LONG_PRESS_DELAY);
     },
+    onTouchMove(event) {
+      if (!this.isTouchActive) {
+        return;
+      }
+      const touch = event.touches[0];
+      if (!touch) return;
+      const elementUnderTouch = document.elementFromPoint(
+        touch.clientX,
+        touch.clientY
+      );
+      const plyEl = this.findPlyElement(elementUnderTouch);
+      if (plyEl && plyEl !== this.hoveredElement) {
+        this.showPlyTooltip(plyEl);
+      }
+    },
     onTouchEnd() {
       this.clearTouchTimer();
+      this.isTouchActive = false;
       this.hidePlyTooltip();
     },
     onVisibilityChange() {
