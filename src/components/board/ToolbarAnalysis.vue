@@ -111,6 +111,7 @@
             :suggestion="botSuggestion"
             fixed-height
             class="toolbar-analysis"
+            @wheel.native="scroll"
           >
             <template v-slot:before>
               <div
@@ -255,6 +256,8 @@ export default {
   data() {
     return {
       suggestionIndex: 0,
+      deltaY: 0,
+      scrollTimer: null,
     };
   },
   computed: {
@@ -388,6 +391,35 @@ export default {
       } else {
         this.suggestionIndex = 0;
       }
+    },
+    scroll(event) {
+      if (!this.$store.state.ui.scrollScrubbing || this.suggestionsCount <= 1) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const scrollThreshold =
+        this.$store.state.ui.scrollThreshold || window.devicePixelRatio * 100;
+
+      this.deltaY += event.deltaY;
+      if (Math.abs(this.deltaY) >= scrollThreshold) {
+        const times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
+        this.deltaY = this.deltaY % scrollThreshold;
+        for (let i = 0; i < times; i++) {
+          if (event.deltaY > 0) {
+            this.nextSuggestion();
+          } else {
+            this.prevSuggestion();
+          }
+        }
+      }
+
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
+        this.deltaY = 0;
+      }, 300);
     },
   },
   watch: {
