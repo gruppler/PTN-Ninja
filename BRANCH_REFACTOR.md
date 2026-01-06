@@ -122,6 +122,27 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 2. `init()` re-parses PTN and rebuilds tree structure via `Move.setPly`
 3. Position is restored via `getSerializablePath()` / `findPlyFromPath()`
 
+### Phase 5b: Smart Branch Renaming on Promotion ✓
+
+When promoting branches, handle branch names intelligently:
+
+- [x] Detect if branch has default name (e.g., "14w2") vs custom name
+- [x] Default names: Rename to maintain sequential order after promotion
+- [x] Custom names: Preserve custom name, move it with the branch
+- [x] Promotion to main: Discard branch name (becomes mainline)
+- [x] Add tests for all renaming scenarios (T14-T17)
+
+**Default name pattern:** `{moveNumber}{player}{index}` (e.g., "14w2", "3b1")
+
+**Implementation:**
+
+- Added `_isDefaultBranchName()` helper using regex pattern
+- Added `_getBranchLeaf()`, `_getBranchParent()`, `_generateDefaultBranchName()` helpers
+- Updated `promoteBranch()` to swap/preserve names based on default vs custom
+- Uses temp branch name during rename to avoid conflicts
+
+**Files:** `src/Game/mutations.js`, `tests/e2e/branch-promotion.spec.js`
+
 ### Phase 6: Serialization
 
 - [ ] Update `toString()` to traverse tree
@@ -221,15 +242,24 @@ After mutations, URLs update based on new tree position, but old URLs still reso
 - Removed unused `_rebuildTreeRelationships()` method (not needed)
 - Phase 5 complete - mutations work correctly with existing architecture
 
+**Phase 5b Completed:**
+
+- Implemented smart branch renaming on promotion
+- Added `_isDefaultBranchName()` helper (regex: `/^(\d+[wb]\d+)(\/\d+[wb]\d+)*$/`)
+- Added `_getBranchLeaf()`, `_getBranchParent()`, `_generateDefaultBranchName()` helpers
+- Updated `promoteBranch()` to handle default vs custom names
+- Added tests T14-T17 for renaming scenarios
+
 **Current State:**
 
-Phase 1-2 complete. Phase 4-5 complete:
+Phase 1-2 complete. Phase 4-5b complete:
 
 - Tree structure is fully bidirectional (parent ↔ children)
 - `children[0]` = main continuation, `children[1+]` = branch alternatives
 - All navigation uses tree traversal (parent for prev, children for next)
 - Mutations serialize to PTN, `init()` rebuilds tree, position restored via path
-- All 12 Playwright tests passing
+- Smart branch renaming: default names swap, custom names preserved
+- All 16 Playwright tests passing
 
 **Next Steps:**
 
