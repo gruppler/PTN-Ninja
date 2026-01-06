@@ -1,147 +1,151 @@
 <template>
   <div class="analysis-item" :class="{ animate }">
+    <slot name="before" />
     <div
       v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: evalPercent + '%' }"
     />
-    <q-item
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="insertPly"
-      :clickable="!isBoardDisabled && ply !== null"
-      style="height: 60px"
-    >
-      <q-item-section>
-        <q-item-label v-if="ply !== null">
+    <div class="full-width">
+      <q-item
+        @mouseover="highlight"
+        @mouseout="unhighlight"
+        @click="insertPly"
+        :clickable="!isBoardDisabled && ply !== null"
+        style="height: 60px"
+      >
+        <q-item-section>
+          <q-item-label v-if="ply !== null">
+            <Ply
+              :ply="ply"
+              no-click
+              :selected="selectedCount > 0"
+              :done="doneCount > 0"
+              :tps="tps"
+              :plies="ply && ply.text ? [ply.text] : null"
+            />
+          </q-item-label>
+        </q-item-section>
+        <q-item-section top side>
+          <q-item-label>
+            <span class="visits" v-if="visits !== null">
+              {{ $tc("analysis.visits", $n(visits, "n0")) }}
+            </span>
+            <span
+              class="player-numbers"
+              v-if="
+                middleNumber !== null ||
+                player1Number !== null ||
+                player2Number !== null ||
+                depth !== null
+              "
+            >
+              <span
+                class="player1 first"
+                v-if="player1Number !== null"
+                :class="{
+                  single:
+                    player2Number === null &&
+                    middleNumber === null &&
+                    depth === null,
+                }"
+                >{{ player1Number }}</span
+              >
+              <span
+                class="middle"
+                v-if="middleNumber !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    player2Number === null &&
+                    depth === null,
+                  first: player1Number === null,
+                  last: player2Number === null && depth === null,
+                }"
+                >{{ middleNumber }}</span
+              >
+              <span
+                class="player2"
+                v-if="player2Number !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    middleNumber === null &&
+                    depth === null,
+                  first: player1Number === null && middleNumber === null,
+                  last: depth == null,
+                }"
+                >{{ player2Number }}</span
+              >
+              <span
+                class="depth last"
+                v-if="depth !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    player2Number === null &&
+                    middleNumber === null,
+                }"
+                >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
+              >
+              <tooltip v-if="playerNumbersTooltip">
+                <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+              </tooltip>
+            </span>
+          </q-item-label>
+          <q-item-label
+            v-if="(count !== null && countLabel) || seconds !== null"
+            class="count"
+            caption
+          >
+            <template v-if="count !== null && countLabel">{{
+              $tc(countLabel, $n(count, "n0"))
+            }}</template>
+            <template v-if="count !== null && seconds !== null"> / </template>
+            <template v-if="seconds !== null">
+              {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
+              {{ $t("analysis.secondsUnit") }}
+            </template>
+            <tooltip v-if="count !== null && seconds">
+              {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
+            </tooltip>
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      <q-item
+        v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
+        class="q-pt-none"
+        @mouseover="highlight"
+        @mouseout="unhighlight"
+        @click="
+          followingPlies && followingPlies.length > 0
+            ? insertFollowingPlies()
+            : null
+        "
+        :clickable="
+          !isBoardDisabled && followingPlies && followingPlies.length > 0
+        "
+      >
+        <q-item-label
+          class="continuation small"
+          :class="{ limited: fixedHeight }"
+        >
           <Ply
-            :ply="ply"
-            no-click
-            :selected="selectedCount > 0"
-            :done="doneCount > 0"
+            v-for="(fPly, i) in followingPlies"
+            :key="i"
+            :ply="fPly"
+            :no-click="isBoardDisabled"
+            @click.stop.prevent.capture="insertFollowingPlies(i)"
+            :selected="selectedCount > i + 1"
+            :done="doneCount > i + 1"
             :tps="tps"
-            :plies="ply && ply.text ? [ply.text] : null"
+            :plies="tps ? getPlySequence(i) : null"
           />
         </q-item-label>
-      </q-item-section>
-      <q-item-section top side>
-        <q-item-label>
-          <span class="visits" v-if="visits !== null">
-            {{ $tc("analysis.visits", $n(visits, "n0")) }}
-          </span>
-          <span
-            class="player-numbers"
-            v-if="
-              middleNumber !== null ||
-              player1Number !== null ||
-              player2Number !== null ||
-              depth !== null
-            "
-          >
-            <span
-              class="player1 first"
-              v-if="player1Number !== null"
-              :class="{
-                single:
-                  player2Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-              }"
-              >{{ player1Number }}</span
-            >
-            <span
-              class="middle"
-              v-if="middleNumber !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  depth === null,
-                first: player1Number === null,
-                last: player2Number === null && depth === null,
-              }"
-              >{{ middleNumber }}</span
-            >
-            <span
-              class="player2"
-              v-if="player2Number !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-                first: player1Number === null && middleNumber === null,
-                last: depth == null,
-              }"
-              >{{ player2Number }}</span
-            >
-            <span
-              class="depth last"
-              v-if="depth !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  middleNumber === null,
-              }"
-              >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
-            >
-            <tooltip v-if="playerNumbersTooltip">
-              <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
-            </tooltip>
-          </span>
-        </q-item-label>
-        <q-item-label
-          v-if="(count !== null && countLabel) || seconds !== null"
-          class="count"
-          caption
-        >
-          <template v-if="count !== null && countLabel">{{
-            $tc(countLabel, $n(count, "n0"))
-          }}</template>
-          <template v-if="count !== null && seconds !== null"> / </template>
-          <template v-if="seconds !== null">
-            {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
-            {{ $t("analysis.secondsUnit") }}
-          </template>
-          <tooltip v-if="count !== null && seconds">
-            {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
-          </tooltip>
-        </q-item-label>
-      </q-item-section>
-    </q-item>
-    <q-item
-      v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
-      class="q-pt-none"
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="
-        followingPlies && followingPlies.length > 0
-          ? insertFollowingPlies()
-          : null
-      "
-      :clickable="
-        !isBoardDisabled && followingPlies && followingPlies.length > 0
-      "
-    >
-      <q-item-label
-        class="continuation small"
-        :class="{ limited: fixedHeight }"
-      >
-        <Ply
-          v-for="(fPly, i) in followingPlies"
-          :key="i"
-          :ply="fPly"
-          :no-click="isBoardDisabled"
-          @click.stop.prevent.capture="insertFollowingPlies(i)"
-          :selected="selectedCount > i + 1"
-          :done="doneCount > i + 1"
-          :tps="tps"
-          :plies="tps ? getPlySequence(i) : null"
-        />
-      </q-item-label>
-    </q-item>
+      </q-item>
+    </div>
+    <slot name="after" />
   </div>
 </template>
 
@@ -265,6 +269,8 @@ export default {
 <style lang="scss">
 .analysis-item {
   position: relative;
+  display: flex;
+  flex-direction: row;
 
   + .analysis-item {
     border-top: 1px solid $separator-color;

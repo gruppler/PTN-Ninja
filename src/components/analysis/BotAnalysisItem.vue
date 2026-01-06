@@ -23,7 +23,14 @@
     :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-if="$slots.after" v-slot:after>
+      <slot name="after" />
+    </template>
+  </AnalysisItem>
 </template>
 
 <script>

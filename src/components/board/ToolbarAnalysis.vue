@@ -111,7 +111,32 @@
             :suggestion="botSuggestion"
             fixed-height
             class="toolbar-analysis"
-          />
+          >
+            <template v-slot:before>
+              <div
+                v-if="suggestionsCount > 1"
+                class="suggestion-nav column items-center justify-stretch full-height"
+              >
+                <q-btn
+                  @click.stop="prevSuggestion"
+                  icon="up"
+                  class="col-grow"
+                  stretch
+                  flat
+                />
+                <div class="text-no-wrap text-caption">
+                  {{ suggestionIndex + 1 }} / {{ suggestionsCount }}
+                </div>
+                <q-btn
+                  @click.stop="nextSuggestion"
+                  icon="down"
+                  class="col-grow"
+                  stretch
+                  flat
+                />
+              </div>
+            </template>
+          </BotAnalysisItem>
           <AnalysisItemPlaceholder v-else class="toolbar-analysis" />
         </template>
         <q-btn
@@ -227,6 +252,11 @@ export default {
       default: null,
     },
   },
+  data() {
+    return {
+      suggestionIndex: 0,
+    };
+  },
   computed: {
     collapsed: {
       get() {
@@ -273,6 +303,15 @@ export default {
     botID() {
       return this.isEmbedded ? null : this.$store.state.analysis.botID;
     },
+    suggestions() {
+      if (this.$store.state.analysis) {
+        return this.$store.state.analysis.botPositions[this.tps] || [];
+      }
+      return [];
+    },
+    suggestionsCount() {
+      return this.suggestions.length;
+    },
     botSuggestion() {
       if (this.analysis) {
         if (
@@ -296,11 +335,8 @@ export default {
         }
       }
 
-      if (this.$store.state.analysis) {
-        const suggestions = this.$store.state.analysis.botPositions[this.tps];
-        if (suggestions) {
-          return suggestions[0];
-        }
+      if (this.suggestions.length > 0) {
+        return this.suggestions[this.suggestionIndex] || this.suggestions[0];
       }
 
       return this.$store.getters["game/suggestion"](this.tps);
@@ -339,6 +375,25 @@ export default {
         this.bot.isInteractiveEnabled = !this.bot.isInteractiveEnabled;
       }
     },
+    prevSuggestion() {
+      if (this.suggestionIndex > 0) {
+        this.suggestionIndex--;
+      } else {
+        this.suggestionIndex = this.suggestionsCount - 1;
+      }
+    },
+    nextSuggestion() {
+      if (this.suggestionIndex < this.suggestionsCount - 1) {
+        this.suggestionIndex++;
+      } else {
+        this.suggestionIndex = 0;
+      }
+    },
+  },
+  watch: {
+    tps() {
+      this.suggestionIndex = 0;
+    },
   },
 };
 </script>
@@ -375,6 +430,11 @@ export default {
 
   .spin {
     animation: spin 1s linear infinite;
+  }
+
+  .suggestion-nav {
+    z-index: 1;
+    position: relative;
   }
 
   @keyframes spin {
