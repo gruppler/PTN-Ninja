@@ -1036,7 +1036,7 @@ export default class Bot {
     formatEvaluation(value);
   }
 
-  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false) {
+  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false, pvsToSave = 1) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
@@ -1172,30 +1172,33 @@ export default class Bot {
 
     // PV
     if (positionBefore && pvLimit > 0) {
-      let position = positionBefore[0];
-      if (position && position.ply) {
-        const pv = [position.ply, ...position.followingPlies]
-          .slice(0, pvLimit)
-          .map((ply) => ply.ptn);
-        let pvComment = `pv ${pv.join(" ")}`;
+      const numPVs = Math.min(pvsToSave, positionBefore.length);
+      for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+        let position = positionBefore[pvIndex];
+        if (position && position.ply) {
+          const pv = [position.ply, ...position.followingPlies]
+            .slice(0, pvLimit)
+            .map((ply) => ply.ptn);
+          let pvComment = `pv ${pv.join(" ")}`;
 
-        // Find existing pv comment index
-        if (ply.id in this.game.comments.notes) {
-          const index = this.game.comments.notes[ply.id].findIndex(
-            (comment) =>
-              comment.pv !== null &&
-              comment.pv.every(
-                (cpv) =>
-                  cpv.every((ply, i) => ply === pv[i]) ||
-                  pv.every((ply, i) => ply === cpv[i])
-              )
-          );
-          if (index >= 0) {
-            pvComment = `!r${index}:${pvComment}`;
+          // Find existing pv comment index
+          if (ply.id in this.game.comments.notes) {
+            const index = this.game.comments.notes[ply.id].findIndex(
+              (comment) =>
+                comment.pv !== null &&
+                comment.pv.every(
+                  (cpv) =>
+                    cpv.every((ply, i) => ply === pv[i]) ||
+                    pv.every((ply, i) => ply === cpv[i])
+                )
+            );
+            if (index >= 0) {
+              pvComment = `!r${index}:${pvComment}`;
+            }
           }
-        }
 
-        comments.push(pvComment);
+          comments.push(pvComment);
+        }
       }
     }
     return comments;
@@ -1203,6 +1206,7 @@ export default class Bot {
 
   saveEvalComments(tps = null) {
     const pvLimit = store.state.analysis.pvLimit;
+    const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
 
@@ -1271,7 +1275,8 @@ export default class Bot {
         const notes = this.formatEvalComments(
           prevPly,
           pvLimit,
-          saveSearchStats
+          saveSearchStats,
+          pvsToSave
         ).filter((n) => !getPV(n));
         if (notes.length) {
           messages[prevPly.id] = notes;
@@ -1294,7 +1299,8 @@ export default class Bot {
         const notes = this.formatEvalComments(
           nextPly,
           pvLimit,
-          saveSearchStats
+          saveSearchStats,
+          pvsToSave
         ).filter((n) => getPV(n));
         if (notes.length) {
           messages[nextPly.id] = notes;
@@ -1306,7 +1312,8 @@ export default class Bot {
         const evaluations = this.formatEvalComments(
           ply,
           pvLimit,
-          saveSearchStats
+          saveSearchStats,
+          pvsToSave
         );
         if (evaluations.length) {
           notes.push(...evaluations);

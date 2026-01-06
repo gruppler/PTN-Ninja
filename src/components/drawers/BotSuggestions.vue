@@ -342,6 +342,17 @@
             filled
           />
 
+          <!-- PVs to Save -->
+          <q-input
+            type="number"
+            v-model.number="pvsToSave"
+            :label="$t('analysis.pvsToSave')"
+            :min="1"
+            :max="20"
+            item-aligned
+            filled
+          />
+
           <!-- Tiltak Cloud -->
           <!-- Max Suggestions -->
           <q-input
@@ -853,7 +864,22 @@ export default {
       return !isEmpty(this.positions);
     },
     suggestions() {
-      return this.positions[this.tps] || [];
+      const botSuggestions = this.positions[this.tps] || [];
+      const noteSuggestions = this.$store.getters["game/suggestions"](this.tps);
+
+      // Merge bot suggestions with note suggestions, avoiding duplicates
+      // Bot suggestions take priority (they have more recent/detailed data)
+      const merged = [...botSuggestions];
+      for (const noteSugg of noteSuggestions) {
+        // Check if this PV already exists in bot suggestions
+        const isDuplicate = merged.some(
+          (s) => s.ply && noteSugg.ply && s.ply.ptn === noteSugg.ply.ptn
+        );
+        if (!isDuplicate) {
+          merged.push(noteSugg);
+        }
+      }
+      return merged;
     },
     enableLogging: {
       get() {
@@ -877,6 +903,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("analysis/SET", ["pvLimit", value]);
+      },
+    },
+    pvsToSave: {
+      get() {
+        return this.$store.state.analysis.pvsToSave;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["pvsToSave", value]);
       },
     },
     saveSearchStats: {

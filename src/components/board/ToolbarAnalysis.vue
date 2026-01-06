@@ -307,10 +307,24 @@ export default {
       return this.isEmbedded ? null : this.$store.state.analysis.botID;
     },
     suggestions() {
-      if (this.$store.state.analysis) {
-        return this.$store.state.analysis.botPositions[this.tps] || [];
+      const botSuggestions = this.$store.state.analysis
+        ? this.$store.state.analysis.botPositions[this.tps] || []
+        : [];
+      const noteSuggestions = this.$store.getters["game/suggestions"](this.tps);
+
+      // Merge bot suggestions with note suggestions, avoiding duplicates
+      // Bot suggestions take priority (they have more recent/detailed data)
+      const merged = [...botSuggestions];
+      for (const noteSugg of noteSuggestions) {
+        // Check if this PV already exists in bot suggestions
+        const isDuplicate = merged.some(
+          (s) => s.ply && noteSugg.ply && s.ply.ptn === noteSugg.ply.ptn
+        );
+        if (!isDuplicate) {
+          merged.push(noteSugg);
+        }
       }
-      return [];
+      return merged;
     },
     suggestionsCount() {
       return this.suggestions.length;

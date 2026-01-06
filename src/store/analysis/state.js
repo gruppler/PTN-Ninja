@@ -19,6 +19,7 @@ const defaultState = {
   enableLogging: false,
   insertEvalMarks: true,
   pvLimit: 3,
+  pvsToSave: 1,
   saveSearchStats: true,
   dbSettings: {
     includeBotGames: false,

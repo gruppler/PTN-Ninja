@@ -117,3 +117,67 @@ export const suggestion = (state) => (tps) => {
 
   return suggestion.ply || suggestion.evaluation !== null ? suggestion : null;
 };
+
+export const suggestions = (state) => (tps) => {
+  if (!tps) {
+    return [];
+  }
+
+  const results = [];
+  let evalData = null;
+
+  // First, find evaluation data (from ply whose tpsAfter matches tps)
+  for (let id in state.comments.notes) {
+    const notes = state.comments.notes[id];
+    const ply = state.ptn.allPlies[id];
+    if (!ply) {
+      continue;
+    }
+    if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
+      const note = notes.find((n) => n.evaluation !== null);
+      if (note) {
+        evalData = {
+          evaluation: note.evaluation,
+          depth: note.depth,
+          nodes: note.nodes,
+          visits: note.visits,
+          time: note.ms,
+        };
+        break;
+      }
+    }
+  }
+
+  // Then, find all PVs (from ply whose tpsBefore matches tps)
+  for (let id in state.comments.notes) {
+    const notes = state.comments.notes[id];
+    const ply = state.ptn.allPlies[id];
+    if (!ply) {
+      continue;
+    }
+    if (ply.tpsBefore === tps) {
+      // Find all notes with PVs
+      for (const note of notes) {
+        if (note.pv !== null) {
+          // Each note.pv can contain multiple PV arrays
+          for (const pvArray of note.pv) {
+            const pv = parsePV(ply.player, ply.color, pvArray);
+            const suggestion = {
+              ply: pv.splice(0, 1)[0],
+              followingPlies: pv,
+              evaluation: evalData ? evalData.evaluation : null,
+              depth: evalData ? evalData.depth : null,
+              nodes: evalData ? evalData.nodes : null,
+              visits: evalData ? evalData.visits : null,
+              time: evalData ? evalData.time : null,
+              fromNotes: true,
+            };
+            results.push(suggestion);
+          }
+        }
+      }
+    }
+  }
+
+  return results;
+};
