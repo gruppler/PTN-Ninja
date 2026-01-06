@@ -112,6 +112,19 @@ export default class Move {
         ply.parent = this.ply1 && !this.ply1.isNop ? this.ply1 : null;
       }
     }
+    // Add to parent's children array (bidirectional link)
+    if (ply.parent && !ply.parent.children.includes(ply)) {
+      // Main continuation goes at index 0, branches are added later via addBranch
+      if (ply.parent.children.length === 0) {
+        ply.parent.children.push(ply);
+      } else if (!ply.branch || ply.branch === ply.parent.branch) {
+        // Same branch = main continuation, should be first child
+        ply.parent.children.unshift(ply);
+      } else {
+        // Different branch = alternative, add after main continuation
+        ply.parent.children.push(ply);
+      }
+    }
     if (oldPly) {
       if (oldPly.branches.length) {
         ply.branches = oldPly.branches;

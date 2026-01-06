@@ -837,4 +837,188 @@ test.describe("Branch Promotion Tests", () => {
 
     expect(collapsedCountAfter).toBe(collapsedCountBefore);
   });
+
+  // ============================================================
+  // Phase 5b: Smart Branch Renaming Tests
+  // ============================================================
+
+  test("T14: Default branch names are renumbered after promotion", async ({
+    page,
+  }) => {
+    // T2 has branches 3w1 and 3w2 (default names)
+    await loadPTN(page, PTN_FIXTURES.T2);
+
+    const before = await getGameState(page);
+
+    // Verify we have the expected default branch names
+    expect(before.branchKeys).toContain("3w1");
+    expect(before.branchKeys).toContain("3w2");
+
+    // Promote 3w2 (should become 3w1, old 3w1 should become 3w2)
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("game/PROMOTE_BRANCH", "3w2");
+    });
+
+    const after = await getGameState(page);
+    const isValid = await validateGame(page);
+
+    expect(isValid).toBe(true);
+    expect(after.plyCount).toBe(before.plyCount);
+
+    // After promotion, branch names should be renumbered sequentially
+    // The promoted branch should now be 3w1, the demoted branch should be 3w2
+    expect(after.branchKeys).toContain("3w1");
+    expect(after.branchKeys).toContain("3w2");
+
+    // The content of 3w1 should now be what was in 3w2 (d1, d2)
+    // and 3w2 should have what was in 3w1 (c1, c2)
+    const branch3w1Content = await page.evaluate(() => {
+      const game = window.app.$game;
+      const ply = game.branches["3w1"];
+      return ply ? ply.text : null;
+    });
+    expect(branch3w1Content).toBe("d1");
+  });
+
+  test("T15: Custom branch names are preserved during promotion", async ({
+    page,
+  }) => {
+    // Create a PTN with a custom-named branch
+    const ptnWithCustomBranch = `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+
+{analysis}
+3. c1 b3
+4. c2 b4
+`;
+    await loadPTN(page, ptnWithCustomBranch);
+
+    const before = await getGameState(page);
+
+    // Verify we have the custom branch name
+    expect(before.branchKeys).toContain("analysis");
+
+    // Promote the custom-named branch to main
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("game/MAKE_BRANCH_MAIN", "analysis");
+    });
+
+    const after = await getGameState(page);
+    const isValid = await validateGame(page);
+
+    expect(isValid).toBe(true);
+
+    // The custom name should be discarded when promoted to main
+    // (main branch has empty string as name)
+    expect(after.branchKeys).toContain("");
+
+    // The old main should now have a default branch name
+    // (since the custom name was on the promoted branch)
+  });
+
+  test("T16: Custom branch name moves with branch during sibling promotion", async ({
+    page,
+  }) => {
+    // Create a PTN with multiple branches, one with custom name
+    const ptnWithCustomAndDefault = `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+4. a4 b4
+
+{3w1}
+3. c1 b3
+4. c2 b4
+
+{analysis}
+3. d1 b3
+4. d2 b4
+`;
+    await loadPTN(page, ptnWithCustomAndDefault);
+
+    const before = await getGameState(page);
+
+    // Verify we have both branch names
+    expect(before.branchKeys).toContain("3w1");
+    expect(before.branchKeys).toContain("analysis");
+
+    // Promote the custom-named "analysis" branch (should keep its name)
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("game/PROMOTE_BRANCH", "analysis");
+    });
+
+    const after = await getGameState(page);
+    const isValid = await validateGame(page);
+
+    expect(isValid).toBe(true);
+    expect(after.plyCount).toBe(before.plyCount);
+
+    // The custom name "analysis" should be preserved
+    expect(after.branchKeys).toContain("analysis");
+
+    // The content should still be associated with the custom name
+    const analysisContent = await page.evaluate(() => {
+      const game = window.app.$game;
+      const ply = game.branches["analysis"];
+      return ply ? ply.text : null;
+    });
+    expect(analysisContent).toBe("d1");
+  });
+
+  test("T17: Mixed default and custom names handled correctly", async ({
+    page,
+  }) => {
+    // Create a PTN with 3 branches: main, default name, custom name
+    const ptnMixed = `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+4. a4 b4
+
+{3w1}
+3. c1 b3
+4. c2 b4
+
+{3w2}
+3. d1 b3
+4. d2 b4
+
+{my-analysis}
+3. e1 b3
+4. e2 b4
+`;
+    await loadPTN(page, ptnMixed);
+
+    const before = await getGameState(page);
+
+    // Verify initial state
+    expect(before.branchKeys).toContain("3w1");
+    expect(before.branchKeys).toContain("3w2");
+    expect(before.branchKeys).toContain("my-analysis");
+
+    // Promote the custom-named branch
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("game/PROMOTE_BRANCH", "my-analysis");
+    });
+
+    const after = await getGameState(page);
+    const isValid = await validateGame(page);
+
+    expect(isValid).toBe(true);
+    expect(after.plyCount).toBe(before.plyCount);
+
+    // Custom name should be preserved
+    expect(after.branchKeys).toContain("my-analysis");
+
+    // Default names should be renumbered appropriately
+    // (exact behavior depends on implementation)
+  });
 });

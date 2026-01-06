@@ -7,7 +7,38 @@ import Tag from "./PTN/Tag";
 
 import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
 
+// Default branch name pattern: {moveNumber}{player}{index} e.g., "3w1", "14b2"
+// Also handles nested branches like "3w1/4w1"
+const DEFAULT_BRANCH_PATTERN = /^(\d+[wb]\d+)(\/\d+[wb]\d+)*$/;
+
 export default class GameMutations {
+  // Check if a branch name is a default auto-generated name
+  _isDefaultBranchName(branchName) {
+    if (!branchName) return true; // Main branch (empty string) is "default"
+    return DEFAULT_BRANCH_PATTERN.test(branchName);
+  }
+
+  // Get the leaf segment of a branch name (last part after /)
+  _getBranchLeaf(branchName) {
+    if (!branchName) return "";
+    const parts = branchName.split("/");
+    return parts[parts.length - 1];
+  }
+
+  // Get the parent path of a branch name (everything before last /)
+  _getBranchParent(branchName) {
+    if (!branchName) return "";
+    const lastSlash = branchName.lastIndexOf("/");
+    return lastSlash >= 0 ? branchName.substring(0, lastSlash) : "";
+  }
+
+  // Generate a default branch name for a ply
+  _generateDefaultBranchName(ply, index) {
+    const moveNum = ply.move.number;
+    const player = ply.player === 1 ? "w" : "b";
+    return `${moveNum}${player}${index}`;
+  }
+
   replacePTN(ptn, state = this.minState) {
     this.recordChange(() => {
       this.init({ ...this.params, ptn, state });
@@ -33,68 +64,170 @@ export default class GameMutations {
     if (index === 1) {
       return this.makeBranchMain(branch);
     } else {
-      // Save position using serializable path (survives init)
-      const currentPly = this.board.ply;
-      const plyIsDone = this.board.plyIsDone;
-      const path = currentPly ? currentPly.getSerializablePath() : null;
+      this.recordChange(() => {
+        // Save position using serializable path (survives init)
+        const currentPly = this.board.ply;
+        const plyIsDone = this.board.plyIsDone;
+        const path = currentPly ? currentPly.getSerializablePath() : null;
 
-      const oldID = ply.id;
-      const newID = ply.branches[index - 1].id;
-      let length = 0;
-      while (ply && ply.branch === branch) {
-        length += 1;
-        ply = this.plies[ply.id + 1];
-      }
-      let plies = [...this.plies];
-      let notes = {};
-      let branchPlies = plies.splice(oldID, length);
-      plies.splice(newID, 0, ...branchPlies);
-      for (let id = 0; id < plies.length; id++) {
-        if (plies[id].id !== id) {
-          notes[id] = this.notes[plies[id].id];
-          plies[id].id = id;
-        } else {
-          notes[id] = this.notes[id];
+        // Get the sibling we're swapping with
+        const siblingPly = ply.branches[index - 1];
+        const siblingBranch = siblingPly.branch;
+
+        // Determine if branches have default names
+        const promotedIsDefault = this._isDefaultBranchName(
+          this._getBranchLeaf(branch)
+        );
+        const siblingIsDefault = this._isDefaultBranchName(
+          this._getBranchLeaf(siblingBranch)
+        );
+
+        // Calculate new branch names based on whether they're default or custom
+        let newPromotedBranch = branch;
+        let newSiblingBranch = siblingBranch;
+
+        // After promotion:
+        // - Promoted branch moves from position `index` to `index - 1` in branches array
+        // - Sibling moves from position `index - 1` to `index` in branches array
+        // Branch name suffix = array position (1-indexed, since branches[0] is main)
+        // So promoted gets suffix `index - 1`, sibling gets suffix `index`
+        if (promotedIsDefault && siblingIsDefault) {
+          // Both default: swap names (they just exchange positions)
+          newPromotedBranch = siblingBranch;
+          newSiblingBranch = branch;
+        } else if (promotedIsDefault && !siblingIsDefault) {
+          // Promoted is default, sibling is custom: generate new default name
+          // Promoted moves to position index-1, so suffix is index-1
+          const parentPath = this._getBranchParent(branch);
+          const newLeaf = this._generateDefaultBranchName(ply, index - 1);
+          newPromotedBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+        } else if (!promotedIsDefault && siblingIsDefault) {
+          // Promoted is custom, sibling is default: generate new default name
+          // Sibling moves to position index, so suffix is index
+          const parentPath = this._getBranchParent(siblingBranch);
+          const newLeaf = this._generateDefaultBranchName(siblingPly, index);
+          newSiblingBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
         }
-      }
-      this.notes = notes;
+        // If both are custom, both keep their names
 
-      // Sort ALL siblings arrays after ID changes
-      plies.forEach((ply) => {
-        if (ply.branches.length) {
-          ply.branches.sort((a, b) => a.id - b.id);
+        const oldID = ply.id;
+        const newID = ply.branches[index - 1].id;
+        let length = 0;
+        let tempPly = ply;
+        while (tempPly && tempPly.branch === branch) {
+          length += 1;
+          tempPly = this.plies[tempPly.id + 1];
         }
-      });
-
-      // Rebuild game branches and children
-      let branches = {};
-      plies.forEach((ply) => {
-        ply.children = [];
-        if (!(ply.branch in branches)) {
-          branches[ply.branch] = ply;
-          if (ply.id === 0 && ply.branches.length) {
-            ply.children.push(ply);
+        let plies = [...this.plies];
+        let notes = {};
+        let branchPlies = plies.splice(oldID, length);
+        plies.splice(newID, 0, ...branchPlies);
+        for (let id = 0; id < plies.length; id++) {
+          if (plies[id].id !== id) {
+            notes[id] = this.notes[plies[id].id];
+            plies[id].id = id;
+          } else {
+            notes[id] = this.notes[id];
           }
-        } else {
+        }
+        this.notes = notes;
+
+        // Apply branch renames if needed (use temp name to avoid conflicts)
+        if (
+          newPromotedBranch !== branch ||
+          newSiblingBranch !== siblingBranch
+        ) {
+          const tempBranch = `__temp_${Date.now()}__`;
+          const currentTargetBranch = this.board.targetBranch;
+
+          // First pass: rename promoted branch to temp
+          if (newPromotedBranch !== branch) {
+            plies.forEach((p) => {
+              if (p.branch === branch) {
+                p.branch = tempBranch;
+                p.linenum.branch = tempBranch;
+              } else if (p.branch.startsWith(branch + "/")) {
+                p.branch = tempBranch + p.branch.substring(branch.length);
+                p.linenum.branch = p.branch;
+              }
+            });
+          }
+
+          // Second pass: rename sibling branch to its new name
+          if (newSiblingBranch !== siblingBranch) {
+            plies.forEach((p) => {
+              if (p.branch === siblingBranch) {
+                p.branch = newSiblingBranch;
+                p.linenum.branch = newSiblingBranch;
+              } else if (p.branch.startsWith(siblingBranch + "/")) {
+                p.branch =
+                  newSiblingBranch + p.branch.substring(siblingBranch.length);
+                p.linenum.branch = p.branch;
+              }
+            });
+          }
+
+          // Third pass: rename temp to final promoted name
+          if (newPromotedBranch !== branch) {
+            plies.forEach((p) => {
+              if (p.branch === tempBranch) {
+                p.branch = newPromotedBranch;
+                p.linenum.branch = newPromotedBranch;
+              } else if (p.branch.startsWith(tempBranch + "/")) {
+                p.branch =
+                  newPromotedBranch + p.branch.substring(tempBranch.length);
+                p.linenum.branch = p.branch;
+              }
+            });
+          }
+
+          // Update targetBranch if it was affected by the rename
+          if (currentTargetBranch === branch) {
+            this.board.targetBranch = newPromotedBranch;
+          } else if (currentTargetBranch.startsWith(branch + "/")) {
+            this.board.targetBranch =
+              newPromotedBranch + currentTargetBranch.substring(branch.length);
+          } else if (currentTargetBranch === siblingBranch) {
+            this.board.targetBranch = newSiblingBranch;
+          } else if (currentTargetBranch.startsWith(siblingBranch + "/")) {
+            this.board.targetBranch =
+              newSiblingBranch +
+              currentTargetBranch.substring(siblingBranch.length);
+          }
+        }
+
+        // Sort ALL siblings arrays after ID changes
+        plies.forEach((ply) => {
+          if (ply.branches.length) {
+            ply.branches.sort((a, b) => a.id - b.id);
+          }
+        });
+
+        // Rebuild branches object and branches.parent references
+        let branches = {};
+        plies.forEach((ply) => {
+          if (!(ply.branch in branches)) {
+            branches[ply.branch] = ply;
+          }
           if (ply.branches.length) {
             ply.branches.parent = branches[ply.branch];
-            ply.branches.parent.children.push(ply);
+          }
+        });
+        this.branches = branches;
+        this.plies = plies;
+
+        // Let init() rebuild the tree structure (children arrays)
+        this._updatePTN();
+        this.init({ ...this.params, ptn: this.ptn });
+
+        // Restore position using the path
+        if (path) {
+          const targetPly = this.findPlyFromPath(path);
+          if (targetPly) {
+            this.board.goToPly(targetPly.id, plyIsDone);
           }
         }
       });
-      this.branches = branches;
-      this.plies = plies;
-
-      this._updatePTN(true);
-      this.init({ ...this.params, ptn: this.ptn });
-
-      // Restore position using the path
-      if (path) {
-        const targetPly = this.findPlyFromPath(path);
-        if (targetPly) {
-          this.board.goToPly(targetPly.id, plyIsDone);
-        }
-      }
     }
   }
 

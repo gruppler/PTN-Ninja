@@ -607,33 +607,18 @@ export default class GameBase {
     return this.plies.find((p) => p.index === 0 && p.branch === "") || null;
   }
 
-  // Traverse tree and collect all plies in order
+  // Traverse tree and collect all plies in order (depth-first, main branch first)
   getPliesFromTree() {
     const result = [];
     const visited = new Set();
 
     const traverse = (ply) => {
-      if (!ply || visited.has(ply.id)) return;
-      visited.add(ply.id);
+      if (!ply || visited.has(ply)) return;
+      visited.add(ply);
       result.push(ply);
 
-      // Visit next ply in sequence (by ID for now, will use children later)
-      const nextId = ply.id + 1;
-      if (nextId < this.plies.length) {
-        const next = this.plies[nextId];
-        if (next && next.parent === ply) {
-          traverse(next);
-        }
-      }
-
-      // Visit branch siblings
-      if (ply.branches.length > 1) {
-        ply.branches.forEach((sibling) => {
-          if (sibling !== ply && !visited.has(sibling.id)) {
-            traverse(sibling);
-          }
-        });
-      }
+      // Visit children: first child is main continuation, rest are branches
+      ply.children.forEach((child) => traverse(child));
     };
 
     const root = this.rootPly;
@@ -723,6 +708,45 @@ export default class GameBase {
       console.warn("Parent relationship issues:", issues);
     } else {
       console.log("All parent relationships verified OK");
+    }
+    return issues;
+  }
+
+  // Debug method to verify children relationships (bidirectional with parent)
+  verifyChildrenRelationships() {
+    const issues = [];
+    this.plies.forEach((ply) => {
+      // Check that each child has this ply as parent
+      ply.children.forEach((child, i) => {
+        if (child.parent !== ply) {
+          issues.push(
+            "Ply " +
+              ply.id +
+              ": child[" +
+              i +
+              "] (id " +
+              child.id +
+              ") has wrong parent (id " +
+              (child.parent ? child.parent.id : "null") +
+              ")"
+          );
+        }
+      });
+      // Check that if we have a parent, we're in their children array
+      if (ply.parent && !ply.parent.children.includes(ply)) {
+        issues.push(
+          "Ply " +
+            ply.id +
+            ": has parent " +
+            ply.parent.id +
+            " but not in parent's children"
+        );
+      }
+    });
+    if (issues.length) {
+      console.warn("Children relationship issues:", issues);
+    } else {
+      console.log("All children relationships verified OK");
     }
     return issues;
   }
