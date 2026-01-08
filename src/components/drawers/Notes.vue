@@ -133,7 +133,8 @@ export default {
       return this.$store.state.ui.theme.primaryDark;
     },
     log() {
-      return this.$store.state.ui.showAllBranches
+      return this.$store.state.ui.showAllBranches &&
+        !this.$store.state.ui.inlineBranches
         ? this.game.comments.notes
         : Object.freeze(
             pickBy(
