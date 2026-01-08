@@ -29,6 +29,15 @@ export default class BoardNavigation {
       if (!ply.tpsAfter) {
         ply.tpsAfter = this.tps;
         this.dirtyPly(ply.id);
+        // Update tpsBefore on any continuation children
+        if (ply.children) {
+          for (const child of ply.children) {
+            if (child.isContinuation && !child.tpsBefore) {
+              child.tpsBefore = ply.tpsAfter;
+              this.dirtyPly(child.id);
+            }
+          }
+        }
       }
       if (ply.result && ply.result.type !== "1") {
         if (ply.result.type === "R" && !ply.result.roads) {
@@ -50,6 +59,11 @@ export default class BoardNavigation {
     if (!ply) {
       return false;
     }
+    if (ply.isContinuation) {
+      // Continuation is a no-op placeholder - never "done"
+      this._setPly(ply.id, false);
+      return true;
+    }
     if (!ply.tpsBefore) {
       ply.tpsBefore = this.tps;
       this.dirtyPly(ply.id);
@@ -69,6 +83,11 @@ export default class BoardNavigation {
     const ply = this.plyIsDone ? this.ply : this.prevPly;
     if (!ply) {
       return false;
+    }
+    if (ply.isContinuation) {
+      // Continuation is a no-op placeholder
+      this._setPly(ply.id, false);
+      return true;
     }
     try {
       this._doMoveset(ply.toUndoMoveset(), ply.color, ply);
@@ -270,6 +289,11 @@ export default class BoardNavigation {
         return false;
       }
 
+      // Continuations can never be "done" - they are always undone
+      if (targetPly.isContinuation) {
+        isDone = false;
+      }
+
       const target = {
         plyIsDone: isDone,
         move: targetPly.move,
@@ -302,6 +326,8 @@ export default class BoardNavigation {
       if (this.ply.index < targetPly.index) {
         while (this.ply.index < targetPly.index && this._doPly()) {
           // Go forward until we reach the target ply
+          // Stop if we hit a continuation (can't advance past it)
+          if (this.ply.isContinuation) break;
         }
       } else if (this.ply.index > targetPly.index) {
         while (this.ply.index > targetPly.index && this._undoPly()) {
@@ -348,7 +374,14 @@ export default class BoardNavigation {
     if (!this.plies.length) {
       return;
     }
-    return this.goToPly(last(this.plies).id, true);
+    // Skip Continuation plies - find the last actual ply
+    let lastPly = last(this.plies);
+    if (lastPly && lastPly.isContinuation) {
+      lastPly = lastPly.parent;
+    }
+    if (lastPly) {
+      return this.goToPly(lastPly.id, true);
+    }
   }
 
   prev(half = false, times = 1) {

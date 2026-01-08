@@ -327,7 +327,18 @@ export const CANCEL_MOVE = (state) => {
 export const DELETE_PLY = (state, plyID) => {
   const game = Vue.prototype.$game;
   if (game) {
+    const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+    const savedStates = saveBranchPointStates(game, currentOverrides);
+
     game.deletePly(plyID, true, true);
+
+    const newOverrides = restoreBranchPointStates(game, savedStates);
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(newOverrides),
+    });
+    if (state.list && state.list[0]) {
+      state.list[0].ptnUI = state.ptnUI;
+    }
     postMessage("DELETE_PLY", plyID);
   }
 };

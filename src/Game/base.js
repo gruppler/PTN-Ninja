@@ -1,4 +1,5 @@
 import Comment from "./PTN/Comment";
+import Continuation from "./PTN/Continuation";
 import Evaluation from "./PTN/Evaluation";
 import Linenum from "./PTN/Linenum";
 import Move from "./PTN/Move";
@@ -372,6 +373,30 @@ export default class GameBase {
             if (ply) {
               ply.result = item;
             }
+          } else if (Continuation.test(ptn)) {
+            // Continuation placeholder (can have comments and branches)
+            item = ply = Continuation.parse(ptn, { id: this.plies.length });
+            if (!move.ply1) {
+              if (!move.linenum) {
+                move.linenum = Linenum.parse(moveNumber + ". ", this, branch);
+              }
+              ply.player = 1;
+              // Color depends on swap opening - on move 1 with swap, player 1 uses color 2
+              const isSwap = this.openingSwap && moveNumber === 1;
+              ply.color = isSwap ? 2 : 1;
+              move.ply1 = ply;
+            } else if (!move.ply2) {
+              ply.player = 2;
+              // Color depends on swap opening - on move 1 with swap, player 2 uses color 1
+              const isSwap = this.openingSwap && moveNumber === 1;
+              ply.color = isSwap ? 1 : 2;
+              move.ply2 = ply;
+            }
+            this.plies.push(ply);
+            this.board.dirtyPly(ply.id);
+            if (!(ply.branch in this.branches)) {
+              this.branches[ply.branch] = ply;
+            }
           } else if (Nop.test(ptn)) {
             // Placeholder
             item = Nop.parse(ptn);
@@ -545,8 +570,154 @@ export default class GameBase {
       console.error("PTN validation failed:", error);
     }
 
+    // Auto-add continuations at the end of each branch
+    this._addContinuations();
+
     if (this.onInit) {
       this.onInit(this);
+    }
+  }
+
+  // Add continuation placeholders at the end of branches that don't have them
+  _addContinuations() {
+    // Don't add continuations if game has ended (result tag is set during init)
+    if (this.tags.result) return;
+
+    // First, collect comments from existing continuations (keyed by branch)
+    const continuationComments = {};
+    for (const ply of this.plies) {
+      if (ply && ply.isContinuation) {
+        const branch = ply.branch || "";
+        if (this.notes[ply.id]) {
+          continuationComments[branch] = {
+            notes: this.notes[ply.id],
+          };
+        }
+        if (this.chatlog[ply.id]) {
+          continuationComments[branch] = continuationComments[branch] || {};
+          continuationComments[branch].chatlog = this.chatlog[ply.id];
+        }
+      }
+    }
+
+    // Remove all existing continuations (they will be regenerated)
+    for (let i = this.plies.length - 1; i >= 0; i--) {
+      const ply = this.plies[i];
+      if (ply && ply.isContinuation) {
+        // Remove comments (will be restored on new continuation)
+        delete this.notes[ply.id];
+        delete this.chatlog[ply.id];
+        // Remove from parent's children
+        if (ply.parent && ply.parent.children) {
+          const idx = ply.parent.children.indexOf(ply);
+          if (idx >= 0) ply.parent.children.splice(idx, 1);
+        }
+        // Remove from move
+        if (ply.move) {
+          if (ply.move.ply1 === ply) ply.move.ply1 = null;
+          if (ply.move.ply2 === ply) ply.move.ply2 = null;
+        }
+        this.plies[i] = null;
+      }
+    }
+
+    // Remove continuation-only moves (but keep moves that have no plies yet)
+    for (let i = this.moves.length - 1; i >= 0; i--) {
+      const move = this.moves[i];
+      // Only remove if the move has plies and all of them are continuations
+      if (
+        move.plies.length > 0 &&
+        move.plies.every((p) => !p || p.isContinuation)
+      ) {
+        this.moves.splice(i, 1);
+      }
+    }
+
+    const branchEnds = {};
+
+    // Find the last non-continuation ply of each branch
+    for (const ply of this.plies) {
+      if (!ply || ply.isContinuation) continue;
+      const branch = ply.branch || "";
+      if (
+        !branchEnds[branch] ||
+        ply.index > branchEnds[branch].index ||
+        (ply.index === branchEnds[branch].index &&
+          ply.player > branchEnds[branch].player)
+      ) {
+        branchEnds[branch] = ply;
+      }
+    }
+
+    // Add continuations where needed
+    for (const branch in branchEnds) {
+      const lastPly = branchEnds[branch];
+      if (!lastPly || lastPly.isContinuation || lastPly.result) continue;
+
+      // Determine next player and color
+      let nextPlayer, nextColor;
+      if (lastPly.player === 1 && !lastPly.move.ply2) {
+        nextPlayer = 2;
+      } else {
+        nextPlayer = 1;
+      }
+
+      // Color depends on swap opening
+      const nextMoveNumber =
+        nextPlayer === 1 ? lastPly.move.number + 1 : lastPly.move.number;
+      const isSwap = this.openingSwap && nextMoveNumber === 1;
+      nextColor = isSwap ? (nextPlayer === 1 ? 2 : 1) : nextPlayer;
+
+      const continuation = new Continuation({
+        id: this.plies.length,
+        player: nextPlayer,
+        color: nextColor,
+      });
+      continuation.parent = lastPly;
+      continuation.branch = branch;
+      // Set tpsBefore so analysis results can be saved to continuation
+      // (will be populated when board navigates to parent ply)
+      continuation.tpsBefore = lastPly.tpsAfter || "";
+
+      if (nextPlayer === 2 && !lastPly.move.ply2) {
+        // Add as ply2 of the same move
+        lastPly.move.ply2 = continuation;
+      } else {
+        // Add as ply1 of a new move
+        const moveNumber = lastPly.move.number + 1;
+        // Check if a move with this number and branch already exists
+        let existingMove = this.moves.find(
+          (m) => m.linenum.number === moveNumber && m.linenum.branch === branch
+        );
+        if (existingMove) {
+          existingMove.ply1 = continuation;
+        } else {
+          const newMove = new Move({
+            game: this,
+            id: this.moves.length,
+            linenum: new Linenum(moveNumber + ". ", this, branch),
+          });
+          newMove.ply1 = continuation;
+          this.moves.push(newMove);
+          this.board.dirtyMove(newMove.id);
+        }
+      }
+
+      if (!lastPly.children.includes(continuation)) {
+        lastPly.children.push(continuation);
+      }
+      this.plies.push(continuation);
+      this.board.dirtyPly(continuation.id);
+
+      // Restore comments from old continuation (if any)
+      if (continuationComments[branch]) {
+        if (continuationComments[branch].notes) {
+          this.notes[continuation.id] = continuationComments[branch].notes;
+        }
+        if (continuationComments[branch].chatlog) {
+          this.chatlog[continuation.id] = continuationComments[branch].chatlog;
+        }
+      }
     }
   }
 
@@ -905,6 +1076,10 @@ export default class GameBase {
     skipCache = false,
     transform = null
   ) {
+    // Skip moves that only contain continuations (they are auto-generated)
+    const isContinuationOnlyMove = (move) =>
+      move.plies.every((p) => !p || p.isContinuation);
+
     const printMove = (move) =>
       move.toString(
         showComments ? this.getMoveComments(move) : null,
@@ -930,11 +1105,23 @@ export default class GameBase {
       return (
         prefix +
         (skipCache ? this.getMovesGrouped() : this.movesGrouped)
-          .map((moves) => moves.map(printMove).join("\r\n"))
+          .map((moves) =>
+            moves
+              .filter((m) => !isContinuationOnlyMove(m))
+              .map(printMove)
+              .join("\r\n")
+          )
+          .filter((group) => group) // Remove empty groups
           .join("\r\n\r\n")
       );
     } else {
-      return prefix + this.board.moves.map(printMove).join("\r\n");
+      return (
+        prefix +
+        this.board.moves
+          .filter((m) => !isContinuationOnlyMove(m))
+          .map(printMove)
+          .join("\r\n")
+      );
     }
   }
 }

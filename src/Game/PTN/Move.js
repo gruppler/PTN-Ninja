@@ -27,7 +27,7 @@ export default class Move {
     const output = pick(this, outputProps);
     output.linenum = this.linenum.output;
     output.plies = this.plies.map((ply) =>
-      ply.isNop ? ply.output : plies[ply.id]
+      ply.isNop || ply.isContinuation ? ply.output : plies[ply.id]
     );
     output.ply1Original = this.ply1Original
       ? plies[this.ply1Original.id]
@@ -69,7 +69,9 @@ export default class Move {
   }
 
   get firstPly() {
-    return this.plies.find((ply) => ply && !ply.isNop) || null;
+    return (
+      this.plies.find((ply) => ply && !ply.isNop && !ply.isContinuation) || null
+    );
   }
 
   setPly(ply, index = 0) {
@@ -83,7 +85,10 @@ export default class Move {
       if (index === 1 || this.plies.length === 1) {
         this.plies.length--;
       }
-      if (this.plies.length === 1 && (!this.plies[0] || this.plies[0].isNop)) {
+      if (
+        this.plies.length === 1 &&
+        (!this.plies[0] || this.plies[0].isNop || this.plies[0].isContinuation)
+      ) {
         this.plies.length--;
       }
       return;
@@ -109,7 +114,10 @@ export default class Move {
             : null;
       } else {
         // ply2's parent is ply1 of the same move
-        ply.parent = this.ply1 && !this.ply1.isNop ? this.ply1 : null;
+        ply.parent =
+          this.ply1 && !this.ply1.isNop && !this.ply1.isContinuation
+            ? this.ply1
+            : null;
       }
     }
     // Add to parent's children array (bidirectional link)
@@ -142,7 +150,7 @@ export default class Move {
       this.linenum &&
       this.linenum.branch &&
       this.linenum.isRoot &&
-      (index === 0 || this.ply1.isNop)
+      (index === 0 || this.ply1.isNop || this.ply1.isContinuation)
     ) {
       // Looks like we're adding a new branch
       const original = this.game.moves.find(
@@ -155,7 +163,7 @@ export default class Move {
         this.game.board.dirtyPly(original.plies[index].id);
 
         // If first ply is placeholder, save reference to its original
-        if (this.ply1.isNop) {
+        if (this.ply1.isNop || this.ply1.isContinuation) {
           this.ply1Original = original.ply1;
         }
       }
@@ -171,18 +179,20 @@ export default class Move {
 
     if (!showBranch && this.ply1Original) {
       ply1 =
-        transform && !this.ply1Original.isNop
+        transform &&
+        !this.ply1Original.isNop &&
+        !this.ply1Original.isContinuation
           ? this.ply1Original.transform(this.game.size, transform)
           : this.ply1Original.toString();
     } else if (this.ply1) {
       ply1 =
-        transform && !this.ply1.isNop
+        transform && !this.ply1.isNop && !this.ply1.isContinuation
           ? this.ply1.transform(this.game.size, transform)
           : this.ply1.toString();
     }
     if (this.ply2) {
       ply2 =
-        transform && !this.ply2.isNop
+        transform && !this.ply2.isNop && !this.ply2.isContinuation
           ? this.ply2.transform(this.game.size, transform)
           : this.ply2.toString();
     }

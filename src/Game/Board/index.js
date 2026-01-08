@@ -534,7 +534,12 @@ export default class Board extends Aggregation(
     let moves = [];
     if (this.plies) {
       this.plies.forEach((ply) => {
-        if (ply.player === 2 || !ply.move.ply2 || ply.move.ply2.isNop) {
+        if (
+          ply.player === 2 ||
+          !ply.move.ply2 ||
+          ply.move.ply2.isNop ||
+          ply.move.ply2.isContinuation
+        ) {
           moves.push(ply.move);
         }
       });
@@ -800,6 +805,14 @@ export default class Board extends Aggregation(
 
   get turn() {
     if (this.ply) {
+      // Continuation doesn't change the turn - use the parent's next turn
+      if (this.ply.isContinuation) {
+        const parent = this.ply.parent;
+        if (parent) {
+          return parent.player === 1 ? 2 : 1;
+        }
+        return this.game.firstPlayer;
+      }
       return this.plyIsDone ? (this.ply.player === 1 ? 2 : 1) : this.ply.player;
     }
     return this.game.firstPlayer;

@@ -1,3 +1,4 @@
+import Continuation from "./PTN/Continuation";
 import Linenum from "./PTN/Linenum";
 import Result from "./PTN/Result";
 import Move from "./PTN/Move";
@@ -594,6 +595,10 @@ export default class GameMutations {
     if (!ply) {
       return false;
     }
+    // Continuations cannot be deleted
+    if (ply.isContinuation) {
+      return false;
+    }
     const move = ply.move;
     const plyWasDone = this.board.plyIsDone;
 
@@ -626,7 +631,7 @@ export default class GameMutations {
       }
     }
 
-    // Remove descendents
+    // Remove descendents (but not continuations - they'll be re-added by init)
     if (removeDescendents) {
       const nextPly = this.plies.find(
         (nextPly) =>
@@ -635,7 +640,7 @@ export default class GameMutations {
           nextPly.index === ply.index + 1
       );
 
-      if (nextPly) {
+      if (nextPly && !nextPly.isContinuation) {
         this._deletePly(nextPly.id, true, true);
       }
     }
@@ -751,6 +756,16 @@ export default class GameMutations {
     let boardPly = this.board.ply;
     const tps = this.board.tps;
 
+    // Check for continuation-specific insertion scenarios
+    const nextPly = this.board.nextPly;
+    const isContinuationSelected = boardPly && boardPly.isContinuation;
+    const isBeforeContinuation =
+      boardPly &&
+      !boardPly.isContinuation &&
+      this.board.plyIsDone &&
+      nextPly &&
+      nextPly.isContinuation;
+
     if (ply.constructor !== Ply) {
       if (Linenum.test(ply) || Result.test(ply)) {
         // Silently ignore line numbers and results
@@ -762,8 +777,14 @@ export default class GameMutations {
           replaceCurrent && boardPly && !this.board.nextPly
             ? boardPly.id
             : this.plies.length,
-        color: replaceCurrent && boardPly ? boardPly.color : this.board.color,
-        player: replaceCurrent && boardPly ? boardPly.player : this.board.turn,
+        color:
+          replaceCurrent && boardPly && !boardPly.isContinuation
+            ? boardPly.color
+            : this.board.color,
+        player:
+          replaceCurrent && boardPly && !boardPly.isContinuation
+            ? boardPly.player
+            : this.board.turn,
         beforeTPS: tps,
       });
     } else {
@@ -793,17 +814,18 @@ export default class GameMutations {
       throw new Error("Invalid first move");
     }
     if (!isAlreadyDone) {
-      if (replaceCurrent && this.board.plyIsDone) {
+      if (replaceCurrent && this.board.plyIsDone && !boardPly.isContinuation) {
         this.board._undoMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
       }
       this.board._doMoveset(ply.toMoveset(), ply.color, ply);
       this.board._undoMoveset(ply.toMoveset(), ply.color, ply);
-      if (replaceCurrent && this.board.plyIsDone) {
+      if (replaceCurrent && this.board.plyIsDone && !boardPly.isContinuation) {
         this.board._doMoveset(boardPly.toMoveset(), boardPly.color, boardPly);
       }
     }
 
     this.board.dirtyPly(ply.id);
+
     if (replaceCurrent && !this.board.plyIsDone && this.board.prevPly) {
       this.board._setPly(this.board.prevPly.id, true);
     } else if (!replaceCurrent && this.board.plyIsDone && this.board.nextPly) {
@@ -886,7 +908,128 @@ export default class GameMutations {
         return this.board.updatePositionOutput();
       }
 
-      if (replaceCurrent && !this.board.nextPly) {
+      if (isBeforeContinuation) {
+        // Replace continuation with new ply in the same position
+        const continuation = nextPly;
+        const contMove = continuation.move;
+
+        // The new ply takes the continuation's position
+        ply.branch = continuation.branch;
+        ply.parent = continuation.parent;
+
+        // Transfer any branches the continuation had (except itself) to the new ply
+        if (continuation.branches && continuation.branches.length > 1) {
+          const siblings = continuation.branches.filter(
+            (b) => b !== continuation
+          );
+          siblings.forEach((sibling) => {
+            sibling.parent = ply;
+            if (!ply.branches.includes(sibling)) {
+              ply.branches.push(sibling);
+            }
+          });
+        }
+
+        // Transfer comments from continuation to new ply
+        if (this.notes[continuation.id]) {
+          this.notes[ply.id] = this.notes[continuation.id];
+          delete this.notes[continuation.id];
+          this.board.dirtyComment("notes", ply.id);
+        }
+        if (this.chatlog[continuation.id]) {
+          this.chatlog[ply.id] = this.chatlog[continuation.id];
+          delete this.chatlog[continuation.id];
+          this.board.dirtyComment("chatlog", ply.id);
+        }
+
+        // Remove continuation from parent's children
+        if (continuation.parent && continuation.parent.children) {
+          const childIndex = continuation.parent.children.indexOf(continuation);
+          if (childIndex !== -1) {
+            continuation.parent.children.splice(childIndex, 1);
+          }
+        }
+
+        // Add new ply to parent's children
+        if (ply.parent && !ply.parent.children.includes(ply)) {
+          ply.parent.children.push(ply);
+        }
+
+        // Remove continuation from game.plies (set to null to preserve IDs)
+        this.plies[continuation.id] = null;
+
+        // Set new ply in continuation's place in the move
+        contMove.setPly(ply, continuation.player - 1);
+
+        // Add ply to game.plies
+        this.plies.push(ply);
+
+        // Execute the ply on the board (board is already at the correct position - parent ply done)
+        this.board._doMoveset(ply.toMoveset(), ply.color, ply);
+        this.board._setPly(ply.id, true);
+        this.board.targetBranch = ply.branch;
+
+        this.board.updateSquareConnections();
+        if (this.board.checkGameEnd(false)) {
+          if (ply.branch === "" && !this.tag("result")) {
+            this.setTags({ result: ply.result.text }, false, false);
+          }
+          this.board.dirtyPly(ply.id);
+          this.board.setRoads(ply.result.roads || null);
+        }
+        ply.tpsAfter = this.board.tps;
+
+        // Add continuation after the new ply
+        if (!this.board.isGameEnd) {
+          this._addContinuationAfterPly(ply);
+        }
+
+        return ply;
+      } else if (isContinuationSelected) {
+        // Add new move as a branch from the continuation's parent
+        const continuation = boardPly;
+        const parentPly = continuation.parent;
+
+        // Create new branch from the parent
+        ply.branch = this.newBranchID(
+          parentPly ? parentPly.branch : "",
+          continuation.move.number,
+          ply.player
+        );
+
+        move = new Move({
+          game: this,
+          id: this.moves.length,
+          linenum: new Linenum(
+            continuation.move.number + ". ",
+            this,
+            ply.branch
+          ),
+        });
+
+        if (ply.player === 2) {
+          move.ply1 = Nop.parse("--");
+        }
+        move.setPly(ply, ply.player - 1);
+        this.moves.push(move);
+        this.branches[ply.branch] = ply;
+
+        // Link to parent - new ply becomes sibling of continuation
+        if (parentPly) {
+          ply.parent = parentPly;
+          if (!parentPly.children.includes(ply)) {
+            parentPly.children.push(ply);
+          }
+        }
+
+        // Add ply to continuation's branches (they are siblings)
+        if (!continuation.branches.includes(ply)) {
+          continuation.branches.push(ply);
+        }
+        if (!ply.branches.includes(continuation)) {
+          ply.branches.push(continuation);
+        }
+      } else if (replaceCurrent && !this.board.nextPly) {
         // Replace ply
         move.setPly(ply, ply.player - 1);
       } else {
@@ -977,13 +1120,81 @@ export default class GameMutations {
     }
     ply.tpsAfter = this.board.tps;
 
+    // Add continuation after the new ply if we replaced one or created a new branch
+    if (
+      (isBeforeContinuation || isContinuationSelected) &&
+      !this.board.isGameEnd
+    ) {
+      this._addContinuationAfterPly(ply);
+    }
+
     return ply;
+  }
+
+  // Add a continuation placeholder after a ply
+  _addContinuationAfterPly(ply) {
+    let nextPlayer, nextColor;
+
+    if (ply.player === 1 && !ply.move.ply2) {
+      // Add as ply2 of the same move
+      nextPlayer = 2;
+      // Color depends on swap opening - on move 1 with swap, player 2 uses color 1
+      const isSwap = this.openingSwap && ply.move.number === 1;
+      nextColor = isSwap ? 1 : 2;
+
+      const continuation = new Continuation({
+        id: this.plies.length,
+        player: nextPlayer,
+        color: nextColor,
+      });
+      ply.move.ply2 = continuation;
+      continuation.parent = ply;
+      continuation.branch = ply.branch;
+      // Set tpsBefore so analysis results can be saved to continuation
+      continuation.tpsBefore = ply.tpsAfter;
+      if (!ply.children.includes(continuation)) {
+        ply.children.push(continuation);
+      }
+      this.plies.push(continuation);
+      this.board.dirtyPly(continuation.id);
+    } else {
+      // Add as ply1 of a new move
+      const moveNumber = ply.move.number + 1;
+      nextPlayer = 1;
+      // Color depends on swap opening - on move 1 with swap, player 1 uses color 2
+      const isSwap = this.openingSwap && moveNumber === 1;
+      nextColor = isSwap ? 2 : 1;
+
+      const continuation = new Continuation({
+        id: this.plies.length,
+        player: nextPlayer,
+        color: nextColor,
+      });
+      const newMove = new Move({
+        game: this,
+        id: this.moves.length,
+        linenum: new Linenum(moveNumber + ". ", this, ply.branch),
+      });
+      newMove.ply1 = continuation;
+      this.moves.push(newMove);
+      this.board.dirtyMove(newMove.id);
+      continuation.parent = ply;
+      continuation.branch = ply.branch;
+      // Set tpsBefore so analysis results can be saved to continuation
+      continuation.tpsBefore = ply.tpsAfter;
+      if (!ply.children.includes(continuation)) {
+        ply.children.push(continuation);
+      }
+      this.plies.push(continuation);
+      this.board.dirtyPly(continuation.id);
+    }
   }
 
   insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
     return this.recordChange(() => {
       if (this._insertPly.apply(this, arguments)) {
         this._updatePTN();
+        this._addContinuations();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
         this.board.updateBoardOutput();
@@ -1011,6 +1222,7 @@ export default class GameMutations {
       try {
         if (this._insertPly(ply)) {
           this._updatePTN();
+          this._addContinuations();
           this.board.updatePTNOutput();
           this.board.updatePositionOutput();
           this.board.updateBoardOutput();
@@ -1056,6 +1268,7 @@ export default class GameMutations {
         this.board.prev(false, prev);
       }
       this._updatePTN();
+      this._addContinuations();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
       this.board.updateBoardOutput();

@@ -843,7 +843,7 @@ export default {
     hasCurrentPositionSavedResults() {
       const tps = this.tps;
       // Check previous ply for evaluation
-      const prevPly = this.allPlies.find((p) => p.tpsAfter === tps);
+      const prevPly = this.allPlies.find((p) => p && p.tpsAfter === tps);
       if (prevPly) {
         const prevNotes = this.$store.state.game.comments.notes[prevPly.id];
         if (prevNotes && prevNotes.some((note) => note.evaluation !== null)) {
@@ -851,7 +851,7 @@ export default {
         }
       }
       // Check next ply for PV
-      const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
+      const nextPly = this.allPlies.find((p) => p && p.tpsBefore === tps);
       if (nextPly) {
         const nextNotes = this.$store.state.game.comments.notes[nextPly.id];
         if (nextNotes && nextNotes.some((note) => note.pv !== null)) {

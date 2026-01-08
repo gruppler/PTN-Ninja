@@ -53,18 +53,38 @@
         <span v-else-if="ply1 && ply1.isNop" class="ptn nop">{{
           ply1.text
         }}</span>
+        <Continuation
+          v-else-if="ply1 && ply1.isContinuation"
+          :key="'cont-' + ply1.id"
+          :ply="ply1"
+          :inline-branches="inlineBranches"
+        />
         <Ply
           v-else-if="ply1"
-          :key="ply1.id"
+          :key="'ply-' + ply1.id"
           :ply="ply1"
           :inline-branches="inlineBranches"
         />
       </template>
-      <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
+      <template
+        v-if="
+          ply2 &&
+          !ply2.isNop &&
+          !ply2.isContinuation &&
+          (!player || player === 2)
+        "
+      >
         <span v-if="splitPly === 'split1'" class="ptn nop">--</span>
         <Ply
           v-else
-          :key="ply2.id"
+          :key="'ply-' + ply2.id"
+          :ply="ply2"
+          :inline-branches="inlineBranches"
+        />
+      </template>
+      <template v-if="ply2 && ply2.isContinuation && (!player || player === 2)">
+        <Continuation
+          :key="'cont-' + ply2.id"
           :ply="ply2"
           :inline-branches="inlineBranches"
         />
@@ -76,12 +96,13 @@
 </template>
 
 <script>
+import Continuation from "./Continuation";
 import Linenum from "./Linenum";
 import Ply from "./Ply";
 
 export default {
   name: "Move",
-  components: { Linenum, Ply },
+  components: { Continuation, Linenum, Ply },
   props: {
     move: Object,
     player: Number,
