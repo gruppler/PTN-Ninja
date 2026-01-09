@@ -141,6 +141,18 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Show PV in Notes") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="showNotesPV"
+            :disable="isDisabled('showNotesPV')"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Nav Controls") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -312,6 +324,7 @@ const props = [
   "showPlayButton",
   "showHints",
   "showMove",
+  "showNotesPV",
   "showScrubber",
   "themeID",
 ];

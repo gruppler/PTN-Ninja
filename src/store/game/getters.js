@@ -60,64 +60,6 @@ export const prevTPS = (state) =>
     ? state.position.prevPly.tpsBefore
     : null;
 
-export const suggestion = (state) => (tps) => {
-  if (!tps) {
-    return null;
-  }
-
-  // Get suggestion from notes
-  const suggestion = {
-    ply: null,
-    followingPlies: [],
-    evaluation: null,
-    depth: null,
-    nodes: null,
-    time: null,
-    visits: null,
-  };
-  let notes;
-  let note;
-  let ply;
-  for (let id in state.comments.notes) {
-    notes = state.comments.notes[id];
-    ply = state.ptn.allPlies[id];
-    if (!ply) {
-      continue;
-    }
-    if (suggestion.ply === null && ply.tpsBefore === tps) {
-      note = notes.find((n) => n.pv !== null);
-      if (note) {
-        const pv = parsePV(ply.player, ply.color, note.pv[0]);
-        suggestion.ply = pv.splice(0, 1)[0];
-        suggestion.followingPlies = pv;
-      }
-    }
-    if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
-      note = notes.find((n) => n.evaluation !== null);
-      if (note) {
-        suggestion.evaluation = note.evaluation;
-        if (note.depth !== null) {
-          suggestion.depth = note.depth;
-        }
-        if (note.nodes !== null) {
-          suggestion.nodes = note.nodes;
-        }
-        if (note.visits !== null) {
-          suggestion.visits = note.visits;
-        }
-        if (note.ms !== null) {
-          suggestion.time = note.ms;
-        }
-      }
-    }
-    if (suggestion.ply && suggestion.evaluation) {
-      break;
-    }
-  }
-
-  return suggestion.ply || suggestion.evaluation !== null ? suggestion : null;
-};
-
 export const suggestions = (state) => (tps) => {
   if (!tps) {
     return [];
@@ -148,7 +90,42 @@ export const suggestions = (state) => (tps) => {
     }
   }
 
-  // Then, find all PVs (from ply whose tpsBefore matches tps)
+  // Find all PVs in new format (pvAfter on ply whose tpsAfter matches tps)
+  for (let id in state.comments.notes) {
+    const notes = state.comments.notes[id];
+    const ply = state.ptn.allPlies[id];
+    if (!ply) {
+      continue;
+    }
+    if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
+      // Find all notes with pvAfter (new format)
+      for (const note of notes) {
+        if (note.pvAfter !== null) {
+          // Determine player/color for the position after this ply
+          const nextPlayer = ply.player === 1 ? 2 : 1;
+          const nextColor = nextPlayer;
+          // Each note.pvAfter can contain multiple PV arrays
+          for (const pvArray of note.pvAfter) {
+            const pv = parsePV(nextPlayer, nextColor, pvArray);
+            const suggestion = {
+              ply: pv.splice(0, 1)[0],
+              followingPlies: pv,
+              // New format: eval/stats are in the same comment
+              evaluation: note.evaluation !== null ? note.evaluation : null,
+              depth: note.depth !== null ? note.depth : null,
+              nodes: note.nodes !== null ? note.nodes : null,
+              visits: note.visits !== null ? note.visits : null,
+              time: note.ms !== null ? note.ms : null,
+              fromNotes: true,
+            };
+            results.push(suggestion);
+          }
+        }
+      }
+    }
+  }
+
+  // Find all PVs in old format (pv on ply whose tpsBefore matches tps)
   for (let id in state.comments.notes) {
     const notes = state.comments.notes[id];
     const ply = state.ptn.allPlies[id];
@@ -156,7 +133,7 @@ export const suggestions = (state) => (tps) => {
       continue;
     }
     if (ply.tpsBefore === tps) {
-      // Find all notes with PVs
+      // Find all notes with pv (old format)
       for (const note of notes) {
         if (note.pv !== null) {
           // Each note.pv can contain multiple PV arrays
@@ -165,6 +142,7 @@ export const suggestions = (state) => (tps) => {
             const suggestion = {
               ply: pv.splice(0, 1)[0],
               followingPlies: pv,
+              // Old format: eval is from separate comment
               evaluation: evalData ? evalData.evaluation : null,
               depth: evalData ? evalData.depth : null,
               nodes: evalData ? evalData.nodes : null,
@@ -179,5 +157,25 @@ export const suggestions = (state) => (tps) => {
     }
   }
 
+  // If no PVs found but we have eval data, return a single suggestion with just eval
+  if (results.length === 0 && evalData) {
+    results.push({
+      ply: null,
+      followingPlies: [],
+      evaluation: evalData.evaluation,
+      depth: evalData.depth,
+      nodes: evalData.nodes,
+      visits: evalData.visits,
+      time: evalData.time,
+      fromNotes: true,
+    });
+  }
+
   return results;
+};
+
+// Convenience getter that returns the first suggestion or null
+export const suggestion = (state) => (tps) => {
+  const all = suggestions(state)(tps);
+  return all.length > 0 ? all[0] : null;
 };

@@ -247,6 +247,26 @@ export default class Bot {
     return store.state.game;
   }
 
+  // Detect PV format from existing comments
+  // Returns "new" if any comment uses pv> format
+  // Returns "old" if any comment uses pv format (without >)
+  // Returns null if no PV comments exist
+  get pvFormat() {
+    const notes = this.game.comments?.notes;
+    if (!notes) return null;
+    for (const plyID in notes) {
+      for (const note of notes[plyID]) {
+        if (note.pvAfter !== null) {
+          return "new";
+        }
+        if (note.pv !== null) {
+          return "old";
+        }
+      }
+    }
+    return null;
+  }
+
   get size() {
     return this.game.config.size;
   }
@@ -1053,6 +1073,10 @@ export default class Bot {
     let evaluationBefore = null;
     let evaluationAfter = null;
 
+    // Determine PV format: use old format only if existing comments use it
+    const pvFormat = this.pvFormat;
+    const useNewFormat = pvFormat !== "old";
+
     // Assume evaluationAfter from game result
     if (ply.result && ply.result.type !== "1") {
       evaluationAfter = ply.result.isTie
@@ -1073,50 +1097,98 @@ export default class Bot {
       }
     }
 
-    // Evaluation, search info
-    const canInsertEvalComments = hasPositionBeforeEval && hasPositionAfterEval;
-
-    if (
-      canInsertEvalComments &&
-      (evaluationAfter !== null ||
-        (positionAfter && positionAfter[0].evaluation !== null))
-    ) {
-      let evaluationComment = "";
-
+    // Calculate evaluationAfter if we have position data
+    if (hasPositionAfterEval) {
       evaluationAfter =
-        Math.round(
-          100 *
-            (evaluationAfter !== null
-              ? evaluationAfter
-              : positionAfter[0].evaluation)
-        ) / 1e4;
-      if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-        evaluationComment += `${
+        evaluationAfter !== null
+          ? evaluationAfter
+          : Math.round(100 * positionAfter[0].evaluation) / 1e4;
+    } else if (evaluationAfter !== null) {
+      evaluationAfter = Math.round(100 * evaluationAfter) / 1e4;
+    }
+
+    if (useNewFormat) {
+      // New format: unified comments with pv> for position after this ply
+      // Each PV gets its own comment with eval+stats+pv
+      if (positionAfter && pvLimit > 0) {
+        const numPVs = Math.min(pvsToSave, positionAfter.length);
+        for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+          let position = positionAfter[pvIndex];
+          let unifiedComment = "";
+
+          // Add evaluation (use position-specific eval if available, else first)
+          const posEval =
+            position &&
+            position.evaluation !== null &&
+            position.evaluation !== undefined
+              ? Math.round(100 * position.evaluation) / 1e4
+              : evaluationAfter;
+          if (posEval !== null && !isNaN(posEval)) {
+            unifiedComment += `${posEval >= 0 ? "+" : ""}${posEval}`;
+          }
+
+          // Add search stats
+          if (saveSearchStats && position) {
+            if (position.depth !== null && position.depth !== undefined) {
+              unifiedComment += `/${position.depth}`;
+            }
+            if (position.nodes !== null && position.nodes !== undefined) {
+              unifiedComment += ` ${position.nodes} nodes`;
+            }
+            if (position.visits !== null && position.visits !== undefined) {
+              unifiedComment += ` ${position.visits} visits`;
+            }
+            if (position.time !== null && position.time !== undefined) {
+              unifiedComment += ` ${position.time}ms`;
+            }
+          }
+
+          // Add PV with pv> marker
+          if (position && position.ply) {
+            const pv = [position.ply, ...position.followingPlies]
+              .slice(0, pvLimit)
+              .map((p) => p.ptn);
+            unifiedComment += ` pv> ${pv.join(" ")}`;
+          }
+
+          if (unifiedComment.length) {
+            // Find existing pv> comment index for replacement
+            if (ply.id in this.game.comments.notes) {
+              const index = this.game.comments.notes[ply.id].findIndex(
+                (comment) => comment.pvAfter !== null
+              );
+              if (index >= 0 && pvIndex === 0) {
+                unifiedComment = `!r${index}:${unifiedComment}`;
+              }
+            }
+            comments.push(unifiedComment.trim());
+          }
+        }
+      } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+        // No PV, just eval+stats
+        let evaluationComment = `${
           evaluationAfter >= 0 ? "+" : ""
         }${evaluationAfter}`;
 
-        if (saveSearchStats && positionAfter) {
+        if (saveSearchStats && positionAfter && positionAfter[0]) {
           if (
             positionAfter[0].depth !== null &&
             positionAfter[0].depth !== undefined
           ) {
             evaluationComment += `/${positionAfter[0].depth}`;
           }
-
           if (
             positionAfter[0].nodes !== null &&
             positionAfter[0].nodes !== undefined
           ) {
             evaluationComment += ` ${positionAfter[0].nodes} nodes`;
           }
-
           if (
             positionAfter[0].visits !== null &&
             positionAfter[0].visits !== undefined
           ) {
             evaluationComment += ` ${positionAfter[0].visits} visits`;
           }
-
           if (
             positionAfter[0].time !== null &&
             positionAfter[0].time !== undefined
@@ -1125,7 +1197,6 @@ export default class Bot {
           }
         }
 
-        // Find existing eval comment index
         if (ply.id in this.game.comments.notes) {
           const index = this.game.comments.notes[ply.id].findIndex(
             (comment) => comment.evaluation !== null
@@ -1137,41 +1208,90 @@ export default class Bot {
 
         comments.push(evaluationComment);
       }
+    } else {
+      // Old format: separate eval and PV comments
+      if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+        let evaluationComment = `${
+          evaluationAfter >= 0 ? "+" : ""
+        }${evaluationAfter}`;
 
-      // Evaluation marks
-      if (store.state.analysis.insertEvalMarks) {
-        if (
-          evaluationBefore === null &&
-          positionBefore &&
-          positionBefore[0].evaluation !== null
-        ) {
-          evaluationBefore = positionBefore[0].evaluation;
-        }
-        if (evaluationBefore !== null) {
-          evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
-          const scoreLoss =
-            (ply.player === 1
-              ? evaluationAfter - evaluationBefore
-              : evaluationBefore - evaluationAfter) / 2;
-          const thresholds =
-            this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
-          if (scoreLoss > thresholds.brilliant) {
-            comments.push("!!");
-          } else if (scoreLoss > thresholds.good) {
-            comments.push("!");
-          } else if (scoreLoss > thresholds.bad) {
-            // Do nothing
-          } else if (scoreLoss > thresholds.blunder) {
-            comments.push("?");
-          } else {
-            comments.push("??");
+        if (saveSearchStats && positionAfter && positionAfter[0]) {
+          if (
+            positionAfter[0].depth !== null &&
+            positionAfter[0].depth !== undefined
+          ) {
+            evaluationComment += `/${positionAfter[0].depth}`;
           }
+          if (
+            positionAfter[0].nodes !== null &&
+            positionAfter[0].nodes !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
+          }
+          if (
+            positionAfter[0].visits !== null &&
+            positionAfter[0].visits !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].visits} visits`;
+          }
+          if (
+            positionAfter[0].time !== null &&
+            positionAfter[0].time !== undefined
+          ) {
+            evaluationComment += ` ${positionAfter[0].time}ms`;
+          }
+        }
+
+        if (ply.id in this.game.comments.notes) {
+          const index = this.game.comments.notes[ply.id].findIndex(
+            (comment) => comment.evaluation !== null
+          );
+          if (index >= 0) {
+            evaluationComment = `!r${index}:${evaluationComment}`;
+          }
+        }
+
+        comments.push(evaluationComment);
+      }
+    }
+
+    // Evaluation marks (requires both positions)
+    if (
+      hasPositionBeforeEval &&
+      hasPositionAfterEval &&
+      store.state.analysis.insertEvalMarks
+    ) {
+      if (
+        evaluationBefore === null &&
+        positionBefore &&
+        positionBefore[0].evaluation !== null
+      ) {
+        evaluationBefore = positionBefore[0].evaluation;
+      }
+      if (evaluationBefore !== null && evaluationAfter !== null) {
+        evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
+        const scoreLoss =
+          (ply.player === 1
+            ? evaluationAfter - evaluationBefore
+            : evaluationBefore - evaluationAfter) / 2;
+        const thresholds =
+          this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
+        if (scoreLoss > thresholds.brilliant) {
+          comments.push("!!");
+        } else if (scoreLoss > thresholds.good) {
+          comments.push("!");
+        } else if (scoreLoss > thresholds.bad) {
+          // Do nothing
+        } else if (scoreLoss > thresholds.blunder) {
+          comments.push("?");
+        } else {
+          comments.push("??");
         }
       }
     }
 
-    // PV
-    if (positionBefore && pvLimit > 0) {
+    // PV for old format only (new format includes PV in unified comments above)
+    if (!useNewFormat && positionBefore && pvLimit > 0) {
       const numPVs = Math.min(pvsToSave, positionBefore.length);
       for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
         let position = positionBefore[pvIndex];
@@ -1209,6 +1329,10 @@ export default class Bot {
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
+
+    // Determine PV format: use old format only if existing comments use it
+    const pvFormat = this.pvFormat;
+    const useNewFormat = pvFormat !== "old";
 
     if (isString(tps) && tps.length) {
       const getEvalReplacementPrefix = (ply) => {
@@ -1261,7 +1385,7 @@ export default class Bot {
 
       // The current TPS corresponds to:
       // - the *positionAfter* of the previous ply (evaluation belongs there)
-      // - the *positionBefore* of the next ply (pv belongs there)
+      // - the *positionBefore* of the next ply (pv belongs there - old format only)
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
 
@@ -1272,12 +1396,14 @@ export default class Bot {
         prevPly || this.plies.find((p) => p.id === 0 && p.tpsBefore === tps);
 
       if (prevPly) {
+        // For new format: all comments (including pv>) stay with prevPly
+        // For old format: filter out old-style pv comments (they go to nextPly)
         const notes = this.formatEvalComments(
           prevPly,
           pvLimit,
           saveSearchStats,
           pvsToSave
-        ).filter((n) => !getPV(n));
+        ).filter((n) => useNewFormat || !getPV(n));
         if (notes.length) {
           messages[prevPly.id] = notes;
         }
@@ -1295,7 +1421,8 @@ export default class Bot {
         }
       }
 
-      if (nextPly) {
+      // Old format only: PV comments go to the next ply
+      if (!useNewFormat && nextPly) {
         const notes = this.formatEvalComments(
           nextPly,
           pvLimit,

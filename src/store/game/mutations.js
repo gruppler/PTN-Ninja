@@ -648,7 +648,10 @@ export const REMOVE_NOTES = () => {
 
 export const REMOVE_ANALYSIS_NOTES = () => {
   Vue.prototype.$game.removeNotes(
-    (note, plyID) => note.output.evaluation !== null || note.output.pv !== null
+    (note, plyID) =>
+      note.output.evaluation !== null ||
+      note.output.pv !== null ||
+      note.output.pvAfter !== null
   );
 };
 
@@ -668,7 +671,9 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
 
   Vue.prototype.$game.removeNotes((note, plyID) => {
     if (evalPlyID && plyID === evalPlyID) {
-      return note.evaluation !== null || note.pv !== null;
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
     }
     if (nextPlyID && plyID === nextPlyID) {
       return note.evaluation !== null || note.pv !== null;

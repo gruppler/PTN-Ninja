@@ -10,6 +10,7 @@ const outputProps = [
   "ms",
   "nodes",
   "pv",
+  "pvAfter",
   "visits",
 ];
 
@@ -82,14 +83,35 @@ export function getNodes(message) {
 export function getPV(message) {
   let matches;
 
+  // Match old format: "pv " or "pv=" (NOT "pv>")
   matches = message.match(
-    /(?:\W|^)(pv([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
+    /(?:\W|^)(pv(?![>])([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
   );
   if (matches) {
     matches = matches.map((match) =>
       match
         .trim()
         .replace(/^pv[=\s]+/, "")
+        .split(/\s+/)
+    );
+    return matches;
+  }
+
+  return null;
+}
+
+export function getPVAfter(message) {
+  let matches;
+
+  // Match new format: "pv>" (PV for position AFTER this ply)
+  matches = message.match(
+    /(?:\W|^)(pv>(\s+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
+  );
+  if (matches) {
+    matches = matches.map((match) =>
+      match
+        .trim()
+        .replace(/^pv>\s*/, "")
         .split(/\s+/)
     );
     return matches;
@@ -149,6 +171,10 @@ export default class Comment {
 
   get pv() {
     return getPV(this.message);
+  }
+
+  get pvAfter() {
+    return getPVAfter(this.message);
   }
 
   get visits() {

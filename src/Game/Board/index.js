@@ -430,10 +430,25 @@ export default class Board extends Aggregation(
                     evaluations[plyID] = comment.evaluation;
                   }
                   if (comment.pv !== null) {
+                    const pvItems = comment.pv.map((p) => ({
+                      moves: p,
+                      isAfter: false,
+                    }));
                     if (pvs[plyID]) {
-                      pvs[plyID] = pvs[plyID].concat(comment.pv);
+                      pvs[plyID] = pvs[plyID].concat(pvItems);
                     } else {
-                      pvs[plyID] = comment.pv;
+                      pvs[plyID] = pvItems;
+                    }
+                  }
+                  if (comment.pvAfter !== null) {
+                    const pvItems = comment.pvAfter.map((p) => ({
+                      moves: p,
+                      isAfter: true,
+                    }));
+                    if (pvs[plyID]) {
+                      pvs[plyID] = pvs[plyID].concat(pvItems);
+                    } else {
+                      pvs[plyID] = pvItems;
                     }
                   }
                 }

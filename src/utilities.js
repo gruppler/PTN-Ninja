@@ -58,7 +58,7 @@ export function countedThrottle(func, wait) {
   };
 }
 
-function nextPly(player, color) {
+export function nextPly(player, color) {
   if (player === 2 && color === 1) {
     return { player: 1, color: 1 };
   }

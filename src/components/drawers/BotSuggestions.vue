@@ -342,7 +342,7 @@
             filled
           />
 
-          <!-- PVs to Save -->
+          <!-- Suggestions to Save -->
           <q-input
             type="number"
             v-model.number="pvsToSave"
@@ -837,7 +837,12 @@ export default {
     hasAnalysisNotes() {
       return Object.values(this.$store.state.game.comments.notes).some(
         (notes) =>
-          notes.some((note) => note.evaluation !== null || note.pv !== null)
+          notes.some(
+            (note) =>
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+          )
       );
     },
     hasCurrentPositionSavedResults() {
@@ -850,7 +855,14 @@ export default {
           return true;
         }
       }
-      // Check next ply for PV
+      // Check previous ply for pvAfter (new format)
+      if (prevPly) {
+        const prevNotes = this.$store.state.game.comments.notes[prevPly.id];
+        if (prevNotes && prevNotes.some((note) => note.pvAfter !== null)) {
+          return true;
+        }
+      }
+      // Check next ply for PV (old format)
       const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
       if (nextPly) {
         const nextNotes = this.$store.state.game.comments.notes[nextPly.id];

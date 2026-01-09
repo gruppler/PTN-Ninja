@@ -63,6 +63,7 @@ const defaultState = {
   showBoardTransformBtn: false,
   showControls: true,
   showEval: true,
+  showNotesPV: false,
   showHeader: true,
   showHints: true,
   showMove: true,

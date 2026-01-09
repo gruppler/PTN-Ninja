@@ -4,6 +4,24 @@ import Evaluation from "./PTN/Evaluation";
 import { isFunction, omit } from "lodash";
 
 export default class GameComments {
+  // Detect PV format from existing comments
+  // Returns "new" if any comment uses pv> format
+  // Returns "old" if any comment uses pv format (without >)
+  // Returns null if no PV comments exist (will use new format for new analysis)
+  get pvFormat() {
+    for (const plyID in this.notes) {
+      for (const note of this.notes[plyID]) {
+        if (note.pvAfter !== null) {
+          return "new";
+        }
+        if (note.pv !== null) {
+          return "old";
+        }
+      }
+    }
+    return null;
+  }
+
   getMoveComments(move) {
     let comments = [];
     if (move.ply1 && "id" in move.ply1) {
