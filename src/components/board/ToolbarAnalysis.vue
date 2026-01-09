@@ -149,8 +149,9 @@
           icon="connect"
           :label="$t('tei.connect')"
           class="full-width toolbar-analysis"
-          color="primary"
+          color="hldim"
           stretch
+          flat
         />
         <q-btn
           v-else-if="bot && bot.hasOptions && !botState.isReady"
@@ -159,8 +160,9 @@
           :label="$t('analysis.init')"
           :loading="botState.isReadying"
           class="full-width toolbar-analysis"
-          color="primary"
+          color="hldim"
           stretch
+          flat
         />
         <div class="position-relative" v-else-if="!isEmbedded">
           <q-btn-group spread stretch>
@@ -173,7 +175,8 @@
               :loading="botState.isAnalyzingPosition"
               :disable="!bot.isAnalyzePositionAvailable"
               class="full-width toolbar-analysis"
-              color="primary"
+              color="hldim"
+              flat
             >
               <q-icon name="board" left />
               <template v-if="$q.screen.gt.sm">
@@ -186,7 +189,8 @@
               :loading="botState.isAnalyzingBranch"
               :disable="!bot.isAnalyzeGameAvailable"
               class="full-width"
-              color="primary"
+              color="hldim"
+              flat
             >
               <q-icon name="branch" left />
               <template v-if="$q.screen.gt.sm">
@@ -199,7 +203,8 @@
               :loading="botState.isAnalyzingGame"
               :disable="!bot.isAnalyzeGameAvailable"
               class="full-width"
-              color="primary"
+              color="hldim"
+              flat
             >
               <q-icon name="branches_all" left />
               <template v-if="$q.screen.gt.sm">
@@ -210,7 +215,8 @@
             <q-btn
               v-if="botMeta && botMeta.isInteractive"
               @click="toggleInteractiveAnalysis"
-              color="primary"
+              color="hldim"
+              flat
               :disable="!bot.isInteractiveAvailable"
               class="full-width"
             >
