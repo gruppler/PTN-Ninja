@@ -108,6 +108,7 @@ export default class Bot {
     };
 
     this.settings = {
+      enableLogging: false,
       ...settings,
     };
     // After initialization of the store,
@@ -144,12 +145,12 @@ export default class Bot {
 
   //#region send/receive
   onSend(message) {
-    if (store.state.analysis && store.state.analysis.enableLogging) {
+    if (this.settings.enableLogging) {
       this.logMessage(message);
     }
   }
   onReceive(message) {
-    if (store.state.analysis && store.state.analysis.enableLogging) {
+    if (this.settings.enableLogging) {
       this.logMessage(message, true);
     }
   }
@@ -159,16 +160,16 @@ export default class Bot {
       message = JSON.stringify(message);
     }
     message = Object.freeze({ message, received });
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/BOT_LOG", message);
+    if (store.state.analysis) {
+      store.commit("analysis/BOT_LOG", { botID: this.id, message });
     } else {
       this.log.push(message);
     }
   }
 
   clearLog() {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/CLEAR_BOT_LOG");
+    if (store.state.analysis) {
+      store.commit("analysis/CLEAR_BOT_LOG", this.id);
     } else {
       this.log = [];
     }
@@ -176,8 +177,8 @@ export default class Bot {
 
   //#region Setters
   setMeta(meta) {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_META", meta);
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_META", { botID: this.id, changes: meta });
     } else {
       Object.assign(this.meta, meta);
     }
@@ -212,16 +213,23 @@ export default class Bot {
       }
     }
 
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_STATE", state);
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_STATE", {
+        botID: this.id,
+        changes: state,
+      });
     } else {
       Object.assign(this.state, state);
     }
   }
 
   setPosition(tps, suggestions) {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_POSITION", [tps, suggestions]);
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_POSITION", {
+        botID: this.id,
+        tps,
+        suggestions,
+      });
     } else {
       this.positions[tps] = suggestions;
     }
@@ -475,10 +483,9 @@ export default class Bot {
 
   //#region clearResults
   clearResults() {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/CLEAR_BOT_POSITIONS");
-    } else {
-      this.positions = {};
+    this.positions = {};
+    if (store.state.analysis) {
+      store.commit("analysis/CLEAR_BOT_POSITIONS", this.id);
     }
     this.setState({ time: 0, nps: 0 });
   }
@@ -796,14 +803,7 @@ export default class Bot {
         const concurrency = this.concurrency;
 
         const plies = this.getPlies(all);
-        const analysisPlies = !all
-          ? plies.filter((ply) => {
-              const currentIndex = this.game.position.ply
-                ? this.game.position.ply.index
-                : 0;
-              return ply && ply.index >= currentIndex;
-            })
-          : plies;
+        const analysisPlies = plies;
 
         const positions = this.getPositionsToAnalyze(all, analysisPlies);
         const total = analysisPlies.length;
@@ -1335,15 +1335,8 @@ export default class Bot {
     const useNewFormat = pvFormat !== "old";
 
     if (isString(tps) && tps.length) {
-      const getEvalReplacementPrefix = (ply) => {
-        if (!ply || !(ply.id in this.game.comments.notes)) {
-          return "";
-        }
-        const index = this.game.comments.notes[ply.id].findIndex(
-          (comment) => comment.evaluation !== null
-        );
-        return index >= 0 ? `!r${index}:` : "";
-      };
+      // Remove existing analysis notes for this position before adding new ones (batched)
+      store.commit("game/REMOVE_POSITION_ANALYSIS_NOTES", tps);
 
       const buildEvalCommentFromPosition = (position) => {
         if (!position || !position[0]) {
@@ -1415,9 +1408,7 @@ export default class Bot {
       if (evalPly && !(evalPly.id in messages)) {
         const fallbackEval = buildEvalCommentFromPosition(this.positions[tps]);
         if (fallbackEval) {
-          messages[evalPly.id] = [
-            getEvalReplacementPrefix(evalPly) + fallbackEval,
-          ];
+          messages[evalPly.id] = [fallbackEval];
         }
       }
 
@@ -1434,6 +1425,9 @@ export default class Bot {
         }
       }
     } else {
+      // For full game/branch analysis, remove existing analysis notes first (batched)
+      store.commit("game/REMOVE_ANALYSIS_NOTES");
+
       this.plies.forEach((ply) => {
         const notes = [];
         const evaluations = this.formatEvalComments(

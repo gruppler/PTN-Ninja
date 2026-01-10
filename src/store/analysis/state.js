@@ -8,15 +8,17 @@ const defaultBotID = "tiltak";
 const botList = [...botListOptions];
 
 const defaultState = {
+  activeBots: [],
   botList,
   customBots: {},
-  botID: defaultBotID,
-  botLog: [],
-  botMeta: {},
+  botID: defaultBotID, // Used only for ToolbarAnalysis display selection
+  botSettings: {}, // Per-bot settings (persisted)
+  // Per-bot reactive state (keyed by botID)
+  botLogs: {},
+  botMetas: {},
   botPositions: {},
-  botSettings: {},
-  botState: {},
-  enableLogging: false,
+  botStates: {},
+  // Global settings
   insertEvalMarks: true,
   pvLimit: 3,
   pvsToSave: 1,
@@ -89,6 +91,25 @@ defaults(state.dbSettings, defaultState.dbSettings);
 defaults(state.botSettings, defaultState.botSettings);
 Object.keys(defaultState.botSettings).forEach((bot) => {
   defaults(state.botSettings[bot], defaultState.botSettings[bot]);
+});
+
+// Initialize per-bot state for all active bots
+state.activeBots.forEach((botId) => {
+  if (botId && bots[botId]) {
+    const bot = bots[botId];
+    if (!state.botLogs[botId]) {
+      state.botLogs[botId] = cloneDeep(bot.log);
+    }
+    if (!state.botMetas[botId]) {
+      state.botMetas[botId] = cloneDeep(bot.meta);
+    }
+    if (!state.botStates[botId]) {
+      state.botStates[botId] = cloneDeep(bot.state);
+    }
+    if (!state.botPositions[botId]) {
+      state.botPositions[botId] = cloneDeep(bot.positions);
+    }
+  }
 });
 
 export default state;

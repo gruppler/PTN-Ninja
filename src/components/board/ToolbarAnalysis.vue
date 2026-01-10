@@ -1,85 +1,143 @@
 <template>
   <div class="toolbar-analysis-container">
-    <q-btn
-      @click="toggle"
-      :icon="icon"
-      class="toolbar-analysis-toggle dimmed-btn absolute"
-      :class="{ embedded: isEmbedded }"
-      v-ripple="false"
-      :color="btnColor"
-      dense
-      flat
-    >
-      <hint>{{ collapsed ? $t("Show Analysis") : $t("Hide Analysis") }}</hint>
-    </q-btn>
-    <q-btn
-      v-if="
-        !isEmbedded &&
-        !showBigButtons &&
-        bot &&
-        botMeta &&
-        botMeta.isInteractive &&
-        bot.isInteractiveAvailable &&
-        (!botMeta.requiresConnect || botState.isConnected)
-      "
-      @click="toggleInteractiveAnalysis"
-      :class="[
-        'interactive-analysis-toggle',
-        'absolute',
-        { 'dimmed-btn': !bot.isInteractiveEnabled },
-      ]"
-      v-ripple="false"
-      :color="bot.isInteractiveEnabled ? 'primary' : btnColor"
-      dense
-      flat
-    >
-      <q-spinner-cube
-        v-if="botState.isInteractiveEnabled && botState.isRunning"
-        size="sm"
-      />
-      <q-icon v-else name="int_analysis" />
-      <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
-    </q-btn>
-    <q-btn
-      v-else-if="
-        !isEmbedded &&
-        !showBigButtons &&
-        bot &&
-        botMeta &&
-        botMeta.requiresConnect &&
-        !botState.isConnected
-      "
-      @click="bot.connect()"
-      :loading="botState.isConnecting"
-      :class="['connect-toggle', 'dimmed-btn', 'absolute']"
-      v-ripple="false"
-      :color="btnColor"
-      dense
-      flat
-    >
-      <q-icon name="connect" />
-      <hint>{{ $t("tei.connect") }}</hint>
-    </q-btn>
-    <q-btn
-      v-if="
-        !isEmbedded &&
-        !showBigButtons &&
-        bot &&
-        botState &&
-        (botState.isAnalyzingPosition ||
-          botState.isAnalyzingGame ||
-          botState.isAnalyzingBranch)
-      "
-      @click="bot.terminate()"
-      :class="['cancel-analysis-toggle', 'absolute']"
-      v-ripple="false"
-      color="primary"
-      dense
-      flat
-    >
-      <q-spinner size="sm" />
-      <hint>{{ $t("Cancel") }} {{ $t("Analysis") }}</hint>
-    </q-btn>
+    <div class="button-container absolute q-gutter-x-md">
+      <q-btn
+        @click="toggle"
+        :icon="icon"
+        class="toolbar-analysis-toggle dimmed-btn"
+        :class="{ embedded: isEmbedded }"
+        v-ripple="false"
+        :color="btnColor"
+        dense
+        flat
+      >
+        <hint>{{ collapsed ? $t("Show Analysis") : $t("Hide Analysis") }}</hint>
+      </q-btn>
+      <q-btn
+        v-if="
+          !collapsed &&
+          !isEmbedded &&
+          (activeBots.length > 1 || hasSavedSuggestions)
+        "
+        class="bot-selector-toggle dimmed-btn"
+        v-ripple="false"
+        :color="btnColor"
+        dense
+        flat
+      >
+        <q-icon
+          :name="viewingSavedResults ? 'save' : botOption.icon || 'bot'"
+        />
+        <hint>
+          {{ viewingSavedResults ? $t("Saved Results") : botOption.label }}
+        </hint>
+        <q-menu anchor="top right" self="bottom right">
+          <q-list>
+            <q-item
+              v-for="(id, idx) in activeBots"
+              :key="idx"
+              clickable
+              v-close-popup
+              @click="selectBot(id)"
+              :active="id === botID && !viewingSavedResults"
+            >
+              <q-item-section avatar>
+                <q-icon :name="getBotIcon(id)" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ getBotLabel(id) }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-separator v-if="hasSavedSuggestions" />
+            <q-item
+              v-if="hasSavedSuggestions"
+              clickable
+              v-close-popup
+              @click="selectSavedResults"
+              :active="viewingSavedResults"
+            >
+              <q-item-section avatar>
+                <q-icon name="save" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("Saved Results") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
+      <q-btn
+        v-if="
+          !collapsed &&
+          !isEmbedded &&
+          !showBigButtons &&
+          bot &&
+          botMeta &&
+          botMeta.isInteractive &&
+          bot.isInteractiveAvailable &&
+          (!botMeta.requiresConnect || botState.isConnected)
+        "
+        @click="toggleInteractiveAnalysis"
+        :class="[
+          'interactive-analysis-toggle',
+          '',
+          { 'dimmed-btn': !bot.isInteractiveEnabled },
+        ]"
+        v-ripple="false"
+        :color="bot.isInteractiveEnabled ? 'primary' : btnColor"
+        dense
+        flat
+      >
+        <q-spinner-cube
+          v-if="botState.isInteractiveEnabled && botState.isRunning"
+          size="sm"
+        />
+        <q-icon v-else name="int_analysis" />
+        <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
+      </q-btn>
+      <q-btn
+        v-else-if="
+          !collapsed &&
+          !isEmbedded &&
+          !showBigButtons &&
+          bot &&
+          botMeta &&
+          botMeta.requiresConnect &&
+          !botState.isConnected
+        "
+        @click="bot.connect()"
+        :loading="botState.isConnecting"
+        :class="['connect-toggle', 'dimmed-btn']"
+        v-ripple="false"
+        :color="btnColor"
+        dense
+        flat
+      >
+        <q-icon name="connect" />
+        <hint>{{ $t("tei.connect") }}</hint>
+      </q-btn>
+      <q-btn
+        v-if="
+          !collapsed &&
+          !isEmbedded &&
+          !showBigButtons &&
+          bot &&
+          botState &&
+          (botState.isAnalyzingPosition ||
+            botState.isAnalyzingGame ||
+            botState.isAnalyzingBranch)
+        "
+        @click="bot.terminate()"
+        :class="['cancel-analysis-toggle']"
+        v-ripple="false"
+        color="primary"
+        dense
+        flat
+      >
+        <q-spinner size="sm" />
+        <hint>{{ $t("Cancel") }} {{ $t("Analysis") }}</hint>
+      </q-btn>
+    </div>
     <smooth-reflow class="relative-position">
       <template v-if="!collapsed">
         <q-item v-if="isGameEnd" class="flex-center toolbar-analysis">
@@ -244,8 +302,8 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import { parsePV } from "../../utilities";
-import { isArray } from "lodash";
-import { isNumber } from "lodash";
+import { bots } from "../../bots";
+import { isArray, isNumber } from "lodash";
 
 export default {
   name: "ToolbarAnalysis",
@@ -264,6 +322,8 @@ export default {
       suggestionIndex: 0,
       deltaY: 0,
       scrollTimer: null,
+      preferSavedResults: true,
+      manualBotSelection: false,
     };
   },
   computed: {
@@ -304,33 +364,51 @@ export default {
       return this.isEmbedded ? null : this.$store.getters["analysis/bot"];
     },
     botMeta() {
-      return this.isEmbedded ? null : this.$store.state.analysis.botMeta;
+      if (this.isEmbedded || !this.botID) return null;
+      return this.$store.state.analysis.botMetas[this.botID] || {};
     },
     botState() {
-      return this.isEmbedded ? null : this.$store.state.analysis.botState;
+      if (this.isEmbedded || !this.botID) return null;
+      return this.$store.state.analysis.botStates[this.botID] || {};
     },
     botID() {
       return this.isEmbedded ? null : this.$store.state.analysis.botID;
     },
+    activeBots() {
+      return (this.$store.state.analysis.activeBots || []).filter(
+        (id) => id != null
+      );
+    },
+    botList() {
+      return this.$store.state.analysis.botList || [];
+    },
+    botOption() {
+      return this.botList.find((b) => b.value === this.botID) || {};
+    },
+    savedSuggestions() {
+      return this.$store.getters["game/suggestions"](this.tps);
+    },
+    hasSavedSuggestions() {
+      return this.savedSuggestions.length > 0;
+    },
+    currentBotSuggestions() {
+      if (!this.$store.state.analysis || !this.botID) return [];
+      const positions = this.$store.state.analysis.botPositions[this.botID];
+      return positions ? positions[this.tps] || [] : [];
+    },
+    hasCurrentBotSuggestions() {
+      return this.currentBotSuggestions.length > 0;
+    },
     suggestions() {
-      const botSuggestions = this.$store.state.analysis
-        ? this.$store.state.analysis.botPositions[this.tps] || []
-        : [];
-      const noteSuggestions = this.$store.getters["game/suggestions"](this.tps);
-
-      // Merge bot suggestions with note suggestions, avoiding duplicates
-      // Bot suggestions take priority (they have more recent/detailed data)
-      const merged = [...botSuggestions];
-      for (const noteSugg of noteSuggestions) {
-        // Check if this PV already exists in bot suggestions
-        const isDuplicate = merged.some(
-          (s) => s.ply && noteSugg.ply && s.ply.ptn === noteSugg.ply.ptn
-        );
-        if (!isDuplicate) {
-          merged.push(noteSugg);
-        }
+      // Show saved results if preferred and available
+      if (this.preferSavedResults && this.hasSavedSuggestions) {
+        return this.savedSuggestions;
       }
-      return merged;
+      return this.currentBotSuggestions;
+    },
+    viewingSavedResults() {
+      // Actually viewing saved results (preferred AND available)
+      return this.preferSavedResults && this.hasSavedSuggestions;
     },
     suggestionsCount() {
       return this.suggestions.length;
@@ -362,7 +440,12 @@ export default {
         return this.suggestions[this.suggestionIndex] || this.suggestions[0];
       }
 
-      return this.$store.getters["game/suggestion"](this.tps);
+      // Only fall through to saved results if actually viewing saved results
+      if (this.viewingSavedResults) {
+        return this.$store.getters["game/suggestion"](this.tps);
+      }
+
+      return null;
     },
     progress() {
       if (this.botSuggestion && "progress" in this.botSuggestion) {
@@ -392,6 +475,25 @@ export default {
   methods: {
     toggle() {
       this.collapsed = !this.collapsed;
+    },
+    selectBot(botId) {
+      this.preferSavedResults = false;
+      this.manualBotSelection = true;
+      if (botId && botId !== this.botID) {
+        this.$store.dispatch("analysis/SET", ["botID", botId]);
+      }
+    },
+    selectSavedResults() {
+      this.preferSavedResults = true;
+      this.manualBotSelection = false;
+    },
+    getBotIcon(botId) {
+      const bot = bots[botId];
+      return bot ? bot.icon : "bot";
+    },
+    getBotLabel(botId) {
+      const bot = bots[botId];
+      return bot ? bot.label : botId;
     },
     toggleInteractiveAnalysis() {
       if (this.bot && this.bot.isInteractiveAvailable) {
@@ -446,6 +548,32 @@ export default {
     tps() {
       this.suggestionIndex = 0;
     },
+    "game.name": {
+      handler() {
+        // Switch to saved results when game changes
+        if (this.hasSavedSuggestions) {
+          this.preferSavedResults = true;
+          this.manualBotSelection = false;
+        }
+      },
+    },
+    botSuggestion: {
+      handler(suggestion) {
+        // Update highlight when suggestion changes (e.g., from scrolling)
+        // Only update if highlight is already being overridden (hlSquares is non-empty)
+        if (
+          suggestion &&
+          suggestion.ply &&
+          this.$store.state.game.hlSquares?.length
+        ) {
+          this.$store.dispatch(
+            "game/HIGHLIGHT_SQUARES",
+            suggestion.ply.squares
+          );
+        }
+      },
+      immediate: false,
+    },
   },
 };
 </script>
@@ -460,17 +588,13 @@ export default {
     z-index: 1;
   }
 
-  .toolbar-analysis-toggle,
-  .cancel-analysis-toggle,
-  .interactive-analysis-toggle,
-  .connect-toggle {
+  .button-container {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-wrap: nowrap;
     top: -32px;
-    right: 130px;
-    z-index: 1;
-  }
-
-  .toolbar-analysis-toggle {
     right: 86px;
+    z-index: 1;
     &.embedded {
       right: 18px;
     }

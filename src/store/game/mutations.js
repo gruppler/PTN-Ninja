@@ -4,6 +4,7 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Evaluation from "../../Game/PTN/Evaluation";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -644,6 +645,8 @@ export const REMOVE_POSITION_NOTES = (state, plyID) => {
 
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
 };
 
 export const REMOVE_ANALYSIS_NOTES = () => {
@@ -653,6 +656,36 @@ export const REMOVE_ANALYSIS_NOTES = () => {
       note.output.pv !== null ||
       note.output.pvAfter !== null
   );
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
+};
+
+// Helper to clear PTN eval marks (!/!!/?/??) but keep tak/tinue marks
+const clearEvalMarks = () => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.plies.forEach((ply) => {
+    if (ply && ply.evaluation) {
+      // Keep only tak/tinue marks
+      const hasTak = ply.evaluation.tak;
+      const hasTinue = ply.evaluation.tinue;
+      if (hasTak || hasTinue) {
+        // Preserve tak/tinue, remove ?/!
+        const newText = hasTinue ? '"' : hasTak ? "'" : "";
+        if (newText !== ply.evaluation.text) {
+          ply.evaluation = Evaluation.parse(newText);
+          game.board.dirtyPly(ply.id);
+        }
+      } else {
+        // No tak/tinue, clear entirely
+        ply.evaluation = null;
+        game.board.dirtyPly(ply.id);
+      }
+    }
+  });
+  game._updatePTN(true);
+  game.board.updatePTNOutput();
 };
 
 export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {

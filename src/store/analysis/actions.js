@@ -59,3 +59,38 @@ export const BOT_CONNECT = ({ state }) => {
 export const BOT_DISCONNECT = ({ state }) => {
   bots[state.botID].disconnect();
 };
+
+// Active Bots management with LocalStorage persistence
+const saveActiveBots = (state) => {
+  try {
+    LocalStorage.set("activeBots", state.activeBots);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
+};
+
+export const ADD_ACTIVE_BOT = ({ state, commit }, botId = null) => {
+  commit("ADD_ACTIVE_BOT", botId);
+  saveActiveBots(state);
+};
+
+export const SET_ACTIVE_BOT = ({ state, commit }, { index, botId }) => {
+  commit("SET_ACTIVE_BOT", { index, botId });
+  saveActiveBots(state);
+};
+
+export const REMOVE_ACTIVE_BOT = ({ state, commit }, index) => {
+  commit("REMOVE_ACTIVE_BOT", index);
+  saveActiveBots(state);
+};
+
+export const REORDER_ACTIVE_BOTS = (
+  { state, commit },
+  { fromIndex, toIndex }
+) => {
+  commit("REORDER_ACTIVE_BOTS", { fromIndex, toIndex });
+  saveActiveBots(state);
+};

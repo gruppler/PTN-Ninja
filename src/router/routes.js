@@ -114,7 +114,7 @@ const routes = [
       },
       {
         name: "bot",
-        path: "/bot",
+        path: "/bot/:botID?",
         component: () => import("../dialogs/EditBot"),
       },
       {

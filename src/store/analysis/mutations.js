@@ -6,23 +6,37 @@ import { cloneDeep, sortBy } from "lodash";
 export const SET = (state, [key, value]) => {
   if (key in state.defaults) {
     state[key] = cloneDeep(value);
-    if (key === "botID") {
-      SET_BOT(state, value);
-    }
   }
 };
 
+// Initialize per-bot state in the store
+export const INIT_BOT = (state, botID) => {
+  if (!(botID in bots)) {
+    return;
+  }
+  const bot = bots[botID];
+  // Initialize per-bot state if not already present (use cloneDeep to avoid shared references)
+  if (!state.botLogs[botID]) {
+    Vue.set(state.botLogs, botID, cloneDeep(bot.log));
+  }
+  if (!state.botMetas[botID]) {
+    Vue.set(state.botMetas, botID, cloneDeep(bot.meta));
+  }
+  if (!state.botStates[botID]) {
+    Vue.set(state.botStates, botID, cloneDeep(bot.state));
+  }
+  if (!state.botPositions[botID]) {
+    Vue.set(state.botPositions, botID, cloneDeep(bot.positions));
+  }
+};
+
+// Set the bot to display in ToolbarAnalysis
 export const SET_BOT = (state, botID) => {
   if (!(botID in bots)) {
     throw new Error("Bot not available");
   }
-  const bot = bots[botID];
-  Vue.prototype.$bot = bot;
   state.botID = botID;
-  state.botLog = bot.log;
-  state.botMeta = bot.meta;
-  state.botState = bot.state;
-  state.botPositions = bot.positions;
+  INIT_BOT(state, botID);
 };
 
 export const SAVE_BOT = (state, bot) => {
@@ -86,40 +100,105 @@ export const DELETE_BOT = (state, botID) => {
   }
 };
 
-export const BOT_LOG = (state, message) => {
-  state.botLog.push(message);
+// Per-bot mutations - all take botID as first parameter
+export const BOT_LOG = (state, { botID, message }) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.log.push(message);
+  }
+  if (!state.botLogs[botID]) {
+    Vue.set(state.botLogs, botID, []);
+  }
+  state.botLogs[botID].push(message);
 };
 
-export const CLEAR_BOT_LOG = (state) => {
-  const bot = bots[state.botID];
-  bot.log = [];
-  state.botLog = bot.log;
+export const CLEAR_BOT_LOG = (state, botID) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.log = [];
+  }
+  Vue.set(state.botLogs, botID, []);
 };
 
-export const SET_BOT_META = (state, changes) => {
-  bots[state.botID].meta = state.botMeta = { ...state.botMeta, ...changes };
+export const SET_BOT_META = (state, { botID, changes }) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.meta = { ...bot.meta, ...changes };
+  }
+  if (!state.botMetas[botID]) {
+    Vue.set(state.botMetas, botID, {});
+  }
+  Vue.set(state.botMetas, botID, { ...state.botMetas[botID], ...changes });
 };
 
-export const SET_BOT_STATE = (state, changes) => {
-  bots[state.botID].state = state.botState = { ...state.botState, ...changes };
+export const SET_BOT_STATE = (state, { botID, changes }) => {
+  const bot = bots[botID];
+  if (bot) {
+    Object.assign(bot.state, changes);
+  }
+  if (!state.botStates[botID]) {
+    Vue.set(state.botStates, botID, {});
+  }
+  const newState = { ...state.botStates[botID], ...changes };
+  Vue.set(state.botStates, botID, newState);
 };
 
-export const SET_BOT_POSITION = (state, [tps, suggestions]) => {
-  Vue.set(state.botPositions, tps, suggestions);
+export const SET_BOT_POSITION = (state, { botID, tps, suggestions }) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.positions[tps] = suggestions;
+  }
+  if (!state.botPositions[botID]) {
+    Vue.set(state.botPositions, botID, {});
+  }
+  Vue.set(state.botPositions[botID], tps, suggestions);
 };
 
-export const SET_BOT_POSITIONS = (state, positions) => {
-  const bot = bots[state.botID];
-  bot.positions = positions || {};
-  state.botPositions = bot.positions;
+export const SET_BOT_POSITIONS = (state, { botID, positions }) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.positions = positions || {};
+  }
+  Vue.set(state.botPositions, botID, positions || {});
 };
 
-export const DELETE_BOT_POSITION = (state, tps) => {
-  Vue.delete(state.botPositions, tps);
+export const DELETE_BOT_POSITION = (state, { botID, tps }) => {
+  if (state.botPositions[botID]) {
+    Vue.delete(state.botPositions[botID], tps);
+  }
 };
 
-export const CLEAR_BOT_POSITIONS = (state) => {
-  const bot = bots[state.botID];
-  bot.positions = {};
-  state.botPositions = bot.positions;
+export const CLEAR_BOT_POSITIONS = (state, botID) => {
+  const bot = bots[botID];
+  if (bot) {
+    bot.positions = {};
+  }
+  Vue.set(state.botPositions, botID, {});
+};
+
+// Active Bots mutations
+export const ADD_ACTIVE_BOT = (state, botId = null) => {
+  state.activeBots.push(botId);
+  if (botId) {
+    INIT_BOT(state, botId);
+  }
+};
+
+export const SET_ACTIVE_BOT = (state, { index, botId }) => {
+  Vue.set(state.activeBots, index, botId);
+  if (botId) {
+    INIT_BOT(state, botId);
+  }
+};
+
+export const REMOVE_ACTIVE_BOT = (state, index) => {
+  if (state.activeBots.length > 1) {
+    state.activeBots.splice(index, 1);
+  }
+};
+
+export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
+  const bot = state.activeBots[fromIndex];
+  state.activeBots.splice(fromIndex, 1);
+  state.activeBots.splice(toIndex, 0, bot);
 };

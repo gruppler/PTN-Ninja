@@ -289,6 +289,7 @@ import BotOptionInput from "../components/analysis/BotOptionInput";
 import { uid } from "quasar";
 import { cloneDeep, difference, forEach, isEqual, omit, pick } from "lodash";
 import { defaultLimitTypes, defaultEvalMarkThresholds } from "../bots/bot";
+import { bots } from "../bots";
 
 const halfKomis = [];
 for (let k = -9; k <= 9; k++) {
@@ -310,14 +311,20 @@ export default {
     };
   },
   computed: {
+    botID() {
+      // Use route param if provided, otherwise fall back to store's selected bot
+      return this.$route.params.botId || this.$store.state.analysis.botID;
+    },
     bot() {
-      return this.$store.getters["analysis/bot"];
+      return this.botID ? bots[this.botID] : null;
     },
     botMeta() {
-      return this.$store.state.analysis.botMeta;
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botMetas[this.botID] || {};
     },
     botState() {
-      return this.$store.state.analysis.botState;
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botStates[this.botID] || {};
     },
     isNew() {
       return !this.bot || !this.botMeta.isCustom;
