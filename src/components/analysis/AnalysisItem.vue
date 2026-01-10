@@ -1,5 +1,10 @@
 <template>
-  <div class="analysis-item" :class="{ animate }">
+  <div
+    class="analysis-item"
+    :class="{ animate }"
+    @mouseover="highlight"
+    @mouseout="unhighlight"
+  >
     <slot name="before" />
     <div
       v-if="evaluation !== null"
@@ -9,8 +14,6 @@
     />
     <div class="full-width">
       <q-item
-        @mouseover="highlight"
-        @mouseout="unhighlight"
         @click="insertPly"
         :clickable="!isBoardDisabled && ply !== null"
         style="height: 60px"
@@ -116,8 +119,6 @@
       <q-item
         v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
         class="q-pt-none"
-        @mouseover="highlight"
-        @mouseout="unhighlight"
         @click="
           followingPlies && followingPlies.length > 0
             ? insertFollowingPlies()

@@ -44,6 +44,7 @@ export default {
       isMoving: false,
       isTouchActive: false,
       touchStartedOnPly: false,
+      mutationObserver: null,
     };
   },
   computed: {
@@ -106,6 +107,7 @@ export default {
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
     this.clearTouchTimer();
     this.clearHideTimer();
+    this.stopObservingElement();
   },
   methods: {
     findPlyElement(target) {
@@ -165,15 +167,56 @@ export default {
       this.clearHideTimer();
       const wasVisible = this.hoveredPly !== null;
       this.isMoving = wasVisible;
+
+      // Stop observing old element
+      if (this.hoveredElement && this.hoveredElement !== el) {
+        this.stopObservingElement();
+      }
+
       this.hoveredElement = el;
       this.hoveredPly = plyData;
       this.$nextTick(() => this.updateTooltipPosition(el));
+
+      // Start observing new element for attribute changes
+      this.startObservingElement(el);
     },
     hidePlyTooltip() {
+      this.stopObservingElement();
       this.hoveredPly = null;
       this.hoveredElement = null;
       this.isMoving = false;
       this.clearTouchTimer();
+    },
+    startObservingElement(el) {
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+      }
+      this.mutationObserver = new MutationObserver(() => {
+        // Re-read data when attributes change
+        if (this.hoveredElement) {
+          const newData = this.getPlyDataFromElement(this.hoveredElement);
+          if (
+            newData &&
+            newData.tps &&
+            (newData.tps !== this.hoveredPly?.tps ||
+              JSON.stringify(newData.plies) !==
+                JSON.stringify(this.hoveredPly?.plies))
+          ) {
+            this.hoveredPly = newData;
+          }
+        }
+      });
+      this.mutationObserver.observe(el, {
+        attributes: true,
+        attributeFilter: ["data-tps", "data-tps-after", "data-plies"],
+        subtree: true,
+      });
+    },
+    stopObservingElement() {
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+        this.mutationObserver = null;
+      }
     },
     clearTouchTimer() {
       if (this.touchTimer) {
@@ -195,8 +238,17 @@ export default {
     },
     onMouseOver(event) {
       const plyEl = this.findPlyElement(event.target);
-      if (plyEl && plyEl !== this.hoveredElement) {
-        this.showPlyTooltip(plyEl);
+      if (plyEl) {
+        // Check if element changed OR if data attributes changed (e.g., from scrolling suggestions)
+        const newData = this.getPlyDataFromElement(plyEl);
+        const dataChanged =
+          !this.hoveredPly ||
+          newData.tps !== this.hoveredPly.tps ||
+          JSON.stringify(newData.plies) !==
+            JSON.stringify(this.hoveredPly.plies);
+        if (plyEl !== this.hoveredElement || dataChanged) {
+          this.showPlyTooltip(plyEl);
+        }
       }
     },
     onMouseOut(event) {
