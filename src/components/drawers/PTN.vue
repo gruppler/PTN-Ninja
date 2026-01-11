@@ -20,6 +20,7 @@
         <template v-slot="{ item }">
           <q-separator
             v-if="item && item.type === 'branch-separator'"
+            :dark="$store.state.ui.theme.panelDark"
             class="fullwidth-padded-md"
           />
           <Move

@@ -89,10 +89,19 @@
         </q-item-section>
       </template>
 
-      <smooth-reflow class="bg-ui" height-only>
+      <smooth-reflow height-only>
         <template v-if="showDBSettings">
           <!-- Include Bots -->
-          <q-item tag="label" clickable v-ripple>
+          <q-item
+            tag="label"
+            :class="[
+              $store.state.ui.theme.panelDark
+                ? 'text-textLight'
+                : 'text-textDark',
+            ]"
+            clickable
+            v-ripple
+          >
             <q-item-section avatar>
               <q-icon
                 :name="dbSettings.includeBotGames ? 'bot_on' : 'bot_off'"
@@ -104,7 +113,10 @@
               </q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-toggle v-model="dbSettings.includeBotGames" />
+              <q-toggle
+                v-model="dbSettings.includeBotGames"
+                :dark="$store.state.ui.theme.panelDark"
+              />
             </q-item-section>
           </q-item>
 
@@ -125,6 +137,7 @@
             use-input
             @filter="searchPlayer1"
             @input="$refs.player1.updateInputValue('')"
+            :dark="$store.state.ui.theme.panelDark"
             hide-dropdown-icon
           >
             <template v-slot:prepend>
@@ -149,6 +162,7 @@
             use-input
             @filter="searchPlayer2"
             @input="$refs.player2.updateInputValue('')"
+            :dark="$store.state.ui.theme.panelDark"
             hide-dropdown-icon
           >
             <template v-slot:prepend>
@@ -168,6 +182,7 @@
             item-aligned
             clearable
             filled
+            :dark="$store.state.ui.theme.panelDark"
           >
             <template v-slot:prepend>
               <q-icon name="rating1" />
@@ -189,6 +204,7 @@
             clearable
             filled
             multiple
+            :dark="$store.state.ui.theme.panelDark"
           >
             <template v-slot:prepend>
               <q-icon name="komi" />
@@ -208,6 +224,7 @@
             item-aligned
             clearable
             filled
+            :dark="$store.state.ui.theme.panelDark"
           >
             <template v-slot:prepend>
               <q-icon
@@ -225,6 +242,7 @@
             item-aligned
             clearable
             filled
+            :dark="$store.state.ui.theme.panelDark"
           />
           <DateInput
             :label="$t('analysis.maxDate')"
@@ -234,6 +252,7 @@
             item-aligned
             clearable
             filled
+            :dark="$store.state.ui.theme.panelDark"
           />
 
           <!-- Max Suggestions -->
@@ -246,11 +265,13 @@
             step="1"
             item-aligned
             filled
+            :dark="$store.state.ui.theme.panelDark"
           >
             <template v-slot:prepend>
               <q-icon name="moves" />
             </template>
           </q-input>
+          <q-separator :dark="$store.state.ui.theme.panelDark" />
         </template>
       </smooth-reflow>
 
@@ -258,13 +279,25 @@
         <q-item v-if="!databases" class="flex-center bg-negative" dark>
           {{ $t("analysis.database.error") }}
         </q-item>
-        <q-item v-else-if="!databases.length" class="flex-center">
+        <q-item
+          v-else-if="!databases.length"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ $t("analysis.database.loading") }}
         </q-item>
-        <q-item v-else-if="noMatchingDatabase" class="flex-center">
+        <q-item
+          v-else-if="noMatchingDatabase"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ $t("analysis.database.notFound") }}
         </q-item>
-        <q-item v-else-if="!dbMoves.length" class="flex-center">
+        <q-item
+          v-else-if="!dbMoves.length"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
         </q-item>
         <template v-else>
@@ -298,13 +331,25 @@
         <q-item v-if="!databases" class="flex-center bg-negative" dark>
           {{ $t("analysis.database.error") }}
         </q-item>
-        <q-item v-else-if="!databases.length" class="flex-center">
+        <q-item
+          v-else-if="!databases.length"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ $t("analysis.database.loading") }}
         </q-item>
-        <q-item v-else-if="noMatchingDatabase" class="flex-center">
+        <q-item
+          v-else-if="noMatchingDatabase"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ $t("analysis.database.notFound") }}
         </q-item>
-        <q-item v-else-if="!dbGames.length" class="flex-center">
+        <q-item
+          v-else-if="!dbGames.length"
+          class="flex-center"
+          :dark="$store.state.ui.theme.panelDark"
+        >
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
         </q-item>
         <template v-else>
@@ -320,6 +365,7 @@
             :date="game.date"
             :komi="game.komi"
             :tournament="game.tournament"
+            :dark="$store.state.ui.theme.panelDark"
           />
         </template>
         <q-inner-loading :showing="loadingDBMoves || loadingDBs" />

@@ -8,9 +8,13 @@
     transition-hide="none"
     auto-close
   >
-    <q-list class="branch-menu" dense>
+    <q-list class="branch-menu bg-panel" dense>
       <template v-for="(ply, i) in branches">
-        <q-separator :key="'separator-' + i" v-if="showSeparator(i)" />
+        <q-separator
+          :key="'separator-' + i"
+          v-if="showSeparator(i)"
+          :dark="$store.state.ui.theme.panelDark"
+        />
         <q-item :key="i" ref="items" @click="select(ply)" clickable>
           <q-item-label class="row no-wrap overflow-hidden items-center">
             <span class="fade">

@@ -19,7 +19,7 @@
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
           <q-item v-else clickable @click="item.action" :key="item.id">
-            <q-item-section side>
+            <q-item-section class="fg-inherit" side>
               <q-icon :name="item.icon" />
             </q-item-section>
             <q-item-section>{{ item.label }}</q-item-section>

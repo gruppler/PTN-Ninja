@@ -101,7 +101,7 @@ export default {
       );
     },
     evaluation() {
-      return this.$store.state.game.comments.evaluations[this.plyID];
+      return this.$store.state.game.comments.evaluations[this.plyID] ?? null;
     },
     pvs() {
       let pvs = this.$store.state.game.comments.pvs[this.plyID];

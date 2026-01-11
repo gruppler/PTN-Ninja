@@ -45,7 +45,7 @@
         <q-separator vertical />
         <q-btn
           @click="removeCurrentPosition"
-          icon="delete_outline"
+          icon="delete"
           :disable="!hasCurrentPositionNotes"
           flat
           spread

@@ -3,6 +3,8 @@
     class="database-game q-pr-none q-py-none"
     clickable
     @click="loadGame()"
+    :class="[dark ? 'text-textLight' : 'text-textDark']"
+    v-bind="$attrs"
   >
     <q-item-section class="q-py-sm">
       <q-item-label>
@@ -18,7 +20,7 @@
         <relative-time :value="date" />
       </q-item-label>
     </q-item-section>
-    <q-item-section class="q-mr-md q-py-sm" side>
+    <q-item-section class="fg-inherit q-mr-md q-py-sm" side>
       <Result :result="result" />
       <div class="q-mt-xs q-gutter-x-sm">
         <q-icon v-if="tournament" name="event">
@@ -31,7 +33,7 @@
         </span>
       </div>
     </q-item-section>
-    <q-separator vertical />
+    <q-separator :dark="dark" vertical />
     <q-btn icon="open_in_new" @click.stop="loadGame(true)" stretch flat />
     <q-inner-loading :showing="loading" />
   </q-item>
@@ -53,6 +55,7 @@ export default {
     date: Date,
     komi: Number,
     tournament: Boolean,
+    dark: Boolean,
   },
   data() {
     return {
