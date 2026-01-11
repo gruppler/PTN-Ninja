@@ -18,7 +18,10 @@
         :clickable="!isBoardDisabled && ply !== null"
         style="height: 60px"
       >
-        <q-item-section>
+        <q-item-section class="no-wrap">
+          <q-item-label v-if="botName !== null" caption>
+            <span class="bot-name">{{ botName }}</span>
+          </q-item-label>
           <q-item-label v-if="ply !== null">
             <Ply
               :ply="ply"
@@ -82,13 +85,14 @@
                 >{{ player2Number }}</span
               >
               <span
-                class="depth last"
+                class="depth"
                 v-if="depth !== null"
                 :class="{
                   single:
                     player1Number === null &&
                     player2Number === null &&
                     middleNumber === null,
+                  last: true,
                 }"
                 >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
               >
@@ -170,6 +174,10 @@ export default {
     },
     depth: {
       type: Number,
+      default: null,
+    },
+    botName: {
+      type: String,
       default: null,
     },
     player1Number: {

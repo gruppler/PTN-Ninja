@@ -35,15 +35,26 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ botOption.label }}</q-item-label>
-          <q-item-label class="fg-inherit" caption>
+          <q-item-label
+            v-if="botMeta.author && botID !== 'tei'"
+            class="fg-inherit"
+            caption
+          >
             {{ botMeta.author }}
           </q-item-label>
         </q-item-section>
         <q-item-section v-if="!expanded && botState.isRunning" side>
-          <q-spinner-cube size="sm" />
+          <BotProgress
+            @click.stop="bot.terminate()"
+            :is-running="botState.isRunning"
+            :interactive="botState.isInteractiveEnabled"
+            :progress="botState.progress"
+            dense
+            flat
+          />
         </q-item-section>
         <q-item-section class="fg-inherit" side>
-          <div class="row no-wrap q-gutter-x-sm">
+          <div class="row no-wrap q-gutter-x-sm" style="margin-right: -2px">
             <q-btn
               @click.stop="toggleBotSettings"
               icon="settings"
@@ -93,7 +104,7 @@
                   <q-separator />
                   <q-item clickable @click="removeBot" :disable="isLastBot">
                     <q-item-section avatar>
-                      <q-icon name="close" />
+                      <q-icon name="bot_off" />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ $t("Remove Bot") }}</q-item-label>
@@ -150,59 +161,58 @@
         <template v-if="showBotSettings">
           <!-- TEI Connection Settings -->
           <template v-if="botID === 'tei'">
-            <q-separator />
-            <q-expansion-item
-              icon="connect"
-              :label="$t('Connection Settings')"
-              :default-opened="!botState.isConnected"
+            <!-- Address -->
+            <q-input
+              v-model.number="localBotSettings[botID].address"
+              :label="$t('tei.address')"
+              :prefix="bot.protocol"
+              :dark="$store.state.ui.theme.panelDark"
+              filled
+              :disable="botState.isConnected || botState.isConnecting"
+              item-aligned
             >
-              <q-list>
-                <!-- Address -->
+              <template v-slot:after>
+                <!-- Port -->
                 <q-input
-                  v-model.number="localBotSettings[botID].address"
-                  :label="$t('tei.address')"
-                  :prefix="bot.protocol"
+                  v-model.number="localBotSettings[botID].port"
+                  :label="$t('tei.port')"
+                  style="width: 9em"
+                  type="number"
+                  min="0"
+                  max="65535"
+                  step="1"
+                  prefix=":"
+                  :dark="$store.state.ui.theme.panelDark"
                   filled
+                  clearable
                   :disable="botState.isConnected || botState.isConnecting"
-                  item-aligned
-                >
-                  <template v-slot:after>
-                    <!-- Port -->
-                    <q-input
-                      v-model.number="localBotSettings[botID].port"
-                      :label="$t('tei.port')"
-                      style="width: 9em"
-                      type="number"
-                      min="0"
-                      max="65535"
-                      step="1"
-                      prefix=":"
-                      filled
-                      clearable
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </template>
-                </q-input>
+                />
+              </template>
+            </q-input>
 
-                <!-- Use SSL -->
-                <q-item
-                  tag="label"
+            <!-- Use SSL -->
+            <q-item
+              tag="label"
+              :disable="botState.isConnected || botState.isConnecting"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="localBotSettings[botID].ssl"
+                  :dark="$store.state.ui.theme.panelDark"
                   :disable="botState.isConnected || botState.isConnecting"
-                  clickable
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="localBotSettings[botID].ssl"
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-expansion-item>
+                />
+              </q-item-section>
+            </q-item>
           </template>
 
           <!-- Connect -->
@@ -226,7 +236,6 @@
             class="full-width"
             color="primary"
             stretch
-            flat
           />
 
           <!-- Save Bot -->
@@ -239,14 +248,19 @@
             class="full-width"
             color="primary"
             stretch
-            flat
           />
 
           <!-- Search Limits -->
-          <q-separator />
-          <q-item-label class="fg-inherit" header>{{
-            $t("analysis.limit")
-          }}</q-item-label>
+          <q-separator :dark="$store.state.ui.theme.panelDark" />
+          <q-item-label
+            :class="[
+              $store.state.ui.theme.panelDark
+                ? 'text-textLight'
+                : 'text-textDark',
+            ]"
+            header
+            >{{ $t("analysis.limit") }}</q-item-label
+          >
 
           <BotLimitInput
             v-for="type in limitTypes"
@@ -262,6 +276,7 @@
               (localBotSettings[botID].limitTypes &&
                 !localBotSettings[botID].limitTypes.includes(type.value))
             "
+            :dark="$store.state.ui.theme.panelDark"
             filled
             item-aligned
           >
@@ -286,9 +301,15 @@
                 insertEvalMarks && localBotSettings[botID].evalMarkThresholds
               "
             >
-              <q-item-label class="fg-inherit" header>{{
-                $t("analysis.evalMarkThresholds")
-              }}</q-item-label>
+              <q-item-label
+                :class="[
+                  $store.state.ui.theme.panelDark
+                    ? 'text-textLight'
+                    : 'text-textDark',
+                ]"
+                header
+                >{{ $t("analysis.evalMarkThresholds") }}</q-item-label
+              >
               <q-input
                 type="number"
                 v-model.number="
@@ -297,6 +318,7 @@
                 :label="$t('analysis.thresholds.brilliant')"
                 :step="0.01"
                 hide-bottom-space
+                :dark="$store.state.ui.theme.panelDark"
                 filled
                 item-aligned
               />
@@ -306,6 +328,7 @@
                 :label="$t('analysis.thresholds.good')"
                 :step="0.01"
                 hide-bottom-space
+                :dark="$store.state.ui.theme.panelDark"
                 filled
                 item-aligned
               />
@@ -315,6 +338,7 @@
                 :label="$t('analysis.thresholds.bad')"
                 :step="0.01"
                 hide-bottom-space
+                :dark="$store.state.ui.theme.panelDark"
                 filled
                 item-aligned
               />
@@ -326,6 +350,7 @@
                 :label="$t('analysis.thresholds.blunder')"
                 :step="0.01"
                 hide-bottom-space
+                :dark="$store.state.ui.theme.panelDark"
                 filled
                 item-aligned
               />
@@ -336,6 +361,11 @@
           <q-item
             v-if="'normalizeEvaluation' in localBotSettings[botID]"
             tag="label"
+            :class="[
+              $store.state.ui.theme.panelDark
+                ? 'text-textLight'
+                : 'text-textDark',
+            ]"
             clickable
             v-ripple
           >
@@ -347,6 +377,7 @@
             <q-item-section side>
               <q-toggle
                 key="botSettings"
+                :dark="$store.state.ui.theme.panelDark"
                 v-model="localBotSettings[botID].normalizeEvaluation"
               />
             </q-item-section>
@@ -364,6 +395,7 @@
               :min="1"
               :max="1e4"
               :rules="[(s) => s > 0]"
+              :dark="$store.state.ui.theme.panelDark"
               hide-bottom-space
               filled
               item-aligned
@@ -393,9 +425,8 @@
           v-if="
             (!botMeta.requiresConnect || botState.isConnected) && bot.hasOptions
           "
-          class="bg-ui"
         >
-          <q-separator />
+          <q-separator :dark="$store.state.ui.theme.panelDark" />
 
           <BotOptionInput
             v-for="(option, name) in botMeta.options"
@@ -405,6 +436,7 @@
             :name="name"
             :disable="botState.isRunning || botState.isInteractiveEnabled"
             @action="bot.sendAction"
+            :dark="$store.state.ui.theme.panelDark"
             filled
             item-aligned
           />
@@ -429,50 +461,48 @@
           class="analysis-controls-group"
         >
           <!-- Analyze Position -->
-          <q-btn
+          <BotProgress
             @click="analyzePosition()"
-            :loading="botState.isAnalyzingPosition"
             :disable="!bot.isAnalyzePositionAvailable"
-            color="primary"
             icon="board"
-          >
-            <hint>{{ $t("analysis.Analyze Position") }}</hint>
-          </q-btn>
+            :hint="$t('analysis.Analyze Position')"
+            :is-running="botState.isAnalyzingPosition"
+            :progress="botState.progress"
+            color="primary"
+          />
           <!-- Analyze Branch -->
-          <q-btn
-            @click="bot.analyzeBranch()"
-            :loading="botState.isAnalyzingBranch"
-            :disable="!bot.isAnalyzeGameAvailable"
-            color="primary"
+          <BotProgress
+            @click="analyzeBranch()"
+            :disable="
+              !bot.isAnalyzeGameAvailable && !botState.isAnalyzingBranch
+            "
             icon="branch"
-          >
-            <hint>{{ $t("analysis.Analyze Branch") }}</hint>
-          </q-btn>
-          <!-- Analyze Game -->
-          <q-btn
-            @click="bot.analyzeGame()"
-            :loading="botState.isAnalyzingGame"
-            :disable="!bot.isAnalyzeGameAvailable"
+            :hint="$t('analysis.Analyze Branch')"
+            :is-running="botState.isAnalyzingBranch"
+            :progress="botState.progress"
             color="primary"
+          />
+          <!-- Analyze Game -->
+          <BotProgress
+            @click="analyzeGame()"
+            :disable="!bot.isAnalyzeGameAvailable && !botState.isAnalyzingGame"
             icon="branches_all"
-          >
-            <hint>{{ $t("analysis.Analyze Game") }}</hint>
-          </q-btn>
+            :hint="$t('analysis.Analyze Game')"
+            :is-running="botState.isAnalyzingGame"
+            :progress="botState.progress"
+            color="primary"
+          />
           <!-- Interactive Analysis -->
-          <q-btn
+          <BotProgress
             v-if="botMeta.isInteractive"
             @click="toggleInteractiveAnalysis"
-            color="primary"
             :disable="!bot.isInteractiveAvailable"
-          >
-            <q-spinner-cube
-              v-if="botState.isInteractiveEnabled && botState.isRunning"
-              size="sm"
-              class="q-ml-xs"
-            />
-            <q-icon v-else name="int_analysis" />
-            <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
-          </q-btn>
+            icon="int_analysis"
+            :hint="$t('analysis.interactiveAnalysis')"
+            :is-running="botState.isInteractiveEnabled"
+            interactive
+            color="primary"
+          />
         </q-btn-group>
 
         <!-- Live Stats -->
@@ -498,7 +528,7 @@
 
           <!-- Progress indicators for analysis -->
           <div
-            class="absolute-top full-width full-height row no-wrap justify-end"
+            class="absolute-top full-width full-height row no-wrap justify-end q-pr-md"
           >
             <div
               v-if="
@@ -520,7 +550,15 @@
                 dense
                 flat
               >
-                <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
+                <Linenum
+                  :linenum="botState.analyzingPly.linenum"
+                  no-branch
+                  :class="[
+                    $store.state.ui.theme.uiDark
+                      ? 'text-textLight'
+                      : 'text-textDark',
+                  ]"
+                />
                 <PlyChip
                   :ply="botState.analyzingPly"
                   class="no-pointer-events q-ma-none"
@@ -528,14 +566,6 @@
                   :done="botState.tps === botState.analyzingPly.tpsAfter"
                 />
               </q-btn>
-              <q-btn
-                :label="$t('Cancel')"
-                @click.stop="bot.terminate()"
-                color="primary"
-                class="absolute-right"
-                stretch
-                flat
-              />
             </div>
 
             <q-btn
@@ -549,15 +579,6 @@
               <hint>{{ $t("analysis.logMessages") }}</hint>
             </q-btn>
           </div>
-
-          <q-linear-progress
-            v-if="botState && botState.isRunning"
-            class="absolute-position"
-            style="bottom: 0; z-index: 1"
-            size="2px"
-            :value="botState.progress / 100"
-            :indeterminate="botState.isInteractiveEnabled && botState.isRunning"
-          />
         </div>
 
         <!-- Log -->
@@ -619,13 +640,27 @@
           :key="'unsaved-' + i"
           :suggestion="suggestion"
         />
-        <q-item v-if="isGameEnd && !suggestions.length" class="flex-center">
-          {{ $t("analysis.gameOver") }}
+        <q-item
+          v-if="!suggestions.length"
+          class="flex-center"
+          :class="[
+            $store.state.ui.theme.panelDark
+              ? 'text-textLight'
+              : 'text-textDark',
+          ]"
+        >
+          {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
         </q-item>
       </smooth-reflow>
 
       <!-- Bot Action Buttons -->
-      <q-btn-group class="bg-ui" spread stretch>
+      <q-btn-group
+        :class="[
+          $store.state.ui.theme.panelDark ? 'text-textLight' : 'text-textDark',
+        ]"
+        spread
+        stretch
+      >
         <q-btn icon="save" spread stretch :disable="!hasResults">
           <hint>{{ $t("Save to Notes") }}</hint>
           <q-menu
@@ -697,17 +732,6 @@
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
-
-              <q-separator />
-
-              <q-item clickable @click="removeBot" :disable="isLastBot">
-                <q-item-section avatar>
-                  <q-icon name="close" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Remove Bot") }}</q-item-label>
-                </q-item-section>
-              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -720,6 +744,7 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import BotLimitInput from "../analysis/BotLimitInput";
 import BotOptionInput from "../analysis/BotOptionInput";
+import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
 import PlyChip from "../PTN/Ply.vue";
 import { bots } from "../../bots";
@@ -732,6 +757,7 @@ export default {
     BotAnalysisItem,
     BotLimitInput,
     BotOptionInput,
+    BotProgress,
     Linenum,
     PlyChip,
   },
@@ -1003,6 +1029,26 @@ export default {
       try {
         if (!this.botState.isAnalyzingPosition) {
           this.bot.analyzeCurrentPosition();
+        } else {
+          this.bot.terminate();
+        }
+      } catch (error) {}
+    },
+    analyzeBranch() {
+      try {
+        if (!this.botState.isAnalyzingBranch) {
+          this.bot.analyzeBranch();
+        } else {
+          this.bot.terminate();
+        }
+      } catch (error) {}
+    },
+    analyzeGame() {
+      try {
+        if (!this.botState.isAnalyzingGame) {
+          this.bot.analyzeGame();
+        } else {
+          this.bot.terminate();
         }
       } catch (error) {}
     },

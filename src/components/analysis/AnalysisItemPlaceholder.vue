@@ -1,5 +1,5 @@
 <template>
-  <div class="analysis-item">
+  <div class="placeholder">
     <q-item style="height: 60px">
       <q-item-section>
         <q-item-label class="q-pa-xs">

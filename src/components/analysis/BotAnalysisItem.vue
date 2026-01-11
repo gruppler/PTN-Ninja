@@ -18,6 +18,7 @@
         : null
     "
     :depth="suggestion.depth || null"
+    :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
     :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
@@ -43,6 +44,10 @@ export default {
   components: { AnalysisItem },
   props: {
     suggestion: Object,
+    showBotName: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     seconds() {
