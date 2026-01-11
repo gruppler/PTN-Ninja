@@ -71,7 +71,11 @@
       </template>
     </div>
 
-    <q-separator v-if="separatorRow" class="fullwidth-padded-md" />
+    <q-separator
+      v-if="separatorRow"
+      class="fullwidth-padded-md"
+      :dark="$store.state.ui.theme.panelDark"
+    />
   </div>
 </template>
 
@@ -122,12 +126,8 @@ export default {
     },
     evaluations() {
       let evaluations = [];
-      let eval1 = this.ply1
-        ? this.$store.state.game.comments.evaluations[this.ply1.id]
-        : null;
-      let eval2 = this.ply2
-        ? this.$store.state.game.comments.evaluations[this.ply2.id]
-        : null;
+      let eval1 = this.getEvaluation(this.ply1);
+      let eval2 = this.getEvaluation(this.ply2);
       if (eval1 != null) {
         evaluations.push(eval1);
       }
@@ -141,15 +141,11 @@ export default {
         return this.evaluations;
       }
       if (this.splitPly === "split1") {
-        const eval1 = this.ply1
-          ? this.$store.state.game.comments.evaluations[this.ply1.id]
-          : null;
+        const eval1 = this.getEvaluation(this.ply1);
         return eval1 != null ? [eval1] : [];
       }
       if (this.splitPly === "split2") {
-        const eval2 = this.ply2
-          ? this.$store.state.game.comments.evaluations[this.ply2.id]
-          : null;
+        const eval2 = this.getEvaluation(this.ply2);
         return eval2 != null ? [eval2] : [];
       }
       return [];
@@ -226,6 +222,27 @@ export default {
       );
     },
   },
+  methods: {
+    getEvaluation(ply) {
+      if (!ply) return null;
+      // First check for saved evaluation
+      const savedEval = this.$store.state.game.comments.evaluations[ply.id];
+      if (savedEval != null) {
+        return savedEval;
+      }
+      // Check for unsaved bot evaluation for the position after this ply
+      const analysis = this.$store.state.analysis;
+      if (analysis && analysis.botPositions) {
+        const tps = ply.tpsAfter;
+        const botID = analysis.botID;
+        const botPositions = analysis.botPositions[botID];
+        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
+          return botPositions[tps][0].evaluation ?? null;
+        }
+      }
+      return null;
+    },
+  },
 };
 </script>
 
@@ -267,10 +284,13 @@ export default {
   .nop {
     font-family: "Source Code Pro";
     padding: 4px 8px;
-    color: var(--q-color-player1);
     white-space: nowrap;
     display: inline-block;
     vertical-align: middle;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
   }
 
   .q-separator {
@@ -299,9 +319,9 @@ export default {
       height: 2.55em;
       border-width: 0 2px 0 0;
       border-style: solid;
-      border-color: var(--q-color-text-light);
-      body.panel-dark & {
-        border-color: var(--q-color-text-dark);
+      border-color: var(--q-color-textDark);
+      body.panelDark & {
+        border-color: var(--q-color-textLight);
       }
     }
   }
