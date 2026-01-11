@@ -34,26 +34,50 @@
         <smooth-reflow>
           <div v-if="showGlobalSettings">
             <!-- Insert Evaluation Marks -->
-            <q-item tag="label" clickable v-ripple>
+            <q-item
+              tag="label"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
               <q-item-section>
                 <q-item-label>{{
                   $t("analysis.insertEvalMarks")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="insertEvalMarks" />
+                <q-toggle
+                  v-model="insertEvalMarks"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
               </q-item-section>
             </q-item>
 
             <!-- Save Extra Info -->
-            <q-item tag="label" clickable v-ripple>
+            <q-item
+              tag="label"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
               <q-item-section>
                 <q-item-label>{{
                   $t("analysis.saveSearchStats")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="saveSearchStats" />
+                <q-toggle
+                  v-model="saveSearchStats"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
               </q-item-section>
             </q-item>
 
@@ -66,6 +90,7 @@
               :max="20"
               item-aligned
               filled
+              :dark="$store.state.ui.theme.panelDark"
             />
 
             <!-- Suggestions to Save -->
@@ -77,6 +102,7 @@
               :max="20"
               item-aligned
               filled
+              :dark="$store.state.ui.theme.panelDark"
             />
           </div>
         </smooth-reflow>
@@ -184,6 +210,7 @@
               v-for="(suggestion, i) in savedSuggestions"
               :key="'saved-' + i"
               :suggestion="suggestion"
+              show-bot-name
             />
           </smooth-reflow>
         </q-expansion-item>
@@ -310,7 +337,26 @@ export default {
       this.$store.dispatch("analysis/SET_ACTIVE_BOT", { index, botId });
     },
     onBotRemove(index) {
+      const removedBotId = this.activeBots[index];
       this.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", index);
+      this.notify({
+        icon: "bot_off",
+        message: this.$t("Remove Bot"),
+        timeout: 5000,
+        progress: true,
+        actions: [
+          {
+            label: this.$t("Undo"),
+            color: "primary",
+            handler: () => {
+              this.$store.dispatch("analysis/INSERT_ACTIVE_BOT", {
+                index,
+                botId: removedBotId,
+              });
+            },
+          },
+        ],
+      });
     },
     onBotMoveUp(index) {
       if (index > 0) {

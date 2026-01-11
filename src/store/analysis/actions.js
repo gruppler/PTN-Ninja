@@ -87,6 +87,11 @@ export const REMOVE_ACTIVE_BOT = ({ state, commit }, index) => {
   saveActiveBots(state);
 };
 
+export const INSERT_ACTIVE_BOT = ({ state, commit }, { index, botId }) => {
+  commit("INSERT_ACTIVE_BOT", { index, botId });
+  saveActiveBots(state);
+};
+
 export const REORDER_ACTIVE_BOTS = (
   { state, commit },
   { fromIndex, toIndex }

@@ -197,6 +197,13 @@ export const REMOVE_ACTIVE_BOT = (state, index) => {
   }
 };
 
+export const INSERT_ACTIVE_BOT = (state, { index, botId }) => {
+  state.activeBots.splice(index, 0, botId);
+  if (botId) {
+    INIT_BOT(state, botId);
+  }
+};
+
 export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
   const bot = state.activeBots[fromIndex];
   state.activeBots.splice(fromIndex, 1);
