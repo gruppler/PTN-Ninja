@@ -84,6 +84,7 @@ export const suggestions = (state) => (tps) => {
           nodes: note.nodes,
           visits: note.visits,
           time: note.ms,
+          botName: note.botName,
         };
         break;
       }
@@ -116,6 +117,7 @@ export const suggestions = (state) => (tps) => {
               nodes: note.nodes !== null ? note.nodes : null,
               visits: note.visits !== null ? note.visits : null,
               time: note.ms !== null ? note.ms : null,
+              botName: note.botName !== null ? note.botName : null,
               fromNotes: true,
             };
             results.push(suggestion);
@@ -148,6 +150,7 @@ export const suggestions = (state) => (tps) => {
               nodes: evalData ? evalData.nodes : null,
               visits: evalData ? evalData.visits : null,
               time: evalData ? evalData.time : null,
+              botName: evalData ? evalData.botName : null,
               fromNotes: true,
             };
             results.push(suggestion);
@@ -167,6 +170,7 @@ export const suggestions = (state) => (tps) => {
       nodes: evalData.nodes,
       visits: evalData.visits,
       time: evalData.time,
+      botName: evalData.botName,
       fromNotes: true,
     });
   }

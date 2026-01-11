@@ -965,6 +965,7 @@ export default class Bot {
       if (!isEmpty(result)) {
         result.startTime = startTime;
         result.hash = hash;
+        result.botName = this.label;
         results.push(result);
       } else {
         results.push(null);
@@ -1107,156 +1108,96 @@ export default class Bot {
       evaluationAfter = Math.round(100 * evaluationAfter) / 1e4;
     }
 
-    if (useNewFormat) {
-      // New format: unified comments with pv> for position after this ply
-      // Each PV gets its own comment with eval+stats+pv
-      if (positionAfter && pvLimit > 0) {
-        const numPVs = Math.min(pvsToSave, positionAfter.length);
-        for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
-          let position = positionAfter[pvIndex];
-          let unifiedComment = "";
-
-          // Add evaluation (use position-specific eval if available, else first)
-          const posEval =
-            position &&
-            position.evaluation !== null &&
-            position.evaluation !== undefined
-              ? Math.round(100 * position.evaluation) / 1e4
-              : evaluationAfter;
-          if (posEval !== null && !isNaN(posEval)) {
-            unifiedComment += `${posEval >= 0 ? "+" : ""}${posEval}`;
-          }
-
-          // Add search stats
-          if (saveSearchStats && position) {
-            if (position.depth !== null && position.depth !== undefined) {
-              unifiedComment += `/${position.depth}`;
-            }
-            if (position.nodes !== null && position.nodes !== undefined) {
-              unifiedComment += ` ${position.nodes} nodes`;
-            }
-            if (position.visits !== null && position.visits !== undefined) {
-              unifiedComment += ` ${position.visits} visits`;
-            }
-            if (position.time !== null && position.time !== undefined) {
-              unifiedComment += ` ${position.time}ms`;
-            }
-          }
-
-          // Add PV with pv> marker
-          if (position && position.ply) {
-            const pv = [position.ply, ...position.followingPlies]
-              .slice(0, pvLimit)
-              .map((p) => p.ptn);
-            unifiedComment += ` pv> ${pv.join(" ")}`;
-          }
-
-          if (unifiedComment.length) {
-            // Find existing pv> comment index for replacement
-            if (ply.id in this.game.comments.notes) {
-              const index = this.game.comments.notes[ply.id].findIndex(
-                (comment) => comment.pvAfter !== null
-              );
-              if (index >= 0 && pvIndex === 0) {
-                unifiedComment = `!r${index}:${unifiedComment}`;
-              }
-            }
-            comments.push(unifiedComment.trim());
-          }
-        }
-      } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-        // No PV, just eval+stats
-        let evaluationComment = `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
-
-        if (saveSearchStats && positionAfter && positionAfter[0]) {
-          if (
-            positionAfter[0].depth !== null &&
-            positionAfter[0].depth !== undefined
-          ) {
-            evaluationComment += `/${positionAfter[0].depth}`;
-          }
-          if (
-            positionAfter[0].nodes !== null &&
-            positionAfter[0].nodes !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
-          }
-          if (
-            positionAfter[0].visits !== null &&
-            positionAfter[0].visits !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].visits} visits`;
-          }
-          if (
-            positionAfter[0].time !== null &&
-            positionAfter[0].time !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].time}ms`;
-          }
-        }
-
-        if (ply.id in this.game.comments.notes) {
-          const index = this.game.comments.notes[ply.id].findIndex(
-            (comment) => comment.evaluation !== null
-          );
-          if (index >= 0) {
-            evaluationComment = `!r${index}:${evaluationComment}`;
-          }
-        }
-
-        comments.push(evaluationComment);
+    // Helper to format eval+stats comment
+    const formatEvalStats = (evaluation, position) => {
+      let comment = "";
+      // Use botName from stored position data
+      if (position && position.botName) {
+        comment += `bot:"${position.botName.replace(/"/g, '\\"')}" `;
       }
-    } else {
-      // Old format: separate eval and PV comments
-      if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-        let evaluationComment = `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
-
-        if (saveSearchStats && positionAfter && positionAfter[0]) {
-          if (
-            positionAfter[0].depth !== null &&
-            positionAfter[0].depth !== undefined
-          ) {
-            evaluationComment += `/${positionAfter[0].depth}`;
-          }
-          if (
-            positionAfter[0].nodes !== null &&
-            positionAfter[0].nodes !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
-          }
-          if (
-            positionAfter[0].visits !== null &&
-            positionAfter[0].visits !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].visits} visits`;
-          }
-          if (
-            positionAfter[0].time !== null &&
-            positionAfter[0].time !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].time}ms`;
-          }
+      if (evaluation !== null && !isNaN(evaluation)) {
+        comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;
+      }
+      if (saveSearchStats && position) {
+        if (position.depth !== null && position.depth !== undefined) {
+          comment += `/${position.depth}`;
         }
+        if (position.nodes !== null && position.nodes !== undefined) {
+          comment += ` ${position.nodes} nodes`;
+        }
+        if (position.visits !== null && position.visits !== undefined) {
+          comment += ` ${position.visits} visits`;
+        }
+        if (position.time !== null && position.time !== undefined) {
+          comment += ` ${position.time}ms`;
+        }
+      }
+      return comment;
+    };
 
-        if (ply.id in this.game.comments.notes) {
-          const index = this.game.comments.notes[ply.id].findIndex(
-            (comment) => comment.evaluation !== null
+    // Check if ply already has analysis notes (eval, pv, or pvAfter)
+    const hasExistingAnalysisNotes =
+      ply.id in this.game.comments.notes &&
+      this.game.comments.notes[ply.id].some(
+        (note) =>
+          note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+
+    // Only add analysis notes if there are no existing analysis notes for this ply
+    if (!hasExistingAnalysisNotes) {
+      if (useNewFormat) {
+        // New format: unified comments with pv> for position after this ply
+        // Each PV gets its own comment with eval+stats+pv
+        if (positionAfter && pvLimit > 0) {
+          const numPVs = Math.min(pvsToSave, positionAfter.length);
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            let position = positionAfter[pvIndex];
+
+            // Use position-specific eval if available, else first
+            const posEval =
+              position &&
+              position.evaluation !== null &&
+              position.evaluation !== undefined
+                ? Math.round(100 * position.evaluation) / 1e4
+                : evaluationAfter;
+
+            let unifiedComment = formatEvalStats(posEval, position);
+
+            // Add PV with pv> marker
+            if (position && position.ply) {
+              const pv = [position.ply, ...position.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              unifiedComment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (unifiedComment.length) {
+              comments.push(unifiedComment.trim());
+            }
+          }
+        } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+          // No PV, just eval+stats
+          let evalComment = formatEvalStats(
+            evaluationAfter,
+            positionAfter && positionAfter[0]
           );
-          if (index >= 0) {
-            evaluationComment = `!r${index}:${evaluationComment}`;
-          }
+          comments.push(evalComment);
         }
-
-        comments.push(evaluationComment);
+      } else {
+        // Old format: separate eval and PV comments
+        if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+          let evalComment = formatEvalStats(
+            evaluationAfter,
+            positionAfter && positionAfter[0]
+          );
+          comments.push(evalComment);
+        }
       }
     }
 
-    // Evaluation marks (requires both positions)
+    // Evaluation marks (requires both positions, and no existing analysis notes)
     if (
+      !hasExistingAnalysisNotes &&
       hasPositionBeforeEval &&
       hasPositionAfterEval &&
       store.state.analysis.insertEvalMarks
@@ -1291,7 +1232,13 @@ export default class Bot {
     }
 
     // PV for old format only (new format includes PV in unified comments above)
-    if (!useNewFormat && positionBefore && pvLimit > 0) {
+    // Skip if there are existing analysis notes
+    if (
+      !hasExistingAnalysisNotes &&
+      !useNewFormat &&
+      positionBefore &&
+      pvLimit > 0
+    ) {
       const numPVs = Math.min(pvsToSave, positionBefore.length);
       for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
         let position = positionBefore[pvIndex];
@@ -1300,23 +1247,6 @@ export default class Bot {
             .slice(0, pvLimit)
             .map((ply) => ply.ptn);
           let pvComment = `pv ${pv.join(" ")}`;
-
-          // Find existing pv comment index
-          if (ply.id in this.game.comments.notes) {
-            const index = this.game.comments.notes[ply.id].findIndex(
-              (comment) =>
-                comment.pv !== null &&
-                comment.pv.every(
-                  (cpv) =>
-                    cpv.every((ply, i) => ply === pv[i]) ||
-                    pv.every((ply, i) => ply === cpv[i])
-                )
-            );
-            if (index >= 0) {
-              pvComment = `!r${index}:${pvComment}`;
-            }
-          }
-
           comments.push(pvComment);
         }
       }

@@ -5,6 +5,7 @@ const outputProps = [
   "time",
   "player",
   "message",
+  "botName",
   "depth",
   "evaluation",
   "ms",
@@ -131,6 +132,16 @@ export function getVisits(message) {
   return null;
 }
 
+export function getBotName(message) {
+  // Bot name stored as bot:"name" (e.g., '+0.12/15 bot:"Tiltak" 1234 nodes')
+  let matches = message.match(/bot:"((?:[^"\\]|\\.)*)"/i);
+  if (matches) {
+    // Unescape any escaped quotes
+    return matches[1].replace(/\\"/g, '"');
+  }
+  return null;
+}
+
 export default class Comment {
   constructor(notation) {
     const matchData = notation.match(/\{((@[^"}]+:)?([0-9]+:)?([^}]*))\}/);
@@ -179,6 +190,10 @@ export default class Comment {
 
   get visits() {
     return getVisits(this.message);
+  }
+
+  get botName() {
+    return getBotName(this.message);
   }
 
   get output() {
