@@ -266,7 +266,7 @@ export default {
       }
 
       this.touchStartedOnPly = true;
-      this.$store.state.ui.plyPreviewActive = true;
+      this.$store.commit("ui/SET_PLY_PREVIEW_ACTIVE", true);
       this.clearTouchTimer();
       this.touchTimer = setTimeout(() => {
         this.isTouchActive = true;
@@ -297,7 +297,7 @@ export default {
       this.clearTouchTimer();
       this.isTouchActive = false;
       this.touchStartedOnPly = false;
-      this.$store.state.ui.plyPreviewActive = false;
+      this.$store.commit("ui/SET_PLY_PREVIEW_ACTIVE", false);
       this.hidePlyTooltip();
     },
     onVisibilityChange() {

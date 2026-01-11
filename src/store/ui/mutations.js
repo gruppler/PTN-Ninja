@@ -46,6 +46,10 @@ export const SET_SCRUBBING = (state, phase) => {
   state.scrubbing = phase === "start";
 };
 
+export const SET_PLY_PREVIEW_ACTIVE = (state, active) => {
+  state.plyPreviewActive = active;
+};
+
 export const SET_THUMBNAIL = (state, { id, options, url }) => {
   state.thumbnails[id] = deepFreeze({ options: cloneDeep(options), url });
 };
