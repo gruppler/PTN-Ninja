@@ -959,6 +959,11 @@ export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REMOVE_ANALYSIS_NOTE = ({ commit, dispatch }, source) => {
+  commit("REMOVE_ANALYSIS_NOTE", source);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const REMOVE_POSITION_NOTES = ({ commit, dispatch }, plyID) => {
   commit("REMOVE_POSITION_NOTES", plyID);
   dispatch("SAVE_CURRENT_GAME", true);

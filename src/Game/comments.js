@@ -204,6 +204,129 @@ export default class GameComments {
     return this.removeAllComments("notes", filter);
   }
 
+  // Remove analysis note for a specific suggestion
+  // For old format notes that have both eval and pv, we edit to remove just the pv
+  removeAnalysisNote(source) {
+    const { plyID, noteIndex, format } = source;
+    const notes = this.notes[plyID];
+    if (!notes || !notes[noteIndex]) {
+      return;
+    }
+
+    const note = notes[noteIndex];
+
+    // Check if this note has both evaluation and pv (old format combined)
+    // In this case, we should edit the note to remove just the pv, keeping the eval
+    if (format === "pv" && note.evaluation !== null && note.pv !== null) {
+      // Extract everything before "pv " or "pv=" to keep the eval portion
+      const pvIndex = note.message.search(/\bpv(?![>])\s*[=\s]/i);
+      if (pvIndex > 0) {
+        const newMessage = note.message
+          .substring(0, pvIndex)
+          .replace(/,\s*$/, "")
+          .trim();
+        if (newMessage) {
+          note.message = newMessage;
+          this.board.dirtyComment("notes", plyID);
+        } else {
+          // Nothing left, delete the whole note
+          if (notes.length > 1) {
+            notes.splice(noteIndex, 1);
+          } else {
+            this.notes = omit(this.notes, plyID);
+          }
+          this.board.dirtyComment("notes", plyID);
+        }
+      } else {
+        // pv is at the start or couldn't find it, delete the whole note
+        if (notes.length > 1) {
+          notes.splice(noteIndex, 1);
+        } else {
+          this.notes = omit(this.notes, plyID);
+        }
+        this.board.dirtyComment("notes", plyID);
+      }
+    } else {
+      // For new format (pvAfter) or notes without combined eval+pv, just delete
+      if (notes.length > 1) {
+        notes.splice(noteIndex, 1);
+      } else {
+        this.notes = omit(this.notes, plyID);
+      }
+      this.board.dirtyComment("notes", plyID);
+    }
+
+    // For old format PV notes, also find and handle the eval note on the previous ply
+    // The eval for this position is on the ply whose tpsAfter matches this ply's tpsBefore
+    if (format === "pv") {
+      const ply = this.plies[Number(plyID)];
+      if (ply && ply.tpsBefore) {
+        const tps = ply.tpsBefore;
+        // Find the ply whose tpsAfter matches this position's TPS
+        // OR for initial position, ply 0 where tpsBefore matches
+        let evalPlyID = null;
+        for (let i = 0; i < this.plies.length; i++) {
+          const p = this.plies[i];
+          if (!p) continue;
+          if (p.tpsAfter === tps || (p.id === 0 && p.tpsBefore === tps)) {
+            evalPlyID = p.id;
+            break;
+          }
+        }
+        if (evalPlyID !== null && this.notes[evalPlyID]) {
+          const evalNotes = this.notes[evalPlyID];
+          const evalNoteIndex = evalNotes.findIndex(
+            (n) => n.evaluation !== null
+          );
+          if (evalNoteIndex !== -1) {
+            const evalNote = evalNotes[evalNoteIndex];
+            // If this eval note also has a pv, edit to keep just the pv
+            if (evalNote.pv !== null) {
+              // Extract everything from "pv " onwards to keep the pv portion
+              const pvIndex = evalNote.message.search(/\bpv(?![>])\s*[=\s]/i);
+              if (pvIndex >= 0) {
+                const newEvalMessage = evalNote.message
+                  .substring(pvIndex)
+                  .trim();
+                if (newEvalMessage) {
+                  evalNote.message = newEvalMessage;
+                  this.board.dirtyComment("notes", evalPlyID);
+                } else {
+                  // Nothing left, delete the whole note
+                  if (evalNotes.length > 1) {
+                    evalNotes.splice(evalNoteIndex, 1);
+                  } else {
+                    this.notes = omit(this.notes, evalPlyID);
+                  }
+                  this.board.dirtyComment("notes", evalPlyID);
+                }
+              } else {
+                // Couldn't find pv, delete the whole note
+                if (evalNotes.length > 1) {
+                  evalNotes.splice(evalNoteIndex, 1);
+                } else {
+                  this.notes = omit(this.notes, evalPlyID);
+                }
+                this.board.dirtyComment("notes", evalPlyID);
+              }
+            } else {
+              // No pv, just delete the eval note
+              if (evalNotes.length > 1) {
+                evalNotes.splice(evalNoteIndex, 1);
+              } else {
+                this.notes = omit(this.notes, evalPlyID);
+              }
+              this.board.dirtyComment("notes", evalPlyID);
+            }
+          }
+        }
+      }
+    }
+
+    this._updatePTN(true);
+    this.board.updateCommentsOutput();
+  }
+
   _setEvaluation(plyID, notation) {
     const ply = this.plies[plyID];
     if (!ply) {

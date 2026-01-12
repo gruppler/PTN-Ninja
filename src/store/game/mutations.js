@@ -637,6 +637,10 @@ export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
 };
 
+export const REMOVE_ANALYSIS_NOTE = (state, source) => {
+  Vue.prototype.$game.removeAnalysisNote(source);
+};
+
 export const REMOVE_POSITION_NOTES = (state, plyID) => {
   Vue.prototype.$game.removeNotes(
     (note, notePlyID) => notePlyID === String(plyID)
