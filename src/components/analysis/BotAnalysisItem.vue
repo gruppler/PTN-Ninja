@@ -28,8 +28,27 @@
     <template v-if="$slots.before" v-slot:before>
       <slot name="before" />
     </template>
-    <template v-if="$slots.after" v-slot:after>
+    <template v-slot:after>
       <slot name="after" />
+      <q-btn
+        v-if="showMenu"
+        class="analysis-item-menu-btn"
+        icon="menu_vertical"
+        dense
+        round
+        flat
+      >
+        <q-menu auto-close transition-show="none" transition-hide="none">
+          <q-list>
+            <q-item @click="$emit('delete')" clickable>
+              <q-item-section side>
+                <q-icon name="delete" />
+              </q-item-section>
+              <q-item-section>{{ $t("Delete") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </template>
   </AnalysisItem>
 </template>
@@ -45,6 +64,10 @@ export default {
   props: {
     suggestion: Object,
     showBotName: {
+      type: Boolean,
+      default: false,
+    },
+    showMenu: {
       type: Boolean,
       default: false,
     },
@@ -113,3 +136,11 @@ export default {
   methods: { formatEvaluation },
 };
 </script>
+
+<style lang="scss" scoped>
+.analysis-item-menu-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+</style>

@@ -106,7 +106,9 @@ export const suggestions = (state) => (tps) => {
           const nextPlayer = ply.player === 1 ? 2 : 1;
           const nextColor = nextPlayer;
           // Each note.pvAfter can contain multiple PV arrays
-          for (const pvArray of note.pvAfter) {
+          const noteIndex = notes.indexOf(note);
+          for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
+            const pvArray = note.pvAfter[pvIndex];
             const pv = parsePV(nextPlayer, nextColor, pvArray);
             const suggestion = {
               ply: pv.splice(0, 1)[0],
@@ -119,6 +121,8 @@ export const suggestions = (state) => (tps) => {
               time: note.ms !== null ? note.ms : null,
               botName: note.botName !== null ? note.botName : null,
               fromNotes: true,
+              // Source tracking for deletion
+              source: { plyID: id, noteIndex, pvIndex, format: "pvAfter" },
             };
             results.push(suggestion);
           }
@@ -139,7 +143,9 @@ export const suggestions = (state) => (tps) => {
       for (const note of notes) {
         if (note.pv !== null) {
           // Each note.pv can contain multiple PV arrays
-          for (const pvArray of note.pv) {
+          const noteIndex = notes.indexOf(note);
+          for (let pvIndex = 0; pvIndex < note.pv.length; pvIndex++) {
+            const pvArray = note.pv[pvIndex];
             const pv = parsePV(ply.player, ply.color, pvArray);
             const suggestion = {
               ply: pv.splice(0, 1)[0],
@@ -152,6 +158,8 @@ export const suggestions = (state) => (tps) => {
               time: evalData ? evalData.time : null,
               botName: evalData ? evalData.botName : null,
               fromNotes: true,
+              // Source tracking for deletion
+              source: { plyID: id, noteIndex, pvIndex, format: "pv" },
             };
             results.push(suggestion);
           }
