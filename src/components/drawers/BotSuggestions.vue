@@ -241,7 +241,7 @@
           <!-- Save Bot -->
           <q-btn
             v-if="botID === 'tei'"
-            :to="{ name: 'bot' }"
+            :to="{ name: 'bot-new' }"
             icon="bot"
             :label="$t('tei.Save Bot')"
             :disable="!botState.isConnected"
@@ -506,7 +506,7 @@
         </q-btn-group>
 
         <!-- Live Stats -->
-        <div class="bg-ui relative-position" style="height: 36px">
+        <div class="bg-accent relative-position" style="height: 36px">
           <div class="text-caption text-center q-pa-sm">
             <template v-if="botState.time !== null || botState.nps !== null">
               <span v-if="botState.time !== null">
@@ -554,7 +554,7 @@
                   :linenum="botState.analyzingPly.linenum"
                   no-branch
                   :class="[
-                    $store.state.ui.theme.uiDark
+                    $store.state.ui.theme.accentDark
                       ? 'text-textLight'
                       : 'text-textDark',
                   ]"
