@@ -1136,6 +1136,7 @@ export default class Bot {
     };
 
     // Check if ply already has analysis notes (eval, pv, or pvAfter)
+    // Used to prevent duplicate eval marks, but allow multiple bot analyses
     const hasExistingAnalysisNotes =
       ply.id in this.game.comments.notes &&
       this.game.comments.notes[ply.id].some(
@@ -1143,8 +1144,8 @@ export default class Bot {
           note.evaluation !== null || note.pv !== null || note.pvAfter !== null
       );
 
-    // Only add analysis notes if there are no existing analysis notes for this ply
-    if (!hasExistingAnalysisNotes) {
+    // Always add analysis notes (allows multiple bots to contribute)
+    {
       if (useNewFormat) {
         // New format: unified comments with pv> for position after this ply
         // Each PV gets its own comment with eval+stats+pv
@@ -1355,9 +1356,8 @@ export default class Bot {
         }
       }
     } else {
-      // For full game/branch analysis, remove existing analysis notes first (batched)
-      store.commit("game/REMOVE_ANALYSIS_NOTES");
-
+      // For full game/branch analysis, add to existing notes (don't remove them)
+      // This allows multiple analyses to be saved and combined
       this.plies.forEach((ply) => {
         const notes = [];
         const evaluations = this.formatEvalComments(
