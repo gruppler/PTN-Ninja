@@ -138,7 +138,28 @@ export default {
     },
     evaluationsForRow() {
       if (!this.splitPly) {
-        return this.evaluations;
+        // For non-split moves: show bars based on number of plies
+        const eval1 = this.getEvaluation(this.ply1);
+        const eval2 = this.getEvaluation(this.ply2);
+        const hasPly1 = this.ply1 && !this.ply1.isNop;
+        const hasPly2 = this.ply2 && !this.ply2.isNop;
+        const hasAnyEval = eval1 != null || eval2 != null;
+
+        if (!hasAnyEval) {
+          return [];
+        }
+
+        if (hasPly1 && hasPly2) {
+          // Two plies: show two bars (use 0 for undefined evals)
+          return [eval1 ?? 0, eval2 ?? 0];
+        } else if (hasPly1) {
+          // Only ply1: show one bar
+          return [eval1];
+        } else if (hasPly2) {
+          // Only ply2: show one bar
+          return [eval2];
+        }
+        return [];
       }
       if (this.splitPly === "split1") {
         const eval1 = this.getEvaluation(this.ply1);
@@ -225,19 +246,32 @@ export default {
   methods: {
     getEvaluation(ply) {
       if (!ply) return null;
-      // First check for saved evaluation
-      const savedEval = this.$store.state.game.comments.evaluations[ply.id];
-      if (savedEval != null) {
-        return savedEval;
-      }
-      // Check for unsaved bot evaluation for the position after this ply
       const analysis = this.$store.state.analysis;
+      const preferSaved = analysis?.preferSavedResults;
+
+      // If preferring saved results, check saved first
+      if (preferSaved) {
+        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
+        if (savedEval != null) {
+          return savedEval;
+        }
+      }
+
+      // Check for selected bot's evaluation (unsaved)
       if (analysis && analysis.botPositions) {
         const tps = ply.tpsAfter;
         const botID = analysis.botID;
         const botPositions = analysis.botPositions[botID];
         if (botPositions && botPositions[tps] && botPositions[tps][0]) {
           return botPositions[tps][0].evaluation ?? null;
+        }
+      }
+
+      // Fall back to saved evaluation if not preferring saved
+      if (!preferSaved) {
+        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
+        if (savedEval != null) {
+          return savedEval;
         }
       }
       return null;
@@ -278,7 +312,7 @@ export default {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 3em;
+    width: 4em;
   }
 
   .nop {

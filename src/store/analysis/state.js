@@ -12,6 +12,7 @@ const defaultState = {
   botList,
   customBots: {},
   botID: defaultBotID, // Used only for ToolbarAnalysis display selection
+  preferSavedResults: true, // Whether to show saved results over bot analysis
   botSettings: {}, // Per-bot settings (persisted)
   // Per-bot reactive state (keyed by botID)
   botLogs: {},

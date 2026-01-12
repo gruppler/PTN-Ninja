@@ -234,15 +234,31 @@ export default {
       return this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar;
     },
     evaluation() {
+      // First check for override from SET_EVAL (e.g., from live analysis)
       if (this.$store.state.game.evaluation !== null) {
         return this.$store.state.game.evaluation;
-      } else if (this.position.boardPly) {
+      }
+
+      // Get the TPS for the current position (after the board ply)
+      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+
+      // Check selected bot's positions (regardless of preferSavedResults)
+      const analysis = this.$store.state.analysis;
+      if (analysis && analysis.botPositions && !analysis.preferSavedResults) {
+        const botID = analysis.botID;
+        const botPositions = analysis.botPositions[botID];
+        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
+          return botPositions[tps][0].evaluation ?? null;
+        }
+      }
+
+      // Fall back to saved evaluation
+      if (this.position.boardPly) {
         return this.$store.state.game.comments.evaluations[
           this.position.boardPly.id
         ];
-      } else {
-        return null;
       }
+      return null;
     },
     evaluationText() {
       let evaluation = this.position.boardPly
