@@ -39,7 +39,11 @@ export const DELETE_BOT = ({ state, commit, dispatch }, botID) => {
       LocalStorage.set("botSettings", omit(state.botSettings, botID));
       LocalStorage.set("customBots", omit(state.customBots, botID));
       commit("DELETE_BOT", botID);
-      // SET_BOT(state, state.defaults.botID);
+      // Remove from active bots if present
+      const activeIndex = state.activeBots.indexOf(botID);
+      if (activeIndex !== -1) {
+        dispatch("REMOVE_ACTIVE_BOT", activeIndex);
+      }
       dispatch("SET", ["botID", "tei"]);
       return true;
     } catch (error) {
