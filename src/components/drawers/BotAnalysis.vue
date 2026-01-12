@@ -211,6 +211,8 @@
               :key="'saved-' + i"
               :suggestion="suggestion"
               show-bot-name
+              show-menu
+              @delete="deleteSavedSuggestion(suggestion)"
             />
           </smooth-reflow>
         </q-expansion-item>
@@ -417,6 +419,12 @@ export default {
           },
         ],
       });
+    },
+    deleteSavedSuggestion(suggestion) {
+      if (!suggestion.source) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
     },
   },
   watch: {

@@ -99,11 +99,7 @@
 
       <!-- Bot Selector -->
       <q-btn
-        v-if="
-          !collapsed &&
-          !isEmbedded &&
-          (activeBots.length > 1 || hasSavedSuggestions)
-        "
+        v-if="!isEmbedded && (activeBots.length > 1 || hasSavedSuggestions)"
         class="bot-selector-toggle dimmed-btn"
         v-ripple="false"
         :color="btnColor"
@@ -188,8 +184,10 @@
             :suggestion="botSuggestion"
             show-bot-name
             fixed-height
+            :show-menu="viewingSavedResults"
             class="toolbar-analysis"
             @wheel.native="scroll"
+            @delete="deleteSavedSuggestion"
           >
             <template v-slot:before>
               <div
@@ -345,7 +343,6 @@ export default {
       scrollTimer: null,
       botSelectorDeltaY: 0,
       botSelectorScrollTimer: null,
-      preferSavedResults: true,
       manualBotSelection: false,
     };
   },
@@ -407,6 +404,9 @@ export default {
     },
     botOption() {
       return this.botList.find((b) => b.value === this.botID) || {};
+    },
+    preferSavedResults() {
+      return this.$store.state.analysis.preferSavedResults;
     },
     savedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);
@@ -500,14 +500,14 @@ export default {
       this.collapsed = !this.collapsed;
     },
     selectBot(botId) {
-      this.preferSavedResults = false;
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
       this.manualBotSelection = true;
       if (botId && botId !== this.botID) {
         this.$store.dispatch("analysis/SET", ["botID", botId]);
       }
     },
     selectSavedResults() {
-      this.preferSavedResults = true;
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
       this.manualBotSelection = false;
     },
     getBotIcon(botId) {
@@ -628,6 +628,13 @@ export default {
         this.botSelectorDeltaY = 0;
       }, 300);
     },
+    deleteSavedSuggestion() {
+      const suggestion = this.botSuggestion;
+      if (!suggestion || !suggestion.source) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
+    },
   },
   watch: {
     tps() {
@@ -638,7 +645,7 @@ export default {
         // If the currently selected bot was removed, switch to saved results or first available bot
         if (!this.preferSavedResults && !newBots.includes(this.botID)) {
           if (this.hasSavedSuggestions) {
-            this.preferSavedResults = true;
+            this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
             this.manualBotSelection = false;
           } else if (newBots.length > 0) {
             this.$store.dispatch("analysis/SET", ["botID", newBots[0]]);
@@ -650,7 +657,7 @@ export default {
       handler() {
         // Switch to saved results when game changes
         if (this.hasSavedSuggestions) {
-          this.preferSavedResults = true;
+          this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
           this.manualBotSelection = false;
         }
       },
@@ -670,23 +677,14 @@ export default {
           );
         }
         // Update eval bars with the selected suggestion's evaluation
-        if (!this.collapsed && suggestion && "evaluation" in suggestion) {
+        // (regardless of whether toolbar is collapsed)
+        if (suggestion && "evaluation" in suggestion) {
           this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-        } else if (!this.collapsed) {
+        } else {
           this.$store.dispatch("game/SET_EVAL", null);
         }
       },
       immediate: true,
-    },
-    collapsed: {
-      handler(isCollapsed) {
-        // Clear eval override when toolbar is collapsed
-        if (isCollapsed) {
-          this.$store.dispatch("game/SET_EVAL", null);
-        } else if (this.botSuggestion && "evaluation" in this.botSuggestion) {
-          this.$store.dispatch("game/SET_EVAL", this.botSuggestion.evaluation);
-        }
-      },
     },
   },
   beforeDestroy() {
