@@ -25,6 +25,7 @@
               icon="board"
               class="dimmed-btn"
               v-ripple="false"
+              :color="btnColor"
               dense
               flat
             >
@@ -37,6 +38,7 @@
               icon="branch"
               class="dimmed-btn"
               v-ripple="false"
+              :color="btnColor"
               dense
               flat
             >
@@ -49,6 +51,7 @@
               icon="branches_all"
               class="dimmed-btn"
               v-ripple="false"
+              :color="btnColor"
               dense
               flat
             >
@@ -63,6 +66,7 @@
             icon="int_analysis"
             class="dimmed-btn"
             v-ripple="false"
+            :color="btnColor"
             dense
             flat
           >
