@@ -59,7 +59,7 @@
         </q-btn>
 
         <q-btn
-          v-if="fullWidth && branchUI && branchPointPly"
+          v-if="fullWidth && branchUI && branchPointPly && isInlineMode"
           @click.stop="collapseBranch"
           icon="close"
           size="md"
@@ -134,6 +134,12 @@ export default {
       return (
         !this.unselected &&
         this.$store.state.game.ptn.branchPlies.some((p) => p.id === this.ply.id)
+      );
+    },
+    isInlineMode() {
+      return (
+        this.$store.state.ui.showAllBranches &&
+        this.$store.state.ui.inlineBranches
       );
     },
     branchPointPly() {
