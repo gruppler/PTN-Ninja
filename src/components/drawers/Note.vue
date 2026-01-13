@@ -8,9 +8,9 @@
     <span>
       <q-btn
         class="note-menu-btn float-right"
+        style="margin-top: -8px; margin-right: -8px"
         icon="menu_vertical"
         dense
-        round
         flat
       >
         <q-menu auto-close transition-show="none" transition-hide="none">
