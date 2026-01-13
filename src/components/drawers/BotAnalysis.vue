@@ -310,25 +310,7 @@ export default {
       },
     },
     hasCurrentPositionSavedResults() {
-      const tps = this.tps;
-      const prevPly = this.allPlies.find((p) => p.tpsAfter === tps);
-      if (prevPly) {
-        const prevNotes = this.$store.state.game.comments.notes[prevPly.id];
-        if (prevNotes && prevNotes.some((note) => note.evaluation !== null)) {
-          return true;
-        }
-        if (prevNotes && prevNotes.some((note) => note.pvAfter !== null)) {
-          return true;
-        }
-      }
-      const nextPly = this.allPlies.find((p) => p.tpsBefore === tps);
-      if (nextPly) {
-        const nextNotes = this.$store.state.game.comments.notes[nextPly.id];
-        if (nextNotes && nextNotes.some((note) => note.pv !== null)) {
-          return true;
-        }
-      }
-      return false;
+      return this.savedSuggestions.length > 0;
     },
   },
   methods: {
