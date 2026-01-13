@@ -293,7 +293,7 @@ export default class Bot {
 
   getPositionsToAnalyze(all = true, pliesOverride = null) {
     const pliesSource = pliesOverride || this.getPlies(all);
-    const plies = pliesSource.filter((ply) => !this.plyHasEvalComment(ply));
+    const plies = pliesSource;
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
       plyID: ply.id,
