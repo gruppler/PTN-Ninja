@@ -368,10 +368,11 @@ PV plies that are displayed as solid match what was actually played in the curre
 
 :::
 
-The **Toolbar Analysis** (below the board) displays suggestions from one bot at a time. When multiple bots or saved results are available, a bot selector appears.
+The **Toolbar Analysis** (below the board) displays suggestions from one source at a time. When multiple bots or saved results are available, a bot selector appears.
 
 :::
 
+- To show or hide the Toolbar Analysis, **click** the expand/collapse button in the bottom-right, or press <kbd>A</kbd>.
 - **Click** the bot selector icon to choose which bot's suggestions to display.
 - Select "Saved Results" to view analysis that has been saved to the game's notes.
 - Use the **scroll wheel** over the bot selector to quickly cycle through bots.
