@@ -193,7 +193,11 @@ Though the UI should provide for most of your PTN editing needs, PTN Ninja also 
 
 ## Branches
 
-PTN Ninja records multiple lines of play, called "branches." Branches outside the Current Branch of play are hidden by default. You can display branches by **clicking** the 'branch' button in the PTN panel's header toolbar.
+PTN Ninja records multiple lines of play, called "branches." The PTN panel offers three display modes:
+
+- **Current Branch** — Shows only the current line of play (default).
+- **Inline Branches** — Shows all branches inline, with collapsible branch points.
+- **All Branches** — Shows all branches in a tree structure with indentation.
 
 ::: tip
 
@@ -203,9 +207,9 @@ You can perform several actions on branches by **right-clicking** the branch nam
 
 :::
 
-- To change how branches are displayed in the PTN panel, **click** the leftmost button in the header toolbar.
-  - To toggle quickly between "All Branches" and the previous mode, **right-click** this button.
-- Click the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+- To change the branch display mode, **click** the leftmost button in the PTN panel's header toolbar.
+  - To toggle quickly between showing and hiding branches, **right-click** this button.
+- **Click** the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
   - This button is highlighted when not on the main branch.
 - Use <kbd>▲/▼</kbd> to navigate between branches.
   - When the branch menu (<kbd>B</kbd>) is open, <kbd>▲/▼</kbd> navigates between all branches.
@@ -300,32 +304,55 @@ PTN Ninja currently offers access to two built-in bots: **Tiltak (cloud)** and *
   - can take full advantage of your hardware
   - facilitates bot development
 
+### Connecting a TEI Bot
+
+To use a TEI bot with PTN Ninja, you'll need [websocketd](http://websocketd.com/) to bridge the bot's standard I/O to WebSocket.
+
+:::
+
+1. Install [websocketd](http://websocketd.com/).
+2. Run your bot via websocketd:
+
+   ```bash
+   websocketd --port=7731 ./path/to/your/bot
+   ```
+
+   To allow connections from other devices, add `--address=0.0.0.0`.
+
+3. In PTN Ninja, select the TEI bot and click the cog icon to show its settings.
+4. Under address, enter `127.0.0.1` if connecting from the same device, or the IP address of the device running the bot if connecting from another device on the same network.
+5. Set the port to match the port used in step 2.
+6. Make sure SSL is disabled.
+7. Click Connect.
+
+:::
+
 ::: info Note
 
-A TEI connection can be saved as custom bot. This enables quick switching between different connection settings and allows you to specify supported size/komi and search limit types, as well as predefine any bot options specified by the TEI protocol.
+You can run multiple bots on the same device by giving each bot a different port.
+
+If you want to access your bot(s) from outside your network, consider setting up a reverse proxy like [Nginx Proxy Manager](https://nginxproxymanager.com/), running your bots as services, and configuring SSL for a personal domain. You can then assign a different subdomain to each bot.
+
+A TEI connection can be saved as a custom bot. This enables quick switching between different connection settings and allows you to specify supported size/komi, search limit types and ranges, eval score normalization, and preset bot-specific options.
 
 :::
 
-:::
+::: warning Troubleshooting
 
-- To change a bot's settings, **click** the 'cog' icon in the Bot Suggestions section.
-
-:::
-
-::: info Note
-
-When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, this button will be disabled.
-
-After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes (and evaluation marks, if enabled). The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
-
-The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
-
-The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
+If the connection fails, check the browser console for error messages. Chrome may have stricter security requirements than Firefox for WebSocket connections.
 
 :::
 
+### Using Bot Analysis
+
+You can add multiple bots to analyze positions in parallel. Each bot runs independently, allowing you to compare suggestions from different engines simultaneously.
+
 :::
 
+- **Click** the "Add Bot" button in the Analysis panel to add another bot.
+- Use the bot selector dropdown to choose which bot to add.
+- Bots can be reordered using the up/down arrows in each bot's menu.
+- To remove a bot, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle display of the evaluation bars.
 - **Hover** over a ply within a PV to preview the board state after that ply.
 - **Click** a ply within a PV to insert and navigate to that ply.
@@ -338,6 +365,45 @@ The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!
 PV plies that are displayed with an outline match the previous position's PV.
 
 PV plies that are displayed as solid match what was actually played in the current branch.
+
+:::
+
+The **Toolbar Analysis** (below the board) displays suggestions from one bot at a time. When multiple bots or saved results are available, a bot selector appears.
+
+:::
+
+- **Click** the bot selector icon to choose which bot's suggestions to display.
+- Select "Saved Results" to view analysis that has been saved to the game's notes.
+- Use the **scroll wheel** over the bot selector to quickly cycle through bots.
+- Use the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same bot.
+
+:::
+
+### Managing Results
+
+Bot analysis results can be saved to the game's PTN as notes, or cleared when no longer needed.
+
+:::
+
+- To save results to notes, use the menu in each bot's section.
+  - "Save Current Position" saves only the current position's results generated by the bot.
+  - "Save All Results" saves all analyzed positions generated by the bot.
+- To clear a bot's unsaved results, use the menu to select "Clear Results" or "Clear Current Position."
+- Saved results appear in the "Saved Results" section and can be deleted individually or in bulk.
+  - **Click** the delete icon in the Saved Results header to delete all saved results or just the current position's results.
+  - **Click** the menu icon on an individual saved result to delete it.
+
+:::
+
+::: info Note
+
+When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, this button will be disabled.
+
+After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes (and evaluation marks, if enabled). The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
+
+The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
+
+The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
 
 :::
 

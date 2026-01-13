@@ -49,6 +49,18 @@
                     @click.prevent="tocScroll(child.id)"
                     >{{ child.label }}</a
                   >
+                  <ul v-if="child.children && child.children.length">
+                    <li
+                      v-for="grandchild in child.children"
+                      :key="grandchild.id"
+                    >
+                      <a
+                        :href="$route.path + '#' + grandchild.id"
+                        @click.prevent="tocScroll(grandchild.id)"
+                        >{{ grandchild.label }}</a
+                      >
+                    </li>
+                  </ul>
                 </li>
               </ul>
             </li>
