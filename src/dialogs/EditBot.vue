@@ -465,7 +465,9 @@ export default {
       });
 
       // Bot Options
-      this.options = Object.keys(this.botMeta.presetOptions || {});
+      this.options = this.isNew
+        ? Object.keys(this.botMeta.options || {})
+        : Object.keys(this.botMeta.presetOptions || {});
       buffer.meta.presetOptions = {
         ...this.botMeta.options,
         ...cloneDeep(this.botMeta.presetOptions),
