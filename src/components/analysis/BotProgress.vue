@@ -11,7 +11,7 @@
       />
     </template>
     <q-icon v-else :name="icon" :size="size" />
-    <hint v-if="hint">{{ isRunning ? "Cancel" : hint }}</hint>
+    <hint v-if="hint || isRunning">{{ isRunning ? "Cancel" : hint }}</hint>
   </q-btn>
 </template>
 

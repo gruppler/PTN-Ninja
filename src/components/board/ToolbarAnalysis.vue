@@ -80,6 +80,7 @@
           @click="cancelAnalysis"
           is-running
           :interactive="bot.isInteractiveEnabled"
+          :progress="botState.progress"
           color="primary"
           dense
           flat
