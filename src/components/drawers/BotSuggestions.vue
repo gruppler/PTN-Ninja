@@ -640,8 +640,14 @@
           :key="'unsaved-' + i"
           :suggestion="suggestion"
         />
+        <template v-if="!suggestions.length && isAnalyzingGameOrBranch">
+          <AnalysisItemPlaceholder
+            v-for="i in placeholderCount"
+            :key="'placeholder-' + i"
+          />
+        </template>
         <q-item
-          v-if="!suggestions.length"
+          v-else-if="!suggestions.length"
           class="flex-center"
           :class="[
             $store.state.ui.theme.panelDark
@@ -774,6 +780,7 @@
 
 <script>
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotLimitInput from "../analysis/BotLimitInput";
 import BotOptionInput from "../analysis/BotOptionInput";
 import BotProgress from "../analysis/BotProgress";
@@ -787,6 +794,7 @@ export default {
   name: "BotSuggestions",
   components: {
     BotAnalysisItem,
+    AnalysisItemPlaceholder,
     BotLimitInput,
     BotOptionInput,
     BotProgress,
@@ -822,6 +830,7 @@ export default {
       localBotSettings: cloneDeep(this.$store.state.analysis.botSettings),
       botOptions: {},
       autoScrollLog: true,
+      prevSuggestionsCount: 1,
     };
   },
   computed: {
@@ -882,6 +891,22 @@ export default {
     suggestions() {
       // Return all bot suggestions without filtering duplicates
       return this.positions[this.tps] || [];
+    },
+    placeholderCount() {
+      // During branch/game analysis, show placeholders matching previous result count
+      if (
+        this.botState &&
+        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
+      ) {
+        return this.prevSuggestionsCount;
+      }
+      return 1;
+    },
+    isAnalyzingGameOrBranch() {
+      return (
+        this.botState &&
+        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
+      );
     },
     enableLogging: {
       get() {
@@ -1159,6 +1184,12 @@ export default {
         }
       },
       immediate: true,
+    },
+    suggestions(newSuggestions) {
+      // Track previous count for placeholder sizing during analysis
+      if (newSuggestions.length > 0) {
+        this.prevSuggestionsCount = newSuggestions.length;
+      }
     },
   },
 };
