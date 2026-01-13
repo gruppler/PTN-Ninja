@@ -1057,7 +1057,13 @@ export default class Bot {
     formatEvaluation(value);
   }
 
-  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false, pvsToSave = 1) {
+  formatEvalComments(
+    ply,
+    pvLimit = 0,
+    saveSearchStats = false,
+    pvsToSave = 1,
+    useNewFormat = true
+  ) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
@@ -1073,10 +1079,6 @@ export default class Bot {
       positionAfter[0].evaluation !== undefined;
     let evaluationBefore = null;
     let evaluationAfter = null;
-
-    // Determine PV format: use old format only if existing comments use it
-    const pvFormat = this.pvFormat;
-    const useNewFormat = pvFormat !== "old";
 
     // Assume evaluationAfter from game result
     if (ply.result && ply.result.type !== "1") {
@@ -1261,14 +1263,12 @@ export default class Bot {
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
 
-    // Determine PV format: use old format only if existing comments use it
-    const pvFormat = this.pvFormat;
-    const useNewFormat = pvFormat !== "old";
+    // Always use new format when saving
+    const useNewFormat = true;
+    // Or, use old format only if existing comments use it
+    // const useNewFormat = this.pvFormat !== "old";
 
     if (isString(tps) && tps.length) {
-      // Remove existing analysis notes for this position before adding new ones (batched)
-      store.commit("game/REMOVE_POSITION_ANALYSIS_NOTES", tps);
-
       const buildEvalCommentFromPosition = (position) => {
         if (!position || !position[0]) {
           return null;
@@ -1320,14 +1320,13 @@ export default class Bot {
         prevPly || this.plies.find((p) => p.id === 0 && p.tpsBefore === tps);
 
       if (prevPly) {
-        // For new format: all comments (including pv>) stay with prevPly
-        // For old format: filter out old-style pv comments (they go to nextPly)
         const notes = this.formatEvalComments(
           prevPly,
           pvLimit,
           saveSearchStats,
-          pvsToSave
-        ).filter((n) => useNewFormat || !getPV(n));
+          pvsToSave,
+          useNewFormat
+        );
         if (notes.length) {
           messages[prevPly.id] = notes;
         }
@@ -1342,19 +1341,6 @@ export default class Bot {
           messages[evalPly.id] = [fallbackEval];
         }
       }
-
-      // Old format only: PV comments go to the next ply
-      if (!useNewFormat && nextPly) {
-        const notes = this.formatEvalComments(
-          nextPly,
-          pvLimit,
-          saveSearchStats,
-          pvsToSave
-        ).filter((n) => getPV(n));
-        if (notes.length) {
-          messages[nextPly.id] = notes;
-        }
-      }
     } else {
       // For full game/branch analysis, add to existing notes (don't remove them)
       // This allows multiple analyses to be saved and combined
@@ -1364,7 +1350,8 @@ export default class Bot {
           ply,
           pvLimit,
           saveSearchStats,
-          pvsToSave
+          pvsToSave,
+          useNewFormat
         );
         if (evaluations.length) {
           notes.push(...evaluations);
