@@ -1062,6 +1062,8 @@ export default {
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {
+        // Select this bot in the toolbar
+        this.bot.selectInToolbar();
         this.$store.dispatch("game/GO_TO_PLY", {
           plyID: this.botState.analyzingPly.id,
           isDone: this.botState.tps === this.botState.analyzingPly.tpsAfter,

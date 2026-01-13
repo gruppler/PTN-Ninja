@@ -196,7 +196,13 @@ export default class Bot {
       // Check if current position matches the previous analyzing position
       // (or if there's no previous position, like on the first ply)
       // and we're moving forward in the analysis
+      // Only auto-follow if this bot is selected in the toolbar
+      const isSelectedInToolbar =
+        store.state.analysis &&
+        store.state.analysis.botID === this.id &&
+        !store.state.analysis.preferSavedResults;
       if (
+        isSelectedInToolbar &&
         (previousAnalyzingTPS === currentTPS ||
           previousAnalyzingTPS === null) &&
         (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
@@ -259,6 +265,12 @@ export default class Bot {
   // Returns "new" if any comment uses pv> format
   // Returns "old" if any comment uses pv format (without >)
   // Returns null if no PV comments exist
+  // Select this bot in the toolbar analysis
+  selectInToolbar() {
+    store.dispatch("analysis/SET", ["preferSavedResults", false]);
+    store.dispatch("analysis/SET", ["botID", this.id]);
+  }
+
   get pvFormat() {
     const notes = this.game.comments?.notes;
     if (!notes) return null;
@@ -623,6 +635,8 @@ export default class Bot {
       return;
     }
     if (isInteractiveEnabled) {
+      // Select this bot in the toolbar
+      this.selectInToolbar();
       // Enable
       this.setState({
         isInteractiveEnabled,
@@ -733,6 +747,9 @@ export default class Bot {
           throw "";
         }
 
+        // Select this bot in the toolbar
+        this.selectInToolbar();
+
         const tps = this.tps;
         const plyID = this.game.position.boardPly
           ? this.game.position.boardPly.id
@@ -795,6 +812,9 @@ export default class Bot {
         if (this.state.isRunning) {
           throw "";
         }
+
+        // Select this bot in the toolbar
+        this.selectInToolbar();
 
         // Validate
         const init = this.validatePosition(this.tps, 0);
