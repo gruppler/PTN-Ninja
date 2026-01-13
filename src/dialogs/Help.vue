@@ -31,7 +31,11 @@
     <div ref="help" class="help">
       <q-tab-panels v-model="section" animated persistent>
         <q-tab-panel name="about">
-          <q-markdown ref="markdown" :src="about" no-heading-anchor-links />
+          <q-markdown
+            :src="about"
+            class="text-selectable"
+            no-heading-anchor-links
+          />
         </q-tab-panel>
 
         <q-tab-panel name="usage">
@@ -68,6 +72,7 @@
           <q-markdown
             ref="markdown"
             :src="usage"
+            class="text-selectable"
             no-heading-anchor-links
             toc
             @data="onTOC"
