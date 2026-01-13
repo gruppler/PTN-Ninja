@@ -688,7 +688,9 @@ const clearEvalMarks = () => {
       }
     }
   });
-  game._updatePTN(true);
+  // Don't record change here - the caller already recorded the change
+  // This prevents double-recording which breaks undo
+  game._updatePTN(false);
   game.board.updatePTNOutput();
 };
 

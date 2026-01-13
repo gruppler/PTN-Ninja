@@ -464,7 +464,7 @@ export default {
     emailVerified: "Email address verified",
     passwordChanged: "Password changed",
     removedAllNotes: "Removed all notes",
-    removedAurrentPositionsNotes: "Removed current position notes",
+    removedAurrentPositionsNotes: "Removed current position's notes",
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
     resultsDeleted: "Results deleted.",
