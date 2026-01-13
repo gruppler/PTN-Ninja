@@ -70,7 +70,7 @@
             dense
             flat
           >
-            <hint>{{ "toggleInteractiveAnalysis" }}</hint>
+            <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
           </q-btn>
         </template>
 
