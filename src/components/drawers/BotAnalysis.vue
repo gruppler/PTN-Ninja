@@ -340,24 +340,17 @@ export default {
     },
     onBotRemove(index) {
       const removedBotId = this.activeBots[index];
+      const botName = bots[removedBotId].label;
       this.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", index);
-      this.notify({
+      this.notifyUndo({
         icon: "bot_off",
-        message: this.$t("Remove Bot"),
-        timeout: 5000,
-        progress: true,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "primary",
-            handler: () => {
-              this.$store.dispatch("analysis/INSERT_ACTIVE_BOT", {
-                index,
-                botId: removedBotId,
-              });
-            },
-          },
-        ],
+        message: this.$t("success.removedBot", { botName }),
+        handler: () => {
+          this.$store.dispatch("analysis/INSERT_ACTIVE_BOT", {
+            index,
+            botId: removedBotId,
+          });
+        },
       });
     },
     onBotMoveUp(index) {
@@ -380,21 +373,12 @@ export default {
       const bot = bots[this.activeBots[0]];
       if (bot) {
         bot.clearSavedResults();
-        this.notify({
+        this.notifyUndo({
           icon: "delete_all",
           message: this.$t("success.resultsDeleted"),
-          timeout: 5000,
-          progress: true,
-          actions: [
-            {
-              label: this.$t("Undo"),
-              color: "primary",
-              multiLine: false,
-              handler: () => {
-                this.$store.dispatch("game/UNDO");
-              },
-            },
-          ],
+          handler: () => {
+            this.$store.dispatch("game/UNDO");
+          },
         });
       }
     },
@@ -403,21 +387,12 @@ export default {
         return;
       }
       this.$store.dispatch("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
-      this.notify({
+      this.notifyUndo({
         icon: "delete",
         message: this.$t("success.resultsDeleted"),
-        timeout: 5000,
-        progress: true,
-        multiline: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "primary",
-            handler: () => {
-              this.$store.dispatch("game/UNDO");
-            },
-          },
-        ],
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
       });
     },
     deleteSavedSuggestion(suggestion) {
@@ -425,6 +400,13 @@ export default {
         return;
       }
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
   },
   watch: {

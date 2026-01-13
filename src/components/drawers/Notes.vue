@@ -256,23 +256,11 @@ export default {
       const notes = this.game.comments.notes[plyID];
       if (notes && notes.length) {
         this.$store.dispatch("game/REMOVE_POSITION_NOTES", plyID);
-
-        // Show undo notification
-        this.notify({
+        this.notifyUndo({
           message: this.$t("success.removedAurrentPositionsNotes"),
-          timeout: 5000,
-          progress: true,
-          multiLine: false,
-          actions: [
-            {
-              label: this.$t("Undo"),
-              color: "primary",
-              handler: () => {
-                this.$store.dispatch("game/UNDO");
-              },
-            },
-            { icon: "close", color: "textLight" },
-          ],
+          handler: () => {
+            this.$store.dispatch("game/UNDO");
+          },
         });
       }
     },
@@ -281,23 +269,11 @@ export default {
 
       if (hasNotes) {
         this.$store.dispatch("game/REMOVE_NOTES");
-
-        // Show undo notification
-        this.notify({
+        this.notifyUndo({
           message: this.$t("success.removedAllNotes"),
-          timeout: 5000,
-          progress: true,
-          multiLine: false,
-          actions: [
-            {
-              label: this.$t("Undo"),
-              color: "primary",
-              handler: () => {
-                this.$store.dispatch("game/UNDO");
-              },
-            },
-            { icon: "close", color: "textLight" },
-          ],
+          handler: () => {
+            this.$store.dispatch("game/UNDO");
+          },
         });
       }
     },

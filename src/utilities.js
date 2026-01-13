@@ -220,6 +220,34 @@ export const notifyHint = (hint, options = {}) => {
   });
 };
 
+export const notifyUndo = ({ icon, message, handler, options = {} }) => {
+  let fg = store.state.ui.theme.isDark ? "textLight" : "textDark";
+  let bg = "ui";
+  const extraActions = options.actions || [];
+  delete options.actions;
+  return Notify.create({
+    icon,
+    message,
+    progressClass: "bg-primary",
+    color: bg,
+    textColor: fg,
+    position: "bottom",
+    timeout: 1e4,
+    progress: true,
+    multiLine: false,
+    actions: [
+      ...extraActions,
+      {
+        label: i18n.t("Undo"),
+        color: "primary",
+        handler,
+      },
+      { icon: "close", color: fg },
+    ],
+    ...options,
+  });
+};
+
 export const formatError = (error) => {
   if (isString(error)) {
     if (i18n.te(`error["${error}"]`)) {

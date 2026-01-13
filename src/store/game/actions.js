@@ -2,7 +2,7 @@ import Vue from "vue";
 import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
-import { notifyError, notifyWarning } from "../../utilities";
+import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
@@ -233,30 +233,24 @@ export const REPLACE_GAME = function (
     dispatch("SAVE_CURRENT_GAME", true);
 
     Vue.nextTick(() => {
-      Vue.prototype.notify({
+      notifyUndo({
         message: i18n.t("success.replacedExistingGame"),
-        timeout: 1e4,
-        progress: true,
-        actions: [
-          {
-            icon: "open_in_new",
-            label: i18n.t("Duplicate"),
-            color: "primary",
-            handler: () => {
-              dispatch("UNDO", game);
-              dispatch("ADD_GAME", game);
+        handler: () => {
+          dispatch("UNDO", game);
+        },
+        options: {
+          actions: [
+            {
+              icon: "open_in_new",
+              label: i18n.t("Duplicate"),
+              color: "primary",
+              handler: () => {
+                dispatch("UNDO", game);
+                dispatch("ADD_GAME", game);
+              },
             },
-          },
-          {
-            icon: "undo",
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              dispatch("UNDO", game);
-            },
-          },
-          { icon: "close" },
-        ],
+          ],
+        },
       });
     });
   } else {
@@ -290,32 +284,22 @@ export const REMOVE_GAME = async function (
       const icon = game.config.isOnline
         ? getters.playerIcon(game.config.player, game.config.isPrivate)
         : "file";
-      Vue.prototype.notify({
+      notifyUndo({
         icon,
         message: i18n.t("Game x closed", { game: game.name }),
-        timeout: 1e4,
-        progress: true,
-        multiLine: false,
-        actions: [
-          {
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              if (index === 0) {
-                Loading.show();
-                setTimeout(() => {
-                  this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
-                    await dispatch("ADD_GAMES", { games: [game], index });
-                    Loading.hide();
-                  });
-                }, 200);
-              } else {
-                dispatch("ADD_GAMES", { games: [game], index });
-              }
-            },
-          },
-          { icon: "close" },
-        ],
+        handler: () => {
+          if (index === 0) {
+            Loading.show();
+            setTimeout(() => {
+              this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
+                await dispatch("ADD_GAMES", { games: [game], index });
+                Loading.hide();
+              });
+            }, 200);
+          } else {
+            dispatch("ADD_GAMES", { games: [game], index });
+          }
+        },
       });
     });
   };
@@ -351,31 +335,22 @@ export const REMOVE_MULTIPLE_GAMES = async function (
       if (start === 0) {
         dispatch("SET_GAME", state.list[0]);
       }
-      Vue.prototype.notify({
+      notifyUndo({
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
-        timeout: 1e4,
-        progress: true,
-        actions: [
-          {
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              if (start === 0) {
-                Loading.show();
-                setTimeout(() => {
-                  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-                    dispatch("ADD_GAMES", { games, index: start });
-                    Loading.hide();
-                  });
-                }, 200);
-              } else {
+        handler: () => {
+          if (start === 0) {
+            Loading.show();
+            setTimeout(() => {
+              this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
                 dispatch("ADD_GAMES", { games, index: start });
-              }
-            },
-          },
-          { icon: "close" },
-        ],
+                Loading.hide();
+              });
+            }, 200);
+          } else {
+            dispatch("ADD_GAMES", { games, index: start });
+          }
+        },
       });
     });
   };

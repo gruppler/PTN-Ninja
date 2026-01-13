@@ -1032,24 +1032,15 @@ export default {
       }
       const before = cloneDeep(this.positions);
       this.bot.clearResults();
-      this.notify({
+      this.notifyUndo({
         icon: "delete_all_outline",
         message: this.$t("success.resultsDeleted"),
-        timeout: 5000,
-        progress: true,
-        multiLine: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "primary",
-            handler: () => {
-              this.$store.commit("analysis/SET_BOT_POSITIONS", {
-                botID: this.botID,
-                positions: before,
-              });
-            },
-          },
-        ],
+        handler: () => {
+          this.$store.commit("analysis/SET_BOT_POSITIONS", {
+            botID: this.botID,
+            positions: before,
+          });
+        },
       });
     },
     clearCurrentPositionResults() {
@@ -1062,27 +1053,18 @@ export default {
         botID: this.botID,
         tps: this.tps,
       });
-      this.notify({
+      this.notifyUndo({
         icon: "delete",
         message: this.$t("success.resultsDeleted"),
-        timeout: 5000,
-        progress: true,
-        multiline: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "primary",
-            handler: () => {
-              if (before) {
-                this.$store.commit("analysis/SET_BOT_POSITION", {
-                  botID: this.botID,
-                  tps,
-                  suggestions: before,
-                });
-              }
-            },
-          },
-        ],
+        handler: () => {
+          if (before) {
+            this.$store.commit("analysis/SET_BOT_POSITION", {
+              botID: this.botID,
+              tps,
+              suggestions: before,
+            });
+          }
+        },
       });
     },
     goToAnalysisPly() {
@@ -1103,12 +1085,12 @@ export default {
         tps: this.tps,
         botName: this.botName,
       });
-      this.notify({
+      this.notifyUndo({
         icon: "delete",
         message: this.$t("success.resultsDeleted"),
-        timeout: 5000,
-        progress: true,
-        multiLine: false,
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
       });
     },
     deleteAllSavedResults() {
@@ -1116,12 +1098,12 @@ export default {
         return;
       }
       this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.botName);
-      this.notify({
+      this.notifyUndo({
         icon: "delete_all",
         message: this.$t("success.resultsDeleted"),
-        timeout: 5000,
-        progress: true,
-        multiLine: false,
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
       });
     },
     analyzePosition() {

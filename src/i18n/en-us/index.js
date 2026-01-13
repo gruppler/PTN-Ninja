@@ -457,6 +457,7 @@ export default {
   },
 
   success: {
+    removedBot: 'Removed bot "{botName}"',
     closedMultipleGames: "Closed 1 game | Closed {count} games",
     copied: "Copied!",
     copiedItem: "Copied {item}",
