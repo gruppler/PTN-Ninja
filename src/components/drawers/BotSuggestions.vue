@@ -732,6 +732,34 @@
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                @click="deleteSavedPositionResults"
+                :disable="!hasSavedSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete Positions Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable @click="deleteAllSavedResults">
+                <q-item-section avatar>
+                  <q-icon name="delete_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete All Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -892,6 +920,17 @@ export default {
     areBotOptionsApplied() {
       return this.bot && isEqual(this.botOptions, this.bot.getOptions());
     },
+    botName() {
+      return this.botMeta.name || this.bot?.label || null;
+    },
+    savedSuggestions() {
+      const allSaved = this.$store.getters["game/suggestions"](this.tps);
+      // Filter to only suggestions matching this bot's name (or with no bot name)
+      return allSaved.filter((s) => !s.botName || s.botName === this.botName);
+    },
+    hasSavedSuggestions() {
+      return this.savedSuggestions.length > 0;
+    },
   },
   methods: {
     selectBot(value) {
@@ -966,7 +1005,7 @@ export default {
       this.bot.clearResults();
       this.notify({
         icon: "delete_all_outline",
-        message: this.$t("analysis.Clear All Unsaved Results"),
+        message: this.$t("success.resultsDeleted"),
         timeout: 5000,
         progress: true,
         multiLine: false,
@@ -996,7 +1035,7 @@ export default {
       });
       this.notify({
         icon: "delete",
-        message: this.$t("analysis.Clear Positions Unsaved Results"),
+        message: this.$t("success.resultsDeleted"),
         timeout: 5000,
         progress: true,
         multiline: false,
@@ -1024,6 +1063,35 @@ export default {
           isDone: this.botState.tps === this.botState.analyzingPly.tpsAfter,
         });
       }
+    },
+    deleteSavedPositionResults() {
+      if (!this.hasSavedSuggestions || !this.botName) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.botName,
+      });
+      this.notify({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        timeout: 5000,
+        progress: true,
+        multiLine: false,
+      });
+    },
+    deleteAllSavedResults() {
+      if (!this.botName) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.botName);
+      this.notify({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        timeout: 5000,
+        progress: true,
+        multiLine: false,
+      });
     },
     analyzePosition() {
       try {

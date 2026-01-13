@@ -718,3 +718,55 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
     return false;
   });
 };
+
+// Helper to check if a note matches a bot name
+// A note matches if: botName is null/undefined (no bot name stored), or botName matches
+const noteMatchesBot = (note, botName) => {
+  return !note.botName || note.botName === botName;
+};
+
+// Helper to check if a note is an analysis note
+const isAnalysisNote = (note) =>
+  note.evaluation !== null || note.pv !== null || note.pvAfter !== null;
+
+export const REMOVE_BOT_ANALYSIS_NOTES = (state, botName) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+
+  Vue.prototype.$game.removeNotes((note) => {
+    return isAnalysisNote(note) && noteMatchesBot(note, botName);
+  });
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
+};
+
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !allPlies || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies.find((p) => p && p.tpsBefore === tps);
+  const evalPly =
+    prevPly || allPlies.find((p) => p && p.id === 0 && p.tpsBefore === tps);
+
+  const evalPlyID = evalPly ? String(evalPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    if (!noteMatchesBot(note, botName)) {
+      return false;
+    }
+    if (evalPlyID && plyID === evalPlyID) {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.evaluation !== null || note.pv !== null;
+    }
+    return false;
+  });
+};

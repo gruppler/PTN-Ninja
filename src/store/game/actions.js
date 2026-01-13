@@ -986,3 +986,19 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = function (
   commit("REMOVE_POSITION_ANALYSIS_NOTES", tps);
   dispatch("SAVE_CURRENT_GAME", true);
 };
+
+export const REMOVE_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  botName
+) {
+  commit("REMOVE_BOT_ANALYSIS_NOTES", botName);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  { tps, botName }
+) {
+  commit("REMOVE_POSITION_BOT_ANALYSIS_NOTES", { tps, botName });
+  dispatch("SAVE_CURRENT_GAME", true);
+};

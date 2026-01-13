@@ -382,7 +382,7 @@ export default {
         bot.clearSavedResults();
         this.notify({
           icon: "delete_all",
-          message: this.$t("analysis.Delete All Saved Results"),
+          message: this.$t("success.resultsDeleted"),
           timeout: 5000,
           progress: true,
           actions: [
@@ -405,7 +405,7 @@ export default {
       this.$store.dispatch("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
       this.notify({
         icon: "delete",
-        message: this.$t("analysis.Delete Positions Saved Results"),
+        message: this.$t("success.resultsDeleted"),
         timeout: 5000,
         progress: true,
         multiline: false,

@@ -467,6 +467,7 @@ export default {
     removedAurrentPositionsNotes: "Removed current position notes",
     replacedExistingGame: "Replaced existing game of the same name",
     resetPasswordSent: "Reset password email sent.",
+    resultsDeleted: "Results deleted.",
     themeRemoved: 'Removed theme "{name}"',
     updateAvailable: "A new version is available",
     verifyEmailSent: "Verification email sent.",
