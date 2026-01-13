@@ -12,8 +12,15 @@
         <q-item-section>
           <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
         </q-item-section>
-        <q-item-section v-if="!sections.botSuggestions && isAnyBotRunning" side>
-          <q-spinner-cube size="sm" />
+        <q-item-section v-if="!sections.botSuggestions && runningBotState" side>
+          <BotProgress
+            :is-running="true"
+            :interactive="runningBotState.isInteractiveEnabled"
+            :progress="runningBotState.progress"
+            class="no-pointer-events"
+            dense
+            flat
+          />
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
@@ -224,6 +231,7 @@
 <script>
 import BotSuggestions from "./BotSuggestions.vue";
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
+import BotProgress from "../analysis/BotProgress";
 import { bots } from "../../bots";
 import { cloneDeep } from "lodash";
 
@@ -232,6 +240,7 @@ export default {
   components: {
     BotSuggestions,
     BotAnalysisItem,
+    BotProgress,
   },
   data() {
     return {
@@ -256,12 +265,26 @@ export default {
       return this.game.ptn.allPlies;
     },
     isAnyBotRunning() {
-      // Check if any active bot is running
-      return this.activeBots.some((botId) => {
-        if (!botId) return false;
-        const bot = bots[botId];
-        return bot && bot.state && bot.state.isRunning;
-      });
+      return this.runningBotState !== null;
+    },
+    runningBotState() {
+      // Priority: selected toolbar bot if running, else first running bot
+      const toolbarBotId = this.$store.state.analysis.botID;
+      if (toolbarBotId && this.activeBots.includes(toolbarBotId)) {
+        const state = this.$store.state.analysis.botStates[toolbarBotId];
+        if (state && state.isRunning) {
+          return state;
+        }
+      }
+      // Find first running bot
+      for (const botId of this.activeBots) {
+        if (!botId) continue;
+        const state = this.$store.state.analysis.botStates[botId];
+        if (state && state.isRunning) {
+          return state;
+        }
+      }
+      return null;
     },
     savedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);
