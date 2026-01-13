@@ -661,7 +661,7 @@
         spread
         stretch
       >
-        <q-btn icon="save" spread stretch :disable="!hasResults">
+        <q-btn icon="save" spread stretch>
           <hint>{{ $t("Save to Notes") }}</hint>
           <q-menu
             transition-show="none"
@@ -682,7 +682,11 @@
                   <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
                 </q-item-section>
               </q-item>
-              <q-item clickable @click="saveAllResultsToNotes">
+              <q-item
+                clickable
+                @click="saveAllResultsToNotes"
+                :disable="!hasResults"
+              >
                 <q-item-section avatar>
                   <q-icon name="save_all" />
                 </q-item-section>
@@ -694,7 +698,7 @@
           </q-menu>
         </q-btn>
 
-        <q-btn icon="delete" spread stretch :disable="!hasResults">
+        <q-btn icon="delete" spread stretch>
           <hint>{{ $t("Delete") }}</hint>
           <q-menu
             transition-show="none"
