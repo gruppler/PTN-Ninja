@@ -700,6 +700,19 @@
                   <q-item-label>{{ $t("Save All") }}</q-item-label>
                 </q-item-section>
               </q-item>
+
+              <q-separator />
+
+              <q-item clickable @click="saveEvalMarks" :disable="!hasResults">
+                <q-item-section avatar>
+                  <q-icon name="eval" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Save Eval Marks")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -1025,6 +1038,12 @@ export default {
         return;
       }
       this.bot.saveEvalComments(this.tps);
+    },
+    saveEvalMarks() {
+      if (!this.bot) {
+        return;
+      }
+      this.bot.saveEvalMarks();
     },
     clearUnsavedResults() {
       if (!this.hasResults) {

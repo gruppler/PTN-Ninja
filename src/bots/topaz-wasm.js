@@ -101,6 +101,11 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
+    // Get player to move from TPS - score is from their perspective
+    const initialPlayer = Number(tps.split(" ")[1]);
+    // Normalize to player 1's perspective (positive = good for player 1)
+    const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
+
     const results = {
       hash,
       tps,
@@ -109,7 +114,7 @@ export default class TopazWasm extends Bot {
           pv,
           depth,
           nodes,
-          // evaluation: Number(score),
+          evaluation,
         },
       ],
     };

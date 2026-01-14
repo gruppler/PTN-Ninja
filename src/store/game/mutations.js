@@ -772,3 +772,48 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
     return false;
   });
 };
+
+// Set eval marks (!!,!,?,??) on plies, clearing existing eval marks first
+export const SET_EVAL_MARKS = (state, evalMarks) => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.recordChange(() => {
+    // First clear all existing eval marks (but keep tak/tinue)
+    clearEvalMarks();
+
+    // Then apply new eval marks
+    for (const plyId in evalMarks) {
+      const ply = game.plies[plyId];
+      if (!ply) continue;
+
+      const mark = evalMarks[plyId];
+      // Preserve existing tak/tinue marks
+      let newText = mark;
+      if (ply.evaluation) {
+        if (ply.evaluation.tinue) {
+          newText += '"';
+        } else if (ply.evaluation.tak) {
+          newText += "'";
+        }
+      }
+      ply.evaluation = Evaluation.parse(newText);
+      game.board.dirtyPly(ply.id);
+    }
+
+    game._updatePTN(false);
+    game.board.updatePTNOutput();
+  });
+};
+
+// Remove all eval marks (!!,!,?,??) but keep tak/tinue marks
+export const REMOVE_EVAL_MARKS = () => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.recordChange(() => {
+    clearEvalMarks();
+    game._updatePTN(false);
+    game.board.updatePTNOutput();
+  });
+};

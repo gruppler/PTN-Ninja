@@ -86,12 +86,17 @@ export default class TiltakCloud extends Bot {
     this.onReceive(data);
     const { SuggestMoves: suggestedMoves } = data;
 
+    // Get player to move from TPS - winning_probability is from their perspective
+    const initialPlayer = Number(tps.split(" ")[1]);
+
     const results = {
       tps,
       suggestions: suggestedMoves.map(
         ({ mv, visits, winning_probability, pv }) => {
           pv.unshift(mv);
-          const evaluation = 200 * (winning_probability - 0.5);
+          // Normalize to player 1's perspective (positive = good for player 1)
+          const evaluation =
+            200 * (winning_probability - 0.5) * (initialPlayer === 1 ? 1 : -1);
           const suggestion = { pv, visits, evaluation };
           if (time_control.FixedNodes) {
             suggestion.nodes = time_control.FixedNodes;

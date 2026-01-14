@@ -11,6 +11,18 @@ const minProps = [
   "specialPiece",
 ];
 
+// Standalone function to compare two plies (can be plain objects or Ply instances)
+export function pliesEqual(ply1, ply2) {
+  if (!ply1 || !ply2) return false;
+  const getMin = (ply) =>
+    ply instanceof Ply
+      ? ply.min
+      : isString(ply)
+      ? new Ply(ply).min
+      : pick(ply, minProps);
+  return isEqual(getMin(ply1), getMin(ply2));
+}
+
 const outputProps = [
   "branch",
   "color",

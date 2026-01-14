@@ -19,6 +19,7 @@ import {
 import hashObject from "object-hash";
 import asyncPool from "tiny-async-pool";
 import { getPV } from "../Game/PTN/Comment";
+import { pliesEqual } from "../Game/PTN/Ply";
 
 export function formatEvaluation(value) {
   return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
@@ -1384,6 +1385,92 @@ export default class Bot {
 
     if (Object.keys(messages).length) {
       store.dispatch("game/ADD_NOTES", messages);
+    }
+  }
+
+  // Apply eval marks (!!,!,?,??) to PTN based on bot analysis
+  saveEvalMarks(tps = null) {
+    const thresholds =
+      this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
+    const evalMarks = {};
+
+    // Helper to calculate eval mark for a ply
+    const calculateEvalMark = (ply) => {
+      // Skip first two plies (opening moves) - no meaningful "before" to compare
+      // Check move number from tpsBefore - format is "board player moveNumber"
+      // Move 1 plies have tpsBefore with moveNumber 1
+      const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
+      const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
+      if (moveNumber <= 1) {
+        return null;
+      }
+
+      const positionBefore = this.positions[ply.tpsBefore];
+      const positionAfter = this.positions[ply.tpsAfter];
+
+      if (!positionBefore || !positionAfter) {
+        return null;
+      }
+      if (!positionBefore[0] || !positionAfter[0]) {
+        return null;
+      }
+
+      // Skip if the move made matches the bot's top suggestion
+      // (no mark needed if player made the expected move)
+      const topSuggestion = positionBefore[0];
+      if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
+        return null;
+      }
+
+      const rawEvalBefore = positionBefore[0].evaluation;
+      const rawEvalAfter = positionAfter[0].evaluation;
+
+      if (rawEvalBefore === null || rawEvalAfter === null) {
+        return null;
+      }
+
+      // Normalize evaluations the same way as formatEvalComments
+      const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
+      const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
+
+      const scoreLoss =
+        (ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter) /
+        2;
+
+      if (scoreLoss > thresholds.brilliant) {
+        return "!!";
+      } else if (scoreLoss > thresholds.good) {
+        return "!";
+      } else if (scoreLoss > thresholds.bad) {
+        return null; // No mark for neutral moves
+      } else if (scoreLoss > thresholds.blunder) {
+        return "?";
+      } else {
+        return "??";
+      }
+    };
+
+    if (isString(tps) && tps.length) {
+      // Single position: find the ply that leads to this TPS
+      const ply = this.plies.find((p) => p.tpsAfter === tps);
+      if (ply) {
+        const mark = calculateEvalMark(ply);
+        if (mark) {
+          evalMarks[ply.id] = mark;
+        }
+      }
+    } else {
+      // All positions
+      this.plies.forEach((ply) => {
+        const mark = calculateEvalMark(ply);
+        if (mark) {
+          evalMarks[ply.id] = mark;
+        }
+      });
+    }
+
+    if (Object.keys(evalMarks).length) {
+      store.dispatch("game/SET_EVAL_MARKS", evalMarks);
     }
   }
 }

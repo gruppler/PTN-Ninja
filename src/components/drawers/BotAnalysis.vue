@@ -148,7 +148,6 @@
 
         <!-- Saved Results -->
         <q-expansion-item
-          v-if="savedSuggestions.length || hasAnalysisNotes"
           v-model="sections.savedResults"
           header-class="bg-ui"
           hide-expand-icon
@@ -203,6 +202,23 @@
                       <q-item-section>
                         <q-item-label>
                           {{ $t("analysis.Delete All Saved Results") }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+
+                    <q-separator />
+
+                    <q-item
+                      clickable
+                      @click="removeEvalMarks"
+                      :disable="!hasEvalMarks"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="eval" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>
+                          {{ $t("analysis.Remove Eval Marks") }}
                         </q-item-label>
                       </q-item-section>
                     </q-item>
@@ -335,6 +351,14 @@ export default {
     hasCurrentPositionSavedResults() {
       return this.savedSuggestions.length > 0;
     },
+    hasEvalMarks() {
+      const plies = this.game.ptn && this.game.ptn.allPlies;
+      if (!plies) return false;
+      return plies.some(
+        (ply) =>
+          ply && ply.evaluation && (ply.evaluation["?"] || ply.evaluation["!"])
+      );
+    },
   },
   methods: {
     addBot() {
@@ -408,6 +432,16 @@ export default {
       this.notifyUndo({
         icon: "delete",
         message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    removeEvalMarks() {
+      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
+      this.notifyUndo({
+        icon: "eval",
+        message: this.$t("success.evalMarksRemoved"),
         handler: () => {
           this.$store.dispatch("game/UNDO");
         },

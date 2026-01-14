@@ -48,6 +48,7 @@ export default {
   email: "mdi-email",
   embed: "mdi-code-tags",
   error: "mdi-alert-circle",
+  eval: "mdi-exclamation",
   event: "mdi-trophy",
   event_outline: "mdi-trophy-outline",
   file: "mdi-file",

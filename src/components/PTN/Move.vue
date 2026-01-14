@@ -248,6 +248,7 @@ export default {
       if (!ply) return null;
       const analysis = this.$store.state.analysis;
       const preferSaved = analysis?.preferSavedResults;
+      const botID = analysis?.botID;
 
       // If preferring saved results, check saved first
       if (preferSaved) {
@@ -258,16 +259,17 @@ export default {
       }
 
       // Check for selected bot's evaluation (unsaved)
-      if (analysis && analysis.botPositions) {
+      if (analysis && analysis.botPositions && botID) {
         const tps = ply.tpsAfter;
-        const botID = analysis.botID;
         const botPositions = analysis.botPositions[botID];
         if (botPositions && botPositions[tps] && botPositions[tps][0]) {
           return botPositions[tps][0].evaluation ?? null;
         }
+        // If a bot is selected but has no results, don't fall back to saved
+        return null;
       }
 
-      // Fall back to saved evaluation if not preferring saved
+      // Fall back to saved evaluation only if no bot is selected
       if (!preferSaved) {
         const savedEval = this.$store.state.game.comments.evaluations[ply.id];
         if (savedEval != null) {
