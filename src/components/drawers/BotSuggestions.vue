@@ -163,7 +163,7 @@
           <template v-if="botID === 'tei'">
             <!-- Address -->
             <q-input
-              v-model.number="localBotSettings[botID].address"
+              v-model="localBotSettings[botID].address"
               :label="$t('tei.address')"
               :prefix="bot.protocol"
               :dark="$store.state.ui.theme.panelDark"
