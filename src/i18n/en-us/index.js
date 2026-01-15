@@ -230,7 +230,6 @@ export default {
   Save: "Save",
   "Save All": "Save All",
   "Save Current Position": "Save Current Position",
-  "Save to Notes": "Save to Notes",
   "Saved Results": "Saved Results",
   "Select Bot": "Select Bot",
   Settings: "Settings",

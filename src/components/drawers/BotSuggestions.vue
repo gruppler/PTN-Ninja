@@ -606,7 +606,7 @@
         stretch
       >
         <q-btn icon="save" spread stretch>
-          <hint>{{ $t("Save to Notes") }}</hint>
+          <hint>{{ $t("Save") }}</hint>
           <q-menu
             transition-show="none"
             transition-hide="none"
