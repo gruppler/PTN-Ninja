@@ -37,7 +37,7 @@
         <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
         <!-- Address -->
         <q-input
-          v-model.number="buffer.meta.connection.address"
+          v-model="buffer.meta.connection.address"
           :label="$t('tei.address')"
           :prefix="bot.protocol"
           filled
