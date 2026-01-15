@@ -49,6 +49,7 @@
             :is-running="botState.isRunning"
             :interactive="botState.isInteractiveEnabled"
             :progress="botState.progress"
+            class="no-pointer-events"
             dense
             flat
           />
