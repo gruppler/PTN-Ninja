@@ -40,30 +40,6 @@
         <!-- Global Settings -->
         <smooth-reflow>
           <div v-if="showGlobalSettings">
-            <!-- Insert Evaluation Marks -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.insertEvalMarks")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="insertEvalMarks"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
-              </q-item-section>
-            </q-item>
-
             <!-- Save Extra Info -->
             <q-item
               tag="label"
@@ -111,6 +87,85 @@
               filled
               :dark="$store.state.ui.theme.panelDark"
             />
+
+            <!-- Insert Evaluation Marks -->
+            <q-item
+              tag="label"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.insertEvalMarks")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="insertEvalMarks"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Evaluation Mark Thresholds -->
+            <smooth-reflow>
+              <template v-if="insertEvalMarks">
+                <q-item-label
+                  :class="[
+                    $store.state.ui.theme.panelDark
+                      ? 'text-textLight'
+                      : 'text-textDark',
+                  ]"
+                  header
+                  >{{ $t("analysis.evalMarkThresholds") }}</q-item-label
+                >
+                <q-input
+                  type="number"
+                  v-model.number="evalMarkThresholds.brilliant"
+                  :label="$t('analysis.thresholds.brilliant')"
+                  :step="0.01"
+                  hide-bottom-space
+                  :dark="$store.state.ui.theme.panelDark"
+                  filled
+                  item-aligned
+                />
+                <q-input
+                  type="number"
+                  v-model.number="evalMarkThresholds.good"
+                  :label="$t('analysis.thresholds.good')"
+                  :step="0.01"
+                  hide-bottom-space
+                  :dark="$store.state.ui.theme.panelDark"
+                  filled
+                  item-aligned
+                />
+                <q-input
+                  type="number"
+                  v-model.number="evalMarkThresholds.bad"
+                  :label="$t('analysis.thresholds.bad')"
+                  :step="0.01"
+                  hide-bottom-space
+                  :dark="$store.state.ui.theme.panelDark"
+                  filled
+                  item-aligned
+                />
+                <q-input
+                  type="number"
+                  v-model.number="evalMarkThresholds.blunder"
+                  :label="$t('analysis.thresholds.blunder')"
+                  :step="0.01"
+                  hide-bottom-space
+                  :dark="$store.state.ui.theme.panelDark"
+                  filled
+                  item-aligned
+                />
+              </template>
+            </smooth-reflow>
           </div>
         </smooth-reflow>
 
@@ -324,6 +379,9 @@ export default {
         this.$store.dispatch("analysis/SET", ["insertEvalMarks", value]);
       },
     },
+    evalMarkThresholds() {
+      return this.$store.state.analysis.evalMarkThresholds;
+    },
     saveSearchStats: {
       get() {
         return this.$store.state.analysis.saveSearchStats;
@@ -452,6 +510,12 @@ export default {
     sections: {
       handler(value) {
         this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
+      },
+      deep: true,
+    },
+    evalMarkThresholds: {
+      handler(value) {
+        this.$store.dispatch("analysis/SET", ["evalMarkThresholds", value]);
       },
       deep: true,
     },

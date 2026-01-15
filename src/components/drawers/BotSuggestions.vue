@@ -295,69 +295,6 @@
             </template>
           </BotLimitInput>
 
-          <!-- Evaluation Mark Thresholds -->
-          <smooth-reflow>
-            <template
-              v-if="
-                insertEvalMarks && localBotSettings[botID].evalMarkThresholds
-              "
-            >
-              <q-item-label
-                :class="[
-                  $store.state.ui.theme.panelDark
-                    ? 'text-textLight'
-                    : 'text-textDark',
-                ]"
-                header
-                >{{ $t("analysis.evalMarkThresholds") }}</q-item-label
-              >
-              <q-input
-                type="number"
-                v-model.number="
-                  localBotSettings[botID].evalMarkThresholds.brilliant
-                "
-                :label="$t('analysis.thresholds.brilliant')"
-                :step="0.01"
-                hide-bottom-space
-                :dark="$store.state.ui.theme.panelDark"
-                filled
-                item-aligned
-              />
-              <q-input
-                type="number"
-                v-model.number="localBotSettings[botID].evalMarkThresholds.good"
-                :label="$t('analysis.thresholds.good')"
-                :step="0.01"
-                hide-bottom-space
-                :dark="$store.state.ui.theme.panelDark"
-                filled
-                item-aligned
-              />
-              <q-input
-                type="number"
-                v-model.number="localBotSettings[botID].evalMarkThresholds.bad"
-                :label="$t('analysis.thresholds.bad')"
-                :step="0.01"
-                hide-bottom-space
-                :dark="$store.state.ui.theme.panelDark"
-                filled
-                item-aligned
-              />
-              <q-input
-                type="number"
-                v-model.number="
-                  localBotSettings[botID].evalMarkThresholds.blunder
-                "
-                :label="$t('analysis.thresholds.blunder')"
-                :step="0.01"
-                hide-bottom-space
-                :dark="$store.state.ui.theme.panelDark"
-                filled
-                item-aligned
-              />
-            </template>
-          </smooth-reflow>
-
           <!-- Normalize Evaluation -->
           <q-item
             v-if="'normalizeEvaluation' in localBotSettings[botID]"

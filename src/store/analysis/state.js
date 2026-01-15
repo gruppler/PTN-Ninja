@@ -2,6 +2,7 @@ import { LocalStorage } from "quasar";
 import { cloneDeep, defaults, forEach, sortBy } from "lodash";
 import { bots, botListOptions } from "../../bots";
 import CustomTeiBot from "../../bots/custom-tei";
+import { defaultEvalMarkThresholds } from "../../bots/bot";
 
 const defaultBotID = "tiltak";
 
@@ -21,6 +22,7 @@ const defaultState = {
   botStates: {},
   // Global settings
   insertEvalMarks: true,
+  evalMarkThresholds: { ...defaultEvalMarkThresholds },
   pvLimit: 3,
   pvsToSave: 1,
   saveSearchStats: true,

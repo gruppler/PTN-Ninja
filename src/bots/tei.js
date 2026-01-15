@@ -1,4 +1,4 @@
-import Bot, { defaultEvalMarkThresholds } from "./bot";
+import Bot from "./bot";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
 
@@ -28,7 +28,6 @@ export default class TeiBot extends Bot {
         nodes: 1000,
         movetime: 5000,
         options: {},
-        evalMarkThresholds: { ...defaultEvalMarkThresholds },
       },
       meta: {
         teiVersion: 0,

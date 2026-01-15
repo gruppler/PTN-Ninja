@@ -1240,7 +1240,7 @@ export default class Bot {
             ? evaluationAfter - evaluationBefore
             : evaluationBefore - evaluationAfter) / 2;
         const thresholds =
-          this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
+          store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
         if (scoreLoss > thresholds.brilliant) {
           comments.push("!!");
         } else if (scoreLoss > thresholds.good) {
