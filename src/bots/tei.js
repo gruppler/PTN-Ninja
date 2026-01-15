@@ -2,8 +2,6 @@ import Bot, { defaultEvalMarkThresholds } from "./bot";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
 
-let socket = null;
-
 export default class TeiBot extends Bot {
   constructor(options = {}) {
     super({
@@ -38,6 +36,7 @@ export default class TeiBot extends Bot {
       ...options,
     });
 
+    this._socket = null;
     this._bufferedResults = {};
     this._lastSearchTPS = null;
     this._flushBufferedResultsThrottled = throttle(
@@ -144,9 +143,9 @@ export default class TeiBot extends Bot {
 
   //#region send/receive
   send(message) {
-    if (socket) {
+    if (this._socket) {
       this.onSend(message);
-      socket.send(message);
+      this._socket.send(message);
     }
   }
   receive(message) {
@@ -182,7 +181,7 @@ export default class TeiBot extends Bot {
 
   //#region terminate
   async terminate(state) {
-    if (socket) {
+    if (this._socket) {
       try {
         if (this._flushBufferedResultsThrottled) {
           this._flushBufferedResultsThrottled.flush();
@@ -194,7 +193,7 @@ export default class TeiBot extends Bot {
         }
         this.onTerminate(state);
       } catch (error) {
-        await socket.close();
+        await this._socket.close();
         this.init();
       }
     }
@@ -217,28 +216,28 @@ export default class TeiBot extends Bot {
           const url = this.url;
 
           this.setState({ isConnecting: true });
-          socket = new WebSocket(url);
-          socket.onopen = () => {
+          this._socket = new WebSocket(url);
+          this._socket.onopen = () => {
             this.setState({ isConnecting: false, isConnected: true });
             console.info(`Connected to ${url}`);
             this.send("tei");
             resolve(true);
           };
-          socket.onclose = () => {
+          this._socket.onclose = () => {
             console.info(`Disconnected from ${url}`);
             this.terminate();
             this.reset();
           };
 
           // Error handling
-          socket.onerror = (error) => {
+          this._socket.onerror = (error) => {
             this.terminate();
             this.reset();
             reject(error);
           };
 
           // Message handling
-          socket.onmessage = ({ data }) => {
+          this._socket.onmessage = ({ data }) => {
             this.receive(data);
           };
           return true;
@@ -251,11 +250,11 @@ export default class TeiBot extends Bot {
 
   //#region disconnect
   disconnect() {
-    if (socket && this.state.isConnected) {
+    if (this._socket && this.state.isConnected) {
       this.terminate();
       this.reset();
-      socket.close();
-      socket = null;
+      this._socket.close();
+      this._socket = null;
     }
   }
 
