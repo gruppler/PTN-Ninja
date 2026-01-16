@@ -63,7 +63,7 @@
           />
         </q-item-section>
         <q-item-section class="fg-inherit" side>
-          <div class="row no-wrap q-gutter-x-sm" style="margin-right: -2px">
+          <div class="row no-wrap q-gutter-x-sm">
             <q-btn @click.stop icon="menu_vertical" dense round flat>
               <q-menu
                 transition-show="none"
