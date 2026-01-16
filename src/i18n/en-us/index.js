@@ -232,6 +232,7 @@ export default {
   "Save Current Position": "Save Current Position",
   "Saved Results": "Saved Results",
   "Select Bot": "Select Bot",
+  "Select Saved Results": "Select Saved Results",
   Settings: "Settings",
   "Scroll threshold": "Scroll threshold",
   "Scrub Bar": "Scrub Bar",

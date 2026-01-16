@@ -3,7 +3,6 @@
     v-model="expanded"
     header-class="bg-ui"
     expand-icon-class="fg-inherit"
-    hide-expand-icon
   >
     <template v-slot:header>
       <!-- Bot selector in header when no bot selected -->
@@ -31,9 +30,18 @@
       <!-- Bot info in header when bot is selected -->
       <template v-else>
         <q-item-section avatar>
-          <q-icon :name="botOption.icon" />
+          <q-btn
+            @click.stop="selectActiveBot"
+            :icon="botOption.icon"
+            :color="isActiveBot ? 'primary' : ''"
+            dense
+            round
+            flat
+          >
+            <hint>{{ $t("Select Bot") }}</hint>
+          </q-btn>
         </q-item-section>
-        <q-item-section>
+        <q-item-section :class="{ 'text-primary': isActiveBot }">
           <q-item-label>{{ botOption.label }}</q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
@@ -56,16 +64,6 @@
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <div class="row no-wrap q-gutter-x-sm" style="margin-right: -2px">
-            <q-btn
-              @click.stop="toggleBotSettings"
-              icon="settings"
-              :color="showBotSettings ? 'primary' : ''"
-              dense
-              round
-              flat
-            >
-              <hint>{{ $t("Settings") }}</hint>
-            </q-btn>
             <q-btn @click.stop icon="menu_vertical" dense round flat>
               <q-menu
                 transition-show="none"
@@ -114,6 +112,16 @@
                 </q-list>
               </q-menu>
             </q-btn>
+            <q-btn
+              @click.stop="toggleBotSettings"
+              icon="settings"
+              :color="showBotSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            >
+              <hint>{{ $t("Settings") }}</hint>
+            </q-btn>
           </div>
         </q-item-section>
       </template>
@@ -133,7 +141,7 @@
       map-options
       item-aligned
       filled
-      @input="selectBot"
+      @input="selectNewBot"
     >
       <template v-slot:option="scope">
         <q-item
@@ -853,6 +861,15 @@ export default {
       }
       return 1;
     },
+    isActiveBot() {
+      return (
+        this.botID === this.$store.state.analysis.botID &&
+        !(
+          this.$store.state.analysis.preferSavedResults &&
+          this.$store.getters["game/suggestions"](this.tps).length > 0
+        )
+      );
+    },
     isAnalyzingGameOrBranch() {
       return (
         this.botState &&
@@ -913,8 +930,12 @@ export default {
     },
   },
   methods: {
-    selectBot(value) {
+    selectNewBot(value) {
       this.$emit("select", { index: this.index, botId: value });
+    },
+    selectActiveBot() {
+      this.$store.dispatch("analysis/SET", ["botID", this.botID]);
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
     },
     removeBot() {
       this.$emit("remove", this.index);

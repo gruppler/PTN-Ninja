@@ -205,14 +205,22 @@
         <q-expansion-item
           v-model="sections.savedResults"
           header-class="bg-ui"
-          hide-expand-icon
           default-opened
         >
           <template v-slot:header>
             <q-item-section avatar>
-              <q-icon name="save" />
+              <q-btn
+                @click.stop="selectSavedResults"
+                icon="save"
+                :color="isActive ? 'primary' : ''"
+                dense
+                round
+                flat
+              >
+                <hint>{{ $t("Select Saved Results") }}</hint>
+              </q-btn>
             </q-item-section>
-            <q-item-section>
+            <q-item-section :class="{ 'text-primary': isActive }">
               <q-item-label>{{ $t("Saved Results") }}</q-item-label>
             </q-item-section>
             <q-item-section class="fg-inherit" side>
@@ -417,10 +425,19 @@ export default {
           ply && ply.evaluation && (ply.evaluation["?"] || ply.evaluation["!"])
       );
     },
+    isActive() {
+      return (
+        this.$store.state.analysis.preferSavedResults &&
+        this.hasCurrentPositionSavedResults
+      );
+    },
   },
   methods: {
     addBot() {
       this.$store.dispatch("analysis/ADD_ACTIVE_BOT", null);
+    },
+    selectSavedResults() {
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
     },
     onBotSelect({ index, botId }) {
       this.$store.dispatch("analysis/SET_ACTIVE_BOT", { index, botId });
