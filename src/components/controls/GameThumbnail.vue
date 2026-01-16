@@ -48,6 +48,7 @@ export default {
       imageLoaded: false,
       thumbnail: null,
       url: "",
+      requestId: 0,
     };
   },
   computed: {
@@ -70,15 +71,20 @@ export default {
   },
   methods: {
     async updateThumbnail() {
+      const currentRequestId = ++this.requestId;
       try {
         const url = await this.$store.dispatch(
           "ui/GET_THUMBNAIL",
           this.options
         );
+        // Only apply if this is still the most recent request
+        if (currentRequestId !== this.requestId) return;
         this.url = url;
         let img = new Image();
         img.onload = () => {
-          this.imageLoaded = true;
+          if (currentRequestId === this.requestId) {
+            this.imageLoaded = true;
+          }
         };
         img.src = url;
       } catch (error) {
