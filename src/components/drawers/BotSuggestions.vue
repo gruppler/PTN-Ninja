@@ -32,12 +32,22 @@
         <q-item-section avatar>
           <q-btn
             @click.stop="selectActiveBot"
-            :icon="botOption.icon"
             :color="isActiveBot ? 'primary' : ''"
             dense
             round
             flat
           >
+            <BotProgress
+              v-if="!expanded && botState.isRunning"
+              @click.stop="bot.terminate()"
+              :is-running="botState.isRunning"
+              :interactive="botState.isInteractiveEnabled"
+              :progress="botState.progress"
+              class="no-pointer-events"
+              dense
+              flat
+            />
+            <q-icon v-else :name="botOption.icon" />
             <hint>{{ $t("Select Bot") }}</hint>
           </q-btn>
         </q-item-section>
@@ -50,17 +60,6 @@
           >
             {{ botMeta.author }}
           </q-item-label>
-        </q-item-section>
-        <q-item-section v-if="!expanded && botState.isRunning" side>
-          <BotProgress
-            @click.stop="bot.terminate()"
-            :is-running="botState.isRunning"
-            :interactive="botState.isInteractiveEnabled"
-            :progress="botState.progress"
-            class="no-pointer-events"
-            dense
-            flat
-          />
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <div class="row no-wrap q-gutter-x-sm">
