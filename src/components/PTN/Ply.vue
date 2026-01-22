@@ -255,6 +255,11 @@ export default {
       console.log(event);
     },
   },
+  watch: {
+    menu(isOpen) {
+      this.$store.commit("ui/SET_BRANCH_MENU_OPEN", isOpen);
+    },
+  },
 };
 </script>
 

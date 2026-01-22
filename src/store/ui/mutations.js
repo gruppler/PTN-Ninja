@@ -50,6 +50,10 @@ export const SET_PLY_PREVIEW_ACTIVE = (state, active) => {
   state.plyPreviewActive = active;
 };
 
+export const SET_BRANCH_MENU_OPEN = (state, open) => {
+  state.branchMenuOpen = open;
+};
+
 export const SET_THUMBNAIL = (state, { id, options, url }) => {
   state.thumbnails[id] = deepFreeze({ options: cloneDeep(options), url });
 };

@@ -81,6 +81,11 @@ export default {
     "$store.state.ui.textTab"() {
       this.hidePlyTooltip();
     },
+    "$store.state.ui.branchMenuOpen"(isOpen) {
+      if (isOpen) {
+        this.hidePlyTooltip();
+      }
+    },
   },
   mounted() {
     document.addEventListener("mouseover", this.onMouseOver, true);
