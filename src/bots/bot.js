@@ -1288,11 +1288,17 @@ export default class Bot {
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
+    const botName = this.name;
 
     // Always use new format when saving
     const useNewFormat = true;
     // Or, use old format only if existing comments use it
     // const useNewFormat = this.pvFormat !== "old";
+
+    // Helper to check if a note is an analysis note from this bot
+    const isThisBotAnalysisNote = (note) =>
+      (note.evaluation !== null || note.pv !== null || note.pvAfter !== null) &&
+      (!note.botName || note.botName === botName);
 
     if (isString(tps) && tps.length) {
       const buildEvalCommentFromPosition = (position) => {
@@ -1389,6 +1395,34 @@ export default class Bot {
     }
 
     if (Object.keys(messages).length) {
+      // Remove excess analysis notes from this bot to enforce pvsToSave limit
+      // Only remove notes if adding new ones would exceed the limit
+      for (const plyID of Object.keys(messages)) {
+        const existingNotes = this.game.comments.notes[plyID] || [];
+        const existingBotNotes = existingNotes.filter(isThisBotAnalysisNote);
+        const newNotesCount = messages[plyID].length;
+        const totalAfterAdd = existingBotNotes.length + newNotesCount;
+
+        if (totalAfterAdd > pvsToSave) {
+          // Need to remove excess notes, starting from the last one
+          const excessCount = totalAfterAdd - pvsToSave;
+          let removed = 0;
+
+          // Find indices of this bot's notes (in reverse order to remove from end)
+          const botNoteIndices = existingNotes
+            .map((note, idx) => (isThisBotAnalysisNote(note) ? idx : -1))
+            .filter((idx) => idx !== -1)
+            .reverse();
+
+          // Remove excess notes starting from the last one
+          for (const idx of botNoteIndices) {
+            if (removed >= excessCount) break;
+            this.game.removeNote(plyID, idx);
+            removed++;
+          }
+        }
+      }
+
       store.dispatch("game/ADD_NOTES", messages);
     }
   }

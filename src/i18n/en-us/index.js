@@ -575,7 +575,7 @@ export default {
     nps: "nps",
     "Preset Bot Options": "Preset Bot Options",
     pvLimit: "Plies to Save",
-    pvsToSave: "Suggestions to Save",
+    pvsToSave: "Suggestions to Save per Bot",
     saveSearchStats: "Save Search Info",
     secondsUnit: "sec",
     sigma: "Sigma",
