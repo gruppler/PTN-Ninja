@@ -129,6 +129,7 @@
                   v-model.number="evalMarkThresholds.brilliant"
                   :label="$t('analysis.thresholds.brilliant')"
                   :step="0.01"
+                  :min="0.01"
                   hide-bottom-space
                   :dark="$store.state.ui.theme.panelDark"
                   filled
@@ -139,6 +140,7 @@
                   v-model.number="evalMarkThresholds.good"
                   :label="$t('analysis.thresholds.good')"
                   :step="0.01"
+                  :min="0.01"
                   hide-bottom-space
                   :dark="$store.state.ui.theme.panelDark"
                   filled
@@ -149,6 +151,7 @@
                   v-model.number="evalMarkThresholds.bad"
                   :label="$t('analysis.thresholds.bad')"
                   :step="0.01"
+                  :max="-0.01"
                   hide-bottom-space
                   :dark="$store.state.ui.theme.panelDark"
                   filled
@@ -159,6 +162,7 @@
                   v-model.number="evalMarkThresholds.blunder"
                   :label="$t('analysis.thresholds.blunder')"
                   :step="0.01"
+                  :max="-0.01"
                   hide-bottom-space
                   :dark="$store.state.ui.theme.panelDark"
                   filled
@@ -312,7 +316,7 @@ import BotSuggestions from "./BotSuggestions.vue";
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import BotProgress from "../analysis/BotProgress";
 import { bots } from "../../bots";
-import { cloneDeep } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 export default {
   name: "BotAnalysis",
@@ -324,6 +328,9 @@ export default {
   data() {
     return {
       sections: cloneDeep(this.$store.state.ui.analysisSections),
+      localEvalMarkThresholds: cloneDeep(
+        this.$store.state.analysis.evalMarkThresholds
+      ),
       showGlobalSettings: false,
     };
   },
@@ -387,8 +394,13 @@ export default {
         this.$store.dispatch("analysis/SET", ["insertEvalMarks", value]);
       },
     },
-    evalMarkThresholds() {
-      return this.$store.state.analysis.evalMarkThresholds;
+    evalMarkThresholds: {
+      get() {
+        return this.localEvalMarkThresholds;
+      },
+      set(value) {
+        this.localEvalMarkThresholds = value;
+      },
     },
     saveSearchStats: {
       get() {
@@ -530,9 +542,23 @@ export default {
       },
       deep: true,
     },
-    evalMarkThresholds: {
+    localEvalMarkThresholds: {
       handler(value) {
-        this.$store.dispatch("analysis/SET", ["evalMarkThresholds", value]);
+        const storeValue = this.$store.state.analysis.evalMarkThresholds;
+        if (!isEqual(value, storeValue)) {
+          this.$store.dispatch("analysis/SET", [
+            "evalMarkThresholds",
+            cloneDeep(value),
+          ]);
+        }
+      },
+      deep: true,
+    },
+    "$store.state.analysis.evalMarkThresholds": {
+      handler(value) {
+        if (!isEqual(value, this.localEvalMarkThresholds)) {
+          this.localEvalMarkThresholds = cloneDeep(value);
+        }
       },
       deep: true,
     },
