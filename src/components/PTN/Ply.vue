@@ -191,6 +191,7 @@ export default {
 
       const analysis = this.$store.state.analysis;
       const preferSaved = analysis?.preferSavedResults;
+      const showEvalMarks = analysis?.showEvalMarks;
 
       // Get the base evaluation text from ply (tak/tinue marks)
       const plyEval = this.ply.evaluation;
@@ -198,16 +199,21 @@ export default {
         ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
         : "";
 
+      // If preferring saved results, use saved eval marks from PTN
+      if (preferSaved) {
+        return plyEval ? plyEval.text : null;
+      }
+
+      // If showEvalMarks is disabled, only show tak/tinue marks
+      if (!showEvalMarks) {
+        return takTinue || null;
+      }
+
       // Access reactive state directly so Vue tracks dependencies
       const botID = analysis?.botID;
       const botPositions = analysis?.botPositions;
       const positions = botID && botPositions ? botPositions[botID] : null;
       const hasBotPositions = positions && Object.keys(positions).length > 0;
-
-      // If preferring saved results, use saved eval marks from PTN
-      if (preferSaved) {
-        return plyEval ? plyEval.text : null;
-      }
 
       // Check for eval mark override from bot analysis
       if (hasBotPositions) {
@@ -218,7 +224,7 @@ export default {
         return override ? override + takTinue : takTinue || null;
       }
 
-      // No bot positions and not preferring saved - only show tak/tinue marks
+      // No bot positions - only show tak/tinue marks
       return takTinue || null;
     },
   },

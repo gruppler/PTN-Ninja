@@ -541,7 +541,8 @@ export default {
     gameOver: "The game has ended",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
-    insertEvalMarks: "Insert Evaluation Marks",
+    saveEvalMarks: "Save Evaluation Marks",
+    showEvalMarks: "Show Evaluation Marks",
     evalMarkThresholds: "Evaluation Mark Thresholds",
     thresholds: {
       brilliant: "Brilliant (!!)",
@@ -575,7 +576,7 @@ export default {
     "Preset Bot Options": "Preset Bot Options",
     pvLimit: "Plies to Save",
     pvsToSave: "Suggestions to Save",
-    saveSearchStats: "Save Search Stats",
+    saveSearchStats: "Save Search Info",
     secondsUnit: "sec",
     sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",

@@ -273,10 +273,16 @@ export default {
 
       const analysis = this.$store.state.analysis;
       const preferSaved = analysis?.preferSavedResults;
+      const showEvalMarks = analysis?.showEvalMarks;
 
       // If preferring saved results, use saved eval marks from PTN
       if (preferSaved) {
         return plyEval ? plyEval.text : null;
+      }
+
+      // If showEvalMarks is disabled, only show tak/tinue marks
+      if (!showEvalMarks) {
+        return takTinue || null;
       }
 
       // Access reactive state directly so Vue tracks dependencies
@@ -294,7 +300,7 @@ export default {
         return override ? override + takTinue : takTinue || null;
       }
 
-      // No bot positions and not preferring saved - only show tak/tinue marks
+      // No bot positions - only show tak/tinue marks
       return takTinue || null;
     },
     selected() {

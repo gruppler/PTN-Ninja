@@ -88,25 +88,27 @@
               :dark="$store.state.ui.theme.panelDark"
             />
 
-            <!-- Insert Evaluation Marks -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
+            <!-- Save Evaluation Marks -->
+            <q-item @click="saveEvalMarks = !saveEvalMarks" clickable v-ripple>
               <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.insertEvalMarks")
-                }}</q-item-label>
+                <q-item-label>{{ $t("analysis.saveEvalMarks") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <q-toggle
-                  v-model="insertEvalMarks"
+                  v-model="saveEvalMarks"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Show Evaluation Marks -->
+            <q-item @click="showEvalMarks = !showEvalMarks" clickable v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("analysis.showEvalMarks") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showEvalMarks"
                   :dark="$store.state.ui.theme.panelDark"
                 />
               </q-item-section>
@@ -114,7 +116,7 @@
 
             <!-- Evaluation Mark Thresholds -->
             <smooth-reflow>
-              <template v-if="insertEvalMarks">
+              <template v-if="saveEvalMarks || showEvalMarks">
                 <q-item-label
                   :class="[
                     $store.state.ui.theme.panelDark
@@ -386,12 +388,20 @@ export default {
           )
       );
     },
-    insertEvalMarks: {
+    saveEvalMarks: {
       get() {
-        return this.$store.state.analysis.insertEvalMarks;
+        return this.$store.state.analysis.saveEvalMarks;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", ["insertEvalMarks", value]);
+        this.$store.dispatch("analysis/SET", ["saveEvalMarks", value]);
+      },
+    },
+    showEvalMarks: {
+      get() {
+        return this.$store.state.analysis.showEvalMarks;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["showEvalMarks", value]);
       },
     },
     evalMarkThresholds: {

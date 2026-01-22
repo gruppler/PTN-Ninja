@@ -1220,11 +1220,16 @@ export default class Bot {
     }
 
     // Evaluation marks (requires both positions, and no existing analysis notes)
+    // Also skip if there are already eval marks in the PTN (auto-save shouldn't overwrite)
+    const hasExistingEvalMarks = this.plies.some(
+      (p) => p && p.evaluation && (p.evaluation["?"] || p.evaluation["!"])
+    );
     if (
       !hasExistingAnalysisNotes &&
+      !hasExistingEvalMarks &&
       hasPositionBeforeEval &&
       hasPositionAfterEval &&
-      store.state.analysis.insertEvalMarks
+      store.state.analysis.saveEvalMarks
     ) {
       if (
         evaluationBefore === null &&
