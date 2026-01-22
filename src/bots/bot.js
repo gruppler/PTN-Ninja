@@ -839,11 +839,11 @@ export default class Bot {
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
-                icon: "delete_all",
-                label: i18n.t("analysis.Delete All Saved Results"),
+                icon: "delete",
+                label: i18n.t("analysis.Delete Unsaved Results"),
                 color: "textDark",
                 handler: () => {
-                  this.clearSavedResults();
+                  this.clearResults();
                 },
               },
               { icon: "close", color: "textDark" },

@@ -531,6 +531,7 @@ export default {
     "Clear Positions Unsaved Results": "Clear Position's Unsaved Results",
     "Database Moves": "PlayTak Openings",
     "Delete All Saved Results": "Delete All Saved Results",
+    "Delete Unsaved Results": "Delete Unsaved Results",
     "Delete Positions Saved Results": "Delete Position's Saved Results",
     "Remove Eval Marks": "Remove Eval Marks",
     "Save Eval Marks": "Save Eval Marks",
