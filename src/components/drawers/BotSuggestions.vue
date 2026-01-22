@@ -686,7 +686,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{
-                    $t("analysis.Clear All Unsaved Results")
+                    $t("analysis.Clear Bots Unsaved Results")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -714,7 +714,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{
-                    $t("analysis.Delete All Saved Results")
+                    $t("analysis.Delete Bots Saved Results")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>

@@ -839,8 +839,8 @@ export default class Bot {
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
-                icon: "delete",
-                label: i18n.t("analysis.Delete Unsaved Results"),
+                icon: "delete_all_outline",
+                label: i18n.t("analysis.Clear Bots Unsaved Results"),
                 color: "textDark",
                 handler: () => {
                   this.clearResults();
