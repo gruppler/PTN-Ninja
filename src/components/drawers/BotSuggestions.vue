@@ -450,80 +450,70 @@
           />
         </q-btn-group>
 
-        <!-- Live Stats -->
-        <div class="bg-accent relative-position" style="height: 36px">
-          <div class="text-caption text-center q-pa-sm">
-            <template v-if="botState.time !== null || botState.nps !== null">
-              <span v-if="botState.time !== null">
-                {{ $n((botState.time || 0) / 1e3, "n0") }}
-                {{ $t("analysis.secondsUnit") }}
-              </span>
-              <span v-if="botState.time !== null && botState.nps !== null">
-                •
-              </span>
-              <span v-if="botState.nps !== null">
-                {{ $n(botState.nps / 1e3 || 0, "n0") }}
-                {{ $t("analysis.knps") }}
-              </span>
-            </template>
-            <span v-else>
-              {{ $t("analysis.notRunning") }}
-            </span>
-          </div>
-
-          <!-- Progress indicators for analysis -->
+        <!-- Progress indicators for analysis -->
+        <div
+          class="bg-panel shadow-1 row no-wrap justify-end q-pr-md"
+          style="height: 36px"
+        >
           <div
-            class="absolute-top full-width full-height row no-wrap justify-end q-pr-md"
+            v-if="
+              botState.isAnalyzingPosition ||
+              botState.isAnalyzingGame ||
+              botState.isAnalyzingBranch
+            "
+            class="full-width relative-position"
           >
-            <div
-              v-if="
-                botState.isAnalyzingPosition ||
-                botState.isAnalyzingGame ||
-                botState.isAnalyzingBranch
-              "
-              class="full-width relative-position"
-            >
-              <q-btn
-                v-if="botState.analyzingPly"
-                @click.stop="goToAnalysisPly"
-                class="absolute-left q-py-none"
-                :class="{
-                  highlight: $store.state.ui.theme.primaryDark,
-                  dim: !$store.state.ui.theme.primaryDark,
-                }"
-                no-caps
-                dense
-                flat
-              >
-                <Linenum
-                  :linenum="botState.analyzingPly.linenum"
-                  no-branch
-                  :class="[
-                    $store.state.ui.theme.accentDark
-                      ? 'text-textLight'
-                      : 'text-textDark',
-                  ]"
-                />
-                <PlyChip
-                  :ply="botState.analyzingPly"
-                  class="no-pointer-events q-ma-none"
-                  no-branches
-                  :done="botState.tps === botState.analyzingPly.tpsAfter"
-                />
-              </q-btn>
-            </div>
-
             <q-btn
-              @click.stop="enableLogging = !enableLogging"
-              icon="logs"
-              :color="enableLogging ? 'primary' : ''"
-              stretch
+              v-if="botState.analyzingPly"
+              @click.stop="goToAnalysisPly"
+              class="absolute-left q-py-none"
+              no-caps
               dense
               flat
             >
-              <hint>{{ $t("analysis.logMessages") }}</hint>
+              <Linenum
+                :linenum="botState.analyzingPly.linenum"
+                no-branch
+                :class="[
+                  $store.state.ui.theme.panelDark
+                    ? 'text-textLight'
+                    : 'text-textDark',
+                ]"
+              />
+              <PlyChip
+                :ply="botState.analyzingPly"
+                class="no-pointer-events q-ma-none"
+                no-branches
+                :done="botState.tps === botState.analyzingPly.tpsAfter"
+              />
             </q-btn>
           </div>
+
+          <div
+            v-if="botState.time !== null || botState.nps !== null"
+            class="text-caption text-no-wrap text-right column justify-center q-px-sm"
+            style="line-height: 1.1em"
+          >
+            <div v-if="botState.time !== null">
+              {{ $n((botState.time || 0) / 1e3, "n0") }}
+              {{ $t("analysis.secondsUnit") }}
+            </div>
+            <div v-if="botState.nps !== null">
+              {{ $n(botState.nps / 1e3 || 0, "n0") }}
+              {{ $t("analysis.knps") }}
+            </div>
+          </div>
+
+          <q-btn
+            @click.stop="enableLogging = !enableLogging"
+            icon="logs"
+            :color="enableLogging ? 'primary' : ''"
+            stretch
+            dense
+            flat
+          >
+            <hint>{{ $t("analysis.logMessages") }}</hint>
+          </q-btn>
         </div>
 
         <!-- Log -->
@@ -783,7 +773,6 @@ export default {
   },
   data() {
     return {
-      expanded: true,
       showBotSettings: false,
       localBotSettings: cloneDeep(this.$store.state.analysis.botSettings),
       botOptions: {},
@@ -792,6 +781,18 @@ export default {
     };
   },
   computed: {
+    expanded: {
+      get() {
+        // Default to expanded (true) if not set
+        return this.$store.state.analysis.collapsedBots[this.index] !== true;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
+          index: this.index,
+          collapsed: !value,
+        });
+      },
+    },
     botID() {
       return this.botId;
     },

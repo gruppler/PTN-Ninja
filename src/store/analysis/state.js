@@ -20,6 +20,8 @@ const defaultState = {
   botMetas: {},
   botPositions: {},
   botStates: {},
+  // Collapsed state for active bots (keyed by index)
+  collapsedBots: {},
   // Global settings
   insertEvalMarks: true,
   evalMarkThresholds: { ...defaultEvalMarkThresholds },

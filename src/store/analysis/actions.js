@@ -102,4 +102,22 @@ export const REORDER_ACTIVE_BOTS = (
 ) => {
   commit("REORDER_ACTIVE_BOTS", { fromIndex, toIndex });
   saveActiveBots(state);
+  saveCollapsedBots(state);
+};
+
+// Collapsed bots persistence
+const saveCollapsedBots = (state) => {
+  try {
+    LocalStorage.set("collapsedBots", state.collapsedBots);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
+};
+
+export const SET_BOT_COLLAPSED = ({ state, commit }, { index, collapsed }) => {
+  commit("SET_BOT_COLLAPSED", { index, collapsed });
+  saveCollapsedBots(state);
 };
