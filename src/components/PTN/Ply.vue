@@ -34,8 +34,8 @@
           ply.minDistribution
         }}</span>
         <span class="wallSmash" v-if="ply.wallSmash">{{ ply.wallSmash }}</span>
-        <span class="evaluation" v-if="ply.evaluation">{{
-          ply.evaluation.text
+        <span class="evaluation" v-if="displayEvaluation">{{
+          displayEvaluation
         }}</span>
 
         <slot />
@@ -185,6 +185,41 @@ export default {
         : this.position.plyID === this.ply.id
         ? this.position.plyIsDone
         : this.isInBranch && this.position.plyIndex > this.ply.index;
+    },
+    displayEvaluation() {
+      if (!this.ply) return null;
+
+      const analysis = this.$store.state.analysis;
+      const preferSaved = analysis?.preferSavedResults;
+
+      // Get the base evaluation text from ply (tak/tinue marks)
+      const plyEval = this.ply.evaluation;
+      const takTinue = plyEval
+        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
+        : "";
+
+      // Access reactive state directly so Vue tracks dependencies
+      const botID = analysis?.botID;
+      const botPositions = analysis?.botPositions;
+      const positions = botID && botPositions ? botPositions[botID] : null;
+      const hasBotPositions = positions && Object.keys(positions).length > 0;
+
+      // If preferring saved results, use saved eval marks from PTN
+      if (preferSaved) {
+        return plyEval ? plyEval.text : null;
+      }
+
+      // Check for eval mark override from bot analysis
+      if (hasBotPositions) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(this.ply) : null;
+
+        // Return override combined with tak/tinue, or just tak/tinue if no override
+        return override ? override + takTinue : takTinue || null;
+      }
+
+      // No bot positions and not preferring saved - only show tak/tinue marks
+      return takTinue || null;
     },
   },
   methods: {

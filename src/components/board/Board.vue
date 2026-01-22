@@ -261,11 +261,41 @@ export default {
       return null;
     },
     evaluationText() {
-      let evaluation = this.position.boardPly
+      const ply = this.position.boardPly
         ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
-            .evaluation
         : null;
-      return evaluation ? evaluation.text : null;
+      if (!ply) return null;
+
+      const plyEval = ply.evaluation;
+      const takTinue = plyEval
+        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
+        : "";
+
+      const analysis = this.$store.state.analysis;
+      const preferSaved = analysis?.preferSavedResults;
+
+      // If preferring saved results, use saved eval marks from PTN
+      if (preferSaved) {
+        return plyEval ? plyEval.text : null;
+      }
+
+      // Access reactive state directly so Vue tracks dependencies
+      const botID = analysis?.botID;
+      const botPositions = analysis?.botPositions;
+      const positions = botID && botPositions ? botPositions[botID] : null;
+      const hasBotPositions = positions && Object.keys(positions).length > 0;
+
+      // Check for eval mark override from bot analysis
+      if (hasBotPositions) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(ply) : null;
+
+        // Return override combined with tak/tinue, or just tak/tinue if no override
+        return override ? override + takTinue : takTinue || null;
+      }
+
+      // No bot positions and not preferring saved - only show tak/tinue marks
+      return takTinue || null;
     },
     selected() {
       return this.$store.state.game.selected;
