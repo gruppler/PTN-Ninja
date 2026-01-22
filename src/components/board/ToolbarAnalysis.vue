@@ -253,57 +253,60 @@
                 @click="bot.analyzeCurrentPosition()"
                 :loading="botState.isAnalyzingPosition"
                 :disable="!bot.isAnalyzePositionAvailable"
-                class="full-width toolbar-analysis"
+                :label="$q.screen.gt.sm ? $t('analysis.Analyze Position') : ''"
+                icon="board"
+                class="toolbar-analysis"
                 color="hldim"
                 flat
+                stack
               >
-                <q-icon name="board" left />
-                <template v-if="$q.screen.gt.sm">
-                  {{ $t("analysis.Analyze Position") }}
-                </template>
-                <hint v-else>{{ $t("analysis.Analyze Position") }}</hint>
+                <hint v-if="!$q.screen.gt.sm">{{
+                  $t("analysis.Analyze Position")
+                }}</hint>
               </q-btn>
               <q-btn
                 @click="bot.analyzeBranch()"
                 :loading="botState.isAnalyzingBranch"
                 :disable="!bot.isAnalyzeGameAvailable"
-                class="full-width"
+                :label="$q.screen.gt.sm ? $t('analysis.Analyze Branch') : ''"
+                icon="branch"
                 color="hldim"
                 flat
+                stack
               >
-                <q-icon name="branch" left />
-                <template v-if="$q.screen.gt.sm">
-                  {{ $t("analysis.Analyze Branch") }}
-                </template>
-                <hint v-else>{{ $t("analysis.Analyze Branch") }}</hint>
+                <hint v-if="!$q.screen.gt.sm">{{
+                  $t("analysis.Analyze Branch")
+                }}</hint>
               </q-btn>
               <q-btn
                 @click="bot.analyzeGame()"
                 :loading="botState.isAnalyzingGame"
                 :disable="!bot.isAnalyzeGameAvailable"
-                class="full-width"
+                :label="$q.screen.gt.sm ? $t('analysis.Analyze Game') : ''"
+                icon="branches_all"
                 color="hldim"
                 flat
+                stack
               >
-                <q-icon name="branches_all" left />
-                <template v-if="$q.screen.gt.sm">
-                  {{ $t("analysis.Analyze Game") }}
-                </template>
-                <hint v-else>{{ $t("analysis.Analyze Game") }}</hint>
+                <hint v-if="!$q.screen.gt.sm">{{
+                  $t("analysis.Analyze Game")
+                }}</hint>
               </q-btn>
               <q-btn
                 v-if="botMeta && botMeta.isInteractive"
                 @click="toggleInteractiveAnalysis"
+                :label="
+                  $q.screen.gt.sm ? $t('analysis.interactiveAnalysis') : ''
+                "
+                icon="int_analysis"
                 color="hldim"
                 flat
+                stack
                 :disable="!bot.isInteractiveAvailable"
-                class="full-width"
               >
-                <q-icon name="int_analysis" left />
-                <template v-if="$q.screen.gt.sm">
-                  {{ $t("analysis.interactiveAnalysis") }}
-                </template>
-                <hint v-else>{{ $t("analysis.interactiveAnalysis") }}</hint>
+                <hint v-if="!$q.screen.gt.sm">{{
+                  $t("analysis.interactiveAnalysis")
+                }}</hint>
               </q-btn>
             </q-btn-group>
             <q-inner-loading
