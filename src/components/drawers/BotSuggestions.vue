@@ -581,17 +581,23 @@
             :key="'placeholder-' + i"
           />
         </template>
-        <q-item
-          v-else-if="!suggestions.length"
-          class="flex-center"
-          :class="[
-            $store.state.ui.theme.panelDark
-              ? 'text-textLight'
-              : 'text-textDark',
-          ]"
-        >
-          {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
-        </q-item>
+        <div v-else-if="!suggestions.length" class="relative-position">
+          <AnalysisItemPlaceholder
+            v-for="i in avgResultsCount"
+            :key="'static-placeholder-' + i"
+            static
+          />
+          <q-item
+            class="flex-center absolute-center full-width"
+            :class="[
+              $store.state.ui.theme.panelDark
+                ? 'text-textLight'
+                : 'text-textDark',
+            ]"
+          >
+            {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+          </q-item>
+        </div>
       </smooth-reflow>
 
       <!-- Bot Action Buttons -->
@@ -860,6 +866,13 @@ export default {
         return this.prevSuggestionsCount;
       }
       return 1;
+    },
+    avgResultsCount() {
+      // Find the rounded average number of results across all positions for this bot
+      const positionArrays = Object.values(this.positions);
+      if (!positionArrays.length) return 1;
+      const total = positionArrays.reduce((sum, arr) => sum + arr.length, 0);
+      return Math.max(1, Math.round(total / positionArrays.length));
     },
     isActiveBot() {
       return (

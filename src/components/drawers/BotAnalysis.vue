@@ -306,6 +306,23 @@
               show-menu
               @delete="deleteSavedSuggestion(suggestion)"
             />
+            <div v-if="!savedSuggestions.length" class="relative-position">
+              <AnalysisItemPlaceholder
+                v-for="i in avgResultsCount"
+                :key="'static-placeholder-' + i"
+                static
+              />
+              <q-item
+                class="flex-center absolute-center full-width"
+                :class="[
+                  $store.state.ui.theme.panelDark
+                    ? 'text-textLight'
+                    : 'text-textDark',
+                ]"
+              >
+                {{ $t("analysis.noResults") }}
+              </q-item>
+            </div>
           </smooth-reflow>
         </q-expansion-item>
       </recess>
@@ -316,6 +333,7 @@
 <script>
 import BotSuggestions from "./BotSuggestions.vue";
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotProgress from "../analysis/BotProgress";
 import { bots } from "../../bots";
 import { cloneDeep, isEqual } from "lodash";
@@ -325,6 +343,7 @@ export default {
   components: {
     BotSuggestions,
     BotAnalysisItem,
+    AnalysisItemPlaceholder,
     BotProgress,
   },
   data() {
@@ -452,6 +471,29 @@ export default {
         this.$store.state.analysis.preferSavedResults &&
         this.hasCurrentPositionSavedResults
       );
+    },
+    avgResultsCount() {
+      // Find the rounded average number of saved results across all positions
+      const allPlies = this.game.ptn && this.game.ptn.allPlies;
+      if (!allPlies) return 1;
+      let total = 0;
+      let count = 0;
+      const seenTps = new Set();
+      for (const ply of allPlies) {
+        if (!ply) continue;
+        // Check tpsAfter for each ply
+        if (ply.tpsAfter && !seenTps.has(ply.tpsAfter)) {
+          seenTps.add(ply.tpsAfter);
+          const suggestions = this.$store.getters["game/suggestions"](
+            ply.tpsAfter
+          );
+          if (suggestions.length > 0) {
+            total += suggestions.length;
+            count++;
+          }
+        }
+      }
+      return count > 0 ? Math.max(1, Math.round(total / count)) : 1;
     },
   },
   methods: {
