@@ -47,6 +47,7 @@ export default {
 </script>
 
 <style lang="scss">
+.analysis-item,
 .analysis-item-placeholder {
   + .analysis-item-placeholder {
     border-top: 1px solid rgba($separator-color, 0.1);

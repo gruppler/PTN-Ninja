@@ -392,6 +392,13 @@
               expandable
               @delete="deleteSavedSuggestion(suggestion)"
             />
+            <!-- Fill remaining space with placeholders when fewer than average -->
+            <AnalysisItemPlaceholder
+              v-for="i in savedFillerPlaceholderCount"
+              :key="'saved-filler-placeholder-' + i"
+              :show-continuation="showContinuationToggle"
+              static
+            />
             <div v-if="!savedSuggestions.length" class="relative-position">
               <AnalysisItemPlaceholder
                 v-for="i in avgResultsCount"
@@ -597,6 +604,11 @@ export default {
         }
       }
       return count > 0 ? Math.max(1, Math.round(total / count)) : 1;
+    },
+    savedFillerPlaceholderCount() {
+      // Number of placeholders to fill remaining space when fewer saved suggestions than average
+      if (!this.savedSuggestions.length) return 0;
+      return Math.max(0, this.avgResultsCount - this.savedSuggestions.length);
     },
     showFullPVs() {
       return this.$store.state.analysis.showFullPVs;

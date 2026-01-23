@@ -496,7 +496,13 @@
             </q-btn>
           </div>
           <div v-else-if="nextPlayedPly" class="full-width relative-position">
-            <div class="absolute-left q-py-none q-px-sm row items-center">
+            <q-btn
+              @click.stop="goToNextPlayedPly"
+              class="absolute-left q-py-none"
+              no-caps
+              dense
+              flat
+            >
               <Linenum
                 :linenum="nextPlayedPly.linenum"
                 no-branch
@@ -512,7 +518,7 @@
                 no-branches
                 done
               />
-            </div>
+            </q-btn>
           </div>
 
           <div
@@ -603,6 +609,13 @@
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
           expandable
+        />
+        <!-- Fill remaining space with placeholders when fewer than average -->
+        <AnalysisItemPlaceholder
+          v-for="i in fillerPlaceholderCount"
+          :key="'filler-placeholder-' + i"
+          :show-continuation="showContinuation"
+          static
         />
         <template v-if="!suggestions.length && isAnalyzingGameOrBranch">
           <AnalysisItemPlaceholder
@@ -914,6 +927,11 @@ export default {
       const total = positionArrays.reduce((sum, arr) => sum + arr.length, 0);
       return Math.max(1, Math.round(total / positionArrays.length));
     },
+    fillerPlaceholderCount() {
+      // Number of placeholders to fill remaining space when fewer suggestions than average
+      if (!this.suggestions.length) return 0;
+      return Math.max(0, this.avgResultsCount - this.suggestions.length);
+    },
     isActiveBot() {
       return (
         this.botID === this.$store.state.analysis.botID &&
@@ -1111,6 +1129,16 @@ export default {
         this.$store.dispatch("game/GO_TO_PLY", {
           plyID: this.botState.analyzingPly.id,
           isDone: this.botState.tps === this.botState.analyzingPly.tpsAfter,
+        });
+      }
+    },
+    goToNextPlayedPly() {
+      if (this.bot && this.nextPlayedPly) {
+        // Select this bot in the toolbar
+        this.bot.selectInToolbar();
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: this.nextPlayedPly.id,
+          isDone: true,
         });
       }
     },
