@@ -601,7 +601,7 @@
       </div>
 
       <!-- Unsaved Results -->
-      <smooth-reflow>
+      <smooth-reflow height-only style="overflow-x: hidden">
         <BotAnalysisItem
           v-for="(suggestion, i) in suggestions"
           :key="'unsaved-' + i"

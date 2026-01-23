@@ -380,7 +380,7 @@
             </q-item-section>
           </template>
 
-          <smooth-reflow>
+          <smooth-reflow height-only style="overflow-x: hidden">
             <BotAnalysisItem
               v-for="(suggestion, i) in savedSuggestions"
               :key="'saved-' + i"

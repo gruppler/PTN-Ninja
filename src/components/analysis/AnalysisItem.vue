@@ -121,7 +121,7 @@
           </q-item-label>
         </q-item-section>
       </q-item>
-      <smooth-reflow>
+      <smooth-reflow height-only>
         <q-item
           v-if="showSecondRow"
           class="q-pt-none"
@@ -378,6 +378,7 @@ export default {
   position: relative;
   display: flex;
   flex-direction: row;
+  overflow-x: hidden;
 
   + .analysis-item {
     border-top: 1px solid $separator-color;
