@@ -923,9 +923,51 @@ export default {
     avgResultsCount() {
       // Find the rounded average number of results across all positions for this bot
       const positionArrays = Object.values(this.positions);
-      if (!positionArrays.length) return 1;
-      const total = positionArrays.reduce((sum, arr) => sum + arr.length, 0);
-      return Math.max(1, Math.round(total / positionArrays.length));
+      if (positionArrays.length) {
+        const total = positionArrays.reduce((sum, arr) => sum + arr.length, 0);
+        return Math.max(1, Math.round(total / positionArrays.length));
+      }
+      // If no results yet, check for multiPV option in current options or saved settings
+      const optionSources = [
+        this.botOptions,
+        this.localBotSettings[this.botID]?.options,
+        this.$store.state.analysis.botSettings[this.botID]?.options,
+        this.bot?.settings?.options,
+      ];
+      for (const options of optionSources) {
+        if (options) {
+          for (const [key, value] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.max(1, numValue);
+              }
+            }
+          }
+        }
+      }
+      // Check presetOptions and meta options (these have {value: ...} structure)
+      const metaOptionSources = [
+        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.options,
+        this.bot?.meta?.presetOptions,
+        this.bot?.meta?.options,
+      ];
+      for (const options of metaOptionSources) {
+        if (options) {
+          for (const [key, option] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const val = option?.value ?? option?.default;
+              const numValue = Number(val);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.max(1, numValue);
+              }
+            }
+          }
+        }
+      }
+      return 1;
     },
     fillerPlaceholderCount() {
       // Number of placeholders to fill remaining space when fewer suggestions than average
@@ -1227,9 +1269,24 @@ export default {
     bot: {
       handler(newBot) {
         if (newBot) {
-          this.botOptions = newBot.getOptions();
+          // Merge with existing botOptions to preserve user changes
+          this.botOptions = { ...this.botOptions, ...newBot.getOptions() };
         }
       },
+      immediate: true,
+    },
+    botMeta: {
+      handler(newMeta) {
+        // When bot meta changes (e.g., presetOptions updated), update botOptions
+        if (newMeta?.presetOptions) {
+          for (const [key, option] of Object.entries(newMeta.presetOptions)) {
+            if (option?.value !== undefined) {
+              this.$set(this.botOptions, key, option.value);
+            }
+          }
+        }
+      },
+      deep: true,
       immediate: true,
     },
     suggestions(newSuggestions) {
