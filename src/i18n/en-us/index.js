@@ -579,6 +579,8 @@ export default {
     showContinuation: "Show Continuation",
     showFullSuggestion: "Show Full Suggestion",
     saveSearchStats: "Save Search Info",
+    autoSaveAfterSearch: "Auto-save after Search",
+    overwriteInferior: "Overwrite Inferior Results",
     secondsUnit: "sec",
     sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",

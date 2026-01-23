@@ -131,6 +131,44 @@
               </q-item-section>
             </q-item>
 
+            <!-- Auto-save after Search -->
+            <q-item
+              @click="autoSaveAfterSearch = !autoSaveAfterSearch"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.autoSaveAfterSearch")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="autoSaveAfterSearch"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Overwrite Inferior Results -->
+            <q-item
+              @click="overwriteInferior = !overwriteInferior"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.overwriteInferior")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="overwriteInferior"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
             <q-separator />
 
             <!-- Show Evaluation Marks -->
@@ -502,6 +540,22 @@ export default {
       },
       set(value) {
         this.$store.dispatch("analysis/SET", ["pvsToSave", value]);
+      },
+    },
+    autoSaveAfterSearch: {
+      get() {
+        return this.$store.state.analysis.autoSaveAfterSearch;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["autoSaveAfterSearch", value]);
+      },
+    },
+    overwriteInferior: {
+      get() {
+        return this.$store.state.analysis.overwriteInferior;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["overwriteInferior", value]);
       },
     },
     hasCurrentPositionSavedResults() {

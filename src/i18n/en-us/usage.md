@@ -394,13 +394,20 @@ Bot analysis results can be saved to the game's PTN as notes, or cleared when no
   - **Click** the delete icon in the Saved Results header to delete all saved results or just the current position's results.
   - **Click** the menu icon on an individual saved result to delete it.
 
+The Bot Analysis settings include options for managing saved results:
+- "Suggestions to Save per Bot" limits how many suggestions are saved per position for each bot.
+- "Auto-save after Search" automatically saves results after analyzing a full game or branch.
+- "Overwrite Inferior Results" only replaces saved results if the new results have higher nodes or time values.
+
 :::
 
 ::: info Note
 
 When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, this button will be disabled.
 
-After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes (and evaluation marks, if enabled). The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
+After full game or branch analysis, the evaluation score and PV ("principle variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save after Search" option in the Bot Analysis settings. When disabled, you must manually save the results using the bot menu.
+
+The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section. The "Suggestions to Save per Bot" setting limits how many suggestions are saved per position for each bot.
 
 The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
 

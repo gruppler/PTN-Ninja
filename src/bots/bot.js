@@ -307,6 +307,7 @@ export default class Bot {
   getPositionsToAnalyze(all = true, pliesOverride = null) {
     const pliesSource = pliesOverride || this.getPlies(all);
     const plies = pliesSource;
+
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
       plyID: ply.id,
@@ -333,10 +334,11 @@ export default class Bot {
     }
     positions = uniqBy(positions, (p) => p.tps).filter(
       (p) =>
+        // Skip if position is in memory with matching settings (unsaved results)
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
-        (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.9) ||
-        (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.9)
+        (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.5) ||
+        (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.5)
     );
 
     return positions;
@@ -886,9 +888,11 @@ export default class Bot {
           this.setState({ progress: (100 * ++completed) / total });
         }
 
-        // Insert comments if successful
+        // Insert comments if successful and auto-save is enabled
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
-          this.saveEvalComments();
+          if (store.state.analysis.autoSaveAfterSearch) {
+            this.saveEvalComments();
+          }
           resolve();
         } else {
           reject();
@@ -1395,36 +1399,148 @@ export default class Bot {
     }
 
     if (Object.keys(messages).length) {
-      // Remove excess analysis notes from this bot to enforce pvsToSave limit
-      // Only remove notes if adding new ones would exceed the limit
+      // Handle existing notes based on overwriteInferior setting
       for (const plyID of Object.keys(messages)) {
         const existingNotes = this.game.comments.notes[plyID] || [];
-        const existingBotNotes = existingNotes.filter(isThisBotAnalysisNote);
-        const newNotesCount = messages[plyID].length;
-        const totalAfterAdd = existingBotNotes.length + newNotesCount;
 
-        if (totalAfterAdd > pvsToSave) {
-          // Need to remove excess notes, starting from the last one
-          const excessCount = totalAfterAdd - pvsToSave;
-          let removed = 0;
+        // Find indices of this bot's notes
+        const botNoteIndices = existingNotes
+          .map((note, idx) =>
+            isThisBotAnalysisNote(note) ? { idx, note } : null
+          )
+          .filter((item) => item !== null);
 
-          // Find indices of this bot's notes (in reverse order to remove from end)
-          const botNoteIndices = existingNotes
-            .map((note, idx) => (isThisBotAnalysisNote(note) ? idx : -1))
-            .filter((idx) => idx !== -1)
-            .reverse();
+        const newNotes = messages[plyID];
+        const overwriteInferior = store.state.analysis.overwriteInferior;
 
-          // Remove excess notes starting from the last one
-          for (const idx of botNoteIndices) {
-            if (removed >= excessCount) break;
-            this.game.removeNote(plyID, idx);
-            removed++;
+        if (
+          overwriteInferior &&
+          botNoteIndices.length > 0 &&
+          newNotes.length > 0
+        ) {
+          // When overwriteInferior is enabled:
+          // Remove notes that are inferior to new ones
+          const indicesToRemove = [];
+
+          for (const { idx, note: existingNote } of botNoteIndices) {
+            let isInferior = false;
+
+            for (const newNote of newNotes) {
+              const existing = this.parseNoteStats(existingNote.message);
+              const newStats = this.parseNoteStats(newNote);
+
+              // Check if new result is superior (higher nodes, depth, or time)
+              if (existing.nodes !== null && newStats.nodes !== null) {
+                if (newStats.nodes > existing.nodes) {
+                  isInferior = true;
+                  break;
+                }
+              } else if (existing.nodes === null && newStats.nodes !== null) {
+                isInferior = true;
+                break;
+              } else if (existing.depth !== null && newStats.depth !== null) {
+                if (newStats.depth > existing.depth) {
+                  isInferior = true;
+                  break;
+                }
+              } else if (existing.depth === null && newStats.depth !== null) {
+                isInferior = true;
+                break;
+              } else if (existing.time !== null && newStats.time !== null) {
+                if (newStats.time > existing.time) {
+                  isInferior = true;
+                  break;
+                }
+              } else if (existing.time === null && newStats.time !== null) {
+                isInferior = true;
+                break;
+              }
+            }
+
+            if (isInferior) {
+              indicesToRemove.push(idx);
+            }
           }
+
+          // Remove inferior notes (in reverse order to maintain indices)
+          indicesToRemove.sort((a, b) => b - a);
+          for (const idx of indicesToRemove) {
+            this.game.removeNote(plyID, idx);
+          }
+
+          // After removing inferior, check remaining count and limit new notes
+          const remainingCount = (this.game.comments.notes[plyID] || []).filter(
+            (note) => isThisBotAnalysisNote(note)
+          ).length;
+          const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
+          // Only add as many new notes as we have slots for
+          messages[plyID] = newNotes.slice(0, slotsAvailable);
+        } else {
+          // When overwriteInferior is disabled:
+          // Only add new notes if we haven't reached the pvsToSave limit
+          const currentCount = botNoteIndices.length;
+          const slotsAvailable = Math.max(0, pvsToSave - currentCount);
+          // Only add as many new notes as we have slots for (don't remove existing)
+          messages[plyID] = newNotes.slice(0, slotsAvailable);
         }
       }
 
-      store.dispatch("game/ADD_NOTES", messages);
+      // Filter out empty message arrays before dispatching
+      const filteredMessages = {};
+      for (const [plyID, notes] of Object.entries(messages)) {
+        if (notes.length > 0) {
+          filteredMessages[plyID] = notes;
+        }
+      }
+      if (Object.keys(filteredMessages).length > 0) {
+        store.dispatch("game/ADD_NOTES", filteredMessages);
+      }
     }
+  }
+
+  // Parse stats from a note message (e.g., "+1.23 1000 nodes 5ms"),
+  parseNoteStats(message) {
+    const stats = {
+      evaluation: null,
+      nodes: null,
+      time: null,
+      depth: null,
+      visits: null,
+    };
+
+    // Extract evaluation (e.g., +1.23 or -0.5)
+    const evalMatch = message.match(/^([+-]?\d+\.?\d*)/);
+    if (evalMatch) {
+      stats.evaluation = parseFloat(evalMatch[1]);
+    }
+
+    // Extract nodes (e.g., "1000 nodes")
+    const nodesMatch = message.match(/(\d+(?:,\d+)*)\s+nodes?/);
+    if (nodesMatch) {
+      stats.nodes = parseInt(nodesMatch[1].replace(/,/g, ""));
+    }
+
+    // Extract time (e.g., "5ms" or "1.5s")
+    const timeMatch = message.match(/(\d+(?:\.\d+)?)\s*(ms|s)/);
+    if (timeMatch) {
+      const value = parseFloat(timeMatch[1]);
+      const unit = timeMatch[2];
+      stats.time = unit === "s" ? value * 1000 : value; // Convert to ms
+    }
+
+    // Extract depth (e.g., "/10")
+    const depthMatch = message.match(/\/(\d+)/);
+    if (depthMatch) {
+      stats.depth = parseInt(depthMatch[1]);
+    }
+
+    // Extract visits (e.g., "100 visits")
+    const visitsMatch = message.match(/(\d+(?:,\d+)*)\s+visits?/);
+    if (visitsMatch) {
+      stats.visits = parseInt(visitsMatch[1].replace(/,/g, ""));
+    }
+
+    return stats;
   }
 
   // Apply eval marks (!!,!,?,??) to PTN based on bot analysis

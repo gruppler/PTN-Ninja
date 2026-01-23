@@ -31,6 +31,8 @@ const defaultState = {
   saveSearchStats: true,
   showFullPVs: false,
   showContinuation: true,
+  autoSaveAfterSearch: false,
+  overwriteInferior: true,
   dbSettings: {
     includeBotGames: false,
     player1: [],
