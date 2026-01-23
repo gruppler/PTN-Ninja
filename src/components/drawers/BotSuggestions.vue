@@ -889,9 +889,17 @@ export default {
     nextPlayedPly() {
       // Get the next ply that was actually played (after current position)
       const currentPly = this.game.position.ply;
+      const branchPlies = this.game.ptn.branchPlies;
+      // At starting position (plyIndex 0), return the first ply
+      if (
+        this.game.position.plyIndex === 0 &&
+        !this.game.position.plyIsDone &&
+        branchPlies.length > 0
+      ) {
+        return branchPlies[0];
+      }
       if (!currentPly) return null;
       const currentIndex = currentPly.index;
-      const branchPlies = this.game.ptn.branchPlies;
       // Find the next ply in the branch after the current one
       return branchPlies.find((p) => p.index === currentIndex + 1) || null;
     },
