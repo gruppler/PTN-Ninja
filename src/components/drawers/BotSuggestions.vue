@@ -495,6 +495,25 @@
               />
             </q-btn>
           </div>
+          <div v-else-if="nextPlayedPly" class="full-width relative-position">
+            <div class="absolute-left q-py-none q-px-sm row items-center">
+              <Linenum
+                :linenum="nextPlayedPly.linenum"
+                no-branch
+                :class="[
+                  $store.state.ui.theme.panelDark
+                    ? 'text-textLight'
+                    : 'text-textDark',
+                ]"
+              />
+              <PlyChip
+                :ply="nextPlayedPly"
+                class="no-pointer-events q-ma-none"
+                no-branches
+                done
+              />
+            </div>
+          </div>
 
           <div
             v-if="botState.time !== null || botState.nps !== null"
@@ -853,6 +872,15 @@ export default {
     },
     tps() {
       return this.game.position.tps;
+    },
+    nextPlayedPly() {
+      // Get the next ply that was actually played (after current position)
+      const currentPly = this.game.position.ply;
+      if (!currentPly) return null;
+      const currentIndex = currentPly.index;
+      const branchPlies = this.game.ptn.branchPlies;
+      // Find the next ply in the branch after the current one
+      return branchPlies.find((p) => p.index === currentIndex + 1) || null;
     },
     allPlies() {
       return this.game.ptn.allPlies;
