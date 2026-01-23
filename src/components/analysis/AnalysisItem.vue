@@ -16,6 +16,7 @@
       <q-item
         @click="insertPly"
         :clickable="!isBoardDisabled && ply !== null"
+        :class="{ 'q-pr-xs': showAfterColumn }"
         style="height: 60px"
       >
         <q-item-section class="no-wrap">
@@ -124,6 +125,7 @@
         <q-item
           v-if="showSecondRow"
           class="q-pt-none"
+          :class="{ 'q-pr-xs': showAfterColumn }"
           @click="
             followingPlies && followingPlies.length > 0
               ? insertFollowingPlies()
@@ -155,7 +157,8 @@
       </smooth-reflow>
     </div>
     <div
-      class="column no-wrap"
+      v-if="showAfterColumn"
+      class="column no-wrap q-mr-md"
       :style="{ maxHeight: showSecondRow ? '' : '60px', overflow: 'hidden' }"
     >
       <slot name="after" />
@@ -253,6 +256,9 @@ export default {
   computed: {
     isLimited() {
       return this.fixedHeight && !this.expanded;
+    },
+    showAfterColumn() {
+      return this.$slots.after || (this.expandable && this.showExpandButton);
     },
     showSecondRow() {
       return (
