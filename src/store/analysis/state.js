@@ -29,6 +29,8 @@ const defaultState = {
   pvLimit: 3,
   pvsToSave: 1,
   saveSearchStats: true,
+  showFullPVs: false,
+  showContinuation: true,
   dbSettings: {
     includeBotGames: false,
     player1: [],

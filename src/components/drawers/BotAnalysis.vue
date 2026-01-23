@@ -40,6 +40,73 @@
         <!-- Global Settings -->
         <smooth-reflow>
           <div v-if="showGlobalSettings">
+            <!-- Show Continuation -->
+            <q-item
+              @click="showContinuationToggle = !showContinuationToggle"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.showContinuation")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showContinuationToggle"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Show Full Suggestion -->
+            <smooth-reflow>
+              <q-item
+                v-if="showContinuationToggle"
+                @click="showFullPVsToggle = !showFullPVsToggle"
+                clickable
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.showFullSuggestion")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle
+                    v-model="showFullPVsToggle"
+                    :dark="$store.state.ui.theme.panelDark"
+                  />
+                </q-item-section>
+              </q-item>
+            </smooth-reflow>
+
+            <q-separator />
+
+            <!-- Suggestions to Save -->
+            <q-input
+              type="number"
+              v-model.number="pvsToSave"
+              :label="$t('analysis.pvsToSave')"
+              :min="1"
+              :max="20"
+              item-aligned
+              filled
+              :dark="$store.state.ui.theme.panelDark"
+            />
+
+            <!-- Plies to Save -->
+            <q-input
+              type="number"
+              v-model.number="pvLimit"
+              :label="$t('analysis.pliesToSave')"
+              :min="0"
+              :max="20"
+              item-aligned
+              filled
+              :dark="$store.state.ui.theme.panelDark"
+            />
+
             <!-- Save Extra Info -->
             <q-item
               tag="label"
@@ -64,42 +131,7 @@
               </q-item-section>
             </q-item>
 
-            <!-- PV Limit -->
-            <q-input
-              type="number"
-              v-model.number="pvLimit"
-              :label="$t('analysis.pvLimit')"
-              :min="0"
-              :max="20"
-              item-aligned
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-
-            <!-- Suggestions to Save -->
-            <q-input
-              type="number"
-              v-model.number="pvsToSave"
-              :label="$t('analysis.pvsToSave')"
-              :min="1"
-              :max="20"
-              item-aligned
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-
-            <!-- Save Evaluation Marks -->
-            <q-item @click="saveEvalMarks = !saveEvalMarks" clickable v-ripple>
-              <q-item-section>
-                <q-item-label>{{ $t("analysis.saveEvalMarks") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="saveEvalMarks"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
-              </q-item-section>
-            </q-item>
+            <q-separator />
 
             <!-- Show Evaluation Marks -->
             <q-item @click="showEvalMarks = !showEvalMarks" clickable v-ripple>
@@ -109,6 +141,19 @@
               <q-item-section side>
                 <q-toggle
                   v-model="showEvalMarks"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Save Evaluation Marks -->
+            <q-item @click="saveEvalMarks = !saveEvalMarks" clickable v-ripple>
+              <q-item-section>
+                <q-item-label>{{ $t("analysis.saveEvalMarks") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="saveEvalMarks"
                   :dark="$store.state.ui.theme.panelDark"
                 />
               </q-item-section>
@@ -304,12 +349,16 @@
               :suggestion="suggestion"
               show-bot-name
               show-menu
+              :fixed-height="!showFullPVs"
+              :show-continuation="showContinuationToggle"
+              expandable
               @delete="deleteSavedSuggestion(suggestion)"
             />
             <div v-if="!savedSuggestions.length" class="relative-position">
               <AnalysisItemPlaceholder
                 v-for="i in avgResultsCount"
                 :key="'static-placeholder-' + i"
+                :show-continuation="showContinuationToggle"
                 static
               />
               <q-item
@@ -494,6 +543,25 @@ export default {
         }
       }
       return count > 0 ? Math.max(1, Math.round(total / count)) : 1;
+    },
+    showFullPVs() {
+      return this.$store.state.analysis.showFullPVs;
+    },
+    showFullPVsToggle: {
+      get() {
+        return this.$store.state.analysis.showFullPVs;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["showFullPVs", value]);
+      },
+    },
+    showContinuationToggle: {
+      get() {
+        return this.$store.state.analysis.showContinuation;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["showContinuation", value]);
+      },
     },
   },
   methods: {

@@ -22,6 +22,9 @@
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
     :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
+    :fixed-height="fixedHeight"
+    :expandable="expandable"
+    :show-continuation="showContinuation"
     v-bind="$attrs"
     v-on="$listeners"
   >
@@ -34,9 +37,8 @@
         v-if="showMenu"
         class="analysis-item-menu-btn"
         icon="menu_vertical"
-        dense
-        round
         flat
+        dense
       >
         <q-menu auto-close transition-show="none" transition-hide="none">
           <q-list>
@@ -70,6 +72,18 @@ export default {
     showMenu: {
       type: Boolean,
       default: false,
+    },
+    fixedHeight: {
+      type: Boolean,
+      default: false,
+    },
+    expandable: {
+      type: Boolean,
+      default: false,
+    },
+    showContinuation: {
+      type: Boolean,
+      default: true,
     },
   },
   computed: {
@@ -136,11 +150,3 @@ export default {
   methods: { formatEvaluation },
 };
 </script>
-
-<style lang="scss" scoped>
-.analysis-item-menu-btn {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-}
-</style>

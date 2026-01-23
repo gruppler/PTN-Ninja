@@ -351,104 +351,111 @@
 
       <!-- Controls -->
       <div class="relative-position">
-        <!-- Connect -->
-        <q-btn
-          v-if="
-            botMeta.requiresConnect && !botState.isConnected && !showBotSettings
-          "
-          @click="bot.connect()"
-          :loading="botState.isConnecting"
-          icon="connect"
-          :label="$t('tei.connect')"
-          class="full-width"
-          color="primary"
-          stretch
-        />
-
-        <!-- Other Bot Options -->
-        <div
-          v-if="
-            (!botMeta.requiresConnect || botState.isConnected) && bot.hasOptions
-          "
-        >
-          <q-separator :dark="$store.state.ui.theme.panelDark" />
-
-          <BotOptionInput
-            v-for="(option, name) in botMeta.options"
-            :key="name"
-            v-model="botOptions[name]"
-            :option="option"
-            :name="name"
-            :disable="botState.isRunning || botState.isInteractiveEnabled"
-            @action="bot.sendAction"
-            :dark="$store.state.ui.theme.panelDark"
-            filled
-            item-aligned
-          />
-
+        <smooth-reflow>
+          <!-- Connect -->
           <q-btn
-            @click="setBotOptions"
-            icon="apply"
-            :label="$t('analysis.Apply Options')"
-            :loading="botState.isReadying"
+            v-if="
+              botMeta.requiresConnect &&
+              !botState.isConnected &&
+              !showBotSettings
+            "
+            @click="bot.connect()"
+            :loading="botState.isConnecting"
+            icon="connect"
+            :label="$t('tei.connect')"
             class="full-width"
             color="primary"
-            :flat="areBotOptionsApplied && botState.isReady"
             stretch
           />
-        </div>
 
-        <!-- Analysis Controls -->
-        <q-btn-group
-          v-if="!botMeta.requiresConnect || botState.isConnected"
-          spread
-          stretch
-          class="analysis-controls-group"
-        >
-          <!-- Analyze Position -->
-          <BotProgress
-            @click="analyzePosition()"
-            :disable="!bot.isAnalyzePositionAvailable"
-            icon="board"
-            :hint="$t('analysis.Analyze Position')"
-            :is-running="botState.isAnalyzingPosition"
-            :progress="botState.progress"
-            color="primary"
-          />
-          <!-- Analyze Branch -->
-          <BotProgress
-            @click="analyzeBranch()"
-            :disable="
-              !bot.isAnalyzeGameAvailable && !botState.isAnalyzingBranch
+          <!-- Other Bot Options -->
+          <div
+            v-if="
+              (!botMeta.requiresConnect || botState.isConnected) &&
+              bot.hasOptions
             "
-            icon="branch"
-            :hint="$t('analysis.Analyze Branch')"
-            :is-running="botState.isAnalyzingBranch"
-            :progress="botState.progress"
-            color="primary"
-          />
-          <!-- Analyze Game -->
-          <BotProgress
-            @click="analyzeGame()"
-            :disable="!bot.isAnalyzeGameAvailable && !botState.isAnalyzingGame"
-            icon="branches_all"
-            :hint="$t('analysis.Analyze Game')"
-            :is-running="botState.isAnalyzingGame"
-            :progress="botState.progress"
-            color="primary"
-          />
-          <!-- Interactive Analysis -->
-          <BotProgress
-            v-if="botMeta.isInteractive"
-            @click="toggleInteractiveAnalysis"
-            :disable="!bot.isInteractiveAvailable"
-            icon="int_analysis"
-            :hint="$t('analysis.interactiveAnalysis')"
-            :is-running="botState.isInteractiveEnabled"
-            interactive
-            color="primary"
-          />
-        </q-btn-group>
+          >
+            <q-separator :dark="$store.state.ui.theme.panelDark" />
+
+            <BotOptionInput
+              v-for="(option, name) in botMeta.options"
+              :key="name"
+              v-model="botOptions[name]"
+              :option="option"
+              :name="name"
+              :disable="botState.isRunning || botState.isInteractiveEnabled"
+              @action="bot.sendAction"
+              :dark="$store.state.ui.theme.panelDark"
+              filled
+              item-aligned
+            />
+
+            <q-btn
+              @click="setBotOptions"
+              icon="apply"
+              :label="$t('analysis.Apply Options')"
+              :loading="botState.isReadying"
+              class="full-width"
+              color="primary"
+              :flat="areBotOptionsApplied && botState.isReady"
+              stretch
+            />
+          </div>
+
+          <!-- Analysis Controls -->
+          <q-btn-group
+            v-if="!botMeta.requiresConnect || botState.isConnected"
+            spread
+            stretch
+            class="analysis-controls-group"
+          >
+            <!-- Analyze Position -->
+            <BotProgress
+              @click="analyzePosition()"
+              :disable="!bot.isAnalyzePositionAvailable"
+              icon="board"
+              :hint="$t('analysis.Analyze Position')"
+              :is-running="botState.isAnalyzingPosition"
+              :progress="botState.progress"
+              color="primary"
+            />
+            <!-- Analyze Branch -->
+            <BotProgress
+              @click="analyzeBranch()"
+              :disable="
+                !bot.isAnalyzeGameAvailable && !botState.isAnalyzingBranch
+              "
+              icon="branch"
+              :hint="$t('analysis.Analyze Branch')"
+              :is-running="botState.isAnalyzingBranch"
+              :progress="botState.progress"
+              color="primary"
+            />
+            <!-- Analyze Game -->
+            <BotProgress
+              @click="analyzeGame()"
+              :disable="
+                !bot.isAnalyzeGameAvailable && !botState.isAnalyzingGame
+              "
+              icon="branches_all"
+              :hint="$t('analysis.Analyze Game')"
+              :is-running="botState.isAnalyzingGame"
+              :progress="botState.progress"
+              color="primary"
+            />
+            <!-- Interactive Analysis -->
+            <BotProgress
+              v-if="botMeta.isInteractive"
+              @click="toggleInteractiveAnalysis"
+              :disable="!bot.isInteractiveAvailable"
+              icon="int_analysis"
+              :hint="$t('analysis.interactiveAnalysis')"
+              :is-running="botState.isInteractiveEnabled"
+              interactive
+              color="primary"
+            />
+          </q-btn-group>
+        </smooth-reflow>
 
         <!-- Progress indicators for analysis -->
         <div
@@ -574,17 +581,22 @@
           v-for="(suggestion, i) in suggestions"
           :key="'unsaved-' + i"
           :suggestion="suggestion"
+          :fixed-height="!showFullPVs"
+          :show-continuation="showContinuation"
+          expandable
         />
         <template v-if="!suggestions.length && isAnalyzingGameOrBranch">
           <AnalysisItemPlaceholder
             v-for="i in placeholderCount"
             :key="'placeholder-' + i"
+            :show-continuation="showContinuation"
           />
         </template>
         <div v-else-if="!suggestions.length" class="relative-position">
           <AnalysisItemPlaceholder
             v-for="i in avgResultsCount"
             :key="'static-placeholder-' + i"
+            :show-continuation="showContinuation"
             static
           />
           <q-item
@@ -888,6 +900,12 @@ export default {
         this.botState &&
         (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
       );
+    },
+    showFullPVs() {
+      return this.$store.state.analysis.showFullPVs;
+    },
+    showContinuation() {
+      return this.$store.state.analysis.showContinuation;
     },
     enableLogging: {
       get() {

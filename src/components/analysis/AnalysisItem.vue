@@ -120,37 +120,57 @@
           </q-item-label>
         </q-item-section>
       </q-item>
-      <q-item
-        v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
-        class="q-pt-none"
-        @click="
-          followingPlies && followingPlies.length > 0
-            ? insertFollowingPlies()
-            : null
-        "
-        :clickable="
-          !isBoardDisabled && followingPlies && followingPlies.length > 0
-        "
-      >
-        <q-item-label
-          class="continuation small"
-          :class="{ limited: fixedHeight }"
+      <smooth-reflow>
+        <q-item
+          v-if="showSecondRow"
+          class="q-pt-none"
+          @click="
+            followingPlies && followingPlies.length > 0
+              ? insertFollowingPlies()
+              : null
+          "
+          :clickable="
+            !isBoardDisabled && followingPlies && followingPlies.length > 0
+          "
         >
-          <Ply
-            v-for="(fPly, i) in followingPlies"
-            :key="i"
-            :ply="fPly"
-            :no-click="isBoardDisabled"
-            @click.stop.prevent.capture="insertFollowingPlies(i)"
-            :selected="selectedCount > i + 1"
-            :done="doneCount > i + 1"
-            :tps="tps"
-            :plies="tps ? getPlySequence(i) : null"
-          />
-        </q-item-label>
-      </q-item>
+          <q-item-label
+            ref="continuation"
+            class="continuation small"
+            :class="{ limited: isLimited }"
+          >
+            <Ply
+              v-for="(fPly, i) in followingPlies"
+              ref="plies"
+              :key="i"
+              :ply="fPly"
+              :no-click="isBoardDisabled"
+              @click.stop.prevent.capture="insertFollowingPlies(i)"
+              :selected="selectedCount > i + 1"
+              :done="doneCount > i + 1"
+              :tps="tps"
+              :plies="tps ? getPlySequence(i) : null"
+            />
+          </q-item-label>
+        </q-item>
+      </smooth-reflow>
     </div>
-    <slot name="after" />
+    <div
+      class="column no-wrap"
+      :style="{ maxHeight: showSecondRow ? '' : '60px', overflow: 'hidden' }"
+    >
+      <slot name="after" />
+
+      <q-btn
+        v-if="expandable && showExpandButton"
+        @click.stop="expanded = !expanded"
+        :icon="expanded ? 'arrow_drop_up' : 'arrow_drop_down'"
+        class="expand-btn q-mt-auto"
+        flat
+        dense
+      >
+        <hint>{{ $t(expanded ? "Less" : "More") }}</hint>
+      </q-btn>
+    </div>
   </div>
 </template>
 
@@ -214,8 +234,35 @@ export default {
     },
     animate: Boolean,
     fixedHeight: Boolean,
+    expandable: Boolean,
+    showContinuation: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  data() {
+    return {
+      expanded: false,
+      hasWrapping: false,
+    };
   },
   computed: {
+    isLimited() {
+      return this.fixedHeight && !this.expanded;
+    },
+    showSecondRow() {
+      return (
+        (this.showContinuation || this.expanded) &&
+        (this.fixedHeight ||
+          (this.followingPlies && this.followingPlies.length > 0))
+      );
+    },
+    showExpandButton() {
+      const hasContinuation =
+        this.followingPlies && this.followingPlies.length > 0;
+      if (!hasContinuation) return false;
+      return !this.showContinuation || (this.fixedHeight && this.hasWrapping);
+    },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
     },
@@ -240,12 +287,16 @@ export default {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
+      if (this.evaluation !== null) {
+        this.$store.dispatch("game/SET_EVAL", this.evaluation);
+      }
     },
     unhighlight() {
       if (this.ply === null) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+      this.$store.dispatch("game/SET_EVAL", null);
     },
     insertFollowingPlies(index) {
       if (this.ply === null || this.isBoardDisabled) {
@@ -271,6 +322,43 @@ export default {
         ...this.followingPlies.slice(0, index + 1).map((p) => p.text),
       ];
     },
+    checkWrapping() {
+      this.$nextTick(() => {
+        const container = this.$refs.continuation;
+        if (!container || !this.$refs.plies) {
+          this.hasWrapping = false;
+          return;
+        }
+        const plies = this.$refs.plies.map((ply) => ply.$el);
+        if (plies.length < 2) {
+          this.hasWrapping = false;
+          return;
+        }
+        const firstRect = plies[0].getBoundingClientRect();
+        const lastRect = plies[plies.length - 1].getBoundingClientRect();
+        this.hasWrapping = Math.abs(firstRect.top - lastRect.top) > 2;
+      });
+    },
+  },
+  watch: {
+    followingPlies: {
+      handler() {
+        this.checkWrapping();
+      },
+      immediate: true,
+    },
+    showContinuation() {
+      this.checkWrapping();
+    },
+    expanded() {
+      this.checkWrapping();
+    },
+    tps() {
+      this.expanded = false;
+    },
+  },
+  mounted() {
+    this.checkWrapping();
   },
 };
 </script>
