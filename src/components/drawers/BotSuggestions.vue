@@ -608,7 +608,10 @@
           :suggestion="suggestion"
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
+          :keep-highlighted="hoveredSuggestionIndex === i"
           expandable
+          @mouseenter.native="hoveredSuggestionIndex = i"
+          @mouseleave.native="hoveredSuggestionIndex = null"
         />
         <!-- Fill remaining space with placeholders when fewer than average -->
         <AnalysisItemPlaceholder
@@ -828,6 +831,7 @@ export default {
       botOptions: {},
       autoScrollLog: true,
       prevSuggestionsCount: 1,
+      hoveredSuggestionIndex: null,
     };
   },
   computed: {
@@ -1301,6 +1305,22 @@ export default {
       // Track previous count for placeholder sizing during analysis
       if (newSuggestions.length > 0) {
         this.prevSuggestionsCount = newSuggestions.length;
+      }
+      // Re-apply highlight if hovering over a suggestion when results update
+      // Use $nextTick to ensure this runs after Vue re-renders and after mouseout fires
+      if (this.hoveredSuggestionIndex !== null) {
+        this.$nextTick(() => {
+          const suggestion = newSuggestions[this.hoveredSuggestionIndex];
+          if (suggestion?.ply) {
+            this.$store.dispatch(
+              "game/HIGHLIGHT_SQUARES",
+              suggestion.ply.squares
+            );
+            if ("evaluation" in suggestion) {
+              this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+            }
+          }
+        });
       }
     },
   },

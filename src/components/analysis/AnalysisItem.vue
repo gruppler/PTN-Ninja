@@ -239,6 +239,10 @@ export default {
       type: Boolean,
       default: true,
     },
+    keepHighlighted: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -292,7 +296,7 @@ export default {
       }
     },
     unhighlight() {
-      if (this.ply === null) {
+      if (this.ply === null || this.keepHighlighted) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
