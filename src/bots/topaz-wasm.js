@@ -8,8 +8,8 @@ export default class TopazWasm extends Bot {
     super({
       id: "topaz",
       icon: "local",
-      label: "analysis.bots.topaz",
-      description: "analysis.bots_description.topaz",
+      label: "analysis.engines.topaz",
+      description: "analysis.engines_description.topaz",
       isInteractive: false,
       sizeHalfKomis: { 6: [0] },
       settings: {

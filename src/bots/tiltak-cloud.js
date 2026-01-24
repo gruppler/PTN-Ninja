@@ -8,8 +8,8 @@ export default class TiltakCloud extends Bot {
     super({
       id: "tiltak-cloud",
       icon: "online",
-      label: "analysis.bots.tiltak-cloud",
-      description: "analysis.bots_description.tiltak-cloud",
+      label: "analysis.engines.tiltak-cloud",
+      description: "analysis.engines_description.tiltak-cloud",
       concurrency: 10,
       isInteractive: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },

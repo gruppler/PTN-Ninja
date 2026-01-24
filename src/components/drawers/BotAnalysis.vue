@@ -10,7 +10,7 @@
           <q-icon name="bot" />
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
+          <q-item-label>{{ $t("analysis.Engine Moves") }}</q-item-label>
         </q-item-section>
         <q-item-section v-if="!sections.botSuggestions && runningBotState" side>
           <BotProgress
@@ -283,7 +283,7 @@
         <q-btn
           @click="addBot"
           icon="add"
-          :label="$t('Add Bot')"
+          :label="$t('Add Engine')"
           class="full-width no-border-radius"
           color="primary"
         />
@@ -642,11 +642,14 @@ export default {
     },
     onBotRemove(index) {
       const removedBotId = this.activeBots[index];
-      const botName = bots[removedBotId].label;
+      const bot = bots[removedBotId];
+      const botName = bot ? bot.label : removedBotId;
       this.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", index);
       this.notifyUndo({
         icon: "bot_off",
-        message: this.$t("success.removedBot", { botName }),
+        message: botName
+          ? this.$t("success.removedEngineX", { engineName: botName })
+          : this.$t("success.removedEngine"),
         handler: () => {
           this.$store.dispatch("analysis/INSERT_ACTIVE_BOT", {
             index,

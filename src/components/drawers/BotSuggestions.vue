@@ -11,7 +11,7 @@
           <q-icon name="add" />
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ $t("Select Bot") }}</q-item-label>
+          <q-item-label>{{ $t("Select Engine") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-btn
@@ -22,7 +22,7 @@
             round
             flat
           >
-            <hint>{{ $t("Remove Bot") }}</hint>
+            <hint>{{ $t("Remove Engine") }}</hint>
           </q-btn>
         </q-item-section>
       </template>
@@ -48,7 +48,7 @@
               flat
             />
             <q-icon v-else :name="botOption.icon" />
-            <hint>{{ $t("Select Bot") }}</hint>
+            <hint>{{ $t("Select Engine") }}</hint>
           </q-btn>
         </q-item-section>
         <q-item-section :class="{ 'text-primary': isActiveBot }">
@@ -105,7 +105,7 @@
                       <q-icon name="bot_off" />
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label>{{ $t("Remove Bot") }}</q-item-label>
+                      <q-item-label>{{ $t("Remove Engine") }}</q-item-label>
                     </q-item-section>
                   </q-item>
                 </q-list>
@@ -132,7 +132,7 @@
       class="bg-ui"
       :value="null"
       :options="availableBots"
-      :label="$t('Select Bot')"
+      :label="$t('Select Engine')"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -251,7 +251,7 @@
             v-if="botID === 'tei'"
             :to="{ name: 'bot-new' }"
             icon="bot"
-            :label="$t('tei.Save Bot')"
+            :label="$t('tei.Save Engine')"
             :disable="!botState.isConnected"
             class="full-width"
             color="primary"
@@ -739,7 +739,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{
-                    $t("analysis.Clear Bots Unsaved Results")
+                    $t("analysis.Clear Engines Unsaved Results")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -767,7 +767,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{
-                    $t("analysis.Delete Bots Saved Results")
+                    $t("analysis.Delete Engines Saved Results")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -1143,7 +1143,7 @@ export default {
       this.bot.clearResults();
       this.notifyUndo({
         icon: "delete_all_outline",
-        message: this.$t("success.resultsDeleted"),
+        message: this.$t("success.resultsCleared"),
         handler: () => {
           this.$store.commit("analysis/SET_BOT_POSITIONS", {
             botID: this.botID,
@@ -1164,7 +1164,7 @@ export default {
       });
       this.notifyUndo({
         icon: "delete",
-        message: this.$t("success.resultsDeleted"),
+        message: this.$t("success.resultsCleared"),
         handler: () => {
           if (before) {
             this.$store.commit("analysis/SET_BOT_POSITION", {

@@ -7,8 +7,8 @@ export default class TeiBot extends Bot {
     super({
       id: "tei",
       icon: "tei",
-      label: "analysis.bots.tei",
-      description: "analysis.bots_description.tei",
+      label: "analysis.engines.tei",
+      description: "analysis.engines_description.tei",
       isInteractive: true,
       requiresConnect: true,
       state: {

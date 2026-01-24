@@ -1,7 +1,10 @@
 <template>
   <large-dialog ref="dialog" :value="Boolean(bot)" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="bot" :title="$t(isNew ? 'New Bot' : 'Edit Bot')" />
+      <dialog-header
+        icon="bot"
+        :title="$t(isNew ? 'New Engine' : 'Edit Engine')"
+      />
     </template>
 
     <q-list v-if="buffer">
@@ -197,7 +200,7 @@
           <q-separator />
           <!-- Bot Options -->
           <q-item-label header>{{
-            $t("analysis.Preset Bot Options")
+            $t("analysis.Preset Engine Options")
           }}</q-item-label>
           <BotOptionInput
             v-for="(option, name) in buffer.meta.presetOptions"
@@ -510,7 +513,7 @@ export default {
       }
       this.prompt({
         title: this.$t("Confirm"),
-        message: this.$t("confirm.deleteBot"),
+        message: this.$t("confirm.deleteEngine"),
         success: () => {
           this.$store.dispatch("analysis/DELETE_BOT", this.bot.id);
           this.close();
