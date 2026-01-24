@@ -118,7 +118,12 @@
         <hint>
           {{ viewingSavedResults ? $t("Saved Results") : botOption.label }}
         </hint>
-        <q-menu anchor="top right" self="bottom right">
+        <q-menu
+          anchor="top right"
+          self="bottom right"
+          transition-show="none"
+          transition-hide="none"
+        >
           <q-list>
             <q-item
               v-for="(id, idx) in activeBots"
