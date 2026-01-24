@@ -285,13 +285,8 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 ## Bot Analysis
 
-PTN Ninja currently offers access to two built-in bots: **Tiltak (cloud)** and **Tiltak (wasm)**. It also supports connecting to any bot that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja currently offers access to one built-in bot: **Tiltak (wasm)**. It also supports connecting to any bot that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
 
-- [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
-  - can provide quick analysis of the entire game
-  - can store evaluations and PVs in PTN
-  - offers several suggestions
-  - runs in the cloud
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - provides continual evaluation of the current position
   - updates the evaluation and PV in real time
@@ -300,7 +295,7 @@ PTN Ninja currently offers access to two built-in bots: **Tiltak (cloud)** and *
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can provide continual evaluation of the current position
   - can update the evaluation and PV in real time
-  - offers a single suggestion
+  - can offer multiple suggestions
   - can take full advantage of your hardware
   - facilitates bot development
 
