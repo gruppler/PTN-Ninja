@@ -276,26 +276,41 @@
       </smooth-reflow>
 
       <smooth-reflow class="relative-position">
-        <q-item v-if="!databases" class="flex-center bg-negative" dark>
+        <q-item
+          v-if="!databases"
+          class="flex-center text-center text-grey-1 bg-negative"
+          dark
+        >
           {{ $t("analysis.database.error") }}
         </q-item>
         <q-item
           v-else-if="!databases.length"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ $t("analysis.database.loading") }}
         </q-item>
         <q-item
           v-else-if="noMatchingDatabase"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ $t("analysis.database.notFound") }}
         </q-item>
         <q-item
+          v-else-if="isBeyondOpeningDB"
+          class="flex-center text-center"
+          :class="textClass"
+          :dark="$store.state.ui.theme.panelDark"
+        >
+          {{ $t("analysis.database.beyondRange") }}
+        </q-item>
+        <q-item
           v-else-if="!dbMoves.length"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
@@ -328,26 +343,41 @@
       expand-icon-class="fg-inherit"
     >
       <smooth-reflow>
-        <q-item v-if="!databases" class="flex-center bg-negative" dark>
+        <q-item
+          v-if="!databases"
+          class="flex-center text-center text-grey-1 bg-negative"
+          dark
+        >
           {{ $t("analysis.database.error") }}
         </q-item>
         <q-item
           v-else-if="!databases.length"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ $t("analysis.database.loading") }}
         </q-item>
         <q-item
           v-else-if="noMatchingDatabase"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ $t("analysis.database.notFound") }}
         </q-item>
         <q-item
+          v-else-if="isBeyondOpeningDB"
+          class="flex-center text-center"
+          :class="textClass"
+          :dark="$store.state.ui.theme.panelDark"
+        >
+          {{ $t("analysis.database.beyondRange") }}
+        </q-item>
+        <q-item
           v-else-if="!dbGames.length"
-          class="flex-center"
+          class="flex-center text-center"
+          :class="textClass"
           :dark="$store.state.ui.theme.panelDark"
         >
           {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
@@ -507,6 +537,20 @@ export default {
     noMatchingDatabase() {
       return this.databaseIdToQuery === null;
     },
+    plyIndex() {
+      return this.$store.state.game.position.plyIndex;
+    },
+    isBeyondOpeningDB() {
+      const config = this.$store.state.game.config;
+      const tpsOffset =
+        (config.firstMoveNumber - 1) * 2 + (config.firstPlayer - 1);
+      return tpsOffset + this.plyIndex >= 9;
+    },
+    textClass() {
+      return this.$store.state.ui.theme.panelDark
+        ? "text-textLight"
+        : "text-textDark";
+    },
   },
   methods: {
     toggleDBSettings() {
@@ -602,6 +646,9 @@ export default {
 
     async queryDBPosition() {
       if (this.isOffline) {
+        return;
+      }
+      if (this.isBeyondOpeningDB) {
         return;
       }
       const databaseId = this.databaseIdToQuery;

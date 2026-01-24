@@ -85,7 +85,11 @@ export const SET_GAME = function (state, game) {
   state.name = game.name;
   state.board = game.board.output.board;
   state.comments = game.board.output.comments;
-  state.config = game.config;
+  state.config = {
+    ...game.config,
+    firstMoveNumber: game.firstMoveNumber,
+    firstPlayer: game.firstPlayer,
+  };
   state.history = game.history;
   state.historyIndex = game.historyIndex;
   state.position = game.board.output.position;
