@@ -72,7 +72,7 @@ export default {
       this.loading = true;
       this.$store
         .dispatch(
-          inNewTab ? "game/OPEN_PLAYTAK_GAME" : "game/ADD_PLAYTAK_GAME",
+          inNewTab ? "game/OPEN_TAKEXPLORER_GAME" : "game/ADD_TAKEXPLORER_GAME",
           {
             id: this.playtakId,
             state: {

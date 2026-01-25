@@ -473,6 +473,10 @@
             <q-btn
               v-if="botState.analyzingPly"
               @click.stop="goToAnalysisPly"
+              @mouseenter="highlightPly(botState.analyzingPly)"
+              @mouseleave="unhighlightPly"
+              :data-tps-after="botState.analyzingPly.tpsAfter"
+              :data-ply-text="botState.analyzingPly.text"
               class="absolute-left q-py-none"
               no-caps
               dense
@@ -498,6 +502,10 @@
           <div v-else-if="nextPlayedPly" class="full-width relative-position">
             <q-btn
               @click.stop="goToNextPlayedPly"
+              @mouseenter="highlightPly(nextPlayedPly)"
+              @mouseleave="unhighlightPly"
+              :data-tps-after="nextPlayedPly.tpsAfter"
+              :data-ply-text="nextPlayedPly.text"
               class="absolute-left q-py-none"
               no-caps
               dense
@@ -1195,6 +1203,14 @@ export default {
           isDone: true,
         });
       }
+    },
+    highlightPly(ply) {
+      if (ply) {
+        this.$store.dispatch("game/HIGHLIGHT_SQUARES", ply.squares);
+      }
+    },
+    unhighlightPly() {
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     deleteSavedPositionResults() {
       if (!this.hasSavedSuggestions || !this.botName) {

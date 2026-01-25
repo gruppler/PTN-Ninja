@@ -532,6 +532,63 @@ export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
   }
 }
 
+import { OPENING_DB_API } from "../../constants";
+
+export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
+  const response = await fetch(`${OPENING_DB_API}/ptn/${id}`);
+  if (response && response.ok) {
+    const ptn = await response.text();
+    let game = new Game({ ptn, state });
+    return game;
+  } else {
+    if (response) {
+      if (response.status === 404) {
+        throw "Game does not exist";
+      } else {
+        const errorData = await response.json().catch(() => null);
+        throw errorData && errorData.message ? errorData.message : "unknown";
+      }
+    } else {
+      throw "unknown";
+    }
+  }
+}
+
+export const ADD_TAKEXPLORER_GAME = async function (
+  { dispatch },
+  { id, state }
+) {
+  try {
+    const game = await dispatch("FETCH_TAKEXPLORER_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+export const OPEN_TAKEXPLORER_GAME = async function (
+  { dispatch },
+  { id, state }
+) {
+  try {
+    const game = await dispatch("FETCH_TAKEXPLORER_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    window.open(
+      this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      }),
+      "_blank"
+    );
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
     const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });

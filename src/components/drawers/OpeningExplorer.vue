@@ -261,7 +261,7 @@
             :label="$t('analysis.maxSuggestedMoves')"
             type="number"
             min="1"
-            max="99"
+            max="20"
             step="1"
             item-aligned
             filled
@@ -269,6 +269,23 @@
           >
             <template v-slot:prepend>
               <q-icon name="moves" />
+            </template>
+          </q-input>
+
+          <!-- Max Top Games -->
+          <q-input
+            v-model.number="dbSettings.maxTopGames"
+            :label="$t('analysis.maxTopGames')"
+            type="number"
+            min="1"
+            max="10"
+            step="1"
+            item-aligned
+            filled
+            :dark="$store.state.ui.theme.panelDark"
+          >
+            <template v-slot:prepend>
+              <q-icon name="top_games" />
             </template>
           </q-input>
           <q-separator :dark="$store.state.ui.theme.panelDark" />
@@ -307,14 +324,22 @@
         >
           {{ $t("analysis.database.beyondRange") }}
         </q-item>
-        <q-item
-          v-else-if="!dbMoves.length"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
-        </q-item>
+        <template v-else-if="!dbMoves.length">
+          <div class="relative-position">
+            <AnalysisItemPlaceholder
+              v-for="i in dbSettings.maxSuggestedMoves"
+              :key="'placeholder-' + i"
+              :show-continuation="false"
+              static
+            />
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="textClass"
+            >
+              {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
+            </q-item>
+          </div>
+        </template>
         <template v-else>
           <AnalysisItem
             v-for="(move, i) in dbMoves.slice(0, dbSettings.maxSuggestedMoves)"
@@ -327,6 +352,12 @@
             :middle-number="move.draws ? $n(move.draws, 'n0') : null"
             :player2-number="$n(move.wins2, 'n0')"
             :player-numbers-tooltip="winsTooltip(move)"
+          />
+          <AnalysisItemPlaceholder
+            v-for="i in dbMovesFillerCount"
+            :key="'filler-' + i"
+            :show-continuation="false"
+            static
           />
         </template>
         <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
@@ -374,17 +405,24 @@
         >
           {{ $t("analysis.database.beyondRange") }}
         </q-item>
-        <q-item
-          v-else-if="!dbGames.length"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
-        </q-item>
+        <template v-else-if="!dbGames.length">
+          <div class="relative-position">
+            <DatabaseGamePlaceholder
+              v-for="i in maxTopGames"
+              :key="'placeholder-' + i"
+              static
+            />
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="textClass"
+            >
+              {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
+            </q-item>
+          </div>
+        </template>
         <template v-else>
           <DatabaseGame
-            v-for="(game, i) in dbGames"
+            v-for="(game, i) in dbGames.slice(0, maxTopGames)"
             :key="i"
             :playtak-id="game.playtakId"
             :player1="game.player1"
@@ -397,6 +435,11 @@
             :tournament="game.tournament"
             :dark="$store.state.ui.theme.panelDark"
           />
+          <DatabaseGamePlaceholder
+            v-for="i in dbGamesFillerCount"
+            :key="'filler-' + i"
+            static
+          />
         </template>
         <q-inner-loading :showing="loadingDBMoves || loadingDBs" />
       </smooth-reflow>
@@ -406,7 +449,9 @@
 
 <script>
 import AnalysisItem from "../analysis/AnalysisItem";
+import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import DatabaseGame from "../analysis/DatabaseGame";
+import DatabaseGamePlaceholder from "../analysis/DatabaseGamePlaceholder";
 import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
@@ -421,7 +466,13 @@ const databasesEndpoint = `${OPENING_DB_API}/databases`;
 
 export default {
   name: "OpeningExplorer",
-  components: { AnalysisItem, DatabaseGame, DateInput },
+  components: {
+    AnalysisItem,
+    AnalysisItemPlaceholder,
+    DatabaseGame,
+    DatabaseGamePlaceholder,
+    DateInput,
+  },
   props: {
     recess: Boolean,
   },
@@ -550,6 +601,20 @@ export default {
       return this.$store.state.ui.theme.panelDark
         ? "text-textLight"
         : "text-textDark";
+    },
+    maxTopGames() {
+      return this.dbSettings.maxTopGames || 4;
+    },
+    dbMovesFillerCount() {
+      const shown = Math.min(
+        this.dbMoves.length,
+        this.dbSettings.maxSuggestedMoves
+      );
+      return Math.max(0, this.dbSettings.maxSuggestedMoves - shown);
+    },
+    dbGamesFillerCount() {
+      const shown = Math.min(this.dbGames.length, this.maxTopGames);
+      return Math.max(0, this.maxTopGames - shown);
     },
   },
   methods: {

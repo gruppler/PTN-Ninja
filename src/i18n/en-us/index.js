@@ -565,6 +565,7 @@ export default {
     max: "max",
     maxDate: "Before",
     maxSuggestedMoves: "Suggestions to Show",
+    maxTopGames: "Top Games to Show",
     movetime: "Milliseconds",
     min: "min",
     minDate: "After",
