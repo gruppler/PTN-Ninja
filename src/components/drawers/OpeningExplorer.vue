@@ -293,53 +293,59 @@
       </smooth-reflow>
 
       <smooth-reflow class="relative-position">
-        <q-item
-          v-if="!databases"
-          class="flex-center text-center text-grey-1 bg-negative"
-          dark
+        <!-- Messages with placeholders behind them -->
+        <template
+          v-if="
+            !databases ||
+            !databases.length ||
+            noMatchingDatabase ||
+            isBeyondOpeningDB ||
+            !dbMoves.length
+          "
         >
-          {{ $t("analysis.database.error") }}
-        </q-item>
-        <q-item
-          v-else-if="!databases.length"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.loading") }}
-        </q-item>
-        <q-item
-          v-else-if="noMatchingDatabase"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.notFound") }}
-        </q-item>
-        <q-item
-          v-else-if="isBeyondOpeningDB"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.beyondRange") }}
-        </q-item>
-        <template v-else-if="!dbMoves.length">
-          <div class="relative-position">
-            <AnalysisItemPlaceholder
-              v-for="i in dbSettings.maxSuggestedMoves"
-              :key="'placeholder-' + i"
-              :show-continuation="false"
-              static
-            />
-            <q-item
-              class="flex-center absolute-center full-width"
-              :class="textClass"
-            >
-              {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
-            </q-item>
-          </div>
+          <AnalysisItemPlaceholder
+            v-for="i in dbSettings.maxSuggestedMoves"
+            :key="'placeholder-' + i"
+            :show-continuation="false"
+            static
+          />
+          <q-item
+            v-if="!databases"
+            class="flex-center text-center text-grey-1 bg-negative absolute-center full-width"
+            dark
+          >
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item
+            v-else-if="!databases.length"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.loading") }}
+          </q-item>
+          <q-item
+            v-else-if="noMatchingDatabase"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.notFound") }}
+          </q-item>
+          <q-item
+            v-else-if="isBeyondOpeningDB"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.beyondRange") }}
+          </q-item>
+          <q-item
+            v-else
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
+          </q-item>
         </template>
+        <!-- Actual results with filler placeholders -->
         <template v-else>
           <AnalysisItem
             v-for="(move, i) in dbMoves.slice(0, dbSettings.maxSuggestedMoves)"
@@ -373,53 +379,59 @@
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
-      <smooth-reflow>
-        <q-item
-          v-if="!databases"
-          class="flex-center text-center text-grey-1 bg-negative"
-          dark
+      <smooth-reflow class="relative-position">
+        <!-- Messages with placeholders behind them -->
+        <template
+          v-if="
+            !databases ||
+            !databases.length ||
+            noMatchingDatabase ||
+            isBeyondOpeningDB ||
+            !dbGames.length
+          "
         >
-          {{ $t("analysis.database.error") }}
-        </q-item>
-        <q-item
-          v-else-if="!databases.length"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.loading") }}
-        </q-item>
-        <q-item
-          v-else-if="noMatchingDatabase"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.notFound") }}
-        </q-item>
-        <q-item
-          v-else-if="isBeyondOpeningDB"
-          class="flex-center text-center"
-          :class="textClass"
-          :dark="$store.state.ui.theme.panelDark"
-        >
-          {{ $t("analysis.database.beyondRange") }}
-        </q-item>
-        <template v-else-if="!dbGames.length">
-          <div class="relative-position">
-            <DatabaseGamePlaceholder
-              v-for="i in maxTopGames"
-              :key="'placeholder-' + i"
-              static
-            />
-            <q-item
-              class="flex-center absolute-center full-width"
-              :class="textClass"
-            >
-              {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
-            </q-item>
-          </div>
+          <DatabaseGamePlaceholder
+            v-for="i in maxTopGames"
+            :key="'placeholder-' + i"
+            static
+          />
+          <q-item
+            v-if="!databases"
+            class="flex-center text-center text-grey-1 bg-negative absolute-center full-width"
+            dark
+          >
+            {{ $t("analysis.database.error") }}
+          </q-item>
+          <q-item
+            v-else-if="!databases.length"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.loading") }}
+          </q-item>
+          <q-item
+            v-else-if="noMatchingDatabase"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.notFound") }}
+          </q-item>
+          <q-item
+            v-else-if="isBeyondOpeningDB"
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ $t("analysis.database.beyondRange") }}
+          </q-item>
+          <q-item
+            v-else
+            class="flex-center text-center absolute-center full-width"
+            :class="textClass"
+          >
+            {{ loadingDBMoves ? "" : $t("analysis.database.newPosition") }}
+          </q-item>
         </template>
+        <!-- Actual results with filler placeholders -->
         <template v-else>
           <DatabaseGame
             v-for="(game, i) in dbGames.slice(0, maxTopGames)"

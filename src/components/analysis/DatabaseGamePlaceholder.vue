@@ -39,7 +39,7 @@
           :animation="animation"
         />
       </q-item-section>
-      <q-separator vertical />
+      <q-separator style="opacity: 0.5" vertical />
       <div style="width: 56px" />
     </q-item>
   </div>
