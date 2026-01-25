@@ -18,7 +18,15 @@ import {
 } from "lodash";
 import hashObject from "object-hash";
 import asyncPool from "tiny-async-pool";
-import { getPV } from "../Game/PTN/Comment";
+import {
+  getBotName,
+  getNodes,
+  getMS,
+  getDepth,
+  getVisits,
+  getPV,
+  getPVAfter,
+} from "../Game/PTN/Comment";
 import { pliesEqual } from "../Game/PTN/Ply";
 
 export function formatEvaluation(value) {
@@ -1292,7 +1300,15 @@ export default class Bot {
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    const botName = this.name;
+    const botName = this.label;
+
+    // Helper to normalize bot names for comparison (e.g., "Tiltak (wasm)" -> "Tiltak")
+    const normalizeBotName = (name) => {
+      if (!name) return null;
+      // Remove common suffixes like "(wasm)", "(cloud)", etc.
+      return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    };
+    const normalizedBotName = normalizeBotName(botName);
 
     // Always use new format when saving
     const useNewFormat = true;
@@ -1300,9 +1316,20 @@ export default class Bot {
     // const useNewFormat = this.pvFormat !== "old";
 
     // Helper to check if a note is an analysis note from this bot
-    const isThisBotAnalysisNote = (note) =>
-      (note.evaluation !== null || note.pv !== null || note.pvAfter !== null) &&
-      (!note.botName || note.botName === botName);
+    const isThisBotAnalysisNote = (note) => {
+      if (
+        note.evaluation === null &&
+        note.pv === null &&
+        note.pvAfter === null
+      ) {
+        return false;
+      }
+      if (!note.botName) {
+        return true; // No bot name means it could be from this bot
+      }
+      // Compare normalized bot names
+      return normalizeBotName(note.botName) === normalizedBotName;
+    };
 
     if (isString(tps) && tps.length) {
       const buildEvalCommentFromPosition = (position) => {
@@ -1400,10 +1427,11 @@ export default class Bot {
 
     if (Object.keys(messages).length) {
       // Handle existing notes based on overwriteInferior setting
-      for (const plyID of Object.keys(messages)) {
+      for (const plyIDStr of Object.keys(messages)) {
+        const plyID = Number(plyIDStr);
         const existingNotes = this.game.comments.notes[plyID] || [];
 
-        // Find indices of this bot's notes
+        // Find indices of this bot's notes (analysis notes from this bot)
         const botNoteIndices = existingNotes
           .map((note, idx) =>
             isThisBotAnalysisNote(note) ? { idx, note } : null
@@ -1413,75 +1441,110 @@ export default class Bot {
         const newNotes = messages[plyID];
         const overwriteInferior = store.state.analysis.overwriteInferior;
 
-        if (
-          overwriteInferior &&
-          botNoteIndices.length > 0 &&
-          newNotes.length > 0
-        ) {
+        if (overwriteInferior) {
           // When overwriteInferior is enabled:
-          // Remove notes that are inferior to new ones
+          // Merge results with same first move and engine, keeping superior ones
           const indicesToRemove = [];
+          const notesToAdd = [];
 
-          for (const { idx, note: existingNote } of botNoteIndices) {
-            let isInferior = false;
+          for (const newNote of newNotes) {
+            const newFirstMove = this.getFirstMoveFromNote(newNote);
+            const newBotNameRaw = this.getBotNameFromNote(newNote) || botName;
+            const newBotNameNorm = normalizeBotName(newBotNameRaw);
 
-            for (const newNote of newNotes) {
-              const existing = this.parseNoteStats(existingNote.message);
-              const newStats = this.parseNoteStats(newNote);
+            // Find existing note with same first move and bot name
+            let matchingExisting = null;
+            let matchingIdx = -1;
 
-              // Check if new result is superior (higher nodes, depth, or time)
-              if (existing.nodes !== null && newStats.nodes !== null) {
-                if (newStats.nodes > existing.nodes) {
-                  isInferior = true;
-                  break;
-                }
-              } else if (existing.nodes === null && newStats.nodes !== null) {
-                isInferior = true;
-                break;
-              } else if (existing.depth !== null && newStats.depth !== null) {
-                if (newStats.depth > existing.depth) {
-                  isInferior = true;
-                  break;
-                }
-              } else if (existing.depth === null && newStats.depth !== null) {
-                isInferior = true;
-                break;
-              } else if (existing.time !== null && newStats.time !== null) {
-                if (newStats.time > existing.time) {
-                  isInferior = true;
-                  break;
-                }
-              } else if (existing.time === null && newStats.time !== null) {
-                isInferior = true;
+            for (const { idx, note: existingNote } of botNoteIndices) {
+              // Skip notes already marked for removal
+              if (indicesToRemove.includes(idx)) continue;
+
+              const existingFirstMove = this.getFirstMoveFromNote(
+                existingNote.message
+              );
+              const existingBotNameRaw = existingNote.botName || botName;
+              const existingBotNameNorm = normalizeBotName(existingBotNameRaw);
+
+              if (
+                newFirstMove === existingFirstMove &&
+                newBotNameNorm === existingBotNameNorm
+              ) {
+                matchingExisting = existingNote;
+                matchingIdx = idx;
                 break;
               }
             }
 
-            if (isInferior) {
-              indicesToRemove.push(idx);
+            if (matchingExisting) {
+              // Found matching note - keep superior one
+              if (this.isNoteSuperior(newNote, matchingExisting)) {
+                indicesToRemove.push(matchingIdx);
+                notesToAdd.push(newNote);
+              }
+              // If existing is superior, don't add new note (skip it)
+            } else {
+              // No matching note - add as new
+              notesToAdd.push(newNote);
             }
           }
 
           // Remove inferior notes (in reverse order to maintain indices)
           indicesToRemove.sort((a, b) => b - a);
           for (const idx of indicesToRemove) {
-            this.game.removeNote(plyID, idx);
+            store.commit("game/REMOVE_NOTE", { plyID, index: idx });
           }
 
-          // After removing inferior, check remaining count and limit new notes
-          const remainingCount = (this.game.comments.notes[plyID] || []).filter(
-            (note) => isThisBotAnalysisNote(note)
-          ).length;
+          // Calculate remaining count by subtracting removed from original
+          // (can't re-read state as it may not be updated yet)
+          const remainingCount = botNoteIndices.length - indicesToRemove.length;
           const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
+
+          // Get first moves of notes that will remain (not removed)
+          const remainingFirstMoves = new Set(
+            botNoteIndices
+              .filter(({ idx }) => !indicesToRemove.includes(idx))
+              .map(({ note }) => this.getFirstMoveFromNote(note.message))
+          );
+
+          // Filter out notes that would duplicate first moves of remaining notes
+          const uniqueNewNotes = notesToAdd.filter((note) => {
+            const firstMove = this.getFirstMoveFromNote(note);
+            if (remainingFirstMoves.has(firstMove)) {
+              return false; // Skip duplicates
+            }
+            remainingFirstMoves.add(firstMove);
+            return true;
+          });
+
           // Only add as many new notes as we have slots for
-          messages[plyID] = newNotes.slice(0, slotsAvailable);
+          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
         } else {
           // When overwriteInferior is disabled:
           // Only add new notes if we haven't reached the pvsToSave limit
+          // and don't duplicate first moves
           const currentCount = botNoteIndices.length;
           const slotsAvailable = Math.max(0, pvsToSave - currentCount);
+
+          // Get existing first moves for this bot
+          const existingFirstMoves = new Set(
+            botNoteIndices.map(({ note }) =>
+              this.getFirstMoveFromNote(note.message)
+            )
+          );
+
+          // Filter out notes that would duplicate first moves
+          const uniqueNewNotes = newNotes.filter((note) => {
+            const firstMove = this.getFirstMoveFromNote(note);
+            if (existingFirstMoves.has(firstMove)) {
+              return false; // Skip duplicates
+            }
+            existingFirstMoves.add(firstMove);
+            return true;
+          });
+
           // Only add as many new notes as we have slots for (don't remove existing)
-          messages[plyID] = newNotes.slice(0, slotsAvailable);
+          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
         }
       }
 
@@ -1498,49 +1561,58 @@ export default class Bot {
     }
   }
 
-  // Parse stats from a note message (e.g., "+1.23 1000 nodes 5ms"),
+  // Parse stats from a note message using shared Comment.js helpers
   parseNoteStats(message) {
-    const stats = {
-      evaluation: null,
-      nodes: null,
-      time: null,
-      depth: null,
-      visits: null,
+    return {
+      nodes: getNodes(message),
+      time: getMS(message),
+      depth: getDepth(message),
+      visits: getVisits(message),
     };
+  }
 
-    // Extract evaluation (e.g., +1.23 or -0.5)
-    const evalMatch = message.match(/^([+-]?\d+\.?\d*)/);
-    if (evalMatch) {
-      stats.evaluation = parseFloat(evalMatch[1]);
+  // Extract the first move from a note message using shared Comment.js helpers
+  getFirstMoveFromNote(message) {
+    // Try new format first (pv>)
+    const pvAfter = getPVAfter(message);
+    if (pvAfter && pvAfter[0] && pvAfter[0][0]) {
+      return pvAfter[0][0];
     }
-
-    // Extract nodes (e.g., "1000 nodes")
-    const nodesMatch = message.match(/(\d+(?:,\d+)*)\s+nodes?/);
-    if (nodesMatch) {
-      stats.nodes = parseInt(nodesMatch[1].replace(/,/g, ""));
+    // Fall back to old format (pv or pv=)
+    const pv = getPV(message);
+    if (pv && pv[0] && pv[0][0]) {
+      return pv[0][0];
     }
+    return null;
+  }
 
-    // Extract time (e.g., "5ms" or "1.5s")
-    const timeMatch = message.match(/(\d+(?:\.\d+)?)\s*(ms|s)/);
-    if (timeMatch) {
-      const value = parseFloat(timeMatch[1]);
-      const unit = timeMatch[2];
-      stats.time = unit === "s" ? value * 1000 : value; // Convert to ms
+  // Extract bot name from a note message using shared Comment.js helper
+  getBotNameFromNote(message) {
+    return getBotName(message);
+  }
+
+  // Compare two notes to determine if newNote is superior to existingNote
+  isNoteSuperior(newNote, existingNote) {
+    const newStats = this.parseNoteStats(newNote);
+    const existingStats = this.parseNoteStats(
+      typeof existingNote === "string" ? existingNote : existingNote.message
+    );
+
+    // Compare by nodes first, then depth, then time
+    if (existingStats.nodes !== null && newStats.nodes !== null) {
+      return newStats.nodes > existingStats.nodes;
+    } else if (existingStats.nodes === null && newStats.nodes !== null) {
+      return true;
+    } else if (existingStats.depth !== null && newStats.depth !== null) {
+      return newStats.depth > existingStats.depth;
+    } else if (existingStats.depth === null && newStats.depth !== null) {
+      return true;
+    } else if (existingStats.time !== null && newStats.time !== null) {
+      return newStats.time > existingStats.time;
+    } else if (existingStats.time === null && newStats.time !== null) {
+      return true;
     }
-
-    // Extract depth (e.g., "/10")
-    const depthMatch = message.match(/\/(\d+)/);
-    if (depthMatch) {
-      stats.depth = parseInt(depthMatch[1]);
-    }
-
-    // Extract visits (e.g., "100 visits")
-    const visitsMatch = message.match(/(\d+(?:,\d+)*)\s+visits?/);
-    if (visitsMatch) {
-      stats.visits = parseInt(visitsMatch[1].replace(/,/g, ""));
-    }
-
-    return stats;
+    return false;
   }
 
   // Apply eval marks (!!,!,?,??) to PTN based on bot analysis
