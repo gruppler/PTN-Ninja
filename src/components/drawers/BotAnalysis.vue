@@ -401,7 +401,7 @@
             />
             <div v-if="!savedSuggestions.length" class="relative-position">
               <AnalysisItemPlaceholder
-                v-for="i in avgResultsCount"
+                v-for="i in modeResultsCount"
                 :key="'static-placeholder-' + i"
                 :show-continuation="showContinuationToggle"
                 static
@@ -582,12 +582,11 @@ export default {
         this.hasCurrentPositionSavedResults
       );
     },
-    avgResultsCount() {
-      // Find the rounded average number of saved results across all positions
+    modeResultsCount() {
+      // Find the mode (most repeated number) of saved results across positions with results
       const allPlies = this.game.ptn && this.game.ptn.allPlies;
       if (!allPlies) return 1;
-      let total = 0;
-      let count = 0;
+      const counts = {};
       const seenTps = new Set();
       for (const ply of allPlies) {
         if (!ply) continue;
@@ -598,17 +597,25 @@ export default {
             ply.tpsAfter
           );
           if (suggestions.length > 0) {
-            total += suggestions.length;
-            count++;
+            counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
           }
         }
       }
-      return count > 0 ? Math.max(1, Math.round(total / count)) : 1;
+      // Find the mode (value with highest frequency)
+      let mode = 1;
+      let maxFreq = 0;
+      for (const [value, freq] of Object.entries(counts)) {
+        if (freq > maxFreq) {
+          maxFreq = freq;
+          mode = parseInt(value, 10);
+        }
+      }
+      return Math.max(1, mode);
     },
     savedFillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer saved suggestions than average
+      // Number of placeholders to fill remaining space when fewer saved suggestions than mode
       if (!this.savedSuggestions.length) return 0;
-      return Math.max(0, this.avgResultsCount - this.savedSuggestions.length);
+      return Math.max(0, this.modeResultsCount - this.savedSuggestions.length);
     },
     showFullPVs() {
       return this.$store.state.analysis.showFullPVs;

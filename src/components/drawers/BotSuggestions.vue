@@ -637,7 +637,7 @@
         </template>
         <div v-else-if="!suggestions.length" class="relative-position">
           <AnalysisItemPlaceholder
-            v-for="i in avgResultsCount"
+            v-for="i in modeResultsCount"
             :key="'static-placeholder-' + i"
             :show-continuation="showContinuation"
             static
@@ -940,12 +940,25 @@ export default {
       }
       return 1;
     },
-    avgResultsCount() {
-      // Find the rounded average number of results across all positions for this bot
-      const positionArrays = Object.values(this.positions);
+    modeResultsCount() {
+      // Find the mode (most repeated number) of results across positions with results for this bot
+      const positionArrays = Object.values(this.positions).filter(
+        (arr) => arr.length > 0
+      );
       if (positionArrays.length) {
-        const total = positionArrays.reduce((sum, arr) => sum + arr.length, 0);
-        return Math.max(1, Math.round(total / positionArrays.length));
+        const counts = {};
+        for (const arr of positionArrays) {
+          counts[arr.length] = (counts[arr.length] || 0) + 1;
+        }
+        let mode = 1;
+        let maxFreq = 0;
+        for (const [value, freq] of Object.entries(counts)) {
+          if (freq > maxFreq) {
+            maxFreq = freq;
+            mode = parseInt(value, 10);
+          }
+        }
+        return Math.max(1, mode);
       }
       // If no results yet, check for multiPV option in current options or saved settings
       const optionSources = [
@@ -990,9 +1003,9 @@ export default {
       return 1;
     },
     fillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer suggestions than average
+      // Number of placeholders to fill remaining space when fewer suggestions than mode
       if (!this.suggestions.length) return 0;
-      return Math.max(0, this.avgResultsCount - this.suggestions.length);
+      return Math.max(0, this.modeResultsCount - this.suggestions.length);
     },
     isActiveBot() {
       return (
