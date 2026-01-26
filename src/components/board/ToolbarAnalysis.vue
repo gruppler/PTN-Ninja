@@ -408,18 +408,18 @@ export default {
       return this.isEmbedded ? null : this.$store.state.analysis.botID;
     },
     activeBots() {
-      return (this.$store.state.analysis.activeBots || []).filter(
+      return (this.$store.state.analysis?.activeBots || []).filter(
         (id) => id != null
       );
     },
     botList() {
-      return this.$store.state.analysis.botList || [];
+      return this.$store.state.analysis?.botList || [];
     },
     botOption() {
       return this.botList.find((b) => b.value === this.botID) || {};
     },
     preferSavedResults() {
-      return this.$store.state.analysis.preferSavedResults;
+      return this.$store.state.analysis?.preferSavedResults ?? true;
     },
     savedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);
@@ -429,7 +429,7 @@ export default {
     },
     currentBotSuggestions() {
       if (!this.$store.state.analysis || !this.botID) return [];
-      const positions = this.$store.state.analysis.botPositions[this.botID];
+      const positions = this.$store.state.analysis?.botPositions[this.botID];
       return positions ? positions[this.tps] || [] : [];
     },
     hasCurrentBotSuggestions() {
