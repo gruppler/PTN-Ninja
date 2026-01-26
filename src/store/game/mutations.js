@@ -32,7 +32,7 @@ export const SET_GAME = function (state, game) {
   const handleGameEnd = (game) => {
     if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
       const url = this.getters["ui/url"](game, {
-        name: game.name,
+        engineName: game.name,
         origin: true,
         state: true,
       });
@@ -725,29 +725,32 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
   });
 };
 
-// Helper to check if a note matches a bot name
-// A note matches if: botName is null/undefined (no bot name stored), or botName matches
-const noteMatchesBot = (note, botName) => {
-  return !note.botName || note.botName === botName;
+// Helper to check if a note matches an engine name
+// A note matches if: botName is null/undefined (no engine name stored), or botName matches
+const noteMatchesEngine = (note, engineName) => {
+  return !note.botName || note.botName === engineName;
 };
 
 // Helper to check if a note is an analysis note
 const isAnalysisNote = (note) =>
   note.evaluation !== null || note.pv !== null || note.pvAfter !== null;
 
-export const REMOVE_BOT_ANALYSIS_NOTES = (state, botName) => {
+export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   if (!Vue.prototype.$game) {
     return;
   }
 
   Vue.prototype.$game.removeNotes((note) => {
-    return isAnalysisNote(note) && noteMatchesBot(note, botName);
+    return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
   });
   // Also clear PTN eval marks (except tak/tinue)
   clearEvalMarks();
 };
 
-export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (
+  state,
+  { tps, engineName }
+) => {
   const allPlies = state.ptn && state.ptn.allPlies;
   if (!Vue.prototype.$game || !allPlies || !tps) {
     return;
@@ -762,7 +765,7 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
   const nextPlyID = nextPly ? String(nextPly.id) : null;
 
   Vue.prototype.$game.removeNotes((note, plyID) => {
-    if (!noteMatchesBot(note, botName)) {
+    if (!noteMatchesEngine(note, engineName)) {
       return false;
     }
     if (evalPlyID && plyID === evalPlyID) {

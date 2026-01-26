@@ -1148,7 +1148,7 @@ export default class Bot {
       let comment = "";
       // Use botName from stored position data
       if (position && position.botName) {
-        comment += `bot:"${position.botName.replace(/"/g, '\\"')}" `;
+        comment += `name:"${position.botName.replace(/"/g, '\\"')}" `;
       }
       if (evaluation !== null && !isNaN(evaluation)) {
         comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;

@@ -19,8 +19,8 @@ const PTN_WITH_ANALYSIS = `[Site "PlayTak.com"]
 [Result "0-1"]
 [Opening "swap"]
 
-1. a6 {bot:"Tiltak" +0.208/12 143449 nodes 1807ms pv> f6 d4 Cc4 d3 c3 d2 c2 d1 c1 d5 d6} {bot:"Topaz" +0.0798/8 1468053 nodes 2615ms pv> a1 d2 c6 c2 b6 d6 d5 e2} f1 {bot:"Tiltak" +0.266/13 142449 nodes 1805ms pv> e4 Cd4 e3 d3 e2 e5 d2 c2 Cc3 d5 b3 c5 c4 b5} {bot:"Topaz" +0.1877/8 954928 nodes 1631ms pv> d3 b4 d4 b3 d5 b2 d2 b5}
-2. f4 {bot:"Tiltak" +0.1/10 126449 nodes 1807ms pv> c3 f3 d3 f2 e3 f5 Sf6 e5 f6- e4 2f5<} {bot:"Topaz" +0.01/10 1471830 nodes 2767ms pv> e5 f5 f3 e4 e3 Cd4 b3 b4 Cc4 d3} d4 {bot:"Tiltak" +0.2/13 123449 nodes 1803ms pv> f3 d3 e3 f5 d2 e5 e2 c2 Cc3 d5 b3 c5 c4 b5} {bot:"Topaz" +0.1877/10 1473513 nodes 2746ms pv> e4 d5 e5 d3 f2 f3 Ce3 Ce6 d6 c5}
+1. a6 {name:"Tiltak" +0.208/12 143449 nodes 1807ms pv> f6 d4 Cc4 d3 c3 d2 c2 d1 c1 d5 d6} {name:"Topaz" +0.0798/8 1468053 nodes 2615ms pv> a1 d2 c6 c2 b6 d6 d5 e2} f1 {name:"Tiltak" +0.266/13 142449 nodes 1805ms pv> e4 Cd4 e3 d3 e2 e5 d2 c2 Cc3 d5 b3 c5 c4 b5} {name:"Topaz" +0.1877/8 954928 nodes 1631ms pv> d3 b4 d4 b3 d5 b2 d2 b5}
+2. f4 {name:"Tiltak" +0.1/10 126449 nodes 1807ms pv> c3 f3 d3 f2 e3 f5 Sf6 e5 f6- e4 2f5<} {name:"Topaz" +0.01/10 1471830 nodes 2767ms pv> e5 f5 f3 e4 e3 Cd4 b3 b4 Cc4 d3} d4 {name:"Tiltak" +0.2/13 123449 nodes 1803ms pv> f3 d3 e3 f5 d2 e5 e2 c2 Cc3 d5 b3 c5 c4 b5} {name:"Topaz" +0.1877/10 1473513 nodes 2746ms pv> e4 d5 e5 d3 f2 f3 Ce3 Ce6 d6 c5}
 `;
 
 const SIMPLE_PTN = `[Size "6"]
@@ -325,7 +325,7 @@ test.describe("Bot Suggestions Save Tests", () => {
     expect(topazNote.nodes).toBe(1471830);
   });
 
-  test("Notes are correctly parsed with bot name and stats", async ({
+  test("Notes are correctly parsed with engine name and stats", async ({
     page,
   }) => {
     await loadPTN(page, PTN_WITH_ANALYSIS);
@@ -351,7 +351,7 @@ test.describe("Bot Suggestions Save Tests", () => {
     await goToPly(page, 2);
 
     // Add a note directly
-    const noteMessage = 'bot:"Tiltak" +0.5/10 500000 nodes 1000ms pv> e5 f5';
+    const noteMessage = 'name:"Tiltak" +0.5/10 500000 nodes 1000ms pv> e5 f5';
     await addNotesDirectly(page, 2, [noteMessage]);
 
     // Verify note was added
@@ -368,9 +368,9 @@ test.describe("Bot Suggestions Save Tests", () => {
 
     // Add multiple notes
     const noteMessages = [
-      'bot:"Tiltak" +0.1/10 100000 nodes 1000ms pv> c3 f3',
-      'bot:"Tiltak" +0.2/10 90000 nodes 900ms pv> e5 f5',
-      'bot:"Tiltak" +0.3/10 80000 nodes 800ms pv> e4 f3',
+      'name:"Tiltak" +0.1/10 100000 nodes 1000ms pv> c3 f3',
+      'name:"Tiltak" +0.2/10 90000 nodes 900ms pv> e5 f5',
+      'name:"Tiltak" +0.3/10 80000 nodes 800ms pv> e4 f3',
     ];
     await addNotesDirectly(page, 2, noteMessages);
 
@@ -467,15 +467,20 @@ test.describe("Bot Suggestions Save Tests", () => {
 
     // Now save new Tiltak analysis with 4 results
     const tps = "2,x5/x6/x5,1/x6/x6/x5,1 2 2";
-    const result = await saveBotAnalysis(page, "tiltak", tps, TOPAZ_ANALYSIS_RESULTS);
+    const result = await saveBotAnalysis(
+      page,
+      "tiltak",
+      tps,
+      TOPAZ_ANALYSIS_RESULTS
+    );
 
-    console.log("saveBotAnalysis result:", result);
+    // console.log("saveBotAnalysis result:", result);
 
     // Get notes after
     const notesAfter = await getAllNotesForPly(page, 2);
 
-    console.log("Notes after:", notesAfter.length);
-    console.log("Notes by bot:", notesAfter.map((n) => n.botName));
+    // console.log("Notes after:", notesAfter.length);
+    // console.log("Notes by bot:", notesAfter.map((n) => n.botName));
 
     // The bug: notesAfter should be limited, but it's not
     // With pvsToSave=2, we should have at most 2 Tiltak notes + 1 Topaz = 3 total
@@ -493,7 +498,7 @@ test.describe("Bot Suggestions Save Tests", () => {
     // expect(tiltakAfter.length).toBeLessThanOrEqual(2);
 
     // For now, just log the issue
-    console.log("Tiltak notes after:", tiltakAfter.length, "(should be <= 2)");
+    // console.log("Tiltak notes after:", tiltakAfter.length, "(should be <= 2)");
   });
 
   test("saveEvalComments with overwriteInferior replaces inferior notes", async ({
@@ -586,7 +591,7 @@ test.describe("Bot Suggestions Save Tests", () => {
       return window.app.$game.historyIndex;
     });
 
-    console.log("Before save - notes:", notesBefore.length, "historyIndex:", historyIndexBefore);
+    // console.log("Before save - notes:", notesBefore.length, "historyIndex:", historyIndexBefore);
 
     // Save new analysis
     const tps = "2,x5/x6/x5,1/x6/x6/x5,1 2 2";
@@ -598,7 +603,7 @@ test.describe("Bot Suggestions Save Tests", () => {
       return window.app.$game.historyIndex;
     });
 
-    console.log("After save - notes:", notesAfterSave.length, "historyIndex:", historyIndexAfterSave);
+    // console.log("After save - notes:", notesAfterSave.length, "historyIndex:", historyIndexAfterSave);
 
     // Undo once
     await page.evaluate(() => {
@@ -612,7 +617,7 @@ test.describe("Bot Suggestions Save Tests", () => {
       return window.app.$game.historyIndex;
     });
 
-    console.log("After undo - notes:", notesAfterUndo.length, "historyIndex:", historyIndexAfterUndo);
+    // console.log("After undo - notes:", notesAfterUndo.length, "historyIndex:", historyIndexAfterUndo);
 
     // BUG: Currently requires 2 undos to restore original state
     // After fix, single undo should restore original note count
@@ -620,6 +625,6 @@ test.describe("Bot Suggestions Save Tests", () => {
 
     // For now, log the issue
     const undosNeeded = historyIndexAfterSave - historyIndexBefore;
-    console.log("Undos needed to restore:", undosNeeded, "(should be 1)");
+    // console.log("Undos needed to restore:", undosNeeded, "(should be 1)");
   });
 });

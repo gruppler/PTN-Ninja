@@ -40,7 +40,10 @@
         </template>
       </q-virtual-scroll>
     </q-scroll-area>
-    <q-toolbar class="bg-ui q-pa-none">
+    <q-toolbar
+      class="bg-ui q-pa-none"
+      :class="{ 'footer-toolbar': !showPTNTools }"
+    >
       <q-btn-group class="full-width" spread stretch flat unelevated>
         <q-btn @click="scrollToTop" icon="to_top" flat spread stretch>
           <hint>{{ $t("Top") }}</hint>
@@ -69,7 +72,30 @@
         </template>
       </q-btn-group>
     </q-toolbar>
-    <q-separator />
+    <template v-if="showPTNTools">
+      <q-separator />
+
+      <q-toolbar class="footer-toolbar bg-ui q-pa-none">
+        <UndoButtons
+          v-if="
+            !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
+          "
+          :class="{ 'full-width': $store.state.ui.disablePTNTools }"
+          spread
+          stretch
+          flat
+          unelevated
+        />
+        <EvalButtons
+          v-if="!$store.state.ui.disablePTNTools"
+          class="full-width"
+          spread
+          stretch
+          flat
+          unelevated
+        />
+      </q-toolbar>
+    </template>
     <q-resize-observer @resize="scroll" />
   </component>
 </template>
@@ -77,12 +103,14 @@
 <script>
 import Move from "../PTN/Move";
 import InlineMovesBuilder from "../../Game/PTN/InlineMovesBuilder";
+import UndoButtons from "../controls/UndoButtons";
+import EvalButtons from "../controls/EvalButtons";
 
 import { throttle } from "lodash";
 
 export default {
   name: "PTN",
-  components: { Move },
+  components: { Move, UndoButtons, EvalButtons },
   props: {
     recess: Boolean,
   },
@@ -159,6 +187,14 @@ export default {
         );
       }
       return Object.freeze(this.ptn.branchMoves);
+    },
+    showPTNTools() {
+      return (
+        !this.$store.state.ui.embed ||
+        (!this.$store.state.ui.disableUndo &&
+          !this.$store.state.ui.disableNavigation) ||
+        !this.$store.state.ui.disablePTNTools
+      );
     },
   },
   methods: {

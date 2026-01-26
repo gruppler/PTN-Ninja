@@ -197,10 +197,6 @@
         <div class="col-grow relative-position">
           <PTN ref="ptn" class="absolute-fit" recess />
         </div>
-        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <UndoButtons spread stretch flat unelevated />
-          <EvalButtons class="full-width" spread stretch flat unelevated />
-        </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -312,8 +308,6 @@ import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -346,8 +340,6 @@ export default {
     NavControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     Chat,

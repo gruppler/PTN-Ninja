@@ -1,6 +1,9 @@
 <template>
   <div class="toolbar-analysis-container">
-    <div class="button-container absolute q-gutter-x-md">
+    <div
+      class="button-container absolute q-gutter-x-md"
+      :class="{ embedded: isEmbedded }"
+    >
       <template
         v-if="
           !collapsed &&
@@ -164,7 +167,6 @@
         @click="toggle"
         :icon="icon"
         class="toolbar-analysis-toggle dimmed-btn"
-        :class="{ embedded: isEmbedded }"
         v-ripple="false"
         :color="btnColor"
         dense

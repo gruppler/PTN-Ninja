@@ -114,33 +114,6 @@
             :recess="!$store.state.ui.disablePTNTools"
           />
         </div>
-        <q-toolbar
-          v-if="
-            (!$store.state.ui.disableUndo &&
-              !$store.state.ui.disableNavigation) ||
-            !$store.state.ui.disablePTNTools
-          "
-          class="footer-toolbar bg-ui q-pa-none"
-        >
-          <UndoButtons
-            v-if="
-              !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
-            "
-            :class="{ 'full-width': $store.state.ui.disablePTNTools }"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-          <EvalButtons
-            v-if="!$store.state.ui.disablePTNTools"
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-        </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -202,8 +175,6 @@ import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -228,8 +199,6 @@ export default {
     NavControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     ToolbarAnalysis,

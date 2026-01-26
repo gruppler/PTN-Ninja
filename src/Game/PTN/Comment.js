@@ -133,8 +133,8 @@ export function getVisits(message) {
 }
 
 export function getBotName(message) {
-  // Bot name stored as bot:"name" (e.g., '+0.12/15 bot:"Tiltak" 1234 nodes')
-  let matches = message.match(/bot:"((?:[^"\\]|\\.)*)"/i);
+  // Engine name stored as name:"name" (e.g., '+0.12/15 name:"Tiltak" 1234 nodes')
+  let matches = message.match(/name:"((?:[^"\\]|\\.)*)"/i);
   if (matches) {
     // Unescape any escaped quotes
     return matches[1].replace(/\\"/g, '"');
