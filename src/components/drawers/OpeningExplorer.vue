@@ -358,6 +358,7 @@
             :middle-number="move.draws ? $n(move.draws, 'n0') : null"
             :player2-number="$n(move.wins2, 'n0')"
             :player-numbers-tooltip="winsTooltip(move)"
+            :done-count="isMovePlayed(move) ? 1 : 0"
           />
           <AnalysisItemPlaceholder
             v-for="i in dbMovesFillerCount"
@@ -656,6 +657,25 @@ export default {
         "analysis.draws",
         move.draws
       )} – ${percentageString(move.draws)}`;
+    },
+
+    isMovePlayed(move) {
+      // Check if this move was actually played in the current game
+      const position = this.$store.state.game.position;
+      if (!position || !position.boardPly) {
+        return false;
+      }
+
+      // Get the next ply in the current game
+      const nextPlyIndex = position.plyIndex + 1;
+      const nextPly = this.allPlies.find((ply) => ply.index === nextPlyIndex);
+
+      if (!nextPly) {
+        return false;
+      }
+
+      // Compare the move text to see if they match
+      return move.ply.text === nextPly.text;
     },
 
     /** Queries `tps` position.
