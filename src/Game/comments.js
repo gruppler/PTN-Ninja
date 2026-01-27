@@ -44,7 +44,7 @@ export default class GameComments {
         this.board.plyIndex <= 0 && !this.board.plyIsDone
           ? -1
           : this.board.plyID;
-    } else if (!(plyID in this.plies) && plyID !== -1) {
+    } else if (!(plyID in this.plies) && Number(plyID) !== -1) {
       throw "Invalid plyID";
     }
     if (!this[type][plyID]) {

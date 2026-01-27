@@ -68,25 +68,80 @@ export const suggestions = (state) => (tps) => {
   const results = [];
   let evalData = null;
 
-  // First, find evaluation data (from ply whose tpsAfter matches tps)
-  for (let id in state.comments.notes) {
-    const notes = state.comments.notes[id];
-    const ply = state.ptn.allPlies[id];
-    if (!ply) {
-      continue;
+  // Check if this is the initial position (tps matches first ply's tpsBefore)
+  // Also handle case where there are no plies (empty game with starting TPS)
+  const firstPly = state.ptn.allPlies[0];
+  const hasNoPlies = !state.ptn.allPlies || state.ptn.allPlies.length === 0;
+  const isInitialPosition =
+    (firstPly && firstPly.tpsBefore === tps) || hasNoPlies;
+
+  // First, check ply -1 for initial position analysis
+  if (isInitialPosition && state.comments.notes[-1]) {
+    const notes = state.comments.notes[-1];
+    const note = notes.find((n) => n.evaluation !== null);
+    if (note) {
+      evalData = {
+        evaluation: note.evaluation,
+        depth: note.depth,
+        nodes: note.nodes,
+        visits: note.visits,
+        time: note.ms,
+        botName: note.botName,
+      };
     }
-    if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
-      const note = notes.find((n) => n.evaluation !== null);
-      if (note) {
-        evalData = {
-          evaluation: note.evaluation,
-          depth: note.depth,
-          nodes: note.nodes,
-          visits: note.visits,
-          time: note.ms,
-          botName: note.botName,
-        };
-        break;
+  }
+
+  // Then, find evaluation data (from ply whose tpsAfter matches tps)
+  if (!evalData) {
+    for (let id in state.comments.notes) {
+      const notes = state.comments.notes[id];
+      const ply = state.ptn.allPlies[id];
+      if (!ply) {
+        continue;
+      }
+      if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
+        const note = notes.find((n) => n.evaluation !== null);
+        if (note) {
+          evalData = {
+            evaluation: note.evaluation,
+            depth: note.depth,
+            nodes: note.nodes,
+            visits: note.visits,
+            time: note.ms,
+            botName: note.botName,
+          };
+          break;
+        }
+      }
+    }
+  }
+
+  // Check ply -1 for PVs in new format (initial position)
+  if (isInitialPosition && state.comments.notes[-1]) {
+    const notes = state.comments.notes[-1];
+    for (const note of notes) {
+      if (note.pvAfter !== null) {
+        // For initial position, player 1 moves first (color depends on opening swap)
+        const nextPlayer = 1;
+        const nextColor = 1;
+        const noteIndex = notes.indexOf(note);
+        for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
+          const pvArray = note.pvAfter[pvIndex];
+          const pv = parsePV(nextPlayer, nextColor, pvArray);
+          const suggestion = {
+            ply: pv.splice(0, 1)[0],
+            followingPlies: pv,
+            evaluation: note.evaluation !== null ? note.evaluation : null,
+            depth: note.depth !== null ? note.depth : null,
+            nodes: note.nodes !== null ? note.nodes : null,
+            visits: note.visits !== null ? note.visits : null,
+            time: note.ms !== null ? note.ms : null,
+            botName: note.botName !== null ? note.botName : null,
+            fromNotes: true,
+            source: { plyID: -1, noteIndex, pvIndex, format: "pvAfter" },
+          };
+          results.push(suggestion);
+        }
       }
     }
   }
@@ -126,6 +181,34 @@ export const suggestions = (state) => (tps) => {
             };
             results.push(suggestion);
           }
+        }
+      }
+    }
+  }
+
+  // Check ply -1 for PVs in old format (initial position)
+  if (isInitialPosition && state.comments.notes[-1]) {
+    const notes = state.comments.notes[-1];
+    for (const note of notes) {
+      if (note.pv !== null) {
+        // For initial position, player 1 moves first
+        const noteIndex = notes.indexOf(note);
+        for (let pvIndex = 0; pvIndex < note.pv.length; pvIndex++) {
+          const pvArray = note.pv[pvIndex];
+          const pv = parsePV(1, 1, pvArray);
+          const suggestion = {
+            ply: pv.splice(0, 1)[0],
+            followingPlies: pv,
+            evaluation: evalData ? evalData.evaluation : null,
+            depth: evalData ? evalData.depth : null,
+            nodes: evalData ? evalData.nodes : null,
+            visits: evalData ? evalData.visits : null,
+            time: evalData ? evalData.time : null,
+            botName: evalData ? evalData.botName : null,
+            fromNotes: true,
+            source: { plyID: -1, noteIndex, pvIndex, format: "pv" },
+          };
+          results.push(suggestion);
         }
       }
     }

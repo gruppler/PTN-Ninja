@@ -752,21 +752,31 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (
   { tps, engineName }
 ) => {
   const allPlies = state.ptn && state.ptn.allPlies;
-  if (!Vue.prototype.$game || !allPlies || !tps) {
+  if (!Vue.prototype.$game || !tps) {
     return;
   }
 
-  const prevPly = allPlies.find((p) => p && p.tpsAfter === tps);
-  const nextPly = allPlies.find((p) => p && p.tpsBefore === tps);
-  const evalPly =
-    prevPly || allPlies.find((p) => p && p.id === 0 && p.tpsBefore === tps);
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
 
-  const evalPlyID = evalPly ? String(evalPly.id) : null;
+  // Check if this is the initial position (before first move)
+  // Also handle case where there are no plies (empty game with starting TPS)
+  const hasNoPlies = !allPlies || allPlies.length === 0;
+  const isInitialPosition =
+    (!prevPly && nextPly && nextPly.id === 0) || hasNoPlies;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
   const nextPlyID = nextPly ? String(nextPly.id) : null;
 
   Vue.prototype.$game.removeNotes((note, plyID) => {
     if (!noteMatchesEngine(note, engineName)) {
       return false;
+    }
+    // For initial position, also check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
     }
     if (evalPlyID && plyID === evalPlyID) {
       return (

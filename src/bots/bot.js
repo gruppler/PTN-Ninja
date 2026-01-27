@@ -1376,11 +1376,13 @@ export default class Bot {
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
 
-      // For the initial position there is no previous ply. In that case we still
-      // attach the evaluation to ply 0 (consistent with getters that allow
-      // ply.id === 0 && ply.tpsBefore === tps).
-      const evalPly =
-        prevPly || this.plies.find((p) => p.id === 0 && p.tpsBefore === tps);
+      // Check if this is the initial position (before first move)
+      // Initial position is when:
+      // 1. nextPly is ply 0 and there's no prevPly, OR
+      // 2. There are no plies at all (empty game with starting TPS)
+      const isInitialPosition =
+        (!prevPly && nextPly && nextPly.id === 0) ||
+        (!prevPly && !nextPly && this.plies.length === 0);
 
       if (prevPly) {
         const notes = this.formatEvalComments(
@@ -1395,13 +1397,80 @@ export default class Bot {
         }
       }
 
-      // If we have analysis for the current TPS but couldn't generate an eval
-      // comment (often because positionBefore isn't analyzed), synthesize an
-      // evaluation comment directly from the current position.
-      if (evalPly && !(evalPly.id in messages)) {
-        const fallbackEval = buildEvalCommentFromPosition(this.positions[tps]);
-        if (fallbackEval) {
-          messages[evalPly.id] = [fallbackEval];
+      // For initial position (before first move), save to ply -1
+      // This allows analysis comments before the first ply
+      if (isInitialPosition) {
+        const position = this.positions[tps];
+        if (position && position.length > 0) {
+          const initialPositionNotes = [];
+          const numPVs = Math.min(pvsToSave, position.length);
+
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            const positionData = position[pvIndex];
+            if (!positionData) continue;
+
+            let comment = "";
+
+            // Add bot name
+            if (positionData.botName) {
+              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            // Add evaluation
+            if (
+              positionData.evaluation !== null &&
+              positionData.evaluation !== undefined
+            ) {
+              const evalValue = Math.round(100 * positionData.evaluation) / 1e4;
+              if (!isNaN(evalValue)) {
+                comment += `${evalValue >= 0 ? "+" : ""}${evalValue}`;
+              }
+            }
+
+            // Add search stats
+            if (saveSearchStats) {
+              if (
+                positionData.depth !== null &&
+                positionData.depth !== undefined
+              ) {
+                comment += `/${positionData.depth}`;
+              }
+              if (
+                positionData.nodes !== null &&
+                positionData.nodes !== undefined
+              ) {
+                comment += ` ${positionData.nodes} nodes`;
+              }
+              if (
+                positionData.visits !== null &&
+                positionData.visits !== undefined
+              ) {
+                comment += ` ${positionData.visits} visits`;
+              }
+              if (
+                positionData.time !== null &&
+                positionData.time !== undefined
+              ) {
+                comment += ` ${positionData.time}ms`;
+              }
+            }
+
+            // Add PV with pv> marker (new format - represents position after comment)
+            if (positionData.ply && pvLimit > 0) {
+              const pv = [positionData.ply, ...positionData.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              comment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (comment.trim().length > 0) {
+              initialPositionNotes.push(comment.trim());
+            }
+          }
+
+          if (initialPositionNotes.length > 0) {
+            messages[-1] = initialPositionNotes;
+          }
         }
       }
     } else {
@@ -1423,6 +1492,84 @@ export default class Bot {
           messages[ply.id] = notes;
         }
       });
+
+      // Also save initial position analysis to ply -1 if available
+      const firstPly = this.plies[0];
+      if (firstPly) {
+        const initialTPS = firstPly.tpsBefore;
+        const position = this.positions[initialTPS];
+        if (position && position.length > 0) {
+          const initialPositionNotes = [];
+          const numPVs = Math.min(pvsToSave, position.length);
+
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            const positionData = position[pvIndex];
+            if (!positionData) continue;
+
+            let comment = "";
+
+            // Add bot name
+            if (positionData.botName) {
+              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            // Add evaluation
+            if (
+              positionData.evaluation !== null &&
+              positionData.evaluation !== undefined
+            ) {
+              const evalValue = Math.round(100 * positionData.evaluation) / 1e4;
+              if (!isNaN(evalValue)) {
+                comment += `${evalValue >= 0 ? "+" : ""}${evalValue}`;
+              }
+            }
+
+            // Add search stats
+            if (saveSearchStats) {
+              if (
+                positionData.depth !== null &&
+                positionData.depth !== undefined
+              ) {
+                comment += `/${positionData.depth}`;
+              }
+              if (
+                positionData.nodes !== null &&
+                positionData.nodes !== undefined
+              ) {
+                comment += ` ${positionData.nodes} nodes`;
+              }
+              if (
+                positionData.visits !== null &&
+                positionData.visits !== undefined
+              ) {
+                comment += ` ${positionData.visits} visits`;
+              }
+              if (
+                positionData.time !== null &&
+                positionData.time !== undefined
+              ) {
+                comment += ` ${positionData.time}ms`;
+              }
+            }
+
+            // Add PV with pv> marker (new format)
+            if (positionData.ply && pvLimit > 0) {
+              const pv = [positionData.ply, ...positionData.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              comment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (comment.trim().length > 0) {
+              initialPositionNotes.push(comment.trim());
+            }
+          }
+
+          if (initialPositionNotes.length > 0) {
+            messages[-1] = initialPositionNotes;
+          }
+        }
+      }
     }
 
     if (Object.keys(messages).length) {
