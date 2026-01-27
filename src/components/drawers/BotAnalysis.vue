@@ -7,13 +7,8 @@
     >
       <template v-slot:header>
         <q-item-section avatar>
-          <q-icon name="bot" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>{{ $t("analysis.Engine Moves") }}</q-item-label>
-        </q-item-section>
-        <q-item-section v-if="!sections.botSuggestions && runningBotState" side>
           <BotProgress
+            v-if="!sections.botSuggestions && runningBotState"
             :is-running="true"
             :interactive="runningBotState.isInteractiveEnabled"
             :progress="runningBotState.progress"
@@ -21,6 +16,10 @@
             dense
             flat
           />
+          <q-icon v-else name="bot" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ $t("analysis.Engine Moves") }}</q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
