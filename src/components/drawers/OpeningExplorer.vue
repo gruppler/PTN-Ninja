@@ -278,7 +278,7 @@
             :label="$t('analysis.maxTopGames')"
             type="number"
             min="1"
-            max="10"
+            max="4"
             step="1"
             item-aligned
             filled
