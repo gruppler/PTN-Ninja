@@ -33,6 +33,7 @@
           <q-btn
             @click.stop="selectActiveBot"
             :color="isActiveBot ? 'primary' : ''"
+            style="margin-left: -4px"
             dense
             round
             flat

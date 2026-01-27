@@ -288,136 +288,140 @@
         />
 
         <q-separator />
+      </recess>
+    </q-expansion-item>
 
-        <!-- Saved Results -->
-        <q-expansion-item
-          v-model="sections.savedResults"
-          header-class="bg-ui"
-          default-opened
-        >
-          <template v-slot:header>
-            <q-item-section avatar>
-              <q-btn
-                @click.stop="selectSavedResults"
-                icon="save"
-                :color="isActive ? 'primary' : ''"
-                dense
-                round
-                flat
-              >
-                <hint>{{ $t("Select Saved Results") }}</hint>
-              </q-btn>
-            </q-item-section>
-            <q-item-section :class="{ 'text-primary': isActive }">
-              <q-item-label>{{ $t("Saved Results") }}</q-item-label>
-            </q-item-section>
-            <q-item-section class="fg-inherit" side>
-              <q-btn
-                @click.stop
-                icon="delete"
-                :disable="!hasAnalysisNotes"
-                dense
-                round
-                flat
-              >
-                <q-menu
-                  transition-show="none"
-                  transition-hide="none"
-                  auto-close
-                  square
+    <!-- Saved Results - moved outside Bot Analysis -->
+    <q-expansion-item
+      v-model="sections.savedResults"
+      header-class="bg-accent"
+      expand-icon-class="fg-inherit"
+      default-opened
+    >
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-btn
+            @click.stop="selectSavedResults"
+            icon="save"
+            :color="isActive ? 'primary' : ''"
+            style="margin-left: -4px"
+            dense
+            round
+            flat
+          >
+            <hint>{{ $t("Select Saved Results") }}</hint>
+          </q-btn>
+        </q-item-section>
+        <q-item-section :class="{ 'text-primary': isActive }">
+          <q-item-label>{{ $t("Saved Results") }}</q-item-label>
+        </q-item-section>
+        <q-item-section class="fg-inherit" side>
+          <q-btn
+            @click.stop
+            icon="delete"
+            :disable="!hasAnalysisNotes"
+            dense
+            round
+            flat
+          >
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="clearCurrentPositionSavedResults"
+                  :disable="!hasCurrentPositionSavedResults"
                 >
-                  <q-list>
-                    <q-item
-                      clickable
-                      @click="clearCurrentPositionSavedResults"
-                      :disable="!hasCurrentPositionSavedResults"
-                    >
-                      <q-item-section avatar>
-                        <q-icon name="delete" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label>
-                          {{ $t("analysis.Delete Positions Saved Results") }}
-                        </q-item-label>
-                      </q-item-section>
-                    </q-item>
+                  <q-item-section avatar>
+                    <q-icon name="delete" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Delete Positions Saved Results") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
 
-                    <q-item
-                      clickable
-                      @click="clearSavedResults"
-                      :disable="!hasAnalysisNotes"
-                    >
-                      <q-item-section avatar>
-                        <q-icon name="delete_all" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label>
-                          {{ $t("analysis.Delete All Saved Results") }}
-                        </q-item-label>
-                      </q-item-section>
-                    </q-item>
+                <q-item
+                  clickable
+                  @click="clearSavedResults"
+                  :disable="!hasAnalysisNotes"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Delete All Saved Results") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
 
-                    <q-separator />
+                <q-separator />
 
-                    <q-item
-                      clickable
-                      @click="removeEvalMarks"
-                      :disable="!hasEvalMarks"
-                    >
-                      <q-item-section avatar>
-                        <q-icon name="eval" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label>
-                          {{ $t("analysis.Remove Eval Marks") }}
-                        </q-item-label>
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-            </q-item-section>
-          </template>
+                <q-item
+                  clickable
+                  @click="removeEvalMarks"
+                  :disable="!hasEvalMarks"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="eval" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Remove Eval Marks") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-item-section>
+      </template>
 
-          <smooth-reflow height-only style="overflow-x: hidden">
-            <BotAnalysisItem
-              v-for="(suggestion, i) in savedSuggestions"
-              :key="'saved-' + i"
-              :suggestion="suggestion"
-              show-bot-name
-              show-menu
-              :fixed-height="!showFullPVs"
-              :show-continuation="showContinuationToggle"
-              expandable
-              @delete="deleteSavedSuggestion(suggestion)"
-            />
-            <!-- Fill remaining space with placeholders when fewer than average -->
+      <recess>
+        <smooth-reflow height-only style="overflow-x: hidden">
+          <BotAnalysisItem
+            v-for="(suggestion, i) in savedSuggestions"
+            :key="'saved-' + i"
+            :suggestion="suggestion"
+            show-bot-name
+            show-menu
+            :fixed-height="!showFullPVs"
+            :show-continuation="showContinuationToggle"
+            expandable
+            @delete="deleteSavedSuggestion(suggestion)"
+          />
+          <!-- Fill remaining space with placeholders when fewer than average -->
+          <AnalysisItemPlaceholder
+            v-for="i in savedFillerPlaceholderCount"
+            :key="'saved-filler-placeholder-' + i"
+            :show-continuation="showContinuationToggle"
+            static
+          />
+          <div v-if="!savedSuggestions.length" class="relative-position">
             <AnalysisItemPlaceholder
-              v-for="i in savedFillerPlaceholderCount"
-              :key="'saved-filler-placeholder-' + i"
+              v-for="i in modeResultsCount"
+              :key="'static-placeholder-' + i"
               :show-continuation="showContinuationToggle"
               static
             />
-            <div v-if="!savedSuggestions.length" class="relative-position">
-              <AnalysisItemPlaceholder
-                v-for="i in modeResultsCount"
-                :key="'static-placeholder-' + i"
-                :show-continuation="showContinuationToggle"
-                static
-              />
-              <q-item
-                class="flex-center absolute-center full-width"
-                :class="[
-                  $store.state.ui.theme.panelDark
-                    ? 'text-textLight'
-                    : 'text-textDark',
-                ]"
-              >
-                {{ $t("analysis.noResults") }}
-              </q-item>
-            </div>
-          </smooth-reflow>
-        </q-expansion-item>
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+            >
+              {{ $t("analysis.noResults") }}
+            </q-item>
+          </div>
+        </smooth-reflow>
       </recess>
     </q-expansion-item>
   </div>
