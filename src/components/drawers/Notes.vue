@@ -66,55 +66,21 @@
       </q-btn-group>
     </q-toolbar>
     <q-separator />
-    <div class="bg-ui row no-wrap">
-      <q-input
-        ref="input"
-        @keydown.enter="send"
-        @keydown.esc="cancelEdit"
-        @blur="cancelEdit"
-        debounce="50"
-        class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
-        v-model="message"
-        :placeholder="$t('Note')"
-        dense
-        rounded
-        autogrow
-        outlined
-        color="primary"
-        bg-color="primary"
-        :dark="primaryDark"
-      >
-        <template v-slot:append>
-          <q-btn
-            @click="send"
-            :icon="editing ? 'edit' : 'add_note'"
-            :disabled="!message.trim().length"
-            flat
-            dense
-            round
-          />
-        </template>
-      </q-input>
-    </div>
+    <NoteInput ref="noteInput" />
   </div>
 </template>
 
 <script>
 import NoteItem from "./NoteItem";
+import NoteInput from "./NoteInput";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { NoteItem },
+  components: { NoteItem, NoteInput },
   props: {
     recess: Boolean,
-  },
-  data() {
-    return {
-      message: "",
-      editing: null,
-    };
   },
   computed: {
     game() {
@@ -128,9 +94,6 @@ export default {
     },
     isShowing() {
       return this.$store.state.ui.textTab === "notes";
-    },
-    primaryDark() {
-      return this.$store.state.ui.theme.primaryDark;
     },
     log() {
       return this.$store.state.ui.showAllBranches &&
@@ -205,51 +168,21 @@ export default {
     jumpToCurrent() {
       this.$nextTick(() => this.scroll());
     },
-    send(event) {
-      if (event.shiftKey) {
-        return; // Ignore shift+enter
-      } else {
-        event.preventDefault();
-      }
-      if (this.message) {
-        if (this.editing) {
-          this.$store.dispatch("game/EDIT_NOTE", {
-            plyID: this.editing.plyID,
-            index: this.editing.index,
-            message: this.message.trim(),
-          });
-          this.editing = null;
-        } else {
-          this.$store.dispatch("game/ADD_NOTE", {
-            message: this.message.trim(),
-          });
-        }
-        this.$refs.input.blur(); // De-select to enable clearing input on mobile
-        this.message = "";
-        this.$refs.input.focus();
-      }
-    },
     edit({ plyID, index }) {
       const log = this.log[plyID][index];
-      this.editing = { plyID, index };
       if (!this.isCurrent(plyID)) {
         this.$store.dispatch("game/GO_TO_PLY", { plyID, isDone: true });
       }
-      setTimeout(() => {
-        this.$refs.input.focus();
-        this.message = log.message;
-      }, 10);
-    },
-    cancelEdit() {
-      if (this.editing) {
-        this.editing = null;
-        this.message = "";
-      } else {
-        this.$refs.input.blur();
-      }
+      this.$refs.noteInput.startEdit({ plyID, index, message: log.message });
     },
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+      this.notifyUndo({
+        message: this.$t("success.noteRemoved"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
     removeCurrentPosition() {
       const plyID = this.positionPlyID;
