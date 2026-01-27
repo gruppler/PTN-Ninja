@@ -18,7 +18,7 @@
         class="evaluation col"
         :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
         :style="{ width: Math.abs(evaluation) + '%' }"
-        :key="i"
+        :key="`eval-bar-${i}`"
       />
     </div>
 
@@ -36,7 +36,11 @@
     />
     <div class="move-wrapper">
       <template v-if="!noDecoration && !currentOnly">
-        <div class="depth-indicator" v-for="i in depth" :key="i" />
+        <div
+          class="depth-indicator"
+          v-for="i in depth"
+          :key="`depth-indicator-${i}`"
+        />
       </template>
       <Linenum
         v-if="move.linenum"
