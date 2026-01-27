@@ -99,7 +99,7 @@ export const suggestions = (state) => (tps) => {
       if (!ply) {
         continue;
       }
-      if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
+      if (ply.tpsAfter === tps) {
         const note = notes.find((n) => n.evaluation !== null);
         if (note) {
           evalData = {
@@ -119,15 +119,19 @@ export const suggestions = (state) => (tps) => {
   // Check ply -1 for PVs in new format (initial position)
   if (isInitialPosition && state.comments.notes[-1]) {
     const notes = state.comments.notes[-1];
+    // Parse TPS to get player and move number: "board player moveNumber"
+    const tpsParts = tps.split(" ");
+    const tpsPlayer = tpsParts.length >= 2 ? Number(tpsParts[1]) : 1;
+    const tpsMoveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 1;
+    // Opening swap: on move 1, player places opponent's color
+    const tpsColor =
+      tpsMoveNumber === 1 ? (tpsPlayer === 1 ? 2 : 1) : tpsPlayer;
     for (const note of notes) {
       if (note.pvAfter !== null) {
-        // For initial position, player 1 moves first (color depends on opening swap)
-        const nextPlayer = 1;
-        const nextColor = 1;
         const noteIndex = notes.indexOf(note);
         for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
           const pvArray = note.pvAfter[pvIndex];
-          const pv = parsePV(nextPlayer, nextColor, pvArray);
+          const pv = parsePV(tpsPlayer, tpsColor, pvArray);
           const suggestion = {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
@@ -153,7 +157,7 @@ export const suggestions = (state) => (tps) => {
     if (!ply) {
       continue;
     }
-    if (ply.tpsAfter === tps || (ply.id === 0 && ply.tpsBefore === tps)) {
+    if (ply.tpsAfter === tps) {
       // Find all notes with pvAfter (new format)
       for (const note of notes) {
         if (note.pvAfter !== null) {
@@ -189,13 +193,20 @@ export const suggestions = (state) => (tps) => {
   // Check ply -1 for PVs in old format (initial position)
   if (isInitialPosition && state.comments.notes[-1]) {
     const notes = state.comments.notes[-1];
+    // Parse TPS to get player and move number: "board player moveNumber"
+    const tpsPartsOld = tps.split(" ");
+    const tpsPlayerOld = tpsPartsOld.length >= 2 ? Number(tpsPartsOld[1]) : 1;
+    const tpsMoveNumberOld =
+      tpsPartsOld.length >= 3 ? Number(tpsPartsOld[2]) : 1;
+    // Opening swap: on move 1, player places opponent's color
+    const tpsColorOld =
+      tpsMoveNumberOld === 1 ? (tpsPlayerOld === 1 ? 2 : 1) : tpsPlayerOld;
     for (const note of notes) {
       if (note.pv !== null) {
-        // For initial position, player 1 moves first
         const noteIndex = notes.indexOf(note);
         for (let pvIndex = 0; pvIndex < note.pv.length; pvIndex++) {
           const pvArray = note.pv[pvIndex];
-          const pv = parsePV(1, 1, pvArray);
+          const pv = parsePV(tpsPlayerOld, tpsColorOld, pvArray);
           const suggestion = {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
