@@ -31,16 +31,20 @@
 
     <recess>
       <smooth-reflow>
-        <div v-if="filteredNotes.length" class="position-notes-list">
+        <div
+          v-if="filteredNotes.length"
+          ref="notesList"
+          class="position-notes-list q-px-md q-pt-md"
+        >
           <Note
             v-for="note in filteredNotes"
             :key="`note-${positionPlyID}-${note.originalIndex}`"
+            :ref="`note-${note.originalIndex}`"
             :plyID="positionPlyID"
             :index="note.originalIndex"
             :comment="note"
             @edit="edit"
             @remove="remove"
-            class="q-px-md q-py-xs"
           />
         </div>
         <q-item v-else class="flex-center" :class="textClass">
@@ -48,7 +52,12 @@
         </q-item>
       </smooth-reflow>
 
-      <NoteInput ref="noteInput" style="position: sticky; bottom: 0" />
+      <NoteInput
+        ref="noteInput"
+        @added="onNoteAdded"
+        @edited="onNoteEdited"
+        style="position: sticky; bottom: 0"
+      />
     </recess>
   </q-expansion-item>
 </template>
@@ -128,6 +137,65 @@ export default {
           this.$store.dispatch("game/UNDO");
         },
       });
+    },
+    scrollToNote(originalIndex) {
+      // Wait for DOM and smooth-reflow animation to complete
+      this.$nextTick(() => {
+        // Delay to allow smooth-reflow CSS transitions to complete (0.3s = 300ms)
+        setTimeout(() => {
+          const noteRef = this.$refs[`note-${originalIndex}`];
+          if (noteRef) {
+            // noteRef is an array when using v-for refs
+            const component = Array.isArray(noteRef) ? noteRef[0] : noteRef;
+            if (component && component.$el) {
+              // Find the q-scroll-area container (parent Analysis component)
+              const scrollContainer = component.$el.closest(
+                ".q-scrollarea__container"
+              );
+              if (scrollContainer) {
+                // Use getBoundingClientRect for accurate positioning
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const elementRect = component.$el.getBoundingClientRect();
+                const currentScrollTop = scrollContainer.scrollTop;
+                // Calculate element's position relative to container
+                const elementTopRelative =
+                  elementRect.top - containerRect.top + currentScrollTop;
+                const containerHeight = scrollContainer.clientHeight;
+                const elementHeight = elementRect.height;
+                // Scroll to center the element
+                scrollContainer.scrollTo({
+                  top:
+                    elementTopRelative -
+                    containerHeight / 2 +
+                    elementHeight / 2,
+                  behavior: "smooth",
+                });
+              } else {
+                // Fallback to scrollIntoView if no scroll container found
+                component.$el.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            }
+          }
+        }, 250);
+      });
+    },
+    onNoteAdded() {
+      // Scroll to the last note (newly added)
+      // Wait for Vue to update the DOM after the store change
+      this.$nextTick(() => {
+        this.$nextTick(() => {
+          if (this.filteredNotes.length > 0) {
+            const lastNote = this.filteredNotes[this.filteredNotes.length - 1];
+            this.scrollToNote(lastNote.originalIndex);
+          }
+        });
+      });
+    },
+    onNoteEdited({ index }) {
+      this.scrollToNote(index);
     },
   },
   watch: {

@@ -44,6 +44,13 @@ export default {
     dark() {
       return this.$store.state.ui.theme.primaryDark;
     },
+    currentPlyID() {
+      const pos = this.$store.state.game.position;
+      if (!pos.ply || (!pos.ply.index && !pos.plyIsDone)) {
+        return -1;
+      }
+      return pos.plyID;
+    },
   },
   methods: {
     send(event) {
@@ -68,7 +75,7 @@ export default {
           this.$store.dispatch("game/ADD_NOTE", {
             message: this.message.trim(),
           });
-          this.$emit("added");
+          this.$emit("added", { plyID: this.currentPlyID });
         }
         this.$refs.input.blur();
         this.message = "";
