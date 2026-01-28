@@ -307,7 +307,11 @@ export default {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      this.$store.dispatch("game/SET_EVAL", null);
+      // Restore current position's suggestion evaluation
+      const suggestion = this.$store.getters["game/suggestion"](this.tps);
+      const eval_ =
+        suggestion && "evaluation" in suggestion ? suggestion.evaluation : null;
+      this.$store.dispatch("game/SET_EVAL", eval_);
     },
     insertFollowingPlies(index) {
       if (this.ply === null || this.isBoardDisabled) {
