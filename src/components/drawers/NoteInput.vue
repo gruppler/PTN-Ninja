@@ -15,7 +15,7 @@
       outlined
       color="primary"
       bg-color="primary"
-      :dark="primaryDark"
+      :dark="dark"
     >
       <template v-slot:append>
         <q-btn
@@ -41,7 +41,7 @@ export default {
     };
   },
   computed: {
-    primaryDark() {
+    dark() {
       return this.$store.state.ui.theme.primaryDark;
     },
   },

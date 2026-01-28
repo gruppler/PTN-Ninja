@@ -531,7 +531,7 @@ export default {
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
     "Apply Options": "Apply Options",
-    "Engine Moves": "Engine Suggestions",
+    "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
     "Clear Engines Unsaved Results": "Clear Engine's Unsaved Results",
     "Clear Positions Unsaved Results": "Clear Position's Unsaved Results",

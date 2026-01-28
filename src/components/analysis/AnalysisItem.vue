@@ -168,6 +168,7 @@
         @click.stop="expanded = !expanded"
         :icon="expanded ? 'arrow_drop_up' : 'arrow_drop_down'"
         class="expand-btn q-mt-auto"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
         flat
         dense
       >

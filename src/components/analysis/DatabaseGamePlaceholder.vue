@@ -8,6 +8,7 @@
             width="8em"
             height="1.15em"
             :animation="animation"
+            :dark="dark"
             class="inline-block"
           />
         </q-item-label>
@@ -17,6 +18,7 @@
             width="7em"
             height="1.15em"
             :animation="animation"
+            :dark="dark"
             class="inline-block"
           />
         </q-item-label>
@@ -26,20 +28,27 @@
             width="5em"
             height="1em"
             :animation="animation"
+            :dark="dark"
             class="inline-block"
           />
         </q-item-label>
       </q-item-section>
       <q-item-section class="q-mr-md q-py-sm" side>
-        <q-skeleton width="2.5em" height="1.5em" :animation="animation" />
+        <q-skeleton
+          width="2.5em"
+          height="1.5em"
+          :animation="animation"
+          :dark="dark"
+        />
         <q-skeleton
           class="q-mt-xs"
           width="2em"
           height="1.15em"
           :animation="animation"
+          :dark="dark"
         />
       </q-item-section>
-      <q-separator style="opacity: 0.5" vertical />
+      <q-separator style="opacity: 0.5" :dark="dark" vertical />
       <div style="width: 56px" />
     </q-item>
   </div>
@@ -57,6 +66,9 @@ export default {
   computed: {
     animation() {
       return this.static ? "none" : "wave";
+    },
+    dark() {
+      return this.$store.state.ui.theme.panelDark;
     },
   },
 };

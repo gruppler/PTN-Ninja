@@ -133,7 +133,7 @@
       class="bg-ui"
       :value="null"
       :options="availableBots"
-      :label="$t('Select Engine')"
+      :label="$t('Engine')"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -175,7 +175,7 @@
               v-model="localBotSettings[botID].address"
               :label="$t('tei.address')"
               :prefix="bot.protocol"
-              :dark="$store.state.ui.theme.panelDark"
+              :dark="dark"
               filled
               :disable="botState.isConnected || botState.isConnecting"
               item-aligned
@@ -191,7 +191,7 @@
                   max="65535"
                   step="1"
                   prefix=":"
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   filled
                   clearable
                   :disable="botState.isConnected || botState.isConnecting"
@@ -203,11 +203,7 @@
             <q-item
               tag="label"
               :disable="botState.isConnected || botState.isConnecting"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
+              :class="textClass"
               clickable
               v-ripple
             >
@@ -217,7 +213,7 @@
               <q-item-section side>
                 <q-toggle
                   v-model="localBotSettings[botID].ssl"
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   :disable="botState.isConnected || botState.isConnecting"
                 />
               </q-item-section>
@@ -260,16 +256,10 @@
           />
 
           <!-- Search Limits -->
-          <q-separator :dark="$store.state.ui.theme.panelDark" />
-          <q-item-label
-            :class="[
-              $store.state.ui.theme.panelDark
-                ? 'text-textLight'
-                : 'text-textDark',
-            ]"
-            header
-            >{{ $t("analysis.limit") }}</q-item-label
-          >
+          <q-separator :dark="dark" />
+          <q-item-label :class="textClass" header>{{
+            $t("analysis.limit")
+          }}</q-item-label>
 
           <BotLimitInput
             v-for="type in limitTypes"
@@ -285,7 +275,7 @@
               (localBotSettings[botID].limitTypes &&
                 !localBotSettings[botID].limitTypes.includes(type.value))
             "
-            :dark="$store.state.ui.theme.panelDark"
+            :dark="dark"
             filled
             item-aligned
           >
@@ -307,11 +297,7 @@
           <q-item
             v-if="'normalizeEvaluation' in localBotSettings[botID]"
             tag="label"
-            :class="[
-              $store.state.ui.theme.panelDark
-                ? 'text-textLight'
-                : 'text-textDark',
-            ]"
+            :class="textClass"
             clickable
             v-ripple
           >
@@ -323,7 +309,7 @@
             <q-item-section side>
               <q-toggle
                 key="botSettings"
-                :dark="$store.state.ui.theme.panelDark"
+                :dark="dark"
                 v-model="localBotSettings[botID].normalizeEvaluation"
               />
             </q-item-section>
@@ -341,7 +327,7 @@
               :min="1"
               :max="1e4"
               :rules="[(s) => s > 0]"
-              :dark="$store.state.ui.theme.panelDark"
+              :dark="dark"
               hide-bottom-space
               filled
               item-aligned
@@ -376,7 +362,7 @@
               bot.hasOptions
             "
           >
-            <q-separator :dark="$store.state.ui.theme.panelDark" />
+            <q-separator :dark="dark" />
 
             <BotOptionInput
               v-for="(option, name) in botMeta.options"
@@ -386,7 +372,7 @@
               :name="name"
               :disable="botState.isRunning || botState.isInteractiveEnabled"
               @action="bot.sendAction"
-              :dark="$store.state.ui.theme.panelDark"
+              :dark="dark"
               filled
               item-aligned
             />
@@ -460,7 +446,7 @@
 
         <!-- Progress indicators for analysis -->
         <div
-          class="bg-panel shadow-1 row no-wrap justify-end q-pr-md"
+          class="shadow-1 row no-wrap justify-end q-pr-md"
           style="height: 36px"
         >
           <div
@@ -486,11 +472,7 @@
               <Linenum
                 :linenum="botState.analyzingPly.linenum"
                 no-branch
-                :class="[
-                  $store.state.ui.theme.panelDark
-                    ? 'text-textLight'
-                    : 'text-textDark',
-                ]"
+                :class="textClass"
               />
               <PlyChip
                 :ply="botState.analyzingPly"
@@ -515,11 +497,7 @@
               <Linenum
                 :linenum="nextPlayedPly.linenum"
                 no-branch
-                :class="[
-                  $store.state.ui.theme.panelDark
-                    ? 'text-textLight'
-                    : 'text-textDark',
-                ]"
+                :class="textClass"
               />
               <PlyChip
                 :ply="nextPlayedPly"
@@ -548,7 +526,7 @@
           <q-btn
             @click.stop="enableLogging = !enableLogging"
             icon="logs"
-            :color="enableLogging ? 'primary' : ''"
+            :color="enableLogging ? 'primary' : textColor"
             stretch
             dense
             flat
@@ -606,6 +584,8 @@
             !botState.isTeiOk &&
             !botState.isReady
           "
+          :dark="dark"
+          :color="textColor"
         />
       </div>
 
@@ -645,11 +625,7 @@
           />
           <q-item
             class="flex-center absolute-center full-width"
-            :class="[
-              $store.state.ui.theme.panelDark
-                ? 'text-textLight'
-                : 'text-textDark',
-            ]"
+            :class="textClass"
           >
             {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
           </q-item>
@@ -657,13 +633,7 @@
       </smooth-reflow>
 
       <!-- Bot Action Buttons -->
-      <q-btn-group
-        :class="[
-          $store.state.ui.theme.panelDark ? 'text-textLight' : 'text-textDark',
-        ]"
-        spread
-        stretch
-      >
+      <q-btn-group :class="textClass" spread stretch>
         <q-btn icon="save" spread stretch>
           <hint>{{ $t("Save") }}</hint>
           <q-menu
@@ -855,6 +825,15 @@ export default {
           collapsed: !value,
         });
       },
+    },
+    dark() {
+      return this.$store.state.ui.theme.panelDark;
+    },
+    textColor() {
+      return this.dark ? "textLight" : "textDark";
+    },
+    textClass() {
+      return "text-" + this.textColor;
     },
     botID() {
       return this.botId;

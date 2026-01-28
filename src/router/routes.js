@@ -114,12 +114,12 @@ const routes = [
       },
       {
         name: "bot",
-        path: "/bot/:botID?",
+        path: "/engine/:botID?",
         component: () => import("../dialogs/EditBot"),
       },
       {
         name: "bot-new",
-        path: "/bot/new",
+        path: "/engine/new",
         component: () => import("../dialogs/EditBot"),
         props: { isNewBot: true },
       },

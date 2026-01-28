@@ -48,9 +48,7 @@
         </q-item>
       </smooth-reflow>
 
-      <q-separator />
-
-      <NoteInput ref="noteInput" />
+      <NoteInput ref="noteInput" style="position: sticky; bottom: 0" />
     </recess>
   </q-expansion-item>
 </template>

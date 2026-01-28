@@ -37,6 +37,7 @@
         v-if="showMenu"
         class="analysis-item-menu-btn"
         icon="menu_vertical"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
         flat
         dense
       >

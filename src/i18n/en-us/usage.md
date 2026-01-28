@@ -403,7 +403,7 @@ When using the "Analyze Game" or "Analyze Branch" button, any positions that hav
 
 After full game or branch analysis, the evaluation score and PV ("principle variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save after Search" option in the Engine Analysis settings. When disabled, you must manually save the results using the engine menu.
 
-The number of plies saved to notes can be changed in the engine's settings, accessed via the 'cog' icon in the Engine Suggestions section. The "Suggestions to Save per Engine" setting limits how many suggestions are saved per position for each engine.
+The number of plies saved to notes can be changed in the engine's settings, accessed via the 'cog' icon in the Engine Analysis section. The "Suggestions to Save per Engine" setting limits how many suggestions are saved per position for each engine.
 
 The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
 

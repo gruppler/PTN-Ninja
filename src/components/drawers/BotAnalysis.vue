@@ -23,7 +23,7 @@
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
-            @click.stop="showGlobalSettings = !showGlobalSettings"
+            @click.stop="toggleGlobalSettings"
             icon="settings"
             :color="showGlobalSettings ? 'primary' : ''"
             round
@@ -38,7 +38,7 @@
       <recess>
         <!-- Global Settings -->
         <smooth-reflow>
-          <div v-if="showGlobalSettings">
+          <div v-if="showGlobalSettings" :class="'text-' + textColor">
             <!-- Show Continuation -->
             <q-item
               @click="showContinuationToggle = !showContinuationToggle"
@@ -51,10 +51,7 @@
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="showContinuationToggle"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="showContinuationToggle" :dark="dark" />
               </q-item-section>
             </q-item>
 
@@ -72,15 +69,12 @@
                   }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle
-                    v-model="showFullPVsToggle"
-                    :dark="$store.state.ui.theme.panelDark"
-                  />
+                  <q-toggle v-model="showFullPVsToggle" :dark="dark" />
                 </q-item-section>
               </q-item>
             </smooth-reflow>
 
-            <q-separator />
+            <q-separator :dark="dark" />
 
             <!-- Suggestions to Save -->
             <q-input
@@ -91,7 +85,7 @@
               :max="20"
               item-aligned
               filled
-              :dark="$store.state.ui.theme.panelDark"
+              :dark="dark"
             />
 
             <!-- Plies to Save -->
@@ -103,30 +97,18 @@
               :max="20"
               item-aligned
               filled
-              :dark="$store.state.ui.theme.panelDark"
+              :dark="dark"
             />
 
             <!-- Save Extra Info -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
+            <q-item tag="label" clickable v-ripple>
               <q-item-section>
                 <q-item-label>{{
                   $t("analysis.saveSearchStats")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="saveSearchStats"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="saveSearchStats" :dark="dark" />
               </q-item-section>
             </q-item>
 
@@ -142,10 +124,7 @@
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="autoSaveAfterSearch"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="autoSaveAfterSearch" :dark="dark" />
               </q-item-section>
             </q-item>
 
@@ -161,14 +140,11 @@
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="overwriteInferior"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="overwriteInferior" :dark="dark" />
               </q-item-section>
             </q-item>
 
-            <q-separator />
+            <q-separator :dark="dark" />
 
             <!-- Show Evaluation Marks -->
             <q-item @click="showEvalMarks = !showEvalMarks" clickable v-ripple>
@@ -176,10 +152,7 @@
                 <q-item-label>{{ $t("analysis.showEvalMarks") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="showEvalMarks"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="showEvalMarks" :dark="dark" />
               </q-item-section>
             </q-item>
 
@@ -189,25 +162,16 @@
                 <q-item-label>{{ $t("analysis.saveEvalMarks") }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="saveEvalMarks"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
+                <q-toggle v-model="saveEvalMarks" :dark="dark" />
               </q-item-section>
             </q-item>
 
             <!-- Evaluation Mark Thresholds -->
             <smooth-reflow>
               <template v-if="saveEvalMarks || showEvalMarks">
-                <q-item-label
-                  :class="[
-                    $store.state.ui.theme.panelDark
-                      ? 'text-textLight'
-                      : 'text-textDark',
-                  ]"
-                  header
-                  >{{ $t("analysis.evalMarkThresholds") }}</q-item-label
-                >
+                <q-item-label :class="'text-' + textColor" header>{{
+                  $t("analysis.evalMarkThresholds")
+                }}</q-item-label>
                 <q-input
                   type="number"
                   v-model.number="evalMarkThresholds.brilliant"
@@ -215,7 +179,7 @@
                   :step="0.01"
                   :min="0.01"
                   hide-bottom-space
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   filled
                   item-aligned
                 />
@@ -226,7 +190,7 @@
                   :step="0.01"
                   :min="0.01"
                   hide-bottom-space
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   filled
                   item-aligned
                 />
@@ -237,7 +201,7 @@
                   :step="0.01"
                   :max="-0.01"
                   hide-bottom-space
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   filled
                   item-aligned
                 />
@@ -248,7 +212,7 @@
                   :step="0.01"
                   :max="-0.01"
                   hide-bottom-space
-                  :dark="$store.state.ui.theme.panelDark"
+                  :dark="dark"
                   filled
                   item-aligned
                 />
@@ -262,7 +226,7 @@
           v-for="(botId, index) in activeBots"
           :key="'bot-' + (botId || index)"
         >
-          <q-separator v-if="index > 0" />
+          <q-separator v-if="index > 0" :dark="dark" />
           <BotSuggestions
             :bot-id="botId"
             :index="index"
@@ -276,7 +240,7 @@
           />
         </div>
 
-        <q-separator />
+        <q-separator :dark="dark" />
 
         <!-- Add Bot Button -->
         <q-btn
@@ -287,7 +251,7 @@
           color="primary"
         />
 
-        <q-separator />
+        <q-separator :dark="dark" />
       </recess>
     </q-expansion-item>
 
@@ -361,7 +325,7 @@
                   </q-item-section>
                 </q-item>
 
-                <q-separator />
+                <q-separator :dark="dark" />
 
                 <q-item
                   clickable
@@ -412,11 +376,7 @@
             />
             <q-item
               class="flex-center absolute-center full-width"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
+              :class="'text-' + textColor"
             >
               {{ $t("analysis.noResults") }}
             </q-item>
@@ -453,6 +413,12 @@ export default {
     };
   },
   computed: {
+    dark() {
+      return this.$store.state.ui.theme.panelDark;
+    },
+    textColor() {
+      return this.dark ? "textLight" : "textDark";
+    },
     activeBots() {
       return this.$store.state.analysis.activeBots;
     },
@@ -745,6 +711,12 @@ export default {
           this.$store.dispatch("game/UNDO");
         },
       });
+    },
+    toggleGlobalSettings() {
+      this.showGlobalSettings = !this.showGlobalSettings;
+      if (this.showGlobalSettings) {
+        this.sections.botSuggestions = true;
+      }
     },
   },
   watch: {

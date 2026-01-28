@@ -322,6 +322,8 @@
                 !botState.isTeiOk &&
                 !botState.isReady
               "
+              :dark="dark"
+              :color="textColor"
             />
           </div>
         </template>
@@ -375,6 +377,12 @@ export default {
     },
     icon() {
       return this.collapsed ? "up" : "down";
+    },
+    dark() {
+      return this.$store.state.ui.theme.panelDark;
+    },
+    textColor() {
+      return this.dark ? "textLight" : "textDark";
     },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
