@@ -700,19 +700,27 @@ const clearEvalMarks = () => {
 
 export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
   const allPlies = state.ptn && state.ptn.allPlies;
-  if (!Vue.prototype.$game || !allPlies || !tps) {
+  if (!Vue.prototype.$game || !tps) {
     return;
   }
 
-  const prevPly = allPlies.find((p) => p && p.tpsAfter === tps);
-  const nextPly = allPlies.find((p) => p && p.tpsBefore === tps);
-  const evalPly =
-    prevPly || allPlies.find((p) => p && p.id === 0 && p.tpsBefore === tps);
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
 
-  const evalPlyID = evalPly ? String(evalPly.id) : null;
+  // Check if this is the initial position (before first move)
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  const isInitialPosition = !prevPly;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
   const nextPlyID = nextPly ? String(nextPly.id) : null;
 
   Vue.prototype.$game.removeNotes((note, plyID) => {
+    // For initial position, check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
     if (evalPlyID && plyID === evalPlyID) {
       return (
         note.evaluation !== null || note.pv !== null || note.pvAfter !== null
@@ -747,10 +755,8 @@ export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   clearEvalMarks();
 };
 
-export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (
-  state,
-  { tps, engineName }
-) => {
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
+  const engineName = botName;
   const allPlies = state.ptn && state.ptn.allPlies;
   if (!Vue.prototype.$game || !tps) {
     return;
@@ -760,10 +766,9 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (
   const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
 
   // Check if this is the initial position (before first move)
-  // Also handle case where there are no plies (empty game with starting TPS)
-  const hasNoPlies = !allPlies || allPlies.length === 0;
-  const isInitialPosition =
-    (!prevPly && nextPly && nextPly.id === 0) || hasNoPlies;
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  // This handles both cases: when nextPly exists and when the game has no plies
+  const isInitialPosition = !prevPly;
 
   const evalPlyID = prevPly ? String(prevPly.id) : null;
   const nextPlyID = nextPly ? String(nextPly.id) : null;
@@ -772,7 +777,7 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (
     if (!noteMatchesEngine(note, engineName)) {
       return false;
     }
-    // For initial position, also check ply -1
+    // For initial position, check ply -1
     if (isInitialPosition && plyID === "-1") {
       return (
         note.evaluation !== null || note.pv !== null || note.pvAfter !== null
