@@ -13,4 +13,4 @@ export const SHORTENER_SERVICE = process.env.DEV
 export const OPENING_DB_API =
   /* process.env.DEV
   ? `http://localhost:5000/api/v1`
-  :  */ "https://tak-explorer.uc.r.appspot.com/api/v1";
+  :  */ "https://takexplorer-739863738814.us-central1.run.app/api/v1";

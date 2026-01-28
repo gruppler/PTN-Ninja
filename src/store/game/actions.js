@@ -535,9 +535,10 @@ export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
 import { OPENING_DB_API } from "../../constants";
 
 export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
-  const response = await fetch(`${OPENING_DB_API}/ptn/${id}`);
+  const response = await fetch(`${OPENING_DB_API}/game/${id}`);
   if (response && response.ok) {
-    const ptn = await response.text();
+    const text = await response.text();
+    const ptn = JSON.parse(text).ptn;
     let game = new Game({ ptn, state });
     return game;
   } else {
