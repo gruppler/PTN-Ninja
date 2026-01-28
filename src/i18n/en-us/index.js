@@ -265,7 +265,6 @@ export default {
   "Show PTN": "Show PTN",
   "Show Text": "Show Text",
   "Show Evaluation": "Show Evaluation",
-  "Show PV in Notes": "Show PV in Notes",
   "Show Analysis Notes": "Show Analysis Notes",
   "Hide Analysis Notes": "Hide Analysis Notes",
   Site: "Site",
