@@ -307,7 +307,13 @@ export default {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      this.$store.dispatch("game/SET_EVAL", null);
+      // Restore to saved suggestion's evaluation for current position, or null
+      const savedSuggestion = this.$store.getters["game/suggestion"](this.tps);
+      if (savedSuggestion && "evaluation" in savedSuggestion) {
+        this.$store.dispatch("game/SET_EVAL", savedSuggestion.evaluation);
+      } else {
+        this.$store.dispatch("game/SET_EVAL", null);
+      }
     },
     insertFollowingPlies(index) {
       if (this.ply === null || this.isBoardDisabled) {
