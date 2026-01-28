@@ -591,6 +591,19 @@ export default {
       if (!allPlies) return 1;
       const counts = {};
       const seenTps = new Set();
+
+      // Include initial position (before first ply)
+      const firstPly = allPlies[0];
+      if (firstPly && firstPly.tpsBefore) {
+        seenTps.add(firstPly.tpsBefore);
+        const suggestions = this.$store.getters["game/suggestions"](
+          firstPly.tpsBefore
+        );
+        if (suggestions.length > 0) {
+          counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
+        }
+      }
+
       for (const ply of allPlies) {
         if (!ply) continue;
         // Check tpsAfter for each ply
