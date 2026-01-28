@@ -244,6 +244,9 @@ kbd {
 .q-message-text-content {
   white-space: pre-wrap;
 }
+.q-message-text:last-child {
+  min-height: auto;
+}
 .q-menu:not(.q-branch-menu),
 .q-menu:not(.q-branch-menu) .q-list {
   user-select: none;

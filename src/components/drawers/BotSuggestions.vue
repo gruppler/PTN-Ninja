@@ -511,6 +511,7 @@
           <div
             v-if="botState.time !== null || botState.nps !== null"
             class="text-caption text-no-wrap text-right column justify-center q-px-sm"
+            :class="textClass"
             style="line-height: 1.1em"
           >
             <div v-if="botState.time !== null">
