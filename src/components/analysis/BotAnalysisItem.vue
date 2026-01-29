@@ -21,7 +21,6 @@
     :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
-    :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
     :fixed-height="fixedHeight"
     :expandable="expandable"
     :show-continuation="showContinuation"

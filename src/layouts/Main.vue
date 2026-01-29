@@ -544,8 +544,14 @@ export default {
         event.target.matches(".q-notification.note") ||
         event.target.matches(".q-notification.note .q-notification__message")
       ) {
-        this.textTab = "notes";
         this.showText = true;
+        if (
+          !this.hasAnalysis ||
+          !this.textTab === "analysis" ||
+          !this.$store.state.ui.analysisSections.positionNotes
+        ) {
+          this.textTab = "notes";
+        }
       } else if (
         event.target.matches(".q-notification.game") ||
         event.target.matches(".q-notification.game .q-notification__message") ||

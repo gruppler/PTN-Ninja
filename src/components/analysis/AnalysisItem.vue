@@ -236,7 +236,6 @@ export default {
       type: Number,
       default: 0,
     },
-    animate: Boolean,
     fixedHeight: Boolean,
     expandable: Boolean,
     showContinuation: {
@@ -257,6 +256,11 @@ export default {
   computed: {
     isLimited() {
       return this.fixedHeight && !this.expanded;
+    },
+    animate() {
+      return (
+        this.$store.state.ui.animateBoard && !this.$store.state.ui.scrubbing
+      );
     },
     showAfterColumn() {
       return this.$slots.after || (this.expandable && this.showExpandButton);
