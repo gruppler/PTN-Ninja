@@ -2,6 +2,7 @@ import Vue from "vue";
 import { parseURLparams } from "../../router/routes";
 import router from "../../router";
 import { parsePV } from "../../utilities";
+import { bothPlayersHaveFlats } from "../../Game/PTN/TPS";
 
 export const uniqueName =
   (state) =>
@@ -123,9 +124,14 @@ export const suggestions = (state) => (tps) => {
     const tpsParts = tps.split(" ");
     const tpsPlayer = tpsParts.length >= 2 ? Number(tpsParts[1]) : 1;
     const tpsMoveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 1;
-    // Opening swap: on move 1, player places opponent's color
+    // Opening swap: on move 1 when both players haven't placed flats yet
+    const isFirstMove = tpsMoveNumber === 1 && !bothPlayersHaveFlats(tps);
     const tpsColor =
-      tpsMoveNumber === 1 ? (tpsPlayer === 1 ? 2 : 1) : tpsPlayer;
+      state.config.openingSwap && isFirstMove
+        ? tpsPlayer === 1
+          ? 2
+          : 1
+        : tpsPlayer;
     for (const note of notes) {
       if (note.pvAfter !== null) {
         const noteIndex = notes.indexOf(note);
@@ -163,7 +169,16 @@ export const suggestions = (state) => (tps) => {
         if (note.pvAfter !== null) {
           // Determine player/color for the position after this ply
           const nextPlayer = ply.player === 1 ? 2 : 1;
-          const nextColor = nextPlayer;
+          // Parse TPS to get move number for opening swap check
+          const tpsParts = tps.split(" ");
+          const tpsMoveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 1;
+          const isFirstMove = tpsMoveNumber === 1 && !bothPlayersHaveFlats(tps);
+          const nextColor =
+            state.config.openingSwap && isFirstMove
+              ? nextPlayer === 1
+                ? 2
+                : 1
+              : nextPlayer;
           // Each note.pvAfter can contain multiple PV arrays
           const noteIndex = notes.indexOf(note);
           for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
@@ -198,9 +213,14 @@ export const suggestions = (state) => (tps) => {
     const tpsPlayerOld = tpsPartsOld.length >= 2 ? Number(tpsPartsOld[1]) : 1;
     const tpsMoveNumberOld =
       tpsPartsOld.length >= 3 ? Number(tpsPartsOld[2]) : 1;
-    // Opening swap: on move 1, player places opponent's color
+    // Opening swap: on move 1 when both players haven't placed flats yet
+    const isFirstMoveOld = tpsMoveNumberOld === 1 && !bothPlayersHaveFlats(tps);
     const tpsColorOld =
-      tpsMoveNumberOld === 1 ? (tpsPlayerOld === 1 ? 2 : 1) : tpsPlayerOld;
+      state.config.openingSwap && isFirstMoveOld
+        ? tpsPlayerOld === 1
+          ? 2
+          : 1
+        : tpsPlayerOld;
     for (const note of notes) {
       if (note.pv !== null) {
         const noteIndex = notes.indexOf(note);

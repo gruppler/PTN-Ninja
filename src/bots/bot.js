@@ -28,6 +28,7 @@ import {
   getPVAfter,
 } from "../Game/PTN/Comment";
 import { pliesEqual } from "../Game/PTN/Ply";
+import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
 
 export function formatEvaluation(value) {
   return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
@@ -949,8 +950,9 @@ export default class Bot {
 
     // Determine ply colors
     const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+    const isFirstMove = moveNumber === 1 && !bothPlayersHaveFlats(tps);
     const initialColor =
-      this.openingSwap && moveNumber === 1
+      this.openingSwap && isFirstMove
         ? initialPlayer == 1
           ? 2
           : 1
