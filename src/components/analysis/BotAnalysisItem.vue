@@ -34,7 +34,7 @@
     <template v-slot:after>
       <slot name="after" />
       <q-btn
-        v-if="showMenu"
+        v-if="showMenu && !isBoardDisabled"
         class="analysis-item-menu-btn"
         icon="menu_vertical"
         :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
@@ -88,6 +88,9 @@ export default {
     },
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     seconds() {
       return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
     },
