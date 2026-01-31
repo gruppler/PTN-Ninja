@@ -192,6 +192,18 @@ export default class GameComments {
     return this.addComments("notes", messages);
   }
 
+  setNotes(plyID, messages) {
+    // Clear existing notes for this ply and set new ones
+    this.removePlyComments(plyID);
+    if (messages && messages.length) {
+      messages.forEach((message) => {
+        this._addComment("notes", message, plyID);
+      });
+      this._updatePTN(true);
+      this.board.updateCommentsOutput();
+    }
+  }
+
   editNote(plyID, index, message) {
     return this.editComment("notes", plyID, index, message);
   }

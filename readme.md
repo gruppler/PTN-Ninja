@@ -255,6 +255,10 @@ For example:
 
 - Set the game title
 
+#### `SET_NOTES` (value: `<Object>: { plyID, messages }`)
+
+- Replace all notes on the specified ply with the provided array of messages. Pass an empty array to clear notes for that ply.
+
 #### `SET_PLAYER` (value: `1|2`)
 
 - Set the user as player 1 or 2, disabling input during the opponent's turn.
