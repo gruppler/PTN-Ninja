@@ -103,19 +103,30 @@
             </span>
           </q-item-label>
           <q-item-label
-            v-if="(count !== null && countLabel) || seconds !== null"
+            v-if="
+              (count !== null && countLabel && !hideCount) ||
+              (seconds !== null && !hideSeconds)
+            "
             class="count"
             caption
           >
-            <template v-if="count !== null && countLabel">{{
+            <template v-if="count !== null && countLabel && !hideCount">{{
               $tc(countLabel, $n(count, "n0"))
             }}</template>
-            <template v-if="count !== null && seconds !== null"> / </template>
-            <template v-if="seconds !== null">
+            <template
+              v-if="
+                count !== null && !hideCount && seconds !== null && !hideSeconds
+              "
+            >
+              /
+            </template>
+            <template v-if="seconds !== null && !hideSeconds">
               {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
               {{ $t("analysis.secondsUnit") }}
             </template>
-            <tooltip v-if="count !== null && seconds">
+            <tooltip
+              v-if="count !== null && !hideCount && seconds && !hideSeconds"
+            >
               {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
             </tooltip>
           </q-item-label>
@@ -243,6 +254,14 @@ export default {
       default: true,
     },
     keepHighlighted: {
+      type: Boolean,
+      default: false,
+    },
+    hideCount: {
+      type: Boolean,
+      default: false,
+    },
+    hideSeconds: {
       type: Boolean,
       default: false,
     },

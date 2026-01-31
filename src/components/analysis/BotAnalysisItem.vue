@@ -24,6 +24,8 @@
     :fixed-height="fixedHeight"
     :expandable="expandable"
     :show-continuation="showContinuation"
+    :hide-count="hideCount"
+    :hide-seconds="hideSeconds"
     v-bind="$attrs"
     v-on="$listeners"
   >
@@ -65,6 +67,10 @@ export default {
   components: { AnalysisItem },
   props: {
     suggestion: Object,
+    prevSuggestion: {
+      type: Object,
+      default: null,
+    },
     showBotName: {
       type: Boolean,
       default: false,
@@ -92,6 +98,22 @@ export default {
     },
     seconds() {
       return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
+    },
+    hideCount() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.nodes !== null &&
+        this.suggestion.nodes !== undefined &&
+        this.suggestion.nodes === this.prevSuggestion.nodes
+      );
+    },
+    hideSeconds() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.time !== null &&
+        this.suggestion.time !== undefined &&
+        this.suggestion.time === this.prevSuggestion.time
+      );
     },
     pv() {
       return [this.suggestion.ply].concat(this.suggestion.followingPlies);

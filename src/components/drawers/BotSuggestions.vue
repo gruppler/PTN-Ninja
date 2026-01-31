@@ -595,6 +595,7 @@
           v-for="(suggestion, i) in suggestions"
           :key="'unsaved-' + i"
           :suggestion="suggestion"
+          :prev-suggestion="i > 0 ? suggestions[i - 1] : null"
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
           :keep-highlighted="hoveredSuggestionIndex === i"

@@ -353,6 +353,7 @@
             v-for="(suggestion, i) in savedSuggestions"
             :key="'saved-' + i"
             :suggestion="suggestion"
+            :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
             show-bot-name
             show-menu
             :fixed-height="!showFullPVs"
