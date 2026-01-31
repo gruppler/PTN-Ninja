@@ -503,7 +503,6 @@
                 :ply="nextPlayedPly"
                 class="no-pointer-events q-ma-none"
                 no-branches
-                done
               />
             </q-btn>
           </div>
