@@ -199,9 +199,9 @@ export default class GameComments {
       messages.forEach((message) => {
         this._addComment("notes", message, plyID);
       });
-      this._updatePTN(true);
-      this.board.updateCommentsOutput();
     }
+    this._updatePTN(true);
+    this.board.updateCommentsOutput();
   }
 
   editNote(plyID, index, message) {
