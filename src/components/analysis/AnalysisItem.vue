@@ -291,14 +291,14 @@ export default {
   },
   methods: {
     insertPly() {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
     highlight() {
-      if (this.ply === null) {
+      if (!this.ply) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
@@ -307,7 +307,7 @@ export default {
       }
     },
     unhighlight() {
-      if (this.ply === null || this.keepHighlighted) {
+      if (!this.ply || this.keepHighlighted) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
@@ -318,7 +318,7 @@ export default {
       this.$store.dispatch("game/SET_EVAL", eval_);
     },
     insertFollowingPlies(index) {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       let prev = 0;
