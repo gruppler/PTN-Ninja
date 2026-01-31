@@ -182,7 +182,7 @@ export default class GameBase {
             delete item.ptn;
           } catch (error) {
             console.warn(error);
-            // this.warnings.push(error);
+            this.warnings.push(error);
             let match = ptn.match(/]\s*/);
             if (match) {
               ptn = ptn.substring(match.index + 1).trimStart();

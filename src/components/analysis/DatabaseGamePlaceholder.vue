@@ -3,9 +3,8 @@
     <q-item class="q-pr-none q-py-none">
       <q-item-section class="q-py-sm">
         <q-item-label>
-          <q-icon name="player1" left class="invisible" />
           <q-skeleton
-            width="8em"
+            width="100%"
             height="1.15em"
             :animation="animation"
             :dark="dark"
@@ -13,19 +12,17 @@
           />
         </q-item-label>
         <q-item-label>
-          <q-icon name="player2" left class="invisible" />
+          <q-skeleton
+            width="100%"
+            height="1.15em"
+            :animation="animation"
+            :dark="dark"
+            class="inline-block"
+          />
+        </q-item-label>
+        <q-item-label>
           <q-skeleton
             width="7em"
-            height="1.15em"
-            :animation="animation"
-            :dark="dark"
-            class="inline-block"
-          />
-        </q-item-label>
-        <q-item-label>
-          <span class="q-px-md" />
-          <q-skeleton
-            width="5em"
             height="1em"
             :animation="animation"
             :dark="dark"
@@ -33,10 +30,19 @@
           />
         </q-item-label>
       </q-item-section>
+      <q-item-section class="q-py-sm" side>
+        <q-skeleton
+          width="2.75em"
+          height="2em"
+          :animation="animation"
+          :dark="dark"
+          class="q-mx-xs"
+        />
+      </q-item-section>
       <q-item-section class="q-mr-md q-py-sm" side>
         <q-skeleton
-          width="2.5em"
-          height="1.5em"
+          width="3.5em"
+          height="2em"
           :animation="animation"
           :dark="dark"
         />
@@ -48,8 +54,6 @@
           :dark="dark"
         />
       </q-item-section>
-      <q-separator style="opacity: 0.5" :dark="dark" vertical />
-      <div style="width: 56px" />
     </q-item>
   </div>
 </template>

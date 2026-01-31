@@ -546,6 +546,7 @@ export default {
     gameOver: "Game Over",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
+    openGamesInNewTab: "Open Games in New Tab",
     saveEvalMarks: "Save Evaluation Marks",
     showEvalMarks: "Show Evaluation Marks",
     evalMarkThresholds: "Evaluation Mark Thresholds",

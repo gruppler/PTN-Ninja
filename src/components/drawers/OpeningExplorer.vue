@@ -121,6 +121,33 @@
               </q-item-section>
             </q-item>
 
+            <!-- Open in New Tab -->
+            <q-item
+              tag="label"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
+              <q-item-section avatar>
+                <q-icon name="open_in_new" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  {{ $t("analysis.openGamesInNewTab") }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="dbSettings.openGamesInNewTab"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
             <!-- Player 1 -->
             <q-select
               ref="player1"
@@ -279,7 +306,7 @@
               :label="$t('analysis.maxTopGames')"
               type="number"
               min="1"
-              max="4"
+              max="10"
               step="1"
               item-aligned
               filled
@@ -459,6 +486,7 @@
               :komi="game.komi"
               :tournament="game.tournament"
               :dark="$store.state.ui.theme.panelDark"
+              :next-move="game.nextMove"
             />
             <DatabaseGamePlaceholder
               v-for="i in dbGamesFillerCount"
@@ -841,6 +869,7 @@ export default {
             date: timestampToDate(game.date),
             komi: game.komi,
             tournament: game.tournament,
+            nextMove: game.next_move,
           }))
         );
 
