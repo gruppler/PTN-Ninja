@@ -35,30 +35,31 @@ main,
   src: url("./fonts/Source+Code+Pro_700_normal.woff");
 }
 
+.q-item__section--side,
 .fg-inherit {
   color: inherit !important;
 }
 
 .bg-bg {
-  background: var(--q-color-bg) !important;
+  background-color: var(--q-color-bg) !important;
 }
 .text-textLight {
   color: var(--q-color-textLight) !important;
 }
 .bg-textLight {
-  background: var(--q-color-textLight) !important;
+  background-color: var(--q-color-textLight) !important;
 }
 .text-textDark {
   color: var(--q-color-textDark) !important;
 }
 .bg-textDark {
-  background: var(--q-color-textDark) !important;
+  background-color: var(--q-color-textDark) !important;
 }
 .text-ui {
   color: var(--q-color-ui) !important;
 }
 .bg-ui {
-  background: var(--q-color-ui) !important;
+  background-color: var(--q-color-ui) !important;
   color: var(--q-color-textDark) !important;
   body.isDark & {
     color: var(--q-color-textLight) !important;
@@ -71,7 +72,7 @@ main,
   }
 }
 .bg-accent {
-  background: var(--q-color-accent) !important;
+  background-color: var(--q-color-accent) !important;
   color: var(--q-color-textDark) !important;
   body.accentDark & {
     color: var(--q-color-textLight) !important;
@@ -83,7 +84,7 @@ main,
 }
 .bg-panel,
 .bg-panelOpaque {
-  background: var(--q-color-panel) !important;
+  background-color: var(--q-color-panel) !important;
   color: var(--q-color-textDark);
   body.panelDark & {
     color: var(--q-color-textLight);
@@ -93,7 +94,7 @@ main,
   color: var(--q-color-player1) !important;
 }
 .bg-player1 {
-  background: var(--q-color-player1) !important;
+  background-color: var(--q-color-player1) !important;
   color: var(--q-color-textDark);
   body.player1Dark & {
     color: var(--q-color-textLight);
@@ -103,15 +104,28 @@ main,
   color: var(--q-color-player2) !important;
 }
 .bg-player2 {
-  background: var(--q-color-player2) !important;
+  background-color: var(--q-color-player2) !important;
   color: var(--q-color-textDark);
   body.player2Dark & {
     color: var(--q-color-textLight);
   }
 }
 
+.bot-name {
+  font-weight: bold;
+  background-color: $highlight;
+  color: var(--q-color-textDark);
+  body.panelDark & {
+    color: var(--q-color-textLight);
+    background-color: $dim;
+  }
+  border-radius: $generic-border-radius;
+  margin: 0 2px;
+  padding: 2px 4px;
+}
+
 .q-dark {
-  background: var(--q-color-accent);
+  background-color: var(--q-color-accent);
 }
 
 .q-card,
@@ -120,7 +134,7 @@ main,
 .q-list--dark,
 .q-tab-panels,
 .q-tab-panels--dark {
-  background: var(--q-color-ui);
+  background-color: var(--q-color-ui);
   color: var(--q-color-textDark) !important;
   body.isDark & {
     color: var(--q-color-textLight) !important;
@@ -128,7 +142,7 @@ main,
 }
 
 ::selection {
-  background: var(--q-color-primary);
+  background-color: var(--q-color-primary);
   color: var(--q-color-textDark);
   body.primaryDark & {
     color: var(--q-color-textLight);
@@ -230,12 +244,21 @@ kbd {
 .q-message-text-content {
   white-space: pre-wrap;
 }
-.q-menu {
+.q-message-text:last-child {
+  min-height: auto;
+}
+.q-menu:not(.q-branch-menu),
+.q-menu:not(.q-branch-menu) .q-list {
   user-select: none;
   background: var(--q-color-accent) !important;
-  color: var(--q-color-textDark) !important;
-  body.accentDark & {
-    color: var(--q-color-textLight) !important;
+  &,
+  .q-item--dark,
+  .q-list--dark .q-item__section--side:not(.q-item__section--avatar),
+  .q-item--dark .q-item__section--side:not(.q-item__section--avatar) {
+    color: var(--q-color-textDark) !important;
+    body.accentDark & {
+      color: var(--q-color-textLight) !important;
+    }
   }
 }
 

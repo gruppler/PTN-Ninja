@@ -8,9 +8,13 @@
     transition-hide="none"
     auto-close
   >
-    <q-list class="branch-menu" dense>
+    <q-list class="branch-menu bg-panel" dense>
       <template v-for="(ply, i) in branches">
-        <q-separator :key="'separator-' + i" v-if="showSeparator(i)" />
+        <q-separator
+          :key="'separator-' + i"
+          v-if="showSeparator(i)"
+          :dark="$store.state.ui.theme.panelDark"
+        />
         <q-item :key="i" ref="items" @click="select(ply)" clickable>
           <q-item-label class="row no-wrap overflow-hidden items-center">
             <span class="fade">
@@ -25,15 +29,20 @@
               :linenum="ply.linenum"
               :active-ply="ply"
               class="branch-container col-shrink"
+              no-edit
             />
-            <Ply :ply="ply" no-branches no-click>
-              <PlyPreview
-                :tps="ply.tpsAfter"
-                :hl="ply.text"
-                :options="$store.state.game.config"
-              />
-            </Ply>
+            <Ply :ply="ply" no-branches no-click />
           </q-item-label>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            separate-close-popup
+            context-menu
+            touch-position
+          >
+            <BranchContextMenu :branch="ply.branch" />
+          </q-menu>
         </q-item>
       </template>
     </q-list>
@@ -41,7 +50,7 @@
 </template>
 
 <script>
-import PlyPreview from "../controls/PlyPreview";
+import BranchContextMenu from "../controls/BranchContextMenu";
 import { findLastIndex } from "lodash";
 
 export default {
@@ -49,7 +58,7 @@ export default {
   components: {
     Linenum: () => import("../PTN/Linenum"),
     Ply: () => import("../PTN/Ply"),
-    PlyPreview,
+    BranchContextMenu,
   },
   props: {
     value: Boolean,

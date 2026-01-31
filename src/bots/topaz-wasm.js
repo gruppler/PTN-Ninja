@@ -8,8 +8,8 @@ export default class TopazWasm extends Bot {
     super({
       id: "topaz",
       icon: "local",
-      label: "analysis.bots.topaz",
-      description: "analysis.bots_description.topaz",
+      label: "analysis.engines.topaz",
+      description: "analysis.engines_description.topaz",
       isInteractive: false,
       sizeHalfKomis: { 6: [0] },
       settings: {
@@ -100,6 +100,11 @@ export default class TopazWasm extends Bot {
 
     const { tps, depth, score, nodes, pv, hash } = response;
 
+    // Get player to move from TPS - score is from their perspective
+    const initialPlayer = Number(tps.split(" ")[1]);
+    // Normalize to player 1's perspective (positive = good for player 1)
+    const evaluation = Number(score) * (initialPlayer === 1 ? 1 : -1);
+
     const results = {
       hash,
       tps,
@@ -108,7 +113,7 @@ export default class TopazWasm extends Bot {
           pv,
           depth,
           nodes,
-          // evaluation: Number(score),
+          evaluation,
         },
       ],
     };

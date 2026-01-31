@@ -93,6 +93,38 @@ export default class Move {
     ply.linenum = this.linenum;
     ply.branch = this.branch;
     ply.index = this.index * 2 + index - this.game.firstPlayer + 1;
+
+    // Set tree parent (for non-branch plies; branch plies get parent set in addBranch)
+    if (!ply.parent) {
+      if (index === 0) {
+        // ply1's parent is the last ply of the previous move in the same branch
+        const prevMove = this.game.moves.find(
+          (m) => m.branch === this.branch && m.number === this.number - 1
+        );
+        ply.parent =
+          prevMove && prevMove.ply2 && !prevMove.ply2.isNop
+            ? prevMove.ply2
+            : prevMove && prevMove.ply1 && !prevMove.ply1.isNop
+            ? prevMove.ply1
+            : null;
+      } else {
+        // ply2's parent is ply1 of the same move
+        ply.parent = this.ply1 && !this.ply1.isNop ? this.ply1 : null;
+      }
+    }
+    // Add to parent's children array (bidirectional link)
+    if (ply.parent && !ply.parent.children.includes(ply)) {
+      // Main continuation goes at index 0, branches are added later via addBranch
+      if (ply.parent.children.length === 0) {
+        ply.parent.children.push(ply);
+      } else if (!ply.branch || ply.branch === ply.parent.branch) {
+        // Same branch = main continuation, should be first child
+        ply.parent.children.unshift(ply);
+      } else {
+        // Different branch = alternative, add after main continuation
+        ply.parent.children.push(ply);
+      }
+    }
     if (oldPly) {
       if (oldPly.branches.length) {
         ply.branches = oldPly.branches;

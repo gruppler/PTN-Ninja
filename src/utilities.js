@@ -58,7 +58,7 @@ export function countedThrottle(func, wait) {
   };
 }
 
-function nextPly(player, color) {
+export function nextPly(player, color) {
   if (player === 2 && color === 1) {
     return { player: 1, color: 1 };
   }
@@ -216,6 +216,34 @@ export const notifyHint = (hint, options = {}) => {
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
+    ...options,
+  });
+};
+
+export const notifyUndo = ({ icon, message, handler, options = {} }) => {
+  let fg = store.state.ui.theme.isDark ? "textLight" : "textDark";
+  let bg = "ui";
+  const extraActions = options.actions || [];
+  delete options.actions;
+  return Notify.create({
+    icon,
+    message,
+    progressClass: "bg-primary",
+    color: bg,
+    textColor: fg,
+    position: "bottom",
+    timeout: 1e4,
+    progress: true,
+    multiLine: false,
+    actions: [
+      ...extraActions,
+      {
+        label: i18n.t("Undo"),
+        color: "primary",
+        handler,
+      },
+      { icon: "close", color: fg },
+    ],
     ...options,
   });
 };

@@ -182,7 +182,7 @@ export default {
       }
     },
     unseenCount() {
-      return this.games.filter((game) => game.config.unseen).length;
+      return this.games.filter((game) => game.config?.unseen).length;
     },
   },
   methods: {

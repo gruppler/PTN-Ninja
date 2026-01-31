@@ -97,23 +97,13 @@ export default {
       }
       const theme = cloneDeep(themes.splice(index, 1)[0]);
       this.$store.dispatch("ui/SET_UI", ["themes", themes]);
-      this.notify({
+      this.notifyUndo({
         icon: "color",
         message: this.$t("success.themeRemoved", theme),
-        timeout: 5000,
-        progress: true,
-        multiLine: false,
-        actions: [
-          {
-            label: this.$t("Undo"),
-            color: "primary",
-            handler: () => {
-              themes.splice(index, 0, theme);
-              this.$store.dispatch("ui/SET_UI", ["themes", themes]);
-            },
-          },
-          { icon: "close" },
-        ],
+        handler: () => {
+          themes.splice(index, 0, theme);
+          this.$store.dispatch("ui/SET_UI", ["themes", themes]);
+        },
       });
     },
   },

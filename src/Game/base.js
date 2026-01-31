@@ -100,6 +100,7 @@ export default class GameBase {
     editingTPS,
     highlighterEnabled,
     highlighterSquares,
+    ptnUI,
     onInit,
     onError,
     onAppendPly,
@@ -152,6 +153,7 @@ export default class GameBase {
     this.editingTPS = editingTPS;
     this.highlighterEnabled = Boolean(highlighterEnabled);
     this.highlighterSquares = highlighterSquares || {};
+    this.ptnUI = ptnUI || { branchPointOverrides: {} };
     this.defaultSize = defaultSize || 6;
     this.moves = [];
     this.branches = {};
@@ -598,6 +600,155 @@ export default class GameBase {
 
   getMovesSorted() {
     return flatten(this.movesGrouped);
+  }
+
+  // Get the root ply (first ply of main branch)
+  get rootPly() {
+    return this.plies.find((p) => p.index === 0 && p.branch === "") || null;
+  }
+
+  // Traverse tree and collect all plies in order (depth-first, main branch first)
+  getPliesFromTree() {
+    const result = [];
+    const visited = new Set();
+
+    const traverse = (ply) => {
+      if (!ply || visited.has(ply)) return;
+      visited.add(ply);
+      result.push(ply);
+
+      // Visit children: first child is main continuation, rest are branches
+      ply.children.forEach((child) => traverse(child));
+    };
+
+    const root = this.rootPly;
+    if (root) {
+      traverse(root);
+    }
+
+    return result;
+  }
+
+  // Find a ply from a serializable path (from Ply.getSerializablePath())
+  // Uses moveText to identify branch choices (stable across promotion)
+  findPlyFromPath(path) {
+    if (!path || !path.length) return null;
+
+    const target = path[path.length - 1];
+    const branchChoices = path.slice(0, -1);
+
+    // Find all plies matching the target move number, player, and move text
+    const candidates = this.plies.filter(
+      (p) =>
+        p.move.number === target.moveNumber &&
+        p.player === target.player &&
+        p.toString(true) === target.moveText
+    );
+
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+
+    // Multiple candidates - use branch choices to narrow down
+    for (const candidate of candidates) {
+      let matches = true;
+      let current = candidate;
+
+      // Walk up the tree and check branch choices by move text
+      for (let i = branchChoices.length - 1; i >= 0 && matches; i--) {
+        const choice = branchChoices[i];
+        // Find the branch point for this choice
+        while (current && current.parent) {
+          if (
+            current.branches.length > 1 &&
+            current.move.number === choice.moveNumber &&
+            current.player === choice.player
+          ) {
+            // Check if the move text matches
+            if (current.toString(true) !== choice.moveText) {
+              matches = false;
+            }
+            break;
+          }
+          current = current.parent;
+        }
+      }
+
+      if (matches) return candidate;
+    }
+
+    // Fallback to first candidate
+    return candidates[0];
+  }
+
+  // Debug method to verify parent relationships
+  verifyParentRelationships() {
+    const issues = [];
+    this.plies.forEach((ply) => {
+      if (ply.index === 0 && ply.branch === "") {
+        // First ply of main branch should have no parent
+        if (ply.parent !== null) {
+          const parentId = ply.parent ? ply.parent.id : "null";
+          issues.push(
+            "Ply " + ply.id + ": First main ply has parent " + parentId
+          );
+        }
+      } else if (ply.parent === null) {
+        issues.push(
+          "Ply " +
+            ply.id +
+            " (index " +
+            ply.index +
+            ', branch "' +
+            ply.branch +
+            '"): Missing parent'
+        );
+      }
+    });
+    if (issues.length) {
+      console.warn("Parent relationship issues:", issues);
+    } else {
+      console.log("All parent relationships verified OK");
+    }
+    return issues;
+  }
+
+  // Debug method to verify children relationships (bidirectional with parent)
+  verifyChildrenRelationships() {
+    const issues = [];
+    this.plies.forEach((ply) => {
+      // Check that each child has this ply as parent
+      ply.children.forEach((child, i) => {
+        if (child.parent !== ply) {
+          issues.push(
+            "Ply " +
+              ply.id +
+              ": child[" +
+              i +
+              "] (id " +
+              child.id +
+              ") has wrong parent (id " +
+              (child.parent ? child.parent.id : "null") +
+              ")"
+          );
+        }
+      });
+      // Check that if we have a parent, we're in their children array
+      if (ply.parent && !ply.parent.children.includes(ply)) {
+        issues.push(
+          "Ply " +
+            ply.id +
+            ": has parent " +
+            ply.parent.id +
+            " but not in parent's children"
+        );
+      }
+    });
+    if (issues.length) {
+      console.warn("Children relationship issues:", issues);
+    } else {
+      console.log("All children relationships verified OK");
+    }
+    return issues;
   }
 
   generateName(tags) {

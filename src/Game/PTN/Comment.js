@@ -5,11 +5,13 @@ const outputProps = [
   "time",
   "player",
   "message",
+  "botName",
   "depth",
   "evaluation",
   "ms",
   "nodes",
   "pv",
+  "pvAfter",
   "visits",
 ];
 
@@ -82,14 +84,35 @@ export function getNodes(message) {
 export function getPV(message) {
   let matches;
 
+  // Match old format: "pv " or "pv=" (NOT "pv>")
   matches = message.match(
-    /(?:\W|^)(pv([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
+    /(?:\W|^)(pv(?![>])([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
   );
   if (matches) {
     matches = matches.map((match) =>
       match
         .trim()
         .replace(/^pv[=\s]+/, "")
+        .split(/\s+/)
+    );
+    return matches;
+  }
+
+  return null;
+}
+
+export function getPVAfter(message) {
+  let matches;
+
+  // Match new format: "pv>" (PV for position AFTER this ply)
+  matches = message.match(
+    /(?:\W|^)(pv>(\s+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
+  );
+  if (matches) {
+    matches = matches.map((match) =>
+      match
+        .trim()
+        .replace(/^pv>\s*/, "")
         .split(/\s+/)
     );
     return matches;
@@ -106,6 +129,16 @@ export function getVisits(message) {
     return Number(matches[2]);
   }
 
+  return null;
+}
+
+export function getBotName(message) {
+  // Engine name stored as name:"name" (e.g., '+0.12/15 name:"Tiltak" 1234 nodes')
+  let matches = message.match(/name:"((?:[^"\\]|\\.)*)"/i);
+  if (matches) {
+    // Unescape any escaped quotes
+    return matches[1].replace(/\\"/g, '"');
+  }
   return null;
 }
 
@@ -151,8 +184,16 @@ export default class Comment {
     return getPV(this.message);
   }
 
+  get pvAfter() {
+    return getPVAfter(this.message);
+  }
+
   get visits() {
     return getVisits(this.message);
+  }
+
+  get botName() {
+    return getBotName(this.message);
   }
 
   get output() {

@@ -8,13 +8,12 @@ export default class TiltakCloud extends Bot {
     super({
       id: "tiltak-cloud",
       icon: "online",
-      label: "analysis.bots.tiltak-cloud",
-      description: "analysis.bots_description.tiltak-cloud",
+      label: "analysis.engines.tiltak-cloud",
+      description: "analysis.engines_description.tiltak-cloud",
       concurrency: 10,
       isInteractive: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
       settings: {
-        maxSuggestedMoves: 5,
         nodes: 1e5,
         movetime: 5e3,
         limitTypes: ["movetime"],
@@ -86,12 +85,17 @@ export default class TiltakCloud extends Bot {
     this.onReceive(data);
     const { SuggestMoves: suggestedMoves } = data;
 
+    // Get player to move from TPS - winning_probability is from their perspective
+    const initialPlayer = Number(tps.split(" ")[1]);
+
     const results = {
       tps,
       suggestions: suggestedMoves.map(
         ({ mv, visits, winning_probability, pv }) => {
           pv.unshift(mv);
-          const evaluation = 200 * (winning_probability - 0.5);
+          // Normalize to player 1's perspective (positive = good for player 1)
+          const evaluation =
+            200 * (winning_probability - 0.5) * (initialPlayer === 1 ? 1 : -1);
           const suggestion = { pv, visits, evaluation };
           if (time_control.FixedNodes) {
             suggestion.nodes = time_control.FixedNodes;

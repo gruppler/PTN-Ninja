@@ -30,7 +30,13 @@
 
         <q-menu transition-show="none" transition-hide="none" square>
           <q-list>
-            <ThemeSelector v-model="themeID" edit-button filled square>
+            <ThemeSelector
+              v-model="themeID"
+              :dark="$store.state.ui.theme.accentDark"
+              edit-button
+              filled
+              square
+            >
               <template v-slot:prepend>
                 <q-icon name="color" />
               </template>

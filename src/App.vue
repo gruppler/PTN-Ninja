@@ -113,6 +113,7 @@ export default {
         case "EDIT_NOTE":
         case "ADD_NOTE":
         case "ADD_NOTES":
+        case "SET_NOTES":
         case "REMOVE_NOTE":
           this.$store.dispatch("game/" + data.action, data.value || {});
           break;

@@ -39,7 +39,11 @@ export const DELETE_BOT = ({ state, commit, dispatch }, botID) => {
       LocalStorage.set("botSettings", omit(state.botSettings, botID));
       LocalStorage.set("customBots", omit(state.customBots, botID));
       commit("DELETE_BOT", botID);
-      // SET_BOT(state, state.defaults.botID);
+      // Remove from active bots if present
+      const activeIndex = state.activeBots.indexOf(botID);
+      if (activeIndex !== -1) {
+        dispatch("REMOVE_ACTIVE_BOT", activeIndex);
+      }
       dispatch("SET", ["botID", "tei"]);
       return true;
     } catch (error) {
@@ -58,4 +62,62 @@ export const BOT_CONNECT = ({ state }) => {
 
 export const BOT_DISCONNECT = ({ state }) => {
   bots[state.botID].disconnect();
+};
+
+// Active Bots management with LocalStorage persistence
+const saveActiveBots = (state) => {
+  try {
+    LocalStorage.set("activeBots", state.activeBots);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
+};
+
+export const ADD_ACTIVE_BOT = ({ state, commit }, botId = null) => {
+  commit("ADD_ACTIVE_BOT", botId);
+  saveActiveBots(state);
+};
+
+export const SET_ACTIVE_BOT = ({ state, commit }, { index, botId }) => {
+  commit("SET_ACTIVE_BOT", { index, botId });
+  saveActiveBots(state);
+};
+
+export const REMOVE_ACTIVE_BOT = ({ state, commit }, index) => {
+  commit("REMOVE_ACTIVE_BOT", index);
+  saveActiveBots(state);
+};
+
+export const INSERT_ACTIVE_BOT = ({ state, commit }, { index, botId }) => {
+  commit("INSERT_ACTIVE_BOT", { index, botId });
+  saveActiveBots(state);
+};
+
+export const REORDER_ACTIVE_BOTS = (
+  { state, commit },
+  { fromIndex, toIndex }
+) => {
+  commit("REORDER_ACTIVE_BOTS", { fromIndex, toIndex });
+  saveActiveBots(state);
+  saveCollapsedBots(state);
+};
+
+// Collapsed bots persistence
+const saveCollapsedBots = (state) => {
+  try {
+    LocalStorage.set("collapsedBots", state.collapsedBots);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
+};
+
+export const SET_BOT_COLLAPSED = ({ state, commit }, { index, collapsed }) => {
+  commit("SET_BOT_COLLAPSED", { index, collapsed });
+  saveCollapsedBots(state);
 };

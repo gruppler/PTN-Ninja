@@ -187,7 +187,7 @@
       :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -195,12 +195,8 @@
           <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" recess />
+          <PTN ref="ptn" class="absolute-fit" recess />
         </div>
-        <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-          <UndoButtons spread stretch flat unelevated />
-          <EvalButtons class="full-width" spread stretch flat unelevated />
-        </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -212,7 +208,7 @@
       :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -286,6 +282,7 @@
     <ErrorNotifications :errors="errors" />
     <GameNotifications ref="gameNotifications" />
     <NoteNotifications ref="noteNotifications" />
+    <PlyTooltipProvider />
   </q-layout>
   <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
     No Game
@@ -305,13 +302,12 @@ import Analysis from "../components/drawers/Analysis";
 import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
+import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -337,14 +333,13 @@ export default {
     PTN,
     Notes,
     Analysis,
+    PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
     NavControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     Chat,
@@ -549,8 +544,14 @@ export default {
         event.target.matches(".q-notification.note") ||
         event.target.matches(".q-notification.note .q-notification__message")
       ) {
-        this.textTab = "notes";
         this.showText = true;
+        if (
+          !this.hasAnalysis ||
+          !this.textTab === "analysis" ||
+          !this.$store.state.ui.analysisSections.positionNotes
+        ) {
+          this.textTab = "notes";
+        }
       } else if (
         event.target.matches(".q-notification.game") ||
         event.target.matches(".q-notification.game .q-notification__message") ||

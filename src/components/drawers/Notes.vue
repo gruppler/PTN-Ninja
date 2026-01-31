@@ -31,67 +31,70 @@
       </q-scroll-area>
       <q-resize-observer @resize="scroll" />
     </component>
-    <div class="bg-ui row no-wrap">
-      <q-input
-        ref="input"
-        @keydown.enter="send"
-        @keydown.esc="cancelEdit"
-        @blur="cancelEdit"
-        debounce="50"
-        class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
-        v-model="message"
-        :placeholder="$t('Note')"
-        dense
-        rounded
-        autogrow
-        outlined
-        color="primary"
-        bg-color="primary"
-        :dark="primaryDark"
-      >
-        <template v-slot:append>
-          <q-btn
-            @click="send"
-            :icon="editing ? 'edit' : 'add_note'"
-            :disabled="!message.trim().length"
-            flat
-            dense
-            round
-          />
-        </template>
-      </q-input>
-      <q-btn icon="menu_vertical" spread stretch flat dense>
-        <q-menu transition-show="none" transition-hide="none" auto-close square>
-          <q-list>
-            <q-item clickable @click="removeAll">
-              <q-item-section side>
-                <q-icon name="delete" />
-              </q-item-section>
-              <q-item-section>{{ $t("Remove All") }}</q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
-      </q-btn>
-    </div>
+    <q-toolbar class="bg-ui q-pa-none">
+      <q-btn-group class="full-width" spread stretch flat unelevated>
+        <q-btn @click="scrollToTop" icon="to_top" flat spread stretch>
+          <hint>{{ $t("Top") }}</hint>
+        </q-btn>
+        <q-btn @click="jumpToCurrent" icon="to_current" flat spread stretch>
+          <hint>{{ $t("Current") }}</hint>
+        </q-btn>
+        <q-btn @click="scrollToBottom" icon="to_bottom" flat spread stretch>
+          <hint>{{ $t("Bottom") }}</hint>
+        </q-btn>
+        <q-separator vertical />
+        <q-btn
+          @click.stop="hideAnalysisNotes = !hideAnalysisNotes"
+          icon="analysis"
+          :color="hideAnalysisNotes ? '' : 'primary'"
+          round
+          dense
+          flat
+        >
+          <hint>{{
+            $t(
+              hideAnalysisNotes ? "Show Analysis Notes" : "Hide Analysis Notes"
+            )
+          }}</hint>
+        </q-btn>
+        <q-btn
+          @click="removeCurrentPosition"
+          icon="delete"
+          :disable="!hasCurrentPositionNotes"
+          flat
+          spread
+          stretch
+        >
+          <hint>{{ $t("Remove Current Positions Notes") }}</hint>
+        </q-btn>
+        <q-btn
+          @click="removeAll"
+          icon="delete_all"
+          :disable="!hasAnyNotes"
+          flat
+          spread
+          stretch
+        >
+          <hint>{{ $t("Remove All") }}</hint>
+        </q-btn>
+      </q-btn-group>
+    </q-toolbar>
+    <q-separator />
+    <NoteInput ref="noteInput" @added="onNoteAdded" @edited="onNoteEdited" />
   </div>
 </template>
 
 <script>
 import NoteItem from "./NoteItem";
+import NoteInput from "./NoteInput";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { NoteItem },
+  components: { NoteItem, NoteInput },
   props: {
     recess: Boolean,
-  },
-  data() {
-    return {
-      message: "",
-      editing: null,
-    };
   },
   computed: {
     game() {
@@ -106,18 +109,44 @@ export default {
     isShowing() {
       return this.$store.state.ui.textTab === "notes";
     },
-    primaryDark() {
-      return this.$store.state.ui.theme.primaryDark;
+    hideAnalysisNotes: {
+      get() {
+        return this.$store.state.ui.hideAnalysisNotes || false;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["hideAnalysisNotes", value]);
+      },
     },
-    log() {
-      return this.$store.state.ui.showAllBranches
+    unfilteredLog() {
+      return this.$store.state.ui.showAllBranches &&
+        !this.$store.state.ui.inlineBranches
         ? this.game.comments.notes
         : Object.freeze(
             pickBy(
               this.game.comments.notes,
-              (notes, id) => id < 0 || this.branchPlies.includes(this.plies[id])
+              (notes, id) =>
+                id < 0 || this.branchPlies.some((p) => p.id === 1 * id)
             )
           );
+    },
+    log() {
+      if (!this.hideAnalysisNotes) {
+        return this.unfilteredLog;
+      }
+      // Filter out analysis notes
+      const filtered = {};
+      for (const [plyID, notes] of Object.entries(this.unfilteredLog)) {
+        const filteredNotes = notes.filter(
+          (note) =>
+            note.evaluation === null &&
+            note.pv === null &&
+            note.pvAfter === null
+        );
+        if (filteredNotes.length > 0) {
+          filtered[plyID] = filteredNotes;
+        }
+      }
+      return Object.freeze(filtered);
     },
     plyIDs() {
       return Object.freeze(
@@ -144,7 +173,7 @@ export default {
             ply = plyID in this.plies ? this.plies[plyID] : null;
             if (
               ply &&
-              this.branchPlies.includes(ply) &&
+              this.branchPlies.some((p) => p.id === ply.id) &&
               ply.index < this.game.position.ply.index
             ) {
               return plyID;
@@ -155,56 +184,147 @@ export default {
       }
       return null;
     },
+    positionPlyID() {
+      const pos = this.game.position;
+      if (!pos.ply || (!pos.ply.index && !pos.plyIsDone)) {
+        return -1;
+      }
+      return pos.plyID;
+    },
+    hasCurrentPositionNotes() {
+      const plyID = this.positionPlyID;
+      return plyID in this.game.comments.notes;
+    },
+    hasAnyNotes() {
+      return Object.keys(this.game.comments.notes).length > 0;
+    },
   },
   methods: {
-    send(event) {
-      if (event.shiftKey) {
-        return; // Ignore shift+enter
-      } else {
-        event.preventDefault();
-      }
-      if (this.message) {
-        if (this.editing) {
-          this.$store.dispatch("game/EDIT_NOTE", {
-            plyID: this.editing.plyID,
-            index: this.editing.index,
-            message: this.message.trim(),
-          });
-          this.editing = null;
-        } else {
-          this.$store.dispatch("game/ADD_NOTE", {
-            message: this.message.trim(),
-          });
-        }
-        this.$refs.input.blur(); // De-select to enable clearing input on mobile
-        this.message = "";
-        this.$refs.input.focus();
-      }
+    scrollToTop() {
+      this.$refs.scroll.scrollTo(0);
+    },
+    scrollToBottom() {
+      this.$refs.scroll.scrollTo(this.plyIDs.length - 1);
+    },
+    jumpToCurrent() {
+      this.$nextTick(() => this.scroll());
     },
     edit({ plyID, index }) {
-      const log = this.log[plyID][index];
-      this.editing = { plyID, index };
+      const log = this.unfilteredLog[plyID][index];
       if (!this.isCurrent(plyID)) {
         this.$store.dispatch("game/GO_TO_PLY", { plyID, isDone: true });
       }
-      setTimeout(() => {
-        this.$refs.input.focus();
-        this.message = log.message;
-      }, 10);
+      this.$refs.noteInput.startEdit({ plyID, index, message: log.message });
     },
-    cancelEdit() {
-      if (this.editing) {
-        this.editing = null;
-        this.message = "";
-      } else {
-        this.$refs.input.blur();
+    scrollToNote(plyID) {
+      const index = this.plyIDs.findIndex((id) => id === plyID);
+      if (index >= 0) {
+        this.$nextTick(() => this.$refs.scroll.scrollTo(index, "center-force"));
       }
+    },
+    onNoteAdded({ plyID }) {
+      this.$nextTick(() => this.scrollToNote(plyID));
+    },
+    onNoteEdited({ plyID }) {
+      this.$nextTick(() => this.scrollToNote(plyID));
     },
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+      this.notifyUndo({
+        message: this.$t("success.noteRemoved"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    removeCurrentPosition() {
+      const plyID = this.positionPlyID;
+      const notes = this.game.comments.notes[plyID];
+      if (notes && notes.length) {
+        if (this.hideAnalysisNotes) {
+          // Remove only non-analysis notes when analysis notes are hidden
+          const indicesToRemove = notes
+            .map((note, index) => ({ note, index }))
+            .filter(
+              ({ note }) =>
+                note.evaluation === null &&
+                note.pv === null &&
+                note.pvAfter === null
+            )
+            .map(({ index }) => index)
+            .reverse(); // Remove from end to preserve indices
+          for (const index of indicesToRemove) {
+            this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+          }
+          if (indicesToRemove.length > 0) {
+            this.notifyUndo({
+              message: this.$t("success.removedAurrentPositionsNotes"),
+              handler: () => {
+                for (let i = 0; i < indicesToRemove.length; i++) {
+                  this.$store.dispatch("game/UNDO");
+                }
+              },
+            });
+          }
+        } else {
+          this.$store.dispatch("game/REMOVE_POSITION_NOTES", plyID);
+          this.notifyUndo({
+            message: this.$t("success.removedAurrentPositionsNotes"),
+            handler: () => {
+              this.$store.dispatch("game/UNDO");
+            },
+          });
+        }
+      }
     },
     removeAll() {
-      this.$store.dispatch("game/REMOVE_NOTES");
+      const hasNotes = Object.keys(this.game.comments.notes).length > 0;
+
+      if (hasNotes) {
+        if (this.hideAnalysisNotes) {
+          // Remove only non-analysis notes when analysis notes are hidden
+          let removedCount = 0;
+          for (const [plyID, notes] of Object.entries(
+            this.game.comments.notes
+          )) {
+            const indicesToRemove = notes
+              .map((note, index) => ({ note, index }))
+              .filter(
+                ({ note }) =>
+                  note.evaluation === null &&
+                  note.pv === null &&
+                  note.pvAfter === null
+              )
+              .map(({ index }) => index)
+              .reverse();
+            for (const index of indicesToRemove) {
+              this.$store.dispatch("game/REMOVE_NOTE", {
+                plyID: parseInt(plyID),
+                index,
+              });
+              removedCount++;
+            }
+          }
+          if (removedCount > 0) {
+            this.notifyUndo({
+              message: this.$t("success.removedAllNotes"),
+              handler: () => {
+                for (let i = 0; i < removedCount; i++) {
+                  this.$store.dispatch("game/UNDO");
+                }
+              },
+            });
+          }
+        } else {
+          this.$store.dispatch("game/REMOVE_NOTES");
+          this.notifyUndo({
+            message: this.$t("success.removedAllNotes"),
+            handler: () => {
+              this.$store.dispatch("game/UNDO");
+            },
+          });
+        }
+      }
     },
     isCurrent(plyID) {
       return (

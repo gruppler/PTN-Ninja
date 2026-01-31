@@ -114,8 +114,14 @@ const routes = [
       },
       {
         name: "bot",
-        path: "/bot",
+        path: "/engine/:botID?",
         component: () => import("../dialogs/EditBot"),
+      },
+      {
+        name: "bot-new",
+        path: "/engine/new",
+        component: () => import("../dialogs/EditBot"),
+        props: { isNewBot: true },
       },
       {
         name: "close",

@@ -12,6 +12,17 @@ export function isEmptyTPS(tps) {
   return !/[12]/.test(matchData[1]);
 }
 
+export function bothPlayersHaveFlats(tps) {
+  const matchData = tps.match(tpsRegex);
+  if (!matchData) {
+    return false;
+  }
+  const board = matchData[1];
+  const hasPlayer1Flat = /1(?![SC])/.test(board);
+  const hasPlayer2Flat = /2(?![SC])/.test(board);
+  return hasPlayer1Flat && hasPlayer2Flat;
+}
+
 export default class TPS {
   constructor(notation) {
     this.errors = [];

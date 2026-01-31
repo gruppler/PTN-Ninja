@@ -1,7 +1,10 @@
 <template>
   <large-dialog ref="dialog" :value="Boolean(bot)" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="bot" :title="$t(isNew ? 'New Bot' : 'Edit Bot')" />
+      <dialog-header
+        icon="bot"
+        :title="$t(isNew ? 'New Engine' : 'Edit Engine')"
+      />
     </template>
 
     <q-list v-if="buffer">
@@ -37,7 +40,7 @@
         <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
         <!-- Address -->
         <q-input
-          v-model.number="buffer.meta.connection.address"
+          v-model="buffer.meta.connection.address"
           :label="$t('tei.address')"
           :prefix="bot.protocol"
           filled
@@ -197,7 +200,7 @@
           <q-separator />
           <!-- Bot Options -->
           <q-item-label header>{{
-            $t("analysis.Preset Bot Options")
+            $t("analysis.Preset Engine Options")
           }}</q-item-label>
           <BotOptionInput
             v-for="(option, name) in buffer.meta.presetOptions"
@@ -245,8 +248,17 @@
 import BotOptionInput from "../components/analysis/BotOptionInput";
 
 import { uid } from "quasar";
-import { cloneDeep, difference, forEach, isEqual, omit, pick } from "lodash";
+import {
+  cloneDeep,
+  difference,
+  forEach,
+  isEmpty,
+  isEqual,
+  omit,
+  pick,
+} from "lodash";
 import { defaultLimitTypes } from "../bots/bot";
+import { bots } from "../bots";
 
 const halfKomis = [];
 for (let k = -9; k <= 9; k++) {
@@ -256,6 +268,12 @@ for (let k = -9; k <= 9; k++) {
 export default {
   name: "EditBot",
   components: { BotOptionInput },
+  props: {
+    isNewBot: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       buffer: null,
@@ -268,17 +286,33 @@ export default {
     };
   },
   computed: {
+    botID() {
+      // For new bot creation, always use 'tei' to get current TEI settings
+      if (this.isNewBot) {
+        return "tei";
+      }
+      // Use route param if provided, otherwise fall back to store's selected bot
+      return this.$route.params.botID || this.$store.state.analysis.botID;
+    },
     bot() {
-      return this.$store.getters["analysis/bot"];
+      return this.botID ? bots[this.botID] : null;
     },
     botMeta() {
-      return this.$store.state.analysis.botMeta;
+      if (!this.botID) return {};
+      // Prefer bot.meta directly as it has the latest values from setMeta() calls
+      // The store's botMetas may not be fully synced
+      const bot = bots[this.botID];
+      if (bot && bot.meta) {
+        return bot.meta;
+      }
+      return this.$store.state.analysis.botMetas[this.botID] || {};
     },
     botState() {
-      return this.$store.state.analysis.botState;
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botStates[this.botID] || {};
     },
     isNew() {
-      return !this.bot || !this.botMeta.isCustom;
+      return this.isNewBot || !this.bot || !this.botMeta.isCustom;
     },
     allLimitTypes() {
       return [
@@ -313,8 +347,9 @@ export default {
       }
     },
     reset() {
-      if (this.isNew && !this.botState.isConnected) {
+      if (this.isNew && !this.isNewBot && !this.botState.isConnected) {
         this.close();
+        return;
       }
       const buffer = {
         id: this.isNew ? uid() : this.bot.id,
@@ -340,6 +375,29 @@ export default {
         ]);
         buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
         buffer.meta.sigma = this.bot.settings.sigma;
+        // For new bot from TEI, also get name/author/version/sizeHalfKomis from botMeta
+        if (!buffer.meta.name && this.botMeta.name) {
+          buffer.meta.name = this.botMeta.name;
+        }
+        if (!buffer.meta.author && this.botMeta.author) {
+          buffer.meta.author = this.botMeta.author;
+        }
+        if (!buffer.meta.version && this.botMeta.version) {
+          buffer.meta.version = this.botMeta.version;
+        }
+        if (isEmpty(buffer.meta.sizeHalfKomis) && this.botMeta.sizeHalfKomis) {
+          buffer.meta.sizeHalfKomis = cloneDeep(this.botMeta.sizeHalfKomis);
+        }
+        // Get limitTypes from bot meta
+        if (isEmpty(buffer.meta.limitTypes) && this.botMeta.limitTypes) {
+          buffer.meta.limitTypes = cloneDeep(this.botMeta.limitTypes);
+        }
+        if (!buffer.meta.limitTypes) {
+          buffer.meta.limitTypes = {};
+        }
+        if (!buffer.meta.sizeHalfKomis) {
+          buffer.meta.sizeHalfKomis = {};
+        }
       }
 
       // Limit Types
@@ -359,7 +417,9 @@ export default {
       });
 
       // Bot Options
-      this.options = Object.keys(this.botMeta.presetOptions || {});
+      this.options = this.isNew
+        ? Object.keys(this.botMeta.options || {})
+        : Object.keys(this.botMeta.presetOptions || {});
       buffer.meta.presetOptions = {
         ...this.botMeta.options,
         ...cloneDeep(this.botMeta.presetOptions),
@@ -427,11 +487,22 @@ export default {
       }
 
       if (await this.$store.dispatch("analysis/SAVE_BOT", buffer)) {
+        // If creating a new bot from TEI, replace TEI in active bots with the new bot
+        if (this.isNewBot) {
+          const activeBots = this.$store.state.analysis.activeBots;
+          const teiIndex = activeBots.indexOf("tei");
+          if (teiIndex !== -1) {
+            this.$store.dispatch("analysis/SET_ACTIVE_BOT", {
+              index: teiIndex,
+              botId: buffer.id,
+            });
+          }
+        }
         if (reconnect) {
-          this.bot.connect();
-        } else if (!this.bot.hasOptions) {
+          bots[buffer.id].connect();
+        } else if (!bots[buffer.id].hasOptions) {
           // Intialize automatically if no options
-          this.bot.applyOptions();
+          bots[buffer.id].applyOptions();
         }
         this.close();
       }
@@ -442,7 +513,7 @@ export default {
       }
       this.prompt({
         title: this.$t("Confirm"),
-        message: this.$t("confirm.deleteBot"),
+        message: this.$t("confirm.deleteEngine"),
         success: () => {
           this.$store.dispatch("analysis/DELETE_BOT", this.bot.id);
           this.close();

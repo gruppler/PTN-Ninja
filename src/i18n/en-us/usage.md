@@ -193,7 +193,11 @@ Though the UI should provide for most of your PTN editing needs, PTN Ninja also 
 
 ## Branches
 
-PTN Ninja records multiple lines of play, called "branches." Branches outside the current line of play are hidden by default. You can display branches by **clicking** the 'branch' button in the PTN panel's header toolbar.
+PTN Ninja records multiple lines of play, called "branches." The PTN panel offers three display modes:
+
+- **Current Branch** — Shows only the current line of play (default).
+- **Inline Branches** — Shows all branches inline, with collapsible branch points.
+- **All Branches** — Shows all branches in a tree structure with indentation.
 
 ::: tip
 
@@ -203,10 +207,17 @@ You can perform several actions on branches by **right-clicking** the branch nam
 
 :::
 
-- To show all branches (or hide other branches) in the PTN panel, **click** the "branch" icon in the header toolbar, or press <kbd>Shift</kbd><kbd>B</kbd>.
-- Click the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+- To change the branch display mode, **click** the leftmost button in the PTN panel's header toolbar.
+  - To toggle quickly between showing and hiding branches, **right-click** this button.
+- **Click** the 'branch' menu in the bottom toolbar, or press <kbd>B</kbd>, to see the list of all branches.
+  - This button is highlighted when not on the main branch.
 - Use <kbd>▲/▼</kbd> to navigate between branches.
-- **Right-click** a branch name to **promote**, **rename**, or **delete** it.
+  - When the branch menu (<kbd>B</kbd>) is open, <kbd>▲/▼</kbd> navigates between all branches.
+  - When the branch menu is closed, <kbd>▲/▼</kbd> will not allow jumps between unrelated branches.
+  - <kbd>Shift</kbd><kbd>▲/▼</kbd> jumps to the first or last branch within related branches.
+  - <kbd>Ctrl</kbd><kbd>▲</kbd> jumps to the main branch.
+  - In "Inline Branches" mode, <kbd>▲</kbd> can also be used to collapse the current branch at its parent ply.
+- **Right-click** a branch or use the menu button to **promote**, **rename**, or **delete** it.
 
 :::
 
@@ -264,7 +275,7 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 # Analysis
 
-Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **bot analysis** and an **opening explorer**.
+Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **engine analysis** and an **opening explorer**.
 
 :::
 
@@ -272,15 +283,10 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 :::
 
-## Bot Analysis
+## Engine Analysis
 
-PTN Ninja currently offers access to two built-in bots: **Tiltak (cloud)** and **Tiltak (wasm)**. It also supports connecting to any bot that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these bots and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
-- [Tiltak (cloud)](https://github.com/MortenLohne/tiltak)
-  - can provide quick analysis of the entire game
-  - can store evaluations and PVs in PTN
-  - offers several suggestions
-  - runs in the cloud
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - provides continual evaluation of the current position
   - updates the evaluation and PV in real time
@@ -289,38 +295,59 @@ PTN Ninja currently offers access to two built-in bots: **Tiltak (cloud)** and *
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can provide continual evaluation of the current position
   - can update the evaluation and PV in real time
-  - offers a single suggestion
+  - can offer multiple suggestions
   - can take full advantage of your hardware
   - facilitates bot development
 
+### Connecting a TEI Engine
+
+To use a TEI engine with PTN Ninja, you'll need [websocketd](http://websocketd.com/) to bridge the engine's standard I/O to WebSocket.
+
+:::
+
+1. Install [websocketd](http://websocketd.com/).
+2. Run your engine via websocketd:
+
+   ```bash
+   websocketd --port=7731 ./path/to/your/engine
+   ```
+
+   To allow connections from other devices, add `--address=0.0.0.0`.
+
+3. In PTN Ninja, select the TEI engine and click the cog icon to show its settings.
+4. Under address, enter `127.0.0.1` if connecting from the same device, or the IP address of the device running the engine if connecting from another device on the same network.
+5. Set the port to match the port used in step 2.
+6. Make sure SSL is disabled.
+7. Click Connect.
+
+:::
+
 ::: info Note
 
-A TEI connection can be saved as custom bot. This enables quick switching between different connection settings and allows you to specify supported size/komi and search limit types, as well as predefine any bot options specified by the TEI protocol.
+You can run multiple engines on the same device by giving each engine a different port.
+
+If you want to access your engine(s) from outside your network, consider setting up a reverse proxy like [Nginx Proxy Manager](https://nginxproxymanager.com/), running your engines as services, and configuring SSL for a personal domain. You can then assign a different subdomain to each engine.
+
+A TEI connection can be saved as a custom engine. This enables quick switching between different connection settings and allows you to specify supported size/komi, search limit types and ranges, eval score normalization, and preset engine-specific options.
 
 :::
 
-:::
+::: warning Troubleshooting
 
-- To change a bot's settings, **click** the 'cog' icon in the Bot Suggestions section.
-- To analyze the current branch, disable "Show All Branches," then **click** "Analyze Branch" button
-- To analyze the entire game (including all branches), enable "Show All Branches," then **click** "Analyze Game" button
+If the connection fails, check the browser console for error messages. Chrome may have stricter security requirements than Firefox for WebSocket connections.
 
 :::
 
-::: info Note
+### Using Engine Analysis
 
-When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed will be skipped. If all plies have been analyzed, this button will be disabled.
-
-After full game or branch analysis, the evaluation score and PV ("principle variation") are saved to the game's PTN as notes (and evaluation marks, if enabled). The number of plies saved to notes can be changed in the bot's settings, accessed via the 'cog' icon in the Bot Suggestions section.
-
-The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
-
-The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
+You can add multiple engines to analyze positions in parallel. Each engine runs independently, allowing you to compare suggestions from different engines simultaneously.
 
 :::
 
-:::
-
+- **Click** the "Add Engine" button in the Analysis panel to add another engine.
+- Use the engine selector dropdown to choose which engine to add.
+- Engines can be reordered using the up/down arrows in each engine's menu.
+- To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle display of the evaluation bars.
 - **Hover** over a ply within a PV to preview the board state after that ply.
 - **Click** a ply within a PV to insert and navigate to that ply.
@@ -333,6 +360,54 @@ The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!
 PV plies that are displayed with an outline match the previous position's PV.
 
 PV plies that are displayed as solid match what was actually played in the current branch.
+
+:::
+
+The **Toolbar Analysis** (below the board) displays suggestions from one source at a time. When multiple engines or saved results are available, an engine selector appears.
+
+:::
+
+- To show or hide the Toolbar Analysis, **click** the expand/collapse button in the bottom-right, or press <kbd>A</kbd>.
+- **Click** the engine selector icon to choose which engine's suggestions to display.
+- Select "Saved Results" to view analysis that has been saved to the game's notes.
+- Use the **scroll wheel** over the engine selector to quickly cycle through engines.
+- Use the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
+
+:::
+
+### Managing Results
+
+Engine analysis results can be saved to the game's PTN as notes, or cleared when no longer needed.
+
+:::
+
+- To save results to notes, use the menu in each engine's section.
+  - "Save Current Position" saves only the current position's results generated by the engine.
+  - "Save All Results" saves all analyzed positions generated by the engine.
+- To clear an engine's unsaved results, use the menu to select "Clear Results" or "Clear Current Position."
+- Saved results appear in the "Saved Results" section and can be deleted individually or in bulk.
+  - **Click** the delete icon in the Saved Results header to delete all saved results or just the current position's results.
+  - **Click** the menu icon on an individual saved result to delete it.
+
+The Engine Analysis settings include options for managing saved results:
+
+- "Suggestions to Save per Engine" limits how many suggestions are saved per position for each engine.
+- "Auto-save after Search" automatically saves results after analyzing a full game or branch.
+- "Overwrite Inferior Results" only replaces saved results if the new results have higher nodes or time values.
+
+:::
+
+::: info Note
+
+When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed by the engine will be skipped.
+
+After full game or branch analysis, the evaluation score and PV ("principle variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save after Search" option in the Engine Analysis settings. When disabled, you must manually save the results using the engine menu.
+
+The number of plies saved to notes can be changed in the engine's settings, accessed via the 'cog' icon in the Engine Analysis section. The "Suggestions to Save per Engine" setting limits how many suggestions are saved per position for each engine.
+
+The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
+
+The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
 
 :::
 

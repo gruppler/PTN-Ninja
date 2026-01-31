@@ -28,13 +28,13 @@ export default {
   props: ["id"],
   computed: {
     game() {
-      return this.$store.state.game;
+      return this.$store.state.game || {};
     },
     board() {
       return this.game.board;
     },
     config() {
-      return this.game.config;
+      return this.game.config || {};
     },
     stackColor() {
       if (

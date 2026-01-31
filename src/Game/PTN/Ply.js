@@ -11,6 +11,18 @@ const minProps = [
   "specialPiece",
 ];
 
+// Standalone function to compare two plies (can be plain objects or Ply instances)
+export function pliesEqual(ply1, ply2) {
+  if (!ply1 || !ply2) return false;
+  const getMin = (ply) =>
+    ply instanceof Ply
+      ? ply.min
+      : isString(ply)
+      ? new Ply(ply).min
+      : pick(ply, minProps);
+  return isEqual(getMin(ply1), getMin(ply2));
+}
+
 const outputProps = [
   "branch",
   "color",
@@ -49,6 +61,7 @@ export default class Ply extends Ptn {
       result = null,
       branches = [],
       children = [],
+      parent = null,
     }
   ) {
     super(notation);
@@ -78,6 +91,7 @@ export default class Ply extends Ptn {
     this.result = result;
     this.branches = branches;
     this.children = children;
+    this.parent = parent; // Reference to parent ply in tree structure
     this.branch = "";
     this.squares = [this.column + this.row];
     this.tpsBefore = "";
@@ -152,6 +166,14 @@ export default class Ply extends Ptn {
   get output() {
     const output = pick(this, outputProps);
     output.branches = this.branches.map((ply) => ply.id);
+    // Compute depth from branch name (e.g., "14b1/15b1" has depth 2)
+    output.depth = this.branch ? this.branch.split("/").length : 0;
+    output.branchPoint =
+      this.branches.parent &&
+      this.branches.parent.branches &&
+      this.branches.parent.branches[0]
+        ? this.branches.parent.branches[0].id
+        : null;
     output.evaluation = this.evaluation ? this.evaluation.output : null;
     output.result = this.result ? this.result.output : null;
     output.linenum = this.linenum.output;
@@ -187,10 +209,20 @@ export default class Ply extends Ptn {
     }
     this.branches.push(ply);
     ply.branches = this.branches;
+    // Set tree parent - branch ply's parent is the ply before the branch point
+    ply.parent = this.parent;
+    // Add to parent's children array (branch alternatives come after main continuation)
+    if (ply.parent && !ply.parent.children.includes(ply)) {
+      ply.parent.children.push(ply);
+    }
   }
 
   removeBranch(ply) {
     delete this.game.branches[ply.branch];
+    // Remove from parent's children array
+    if (ply.parent && ply.parent.children.includes(ply)) {
+      ply.parent.children.splice(ply.parent.children.indexOf(ply), 1);
+    }
     if (this.branches.length === 2) {
       // Remove our last branch
       this.branches.parent.children.splice(
@@ -201,6 +233,31 @@ export default class Ply extends Ptn {
     } else {
       this.branches.splice(this.branches.indexOf(ply), 1);
     }
+  }
+
+  // Promote this ply to be the main continuation (first child of parent)
+  promoteToMainChild() {
+    if (!this.parent) return false;
+    const children = this.parent.children;
+    const index = children.indexOf(this);
+    if (index <= 0) return false; // Already main or not found
+    // Remove from current position and insert at front
+    children.splice(index, 1);
+    children.unshift(this);
+    return true;
+  }
+
+  // Swap position with another sibling in parent's children array
+  swapWithSibling(sibling) {
+    if (!this.parent || this.parent !== sibling.parent) return false;
+    const children = this.parent.children;
+    const myIndex = children.indexOf(this);
+    const siblingIndex = children.indexOf(sibling);
+    if (myIndex < 0 || siblingIndex < 0) return false;
+    // Swap positions
+    children[myIndex] = sibling;
+    children[siblingIndex] = this;
+    return true;
   }
 
   isInBranch(branch) {
@@ -240,6 +297,71 @@ export default class Ply extends Ptn {
 
   get text() {
     return this.toString(true);
+  }
+
+  // Tree traversal helpers
+  get nextPly() {
+    // Next ply is the first child (main continuation)
+    return this.children.length > 0 ? this.children[0] : null;
+  }
+
+  get prevPly() {
+    // Previous ply is our parent
+    return this.parent;
+  }
+
+  get siblings() {
+    // Other plies that share the same parent (branch alternatives)
+    if (!this.branches.length) return [];
+    return this.branches.filter((p) => p !== this);
+  }
+
+  // Get the path from root to this ply as an array of plies
+  getPath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      path.unshift(current);
+      current = current.parent;
+    }
+    return path;
+  }
+
+  // Get the depth of this ply in the tree (0 = root)
+  get depth() {
+    let depth = 0;
+    let current = this.parent;
+    while (current) {
+      depth++;
+      current = current.parent;
+    }
+    return depth;
+  }
+
+  // Get a serializable path representation that survives init() and promotion
+  // Returns array of {moveNumber, player, moveText} for each branch point
+  // Uses moveText instead of branchIndex since indices change during promotion
+  getSerializablePath() {
+    const path = [];
+    let current = this;
+    while (current) {
+      if (current.branches.length > 1) {
+        // This is a branch point - record the move text to identify which branch
+        path.unshift({
+          moveNumber: current.move.number,
+          player: current.player,
+          moveText: current.toString(true), // Use move text as stable identifier
+        });
+      }
+      current = current.parent;
+    }
+    // Add final position
+    path.push({
+      moveNumber: this.move.number,
+      player: this.player,
+      moveText: this.toString(true),
+    });
+    return path;
   }
 
   toString(plyOnly = false) {

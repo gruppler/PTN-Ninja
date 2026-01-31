@@ -8,8 +8,8 @@ export default class TiltakWasm extends TeiBot {
     super({
       id: "tiltak",
       icon: "local",
-      label: "analysis.bots.tiltak",
-      description: "analysis.bots_description.tiltak",
+      label: "analysis.engines.tiltak",
+      description: "analysis.engines_description.tiltak",
       isInteractive: true,
       requiresConnect: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },

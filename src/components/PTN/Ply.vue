@@ -3,10 +3,14 @@
     class="ptn ply"
     :class="{ selected: isSelected, other: !isInBranch }"
     v-if="ply"
+    :data-ply-id="ply.id"
+    :data-tps-after="tpsAfterValue || undefined"
+    :data-tps="tps || undefined"
+    :data-plies="pliesJson || undefined"
+    :data-ply-text="ply.text"
   >
     <q-chip
-      @click.left="select(ply, isSelected ? !isDone : true)"
-      @click.right.stop.prevent.native
+      @click="select(ply, isSelected ? !isDone : true)"
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
@@ -30,21 +34,29 @@
           ply.minDistribution
         }}</span>
         <span class="wallSmash" v-if="ply.wallSmash">{{ ply.wallSmash }}</span>
-        <span class="evaluation" v-if="ply.evaluation">{{
-          ply.evaluation.text
+        <span class="evaluation" v-if="displayEvaluation">{{
+          displayEvaluation
         }}</span>
+
+        <slot />
       </span>
       <q-btn
-        v-if="!noBranches && branches.length"
-        @click.stop
-        icon="arrow_drop_down"
+        v-if="!noBranches && showBranchButton"
+        @click.stop="handleBranchButton"
+        :icon="
+          inlineBranches
+            ? isCollapsed
+              ? 'arrow_drop_down'
+              : 'arrow_drop_up'
+            : 'arrow_drop_down'
+        "
         size="md"
         flat
         dense
       >
         <BranchMenu
+          v-if="!inlineBranches && hasBranches"
           @select="selectBranch"
-          v-if="branches.length"
           :branches="branches"
           v-model="menu"
         />
@@ -58,8 +70,6 @@
       @click.right.prevent.native="select(ply, false)"
       clickable
     />
-
-    <slot v-if="!menu" />
   </span>
 </template>
 
@@ -72,10 +82,28 @@ import { isBoolean } from "lodash";
 export default {
   name: "Ply",
   components: { BranchMenu, Result },
+  inject: {
+    branchUI: {
+      default: null,
+    },
+  },
   props: {
     ply: Object,
+    inlineBranches: Boolean,
     noBranches: Boolean,
     noClick: Boolean,
+    tpsAfter: {
+      type: String,
+      default: null,
+    },
+    tps: {
+      type: String,
+      default: null,
+    },
+    plies: {
+      type: Array,
+      default: null,
+    },
     done: {
       type: Boolean,
       default: null,
@@ -91,8 +119,17 @@ export default {
     };
   },
   computed: {
+    tpsAfterValue() {
+      return this.tpsAfter || this.ply.tpsAfter;
+    },
+    pliesJson() {
+      return this.plies ? JSON.stringify(this.plies) : null;
+    },
     theme() {
       return this.$store.state.ui.theme;
+    },
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
     },
     position() {
       return this.$store.state.game.position;
@@ -103,13 +140,44 @@ export default {
     branches() {
       return this.ply.branches.map((id) => this.ptn.allPlies[id]);
     },
+    hasBranches() {
+      return Boolean(
+        this.ply && this.ply.branches && this.ply.branches.length > 1
+      );
+    },
+    isBranchParent() {
+      if (!this.hasBranches) {
+        return false;
+      }
+      const first =
+        this.branches && this.branches.length ? this.branches[0] : null;
+      return Boolean(first && first.id === this.ply.id);
+    },
+    showBranchButton() {
+      if (!this.hasBranches) {
+        return false;
+      }
+      return this.inlineBranches ? this.isBranchParent : true;
+    },
+    useBranchMenu() {
+      return !this.inlineBranches;
+    },
+    isCollapsed() {
+      if (!this.inlineBranches) {
+        return false;
+      }
+      if (!this.branchUI || !this.branchUI.isExpanded) {
+        return true;
+      }
+      return !this.branchUI.isExpanded(this.ply);
+    },
     isSelected() {
       return isBoolean(this.selected)
         ? this.selected
         : this.position.plyID === this.ply.id;
     },
     isInBranch() {
-      return this.ptn.branchPlies.includes(this.ply);
+      return this.ptn.branchPlies.some((p) => p.id === this.ply.id);
     },
     isDone() {
       return isBoolean(this.done)
@@ -117,6 +185,47 @@ export default {
         : this.position.plyID === this.ply.id
         ? this.position.plyIsDone
         : this.isInBranch && this.position.plyIndex > this.ply.index;
+    },
+    displayEvaluation() {
+      if (!this.ply) return null;
+
+      const analysis = this.$store.state.analysis;
+      const preferSaved = analysis?.preferSavedResults;
+      const showEvalMarks = analysis?.showEvalMarks;
+
+      // Get the base evaluation text from ply (tak/tinue marks)
+      const plyEval = this.ply.evaluation;
+      const takTinue = plyEval
+        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
+        : "";
+
+      // If preferring saved results, use saved eval marks from PTN
+      if (preferSaved) {
+        return plyEval ? plyEval.text : null;
+      }
+
+      // If showEvalMarks is disabled, only show tak/tinue marks
+      if (!showEvalMarks) {
+        return takTinue || null;
+      }
+
+      // Access reactive state directly so Vue tracks dependencies
+      const botID = analysis?.botID;
+      const botPositions = analysis?.botPositions;
+      const positions = botID && botPositions ? botPositions[botID] : null;
+      const hasBotPositions = positions && Object.keys(positions).length > 0;
+
+      // Check for eval mark override from bot analysis
+      if (hasBotPositions) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(this.ply) : null;
+
+        // Return override combined with tak/tinue, or just tak/tinue if no override
+        return override ? override + takTinue : takTinue || null;
+      }
+
+      // No bot positions - only show tak/tinue marks
+      return takTinue || null;
     },
   },
   methods: {
@@ -131,8 +240,24 @@ export default {
         this.$store.dispatch("game/SET_TARGET", ply);
       }
     },
+    handleBranchButton() {
+      if (this.inlineBranches) {
+        this.toggleCollapse();
+      }
+    },
+    toggleCollapse() {
+      if (!this.branchUI || !this.branchUI.toggle) {
+        return;
+      }
+      this.branchUI.toggle(this.ply);
+    },
     captureFocus(event) {
       console.log(event);
+    },
+  },
+  watch: {
+    menu(isOpen) {
+      this.$store.commit("ui/SET_BRANCH_MENU_OPEN", isOpen);
     },
   },
 };

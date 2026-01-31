@@ -1,162 +1,200 @@
 <template>
-  <div class="analysis-item" :class="{ animate }">
+  <div
+    class="analysis-item"
+    :class="{ animate }"
+    @mouseover="highlight"
+    @mouseout="unhighlight"
+  >
+    <slot name="before" />
     <div
       v-if="evaluation !== null"
       class="evaluation"
       :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
       :style="{ width: evalPercent + '%' }"
     />
-    <q-item
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="insertPly"
-      :clickable="!isBoardDisabled && ply !== null"
-      style="height: 60px"
-    >
-      <q-item-section>
-        <q-item-label v-if="ply !== null">
-          <Ply
-            :ply="ply"
-            no-click
-            :selected="selectedCount > 0"
-            :done="doneCount > 0"
-          >
-            <PlyPreview
-              :tps="tps"
-              :plies="[ply.text]"
-              :options="$store.state.game.config"
-            />
-          </Ply>
-        </q-item-label>
-      </q-item-section>
-      <q-item-section top side>
-        <q-item-label>
-          <span class="visits" v-if="visits !== null">
-            {{ $tc("analysis.visits", $n(visits, "n0")) }}
-          </span>
-          <span
-            class="player-numbers"
-            v-if="
-              middleNumber !== null ||
-              player1Number !== null ||
-              player2Number !== null ||
-              depth !== null
-            "
-          >
-            <span
-              class="player1 first"
-              v-if="player1Number !== null"
-              :class="{
-                single:
-                  player2Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-              }"
-              >{{ player1Number }}</span
-            >
-            <span
-              class="middle"
-              v-if="middleNumber !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  depth === null,
-                first: player1Number === null,
-                last: player2Number === null && depth === null,
-              }"
-              >{{ middleNumber }}</span
-            >
-            <span
-              class="player2"
-              v-if="player2Number !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-                first: player1Number === null && middleNumber === null,
-                last: depth == null,
-              }"
-              >{{ player2Number }}</span
-            >
-            <span
-              class="depth last"
-              v-if="depth !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  middleNumber === null,
-              }"
-              >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
-            >
-            <tooltip v-if="playerNumbersTooltip">
-              <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
-            </tooltip>
-          </span>
-        </q-item-label>
-        <q-item-label
-          v-if="(count !== null && countLabel) || seconds !== null"
-          class="count"
-          caption
-        >
-          <template v-if="count !== null && countLabel">{{
-            $tc(countLabel, $n(count, "n0"))
-          }}</template>
-          <template v-if="count !== null && seconds !== null"> / </template>
-          <template v-if="seconds !== null">
-            {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
-            {{ $t("analysis.secondsUnit") }}
-          </template>
-        </q-item-label>
-      </q-item-section>
-    </q-item>
-    <q-item
-      v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
-      class="q-pt-none"
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="
-        followingPlies && followingPlies.length > 0
-          ? insertFollowingPlies()
-          : null
-      "
-      :clickable="
-        !isBoardDisabled && followingPlies && followingPlies.length > 0
-      "
-    >
-      <q-item-label
-        class="continuation small"
-        :class="{ limited: fixedHeight }"
+    <div class="full-width">
+      <q-item
+        @click="insertPly"
+        :clickable="!isBoardDisabled && ply !== null"
+        :class="{ 'q-pr-xs': showAfterColumn }"
+        style="height: 60px"
       >
-        <Ply
-          v-for="(fPly, i) in followingPlies"
-          :key="i"
-          :ply="fPly"
-          :no-click="isBoardDisabled"
-          @click.stop.prevent.capture="insertFollowingPlies(i)"
-          :selected="selectedCount > i + 1"
-          :done="doneCount > i + 1"
+        <q-item-section class="no-wrap">
+          <q-item-label v-if="botName !== null" caption>
+            <span class="bot-name">{{ botName }}</span>
+          </q-item-label>
+          <q-item-label v-if="ply !== null">
+            <Ply
+              :ply="ply"
+              no-click
+              :selected="selectedCount > 0"
+              :done="doneCount > 0"
+              :tps="tps"
+              :plies="ply && ply.text ? [ply.text] : null"
+            />
+          </q-item-label>
+        </q-item-section>
+        <q-item-section top side>
+          <q-item-label>
+            <span class="visits" v-if="visits !== null">
+              {{ $tc("analysis.visits", $n(visits, "n0")) }}
+            </span>
+            <span
+              class="player-numbers"
+              v-if="
+                middleNumber !== null ||
+                player1Number !== null ||
+                player2Number !== null ||
+                depth !== null
+              "
+            >
+              <span
+                class="player1 first"
+                v-if="player1Number !== null"
+                :class="{
+                  single:
+                    player2Number === null &&
+                    middleNumber === null &&
+                    depth === null,
+                }"
+                >{{ player1Number }}</span
+              >
+              <span
+                class="middle"
+                v-if="middleNumber !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    player2Number === null &&
+                    depth === null,
+                  first: player1Number === null,
+                  last: player2Number === null && depth === null,
+                }"
+                >{{ middleNumber }}</span
+              >
+              <span
+                class="player2"
+                v-if="player2Number !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    middleNumber === null &&
+                    depth === null,
+                  first: player1Number === null && middleNumber === null,
+                  last: depth == null,
+                }"
+                >{{ player2Number }}</span
+              >
+              <span
+                class="depth"
+                v-if="depth !== null"
+                :class="{
+                  single:
+                    player1Number === null &&
+                    player2Number === null &&
+                    middleNumber === null,
+                  last: true,
+                }"
+                >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
+              >
+              <tooltip v-if="playerNumbersTooltip">
+                <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+              </tooltip>
+            </span>
+          </q-item-label>
+          <q-item-label
+            v-if="
+              (count !== null && countLabel && !hideCount) ||
+              (seconds !== null && !hideSeconds)
+            "
+            class="count"
+            caption
+          >
+            <template v-if="count !== null && countLabel && !hideCount">{{
+              $tc(countLabel, $n(count, "n0"))
+            }}</template>
+            <template
+              v-if="
+                count !== null && !hideCount && seconds !== null && !hideSeconds
+              "
+            >
+              /
+            </template>
+            <template v-if="seconds !== null && !hideSeconds">
+              {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
+              {{ $t("analysis.secondsUnit") }}
+            </template>
+            <tooltip
+              v-if="count !== null && !hideCount && seconds && !hideSeconds"
+            >
+              {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
+            </tooltip>
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      <smooth-reflow height-only>
+        <q-item
+          v-if="showSecondRow"
+          class="q-pt-none"
+          :class="{ 'q-pr-xs': showAfterColumn }"
+          @click="
+            followingPlies && followingPlies.length > 0
+              ? insertFollowingPlies()
+              : null
+          "
+          :clickable="
+            !isBoardDisabled && followingPlies && followingPlies.length > 0
+          "
         >
-          <PlyPreview
-            :tps="tps"
-            :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
-            :options="$store.state.game.config"
-          />
-        </Ply>
-      </q-item-label>
-    </q-item>
+          <q-item-label
+            ref="continuation"
+            class="continuation small"
+            :class="{ limited: isLimited }"
+          >
+            <Ply
+              v-for="(fPly, i) in followingPlies"
+              ref="plies"
+              :key="i"
+              :ply="fPly"
+              :no-click="isBoardDisabled"
+              @click.stop.prevent.capture="insertFollowingPlies(i)"
+              :selected="selectedCount > i + 1"
+              :done="doneCount > i + 1"
+              :tps="tps"
+              :plies="tps ? getPlySequence(i) : null"
+            />
+          </q-item-label>
+        </q-item>
+      </smooth-reflow>
+    </div>
+    <div
+      v-if="showAfterColumn"
+      class="column no-wrap q-mr-md"
+      :style="{ maxHeight: showSecondRow ? '' : '60px', overflow: 'hidden' }"
+    >
+      <slot name="after" />
+
+      <q-btn
+        v-if="expandable && showExpandButton"
+        @click.stop="expanded = !expanded"
+        :icon="expanded ? 'arrow_drop_up' : 'arrow_drop_down'"
+        class="expand-btn q-mt-auto"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
+        flat
+        dense
+      >
+        <hint>{{ $t(expanded ? "Less" : "More") }}</hint>
+      </q-btn>
+    </div>
   </div>
 </template>
 
 <script>
 import Ply from "../PTN/Ply";
-import PlyPreview from "../controls/PlyPreview";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply, PlyPreview },
+  components: { Ply },
   props: {
     ply: Object,
     followingPlies: Array,
@@ -171,6 +209,10 @@ export default {
     },
     depth: {
       type: Number,
+      default: null,
+    },
+    botName: {
+      type: String,
       default: null,
     },
     player1Number: {
@@ -205,15 +247,62 @@ export default {
       type: Number,
       default: 0,
     },
-    animate: Boolean,
     fixedHeight: Boolean,
+    expandable: Boolean,
+    showContinuation: {
+      type: Boolean,
+      default: true,
+    },
+    keepHighlighted: {
+      type: Boolean,
+      default: false,
+    },
+    hideCount: {
+      type: Boolean,
+      default: false,
+    },
+    hideSeconds: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  data() {
+    return {
+      expanded: false,
+      hasWrapping: false,
+    };
   },
   computed: {
+    isLimited() {
+      return this.fixedHeight && !this.expanded;
+    },
+    animate() {
+      return (
+        this.$store.state.ui.animateBoard && !this.$store.state.ui.scrubbing
+      );
+    },
+    showAfterColumn() {
+      return this.$slots.after || (this.expandable && this.showExpandButton);
+    },
+    showSecondRow() {
+      return (
+        (this.showContinuation || this.expanded) &&
+        (this.fixedHeight ||
+          (this.followingPlies && this.followingPlies.length > 0))
+      );
+    },
+    showExpandButton() {
+      const hasContinuation =
+        this.followingPlies && this.followingPlies.length > 0;
+      if (!hasContinuation) return false;
+      return !this.showContinuation || (this.fixedHeight && this.hasWrapping);
+    },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
     },
     tps() {
-      return this.$store.state.game.position.tps;
+      const position = this.$store.state.game.position;
+      return position ? position.tps : null;
     },
     evalPercent() {
       return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
@@ -221,26 +310,34 @@ export default {
   },
   methods: {
     insertPly() {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
     highlight() {
-      if (this.ply === null) {
+      if (!this.ply) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
+      if (this.evaluation !== null) {
+        this.$store.dispatch("game/SET_EVAL", this.evaluation);
+      }
     },
     unhighlight() {
-      if (this.ply === null) {
+      if (!this.ply || this.keepHighlighted) {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+      // Restore current position's suggestion evaluation
+      const suggestion = this.$store.getters["game/suggestion"](this.tps);
+      const eval_ =
+        suggestion && "evaluation" in suggestion ? suggestion.evaluation : null;
+      this.$store.dispatch("game/SET_EVAL", eval_);
     },
     insertFollowingPlies(index) {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       let prev = 0;
@@ -257,6 +354,49 @@ export default {
         prev,
       });
     },
+    getPlySequence(index) {
+      return [
+        this.ply.text,
+        ...this.followingPlies.slice(0, index + 1).map((p) => p.text),
+      ];
+    },
+    checkWrapping() {
+      this.$nextTick(() => {
+        const container = this.$refs.continuation;
+        if (!container || !this.$refs.plies) {
+          this.hasWrapping = false;
+          return;
+        }
+        const plies = this.$refs.plies.map((ply) => ply.$el);
+        if (plies.length < 2) {
+          this.hasWrapping = false;
+          return;
+        }
+        const firstRect = plies[0].getBoundingClientRect();
+        const lastRect = plies[plies.length - 1].getBoundingClientRect();
+        this.hasWrapping = Math.abs(firstRect.top - lastRect.top) > 2;
+      });
+    },
+  },
+  watch: {
+    followingPlies: {
+      handler() {
+        this.checkWrapping();
+      },
+      immediate: true,
+    },
+    showContinuation() {
+      this.checkWrapping();
+    },
+    expanded() {
+      this.checkWrapping();
+    },
+    tps() {
+      this.expanded = false;
+    },
+  },
+  mounted() {
+    this.checkWrapping();
   },
 };
 </script>
@@ -264,6 +404,16 @@ export default {
 <style lang="scss">
 .analysis-item {
   position: relative;
+  display: flex;
+  flex-direction: row;
+  overflow-x: hidden;
+
+  + .analysis-item {
+    border-top: 1px solid $separator-color;
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
 
   .evaluation {
     position: absolute;

@@ -27,7 +27,7 @@ export default class CustomTeiBot extends TeiBot {
 
     super({
       id,
-      icon: "bot",
+      icon: "tei",
       label: `${meta.name}${meta.version ? " " + meta.version : ""}`,
       description: meta.author ? `${i18n.t("tei.by")} ${meta.author}` : "",
       settings,

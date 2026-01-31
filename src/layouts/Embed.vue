@@ -100,7 +100,7 @@
       :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -109,37 +109,11 @@
         </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN
+            ref="ptn"
             class="absolute-fit"
             :recess="!$store.state.ui.disablePTNTools"
           />
         </div>
-        <q-toolbar
-          v-if="
-            (!$store.state.ui.disableUndo &&
-              !$store.state.ui.disableNavigation) ||
-            !$store.state.ui.disablePTNTools
-          "
-          class="footer-toolbar bg-ui q-pa-none"
-        >
-          <UndoButtons
-            v-if="
-              !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
-            "
-            :class="{ 'full-width': $store.state.ui.disablePTNTools }"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-          <EvalButtons
-            v-if="!$store.state.ui.disablePTNTools"
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-        </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -152,7 +126,7 @@
       :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <Notes ref="notes" class="fit" />
@@ -179,6 +153,7 @@
     <ErrorNotifications :errors="errors" />
     <GameNotifications ref="gameNotifications" />
     <NoteNotifications ref="noteNotifications" />
+    <PlyTooltipProvider />
   </q-layout>
   <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
@@ -194,13 +169,12 @@ import Notes from "../components/drawers/Notes";
 import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
+import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -221,11 +195,10 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
+    PlyTooltipProvider,
     NavControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     ToolbarAnalysis,

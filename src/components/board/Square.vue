@@ -73,7 +73,7 @@ export default {
   },
   computed: {
     game() {
-      return this.$store.state.game;
+      return this.$store.state.game || {};
     },
     board() {
       return this.game.board;
@@ -87,11 +87,11 @@ export default {
       );
     },
     isHighlighting() {
-      return this.$store.state.game.highlighterEnabled;
+      return this.game.highlighterEnabled;
     },
     highlighterColor() {
       return (
-        this.$store.state.game.highlighterSquares[this.coord] ||
+        this.game.highlighterSquares?.[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
     },
@@ -99,17 +99,17 @@ export default {
       return this.isHighlighted && isDark(this.highlighterColor);
     },
     isHighlighted() {
-      return this.coord in this.$store.state.game.highlighterSquares;
+      return this.coord in (this.game.highlighterSquares || {});
     },
     isEditingTPS() {
-      return this.$store.state.game.editingTPS !== undefined;
+      return this.game.editingTPS !== undefined;
     },
     selectedPiece() {
       return this.$store.state.ui.selectedPiece;
     },
     editingTPS: {
       get() {
-        return this.$store.state.game.editingTPS;
+        return this.game.editingTPS;
       },
       set(tps) {
         this.$store.dispatch("game/EDIT_TPS", tps);
@@ -130,7 +130,7 @@ export default {
     ring() {
       const theme = this.$store.state.ui.theme;
       let ring = this.square.static.ring;
-      if (theme.fromCenter) {
+      if (theme.fromCenter && this.game.config) {
         ring = Math.round(this.game.config.size / 2) - ring + 1;
       }
       if (ring > theme.rings) {
@@ -332,6 +332,10 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
 
 .square {
   position: relative;
+
+  .board-space.board-3D & {
+    transform: translateZ(0.001px);
+  }
 
   .board-container.diamonds1 &,
   .board-container.diamonds2 &,

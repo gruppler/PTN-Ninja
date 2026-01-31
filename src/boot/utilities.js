@@ -5,6 +5,7 @@ import {
   notifySuccess,
   notifyWarning,
   notifyHint,
+  notifyUndo,
 } from "../utilities";
 
 export default ({ Vue }) => {
@@ -14,4 +15,5 @@ export default ({ Vue }) => {
   Vue.prototype.notifySuccess = notifySuccess;
   Vue.prototype.notifyWarning = notifyWarning;
   Vue.prototype.notifyHint = notifyHint;
+  Vue.prototype.notifyUndo = notifyUndo;
 };

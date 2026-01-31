@@ -4,6 +4,7 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Evaluation from "../../Game/PTN/Evaluation";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -15,6 +16,8 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
+
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -29,7 +32,7 @@ export const SET_GAME = function (state, game) {
   const handleGameEnd = (game) => {
     if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
       const url = this.getters["ui/url"](game, {
-        name: game.name,
+        engineName: game.name,
         origin: true,
         state: true,
       });
@@ -59,6 +62,7 @@ export const SET_GAME = function (state, game) {
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
+      ptnUI: loadedPTNUI,
       onInit,
       onAppendPly,
       onInsertPly,
@@ -72,12 +76,20 @@ export const SET_GAME = function (state, game) {
       game.onInsertPly = onInsertPly;
       game.onError = onError;
     }
+    // Ensure the Game object has the latest ptnUI
+    if (loadedPTNUI) {
+      game.ptnUI = loadedPTNUI;
+    }
   }
   Vue.prototype.$game = game;
   state.name = game.name;
   state.board = game.board.output.board;
   state.comments = game.board.output.comments;
-  state.config = game.config;
+  state.config = {
+    ...game.config,
+    firstMoveNumber: game.firstMoveNumber,
+    firstPlayer: game.firstPlayer,
+  };
   state.history = game.history;
   state.historyIndex = game.historyIndex;
   state.position = game.board.output.position;
@@ -86,6 +98,7 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
+  state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 };
 
 export const ADD_GAME = (state, game) => {
@@ -94,6 +107,11 @@ export const ADD_GAME = (state, game) => {
     name: game.name,
     state: game.minState || game.state,
     config: game.config,
+    ptnUI: cloneDeep(
+      game.ptnUI && game.ptnUI.branchPointOverrides
+        ? game.ptnUI
+        : { branchPointOverrides: {} }
+    ),
     history: game.history,
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
@@ -111,6 +129,11 @@ export const ADD_GAMES = (state, { games, index }) => {
       name: game.name,
       state: game.minState || game.state,
       config: game.config,
+      ptnUI: cloneDeep(
+        game.ptnUI && game.ptnUI.branchPointOverrides
+          ? game.ptnUI
+          : { branchPointOverrides: {} }
+      ),
       history: game.history,
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
@@ -118,6 +141,15 @@ export const ADD_GAMES = (state, { games, index }) => {
       highlighterSquares: game.highlighterSquares,
     }))
   );
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = (state, overrides) => {
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze({ ...overrides } || {}),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const REMOVE_GAME = (state, index) => {
@@ -204,8 +236,19 @@ export const APPLY_TRANSFORM = (state, transform) => {
 };
 
 export const SELECT_GAME = (state, index) => {
-  state.list.unshift(state.list.splice(index, 1)[0]);
-  state.list[0].lastSeen = new Date();
+  const game = state.list.splice(index, 1)[0];
+  game.lastSeen = new Date();
+  state.list.unshift(game);
+  // Ensure ptnUI is preserved when switching games
+  if (game.ptnUI && game.ptnUI.branchPointOverrides) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...game.ptnUI.branchPointOverrides,
+      }),
+    });
+  } else {
+    state.ptnUI = Object.freeze({ branchPointOverrides: Object.freeze({}) });
+  }
 };
 
 export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
@@ -371,14 +414,28 @@ export const DELETE_BRANCH = (state, branch) => {
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.undo()) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
   if (game && !state.isEditingTPS && game.redo()) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze(savedBranchOverrides),
+    });
     postMessage("REDO");
   }
 };
@@ -456,12 +513,108 @@ export const SAVE_TPS = function (state, tps) {
   Vue.prototype.$game.setEditingTPS();
 };
 
+// Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points
+// This preserves the visual state regardless of what the new default would be
+// Uses sorted sibling move texts as a stable key that survives promotion
+const saveBranchPointStates = (game, currentOverrides) => {
+  const saved = {};
+  // Find all branch points and save their effective state
+  // Note: in game.plies, branches[0] is a ply object, not an ID
+  for (const ply of game.plies) {
+    if (
+      ply &&
+      ply.branches &&
+      ply.branches.length > 1 &&
+      ply.branches[0] === ply
+    ) {
+      const override = currentOverrides[ply.id];
+      // Use all sibling move texts (sorted) as a stable key
+      // This survives promotion because the siblings remain the same
+      const siblingMoveTexts = ply.branches
+        .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
+        .filter(Boolean)
+        .sort()
+        .join("|");
+      const key = JSON.stringify({
+        moveNumber: ply.move.number,
+        player: ply.player,
+        siblings: siblingMoveTexts,
+      });
+      // Save explicit overrides only - undefined means use default behavior
+      if (override !== undefined) {
+        saved[key] = override;
+      }
+    }
+  }
+  return saved;
+};
+
+// Helper to restore branch point overrides after init()
+const restoreBranchPointStates = (game, savedStates) => {
+  const newOverrides = {};
+  Object.entries(savedStates).forEach(([key, expanded]) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(key);
+    } catch (e) {
+      return;
+    }
+    // Find the branch point ply matching this key
+    // Note: in game.plies, branches[0] is a ply object, not an ID
+    for (const ply of game.plies) {
+      if (
+        ply.move.number === parsed.moveNumber &&
+        ply.player === parsed.player &&
+        ply.branches &&
+        ply.branches.length > 1 &&
+        ply.branches[0] === ply
+      ) {
+        // Build the sibling key for this branch point
+        const siblingMoveTexts = ply.branches
+          .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
+          .filter(Boolean)
+          .sort()
+          .join("|");
+        if (siblingMoveTexts === parsed.siblings) {
+          newOverrides[ply.id] = expanded;
+          break;
+        }
+      }
+    }
+  });
+  return newOverrides;
+};
+
 export const PROMOTE_BRANCH = (state, branch) => {
-  Vue.prototype.$game.promoteBranch(branch);
+  const game = Vue.prototype.$game;
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.promoteBranch(branch);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const MAKE_BRANCH_MAIN = (state, branch) => {
-  Vue.prototype.$game.makeBranchMain(branch, true);
+  const game = Vue.prototype.$game;
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.makeBranchMain(branch, true);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
@@ -484,16 +637,209 @@ export const ADD_NOTES = (state, messages) => {
   Vue.prototype.$game.addNotes(messages);
 };
 
+export const SET_NOTES = (state, { plyID, messages }) => {
+  Vue.prototype.$game.setNotes(plyID, messages);
+};
+
 export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
 };
 
+export const REMOVE_ANALYSIS_NOTE = (state, source) => {
+  Vue.prototype.$game.removeAnalysisNote(source);
+};
+
+export const REMOVE_POSITION_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) => notePlyID === String(plyID)
+  );
+};
+
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
 };
 
 export const REMOVE_ANALYSIS_NOTES = () => {
   Vue.prototype.$game.removeNotes(
-    (note) => note.output.evaluation !== null || note.output.pv !== null
+    (note, plyID) =>
+      note.output.evaluation !== null ||
+      note.output.pv !== null ||
+      note.output.pvAfter !== null
   );
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
+};
+
+// Helper to clear PTN eval marks (!/!!/?/??) but keep tak/tinue marks
+const clearEvalMarks = () => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.plies.forEach((ply) => {
+    if (ply && ply.evaluation) {
+      // Keep only tak/tinue marks
+      const hasTak = ply.evaluation.tak;
+      const hasTinue = ply.evaluation.tinue;
+      if (hasTak || hasTinue) {
+        // Preserve tak/tinue, remove ?/!
+        const newText = hasTinue ? '"' : hasTak ? "'" : "";
+        if (newText !== ply.evaluation.text) {
+          ply.evaluation = Evaluation.parse(newText);
+          game.board.dirtyPly(ply.id);
+        }
+      } else {
+        // No tak/tinue, clear entirely
+        ply.evaluation = null;
+        game.board.dirtyPly(ply.id);
+      }
+    }
+  });
+  // Don't record change here - the caller already recorded the change
+  // This prevents double-recording which breaks undo
+  game._updatePTN(false);
+  game.board.updatePTNOutput();
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
+
+  // Check if this is the initial position (before first move)
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  const isInitialPosition = !prevPly;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    // For initial position, check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
+    if (evalPlyID && plyID === evalPlyID) {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.evaluation !== null || note.pv !== null;
+    }
+    return false;
+  });
+};
+
+// Helper to check if a note matches an engine name
+// A note matches if: botName is null/undefined (no engine name stored), or botName matches
+const noteMatchesEngine = (note, engineName) => {
+  return !note.botName || note.botName === engineName;
+};
+
+// Helper to check if a note is an analysis note
+const isAnalysisNote = (note) =>
+  note.evaluation !== null || note.pv !== null || note.pvAfter !== null;
+
+export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+
+  Vue.prototype.$game.removeNotes((note) => {
+    return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
+  });
+  // Also clear PTN eval marks (except tak/tinue)
+  clearEvalMarks();
+};
+
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
+  const engineName = botName;
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
+
+  // Check if this is the initial position (before first move)
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  // This handles both cases: when nextPly exists and when the game has no plies
+  const isInitialPosition = !prevPly;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    if (!noteMatchesEngine(note, engineName)) {
+      return false;
+    }
+    // For initial position, check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
+    if (evalPlyID && plyID === evalPlyID) {
+      return (
+        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+      );
+    }
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.evaluation !== null || note.pv !== null;
+    }
+    return false;
+  });
+};
+
+// Set eval marks (!!,!,?,??) on plies, clearing existing eval marks first
+export const SET_EVAL_MARKS = (state, evalMarks) => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.recordChange(() => {
+    // First clear all existing eval marks (but keep tak/tinue)
+    clearEvalMarks();
+
+    // Then apply new eval marks
+    for (const plyId in evalMarks) {
+      const ply = game.plies[plyId];
+      if (!ply) continue;
+
+      const mark = evalMarks[plyId];
+      // Preserve existing tak/tinue marks
+      let newText = mark;
+      if (ply.evaluation) {
+        if (ply.evaluation.tinue) {
+          newText += '"';
+        } else if (ply.evaluation.tak) {
+          newText += "'";
+        }
+      }
+      ply.evaluation = Evaluation.parse(newText);
+      game.board.dirtyPly(ply.id);
+    }
+
+    game._updatePTN(false);
+    game.board.updatePTNOutput();
+  });
+};
+
+// Remove all eval marks (!!,!,?,??) but keep tak/tinue marks
+export const REMOVE_EVAL_MARKS = () => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.plies) return;
+
+  game.recordChange(() => {
+    clearEvalMarks();
+    game._updatePTN(false);
+    game.board.updatePTNOutput();
+  });
 };

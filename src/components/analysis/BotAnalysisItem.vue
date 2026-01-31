@@ -18,12 +18,43 @@
         : null
     "
     :depth="suggestion.depth || null"
+    :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
-    :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
+    :fixed-height="fixedHeight"
+    :expandable="expandable"
+    :show-continuation="showContinuation"
+    :hide-count="hideCount"
+    :hide-seconds="hideSeconds"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-slot:after>
+      <slot name="after" />
+      <q-btn
+        v-if="showMenu && !isBoardDisabled"
+        class="analysis-item-menu-btn"
+        icon="menu_vertical"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
+        flat
+        dense
+      >
+        <q-menu auto-close transition-show="none" transition-hide="none">
+          <q-list>
+            <q-item @click="$emit('delete')" clickable>
+              <q-item-section side>
+                <q-icon name="delete" />
+              </q-item-section>
+              <q-item-section>{{ $t("Delete") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
+    </template>
+  </AnalysisItem>
 </template>
 
 <script>
@@ -36,10 +67,53 @@ export default {
   components: { AnalysisItem },
   props: {
     suggestion: Object,
+    prevSuggestion: {
+      type: Object,
+      default: null,
+    },
+    showBotName: {
+      type: Boolean,
+      default: false,
+    },
+    showMenu: {
+      type: Boolean,
+      default: false,
+    },
+    fixedHeight: {
+      type: Boolean,
+      default: false,
+    },
+    expandable: {
+      type: Boolean,
+      default: false,
+    },
+    showContinuation: {
+      type: Boolean,
+      default: true,
+    },
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     seconds() {
       return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
+    },
+    hideCount() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.nodes !== null &&
+        this.suggestion.nodes !== undefined &&
+        this.suggestion.nodes === this.prevSuggestion.nodes
+      );
+    },
+    hideSeconds() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.time !== null &&
+        this.suggestion.time !== undefined &&
+        this.suggestion.time === this.prevSuggestion.time
+      );
     },
     pv() {
       return [this.suggestion.ply].concat(this.suggestion.followingPlies);

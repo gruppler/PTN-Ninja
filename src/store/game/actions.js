@@ -2,7 +2,7 @@ import Vue from "vue";
 import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
-import { notifyError, notifyWarning } from "../../utilities";
+import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
@@ -194,7 +194,9 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch, getters }) {
           games[0] = new Game({ tags });
         } catch (error) {}
       }
-      games[0].name = getters.uniqueName(games[0].name);
+      if (games[0]) {
+        games[0].name = getters.uniqueName(games[0].name);
+      }
     }
   }
   if (ptn && games && games.length) {
@@ -233,30 +235,24 @@ export const REPLACE_GAME = function (
     dispatch("SAVE_CURRENT_GAME", true);
 
     Vue.nextTick(() => {
-      Vue.prototype.notify({
+      notifyUndo({
         message: i18n.t("success.replacedExistingGame"),
-        timeout: 1e4,
-        progress: true,
-        actions: [
-          {
-            icon: "open_in_new",
-            label: i18n.t("Duplicate"),
-            color: "primary",
-            handler: () => {
-              dispatch("UNDO", game);
-              dispatch("ADD_GAME", game);
+        handler: () => {
+          dispatch("UNDO", game);
+        },
+        options: {
+          actions: [
+            {
+              icon: "open_in_new",
+              label: i18n.t("Duplicate"),
+              color: "primary",
+              handler: () => {
+                dispatch("UNDO", game);
+                dispatch("ADD_GAME", game);
+              },
             },
-          },
-          {
-            icon: "undo",
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              dispatch("UNDO", game);
-            },
-          },
-          { icon: "close" },
-        ],
+          ],
+        },
       });
     });
   } else {
@@ -290,32 +286,22 @@ export const REMOVE_GAME = async function (
       const icon = game.config.isOnline
         ? getters.playerIcon(game.config.player, game.config.isPrivate)
         : "file";
-      Vue.prototype.notify({
+      notifyUndo({
         icon,
         message: i18n.t("Game x closed", { game: game.name }),
-        timeout: 1e4,
-        progress: true,
-        multiLine: false,
-        actions: [
-          {
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              if (index === 0) {
-                Loading.show();
-                setTimeout(() => {
-                  this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
-                    await dispatch("ADD_GAMES", { games: [game], index });
-                    Loading.hide();
-                  });
-                }, 200);
-              } else {
-                dispatch("ADD_GAMES", { games: [game], index });
-              }
-            },
-          },
-          { icon: "close" },
-        ],
+        handler: () => {
+          if (index === 0) {
+            Loading.show();
+            setTimeout(() => {
+              this.dispatch("ui/WITHOUT_BOARD_ANIM", async () => {
+                await dispatch("ADD_GAMES", { games: [game], index });
+                Loading.hide();
+              });
+            }, 200);
+          } else {
+            dispatch("ADD_GAMES", { games: [game], index });
+          }
+        },
       });
     });
   };
@@ -351,31 +337,22 @@ export const REMOVE_MULTIPLE_GAMES = async function (
       if (start === 0) {
         dispatch("SET_GAME", state.list[0]);
       }
-      Vue.prototype.notify({
+      notifyUndo({
         icon: "close_multiple",
         message: i18n.tc("success.closedMultipleGames", count),
-        timeout: 1e4,
-        progress: true,
-        actions: [
-          {
-            label: i18n.t("Undo"),
-            color: "primary",
-            handler: () => {
-              if (start === 0) {
-                Loading.show();
-                setTimeout(() => {
-                  this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
-                    dispatch("ADD_GAMES", { games, index: start });
-                    Loading.hide();
-                  });
-                }, 200);
-              } else {
+        handler: () => {
+          if (start === 0) {
+            Loading.show();
+            setTimeout(() => {
+              this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
                 dispatch("ADD_GAMES", { games, index: start });
-              }
-            },
-          },
-          { icon: "close" },
-        ],
+                Loading.hide();
+              });
+            }, 200);
+          } else {
+            dispatch("ADD_GAMES", { games, index: start });
+          }
+        },
       });
     });
   };
@@ -530,31 +507,112 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
   });
 };
 
+export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
+  const response = await fetch(
+    `https://api.playtak.com/v1/games-history/ptn/${id}`
+    // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+  );
+  if (response && response.ok) {
+    const ptn = await response.text();
+    console.log(ptn);
+    let game = new Game({ ptn, state });
+    return game;
+  } else {
+    if (response) {
+      if (response.status === 404) {
+        throw "Game does not exist";
+      } else {
+        response = await response.json();
+        console.log(response);
+        throw response && response.message ? response.message : "unknown";
+      }
+    } else {
+      throw "unknown";
+    }
+  }
+}
+
+import { OPENING_DB_API } from "../../constants";
+
+export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
+  const response = await fetch(`${OPENING_DB_API}/game/${id}`);
+  if (response && response.ok) {
+    const text = await response.text();
+    const ptn = JSON.parse(text).ptn;
+    let game = new Game({ ptn, state });
+    return game;
+  } else {
+    if (response) {
+      if (response.status === 404) {
+        throw "Game does not exist";
+      } else {
+        const errorData = await response.json().catch(() => null);
+        throw errorData && errorData.message ? errorData.message : "unknown";
+      }
+    } else {
+      throw "unknown";
+    }
+  }
+}
+
+export const ADD_TAKEXPLORER_GAME = async function (
+  { dispatch },
+  { id, state }
+) {
+  try {
+    const game = await dispatch("FETCH_TAKEXPLORER_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+export const OPEN_TAKEXPLORER_GAME = async function (
+  { dispatch },
+  { id, state }
+) {
+  try {
+    const game = await dispatch("FETCH_TAKEXPLORER_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    window.open(
+      this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      }),
+      "_blank"
+    );
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
-    const response = await fetch(
-      `https://api.playtak.com/v1/games-history/ptn/${id}`
-      // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    dispatch("ADD_GAME", game);
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
+  try {
+    const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+    game.warnings.forEach((warning) => notifyWarning(warning));
+    window.open(
+      this.getters["ui/url"](game, {
+        name: game.name,
+        origin: true,
+        state: true,
+      }),
+      "_blank"
     );
-    if (response && response.ok) {
-      const ptn = await response.text();
-      console.log(ptn);
-      let game = new Game({ ptn, state });
-      game.warnings.forEach((warning) => notifyWarning(warning));
-      return dispatch("ADD_GAME", game);
-    } else {
-      if (response) {
-        if (response.status === 404) {
-          throw "Game does not exist";
-        } else {
-          response = await response.json();
-          console.log(response);
-          throw response && response.message ? response.message : "unknown";
-        }
-      } else {
-        throw "unknown";
-      }
-    }
   } catch (error) {
     notifyError(error);
     throw error;
@@ -587,6 +645,7 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         ptn: game.ptn,
         state: game.minState,
         config: game.config,
+        ptnUI: this.state.game.ptnUI,
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
         highlighterSquares: game.highlighterSquares,
@@ -600,6 +659,35 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
   }
   if (rebuildState) {
     commit("SAVE_CURRENT_GAME");
+  }
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = async function (
+  { commit, state, dispatch },
+  overrides
+) {
+  commit("SET_BRANCH_POINT_OVERRIDES", overrides);
+  if (this.state.ui.embed) {
+    return;
+  }
+  const game = { ...state.list[0] };
+  try {
+    game.ptnUI = {
+      ...(game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+  // Ensure ptnUI is saved to the main game object as well
+  dispatch("SAVE_CURRENT_GAME", false);
+  // Also update the in-memory Game object's ptnUI
+  if (Vue.prototype.$game) {
+    Vue.prototype.$game.ptnUI = {
+      ...(Vue.prototype.$game.ptnUI || {}),
+      branchPointOverrides: overrides || {},
+    };
   }
 };
 
@@ -644,6 +732,9 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
 
 export const SET_PLAYER = function ({ commit }, player) {
   const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
   player = Number(player) || null;
   const config = { ...game.config, player };
   Object.assign(game.config, config);
@@ -898,8 +989,23 @@ export const ADD_NOTES = ({ commit, dispatch }, messages) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const SET_NOTES = ({ commit, dispatch }, { plyID, messages }) => {
+  commit("SET_NOTES", { plyID, messages });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const REMOVE_NOTE = ({ commit, dispatch }, { plyID, index }) => {
   commit("REMOVE_NOTE", { plyID, index });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_ANALYSIS_NOTE = ({ commit, dispatch }, source) => {
+  commit("REMOVE_ANALYSIS_NOTE", source);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_NOTES = ({ commit, dispatch }, plyID) => {
+  commit("REMOVE_POSITION_NOTES", plyID);
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -910,5 +1016,39 @@ export const REMOVE_NOTES = function ({ commit, dispatch }) {
 
 export const REMOVE_ANALYSIS_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_ANALYSIS_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  tps
+) {
+  commit("REMOVE_POSITION_ANALYSIS_NOTES", tps);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  botName
+) {
+  commit("REMOVE_BOT_ANALYSIS_NOTES", botName);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  { tps, botName }
+) {
+  commit("REMOVE_POSITION_BOT_ANALYSIS_NOTES", { tps, botName });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const SET_EVAL_MARKS = function ({ commit, dispatch }, evalMarks) {
+  commit("SET_EVAL_MARKS", evalMarks);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_EVAL_MARKS = function ({ commit, dispatch }) {
+  commit("REMOVE_EVAL_MARKS");
   dispatch("SAVE_CURRENT_GAME", true);
 };

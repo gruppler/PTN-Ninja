@@ -5,9 +5,11 @@ import { THEMES } from "../../themes";
 const defaultState = {
   offline: !navigator.onLine,
   analysisSections: {
-    botSuggestions: false,
     dbMoves: false,
     dbGames: false,
+    botSuggestions: false,
+    savedResults: true,
+    positionNotes: true,
   },
   animateBoard: true,
   animateScrub: false,
@@ -35,6 +37,7 @@ const defaultState = {
   highlighterColor: "",
   highlighterCustomColor: "",
   highlightSquares: true,
+  inlineBranches: true,
   isPortrait: false,
   isVertical: false,
   komi: 0,
@@ -44,6 +47,7 @@ const defaultState = {
       ? navigator.canShare({ text: "test", url: location.href })
       : false,
   notifyAnalysisNotes: false,
+  hideAnalysisNotes: true,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
@@ -57,7 +61,7 @@ const defaultState = {
   scrollScrubbing: Platform.is.desktop,
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
-  showAllBranches: false,
+  showAllBranches: true,
   showBoardPrefsBtn: false,
   showBoardTransformBtn: false,
   showControls: true,
@@ -96,6 +100,7 @@ export const embedUIOptions = [
   "evalText",
   "flatCounts",
   "highlightSquares",
+  "inlineBranches",
   "moveNumber",
   "notifyAnalysisNotes",
   "notifyGame",
@@ -162,7 +167,11 @@ defaultState.pngConfig = {
 
 const state = {
   embed: Platform.within.iframe,
+  collapseBranchRequest: null,
+  expandBranchRequest: null,
   scrubbing: false,
+  plyPreviewActive: false,
+  branchMenuOpen: false,
   thumbnails: {},
   shortLinks: {},
   defaults: defaultState,

@@ -8,12 +8,6 @@
     :key="plyID"
     :ref="plyID"
   >
-    <div
-      v-if="$store.state.ui.showEval && evaluation !== null"
-      class="evaluation"
-      :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-      :style="{ width: Math.abs(evaluation) + '%' }"
-    />
     <div v-if="ply && plyID >= 0" class="ply-container">
       <Move
         :move="move"
@@ -21,39 +15,7 @@
         separate-branch
         no-decoration
         class="q-px-md"
-      >
-        <template v-slot:plyTooltip>
-          <PlyPreview
-            :tps="ply.tpsAfter"
-            :hl="ply.text"
-            :options="$store.state.game.config"
-          />
-        </template>
-      </Move>
-      <q-item
-        v-for="(pv, i) in pvs"
-        :key="i"
-        @mouseover="current ? highlight(pv) : null"
-        @mouseout="current ? unhighlight() : null"
-        @click="insertPV(i)"
-        clickable
-      >
-        <q-item-label class="small">
-          <Linenum :linenum="move.linenum" no-branch />
-          <Ply
-            v-for="(pvPly, j) in pv"
-            :key="j"
-            :ply="pvPly"
-            @click.stop.prevent.capture="insertPV(i, j)"
-          >
-            <PlyPreview
-              :tps="ply.tpsBefore"
-              :plies="pv.slice(0, j + 1).map((p) => p.ptn)"
-              :options="$store.state.game.config"
-            />
-          </Ply>
-        </q-item-label>
-      </q-item>
+      />
     </div>
 
     <Note
@@ -72,14 +34,10 @@
 <script>
 import Note from "./Note";
 import Move from "../PTN/Move";
-import Linenum from "../PTN/Linenum";
-import Ply from "../PTN/Ply";
-import PlyPreview from "../controls/PlyPreview";
-import { parsePV } from "../../utilities";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move, Linenum, Ply, PlyPreview },
+  components: { Note, Move },
   props: {
     plyID: Number,
     notes: Array,
@@ -111,52 +69,10 @@ export default {
             (!this.game.position.ply.index && !this.game.position.plyIsDone)))
       );
     },
-    evaluation() {
-      return this.$store.state.game.comments.evaluations[this.plyID];
-    },
-    pvs() {
-      let pvs = this.$store.state.game.comments.pvs[this.plyID];
-      if (pvs) {
-        return pvs.map(this.formatPV);
-      }
-      return null;
-    },
   },
   methods: {
     remove({ plyID, index }) {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
-    },
-    formatPV(pv) {
-      return parsePV(this.ply.player, this.ply.color, pv);
-    },
-    highlight(pv) {
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", pv[0].squares);
-    },
-    unhighlight() {
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-    },
-    insertPV(pvIndex, plyIndex) {
-      if (!this.pvs || !this.pvs[pvIndex]) {
-        return;
-      }
-      let prev = 0;
-      if (plyIndex === undefined) {
-        plyIndex = this.pvs[pvIndex].length;
-        prev = plyIndex - 1;
-      }
-      this.unhighlight();
-      if (this.$store.state.game.position.plyID !== this.plyID) {
-        this.$store.commit("game/GO_TO_PLY", {
-          plyID: this.plyID,
-          isDone: false,
-        });
-      } else if (this.$store.state.game.position.plyIsDone) {
-        this.$store.commit("game/PREV", { half: true });
-      }
-      this.$store.dispatch("game/INSERT_PLIES", {
-        plies: this.pvs[pvIndex].slice(0, plyIndex + 1).map((ply) => ply.text),
-        prev,
-      });
     },
   },
 };
@@ -166,20 +82,18 @@ export default {
 .note-item {
   position: relative;
 
+  + .note-item {
+    border-top: 1px solid $separator-color;
+
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
+
   &.current {
     background-color: $dim;
     body.panelDark & {
       background-color: $highlight;
-    }
-  }
-
-  .evaluation {
-    &.p1,
-    &.p2 {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
     }
   }
 

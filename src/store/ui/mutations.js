@@ -30,12 +30,28 @@ export const SET_UI = (state, [key, value]) => {
   }
 };
 
+export const SET_COLLAPSE_BRANCH_REQUEST = (state, request) => {
+  state.collapseBranchRequest = cloneDeep(request);
+};
+
+export const SET_EXPAND_BRANCH_REQUEST = (state, request) => {
+  state.expandBranchRequest = cloneDeep(request);
+};
+
 export const SET_EMBED_GAME = (state) => {
   state.embed = true;
 };
 
 export const SET_SCRUBBING = (state, phase) => {
   state.scrubbing = phase === "start";
+};
+
+export const SET_PLY_PREVIEW_ACTIVE = (state, active) => {
+  state.plyPreviewActive = active;
+};
+
+export const SET_BRANCH_MENU_OPEN = (state, open) => {
+  state.branchMenuOpen = open;
 };
 
 export const SET_THUMBNAIL = (state, { id, options, url }) => {

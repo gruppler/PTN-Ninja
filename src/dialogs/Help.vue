@@ -31,11 +31,15 @@
     <div ref="help" class="help">
       <q-tab-panels v-model="section" animated persistent>
         <q-tab-panel name="about">
-          <q-markdown ref="markdown" :src="about" no-heading-anchor-links />
+          <q-markdown
+            :src="about"
+            class="text-selectable"
+            no-heading-anchor-links
+          />
         </q-tab-panel>
 
         <q-tab-panel name="usage">
-          <ul class="toc" v-if="toc && width < 1200">
+          <ul class="toc" v-if="toc">
             <li v-for="parent in toc" :key="parent.id">
               <a
                 :href="$route.path + '#' + parent.id"
@@ -49,33 +53,26 @@
                     @click.prevent="tocScroll(child.id)"
                     >{{ child.label }}</a
                   >
+                  <ul v-if="child.children && child.children.length">
+                    <li
+                      v-for="grandchild in child.children"
+                      :key="grandchild.id"
+                    >
+                      <a
+                        :href="$route.path + '#' + grandchild.id"
+                        @click.prevent="tocScroll(grandchild.id)"
+                        >{{ grandchild.label }}</a
+                      >
+                    </li>
+                  </ul>
                 </li>
               </ul>
             </li>
           </ul>
-          <q-page-sticky position="top-left" v-else-if="toc" :offset="[6, 6]">
-            <ul class="toc" v-if="toc">
-              <li v-for="parent in toc" :key="parent.id">
-                <a
-                  :href="$route.path + '#' + parent.id"
-                  @click.prevent="tocScroll(parent.id)"
-                  >{{ parent.label }}</a
-                >
-                <ul v-if="parent.children.length">
-                  <li v-for="child in parent.children" :key="child.id">
-                    <a
-                      :href="$route.path + '#' + child.id"
-                      @click.prevent="tocScroll(child.id)"
-                      >{{ child.label }}</a
-                    >
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </q-page-sticky>
           <q-markdown
             ref="markdown"
             :src="usage"
+            class="text-selectable"
             no-heading-anchor-links
             toc
             @data="onTOC"
@@ -145,6 +142,9 @@ export default {
       set(section) {
         this.$router.replace({ params: { section } });
       },
+    },
+    fullscreen() {
+      return this.isFullscreen();
     },
   },
   methods: {
@@ -244,6 +244,18 @@ export default {
 
     ul {
       font-weight: normal;
+    }
+  }
+
+  @media (min-width: 1300px) {
+    &:fullscreen .toc,
+    &:-webkit-full-screen .toc {
+      position: fixed;
+      float: none;
+      top: 1.2em;
+      left: 50%;
+      transform: translateX(calc(-7em - 450px - 50%));
+      margin-left: 0;
     }
   }
 

@@ -234,22 +234,74 @@ export default {
       return this.$store.state.ui.showEval && this.$store.state.ui.boardEvalBar;
     },
     evaluation() {
+      // First check for override from SET_EVAL (e.g., from live analysis)
       if (this.$store.state.game.evaluation !== null) {
         return this.$store.state.game.evaluation;
-      } else if (this.position.boardPly) {
+      }
+
+      // Get the TPS for the current position (after the board ply)
+      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+
+      // Check selected bot's positions (regardless of preferSavedResults)
+      const analysis = this.$store.state.analysis;
+      if (analysis && analysis.botPositions && !analysis.preferSavedResults) {
+        const botID = analysis.botID;
+        const botPositions = analysis.botPositions[botID];
+        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
+          return botPositions[tps][0].evaluation ?? null;
+        }
+      }
+
+      // Fall back to saved evaluation
+      if (this.position.boardPly) {
         return this.$store.state.game.comments.evaluations[
           this.position.boardPly.id
         ];
-      } else {
-        return null;
       }
+      return null;
     },
     evaluationText() {
-      let evaluation = this.position.boardPly
+      const ply = this.position.boardPly
         ? this.$store.state.game.ptn.allPlies[this.position.boardPly.id]
-            .evaluation
         : null;
-      return evaluation ? evaluation.text : null;
+      if (!ply) return null;
+
+      const plyEval = ply.evaluation;
+      const takTinue = plyEval
+        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
+        : "";
+
+      const analysis = this.$store.state.analysis;
+      const preferSaved = analysis?.preferSavedResults;
+      const showEvalMarks = analysis?.showEvalMarks;
+
+      // If preferring saved results, use saved eval marks from PTN
+      if (preferSaved) {
+        return plyEval ? plyEval.text : null;
+      }
+
+      // If showEvalMarks is disabled, only show tak/tinue marks
+      if (!showEvalMarks) {
+        return takTinue || null;
+      }
+
+      // Access reactive state directly so Vue tracks dependencies
+      const botID = analysis?.botID;
+      const botPositions = analysis?.botPositions;
+      const positions = botID && botPositions ? botPositions[botID] : null;
+      const hasBotPositions = positions && Object.keys(positions).length > 0;
+
+      // Check for eval mark override from bot analysis
+      if (hasBotPositions) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(ply) : null;
+
+        // Return override combined with tak/tinue, or just tak/tinue if no override
+        return override ? override + takTinue : takTinue || null;
+      }
+
+      // No bot positions - only show tak/tinue marks
+      return takTinue || null;
     },
     selected() {
       return this.$store.state.game.selected;
@@ -788,7 +840,8 @@ $radius: 0.35em;
     grid-row-start: 1;
   }
 
-  .move-number {
+  .move-number,
+  .eval-text {
     height: 1.75em;
     line-height: 1.75;
   }
