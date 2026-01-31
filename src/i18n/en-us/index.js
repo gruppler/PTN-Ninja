@@ -614,7 +614,7 @@ export default {
       newPosition: "No data for this position or search filter",
       notFound:
         "No database available for the current board size or search filters",
-      beyondRange: "No longer within the opening",
+      beyondRange: "No longer within the opening data",
     },
     tournamentOptions: {
       exclude: "Non-Tournament",

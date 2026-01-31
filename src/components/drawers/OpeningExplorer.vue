@@ -13,7 +13,7 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
-          <q-item-label v-if="hasDBSettings" class="fg-inherit" caption>
+          <q-item-label class="fg-inherit" caption>
             <div class="q-gutter-xs">
               <q-icon v-if="dbSettings.includeBotGames" name="bot">
                 <tooltip>{{ $t("analysis.includeBotGames") }}</tooltip>
@@ -116,33 +116,6 @@
               <q-item-section side>
                 <q-toggle
                   v-model="dbSettings.includeBotGames"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
-              </q-item-section>
-            </q-item>
-
-            <!-- Open in New Tab -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
-              <q-item-section avatar>
-                <q-icon name="open_in_new" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>
-                  {{ $t("analysis.openGamesInNewTab") }}
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="dbSettings.openGamesInNewTab"
                   :dark="$store.state.ui.theme.panelDark"
                 />
               </q-item-section>
@@ -300,22 +273,6 @@
               </template>
             </q-input>
 
-            <!-- Max Top Games -->
-            <q-input
-              v-model.number="dbSettings.maxTopGames"
-              :label="$t('analysis.maxTopGames')"
-              type="number"
-              min="1"
-              max="10"
-              step="1"
-              item-aligned
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon name="top_games" />
-              </template>
-            </q-input>
             <q-separator :dark="$store.state.ui.theme.panelDark" />
           </template>
         </smooth-reflow>
@@ -413,11 +370,88 @@
     <q-expansion-item
       v-if="dbGames"
       v-model="sections.dbGames"
-      :label="$t('analysis.Top Games from Position')"
-      icon="top_games"
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-icon name="top_games" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>
+            {{ $t("analysis.Top Games from Position") }}
+          </q-item-label>
+          <q-item-label class="fg-inherit" caption>
+            <div class="q-gutter-xs">
+              <q-icon v-if="dbSettings.openGamesInNewTab" name="open_in_new">
+                <tooltip>{{ $t("analysis.openGamesInNewTab") }}</tooltip>
+              </q-icon>
+            </div>
+          </q-item-label>
+        </q-item-section>
+        <q-item-section class="fg-inherit" side>
+          <q-btn
+            @click.stop="toggleTopGamesSettings"
+            icon="settings"
+            :color="showTopGamesSettings ? 'primary' : ''"
+            dense
+            round
+            flat
+          />
+        </q-item-section>
+      </template>
+
+      <recess>
+        <smooth-reflow height-only>
+          <template v-if="showTopGamesSettings">
+            <!-- Open in New Tab -->
+            <q-item
+              tag="label"
+              :class="[
+                $store.state.ui.theme.panelDark
+                  ? 'text-textLight'
+                  : 'text-textDark',
+              ]"
+              clickable
+              v-ripple
+            >
+              <q-item-section avatar>
+                <q-icon name="open_in_new" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  {{ $t("analysis.openGamesInNewTab") }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="dbSettings.openGamesInNewTab"
+                  :dark="$store.state.ui.theme.panelDark"
+                />
+              </q-item-section>
+            </q-item>
+
+            <!-- Max Top Games -->
+            <q-input
+              v-model.number="dbSettings.maxTopGames"
+              :label="$t('analysis.maxTopGames')"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              item-aligned
+              filled
+              :dark="$store.state.ui.theme.panelDark"
+            >
+              <template v-slot:prepend>
+                <q-icon name="top_games" />
+              </template>
+            </q-input>
+            <q-separator :dark="$store.state.ui.theme.panelDark" />
+          </template>
+        </smooth-reflow>
+      </recess>
+
       <recess>
         <smooth-reflow class="relative-position">
           <!-- Messages with placeholders behind them -->
@@ -546,6 +580,7 @@ export default {
     return {
       loadingDBMoves: false,
       showDBSettings: false,
+      showTopGamesSettings: false,
       dbPositions: {},
       dbMoves: [],
       dbGames: [],
@@ -609,11 +644,6 @@ export default {
     },
     dbPosition() {
       return this.dbPositions[this.tps] || null;
-    },
-    hasDBSettings() {
-      return Object.values(omit(this.dbSettings, "maxSuggestedMoves")).some(
-        (setting) => setting !== null && (!isArray(setting) || setting.length)
-      );
     },
     /**
      * Select the ID of the database to use for the current board size and search filters
@@ -682,6 +712,13 @@ export default {
       // Expand panel with settings if the panel was collapsed
       if (this.showDBSettings) {
         this.sections.dbMoves = true;
+      }
+    },
+    toggleTopGamesSettings() {
+      this.showTopGamesSettings = !this.showTopGamesSettings;
+      // Expand panel with settings if the panel was collapsed
+      if (this.showTopGamesSettings) {
+        this.sections.dbGames = true;
       }
     },
     hashDBSettings(settings) {
