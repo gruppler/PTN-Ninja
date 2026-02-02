@@ -107,6 +107,14 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
     }
+    // Set preferSavedResults based on tab selection
+    if (key === "textTab") {
+      if (value === "notes") {
+        dispatch("analysis/SET", ["preferSavedResults", true], { root: true });
+      } else if (value === "analysis") {
+        dispatch("analysis/SET", ["preferSavedResults", false], { root: true });
+      }
+    }
   }
 };
 

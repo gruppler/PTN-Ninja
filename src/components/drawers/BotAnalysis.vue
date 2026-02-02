@@ -7,27 +7,16 @@
     >
       <template v-slot:header>
         <q-item-section avatar>
-          <q-btn
-            @click.stop="selectEngineResults"
-            :color="isEngineActive ? 'primary' : ''"
-            style="margin-left: -4px"
+          <BotProgress
+            v-if="!sections.botSuggestions && runningBotState"
+            :is-running="true"
+            :interactive="runningBotState.isInteractiveEnabled"
+            :progress="runningBotState.progress"
+            class="no-pointer-events"
             dense
-            round
             flat
-            glossy
-          >
-            <BotProgress
-              v-if="!sections.botSuggestions && runningBotState"
-              :is-running="true"
-              :interactive="runningBotState.isInteractiveEnabled"
-              :progress="runningBotState.progress"
-              class="no-pointer-events"
-              dense
-              flat
-            />
-            <q-icon v-else name="bot" />
-            <hint>{{ $t("Select Engine Results") }}</hint>
-          </q-btn>
+          />
+          <q-icon v-else name="bot" />
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Engine Moves") }}</q-item-label>
@@ -265,146 +254,11 @@
         <q-separator :dark="dark" />
       </recess>
     </q-expansion-item>
-
-    <!-- Saved Results - moved outside Bot Analysis -->
-    <q-expansion-item
-      v-model="sections.savedResults"
-      header-class="bg-accent"
-      expand-icon-class="fg-inherit"
-      default-opened
-    >
-      <template v-slot:header>
-        <q-item-section avatar>
-          <q-btn
-            @click.stop="selectSavedResults"
-            icon="save"
-            :color="isSavedResultsActive ? 'primary' : ''"
-            style="margin-left: -4px"
-            dense
-            round
-            flat
-            glossy
-            :disable="!hasCurrentPositionSavedResults"
-          >
-            <hint>{{ $t("Select Saved Results") }}</hint>
-          </q-btn>
-        </q-item-section>
-        <q-item-section :class="{ 'text-primary': isSavedResultsActive }">
-          <q-item-label>{{ $t("Saved Results") }}</q-item-label>
-        </q-item-section>
-        <q-item-section class="fg-inherit" side>
-          <q-btn
-            @click.stop
-            icon="delete"
-            :disable="!hasAnalysisNotes"
-            dense
-            round
-            flat
-          >
-            <q-menu
-              transition-show="none"
-              transition-hide="none"
-              auto-close
-              square
-            >
-              <q-list>
-                <q-item
-                  clickable
-                  @click="clearCurrentPositionSavedResults"
-                  :disable="!hasCurrentPositionSavedResults"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="delete" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>
-                      {{ $t("analysis.Delete Positions Saved Results") }}
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  @click="clearSavedResults"
-                  :disable="!hasAnalysisNotes"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="delete_all" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>
-                      {{ $t("analysis.Delete All Saved Results") }}
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-separator :dark="dark" />
-
-                <q-item
-                  clickable
-                  @click="removeEvalMarks"
-                  :disable="!hasEvalMarks"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="eval" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>
-                      {{ $t("analysis.Remove Eval Marks") }}
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-        </q-item-section>
-      </template>
-
-      <recess>
-        <smooth-reflow height-only style="overflow-x: hidden">
-          <BotAnalysisItem
-            v-for="(suggestion, i) in savedSuggestions"
-            :key="'saved-' + i"
-            :suggestion="suggestion"
-            :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
-            show-bot-name
-            show-menu
-            :fixed-height="!showFullPVs"
-            :show-continuation="showContinuationToggle"
-            expandable
-            @delete="deleteSavedSuggestion(suggestion)"
-          />
-          <!-- Fill remaining space with placeholders when fewer than average -->
-          <AnalysisItemPlaceholder
-            v-for="i in savedFillerPlaceholderCount"
-            :key="'saved-filler-placeholder-' + i"
-            :show-continuation="showContinuationToggle"
-            static
-          />
-          <div v-if="!savedSuggestions.length" class="relative-position">
-            <AnalysisItemPlaceholder
-              v-for="i in modeResultsCount"
-              :key="'static-placeholder-' + i"
-              :show-continuation="showContinuationToggle"
-              static
-            />
-            <q-item
-              class="flex-center absolute-center full-width"
-              :class="'text-' + textColor"
-            >
-              {{ $t("analysis.noResults") }}
-            </q-item>
-          </div>
-        </smooth-reflow>
-      </recess>
-    </q-expansion-item>
   </div>
 </template>
 
 <script>
 import BotSuggestions from "./BotSuggestions.vue";
-import BotAnalysisItem from "../analysis/BotAnalysisItem";
-import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotProgress from "../analysis/BotProgress";
 import { bots } from "../../bots";
 import { cloneDeep, isEqual } from "lodash";
@@ -413,8 +267,6 @@ export default {
   name: "BotAnalysis",
   components: {
     BotSuggestions,
-    BotAnalysisItem,
-    AnalysisItemPlaceholder,
     BotProgress,
   },
   data() {
@@ -439,15 +291,6 @@ export default {
     defaultBotID() {
       return this.$store.state.analysis.botID;
     },
-    game() {
-      return this.$store.state.game;
-    },
-    tps() {
-      return this.game.position.tps;
-    },
-    allPlies() {
-      return this.game.ptn.allPlies;
-    },
     isAnyBotRunning() {
       return this.runningBotState !== null;
     },
@@ -469,20 +312,6 @@ export default {
         }
       }
       return null;
-    },
-    savedSuggestions() {
-      return this.$store.getters["game/suggestions"](this.tps);
-    },
-    hasAnalysisNotes() {
-      return Object.values(this.$store.state.game.comments.notes).some(
-        (notes) =>
-          notes.some(
-            (note) =>
-              note.evaluation !== null ||
-              note.pv !== null ||
-              note.pvAfter !== null
-          )
-      );
     },
     saveEvalMarks: {
       get() {
@@ -548,74 +377,6 @@ export default {
         this.$store.dispatch("analysis/SET", ["overwriteInferior", value]);
       },
     },
-    hasCurrentPositionSavedResults() {
-      return this.savedSuggestions.length > 0;
-    },
-    hasEvalMarks() {
-      const plies = this.game.ptn && this.game.ptn.allPlies;
-      if (!plies) return false;
-      return plies.some(
-        (ply) =>
-          ply && ply.evaluation && (ply.evaluation["?"] || ply.evaluation["!"])
-      );
-    },
-    isSavedResultsActive() {
-      return (
-        this.$store.state.analysis.preferSavedResults &&
-        this.hasCurrentPositionSavedResults
-      );
-    },
-    isEngineActive() {
-      return !this.isSavedResultsActive;
-    },
-    modeResultsCount() {
-      // Find the mode (most repeated number) of saved results across positions with results
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-      if (!allPlies) return 1;
-      const counts = {};
-      const seenTps = new Set();
-
-      // Include initial position (before first ply)
-      const firstPly = allPlies[0];
-      if (firstPly && firstPly.tpsBefore) {
-        seenTps.add(firstPly.tpsBefore);
-        const suggestions = this.$store.getters["game/suggestions"](
-          firstPly.tpsBefore
-        );
-        if (suggestions.length > 0) {
-          counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
-        }
-      }
-
-      for (const ply of allPlies) {
-        if (!ply) continue;
-        // Check tpsAfter for each ply
-        if (ply.tpsAfter && !seenTps.has(ply.tpsAfter)) {
-          seenTps.add(ply.tpsAfter);
-          const suggestions = this.$store.getters["game/suggestions"](
-            ply.tpsAfter
-          );
-          if (suggestions.length > 0) {
-            counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
-          }
-        }
-      }
-      // Find the mode (value with highest frequency)
-      let mode = 1;
-      let maxFreq = 0;
-      for (const [value, freq] of Object.entries(counts)) {
-        if (freq > maxFreq) {
-          maxFreq = freq;
-          mode = parseInt(value, 10);
-        }
-      }
-      return Math.max(1, mode);
-    },
-    savedFillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer saved suggestions than mode
-      if (!this.savedSuggestions.length) return 0;
-      return Math.max(0, this.modeResultsCount - this.savedSuggestions.length);
-    },
     showFullPVs() {
       return this.$store.state.analysis.showFullPVs;
     },
@@ -639,12 +400,6 @@ export default {
   methods: {
     addBot() {
       this.$store.dispatch("analysis/ADD_ACTIVE_BOT", null);
-    },
-    selectSavedResults() {
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
-    },
-    selectEngineResults() {
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
     },
     onBotSelect({ index, botId }) {
       this.$store.dispatch("analysis/SET_ACTIVE_BOT", { index, botId });
@@ -683,55 +438,6 @@ export default {
         });
       }
     },
-    clearSavedResults() {
-      const bot = bots[this.activeBots[0]];
-      if (bot) {
-        bot.clearSavedResults();
-        this.notifyUndo({
-          icon: "delete_all",
-          message: this.$t("success.resultsDeleted"),
-          handler: () => {
-            this.$store.dispatch("game/UNDO");
-          },
-        });
-      }
-    },
-    clearCurrentPositionSavedResults() {
-      if (!this.hasCurrentPositionSavedResults) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
-      this.notifyUndo({
-        icon: "delete",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    deleteSavedSuggestion(suggestion) {
-      if (!suggestion.source) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
-      this.notifyUndo({
-        icon: "delete",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    removeEvalMarks() {
-      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
-      this.notifyUndo({
-        icon: "eval",
-        message: this.$t("success.evalMarksRemoved"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
     toggleGlobalSettings() {
       this.showGlobalSettings = !this.showGlobalSettings;
       if (this.showGlobalSettings) {
@@ -749,23 +455,9 @@ export default {
         ]);
       }
     },
-    "sections.savedResults"(value) {
-      const storeValue = this.$store.state.ui.analysisSections;
-      if (storeValue.savedResults !== value) {
-        this.$store.dispatch("ui/SET_UI", [
-          "analysisSections",
-          { ...storeValue, savedResults: value },
-        ]);
-      }
-    },
     "$store.state.ui.analysisSections.botSuggestions"(value) {
       if (this.sections.botSuggestions !== value) {
         this.sections.botSuggestions = value;
-      }
-    },
-    "$store.state.ui.analysisSections.savedResults"(value) {
-      if (this.sections.savedResults !== value) {
-        this.sections.savedResults = value;
       }
     },
     localEvalMarkThresholds: {

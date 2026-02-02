@@ -1,5 +1,6 @@
 <template>
   <div class="notes column no-wrap">
+    <SavedResults />
     <component
       :is="recess ? 'recess' : 'div'"
       class="col-grow relative-position"
@@ -43,20 +44,6 @@
           <hint>{{ $t("Bottom") }}</hint>
         </q-btn>
         <q-separator vertical />
-        <q-btn
-          @click.stop="hideAnalysisNotes = !hideAnalysisNotes"
-          icon="analysis"
-          :color="hideAnalysisNotes ? '' : 'primary'"
-          round
-          dense
-          flat
-        >
-          <hint>{{
-            $t(
-              hideAnalysisNotes ? "Show Analysis Notes" : "Hide Analysis Notes"
-            )
-          }}</hint>
-        </q-btn>
         <q-btn icon="delete" :disable="!hasAnyNotes" flat spread stretch>
           <hint>{{ $t("Delete") }}</hint>
           <q-menu
@@ -102,12 +89,13 @@
 <script>
 import NoteItem from "./NoteItem";
 import NoteInput from "./NoteInput";
+import SavedResults from "./SavedResults";
 
 import { pickBy } from "lodash";
 
 export default {
   name: "Notes",
-  components: { NoteItem, NoteInput },
+  components: { NoteItem, NoteInput, SavedResults },
   props: {
     recess: Boolean,
   },
@@ -124,14 +112,6 @@ export default {
     isShowing() {
       return this.$store.state.ui.textTab === "notes";
     },
-    hideAnalysisNotes: {
-      get() {
-        return this.$store.state.ui.hideAnalysisNotes || false;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["hideAnalysisNotes", value]);
-      },
-    },
     unfilteredLog() {
       return this.$store.state.ui.showAllBranches &&
         !this.$store.state.ui.inlineBranches
@@ -145,10 +125,7 @@ export default {
           );
     },
     log() {
-      if (!this.hideAnalysisNotes) {
-        return this.unfilteredLog;
-      }
-      // Filter out analysis notes
+      // Always filter out analysis notes
       const filtered = {};
       for (const [plyID, notes] of Object.entries(this.unfilteredLog)) {
         const filteredNotes = notes.filter(
@@ -256,37 +233,27 @@ export default {
       const plyID = this.positionPlyID;
       const notes = this.game.comments.notes[plyID];
       if (notes && notes.length) {
-        if (this.hideAnalysisNotes) {
-          // Remove only non-analysis notes when analysis notes are hidden
-          const indicesToRemove = notes
-            .map((note, index) => ({ note, index }))
-            .filter(
-              ({ note }) =>
-                note.evaluation === null &&
-                note.pv === null &&
-                note.pvAfter === null
-            )
-            .map(({ index }) => index)
-            .reverse(); // Remove from end to preserve indices
-          for (const index of indicesToRemove) {
-            this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
-          }
-          if (indicesToRemove.length > 0) {
-            this.notifyUndo({
-              message: this.$t("success.removedAurrentPositionsNotes"),
-              handler: () => {
-                for (let i = 0; i < indicesToRemove.length; i++) {
-                  this.$store.dispatch("game/UNDO");
-                }
-              },
-            });
-          }
-        } else {
-          this.$store.dispatch("game/REMOVE_POSITION_NOTES", plyID);
+        // Remove only non-analysis notes
+        const indicesToRemove = notes
+          .map((note, index) => ({ note, index }))
+          .filter(
+            ({ note }) =>
+              note.evaluation === null &&
+              note.pv === null &&
+              note.pvAfter === null
+          )
+          .map(({ index }) => index)
+          .reverse(); // Remove from end to preserve indices
+        for (const index of indicesToRemove) {
+          this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+        }
+        if (indicesToRemove.length > 0) {
           this.notifyUndo({
             message: this.$t("success.removedAurrentPositionsNotes"),
             handler: () => {
-              this.$store.dispatch("game/UNDO");
+              for (let i = 0; i < indicesToRemove.length; i++) {
+                this.$store.dispatch("game/UNDO");
+              }
             },
           });
         }
@@ -296,46 +263,34 @@ export default {
       const hasNotes = Object.keys(this.game.comments.notes).length > 0;
 
       if (hasNotes) {
-        if (this.hideAnalysisNotes) {
-          // Remove only non-analysis notes when analysis notes are hidden
-          let removedCount = 0;
-          for (const [plyID, notes] of Object.entries(
-            this.game.comments.notes
-          )) {
-            const indicesToRemove = notes
-              .map((note, index) => ({ note, index }))
-              .filter(
-                ({ note }) =>
-                  note.evaluation === null &&
-                  note.pv === null &&
-                  note.pvAfter === null
-              )
-              .map(({ index }) => index)
-              .reverse();
-            for (const index of indicesToRemove) {
-              this.$store.dispatch("game/REMOVE_NOTE", {
-                plyID: parseInt(plyID),
-                index,
-              });
-              removedCount++;
-            }
-          }
-          if (removedCount > 0) {
-            this.notifyUndo({
-              message: this.$t("success.removedAllNotes"),
-              handler: () => {
-                for (let i = 0; i < removedCount; i++) {
-                  this.$store.dispatch("game/UNDO");
-                }
-              },
+        // Remove only non-analysis notes
+        let removedCount = 0;
+        for (const [plyID, notes] of Object.entries(this.game.comments.notes)) {
+          const indicesToRemove = notes
+            .map((note, index) => ({ note, index }))
+            .filter(
+              ({ note }) =>
+                note.evaluation === null &&
+                note.pv === null &&
+                note.pvAfter === null
+            )
+            .map(({ index }) => index)
+            .reverse();
+          for (const index of indicesToRemove) {
+            this.$store.dispatch("game/REMOVE_NOTE", {
+              plyID: parseInt(plyID),
+              index,
             });
+            removedCount++;
           }
-        } else {
-          this.$store.dispatch("game/REMOVE_NOTES");
+        }
+        if (removedCount > 0) {
           this.notifyUndo({
             message: this.$t("success.removedAllNotes"),
             handler: () => {
-              this.$store.dispatch("game/UNDO");
+              for (let i = 0; i < removedCount; i++) {
+                this.$store.dispatch("game/UNDO");
+              }
             },
           });
         }
