@@ -53,7 +53,7 @@
             <hint>{{ $t("Select Engine Results") }}</hint>
           </q-btn>
         </q-item-section>
-        <q-item-section :class="{ 'text-primary': isActiveBot }">
+        <q-item-section>
           <q-item-label>{{ botOption.label }}</q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
