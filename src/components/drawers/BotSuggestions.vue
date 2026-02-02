@@ -37,6 +37,7 @@
             dense
             round
             flat
+            glossy
           >
             <BotProgress
               v-if="!expanded && botState.isRunning"
@@ -49,7 +50,7 @@
               flat
             />
             <q-icon v-else :name="botOption.icon" />
-            <hint>{{ $t("Select Engine") }}</hint>
+            <hint>{{ $t("Select Engine Results") }}</hint>
           </q-btn>
         </q-item-section>
         <q-item-section :class="{ 'text-primary': isActiveBot }">

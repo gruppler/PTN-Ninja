@@ -7,6 +7,15 @@
     >
       <template v-slot:header>
         <q-item-section avatar>
+          <q-btn
+            @click.stop="selectEngineResults"
+            :color="isEngineActive ? 'primary' : ''"
+            style="margin-left: -4px"
+            dense
+            round
+            flat
+            glossy
+          >
           <BotProgress
             v-if="!sections.botSuggestions && runningBotState"
             :is-running="true"
@@ -17,6 +26,8 @@
             flat
           />
           <q-icon v-else name="bot" />
+            <hint>{{ $t("Select Engine Results") }}</hint>
+          </q-btn>
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Engine Moves") }}</q-item-label>
@@ -267,16 +278,18 @@
           <q-btn
             @click.stop="selectSavedResults"
             icon="save"
-            :color="isActive ? 'primary' : ''"
+            :color="isSavedResultsActive ? 'primary' : ''"
             style="margin-left: -4px"
             dense
             round
             flat
+            glossy
+            :disable="!hasCurrentPositionSavedResults"
           >
             <hint>{{ $t("Select Saved Results") }}</hint>
           </q-btn>
         </q-item-section>
-        <q-item-section :class="{ 'text-primary': isActive }">
+        <q-item-section :class="{ 'text-primary': isSavedResultsActive }">
           <q-item-label>{{ $t("Saved Results") }}</q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -546,11 +559,14 @@ export default {
           ply && ply.evaluation && (ply.evaluation["?"] || ply.evaluation["!"])
       );
     },
-    isActive() {
+    isSavedResultsActive() {
       return (
         this.$store.state.analysis.preferSavedResults &&
         this.hasCurrentPositionSavedResults
       );
+    },
+    isEngineActive() {
+      return !this.isSavedResultsActive;
     },
     modeResultsCount() {
       // Find the mode (most repeated number) of saved results across positions with results
@@ -626,6 +642,9 @@ export default {
     },
     selectSavedResults() {
       this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+    },
+    selectEngineResults() {
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
     },
     onBotSelect({ index, botId }) {
       this.$store.dispatch("analysis/SET_ACTIVE_BOT", { index, botId });
@@ -756,12 +775,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.interactive-control {
-  background-color: $dim;
-  body.body--light & {
-    background-color: $highlight;
-  }
-}
-</style>

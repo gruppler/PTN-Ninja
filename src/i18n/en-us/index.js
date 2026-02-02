@@ -233,6 +233,7 @@ export default {
   "Save Current Position": "Save Current Position",
   "Saved Results": "Saved Results",
   "Select Engine": "Select Engine",
+  "Select Engine Results": "Select Engine Results",
   "Select Saved Results": "Select Saved Results",
   Settings: "Settings",
   "Scroll threshold": "Scroll threshold",
