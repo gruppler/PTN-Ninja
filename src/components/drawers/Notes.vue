@@ -57,25 +57,40 @@
             )
           }}</hint>
         </q-btn>
-        <q-btn
-          @click="removeCurrentPosition"
-          icon="delete"
-          :disable="!hasCurrentPositionNotes"
-          flat
-          spread
-          stretch
-        >
-          <hint>{{ $t("Remove Current Positions Notes") }}</hint>
-        </q-btn>
-        <q-btn
-          @click="removeAll"
-          icon="delete_all"
-          :disable="!hasAnyNotes"
-          flat
-          spread
-          stretch
-        >
-          <hint>{{ $t("Remove All") }}</hint>
+        <q-btn icon="delete" :disable="!hasAnyNotes" flat spread stretch>
+          <hint>{{ $t("Delete") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="removeCurrentPosition"
+                :disable="!hasCurrentPositionNotes"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("Remove Current Positions Notes")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable @click="removeAll" :disable="!hasAnyNotes">
+                <q-item-section avatar>
+                  <q-icon name="delete_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Remove All") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </q-btn-group>
     </q-toolbar>
