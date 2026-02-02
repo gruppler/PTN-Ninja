@@ -16,16 +16,16 @@
             flat
             glossy
           >
-          <BotProgress
-            v-if="!sections.botSuggestions && runningBotState"
-            :is-running="true"
-            :interactive="runningBotState.isInteractiveEnabled"
-            :progress="runningBotState.progress"
-            class="no-pointer-events"
-            dense
-            flat
-          />
-          <q-icon v-else name="bot" />
+            <BotProgress
+              v-if="!sections.botSuggestions && runningBotState"
+              :is-running="true"
+              :interactive="runningBotState.isInteractiveEnabled"
+              :progress="runningBotState.progress"
+              class="no-pointer-events"
+              dense
+              flat
+            />
+            <q-icon v-else name="bot" />
             <hint>{{ $t("Select Engine Results") }}</hint>
           </q-btn>
         </q-item-section>
@@ -740,11 +740,33 @@ export default {
     },
   },
   watch: {
-    sections: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
-      },
-      deep: true,
+    "sections.botSuggestions"(value) {
+      const storeValue = this.$store.state.ui.analysisSections;
+      if (storeValue.botSuggestions !== value) {
+        this.$store.dispatch("ui/SET_UI", [
+          "analysisSections",
+          { ...storeValue, botSuggestions: value },
+        ]);
+      }
+    },
+    "sections.savedResults"(value) {
+      const storeValue = this.$store.state.ui.analysisSections;
+      if (storeValue.savedResults !== value) {
+        this.$store.dispatch("ui/SET_UI", [
+          "analysisSections",
+          { ...storeValue, savedResults: value },
+        ]);
+      }
+    },
+    "$store.state.ui.analysisSections.botSuggestions"(value) {
+      if (this.sections.botSuggestions !== value) {
+        this.sections.botSuggestions = value;
+      }
+    },
+    "$store.state.ui.analysisSections.savedResults"(value) {
+      if (this.sections.savedResults !== value) {
+        this.sections.savedResults = value;
+      }
     },
     localEvalMarkThresholds: {
       handler(value) {

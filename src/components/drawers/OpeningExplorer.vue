@@ -3,7 +3,7 @@
     <!-- Database Moves -->
     <q-expansion-item
       v-if="dbMoves"
-      v-model="sections.dbMoves"
+      v-model="dbMovesExpanded"
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
@@ -369,7 +369,7 @@
     <!-- Database Games -->
     <q-expansion-item
       v-if="dbGames"
-      v-model="sections.dbGames"
+      v-model="dbGamesExpanded"
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
@@ -603,7 +603,8 @@ export default {
       dbSettingsHash: this.hashDBSettings(
         this.$store.state.analysis.dbSettings
       ),
-      sections: { ...this.$store.state.ui.analysisSections },
+      dbMovesExpanded: this.$store.state.ui.analysisSections.dbMoves,
+      dbGamesExpanded: this.$store.state.ui.analysisSections.dbGames,
     };
   },
   computed: {
@@ -618,7 +619,7 @@ export default {
     },
     isDBMovesVisible() {
       return (
-        this.isPanelVisible && (this.sections.dbMoves || this.sections.dbGames)
+        this.isPanelVisible && (this.dbMovesExpanded || this.dbGamesExpanded)
       );
     },
     showAllBranches() {
@@ -711,14 +712,14 @@ export default {
       this.showDBSettings = !this.showDBSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showDBSettings) {
-        this.sections.dbMoves = true;
+        this.dbMovesExpanded = true;
       }
     },
     toggleTopGamesSettings() {
       this.showTopGamesSettings = !this.showTopGamesSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showTopGamesSettings) {
-        this.sections.dbGames = true;
+        this.dbGamesExpanded = true;
       }
     },
     hashDBSettings(settings) {
@@ -976,11 +977,29 @@ export default {
         this.dbMinRating = this.dbPosition[hash].settings.min_rating || 0;
       }
     },
-    sections: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
-      },
-      deep: true,
+    dbMovesExpanded(value) {
+      const sections = { ...this.$store.state.ui.analysisSections };
+      if (sections.dbMoves !== value) {
+        sections.dbMoves = value;
+        this.$store.dispatch("ui/SET_UI", ["analysisSections", sections]);
+      }
+    },
+    dbGamesExpanded(value) {
+      const sections = { ...this.$store.state.ui.analysisSections };
+      if (sections.dbGames !== value) {
+        sections.dbGames = value;
+        this.$store.dispatch("ui/SET_UI", ["analysisSections", sections]);
+      }
+    },
+    "$store.state.ui.analysisSections.dbMoves"(value) {
+      if (this.dbMovesExpanded !== value) {
+        this.dbMovesExpanded = value;
+      }
+    },
+    "$store.state.ui.analysisSections.dbGames"(value) {
+      if (this.dbGamesExpanded !== value) {
+        this.dbGamesExpanded = value;
+      }
     },
     dbSettings: {
       handler(settings) {

@@ -1,6 +1,6 @@
 <template>
   <q-expansion-item
-    v-model="sections.positionNotes"
+    v-model="expanded"
     header-class="bg-accent"
     expand-icon-class="fg-inherit"
   >
@@ -65,14 +65,12 @@
 <script>
 import Note from "./Note";
 import NoteInput from "./NoteInput";
-import { cloneDeep } from "lodash";
-
 export default {
   name: "PositionNotes",
   components: { Note, NoteInput },
   data() {
     return {
-      sections: cloneDeep(this.$store.state.ui.analysisSections),
+      expanded: this.$store.state.ui.analysisSections.positionNotes,
     };
   },
   computed: {
@@ -199,11 +197,17 @@ export default {
     },
   },
   watch: {
-    sections: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
-      },
-      deep: true,
+    expanded(value) {
+      const sections = { ...this.$store.state.ui.analysisSections };
+      if (sections.positionNotes !== value) {
+        sections.positionNotes = value;
+        this.$store.dispatch("ui/SET_UI", ["analysisSections", sections]);
+      }
+    },
+    "$store.state.ui.analysisSections.positionNotes"(value) {
+      if (this.expanded !== value) {
+        this.expanded = value;
+      }
     },
   },
 };
