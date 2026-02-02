@@ -676,15 +676,6 @@ export default {
         }
       },
     },
-    "game.name": {
-      handler() {
-        // Switch to saved results when game changes
-        if (this.hasSavedSuggestions) {
-          this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
-          this.manualBotSelection = false;
-        }
-      },
-    },
     botSuggestion: {
       handler(suggestion) {
         // Update highlight when suggestion changes (e.g., from scrolling)
