@@ -16,6 +16,11 @@ const calculateEvalMark = (ply, positions, thresholds) => {
     return null;
   }
 
+  // Skip if this is the first ply in the game (no previous ply to compare against)
+  if (!ply.index) {
+    return null;
+  }
+
   const positionBefore = positions[ply.tpsBefore];
   const positionAfter = positions[ply.tpsAfter];
 
