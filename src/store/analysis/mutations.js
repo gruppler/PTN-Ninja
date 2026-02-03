@@ -222,3 +222,8 @@ export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
 export const SET_BOT_COLLAPSED = (state, { index, collapsed }) => {
   Vue.set(state.collapsedBots, index, collapsed);
 };
+
+// Set collapsed state for a saved results bot by index
+export const SET_SAVED_BOT_COLLAPSED = (state, { index, collapsed }) => {
+  Vue.set(state.collapsedSavedBots, index, collapsed);
+};

@@ -107,7 +107,7 @@
 
       <!-- Bot Selector -->
       <q-btn
-        v-if="!isEmbedded && (activeBots.length > 1 || hasSavedSuggestions)"
+        v-if="!isEmbedded && (activeBots.length > 1 || hasAnySavedSuggestions)"
         class="bot-selector-toggle dimmed-btn"
         v-ripple="false"
         :color="btnColor"
@@ -143,9 +143,9 @@
                 <q-item-label>{{ getBotLabel(id) }}</q-item-label>
               </q-item-section>
             </q-item>
-            <q-separator v-if="hasSavedSuggestions" />
+            <q-separator v-if="hasAnySavedSuggestions" />
             <q-item
-              v-if="hasSavedSuggestions"
+              v-if="hasAnySavedSuggestions"
               clickable
               v-close-popup
               @click="selectSavedResults"
@@ -431,11 +431,28 @@ export default {
     preferSavedResults() {
       return this.$store.state.analysis?.preferSavedResults ?? true;
     },
-    savedSuggestions() {
+    savedBotName() {
+      // Get the saved bot name from state (null = "Other"/unnamed)
+      return this.$store.state.analysis?.savedBotName;
+    },
+    allSavedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);
+    },
+    savedSuggestions() {
+      // Filter saved suggestions by the saved bot's name
+      if (this.savedBotName === null) {
+        // "Other" section: suggestions without a bot name
+        return this.allSavedSuggestions.filter((s) => !s.botName);
+      }
+      return this.allSavedSuggestions.filter(
+        (s) => s.botName === this.savedBotName
+      );
     },
     hasSavedSuggestions() {
       return this.savedSuggestions.length > 0;
+    },
+    hasAnySavedSuggestions() {
+      return this.allSavedSuggestions.length > 0;
     },
     currentBotSuggestions() {
       if (!this.$store.state.analysis || !this.botID) return [];
@@ -603,7 +620,7 @@ export default {
 
       // Build list of selectable options: bots + saved results (if available)
       const options = [...this.activeBots];
-      if (this.hasSavedSuggestions) {
+      if (this.hasAnySavedSuggestions) {
         options.push("saved");
       }
       if (options.length <= 1) {
@@ -658,6 +675,15 @@ export default {
       }
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
     },
+    updateEvalFromState() {
+      // Update eval based on current preferSavedResults and savedBotName/botID
+      const suggestion = this.botSuggestion;
+      if (suggestion && "evaluation" in suggestion) {
+        this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+      } else {
+        this.$store.dispatch("game/SET_EVAL", null);
+      }
+    },
   },
   watch: {
     tps() {
@@ -695,10 +721,19 @@ export default {
         if (suggestion && "evaluation" in suggestion) {
           this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
         } else {
+          // No suggestion - clear override so Board computes its own eval
           this.$store.dispatch("game/SET_EVAL", null);
         }
       },
       immediate: true,
+    },
+    savedBotName() {
+      // When savedBotName changes, update eval from the new bot's suggestions
+      this.updateEvalFromState();
+    },
+    preferSavedResults() {
+      // When preferSavedResults changes, update eval accordingly
+      this.updateEvalFromState();
     },
   },
   beforeDestroy() {

@@ -13,6 +13,7 @@ const defaultState = {
   botList,
   customBots: {},
   botID: defaultBotID, // Used for ToolbarAnalysis and other eval bars
+  savedBotName: null, // Bot name for saved results selection (null = "Other"/unnamed)
   preferSavedResults: true, // Whether to show saved results over bot analysis
   botSettings: {}, // Per-bot settings (persisted)
   // Per-bot reactive state (keyed by botID)
@@ -22,6 +23,8 @@ const defaultState = {
   botStates: {},
   // Collapsed state for active bots (keyed by index)
   collapsedBots: {},
+  // Collapsed state for saved results bots (keyed by index)
+  collapsedSavedBots: {},
   // Global settings
   saveEvalMarks: true,
   showEvalMarks: true,

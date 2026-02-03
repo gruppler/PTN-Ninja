@@ -121,3 +121,7 @@ export const SET_BOT_COLLAPSED = ({ state, commit }, { index, collapsed }) => {
   commit("SET_BOT_COLLAPSED", { index, collapsed });
   saveCollapsedBots(state);
 };
+
+export const SET_SAVED_BOT_COLLAPSED = ({ commit }, { index, collapsed }) => {
+  commit("SET_SAVED_BOT_COLLAPSED", { index, collapsed });
+};
