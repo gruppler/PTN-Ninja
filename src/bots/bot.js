@@ -1304,14 +1304,6 @@ export default class Bot {
     const messages = {};
     const botName = this.label;
 
-    // Helper to normalize bot names for comparison (e.g., "Tiltak (wasm)" -> "Tiltak")
-    const normalizeBotName = (name) => {
-      if (!name) return null;
-      // Remove common suffixes like "(wasm)", "(cloud)", etc.
-      return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
-    };
-    const normalizedBotName = normalizeBotName(botName);
-
     // Always use new format when saving
     const useNewFormat = true;
     // Or, use old format only if existing comments use it
@@ -1329,8 +1321,8 @@ export default class Bot {
       if (!note.botName) {
         return true; // No bot name means it could be from this bot
       }
-      // Compare normalized bot names
-      return normalizeBotName(note.botName) === normalizedBotName;
+      // Compare exact bot names
+      return note.botName === botName;
     };
 
     if (isString(tps) && tps.length) {
@@ -1598,8 +1590,7 @@ export default class Bot {
 
           for (const newNote of newNotes) {
             const newFirstMove = this.getFirstMoveFromNote(newNote);
-            const newBotNameRaw = this.getBotNameFromNote(newNote) || botName;
-            const newBotNameNorm = normalizeBotName(newBotNameRaw);
+            const newBotName = this.getBotNameFromNote(newNote) || botName;
 
             // Find existing note with same first move and bot name
             let matchingExisting = null;
@@ -1612,12 +1603,11 @@ export default class Bot {
               const existingFirstMove = this.getFirstMoveFromNote(
                 existingNote.message
               );
-              const existingBotNameRaw = existingNote.botName || botName;
-              const existingBotNameNorm = normalizeBotName(existingBotNameRaw);
+              const existingBotName = existingNote.botName || botName;
 
               if (
                 newFirstMove === existingFirstMove &&
-                newBotNameNorm === existingBotNameNorm
+                newBotName === existingBotName
               ) {
                 matchingExisting = existingNote;
                 matchingIdx = idx;

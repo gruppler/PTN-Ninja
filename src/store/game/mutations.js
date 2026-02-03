@@ -737,10 +737,13 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
   });
 };
 
-// Helper to check if a note matches an engine name
-// A note matches if: botName is null/undefined (no engine name stored), or botName matches
+// Helper to check if a note matches an engine name (exact match)
+// null engineName matches notes without a botName
 const noteMatchesEngine = (note, engineName) => {
-  return !note.botName || note.botName === engineName;
+  if (engineName === null) {
+    return !note.botName;
+  }
+  return note.botName === engineName;
 };
 
 // Helper to check if a note is an analysis note
