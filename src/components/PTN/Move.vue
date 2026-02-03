@@ -250,37 +250,7 @@ export default {
   methods: {
     getEvaluation(ply) {
       if (!ply) return null;
-      const analysis = this.$store.state.analysis;
-      const preferSaved = analysis?.preferSavedResults;
-      const botID = analysis?.botID;
-
-      // If preferring saved results, check saved first
-      if (preferSaved) {
-        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
-        if (savedEval != null) {
-          return savedEval;
-        }
-      }
-
-      // Check for selected bot's evaluation (unsaved)
-      if (analysis && analysis.botPositions && botID) {
-        const tps = ply.tpsAfter;
-        const botPositions = analysis.botPositions[botID];
-        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
-          return botPositions[tps][0].evaluation ?? null;
-        }
-        // If a bot is selected but has no results, don't fall back to saved
-        return null;
-      }
-
-      // Fall back to saved evaluation only if no bot is selected
-      if (!preferSaved) {
-        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
-        if (savedEval != null) {
-          return savedEval;
-        }
-      }
-      return null;
+      return this.$store.getters["game/evaluationForTps"](ply.tpsAfter);
     },
   },
 };

@@ -305,3 +305,35 @@ export const suggestion = (state) => (tps) => {
   const all = suggestions(state)(tps);
   return all.length > 0 ? all[0] : null;
 };
+
+// Get evaluation for a TPS based on preferSavedResults and savedBotName/botID
+export const evaluationForTps = (state, getters, rootState) => (tps) => {
+  if (!tps) return null;
+
+  const analysis = rootState.analysis;
+  if (!analysis) return null;
+
+  if (analysis.preferSavedResults) {
+    // Get evaluation from saved suggestions filtered by savedBotName
+    const savedBotName = analysis.savedBotName;
+    const allSuggestions = suggestions(state)(tps);
+    const filtered =
+      savedBotName === null
+        ? allSuggestions.filter((s) => !s.botName)
+        : allSuggestions.filter((s) => s.botName === savedBotName);
+    if (filtered.length > 0 && filtered[0].evaluation != null) {
+      return filtered[0].evaluation;
+    }
+    return null;
+  } else {
+    // Get evaluation from selected bot's unsaved results
+    const botID = analysis.botID;
+    if (analysis.botPositions && botID) {
+      const botPositions = analysis.botPositions[botID];
+      if (botPositions && botPositions[tps]?.[0]) {
+        return botPositions[tps][0].evaluation ?? null;
+      }
+    }
+    return null;
+  }
+};

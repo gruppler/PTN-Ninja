@@ -330,10 +330,8 @@ export default {
         return;
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      // Restore current position's suggestion evaluation
-      const suggestion = this.$store.getters["game/suggestion"](this.tps);
-      const eval_ =
-        suggestion && "evaluation" in suggestion ? suggestion.evaluation : null;
+      // Restore current position's evaluation based on preferSavedResults
+      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
       this.$store.dispatch("game/SET_EVAL", eval_);
     },
     insertFollowingPlies(index) {
