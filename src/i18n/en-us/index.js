@@ -172,6 +172,7 @@ export default {
   Opacity: "Opacity",
   Opening: "Opening",
   Orthographic: "Orthographic",
+  Other: "Other",
   Padding: "Padding",
   "Parent Branch": "Parent Branch",
   "Parent Main Branch": "Parent Main Branch",

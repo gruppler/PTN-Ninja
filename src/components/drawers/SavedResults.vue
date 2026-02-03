@@ -1,121 +1,96 @@
 <template>
-  <q-expansion-item
-    v-model="sections.savedResults"
-    header-class="bg-accent"
-    expand-icon-class="fg-inherit"
-    default-opened
-  >
-    <template v-slot:header>
-      <q-item-section avatar>
-        <q-icon name="save" />
-      </q-item-section>
-      <q-item-section>
-        <q-item-label>{{ $t("Saved Results") }}</q-item-label>
-      </q-item-section>
-      <q-item-section class="fg-inherit" side>
-        <q-btn
-          @click.stop="toggleSettings"
-          icon="settings"
-          :color="showSettings ? 'primary' : ''"
-          round
-          dense
-          flat
-        >
-          <hint>{{ $t("Settings") }}</hint>
-        </q-btn>
-      </q-item-section>
-      <q-item-section class="fg-inherit" side> </q-item-section>
-    </template>
-
-    <recess>
-      <!-- Settings -->
-      <smooth-reflow>
-        <div v-if="showSettings" :class="'text-' + textColor">
-          <!-- Show Continuation -->
-          <q-item
-            @click="showContinuationToggle = !showContinuationToggle"
-            clickable
-            v-ripple
+  <div>
+    <q-expansion-item
+      v-model="sections.savedResults"
+      header-class="bg-accent"
+      expand-icon-class="fg-inherit"
+      default-opened
+    >
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-icon name="save" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ $t("Saved Results") }}</q-item-label>
+        </q-item-section>
+        <q-item-section class="fg-inherit" side>
+          <q-btn
+            @click.stop="toggleSettings"
+            icon="settings"
+            :color="showSettings ? 'primary' : ''"
+            round
+            dense
+            flat
           >
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.showContinuation") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="showContinuationToggle" :dark="dark" />
-            </q-item-section>
-          </q-item>
+            <hint>{{ $t("Settings") }}</hint>
+          </q-btn>
+        </q-item-section>
+      </template>
 
-          <!-- Show Full Suggestion -->
-          <smooth-reflow>
+      <recess>
+        <!-- Settings -->
+        <smooth-reflow>
+          <div v-if="showSettings" :class="'text-' + textColor">
+            <!-- Show Continuation -->
             <q-item
-              v-if="showContinuationToggle"
-              @click="showFullPVsToggle = !showFullPVsToggle"
+              @click="showContinuationToggle = !showContinuationToggle"
               clickable
               v-ripple
             >
               <q-item-section>
                 <q-item-label>{{
-                  $t("analysis.showFullSuggestion")
+                  $t("analysis.showContinuation")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="showFullPVsToggle" :dark="dark" />
+                <q-toggle v-model="showContinuationToggle" :dark="dark" />
               </q-item-section>
             </q-item>
-          </smooth-reflow>
-        </div>
-      </smooth-reflow>
 
-      <smooth-reflow height-only style="overflow-x: hidden">
-        <BotAnalysisItem
-          v-for="(suggestion, i) in savedSuggestions"
-          :key="'saved-' + i"
-          :suggestion="suggestion"
-          :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
-          show-bot-name
-          show-menu
-          :fixed-height="!showFullPVs"
-          :show-continuation="showContinuation"
-          expandable
-          @delete="deleteSavedSuggestion(suggestion)"
-        />
-        <!-- Fill remaining space with placeholders when fewer than average -->
-        <AnalysisItemPlaceholder
-          v-for="i in savedFillerPlaceholderCount"
-          :key="'saved-filler-placeholder-' + i"
-          :show-continuation="showContinuation"
-          static
-        />
-        <div v-if="!savedSuggestions.length" class="relative-position">
-          <AnalysisItemPlaceholder
-            v-for="i in modeResultsCount"
-            :key="'static-placeholder-' + i"
-            :show-continuation="showContinuation"
-            static
-          />
-          <q-item
-            class="flex-center absolute-center full-width"
-            :class="'text-' + textColor"
-          >
-            {{ $t("analysis.noResults") }}
-          </q-item>
+            <!-- Show Full Suggestion -->
+            <smooth-reflow>
+              <q-item
+                v-if="showContinuationToggle"
+                @click="showFullPVsToggle = !showFullPVsToggle"
+                clickable
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.showFullSuggestion")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="showFullPVsToggle" :dark="dark" />
+                </q-item-section>
+              </q-item>
+            </smooth-reflow>
+          </div>
+        </smooth-reflow>
+
+        <!-- Saved Results by Bot -->
+        <div
+          v-for="(botName, index) in savedBotNames"
+          :key="botName || 'other'"
+        >
+          <q-separator v-if="index > 0" :dark="dark" />
+          <SavedBotResults :bot-name="botName" :index="index" />
         </div>
-      </smooth-reflow>
-    </recess>
-  </q-expansion-item>
+
+        <q-separator :dark="dark" />
+      </recess>
+    </q-expansion-item>
+  </div>
 </template>
 
 <script>
-import BotAnalysisItem from "../analysis/BotAnalysisItem";
-import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
-import { bots } from "../../bots";
+import SavedBotResults from "./SavedBotResults.vue";
 import { cloneDeep } from "lodash";
 
 export default {
   name: "SavedResults",
   components: {
-    BotAnalysisItem,
-    AnalysisItemPlaceholder,
+    SavedBotResults,
   },
   data() {
     return {
@@ -130,87 +105,50 @@ export default {
     textColor() {
       return this.dark ? "textLight" : "textDark";
     },
-    activeBots() {
-      return this.$store.state.analysis.activeBots;
-    },
     game() {
       return this.$store.state.game;
     },
-    tps() {
-      return this.game.position.tps;
-    },
-    savedSuggestions() {
-      return this.$store.getters["game/suggestions"](this.tps);
-    },
-    hasAnalysisNotes() {
-      return Object.values(this.$store.state.game.comments.notes).some(
-        (notes) =>
-          notes.some(
-            (note) =>
-              note.evaluation !== null ||
-              note.pv !== null ||
-              note.pvAfter !== null
-          )
-      );
-    },
-    hasCurrentPositionSavedResults() {
-      return this.savedSuggestions.length > 0;
-    },
-    hasEvalMarks() {
-      const plies = this.game.ptn && this.game.ptn.allPlies;
-      if (!plies) return false;
-      return plies.some(
-        (ply) =>
-          ply && ply.evaluation && (ply.evaluation["?"] || ply.evaluation["!"])
-      );
-    },
-    modeResultsCount() {
-      // Find the mode (most repeated number) of saved results across positions with results
+    savedBotNames() {
+      // Get unique bot names from all saved suggestions across all positions
+      // Order: active bots first (in order), then other named bots, then null (Other)
+      const botNameSet = new Set();
       const allPlies = this.game.ptn && this.game.ptn.allPlies;
-      if (!allPlies) return 1;
-      const counts = {};
-      const seenTps = new Set();
 
-      // Include initial position (before first ply)
-      const firstPly = allPlies[0];
-      if (firstPly && firstPly.tpsBefore) {
-        seenTps.add(firstPly.tpsBefore);
-        const suggestions = this.$store.getters["game/suggestions"](
-          firstPly.tpsBefore
-        );
-        if (suggestions.length > 0) {
-          counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
+      const collectBotNames = (tps) => {
+        if (!tps) return;
+        const suggestions = this.$store.getters["game/suggestions"](tps);
+        for (const s of suggestions) {
+          botNameSet.add(s.botName); // null for unnamed
         }
+      };
+
+      // Check initial position
+      if (allPlies && allPlies[0] && allPlies[0].tpsBefore) {
+        collectBotNames(allPlies[0].tpsBefore);
       }
 
-      for (const ply of allPlies) {
-        if (!ply) continue;
-        // Check tpsAfter for each ply
-        if (ply.tpsAfter && !seenTps.has(ply.tpsAfter)) {
-          seenTps.add(ply.tpsAfter);
-          const suggestions = this.$store.getters["game/suggestions"](
-            ply.tpsAfter
-          );
-          if (suggestions.length > 0) {
-            counts[suggestions.length] = (counts[suggestions.length] || 0) + 1;
-          }
+      // Check all positions
+      if (allPlies) {
+        for (const ply of allPlies) {
+          if (ply) collectBotNames(ply.tpsAfter);
         }
       }
-      // Find the mode (value with highest frequency)
-      let mode = 1;
-      let maxFreq = 0;
-      for (const [value, freq] of Object.entries(counts)) {
-        if (freq > maxFreq) {
-          maxFreq = freq;
-          mode = parseInt(value, 10);
-        }
+
+      // Build ordered list: just use the exact names from saved suggestions
+      // Sort alphabetically, with null (Other) at the end
+      const result = [];
+
+      // Add all named bots (sorted alphabetically)
+      const namedBots = [...botNameSet].filter((name) => name !== null);
+      namedBots.sort((a, b) => a.localeCompare(b));
+      result.push(...namedBots);
+
+      // Add null (Other) at the end if present
+      if (botNameSet.has(null)) {
+        result.push(null);
       }
-      return Math.max(1, mode);
-    },
-    savedFillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer saved suggestions than mode
-      if (!this.savedSuggestions.length) return 0;
-      return Math.max(0, this.modeResultsCount - this.savedSuggestions.length);
+
+      return result;
     },
     showFullPVs() {
       return this.$store.state.analysis.showFullPVs;
@@ -236,19 +174,6 @@ export default {
     },
   },
   methods: {
-    deleteSavedSuggestion(suggestion) {
-      if (!suggestion.source) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
-      this.notifyUndo({
-        icon: "delete",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
     toggleSettings() {
       this.showSettings = !this.showSettings;
       if (this.showSettings) {
