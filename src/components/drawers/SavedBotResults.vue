@@ -348,20 +348,21 @@ export default {
     },
     clearCurrentPositionSavedResults() {
       // Remove only this bot's saved results for current position
-      for (const suggestion of [...this.savedSuggestions].reverse()) {
-        if (suggestion.source) {
-          this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
-        }
-      }
-      if (this.savedSuggestions.length > 0) {
-        this.notifyUndo({
-          icon: "delete",
-          message: this.$t("success.resultsDeleted"),
-          handler: () => {
-            this.$store.dispatch("game/UNDO");
-          },
-        });
-      }
+      if (this.savedSuggestions.length === 0) return;
+
+      // Use the batch action that creates a single undo entry
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.botName,
+      });
+
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
     clearAllSavedResults() {
       // Remove all saved results for this bot across all positions
