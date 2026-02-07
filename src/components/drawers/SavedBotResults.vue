@@ -74,40 +74,42 @@
       </q-item-section>
     </template>
 
-    <smooth-reflow height-only style="overflow-x: hidden">
-      <BotAnalysisItem
-        v-for="(suggestion, i) in savedSuggestions"
-        :key="'saved-' + i"
-        :suggestion="suggestion"
-        :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
-        show-menu
-        :fixed-height="!showFullPVs"
-        :show-continuation="showContinuation"
-        expandable
-        @delete="deleteSavedSuggestion(suggestion)"
-      />
-      <!-- Fill remaining space with placeholders when fewer than average -->
-      <AnalysisItemPlaceholder
-        v-for="i in fillerPlaceholderCount"
-        :key="'saved-filler-placeholder-' + i"
-        :show-continuation="showContinuation"
-        static
-      />
-      <div v-if="!savedSuggestions.length" class="relative-position">
+    <recess>
+      <smooth-reflow height-only style="overflow-x: hidden">
+        <BotAnalysisItem
+          v-for="(suggestion, i) in savedSuggestions"
+          :key="'saved-' + i"
+          :suggestion="suggestion"
+          :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
+          show-menu
+          :fixed-height="!showFullPVs"
+          :show-continuation="showContinuation"
+          expandable
+          @delete="deleteSavedSuggestion(suggestion)"
+        />
+        <!-- Fill remaining space with placeholders when fewer than average -->
         <AnalysisItemPlaceholder
-          v-for="i in modeResultsCount"
-          :key="'static-placeholder-' + i"
+          v-for="i in fillerPlaceholderCount"
+          :key="'saved-filler-placeholder-' + i"
           :show-continuation="showContinuation"
           static
         />
-        <q-item
-          class="flex-center absolute-center full-width"
-          :class="'text-' + textColor"
-        >
-          {{ $t("analysis.noResults") }}
-        </q-item>
-      </div>
-    </smooth-reflow>
+        <div v-if="!savedSuggestions.length" class="relative-position">
+          <AnalysisItemPlaceholder
+            v-for="i in modeResultsCount"
+            :key="'static-placeholder-' + i"
+            :show-continuation="showContinuation"
+            static
+          />
+          <q-item
+            class="flex-center absolute-center full-width"
+            :class="'text-' + textColor"
+          >
+            {{ $t("analysis.noResults") }}
+          </q-item>
+        </div>
+      </smooth-reflow>
+    </recess>
   </q-expansion-item>
 </template>
 
