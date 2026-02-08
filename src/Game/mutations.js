@@ -683,7 +683,7 @@ export default class GameMutations {
 
     // Make sure target branch exists
     if (!(this.board.targetBranch in this.branches)) {
-      this.board.targetBranch = this.board.ply.branch;
+      this.board.targetBranch = this.board.ply ? this.board.ply.branch : "";
     }
 
     return true;

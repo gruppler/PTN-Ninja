@@ -575,7 +575,7 @@ export default class GameBase {
 
       // Walk all plies in this branch to find branch points
       for (const ply of this.plies) {
-        if (ply.branch !== branchName) continue;
+        if (!ply || ply.branch !== branchName) continue;
         if (ply.branches.length > 1 && ply.branches[0] === ply) {
           // This ply is a branch point — visit sibling branches in order
           ply.branches
