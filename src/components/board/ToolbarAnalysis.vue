@@ -119,7 +119,7 @@
           :name="viewingSavedResults ? 'save' : botOption.icon || 'bot'"
         />
         <hint>
-          {{ viewingSavedResults ? $t("Saved Results") : botOption.label }}
+          {{ viewingSavedResults ? savedResultsLabel : botOption.label }}
         </hint>
         <q-menu
           anchor="top right"
@@ -143,19 +143,22 @@
                 <q-item-label>{{ getBotLabel(id) }}</q-item-label>
               </q-item-section>
             </q-item>
-            <q-separator v-if="hasAnySavedSuggestions" />
+            <q-separator v-if="savedBotNames.length" />
             <q-item
-              v-if="hasAnySavedSuggestions"
+              v-for="name in savedBotNames"
+              :key="'saved-' + (name || 'other')"
               clickable
               v-close-popup
-              @click="selectSavedResults"
-              :active="viewingSavedResults"
+              @click="selectSavedEngine(name)"
+              :active="viewingSavedResults && savedBotName === name"
             >
               <q-item-section avatar>
                 <q-icon name="save" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>{{ $t("Saved Results") }}</q-item-label>
+                <q-item-label>
+                  {{ name || $t("Other") }}
+                </q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
@@ -454,6 +457,42 @@ export default {
     hasAnySavedSuggestions() {
       return this.allSavedSuggestions.length > 0;
     },
+    savedBotNames() {
+      const botNameSet = new Set();
+      const allPlies = this.game.ptn && this.game.ptn.allPlies;
+
+      const collectBotNames = (tps) => {
+        if (!tps) return;
+        const suggestions = this.$store.getters["game/suggestions"](tps);
+        for (const s of suggestions) {
+          botNameSet.add(s.botName);
+        }
+      };
+
+      if (allPlies && allPlies[0] && allPlies[0].tpsBefore) {
+        collectBotNames(allPlies[0].tpsBefore);
+      }
+      if (allPlies) {
+        for (const ply of allPlies) {
+          if (ply) collectBotNames(ply.tpsAfter);
+        }
+      }
+
+      const result = [];
+      const namedBots = [...botNameSet].filter((name) => name !== null);
+      namedBots.sort((a, b) => a.localeCompare(b));
+      result.push(...namedBots);
+      if (botNameSet.has(null)) {
+        result.push(null);
+      }
+      return result;
+    },
+    savedResultsLabel() {
+      if (this.savedBotName === null) {
+        return this.$t("Other");
+      }
+      return this.savedBotName || this.$t("Saved Results");
+    },
     currentBotSuggestions() {
       if (!this.$store.state.analysis || !this.botID) return [];
       const positions = this.$store.state.analysis?.botPositions[this.botID];
@@ -550,6 +589,11 @@ export default {
       this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
       this.manualBotSelection = false;
     },
+    selectSavedEngine(botName) {
+      this.$store.dispatch("analysis/SET", ["savedBotName", botName]);
+      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+      this.manualBotSelection = false;
+    },
     getBotIcon(botId) {
       const bot = bots[botId];
       return bot ? bot.icon : "bot";
@@ -618,11 +662,11 @@ export default {
         return;
       }
 
-      // Build list of selectable options: bots + saved results (if available)
-      const options = [...this.activeBots];
-      if (this.hasAnySavedSuggestions) {
-        options.push("saved");
-      }
+      // Build list of selectable options: bots + per-engine saved results
+      const options = this.activeBots.map((id) => ({ type: "bot", id }));
+      this.savedBotNames.forEach((name) => {
+        options.push({ type: "saved", name });
+      });
       if (options.length <= 1) {
         return;
       }
@@ -642,8 +686,10 @@ export default {
 
         // Find current index
         let currentIndex = this.viewingSavedResults
-          ? options.indexOf("saved")
-          : options.indexOf(this.botID);
+          ? options.findIndex(
+              (o) => o.type === "saved" && o.name === this.savedBotName
+            )
+          : options.findIndex((o) => o.type === "bot" && o.id === this.botID);
         if (currentIndex < 0) currentIndex = 0;
 
         for (let i = 0; i < times; i++) {
@@ -656,10 +702,10 @@ export default {
 
         // Select the new option
         const selected = options[currentIndex];
-        if (selected === "saved") {
-          this.selectSavedResults();
+        if (selected.type === "saved") {
+          this.selectSavedEngine(selected.name);
         } else {
-          this.selectBot(selected);
+          this.selectBot(selected.id);
         }
       }
 
