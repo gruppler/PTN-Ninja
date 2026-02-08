@@ -1010,6 +1010,16 @@ export const REMOVE_POSITION_NOTES = ({ commit, dispatch }, plyID) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REMOVE_POSITION_USER_NOTES = ({ commit, dispatch }, plyID) => {
+  commit("REMOVE_POSITION_USER_NOTES", plyID);
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+export const REMOVE_ALL_USER_NOTES = function ({ commit, dispatch }) {
+  commit("REMOVE_ALL_USER_NOTES");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const REMOVE_NOTES = function ({ commit, dispatch }) {
   commit("REMOVE_NOTES");
   dispatch("SAVE_CURRENT_GAME", true);

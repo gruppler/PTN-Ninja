@@ -655,6 +655,25 @@ export const REMOVE_POSITION_NOTES = (state, plyID) => {
   );
 };
 
+export const REMOVE_POSITION_USER_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) =>
+      notePlyID === String(plyID) &&
+      note.output.evaluation === null &&
+      note.output.pv === null &&
+      note.output.pvAfter === null
+  );
+};
+
+export const REMOVE_ALL_USER_NOTES = () => {
+  Vue.prototype.$game.removeNotes(
+    (note) =>
+      note.output.evaluation === null &&
+      note.output.pv === null &&
+      note.output.pvAfter === null
+  );
+};
+
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
   // Also clear PTN eval marks (except tak/tinue)

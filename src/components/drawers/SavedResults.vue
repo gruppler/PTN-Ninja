@@ -15,59 +15,42 @@
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
-            @click.stop="toggleSettings"
-            icon="settings"
-            :color="showSettings ? 'primary' : ''"
-            round
+            @click.stop
+            icon="delete"
+            :disable="!savedBotNames.length"
             dense
+            round
             flat
           >
-            <hint>{{ $t("Settings") }}</hint>
+            <q-menu auto-close>
+              <q-list>
+                <q-item
+                  clickable
+                  :disable="!hasPositionSavedResults"
+                  @click="deletePositionSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete" />
+                  </q-item-section>
+                  <q-item-section>{{
+                    $t("analysis.Delete Positions Saved Results")
+                  }}</q-item-section>
+                </q-item>
+                <q-item clickable @click="deleteAllSavedResults">
+                  <q-item-section avatar>
+                    <q-icon name="delete_all" />
+                  </q-item-section>
+                  <q-item-section>{{
+                    $t("analysis.Delete All Saved Results")
+                  }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
           </q-btn>
         </q-item-section>
       </template>
 
       <recess>
-        <!-- Settings -->
-        <smooth-reflow>
-          <div v-if="showSettings" :class="'text-' + textColor">
-            <!-- Show Continuation -->
-            <q-item
-              @click="showContinuationToggle = !showContinuationToggle"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.showContinuation")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="showContinuationToggle" :dark="dark" />
-              </q-item-section>
-            </q-item>
-
-            <!-- Show Full Suggestion -->
-            <smooth-reflow>
-              <q-item
-                v-if="showContinuationToggle"
-                @click="showFullPVsToggle = !showFullPVsToggle"
-                clickable
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.showFullSuggestion")
-                  }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle v-model="showFullPVsToggle" :dark="dark" />
-                </q-item-section>
-              </q-item>
-            </smooth-reflow>
-          </div>
-        </smooth-reflow>
-
         <!-- Saved Results by Bot -->
         <div
           v-for="(botName, index) in savedBotNames"
@@ -95,18 +78,21 @@ export default {
   data() {
     return {
       sections: cloneDeep(this.$store.state.ui.analysisSections),
-      showSettings: false,
     };
   },
   computed: {
     dark() {
       return this.$store.state.ui.theme.panelDark;
     },
-    textColor() {
-      return this.dark ? "textLight" : "textDark";
-    },
     game() {
       return this.$store.state.game;
+    },
+    tps() {
+      return this.game.position.tps;
+    },
+    hasPositionSavedResults() {
+      const suggestions = this.$store.getters["game/suggestions"](this.tps);
+      return suggestions && suggestions.length > 0;
     },
     savedBotNames() {
       // Get unique bot names from all saved suggestions across all positions
@@ -150,35 +136,29 @@ export default {
 
       return result;
     },
-    showFullPVs() {
-      return this.$store.state.analysis.showFullPVs;
-    },
-    showFullPVsToggle: {
-      get() {
-        return this.$store.state.analysis.showFullPVs;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["showFullPVs", value]);
-      },
-    },
-    showContinuation() {
-      return this.$store.state.analysis.showContinuation;
-    },
-    showContinuationToggle: {
-      get() {
-        return this.$store.state.analysis.showContinuation;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["showContinuation", value]);
-      },
-    },
   },
   methods: {
-    toggleSettings() {
-      this.showSettings = !this.showSettings;
-      if (this.showSettings) {
-        this.sections.savedResults = true;
-      }
+    deletePositionSavedResults() {
+      if (!this.hasPositionSavedResults) return;
+      this.$store.dispatch("game/REMOVE_POSITION_ANALYSIS_NOTES", this.tps);
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    deleteAllSavedResults() {
+      if (!this.savedBotNames.length) return;
+      this.$store.dispatch("game/REMOVE_ANALYSIS_NOTES");
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
   },
   watch: {

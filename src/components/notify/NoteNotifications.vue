@@ -22,15 +22,8 @@ export default {
       // Hide if Notes tab is shown in text panel
       if (
         this.$store.state.ui.showText &&
+        this.$store.state.ui.analysisSections.positionNotes &&
         this.$store.state.ui.textTab === "notes"
-      ) {
-        return false;
-      }
-      // Hide if Analysis tab is shown with Position Notes section expanded
-      if (
-        this.$store.state.ui.showText &&
-        this.$store.state.ui.textTab === "analysis" &&
-        this.$store.state.ui.analysisSections.positionNotes
       ) {
         return false;
       }
