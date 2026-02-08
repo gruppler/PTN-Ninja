@@ -190,41 +190,31 @@ export default {
       if (!this.ply) return null;
 
       const analysis = this.$store.state.analysis;
-      const preferSaved = analysis?.preferSavedResults;
       const showEvalMarks = analysis?.showEvalMarks;
 
-      // Get the base evaluation text from ply (tak/tinue marks)
+      // Get the base evaluation text from ply (tak/tinue marks and saved eval marks)
       const plyEval = this.ply.evaluation;
       const takTinue = plyEval
         ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
         : "";
-
-      // If preferring saved results, use saved eval marks from PTN
-      if (preferSaved) {
-        return plyEval ? plyEval.text : null;
-      }
 
       // If showEvalMarks is disabled, only show tak/tinue marks
       if (!showEvalMarks) {
         return takTinue || null;
       }
 
-      // Access reactive state directly so Vue tracks dependencies
-      const botID = analysis?.botID;
-      const botPositions = analysis?.botPositions;
-      const positions = botID && botPositions ? botPositions[botID] : null;
-      const hasBotPositions = positions && Object.keys(positions).length > 0;
-
-      // Check for eval mark override from bot analysis
-      if (hasBotPositions) {
-        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
-        const override = getOverride ? getOverride(this.ply) : null;
-
-        // Return override combined with tak/tinue, or just tak/tinue if no override
-        return override ? override + takTinue : takTinue || null;
+      // Check for dynamic eval mark override from bot analysis or saved results
+      const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+      const override = getOverride ? getOverride(this.ply) : null;
+      if (override) {
+        return override + takTinue;
       }
 
-      // No bot positions - only show tak/tinue marks
+      // Fall back to saved eval marks from PTN
+      if (plyEval && (plyEval["?"] || plyEval["!"])) {
+        return plyEval.text;
+      }
+
       return takTinue || null;
     },
   },

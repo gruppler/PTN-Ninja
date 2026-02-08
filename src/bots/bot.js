@@ -794,6 +794,9 @@ export default class Bot {
         });
         if (results) {
           this.storeResults(results);
+          if (store.state.analysis.autoSaveAfterSearch) {
+            this.saveEvalComments(tps);
+          }
           resolve(results);
           return results;
         } else {
@@ -1229,47 +1232,6 @@ export default class Bot {
             positionAfter && positionAfter[0]
           );
           comments.push(evalComment);
-        }
-      }
-    }
-
-    // Evaluation marks (requires both positions, and no existing analysis notes)
-    // Also skip if there are already eval marks in the PTN (auto-save shouldn't overwrite)
-    const hasExistingEvalMarks = this.plies.some(
-      (p) => p && p.evaluation && (p.evaluation["?"] || p.evaluation["!"])
-    );
-    if (
-      !hasExistingAnalysisNotes &&
-      !hasExistingEvalMarks &&
-      hasPositionBeforeEval &&
-      hasPositionAfterEval &&
-      store.state.analysis.saveEvalMarks
-    ) {
-      if (
-        evaluationBefore === null &&
-        positionBefore &&
-        positionBefore[0].evaluation !== null
-      ) {
-        evaluationBefore = positionBefore[0].evaluation;
-      }
-      if (evaluationBefore !== null && evaluationAfter !== null) {
-        evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
-        const scoreLoss =
-          (ply.player === 1
-            ? evaluationAfter - evaluationBefore
-            : evaluationBefore - evaluationAfter) / 2;
-        const thresholds =
-          store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
-        if (scoreLoss > thresholds.brilliant) {
-          comments.push("!!");
-        } else if (scoreLoss > thresholds.good) {
-          comments.push("!");
-        } else if (scoreLoss > thresholds.bad) {
-          // Do nothing
-        } else if (scoreLoss > thresholds.blunder) {
-          comments.push("?");
-        } else {
-          comments.push("??");
         }
       }
     }

@@ -63,18 +63,55 @@ const calculateEvalMark = (ply, positions, thresholds) => {
   }
 };
 
+// Build a positions-like structure from saved notes for the two TPS values needed
+const buildSavedPositions = (ply, rootGetters, savedBotName) => {
+  const getSuggestions = rootGetters["game/suggestions"];
+  if (!getSuggestions) return null;
+
+  const tpsBefore = ply.tpsBefore;
+  const tpsAfter = ply.tpsAfter;
+  if (!tpsBefore || !tpsAfter) return null;
+
+  const filterByBot = (allSuggestions) => {
+    if (savedBotName === null || savedBotName === undefined) {
+      return allSuggestions.filter((s) => !s.botName);
+    }
+    return allSuggestions.filter((s) => s.botName === savedBotName);
+  };
+
+  const beforeSuggestions = filterByBot(getSuggestions(tpsBefore));
+  const afterSuggestions = filterByBot(getSuggestions(tpsAfter));
+
+  if (!beforeSuggestions.length || !afterSuggestions.length) return null;
+
+  return {
+    [tpsBefore]: beforeSuggestions,
+    [tpsAfter]: afterSuggestions,
+  };
+};
+
 // Returns a function that calculates eval mark for a ply given current bot positions
 // This allows the component to call it with the ply and get reactive updates
-export const getEvalMarkOverride = (state) => (ply) => {
-  if (!ply) return null;
+export const getEvalMarkOverride =
+  (state, getters, rootState, rootGetters) => (ply) => {
+    if (!ply) return null;
 
-  const botID = state.botID;
-  const thresholds = state.evalMarkThresholds || defaultEvalMarkThresholds;
-  const positions = botID ? state.botPositions[botID] : null;
+    const thresholds = state.evalMarkThresholds || defaultEvalMarkThresholds;
 
-  if (!positions || Object.keys(positions).length === 0) {
-    return null;
-  }
-
-  return calculateEvalMark(ply, positions, thresholds);
-};
+    if (state.preferSavedResults) {
+      // Use saved notes as the source
+      const positions = buildSavedPositions(
+        ply,
+        rootGetters,
+        state.savedBotName
+      );
+      if (!positions) return null;
+      return calculateEvalMark(ply, positions, thresholds);
+    } else {
+      // Use unsaved bot positions as the source
+      const botID = state.botID;
+      const positions = botID ? state.botPositions[botID] : null;
+      if (!positions || Object.keys(positions).length === 0) return null;
+      return calculateEvalMark(ply, positions, thresholds);
+    }
+  };

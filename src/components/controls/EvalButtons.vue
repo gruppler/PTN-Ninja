@@ -18,8 +18,8 @@
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
-      :class="{ active: isQ && preferSavedResults, double: isDoubleQ }"
-      :disable="disable || !preferSavedResults"
+      :class="{ active: isQ, double: isDoubleQ }"
+      :disable="disable"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
       @shortkey="toggle('?', $event.srcKey === 'double')"
@@ -31,8 +31,8 @@
     />
     <q-btn
       :label="isDoubleBang ? '!!' : '!'"
-      :class="{ active: isBang && preferSavedResults, double: isDoubleBang }"
-      :disable="disable || !preferSavedResults"
+      :class="{ active: isBang, double: isDoubleBang }"
+      :disable="disable"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
       @shortkey="toggle('!', $event.srcKey === 'double')"
@@ -85,9 +85,6 @@ export default {
     },
     isDoubleBang() {
       return this.evaluation && this.evaluation.isDouble["!"];
-    },
-    preferSavedResults() {
-      return this.$store.state.analysis?.preferSavedResults ?? true;
     },
   },
   methods: {

@@ -1,7 +1,7 @@
 <template>
   <q-expansion-item
     v-model="expanded"
-    header-class="bg-ui"
+    header-class="bg-accent"
     expand-icon-class="fg-inherit"
   >
     <template v-slot:header>
@@ -134,7 +134,7 @@
       class="bg-ui"
       :value="null"
       :options="availableBots"
-      :label="$t('Engine')"
+      :label="$tc('Engine')"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -678,7 +678,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{
-                    $t("analysis.Save Eval Marks")
+                    $t("analysis.saveEvalMarks")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -749,6 +749,19 @@
                 <q-item-section>
                   <q-item-label>{{
                     $t("analysis.Delete Engines Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item clickable @click="removeEvalMarks">
+                <q-item-section avatar>
+                  <q-icon name="eval" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.removeEvalMarks")
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -1137,6 +1150,16 @@ export default {
         return;
       }
       this.bot.saveEvalMarks();
+    },
+    removeEvalMarks() {
+      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
+      this.notifyUndo({
+        icon: "eval",
+        message: this.$t("success.evalMarksRemoved"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
     clearUnsavedResults() {
       if (!this.hasResults) {
