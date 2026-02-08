@@ -62,6 +62,7 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   } catch (error) {
     Loading.hide();
     notifyError(error);
+    return;
   }
 
   return new Promise((resolve) => {
@@ -83,8 +84,10 @@ export const ADD_GAMES = async function (
   const now = new Date().getTime();
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
+    const uniqueGameName = getters.uniqueName(game.name);
+    game.name = uniqueGameName;
     const newGame = {
-      name: getters.uniqueName(game.name),
+      name: uniqueGameName,
       ptn: game.ptn,
       lastSeen: game.lastSeen || new Date(now - i),
     };
