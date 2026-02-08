@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Database Moves -->
+    <!-- Common Openings -->
     <q-expansion-item
       v-if="dbMoves"
       v-model="dbMovesExpanded"
@@ -92,170 +92,6 @@
       <recess>
         <smooth-reflow height-only>
           <template v-if="showDBSettings">
-            <!-- Include Bots -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
-              <q-item-section avatar>
-                <q-icon
-                  :name="dbSettings.includeBotGames ? 'bot_on' : 'bot_off'"
-                />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>
-                  {{ $t("analysis.includeBotGames") }}
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="dbSettings.includeBotGames"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
-              </q-item-section>
-            </q-item>
-
-            <!-- Player 1 -->
-            <q-select
-              ref="player1"
-              v-model="dbSettings.player1"
-              :options="player1Names"
-              :loading="!player1Index"
-              :label="$t('Player1')"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              use-input
-              @filter="searchPlayer1"
-              @input="$refs.player1.updateInputValue('')"
-              :dark="$store.state.ui.theme.panelDark"
-              hide-dropdown-icon
-            >
-              <template v-slot:prepend>
-                <q-icon name="player1" />
-              </template>
-            </q-select>
-
-            <!-- Player 2 -->
-            <q-select
-              ref="player2"
-              v-model="dbSettings.player2"
-              :options="player2Names"
-              :loading="!player2Index"
-              :label="$t('Player2')"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              use-input
-              @filter="searchPlayer2"
-              @input="$refs.player2.updateInputValue('')"
-              :dark="$store.state.ui.theme.panelDark"
-              hide-dropdown-icon
-            >
-              <template v-slot:prepend>
-                <q-icon name="player2" />
-              </template>
-            </q-select>
-
-            <!-- Minimum Rating -->
-            <q-input
-              v-model.number="dbSettings.minRating"
-              :label="$t('Minimum Rating')"
-              type="number"
-              :min="dbMinRating"
-              max="5000"
-              step="10"
-              :placeholder="dbMinRating"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon name="rating1" />
-              </template>
-            </q-input>
-
-            <!-- Komi -->
-            <q-select
-              v-model="dbSettings.komi"
-              :options="komiOptions"
-              :label="$t('Komi')"
-              type="number"
-              emit-value
-              map-options
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon name="komi" />
-              </template>
-            </q-select>
-
-            <!-- Game type -->
-            <q-select
-              v-model="dbSettings.tournament"
-              :options="tournamentOptions"
-              :label="$t('analysis.gameType')"
-              emit-value
-              map-options
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon
-                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
-                />
-              </template>
-            </q-select>
-
-            <!-- Min/Max Dates -->
-            <DateInput
-              :label="$t('analysis.minDate')"
-              v-model="dbSettings.minDate"
-              :max="dbSettings.maxDate ? new Date(dbSettings.maxDate) : null"
-              icon="date_arrow_right"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-            <DateInput
-              :label="$t('analysis.maxDate')"
-              v-model="dbSettings.maxDate"
-              :min="dbSettings.minDate ? new Date(dbSettings.minDate) : null"
-              icon="date_arrow_left"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-
             <!-- Max Suggestions -->
             <q-input
               v-model.number="dbSettings.maxSuggestedMoves"
@@ -366,7 +202,9 @@
       </recess>
     </q-expansion-item>
 
-    <!-- Database Games -->
+    <q-separator :dark="$store.state.ui.theme.panelDark" />
+
+    <!-- Top Games -->
     <q-expansion-item
       v-if="dbGames"
       v-model="dbGamesExpanded"
@@ -544,16 +382,13 @@ import AnalysisItem from "../analysis/AnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import DatabaseGame from "../analysis/DatabaseGame";
 import DatabaseGamePlaceholder from "../analysis/DatabaseGamePlaceholder";
-import DateInput from "../controls/DateInput";
 import Ply from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit } from "lodash";
-import Fuse from "fuse.js";
 import hashObject from "object-hash";
 
 import { OPENING_DB_API } from "../../constants";
 const openingsEndpoint = `${OPENING_DB_API}/opening`;
-const usernamesEndpoint = `${OPENING_DB_API}/players`;
 const databasesEndpoint = `${OPENING_DB_API}/databases`;
 
 export default {
@@ -563,20 +398,11 @@ export default {
     AnalysisItemPlaceholder,
     DatabaseGame,
     DatabaseGamePlaceholder,
-    DateInput,
   },
   props: {
     recess: Boolean,
   },
   data() {
-    let komiOptions = [];
-    for (let value = 0; value <= 4; value += 0.5) {
-      komiOptions.push({
-        label: value.toString().replace(/0?\.5/, "½"),
-        value,
-      });
-    }
-
     return {
       loadingDBMoves: false,
       showDBSettings: false,
@@ -589,16 +415,6 @@ export default {
        * @type { {include_bot_games: bool, min_rating: number, size: number}[]? }
        */
       databases: [],
-      player1Index: null,
-      player1Names: [],
-      player2Index: null,
-      player2Names: [],
-      komiOptions,
-      tournamentOptions: [
-        { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
-        { label: this.$t("analysis.tournamentOptions.only"), value: true },
-      ],
-      dbMinRating: 0,
       dbSettings: { ...this.$store.state.analysis.dbSettings },
       dbSettingsHash: this.hashDBSettings(
         this.$store.state.analysis.dbSettings
@@ -614,7 +430,7 @@ export default {
     isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
-        this.$store.state.ui.textTab === "analysis"
+        this.$store.state.ui.textTab === "openings"
       );
     },
     isDBMovesVisible() {
@@ -766,23 +582,8 @@ export default {
      * @returns Explored moves and their winning probability (`evaluation`).
      * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
      */
-    async loadUsernames() {
-      if (this.isOffline) {
-        return;
-      }
-      const response = await fetch(usernamesEndpoint);
-      const { white, black } = await response.json();
-      this.player1Index = new Fuse(white);
-      this.player2Index = new Fuse(black);
-    },
-
     async init() {
       if (!this.isOffline) {
-        // Load player names
-        if (!this.player1Names.length) {
-          this.loadUsernames();
-        }
-
         // Load databases
         if (!this.databases.length) {
           try {
@@ -794,35 +595,6 @@ export default {
           }
         }
       }
-    },
-
-    searchPlayer1(query, update) {
-      update(
-        () =>
-          (this.player1Names = this.player1Index
-            .search(query)
-            .map((result) => result.item)),
-        (ref) => {
-          if (query.trim() !== "" && ref.options.length > 0) {
-            ref.setOptionIndex(-1);
-            ref.moveOptionSelection(1, true);
-          }
-        }
-      );
-    },
-    searchPlayer2(query, update) {
-      update(
-        () =>
-          (this.player2Names = this.player2Index
-            .search(query)
-            .map((result) => result.item)),
-        (ref) => {
-          if (query.trim() !== "" && ref.options.length > 0) {
-            ref.setOptionIndex(-1);
-            ref.moveOptionSelection(1, true);
-          }
-        }
-      );
     },
 
     async queryDBPosition() {
@@ -1007,6 +779,18 @@ export default {
         this.dbSettingsHash = this.hashDBSettings(settings);
         if (!this.isOffline) {
           this.queryDBPosition();
+        }
+      },
+      deep: true,
+    },
+    "$store.state.analysis.dbSettings": {
+      handler(value) {
+        const changed = Object.keys(value).some(
+          (key) =>
+            JSON.stringify(value[key]) !== JSON.stringify(this.dbSettings[key])
+        );
+        if (changed) {
+          this.dbSettings = { ...value };
         }
       },
       deep: true,

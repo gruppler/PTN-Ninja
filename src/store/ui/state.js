@@ -77,7 +77,7 @@ const defaultState = {
   showToolbarAnalysis: true,
   size: "6",
   stackCounts: false,
-  textTab: "analysis",
+  textTab: "openings",
   theme: THEMES.find((t) => t.id === "classic"),
   themeID: "classic",
   themes: [],
@@ -192,5 +192,8 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 
 // Backward compatibility
 defaultsDeep(state, defaultState);
+if (state.textTab === "analysis") {
+  state.textTab = "openings";
+}
 
 export default state;

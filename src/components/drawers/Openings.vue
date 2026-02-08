@@ -1,17 +1,17 @@
 <template>
   <component :is="recess ? 'recess' : 'div'" class="col-grow relative-position">
-    <q-scroll-area ref="scroll" class="absolute-fit">
-      <BotAnalysis />
+    <q-scroll-area ref="scroll" class="games-db absolute-fit">
+      <OpeningExplorer />
     </q-scroll-area>
   </component>
 </template>
 
 <script>
-import BotAnalysis from "./BotAnalysis";
+import OpeningExplorer from "./OpeningExplorer";
 
 export default {
-  name: "Analysis",
-  components: { BotAnalysis },
+  name: "Openings",
+  components: { OpeningExplorer },
   props: {
     recess: Boolean,
   },

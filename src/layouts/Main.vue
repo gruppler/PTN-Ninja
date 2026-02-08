@@ -221,23 +221,118 @@
           align="justify"
           inline-label
         >
-          <q-tab
-            v-if="hasAnalysis"
-            name="analysis"
-            icon="analysis"
-            :label="$t('Analysis')"
-          />
-          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
-          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
+          <q-tab v-if="hasAnalysis" name="openings">
+            <div class="row no-wrap items-center">
+              <q-icon name="opening" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <template v-if="textTab === 'openings'">
+                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
+                    $t("Openings")
+                  }}</span>
+                  <q-btn
+                    @click.stop="showTabSettings = !showTabSettings"
+                    icon="settings"
+                    :color="
+                      showTabSettings
+                        ? 'primary'
+                        : $store.state.ui.theme.isDark
+                        ? 'textLight'
+                        : 'textDark'
+                    "
+                    flat
+                    dense
+                    round
+                    class="q-ml-xs"
+                  />
+                </template>
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasAnalysis" name="engines">
+            <div class="row no-wrap items-center">
+              <q-icon name="bot" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <template v-if="textTab === 'engines'">
+                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
+                    $t("Engines")
+                  }}</span>
+                  <q-btn
+                    @click.stop="showTabSettings = !showTabSettings"
+                    icon="settings"
+                    :color="
+                      showTabSettings
+                        ? 'primary'
+                        : $store.state.ui.theme.isDark
+                        ? 'textLight'
+                        : 'textDark'
+                    "
+                    flat
+                    dense
+                    round
+                    class="q-ml-xs"
+                  />
+                </template>
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab name="notes">
+            <div class="row no-wrap items-center">
+              <q-icon name="save" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <template v-if="textTab === 'notes'">
+                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
+                    $t("Saved")
+                  }}</span>
+                  <q-btn
+                    @click.stop="showTabSettings = !showTabSettings"
+                    icon="settings"
+                    :color="
+                      showTabSettings
+                        ? 'primary'
+                        : $store.state.ui.theme.isDark
+                        ? 'textLight'
+                        : 'textDark'
+                    "
+                    flat
+                    dense
+                    round
+                    class="q-ml-xs"
+                  />
+                </template>
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasChat" name="chat">
+            <div class="row no-wrap items-center">
+              <q-icon name="chat" class="q-tab__icon" />
+              <span
+                v-if="textTab === 'chat' && $q.screen.gt.xs"
+                class="q-tab__label q-ml-sm"
+                >{{ $t("Chat") }}</span
+              >
+            </div>
+          </q-tab>
         </q-tabs>
+        <div style="max-height: 50vh; overflow-y: auto">
+          <smooth-reflow class="bg-ui" height-only>
+            <OpeningsSettings
+              v-if="showTabSettings && textTab === 'openings'"
+            />
+            <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
+            <SavedSettings v-if="showTabSettings && textTab === 'notes'" />
+          </smooth-reflow>
+        </div>
         <q-tab-panels
           class="col-grow bg-transparent"
           :value="textTab"
           keep-alive
           animated
         >
-          <q-tab-panel name="analysis">
-            <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          <q-tab-panel v-if="hasAnalysis" name="openings">
+            <Openings ref="openings" class="fit" recess />
+          </q-tab-panel>
+          <q-tab-panel v-if="hasAnalysis" name="engines">
+            <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
@@ -297,6 +392,10 @@ import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 import Analysis from "../components/drawers/Analysis";
+import Openings from "../components/drawers/Openings";
+import OpeningsSettings from "../components/drawers/OpeningsSettings";
+import EnginesSettings from "../components/drawers/EnginesSettings";
+import SavedSettings from "../components/drawers/SavedSettings";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -333,6 +432,10 @@ export default {
     PTN,
     Notes,
     Analysis,
+    Openings,
+    OpeningsSettings,
+    EnginesSettings,
+    SavedSettings,
     PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
@@ -356,6 +459,7 @@ export default {
       hotkeys: HOTKEYS,
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      showTabSettings: false,
     };
   },
   computed: {
@@ -399,9 +503,9 @@ export default {
       get() {
         let tab = this.$store.state.ui.textTab;
         if (tab === "chat" && !this.hasChat) {
-          tab = "analysis";
+          tab = "openings";
         }
-        if (tab === "analysis" && !this.hasAnalysis) {
+        if ((tab === "openings" || tab === "engines") && !this.hasAnalysis) {
           tab = this.hasChat ? "chat" : "notes";
         }
         return tab;
@@ -420,23 +524,27 @@ export default {
     },
     textPanelIcon() {
       switch (this.textTab) {
+        case "openings":
+          return "opening";
+        case "engines":
+          return "bot";
         case "notes":
-          return this.notifyNotes ? "notes" : "notes_off";
+          return "save";
         case "chat":
           return "chat";
-        case "analysis":
-          return "analysis";
         default:
           return "";
       }
     },
     textPanelHint() {
-      if (this.textTab === "notes") {
+      if (this.textTab === "openings") {
+        return this.$t(this.showText ? "Hide Openings" : "Show Openings");
+      } else if (this.textTab === "engines") {
+        return this.$t(this.showText ? "Hide Engines" : "Show Engines");
+      } else if (this.textTab === "notes") {
         return this.$t(this.showText ? "Hide Notes" : "Show Notes");
       } else if (this.textTab === "chat") {
         return this.$t(this.showText ? "Hide Chat" : "Show Chat");
-      } else if (this.textTab === "analysis") {
-        return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
       }
       return "";
     },
@@ -545,13 +653,11 @@ export default {
         event.target.matches(".q-notification.note .q-notification__message")
       ) {
         this.showText = true;
-        if (
-          !this.hasAnalysis ||
-          !this.textTab === "analysis" ||
-          !this.$store.state.ui.analysisSections.positionNotes
-        ) {
-          this.textTab = "notes";
-        }
+        this.textTab = "notes";
+        this.$store.dispatch("ui/SET_UI", [
+          "analysisSections",
+          { ...this.$store.state.ui.analysisSections, positionNotes: true },
+        ]);
       } else if (
         event.target.matches(".q-notification.game") ||
         event.target.matches(".q-notification.game .q-notification__message") ||
@@ -841,9 +947,13 @@ export default {
           }
           break;
         case "toggleText":
-          let tabs = ["analysis", "notes"];
+          let tabs = [];
+          if (this.hasAnalysis) {
+            tabs.push("openings", "engines");
+          }
+          tabs.push("notes");
           if (this.hasChat) {
-            tabs.unshift("chat");
+            tabs.push("chat");
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
@@ -889,6 +999,9 @@ export default {
       }
     },
     showTextTab(value) {
+      if (value !== this.textTab) {
+        this.showTabSettings = false;
+      }
       this.textTab = value;
     },
     openFiles(event) {
