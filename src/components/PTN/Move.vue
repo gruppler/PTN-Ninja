@@ -9,19 +9,6 @@
       standalone: standalone,
     }"
   >
-    <div
-      v-if="showEvalRow && $store.state.ui.showEval && evaluationsForRow.length"
-      class="evaluations column"
-    >
-      <div
-        v-for="(evaluation, i) in evaluationsForRow"
-        class="evaluation col"
-        :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-        :style="{ width: Math.abs(evaluation) + '%' }"
-        :key="`eval-bar-${i}`"
-      />
-    </div>
-
     <Linenum
       v-if="showSeparateBranchRow"
       :linenum="move.linenum"
@@ -35,6 +22,21 @@
       }"
     />
     <div class="move-wrapper">
+      <div
+        v-if="
+          showEvalRow && $store.state.ui.showEval && evaluationsForRow.length
+        "
+        class="evaluations column"
+      >
+        <div
+          v-for="(evaluation, i) in evaluationsForRow"
+          class="evaluation col"
+          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
+          :style="{ width: Math.abs(evaluation) + '%' }"
+          :key="`eval-bar-${i}`"
+        />
+      </div>
+
       <template v-if="!noDecoration && !currentOnly">
         <div
           class="depth-indicator"
@@ -258,8 +260,6 @@ export default {
 
 <style lang="scss">
 .move {
-  position: relative;
-
   &.current-move {
     background-color: $dim;
     body.panelDark & {
@@ -316,6 +316,7 @@ export default {
   }
 
   .move-wrapper {
+    position: relative;
     min-height: 35px;
     position: relative;
 
