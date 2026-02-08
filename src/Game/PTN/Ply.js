@@ -204,8 +204,10 @@ export default class Ply extends Ptn {
     if (!this.branches.length) {
       this.branches[0] = this;
       this.branches.parent = this.game.branches[this.branch];
-      this.branches.parent.children.push(this);
-      this.branches.parent.children.sort(this.game.plySort);
+      if (this.branches.parent !== this) {
+        this.branches.parent.children.push(this);
+        this.branches.parent.children.sort(this.game.plySort);
+      }
     }
     this.branches.push(ply);
     ply.branches = this.branches;
@@ -225,10 +227,10 @@ export default class Ply extends Ptn {
     }
     if (this.branches.length === 2) {
       // Remove our last branch
-      this.branches.parent.children.splice(
-        this.branches.parent.children.indexOf(this),
-        1
-      );
+      const idx = this.branches.parent.children.indexOf(this);
+      if (idx !== -1) {
+        this.branches.parent.children.splice(idx, 1);
+      }
       this.branches = [];
     } else {
       this.branches.splice(this.branches.indexOf(ply), 1);
@@ -273,7 +275,7 @@ export default class Ply extends Ptn {
     } else if (branch.startsWith(this.branch)) {
       // In an ancestor branch
       let ply = this.game.branches[branch].branches[0];
-      while (ply && ply.index && ply.branch !== this.branch) {
+      while (ply && ply.branch !== this.branch) {
         // Ascend the tree to find a common branch
         ply = this.game.branches[ply.branch].branches[0];
       }

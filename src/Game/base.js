@@ -583,7 +583,12 @@ export default class GameBase {
     };
 
     if (branches.length) {
-      pushBranch(branches[0]);
+      const rootPly = branches[0];
+      sorted.push(rootPly.branch);
+      // Discover branches at the root ply (has no parent, so won't be found via children)
+      rootPly.branches.slice(1).sort(this.plySort).forEach(pushBranch);
+      // Traverse children
+      rootPly.children.forEach(pushChild);
     }
 
     return uniq(sorted);
