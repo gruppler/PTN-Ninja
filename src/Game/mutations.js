@@ -368,20 +368,14 @@ export default class GameMutations {
       }
     });
 
-    // Update game branches
+    // Rebuild branches object and branches.parent references
     let branches = {};
     plies.forEach((ply) => {
-      ply.children = [];
       if (!(ply.branch in branches)) {
         branches[ply.branch] = ply;
-        if (ply.id === 0 && ply.branches.length) {
-          ply.children.push(ply);
-        }
-      } else {
-        if (ply.branches.length) {
-          ply.branches.parent = branches[ply.branch];
-          ply.branches.parent.children.push(ply);
-        }
+      }
+      if (ply.branches.length) {
+        ply.branches.parent = branches[ply.branch];
       }
     });
 

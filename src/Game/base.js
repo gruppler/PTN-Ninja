@@ -565,33 +565,34 @@ export default class GameBase {
   }
 
   getBranchesSorted() {
-    let branches = Object.values(this.branches).sort(this.plySort);
-    let sorted = [];
+    const sorted = [];
+    const visited = new Set();
 
-    const pushBranch = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Children
-      ply.children.forEach(pushChild);
+    const visitBranch = (branchName) => {
+      if (visited.has(branchName)) return;
+      visited.add(branchName);
+      sorted.push(branchName);
+
+      // Walk all plies in this branch to find branch points
+      for (const ply of this.plies) {
+        if (ply.branch !== branchName) continue;
+        if (ply.branches.length > 1 && ply.branches[0] === ply) {
+          // This ply is a branch point — visit sibling branches in order
+          ply.branches
+            .slice(1)
+            .sort(this.plySort)
+            .forEach((sibling) => {
+              visitBranch(sibling.branch);
+            });
+        }
+      }
     };
 
-    const pushChild = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Siblings
-      ply.branches.slice(1).sort(this.plySort).forEach(pushBranch);
-    };
-
-    if (branches.length) {
-      const rootPly = branches[0];
-      sorted.push(rootPly.branch);
-      // Discover branches at the root ply (has no parent, so won't be found via children)
-      rootPly.branches.slice(1).sort(this.plySort).forEach(pushBranch);
-      // Traverse children
-      rootPly.children.forEach(pushChild);
+    if ("" in this.branches) {
+      visitBranch("");
     }
 
-    return uniq(sorted);
+    return sorted;
   }
 
   getMovesGrouped() {

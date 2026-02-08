@@ -690,14 +690,11 @@ test.describe("Branch Operations with Tree Structure", () => {
       await store.dispatch("game/FIRST");
       // Navigate to ply 4 (move 3, player 1)
       for (let i = 0; i < 4; i++) {
-        await store.dispatch("game/NEXT");
+        await store.dispatch("game/NEXT", { half: false, times: 1 });
       }
 
       // Insert an alternative ply (creates a branch)
-      await store.dispatch("game/INSERT_PLY", {
-        ply: "c1",
-        replaceCurrent: true,
-      });
+      await store.dispatch("game/INSERT_PLY", "c1");
 
       // Verify tree structure
       const parentIssues = game.verifyParentRelationships();

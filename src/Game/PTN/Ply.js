@@ -204,10 +204,6 @@ export default class Ply extends Ptn {
     if (!this.branches.length) {
       this.branches[0] = this;
       this.branches.parent = this.game.branches[this.branch];
-      if (this.branches.parent !== this) {
-        this.branches.parent.children.push(this);
-        this.branches.parent.children.sort(this.game.plySort);
-      }
     }
     this.branches.push(ply);
     ply.branches = this.branches;
@@ -227,10 +223,6 @@ export default class Ply extends Ptn {
     }
     if (this.branches.length === 2) {
       // Remove our last branch
-      const idx = this.branches.parent.children.indexOf(this);
-      if (idx !== -1) {
-        this.branches.parent.children.splice(idx, 1);
-      }
       this.branches = [];
     } else {
       this.branches.splice(this.branches.indexOf(ply), 1);
