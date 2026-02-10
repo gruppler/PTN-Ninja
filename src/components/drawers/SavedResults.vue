@@ -95,46 +95,7 @@ export default {
       return suggestions && suggestions.length > 0;
     },
     savedBotNames() {
-      // Get unique bot names from all saved suggestions across all positions
-      // Order: active bots first (in order), then other named bots, then null (Other)
-      const botNameSet = new Set();
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-
-      const collectBotNames = (tps) => {
-        if (!tps) return;
-        const suggestions = this.$store.getters["game/suggestions"](tps);
-        for (const s of suggestions) {
-          botNameSet.add(s.botName); // null for unnamed
-        }
-      };
-
-      // Check initial position
-      if (allPlies && allPlies[0] && allPlies[0].tpsBefore) {
-        collectBotNames(allPlies[0].tpsBefore);
-      }
-
-      // Check all positions
-      if (allPlies) {
-        for (const ply of allPlies) {
-          if (ply) collectBotNames(ply.tpsAfter);
-        }
-      }
-
-      // Build ordered list: just use the exact names from saved suggestions
-      // Sort alphabetically, with null (Other) at the end
-      const result = [];
-
-      // Add all named bots (sorted alphabetically)
-      const namedBots = [...botNameSet].filter((name) => name !== null);
-      namedBots.sort((a, b) => a.localeCompare(b));
-      result.push(...namedBots);
-
-      // Add null (Other) at the end if present
-      if (botNameSet.has(null)) {
-        result.push(null);
-      }
-
-      return result;
+      return this.$store.getters["analysis/savedBotNames"];
     },
   },
   methods: {

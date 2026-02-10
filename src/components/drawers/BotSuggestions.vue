@@ -1081,8 +1081,7 @@ export default {
       this.$emit("select", { index: this.index, botId: value });
     },
     selectActiveBot() {
-      this.$store.dispatch("analysis/SET", ["botID", this.botID]);
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      this.$store.dispatch("analysis/SELECT_ENGINE", this.botID);
     },
     removeBot() {
       this.$emit("remove", this.index);

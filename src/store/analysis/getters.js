@@ -90,6 +90,49 @@ const buildSavedPositions = (ply, rootGetters, savedBotName) => {
   };
 };
 
+// Ordered list of bot names from saved suggestions.
+// Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
+export const savedBotNames = (state, getters, rootState, rootGetters) => {
+  const game = rootState.game;
+  const allPlies = game && game.ptn && game.ptn.allPlies;
+  const getSuggestions = rootGetters["game/suggestions"];
+  if (!allPlies || !getSuggestions) return [];
+
+  const botNameSet = new Set();
+  const collectBotNames = (tps) => {
+    if (!tps) return;
+    const suggestions = getSuggestions(tps);
+    for (const s of suggestions) {
+      botNameSet.add(s.botName);
+    }
+  };
+
+  if (allPlies[0] && allPlies[0].tpsBefore) {
+    collectBotNames(allPlies[0].tpsBefore);
+  }
+  for (const ply of allPlies) {
+    if (ply) collectBotNames(ply.tpsAfter);
+  }
+
+  const namedBots = [...botNameSet].filter((name) => name !== null);
+
+  const activeBotLabels = {};
+  (state.activeBots || []).forEach((id, idx) => {
+    const bot = bots[id];
+    if (bot) activeBotLabels[bot.label] = idx;
+  });
+
+  const matched = namedBots.filter((name) => name in activeBotLabels);
+  const unmatched = namedBots.filter((name) => !(name in activeBotLabels));
+  matched.sort((a, b) => activeBotLabels[a] - activeBotLabels[b]);
+
+  const result = [...matched, ...unmatched];
+  if (botNameSet.has(null)) {
+    result.push(null);
+  }
+  return result;
+};
+
 // Returns a function that calculates eval mark for a ply given current bot positions
 // This allows the component to call it with the ply and get reactive updates
 export const getEvalMarkOverride =

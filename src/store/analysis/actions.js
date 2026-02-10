@@ -105,6 +105,57 @@ export const REORDER_ACTIVE_BOTS = (
   saveCollapsedBots(state);
 };
 
+// Engine selection with bidirectional syncing
+export const SELECT_ENGINE = (
+  { state, dispatch, rootState, rootGetters },
+  botId
+) => {
+  dispatch("SET", ["preferSavedResults", false]);
+  if (botId && botId !== state.botID) {
+    dispatch("SET", ["botID", botId]);
+  }
+  // Sync savedBotName to match the selected engine's label
+  const bot = bots[botId];
+  const label = bot ? bot.label : null;
+  if (label) {
+    const allPlies = rootState.game?.ptn?.allPlies;
+    if (allPlies) {
+      const getSuggestions = rootGetters["game/suggestions"];
+      let found = false;
+      const check = (tps) => {
+        if (!tps || found) return;
+        const suggestions = getSuggestions(tps);
+        if (suggestions.some((s) => s.botName === label)) found = true;
+      };
+      if (allPlies[0] && allPlies[0].tpsBefore) {
+        check(allPlies[0].tpsBefore);
+      }
+      for (const ply of allPlies) {
+        if (ply) check(ply.tpsAfter);
+      }
+      if (found) {
+        dispatch("SET", ["savedBotName", label]);
+      }
+    }
+  }
+};
+
+export const SELECT_SAVED_ENGINE = ({ state, dispatch }, botName) => {
+  dispatch("SET", ["savedBotName", botName]);
+  dispatch("SET", ["preferSavedResults", true]);
+  // Sync botID to match the saved engine's name
+  if (botName) {
+    const activeBots = state.activeBots || [];
+    const matchingBot = activeBots.find((id) => {
+      const bot = bots[id];
+      return bot && bot.label === botName;
+    });
+    if (matchingBot) {
+      dispatch("SET", ["botID", matchingBot]);
+    }
+  }
+};
+
 // Collapsed bots persistence
 const saveCollapsedBots = (state) => {
   try {

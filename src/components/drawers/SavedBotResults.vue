@@ -284,9 +284,7 @@ export default {
   },
   methods: {
     selectSavedBot() {
-      // Set this bot's name as the saved bot and enable preferSavedResults
-      this.$store.dispatch("analysis/SET", ["savedBotName", this.botName]);
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+      this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", this.botName);
     },
     getNextSavedBotName() {
       // Find the next bot name that has saved results (excluding current bot)

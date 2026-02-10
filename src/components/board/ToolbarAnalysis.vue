@@ -458,34 +458,7 @@ export default {
       return this.allSavedSuggestions.length > 0;
     },
     savedBotNames() {
-      const botNameSet = new Set();
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-
-      const collectBotNames = (tps) => {
-        if (!tps) return;
-        const suggestions = this.$store.getters["game/suggestions"](tps);
-        for (const s of suggestions) {
-          botNameSet.add(s.botName);
-        }
-      };
-
-      if (allPlies && allPlies[0] && allPlies[0].tpsBefore) {
-        collectBotNames(allPlies[0].tpsBefore);
-      }
-      if (allPlies) {
-        for (const ply of allPlies) {
-          if (ply) collectBotNames(ply.tpsAfter);
-        }
-      }
-
-      const result = [];
-      const namedBots = [...botNameSet].filter((name) => name !== null);
-      namedBots.sort((a, b) => a.localeCompare(b));
-      result.push(...namedBots);
-      if (botNameSet.has(null)) {
-        result.push(null);
-      }
-      return result;
+      return this.$store.getters["analysis/savedBotNames"];
     },
     savedResultsLabel() {
       if (this.savedBotName === null) {
@@ -579,19 +552,15 @@ export default {
       this.collapsed = !this.collapsed;
     },
     selectBot(botId) {
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      this.$store.dispatch("analysis/SELECT_ENGINE", botId);
       this.manualBotSelection = true;
-      if (botId && botId !== this.botID) {
-        this.$store.dispatch("analysis/SET", ["botID", botId]);
-      }
     },
     selectSavedResults() {
       this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
       this.manualBotSelection = false;
     },
     selectSavedEngine(botName) {
-      this.$store.dispatch("analysis/SET", ["savedBotName", botName]);
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+      this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", botName);
       this.manualBotSelection = false;
     },
     getBotIcon(botId) {
