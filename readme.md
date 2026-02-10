@@ -142,6 +142,10 @@ For example:
 
 - Navigate to the end
 
+#### `LAST_CHILD_BRANCH`
+
+- Navigate to the last child branch of the current branch point
+
 #### `MAKE_BRANCH_MAIN` (value: `<String>`)
 
 - Swap a branch with its main line, specified by branch name
@@ -149,6 +153,10 @@ For example:
 #### `NEXT`
 
 - Navigate forward
+
+#### `NEXT_BRANCH`
+
+- Navigate to the next branch (first child if on a branch point, or next sibling if at the start of a branch)
 
 #### `NOTIFY` (value: `<String>|<Object>`)
 
@@ -183,6 +191,14 @@ For example:
     - `value` (`<String>`): `value` message property to send with the `action` to the opening or parent window when the button is clicked
   - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
 
+#### `PARENT_BRANCH`
+
+- Navigate to the parent branch point
+
+#### `PARENT_MAIN_BRANCH`
+
+- Navigate up to the main line
+
 #### `PAUSE`
 
 - Stop stepping through plies
@@ -198,6 +214,10 @@ For example:
 #### `PREV`
 
 - Navigate backward
+
+#### `PREV_BRANCH`
+
+- Navigate to the previous branch (previous sibling or parent branch point if at the start of a branch)
 
 #### `PROMOTE_BRANCH` (value: `<String>`)
 

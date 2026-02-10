@@ -119,6 +119,11 @@ export default {
           break;
         case "FIRST":
         case "LAST":
+        case "PREV_BRANCH":
+        case "NEXT_BRANCH":
+        case "PARENT_BRANCH":
+        case "PARENT_MAIN_BRANCH":
+        case "LAST_CHILD_BRANCH":
         case "UNDO":
         case "REDO":
         case "TRIM_BRANCHES":
