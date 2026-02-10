@@ -940,6 +940,220 @@ export const GO_TO_PLY = function (
   return !state.error;
 };
 
+// Branch navigation helpers
+const selectBranchPly = function (dispatch, ply) {
+  dispatch("SET_TARGET", ply);
+  dispatch("GO_TO_PLY", { plyID: ply.id, isDone: true });
+};
+
+const canInlineExpand = function (uiState) {
+  return uiState.showPTN && uiState.inlineBranches && uiState.showAllBranches;
+};
+
+export const PREV_BRANCH = function ({ state, dispatch }) {
+  const ptn = state.ptn;
+  const positionPly = state.position && state.position.ply;
+  if (!ptn || !ptn.allPlies || !positionPly) {
+    return;
+  }
+
+  // Check if current ply is a branch point (has child branches)
+  const isParentPly =
+    positionPly.branches &&
+    positionPly.branches.length > 1 &&
+    positionPly.branches[0] === positionPly.id;
+
+  if (isParentPly) {
+    // On parent ply - collapse in inline mode only
+    if (canInlineExpand(this.state.ui)) {
+      this.commit("ui/SET_COLLAPSE_BRANCH_REQUEST", {
+        plyID: positionPly.id,
+        nonce: Date.now(),
+      });
+      return;
+    }
+  }
+
+  // Only navigate siblings/parent when at the first ply of the branch
+  if (!positionPly.branch) {
+    return;
+  }
+
+  const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+  if (!branchRoot || positionPly.id !== branchRoot.id) {
+    return;
+  }
+
+  const siblings = branchRoot.branches;
+  const hasSiblings = siblings && siblings.length > 1;
+
+  if (hasSiblings) {
+    const currentIndex = siblings.indexOf(branchRoot.id);
+    if (currentIndex > 1) {
+      const prevSiblingPly = ptn.allPlies[siblings[currentIndex - 1]];
+      if (prevSiblingPly) {
+        selectBranchPly(dispatch, prevSiblingPly);
+        return;
+      }
+    } else if (currentIndex >= 0) {
+      const branchPointPly = ptn.allPlies[siblings[0]];
+      if (branchPointPly) {
+        selectBranchPly(dispatch, branchPointPly);
+        return;
+      }
+    }
+  }
+
+  // No siblings - compute parent branch from branch name and go to its branch point
+  if (positionPly.branch) {
+    const parentBranchName = positionPly.branch
+      .split("/")
+      .slice(0, -1)
+      .join("/");
+    const parentBranchRoot = ptn.branches && ptn.branches[parentBranchName];
+    const parentSiblings = parentBranchRoot && parentBranchRoot.branches;
+    if (parentSiblings && parentSiblings.length > 0) {
+      const parentBranchPointPly = ptn.allPlies[parentSiblings[0]];
+      if (parentBranchPointPly) {
+        selectBranchPly(dispatch, parentBranchPointPly);
+        return;
+      }
+    }
+  }
+};
+
+export const NEXT_BRANCH = function ({ state, dispatch }) {
+  const ptn = state.ptn;
+  const positionPly = state.position && state.position.ply;
+  if (!ptn || !ptn.allPlies || !positionPly) {
+    return;
+  }
+
+  // Check if current ply is a branch point (has child branches)
+  const isParentPly =
+    positionPly.branches &&
+    positionPly.branches.length > 1 &&
+    positionPly.branches[0] === positionPly.id;
+
+  if (isParentPly) {
+    // On parent ply - select first child branch
+    const firstChildPly = ptn.allPlies[positionPly.branches[1]];
+    if (firstChildPly) {
+      if (canInlineExpand(this.state.ui)) {
+        const currentOverrides =
+          (state.ptnUI && state.ptnUI.branchPointOverrides) || {};
+        if (currentOverrides[positionPly.id] !== true) {
+          dispatch("SET_BRANCH_POINT_OVERRIDES", {
+            ...currentOverrides,
+            [positionPly.id]: true,
+          });
+        }
+      }
+      selectBranchPly(dispatch, firstChildPly);
+      return;
+    }
+  }
+
+  // Get branch root (first ply of current branch) to find siblings
+  const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+  if (!branchRoot || positionPly.id !== branchRoot.id) {
+    return;
+  }
+
+  const siblings = branchRoot.branches;
+  const hasSiblings = siblings && siblings.length > 1;
+
+  if (hasSiblings) {
+    const currentIndex = siblings.indexOf(branchRoot.id);
+    if (currentIndex >= 0 && currentIndex < siblings.length - 1) {
+      const nextSiblingPly = ptn.allPlies[siblings[currentIndex + 1]];
+      if (nextSiblingPly) {
+        selectBranchPly(dispatch, nextSiblingPly);
+        return;
+      }
+    }
+  }
+};
+
+export const PARENT_BRANCH = function ({ state, dispatch }) {
+  const ptn = state.ptn;
+  const positionPly = state.position && state.position.ply;
+  if (!ptn || !ptn.allPlies || !positionPly || !positionPly.branch) {
+    return;
+  }
+
+  const branchRoot = ptn.branches && ptn.branches[positionPly.branch];
+  const parentID =
+    branchRoot && branchRoot.branches && branchRoot.branches.length
+      ? branchRoot.branches[0]
+      : null;
+  const parentPly = parentID != null ? ptn.allPlies[parentID] : null;
+  if (parentPly) {
+    selectBranchPly(dispatch, parentPly);
+  }
+};
+
+export const PARENT_MAIN_BRANCH = function ({ state, dispatch }) {
+  const ptn = state.ptn;
+  const positionPly = state.position && state.position.ply;
+  if (!ptn || !ptn.allPlies || !positionPly || !positionPly.branch) {
+    return;
+  }
+
+  let current = positionPly;
+  while (current && current.branch) {
+    const branchRoot = ptn.branches && ptn.branches[current.branch];
+    const parentID =
+      branchRoot && branchRoot.branches && branchRoot.branches.length
+        ? branchRoot.branches[0]
+        : null;
+    const parentPly = parentID != null ? ptn.allPlies[parentID] : null;
+    if (!parentPly) {
+      return;
+    }
+    if (!parentPly.branch) {
+      selectBranchPly(dispatch, parentPly);
+      return;
+    }
+    current = parentPly;
+  }
+};
+
+export const LAST_CHILD_BRANCH = function ({ state, dispatch }) {
+  const ptn = state.ptn;
+  const positionPly = state.position && state.position.ply;
+  if (!ptn || !ptn.allPlies || !positionPly) {
+    return;
+  }
+
+  const isParentPly =
+    positionPly.branches &&
+    positionPly.branches.length > 1 &&
+    positionPly.branches[0] === positionPly.id;
+  if (!isParentPly) {
+    return;
+  }
+
+  const childID = positionPly.branches[positionPly.branches.length - 1];
+  const childPly = childID != null ? ptn.allPlies[childID] : null;
+  if (!childPly) {
+    return;
+  }
+
+  if (canInlineExpand(this.state.ui)) {
+    const currentOverrides =
+      (state.ptnUI && state.ptnUI.branchPointOverrides) || {};
+    if (currentOverrides[positionPly.id] !== true) {
+      dispatch("SET_BRANCH_POINT_OVERRIDES", {
+        ...currentOverrides,
+        [positionPly.id]: true,
+      });
+    }
+  }
+
+  selectBranchPly(dispatch, childPly);
+};
+
 export const EDIT_TPS = async function ({ commit, state }, tps) {
   const game = { ...state.list[0] };
   try {
