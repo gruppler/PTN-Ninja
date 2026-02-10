@@ -87,9 +87,6 @@
         </q-btn>
         <template v-if="inlineBranches">
           <q-separator vertical />
-          <q-btn @click="collapseAllBranches" icon="less" flat spread stretch>
-            <hint>{{ $t("Collapse All") }}</hint>
-          </q-btn>
           <q-btn
             v-if="inlineBranches"
             @click="expandAllBranches"
@@ -99,6 +96,9 @@
             stretch
           >
             <hint>{{ $t("Expand All") }}</hint>
+          </q-btn>
+          <q-btn @click="collapseAllBranches" icon="less" flat spread stretch>
+            <hint>{{ $t("Collapse All") }}</hint>
           </q-btn>
         </template>
       </q-btn-group>
