@@ -1,7 +1,7 @@
 <template>
   <q-expansion-item
     v-model="expanded"
-    header-class="bg-ui"
+    header-class="bg-accent"
     expand-icon-class="fg-inherit"
   >
     <template v-slot:header>
@@ -9,17 +9,18 @@
         <q-btn
           @click.stop="selectSavedBot"
           :color="isActiveSavedBot ? 'primary' : ''"
+          :text-color="
+            $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+          "
           style="margin-left: -4px"
           dense
           round
-          flat
-          glossy
         >
           <q-icon :name="botIcon" />
           <hint>{{ $t("Select Saved Results") }}</hint>
         </q-btn>
       </q-item-section>
-      <q-item-section :class="{ 'text-primary': isActiveSavedBot }">
+      <q-item-section>
         <q-item-label>{{ botLabel }}</q-item-label>
       </q-item-section>
       <q-item-section class="fg-inherit" side>

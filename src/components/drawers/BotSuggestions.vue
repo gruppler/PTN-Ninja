@@ -33,11 +33,12 @@
           <q-btn
             @click.stop="selectActiveBot"
             :color="isActiveBot ? 'primary' : ''"
+            :text-color="
+              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+            "
             style="margin-left: -4px"
             dense
             round
-            flat
-            glossy
           >
             <BotProgress
               v-if="!expanded && botState.isRunning"
