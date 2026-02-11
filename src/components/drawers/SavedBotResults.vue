@@ -14,7 +14,6 @@
           round
           flat
           glossy
-          :disable="!savedSuggestions.length"
         >
           <q-icon :name="botIcon" />
           <hint>{{ $t("Select Saved Results") }}</hint>
@@ -27,7 +26,7 @@
         <q-btn
           @click.stop
           icon="delete"
-          :disable="!savedSuggestions.length"
+          :disable="!hasAnySavedResults"
           dense
           round
           flat
@@ -286,51 +285,10 @@ export default {
     selectSavedBot() {
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", this.botName);
     },
-    getNextSavedBotName() {
-      // Find the next bot name that has saved results (excluding current bot)
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-      if (!allPlies) return null;
-
-      const botNames = new Set();
-      const collectBotNames = (tps) => {
-        if (!tps) return;
-        const suggestions = this.$store.getters["game/suggestions"](tps);
-        for (const s of suggestions) {
-          if (s.botName !== this.botName) {
-            botNames.add(s.botName);
-          }
-        }
-      };
-
-      // Check initial position
-      if (allPlies[0] && allPlies[0].tpsBefore) {
-        collectBotNames(allPlies[0].tpsBefore);
-      }
-      // Check all positions
-      for (const ply of allPlies) {
-        if (ply) collectBotNames(ply.tpsAfter);
-      }
-
-      // Return first available bot name (prefer named bots over null/"Other")
-      const namedBots = [...botNames].filter((name) => name !== null);
-      if (namedBots.length > 0) {
-        return namedBots.sort((a, b) => a.localeCompare(b))[0];
-      }
-      if (botNames.has(null)) {
-        return null;
-      }
-      return undefined; // No saved results from any bot
-    },
     switchToNextSavedBotIfNeeded() {
-      // If this bot was the active saved bot, switch to next available
+      // If this bot was the active saved bot, sync to next available
       if (this.isActiveSavedBot) {
-        const nextBot = this.getNextSavedBotName();
-        if (nextBot !== undefined) {
-          this.$store.dispatch("analysis/SET", ["savedBotName", nextBot]);
-        } else {
-          // No more saved results - switch to engine analysis
-          this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
-        }
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
     },
     deleteSavedSuggestion(suggestion) {
@@ -368,8 +326,6 @@ export default {
       // Remove all saved results for this bot across all positions
       if (!this.hasAnySavedResults) return;
 
-      // Get next bot before deleting (while we still have data)
-      const nextBot = this.getNextSavedBotName();
       const wasActive = this.isActiveSavedBot;
 
       // Use the batch action that creates a single undo entry
@@ -377,11 +333,7 @@ export default {
 
       // Switch to next bot if this was the active one
       if (wasActive) {
-        if (nextBot !== undefined) {
-          this.$store.dispatch("analysis/SET", ["savedBotName", nextBot]);
-        } else {
-          this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
-        }
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
 
       this.notifyUndo({

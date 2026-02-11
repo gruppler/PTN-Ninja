@@ -41,7 +41,11 @@
                         $t("Remove Current Positions Notes")
                       }}</q-item-section>
                     </q-item>
-                    <q-item clickable @click="removeAllNotes">
+                    <q-item
+                      clickable
+                      :disable="!hasAnyUserNotes"
+                      @click="removeAllNotes"
+                    >
                       <q-item-section avatar>
                         <q-icon name="delete_all" />
                       </q-item-section>

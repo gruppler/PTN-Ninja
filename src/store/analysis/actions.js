@@ -140,6 +140,29 @@ export const SELECT_ENGINE = (
   }
 };
 
+export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
+  const names = getters.savedBotNames;
+  if (names.length === 0) {
+    // No saved results at all - switch to engine analysis
+    if (state.preferSavedResults) {
+      dispatch("SET", ["preferSavedResults", false]);
+    }
+    return;
+  }
+  if (!names.includes(state.savedBotName)) {
+    // Prefer the label of the currently selected engine if it has saved results
+    const bot = bots[state.botID];
+    const label = bot ? bot.label : null;
+    if (label && names.includes(label)) {
+      dispatch("SET", ["savedBotName", label]);
+    } else if (names.includes(null) && !label) {
+      dispatch("SET", ["savedBotName", null]);
+    } else {
+      dispatch("SET", ["savedBotName", names[0]]);
+    }
+  }
+};
+
 export const SELECT_SAVED_ENGINE = ({ state, dispatch }, botName) => {
   dispatch("SET", ["savedBotName", botName]);
   dispatch("SET", ["preferSavedResults", true]);
