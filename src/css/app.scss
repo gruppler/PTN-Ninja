@@ -252,13 +252,16 @@ kbd {
   user-select: none;
   background: var(--q-color-accent) !important;
   &,
-  .q-item--dark,
+  .q-item--dark:not(.q-item--active),
   .q-list--dark .q-item__section--side:not(.q-item__section--avatar),
-  .q-item--dark .q-item__section--side:not(.q-item__section--avatar) {
+  .q-item--dark:not(.q-item--active) .q-item__section--side:not(.q-item__section--avatar) {
     color: var(--q-color-textDark) !important;
     body.accentDark & {
       color: var(--q-color-textLight) !important;
     }
+  }
+  .q-item--active {
+    color: var(--q-color-primary) !important;
   }
 }
 

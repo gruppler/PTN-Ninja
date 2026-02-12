@@ -134,7 +134,7 @@
               clickable
               v-close-popup
               @click="selectBot(id)"
-              :active="id === botID && !viewingSavedResults"
+              :active="!preferSavedResults && id === botID"
             >
               <q-item-section avatar>
                 <q-icon :name="getBotIcon(id)" />
@@ -150,7 +150,7 @@
               clickable
               v-close-popup
               @click="selectSavedEngine(name)"
-              :active="viewingSavedResults && savedBotName === name"
+              :active="preferSavedResults && savedBotName === name"
             >
               <q-item-section avatar>
                 <q-icon name="save" />
