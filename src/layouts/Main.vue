@@ -225,26 +225,11 @@
             <div class="row no-wrap items-center">
               <q-icon name="opening" class="q-tab__icon" />
               <smooth-reflow width-only>
-                <template v-if="textTab === 'openings'">
-                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
-                    $t("Openings")
-                  }}</span>
-                  <q-btn
-                    @click.stop="showTabSettings = !showTabSettings"
-                    icon="settings"
-                    :color="
-                      showTabSettings
-                        ? 'primary'
-                        : $store.state.ui.theme.isDark
-                        ? 'textLight'
-                        : 'textDark'
-                    "
-                    flat
-                    dense
-                    round
-                    class="q-ml-xs"
-                  />
-                </template>
+                <span
+                  v-if="textTab === 'openings' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Openings") }}</span
+                >
               </smooth-reflow>
             </div>
           </q-tab>
@@ -252,26 +237,11 @@
             <div class="row no-wrap items-center">
               <q-icon name="bot" class="q-tab__icon" />
               <smooth-reflow width-only>
-                <template v-if="textTab === 'engines'">
-                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
-                    $t("Engines")
-                  }}</span>
-                  <q-btn
-                    @click.stop="showTabSettings = !showTabSettings"
-                    icon="settings"
-                    :color="
-                      showTabSettings
-                        ? 'primary'
-                        : $store.state.ui.theme.isDark
-                        ? 'textLight'
-                        : 'textDark'
-                    "
-                    flat
-                    dense
-                    round
-                    class="q-ml-xs"
-                  />
-                </template>
+                <span
+                  v-if="textTab === 'engines' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Engines") }}</span
+                >
               </smooth-reflow>
             </div>
           </q-tab>
@@ -279,26 +249,11 @@
             <div class="row no-wrap items-center">
               <q-icon name="save" class="q-tab__icon" />
               <smooth-reflow width-only>
-                <template v-if="textTab === 'notes'">
-                  <span v-if="$q.screen.gt.xs" class="q-tab__label q-ml-sm">{{
-                    $t("Saved")
-                  }}</span>
-                  <q-btn
-                    @click.stop="showTabSettings = !showTabSettings"
-                    icon="settings"
-                    :color="
-                      showTabSettings
-                        ? 'primary'
-                        : $store.state.ui.theme.isDark
-                        ? 'textLight'
-                        : 'textDark'
-                    "
-                    flat
-                    dense
-                    round
-                    class="q-ml-xs"
-                  />
-                </template>
+                <span
+                  v-if="textTab === 'notes' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Saved") }}</span
+                >
               </smooth-reflow>
             </div>
           </q-tab>
@@ -313,6 +268,25 @@
             </div>
           </q-tab>
         </q-tabs>
+        <div
+          v-if="textTab !== 'chat'"
+          class="row items-center justify-end bg-ui q-px-sm"
+        >
+          <q-btn
+            @click="showTabSettings = !showTabSettings"
+            icon="settings"
+            :color="
+              showTabSettings
+                ? 'primary'
+                : $store.state.ui.theme.isDark
+                ? 'textLight'
+                : 'textDark'
+            "
+            flat
+            dense
+            round
+          />
+        </div>
         <div style="max-height: 50vh; overflow-y: auto">
           <smooth-reflow class="bg-ui" height-only>
             <OpeningsSettings
