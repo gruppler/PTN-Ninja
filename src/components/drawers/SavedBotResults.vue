@@ -200,48 +200,37 @@ export default {
       return this.allSavedSuggestions.filter((s) => s.botName === this.botName);
     },
     hasAnySavedResults() {
-      // Check if there are any saved results for this bot across all positions
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-      if (!allPlies) return this.savedSuggestions.length > 0;
-
-      // Check initial position
-      const firstPly = allPlies[0];
-      if (firstPly && firstPly.tpsBefore) {
-        const suggestions = this.$store.getters["game/suggestions"](
-          firstPly.tpsBefore
-        );
-        const filtered =
-          this.botName === null
-            ? suggestions.filter((s) => !s.botName)
-            : suggestions.filter((s) => s.botName === this.botName);
-        if (filtered.length > 0) return true;
-      }
-
-      // Check all positions
-      for (const ply of allPlies) {
-        if (!ply || !ply.tpsAfter) continue;
-        const suggestions = this.$store.getters["game/suggestions"](
-          ply.tpsAfter
-        );
-        const filtered =
-          this.botName === null
-            ? suggestions.filter((s) => !s.botName)
-            : suggestions.filter((s) => s.botName === this.botName);
-        if (filtered.length > 0) return true;
+      // Check notes directly instead of iterating all plies
+      const notes = this.game.comments && this.game.comments.notes;
+      if (!notes) return this.savedSuggestions.length > 0;
+      for (const id in notes) {
+        for (const note of notes[id]) {
+          if (
+            note.evaluation !== null ||
+            note.pv !== null ||
+            note.pvAfter !== null
+          ) {
+            const noteName = note.botName !== undefined ? note.botName : null;
+            if (this.botName === null ? !noteName : noteName === this.botName) {
+              return true;
+            }
+          }
+        }
       }
       return false;
     },
     modeResultsCount() {
       // Find the mode of saved results for this bot across positions
-      const allPlies = this.game.ptn && this.game.ptn.allPlies;
-      if (!allPlies) return 1;
+      // Use tpsNoteIndex to only check TPS values that have notes
+      const { afterIndex } = this.$store.getters["game/tpsNoteIndex"];
+      const getSuggestions = this.$store.getters["game/suggestions"];
       const counts = {};
       const seenTps = new Set();
 
       const countForTps = (tps) => {
         if (!tps || seenTps.has(tps)) return;
         seenTps.add(tps);
-        const suggestions = this.$store.getters["game/suggestions"](tps);
+        const suggestions = getSuggestions(tps);
         const filtered =
           this.botName === null
             ? suggestions.filter((s) => !s.botName)
@@ -251,14 +240,14 @@ export default {
         }
       };
 
-      // Include initial position
-      const firstPly = allPlies[0];
-      if (firstPly && firstPly.tpsBefore) {
-        countForTps(firstPly.tpsBefore);
+      // Only iterate TPS values that actually have notes
+      for (const tps in afterIndex) {
+        countForTps(tps);
       }
-
-      for (const ply of allPlies) {
-        if (ply) countForTps(ply.tpsAfter);
+      // Also check initial position
+      const allPlies = this.game.ptn && this.game.ptn.allPlies;
+      if (allPlies && allPlies[0] && allPlies[0].tpsBefore) {
+        countForTps(allPlies[0].tpsBefore);
       }
 
       let mode = 1;

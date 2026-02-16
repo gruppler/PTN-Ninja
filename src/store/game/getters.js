@@ -48,9 +48,32 @@ export const precedingPlies =
       return [];
     }
     const branch = ply.branch;
+    // Precompute ancestor branch map for O(1) per-ply filtering
+    const ancestorMaxIndex = {};
+    if (branch in game.branches) {
+      const visited = new Set();
+      let curBranch = branch;
+      while (curBranch in game.branches && !visited.has(curBranch)) {
+        visited.add(curBranch);
+        const firstPly = game.branches[curBranch];
+        if (!firstPly || !firstPly.branches || !firstPly.branches[0]) break;
+        const branchPoint = firstPly.branches[0];
+        const parentBranch = branchPoint.branch;
+        if (parentBranch === curBranch) break;
+        ancestorMaxIndex[parentBranch] = branchPoint.index;
+        curBranch = parentBranch;
+      }
+    }
+    const inBranch = (p) => {
+      if (p.branch === branch) return true;
+      if (p.branch in ancestorMaxIndex) {
+        return p.index < ancestorMaxIndex[p.branch];
+      }
+      return false;
+    };
     return game.plies
       .slice(0, plyID + 1 * isDone)
-      .filter((p) => p && p.isInBranch(branch))
+      .filter((p) => p && inBranch(p))
       .map((p) => state.ptn.allPlies[p.id]);
   };
 
@@ -61,13 +84,35 @@ export const prevTPS = (state) =>
     ? state.position.prevPly.tpsBefore
     : null;
 
-export const suggestions = (state) => (tps) => {
+// Index mapping TPS strings to ply IDs that have notes, for O(1) lookup
+export const tpsNoteIndex = (state) => {
+  const afterIndex = {};
+  const beforeIndex = {};
+  const allPlies = state.ptn.allPlies;
+  const notes = state.comments.notes;
+  for (const id in notes) {
+    const ply = allPlies[id];
+    if (!ply) continue;
+    if (ply.tpsAfter) {
+      if (!afterIndex[ply.tpsAfter]) afterIndex[ply.tpsAfter] = [];
+      afterIndex[ply.tpsAfter].push(id);
+    }
+    if (ply.tpsBefore) {
+      if (!beforeIndex[ply.tpsBefore]) beforeIndex[ply.tpsBefore] = [];
+      beforeIndex[ply.tpsBefore].push(id);
+    }
+  }
+  return { afterIndex, beforeIndex };
+};
+
+export const suggestions = (state, getters) => (tps) => {
   if (!tps) {
     return [];
   }
 
   const results = [];
   let evalData = null;
+  const { afterIndex, beforeIndex } = getters.tpsNoteIndex;
 
   // Check if this is the initial position (tps matches first ply's tpsBefore)
   // Also handle case where there are no plies (empty game with starting TPS)
@@ -94,13 +139,12 @@ export const suggestions = (state) => (tps) => {
 
   // Then, find evaluation data (from ply whose tpsAfter matches tps)
   if (!evalData) {
-    for (let id in state.comments.notes) {
-      const notes = state.comments.notes[id];
-      const ply = state.ptn.allPlies[id];
-      if (!ply) {
-        continue;
-      }
-      if (ply.tpsAfter === tps) {
+    const matchingIDs = afterIndex[tps];
+    if (matchingIDs) {
+      for (let i = 0; i < matchingIDs.length; i++) {
+        const id = matchingIDs[i];
+        const notes = state.comments.notes[id];
+        if (!notes) continue;
         const note = notes.find((n) => n.evaluation !== null);
         if (note) {
           evalData = {
@@ -157,13 +201,13 @@ export const suggestions = (state) => (tps) => {
   }
 
   // Find all PVs in new format (pvAfter on ply whose tpsAfter matches tps)
-  for (let id in state.comments.notes) {
-    const notes = state.comments.notes[id];
-    const ply = state.ptn.allPlies[id];
-    if (!ply) {
-      continue;
-    }
-    if (ply.tpsAfter === tps) {
+  const afterIDs = afterIndex[tps];
+  if (afterIDs) {
+    for (let i = 0; i < afterIDs.length; i++) {
+      const id = afterIDs[i];
+      const notes = state.comments.notes[id];
+      const ply = state.ptn.allPlies[id];
+      if (!notes || !ply) continue;
       // Find all notes with pvAfter (new format)
       for (const note of notes) {
         if (note.pvAfter !== null) {
@@ -246,13 +290,13 @@ export const suggestions = (state) => (tps) => {
   }
 
   // Find all PVs in old format (pv on ply whose tpsBefore matches tps)
-  for (let id in state.comments.notes) {
-    const notes = state.comments.notes[id];
-    const ply = state.ptn.allPlies[id];
-    if (!ply) {
-      continue;
-    }
-    if (ply.tpsBefore === tps) {
+  const beforeIDs = beforeIndex[tps];
+  if (beforeIDs) {
+    for (let i = 0; i < beforeIDs.length; i++) {
+      const id = beforeIDs[i];
+      const notes = state.comments.notes[id];
+      const ply = state.ptn.allPlies[id];
+      if (!notes || !ply) continue;
       // Find all notes with pv (old format)
       for (const note of notes) {
         if (note.pv !== null) {
@@ -301,8 +345,8 @@ export const suggestions = (state) => (tps) => {
 };
 
 // Convenience getter that returns the first suggestion or null
-export const suggestion = (state) => (tps) => {
-  const all = suggestions(state)(tps);
+export const suggestion = (state, getters) => (tps) => {
+  const all = getters.suggestions(tps);
   return all.length > 0 ? all[0] : null;
 };
 
@@ -316,7 +360,7 @@ export const evaluationForTps = (state, getters, rootState) => (tps) => {
   if (analysis.preferSavedResults) {
     // Get evaluation from saved suggestions filtered by savedBotName
     const savedBotName = analysis.savedBotName;
-    const allSuggestions = suggestions(state)(tps);
+    const allSuggestions = getters.suggestions(tps);
     const filtered =
       savedBotName === null
         ? allSuggestions.filter((s) => !s.botName)

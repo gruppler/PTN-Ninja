@@ -138,7 +138,9 @@ export default {
       return this.$store.state.game.ptn;
     },
     branches() {
-      return this.ply.branches.map((id) => this.ptn.allPlies[id]);
+      return Object.freeze(
+        this.ply.branches.map((id) => this.ptn.allPlies[id])
+      );
     },
     hasBranches() {
       return Boolean(
@@ -176,8 +178,16 @@ export default {
         ? this.selected
         : this.position.plyID === this.ply.id;
     },
+    branchPlyIDs() {
+      const plies = this.ptn.branchPlies;
+      const ids = new Set();
+      for (let i = 0; i < plies.length; i++) {
+        ids.add(plies[i].id);
+      }
+      return ids;
+    },
     isInBranch() {
-      return this.ptn.branchPlies.some((p) => p.id === this.ply.id);
+      return this.branchPlyIDs.has(this.ply.id);
     },
     isDone() {
       return isBoolean(this.done)

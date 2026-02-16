@@ -92,26 +92,24 @@ const buildSavedPositions = (ply, rootGetters, savedBotName) => {
 
 // Ordered list of bot names from saved suggestions.
 // Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
-export const savedBotNames = (state, getters, rootState, rootGetters) => {
-  const game = rootState.game;
-  const allPlies = game && game.ptn && game.ptn.allPlies;
-  const getSuggestions = rootGetters["game/suggestions"];
-  if (!allPlies || !getSuggestions) return [];
+export const savedBotNames = (state, getters, rootState) => {
+  const comments = rootState.game && rootState.game.comments;
+  const notes = comments && comments.notes;
+  if (!notes) return [];
 
   const botNameSet = new Set();
-  const collectBotNames = (tps) => {
-    if (!tps) return;
-    const suggestions = getSuggestions(tps);
-    for (const s of suggestions) {
-      botNameSet.add(s.botName);
+  for (const id in notes) {
+    const noteList = notes[id];
+    for (let i = 0; i < noteList.length; i++) {
+      const note = noteList[i];
+      if (
+        note.evaluation !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
+      ) {
+        botNameSet.add(note.botName !== undefined ? note.botName : null);
+      }
     }
-  };
-
-  if (allPlies[0] && allPlies[0].tpsBefore) {
-    collectBotNames(allPlies[0].tpsBefore);
-  }
-  for (const ply of allPlies) {
-    if (ply) collectBotNames(ply.tpsAfter);
   }
 
   const namedBots = [...botNameSet].filter((name) => name !== null);
