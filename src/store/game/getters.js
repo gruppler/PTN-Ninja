@@ -84,6 +84,20 @@ export const prevTPS = (state) =>
     ? state.position.prevPly.tpsBefore
     : null;
 
+// Set of all TPS positions in the current game (for filtering engine results)
+export const gameTpsSet = (state) => {
+  const set = new Set();
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (allPlies) {
+    for (const ply of allPlies) {
+      if (!ply) continue;
+      if (ply.tpsBefore) set.add(ply.tpsBefore);
+      if (ply.tpsAfter) set.add(ply.tpsAfter);
+    }
+  }
+  return set;
+};
+
 // Index mapping TPS strings to ply IDs that have notes, for O(1) lookup
 export const tpsNoteIndex = (state) => {
   const afterIndex = {};

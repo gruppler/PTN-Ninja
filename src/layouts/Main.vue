@@ -270,22 +270,47 @@
         </q-tabs>
         <div
           v-if="textTab !== 'chat'"
-          class="row items-center justify-end bg-ui q-px-sm"
+          class="row items-center justify-between bg-ui q-px-sm"
         >
-          <q-btn
-            @click="showTabSettings = !showTabSettings"
-            icon="settings"
-            :color="
-              showTabSettings
-                ? 'primary'
-                : $store.state.ui.theme.isDark
-                ? 'textLight'
-                : 'textDark'
+          <div
+            class="text-caption text-no-wrap q-pl-xs"
+            :class="
+              $store.state.ui.theme.isDark ? 'text-textLight' : 'text-textDark'
             "
-            flat
-            dense
-            round
-          />
+            style="opacity: 0.7"
+          >
+            <template v-if="textTab === 'openings'">
+              {{ tabStatsOpenings }}
+            </template>
+            <template v-else-if="textTab === 'engines'">
+              {{ tabStatsEngines }}
+            </template>
+            <template v-else-if="textTab === 'notes'">
+              {{ tabStatsNotes }}
+            </template>
+          </div>
+          <div class="row items-center no-wrap">
+            <OpeningsFilterIcons
+              v-if="textTab === 'openings'"
+              class="q-mr-sm"
+            />
+            <EnginesFilterIcons v-if="textTab === 'engines'" class="q-mr-sm" />
+            <SavedFilterIcons v-if="textTab === 'notes'" class="q-mr-sm" />
+            <q-btn
+              @click="showTabSettings = !showTabSettings"
+              icon="settings"
+              :color="
+                showTabSettings
+                  ? 'primary'
+                  : $store.state.ui.theme.isDark
+                  ? 'textLight'
+                  : 'textDark'
+              "
+              flat
+              dense
+              round
+            />
+          </div>
         </div>
         <div style="max-height: 50vh; overflow-y: auto">
           <smooth-reflow class="bg-ui" height-only>
@@ -392,6 +417,9 @@ import GameSelector from "../components/controls/GameSelector";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
+import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
+import EnginesFilterIcons from "../components/drawers/EnginesFilterIcons";
+import SavedFilterIcons from "../components/drawers/SavedFilterIcons";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -408,6 +436,9 @@ export default {
     Analysis,
     Openings,
     OpeningsSettings,
+    OpeningsFilterIcons,
+    EnginesFilterIcons,
+    SavedFilterIcons,
     EnginesSettings,
     SavedSettings,
     PlyTooltipProvider,
@@ -548,6 +579,66 @@ export default {
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
+    },
+    tabStatsOpenings() {
+      const stats = this.$store.state.analysis.openingStats;
+      if (!stats || !stats.available) return "";
+      const gamesStr = this.$tc(
+        "analysis.n_games",
+        this.$n(stats.totalGames, "n0")
+      );
+      const movesStr = this.$tc(
+        "analysis.n_moves",
+        this.$n(stats.moveCount, "n0")
+      );
+      return `${gamesStr} · ${movesStr}`;
+    },
+    tabStatsEngines() {
+      const analysis = this.$store.state.analysis;
+      const activeBots = analysis.activeBots || [];
+      const gameTps = this.$store.getters["game/gameTpsSet"];
+      const uniqueTps = new Set();
+      for (const botId of activeBots) {
+        const positions = analysis.botPositions[botId];
+        if (positions) {
+          for (const tps of Object.keys(positions)) {
+            if (gameTps.has(tps)) uniqueTps.add(tps);
+          }
+        }
+      }
+      return this.$tc("analysis.n_positions", this.$n(uniqueTps.size, "n0"));
+    },
+    tabStatsNotes() {
+      const game = this.$store.state.game;
+      const notes = game && game.comments && game.comments.notes;
+      let savedPositions = 0;
+      let userNoteCount = 0;
+      if (notes) {
+        for (const plyID in notes) {
+          const noteList = notes[plyID];
+          let hasAnalysis = false;
+          let hasUserNote = false;
+          for (const note of noteList) {
+            if (
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+            ) {
+              hasAnalysis = true;
+            } else {
+              hasUserNote = true;
+            }
+          }
+          if (hasAnalysis) savedPositions++;
+          if (hasUserNote) userNoteCount++;
+        }
+      }
+      const posStr = this.$tc(
+        "analysis.n_positions",
+        this.$n(savedPositions, "n0")
+      );
+      const noteStr = this.$tc("n_notes", this.$n(userNoteCount, "n0"));
+      return `${posStr} \u00b7 ${noteStr}`;
     },
     panelWidth() {
       const largeWidth = 1600;

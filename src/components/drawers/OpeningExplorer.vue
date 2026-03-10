@@ -13,69 +13,6 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
-          <q-item-label class="fg-inherit" caption>
-            <div class="q-gutter-xs">
-              <q-icon v-if="dbSettings.includeBotGames" name="bot">
-                <tooltip>{{ $t("analysis.includeBotGames") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.player1 && dbSettings.player1.length"
-                name="player1"
-              >
-                <tooltip>{{ dbSettings.player1.join(", ") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.player2 && dbSettings.player2.length"
-                name="player2"
-              >
-                <tooltip>{{ dbSettings.player2.join(", ") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="Number.isFinite(dbSettings.minRating)"
-                name="rating1"
-              >
-                <tooltip>{{ dbSettings.minRating }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.komi && dbSettings.komi.length"
-                name="komi"
-              >
-                <tooltip>
-                  {{ $t("Komi") }}
-                  {{ dbSettings.komi.join(", ").replace(/0?\.5/g, "½") }}
-                </tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.tournament !== null"
-                :name="dbSettings.tournament ? 'event' : 'event_outline'"
-              >
-                <tooltip>{{
-                  $t(
-                    "analysis.tournamentOptions." +
-                      (dbSettings.tournament ? "only" : "exclude")
-                  )
-                }}</tooltip>
-              </q-icon>
-              <q-icon v-if="dbSettings.minDate" name="date_arrow_right">
-                <tooltip>
-                  {{ $t("analysis.minDate") }}
-                  <relative-date
-                    :value="new Date(dbSettings.minDate)"
-                    text-only
-                  />
-                </tooltip>
-              </q-icon>
-              <q-icon v-if="dbSettings.maxDate" name="date_arrow_left">
-                <tooltip>
-                  {{ $t("analysis.maxDate") }}
-                  <relative-date
-                    :value="new Date(dbSettings.maxDate)"
-                    text-only
-                  />
-                </tooltip>
-              </q-icon>
-            </div>
-          </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
@@ -218,13 +155,6 @@
         <q-item-section>
           <q-item-label>
             {{ $t("analysis.Top Games from Position") }}
-          </q-item-label>
-          <q-item-label class="fg-inherit" caption>
-            <div class="q-gutter-xs">
-              <q-icon v-if="dbSettings.openGamesInNewTab" name="open_in_new">
-                <tooltip>{{ $t("analysis.openGamesInNewTab") }}</tooltip>
-              </q-icon>
-            </div>
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -747,6 +677,33 @@ export default {
         this.dbMoves = this.dbPosition[hash].dbMoves || [];
         this.dbGames = this.dbPosition[hash].dbGames || [];
         this.dbMinRating = this.dbPosition[hash].settings.min_rating || 0;
+      }
+    },
+    dbMoves(moves) {
+      const totalGames = moves.reduce((sum, m) => sum + m.totalGames, 0);
+      const moveCount = moves.length;
+      this.$store.commit("analysis/SET_OPENING_STATS", {
+        totalGames,
+        moveCount,
+        available: !this.isBeyondOpeningDB && !this.noMatchingDatabase,
+      });
+    },
+    isBeyondOpeningDB(beyond) {
+      if (beyond) {
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
+      }
+    },
+    noMatchingDatabase(noMatch) {
+      if (noMatch) {
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
       }
     },
     dbMovesExpanded(value) {
