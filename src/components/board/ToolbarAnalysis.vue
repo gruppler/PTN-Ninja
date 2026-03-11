@@ -116,7 +116,7 @@
         @wheel="scrollBotSelector"
       >
         <q-icon
-          :name="viewingSavedResults ? 'save' : botOption.icon || 'bot'"
+          :name="viewingSavedResults ? 'save' : botOption.icon || 'engine'"
         />
         <hint>
           {{ viewingSavedResults ? savedResultsLabel : botOption.label }}
@@ -565,7 +565,7 @@ export default {
     },
     getBotIcon(botId) {
       const bot = bots[botId];
-      return bot ? bot.icon : "bot";
+      return bot ? bot.icon : "engine";
     },
     getBotLabel(botId) {
       const bot = bots[botId];

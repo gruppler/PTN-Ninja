@@ -54,7 +54,7 @@ export default {
           const listOption = bot ? bot.listOption : {};
           result.push({
             id: botId,
-            icon: listOption.icon || "bot",
+            icon: listOption.icon || "engine",
             label: listOption.label || botId,
             isActive: !this.preferSavedResults && botId === this.activeBotID,
             positionCount,

@@ -162,15 +162,15 @@ export default {
     },
     botIcon() {
       if (!this.botName) {
-        return "bot";
+        return "engine";
       }
       // Try to find the bot by name in the bots registry
       for (const [id, bot] of Object.entries(bots)) {
         if (bot.label === this.botName || bot.meta?.name === this.botName) {
-          return bot.icon || "bot";
+          return bot.icon || "engine";
         }
       }
-      return "bot";
+      return "engine";
     },
     preferSavedResults() {
       return this.$store.state.analysis?.preferSavedResults ?? true;

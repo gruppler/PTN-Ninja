@@ -105,7 +105,7 @@
                   <q-separator />
                   <q-item clickable @click="removeBot" :disable="isLastBot">
                     <q-item-section avatar>
-                      <q-icon name="bot_off" />
+                      <q-icon name="close" />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ $t("Remove Engine") }}</q-item-label>
@@ -249,7 +249,7 @@
           <q-btn
             v-if="botID === 'tei'"
             :to="{ name: 'bot-new' }"
-            icon="bot"
+            icon="engine"
             :label="$t('tei.Save Engine')"
             :disable="!botState.isConnected"
             class="full-width"

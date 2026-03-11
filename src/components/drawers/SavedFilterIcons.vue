@@ -73,13 +73,13 @@ export default {
   },
   methods: {
     botIcon(name) {
-      if (!name) return "bot";
+      if (!name) return "engine";
       for (const [, bot] of Object.entries(bots)) {
         if (bot.label === name || bot.meta?.name === name) {
-          return bot.icon || "bot";
+          return bot.icon || "engine";
         }
       }
-      return "bot";
+      return "engine";
     },
   },
 };

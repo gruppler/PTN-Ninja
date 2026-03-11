@@ -2,7 +2,7 @@
   <large-dialog ref="dialog" :value="Boolean(bot)" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header
-        icon="bot"
+        icon="engine"
         :title="$t(isNew ? 'New Engine' : 'Edit Engine')"
       />
     </template>

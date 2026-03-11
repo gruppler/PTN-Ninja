@@ -50,6 +50,7 @@ export default {
   edit: "mdi-pencil",
   email: "mdi-email",
   embed: "mdi-code-tags",
+  engine: "mdi-engine",
   error: "mdi-alert-circle",
   eval: "mdi-exclamation",
   event: "mdi-trophy",

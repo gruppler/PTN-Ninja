@@ -235,7 +235,7 @@
           </q-tab>
           <q-tab v-if="hasAnalysis" name="engines">
             <div class="row no-wrap items-center">
-              <q-icon name="bot" class="q-tab__icon" />
+              <q-icon name="engine" class="q-tab__icon" />
               <smooth-reflow width-only>
                 <span
                   v-if="textTab === 'engines' && $q.screen.gt.xs"
@@ -541,7 +541,7 @@ export default {
         case "openings":
           return "opening";
         case "engines":
-          return "bot";
+          return "engine";
         case "notes":
           return "save";
         case "chat":
