@@ -280,7 +280,16 @@
             style="opacity: 0.7"
           >
             <template v-if="textTab === 'openings'">
-              {{ tabStatsOpenings }}
+              <q-skeleton
+                v-if="openingStatsLoading"
+                width="10em"
+                height="1em"
+                animation="wave"
+                :dark="$store.state.ui.theme.isDark"
+                class="inline-block"
+                style="vertical-align: middle; border-radius: 3px"
+              />
+              <template v-else>{{ tabStatsOpenings }}</template>
             </template>
             <template v-else-if="textTab === 'engines'">
               {{ tabStatsEngines }}
@@ -580,17 +589,19 @@ export default {
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
     },
+    openingStatsLoading() {
+      const stats = this.$store.state.analysis.openingStats;
+      return stats && stats.loading;
+    },
     tabStatsOpenings() {
       const stats = this.$store.state.analysis.openingStats;
-      if (!stats || !stats.available) return "";
-      const gamesStr = this.$tc(
-        "analysis.n_games",
-        this.$n(stats.totalGames, "n0")
-      );
-      const movesStr = this.$tc(
-        "analysis.n_moves",
-        this.$n(stats.moveCount, "n0")
-      );
+      if (!stats || !stats.available || stats.loading) return "";
+      const gamesStr = this.$tc("analysis.n_games", stats.totalGames, {
+        count: this.$n(stats.totalGames, "n0"),
+      });
+      const movesStr = this.$tc("analysis.n_moves", stats.moveCount, {
+        count: this.$n(stats.moveCount, "n0"),
+      });
       return `${gamesStr} · ${movesStr}`;
     },
     tabStatsEngines() {
@@ -606,7 +617,9 @@ export default {
           }
         }
       }
-      return this.$tc("analysis.n_positions", this.$n(uniqueTps.size, "n0"));
+      return this.$tc("analysis.n_positions", uniqueTps.size, {
+        count: this.$n(uniqueTps.size, "n0"),
+      });
     },
     tabStatsNotes() {
       const game = this.$store.state.game;
@@ -633,11 +646,12 @@ export default {
           if (hasUserNote) userNoteCount++;
         }
       }
-      const posStr = this.$tc(
-        "analysis.n_positions",
-        this.$n(savedPositions, "n0")
-      );
-      const noteStr = this.$tc("n_notes", this.$n(userNoteCount, "n0"));
+      const posStr = this.$tc("analysis.n_positions", savedPositions, {
+        count: this.$n(savedPositions, "n0"),
+      });
+      const noteStr = this.$tc("n_notes", userNoteCount, {
+        count: this.$n(userNoteCount, "n0"),
+      });
       return `${posStr} \u00b7 ${noteStr}`;
     },
     panelWidth() {

@@ -37,7 +37,7 @@
         <q-item-section top side>
           <q-item-label>
             <span class="visits" v-if="visits !== null">
-              {{ $tc("analysis.visits", $n(visits, "n0")) }}
+              {{ $tc("analysis.visits", visits, { count: $n(visits, "n0") }) }}
             </span>
             <span
               class="player-numbers"
@@ -111,7 +111,7 @@
             caption
           >
             <template v-if="count !== null && countLabel && !hideCount">{{
-              $tc(countLabel, $n(count, "n0"))
+              $tc(countLabel, count, { count: $n(count, "n0") })
             }}</template>
             <template
               v-if="

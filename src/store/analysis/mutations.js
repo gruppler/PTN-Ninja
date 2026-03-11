@@ -231,7 +231,12 @@ export const SET_SAVED_BOT_COLLAPSED = (state, { index, collapsed }) => {
 // Update opening explorer stats for display in the tab bar
 export const SET_OPENING_STATS = (
   state,
-  { totalGames, moveCount, available }
+  { totalGames, moveCount, available, loading }
 ) => {
-  Vue.set(state, "openingStats", { totalGames, moveCount, available });
+  Vue.set(state, "openingStats", {
+    totalGames,
+    moveCount,
+    available,
+    loading: !!loading,
+  });
 };

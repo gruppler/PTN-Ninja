@@ -542,6 +542,12 @@ export default {
 
       try {
         this.loadingDBMoves = true;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: true,
+          loading: true,
+        });
 
         const player = this.game.position.turn;
         const color = this.game.position.color;
@@ -660,6 +666,17 @@ export default {
       }
     },
     tps() {
+      // Reset to cached data for new position, or clear if not cached yet
+      const position = this.dbPosition;
+      if (position && this.dbSettingsHash in position) {
+        this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
+        this.dbGames = position[this.dbSettingsHash].dbGames || [];
+        this.dbMinRating =
+          position[this.dbSettingsHash].settings.min_rating || 0;
+      } else {
+        this.dbMoves = [];
+        this.dbGames = [];
+      }
       if (this.isDBMovesVisible && !this.isOffline) {
         this.queryDBPosition();
       }
@@ -680,6 +697,10 @@ export default {
       }
     },
     dbMoves(moves) {
+      // Don't clear loading state when moves are reset to empty during fetch
+      if (moves.length === 0 && this.loadingDBMoves) {
+        return;
+      }
       const totalGames = moves.reduce((sum, m) => sum + m.totalGames, 0);
       const moveCount = moves.length;
       this.$store.commit("analysis/SET_OPENING_STATS", {
