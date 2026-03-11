@@ -4,6 +4,8 @@
     :class="{ animate }"
     @mouseover="highlight"
     @mouseout="unhighlight"
+    @touchend="forceUnhighlight"
+    @touchcancel="forceUnhighlight"
   >
     <slot name="before" />
     <div
@@ -331,6 +333,14 @@ export default {
       }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       // Restore current position's evaluation based on preferSavedResults
+      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
+      this.$store.dispatch("game/SET_EVAL", eval_);
+    },
+    forceUnhighlight() {
+      if (!this.ply) {
+        return;
+      }
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
       this.$store.dispatch("game/SET_EVAL", eval_);
     },

@@ -86,6 +86,9 @@ export default {
         this.hidePlyTooltip();
       }
     },
+    "$store.state.game.ptnUI.branchPointOverrides"() {
+      this.hidePlyTooltip();
+    },
   },
   mounted() {
     document.addEventListener("mouseover", this.onMouseOver, true);
