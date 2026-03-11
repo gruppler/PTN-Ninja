@@ -9,6 +9,7 @@
 
 <script>
 import Notifications from "../general/Notifications";
+import inlineMarkdown from "../../utils/inlineMarkdown";
 
 export default {
   name: "NoteNotifications",
@@ -51,7 +52,10 @@ export default {
         );
       }
       return notes.map((note) => ({
-        message: note.displayMessage || note.message,
+        message: note.isUserNote
+          ? inlineMarkdown(note.displayMessage)
+          : note.message,
+        html: !!note.isUserNote,
         classes:
           "note" + (this.$store.state.ui.disableText ? "" : " cursor-pointer"),
         color: "primary",

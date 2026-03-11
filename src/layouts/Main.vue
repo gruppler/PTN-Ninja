@@ -729,7 +729,19 @@ export default {
     clickNotification(event) {
       if (
         event.target.matches(".q-notification.note") ||
-        event.target.matches(".q-notification.note .q-notification__message")
+        event.target.matches(".q-notification.note .q-notification__message") ||
+        event.target.matches(
+          ".q-notification.note .q-notification__message code"
+        ) ||
+        event.target.matches(
+          ".q-notification.note .q-notification__message del"
+        ) ||
+        event.target.matches(
+          ".q-notification.note .q-notification__message em"
+        ) ||
+        event.target.matches(
+          ".q-notification.note .q-notification__message strong"
+        )
       ) {
         this.showText = true;
         this.textTab = "notes";

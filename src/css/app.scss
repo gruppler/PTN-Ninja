@@ -254,7 +254,8 @@ kbd {
   &,
   .q-item--dark:not(.q-item--active),
   .q-list--dark .q-item__section--side:not(.q-item__section--avatar),
-  .q-item--dark:not(.q-item--active) .q-item__section--side:not(.q-item__section--avatar) {
+  .q-item--dark:not(.q-item--active)
+    .q-item__section--side:not(.q-item__section--avatar) {
     color: var(--q-color-textDark) !important;
     body.accentDark & {
       color: var(--q-color-textLight) !important;
@@ -283,6 +284,23 @@ kbd {
     .q-notification__message {
       text-overflow: ellipsis;
       overflow: hidden;
+    }
+  }
+}
+
+.note-item .q-message-text,
+.q-notification.note .q-notification__message {
+  code {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+    font-size: 0.9em;
+  }
+  a {
+    color: inherit;
+    text-decoration: underline;
+    &:hover {
+      color: var(--q-color-accent);
     }
   }
 }

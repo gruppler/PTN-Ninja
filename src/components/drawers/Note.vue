@@ -30,12 +30,18 @@
           </q-list>
         </q-menu>
       </q-btn>
-      <span>{{ comment.displayMessage || comment.message }}</span>
+      <span
+        v-if="comment.isUserNote"
+        v-html="renderMarkdown(comment.displayMessage)"
+      />
+      <span v-else>{{ comment.message }}</span>
     </span>
   </q-chat-message>
 </template>
 
 <script>
+import inlineMarkdown from "../../utils/inlineMarkdown";
+
 export default {
   name: "Note",
   props: ["plyID", "index", "comment"],
@@ -48,6 +54,11 @@ export default {
   computed: {
     primaryDark() {
       return this.$store.state.ui.theme.primaryDark;
+    },
+  },
+  methods: {
+    renderMarkdown(text) {
+      return inlineMarkdown(text);
     },
   },
 };
