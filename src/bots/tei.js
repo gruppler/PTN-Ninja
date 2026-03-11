@@ -505,13 +505,40 @@ export default class TeiBot extends Bot {
         bufferedForTps.suggestions &&
         bufferedForTps.suggestions.filter((s) => s !== null).length > 1;
 
-      // Skip non-multipv lines if we already have multiple results for this position
-      if (
-        !hasMultipv &&
-        ((this.positions[tps] && this.positions[tps].length > 1) ||
-          bufferedHasMultipv)
-      ) {
-        return;
+      // For non-multipv lines when we already have multiple results:
+      // Don't skip entirely — allow updates to slot 0 if the new line has
+      // deeper/more complete data (e.g., Topaz sends a final info line after
+      // stop without multipv token that contains the best result for PV 1)
+      const existingMultipv =
+        (this.positions[tps] && this.positions[tps].length > 1) ||
+        bufferedHasMultipv;
+      if (!hasMultipv && existingMultipv) {
+        // Parse depth/nodes from the line to check if it's an improvement
+        const depthMatch = response.match(/\bdepth\s+(\d+)/);
+        const nodesMatch = response.match(/\bnodes\s+(\d+)/);
+        const newDepth = depthMatch ? Number(depthMatch[1]) : null;
+        const newNodes = nodesMatch ? Number(nodesMatch[1]) : null;
+
+        const existingSlot0 =
+          (bufferedForTps &&
+            bufferedForTps.suggestions &&
+            bufferedForTps.suggestions[0]) ||
+          (this.positions[tps] && this.positions[tps][0]);
+        const existingDepth = existingSlot0 ? existingSlot0.depth : null;
+        const existingNodes = existingSlot0 ? existingSlot0.nodes : null;
+
+        const isDeeper =
+          newDepth !== null &&
+          (existingDepth === null || newDepth >= existingDepth);
+        const hasMoreNodes =
+          newNodes !== null &&
+          (existingNodes === null || newNodes >= existingNodes);
+
+        if (isDeeper || hasMoreNodes) {
+          // Allow through — will update slot 0 only
+        } else {
+          return;
+        }
       }
 
       // Parse Results

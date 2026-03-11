@@ -1618,8 +1618,51 @@ export default class Bot {
             return true;
           });
 
-          // Only add as many new notes as we have slots for
-          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
+          // Add as many new notes as we have slots for
+          // If no slots available but overwriteInferior is on, replace weakest
+          // remaining notes with superior new ones
+          if (slotsAvailable >= uniqueNewNotes.length) {
+            messages[plyID] = uniqueNewNotes;
+          } else {
+            const accepted = uniqueNewNotes.slice(0, slotsAvailable);
+            const overflow = uniqueNewNotes.slice(slotsAvailable);
+
+            // For overflow notes, try to replace weaker existing notes
+            const remainingBotNotes = botNoteIndices
+              .filter(({ idx }) => !indicesToRemove.includes(idx))
+              .map(({ idx, note }) => ({ idx, note }));
+
+            for (const newNote of overflow) {
+              // Find weakest remaining note that is inferior to this new note
+              let weakestIdx = -1;
+              let weakestNote = null;
+              for (const { idx, note: existing } of remainingBotNotes) {
+                if (this.isNoteSuperior(newNote, existing)) {
+                  if (
+                    weakestNote === null ||
+                    this.isNoteSuperior(
+                      weakestNote.message || weakestNote,
+                      existing
+                    )
+                  ) {
+                    weakestIdx = idx;
+                    weakestNote = existing;
+                  }
+                }
+              }
+              if (weakestIdx >= 0) {
+                store.commit("game/REMOVE_NOTE", { plyID, index: weakestIdx });
+                // Remove from remaining list
+                const rIdx = remainingBotNotes.findIndex(
+                  (r) => r.idx === weakestIdx
+                );
+                if (rIdx >= 0) remainingBotNotes.splice(rIdx, 1);
+                accepted.push(newNote);
+              }
+            }
+
+            messages[plyID] = accepted;
+          }
         } else {
           // When overwriteInferior is disabled:
           // Only add new notes if we haven't reached the pvsToSave limit
