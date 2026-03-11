@@ -1,4 +1,3 @@
-import Vue from "vue";
 import { bots } from "../../bots";
 import { defaultEvalMarkThresholds } from "../../bots/bot";
 import { pliesEqual } from "../../Game/PTN/Ply";
@@ -63,33 +62,6 @@ const calculateEvalMark = (ply, positions, thresholds) => {
   }
 };
 
-// Build a positions-like structure from saved notes for the two TPS values needed
-const buildSavedPositions = (ply, rootGetters, savedBotName) => {
-  const getSuggestions = rootGetters["game/suggestions"];
-  if (!getSuggestions) return null;
-
-  const tpsBefore = ply.tpsBefore;
-  const tpsAfter = ply.tpsAfter;
-  if (!tpsBefore || !tpsAfter) return null;
-
-  const filterByBot = (allSuggestions) => {
-    if (savedBotName === null || savedBotName === undefined) {
-      return allSuggestions.filter((s) => !s.botName);
-    }
-    return allSuggestions.filter((s) => s.botName === savedBotName);
-  };
-
-  const beforeSuggestions = filterByBot(getSuggestions(tpsBefore));
-  const afterSuggestions = filterByBot(getSuggestions(tpsAfter));
-
-  if (!beforeSuggestions.length || !afterSuggestions.length) return null;
-
-  return {
-    [tpsBefore]: beforeSuggestions,
-    [tpsAfter]: afterSuggestions,
-  };
-};
-
 // Ordered list of bot names from saved suggestions.
 // Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
 export const savedBotNames = (state, getters, rootState) => {
@@ -133,23 +105,37 @@ export const savedBotNames = (state, getters, rootState) => {
 
 // Returns a function that calculates eval mark for a ply given current bot positions
 // This allows the component to call it with the ply and get reactive updates
+// For saved results: returns the eval mark stored in the PTN comment (static)
+// For live results: computes dynamically from thresholds
 export const getEvalMarkOverride =
   (state, getters, rootState, rootGetters) => (ply) => {
     if (!ply) return null;
 
-    const thresholds = state.evalMarkThresholds || defaultEvalMarkThresholds;
-
     if (state.preferSavedResults) {
-      // Use saved notes as the source
-      const positions = buildSavedPositions(
-        ply,
-        rootGetters,
-        state.savedBotName
-      );
-      if (!positions) return null;
-      return calculateEvalMark(ply, positions, thresholds);
+      // Use saved eval mark from the PTN comment (does not change with thresholds)
+      const getSuggestions = rootGetters["game/suggestions"];
+      if (!getSuggestions) return null;
+
+      const tpsAfter = ply.tpsAfter;
+      if (!tpsAfter) return null;
+
+      const savedBotName = state.savedBotName;
+      const allSuggestions = getSuggestions(tpsAfter);
+      const filtered =
+        savedBotName === null || savedBotName === undefined
+          ? allSuggestions.filter((s) => !s.botName)
+          : allSuggestions.filter((s) => s.botName === savedBotName);
+
+      // Return the evalMark from the first matching suggestion that has one
+      for (const suggestion of filtered) {
+        if (suggestion.evalMark) {
+          return suggestion.evalMark;
+        }
+      }
+      return null;
     } else {
-      // Use unsaved bot positions as the source
+      // Use unsaved bot positions as the source (compute dynamically)
+      const thresholds = state.evalMarkThresholds || defaultEvalMarkThresholds;
       const botID = state.botID;
       const positions = botID ? state.botPositions[botID] : null;
       if (!positions || Object.keys(positions).length === 0) return null;

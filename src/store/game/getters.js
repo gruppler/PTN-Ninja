@@ -142,6 +142,7 @@ export const suggestions = (state, getters) => (tps) => {
     if (note) {
       evalData = {
         evaluation: note.evaluation,
+        evalMark: note.evalMark,
         depth: note.depth,
         nodes: note.nodes,
         visits: note.visits,
@@ -163,6 +164,7 @@ export const suggestions = (state, getters) => (tps) => {
         if (note) {
           evalData = {
             evaluation: note.evaluation,
+            evalMark: note.evalMark,
             depth: note.depth,
             nodes: note.nodes,
             visits: note.visits,
@@ -200,6 +202,7 @@ export const suggestions = (state, getters) => (tps) => {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
             evaluation: note.evaluation !== null ? note.evaluation : null,
+            evalMark: note.evalMark !== null ? note.evalMark : null,
             depth: note.depth !== null ? note.depth : null,
             nodes: note.nodes !== null ? note.nodes : null,
             visits: note.visits !== null ? note.visits : null,
@@ -247,6 +250,7 @@ export const suggestions = (state, getters) => (tps) => {
               followingPlies: pv,
               // New format: eval/stats are in the same comment
               evaluation: note.evaluation !== null ? note.evaluation : null,
+              evalMark: note.evalMark !== null ? note.evalMark : null,
               depth: note.depth !== null ? note.depth : null,
               nodes: note.nodes !== null ? note.nodes : null,
               visits: note.visits !== null ? note.visits : null,
@@ -289,6 +293,7 @@ export const suggestions = (state, getters) => (tps) => {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
             evaluation: evalData ? evalData.evaluation : null,
+            evalMark: note.evalMark !== null ? note.evalMark : null,
             depth: evalData ? evalData.depth : null,
             nodes: evalData ? evalData.nodes : null,
             visits: evalData ? evalData.visits : null,
@@ -324,6 +329,7 @@ export const suggestions = (state, getters) => (tps) => {
               followingPlies: pv,
               // Old format: eval is from separate comment
               evaluation: evalData ? evalData.evaluation : null,
+              evalMark: note.evalMark !== null ? note.evalMark : null,
               depth: evalData ? evalData.depth : null,
               nodes: evalData ? evalData.nodes : null,
               visits: evalData ? evalData.visits : null,
@@ -346,6 +352,7 @@ export const suggestions = (state, getters) => (tps) => {
       ply: null,
       followingPlies: [],
       evaluation: evalData.evaluation,
+      evalMark: evalData.evalMark || null,
       depth: evalData.depth,
       nodes: evalData.nodes,
       visits: evalData.visits,

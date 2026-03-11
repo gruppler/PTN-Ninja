@@ -1100,7 +1100,8 @@ export default class Bot {
     pvLimit = 0,
     saveSearchStats = false,
     pvsToSave = 1,
-    useNewFormat = true
+    useNewFormat = true,
+    evalMark = null
   ) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
@@ -1149,11 +1150,15 @@ export default class Bot {
     }
 
     // Helper to format eval+stats comment
-    const formatEvalStats = (evaluation, position) => {
+    const formatEvalStats = (evaluation, position, includeEvalMark = false) => {
       let comment = "";
       // Use botName from stored position data
       if (position && position.botName) {
         comment += `name:"${position.botName.replace(/"/g, '\\"')}" `;
+      }
+      // Include eval mark (saved permanently in the comment)
+      if (includeEvalMark && evalMark) {
+        comment += `${evalMark} `;
       }
       if (evaluation !== null && !isNaN(evaluation)) {
         comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;
@@ -1189,6 +1194,7 @@ export default class Bot {
       if (useNewFormat) {
         // New format: unified comments with pv> for position after this ply
         // Each PV gets its own comment with eval+stats+pv
+        // Eval mark is only included in the first PV comment
         if (positionAfter && pvLimit > 0) {
           const numPVs = Math.min(pvsToSave, positionAfter.length);
           for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
@@ -1202,7 +1208,11 @@ export default class Bot {
                 ? Math.round(100 * position.evaluation) / 1e4
                 : evaluationAfter;
 
-            let unifiedComment = formatEvalStats(posEval, position);
+            let unifiedComment = formatEvalStats(
+              posEval,
+              position,
+              pvIndex === 0
+            );
 
             // Add PV with pv> marker
             if (position && position.ply) {
@@ -1217,10 +1227,11 @@ export default class Bot {
             }
           }
         } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-          // No PV, just eval+stats
+          // No PV, just eval+stats (include eval mark)
           let evalComment = formatEvalStats(
             evaluationAfter,
-            positionAfter && positionAfter[0]
+            positionAfter && positionAfter[0],
+            true
           );
           comments.push(evalComment);
         }
@@ -1229,7 +1240,8 @@ export default class Bot {
         if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
           let evalComment = formatEvalStats(
             evaluationAfter,
-            positionAfter && positionAfter[0]
+            positionAfter && positionAfter[0],
+            true
           );
           comments.push(evalComment);
         }
@@ -1300,12 +1312,14 @@ export default class Bot {
         (!prevPly && !nextPly && this.plies.length === 0);
 
       if (prevPly) {
+        const evalMark = this.calculateEvalMark(prevPly);
         const notes = this.formatEvalComments(
           prevPly,
           pvLimit,
           saveSearchStats,
           pvsToSave,
-          useNewFormat
+          useNewFormat,
+          evalMark
         );
         if (notes.length) {
           messages[prevPly.id] = notes;
@@ -1393,12 +1407,14 @@ export default class Bot {
       // This allows multiple analyses to be saved and combined
       this.plies.forEach((ply) => {
         const notes = [];
+        const evalMark = this.calculateEvalMark(ply);
         const evaluations = this.formatEvalComments(
           ply,
           pvLimit,
           saveSearchStats,
           pvsToSave,
-          useNewFormat
+          useNewFormat,
+          evalMark
         );
         if (evaluations.length) {
           notes.push(...evaluations);
@@ -1718,88 +1734,69 @@ export default class Bot {
     return false;
   }
 
-  // Apply eval marks (!!,!,?,??) to PTN based on bot analysis
-  saveEvalMarks(tps = null) {
-    const thresholds =
-      this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
-    const evalMarks = {};
+  // Calculate eval mark for a single ply based on bot positions and thresholds
+  calculateEvalMark(ply, thresholds = null) {
+    if (!thresholds) {
+      thresholds =
+        store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
+    }
 
-    // Helper to calculate eval mark for a ply
-    const calculateEvalMark = (ply) => {
-      // Skip first two plies (opening moves) - no meaningful "before" to compare
-      // Check move number from tpsBefore - format is "board player moveNumber"
-      // Move 1 plies have tpsBefore with moveNumber 1
-      const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
-      const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
-      if (moveNumber <= 1) {
-        return null;
-      }
+    // Skip first two plies (opening moves) - no meaningful "before" to compare
+    // Check move number from tpsBefore - format is "board player moveNumber"
+    // Move 1 plies have tpsBefore with moveNumber 1
+    const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
+    const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
+    if (moveNumber <= 1) {
+      return null;
+    }
 
-      const positionBefore = this.positions[ply.tpsBefore];
-      const positionAfter = this.positions[ply.tpsAfter];
+    const positionBefore = this.positions[ply.tpsBefore];
+    const positionAfter = this.positions[ply.tpsAfter];
 
-      if (!positionBefore || !positionAfter) {
-        return null;
-      }
-      if (!positionBefore[0] || !positionAfter[0]) {
-        return null;
-      }
+    if (!positionBefore || !positionAfter) {
+      return null;
+    }
+    if (!positionBefore[0] || !positionAfter[0]) {
+      return null;
+    }
 
-      // Skip if the move made matches the bot's top suggestion
-      // (no mark needed if player made the expected move)
-      const topSuggestion = positionBefore[0];
-      if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
-        return null;
-      }
+    // Skip if the move made matches the bot's top suggestion
+    // (no mark needed if player made the expected move)
+    const topSuggestion = positionBefore[0];
+    if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
+      return null;
+    }
 
-      const rawEvalBefore = positionBefore[0].evaluation;
-      const rawEvalAfter = positionAfter[0].evaluation;
+    const rawEvalBefore = positionBefore[0].evaluation;
+    const rawEvalAfter = positionAfter[0].evaluation;
 
-      if (rawEvalBefore === null || rawEvalAfter === null) {
-        return null;
-      }
+    if (rawEvalBefore === null || rawEvalAfter === null) {
+      return null;
+    }
 
-      // Normalize evaluations the same way as formatEvalComments
-      const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
-      const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
+    // Normalize evaluations the same way as formatEvalComments
+    const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
+    const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
 
-      const scoreLoss =
-        ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
+    const scoreLoss =
+      ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
-      if (scoreLoss > thresholds.brilliant) {
-        return "!!";
-      } else if (scoreLoss > thresholds.good) {
-        return "!";
-      } else if (scoreLoss > thresholds.bad) {
-        return null; // No mark for neutral moves
-      } else if (scoreLoss > thresholds.blunder) {
-        return "?";
-      } else {
-        return "??";
-      }
-    };
-
-    if (isString(tps) && tps.length) {
-      // Single position: find the ply that leads to this TPS
-      const ply = this.plies.find((p) => p.tpsAfter === tps);
-      if (ply) {
-        const mark = calculateEvalMark(ply);
-        if (mark) {
-          evalMarks[ply.id] = mark;
-        }
-      }
+    if (scoreLoss > thresholds.brilliant) {
+      return "!!";
+    } else if (scoreLoss > thresholds.good) {
+      return "!";
+    } else if (scoreLoss > thresholds.bad) {
+      return null; // No mark for neutral moves
+    } else if (scoreLoss > thresholds.blunder) {
+      return "?";
     } else {
-      // All positions
-      this.plies.forEach((ply) => {
-        const mark = calculateEvalMark(ply);
-        if (mark) {
-          evalMarks[ply.id] = mark;
-        }
-      });
+      return "??";
     }
+  }
 
-    if (Object.keys(evalMarks).length) {
-      store.dispatch("game/SET_EVAL_MARKS", evalMarks);
-    }
+  // Save eval marks by including them in saved analysis comments
+  saveEvalMarks(tps = null) {
+    // Delegate to saveEvalComments which now includes eval marks
+    this.saveEvalComments(tps);
   }
 }

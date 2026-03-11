@@ -26,7 +26,6 @@ const defaultState = {
   // Collapsed state for saved results bots (keyed by index)
   collapsedSavedBots: {},
   // Global settings
-  saveEvalMarks: true,
   showEvalMarks: true,
   evalMarkThresholds: { ...defaultEvalMarkThresholds },
   pvLimit: 3,

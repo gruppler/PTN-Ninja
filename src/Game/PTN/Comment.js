@@ -11,6 +11,7 @@ const outputProps = [
   "isUserNote",
   "botName",
   "depth",
+  "evalMark",
   "evaluation",
   "ms",
   "nodes",
@@ -136,6 +137,21 @@ export function getVisits(message) {
   return null;
 }
 
+export function getEvalMark(message) {
+  // Match standalone eval marks: !! ! ?? ?
+  // Must be at word boundary, not part of a ply notation like Ca1!!' or Ca1??
+  // Look for eval marks that are NOT preceded by a board coordinate
+  const match = message.match(/(?:^|\s)([!?]{1,2})(?=\s|$)/m);
+  if (match) {
+    const mark = match[1];
+    // Only accept valid eval marks
+    if (mark === "!!" || mark === "!" || mark === "??" || mark === "?") {
+      return mark;
+    }
+  }
+  return null;
+}
+
 export function getBotName(message) {
   // Engine name stored as name:"name" (e.g., '+0.12/15 name:"Tiltak" 1234 nodes')
   let matches = message.match(/name:"((?:[^"\\]|\\.)*)"/i);
@@ -208,6 +224,10 @@ export default class Comment {
 
   get botName() {
     return this.isUserNote ? null : getBotName(this.message);
+  }
+
+  get evalMark() {
+    return this.isUserNote ? null : getEvalMark(this.message);
   }
 
   get output() {

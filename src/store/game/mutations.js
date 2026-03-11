@@ -4,7 +4,6 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
-import Evaluation from "../../Game/PTN/Evaluation";
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -676,8 +675,6 @@ export const REMOVE_ALL_USER_NOTES = () => {
 
 export const REMOVE_NOTES = () => {
   Vue.prototype.$game.removeNotes();
-  // Also clear PTN eval marks (except tak/tinue)
-  clearEvalMarks();
 };
 
 export const REMOVE_ANALYSIS_NOTES = () => {
@@ -687,38 +684,6 @@ export const REMOVE_ANALYSIS_NOTES = () => {
       note.output.pv !== null ||
       note.output.pvAfter !== null
   );
-  // Also clear PTN eval marks (except tak/tinue)
-  clearEvalMarks();
-};
-
-// Helper to clear PTN eval marks (!/!!/?/??) but keep tak/tinue marks
-const clearEvalMarks = () => {
-  const game = Vue.prototype.$game;
-  if (!game || !game.plies) return;
-
-  game.plies.forEach((ply) => {
-    if (ply && ply.evaluation) {
-      // Keep only tak/tinue marks
-      const hasTak = ply.evaluation.tak;
-      const hasTinue = ply.evaluation.tinue;
-      if (hasTak || hasTinue) {
-        // Preserve tak/tinue, remove ?/!
-        const newText = hasTinue ? '"' : hasTak ? "'" : "";
-        if (newText !== ply.evaluation.text) {
-          ply.evaluation = Evaluation.parse(newText);
-          game.board.dirtyPly(ply.id);
-        }
-      } else {
-        // No tak/tinue, clear entirely
-        ply.evaluation = null;
-        game.board.dirtyPly(ply.id);
-      }
-    }
-  });
-  // Don't record change here - the caller already recorded the change
-  // This prevents double-recording which breaks undo
-  game._updatePTN(false);
-  game.board.updatePTNOutput();
 };
 
 export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
@@ -777,8 +742,6 @@ export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   Vue.prototype.$game.removeNotes((note) => {
     return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
   });
-  // Also clear PTN eval marks (except tak/tinue)
-  clearEvalMarks();
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
@@ -818,50 +781,5 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
       return note.evaluation !== null || note.pv !== null;
     }
     return false;
-  });
-};
-
-// Set eval marks (!!,!,?,??) on plies, clearing existing eval marks first
-export const SET_EVAL_MARKS = (state, evalMarks) => {
-  const game = Vue.prototype.$game;
-  if (!game || !game.plies) return;
-
-  game.recordChange(() => {
-    // First clear all existing eval marks (but keep tak/tinue)
-    clearEvalMarks();
-
-    // Then apply new eval marks
-    for (const plyId in evalMarks) {
-      const ply = game.plies[plyId];
-      if (!ply) continue;
-
-      const mark = evalMarks[plyId];
-      // Preserve existing tak/tinue marks
-      let newText = mark;
-      if (ply.evaluation) {
-        if (ply.evaluation.tinue) {
-          newText += '"';
-        } else if (ply.evaluation.tak) {
-          newText += "'";
-        }
-      }
-      ply.evaluation = Evaluation.parse(newText);
-      game.board.dirtyPly(ply.id);
-    }
-
-    game._updatePTN(false);
-    game.board.updatePTNOutput();
-  });
-};
-
-// Remove all eval marks (!!,!,?,??) but keep tak/tinue marks
-export const REMOVE_EVAL_MARKS = () => {
-  const game = Vue.prototype.$game;
-  if (!game || !game.plies) return;
-
-  game.recordChange(() => {
-    clearEvalMarks();
-    game._updatePTN(false);
-    game.board.updatePTNOutput();
   });
 };

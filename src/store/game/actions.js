@@ -1271,13 +1271,3 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (
   commit("REMOVE_POSITION_BOT_ANALYSIS_NOTES", { tps, botName });
   dispatch("SAVE_CURRENT_GAME", true);
 };
-
-export const SET_EVAL_MARKS = function ({ commit, dispatch }, evalMarks) {
-  commit("SET_EVAL_MARKS", evalMarks);
-  dispatch("SAVE_CURRENT_GAME", true);
-};
-
-export const REMOVE_EVAL_MARKS = function ({ commit, dispatch }) {
-  commit("REMOVE_EVAL_MARKS");
-  dispatch("SAVE_CURRENT_GAME", true);
-};
