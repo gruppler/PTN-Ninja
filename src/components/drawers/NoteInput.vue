@@ -32,6 +32,8 @@
 </template>
 
 <script>
+import { USER_NOTE_PREFIX } from "../../Game/PTN/Comment";
+
 export default {
   name: "NoteInput",
   data() {
@@ -64,7 +66,8 @@ export default {
           this.$store.dispatch("game/EDIT_NOTE", {
             plyID: this.editing.plyID,
             index: this.editing.index,
-            message: this.message.replace(/[{}]/g, "").trim(),
+            message:
+              USER_NOTE_PREFIX + this.message.replace(/[{}]/g, "").trim(),
           });
           this.$emit("edited", {
             plyID: this.editing.plyID,
@@ -73,7 +76,8 @@ export default {
           this.editing = null;
         } else {
           this.$store.dispatch("game/ADD_NOTE", {
-            message: this.message.replace(/[{}]/g, "").trim(),
+            message:
+              USER_NOTE_PREFIX + this.message.replace(/[{}]/g, "").trim(),
           });
           this.$emit("added", { plyID: this.currentPlyID });
         }
@@ -86,7 +90,9 @@ export default {
       this.editing = { plyID, index };
       setTimeout(() => {
         this.$refs.input.focus();
-        this.message = message;
+        this.message = message.startsWith(USER_NOTE_PREFIX)
+          ? message.slice(USER_NOTE_PREFIX.length)
+          : message;
       }, 10);
     },
     cancelEdit() {

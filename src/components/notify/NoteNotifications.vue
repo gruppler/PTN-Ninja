@@ -51,7 +51,7 @@ export default {
         );
       }
       return notes.map((note) => ({
-        message: note.message,
+        message: note.displayMessage || note.message,
         classes:
           "note" + (this.$store.state.ui.disableText ? "" : " cursor-pointer"),
         color: "primary",

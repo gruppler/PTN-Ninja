@@ -30,7 +30,7 @@
           </q-list>
         </q-menu>
       </q-btn>
-      <span>{{ comment.message }}</span>
+      <span>{{ comment.displayMessage || comment.message }}</span>
     </span>
   </q-chat-message>
 </template>

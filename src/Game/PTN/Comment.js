@@ -1,10 +1,14 @@
 import Ply from "./Ply";
 import { pick } from "lodash";
 
+export const USER_NOTE_PREFIX = "*";
+
 const outputProps = [
   "time",
   "player",
   "message",
+  "displayMessage",
+  "isUserNote",
   "botName",
   "depth",
   "evaluation",
@@ -27,16 +31,13 @@ export function getDepth(message) {
 }
 
 // Evaluation formats
-// Patterns are anchored to the start of the message (after optional name:"..." prefix)
-// to avoid matching arbitrary text in user notes (e.g., "pushed +3 squares")
-const namePrefix = /^(?:name:"(?:[^"\\]|\\.)*"\s+)?/.source;
 const evalFormats = [
   {
-    pattern: new RegExp(namePrefix + /([+-][.0-9]+)(?:\W|$)/.source),
+    pattern: /(?:\W|^)([+-][.0-9]+)(?:\W|$)/,
     format: (v) => v * 100,
   },
   {
-    pattern: new RegExp(namePrefix + /([.0-9]+)%(?:\W|$)/.source),
+    pattern: /(?:\W|^)([.0-9]+)%(?:\W|$)/,
     format: (v) => v * 2 - 100,
   },
 ];
@@ -167,36 +168,46 @@ export default class Comment {
     }
   }
 
+  get isUserNote() {
+    return this.message.startsWith(USER_NOTE_PREFIX);
+  }
+
+  get displayMessage() {
+    return this.isUserNote
+      ? this.message.slice(USER_NOTE_PREFIX.length)
+      : this.message;
+  }
+
   get depth() {
-    return getDepth(this.message);
+    return this.isUserNote ? null : getDepth(this.message);
   }
 
   get evaluation() {
-    return getEvaluation(this.message);
+    return this.isUserNote ? null : getEvaluation(this.message);
   }
 
   get ms() {
-    return getMS(this.message);
+    return this.isUserNote ? null : getMS(this.message);
   }
 
   get nodes() {
-    return getNodes(this.message);
+    return this.isUserNote ? null : getNodes(this.message);
   }
 
   get pv() {
-    return getPV(this.message);
+    return this.isUserNote ? null : getPV(this.message);
   }
 
   get pvAfter() {
-    return getPVAfter(this.message);
+    return this.isUserNote ? null : getPVAfter(this.message);
   }
 
   get visits() {
-    return getVisits(this.message);
+    return this.isUserNote ? null : getVisits(this.message);
   }
 
   get botName() {
-    return getBotName(this.message);
+    return this.isUserNote ? null : getBotName(this.message);
   }
 
   get output() {
