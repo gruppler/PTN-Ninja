@@ -1280,52 +1280,11 @@ export default class Bot {
       ) {
         return false;
       }
-      if (!note.botName) {
-        return true; // No bot name means it could be from this bot
-      }
-      // Compare exact bot names
+      // Only match notes that explicitly have this bot's name
       return note.botName === botName;
     };
 
     if (isString(tps) && tps.length) {
-      const buildEvalCommentFromPosition = (position) => {
-        if (!position || !position[0]) {
-          return null;
-        }
-        if (
-          position[0].evaluation === null ||
-          position[0].evaluation === undefined
-        ) {
-          return null;
-        }
-
-        const evaluationAfter = Math.round(100 * position[0].evaluation) / 1e4;
-        if (evaluationAfter === null || isNaN(evaluationAfter)) {
-          return null;
-        }
-
-        let evaluationComment = `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
-
-        if (saveSearchStats) {
-          if (position[0].depth !== null && position[0].depth !== undefined) {
-            evaluationComment += `/${position[0].depth}`;
-          }
-          if (position[0].nodes !== null && position[0].nodes !== undefined) {
-            evaluationComment += ` ${position[0].nodes} nodes`;
-          }
-          if (position[0].visits !== null && position[0].visits !== undefined) {
-            evaluationComment += ` ${position[0].visits} visits`;
-          }
-          if (position[0].time !== null && position[0].time !== undefined) {
-            evaluationComment += ` ${position[0].time}ms`;
-          }
-        }
-
-        return evaluationComment;
-      };
-
       // The current TPS corresponds to:
       // - the *positionAfter* of the previous ply (evaluation belongs there)
       // - the *positionBefore* of the next ply (pv belongs there - old format only)
