@@ -725,47 +725,6 @@
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
-
-              <q-separator />
-
-              <q-item
-                clickable
-                @click="deleteSavedPositionResults"
-                :disable="!hasSavedSuggestions"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Delete Positions Saved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item clickable @click="deleteAllSavedResults">
-                <q-item-section avatar>
-                  <q-icon name="delete_all" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Delete Engines Saved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-separator />
-
-              <q-item clickable @click="removeEvalMarks">
-                <q-item-section avatar>
-                  <q-icon name="eval" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.removeEvalMarks")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -1068,14 +1027,6 @@ export default {
     botName() {
       return this.botMeta.name || this.bot?.label || null;
     },
-    savedSuggestions() {
-      const allSaved = this.$store.getters["game/suggestions"](this.tps);
-      // Filter to only suggestions matching this bot's name (or with no bot name)
-      return allSaved.filter((s) => !s.botName || s.botName === this.botName);
-    },
-    hasSavedSuggestions() {
-      return this.savedSuggestions.length > 0;
-    },
   },
   methods: {
     selectNewBot(value) {
@@ -1151,16 +1102,6 @@ export default {
       }
       this.bot.saveEvalMarks();
     },
-    removeEvalMarks() {
-      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
-      this.notifyUndo({
-        icon: "eval",
-        message: this.$t("success.evalMarksRemoved"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
     clearUnsavedResults() {
       if (!this.hasResults) {
         return;
@@ -1229,35 +1170,6 @@ export default {
     },
     unhighlightPly() {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-    },
-    deleteSavedPositionResults() {
-      if (!this.hasSavedSuggestions || !this.botName) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
-        tps: this.tps,
-        botName: this.botName,
-      });
-      this.notifyUndo({
-        icon: "delete",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    deleteAllSavedResults() {
-      if (!this.botName) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.botName);
-      this.notifyUndo({
-        icon: "delete_all",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
     },
     analyzePosition() {
       try {

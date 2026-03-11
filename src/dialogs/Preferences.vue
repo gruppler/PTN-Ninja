@@ -107,40 +107,6 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="notifyNotes"
-            :disable="isDisabled('notifyNotes')"
-          />
-        </q-item-section>
-        <hint v-if="hotkeys.notifyNotes">
-          {{ $t("Hotkey") }}: {{ hotkeys.notifyNotes }}
-        </hint>
-      </q-item>
-
-      <q-item
-        tag="label"
-        :disable="!notifyNotes || isDisabled(notifyAnalysisNotes)"
-        v-ripple="notifyNotes && !isDisabled('notifyAnalysisNotes')"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="notifyAnalysisNotes"
-            :disable="!notifyNotes || isDisabled('notifyAnalysisNotes')"
-          />
-        </q-item-section>
-        <hint v-if="hotkeys.notifyAnalysisNotes">
-          {{ $t("Hotkey") }}: {{ hotkeys.notifyAnalysisNotes }}
-        </hint>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
           <q-item-label>{{ $t("Nav Controls") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -301,8 +267,6 @@ const props = [
   "hapticNavControls",
   "nativeSharing",
   "notifyGame",
-  "notifyNotes",
-  "notifyAnalysisNotes",
   "openDuplicate",
   "playSpeed",
   "scrollScrubbing",

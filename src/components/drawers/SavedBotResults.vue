@@ -108,7 +108,7 @@
               class="flex-center absolute-center full-width"
               :class="'text-' + textColor"
             >
-              {{ $t("analysis.noResults") }}
+              {{ $t("analysis.noSavedResults") }}
             </q-item>
           </div>
         </smooth-reflow>

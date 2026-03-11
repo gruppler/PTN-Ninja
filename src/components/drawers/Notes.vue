@@ -19,45 +19,95 @@
               <q-item-label>{{ $t("Notes") }}</q-item-label>
             </q-item-section>
             <q-item-section class="fg-inherit" side>
-              <q-btn
-                @click.stop
-                icon="delete"
-                :disable="!hasAnyUserNotes"
-                dense
-                round
-                flat
-              >
-                <q-menu auto-close>
-                  <q-list>
-                    <q-item
-                      clickable
-                      :disable="!hasCurrentPositionNotes"
-                      @click="removeCurrentPosition"
-                    >
-                      <q-item-section avatar>
-                        <q-icon name="delete" />
-                      </q-item-section>
-                      <q-item-section>{{
-                        $t("Remove Current Positions Notes")
-                      }}</q-item-section>
-                    </q-item>
-                    <q-item
-                      clickable
-                      :disable="!hasAnyUserNotes"
-                      @click="removeAllNotes"
-                    >
-                      <q-item-section avatar>
-                        <q-icon name="delete_all" />
-                      </q-item-section>
-                      <q-item-section>{{
-                        $t("Remove All Notes")
-                      }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
+              <div class="row no-wrap q-gutter-x-sm">
+                <q-btn
+                  @click.stop="toggleSettings"
+                  icon="settings"
+                  :color="showSettings ? 'primary' : ''"
+                  dense
+                  round
+                  flat
+                />
+                <q-btn
+                  @click.stop
+                  icon="delete"
+                  :disable="!hasAnyUserNotes"
+                  dense
+                  round
+                  flat
+                >
+                  <q-menu auto-close>
+                    <q-list>
+                      <q-item
+                        clickable
+                        :disable="!hasCurrentPositionNotes"
+                        @click="removeCurrentPosition"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="delete" />
+                        </q-item-section>
+                        <q-item-section>{{
+                          $t("Remove Current Positions Notes")
+                        }}</q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        :disable="!hasAnyUserNotes"
+                        @click="removeAllNotes"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="delete_all" />
+                        </q-item-section>
+                        <q-item-section>{{
+                          $t("Remove All Notes")
+                        }}</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </div>
             </q-item-section>
           </template>
+
+          <recess>
+            <smooth-reflow height-only>
+              <template v-if="showSettings">
+                <!-- Note Notifications -->
+                <q-item :class="textClass" tag="label" v-ripple>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle v-model="notifyNotes" />
+                  </q-item-section>
+                </q-item>
+
+                <!-- Analysis Note Notifications -->
+                <smooth-reflow>
+                  <q-item
+                    v-if="notifyNotes"
+                    :class="textClass"
+                    tag="label"
+                    v-ripple="notifyNotes"
+                  >
+                    <q-item-section>
+                      <q-item-label>{{
+                        $t("Analysis Note Notifications")
+                      }}</q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <q-toggle
+                        v-model="notifyAnalysisNotes"
+                        :disable="!notifyNotes"
+                      />
+                    </q-item-section>
+                  </q-item>
+                </smooth-reflow>
+
+                <q-separator />
+              </template>
+            </smooth-reflow>
+          </recess>
 
           <recess>
             <NoteItem
@@ -113,6 +163,7 @@ export default {
       sections: {
         positionNotes: this.$store.state.ui.analysisSections.positionNotes,
       },
+      showSettings: false,
     };
   },
   computed: {
@@ -162,6 +213,22 @@ export default {
     hasCurrentPositionNotes() {
       return this.currentPlyIDs.length > 0;
     },
+    notifyNotes: {
+      get() {
+        return this.$store.state.ui.notifyNotes;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
+      },
+    },
+    notifyAnalysisNotes: {
+      get() {
+        return this.$store.state.ui.notifyAnalysisNotes;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["notifyAnalysisNotes", value]);
+      },
+    },
     hasAnyUserNotes() {
       const allNotes = this.game.comments.notes;
       for (const plyID in allNotes) {
@@ -180,6 +247,12 @@ export default {
     },
   },
   methods: {
+    toggleSettings() {
+      this.showSettings = !this.showSettings;
+      if (this.showSettings) {
+        this.sections.positionNotes = true;
+      }
+    },
     edit({ plyID, index }) {
       const filteredNotes = this.currentLog[plyID];
       if (!filteredNotes || !filteredNotes[index]) return;

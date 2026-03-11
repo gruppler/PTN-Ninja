@@ -271,6 +271,7 @@
         <div
           v-if="textTab !== 'chat'"
           class="row items-center justify-between bg-ui q-px-sm"
+          style="height: 34px"
         >
           <div
             class="text-caption text-no-wrap q-pl-xs"
@@ -306,6 +307,7 @@
             <EnginesFilterIcons v-if="textTab === 'engines'" class="q-mr-sm" />
             <SavedFilterIcons v-if="textTab === 'notes'" class="q-mr-sm" />
             <q-btn
+              v-if="textTab !== 'notes'"
               @click="showTabSettings = !showTabSettings"
               icon="settings"
               :color="
@@ -323,11 +325,16 @@
         </div>
         <div style="max-height: 50vh; overflow-y: auto">
           <smooth-reflow class="bg-ui" height-only>
+            <q-separator
+              v-if="
+                (showTabSettings && textTab === 'openings') ||
+                (showTabSettings && textTab === 'engines')
+              "
+            />
             <OpeningsSettings
               v-if="showTabSettings && textTab === 'openings'"
             />
             <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
-            <SavedSettings v-if="showTabSettings && textTab === 'notes'" />
           </smooth-reflow>
         </div>
         <q-tab-panels
@@ -403,7 +410,6 @@ import Analysis from "../components/drawers/Analysis";
 import Openings from "../components/drawers/Openings";
 import OpeningsSettings from "../components/drawers/OpeningsSettings";
 import EnginesSettings from "../components/drawers/EnginesSettings";
-import SavedSettings from "../components/drawers/SavedSettings";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -449,7 +455,6 @@ export default {
     EnginesFilterIcons,
     SavedFilterIcons,
     EnginesSettings,
-    SavedSettings,
     PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
