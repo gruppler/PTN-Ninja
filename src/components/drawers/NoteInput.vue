@@ -6,7 +6,7 @@
       @keydown.esc="cancelEdit"
       @blur="cancelEdit"
       debounce="50"
-      class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end"
+      class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end note-input"
       v-model="message"
       :placeholder="$t('Note')"
       dense
@@ -64,7 +64,7 @@ export default {
           this.$store.dispatch("game/EDIT_NOTE", {
             plyID: this.editing.plyID,
             index: this.editing.index,
-            message: this.message.trim(),
+            message: this.message.replace(/[{}]/g, "").trim(),
           });
           this.$emit("edited", {
             plyID: this.editing.plyID,
@@ -73,7 +73,7 @@ export default {
           this.editing = null;
         } else {
           this.$store.dispatch("game/ADD_NOTE", {
-            message: this.message.trim(),
+            message: this.message.replace(/[{}]/g, "").trim(),
           });
           this.$emit("added", { plyID: this.currentPlyID });
         }
@@ -106,3 +106,10 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.note-input ::v-deep .q-field__control {
+  max-height: 6em;
+  overflow-y: auto;
+}
+</style>

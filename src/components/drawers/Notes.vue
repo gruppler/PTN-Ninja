@@ -133,18 +133,25 @@ export default {
     },
     currentLog() {
       // Get only notes for the current position, filtering out analysis notes
+      // Each note gets an _originalIndex property to map back to the full array
       const plyID = this.positionPlyID;
       const allNotes = this.game.comments.notes;
       const filtered = {};
       if (plyID in allNotes) {
-        const filteredNotes = allNotes[plyID].filter(
-          (note) =>
+        const filteredNotes = [];
+        allNotes[plyID].forEach((note, originalIndex) => {
+          if (
             note.evaluation === null &&
             note.pv === null &&
             note.pvAfter === null
-        );
+          ) {
+            filteredNotes.push(
+              Object.freeze({ ...note, _originalIndex: originalIndex })
+            );
+          }
+        });
         if (filteredNotes.length > 0) {
-          filtered[plyID] = filteredNotes;
+          filtered[plyID] = Object.freeze(filteredNotes);
         }
       }
       return Object.freeze(filtered);
@@ -174,19 +181,22 @@ export default {
   },
   methods: {
     edit({ plyID, index }) {
-      const allNotes = this.game.comments.notes;
-      const notes = allNotes[plyID];
-      if (!notes || !notes[index]) return;
+      const filteredNotes = this.currentLog[plyID];
+      if (!filteredNotes || !filteredNotes[index]) return;
+      const originalIndex = filteredNotes[index]._originalIndex;
       this.$refs.noteInput.startEdit({
         plyID,
-        index,
-        message: notes[index].message,
+        index: originalIndex,
+        message: filteredNotes[index].message,
       });
     },
     onNoteAdded() {},
     onNoteEdited() {},
     remove({ plyID, index }) {
-      this.$store.dispatch("game/REMOVE_NOTE", { plyID, index });
+      const filteredNotes = this.currentLog[plyID];
+      if (!filteredNotes || !filteredNotes[index]) return;
+      const originalIndex = filteredNotes[index]._originalIndex;
+      this.$store.dispatch("game/REMOVE_NOTE", { plyID, index: originalIndex });
       this.notifyUndo({
         message: this.$t("success.noteRemoved"),
         handler: () => {

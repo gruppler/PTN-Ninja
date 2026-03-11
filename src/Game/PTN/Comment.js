@@ -27,13 +27,16 @@ export function getDepth(message) {
 }
 
 // Evaluation formats
+// Patterns are anchored to the start of the message (after optional name:"..." prefix)
+// to avoid matching arbitrary text in user notes (e.g., "pushed +3 squares")
+const namePrefix = /^(?:name:"(?:[^"\\]|\\.)*"\s+)?/.source;
 const evalFormats = [
   {
-    pattern: /(?:\W|^)([+-][.0-9]+)(?:\W|$)/,
+    pattern: new RegExp(namePrefix + /([+-][.0-9]+)(?:\W|$)/.source),
     format: (v) => v * 100,
   },
   {
-    pattern: /(?:\W|^)([.0-9]+)%(?:\W|$)/,
+    pattern: new RegExp(namePrefix + /([.0-9]+)%(?:\W|$)/.source),
     format: (v) => v * 2 - 100,
   },
 ];
