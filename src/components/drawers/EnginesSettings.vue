@@ -111,10 +111,11 @@
         }}</q-item-label>
         <q-input
           type="number"
-          v-model.number="evalMarkThresholds.brilliant"
+          v-model.number="thresholdBrilliant"
           :label="$t('analysis.thresholds.brilliant')"
-          :step="0.01"
-          :min="0.01"
+          :step="1"
+          :min="1"
+          suffix="%"
           hide-bottom-space
           :dark="dark"
           filled
@@ -122,10 +123,11 @@
         />
         <q-input
           type="number"
-          v-model.number="evalMarkThresholds.good"
+          v-model.number="thresholdGood"
           :label="$t('analysis.thresholds.good')"
-          :step="0.01"
-          :min="0.01"
+          :step="1"
+          :min="1"
+          suffix="%"
           hide-bottom-space
           :dark="dark"
           filled
@@ -133,10 +135,11 @@
         />
         <q-input
           type="number"
-          v-model.number="evalMarkThresholds.bad"
+          v-model.number="thresholdBad"
           :label="$t('analysis.thresholds.bad')"
-          :step="0.01"
-          :max="-0.01"
+          :step="1"
+          :max="-1"
+          suffix="%"
           hide-bottom-space
           :dark="dark"
           filled
@@ -144,15 +147,28 @@
         />
         <q-input
           type="number"
-          v-model.number="evalMarkThresholds.blunder"
+          v-model.number="thresholdBlunder"
           :label="$t('analysis.thresholds.blunder')"
-          :step="0.01"
-          :max="-0.01"
+          :step="1"
+          :max="-1"
+          suffix="%"
           hide-bottom-space
           :dark="dark"
           filled
           item-aligned
         />
+        <q-item>
+          <q-item-section>
+            <q-btn
+              @click="resetThresholds"
+              :label="$t('Reset')"
+              :disable="isDefaultThresholds"
+              :flat="isDefaultThresholds"
+              color="primary"
+              dense
+            />
+          </q-item-section>
+        </q-item>
       </template>
     </smooth-reflow>
   </div>
@@ -160,6 +176,7 @@
 
 <script>
 import { cloneDeep, isEqual } from "lodash";
+import { defaultEvalMarkThresholds } from "../../bots/bot";
 
 export default {
   name: "EnginesSettings",
@@ -241,13 +258,45 @@ export default {
         this.$store.dispatch("analysis/SET", ["showEvalMarks", value]);
       },
     },
-    evalMarkThresholds: {
+    thresholdBrilliant: {
       get() {
-        return this.localEvalMarkThresholds;
+        return Math.round(this.localEvalMarkThresholds.brilliant * 100);
       },
       set(value) {
-        this.localEvalMarkThresholds = value;
+        this.localEvalMarkThresholds.brilliant = value / 100;
       },
+    },
+    thresholdGood: {
+      get() {
+        return Math.round(this.localEvalMarkThresholds.good * 100);
+      },
+      set(value) {
+        this.localEvalMarkThresholds.good = value / 100;
+      },
+    },
+    thresholdBad: {
+      get() {
+        return Math.round(this.localEvalMarkThresholds.bad * 100);
+      },
+      set(value) {
+        this.localEvalMarkThresholds.bad = value / 100;
+      },
+    },
+    thresholdBlunder: {
+      get() {
+        return Math.round(this.localEvalMarkThresholds.blunder * 100);
+      },
+      set(value) {
+        this.localEvalMarkThresholds.blunder = value / 100;
+      },
+    },
+    isDefaultThresholds() {
+      return isEqual(this.localEvalMarkThresholds, defaultEvalMarkThresholds);
+    },
+  },
+  methods: {
+    resetThresholds() {
+      this.localEvalMarkThresholds = cloneDeep(defaultEvalMarkThresholds);
     },
   },
   watch: {
