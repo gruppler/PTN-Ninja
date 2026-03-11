@@ -48,7 +48,7 @@ const calculateEvalMark = (ply, positions, thresholds) => {
   const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
 
   const scoreLoss =
-    (ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter) / 2;
+    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
   if (scoreLoss > thresholds.brilliant) {
     return "!!";
