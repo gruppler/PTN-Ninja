@@ -7,6 +7,7 @@ export default {
   Action: "Action",
   "Add Engine": "Add Engine",
   "Add Game": "Load/Create Game",
+  "Add Note": "Add Note",
   "All Branches": "All Branches",
   Analysis: "Analysis",
   "Analysis Note Notifications": "Analysis Note Notifications",

@@ -1,33 +1,38 @@
 <template>
-  <div class="bg-ui row no-wrap">
+  <div class="bg-ui column">
     <q-input
       ref="input"
       @keydown.enter="send"
       @keydown.esc="cancelEdit"
-      @blur="cancelEdit"
       debounce="50"
-      class="footer-toolbar bg-ui text-primary col-grow q-pa-sm items-end note-input"
+      class="footer-toolbar bg-ui text-primary col-grow q-pa-xs items-end note-input"
       v-model="message"
       :placeholder="$t('Note')"
       dense
-      rounded
-      autogrow
       outlined
+      autogrow
       color="primary"
       bg-color="primary"
       :dark="dark"
-    >
-      <template v-slot:append>
-        <q-btn
-          @click="send"
-          :icon="editing ? 'edit' : 'add_note'"
-          :disabled="!message.trim().length"
-          flat
-          dense
-          round
-        />
-      </template>
-    </q-input>
+    />
+    <q-btn-group spread stretch flat class="full-width">
+      <q-btn
+        v-if="editing"
+        @click="cancelEdit"
+        icon="close"
+        :label="$t('Cancel')"
+        color="primary"
+        flat
+      />
+      <q-btn
+        @click="send"
+        :icon="editing ? 'save' : 'add_note'"
+        :label="$t(editing ? 'Save' : 'Add Note')"
+        :disabled="!isValid"
+        :flat="!isValid"
+        color="primary"
+      />
+    </q-btn-group>
   </div>
 </template>
 
@@ -52,6 +57,9 @@ export default {
         return -1;
       }
       return pos.plyID;
+    },
+    isValid() {
+      return this.message.trim().length > 0;
     },
   },
   methods: {
@@ -110,12 +118,16 @@ export default {
       this.$refs.input.blur();
     },
   },
+  watch: {
+    "$store.state.game.name"() {
+      this.cancelEdit();
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
-.note-input ::v-deep .q-field__control {
-  max-height: 6em;
-  overflow-y: auto;
+.note-input ::v-deep .q-field__native {
+  max-height: 50vh;
 }
 </style>

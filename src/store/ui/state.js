@@ -192,8 +192,8 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 
 // Backward compatibility
 defaultsDeep(state, defaultState);
-if (state.textTab === "analysis") {
-  state.textTab = "openings";
+if (state.textTab === "engines") {
+  state.textTab = "analysis";
 }
 
 export default state;

@@ -111,7 +111,7 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
     if (key === "textTab") {
       if (value === "notes") {
         dispatch("analysis/SET", ["preferSavedResults", true], { root: true });
-      } else if (value === "engines") {
+      } else if (value === "analysis") {
         dispatch("analysis/SET", ["preferSavedResults", false], { root: true });
       }
     }
