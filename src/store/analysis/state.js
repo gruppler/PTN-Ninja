@@ -49,7 +49,12 @@ const defaultState = {
     maxDate: null,
   },
   openingPositions: {},
-  openingStats: { totalGames: 0, moveCount: 0, available: false },
+  openingStats: {
+    totalGames: 0,
+    moveCount: 0,
+    available: false,
+    dbMinRating: 0,
+  },
 };
 forEach(bots, (bot, id) => {
   defaultState.botSettings[id] = cloneDeep(bot.settings);

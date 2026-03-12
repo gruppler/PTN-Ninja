@@ -73,7 +73,13 @@
       :min="dbMinRating"
       max="5000"
       step="10"
-      :placeholder="dbMinRating"
+      :placeholder="String(dbMinRating)"
+      :hint="
+        dbMinRating ? $t('analysis.dbMinRating', { rating: dbMinRating }) : ''
+      "
+      :hide-hint="false"
+      :style="dbMinRating ? 'padding-bottom: 1.5em' : ''"
+      bottom-slots
       item-aligned
       clearable
       filled
@@ -181,7 +187,6 @@ export default {
         { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
         { label: this.$t("analysis.tournamentOptions.only"), value: true },
       ],
-      dbMinRating: 0,
       dbSettings: { ...this.$store.state.analysis.dbSettings },
     };
   },
@@ -191,6 +196,9 @@ export default {
     },
     textColor() {
       return this.dark ? "textLight" : "textDark";
+    },
+    dbMinRating() {
+      return this.$store.state.analysis.openingStats.dbMinRating || 0;
     },
   },
   methods: {

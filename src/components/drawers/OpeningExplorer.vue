@@ -671,8 +671,10 @@ export default {
       if (position && this.dbSettingsHash in position) {
         this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
         this.dbGames = position[this.dbSettingsHash].dbGames || [];
-        this.dbMinRating =
-          position[this.dbSettingsHash].settings.min_rating || 0;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: position[this.dbSettingsHash].settings.min_rating || 0,
+        });
       } else {
         this.dbMoves = [];
         this.dbGames = [];
@@ -685,15 +687,20 @@ export default {
       if (position && this.dbSettingsHash in position) {
         this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
         this.dbGames = position[this.dbSettingsHash].dbGames || [];
-        this.dbMinRating =
-          position[this.dbSettingsHash].settings.min_rating || 0;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: position[this.dbSettingsHash].settings.min_rating || 0,
+        });
       }
     },
     dbSettingsHash(hash) {
       if (this.dbPosition && hash in this.dbPosition) {
         this.dbMoves = this.dbPosition[hash].dbMoves || [];
         this.dbGames = this.dbPosition[hash].dbGames || [];
-        this.dbMinRating = this.dbPosition[hash].settings.min_rating || 0;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: this.dbPosition[hash].settings.min_rating || 0,
+        });
       }
     },
     dbMoves(moves) {

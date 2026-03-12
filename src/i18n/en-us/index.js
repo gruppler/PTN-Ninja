@@ -543,6 +543,7 @@ export default {
     "Delete All Saved Results": "Delete All Saved Results",
     "Delete Engines Saved Results": "Delete Engine's Saved Results",
     "Delete Positions Saved Results": "Delete Position's Saved Results",
+    dbMinRating: "Database minimum: {rating}",
     depth: "depth",
     Depth: "Depth",
     draws: "draw | draws",
