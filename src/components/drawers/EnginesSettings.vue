@@ -192,7 +192,14 @@ export default {
   },
   methods: {
     resetThresholds() {
+      const previous = cloneDeep(this.localEvalMarkThresholds);
       this.localEvalMarkThresholds = cloneDeep(defaultEvalMarkThresholds);
+      this.notifyUndo({
+        message: this.$t("success.thresholdsReset"),
+        handler: () => {
+          this.localEvalMarkThresholds = previous;
+        },
+      });
     },
   },
   watch: {

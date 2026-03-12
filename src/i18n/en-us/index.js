@@ -481,6 +481,7 @@ export default {
     resultsDeleted: "Results deleted",
     evalMarksRemoved: "Eval marks removed",
     themeRemoved: 'Removed theme "{name}"',
+    thresholdsReset: "Thresholds reset to defaults",
     updateAvailable: "A new version is available",
     verifyEmailSent: "Verification email sent",
   },
