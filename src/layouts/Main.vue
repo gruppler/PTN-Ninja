@@ -105,14 +105,14 @@
           </GameSelector>
         </q-toolbar-title>
         <q-btn
-          :icon="textPanelIcon"
+          icon="analysis"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint v-if="textPanelHint">{{ textPanelHint }}</hint>
+          <hint>{{ $t(showText ? "Hide Analysis" : "Show Analysis") }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -540,32 +540,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    textPanelIcon() {
-      switch (this.textTab) {
-        case "openings":
-          return "opening";
-        case "engines":
-          return "engine";
-        case "notes":
-          return "save";
-        case "chat":
-          return "chat";
-        default:
-          return "";
-      }
-    },
-    textPanelHint() {
-      if (this.textTab === "openings") {
-        return this.$t(this.showText ? "Hide Openings" : "Show Openings");
-      } else if (this.textTab === "engines") {
-        return this.$t(this.showText ? "Hide Engines" : "Show Engines");
-      } else if (this.textTab === "notes") {
-        return this.$t(this.showText ? "Hide Notes" : "Show Notes");
-      } else if (this.textTab === "chat") {
-        return this.$t(this.showText ? "Hide Chat" : "Show Chat");
-      }
-      return "";
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
