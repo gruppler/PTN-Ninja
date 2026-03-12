@@ -475,13 +475,16 @@ export default class TeiBot extends Bot {
         tps: bestmoveTps,
         suggestions: [{ pv: [response.substr(9)] }],
       };
+      let hasQueuedPosition = false;
       if (this.isInteractiveEnabled) {
         if (this.state.tps === this.state.nextTPS) {
-          // No position queued
+          // No position queued; engine finished naturally on this position
           state.tps = null;
           state.nextTPS = null;
         } else {
+          // A different position was queued while the engine was running
           state.tps = this.state.nextTPS;
+          hasQueuedPosition = true;
         }
       }
       if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
@@ -491,7 +494,7 @@ export default class TeiBot extends Bot {
       if (this.onComplete) {
         this.onComplete(results);
       }
-      if (this.isInteractiveEnabled) {
+      if (this.isInteractiveEnabled && hasQueuedPosition) {
         this.analyzeInteractive();
       }
       return results;
