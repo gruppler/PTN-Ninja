@@ -322,6 +322,10 @@ export default {
   font-family: "Source Code Pro";
   font-weight: bold;
 
+  .note-badge {
+    top: -3px;
+  }
+
   .q-chip {
     .pieceCount {
       color: $blue-dark;
