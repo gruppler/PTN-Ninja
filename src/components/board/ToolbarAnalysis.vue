@@ -475,15 +475,16 @@ export default {
       return this.currentBotSuggestions.length > 0;
     },
     suggestions() {
-      // Show saved results if preferred and available
-      if (this.preferSavedResults && this.hasSavedSuggestions) {
+      // When saved results are preferred, always use saved suggestions
+      // (may be empty for this position - don't fall back to unsaved)
+      if (this.preferSavedResults) {
         return this.savedSuggestions;
       }
       return this.currentBotSuggestions;
     },
     viewingSavedResults() {
-      // Actually viewing saved results (preferred AND available)
-      return this.preferSavedResults && this.hasSavedSuggestions;
+      // Reflects the user's selection, not per-position availability
+      return this.preferSavedResults;
     },
     suggestionsCount() {
       return this.suggestions.length;
@@ -513,11 +514,6 @@ export default {
 
       if (this.suggestions.length > 0) {
         return this.suggestions[this.suggestionIndex] || this.suggestions[0];
-      }
-
-      // Only fall through to saved results if actually viewing saved results
-      if (this.viewingSavedResults) {
-        return this.$store.getters["game/suggestion"](this.tps);
       }
 
       return null;

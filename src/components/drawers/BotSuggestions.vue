@@ -952,10 +952,7 @@ export default {
     isActiveBot() {
       return (
         this.botID === this.$store.state.analysis.botID &&
-        !(
-          this.$store.state.analysis.preferSavedResults &&
-          this.$store.getters["game/suggestions"](this.tps).length > 0
-        )
+        !this.$store.state.analysis.preferSavedResults
       );
     },
     isAnalyzingGameOrBranch() {
