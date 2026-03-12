@@ -27,7 +27,7 @@
         </q-btn>
         <q-btn
           v-if="!$store.state.ui.disableText"
-          :icon="notifyNotes ? 'notes' : 'notes_off'"
+          icon="notes"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"

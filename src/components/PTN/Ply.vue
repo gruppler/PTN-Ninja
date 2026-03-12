@@ -8,6 +8,7 @@
     :data-tps="tps || undefined"
     :data-plies="pliesJson || undefined"
     :data-ply-text="ply.text"
+    :data-note="userNoteHtml || undefined"
   >
     <q-chip
       @click="select(ply, isSelected ? !isDone : true)"
@@ -61,6 +62,7 @@
           v-model="menu"
         />
       </q-btn>
+      <q-badge v-if="hasUserNotes" class="note-badge" floating />
     </q-chip>
     <Result
       v-if="ply.result"
@@ -78,6 +80,8 @@ import BranchMenu from "../controls/BranchMenu";
 import Result from "./Result";
 
 import { isBoolean } from "lodash";
+import { USER_NOTE_PREFIX } from "../../Game/PTN/Comment";
+import inlineMarkdown from "../../utils/inlineMarkdown";
 
 export default {
   name: "Ply",
@@ -195,6 +199,30 @@ export default {
         : this.position.plyID === this.ply.id
         ? this.position.plyIsDone
         : this.isInBranch && this.position.plyIndex > this.ply.index;
+    },
+    userNotes() {
+      const allNotes = this.$store.state.game.comments.notes;
+      const notes = allNotes[this.ply.id];
+      if (!notes) return [];
+      return notes.filter(
+        (n) => n.evaluation === null && n.pv === null && n.pvAfter === null
+      );
+    },
+    hasUserNotes() {
+      return this.userNotes.length > 0;
+    },
+    userNoteText() {
+      return this.userNotes
+        .map((n) =>
+          n.message.startsWith(USER_NOTE_PREFIX)
+            ? n.message.slice(USER_NOTE_PREFIX.length)
+            : n.message
+        )
+        .join("\n");
+    },
+    userNoteHtml() {
+      if (!this.hasUserNotes) return null;
+      return inlineMarkdown(this.userNoteText);
     },
     displayEvaluation() {
       if (!this.ply) return null;
