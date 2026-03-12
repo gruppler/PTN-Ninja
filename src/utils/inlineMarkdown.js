@@ -1,5 +1,5 @@
 // Lightweight inline markdown renderer for user notes.
-// Supports: **bold**, *italic*, ~~strikethrough~~, `code`, [links](url)
+// Supports: **bold**, *italic*, __underline__, ~~strikethrough~~, `code`, [links](url)
 
 function escapeHtml(str) {
   return str
@@ -22,6 +22,9 @@ export default function inlineMarkdown(text) {
 
   // *italic*
   html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+  // __underline__
+  html = html.replace(/__(.+?)__/g, "<u>$1</u>");
 
   // ~~strikethrough~~
   html = html.replace(/~~(.+?)~~/g, "<del>$1</del>");
