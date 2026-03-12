@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-ui column">
+  <div class="column">
     <q-input
       ref="input"
       @keydown.enter="send"
       @keydown.esc="cancelEdit"
       debounce="50"
-      class="footer-toolbar bg-ui text-primary col-grow q-pa-xs items-end note-input"
+      class="footer-toolbar text-primary col-grow q-pa-xs items-end note-input"
       v-model="message"
       :placeholder="$t('Note')"
       dense
