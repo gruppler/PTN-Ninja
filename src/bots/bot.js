@@ -1793,10 +1793,4 @@ export default class Bot {
       return "??";
     }
   }
-
-  // Save eval marks by including them in saved analysis comments
-  saveEvalMarks(tps = null) {
-    // Delegate to saveEvalComments which now includes eval marks
-    this.saveEvalComments(tps);
-  }
 }
