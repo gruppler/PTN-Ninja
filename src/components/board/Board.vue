@@ -258,19 +258,16 @@ export default {
       const analysis = this.$store.state.analysis;
       const showEvalMarks = analysis?.showEvalMarks;
 
-      // If showEvalMarks is disabled, only show tak/tinue marks
-      if (!showEvalMarks) {
-        return takTinue || null;
-      }
-
       // Check for dynamic eval mark override from bot analysis or saved results
-      const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
-      const override = getOverride ? getOverride(ply) : null;
-      if (override) {
-        return override + takTinue;
+      if (showEvalMarks) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(ply) : null;
+        if (override) {
+          return override + takTinue;
+        }
       }
 
-      // Fall back to saved eval marks from PTN
+      // Always show manual eval marks from PTN
       if (plyEval && (plyEval["?"] || plyEval["!"])) {
         return plyEval.text;
       }

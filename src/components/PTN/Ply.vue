@@ -202,25 +202,22 @@ export default {
       const analysis = this.$store.state.analysis;
       const showEvalMarks = analysis?.showEvalMarks;
 
-      // Get the base evaluation text from ply (tak/tinue marks and saved eval marks)
+      // Get the base evaluation text from ply (tak/tinue marks and manual eval marks)
       const plyEval = this.ply.evaluation;
       const takTinue = plyEval
         ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
         : "";
 
-      // If showEvalMarks is disabled, only show tak/tinue marks
-      if (!showEvalMarks) {
-        return takTinue || null;
-      }
-
       // Check for dynamic eval mark override from bot analysis or saved results
-      const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
-      const override = getOverride ? getOverride(this.ply) : null;
-      if (override) {
-        return override + takTinue;
+      if (showEvalMarks) {
+        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
+        const override = getOverride ? getOverride(this.ply) : null;
+        if (override) {
+          return override + takTinue;
+        }
       }
 
-      // Fall back to saved eval marks from PTN
+      // Always show manual eval marks from PTN
       if (plyEval && (plyEval["?"] || plyEval["!"])) {
         return plyEval.text;
       }

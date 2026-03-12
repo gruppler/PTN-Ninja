@@ -558,7 +558,7 @@ export default {
     openGamesInNewTab: "Open Games in New Tab",
     removeEvalMarks: "Remove Evaluation Marks",
     saveEvalMarks: "Save Evaluation Marks",
-    showEvalMarks: "Show Evaluation Marks",
+    engineEvalMarks: "Engine Evaluation Marks",
     evalMarkThresholds: "Evaluation Mark Thresholds",
     thresholds: {
       brilliant: "Brilliant (!!)",

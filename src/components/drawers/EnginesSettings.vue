@@ -33,10 +33,10 @@
 
     <q-separator :dark="dark" />
 
-    <!-- Show Evaluation Marks -->
+    <!-- Engine Evaluation Marks -->
     <q-item @click="showEvalMarks = !showEvalMarks" clickable v-ripple>
       <q-item-section>
-        <q-item-label>{{ $t("analysis.showEvalMarks") }}</q-item-label>
+        <q-item-label>{{ $t("analysis.engineEvalMarks") }}</q-item-label>
       </q-item-section>
       <q-item-section side>
         <q-toggle v-model="showEvalMarks" :dark="dark" />
@@ -44,73 +44,69 @@
     </q-item>
 
     <!-- Evaluation Mark Thresholds -->
-    <smooth-reflow>
-      <template v-if="showEvalMarks">
-        <q-item-label :class="'text-' + textColor" header>{{
-          $t("analysis.evalMarkThresholds")
-        }}</q-item-label>
-        <q-input
-          type="number"
-          v-model.number="thresholdBrilliant"
-          :label="$t('analysis.thresholds.brilliant')"
-          :step="1"
-          :min="1"
-          suffix="%"
-          hide-bottom-space
-          :dark="dark"
-          filled
-          item-aligned
+    <q-item-label :class="'text-' + textColor" header>{{
+      $t("analysis.evalMarkThresholds")
+    }}</q-item-label>
+    <q-input
+      type="number"
+      v-model.number="thresholdBrilliant"
+      :label="$t('analysis.thresholds.brilliant')"
+      :step="1"
+      :min="1"
+      suffix="%"
+      hide-bottom-space
+      :dark="dark"
+      filled
+      item-aligned
+    />
+    <q-input
+      type="number"
+      v-model.number="thresholdGood"
+      :label="$t('analysis.thresholds.good')"
+      :step="1"
+      :min="1"
+      suffix="%"
+      hide-bottom-space
+      :dark="dark"
+      filled
+      item-aligned
+    />
+    <q-input
+      type="number"
+      v-model.number="thresholdBad"
+      :label="$t('analysis.thresholds.bad')"
+      :step="1"
+      :max="-1"
+      suffix="%"
+      hide-bottom-space
+      :dark="dark"
+      filled
+      item-aligned
+    />
+    <q-input
+      type="number"
+      v-model.number="thresholdBlunder"
+      :label="$t('analysis.thresholds.blunder')"
+      :step="1"
+      :max="-1"
+      suffix="%"
+      hide-bottom-space
+      :dark="dark"
+      filled
+      item-aligned
+    />
+    <q-item>
+      <q-item-section>
+        <q-btn
+          @click="resetThresholds"
+          :label="$t('Reset')"
+          :disable="isDefaultThresholds"
+          :flat="isDefaultThresholds"
+          color="primary"
+          dense
         />
-        <q-input
-          type="number"
-          v-model.number="thresholdGood"
-          :label="$t('analysis.thresholds.good')"
-          :step="1"
-          :min="1"
-          suffix="%"
-          hide-bottom-space
-          :dark="dark"
-          filled
-          item-aligned
-        />
-        <q-input
-          type="number"
-          v-model.number="thresholdBad"
-          :label="$t('analysis.thresholds.bad')"
-          :step="1"
-          :max="-1"
-          suffix="%"
-          hide-bottom-space
-          :dark="dark"
-          filled
-          item-aligned
-        />
-        <q-input
-          type="number"
-          v-model.number="thresholdBlunder"
-          :label="$t('analysis.thresholds.blunder')"
-          :step="1"
-          :max="-1"
-          suffix="%"
-          hide-bottom-space
-          :dark="dark"
-          filled
-          item-aligned
-        />
-        <q-item>
-          <q-item-section>
-            <q-btn
-              @click="resetThresholds"
-              :label="$t('Reset')"
-              :disable="isDefaultThresholds"
-              :flat="isDefaultThresholds"
-              color="primary"
-              dense
-            />
-          </q-item-section>
-        </q-item>
-      </template>
-    </smooth-reflow>
+      </q-item-section>
+    </q-item>
   </div>
 </template>
 
