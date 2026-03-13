@@ -805,7 +805,11 @@ export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
 };
 
 export const HIGHLIGHT_SQUARES = function ({ commit }, args) {
-  commit("HIGHLIGHT_SQUARES", args);
+  if (Array.isArray(args)) {
+    commit("HIGHLIGHT_SQUARES", { squares: args });
+  } else {
+    commit("HIGHLIGHT_SQUARES", args || {});
+  }
 };
 
 export const HOVER_SQUARE = function ({ commit }, args) {

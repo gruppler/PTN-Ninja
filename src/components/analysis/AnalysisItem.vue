@@ -267,6 +267,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    siblingSquares: {
+      type: Array,
+      default: null,
+    },
   },
   data() {
     return {
@@ -322,7 +326,10 @@ export default {
       if (!this.ply) {
         return;
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", {
+        squares: this.ply.squares,
+        secondarySquares: this.siblingSquares,
+      });
       if (this.evaluation !== null) {
         this.$store.dispatch("game/SET_EVAL", this.evaluation);
       }

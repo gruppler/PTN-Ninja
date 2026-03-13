@@ -268,11 +268,19 @@ export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
   }
 };
 
-export const HIGHLIGHT_SQUARES = (state, squares) => {
+export const HIGHLIGHT_SQUARES = (
+  state,
+  { squares, secondarySquares } = {}
+) => {
   if (squares && squares.length) {
     state.hlSquares = squares;
   } else {
     state.hlSquares = [];
+  }
+  if (secondarySquares && secondarySquares.length) {
+    state.hlSquaresSecondary = secondarySquares;
+  } else {
+    state.hlSquaresSecondary = [];
   }
   postMessage("HIGHLIGHT_SQUARES", squares);
 };

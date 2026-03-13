@@ -122,6 +122,7 @@
               :player2-number="$n(move.wins2, 'n0')"
               :player-numbers-tooltip="winsTooltip(move)"
               :done-count="isMovePlayed(move) ? 1 : 0"
+              :sibling-squares="dbMoveSiblingSquares(i)"
             />
             <AnalysisItemPlaceholder
               v-for="i in dbMovesFillerCount"
@@ -467,6 +468,19 @@ export default {
       if (this.showTopGamesSettings) {
         this.dbGamesExpanded = true;
       }
+    },
+    dbMoveSiblingSquares(index) {
+      const displayed = this.dbMoves.slice(
+        0,
+        this.dbSettings.maxSuggestedMoves
+      );
+      const squares = [];
+      for (let i = 0; i < displayed.length; i++) {
+        if (i !== index && displayed[i].ply) {
+          squares.push(...displayed[i].ply.squares);
+        }
+      }
+      return squares;
     },
     hashDBSettings(settings) {
       return hashObject(omit(settings, "maxSuggestedMoves"));

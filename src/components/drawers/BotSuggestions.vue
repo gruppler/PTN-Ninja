@@ -601,6 +601,7 @@
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
           :keep-highlighted="hoveredSuggestionIndex === i"
+          :sibling-squares="suggestionSiblingSquares(i)"
           expandable
           @mouseenter.native="hoveredSuggestionIndex = i"
           @mouseleave.native="hoveredSuggestionIndex = null"
@@ -1141,6 +1142,15 @@ export default {
         });
       }
     },
+    suggestionSiblingSquares(index) {
+      const squares = [];
+      for (let i = 0; i < this.suggestions.length; i++) {
+        if (i !== index && this.suggestions[i].ply) {
+          squares.push(...this.suggestions[i].ply.squares);
+        }
+      }
+      return squares;
+    },
     highlightPly(ply) {
       if (ply) {
         this.$store.dispatch("game/HIGHLIGHT_SQUARES", ply.squares);
@@ -1236,10 +1246,12 @@ export default {
         this.$nextTick(() => {
           const suggestion = newSuggestions[this.hoveredSuggestionIndex];
           if (suggestion?.ply) {
-            this.$store.dispatch(
-              "game/HIGHLIGHT_SQUARES",
-              suggestion.ply.squares
-            );
+            this.$store.dispatch("game/HIGHLIGHT_SQUARES", {
+              squares: suggestion.ply.squares,
+              secondarySquares: this.suggestionSiblingSquares(
+                this.hoveredSuggestionIndex
+              ),
+            });
             if ("evaluation" in suggestion) {
               this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
             }

@@ -11,6 +11,8 @@
       eog,
       flatwin,
       current,
+      suggestion,
+      'secondary-suggestion': secondarySuggestion,
       primary,
       selected,
       placed,
@@ -141,14 +143,27 @@ export default {
     current() {
       if (this.isHighlighting) {
         return false;
-      } else if (this.game.hlSquares.length) {
-        return this.game.hlSquares.includes(this.square.static.coord);
-      } else {
-        return (
-          this.game.position.ply &&
-          this.game.position.ply.squares.includes(this.square.static.coord)
-        );
       }
+      return (
+        this.game.position.ply &&
+        this.game.position.ply.squares.includes(this.square.static.coord)
+      );
+    },
+    suggestion() {
+      return (
+        !this.isHighlighting &&
+        this.game.hlSquares.length > 0 &&
+        this.game.hlSquares.includes(this.square.static.coord)
+      );
+    },
+    secondarySuggestion() {
+      return (
+        !this.isHighlighting &&
+        !this.suggestion &&
+        this.game.hlSquaresSecondary &&
+        this.game.hlSquaresSecondary.length > 0 &&
+        this.game.hlSquaresSecondary.includes(this.square.static.coord)
+      );
     },
     primary() {
       if (this.selected) {
@@ -156,15 +171,13 @@ export default {
           this.game.selected.squares.length > 1 &&
           this.game.selected.squares[0].static.coord === this.coord
         );
+      } else if (this.suggestion) {
+        return this.game.hlSquares[0] === this.square.static.coord;
       } else if (this.current) {
-        if (this.game.hlSquares.length) {
-          return this.game.hlSquares[0] === this.square.static.coord;
-        } else {
-          let squares = this.game.position.ply.squares;
-          const isDestination =
-            squares.length === 1 || squares[0] !== this.square.static.coord;
-          return this.game.position.plyIsDone ? isDestination : !isDestination;
-        }
+        let squares = this.game.position.ply.squares;
+        const isDestination =
+          squares.length === 1 || squares[0] !== this.square.static.coord;
+        return this.game.position.plyIsDone ? isDestination : !isDestination;
       }
       return false;
     },
@@ -444,6 +457,19 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     }
     .numbers span {
       background-color: var(--q-color-primary) !important;
+    }
+  }
+  .board-container.highlight-squares &.suggestion {
+    .hl.player {
+      opacity: 0.4;
+    }
+    &.primary .hl.player {
+      opacity: 0.8;
+    }
+  }
+  .board-container.highlight-squares &.secondary-suggestion {
+    .hl.player {
+      opacity: 0.4;
     }
   }
   .board-container.highlighter & .hl {

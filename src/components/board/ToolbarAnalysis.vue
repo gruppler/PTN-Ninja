@@ -200,6 +200,7 @@
             show-bot-name
             fixed-height
             :show-menu="viewingSavedResults"
+            :sibling-squares="toolbarSiblingSquares"
             class="toolbar-analysis"
             @wheel.native="scroll"
             @delete="deleteSavedSuggestion"
@@ -489,6 +490,15 @@ export default {
     suggestionsCount() {
       return this.suggestions.length;
     },
+    toolbarSiblingSquares() {
+      const squares = [];
+      for (let i = 0; i < this.suggestions.length; i++) {
+        if (i !== this.suggestionIndex && this.suggestions[i].ply) {
+          squares.push(...this.suggestions[i].ply.squares);
+        }
+      }
+      return squares;
+    },
     botSuggestion() {
       if (this.analysis) {
         if (
@@ -722,10 +732,10 @@ export default {
           suggestion.ply &&
           this.$store.state.game.hlSquares?.length
         ) {
-          this.$store.dispatch(
-            "game/HIGHLIGHT_SQUARES",
-            suggestion.ply.squares
-          );
+          this.$store.dispatch("game/HIGHLIGHT_SQUARES", {
+            squares: suggestion.ply.squares,
+            secondarySquares: this.toolbarSiblingSquares,
+          });
         }
         // Update eval bars with the selected suggestion's evaluation
         // (regardless of whether toolbar is collapsed)
