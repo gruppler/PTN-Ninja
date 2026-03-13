@@ -110,8 +110,8 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
     // Set preferSavedResults based on tab selection
     if (key === "textTab") {
       if (value === "notes") {
-        dispatch("analysis/SET", ["preferSavedResults", true], { root: true });
-      } else if (value === "analysis") {
+        dispatch("analysis/SYNC_SAVED_ENGINE_TO_CURRENT", null, { root: true });
+      } else if (value === "engines") {
         dispatch("analysis/SET", ["preferSavedResults", false], { root: true });
       }
     }

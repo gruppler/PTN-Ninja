@@ -163,20 +163,28 @@ export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
   }
 };
 
-export const SELECT_SAVED_ENGINE = ({ state, dispatch }, botName) => {
-  dispatch("SET", ["savedBotName", botName]);
+export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
   dispatch("SET", ["preferSavedResults", true]);
-  // Sync botID to match the saved engine's name
-  if (botName) {
-    const activeBots = state.activeBots || [];
-    const matchingBot = activeBots.find((id) => {
-      const bot = bots[id];
-      return bot && bot.label === botName;
-    });
-    if (matchingBot) {
-      dispatch("SET", ["botID", matchingBot]);
+  const names = getters.savedBotNames;
+  if (names.length === 0) return;
+  // Prefer the label of the currently selected engine if it has saved results
+  const bot = bots[state.botID];
+  const label = bot ? bot.label : null;
+  if (label && names.includes(label)) {
+    dispatch("SET", ["savedBotName", label]);
+  } else if (!names.includes(state.savedBotName)) {
+    // Current savedBotName is invalid, fall back
+    if (names.includes(null) && !label) {
+      dispatch("SET", ["savedBotName", null]);
+    } else {
+      dispatch("SET", ["savedBotName", names[0]]);
     }
   }
+};
+
+export const SELECT_SAVED_ENGINE = ({ dispatch }, botName) => {
+  dispatch("SET", ["savedBotName", botName]);
+  dispatch("SET", ["preferSavedResults", true]);
 };
 
 // Collapsed bots persistence
