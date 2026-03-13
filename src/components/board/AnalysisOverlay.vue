@@ -304,36 +304,30 @@ export default {
     },
 
     getGroupOffsets(count) {
-      switch (count) {
-        case 1:
-          return [{ dx: 0, dy: 0 }];
-        case 2:
-          return [
-            { dx: -0.17, dy: 0 },
-            { dx: 0.17, dy: 0 },
-          ];
-        case 3:
-          return [
-            { dx: -0.22, dy: 0 },
-            { dx: 0, dy: 0 },
-            { dx: 0.22, dy: 0 },
-          ];
-        default: {
-          const offsets = [];
-          const step = count > 1 ? 0.6 / (count - 1) : 0;
-          for (let i = 0; i < count; i++) {
-            offsets.push({ dx: -0.3 + step * i, dy: 0 });
-          }
-          return offsets;
-        }
+      if (count === 1) return [{ dx: 0, dy: 0 }];
+
+      const perRow = 2;
+      const spacing = 0.34;
+      const offsets = [];
+      const rows = Math.ceil(count / perRow);
+      const totalHeight = (rows - 1) * spacing;
+
+      for (let i = 0; i < count; i++) {
+        const row = Math.floor(i / perRow);
+        const itemsInRow = Math.min(perRow, count - row * perRow);
+        const col = i % perRow;
+        const rowWidth = (itemsInRow - 1) * spacing;
+        const dx = -rowWidth / 2 + col * spacing;
+        const dy = -totalHeight / 2 + row * spacing;
+        offsets.push({ dx, dy });
       }
+      return offsets;
     },
 
     getGroupScale(count) {
       if (count === 1) return 1;
-      if (count === 2) return 0.75;
-      if (count === 3) return 0.6;
-      return 0.5;
+      if (count <= 2) return 0.75;
+      return 0.6;
     },
 
     createStoneElement(move, center, offset, scale) {
@@ -563,16 +557,16 @@ export default {
     stroke-width: 0.02;
   }
   .arrow-p1 {
-    stroke: var(--q-color-player1road);
+    stroke: var(--q-color-player1);
   }
   .arrow-p2 {
-    stroke: var(--q-color-player2road);
+    stroke: var(--q-color-player2);
   }
   .head-p1 {
-    fill: var(--q-color-player1road);
+    fill: var(--q-color-player1);
   }
   .head-p2 {
-    fill: var(--q-color-player2road);
+    fill: var(--q-color-player2);
   }
   .drop-count {
     font-family: sans-serif;
