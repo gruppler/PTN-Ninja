@@ -313,7 +313,7 @@ import AnalysisItem from "../analysis/AnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import DatabaseGame from "../analysis/DatabaseGame";
 import DatabaseGamePlaceholder from "../analysis/DatabaseGamePlaceholder";
-import Ply from "../../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit } from "lodash";
 import hashObject from "object-hash";
@@ -371,9 +371,6 @@ export default {
     },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
-    },
-    allPlies() {
-      return this.$store.state.game.ptn.allPlies;
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
@@ -453,6 +450,20 @@ export default {
       const shown = Math.min(this.dbGames.length, this.maxTopGames);
       return Math.max(0, this.maxTopGames - shown);
     },
+    nextPlayedPly() {
+      const position = this.$store.state.game.position;
+      const branchPlies = this.$store.state.game.ptn.branchPlies;
+      if (
+        position.plyIndex === 0 &&
+        !position.plyIsDone &&
+        branchPlies.length > 0
+      ) {
+        return branchPlies[0];
+      }
+      if (!position.ply) return null;
+      const currentIndex = position.ply.index;
+      return branchPlies.find((p) => p.index === currentIndex + 1) || null;
+    },
   },
   methods: {
     toggleDBSettings() {
@@ -504,22 +515,11 @@ export default {
     },
 
     isMovePlayed(move) {
-      // Check if this move was actually played in the current game
-      const position = this.$store.state.game.position;
-      if (!position || !position.boardPly) {
-        return false;
-      }
-
-      // Get the next ply in the current game
-      const nextPlyIndex = position.plyIndex + 1;
-      const nextPly = this.allPlies.find((ply) => ply.index === nextPlyIndex);
-
-      if (!nextPly) {
-        return false;
-      }
-
-      // Compare the move text to see if they match
-      return move.ply.text === nextPly.text;
+      // Compare the move to the next ply in the current line
+      // Uses the computed nextPlayedPly for reactivity on branch changes
+      return (
+        this.nextPlayedPly !== null && pliesEqual(move.ply, this.nextPlayedPly)
+      );
     },
 
     /** Queries `tps` position.

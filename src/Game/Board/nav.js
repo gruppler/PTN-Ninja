@@ -20,6 +20,7 @@ export default class BoardNavigation {
       return this.goToPly(ply.id, this.plyIsDone);
     } else {
       this.updatePTNOutput();
+      this.updatePositionOutput();
       return true;
     }
   }
