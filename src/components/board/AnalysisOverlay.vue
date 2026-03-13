@@ -143,9 +143,25 @@ export default {
       const validMoves = this.rawMoves.filter((m) => m && m.ply);
       if (validMoves.length === 0) return [];
 
-      const strengths = this.computeStrengths(validMoves);
+      // Deduplicate by ply text, keeping the superior result
+      const seen = {};
+      const deduped = [];
+      for (const m of validMoves) {
+        const key = m.ply.text;
+        if (key in seen) {
+          const existing = deduped[seen[key]];
+          if (this.isSuperior(m, existing)) {
+            deduped[seen[key]] = m;
+          }
+        } else {
+          seen[key] = deduped.length;
+          deduped.push(m);
+        }
+      }
 
-      return validMoves.map((m, i) => ({
+      const strengths = this.computeStrengths(deduped);
+
+      return deduped.map((m, i) => ({
         ply: m.ply,
         strength: strengths[i],
         isPlacement: !m.ply.movement,
@@ -176,7 +192,7 @@ export default {
           const group = placementGroups[coord];
           const center = this.coordToSvg(coord);
           const offsets = this.getGroupOffsets(group.length);
-          const scale = this.getGroupScale(group.length);
+          const scale = 0.75;
 
           group.forEach((m, i) => {
             elements.push(
@@ -225,6 +241,31 @@ export default {
     },
   },
   methods: {
+    isSuperior(candidate, existing) {
+      const cNodes = candidate.nodes != null ? candidate.nodes : null;
+      const eNodes = existing.nodes != null ? existing.nodes : null;
+      const cDepth = candidate.depth != null ? candidate.depth : null;
+      const eDepth = existing.depth != null ? existing.depth : null;
+
+      // If we can compare by nodes or depth, use that
+      if (cNodes !== null && eNodes !== null && cNodes !== eNodes) {
+        return cNodes > eNodes;
+      }
+      if (cDepth !== null && eDepth !== null && cDepth !== eDepth) {
+        return cDepth > eDepth;
+      }
+
+      // Fall back to higher absolute eval
+      const cEval =
+        candidate.evaluation != null ? Math.abs(candidate.evaluation) : null;
+      const eEval =
+        existing.evaluation != null ? Math.abs(existing.evaluation) : null;
+      if (cEval !== null && eEval !== null) {
+        return cEval > eEval;
+      }
+      return false;
+    },
+
     coordToSvg(coord) {
       const bx = "abcdefgh".indexOf(coord[0]);
       const by = parseInt(coord.slice(1), 10) - 1;
@@ -322,12 +363,6 @@ export default {
         offsets.push({ dx, dy });
       }
       return offsets;
-    },
-
-    getGroupScale(count) {
-      if (count === 1) return 1;
-      if (count <= 2) return 0.75;
-      return 0.6;
     },
 
     createStoneElement(move, center, offset, scale) {
@@ -539,34 +574,34 @@ export default {
   .stone-p1 {
     fill: var(--q-color-player1flat);
     stroke: var(--q-color-player1border);
-    stroke-width: 0.02;
+    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .stone-p2 {
     fill: var(--q-color-player2flat);
     stroke: var(--q-color-player2border);
-    stroke-width: 0.02;
+    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .special-p1 {
     fill: var(--q-color-player1special);
     stroke: var(--q-color-player1border);
-    stroke-width: 0.02;
+    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .special-p2 {
     fill: var(--q-color-player2special);
     stroke: var(--q-color-player2border);
-    stroke-width: 0.02;
+    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .arrow-p1 {
-    stroke: var(--q-color-player1);
+    stroke: var(--q-color-player1flat);
   }
   .arrow-p2 {
-    stroke: var(--q-color-player2);
+    stroke: var(--q-color-player2flat);
   }
   .head-p1 {
-    fill: var(--q-color-player1);
+    fill: var(--q-color-player1flat);
   }
   .head-p2 {
-    fill: var(--q-color-player2);
+    fill: var(--q-color-player2flat);
   }
   .drop-count {
     font-family: sans-serif;
