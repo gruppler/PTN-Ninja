@@ -93,6 +93,7 @@
             :id="id"
           />
         </div>
+        <AnalysisOverlay />
         <q-resize-observer class="absolute-fit" @resize="resizeSquare" />
       </div>
 
@@ -120,6 +121,7 @@
 </template>
 
 <script>
+import AnalysisOverlay from "./AnalysisOverlay";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
@@ -133,6 +135,7 @@ const ROTATE_SENSITIVITY = 3;
 export default {
   name: "Board",
   components: {
+    AnalysisOverlay,
     Square,
     Piece,
     TurnIndicator,

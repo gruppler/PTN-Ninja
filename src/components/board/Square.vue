@@ -12,7 +12,6 @@
       flatwin,
       current,
       suggestion,
-      'secondary-suggestion': secondarySuggestion,
       primary,
       selected,
       placed,
@@ -154,15 +153,6 @@ export default {
         !this.isHighlighting &&
         this.game.hlSquares.length > 0 &&
         this.game.hlSquares.includes(this.square.static.coord)
-      );
-    },
-    secondarySuggestion() {
-      return (
-        !this.isHighlighting &&
-        !this.suggestion &&
-        this.game.hlSquaresSecondary &&
-        this.game.hlSquaresSecondary.length > 0 &&
-        this.game.hlSquaresSecondary.includes(this.square.static.coord)
       );
     },
     primary() {
@@ -465,11 +455,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     }
     &.primary .hl.player {
       opacity: 0.8;
-    }
-  }
-  .board-container.highlight-squares &.secondary-suggestion {
-    .hl.player {
-      opacity: 0.4;
     }
   }
   .board-container.highlighter & .hl {

@@ -228,6 +228,10 @@ export const SET_SAVED_BOT_COLLAPSED = (state, { index, collapsed }) => {
   Vue.set(state.collapsedSavedBots, index, collapsed);
 };
 
+export const SET_OPENING_MOVES = (state, moves) => {
+  state.currentOpeningMoves = moves || [];
+};
+
 // Update opening explorer stats for display in the tab bar
 export const SET_OPENING_STATS = (
   state,

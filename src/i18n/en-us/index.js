@@ -312,6 +312,7 @@ export default {
   "Vertical Layout": "Vertical Layout",
   "Vertical Layout Auto": "Auto Layout",
   "View Game Info": "View Game Info",
+  "Visualize Suggestions": "Visualize Suggestions",
   Walls: "Walls",
   Width: "Width",
   yesterday: "yesterday",

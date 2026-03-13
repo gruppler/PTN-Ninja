@@ -113,9 +113,6 @@
                   :disable="isDisabled('animateBoard')"
                 />
               </q-item-section>
-              <hint v-if="hotkeysFormatted.UI.animateBoard">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.animateBoard }}
-              </hint>
             </q-item>
 
             <q-item
@@ -292,6 +289,47 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('highlightSquares')"
+              tag="label"
+              :disable="isDisabled('highlightSquares')"
+              v-ripple="!isDisabled('highlightSquares')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="highlightSquares"
+                  :disable="isDisabled('highlightSquares')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.highlightSquares">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.highlightSquares }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('showAnalysisBoard')"
+              tag="label"
+              :disable="isDisabled('showAnalysisBoard')"
+              v-ripple="!isDisabled('showAnalysisBoard')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showAnalysisBoard"
+                  :disable="isDisabled('showAnalysisBoard')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.showAnalysisBoard">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.showAnalysisBoard }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('showEval')"
               tag="label"
               :disable="isDisabled('showEval')"
@@ -326,9 +364,6 @@
                   :disable="!showEval || isDisabled('boardEvalBar')"
                 />
               </q-item-section>
-              <hint v-if="hotkeys.UI.boardEvalBar">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.boardEvalBar }}
-              </hint>
             </q-item>
 
             <q-item
@@ -368,26 +403,6 @@
               </q-item-section>
               <hint v-if="hotkeys.UI.evalText">
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.evalText }}
-              </hint>
-            </q-item>
-
-            <q-item
-              v-if="!isEmbedded || !isDisabled('highlightSquares')"
-              tag="label"
-              :disable="isDisabled('highlightSquares')"
-              v-ripple="!isDisabled('highlightSquares')"
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="highlightSquares"
-                  :disable="isDisabled('highlightSquares')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.highlightSquares">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.highlightSquares }}
               </hint>
             </q-item>
 
@@ -572,6 +587,7 @@ const props = [
   "flatCounts",
   "highlightSquares",
   "evalText",
+  "showAnalysisBoard",
   "moveNumber",
   "orthographic",
   "perspective",

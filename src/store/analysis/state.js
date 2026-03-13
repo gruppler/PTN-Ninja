@@ -48,6 +48,7 @@ const defaultState = {
     minDate: null,
     maxDate: null,
   },
+  currentOpeningMoves: [],
   openingPositions: {},
   openingStats: {
     totalGames: 0,

@@ -87,7 +87,6 @@
             show-menu
             :fixed-height="!showFullPVs"
             :show-continuation="showContinuation"
-            :sibling-squares="savedSiblingSquares(i)"
             expandable
             @delete="deleteSavedSuggestion(suggestion)"
           />
@@ -277,15 +276,6 @@ export default {
     },
   },
   methods: {
-    savedSiblingSquares(index) {
-      const squares = [];
-      for (let i = 0; i < this.savedSuggestions.length; i++) {
-        if (i !== index && this.savedSuggestions[i].ply) {
-          squares.push(...this.savedSuggestions[i].ply.squares);
-        }
-      }
-      return squares;
-    },
     selectSavedBot() {
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", this.botName);
     },

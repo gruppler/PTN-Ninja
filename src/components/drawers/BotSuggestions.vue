@@ -487,8 +487,6 @@
           <div v-else-if="nextPlayedPly" class="full-width relative-position">
             <q-btn
               @click.stop="goToNextPlayedPly"
-              @mouseenter="highlightPly(nextPlayedPly)"
-              @mouseleave="unhighlightPly"
               :data-tps-after="nextPlayedPly.tpsAfter"
               :data-ply-text="nextPlayedPly.text"
               class="absolute-left q-py-none"
@@ -601,7 +599,6 @@
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
           :keep-highlighted="hoveredSuggestionIndex === i"
-          :sibling-squares="suggestionSiblingSquares(i)"
           expandable
           @mouseenter.native="hoveredSuggestionIndex = i"
           @mouseleave.native="hoveredSuggestionIndex = null"
@@ -1142,23 +1139,6 @@ export default {
         });
       }
     },
-    suggestionSiblingSquares(index) {
-      const squares = [];
-      for (let i = 0; i < this.suggestions.length; i++) {
-        if (i !== index && this.suggestions[i].ply) {
-          squares.push(...this.suggestions[i].ply.squares);
-        }
-      }
-      return squares;
-    },
-    highlightPly(ply) {
-      if (ply) {
-        this.$store.dispatch("game/HIGHLIGHT_SQUARES", ply.squares);
-      }
-    },
-    unhighlightPly() {
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-    },
     analyzePosition() {
       try {
         if (!this.botState.isAnalyzingPosition) {
@@ -1246,12 +1226,10 @@ export default {
         this.$nextTick(() => {
           const suggestion = newSuggestions[this.hoveredSuggestionIndex];
           if (suggestion?.ply) {
-            this.$store.dispatch("game/HIGHLIGHT_SQUARES", {
-              squares: suggestion.ply.squares,
-              secondarySquares: this.suggestionSiblingSquares(
-                this.hoveredSuggestionIndex
-              ),
-            });
+            this.$store.dispatch(
+              "game/HIGHLIGHT_SQUARES",
+              suggestion.ply.squares
+            );
             if ("evaluation" in suggestion) {
               this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
             }

@@ -267,10 +267,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    siblingSquares: {
-      type: Array,
-      default: null,
-    },
   },
   data() {
     return {
@@ -326,10 +322,7 @@ export default {
       if (!this.ply) {
         return;
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", {
-        squares: this.ply.squares,
-        secondarySquares: this.siblingSquares,
-      });
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
       if (this.evaluation !== null) {
         this.$store.dispatch("game/SET_EVAL", this.evaluation);
       }
@@ -408,6 +401,11 @@ export default {
     },
     tps() {
       this.expanded = false;
+    },
+    keepHighlighted(val) {
+      if (!val) {
+        this.unhighlight();
+      }
     },
   },
   mounted() {

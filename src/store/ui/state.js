@@ -62,6 +62,7 @@ const defaultState = {
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: true,
+  showAnalysisBoard: true,
   showBoardPrefsBtn: false,
   showBoardTransformBtn: false,
   showControls: true,

@@ -16,7 +16,6 @@ export default {
   highlighterEnabled: false,
   highlighterSquares: {},
   hlSquares: [],
-  hlSquaresSecondary: [],
   hoveredSquare: null,
   evaluation: null,
   analyzedPositions: {},
