@@ -397,6 +397,14 @@ export const EXPORT_PNG = function ({ state }) {
     options.highlighter = state.highlighterSquares;
   }
 
+  // Analysis suggestions
+  if (options.showAnalysisBoard) {
+    const suggestions = this.getters["analysis/pngSuggestions"];
+    if (suggestions) {
+      options.suggestions = suggestions;
+    }
+  }
+
   const ply = game.position.ply;
   if (ply) {
     if (game.position.plyIsDone) {

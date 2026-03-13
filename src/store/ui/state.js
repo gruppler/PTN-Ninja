@@ -140,6 +140,7 @@ export const imgUIOptions = [
   "flatCounts",
   "highlightSquares",
   "moveNumber",
+  "showAnalysisBoard",
   "showRoads",
   "stackCounts",
   "themeID",

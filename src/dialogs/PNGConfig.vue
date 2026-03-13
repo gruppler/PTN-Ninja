@@ -212,6 +212,15 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.showAnalysisBoard" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -303,6 +312,13 @@ export default {
         Object.keys(this.$store.state.game.highlighterSquares).length
       ) {
         config.highlighter = this.$store.state.game.highlighterSquares;
+      }
+
+      if (config.showAnalysisBoard) {
+        const suggestions = this.$store.getters["analysis/pngSuggestions"];
+        if (suggestions) {
+          config.suggestions = suggestions;
+        }
       }
 
       const ply = this.game.position.ply;

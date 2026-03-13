@@ -103,6 +103,53 @@ export const savedBotNames = (state, getters, rootState) => {
   return result;
 };
 
+// Returns the current analysis suggestions serialized for the PNG renderer.
+// Mirrors the logic in AnalysisOverlay.rawMoves but serializes plies to PTN strings.
+export const pngSuggestions = (state, getters, rootState, rootGetters) => {
+  const tps = rootState.game.position.tps;
+  let rawMoves = [];
+
+  switch (rootState.ui.textTab) {
+    case "openings":
+      rawMoves = state.currentOpeningMoves || [];
+      break;
+    case "engines": {
+      const botID = state.botID;
+      if (!botID) break;
+      const positions = state.botPositions[botID];
+      rawMoves = positions ? positions[tps] || [] : [];
+      break;
+    }
+    case "notes": {
+      const getSuggestions = rootGetters["game/suggestions"];
+      if (!getSuggestions) break;
+      const allSuggestions = getSuggestions(tps);
+      if (!allSuggestions || allSuggestions.length === 0) break;
+      const savedBotName = state.savedBotName;
+      if (savedBotName === null) {
+        rawMoves = allSuggestions.filter((s) => !s.botName);
+      } else {
+        rawMoves = allSuggestions.filter((s) => s.botName === savedBotName);
+      }
+      break;
+    }
+  }
+
+  const validMoves = rawMoves.filter((m) => m && m.ply);
+  if (validMoves.length === 0) return null;
+
+  return validMoves.map((m) => ({
+    ptn: m.ply.text || m.ply.ptn,
+    evaluation: m.evaluation != null ? m.evaluation : null,
+    depth: m.depth != null ? m.depth : null,
+    nodes: m.nodes != null ? m.nodes : null,
+    totalGames: m.totalGames != null ? m.totalGames : null,
+    wins1: m.wins1 != null ? m.wins1 : null,
+    wins2: m.wins2 != null ? m.wins2 : null,
+    draws: m.draws != null ? m.draws : null,
+  }));
+};
+
 // Returns a function that calculates eval mark for a ply given current bot positions
 // This allows the component to call it with the ply and get reactive updates
 // For saved results: returns the eval mark stored in the PTN comment (static)
