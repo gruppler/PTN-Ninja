@@ -122,6 +122,12 @@ export const COMPUTED = {
       player2border: computeStoneBorder,
     },
   },
+  player1flat: {
+    player1FlatDark: isDark,
+  },
+  player2flat: {
+    player2FlatDark: isDark,
+  },
 };
 
 export const computeFrom = (
@@ -181,6 +187,8 @@ export const boardOnly = (theme) => {
     "colors",
     "player1Dark",
     "player2Dark",
+    "player1FlatDark",
+    "player2FlatDark",
     "secondaryDark",
     "board1Dark",
     "board2Dark",

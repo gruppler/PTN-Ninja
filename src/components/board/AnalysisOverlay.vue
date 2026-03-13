@@ -608,13 +608,13 @@ export default {
   }
   .drop-count-p1 {
     fill: var(--q-color-textDark);
-    body.player1Dark & {
+    body.player1FlatDark & {
       fill: var(--q-color-textLight);
     }
   }
   .drop-count-p2 {
     fill: var(--q-color-textDark);
-    body.player2Dark & {
+    body.player2FlatDark & {
       fill: var(--q-color-textLight);
     }
   }
