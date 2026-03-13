@@ -18,6 +18,7 @@
           :rx="el.rx"
           :class="el.classes"
           :opacity="el.opacity"
+          :stroke-width="el.strokeWidth"
         />
         <circle
           v-if="el.shape === 'cap'"
@@ -27,6 +28,7 @@
           :r="el.r"
           :class="el.classes"
           :opacity="el.opacity"
+          :stroke-width="el.strokeWidth"
         />
         <rect
           v-if="el.shape === 'wall'"
@@ -39,6 +41,7 @@
           :class="el.classes"
           :transform="el.transform"
           :opacity="el.opacity"
+          :stroke-width="el.strokeWidth"
         />
         <g v-if="el.shape === 'arrow'" :key="'v' + i" :opacity="el.opacity">
           <line
@@ -109,6 +112,11 @@ export default {
     },
     transform() {
       return this.$store.state.ui.boardTransform;
+    },
+    pieceBorderWidth() {
+      const theme = this.$store.state.ui.theme;
+      const v = theme && theme.vars && theme.vars["piece-border-width"];
+      return (v != null ? Number(v) : 1) * 0.013 * 0.5;
     },
     rawMoves() {
       if (!this.active) return [];
@@ -370,6 +378,8 @@ export default {
       const cy = center.y + offset.dy;
       const p = move.color;
 
+      const sw = this.pieceBorderWidth;
+
       if (move.stoneType === "cap") {
         const r = 0.17 * scale;
         return {
@@ -379,6 +389,7 @@ export default {
           r,
           classes: "special-p" + p,
           opacity: move.strength,
+          strokeWidth: sw,
         };
       } else if (move.stoneType === "wall") {
         const w = 0.1 * scale;
@@ -393,6 +404,7 @@ export default {
           classes: "special-p" + p,
           transform: `rotate(${p === 1 ? -45 : 45}, ${cx}, ${cy})`,
           opacity: move.strength,
+          strokeWidth: sw,
         };
       } else {
         const sz = 0.35 * scale;
@@ -405,6 +417,7 @@ export default {
           rx: sz * 0.12,
           classes: "stone-p" + p,
           opacity: move.strength,
+          strokeWidth: sw,
         };
       }
     },
@@ -574,22 +587,18 @@ export default {
   .stone-p1 {
     fill: var(--q-color-player1flat);
     stroke: var(--q-color-player1border);
-    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .stone-p2 {
     fill: var(--q-color-player2flat);
     stroke: var(--q-color-player2border);
-    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .special-p1 {
     fill: var(--q-color-player1special);
     stroke: var(--q-color-player1border);
-    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .special-p2 {
     fill: var(--q-color-player2special);
     stroke: var(--q-color-player2border);
-    stroke-width: calc(var(--piece-border-width) * 0.013 * 0.5);
   }
   .arrow-p1 {
     stroke: var(--q-color-player1flat);
