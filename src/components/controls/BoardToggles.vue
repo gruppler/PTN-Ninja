@@ -119,6 +119,59 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayout')"
+              tag="label"
+              :disable="!unplayedPieces || isDisabled('verticalLayout')"
+              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayout"
+                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayout">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
+              tag="label"
+              :disable="
+                !unplayedPieces ||
+                !verticalLayout ||
+                isDisabled('verticalLayoutAuto')
+              "
+              v-ripple="
+                unplayedPieces &&
+                verticalLayout &&
+                !isDisabled('verticalLayoutAuto')
+              "
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayoutAuto"
+                  :disable="
+                    !unplayedPieces ||
+                    !verticalLayout ||
+                    isDisabled('verticalLayoutAuto')
+                  "
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayoutAuto">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('axisLabels')"
               tag="label"
               :disable="isDisabled('axisLabels')"
@@ -355,59 +408,6 @@
               </q-item-section>
               <hint v-if="hotkeys.UI.unplayedPieces">
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.unplayedPieces }}
-              </hint>
-            </q-item>
-
-            <q-item
-              v-if="!isEmbedded || !isDisabled('verticalLayout')"
-              tag="label"
-              :disable="!unplayedPieces || isDisabled('verticalLayout')"
-              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="verticalLayout"
-                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.verticalLayout">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
-              </hint>
-            </q-item>
-
-            <q-item
-              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
-              tag="label"
-              :disable="
-                !unplayedPieces ||
-                !verticalLayout ||
-                isDisabled('verticalLayoutAuto')
-              "
-              v-ripple="
-                unplayedPieces &&
-                verticalLayout &&
-                !isDisabled('verticalLayoutAuto')
-              "
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="verticalLayoutAuto"
-                  :disable="
-                    !unplayedPieces ||
-                    !verticalLayout ||
-                    isDisabled('verticalLayoutAuto')
-                  "
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.verticalLayoutAuto">
-                {{ $t("Hotkey") }}:
-                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
               </hint>
             </q-item>
           </q-list>
