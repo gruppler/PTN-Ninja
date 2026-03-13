@@ -462,8 +462,6 @@
             <q-btn
               v-if="botState.analyzingPly"
               @click.stop="goToAnalysisPly"
-              @mouseenter="highlightPly(botState.analyzingPly)"
-              @mouseleave="unhighlightPly"
               :data-tps-after="botState.analyzingPly.tpsAfter"
               :data-ply-text="botState.analyzingPly.text"
               class="absolute-left q-py-none"
