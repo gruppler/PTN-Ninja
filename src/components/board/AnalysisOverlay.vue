@@ -211,19 +211,14 @@ export default {
         layers.push({ elements, style: {} });
       }
 
-      // Arrow layers (each arrow gets its own Z based on tallest stack)
-      const movementGroups = {};
-      movements.forEach((m) => {
-        const key = m.ply.column + "" + m.ply.row + m.ply.direction;
-        if (!movementGroups[key]) movementGroups[key] = [];
-        movementGroups[key].push(m);
-      });
+      // Group arrows that share any edge in the same direction
+      const arrowGroupMap = this.groupOverlappingArrows(movements);
 
       movements.forEach((m) => {
-        const key = m.ply.column + "" + m.ply.row + m.ply.direction;
-        const group = movementGroups[key];
-        const index = group.indexOf(m);
-        const el = this.createArrowElement(m, index, group.length);
+        const groupInfo = arrowGroupMap.get(m);
+        const index = groupInfo ? groupInfo.index : 0;
+        const groupSize = groupInfo ? groupInfo.groupSize : 1;
+        const el = this.createArrowElement(m, index, groupSize);
         if (!el) return;
 
         let style = {};
@@ -306,50 +301,104 @@ export default {
     },
 
     computeStrengths(moves) {
-      if (moves.length === 0) return [];
-      if (moves.length === 1) return [0.9];
+      const DEFAULT_OPACITY = 1.0;
+      const MIN_OPACITY = 0.4;
 
-      if (this.textTab === "openings") {
-        const winRates = moves.map((m) => {
-          if (!m.totalGames || m.totalGames === 0) return 0.5;
+      if (moves.length === 0) return [];
+      if (moves.length === 1) return [DEFAULT_OPACITY];
+
+      // Convert to subjective eval on 0-200 scale where higher = better for current player.
+      // Engine eval: white → 100 + eval, black → 100 - eval
+      // Openings win rate (0-1 from current player's POV) → winRate * 200
+      const isOpenings = this.textTab === "openings";
+
+      const subjEvals = moves.map((m) => {
+        if (isOpenings) {
+          if (!m.totalGames || m.totalGames === 0) return 100;
           const wins = this.turn === 1 ? m.wins1 : m.wins2;
           const draws = m.draws || 0;
-          return (wins + draws * 0.5) / m.totalGames;
-        });
-        return this.normalizeStrengths(winRates);
-      } else {
-        const evals = moves.map((m) => {
+          return ((wins + draws * 0.5) / m.totalGames) * 200;
+        } else {
           if (m.evaluation === null || m.evaluation === undefined) return null;
-          return this.turn === 1 ? m.evaluation : -m.evaluation;
-        });
-
-        const validEvals = evals.filter((e) => e !== null);
-        if (validEvals.length === 0) {
-          return moves.map(() => 0.7);
+          return this.turn === 1 ? 100 + m.evaluation : 100 - m.evaluation;
         }
+      });
 
-        const sorted = [...validEvals].sort((a, b) => a - b);
-        const median = sorted[Math.floor(sorted.length / 2)];
-        const filled = evals.map((e) => (e !== null ? e : median));
-        return this.normalizeStrengths(filled);
+      // Top suggestion (index 0) always gets DEFAULT_OPACITY.
+      // Others scale relative to the top suggestion's subjective eval.
+      const topEval = subjEvals[0];
+      if (topEval === null || topEval === 0) {
+        return moves.map(() => DEFAULT_OPACITY);
       }
+
+      return subjEvals.map((e, i) => {
+        if (i === 0) return DEFAULT_OPACITY;
+        if (e === null) return MIN_OPACITY;
+        return Math.max(MIN_OPACITY, DEFAULT_OPACITY * (e / topEval));
+      });
     },
 
-    normalizeStrengths(values) {
-      const MIN_OPACITY = 0.3;
-      const MAX_OPACITY = 0.9;
+    groupOverlappingArrows(movements) {
+      const result = new Map();
 
-      const max = Math.max(...values);
-      const min = Math.min(...values);
-      const range = max - min;
-
-      if (range === 0) {
-        return values.map(() => (MIN_OPACITY + MAX_OPACITY) / 2);
+      function getEdges(ply) {
+        const sqs = ply.squares || [];
+        const edges = new Set();
+        for (let i = 0; i < sqs.length - 1; i++) {
+          const a = sqs[i];
+          const b = sqs[i + 1];
+          edges.add(a < b ? a + "-" + b : b + "-" + a);
+        }
+        return edges;
       }
 
-      return values.map(
-        (v) => MIN_OPACITY + ((MAX_OPACITY - MIN_OPACITY) * (v - min)) / range
-      );
+      const byAxis = {};
+      movements.forEach((m) => {
+        const dir = m.ply.direction || "";
+        const axis = dir === ">" || dir === "<" ? "h" : "v";
+        if (!byAxis[axis]) byAxis[axis] = [];
+        byAxis[axis].push(m);
+      });
+
+      for (const axis in byAxis) {
+        const axisArrows = byAxis[axis];
+        const edgeSets = axisArrows.map((m) => getEdges(m.ply));
+
+        const edgeToArrows = {};
+        axisArrows.forEach((_, i) => {
+          for (const e of edgeSets[i]) {
+            if (!edgeToArrows[e]) edgeToArrows[e] = [];
+            edgeToArrows[e].push(i);
+          }
+        });
+
+        // Greedy lane assignment
+        const lane = new Array(axisArrows.length).fill(-1);
+        for (let i = 0; i < axisArrows.length; i++) {
+          const usedLanes = new Set();
+          for (const e of edgeSets[i]) {
+            for (const j of edgeToArrows[e]) {
+              if (j !== i && lane[j] >= 0) usedLanes.add(lane[j]);
+            }
+          }
+          let l = 0;
+          while (usedLanes.has(l)) l++;
+          lane[i] = l;
+        }
+
+        for (let i = 0; i < axisArrows.length; i++) {
+          let maxOnEdge = 1;
+          for (const e of edgeSets[i]) {
+            maxOnEdge = Math.max(maxOnEdge, edgeToArrows[e].length);
+          }
+          result.set(axisArrows[i], {
+            index: lane[i],
+            groupSize: maxOnEdge,
+          });
+        }
+      }
+
+      return result;
     },
 
     getGroupOffsets(count) {
