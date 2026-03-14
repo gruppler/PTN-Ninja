@@ -66,6 +66,16 @@
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <div class="row no-wrap q-gutter-x-sm">
+            <q-btn
+              @click.stop="toggleBotSettings"
+              icon="settings"
+              :color="showBotSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            >
+              <hint>{{ $t("Settings") }}</hint>
+            </q-btn>
             <q-btn @click.stop icon="menu_vertical" dense round flat>
               <q-menu
                 transition-show="none"
@@ -113,16 +123,6 @@
                   </q-item>
                 </q-list>
               </q-menu>
-            </q-btn>
-            <q-btn
-              @click.stop="toggleBotSettings"
-              icon="settings"
-              :color="showBotSettings ? 'primary' : ''"
-              dense
-              round
-              flat
-            >
-              <hint>{{ $t("Settings") }}</hint>
             </q-btn>
           </div>
         </q-item-section>

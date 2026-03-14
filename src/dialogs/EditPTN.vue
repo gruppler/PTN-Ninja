@@ -7,7 +7,7 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="edit">{{
+      <dialog-header icon="edit_ptn">{{
         $t(isNewGame ? "New Game" : "Edit PTN")
       }}</dialog-header>
     </template>

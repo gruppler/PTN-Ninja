@@ -91,7 +91,7 @@
 
       <q-btn
         @click="$router.push({ name: 'edit' })"
-        icon="edit"
+        icon="edit_ptn"
         :disabled="!isLocal"
       >
         <hint>{{ $t("Edit PTN") }}</hint>
