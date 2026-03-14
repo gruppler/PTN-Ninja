@@ -436,7 +436,8 @@ export default {
     }
 
     &.unplayed {
-      .board-container:not(.show-unplayed-pieces) & {
+      .board-container:not(.show-unplayed-pieces) &,
+      .board-container.highlighter & {
         pointer-events: none;
         opacity: 0;
       }

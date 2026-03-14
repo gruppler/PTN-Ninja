@@ -96,7 +96,20 @@ export const SET_GAME = function (state, game) {
   state.selected = game.board.output.selected;
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
-  state.highlighterSquares = game.highlighterSquares;
+  // Load per-position highlights from LocalStorage
+  try {
+    const saved = localStorage.getItem("highlighterPositions");
+    if (saved) {
+      state.highlighterPositions = JSON.parse(saved);
+    }
+  } catch (e) {
+    state.highlighterPositions = {};
+  }
+  const tps = game.board ? game.board.getTPS() : null;
+  state.highlighterSquares = (tps && state.highlighterPositions[tps]) || {};
+  if (game) {
+    game.highlighterSquares = state.highlighterSquares;
+  }
   state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 };
 
@@ -115,7 +128,6 @@ export const ADD_GAME = (state, game) => {
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
     highlighterEnabled: game.highlighterEnabled,
-    highlighterSquares: game.highlighterSquares,
   });
 };
 
@@ -137,7 +149,6 @@ export const ADD_GAMES = (state, { games, index }) => {
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
       highlighterEnabled: game.highlighterEnabled,
-      highlighterSquares: game.highlighterSquares,
     }))
   );
 };
@@ -261,10 +272,34 @@ export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
 
 export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
   state.highlighterSquares = squares || {};
-  state.list[0].highlighterSquares = state.highlighterSquares;
   const game = Vue.prototype.$game;
   if (game) {
     game.highlighterSquares = state.highlighterSquares;
+  }
+  // Save to per-position map
+  const tps = state.position && state.position.tps;
+  if (tps) {
+    if (Object.keys(state.highlighterSquares).length) {
+      state.highlighterPositions[tps] = state.highlighterSquares;
+    } else {
+      delete state.highlighterPositions[tps];
+    }
+  }
+};
+
+export const SWAP_HIGHLIGHTER_POSITION = (state, { oldTPS, newTPS }) => {
+  // Save current highlights for old position
+  if (oldTPS && Object.keys(state.highlighterSquares).length) {
+    state.highlighterPositions[oldTPS] = state.highlighterSquares;
+  } else if (oldTPS) {
+    delete state.highlighterPositions[oldTPS];
+  }
+  // Load highlights for new position
+  const squares = (newTPS && state.highlighterPositions[newTPS]) || {};
+  state.highlighterSquares = squares;
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterSquares = squares;
   }
 };
 

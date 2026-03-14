@@ -237,6 +237,7 @@ export default {
   Round: "Round",
   Save: "Save",
   "Save All": "Save All",
+  "Save to Notes": "Save to Notes",
   "Save Current Position": "Save Current Position",
   Saved: "Saved",
   "Saved Results": "Saved Results",

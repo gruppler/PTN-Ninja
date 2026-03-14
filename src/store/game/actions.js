@@ -53,10 +53,6 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
   if (game.editingTPS !== undefined) {
     newGame.editingTPS = game.editingTPS;
   }
-  if (game.highlighterSquares !== undefined) {
-    newGame.highlighterSquares = game.highlighterSquares;
-  }
-
   try {
     Loading.show();
     await gamesDB.add("games", newGame);
@@ -667,7 +663,6 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         ptnUI: this.state.game.ptnUI,
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
-        highlighterSquares: game.highlighterSquares,
         history: game.history,
         historyIndex: game.historyIndex,
         lastSeen: new Date(),
@@ -807,15 +802,51 @@ export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
   }
 };
 
-export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
+export const SET_HIGHLIGHTER_SQUARES = ({ commit, state }, squares) => {
   commit("SET_HIGHLIGHTER_SQUARES", squares);
-  const game = { ...state.list[0] };
+  // Persist per-position highlights to LocalStorage
   try {
-    game.highlighterSquares = squares || {};
-    await gamesDB.put("games", game);
-  } catch (error) {
-    notifyError(error);
+    localStorage.setItem(
+      "highlighterPositions",
+      JSON.stringify(state.highlighterPositions)
+    );
+  } catch (e) {
+    // LocalStorage full or unavailable
   }
+};
+
+export const SWAP_HIGHLIGHTER_POSITION = (
+  { commit, state },
+  { oldTPS, newTPS }
+) => {
+  commit("SWAP_HIGHLIGHTER_POSITION", { oldTPS, newTPS });
+  try {
+    localStorage.setItem(
+      "highlighterPositions",
+      JSON.stringify(state.highlighterPositions)
+    );
+  } catch (e) {
+    // LocalStorage full or unavailable
+  }
+};
+
+export const SAVE_HIGHLIGHTS_TO_NOTES = function ({ state, commit, dispatch }) {
+  const squares = state.highlighterSquares;
+  if (!squares || !Object.keys(squares).length) {
+    return;
+  }
+  // Serialize highlights as "hl:coord=color" entries in a single note
+  const parts = Object.entries(squares).map(
+    ([coord, color]) => `${coord}=${color}`
+  );
+  const message = "hl " + parts.join(" ");
+  const plyID = state.position.plyIsDone
+    ? state.position.plyID
+    : state.position.prevPly
+    ? state.position.prevPly.id
+    : -1;
+  commit("ADD_NOTE", { message, plyID });
+  dispatch("SAVE_CURRENT_GAME", true);
 };
 
 export const HIGHLIGHT_SQUARES = function ({ commit }, args) {

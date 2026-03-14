@@ -371,18 +371,11 @@
         <Scrubber />
 
         <q-toolbar
-          v-show="
-            isHighlighting || isEditingTPS || $store.state.ui.showControls
-          "
+          v-show="isEditingTPS || $store.state.ui.showControls"
           class="footer-toolbar bg-ui"
         >
-          <Highlighter
-            v-if="isHighlighting"
-            class="justify-around items-center"
-            style="width: 100%; max-width: 500px; margin: 0 auto"
-          />
           <PieceSelector
-            v-else-if="isEditingTPS"
+            v-if="isEditingTPS"
             class="justify-around items-center"
             style="width: 100%; max-width: 500px; margin: 0 auto"
           />
@@ -434,7 +427,6 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 // import onlineStore from "../store/online";
 import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
-import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
 import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
@@ -473,7 +465,6 @@ export default {
     Chat,
     ToolbarAnalysis,
     GameSelector,
-    Highlighter,
     PieceSelector,
   },
   props: ["ptn", "state", "name", "gameID"],
@@ -507,6 +498,11 @@ export default {
         (this.$store.state.game.comments &&
           Object.keys(this.$store.state.game.comments.chatlog).length)
       );
+    },
+    positionTPS() {
+      return this.$store.state.game.position
+        ? this.$store.state.game.position.tps
+        : null;
     },
     showPTN: {
       get() {
@@ -546,9 +542,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    isHighlighting() {
-      return this.$store.state.game.highlighterEnabled;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -1098,6 +1091,14 @@ export default {
     hasChat(hasChat) {
       if (!hasChat && this.textTab === "chat") {
         this.textTab = "notes";
+      }
+    },
+    positionTPS(newTPS, oldTPS) {
+      if (newTPS !== oldTPS && this.$store.state.game.highlighterEnabled) {
+        this.$store.dispatch("game/SWAP_HIGHLIGHTER_POSITION", {
+          oldTPS,
+          newTPS,
+        });
       }
     },
   },

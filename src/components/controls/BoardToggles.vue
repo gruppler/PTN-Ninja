@@ -543,30 +543,6 @@
           </q-list>
         </q-menu>
       </q-btn>
-
-      <q-btn
-        v-if="!isEmbedded"
-        @contextmenu.prevent
-        @click="toggleHighlighter"
-        @shortkey="toggleHighlighter"
-        v-shortkey="hotkeys.HIGHLIGHTER.toggle"
-        icon="highlighter"
-        :class="{ 'dimmed-btn': !highlighterEnabled }"
-        v-ripple="false"
-        :color="highlighterEnabled ? '' : fg"
-        :style="{ color: highlighterEnabled ? highlighterColor : '' }"
-        :size="size"
-        flat
-        round
-      >
-        <hint>
-          {{ $t("Toggle Highlighter") }}
-          <div v-if="hotkeys.TRANSFORMS.applyTransform">
-            {{ $t("Hotkey") }}:
-            {{ hotkeysFormatted.HIGHLIGHTER.toggle }}
-          </div>
-        </hint>
-      </q-btn>
     </div>
   </q-page-sticky>
 </template>
@@ -614,20 +590,6 @@ export default {
   computed: {
     isEmbedded() {
       return this.$store.state.ui.embed;
-    },
-    highlighterEnabled: {
-      get() {
-        return this.$store.state.game.highlighterEnabled;
-      },
-      set(value) {
-        this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", value);
-      },
-    },
-    highlighterColor() {
-      return (
-        this.$store.state.ui.highlighterColor ||
-        this.$store.state.ui.theme.colors.primary
-      );
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
@@ -719,9 +681,6 @@ export default {
     },
     transformHotkey({ srcKey }) {
       this[srcKey]();
-    },
-    toggleHighlighter() {
-      this.highlighterEnabled = !this.highlighterEnabled;
     },
   },
 };

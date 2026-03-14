@@ -24,7 +24,8 @@
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: isHighlighting,
-        'show-unplayed-pieces': $store.state.ui.unplayedPieces,
+        'show-unplayed-pieces':
+          $store.state.ui.unplayedPieces || isHighlighting,
         eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
         'pieces-selected': selected.pieces.length > 0,
@@ -64,8 +65,9 @@
         @touchstart.stop
         @mousedown.stop
       >
+        <HighlighterPalette v-if="isHighlighting" />
         <div
-          v-if="showEvaluation"
+          v-if="showEvaluation && !isHighlighting"
           @click.self="dropPiece"
           class="evaluation"
           :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
@@ -73,6 +75,19 @@
             [isVertical ? 'width' : 'height']: Math.abs(evaluation || 0) + '%',
           }"
         />
+        <q-btn
+          v-if="!$store.state.ui.embed"
+          class="highlighter-toggle"
+          @click="toggleHighlighter"
+          icon="highlighter"
+          :style="{ color: isHighlighting ? highlighterColor : '' }"
+          :size="'xs'"
+          flat
+          round
+          dense
+        >
+          <hint>{{ $t("Toggle Highlighter") }}</hint>
+        </q-btn>
       </div>
 
       <div
@@ -122,6 +137,7 @@
 
 <script>
 import AnalysisOverlay from "./AnalysisOverlay";
+import HighlighterPalette from "./HighlighterPalette";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
@@ -136,6 +152,7 @@ export default {
   name: "Board",
   components: {
     AnalysisOverlay,
+    HighlighterPalette,
     Square,
     Piece,
     TurnIndicator,
@@ -391,6 +408,12 @@ export default {
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
     },
+    highlighterColor() {
+      return (
+        this.$store.state.ui.highlighterColor ||
+        this.$store.state.ui.theme.colors.primary
+      );
+    },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
     },
@@ -459,6 +482,12 @@ export default {
     highlightEnd(event) {
       this.highlighting = false;
       window.removeEventListener("pointerup", this.highlightEnd);
+    },
+    toggleHighlighter() {
+      this.$store.dispatch(
+        "game/SET_HIGHLIGHTER_ENABLED",
+        !this.isHighlighting
+      );
     },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
@@ -923,6 +952,23 @@ $radius: 0.35em;
       transition: width $generic-hover-transition,
         background-color $generic-hover-transition;
     }
+  }
+
+  .highlighter-toggle {
+    position: absolute;
+    z-index: 3;
+    opacity: 0.6;
+    &:hover {
+      opacity: 1;
+    }
+  }
+  &.horizontal .highlighter-toggle {
+    top: 2px;
+    right: 2px;
+  }
+  &.vertical .highlighter-toggle {
+    bottom: 2px;
+    right: 2px;
   }
 }
 </style>
