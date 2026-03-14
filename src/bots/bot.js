@@ -27,7 +27,6 @@ import {
   getPV,
   getPVAfter,
 } from "../Game/PTN/Comment";
-import { pliesEqual } from "../Game/PTN/Ply";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
 
 export function formatEvaluation(value) {
@@ -1772,13 +1771,6 @@ export default class Bot {
       return null;
     }
 
-    // Skip if the move made matches the bot's top suggestion
-    // (no mark needed if player made the expected move)
-    const topSuggestion = positionBefore[0];
-    if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
-      return null;
-    }
-
     const rawEvalBefore = positionBefore[0].evaluation;
     const rawEvalAfter = positionAfter[0].evaluation;
 
@@ -1793,13 +1785,15 @@ export default class Bot {
     const scoreLoss =
       ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
-    if (scoreLoss > thresholds.brilliant) {
+    // Thresholds are stored at 2x scale; halve them so displayed values
+    // match actual eval percentage-point differences.
+    if (scoreLoss > thresholds.brilliant / 2) {
       return "!!";
-    } else if (scoreLoss > thresholds.good) {
+    } else if (scoreLoss > thresholds.good / 2) {
       return "!";
-    } else if (scoreLoss > thresholds.bad) {
+    } else if (scoreLoss > thresholds.bad / 2) {
       return null; // No mark for neutral moves
-    } else if (scoreLoss > thresholds.blunder) {
+    } else if (scoreLoss > thresholds.blunder / 2) {
       return "?";
     } else {
       return "??";

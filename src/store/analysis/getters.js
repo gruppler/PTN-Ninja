@@ -1,6 +1,5 @@
 import { bots } from "../../bots";
 import { defaultEvalMarkThresholds } from "../../bots/bot";
-import { pliesEqual } from "../../Game/PTN/Ply";
 
 export const bot = (state) => {
   return bots[state.botID];
@@ -30,12 +29,6 @@ const calculateEvalMark = (ply, positions, thresholds) => {
     return null;
   }
 
-  // Skip if the move made matches the bot's top suggestion
-  const topSuggestion = positionBefore[0];
-  if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
-    return null;
-  }
-
   const rawEvalBefore = positionBefore[0].evaluation;
   const rawEvalAfter = positionAfter[0].evaluation;
 
@@ -49,13 +42,15 @@ const calculateEvalMark = (ply, positions, thresholds) => {
   const scoreLoss =
     ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
-  if (scoreLoss > thresholds.brilliant) {
+  // Thresholds are stored at 2x scale; halve them so displayed values
+  // match actual eval percentage-point differences.
+  if (scoreLoss > thresholds.brilliant / 2) {
     return "!!";
-  } else if (scoreLoss > thresholds.good) {
+  } else if (scoreLoss > thresholds.good / 2) {
     return "!";
-  } else if (scoreLoss > thresholds.bad) {
+  } else if (scoreLoss > thresholds.bad / 2) {
     return null;
-  } else if (scoreLoss > thresholds.blunder) {
+  } else if (scoreLoss > thresholds.blunder / 2) {
     return "?";
   } else {
     return "??";
