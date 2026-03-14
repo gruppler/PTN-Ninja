@@ -118,6 +118,7 @@ export default {
   "Hide Other Lines": "Hide Other Lines",
   "Hide PTN": "Hide PTN",
   "Highlight Squares": "Highlight Squares",
+  Highlighter: "Highlighter",
   Hotkey: "Hotkey",
   Hotkeys: "Hotkeys",
   Image: "Image",

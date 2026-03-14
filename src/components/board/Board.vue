@@ -76,17 +76,18 @@
           }"
         />
         <q-btn
-          v-if="!$store.state.ui.embed"
+          v-if="!$store.state.ui.embed && !isHighlighting"
+          v-shortkey="
+            isDialogOpen ? null : { toggle: HOTKEYS.HIGHLIGHTER.toggle }
+          "
+          @shortkey="toggleHighlighter"
           class="highlighter-toggle"
           @click="toggleHighlighter"
           icon="highlighter"
-          :style="{ color: isHighlighting ? highlighterColor : '' }"
-          :size="'xs'"
           flat
           round
-          dense
         >
-          <hint>{{ $t("Toggle Highlighter") }}</hint>
+          <hint>{{ $t("Highlighter") }}</hint>
         </q-btn>
       </div>
 
@@ -176,6 +177,7 @@ export default {
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
       hotkeys: HOTKEYS.MOVES,
+      HOTKEYS,
     };
   },
   computed: {
@@ -407,12 +409,6 @@ export default {
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
-    },
-    highlighterColor() {
-      return (
-        this.$store.state.ui.highlighterColor ||
-        this.$store.state.ui.theme.colors.primary
-      );
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -920,8 +916,11 @@ $radius: 0.35em;
 
 .unplayed-bg {
   background-color: var(--q-color-board3);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  .board-container.highlighter & {
+    overflow: hidden;
+  }
 
   .evaluation {
     position: absolute;
@@ -963,12 +962,12 @@ $radius: 0.35em;
     }
   }
   &.horizontal .highlighter-toggle {
-    top: 2px;
-    right: 2px;
+    top: 0;
+    left: 0;
   }
   &.vertical .highlighter-toggle {
-    bottom: 2px;
-    right: 2px;
+    top: 0;
+    right: 0;
   }
 }
 </style>

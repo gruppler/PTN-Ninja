@@ -5,67 +5,38 @@
     v-shortkey="isDialogOpen ? null : hotkeys"
     @shortkey="hotkey($event.srcKey)"
   >
-    <div
-      class="palette-colors"
-      :class="{ row: !isVertical, column: isVertical }"
-    >
+    <div class="palette-colors">
       <q-btn
         v-for="(color, i) in palette"
         :key="i"
         :style="{ background: color }"
         :class="{ selected: i === selectedIndex }"
-        :size="btnSize"
         round
         @click="selectColor(i)"
       >
         <hint>{{ $t(colorNames["color" + (i + 1)]) }}</hint>
       </q-btn>
     </div>
-    <div
-      class="palette-actions"
-      :class="{ row: !isVertical, column: isVertical }"
-    >
+    <q-btn-group class="palette-actions">
       <ColorPicker
         :value="selectedColor"
         @input="updateColor"
         :palette="pickerPalette"
         icon="edit"
-        :size="btnSize"
         flat
-        round
       >
         <hint>{{ $t("Edit") }}</hint>
       </ColorPicker>
-      <q-btn
-        @click="resetPalette"
-        icon="undo"
-        :disable="!isCustomized"
-        :size="btnSize"
-        flat
-        round
-      >
+      <q-btn @click="resetPalette" icon="undo" :disable="!isCustomized" flat>
         <hint>{{ $t("Reset") }}</hint>
       </q-btn>
-      <q-btn
-        @click="saveToNotes"
-        icon="save"
-        :disable="isEmpty"
-        :size="btnSize"
-        flat
-        round
-      >
+      <q-btn @click="saveToNotes" icon="save" :disable="isEmpty" flat>
         <hint>{{ $t("Save to Notes") }}</hint>
       </q-btn>
-      <q-btn
-        @click="clear"
-        :icon="isEmpty ? 'close' : 'clear'"
-        :size="btnSize"
-        flat
-        round
-      >
+      <q-btn @click="clear" :icon="isEmpty ? 'close' : 'clear'" flat>
         <hint>{{ $t(isEmpty ? "Close" : "Clear") }}</hint>
       </q-btn>
-    </div>
+    </q-btn-group>
   </div>
 </template>
 
@@ -73,14 +44,14 @@
 import ColorPicker from "../controls/ColorPicker";
 import { colors } from "quasar";
 import { HOTKEYS, HOTKEY_NAMES } from "../../keymap";
-import { isEmpty, omit } from "lodash";
+import { isEmpty } from "lodash";
 
 export default {
   name: "HighlighterPalette",
   components: { ColorPicker },
   data() {
     return {
-      hotkeys: { ...omit(HOTKEYS.HIGHLIGHTER, "toggle"), ...HOTKEYS.CONTROLS },
+      hotkeys: { ...HOTKEYS.HIGHLIGHTER, ...HOTKEYS.CONTROLS },
       colorNames: HOTKEY_NAMES.HIGHLIGHTER,
       selectedIndex: 0,
     };
@@ -88,9 +59,6 @@ export default {
   computed: {
     isVertical() {
       return this.$store.state.ui.isVertical;
-    },
-    btnSize() {
-      return "sm";
     },
     selectedColor: {
       get() {
@@ -174,6 +142,9 @@ export default {
         }
       } else {
         switch (key) {
+          case "toggle":
+            this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", false);
+            break;
           case "clear":
             this.clear();
             break;
@@ -209,56 +180,59 @@ export default {
 .highlighter-palette {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px;
+  justify-content: space-evenly;
   position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
 
+  .palette-colors {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 1;
+
+    .q-btn {
+      transition: box-shadow 0.2s;
+      &.selected {
+        box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+
+  .palette-actions {
+    flex-shrink: 0;
+  }
+
+  // Horizontal: unplayed area is a column to the right of the board
   &.horizontal {
-    flex-direction: column;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-
-    .palette-colors {
-      gap: 4px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-    }
-    .palette-actions {
-      gap: 2px;
-      justify-content: center;
-      align-items: center;
-    }
-  }
-
-  &.vertical {
     flex-direction: row;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    padding: 4px 2px;
 
     .palette-colors {
+      flex-direction: column;
       gap: 4px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
     }
+
     .palette-actions {
-      gap: 2px;
-      justify-content: center;
-      align-items: center;
+      flex-direction: column;
     }
   }
 
-  .palette-colors .q-btn {
-    transition: box-shadow 0.2s;
-    &.selected {
-      box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(0, 0, 0, 0.5);
+  // Vertical: unplayed area is a row below the board
+  &.vertical {
+    flex-direction: column;
+    padding: 2px 4px;
+
+    .palette-colors {
+      flex-direction: row;
+      gap: 4px;
+    }
+
+    .palette-actions {
+      flex-direction: row;
     }
   }
 }
