@@ -535,14 +535,30 @@ export default {
 
     async queryDBPosition() {
       if (this.isOffline) {
+        this.loadingDBMoves = false;
         return;
       }
       if (this.isBeyondOpeningDB) {
+        this.loadingDBMoves = false;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
         return;
       }
       const databaseId = this.databaseIdToQuery;
-      if (databaseId === null) return;
+      if (databaseId === null) {
+        this.loadingDBMoves = false;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
+        return;
+      }
       if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
+        this.loadingDBMoves = false;
         return;
       }
 
@@ -685,6 +701,16 @@ export default {
           dbMinRating: position[this.dbSettingsHash].settings.min_rating || 0,
         });
       } else {
+        // Flag that a fetch is about to happen so the dbMoves watcher
+        // doesn't prematurely clear the loading state
+        const willFetch =
+          this.shouldLoadData &&
+          !this.isOffline &&
+          !this.isBeyondOpeningDB &&
+          this.databaseIdToQuery !== null;
+        if (willFetch) {
+          this.loadingDBMoves = true;
+        }
         this.dbMoves = [];
         this.dbGames = [];
       }

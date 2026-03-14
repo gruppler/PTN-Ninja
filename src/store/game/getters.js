@@ -377,6 +377,7 @@ export const evaluationForTps = (state, getters, rootState) => (tps) => {
 
   const analysis = rootState.analysis;
   if (!analysis) return null;
+  if (analysis.analysisSource === "openings") return null;
 
   if (analysis.preferSavedResults) {
     // Get evaluation from saved suggestions filtered by savedBotName

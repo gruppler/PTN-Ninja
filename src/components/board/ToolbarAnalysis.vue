@@ -9,6 +9,7 @@
           !collapsed &&
           !isEmbedded &&
           !showBigButtons &&
+          analysisSource !== 'openings' &&
           bot &&
           botState &&
           botMeta
@@ -213,6 +214,7 @@
           v-else-if="
             isEmbedded ||
             botSuggestion ||
+            analysisSource === 'openings' ||
             (botState &&
               (botState.isInteractiveEnabled ||
                 botState.isAnalyzingGame ||
@@ -255,9 +257,29 @@
               </div>
             </template>
           </BotAnalysisItem>
+          <div
+            v-else-if="analysisSource === 'openings'"
+            class="relative-position"
+          >
+            <AnalysisItemPlaceholder :static="!openingStats.loading" />
+            <q-item
+              v-if="!openingStats.loading && !openingStats.available"
+              class="flex-center text-center absolute-center full-width"
+              :class="'text-' + textColor"
+            >
+              {{ $t("analysis.database.beyondRange") }}
+            </q-item>
+            <q-item
+              v-else-if="!openingStats.loading"
+              class="flex-center text-center absolute-center full-width"
+              :class="'text-' + textColor"
+            >
+              {{ $t("analysis.database.newPosition") }}
+            </q-item>
+          </div>
           <AnalysisItemPlaceholder v-else />
         </template>
-        <template v-else>
+        <template v-else-if="analysisSource !== 'openings'">
           <q-item-label caption>
             <span class="bot-name absolute">{{ bot.label }}</span>
           </q-item-label>
@@ -506,6 +528,9 @@ export default {
     openingSuggestions() {
       return this.$store.state.analysis.currentOpeningMoves || [];
     },
+    openingStats() {
+      return this.$store.state.analysis.openingStats || {};
+    },
     suggestions() {
       switch (this.analysisSource) {
         case "openings":
@@ -737,6 +762,11 @@ export default {
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
     },
     updateEvalFromState() {
+      // No eval bar when openings are selected
+      if (this.analysisSource === "openings") {
+        this.$store.dispatch("game/SET_EVAL", null);
+        return;
+      }
       // Update eval based on current preferSavedResults and savedBotName/botID
       const suggestion = this.botSuggestion;
       if (suggestion && "evaluation" in suggestion) {

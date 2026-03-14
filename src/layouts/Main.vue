@@ -357,6 +357,10 @@
           </q-tab-panel>
         </q-tab-panels>
       </div>
+      <OpeningExplorer
+        v-if="hasAnalysis && textTab !== 'openings'"
+        v-show="false"
+      />
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
@@ -408,6 +412,7 @@ import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 import Analysis from "../components/drawers/Analysis";
 import Openings from "../components/drawers/Openings";
+import OpeningExplorer from "../components/drawers/OpeningExplorer";
 import OpeningsSettings from "../components/drawers/OpeningsSettings";
 import EnginesSettings from "../components/drawers/EnginesSettings";
 
@@ -450,6 +455,7 @@ export default {
     Notes,
     Analysis,
     Openings,
+    OpeningExplorer,
     OpeningsSettings,
     OpeningsFilterIcons,
     EnginesFilterIcons,
