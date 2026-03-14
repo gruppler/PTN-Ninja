@@ -302,7 +302,7 @@ export default {
 
     computeStrengths(moves) {
       const DEFAULT_OPACITY = 1.0;
-      const MIN_OPACITY = 0.4;
+      const MIN_OPACITY = 0.25;
 
       if (moves.length === 0) return [];
       if (moves.length === 1) return [DEFAULT_OPACITY];
