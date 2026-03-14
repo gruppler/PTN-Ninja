@@ -1205,6 +1205,11 @@ export const TOGGLE_EVALUATION = ({ commit, dispatch }, { type, double }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REMOVE_EVAL_MARKS = ({ commit, dispatch }) => {
+  commit("REMOVE_EVAL_MARKS");
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
   commit("EDIT_NOTE", { plyID, index, message });
   dispatch("SAVE_CURRENT_GAME", true);

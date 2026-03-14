@@ -624,6 +624,10 @@ export const TOGGLE_EVALUATION = (state, { type, double }) => {
   Vue.prototype.$game.toggleEvaluation(type, double);
 };
 
+export const REMOVE_EVAL_MARKS = () => {
+  Vue.prototype.$game.removeEvalMarks();
+};
+
 export const EDIT_NOTE = (state, { plyID, index, message }) => {
   Vue.prototype.$game.editNote(plyID, index, message);
 };

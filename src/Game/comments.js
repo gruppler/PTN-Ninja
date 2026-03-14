@@ -387,6 +387,32 @@ export default class GameComments {
     this.board.updateCommentsOutput();
   }
 
+  removeEvalMarks() {
+    let changed = false;
+    for (let i = 0; i < this.plies.length; i++) {
+      const ply = this.plies[i];
+      if (!ply || !ply.evaluation) continue;
+      if (ply.evaluation["?"] || ply.evaluation["!"]) {
+        let takTinue = "";
+        if (ply.evaluation.tinue) takTinue += '"';
+        else if (ply.evaluation.tak) takTinue += "'";
+        if (takTinue) {
+          ply.evaluation = Evaluation.parse(takTinue);
+        } else {
+          ply.evaluation = null;
+        }
+        this.board.dirtyPly(ply.id);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._updatePTN(true);
+      this.board.updatePTNOutput();
+      this.board.updatePositionOutput();
+    }
+    return changed;
+  }
+
   _setEvaluation(plyID, notation) {
     const ply = this.plies[plyID];
     if (!ply) {

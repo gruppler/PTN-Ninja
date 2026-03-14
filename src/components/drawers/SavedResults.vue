@@ -53,6 +53,21 @@
                       $t("analysis.Delete All Saved Results")
                     }}</q-item-section>
                   </q-item>
+
+                  <q-separator />
+
+                  <q-item
+                    clickable
+                    @click="removeEvalMarks"
+                    :disable="!hasEvalMarks"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="eval" />
+                    </q-item-section>
+                    <q-item-section>{{
+                      $t("analysis.removeEvalMarks")
+                    }}</q-item-section>
+                  </q-item>
                 </q-list>
               </q-menu>
             </q-btn>
@@ -236,6 +251,21 @@ export default {
     savedBotNames() {
       return this.$store.getters["analysis/savedBotNames"];
     },
+    hasEvalMarks() {
+      const allPlies = this.game.ptn && this.game.ptn.allPlies;
+      if (!allPlies) return false;
+      for (let i = 0; i < allPlies.length; i++) {
+        const ply = allPlies[i];
+        if (
+          ply &&
+          ply.evaluation &&
+          (ply.evaluation["?"] || ply.evaluation["!"])
+        ) {
+          return true;
+        }
+      }
+      return false;
+    },
   },
   methods: {
     toggleSettings() {
@@ -261,6 +291,16 @@ export default {
       this.notifyUndo({
         icon: "delete_all",
         message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    removeEvalMarks() {
+      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
+      this.notifyUndo({
+        icon: "eval",
+        message: this.$t("success.evalMarksRemoved"),
         handler: () => {
           this.$store.dispatch("game/UNDO");
         },
