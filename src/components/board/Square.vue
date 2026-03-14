@@ -52,7 +52,8 @@
       <div class="center" />
     </div>
     <div class="numbers">
-      <span v-if="showAxisLabels" class="axis-label">{{ coord }}</span>
+      <span v-if="showAxisRow" class="axis-label axis-row">{{ row }}</span>
+      <span v-if="showAxisCol" class="axis-label axis-col">{{ col }}</span>
       <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
         stackCount
       }}</span>
@@ -185,33 +186,42 @@ export default {
     disabled() {
       return this.$store.getters["game/disabledOptions"];
     },
-    showAxisLabels() {
-      if (
-        this.$store.state.ui.axisLabels &&
-        this.$store.state.ui.axisLabelsSmall
-      ) {
-        switch (this.$store.state.ui.boardTransform[0]) {
-          case 0:
-            return (
-              this.es ||
-              (this.$store.state.ui.boardTransform[1] ? this.ee : this.ew)
-            );
-          case 1:
-            return (
-              this.ee ||
-              (this.$store.state.ui.boardTransform[1] ? this.en : this.es)
-            );
-          case 2:
-            return (
-              this.en ||
-              (this.$store.state.ui.boardTransform[1] ? this.ew : this.ee)
-            );
-          case 3:
-            return (
-              this.ew ||
-              (this.$store.state.ui.boardTransform[1] ? this.es : this.en)
-            );
-        }
+    smallAxisLabels() {
+      return (
+        this.$store.state.ui.axisLabels && this.$store.state.ui.axisLabelsSmall
+      );
+    },
+    row() {
+      return this.coord[1];
+    },
+    col() {
+      return this.coord[0];
+    },
+    showAxisRow() {
+      if (!this.smallAxisLabels) return false;
+      switch (this.$store.state.ui.boardTransform[0]) {
+        case 0:
+          return this.$store.state.ui.boardTransform[1] ? this.ee : this.ew;
+        case 1:
+          return this.$store.state.ui.boardTransform[1] ? this.en : this.es;
+        case 2:
+          return this.$store.state.ui.boardTransform[1] ? this.ew : this.ee;
+        case 3:
+          return this.$store.state.ui.boardTransform[1] ? this.es : this.en;
+      }
+      return false;
+    },
+    showAxisCol() {
+      if (!this.smallAxisLabels) return false;
+      switch (this.$store.state.ui.boardTransform[0]) {
+        case 0:
+          return this.es;
+        case 1:
+          return this.ee;
+        case 2:
+          return this.en;
+        case 3:
+          return this.ew;
       }
       return false;
     },
@@ -503,9 +513,21 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     }
   }
   .axis-label {
+    text-shadow: none !important;
+  }
+  .axis-row {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    right: auto;
+  }
+  .axis-col {
+    bottom: 0;
+    right: 0;
+  }
+  .stack-count {
     right: auto;
     left: 0;
-    text-shadow: none !important;
   }
   &.no-stack-counts:not(.selected):not(:hover) .stack-count {
     display: none;
