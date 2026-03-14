@@ -81,6 +81,13 @@ export const pngFilename =
     return `${name} - ${plyID}${plyIsDone ? "" : "-"}.png`;
   };
 
+export const imageFilename =
+  () =>
+  ({ name, plyID, plyIsDone, svg }) => {
+    const ext = svg ? ".svg" : ".png";
+    return `${name} - ${plyID}${plyIsDone ? "" : "-"}${ext}`;
+  };
+
 export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.board.tps];
 

@@ -132,7 +132,7 @@ export default {
           },
           {
             id: "png",
-            label: "PNG",
+            label: this.$t("Image"),
             icon: "png",
             action: this.png,
           }
@@ -160,7 +160,7 @@ export default {
   methods: {
     async shortkey({ srcKey }) {
       switch (srcKey) {
-        case "exportPNG":
+        case "exportImage":
           this.$store.dispatch("game/EXPORT_PNG");
           break;
         case "exportPTN":

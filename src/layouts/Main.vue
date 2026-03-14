@@ -846,7 +846,7 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "configPNG":
+        case "configImage":
           if (this.$route.name !== "png") {
             this.$router.push({ name: "png" });
           } else {

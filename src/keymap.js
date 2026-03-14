@@ -21,7 +21,7 @@ export const HOTKEYS = {
   DIALOGS: {
     // account: ["ctrl", "shift", "a"],
     configGIF: ["ctrl", "g"],
-    configPNG: ["ctrl", "p"],
+    configImage: ["ctrl", "p"],
     editGame: ["e"],
     editPTN: ["shift", "e"],
     embedGame: ["ctrl", "e"],
@@ -74,7 +74,7 @@ export const HOTKEYS = {
     C: ["3"],
   },
   SHARING: {
-    exportPNG: ["ctrl", "shift", "p"],
+    exportImage: ["ctrl", "shift", "p"],
     exportPTN: ["ctrl", "s"],
     share: ["ctrl", "shift", "c"],
     sharePTN: ["ctrl", "alt", "c"],
@@ -146,7 +146,7 @@ export const HOTKEY_NAMES = {
   DIALOGS: {
     // account: "Account",
     configGIF: "Configure GIF",
-    configPNG: "Configure PNG",
+    configImage: "Image Export",
     editGame: "Edit Game",
     editPTN: "Edit PTN",
     embedGame: "Embed",
@@ -199,7 +199,7 @@ export const HOTKEY_NAMES = {
     C: "Caps",
   },
   SHARING: {
-    exportPNG: "Export PNG Image",
+    exportImage: "Export Image",
     exportPTN: "Export PTN File",
     share: "Share",
     sharePTN: "Share PTN",

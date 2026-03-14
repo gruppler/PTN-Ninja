@@ -3,7 +3,7 @@ import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
-import { TPStoPNG } from "tps-ninja";
+import { TPStoPNG, TPStoSVGString } from "tps-ninja";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
@@ -428,22 +428,28 @@ export const EXPORT_PNG = function ({ state }) {
     options[tagName] = game.ptn.tags[tagName];
   });
 
-  TPStoPNG(options).toBlob((blob) => {
+  const filename = this.getters["ui/imageFilename"]({
+    name: game.name,
+    plyID: game.position.plyID,
+    plyIsDone: game.position.plyIsDone,
+    svg: options.svgFormat,
+  });
+
+  if (options.svgFormat) {
+    const svgString = TPStoSVGString(options);
+    const blob = new Blob([svgString], { type: "image/svg+xml" });
     this.dispatch(
       "ui/DOWNLOAD_FILES",
-      new File(
-        [blob],
-        this.getters["ui/pngFilename"]({
-          name: game.name,
-          plyID: game.position.plyID,
-          plyIsDone: game.position.plyIsDone,
-        }),
-        {
-          type: "image/png",
-        }
-      )
+      new File([blob], filename, { type: "image/svg+xml" })
     );
-  });
+  } else {
+    TPStoPNG(options).toBlob((blob) => {
+      this.dispatch(
+        "ui/DOWNLOAD_FILES",
+        new File([blob], filename, { type: "image/png" })
+      );
+    });
+  }
 };
 
 export const OPEN_FILES = async function ({ dispatch, state }, files) {

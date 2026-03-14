@@ -164,6 +164,7 @@ defaultState.pngConfig = {
   includeNames: true,
   padding: true,
   bgAlpha: 1,
+  svgFormat: false,
   ...pick(defaultState, imgUIOptions),
 };
 

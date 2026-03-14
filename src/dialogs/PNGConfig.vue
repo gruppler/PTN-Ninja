@@ -7,11 +7,18 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="png">{{ $t("Configure PNG") }}</dialog-header>
+      <dialog-header icon="png">{{ $t("Image Export") }}</dialog-header>
     </template>
 
     <smooth-reflow>
+      <div
+        v-if="config.svgFormat"
+        ref="svgPreview"
+        class="block svg-preview"
+        v-html="svgPreview"
+      />
       <img
+        v-else
         ref="preview"
         class="block"
         :src="preview"
@@ -29,7 +36,16 @@
         filled
       />
 
-      <q-item>
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("SVG Format") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.svgFormat" />
+        </q-item-section>
+      </q-item>
+
+      <q-item v-if="!config.svgFormat">
         <q-item-section>
           <q-item-label>
             <span class="float-right" v-html="dimensions" />
@@ -46,6 +62,15 @@
             snap
             label
           />
+        </q-item-section>
+      </q-item>
+
+      <q-item v-else>
+        <q-item-section>
+          <q-item-label>
+            <span class="float-right" v-html="fileSize" />
+            {{ $t("Size") }}
+          </q-item-label>
         </q-item-section>
       </q-item>
 
@@ -264,7 +289,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { TPStoPNG } from "tps-ninja";
+import { TPStoPNG, TPStoSVGString } from "tps-ninja";
 
 import { cloneDeep, debounce } from "lodash";
 
@@ -279,6 +304,7 @@ export default {
     return {
       config: cloneDeep(this.$store.state.ui.pngConfig),
       preview: "",
+      svgPreview: "",
       dimensions: "",
       file: null,
       fileSize: "",
@@ -296,7 +322,7 @@ export default {
     },
   },
   methods: {
-    updatePreview: debounce(function () {
+    getExportConfig() {
       const config = cloneDeep(this.config);
       config.font = "Roboto";
       config.komi = this.game.config.komi;
@@ -339,17 +365,38 @@ export default {
         config.player2 = this.game.ptn.tags.player2;
       }
 
-      // Generate image
-      const filename = this.$store.getters["ui/pngFilename"]({
+      // Game Tags
+      ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach(
+        (tagName) => {
+          config[tagName] = this.game.ptn.tags[tagName];
+        }
+      );
+
+      return config;
+    },
+    updatePreview: debounce(function () {
+      const config = this.getExportConfig();
+      const filename = this.$store.getters["ui/imageFilename"]({
         name: this.game.name,
         plyID: this.game.position.plyID,
         plyIsDone: this.game.position.plyIsDone,
+        svg: this.config.svgFormat,
       });
-      TPStoPNG(config).toBlob((blob) => {
-        this.file = new File([blob], filename, { type: "image/png" });
+
+      if (this.config.svgFormat) {
+        const svgString = TPStoSVGString(config);
+        this.svgPreview = svgString;
+        const blob = new Blob([svgString], { type: "image/svg+xml" });
+        this.file = new File([blob], filename, { type: "image/svg+xml" });
         this.fileSize = humanStorageSize(this.file.size);
-        this.preview = URL.createObjectURL(blob);
-      });
+        this.dimensions = "";
+      } else {
+        TPStoPNG(config).toBlob((blob) => {
+          this.file = new File([blob], filename, { type: "image/png" });
+          this.fileSize = humanStorageSize(this.file.size);
+          this.preview = URL.createObjectURL(blob);
+        });
+      }
     }),
     loadPreview() {
       const img = this.$refs.preview;
@@ -413,3 +460,11 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.svg-preview >>> svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+</style>
