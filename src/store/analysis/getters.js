@@ -109,7 +109,7 @@ export const pngSuggestions = (state, getters, rootState, rootGetters) => {
   const tps = rootState.game.position.tps;
   let rawMoves = [];
 
-  switch (rootState.ui.textTab) {
+  switch (state.analysisSource) {
     case "openings":
       rawMoves = state.currentOpeningMoves || [];
       break;
@@ -120,7 +120,7 @@ export const pngSuggestions = (state, getters, rootState, rootGetters) => {
       rawMoves = positions ? positions[tps] || [] : [];
       break;
     }
-    case "notes": {
+    case "saved": {
       const getSuggestions = rootGetters["game/suggestions"];
       if (!getSuggestions) break;
       const allSuggestions = getSuggestions(tps);

@@ -116,10 +116,22 @@
         @wheel="scrollBotSelector"
       >
         <q-icon
-          :name="viewingSavedResults ? 'save' : botOption.icon || 'engine'"
+          :name="
+            analysisSource === 'openings'
+              ? 'opening'
+              : viewingSavedResults
+              ? 'save'
+              : botOption.icon || 'engine'
+          "
         />
         <hint>
-          {{ viewingSavedResults ? savedResultsLabel : botOption.label }}
+          {{
+            analysisSource === "openings"
+              ? $t("Openings")
+              : viewingSavedResults
+              ? savedResultsLabel
+              : botOption.label
+          }}
         </hint>
         <q-menu
           anchor="top right"
@@ -129,12 +141,26 @@
         >
           <q-list>
             <q-item
+              clickable
+              v-close-popup
+              @click="selectOpenings"
+              :active="analysisSource === 'openings'"
+            >
+              <q-item-section avatar>
+                <q-icon name="opening" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("Openings") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item
               v-for="(id, idx) in activeBots"
               :key="idx"
               clickable
               v-close-popup
               @click="selectBot(id)"
-              :active="!preferSavedResults && id === botID"
+              :active="analysisSource === 'engines' && id === botID"
             >
               <q-item-section avatar>
                 <q-icon :name="getBotIcon(id)" />
@@ -150,7 +176,7 @@
               clickable
               v-close-popup
               @click="selectSavedEngine(name)"
-              :active="preferSavedResults && savedBotName === name"
+              :active="analysisSource === 'saved' && savedBotName === name"
             >
               <q-item-section avatar>
                 <q-icon name="save" />
@@ -431,6 +457,9 @@ export default {
     botOption() {
       return this.botList.find((b) => b.value === this.botID) || {};
     },
+    analysisSource() {
+      return this.$store.state.analysis?.analysisSource || "openings";
+    },
     preferSavedResults() {
       return this.$store.state.analysis?.preferSavedResults ?? true;
     },
@@ -474,17 +503,22 @@ export default {
     hasCurrentBotSuggestions() {
       return this.currentBotSuggestions.length > 0;
     },
+    openingSuggestions() {
+      return this.$store.state.analysis.currentOpeningMoves || [];
+    },
     suggestions() {
-      // When saved results are preferred, always use saved suggestions
-      // (may be empty for this position - don't fall back to unsaved)
-      if (this.preferSavedResults) {
-        return this.savedSuggestions;
+      switch (this.analysisSource) {
+        case "openings":
+          return this.openingSuggestions;
+        case "saved":
+          return this.savedSuggestions;
+        case "engines":
+        default:
+          return this.currentBotSuggestions;
       }
-      return this.currentBotSuggestions;
     },
     viewingSavedResults() {
-      // Reflects the user's selection, not per-position availability
-      return this.preferSavedResults;
+      return this.analysisSource === "saved";
     },
     suggestionsCount() {
       return this.suggestions.length;
@@ -559,6 +593,10 @@ export default {
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", botName);
       this.manualBotSelection = false;
     },
+    selectOpenings() {
+      this.$store.dispatch("analysis/SELECT_OPENINGS");
+      this.manualBotSelection = false;
+    },
     getBotIcon(botId) {
       const bot = bots[botId];
       return bot ? bot.icon : "engine";
@@ -627,8 +665,11 @@ export default {
         return;
       }
 
-      // Build list of selectable options: bots + per-engine saved results
-      const options = this.activeBots.map((id) => ({ type: "bot", id }));
+      // Build list of selectable options: openings + bots + per-engine saved results
+      const options = [{ type: "openings" }];
+      this.activeBots.forEach((id) => {
+        options.push({ type: "bot", id });
+      });
       this.savedBotNames.forEach((name) => {
         options.push({ type: "saved", name });
       });
@@ -650,11 +691,18 @@ export default {
         this.botSelectorDeltaY = this.botSelectorDeltaY % scrollThreshold;
 
         // Find current index
-        let currentIndex = this.viewingSavedResults
-          ? options.findIndex(
-              (o) => o.type === "saved" && o.name === this.savedBotName
-            )
-          : options.findIndex((o) => o.type === "bot" && o.id === this.botID);
+        let currentIndex;
+        if (this.analysisSource === "openings") {
+          currentIndex = 0;
+        } else if (this.analysisSource === "saved") {
+          currentIndex = options.findIndex(
+            (o) => o.type === "saved" && o.name === this.savedBotName
+          );
+        } else {
+          currentIndex = options.findIndex(
+            (o) => o.type === "bot" && o.id === this.botID
+          );
+        }
         if (currentIndex < 0) currentIndex = 0;
 
         for (let i = 0; i < times; i++) {
@@ -667,7 +715,9 @@ export default {
 
         // Select the new option
         const selected = options[currentIndex];
-        if (selected.type === "saved") {
+        if (selected.type === "openings") {
+          this.selectOpenings();
+        } else if (selected.type === "saved") {
           this.selectSavedEngine(selected.name);
         } else {
           this.selectBot(selected.id);
@@ -703,9 +753,15 @@ export default {
     activeBots: {
       handler(newBots) {
         // If the currently selected bot was removed, switch to saved results or first available bot
-        if (!this.preferSavedResults && !newBots.includes(this.botID)) {
+        if (
+          this.analysisSource === "engines" &&
+          !newBots.includes(this.botID)
+        ) {
           if (this.hasSavedSuggestions) {
-            this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+            this.$store.dispatch(
+              "analysis/SELECT_SAVED_ENGINE",
+              this.savedBotName
+            );
             this.manualBotSelection = false;
           } else if (newBots.length > 0) {
             this.$store.dispatch("analysis/SET", ["botID", newBots[0]]);
@@ -744,6 +800,10 @@ export default {
     },
     preferSavedResults() {
       // When preferSavedResults changes, update eval accordingly
+      this.updateEvalFromState();
+    },
+    analysisSource() {
+      // When analysisSource changes, update eval accordingly
       this.updateEvalFromState();
     },
   },

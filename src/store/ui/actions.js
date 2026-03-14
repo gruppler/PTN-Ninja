@@ -107,12 +107,17 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
     }
-    // Set preferSavedResults based on tab selection
+    // Set preferSavedResults and analysisSource based on tab selection
     if (key === "textTab") {
       if (value === "notes") {
         dispatch("analysis/SYNC_SAVED_ENGINE_TO_CURRENT", null, { root: true });
       } else if (value === "engines") {
         dispatch("analysis/SET", ["preferSavedResults", false], { root: true });
+        dispatch("analysis/SET", ["analysisSource", "engines"], { root: true });
+      } else if (value === "openings") {
+        dispatch("analysis/SET", ["analysisSource", "openings"], {
+          root: true,
+        });
       }
     }
   }

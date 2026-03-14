@@ -101,8 +101,8 @@ export default {
     boardSize() {
       return this.$store.state.game.config.size;
     },
-    textTab() {
-      return this.$store.state.ui.textTab;
+    analysisSource() {
+      return this.$store.state.analysis.analysisSource;
     },
     tps() {
       return this.$store.state.game.position.tps;
@@ -121,7 +121,7 @@ export default {
     rawMoves() {
       if (!this.active) return [];
 
-      switch (this.textTab) {
+      switch (this.analysisSource) {
         case "openings":
           return this.$store.state.analysis.currentOpeningMoves || [];
         case "engines": {
@@ -131,7 +131,7 @@ export default {
           const positions = analysis.botPositions[botID];
           return positions ? positions[this.tps] || [] : [];
         }
-        case "notes": {
+        case "saved": {
           const analysis = this.$store.state.analysis;
           const allSuggestions = this.$store.getters["game/suggestions"](
             this.tps
@@ -310,7 +310,7 @@ export default {
       // Convert to subjective eval on 0-200 scale where higher = better for current player.
       // Engine eval: white → 100 + eval, black → 100 - eval
       // Openings win rate (0-1 from current player's POV) → winRate * 200
-      const isOpenings = this.textTab === "openings";
+      const isOpenings = this.analysisSource === "openings";
 
       const subjEvals = moves.map((m) => {
         if (isOpenings) {

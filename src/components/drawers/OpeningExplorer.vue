@@ -357,6 +357,9 @@ export default {
     isOffline() {
       return this.$store.state.ui.offline;
     },
+    isOpeningsSelected() {
+      return this.$store.state.analysis.analysisSource === "openings";
+    },
     isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
@@ -367,6 +370,9 @@ export default {
       return (
         this.isPanelVisible && (this.dbMovesExpanded || this.dbGamesExpanded)
       );
+    },
+    shouldLoadData() {
+      return this.isDBMovesVisible || this.isOpeningsSelected;
     },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
@@ -634,18 +640,18 @@ export default {
   async mounted() {
     await this.init();
     // wait for databases to load before querying the position
-    if (this.isPanelVisible && !this.isOffline) {
+    if (this.shouldLoadData && !this.isOffline) {
       this.queryDBPosition();
     }
   },
 
   watch: {
     async isOffline(isOffline) {
-      if (!isOffline && this.isPanelVisible) {
+      if (!isOffline && (this.isPanelVisible || this.isOpeningsSelected)) {
         if (!this.databases || !this.databases.length) {
           await this.init();
         }
-        if (this.isDBMovesVisible) {
+        if (this.shouldLoadData) {
           this.queryDBPosition();
         }
       }
@@ -655,13 +661,16 @@ export default {
         if (!this.databases || !this.databases.length) {
           await this.init();
         }
-        if (this.isDBMovesVisible && !this.isOffline) {
+        if (this.shouldLoadData && !this.isOffline) {
           this.queryDBPosition();
         }
       }
     },
-    isDBMovesVisible(isVisible) {
-      if (isVisible && !this.isOffline) {
+    async shouldLoadData(shouldLoad) {
+      if (shouldLoad && !this.isOffline) {
+        if (!this.databases || !this.databases.length) {
+          await this.init();
+        }
         this.queryDBPosition();
       }
     },
@@ -679,7 +688,7 @@ export default {
         this.dbMoves = [];
         this.dbGames = [];
       }
-      if (this.isDBMovesVisible && !this.isOffline) {
+      if (this.shouldLoadData && !this.isOffline) {
         this.queryDBPosition();
       }
     },

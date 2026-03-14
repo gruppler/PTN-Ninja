@@ -111,6 +111,7 @@ export const SELECT_ENGINE = (
   botId
 ) => {
   dispatch("SET", ["preferSavedResults", false]);
+  dispatch("SET", ["analysisSource", "engines"]);
   if (botId && botId !== state.botID) {
     dispatch("SET", ["botID", botId]);
   }
@@ -165,6 +166,7 @@ export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
 
 export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
   dispatch("SET", ["preferSavedResults", true]);
+  dispatch("SET", ["analysisSource", "saved"]);
   const names = getters.savedBotNames;
   if (names.length === 0) return;
   // Prefer the label of the currently selected engine if it has saved results
@@ -185,6 +187,11 @@ export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
 export const SELECT_SAVED_ENGINE = ({ dispatch }, botName) => {
   dispatch("SET", ["savedBotName", botName]);
   dispatch("SET", ["preferSavedResults", true]);
+  dispatch("SET", ["analysisSource", "saved"]);
+};
+
+export const SELECT_OPENINGS = ({ dispatch }) => {
+  dispatch("SET", ["analysisSource", "openings"]);
 };
 
 // Collapsed bots persistence

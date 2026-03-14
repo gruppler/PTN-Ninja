@@ -15,6 +15,7 @@ const defaultState = {
   botID: defaultBotID, // Used for ToolbarAnalysis and other eval bars
   savedBotName: null, // Bot name for saved results selection (null = "Other"/unnamed)
   preferSavedResults: true, // Whether to show saved results over bot analysis
+  analysisSource: "openings", // Board overlay data source: "openings", "engines", or "saved"
   botSettings: {}, // Per-bot settings (persisted)
   // Per-bot reactive state (keyed by botID)
   botLogs: {},
