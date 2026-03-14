@@ -107,7 +107,7 @@
 
       <!-- Bot Selector -->
       <q-btn
-        v-if="!isEmbedded && (activeBots.length > 1 || hasAnySavedSuggestions)"
+        v-if="!isEmbedded"
         class="bot-selector-toggle dimmed-btn"
         v-ripple="false"
         :color="btnColor"
