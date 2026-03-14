@@ -1220,6 +1220,14 @@ export const ADD_NOTES = ({ commit, dispatch }, messages) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+export const REPLACE_NOTES = (
+  { commit, dispatch },
+  { removals, additions }
+) => {
+  commit("REPLACE_NOTES", { removals, additions });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const SET_NOTES = ({ commit, dispatch }, { plyID, messages }) => {
   commit("SET_NOTES", { plyID, messages });
   dispatch("SAVE_CURRENT_GAME", true);

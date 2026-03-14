@@ -1504,6 +1504,9 @@ export default class Bot {
     }
 
     if (Object.keys(messages).length) {
+      // Collect all removals across all plies so we can batch them
+      const allRemovals = [];
+
       // Handle existing notes based on overwriteInferior setting
       for (const plyIDStr of Object.keys(messages)) {
         const plyID = Number(plyIDStr);
@@ -1565,14 +1568,7 @@ export default class Bot {
             }
           }
 
-          // Remove inferior notes (in reverse order to maintain indices)
-          indicesToRemove.sort((a, b) => b - a);
-          for (const idx of indicesToRemove) {
-            store.commit("game/REMOVE_NOTE", { plyID, index: idx });
-          }
-
           // Calculate remaining count by subtracting removed from original
-          // (can't re-read state as it may not be updated yet)
           const remainingCount = botNoteIndices.length - indicesToRemove.length;
           const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
 
@@ -1626,7 +1622,7 @@ export default class Bot {
                 }
               }
               if (weakestIdx >= 0) {
-                store.commit("game/REMOVE_NOTE", { plyID, index: weakestIdx });
+                indicesToRemove.push(weakestIdx);
                 // Remove from remaining list
                 const rIdx = remainingBotNotes.findIndex(
                   (r) => r.idx === weakestIdx
@@ -1637,6 +1633,11 @@ export default class Bot {
             }
 
             messages[plyID] = accepted;
+          }
+
+          // Collect removals for this ply into the batch
+          for (const idx of indicesToRemove) {
+            allRemovals.push({ plyID, index: idx });
           }
         } else {
           // When overwriteInferior is disabled:
@@ -1674,8 +1675,19 @@ export default class Bot {
           filteredMessages[plyID] = notes;
         }
       }
-      if (Object.keys(filteredMessages).length > 0) {
-        store.dispatch("game/ADD_NOTES", filteredMessages);
+
+      // Use a single atomic operation for removals + additions
+      const hasRemovals = allRemovals.length > 0;
+      const hasAdditions = Object.keys(filteredMessages).length > 0;
+      if (hasRemovals || hasAdditions) {
+        if (hasRemovals) {
+          store.dispatch("game/REPLACE_NOTES", {
+            removals: allRemovals,
+            additions: hasAdditions ? filteredMessages : null,
+          });
+        } else {
+          store.dispatch("game/ADD_NOTES", filteredMessages);
+        }
       }
     }
   }

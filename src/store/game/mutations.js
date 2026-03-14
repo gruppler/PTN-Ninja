@@ -636,6 +636,10 @@ export const ADD_NOTES = (state, messages) => {
   Vue.prototype.$game.addNotes(messages);
 };
 
+export const REPLACE_NOTES = (state, { removals, additions }) => {
+  Vue.prototype.$game.replaceNotes(removals, additions);
+};
+
 export const SET_NOTES = (state, { plyID, messages }) => {
   Vue.prototype.$game.setNotes(plyID, messages);
 };
