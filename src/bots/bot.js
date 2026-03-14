@@ -276,8 +276,22 @@ export default class Bot {
   // Returns null if no PV comments exist
   // Select this bot in the toolbar analysis
   selectInToolbar() {
+    // If saved results are currently selected, try to switch to the engine
+    // matching the saved bot name (so analysis uses the associated engine)
+    if (store.state.analysis.preferSavedResults) {
+      const savedBotName = store.state.analysis.savedBotName;
+      if (savedBotName) {
+        const { bots: allBots } = require("./index");
+        for (const [id, bot] of Object.entries(allBots)) {
+          if (bot.label === savedBotName) {
+            store.dispatch("analysis/SET", ["botID", id]);
+            break;
+          }
+        }
+      }
+    }
     store.dispatch("analysis/SET", ["preferSavedResults", false]);
-    store.dispatch("analysis/SET", ["botID", this.id]);
+    store.dispatch("analysis/SET", ["analysisSource", "engines"]);
   }
 
   get pvFormat() {
@@ -491,6 +505,10 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
+    // Auto-save when ending infinite position analysis
+    const wasAnalyzingPosition = this.state.isAnalyzingPosition;
+    const tps = this.state.tps;
+
     state = {
       ...state,
       isAnalyzingGame: false,
@@ -500,6 +518,17 @@ export default class Bot {
       nextTPS: null,
     };
     this.onSearchEnd(state);
+
+    if (
+      wasAnalyzingPosition &&
+      tps &&
+      store.state.analysis.autoSaveAfterSearch
+    ) {
+      if (this.positions[tps] && this.positions[tps].length > 0) {
+        this.saveEvalComments(tps);
+      }
+    }
+
     this.onReady = null;
     this.onComplete = null;
   }

@@ -464,7 +464,7 @@
               @click.stop="goToAnalysisPly"
               :data-tps-after="botState.analyzingPly.tpsAfter"
               :data-ply-text="botState.analyzingPly.text"
-              class="absolute-left q-py-none"
+              class="absolute-left q-py-none played-ply-btn"
               no-caps
               dense
               flat
@@ -478,6 +478,7 @@
                 :ply="botState.analyzingPly"
                 class="no-pointer-events q-ma-none"
                 no-branches
+                no-result
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
             </q-btn>
@@ -487,7 +488,7 @@
               @click.stop="goToNextPlayedPly"
               :data-tps-after="nextPlayedPly.tpsAfter"
               :data-ply-text="nextPlayedPly.text"
-              class="absolute-left q-py-none"
+              class="absolute-left q-py-none played-ply-btn"
               no-caps
               dense
               flat
@@ -501,6 +502,7 @@
                 :ply="nextPlayedPly"
                 class="no-pointer-events q-ma-none"
                 no-branches
+                no-result
               />
             </q-btn>
           </div>
@@ -1240,6 +1242,16 @@ export default {
 </script>
 
 <style lang="scss">
+.played-ply-btn {
+  max-width: 100%;
+  overflow: hidden;
+
+  .q-btn__content {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+}
+
 .bot-log {
   font-family: "Source Code Pro";
   font-size: 0.8em;

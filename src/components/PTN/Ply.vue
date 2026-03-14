@@ -65,7 +65,7 @@
       <q-badge v-if="hasUserNotes" class="note-badge" floating />
     </q-chip>
     <Result
-      v-if="ply.result"
+      v-if="ply.result && !noResult"
       :result="ply.result.text"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
@@ -96,6 +96,7 @@ export default {
     inlineBranches: Boolean,
     noBranches: Boolean,
     noClick: Boolean,
+    noResult: Boolean,
     tpsAfter: {
       type: String,
       default: null,
