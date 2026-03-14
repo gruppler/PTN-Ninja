@@ -15,6 +15,12 @@
       >
         <q-menu auto-close transition-show="none" transition-hide="none">
           <q-list>
+            <q-item @click="copy" clickable>
+              <q-item-section side>
+                <q-icon name="copy" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy") }}</q-item-section>
+            </q-item>
             <q-item @click="$emit('edit', { plyID, index })" clickable>
               <q-item-section side>
                 <q-icon name="edit" />
@@ -57,6 +63,11 @@ export default {
     },
   },
   methods: {
+    copy() {
+      this.$store.dispatch("ui/COPY", {
+        text: this.comment.displayMessage,
+      });
+    },
     renderMarkdown(text) {
       return inlineMarkdown(text);
     },
