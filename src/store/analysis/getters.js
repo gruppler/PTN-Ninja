@@ -57,8 +57,30 @@ const calculateEvalMark = (ply, positions, thresholds) => {
   }
 };
 
+// Whether there are any actual saved analysis results in the current game's notes
+export const hasAnySavedResults = (state, getters, rootState) => {
+  const comments = rootState.game && rootState.game.comments;
+  const notes = comments && comments.notes;
+  if (!notes) return false;
+  for (const id in notes) {
+    const noteList = notes[id];
+    for (let i = 0; i < noteList.length; i++) {
+      const note = noteList[i];
+      if (
+        note.evaluation !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 // Ordered list of bot names from saved suggestions.
 // Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
+// Also includes active bots without saved results as placeholders.
 export const savedBotNames = (state, getters, rootState) => {
   const comments = rootState.game && rootState.game.comments;
   const notes = comments && comments.notes;

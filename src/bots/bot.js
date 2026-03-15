@@ -276,14 +276,16 @@ export default class Bot {
   // Returns null if no PV comments exist
   // Select this bot in the toolbar analysis
   selectInToolbar() {
-    // If saved results are currently selected, try to switch to the engine
-    // matching the saved bot name (so analysis uses the associated engine)
+    // If saved results are currently selected, try to switch to the active
+    // engine matching the saved bot name (so analysis uses the associated engine)
     if (store.state.analysis.preferSavedResults) {
       const savedBotName = store.state.analysis.savedBotName;
       if (savedBotName) {
+        const activeBots = store.state.analysis.activeBots || [];
         const { bots: allBots } = require("./index");
-        for (const [id, bot] of Object.entries(allBots)) {
-          if (bot.label === savedBotName) {
+        for (const id of activeBots) {
+          const bot = allBots[id];
+          if (bot && bot.label === savedBotName) {
             store.dispatch("analysis/SET", ["botID", id]);
             break;
           }
@@ -505,8 +507,10 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
-    // Auto-save when ending infinite position analysis
+    // Auto-save when ending infinite position analysis or interactive analysis
     const wasAnalyzingPosition = this.state.isAnalyzingPosition;
+    const wasInteractive =
+      this.state.isInteractiveEnabled && state.isInteractiveEnabled === false;
     const tps = this.state.tps;
 
     state = {
@@ -520,7 +524,7 @@ export default class Bot {
     this.onSearchEnd(state);
 
     if (
-      wasAnalyzingPosition &&
+      (wasAnalyzingPosition || wasInteractive) &&
       tps &&
       store.state.analysis.autoSaveAfterSearch
     ) {

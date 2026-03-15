@@ -112,8 +112,7 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
       if (value === "notes") {
         dispatch("analysis/SYNC_SAVED_ENGINE_TO_CURRENT", null, { root: true });
       } else if (value === "engines") {
-        dispatch("analysis/SET", ["preferSavedResults", false], { root: true });
-        dispatch("analysis/SET", ["analysisSource", "engines"], { root: true });
+        dispatch("analysis/SYNC_ENGINE_TO_SAVED", null, { root: true });
       } else if (value === "openings") {
         dispatch("analysis/SET", ["analysisSource", "openings"], {
           root: true,

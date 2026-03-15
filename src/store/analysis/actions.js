@@ -165,11 +165,11 @@ export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
 };
 
 export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
-  const names = getters.savedBotNames;
-  if (names.length === 0) {
-    // No saved results — keep showing the active engine
+  if (!getters.hasAnySavedResults) {
+    // No actual saved results — keep showing the active engine
     return;
   }
+  const names = getters.savedBotNames;
   dispatch("SET", ["preferSavedResults", true]);
   dispatch("SET", ["analysisSource", "saved"]);
   // Prefer the label of the currently selected engine if it has saved results
@@ -187,14 +187,33 @@ export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
   }
 };
 
+export const SYNC_ENGINE_TO_SAVED = ({ state, dispatch }) => {
+  dispatch("SET", ["preferSavedResults", false]);
+  dispatch("SET", ["analysisSource", "engines"]);
+  // Sync botID to the active engine matching the saved bot name
+  const savedBotName = state.savedBotName;
+  if (savedBotName) {
+    for (const id of state.activeBots) {
+      const bot = bots[id];
+      if (bot && bot.label === savedBotName) {
+        if (id !== state.botID) {
+          dispatch("SET", ["botID", id]);
+        }
+        return;
+      }
+    }
+  }
+};
+
 export const SELECT_SAVED_ENGINE = ({ state, dispatch }, botName) => {
   dispatch("SET", ["savedBotName", botName]);
   dispatch("SET", ["preferSavedResults", true]);
   dispatch("SET", ["analysisSource", "saved"]);
-  // Sync botID to the engine whose label matches the saved bot name
+  // Sync botID to the active engine whose label matches the saved bot name
   if (botName) {
-    for (const [id, bot] of Object.entries(bots)) {
-      if (bot.label === botName) {
+    for (const id of state.activeBots) {
+      const bot = bots[id];
+      if (bot && bot.label === botName) {
         if (id !== state.botID) {
           dispatch("SET", ["botID", id]);
         }
