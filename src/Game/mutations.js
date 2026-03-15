@@ -283,9 +283,21 @@ export default class GameMutations {
       return uniqBy(descendents, "id");
     };
 
+    const promotedIndex = ply.branches.findIndex((p) => ply.id === p.id);
     const oldID = ply.id;
     const newID = ply.branches[0].id;
     const mainBranch = ply.branches[0].branch;
+
+    // Collect intermediate siblings (between main and promoted) for renaming
+    const intermediateSiblings = [];
+    for (let si = 1; si < promotedIndex; si++) {
+      intermediateSiblings.push({
+        ply: ply.branches[si],
+        oldBranch: ply.branches[si].branch,
+        oldIndex: si,
+        newIndex: si + 1,
+      });
+    }
 
     // Collect branches to be swapped and their descendents
     let newMain = getDescendents(ply);
@@ -304,23 +316,99 @@ export default class GameMutations {
       }
     });
 
-    // Rename old main branches
+    // Rename intermediate siblings to temp names FIRST to avoid conflicts
+    // with old main rename (old main may get a name that matches an intermediate sibling)
+    const parentPath = this._getBranchParent(branch);
+    const currentTargetBranch = this.board.targetBranch;
+    const tempRenames = [];
+    for (const sib of intermediateSiblings) {
+      const sibIsDefault = this._isDefaultBranchName(
+        this._getBranchLeaf(sib.oldBranch)
+      );
+      if (!sibIsDefault) continue; // Custom names stay as-is
+
+      const newLeaf = this._generateDefaultBranchName(sib.ply, sib.newIndex);
+      const newBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+      if (newBranch === sib.oldBranch) continue;
+
+      const tempBranch = `__temp_sib_${sib.oldIndex}__`;
+      tempRenames.push({
+        oldBranch: sib.oldBranch,
+        tempBranch,
+        newBranch,
+      });
+    }
+
+    // First pass: rename intermediate siblings to temp names
+    for (const rename of tempRenames) {
+      this.plies.forEach((p) => {
+        if (p.branch === rename.oldBranch) {
+          p.branch = rename.tempBranch;
+          p.linenum.branch = rename.tempBranch;
+        } else if (p.branch.startsWith(rename.oldBranch + "/")) {
+          p.branch =
+            rename.tempBranch + p.branch.substring(rename.oldBranch.length);
+          p.linenum.branch = p.branch;
+        }
+      });
+    }
+
+    // Rename old main branches — old main goes to index 1
+    const oldMainNewLeaf = this._generateDefaultBranchName(
+      this.plies[newID],
+      1
+    );
+    const oldMainNewBranch = parentPath
+      ? `${parentPath}/${oldMainNewLeaf}`
+      : oldMainNewLeaf;
+
     const newBranchRegExp = new RegExp(
       "^" + (branch ? escapeRegExp(mainBranch) + "(\\/|$)" : "")
     );
-    let oldBranchFull = branch && mainBranch ? branch + "$1" : branch;
+    const oldBranchFull =
+      branch && mainBranch ? oldMainNewBranch + "$1" : oldMainNewBranch;
     oldMain.forEach((ply) => {
       if (branch && mainBranch) {
         ply.branch = ply.branch.replace(newBranchRegExp, oldBranchFull);
       } else {
         ply.branch =
-          ply.branch === mainBranch ? branch : branch + "/" + ply.branch;
+          ply.branch === mainBranch
+            ? oldMainNewBranch
+            : oldMainNewBranch + "/" + ply.branch;
       }
       ply.linenum.branch = ply.branch;
       if (this.board.plyID === ply.id) {
         this.board.targetBranch = ply.branch;
       }
     });
+
+    // Second pass: rename intermediate siblings from temp to final names
+    for (const rename of tempRenames) {
+      this.plies.forEach((p) => {
+        if (p.branch === rename.tempBranch) {
+          p.branch = rename.newBranch;
+          p.linenum.branch = rename.newBranch;
+        } else if (p.branch.startsWith(rename.tempBranch + "/")) {
+          p.branch =
+            rename.newBranch + p.branch.substring(rename.tempBranch.length);
+          p.linenum.branch = p.branch;
+        }
+      });
+    }
+    // Update targetBranch if affected by intermediate sibling renames
+    if (tempRenames.length) {
+      for (const rename of tempRenames) {
+        if (currentTargetBranch === rename.oldBranch) {
+          this.board.targetBranch = rename.newBranch;
+          break;
+        } else if (currentTargetBranch.startsWith(rename.oldBranch + "/")) {
+          this.board.targetBranch =
+            rename.newBranch +
+            currentTargetBranch.substring(rename.oldBranch.length);
+          break;
+        }
+      }
+    }
 
     // Move new main plies into position
     let plies = [...this.plies];
