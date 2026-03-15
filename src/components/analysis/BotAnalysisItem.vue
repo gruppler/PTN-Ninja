@@ -3,20 +3,28 @@
     :ply="suggestion.ply"
     :evaluation="'evaluation' in suggestion ? suggestion.evaluation : null"
     :following-plies="suggestion.followingPlies"
-    :count="suggestion.nodes"
-    count-label="analysis.nodes"
+    :count="isOpening ? suggestion.totalGames : suggestion.nodes"
+    :count-label="isOpening ? 'analysis.n_games' : 'analysis.nodes'"
     :visits="suggestion.visits"
     :seconds="seconds"
     :player1-number="
-      'evaluation' in suggestion && suggestion.evaluation >= 0
+      isOpening
+        ? $n(suggestion.wins1, 'n0')
+        : 'evaluation' in suggestion && suggestion.evaluation >= 0
         ? formatEvaluation(suggestion.evaluation)
         : null
+    "
+    :middle-number="
+      isOpening && suggestion.draws ? $n(suggestion.draws, 'n0') : null
     "
     :player2-number="
-      'evaluation' in suggestion && suggestion.evaluation < 0
+      isOpening
+        ? $n(suggestion.wins2, 'n0')
+        : 'evaluation' in suggestion && suggestion.evaluation < 0
         ? formatEvaluation(suggestion.evaluation)
         : null
     "
+    :player-numbers-tooltip="isOpening ? winsTooltip : null"
     :depth="suggestion.depth || null"
     :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
     :done-count="sameNextCount"
@@ -113,6 +121,32 @@ export default {
         this.suggestion.time !== null &&
         this.suggestion.time !== undefined &&
         this.suggestion.time === this.prevSuggestion.time
+      );
+    },
+    isOpening() {
+      return (
+        "wins1" in this.suggestion &&
+        "wins2" in this.suggestion &&
+        "totalGames" in this.suggestion
+      );
+    },
+    winsTooltip() {
+      if (!this.isOpening) return null;
+      const s = this.suggestion;
+      const pct = (count) => this.$n(count / s.totalGames, "percent");
+      return (
+        `${this.$t("Player1")} \u2013 ${this.$n(s.wins1)} ${this.$tc(
+          "analysis.wins",
+          s.wins1
+        )} \u2013 ${pct(s.wins1)}\n` +
+        `${this.$t("Player2")} \u2013 ${this.$n(s.wins2)} ${this.$tc(
+          "analysis.wins",
+          s.wins2
+        )} \u2013 ${pct(s.wins2)}\n` +
+        `${this.$n(s.draws)} ${this.$tc(
+          "analysis.draws",
+          s.draws
+        )} \u2013 ${pct(s.draws)}`
       );
     },
     pv() {

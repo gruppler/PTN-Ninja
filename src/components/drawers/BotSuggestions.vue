@@ -1,7 +1,8 @@
 <template>
   <q-expansion-item
     v-model="expanded"
-    header-class="bg-accent"
+    class="bot-suggestions"
+    header-class="bg-accent sticky-header"
     expand-icon-class="fg-inherit"
   >
     <template v-slot:header>
@@ -339,7 +340,7 @@
       </smooth-reflow>
 
       <!-- Controls -->
-      <div class="relative-position">
+      <div class="relative-position sticky-controls">
         <smooth-reflow>
           <!-- Connect -->
           <q-btn
@@ -398,6 +399,17 @@
             stretch
             class="analysis-controls-group"
           >
+            <!-- Interactive Analysis -->
+            <BotProgress
+              v-if="botMeta.isInteractive"
+              @click="toggleInteractiveAnalysis"
+              :disable="!bot.isInteractiveAvailable"
+              icon="int_analysis"
+              :hint="$t('analysis.interactiveAnalysis')"
+              :is-running="botState.isInteractiveEnabled"
+              interactive
+              color="primary"
+            />
             <!-- Analyze Position -->
             <BotProgress
               @click="analyzePosition()"
@@ -430,17 +442,6 @@
               :hint="$t('analysis.Analyze Game')"
               :is-running="botState.isAnalyzingGame"
               :progress="botState.progress"
-              color="primary"
-            />
-            <!-- Interactive Analysis -->
-            <BotProgress
-              v-if="botMeta.isInteractive"
-              @click="toggleInteractiveAnalysis"
-              :disable="!bot.isInteractiveAvailable"
-              icon="int_analysis"
-              :hint="$t('analysis.interactiveAnalysis')"
-              :is-running="botState.isInteractiveEnabled"
-              interactive
               color="primary"
             />
           </q-btn-group>
@@ -590,12 +591,12 @@
       </div>
 
       <!-- Unsaved Results -->
-      <smooth-reflow height-only style="overflow-x: hidden">
+      <template v-if="displayedSuggestions.length">
         <BotAnalysisItem
-          v-for="(suggestion, i) in suggestions"
+          v-for="(suggestion, i) in displayedSuggestions"
           :key="'unsaved-' + i"
           :suggestion="suggestion"
-          :prev-suggestion="i > 0 ? suggestions[i - 1] : null"
+          :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
           :fixed-height="!showFullPVs"
           :show-continuation="showContinuation"
           :keep-highlighted="hoveredSuggestionIndex === i"
@@ -603,21 +604,17 @@
           @mouseenter.native="hoveredSuggestionIndex = i"
           @mouseleave.native="hoveredSuggestionIndex = null"
         />
+      </template>
+      <template v-else>
         <!-- Fill remaining space with placeholders when fewer than average -->
-        <AnalysisItemPlaceholder
-          v-for="i in fillerPlaceholderCount"
-          :key="'filler-placeholder-' + i"
-          :show-continuation="showContinuation"
-          static
-        />
-        <template v-if="!suggestions.length && isAnalyzingGameOrBranch">
+        <template v-if="isAnalyzingGameOrBranch">
           <AnalysisItemPlaceholder
             v-for="i in placeholderCount"
             :key="'placeholder-' + i"
             :show-continuation="showContinuation"
           />
         </template>
-        <div v-else-if="!suggestions.length" class="relative-position">
+        <div v-else class="relative-position">
           <AnalysisItemPlaceholder
             v-for="i in modeResultsCount"
             :key="'static-placeholder-' + i"
@@ -631,10 +628,10 @@
             {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
           </q-item>
         </div>
-      </smooth-reflow>
+      </template>
 
       <!-- Bot Action Buttons -->
-      <q-btn-group :class="textClass" spread stretch>
+      <q-btn-group :class="textClass" class="sticky-actions" spread stretch>
         <q-btn icon="save" spread stretch>
           <hint>{{ $t("Save") }}</hint>
           <q-menu
@@ -870,13 +867,16 @@ export default {
       // Return all bot suggestions without filtering duplicates
       return this.positions[this.tps] || [];
     },
+    displayedSuggestions() {
+      return this.suggestions.slice(0, 8);
+    },
     placeholderCount() {
       // During branch/game analysis, show placeholders matching previous result count
       if (
         this.botState &&
         (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
       ) {
-        return this.prevSuggestionsCount;
+        return Math.min(8, this.prevSuggestionsCount);
       }
       return 1;
     },
@@ -898,7 +898,7 @@ export default {
             mode = parseInt(value, 10);
           }
         }
-        return Math.max(1, mode);
+        return Math.min(8, Math.max(1, mode));
       }
       // If no results yet, check for multiPV option in current options or saved settings
       const optionSources = [
@@ -913,7 +913,7 @@ export default {
             if (key.toLowerCase() === "multipv") {
               const numValue = Number(value);
               if (!isNaN(numValue) && numValue > 0) {
-                return Math.max(1, numValue);
+                return Math.min(8, Math.max(1, numValue));
               }
             }
           }
@@ -934,18 +934,13 @@ export default {
               const val = option?.value ?? option?.default;
               const numValue = Number(val);
               if (!isNaN(numValue) && numValue > 0) {
-                return Math.max(1, numValue);
+                return Math.min(8, Math.max(1, numValue));
               }
             }
           }
         }
       }
       return 1;
-    },
-    fillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer suggestions than mode
-      if (!this.suggestions.length) return 0;
-      return Math.max(0, this.modeResultsCount - this.suggestions.length);
     },
     isActiveBot() {
       return (
@@ -1242,6 +1237,24 @@ export default {
 </script>
 
 <style lang="scss">
+.bot-suggestions {
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .sticky-controls {
+    position: sticky;
+    top: 48px;
+    z-index: 1;
+  }
+  .sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+}
+
 .played-ply-btn {
   max-width: 100%;
   overflow: hidden;

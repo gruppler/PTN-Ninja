@@ -91,7 +91,12 @@ export const savedBotNames = (state, getters, rootState) => {
   const unmatched = namedBots.filter((name) => !(name in activeBotLabels));
   matched.sort((a, b) => activeBotLabels[a] - activeBotLabels[b]);
 
-  const result = [...matched, ...unmatched];
+  // Include active bots without saved results as placeholders
+  const activeWithoutSaved = Object.keys(activeBotLabels)
+    .filter((label) => !botNameSet.has(label))
+    .sort((a, b) => activeBotLabels[a] - activeBotLabels[b]);
+
+  const result = [...matched, ...activeWithoutSaved, ...unmatched];
   if (botNameSet.has(null)) {
     result.push(null);
   }

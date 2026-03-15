@@ -212,10 +212,11 @@ export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
   const bot = state.activeBots[fromIndex];
   state.activeBots.splice(fromIndex, 1);
   state.activeBots.splice(toIndex, 0, bot);
-  // Also reorder collapsed state
-  const collapsed = state.collapsedBots[fromIndex];
-  Vue.delete(state.collapsedBots, fromIndex);
-  Vue.set(state.collapsedBots, toIndex, collapsed);
+  // Swap collapsed state between the two indices
+  const collapsedFrom = state.collapsedBots[fromIndex];
+  const collapsedTo = state.collapsedBots[toIndex];
+  Vue.set(state.collapsedBots, toIndex, collapsedFrom);
+  Vue.set(state.collapsedBots, fromIndex, collapsedTo);
 };
 
 // Set collapsed state for an active bot by index

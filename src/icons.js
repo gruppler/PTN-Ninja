@@ -119,6 +119,7 @@ export default {
   scratch_board: "mdi-checkerboard-plus",
   save: "mdi-content-save",
   save_all: "mdi-content-save-all",
+  save_move: "mdi-content-save-move",
   search: "mdi-magnify",
   send: "mdi-send",
   settings: "mdi-cog",

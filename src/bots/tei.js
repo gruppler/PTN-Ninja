@@ -572,6 +572,7 @@ export default class TeiBot extends Bot {
       let token;
       // Properties before multipv need to be applied to the correct suggestion index
       const propsBeforeMultipv = {};
+      let seenMultipv = false;
       while ((token = tokens.shift())) {
         if (keys.test(token)) {
           key = token.toLowerCase();
@@ -583,6 +584,7 @@ export default class TeiBot extends Bot {
           if (key === "multipv") {
             // multipv is 1-indexed; use it to determine suggestion index
             i = Number(token) - 1;
+            seenMultipv = true;
             // Ensure suggestions array has enough entries
             while (results.suggestions.length <= i) {
               results.suggestions.push({
@@ -600,45 +602,58 @@ export default class TeiBot extends Bot {
                 results.suggestions[i][prop] = propsBeforeMultipv[prop];
               }
             });
+            // Move evaluation from suggestion[0] to correct index
+            if ("evaluation" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].evaluation = propsBeforeMultipv.evaluation;
+              results.suggestions[0].evaluation = null;
+            }
           } else if (key === "pv") {
             results.suggestions[i].pv.push(token);
           } else if (key === "wdl") {
             // Prefer `wdl` over `score`
-            results.suggestions[i].evaluation =
-              Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
+            let eval_ = Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
             tokens.shift(); // Discard 'lose' score
             if (initialPlayer === 2) {
-              results.suggestions[i].evaluation =
-                -results.suggestions[i].evaluation;
+              eval_ = -eval_;
+            }
+            results.suggestions[i].evaluation = eval_;
+            // Save evaluation for later if multipv hasn't been seen yet
+            if (!seenMultipv) {
+              propsBeforeMultipv.evaluation = eval_;
             }
           } else if (
             key === "score" &&
             results.suggestions[i].evaluation === null
           ) {
+            let eval_ = null;
             switch (scoreType) {
               case "cp":
-                results.suggestions[i].evaluation =
-                  Number(token) * (initialPlayer === 1 ? 1 : -1);
+                eval_ = Number(token) * (initialPlayer === 1 ? 1 : -1);
                 break;
               case "mate":
-                results.suggestions[i].evaluation =
+                eval_ =
                   100 *
                   (Number(token) > 0 ? 1 : -1) *
                   (initialPlayer === 1 ? 1 : -1);
                 break;
               case "solved":
                 if (token === "draw") {
-                  results.suggestions[i].evaluation = 0;
+                  eval_ = 0;
                 } else if (token === "win") {
-                  results.suggestions[i].evaluation =
-                    100 * (initialPlayer === 1 ? 1 : -1);
+                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
                 } else if (token === "loss") {
-                  results.suggestions[i].evaluation =
-                    100 * (initialPlayer === 1 ? -1 : 1);
+                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
                 }
                 break;
               default:
                 scoreType = token;
+            }
+            if (eval_ !== null) {
+              results.suggestions[i].evaluation = eval_;
+              // Save evaluation for later if multipv hasn't been seen yet
+              if (!seenMultipv) {
+                propsBeforeMultipv.evaluation = eval_;
+              }
             }
           } else {
             switch (key) {

@@ -41,7 +41,7 @@ export default {
       return this.$store.state.game.position;
     },
     icon() {
-      return this.collapsed ? "up" : "down";
+      return this.collapsed ? "forward" : "backward";
     },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
@@ -70,22 +70,32 @@ export default {
   flex-shrink: 0;
 
   .board-move {
+    position: relative;
     margin: 0 18px 18px 18px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    transition: transform $generic-hover-transition;
     .move {
-      transition: opacity $generic-hover-transition;
+      transition: transform $generic-hover-transition,
+        opacity $generic-hover-transition;
+    }
+    .collapse {
+      position: absolute;
+      top: -32px;
+      left: 0;
+      transition: left $generic-hover-transition;
     }
   }
 
   .board-move.collapsed {
     .move {
+      transform: translateX(calc(-100% - 18px));
       opacity: 0;
       pointer-events: none;
     }
-    transform: translateY(calc(100% - 14px));
+    .collapse {
+      left: -18px;
+    }
   }
 }
 </style>

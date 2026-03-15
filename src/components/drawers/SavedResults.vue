@@ -8,7 +8,7 @@
     >
       <template v-slot:header>
         <q-item-section avatar>
-          <q-icon name="save" />
+          <q-icon name="save_move" />
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("Saved Results") }}</q-item-label>

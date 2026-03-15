@@ -80,10 +80,10 @@
       <recess>
         <smooth-reflow height-only style="overflow-x: hidden">
           <BotAnalysisItem
-            v-for="(suggestion, i) in savedSuggestions"
+            v-for="(suggestion, i) in displayedSuggestions"
             :key="'saved-' + i"
             :suggestion="suggestion"
-            :prev-suggestion="i > 0 ? savedSuggestions[i - 1] : null"
+            :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
             show-menu
             :fixed-height="!showFullPVs"
             :show-continuation="showContinuation"
@@ -99,7 +99,7 @@
           />
           <div v-if="!savedSuggestions.length" class="relative-position">
             <AnalysisItemPlaceholder
-              v-for="i in modeResultsCount"
+              v-for="i in emptyPlaceholderCount"
               :key="'static-placeholder-' + i"
               :show-continuation="showContinuation"
               static
@@ -203,6 +203,19 @@ export default {
       }
       return this.allSavedSuggestions.filter((s) => s.botName === this.botName);
     },
+    displayedSuggestions() {
+      return this.savedSuggestions.slice(0, 8);
+    },
+    botID() {
+      // Resolve the bot ID from the bot name
+      if (!this.botName) return null;
+      for (const [id, bot] of Object.entries(bots)) {
+        if (bot.label === this.botName || bot.meta?.name === this.botName) {
+          return id;
+        }
+      }
+      return null;
+    },
     hasAnySavedResults() {
       // Check notes directly instead of iterating all plies
       const notes = this.game.comments && this.game.comments.notes;
@@ -262,11 +275,88 @@ export default {
           mode = parseInt(value, 10);
         }
       }
-      return Math.max(1, mode);
+      return Math.min(8, Math.max(1, mode));
+    },
+    engineModeResultsCount() {
+      // Fall back to the engine's live unsaved results to size placeholders,
+      // matching the Engines tab behavior
+      if (!this.botID) return 1;
+      const positions = this.$store.state.analysis.botPositions[this.botID];
+      if (positions) {
+        const positionArrays = Object.values(positions).filter(
+          (arr) => arr.length > 0
+        );
+        if (positionArrays.length) {
+          const counts = {};
+          for (const arr of positionArrays) {
+            counts[arr.length] = (counts[arr.length] || 0) + 1;
+          }
+          let mode = 1;
+          let maxFreq = 0;
+          for (const [value, freq] of Object.entries(counts)) {
+            if (freq > maxFreq) {
+              maxFreq = freq;
+              mode = parseInt(value, 10);
+            }
+          }
+          return Math.min(8, Math.max(1, mode));
+        }
+      }
+      // Check multiPV from bot settings/meta
+      const optionSources = [
+        this.$store.state.analysis.botSettings[this.botID]?.options,
+      ];
+      const bot = bots[this.botID];
+      if (bot) {
+        optionSources.push(bot.settings?.options);
+      }
+      for (const options of optionSources) {
+        if (options) {
+          for (const [key, value] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+      const metaOptionSources = [
+        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.options,
+      ];
+      if (bot) {
+        metaOptionSources.push(bot.meta?.presetOptions, bot.meta?.options);
+      }
+      for (const options of metaOptionSources) {
+        if (options) {
+          for (const [key, option] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const val = option?.value ?? option?.default;
+              const numValue = Number(val);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+      return 1;
     },
     fillerPlaceholderCount() {
       if (!this.savedSuggestions.length) return 0;
-      return Math.max(0, this.modeResultsCount - this.savedSuggestions.length);
+      return Math.max(
+        0,
+        this.modeResultsCount - this.displayedSuggestions.length
+      );
+    },
+    emptyPlaceholderCount() {
+      // For engines without saved results, use engine results count if available
+      return this.hasAnySavedResults
+        ? this.modeResultsCount
+        : this.engineModeResultsCount;
     },
     showFullPVs() {
       return this.$store.state.analysis.showFullPVs;
