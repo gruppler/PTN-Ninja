@@ -2,13 +2,7 @@ import TeiBot from "./tei";
 import { i18n } from "../boot/i18n";
 import { forEach, omit, isEmpty } from "lodash";
 
-const FIXED_META_KEYS = [
-  "name",
-  "author",
-  "isInteractive",
-  "limitTypes",
-  "sizeHalfKomis",
-];
+const FIXED_META_KEYS = ["name", "author", "limitTypes", "sizeHalfKomis"];
 
 export default class CustomTeiBot extends TeiBot {
   constructor(id, meta) {

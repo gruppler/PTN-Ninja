@@ -118,18 +118,6 @@
           </q-item-section>
         </q-item>
 
-        <!-- Interactive Analysis -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.isInteractive" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{
-              $t("analysis.interactiveAnalysis")
-            }}</q-item-label>
-          </q-item-section>
-        </q-item>
-
         <q-separator />
         <!-- Size/Komi -->
         <q-item-label header>{{ $t("analysis.sizeHalfKomi") }}</q-item-label>
@@ -358,7 +346,6 @@ export default {
           "author",
           "version",
           "connection",
-          "isInteractive",
           "normalizeEvaluation",
           "sigma",
           "sizeHalfKomis",
