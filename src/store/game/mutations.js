@@ -4,6 +4,35 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import { HIGHLIGHT_NOTE_PREFIX } from "../../Game/PTN/Comment";
+
+// Parse highlight notes from PTN comments for the current position's ply
+function getHighlightsFromNotes() {
+  const game = Vue.prototype.$game;
+  if (!game || !game.notes) return {};
+  const board = game.board;
+  if (!board) return {};
+  const plyID = board.plyIsDone
+    ? board.plyID
+    : board.prevPly
+    ? board.prevPly.id
+    : -1;
+  const notes = game.notes[plyID];
+  if (!notes) return {};
+  const squares = {};
+  for (const note of notes) {
+    if (note.message && note.message.startsWith(HIGHLIGHT_NOTE_PREFIX)) {
+      const parts = note.message.slice(HIGHLIGHT_NOTE_PREFIX.length).split(" ");
+      for (const part of parts) {
+        const eq = part.indexOf("=");
+        if (eq > 0) {
+          squares[part.slice(0, eq)] = part.slice(eq + 1);
+        }
+      }
+    }
+  }
+  return squares;
+}
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -106,7 +135,11 @@ export const SET_GAME = function (state, game) {
     state.highlighterPositions = {};
   }
   const tps = game.board ? game.board.getTPS() : null;
-  state.highlighterSquares = (tps && state.highlighterPositions[tps]) || {};
+  let initSquares = (tps && state.highlighterPositions[tps]) || {};
+  if (!Object.keys(initSquares).length) {
+    initSquares = getHighlightsFromNotes();
+  }
+  state.highlighterSquares = initSquares;
   if (game) {
     game.highlighterSquares = state.highlighterSquares;
   }
@@ -288,18 +321,44 @@ export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
 };
 
 export const SWAP_HIGHLIGHTER_POSITION = (state, { oldTPS, newTPS }) => {
-  // Save current highlights for old position
+  // Save current highlights for old position only if user-drawn (already in positions map)
   if (oldTPS && Object.keys(state.highlighterSquares).length) {
-    state.highlighterPositions[oldTPS] = state.highlighterSquares;
+    if (oldTPS in state.highlighterPositions) {
+      state.highlighterPositions[oldTPS] = state.highlighterSquares;
+    }
   } else if (oldTPS) {
     delete state.highlighterPositions[oldTPS];
   }
-  // Load highlights for new position
-  const squares = (newTPS && state.highlighterPositions[newTPS]) || {};
+  // Load highlights for new position: LocalStorage first, then PTN notes
+  let squares = (newTPS && state.highlighterPositions[newTPS]) || {};
+  if (!Object.keys(squares).length) {
+    squares = getHighlightsFromNotes();
+  }
   state.highlighterSquares = squares;
   const game = Vue.prototype.$game;
   if (game) {
     game.highlighterSquares = squares;
+  }
+};
+
+export const CLEAR_HIGHLIGHTER_POSITION = (state) => {
+  const tps = state.position && state.position.tps;
+  if (tps) {
+    delete state.highlighterPositions[tps];
+  }
+  state.highlighterSquares = {};
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterSquares = {};
+  }
+};
+
+export const CLEAR_ALL_HIGHLIGHTER_POSITIONS = (state) => {
+  state.highlighterPositions = {};
+  state.highlighterSquares = {};
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterSquares = {};
   }
 };
 

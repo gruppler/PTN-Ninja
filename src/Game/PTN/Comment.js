@@ -2,12 +2,14 @@ import Ply from "./Ply";
 import { pick } from "lodash";
 
 export const USER_NOTE_PREFIX = "*";
+export const HIGHLIGHT_NOTE_PREFIX = "hl ";
 
 const outputProps = [
   "time",
   "player",
   "message",
   "displayMessage",
+  "isHighlightNote",
   "isUserNote",
   "botName",
   "depth",
@@ -182,6 +184,10 @@ export default class Comment {
     } else {
       this.player = null;
     }
+  }
+
+  get isHighlightNote() {
+    return this.message.startsWith(HIGHLIGHT_NOTE_PREFIX);
   }
 
   get isUserNote() {

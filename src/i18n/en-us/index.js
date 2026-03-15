@@ -63,6 +63,8 @@ export default {
   Date: "Date",
   DateTime: "Date/Time",
   Delete: "Delete",
+  "Delete All Highlights": "Delete All Highlights",
+  "Delete Position Highlights": "Delete Position Highlights",
   "Delete Ply": "Delete Ply",
   "Disable Board": "Disable Board",
   "Disable Navigation": "Disable Navigation",

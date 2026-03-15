@@ -76,12 +76,15 @@
           }"
         />
         <q-btn
-          v-if="!$store.state.ui.embed && !isHighlighting"
+          v-if="!$store.state.ui.embed"
           v-shortkey="
-            isDialogOpen ? null : { toggle: HOTKEYS.HIGHLIGHTER.toggle }
+            isDialogOpen || isHighlighting
+              ? null
+              : { toggle: HOTKEYS.HIGHLIGHTER.toggle }
           "
           @shortkey="toggleHighlighter"
           class="highlighter-toggle"
+          :class="{ active: isHighlighting || hasPositionHighlights }"
           @click="toggleHighlighter"
           icon="highlighter"
           flat
@@ -409,6 +412,28 @@ export default {
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
+    },
+    hasPositionHighlights() {
+      // Check LocalStorage highlights
+      const tps = this.$store.state.game.position?.tps;
+      if (tps && tps in this.$store.state.game.highlighterPositions) {
+        return true;
+      }
+      // Check PTN notes for highlight notes at current position
+      const notes = this.$store.state.game.comments?.notes;
+      if (notes) {
+        const pos = this.$store.state.game.position;
+        const plyID = pos.plyIsDone
+          ? pos.plyID
+          : pos.prevPly
+          ? pos.prevPly.id
+          : -1;
+        const plyNotes = notes[plyID];
+        if (plyNotes) {
+          return plyNotes.some((n) => n.isHighlightNote);
+        }
+      }
+      return false;
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -957,8 +982,12 @@ $radius: 0.35em;
     position: absolute;
     z-index: 3;
     opacity: 0.6;
-    &:hover {
+    &:hover,
+    &.active {
       opacity: 1;
+    }
+    &.active {
+      color: var(--q-color-primary);
     }
   }
   &.horizontal .highlighter-toggle {

@@ -46,6 +46,7 @@ export default {
       if (ply && ply.id >= 0 && ply.id in this.game.comments.notes) {
         notes = notes.concat(this.game.comments.notes[ply.id]);
       }
+      notes = notes.filter((note) => !note.isHighlightNote);
       if (!this.$store.state.ui.notifyAnalysisNotes) {
         notes = notes.filter(
           (note) => note.evaluation === null && note.pv === null

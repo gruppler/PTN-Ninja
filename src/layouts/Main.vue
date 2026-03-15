@@ -1094,7 +1094,7 @@ export default {
       }
     },
     positionTPS(newTPS, oldTPS) {
-      if (newTPS !== oldTPS && this.$store.state.game.highlighterEnabled) {
+      if (newTPS !== oldTPS) {
         this.$store.dispatch("game/SWAP_HIGHLIGHTER_POSITION", {
           oldTPS,
           newTPS,

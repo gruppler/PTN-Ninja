@@ -12,12 +12,13 @@
         :style="{ background: color }"
         :class="{ selected: i === selectedIndex }"
         round
+        unelevated
         @click="selectColor(i)"
       >
         <hint>{{ $t(colorNames["color" + (i + 1)]) }}</hint>
       </q-btn>
     </div>
-    <q-btn-group class="palette-actions">
+    <q-btn-group flat class="palette-actions">
       <ColorPicker
         :value="selectedColor"
         @input="updateColor"
@@ -32,6 +33,27 @@
       </q-btn>
       <q-btn @click="saveToNotes" icon="save" :disable="isEmpty" flat>
         <hint>{{ $t("Save to Notes") }}</hint>
+      </q-btn>
+      <q-btn @click.stop icon="delete" :disable="!hasAnyPositions" flat>
+        <q-menu auto-close>
+          <q-list>
+            <q-item clickable :disable="isEmpty" @click="deletePosition">
+              <q-item-section avatar>
+                <q-icon name="delete" />
+              </q-item-section>
+              <q-item-section>{{
+                $t("Delete Position Highlights")
+              }}</q-item-section>
+            </q-item>
+            <q-item clickable @click="deleteAll">
+              <q-item-section avatar>
+                <q-icon name="delete_all" />
+              </q-item-section>
+              <q-item-section>{{ $t("Delete All Highlights") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+        <hint>{{ $t("Delete") }}</hint>
       </q-btn>
       <q-btn @click="clear" :icon="isEmpty ? 'close' : 'clear'" flat>
         <hint>{{ $t(isEmpty ? "Close" : "Clear") }}</hint>
@@ -97,6 +119,11 @@ export default {
     isEmpty() {
       return isEmpty(this.$store.state.game.highlighterSquares);
     },
+    hasAnyPositions() {
+      return (
+        Object.keys(this.$store.state.game.highlighterPositions).length > 0
+      );
+    },
     isDialogOpen() {
       return !["local", "game"].includes(this.$route.name);
     },
@@ -133,6 +160,12 @@ export default {
     },
     saveToNotes() {
       this.$store.dispatch("game/SAVE_HIGHLIGHTS_TO_NOTES");
+    },
+    deletePosition() {
+      this.$store.dispatch("game/CLEAR_HIGHLIGHTER_POSITION");
+    },
+    deleteAll() {
+      this.$store.dispatch("game/CLEAR_ALL_HIGHLIGHTER_POSITIONS");
     },
     hotkey(key) {
       if (key.startsWith("color")) {
@@ -178,9 +211,13 @@ export default {
 
 <style lang="scss">
 .highlighter-palette {
+  // Size color buttons relative to the square size
+  --color-btn-size: calc(var(--square-size) * 0.45);
+  --action-icon-size: calc(var(--square-size) * 0.25);
+
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -193,27 +230,42 @@ export default {
     align-items: center;
     justify-content: space-evenly;
     flex: 1;
+    min-width: 0;
+    min-height: 0;
 
     .q-btn {
+      width: var(--color-btn-size);
+      height: var(--color-btn-size);
+      min-width: 0;
+      min-height: 0;
       transition: box-shadow 0.2s;
       &.selected {
         box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(0, 0, 0, 0.5);
+      }
+      .q-icon {
+        font-size: var(--action-icon-size);
       }
     }
   }
 
   .palette-actions {
     flex-shrink: 0;
+    .q-btn {
+      min-width: 0;
+      min-height: 0;
+      padding: calc(var(--action-icon-size) * 0.4);
+      .q-icon {
+        font-size: var(--action-icon-size);
+      }
+    }
   }
 
   // Horizontal: unplayed area is a column to the right of the board
   &.horizontal {
     flex-direction: row;
-    padding: 4px 2px;
 
     .palette-colors {
       flex-direction: column;
-      gap: 4px;
     }
 
     .palette-actions {
@@ -224,11 +276,9 @@ export default {
   // Vertical: unplayed area is a row below the board
   &.vertical {
     flex-direction: column;
-    padding: 2px 4px;
 
     .palette-colors {
       flex-direction: row;
-      gap: 4px;
     }
 
     .palette-actions {

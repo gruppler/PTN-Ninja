@@ -830,6 +830,27 @@ export const SWAP_HIGHLIGHTER_POSITION = (
   }
 };
 
+export const CLEAR_HIGHLIGHTER_POSITION = ({ commit, state }) => {
+  commit("CLEAR_HIGHLIGHTER_POSITION");
+  try {
+    localStorage.setItem(
+      "highlighterPositions",
+      JSON.stringify(state.highlighterPositions)
+    );
+  } catch (e) {
+    // LocalStorage full or unavailable
+  }
+};
+
+export const CLEAR_ALL_HIGHLIGHTER_POSITIONS = ({ commit }) => {
+  commit("CLEAR_ALL_HIGHLIGHTER_POSITIONS");
+  try {
+    localStorage.setItem("highlighterPositions", JSON.stringify({}));
+  } catch (e) {
+    // LocalStorage full or unavailable
+  }
+};
+
 export const SAVE_HIGHLIGHTS_TO_NOTES = function ({ state, commit, dispatch }) {
   const squares = state.highlighterSquares;
   if (!squares || !Object.keys(squares).length) {
@@ -846,6 +867,19 @@ export const SAVE_HIGHLIGHTS_TO_NOTES = function ({ state, commit, dispatch }) {
     ? state.position.prevPly.id
     : -1;
   commit("ADD_NOTE", { message, plyID });
+  // Clear transient LocalStorage entry; notes are now the persistent source
+  const tps = state.position?.tps;
+  if (tps) {
+    delete state.highlighterPositions[tps];
+    try {
+      localStorage.setItem(
+        "highlighterPositions",
+        JSON.stringify(state.highlighterPositions)
+      );
+    } catch (e) {
+      // LocalStorage full or unavailable
+    }
+  }
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
