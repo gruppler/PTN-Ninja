@@ -532,14 +532,12 @@ export default class GameBase {
         } else {
           // Go back to root branch
           this.board.targetBranch = "";
-          this.board.goToPly(0, true);
-          this.board.last();
+          this.board.first();
         }
-      } else if (this.board.targetBranch) {
-        // Go back to root branch
+      } else {
+        // No saved state; start at the beginning
         this.board.targetBranch = "";
-        this.board.goToPly(0, true);
-        this.board.last();
+        this.board.first();
       }
     } catch (error) {
       console.error("PTN validation failed:", error);
