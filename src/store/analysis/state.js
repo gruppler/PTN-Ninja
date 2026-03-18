@@ -22,10 +22,8 @@ const defaultState = {
   botMetas: {},
   botPositions: {},
   botStates: {},
-  // Collapsed state for active bots (keyed by index)
+  // Collapsed state for engine sections (keyed by bot name/label)
   collapsedBots: {},
-  // Collapsed state for saved results bots (keyed by index)
-  collapsedSavedBots: {},
   // Global settings
   showEvalMarks: true,
   evalMarkThresholds: { ...defaultEvalMarkThresholds },
@@ -68,8 +66,13 @@ const state = {
 };
 
 // Load from LocalStorage
-const load = (key, initial) =>
-  LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
+const load = (key, initial) => {
+  if (!LocalStorage.has(key)) return initial;
+  const value = LocalStorage.getItem(key);
+  // Quasar LocalStorage converts null to the string "null"; restore it
+  if (value === "null" && initial === null) return null;
+  return value;
+};
 
 if (!LocalStorage.isEmpty()) {
   for (let key in defaultState) {
@@ -109,6 +112,20 @@ forEach(bots, (bot, id) => {
 
 // Backward compatibility
 defaults(state, defaultState);
+// Migrate old index-based collapsedBots to empty (will be repopulated by name)
+if (
+  state.collapsedBots &&
+  typeof Object.keys(state.collapsedBots)[0] === "string"
+) {
+  // Check if keys look like indices (numeric strings)
+  const keys = Object.keys(state.collapsedBots);
+  if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
+    // Old format - reset to empty
+    state.collapsedBots = {};
+  }
+}
+// Remove deprecated collapsedSavedBots
+delete state.collapsedSavedBots;
 defaults(state.dbSettings, defaultState.dbSettings);
 defaults(state.botSettings, defaultState.botSettings);
 Object.keys(defaultState.botSettings).forEach((bot) => {

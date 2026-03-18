@@ -141,13 +141,14 @@ export default {
   computed: {
     expanded: {
       get() {
-        return (
-          this.$store.state.analysis.collapsedSavedBots?.[this.index] !== true
-        );
+        // Use bot name as key for collapsed state (synced with BotSuggestions)
+        // Use empty string for null bot names (the "Other" section)
+        const key = this.botName != null ? this.botName : "";
+        return this.$store.state.analysis.collapsedBots?.[key] !== true;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET_SAVED_BOT_COLLAPSED", {
-          index: this.index,
+        this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
+          botName: this.botName,
           collapsed: !value,
         });
       },

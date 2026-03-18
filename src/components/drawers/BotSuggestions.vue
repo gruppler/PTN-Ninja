@@ -774,11 +774,13 @@ export default {
     expanded: {
       get() {
         // Default to expanded (true) if not set
-        return this.$store.state.analysis.collapsedBots[this.index] !== true;
+        // Use bot name (label) as key for collapsed state
+        const key = this.botName != null ? this.botName : "";
+        return this.$store.state.analysis.collapsedBots[key] !== true;
       },
       set(value) {
         this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
-          index: this.index,
+          botName: this.botName,
           collapsed: !value,
         });
       },

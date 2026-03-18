@@ -212,21 +212,14 @@ export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
   const bot = state.activeBots[fromIndex];
   state.activeBots.splice(fromIndex, 1);
   state.activeBots.splice(toIndex, 0, bot);
-  // Swap collapsed state between the two indices
-  const collapsedFrom = state.collapsedBots[fromIndex];
-  const collapsedTo = state.collapsedBots[toIndex];
-  Vue.set(state.collapsedBots, toIndex, collapsedFrom);
-  Vue.set(state.collapsedBots, fromIndex, collapsedTo);
+  // Collapsed state is now keyed by bot name, so no swap needed
 };
 
-// Set collapsed state for an active bot by index
-export const SET_BOT_COLLAPSED = (state, { index, collapsed }) => {
-  Vue.set(state.collapsedBots, index, collapsed);
-};
-
-// Set collapsed state for a saved results bot by index
-export const SET_SAVED_BOT_COLLAPSED = (state, { index, collapsed }) => {
-  Vue.set(state.collapsedSavedBots, index, collapsed);
+// Set collapsed state for a bot by name (used by both saved and unsaved panels)
+export const SET_BOT_COLLAPSED = (state, { botName, collapsed }) => {
+  // Use empty string for null/undefined bot names (the "Other" section)
+  const key = botName != null ? botName : "";
+  Vue.set(state.collapsedBots, key, collapsed);
 };
 
 export const SET_OPENING_MOVES = (state, moves) => {
