@@ -12,129 +12,30 @@
           analysisSource !== 'openings' &&
           resolvedBot &&
           resolvedBotState &&
-          resolvedBotMeta
+          resolvedBotMeta &&
+          !viewingSavedResults
         "
       >
-        <template
+        <!-- Interactive Analysis -->
+        <q-btn
           v-if="
             resolvedBotState.isReady &&
             !resolvedBotState.isRunning &&
-            (!resolvedBotMeta.requiresConnect || resolvedBotState.isConnected)
+            (!resolvedBotMeta.requiresConnect ||
+              resolvedBotState.isConnected) &&
+            resolvedBotMeta.isInteractive &&
+            resolvedBot.isInteractiveAvailable
           "
+          @click="toggleInteractiveAnalysis"
+          icon="int_analysis"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          dense
+          flat
         >
-          <!-- Interactive Analysis -->
-          <q-btn
-            v-if="
-              resolvedBotMeta.isInteractive &&
-              resolvedBot.isInteractiveAvailable
-            "
-            @click="toggleInteractiveAnalysis"
-            icon="int_analysis"
-            class="dimmed-btn"
-            v-ripple="false"
-            :color="btnColor"
-            dense
-            flat
-          >
-            <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
-          </q-btn>
-
-          <!-- Save -->
-          <q-btn
-            icon="save_move"
-            class="dimmed-btn"
-            v-ripple="false"
-            :color="btnColor"
-            dense
-            flat
-          >
-            <hint>{{ $t("Save") }}</hint>
-            <q-menu
-              transition-show="none"
-              transition-hide="none"
-              auto-close
-              square
-            >
-              <q-list>
-                <q-item
-                  clickable
-                  @click="saveCurrentPositionToNotes"
-                  :disable="!hasCurrentBotSuggestions"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="save" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{
-                      $t("Save Current Position")
-                    }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-                <q-item
-                  clickable
-                  @click="saveAllResultsToNotes"
-                  :disable="!hasResults"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="save_all" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ $t("Save All") }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-
-          <!-- Delete -->
-          <q-btn
-            icon="delete"
-            class="dimmed-btn"
-            v-ripple="false"
-            :color="btnColor"
-            dense
-            flat
-          >
-            <hint>{{ $t("Delete") }}</hint>
-            <q-menu
-              transition-show="none"
-              transition-hide="none"
-              auto-close
-              square
-            >
-              <q-list>
-                <q-item
-                  clickable
-                  @click="clearCurrentPositionResults"
-                  :disable="!hasCurrentBotSuggestions"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="delete_outline" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{
-                      $t("analysis.Clear Positions Unsaved Results")
-                    }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-                <q-item
-                  clickable
-                  @click="clearUnsavedResults"
-                  :disable="!hasResults"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="delete_all_outline" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{
-                      $t("analysis.Clear Engines Unsaved Results")
-                    }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-        </template>
+          <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
+        </q-btn>
 
         <!-- Bot Progress -->
         <BotProgress
@@ -163,6 +64,100 @@
         >
           <q-icon name="connect" />
           <hint>{{ $t("tei.connect") }}</hint>
+        </q-btn>
+
+        <!-- Save -->
+        <q-btn
+          icon="save_move"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          dense
+          flat
+        >
+          <hint>{{ $t("Save") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="saveCurrentPositionToNotes"
+                :disable="!hasCurrentBotSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="save" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="saveAllResultsToNotes"
+                :disable="!hasResults"
+              >
+                <q-item-section avatar>
+                  <q-icon name="save_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save All") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
+
+        <!-- Delete -->
+        <q-btn
+          icon="delete"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          dense
+          flat
+        >
+          <hint>{{ $t("Delete") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="clearCurrentPositionResults"
+                :disable="!hasCurrentBotSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear Positions Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="clearUnsavedResults"
+                :disable="!hasResults"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_all_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear Engines Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </template>
 
