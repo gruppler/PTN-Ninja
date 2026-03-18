@@ -141,74 +141,57 @@ export const SELECT_ENGINE = (
   }
 };
 
+// Called when loading/switching games. If the current engine has saved results,
+// select it. Otherwise, find an engine that does have saved results.
 export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
-  const names = getters.savedBotNames;
-  if (names.length === 0) {
+  const withResults = getters.savedBotNamesWithResults;
+  if (withResults.size === 0) {
     // No saved results at all - switch to engine analysis
     if (state.preferSavedResults) {
       dispatch("SET", ["preferSavedResults", false]);
     }
     return;
   }
-  if (!names.includes(state.savedBotName)) {
-    // Prefer the label of the currently selected engine if it has saved results
-    const bot = bots[state.botID];
-    const label = bot ? bot.label : null;
-    if (label && names.includes(label)) {
-      dispatch("SET", ["savedBotName", label]);
-    } else if (names.includes(null) && !label) {
-      dispatch("SET", ["savedBotName", null]);
-    } else {
-      dispatch("SET", ["savedBotName", names[0]]);
+  // If current savedBotName has actual results, keep it
+  if (withResults.has(state.savedBotName)) {
+    return;
+  }
+  // Prefer the label of the currently selected engine if it has results
+  const bot = bots[state.botID];
+  const label = bot ? bot.label : null;
+  if (label && withResults.has(label)) {
+    dispatch("SET", ["savedBotName", label]);
+  } else {
+    // Fall back to first bot with actual results
+    const names = getters.savedBotNames;
+    const firstWithResults = names.find((n) => withResults.has(n));
+    if (firstWithResults !== undefined) {
+      dispatch("SET", ["savedBotName", firstWithResults]);
     }
   }
 };
 
+// Called when switching to the Saved tab. Syncs savedBotName to the current
+// engine, preserving the user's engine selection.
 export const SYNC_SAVED_ENGINE_TO_CURRENT = ({ state, getters, dispatch }) => {
-  if (!getters.hasAnySavedResults) {
-    // No actual saved results — keep showing the active engine
-    return;
-  }
   const names = getters.savedBotNames;
   dispatch("SET", ["preferSavedResults", true]);
   dispatch("SET", ["analysisSource", "saved"]);
-  // If savedBotName is null ("Other"), keep it - user explicitly selected it
-  if (state.savedBotName === null) {
-    return;
-  }
-  // If savedBotName is already valid, keep it
-  if (names.includes(state.savedBotName)) {
-    return;
-  }
-  // Current savedBotName is invalid, fall back
-  // Prefer the label of the currently selected engine if it has saved results
+  // Sync savedBotName to match the currently selected engine
   const bot = bots[state.botID];
   const label = bot ? bot.label : null;
   if (label && names.includes(label)) {
     dispatch("SET", ["savedBotName", label]);
-  } else if (names.includes(null) && !label) {
-    dispatch("SET", ["savedBotName", null]);
-  } else {
+  } else if (names.includes(state.savedBotName)) {
+    // Current savedBotName is still valid, keep it
+  } else if (names.length > 0) {
     dispatch("SET", ["savedBotName", names[0]]);
   }
 };
 
-export const SYNC_ENGINE_TO_SAVED = ({ state, dispatch }) => {
+export const SYNC_ENGINE_TO_SAVED = ({ dispatch }) => {
   dispatch("SET", ["preferSavedResults", false]);
   dispatch("SET", ["analysisSource", "engines"]);
-  // Sync botID to the active engine matching the saved bot name
-  const savedBotName = state.savedBotName;
-  if (savedBotName) {
-    for (const id of state.activeBots) {
-      const bot = bots[id];
-      if (bot && bot.label === savedBotName) {
-        if (id !== state.botID) {
-          dispatch("SET", ["botID", id]);
-        }
-        return;
-      }
-    }
-  }
 };
 
 export const SELECT_SAVED_ENGINE = ({ state, dispatch }, botName) => {

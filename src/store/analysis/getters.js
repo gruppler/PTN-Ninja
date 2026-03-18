@@ -78,13 +78,11 @@ export const hasAnySavedResults = (state, getters, rootState) => {
   return false;
 };
 
-// Ordered list of bot names from saved suggestions.
-// Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
-// Also includes active bots without saved results as placeholders.
-export const savedBotNames = (state, getters, rootState) => {
+// Set of bot names that have actual saved results (not placeholders).
+export const savedBotNamesWithResults = (state, getters, rootState) => {
   const comments = rootState.game && rootState.game.comments;
   const notes = comments && comments.notes;
-  if (!notes) return [];
+  if (!notes) return new Set();
 
   const botNameSet = new Set();
   for (const id in notes) {
@@ -100,6 +98,14 @@ export const savedBotNames = (state, getters, rootState) => {
       }
     }
   }
+  return botNameSet;
+};
+
+// Ordered list of bot names from saved suggestions.
+// Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
+// Also includes active bots without saved results as placeholders.
+export const savedBotNames = (state, getters) => {
+  const botNameSet = getters.savedBotNamesWithResults;
 
   const namedBots = [...botNameSet].filter((name) => name !== null);
 
